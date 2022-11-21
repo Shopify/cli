@@ -1,6 +1,6 @@
 import {ExtensionsPayloadStore} from './payload/store.js'
 import {ExtensionDevOptions} from '../extension.js'
-import {bundleExtension} from '../../extensions/bundle.js'
+import {bundleExtension, getBundleExtensionStdIn} from '../../extensions/bundle.js'
 import {abort, path, output} from '@shopify/cli-kit'
 import chokidar from 'chokidar'
 
@@ -28,7 +28,11 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
       bundleExtension({
         minify: false,
         outputBundlePath: extension.outputBundlePath,
-        sourceFilePath: extension.entrySourceFilePath,
+        stdin: {
+          contents: getBundleExtensionStdIn(extension),
+          resolveDir: extension.directory,
+          loader: 'tsx',
+        },
         environment: 'development',
         env: {
           ...(options.devOptions.app.dotenv?.variables ?? {}),
@@ -38,11 +42,9 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
         stdout: options.devOptions.stdout,
         watchSignal: abortController.signal,
         watch: (error) => {
-          output.debug(
-            `The Javascript bundle of the UI extension with ID ${extension.devUUID} has ${
-              error ? 'an error' : 'changed'
-            }`,
-          )
+          if (!error) {
+            output.info(`${extension.configuration.name} UI extension javascript built successfully`)
+          }
 
           options.payloadStore
             .updateExtension(extension, {

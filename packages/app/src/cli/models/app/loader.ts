@@ -7,6 +7,7 @@ import {
   ThemeExtensionConfigurationSchema,
   UIExtensionConfigurationSupportedSchema,
   Extension,
+  OldExtensionPointsSchema,
 } from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames, extensionGraphqlId} from '../../constants.js'
@@ -21,6 +22,7 @@ import {
   usesWorkspaces as appUsesWorkspaces,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
+import type {NewExtensionPointType} from './extensions.js'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -233,6 +235,68 @@ class AppLoader {
     return parseResult.data
   }
 
+  async getLegacyEntrySourceFilePath(directory: string) {
+    const entrySourceFilePath = (
+      await Promise.all(
+        ['index']
+          .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
+          .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
+          .map((relativePath) => path.join(directory, relativePath))
+          .map(async (sourcePath) => ((await file.exists(sourcePath)) ? sourcePath : undefined)),
+      )
+    ).find((sourcePath) => sourcePath !== undefined)
+
+    if (!entrySourceFilePath) {
+      this.abortOrReport(
+        output.content`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${output.token.path(
+          directory,
+        )} or ${output.token.path(path.join(directory, 'src'))}`,
+        undefined,
+        directory,
+      )
+    }
+
+    return entrySourceFilePath
+  }
+
+  async validateUIExtensionPointConfig(directory: string, extensionPoints: NewExtensionPointType) {
+    const errors: string[] = []
+    const uniqueTargets: string[] = []
+    const duplicateTargets: string[] = []
+
+    for await (const {module, target} of extensionPoints) {
+      const fullPath = path.join(directory, module)
+      const fileExists = await file.exists(fullPath)
+
+      if (!fileExists) {
+        const notFoundPath = output.token.path(path.join(directory, module))
+
+        errors.push(
+          output.content`Couldn't find ${notFoundPath}
+Please check the module path for ${target}`.value,
+        )
+      }
+
+      if (uniqueTargets.indexOf(target) === -1) {
+        uniqueTargets.push(target)
+      } else {
+        duplicateTargets.push(target)
+      }
+    }
+
+    if (duplicateTargets.length) {
+      errors.push(`Duplicate targets found: ${duplicateTargets.join(', ')}\nExtension point targets must be unique`)
+    }
+
+    if (errors.length) {
+      const tomlPath = path.join(directory, configurationFileNames.extension.ui)
+
+      errors.push(`Please check the configuration in ${tomlPath}`)
+
+      this.abortOrReport(`${errors.join('\n\n')}`, undefined, directory)
+    }
+  }
+
   async loadUIExtensions(
     extensionDirectories?: string[],
   ): Promise<{uiExtensions: UIExtension[]; usedCustomLayout: boolean}> {
@@ -247,22 +311,18 @@ class AppLoader {
         UIExtensionConfigurationSupportedSchema,
         configurationPath,
       )
+
       const configuration = {
         ...configurationSupported,
         type: mapUIExternalExtensionTypeToUIExtensionType(configurationSupported.type),
       }
 
-      const entrySourceFilePaths = await path.glob(path.join(directory, 'src', '*.+(ts|js|tsx|jsx)'))
+      let entrySourceFilePath: string | undefined
 
-      if (!entrySourceFilePaths[0]) {
-        // TODO: Previosuly this was abortOrReport, but aborting guarantees types safety
-        // In what circumstance would we want this process to continue if there are no src files?
-        // There being no src files seems like a terminal problem.
-        throw new error.Abort(
-          output.content`Couldn't find any js, jsx, ts or tsx files in the directories ${output.token.path(
-            directory,
-          )} or ${output.token.path(path.join(directory, 'src'))}`,
-        )
+      if (await isLegacyUIExtension(configuration)) {
+        entrySourceFilePath = await this.getLegacyEntrySourceFilePath(directory)
+      } else {
+        await this.validateUIExtensionPointConfig(directory, configuration.extensionPoints as NewExtensionPointType)
       }
 
       return {
@@ -270,7 +330,7 @@ class AppLoader {
         directory,
         configuration,
         configurationPath,
-        entrySourceFilePaths,
+        entrySourceFilePath,
         type: configuration.type,
         graphQLType: extensionGraphqlId(configuration.type),
         outputBundlePath: path.join(directory, 'dist/main.js'),
@@ -356,6 +416,12 @@ class AppLoader {
       return fallback
     }
   }
+}
+
+async function isLegacyUIExtension(configuration: UIExtension['configuration']) {
+  const {success: isLegacyUIExtension} = OldExtensionPointsSchema.safeParse(configuration.extensionPoints)
+
+  return isLegacyUIExtension
 }
 
 async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'frontend' | undefined> {

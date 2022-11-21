@@ -16,18 +16,29 @@ export interface Extension {
   graphQLType: string
 }
 
+const metafieldsSchema = schema.define
+  .array(
+    schema.define.object({
+      namespace: schema.define.string(),
+      key: schema.define.string(),
+    }),
+  )
+  .default([])
+
+export const OldExtensionPointsSchema = schema.define.array(schema.define.string()).default([])
+export const NewExtensionPointsSchema = schema.define.array(
+  schema.define.object({
+    target: schema.define.string(),
+    module: schema.define.string(),
+    metafields: metafieldsSchema,
+  }),
+)
+
 export const UIExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
-  type: schema.define.enum(uiExtensions.types),
-  metafields: schema.define
-    .array(
-      schema.define.object({
-        namespace: schema.define.string(),
-        key: schema.define.string(),
-      }),
-    )
-    .default([]),
-  extensionPoints: schema.define.array(schema.define.string()).optional(),
+  type: schema.define.enum(uiExtensions.types).default('ui_extension'),
+  metafields: metafieldsSchema,
+  extensionPoints: schema.define.union([OldExtensionPointsSchema, NewExtensionPointsSchema]).optional(),
   capabilities: schema.define
     .object({
       block_progress: schema.define.boolean().optional(),
@@ -49,7 +60,7 @@ export const UIExtensionConfigurationSchema = schema.define.object({
 })
 
 export const UIExtensionConfigurationSupportedSchema = UIExtensionConfigurationSchema.extend({
-  type: schema.define.enum([...uiExtensions.types, ...uiExternalExtensionTypes.types]),
+  type: schema.define.enum([...uiExtensions.types, ...uiExternalExtensionTypes.types]).default('ui_extension'),
 })
 
 export const FunctionExtensionConfigurationSchema = schema.define.object({
@@ -101,7 +112,7 @@ export type ThemeExtension = Extension & {
 
 export type UIExtension = Extension & {
   configuration: UIExtensionConfiguration
-  entrySourceFilePath: string
+  entrySourceFilePath?: string
   outputBundlePath: string
   devUUID: string
 }
@@ -110,3 +121,4 @@ type UIExtensionConfiguration = schema.define.infer<typeof UIExtensionConfigurat
 type FunctionExtensionConfiguration = schema.define.infer<typeof FunctionExtensionConfigurationSchema>
 type ThemeExtensionConfiguration = schema.define.infer<typeof ThemeExtensionConfigurationSchema>
 type FunctionExtensionMetadata = schema.define.infer<typeof FunctionExtensionMetadataSchema>
+export type NewExtensionPointType = schema.define.infer<typeof NewExtensionPointsSchema>

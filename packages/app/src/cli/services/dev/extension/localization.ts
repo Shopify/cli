@@ -55,7 +55,7 @@ export async function getLocalization(
   await Promise.all(compilingTranslations)
     .then(async () => {
       localization.lastUpdated = Date.now()
-      output.info(`Parsed locales for extension ${extension.configuration.name} at ${extension.directory}`)
+      output.info(`${extension.configuration.name} UI extension locales built successfully`)
     })
     .catch(() => {
       status = 'error'

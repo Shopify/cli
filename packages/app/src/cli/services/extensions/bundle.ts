@@ -1,12 +1,14 @@
-import {abort, path} from '@shopify/cli-kit'
+import {NewExtensionPointType, UIExtension} from '../../models/app/extensions.js'
+import {abort} from '@shopify/cli-kit'
 import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
 import {Writable} from 'node:stream'
+import type {StdinOptions} from 'esbuild'
 
 interface BundleOptions {
   minify: boolean
   env: {[variable: string]: string}
   outputBundlePath: string
-  sourceFilePath: string
+  stdin: StdinOptions
   stdout: Writable
   stderr: Writable
 
@@ -78,9 +80,8 @@ function getESBuildOptions(options: BundleOptions): Parameters<typeof esBuild>[0
     {'process.env.NODE_ENV': JSON.stringify(options.environment)},
   )
   let esbuildOptions: Parameters<typeof esBuild>[0] = {
-    entryPoints: [options.sourceFilePath],
     outfile: options.outputBundlePath,
-    sourceRoot: path.dirname(options.sourceFilePath),
+    stdin: options.stdin,
     bundle: true,
     define,
     jsx: 'automatic',
@@ -94,6 +95,7 @@ function getESBuildOptions(options: BundleOptions): Parameters<typeof esBuild>[0
     target: 'es6',
     resolveExtensions: ['.tsx', '.ts', '.js', '.json', '.esnext', '.mjs', '.ejs'],
   }
+
   if (options.watch) {
     const watch = options.watch
     esbuildOptions = {
@@ -141,4 +143,17 @@ function isGraphqlPackageAvailable(): boolean {
   } catch {
     return false
   }
+}
+
+// This will probably be on the extension instance after Isaac's refactor
+export function getBundleExtensionStdIn({configuration, directory, entrySourceFilePath}: UIExtension) {
+  if (configuration.type === 'ui_extension') {
+    const extensionPoints = configuration.extensionPoints as NewExtensionPointType
+
+    return extensionPoints.map(({module}) => `import '${module}';`).join('\n')
+  }
+
+  const relativeImportPath = (entrySourceFilePath as string).replace(directory, '')
+
+  return `import '.${relativeImportPath}';`
 }

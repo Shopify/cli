@@ -1,8 +1,9 @@
-import {bundleExtension} from './bundle.js'
+import {bundleExtension, getBundleExtensionStdIn} from './bundle.js'
 import {testApp, testUIExtension} from '../../models/app/app.test-data.js'
-import {describe, expect, test, vi} from 'vitest'
+import {UIExtension} from '../../models/app/extensions.js'
+import {describe, expect, it, test, vi} from 'vitest'
 import {build as esBuild, BuildOptions, WatchMode} from 'esbuild'
-import {abort, path} from '@shopify/cli-kit'
+import {abort} from '@shopify/cli-kit'
 
 vi.mock('esbuild', async () => {
   const esbuild: any = await vi.importActual('esbuild')
@@ -12,7 +13,7 @@ vi.mock('esbuild', async () => {
   }
 })
 
-describe('buildExtension', () => {
+describe('bundleExtension()', () => {
   test('invokes ESBuild with the right options and forwards the logs', async () => {
     // Given
     const extension = testUIExtension()
@@ -44,7 +45,11 @@ describe('buildExtension', () => {
       outputBundlePath: extension.outputBundlePath,
       minify: true,
       environment: 'production',
-      sourceFilePath: extension.entrySourceFilePath,
+      stdin: {
+        contents: 'console.log("mock stdin content")',
+        resolveDir: 'mock/resolve/dir',
+        loader: 'tsx',
+      },
       stdout,
       stderr,
     })
@@ -55,9 +60,12 @@ describe('buildExtension', () => {
     const options: BuildOptions = call[0]
 
     expect(options.bundle).toBeTruthy()
-    expect(options.entryPoints).toEqual([extension.entrySourceFilePath])
+    expect(options.stdin).toStrictEqual({
+      contents: 'console.log("mock stdin content")',
+      resolveDir: 'mock/resolve/dir',
+      loader: 'tsx',
+    })
     expect(options.outfile).toEqual(extension.outputBundlePath)
-    expect(options.sourceRoot).toEqual(path.dirname(extension.entrySourceFilePath))
     expect(options.loader).toEqual({
       '.esnext': 'ts',
       '.js': 'jsx',
@@ -121,7 +129,11 @@ describe('buildExtension', () => {
       outputBundlePath: extension.outputBundlePath,
       minify: true,
       environment: 'production',
-      sourceFilePath: extension.entrySourceFilePath,
+      stdin: {
+        contents: 'console.log("mock stdin content")',
+        resolveDir: 'mock/resolve/dir',
+        loader: 'tsx',
+      },
       stdout,
       stderr,
       watchSignal: abortController.signal,
@@ -163,7 +175,11 @@ describe('buildExtension', () => {
       outputBundlePath: extension.outputBundlePath,
       minify: true,
       environment: 'production',
-      sourceFilePath: extension.entrySourceFilePath,
+      stdin: {
+        contents: 'console.log("mock stdin content")',
+        resolveDir: 'mock/resolve/dir',
+        loader: 'tsx',
+      },
       stdout,
       stderr,
       watch: watcher,
@@ -211,4 +227,39 @@ describe('buildExtension', () => {
       ],
     }
   }
+})
+
+describe('getBundleExtensionStdIn()', () => {
+  describe('if the extension is a ui_extension type', () => {
+    it('imports each extension entryPoint module', () => {
+      const result = getBundleExtensionStdIn({
+        directory: 'mock/directory',
+        entrySourceFilePath: undefined,
+        configuration: {
+          type: 'ui_extension',
+          extensionPoints: [
+            {module: './src/mock1.js', target: 'MOCK::1'},
+            {module: './src/mock2.js', target: 'MOCK::2'},
+          ],
+        },
+      } as UIExtension)
+
+      expect(result).toContain("import './src/mock1.js';")
+      expect(result).toContain("import './src/mock2.js';")
+    })
+  })
+
+  describe('if the extension is not a ui_extension type', () => {
+    it('imports each the entrySourceFilePath', async () => {
+      const result = getBundleExtensionStdIn({
+        directory: 'mock/directory',
+        entrySourceFilePath: 'mock/directory/src/mock1.js',
+        configuration: {
+          type: 'pos_ui_extension',
+        },
+      } as UIExtension)
+
+      expect(result).toBe("import './src/mock1.js';")
+    })
+  })
 })
