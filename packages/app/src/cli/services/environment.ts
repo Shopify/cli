@@ -18,6 +18,7 @@ import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifier
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
 import {ThemeExtension} from '../models/app/extensions.js'
+import {loadAppName} from '../models/app/loader.js'
 import {error as kitError, output, session, store, ui, environment, error, string} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -67,6 +68,44 @@ interface DevEnvironmentOutput {
   identifiers: UuidOnlyIdentifiers
   updateURLs: boolean | undefined
   tunnelPlugin: string | undefined
+}
+
+/**
+ * Make sure there is a valid environment to execute `generate extension`
+ *
+ * We just need a valid app API key to access the Specifications API.
+ * - If the API key is provided via flag, we use it.
+ * - Else, if there is cached API key for the current directory, we use it.
+ * - Else, we prompt the user to select/create an app.
+ *
+ * The selection is then cached as the "dev" app for the current directory.
+ */
+export async function ensureGenerateEnvironment(
+  options: {apiKey?: string; directory: string; reset: boolean},
+  token: string,
+): Promise<string> {
+  if (options.apiKey) return options.apiKey
+  const cachedInfo = await getAppDevCachedInfo({reset: options.reset, directory: options.directory})
+
+  if (cachedInfo === undefined && !options.reset) {
+    const explanation =
+      `\nLooks like this is the first time you're running 'generate extension' for this project.\n` +
+      'Configure your preferences by answering a few questions.\n'
+    output.info(explanation)
+  }
+
+  const orgId = cachedInfo?.orgId || (await selectOrg(token))
+  const {organization, apps} = await fetchOrgAndApps(orgId, token)
+  const localAppName = await loadAppName(options.directory)
+  const selectedApp = await selectOrCreateApp(localAppName, apps, organization, token, cachedInfo?.appId)
+  await store.setAppInfo({
+    appId: selectedApp.apiKey,
+    title: selectedApp.title,
+    directory: options.directory,
+    orgId,
+  })
+
+  return selectedApp.apiKey
 }
 
 /**
@@ -134,7 +173,7 @@ export async function ensureDevEnvironment(
   }
 
   const {organization, apps} = await fetchOrgAndApps(orgId, token)
-  selectedApp = selectedApp || (await selectOrCreateApp(options.app, apps, organization, token, cachedInfo?.appId))
+  selectedApp = selectedApp || (await selectOrCreateApp(options.app.name, apps, organization, token, cachedInfo?.appId))
   await store.setAppInfo({
     appId: selectedApp.apiKey,
     title: selectedApp.title,
@@ -290,7 +329,7 @@ export async function fetchOrganizationAndFetchOrCreateApp(
 ): Promise<{partnersApp: OrganizationApp; orgId: string}> {
   const orgId = await selectOrg(token)
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
-  const partnersApp = await selectOrCreateApp(app, apps, organization, token, undefined)
+  const partnersApp = await selectOrCreateApp(app.name, apps, organization, token, undefined)
   return {orgId, partnersApp}
 }
 

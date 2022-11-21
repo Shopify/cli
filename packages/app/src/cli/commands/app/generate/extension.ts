@@ -86,6 +86,13 @@ export default class AppScaffoldExtension extends Command {
     }))
 
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+
+    // Ensure dev environment is ready
+    // Fetch specifications
+    // Load the app
+    // Validate extension type if provided
+    // Show extension prompts
+
     const app: AppInterface = await loadApp(directory)
 
     flags.type = mapExternalExtensionTypeToExtensionType(flags.type as ExternalExtensionTypes)
