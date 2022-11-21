@@ -35,7 +35,6 @@ throw new AbortError(
     "Make sure the command is executed from a project's directory",
     "Run the command again",
   ]
-  ]
 )
 ```
 
