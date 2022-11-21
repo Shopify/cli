@@ -13,7 +13,7 @@ import {Writable} from 'node:stream'
 export async function kitchenSink() {
   renderInfo({
     headline: 'CLI update available',
-    body: ['Run', {command: 'npm run shopify upgrade'}, '.'],
+    body: ['Run', {command: 'npm run shopify upgrade'}, {char: '.'}],
   })
 
   renderInfo({
