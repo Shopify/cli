@@ -44,17 +44,6 @@ export const AppOrganizationNotFoundError = (apiKey: string, organizations: stri
   )
 }
 
-const OrganizationNotFoundError = (orgId: string) => {
-  return new error.Bug(`Could not find Organization for id ${orgId}.`)
-}
-
-const StoreNotFoundError = async (storeName: string, org: Organization) => {
-  return new error.Bug(
-    `Could not find ${storeName} in the Organization ${org.businessName} as a valid development store.`,
-    `Visit https://${await environment.fqdn.partners()}/${org.id}/stores to create a new store in your organization`,
-  )
-}
-
 export interface DevEnvironmentOptions {
   app: AppInterface
   apiKey?: string
@@ -399,8 +388,15 @@ async function fetchDevDataFromOptions(
 
   if (options.storeFqdn) {
     const orgWithStore = await fetchStoreByDomain(orgId, token, options.storeFqdn)
-    if (!orgWithStore) throw OrganizationNotFoundError(orgId)
-    if (!orgWithStore.store) throw await StoreNotFoundError(options.storeFqdn, orgWithStore?.organization)
+    if (!orgWithStore) throw new error.Bug(`Could not find Organization for id ${orgId}.`)
+    if (!orgWithStore.store) {
+      const partners = await environment.fqdn.partners()
+      const org = orgWithStore.organization
+      throw new error.Bug(
+        `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid development store.`,
+        `Visit https://${partners}/${org.id}/stores to create a new store in your organization`,
+      )
+    }
     await convertToTestStoreIfNeeded(orgWithStore.store, orgWithStore.organization, token)
     selectedStore = orgWithStore.store
   }
