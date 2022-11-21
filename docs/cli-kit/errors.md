@@ -23,6 +23,22 @@ throw new AbortError(
 )
 ```
 
+You can also pass some next steps to the error constructor to help the user recover from the error. The next steps are displayed after the error message.
+
+For example
+
+```ts
+throw new AbortError(
+  "The project doesn't exist",
+  undefined,
+  [
+    "Make sure the command is executed from a project's directory",
+    "Run the command again",
+  ]
+  ]
+)
+```
+
 - **AbortError:** This error is used to terminate the execution of the CLI process and output a message and thenext steps to the user.
 - **BugError:** This error behaves as `AbortError` and gets reported to the error tracking platform.
 - **AbortSilentError:** This version of `AbortError` doesn't output anything to the user. It is helpful in cases when the thrower wants to control the formatting.
