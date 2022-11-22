@@ -1,4 +1,4 @@
-import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
+import {Extension, FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {AppErrors} from './loader.js'
 import {getUIExtensionRendererDependency, UIExtensionTypes} from '../../constants.js'
 import {path, schema, file} from '@shopify/cli-kit'
@@ -56,6 +56,7 @@ export interface AppInterface {
   hasExtensions: () => boolean
   hasUIExtensions: () => boolean
   updateDependencies: () => Promise<void>
+  extensionsForType: (type: string) => Extension[]
 }
 
 export class App implements AppInterface {
@@ -124,6 +125,11 @@ export class App implements AppInterface {
 
   hasUIExtensions(): boolean {
     return this.extensions.ui.length > 0
+  }
+
+  extensionsForType(type: string): Extension[] {
+    const allExternsions = [...this.extensions.ui, ...this.extensions.function, ...this.extensions.theme]
+    return allExternsions.filter((extension) => extension.type === type)
   }
 }
 

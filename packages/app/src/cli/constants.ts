@@ -122,7 +122,7 @@ type PublicExtensionTypes = typeof extensions.publicTypes[number] | string
 type GatedExtensionTypes = Exclude<ExtensionTypes, PublicExtensionTypes>
 
 export function extensionTypeCategory(extensionType: ExtensionTypes): 'theme' | 'function' | 'ui' {
-  if (extensionType === 'theme') {
+  if (extensionType === 'theme_app_extension' || extensionType === 'theme') {
     return 'theme'
   }
   if ((functionExtensions.types as ReadonlyArray<string>).includes(extensionType)) {
@@ -194,7 +194,7 @@ export type ExternalExtensionTypes = typeof externalExtensionTypes.types[number]
 
 // The order of the groups in extensionTypesGroups will be the same displayed in the select prompt
 export const extensionTypesGroups: {name: string; extensions: ExtensionTypes[]}[] = [
-  {name: 'Online store', extensions: ['theme']},
+  {name: 'Online store', extensions: ['theme', 'theme_app_extension']},
   {
     name: 'Discounts and checkout',
     extensions: [
@@ -206,7 +206,7 @@ export const extensionTypesGroups: {name: string; extensions: ExtensionTypes[]}[
     ],
   },
   {name: 'Analytics', extensions: ['web_pixel_extension']},
-  {name: 'Merchant admin', extensions: ['product_subscription']},
+  {name: 'Merchant admin', extensions: ['product_subscription', 'subscription_management']},
   {
     name: 'Shopify private',
     extensions: [

@@ -24,6 +24,9 @@ export interface FunctionSpec<
   languages?: {name: string; value: string}[]
   configSchema: ZodSchemaType<TConfiguration>
   metadataSchema: ZodSchemaType<TMetadata>
+  options: {
+    registrationLimit: number
+  }
   templatePath: (lang: string) => string
 }
 
@@ -143,6 +146,7 @@ export function createFunctionSpec<
   public?: boolean
   templateURL?: string
   languages?: {name: string; value: string}[]
+  registrationLimit?: number
   configSchema?: ZodSchemaType<TConfiguration>
   metadataSchema?: ZodSchemaType<TMetadata>
   templatePath: (lang: string) => string
@@ -156,6 +160,9 @@ export function createFunctionSpec<
     configSchema: BaseFunctionConfigurationSchema,
     metadataSchema: BaseFunctionMetadataSchema,
     public: true,
+    options: {
+      registrationLimit: spec.registrationLimit ?? 10,
+    },
   }
 
   return {...defaults, ...spec}

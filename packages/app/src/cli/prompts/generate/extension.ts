@@ -4,17 +4,13 @@ import {
   isFunctionExtensionType,
   functionExtensionTemplates,
   extensionTypesGroups,
-  functionExtensions,
-  publicFunctionExtensions,
-  getExtensionOutputConfig,
 } from '../../constants.js'
 import {getUIExtensionTemplates, isValidUIExtensionTemplate} from '../../utilities/extensions/template-configuration.js'
-import {fetchExtensionSpecifications} from '../../utilities/extensions/fetch-extension-specifications.js'
-import {fetchAppAndIdentifiers} from '../../services/environment.js'
 import {AppInterface} from '../../models/app/app.js'
-import {ui, environment, session} from '@shopify/cli-kit'
+import {FunctionSpec} from '../../models/extensions/functions.js'
+import {ui} from '@shopify/cli-kit'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
-import {RemoteSpecification} from '@shopify/cli-kit/src/api/graphql'
+import {RemoteSpecification} from '@shopify/cli-kit/src/api/graphql/extension_specifications.js'
 
 interface GenerateExtensionOptions {
   name?: string
@@ -22,6 +18,7 @@ interface GenerateExtensionOptions {
   extensionFlavor?: string
   directory: string
   app: AppInterface
+  extensionSpecifications: (RemoteSpecification | FunctionSpec)[]
   reset: boolean
 }
 
@@ -48,7 +45,7 @@ export const extensionFlavorQuestion = (extensionType: string): ui.Question => {
   }
 }
 
-export function buildChoices(extensionTypes: Pick<RemoteSpecification, 'identifier' | 'externalName'>[]) {
+export function buildChoices(extensionTypes: {identifier: string; externalName: string}[]) {
   return extensionTypes
     .map((type) => {
       const choiceWithoutGroup = {
@@ -75,34 +72,12 @@ const generateExtensionPrompt = async (
   prompt = ui.prompt,
 ): Promise<GenerateExtensionOutput> => {
   const questions: ui.Question<'name' | 'extensionType'>[] = []
-  const isShopify = await environment.local.isShopify()
-  const token = await session.ensureAuthenticatedPartners()
-  const [_partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
-  const extensionSpecifications = await fetchExtensionSpecifications(token, envIdentifiers.app!)
-  const supportedFunctionExtensions = isShopify ? functionExtensions.types : publicFunctionExtensions.types
 
-  const supportedExtensions = [
-    ...extensionSpecifications,
-    ...supportedFunctionExtensions.map((extension) => {
-      return {
-        identifier: extension,
-        externalName: getExtensionOutputConfig(extension).humanKey,
-        options: {
-          registrationLimit: 1,
-        },
-      }
-    }),
-  ]
-  const localExtensions = [...options.app.extensions.ui, ...options.app.extensions.theme]
+  let allExtensions = options.extensionSpecifications
 
   if (!options.extensionType) {
-    let relevantExtensionTypes = supportedExtensions.filter((specification) => {
-      const localExtensionForType = localExtensions.filter((extension) => extension.type === specification.identifier)
-      return localExtensionForType.length < specification.options.registrationLimit
-    })
-
     if (options.extensionFlavor) {
-      relevantExtensionTypes = relevantExtensionTypes.filter((relevantExtensionType) =>
+      allExtensions = allExtensions.filter((relevantExtensionType) =>
         isValidUIExtensionTemplate(relevantExtensionType.identifier, options.extensionFlavor),
       )
     }
@@ -111,7 +86,7 @@ const generateExtensionPrompt = async (
       type: 'select',
       name: 'extensionType',
       message: 'Type of extension?',
-      choices: buildChoices(relevantExtensionTypes),
+      choices: buildChoices(allExtensions),
     })
   }
   if (!options.name) {

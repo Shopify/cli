@@ -73,7 +73,11 @@ export async function ensureGenerateEnvironment(
   options: {apiKey?: string; directory: string; reset: boolean},
   token: string,
 ): Promise<string> {
-  if (options.apiKey) return options.apiKey
+  if (options.apiKey) {
+    const app = await fetchAppFromApiKey(options.apiKey, token)
+    if (!app) throw InvalidApiKeyError(options.apiKey)
+    return app.apiKey
+  }
   const cachedInfo = await getAppDevCachedInfo({reset: options.reset, directory: options.directory})
 
   if (cachedInfo === undefined && !options.reset) {
@@ -83,6 +87,7 @@ export async function ensureGenerateEnvironment(
     output.info(explanation)
   }
 
+  if (cachedInfo?.appId) return cachedInfo.appId
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
   const {organization, apps} = await fetchOrgAndApps(orgId, token)
   const localAppName = await loadAppName(options.directory)
