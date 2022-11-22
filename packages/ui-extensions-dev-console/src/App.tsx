@@ -7,12 +7,20 @@ import {AppProvider} from '@shopify/polaris'
 import {I18nContext, I18nManager} from '@shopify/react-i18n'
 import {ExtensionServerProvider, isValidSurface} from '@shopify/ui-extensions-server-kit'
 
-const protocol = location.protocol === 'http:' ? 'ws:' : 'wss:'
-const host = (import.meta.env.VITE_WEBSOCKET_HOST as string) || location.host
+function getConnectionUrl() {
+  if (import.meta.env.VITE_CONNECTION_URL) {
+    return import.meta.env.VITE_CONNECTION_URL.replace('https', 'wss').replace('/dev-console', '')
+  }
+
+  const protocol = location.protocol === 'http:' ? 'ws:' : 'wss:'
+
+  return `${protocol}//${location.host}/extensions`
+}
+
 const surface = new URLSearchParams(location.search).get('surface')
 const extensionServerOptions = {
   connection: {
-    url: `${protocol}//${host}/extensions`,
+    url: getConnectionUrl(),
   },
   surface: isValidSurface(surface) ? surface : undefined,
 }
