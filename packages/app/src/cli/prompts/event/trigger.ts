@@ -86,7 +86,7 @@ export async function sharedSecretPrompt(): Promise<string> {
     {
       type: 'input',
       name: 'sharedSecret',
-      message: 'Shared Secret to endcode the webhook payload',
+      message: 'Shared Secret to encode the webhook payload',
       default: 'shopify_test',
       validate: (value: string) => {
         if (value.length === 0) {
