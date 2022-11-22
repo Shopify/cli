@@ -30,6 +30,7 @@ export const NoOrgError = (organizationId?: string) => {
       {link: {label: 'this organization', url: `https://partner.shopify.com/${organizationId}`}},
     ])
   }
+  // eslint-disable-next-line rulesdir/no-error-factory-functions
   return new error.Abort(`No Organization found`, undefined, nextSteps)
 }
 
