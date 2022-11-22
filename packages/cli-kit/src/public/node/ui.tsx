@@ -5,6 +5,7 @@ import {Fatal} from '../../error.js'
 import {alert} from '../../private/node/ui/alert.js'
 import {fatalError} from '../../private/node/ui/error.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
+import {prompt, PromptProps} from '../../private/node/ui/select.js'
 import React from 'react'
 import {AbortController} from 'abort-controller'
 import {RenderOptions} from 'ink'
@@ -172,4 +173,8 @@ export function renderWarning(options: RenderAlertOptions) {
  */
 export function renderFatalError(error: Fatal) {
   fatalError(error)
+}
+
+export function renderPrompt(options: PromptProps) {
+  prompt(options)
 }

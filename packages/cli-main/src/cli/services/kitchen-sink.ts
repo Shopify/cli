@@ -1,5 +1,12 @@
 import {error} from '@shopify/cli-kit'
-import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {
+  renderFatalError,
+  renderInfo,
+  renderSuccess,
+  renderWarning,
+  renderPrompt,
+  renderConcurrent,
+} from '@shopify/cli-kit/node/ui'
 import {Signal} from '@shopify/cli-kit/src/abort'
 import {Writable} from 'node:stream'
 
@@ -173,6 +180,26 @@ export async function kitchenSink() {
       stdout.write('third frontend message')
     },
   }
+
+  await renderPrompt({
+    message: 'Associate your project with the org Castile Ventures?',
+    choices: [
+      {label: 'first', value: 'first', key: 'f'},
+      {label: 'second', value: 'second', key: 's'},
+      {label: 'third', value: 'third'},
+      {label: 'fourth', value: 'fourth'},
+      {label: 'fifth', value: 'fifth'},
+      {label: 'sixth', value: 'sixth'},
+      {label: 'seventh', value: 'seventh'},
+      {label: 'eighth', value: 'eighth'},
+      {label: 'ninth', value: 'ninth'},
+    ],
+    limit: 5,
+    onEnter(item) {
+      // eslint-disable-next-line no-console
+      console.log(`selected ${item.label}!`)
+    },
+  })
 
   await renderConcurrent({processes: [backendProcess, frontendProcess]})
 }
