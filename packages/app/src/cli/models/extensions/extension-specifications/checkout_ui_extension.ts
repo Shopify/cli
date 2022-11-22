@@ -7,7 +7,11 @@ const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.
 
 const CheckoutSchema = BaseExtensionSchema.extend({
   extensionPoints: schema.define.array(schema.define.string()).optional(),
-  settings: schema.define.string().optional(),
+  settings: schema.define
+    .object({
+      fields: schema.define.any().optional(),
+    })
+    .optional(),
 })
 
 const spec = createExtensionSpec({
