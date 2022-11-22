@@ -65,7 +65,7 @@ export interface ExtensionDevOptions {
   grantedScopes: string[]
 
   /**
-   * Product variant ID, used for checkout_ui_extensions
+   * Product variant ID, used for UI extensions targeting Checkout
    * If that extension is present, this is mandatory
    */
   checkoutCartUrl?: string

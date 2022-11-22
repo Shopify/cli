@@ -26,13 +26,13 @@ const metafieldsSchema = schema.define
   .default([])
 
 export const OldExtensionPointsSchema = schema.define.array(schema.define.string()).default([])
-export const NewExtensionPointsSchema = schema.define.array(
-  schema.define.object({
-    target: schema.define.string(),
-    module: schema.define.string(),
-    metafields: metafieldsSchema,
-  }),
-)
+export const ExtensionPointSchema = schema.define.object({
+  target: schema.define.string(),
+  module: schema.define.string(),
+  metafields: metafieldsSchema,
+})
+
+export const NewExtensionPointsSchema = schema.define.array(ExtensionPointSchema)
 
 export const UIExtensionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
@@ -122,3 +122,4 @@ type FunctionExtensionConfiguration = schema.define.infer<typeof FunctionExtensi
 type ThemeExtensionConfiguration = schema.define.infer<typeof ThemeExtensionConfigurationSchema>
 type FunctionExtensionMetadata = schema.define.infer<typeof FunctionExtensionMetadataSchema>
 export type NewExtensionPointType = schema.define.infer<typeof NewExtensionPointsSchema>
+export type ExtensionPointType = schema.define.infer<typeof ExtensionPointSchema>

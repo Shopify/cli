@@ -1,7 +1,8 @@
+import {http} from '@shopify/cli-kit'
 import {UIExtension} from '../../../../models/app/extensions.js'
 import {getUIExtensionResourceURL, getUIExtensionSurface} from '../../../../utilities/extensions/configuration.js'
 import {ExtensionDevOptions} from '../../extension.js'
-import {http} from '@shopify/cli-kit'
+import {getExtensionPointTargetSurface} from '../utilities.js'
 
 export function getRedirectUrl(extension: UIExtension, options: ExtensionDevOptions): string {
   const surface = getUIExtensionSurface(extension.configuration.type)
@@ -20,6 +21,32 @@ export function getRedirectUrl(extension: UIExtension, options: ExtensionDevOpti
 
     return rawUrl.toString()
   }
+}
+
+export function getExtensionPointRedirectUrl(
+  requestedTarget: string,
+  extension: UIExtension,
+  options: ExtensionDevOptions,
+): string | undefined {
+  const surface = getExtensionPointTargetSurface(requestedTarget)
+  const rawUrl = new URL(`https://${options.storeFqdn}/`)
+
+  switch (surface) {
+    case 'checkout':
+      // This can never be null because we always generate it
+      // whenever there is an extension point targeting Checkout
+      rawUrl.pathname = options.checkoutCartUrl!
+      rawUrl.searchParams.append('dev', `${options.url}/extensions`)
+      break
+    case 'admin':
+      rawUrl.pathname = 'admin/extensions-dev'
+      rawUrl.searchParams.append('url', getExtensionUrl(extension, options))
+      break
+    default:
+      return undefined
+  }
+
+  return rawUrl.toString()
 }
 
 export function getExtensionUrl(extension: UIExtension, options: ExtensionDevOptions): string {
