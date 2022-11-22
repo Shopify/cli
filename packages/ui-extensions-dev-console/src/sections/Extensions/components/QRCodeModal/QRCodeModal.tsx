@@ -69,12 +69,10 @@ export function QRCodeContent(props: Pick<QRCodeModalProps, 'extension'>) {
 
   if (!isDevelopment && extension.development.root.url.includes('localhost')) {
     return (
-      <div className={styles.PopoverContent}>
-        <Stack alignment="center" vertical>
-          <Icon source={CircleAlertMajor} color="subdued" />
-          <p>{i18n.translate('qrcode.useSecureURL')}</p>
-        </Stack>
-      </div>
+      <Stack alignment="center" vertical>
+        <Icon source={CircleAlertMajor} color="subdued" />
+        <p>{i18n.translate('qrcode.useSecureURL')}</p>
+      </Stack>
     )
   }
 
@@ -87,13 +85,11 @@ export function QRCodeContent(props: Pick<QRCodeModalProps, 'extension'>) {
           </Button>
         </div>
         <QRCode value={mobileQRCode} />
-        <div className={styles.PopoverContent}>
-          <p>
-            {i18n.translate('qrcode.content', {
-              thisExtension: <b>{i18n.translate('qrcode.thisExtension')}</b>,
-            })}
-          </p>
-        </div>
+        <p>
+          {i18n.translate('qrcode.content', {
+            thisExtension: <b>{i18n.translate('qrcode.thisExtension')}</b>,
+          })}
+        </p>
       </div>
     )
   }
