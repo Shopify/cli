@@ -32,9 +32,25 @@ describe('deliveryMethodForAddress', () => {
     expect(method).toEqual(DELIVERY_METHOD.LOCALHOST)
   })
 
+  it('detects a localhost address case insensitive', async () => {
+    // When
+    const method = deliveryMethodForAddress(localHttpAddress.toUpperCase())
+
+    // Then
+    expect(method).toEqual(DELIVERY_METHOD.LOCALHOST)
+  })
+
   it('detects a remote http address', async () => {
     // When
     const method = deliveryMethodForAddress(remoteHttpAddress)
+
+    // Then
+    expect(method).toEqual(DELIVERY_METHOD.HTTP)
+  })
+
+  it('detects a remote http address case insensitive', async () => {
+    // When
+    const method = deliveryMethodForAddress(remoteHttpAddress.toUpperCase())
 
     // Then
     expect(method).toEqual(DELIVERY_METHOD.HTTP)
