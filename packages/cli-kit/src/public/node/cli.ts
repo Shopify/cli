@@ -73,11 +73,14 @@ export async function runCreateCLI(options: RunCLIOptions) {
 export async function useLocalCLIIfDetected(filepath: string): Promise<boolean> {
   const {isTruthy} = await import('../../environment/utilities.js')
   const constants = await import('../../constants.js')
+  const localEnvironment = await import('../../environment/local.js')
   const {join} = await import('../../path.js')
   const {exec} = await import('../../system.js')
 
-  // Temporary flag while we test out this feature and ensure it won't break anything!
-  if (!isTruthy(process.env[constants.default.environmentVariables.enableCliRedirect])) return false
+  if (!(await localEnvironment.isShopify())) {
+    // Temporary flag while we test out this feature and ensure it won't break anything!
+    if (!isTruthy(process.env[constants.default.environmentVariables.enableCliRedirect])) return false
+  }
 
   // Setting an env variable in the child process prevents accidental recursion.
   if (isTruthy(process.env[constants.default.environmentVariables.skipCliRedirect])) return false
