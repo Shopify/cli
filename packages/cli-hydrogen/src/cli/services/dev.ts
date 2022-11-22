@@ -1,3 +1,4 @@
+import {checkHydrogenVersion} from './dev/check-version.js'
 import {createServer, ViteDevServer} from 'vite'
 import {analytics, error as kitError} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
@@ -12,6 +13,8 @@ interface DevOptions {
 
 async function dev({commandConfig, directory, force, host, open}: DevOptions) {
   try {
+    await checkHydrogenVersion(directory)
+
     const server = await createServer({
       root: directory,
       server: {

@@ -12,6 +12,9 @@ import type {ExecOptions} from '../../system.js'
 /** The name of the Yarn lock file */
 export const yarnLockfile = 'yarn.lock'
 
+/** The name of the npm lock file */
+export const npmLockfile = 'package-lock.json'
+
 /** The name of the pnpm lock file */
 export const pnpmLockfile = 'pnpm-lock.yaml'
 
@@ -19,7 +22,8 @@ export const pnpmLockfile = 'pnpm-lock.yaml'
 export const pnpmWorkspaceFile = 'pnpm-workspace.yaml'
 
 /** An array containing the lockfiles from all the package managers */
-export const lockfiles = [yarnLockfile, pnpmLockfile]
+export const lockfiles: Lockfile[] = [yarnLockfile, pnpmLockfile, npmLockfile]
+export type Lockfile = 'yarn.lock' | 'package-lock.json' | 'pnpm-lock.yaml'
 
 /**
  * A union type that represents the type of dependencies in the package.json
