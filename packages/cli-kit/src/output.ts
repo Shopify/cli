@@ -24,7 +24,7 @@ import type {Change} from 'diff'
 
 export {default as logUpdate} from 'log-update'
 
-export type Logger = (message: string) => void
+export type Logger = Writable | ((message: string) => void)
 
 export class TokenizedString {
   value: string
@@ -321,7 +321,11 @@ export function consoleWarn(message: string): void {
 
 export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, message: string): void {
   if (shouldOutput(logLevel)) {
-    logger(message)
+    if (logger instanceof Writable) {
+      logger.write(message)
+    } else {
+      logger(message)
+    }
   }
   logToFile(message, logLevel.toUpperCase())
 }
