@@ -3,7 +3,7 @@ import {Box, Text, useApp, useInput} from 'ink'
 import {isEqual} from 'lodash-es'
 
 export interface Props {
-  items?: Item[]
+  items: Item[]
   onSelect: (item: Item) => void
 }
 
@@ -13,7 +13,7 @@ export interface Item {
   key?: string
 }
 
-const SelectInput: React.FC<Props> = ({items = [], onSelect}): JSX.Element => {
+const SelectInput: React.FC<Props> = ({items, onSelect}): JSX.Element | null => {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const keys = useRef(new Set(items.map((item) => item.key)))
   const {exit: unmountInk} = useApp()
@@ -49,18 +49,13 @@ const SelectInput: React.FC<Props> = ({items = [], onSelect}): JSX.Element => {
 
         if (key.upArrow) {
           const lastIndex = items.length - 1
-          const atFirstIndex = selectedIndex === 0
-          const nextSelectedIndex = atFirstIndex ? lastIndex : selectedIndex - 1
 
-          setSelectedIndex(nextSelectedIndex)
+          setSelectedIndex(selectedIndex === 0 ? lastIndex : selectedIndex - 1)
         } else if (key.downArrow) {
-          const atLastIndex = selectedIndex === items.length - 1
-          const nextSelectedIndex = atLastIndex ? 0 : selectedIndex + 1
-
-          setSelectedIndex(nextSelectedIndex)
+          setSelectedIndex(selectedIndex === items.length - 1 ? 0 : selectedIndex + 1)
         } else if (key.return) {
-          unmountInk()
           onSelect(items[selectedIndex]!)
+          unmountInk()
         }
       },
       [selectedIndex, items, onSelect],

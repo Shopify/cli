@@ -194,7 +194,7 @@ export async function kitchenSink() {
       {label: 'eighth', value: 'eighth'},
       {label: 'ninth', value: 'ninth'},
     ],
-    onEnter(item) {
+    onChoose(item) {
       // eslint-disable-next-line no-console
       console.log(`selected ${item.label}!`)
     },

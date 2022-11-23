@@ -5,10 +5,10 @@ import {Fatal} from '../../error.js'
 import {alert} from '../../private/node/ui/alert.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
-import SelectInput, {Props as SelectProps} from '../../private/node/ui/components/SelectInput.js'
+import Prompt, {Props as PromptProps} from '../../private/node/ui/components/Prompt.js'
 import React from 'react'
 import {AbortController} from 'abort-controller'
-import {RenderOptions, Box, Text} from 'ink'
+import {RenderOptions} from 'ink'
 
 interface RenderConcurrentOptions {
   processes: OutputProcess[]
@@ -175,22 +175,6 @@ export function renderFatalError(error: Fatal) {
   return renderOnce(<FatalError error={error} />, 'error', consoleError)
 }
 
-export interface PromptProps {
-  message: string
-  choices: SelectProps['items']
-  onEnter: SelectProps['onSelect']
-}
-
 export function renderPrompt(options: PromptProps) {
-  return render(
-    <Box flexDirection="column">
-      <Box>
-        <Box marginRight={2}>
-          <Text>?</Text>
-        </Box>
-        <Text>{options.message}</Text>
-      </Box>
-      <SelectInput items={options.choices} onSelect={options.onEnter} />
-    </Box>,
-  )
+  return render(<Prompt {...options} />)
 }
