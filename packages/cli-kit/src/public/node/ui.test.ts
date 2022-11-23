@@ -225,6 +225,53 @@ describe('renderFatalError', async () => {
       ╰──────────────────────────────────────────────────────────────────────────────╯"
     `)
   })
+
+  test('renders a fatal error inside a banner with some next steps', async () => {
+    // Given
+    const mockOutput = outputMocker.mockAndCaptureOutput()
+
+    const nextSteps = [
+      [
+        'Have you',
+        {
+          link: {
+            label: 'created a Shopify Partners organization',
+            url: 'https://partners.shopify.com/signup',
+          },
+        },
+        {
+          char: '?',
+        },
+      ],
+      'Have you confirmed your accounts from the emails you received?',
+      [
+        'Need to connect to a different App or organization? Run the command again with',
+        {
+          command: '--reset',
+        },
+      ],
+    ]
+
+    // When
+    const error = new Abort('No Organization found', undefined, nextSteps)
+    renderFatalError(error)
+
+    // Then
+    expect(mockOutput.error()).toMatchInlineSnapshot(`
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  No Organization found                                                       │
+      │                                                                              │
+      │  Next steps                                                                  │
+      │    • Have you created a Shopify Partners organization:                       │
+      │      https://partners.shopify.com/signup?                                    │
+      │    • Have you confirmed your accounts from the emails you received?          │
+      │    • Need to connect to a different App or organization? Run the command     │
+      │      again with \`--reset\`                                                    │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯"
+    `)
+  })
 })
 
 describe('renderConcurrent', async () => {
