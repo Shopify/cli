@@ -3,7 +3,6 @@ import {
   extensions,
   ExtensionTypes,
   getExtensionOutputConfig,
-  limitedExtensions,
   isUiExtensionType,
   isThemeExtensionType,
   isFunctionExtensionType,
@@ -16,10 +15,7 @@ import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import generateExtensionService, {ExtensionFlavor} from '../../../services/generate/extension.js'
 import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration.js'
-import {
-  mapExtensionTypesToExternalExtensionTypes,
-  mapExtensionTypeToExternalExtensionType,
-} from '../../../utilities/extensions/name-mapper.js'
+import {mapExtensionTypesToExternalExtensionTypes} from '../../../utilities/extensions/name-mapper.js'
 import metadata from '../../../metadata.js'
 import Command from '../../../utilities/app-command.js'
 import {ensureGenerateEnvironment} from '../../../services/environment.js'
@@ -97,7 +93,7 @@ export default class AppScaffoldExtension extends Command {
 
     const isShopify = await environment.local.isShopify()
     const token = await session.ensureAuthenticatedPartners()
-    const apiKey = await ensureGenerateEnvironment({apiKey: flags['api-key'], directory, reset: flags.reset}, token)
+    const apiKey = await ensureGenerateEnvironment({apiKey: flags['api-key'], directory, reset: flags.reset, token})
     const extensionsSpecs = await fetchExtensionSpecifications(token, apiKey)
     const functionSpecs = await (await allFunctionSpecifications()).filter((spec) => spec.public || isShopify)
     let allExtensionSpecs = [...extensionsSpecs, ...functionSpecs]
@@ -115,7 +111,7 @@ export default class AppScaffoldExtension extends Command {
     flags.type = specification?.identifier || flags.type
 
     if (specification) {
-      const existing = app.extensionsForType(specification.identifier)
+      const existing = app.extensionsForType(specification)
       const limit = specification.options.registrationLimit
       if (existing.length >= limit) {
         throw new error.Abort(
@@ -125,7 +121,8 @@ export default class AppScaffoldExtension extends Command {
       }
     } else {
       allExtensionSpecs = allExtensionSpecs.filter((spec) => {
-        const existing = app.extensionsForType(spec.identifier)
+        const existing = app.extensionsForType(spec)
+        output.debug(`${existing.length}: ${spec.externalIdentifier}`)
         return existing.length < spec.options.registrationLimit
       })
     }
@@ -167,38 +164,6 @@ export default class AppScaffoldExtension extends Command {
     output.info(formattedSuccessfulMessage)
   }
 
-  async validateExtensionType(type: string | undefined, specs: RemoteSpecification[]) {
-    if (!type) return
-    const isShopify = await environment.local.isShopify()
-    const validTypes = specs.map((spec) => spec.identifier)
-    const validExternalTypes = specs.map((spec) => spec.externalIdentifier)
-    const supportedExtensions = [...validTypes, ...validExternalTypes]
-    if (!supportedExtensions.includes(type)) {
-      throw new error.Abort(
-        `The following extension types are supported: ${mapExtensionTypesToExternalExtensionTypes(
-          supportedExtensions,
-        ).join(', ')}`,
-      )
-    }
-  }
-
-  /**
-   * If the type passed as flag is not valid because it has already been scaffolded
-   * and we don't allow multiple extensions of that type, throw an error
-   * @param app - current App
-   * @param type - extension type
-   */
-  validateExtensionTypeLimit(app: AppInterface, type: string, limit: number) {
-    if (!type) return
-    const existing = app.extensionsForType(type)
-    if (existing.length >= limit) {
-      throw new error.Abort(
-        'Invalid extension type',
-        `You can only generate ${limit} extension(s) of type ${mapExtensionTypeToExternalExtensionType(type)} per app`,
-      )
-    }
-  }
-
   findSpecification(type: string | undefined, extensionSpecs: RemoteSpecification[], functionSpecs: FunctionSpec[]) {
     if (!type) return
     // Harcode some types that are not present in the remote specs with the same words
@@ -230,22 +195,6 @@ export default class AppScaffoldExtension extends Command {
     if (isFunctionExtensionType(type) && !functionExtensionTemplateNames.includes(flavor)) {
       throw invalidTemplateError(functionExtensionTemplateNames)
     }
-  }
-
-  /**
-   * Some extension types like `theme` and `product_subscription` are limited to one per app
-   * Use this method to retrieve a list of the limited types that have already been scaffolded
-   *
-   * @param app - current App
-   * @returns list of extensions that are limited by quantity and are already scaffolded
-   */
-  limitedExtensionsAlreadyScaffolded(app: AppInterface): string[] {
-    const themeTypes = app.extensions.theme.map((ext) => ext.configuration.type)
-    const uiTypes = app.extensions.ui.map((ext) => ext.configuration.type)
-
-    const themeExtensions = themeTypes.filter((type) => limitedExtensions.theme.includes(type))
-    const uiExtensions = uiTypes.filter((type) => limitedExtensions.ui.includes(type))
-    return [...themeExtensions, ...uiExtensions]
   }
 
   formatSuccessfulRunMessage(

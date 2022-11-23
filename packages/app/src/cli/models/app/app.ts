@@ -56,7 +56,7 @@ export interface AppInterface {
   hasExtensions: () => boolean
   hasUIExtensions: () => boolean
   updateDependencies: () => Promise<void>
-  extensionsForType: (type: string) => Extension[]
+  extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => Extension[]
 }
 
 export class App implements AppInterface {
@@ -127,9 +127,15 @@ export class App implements AppInterface {
     return this.extensions.ui.length > 0
   }
 
-  extensionsForType(type: string): Extension[] {
+  extensionsForType(specification: {identifier: string; externalIdentifier: string}): Extension[] {
     const allExternsions = [...this.extensions.ui, ...this.extensions.function, ...this.extensions.theme]
-    return allExternsions.filter((extension) => extension.type === type)
+    return allExternsions.filter(
+      (extension) =>
+        extension.type === specification.identifier ||
+        extension.type === specification.externalIdentifier ||
+        (extension.type === 'theme' && specification.identifier === 'theme_app_extension') ||
+        (extension.type === 'product_subscription' && specification.identifier === 'subscription_management'),
+    )
   }
 }
 

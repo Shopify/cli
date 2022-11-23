@@ -1,6 +1,6 @@
 import {BaseFunctionConfigurationSchema, BaseFunctionMetadataSchema, ZodSchemaType} from './schemas.js'
 import {allFunctionSpecifications} from './specifications.js'
-import {FunctionExtension} from '../app/extensions.js'
+import {ExtensionIdentifier, FunctionExtension} from '../app/extensions.js'
 import {schema, path, error, system, abort, string, environment} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
@@ -14,7 +14,7 @@ export type MetadataType = schema.define.infer<typeof BaseFunctionMetadataSchema
 export interface FunctionSpec<
   TConfiguration extends FunctionConfigType = FunctionConfigType,
   TMetadata extends MetadataType = MetadataType,
-> {
+> extends ExtensionIdentifier {
   identifier: string
   externalIdentifier: string
   externalName: string

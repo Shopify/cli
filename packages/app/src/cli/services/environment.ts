@@ -69,12 +69,14 @@ interface DevEnvironmentOutput {
  *
  * The selection is then cached as the "dev" app for the current directory.
  */
-export async function ensureGenerateEnvironment(
-  options: {apiKey?: string; directory: string; reset: boolean},
-  token: string,
-): Promise<string> {
+export async function ensureGenerateEnvironment(options: {
+  apiKey?: string
+  directory: string
+  reset: boolean
+  token: string
+}): Promise<string> {
   if (options.apiKey) {
-    const app = await fetchAppFromApiKey(options.apiKey, token)
+    const app = await fetchAppFromApiKey(options.apiKey, options.token)
     if (!app) throw InvalidApiKeyError(options.apiKey)
     return app.apiKey
   }
@@ -88,10 +90,10 @@ export async function ensureGenerateEnvironment(
   }
 
   if (cachedInfo?.appId) return cachedInfo.appId
-  const orgId = cachedInfo?.orgId || (await selectOrg(token))
-  const {organization, apps} = await fetchOrgAndApps(orgId, token)
+  const orgId = cachedInfo?.orgId || (await selectOrg(options.token))
+  const {organization, apps} = await fetchOrgAndApps(orgId, options.token)
   const localAppName = await loadAppName(options.directory)
-  const selectedApp = await selectOrCreateApp(localAppName, apps, organization, token, cachedInfo?.appId)
+  const selectedApp = await selectOrCreateApp(localAppName, apps, organization, options.token, cachedInfo?.appId)
   await store.setAppInfo({
     appId: selectedApp.apiKey,
     title: selectedApp.title,

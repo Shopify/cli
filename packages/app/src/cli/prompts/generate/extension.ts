@@ -7,10 +7,9 @@ import {
 } from '../../constants.js'
 import {getUIExtensionTemplates, isValidUIExtensionTemplate} from '../../utilities/extensions/template-configuration.js'
 import {AppInterface} from '../../models/app/app.js'
-import {FunctionSpec} from '../../models/extensions/functions.js'
+import {ExtensionIdentifier} from '../../models/app/extensions.js'
 import {ui} from '@shopify/cli-kit'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
-import {RemoteSpecification} from '@shopify/cli-kit/src/api/graphql/extension_specifications.js'
 
 interface GenerateExtensionOptions {
   name?: string
@@ -18,7 +17,7 @@ interface GenerateExtensionOptions {
   extensionFlavor?: string
   directory: string
   app: AppInterface
-  extensionSpecifications: (RemoteSpecification | FunctionSpec)[]
+  extensionSpecifications: ExtensionIdentifier[]
   reset: boolean
 }
 
@@ -45,7 +44,7 @@ export const extensionFlavorQuestion = (extensionType: string): ui.Question => {
   }
 }
 
-export function buildChoices(extensionTypes: {identifier: string; externalName: string}[]) {
+export function buildChoices(extensionTypes: ExtensionIdentifier[]) {
   return extensionTypes
     .map((type) => {
       const choiceWithoutGroup = {
