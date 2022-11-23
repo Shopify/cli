@@ -26,19 +26,7 @@ function Layout({children}: Props) {
               <h1>&nbsp;{i18n.translate('title')}</h1>
             </section>
           </header>
-          <main>
-            {/* <aside className={styles.SideBar}>
-              <nav>
-                <ul>
-                  <li className={styles.MenuItem}>
-                    {i18n.translate('nav.extensions')}
-                    <ChevronRightMinor />
-                  </li>
-                </ul>
-              </nav>
-            </aside> */}
-            {children}
-          </main>
+          <main>{children}</main>
         </div>
       </div>
     </ToastProvider>
