@@ -1,4 +1,3 @@
-import {fetchAppFromApiKey} from './fetch.js'
 import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {AppInterface} from '../../models/app/app.js'
 import {Organization, OrganizationApp} from '../../models/organization.js'
@@ -20,13 +19,7 @@ export async function selectOrCreateApp(
   apps: OrganizationApp[],
   org: Organization,
   token: string,
-  cachedApiKey?: string,
 ): Promise<OrganizationApp> {
-  if (cachedApiKey) {
-    const cachedApp = await fetchAppFromApiKey(cachedApiKey, token)
-    if (cachedApp) return cachedApp
-  }
-
   let createNewApp = apps.length === 0
   if (!createNewApp) {
     output.info(`\nBefore you preview your work, it needs to be associated with an app.\n`)

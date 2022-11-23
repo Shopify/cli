@@ -1,4 +1,4 @@
-import {fetchAllDevStores, fetchStoreByDomain} from './fetch.js'
+import {fetchAllDevStores} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {error, output, api, system, ui, environment} from '@shopify/cli-kit'
@@ -39,16 +39,7 @@ export async function selectStore(
   stores: OrganizationStore[],
   org: Organization,
   token: string,
-  cachedStoreName?: string,
 ): Promise<OrganizationStore> {
-  if (cachedStoreName) {
-    const result = await fetchStoreByDomain(org.id, token, cachedStoreName)
-    if (result?.store) {
-      await convertToTestStoreIfNeeded(result.store, org, token)
-      return result.store
-    }
-  }
-
   const store = await selectStorePrompt(stores)
   if (store) {
     await convertToTestStoreIfNeeded(store, org, token)
