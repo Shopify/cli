@@ -1,11 +1,11 @@
 import {error} from '@shopify/cli-kit'
 import {
+  renderConcurrent,
   renderFatalError,
   renderInfo,
+  renderPrompt,
   renderSuccess,
   renderWarning,
-  renderPrompt,
-  renderConcurrent,
 } from '@shopify/cli-kit/node/ui'
 import {Signal} from '@shopify/cli-kit/src/abort'
 import {Writable} from 'node:stream'
@@ -194,7 +194,6 @@ export async function kitchenSink() {
       {label: 'eighth', value: 'eighth'},
       {label: 'ninth', value: 'ninth'},
     ],
-    limit: 5,
     onEnter(item) {
       // eslint-disable-next-line no-console
       console.log(`selected ${item.label}!`)

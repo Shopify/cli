@@ -1,14 +1,14 @@
 import ConcurrentOutput from '../../private/node/ui/components/ConcurrentOutput.js'
-import {OutputProcess} from '../../output.js'
-import {render} from '../../private/node/ui.js'
+import {consoleError, OutputProcess} from '../../output.js'
+import {render, renderOnce} from '../../private/node/ui.js'
 import {Fatal} from '../../error.js'
 import {alert} from '../../private/node/ui/alert.js'
-import {fatalError} from '../../private/node/ui/error.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
-import {prompt, PromptProps} from '../../private/node/ui/select.js'
+import {FatalError} from '../../private/node/ui/components/FatalError.js'
+import SelectInput, {Props as SelectProps} from '../../private/node/ui/components/SelectInput.js'
 import React from 'react'
 import {AbortController} from 'abort-controller'
-import {RenderOptions} from 'ink'
+import {RenderOptions, Box, Text} from 'ink'
 
 interface RenderConcurrentOptions {
   processes: OutputProcess[]
@@ -75,7 +75,7 @@ type RenderAlertOptions = Omit<AlertProps, 'type'>
  * ```
  */
 export function renderInfo(options: RenderAlertOptions) {
-  alert({...options, type: 'info'})
+  return alert({...options, type: 'info'})
 }
 
 /**
@@ -115,7 +115,7 @@ export function renderInfo(options: RenderAlertOptions) {
  * ```
  */
 export function renderSuccess(options: RenderAlertOptions) {
-  alert({...options, type: 'success'})
+  return alert({...options, type: 'success'})
 }
 
 /**
@@ -155,7 +155,7 @@ export function renderSuccess(options: RenderAlertOptions) {
  * ```
  */
 export function renderWarning(options: RenderAlertOptions) {
-  alert({...options, type: 'warning'})
+  return alert({...options, type: 'warning'})
 }
 
 /**
@@ -172,9 +172,25 @@ export function renderWarning(options: RenderAlertOptions) {
  * ```
  */
 export function renderFatalError(error: Fatal) {
-  fatalError(error)
+  return renderOnce(<FatalError error={error} />, 'error', consoleError)
+}
+
+export interface PromptProps {
+  message: string
+  choices: SelectProps['items']
+  onEnter: SelectProps['onSelect']
 }
 
 export function renderPrompt(options: PromptProps) {
-  prompt(options)
+  return render(
+    <Box flexDirection="column">
+      <Box>
+        <Box marginRight={2}>
+          <Text>?</Text>
+        </Box>
+        <Text>{options.message}</Text>
+      </Box>
+      <SelectInput items={options.choices} onSelect={options.onEnter} />
+    </Box>,
+  )
 }
