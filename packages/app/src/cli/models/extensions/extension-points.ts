@@ -6,8 +6,13 @@ type BasePointConfigContents = schema.define.infer<typeof ExtensionPointSchema>
 /**
  * Extension Point specification
  */
+
+// PENDING: Define the interface to support multiple extension points that behave in a similar way
+// like checkout surface
+
+// MAYBE: Infer the surface from the extension point target, do not register specific points. Assume same surface redirects to the same url
 export interface ExtensionPointSpec {
   type: string
-  resourceUrl?: (config: BasePointConfigContents) => string
+  redirectUrl?: (config: BasePointConfigContents) => string
   previewMessage?: (config: BasePointConfigContents) => string
 }

@@ -148,6 +148,19 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     }
   }
 
+  // PENDING:
+  /**
+   * - Create and load all the extension point specs for all supported points
+   * - Load all extension point specs from specifications.ts
+   * - Implement the `redirectUrl` method in all points, but have a default implementation
+   * - Connect everything with the middleware in getExtensionPointPayloadMiddleware
+   */
+  redirectUrl(extensionPointTarget: string) {
+    // const extensionPointSpec = this.extensionPointSpecs?.find((spec) => spec.type === extensionPointTarget)
+    // if (!extensionPointSpec) return ''
+    // return extensionPointSpec.redirectUrl?.(host, uuid, storeFqdn) ?? ''
+  }
+
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
     const partnersFqdn = await environment.fqdn.partners()
     const parnersPath = this.specification.partnersWebIdentifier
@@ -165,10 +178,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     }
 
     return output.content`${heading}\n${message.value}\n`
-  }
-
-  private extensionPointURL(point: ExtensionPointSpec, config: ExtensionPointContents): string {
-    return point.resourceUrl?.(config) ?? ''
   }
 }
 

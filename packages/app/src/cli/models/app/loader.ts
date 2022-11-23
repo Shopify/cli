@@ -277,6 +277,7 @@ class AppLoader {
         }
       }
 
+      // PENDING: load extensionPointSpecs depending on the points defined in the configuartion file and pass it to the constructor
       const extensionInstance = new ExtensionInstance({
         configuration,
         configurationPath,
