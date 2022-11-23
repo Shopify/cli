@@ -42,7 +42,7 @@ export interface UIExtensionPayload {
     status: ExtensionAssetBuildStatus
     localizationStatus: ExtensionAssetBuildStatus
   }
-  extensionPoints: string[] | null
+  extensionPoints: string[] | null | {metafields?: {namespace: string; key: string}[]; target: string; module: string}[]
   localization: Localization | null
   categories: string[] | null
   metafields?: {namespace: string; key: string}[] | null

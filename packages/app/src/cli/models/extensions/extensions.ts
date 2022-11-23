@@ -22,6 +22,7 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
   partnersWebIdentifier: string
   surface: string
   showInCLIHelp: boolean
+  singleEntryPath: boolean
   dependency?: {name: string; version: string}
   templatePath?: string
   graphQLType?: string
@@ -198,6 +199,7 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
   dependency?: {name: string; version: string}
   templatePath?: string
   graphQLType?: string
+  singleEntryPath?: boolean
   schema: ZodSchemaType<TConfiguration>
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
   preDeployValidation?: (config: TConfiguration) => Promise<void>
@@ -211,6 +213,7 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
 }): ExtensionSpec<TConfiguration> {
   const defaults = {
     showInCLIHelp: true,
+    singleEntryPath: true,
   }
   return {...defaults, ...spec}
 }
