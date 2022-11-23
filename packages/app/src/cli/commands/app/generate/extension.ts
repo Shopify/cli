@@ -84,7 +84,7 @@ export default class AppScaffoldExtension extends Command {
     const {flags} = await this.parse(AppScaffoldExtension)
 
     await metadata.addPublic(() => ({
-      cmd_scaffold_required_auth: false,
+      cmd_scaffold_required_auth: true,
       cmd_scaffold_template_custom: flags['clone-url'] !== undefined,
       cmd_scaffold_type_owner: '@shopify/app',
     }))
