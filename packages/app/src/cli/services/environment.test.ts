@@ -3,7 +3,6 @@ import {
   fetchAppFromApiKey,
   fetchOrgAndApps,
   fetchOrganizations,
-  fetchOrgFromId,
   fetchStoreByDomain,
 } from './dev/fetch.js'
 import {selectOrCreateApp} from './dev/select-app.js'
@@ -14,7 +13,6 @@ import {
   ensureDevEnvironment,
   ensureDeployEnvironment,
   ensureThemeExtensionDevEnvironment,
-  ensureGenerateEnvironment,
 } from './environment.js'
 import {createExtension} from './dev/create-extension.js'
 import {OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -24,7 +22,6 @@ import {UIExtension} from '../models/app/extensions.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
-import {loadAppName} from '../models/app/loader.js'
 import {store, api, outputMocker} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 import {ok} from '@shopify/cli-kit/common/result.js'
@@ -38,7 +35,6 @@ beforeEach(() => {
   vi.mock('../models/app/app')
   vi.mock('../models/app/identifiers')
   vi.mock('./environment/identifiers')
-  vi.mock('../models/app/loader.js')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
@@ -124,7 +120,7 @@ const EXTENSION_A: UIExtension = {
   entrySourceFilePath: '',
   outputBundlePath: '',
   devUUID: 'devUUID',
-  externalType: 'checkout_ui',
+  externalType: 'checkout_post_purchase',
   surface: 'surface',
   preDeployValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -132,6 +128,8 @@ const EXTENSION_A: UIExtension = {
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
   getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: (target: string) => true,
 }
 
 const LOCAL_APP = testApp({
@@ -183,54 +181,6 @@ beforeEach(async () => {
   vi.mocked(selectStore).mockResolvedValue(STORE1)
   vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
   vi.mocked(fetchOrgAndApps).mockResolvedValue(FETCH_RESPONSE)
-})
-
-describe('ensureGenerateEnvironment', () => {
-  it('returns the provided app apiKey if valid, without cached state', async () => {
-    // Given
-    const input = {apiKey: 'key2', directory: '/app', reset: false, token: 'token'}
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
-
-    // When
-    const got = await ensureGenerateEnvironment(input)
-
-    // Then
-    expect(got).toEqual(APP2.apiKey)
-  })
-  it('returns the cached api key', async () => {
-    // Given
-    const input = {directory: '/app', reset: false, token: 'token'}
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG1)
-    vi.mocked(store.getAppInfo).mockResolvedValue(CACHED1)
-
-    // When
-    const got = await ensureGenerateEnvironment(input)
-
-    // Then
-    expect(got).toEqual(APP2.apiKey)
-  })
-  it('selects a new app and returns the api key', async () => {
-    // Given
-    const input = {directory: '/app', reset: true, token: 'token'}
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(loadAppName).mockResolvedValueOnce('my-app')
-    vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG1)
-    vi.mocked(store.getAppInfo).mockResolvedValue(undefined)
-
-    // When
-    const got = await ensureGenerateEnvironment(input)
-
-    // Then
-    expect(got).toEqual(APP1.apiKey)
-    expect(selectOrCreateApp).toHaveBeenCalledWith('my-app', [APP1, APP2], ORG1, 'token', undefined)
-    expect(store.setAppInfo).toHaveBeenCalledWith({
-      appId: APP1.apiKey,
-      title: APP1.title,
-      directory: '/app',
-      orgId: ORG1.id,
-    })
-  })
 })
 
 describe('ensureDevEnvironment', () => {
@@ -503,7 +453,7 @@ describe('ensureDeployEnvironment', () => {
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')
-    expect(selectOrCreateApp).toHaveBeenCalledWith(app.name, [APP1, APP2], ORG1, 'token', undefined)
+    expect(selectOrCreateApp).toHaveBeenCalledWith(app, [APP1, APP2], ORG1, 'token', undefined)
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
       identifiers,
@@ -546,7 +496,7 @@ describe('ensureDeployEnvironment', () => {
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')
-    expect(selectOrCreateApp).toHaveBeenCalledWith(app.name, [APP1, APP2], ORG1, 'token', undefined)
+    expect(selectOrCreateApp).toHaveBeenCalledWith(app, [APP1, APP2], ORG1, 'token', undefined)
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
       identifiers,
