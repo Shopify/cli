@@ -64,7 +64,8 @@ export async function optionsPrompt(flags: EventTriggerFlags): Promise<EventTrig
     } else {
       throw new error.Abort(
         "Can't deliver your webhook payload to this address. Run 'shopify event trigger --address=<VALUE>' with a valid URL",
-        `Try this\n\n   ${deliveryMethodInstructions(flags.deliveryMethod as string)}`,
+        undefined,
+        deliveryMethodInstructions(flags.deliveryMethod as string),
       )
     }
   }

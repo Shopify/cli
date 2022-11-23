@@ -36,6 +36,6 @@ export async function eventTriggerService(options: EventTriggerOptions) {
   }
 
   if (sample.samplePayload === JSON.stringify({})) {
-    output.success('Webhook has been enqueued for delivered')
+    output.success('Webhook has been enqueued for delivery')
   }
 }

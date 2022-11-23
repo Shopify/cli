@@ -1,7 +1,7 @@
 import {DELIVERY_METHOD} from '../../services/event/trigger-options.js'
 import {EventTriggerFlags, optionsPrompt} from '../../prompts/event/options-prompt.js'
 import {eventTriggerService} from '../../services/event/trigger.js'
-import {deliveryMethodInstructions} from '../../prompts/event/trigger.js'
+import {deliveryMethodInstructionsAsString} from '../../prompts/event/trigger.js'
 import {Command, Flags} from '@oclif/core'
 
 export default class EventTrigger extends Command {
@@ -45,10 +45,10 @@ export default class EventTrigger extends Command {
       hidden: false,
       env: 'SHOPIFY_FLAG_ADDRESS',
       description: `The URL where the webhook payload should be sent.
-                    For each delivery-method you will need a different address type:
-                     ${deliveryMethodInstructions(DELIVERY_METHOD.HTTP)}
-                     ${deliveryMethodInstructions(DELIVERY_METHOD.PUBSUB)}
-                     ${deliveryMethodInstructions(DELIVERY_METHOD.EVENTBRIDGE)}`,
+                    You will need a different address type for each delivery-method:
+                    ${deliveryMethodInstructionsAsString(DELIVERY_METHOD.HTTP)}
+                    ${deliveryMethodInstructionsAsString(DELIVERY_METHOD.PUBSUB)}
+                    ${deliveryMethodInstructionsAsString(DELIVERY_METHOD.EVENTBRIDGE)}`,
     }),
   }
 

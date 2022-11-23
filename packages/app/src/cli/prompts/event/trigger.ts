@@ -1,5 +1,5 @@
 import {DELIVERY_METHOD, isAddressAllowedForDeliveryMethod} from '../../services/event/trigger-options.js'
-import {ui} from '@shopify/cli-kit'
+import {ui, output} from '@shopify/cli-kit'
 
 export async function topicPrompt(): Promise<string> {
   const input = await ui.prompt([
@@ -73,7 +73,7 @@ export async function addressPrompt(deliveryMethod: string): Promise<string> {
           return true
         }
 
-        return `${deliveryMethodInstructions(deliveryMethod)} for ${deliveryMethod}`
+        return `Invalid address.\n${deliveryMethodInstructionsAsString(deliveryMethod)}`
       },
     },
   ])
@@ -100,16 +100,25 @@ export async function sharedSecretPrompt(): Promise<string> {
   return input.sharedSecret
 }
 
-export function deliveryMethodInstructions(method: string): string {
+export function deliveryMethodInstructions(method: string): string[] {
   if (method === DELIVERY_METHOD.HTTP) {
-    return `- For remote HTTP testing, use a URL that starts with https://\n   - For local HTTP testing, use http://localhost:{port}/{url-path}`
+    return [
+      `For remote HTTP testing, use a URL that starts with https://`,
+      `For local HTTP testing, use http://localhost:{port}/{url-path}`,
+    ]
   }
   if (method === DELIVERY_METHOD.PUBSUB) {
-    return `- For Google Pub/Sub, use pubsub://{project-id}:{topic-id}`
+    return [`For Google Pub/Sub, use pubsub://{project-id}:{topic-id}`]
   }
   if (method === DELIVERY_METHOD.EVENTBRIDGE) {
-    return `- For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:`
+    return [`For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:`]
   }
 
-  return ''
+  return []
+}
+
+export function deliveryMethodInstructionsAsString(method: string): string {
+  return deliveryMethodInstructions(method)
+    .map((hint) => `      · ${output.stringifyMessage(hint)}`)
+    .join('\n')
 }

@@ -75,7 +75,7 @@ describe('execute', () => {
     // Then
     expect(getEventSample).toHaveBeenCalledWith(aTopic, aVersion, 'http', anAddress, aSecret)
     expect(triggerLocalEvent).toHaveBeenCalledTimes(0)
-    expect(outputSpy).toHaveBeenCalledWith('Webhook has been enqueued for delivered')
+    expect(outputSpy).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
   })
 
   describe('Localhost delivery', () => {
