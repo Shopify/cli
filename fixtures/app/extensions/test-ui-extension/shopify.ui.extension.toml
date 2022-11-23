@@ -5,4 +5,4 @@ name = "test-ui-extension"
 target = "Checkout::Actions::RenderBefore"
 
 [[extension_points]]
-target = "Admin::Checkout::Editor"
+target = "Admin::ChceckoutEditor::RenderSettings"
