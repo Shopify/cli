@@ -33,6 +33,8 @@ export function getUIExtensionSurface(uiExtensionType: UIExtensionTypes) {
       return 'pos'
     case 'product_subscription':
       return 'admin'
+    case 'segmentation_template':
+      return 'admin'
     case 'web_pixel_extension':
       // This value is mandatory but is not yet defined for web_pixel
       return 'unknown'

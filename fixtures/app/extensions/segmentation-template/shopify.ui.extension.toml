@@ -1,0 +1,7 @@
+type = "segmentation_template"
+name = "Segmentation template"
+
+
+extension_points = [
+  'Customers::Templates::Render'
+]

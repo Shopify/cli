@@ -119,6 +119,8 @@ async function uiExtensionInit({
             },
           )
 
+          console.log('templateDirectory', templateDirectory)
+
           if (!templateDirectory) {
             throw new error.Bug(`Couldn't find the template for ${extensionType}`)
           }

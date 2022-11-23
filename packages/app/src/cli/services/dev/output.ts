@@ -68,6 +68,10 @@ function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, ur
         message = checkoutUIMessage(url, extension).value
         break
       }
+      case 'segmentation_template': {
+        message = customerSegmentationUIMessage().value
+        break
+      }
       case 'customer_accounts_ui_extension': {
         message = customerAccountsUIMessage(storeFqdn, url, extension).value
         break
@@ -130,6 +134,10 @@ For more detail, see the ${devDocsLink}`
 function checkoutUIMessage(url: string, extension: UIExtension) {
   const publicURL = `${url}/extensions/${extension.devUUID}`
   return output.content`Preview link: ${publicURL}`
+}
+
+function customerSegmentationUIMessage() {
+  return output.content`Hello world from customer segmentation`
 }
 
 function customerAccountsUIMessage(storeFqdn: string, url: string, extension: UIExtension) {

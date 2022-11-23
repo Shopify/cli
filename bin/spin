@@ -1,7 +1,16 @@
 #! /usr/bin/env bash
 
-export NODE_TLS_REJECT_UNAUTHORIZED="${NODE_TLS_REJECT_UNAUTHORIZED:=0}"
+export NODE_TLS_REJECT_UNAUTHORIZED=0
+export SPIN=1
+export SHOPIFY_USE_EXTENSIONS_CLI_SOURCES=1
+export SHOPIFY_PARTNERS_ENV=spin
+export SHOPIFY_SHOPIFY_ENV=spin
+export SHOPIFY_IDENTITY_ENV=spin
+export SPIN_INSTANCE="$(spin show --latest --json | jq -r '.name')"
+export SPIN_WORKSPACE=1
+export SPIN_NAMESPACE=1
+# export NODE_TLS_REJECT_UNAUTHORIZED="${NODE_TLS_REJECT_UNAUTHORIZED:=0}"
 export SHOPIFY_SERVICE_ENV="spin"
-export SPIN_INSTANCE="${SPIN_INSTANCE:=$(spin show --latest --json | jq -r '.name')}"
+# export SPIN_INSTANCE="${SPIN_INSTANCE:=$(spin show --latest --json | jq -r '.name')}"
 
 "$@"

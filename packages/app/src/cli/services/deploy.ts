@@ -195,6 +195,12 @@ async function configFor(extension: UIExtension, app: AppInterface) {
         localization: await loadLocalesConfig(extension.directory),
       }
     }
+    case 'segmentation_template': {
+      return {
+        extension_points: extension.configuration.extensionPoints,
+        name: extension.configuration.name,
+      }
+    }
     case 'customer_accounts_ui_extension': {
       return {
         extension_points: extension.configuration.extensionPoints,

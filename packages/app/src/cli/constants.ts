@@ -76,7 +76,13 @@ export function isFunctionExtensionType(extensionType: string) {
 }
 
 export const publicUIExtensions = {
-  types: ['product_subscription', 'checkout_ui_extension', 'checkout_post_purchase', 'web_pixel_extension'],
+  types: [
+    'segmentation_template',
+    'product_subscription',
+    'checkout_ui_extension',
+    'checkout_post_purchase',
+    'web_pixel_extension',
+  ],
 } as const
 
 export const uiExtensions = {
@@ -144,6 +150,8 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
   switch (extensionType) {
     case 'product_subscription':
       return {name: '@shopify/admin-ui-extensions-react', version: '^1.0.1'}
+    case 'segmentation_template':
+      return {name: '@shopify/admin-ui-extensions-react', version: '^1.0.1'}
     case 'checkout_ui_extension':
       return {name: '@shopify/checkout-ui-extensions-react', version: '^0.20.0'}
     case 'checkout_post_purchase':
@@ -203,6 +211,7 @@ export const extensionTypesGroups: {name: string; extensions: ExtensionTypes[]}[
       'shipping_discounts',
       'checkout_ui_extension',
       'checkout_post_purchase',
+      'segmentation_template',
     ],
   },
   {name: 'Analytics', extensions: ['web_pixel_extension']},
@@ -254,6 +263,8 @@ export function getExtensionOutputConfig(extensionType: ExtensionTypes): Extensi
       return buildExtensionOutputConfig('Theme app extension')
     case 'checkout_ui_extension':
       return buildExtensionOutputConfig('Checkout UI')
+    case 'segmentation_template':
+      return buildExtensionOutputConfig('Customer Segmentation UI')
     case 'customer_accounts_ui_extension':
       return buildExtensionOutputConfig('Customer accounts UI')
     case 'product_subscription':
