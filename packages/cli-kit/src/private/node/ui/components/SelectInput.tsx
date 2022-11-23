@@ -1,3 +1,4 @@
+import {AbortSilent} from '../../../../error.js'
 import React, {useState, useEffect, useRef, useCallback} from 'react'
 import {Box, Text, useApp, useInput} from 'ink'
 import {groupBy, isEqual, mapValues} from 'lodash-es'
@@ -51,6 +52,10 @@ export default function SelectInput<T>({items, onSelect}: React.PropsWithChildre
   useInput(
     useCallback(
       (input, key) => {
+        if (input === 'c' && key.ctrl) {
+          throw new AbortSilent()
+        }
+
         const parsedInput = parseInt(input, 10)
 
         if (parsedInput !== 0 && parsedInput <= items.length + 1) {

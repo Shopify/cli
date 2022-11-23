@@ -177,15 +177,16 @@ export function renderFatalError(error: Fatal) {
 }
 
 export function renderPrompt<T>(options: PromptProps<T>) {
-  return render(<Prompt {...options} />)
+  return render(<Prompt {...options} />, {exitOnCtrlC: false})
 }
 
 interface ConfirmationProps {
   question: string
   onChoose?: (choice: SelectItem<boolean>) => void
+  infoTable?: PromptProps<boolean>['infoTable']
 }
 
-export function renderConfirmation({question, onChoose = () => {}}: ConfirmationProps) {
+export function renderConfirmation({question, infoTable, onChoose = () => {}}: ConfirmationProps) {
   const choices = [
     {
       label: 'Yes, confirm',
@@ -199,5 +200,7 @@ export function renderConfirmation({question, onChoose = () => {}}: Confirmation
     },
   ]
 
-  return render(<Prompt message={question} choices={choices} onChoose={onChoose} />)
+  return render(<Prompt message={question} choices={choices} onChoose={onChoose} infoTable={infoTable} />, {
+    exitOnCtrlC: false,
+  })
 }
