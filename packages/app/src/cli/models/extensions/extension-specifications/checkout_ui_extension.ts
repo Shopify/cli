@@ -22,7 +22,6 @@ const spec = createExtensionSpec({
     return {
       extension_points: config.extensionPoints,
       capabilities: config.capabilities,
-      metafields: config.metafields,
       name: config.name,
       settings: config.settings,
       localization: await loadLocalesConfig(directory, 'checkout_ui'),

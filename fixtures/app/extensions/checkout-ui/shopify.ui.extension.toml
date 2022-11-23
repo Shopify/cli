@@ -9,9 +9,9 @@ block_progress = true
 target = "Checkout::Dynamic::Render"
 module = "./src/CheckoutDynamicRender.jsx"
 
-# [[extension_points.metafields]]
-# namespace = "my-namespace"
-# key = "my-key"
+[[extension_points.metafields]]
+namespace = "my-namespace"
+key = "my-key"
 
 [[extension_points]]
 target = "Admin::CheckoutEditor::RenderSettings"
