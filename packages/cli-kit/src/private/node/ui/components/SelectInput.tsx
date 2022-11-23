@@ -13,6 +13,13 @@ export interface Item {
   key?: string
 }
 
+interface ItemProps {
+  item: Item
+  isSelected: boolean
+  index: number
+  key?: string
+}
+
 const SelectInput: React.FC<Props> = ({items, onSelect}): JSX.Element | null => {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const keys = useRef(new Set(items.map((item) => item.key)))

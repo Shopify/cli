@@ -194,10 +194,6 @@ export async function kitchenSink() {
       {label: 'eighth', value: 'eighth'},
       {label: 'ninth', value: 'ninth'},
     ],
-    onChoose(item) {
-      // eslint-disable-next-line no-console
-      console.log(`selected ${item.label}!`)
-    },
   })
 
   await renderConcurrent({processes: [backendProcess, frontendProcess]})
