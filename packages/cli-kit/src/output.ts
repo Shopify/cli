@@ -303,20 +303,6 @@ export interface OutputProcess {
   action: (stdout: Writable, stderr: Writable, signal: AbortSignal) => Promise<void>
 }
 
-/**
- * This regex can be used to find the erase cursor Ansii characters
- * to strip them from the string.
- * https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#erase-functions
- */
-const eraseCursorAnsiRegex = [
-  // Erase the entire line
-  '2K',
-  // Clear vertical tab stop at current line
-  '1G',
-]
-  .map((element) => `[\\u001B\\u009B][[\\]()#;?]*${element}`)
-  .join('|')
-
 export function consoleLog(message: string): void {
   console.log(withOrWithoutStyle(message))
 }
