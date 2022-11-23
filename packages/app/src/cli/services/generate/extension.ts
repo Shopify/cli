@@ -167,13 +167,14 @@ async function changeIndexFileExtension(extensionDirectory: string, extensionFla
   }
 
   const fileExtension = fileExtensionsMapper[extensionFlavor]
+  const srcFilePaths = await path.glob(path.join(extensionDirectory, 'src', '*'))
+  const srcFileExensionsToChange = []
 
-  if (fileExtension) {
-    await file.move(
-      path.join(extensionDirectory, 'src/index'),
-      path.join(extensionDirectory, `src/index.${fileExtension}`),
-    )
+  for (const srcFilePath of srcFilePaths) {
+    srcFileExensionsToChange.push(file.move(srcFilePath, `${srcFilePath}.${fileExtension}`))
   }
+
+  await Promise.all(srcFileExensionsToChange)
 }
 
 async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, extensionFlavor: ExtensionFlavor) {
