@@ -14,11 +14,15 @@ interface LinkToken {
   }
 }
 
-export type TextToken = string | CommandToken | LinkToken
-export type TextTokenItem = TextToken | TextToken[]
+interface CharToken {
+  char: string
+}
+
+type Token = string | CommandToken | LinkToken | CharToken
+export type TokenItem = Token | Token[]
 
 interface Props {
-  item: TextToken | TextToken[]
+  item: TokenItem
 }
 
 /**
@@ -32,13 +36,15 @@ const TokenizedText: React.FC<Props> = ({item}) => {
     return <Command command={item.command} />
   } else if ('link' in item) {
     return <Link {...item.link} />
+  } else if ('char' in item) {
+    return <Text dimColor>{item.char[0]}</Text>
   } else {
     return (
       <Text>
         {item.map((listItem, index) => (
           <Text key={index}>
+            {index !== 0 && !(typeof listItem !== 'string' && 'char' in listItem) && <Text> </Text>}
             <TokenizedText item={listItem} />
-            {index < item.length - 1 && <Text> </Text>}
           </Text>
         ))}
       </Text>

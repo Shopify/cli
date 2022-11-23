@@ -1,29 +1,37 @@
 import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
-import {api, error, output} from '@shopify/cli-kit'
+import {api, error} from '@shopify/cli-kit'
 
 export const NoOrgError = (organizationId?: string) => {
   const nextSteps = [
-    output.content`Have you ${output.token.link(
-      'created a Shopify Partners organization',
-      'https://partners.shopify.com/signup',
-    )}?`,
-    output.content`Have you confirmed your accounts from the emails you received?`,
-    output.content`Need to connect to a different App or organization? Run the command again with ${output.token.genericShellCommand(
-      '--reset',
-    )}`,
+    [
+      'Have you',
+      {
+        link: {
+          label: 'created a Shopify Partners organization',
+          url: 'https://partners.shopify.com/signup',
+        },
+      },
+      {
+        char: '?',
+      },
+    ],
+    'Have you confirmed your accounts from the emails you received?',
+    [
+      'Need to connect to a different App or organization? Run the command again with',
+      {
+        command: '--reset',
+      },
+    ],
   ]
+
   if (organizationId) {
-    nextSteps.push(
-      output.content`Do you have access to the right Shopify Partners organization? The CLI is loading ${output.token.link(
-        'this organization',
-        `https://partner.shopify.com/${organizationId}`,
-      )}`,
-    )
+    nextSteps.push([
+      'Do you have access to the right Shopify Partners organization? The CLI is loading',
+      {link: {label: 'this organization', url: `https://partner.shopify.com/${organizationId}`}},
+    ])
   }
-  return new error.Abort(
-    `No Organization found`,
-    nextSteps.map((content) => `· ${output.stringifyMessage(content)}`).join('\n'),
-  )
+  // eslint-disable-next-line rulesdir/no-error-factory-functions
+  return new error.Abort(`No Organization found`, undefined, nextSteps)
 }
 
 export interface FetchResponse {

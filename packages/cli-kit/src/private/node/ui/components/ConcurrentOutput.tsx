@@ -72,7 +72,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
   const writableStream = (process: OutputProcess, index: number) => {
     return new Writable({
       write(chunk, _encoding, next) {
-        const lines = stripAnsi(chunk.toString('ascii')).split(/\n/)
+        const lines = stripAnsi(chunk.toString('ascii').replace(/(\n)$/, '')).split(/\n/)
 
         setProcessOutput((previousProcessOutput) => [
           ...previousProcessOutput,
