@@ -18,6 +18,7 @@ export function mapExtensionTypeToExternalExtensionType(extensionType: Extension
       return 'shipping_discount'
     case 'shipping_rate_presenter':
       return 'delivery_option_presenter'
+    case 'subscription_management':
     case 'product_subscription':
       return 'subscription_ui'
     case 'web_pixel_extension':

@@ -13,5 +13,6 @@ export async function fetchExtensionSpecifications(token: string, apiKey: string
   const extensionSpecifications = result.extensionSpecifications.filter(
     (specification) => specification.options.managementExperience === 'cli',
   )
+
   return extensionSpecifications
 }

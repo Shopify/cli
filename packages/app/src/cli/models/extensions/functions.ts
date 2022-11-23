@@ -161,7 +161,7 @@ export function createFunctionSpec<
     metadataSchema: BaseFunctionMetadataSchema,
     public: true,
     options: {
-      registrationLimit: spec.registrationLimit ?? 10,
+      registrationLimit: spec.registrationLimit ?? 3,
     },
   }
 

@@ -20,7 +20,7 @@ import metadata from '../metadata.js'
 import {ThemeExtension} from '../models/app/extensions.js'
 import {loadAppName} from '../models/app/loader.js'
 import {error as kitError, output, session, store, ui, environment, error, string} from '@shopify/cli-kit'
-import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 export const InvalidApiKeyError = (apiKey: string) => {
   return new kitError.Abort(
@@ -89,19 +89,26 @@ export async function ensureGenerateEnvironment(options: {
     output.info(explanation)
   }
 
-  if (cachedInfo?.appId) return cachedInfo.appId
-  const orgId = cachedInfo?.orgId || (await selectOrg(options.token))
-  const {organization, apps} = await fetchOrgAndApps(orgId, options.token)
-  const localAppName = await loadAppName(options.directory)
-  const selectedApp = await selectOrCreateApp(localAppName, apps, organization, options.token, cachedInfo?.appId)
-  await store.setAppInfo({
-    appId: selectedApp.apiKey,
-    title: selectedApp.title,
-    directory: options.directory,
-    orgId,
-  })
-
-  return selectedApp.apiKey
+  if (cachedInfo?.appId && cachedInfo?.orgId) {
+    const org = await fetchOrgFromId(cachedInfo.orgId, options.token)
+    const app = await fetchAppFromApiKey(cachedInfo.appId, options.token)
+    if (!app || !org) throw InvalidApiKeyError(cachedInfo.appId)
+    const packageManager = await getPackageManager(options.directory)
+    showGenerateReusedValues(org.businessName, cachedInfo, packageManager)
+    return app.apiKey
+  } else {
+    const orgId = cachedInfo?.orgId || (await selectOrg(options.token))
+    const {organization, apps} = await fetchOrgAndApps(orgId, options.token)
+    const localAppName = await loadAppName(options.directory)
+    const selectedApp = await selectOrCreateApp(localAppName, apps, organization, options.token, cachedInfo?.appId)
+    await store.setAppInfo({
+      appId: selectedApp.apiKey,
+      title: selectedApp.title,
+      directory: options.directory,
+      orgId,
+    })
+    return selectedApp.apiKey
+  }
 }
 
 /**
@@ -460,6 +467,19 @@ function showReusedValues(org: string, cachedAppInfo: store.CachedAppInfo, packa
     output.content`\nTo reset your default dev config, run ${output.token.packagejsonScript(
       packageManager,
       'dev',
+      '--reset',
+    )}\n`,
+  )
+}
+
+function showGenerateReusedValues(org: string, cachedAppInfo: store.CachedAppInfo, packageManager: PackageManager) {
+  output.info('\nUsing your previous dev settings:')
+  output.info(`- Org:          ${org}`)
+  output.info(`- App:          ${cachedAppInfo.title}`)
+  output.info(
+    output.content`\nTo reset your default config, run ${output.token.packagejsonScript(
+      packageManager,
+      'generate extension',
       '--reset',
     )}\n`,
   )
