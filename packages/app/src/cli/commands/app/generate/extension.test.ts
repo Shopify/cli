@@ -1,10 +1,12 @@
 /* eslint-disable no-irregular-whitespace */
 import AppScaffoldExtension from './extension.js'
-import {ExternalExtensionTypeNames, isThemeExtensionType, getExtensionOutputConfig} from '../../../constants.js'
+import {ExternalExtensionTypeNames, getExtensionOutputConfig, isThemeExtensionType} from '../../../constants.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import generateExtensionPrompt from '../../../prompts/generate/extension.js'
 import generateExtensionService from '../../../services/generate/extension.js'
 import {testApp} from '../../../models/app/app.test-data.js'
+import {ensureGenerateEnvironment} from '../../../services/environment.js'
+import {fetchExtensionSpecifications} from '../../../utilities/extensions/fetch-extension-specifications.js'
 import {describe, expect, it, vi, beforeAll, afterEach} from 'vitest'
 import {path, outputMocker} from '@shopify/cli-kit'
 
@@ -13,6 +15,28 @@ beforeAll(() => {
   vi.mock('../../../models/app/loader.js')
   vi.mock('../../../prompts/generate/extension.js')
   vi.mock('../../../services/generate/extension.js')
+  vi.mock('../../../services/environment.js')
+  vi.mock('../../../utilities/extensions/fetch-extension-specifications.js')
+  vi.mock('@shopify/cli-kit', async () => {
+    const cliKit: any = await vi.importActual('@shopify/cli-kit')
+    return {
+      ...cliKit,
+      session: {
+        ensureAuthenticatedPartners: () => 'token',
+      },
+      api: {
+        partners: {
+          request: vi.fn(),
+        },
+        graphql: cliKit.api.graphql,
+      },
+      store: {
+        getAppInfo: vi.fn(),
+        setAppInfo: vi.fn(),
+        clearAppInfo: vi.fn(),
+      },
+    }
+  })
 })
 
 afterEach(() => {
@@ -120,6 +144,8 @@ function mockSuccessfulCommandExecution(outputConfig: {
 
   vi.mocked(getExtensionOutputConfig).mockReturnValue(outputConfig)
   vi.mocked(loadApp).mockResolvedValue(app)
+  vi.mocked(ensureGenerateEnvironment).mockResolvedValue('api-key')
+  vi.mocked(fetchExtensionSpecifications).mockResolvedValue([])
   vi.mocked(generateExtensionPrompt).mockResolvedValue({name: 'name', extensionType: 'theme'})
   vi.mocked(generateExtensionService).mockResolvedValue(path.join(appRoot, 'extensions', 'name'))
 

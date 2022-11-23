@@ -37,7 +37,7 @@ describe('extension prompt', async () => {
   it('when name is not passed', async () => {
     const prompt = vi.fn()
     const answers = {name: 'ext'}
-    const options = {directory: '/', app: testApp(), reset: false}
+    const options = {directory: '/', app: testApp(), reset: false, extensionSpecifications: []}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers))
@@ -53,7 +53,13 @@ describe('extension prompt', async () => {
   it('when name is passed', async () => {
     const prompt = vi.fn()
     const answers = {name: 'my-special-extension'}
-    const options = {name: 'my-special-extension', directory: '/', app: testApp(), reset: false}
+    const options = {
+      name: 'my-special-extension',
+      directory: '/',
+      app: testApp(),
+      reset: false,
+      extensionSpecifications: [],
+    }
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers))
@@ -69,7 +75,13 @@ describe('extension prompt', async () => {
   it('when there is a registration Limit is not empty', async () => {
     const prompt = vi.fn()
     const answers = {name: 'my-special-extension'}
-    const options = {name: 'my-special-extension', directory: '/', app: testApp(), reset: false}
+    const options = {
+      name: 'my-special-extension',
+      directory: '/',
+      app: testApp(),
+      reset: false,
+      extensionSpecifications: [],
+    }
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers))
@@ -98,6 +110,7 @@ describe('extension prompt', async () => {
       directory: '/',
       app: testApp(),
       reset: false,
+      extensionSpecifications: [],
     }
 
     // Given
@@ -121,6 +134,7 @@ describe('extension prompt', async () => {
       directory: '/',
       app: testApp(),
       reset: false,
+      extensionSpecifications: [],
     }
 
     // Given
@@ -144,6 +158,7 @@ describe('extension prompt', async () => {
       directory: '/',
       app: testApp(),
       reset: false,
+      extensionSpecifications: [],
     }
 
     // Given
