@@ -3,14 +3,7 @@ import {Box, Text, useApp, useInput} from 'ink'
 import {isEqual} from 'lodash-es'
 
 export interface Props {
-  /**
-   * Items to display in a list. Each item must be an object and have `label` and `value` props.
-   */
   items?: Item[]
-
-  /**
-   * Function to call when user selects an item. Item object is passed to that function as an argument.
-   */
   onSelect: (item: Item) => void
 }
 
