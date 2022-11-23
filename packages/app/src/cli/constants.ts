@@ -215,6 +215,7 @@ export const extensionTypesGroups: {name: string; extensions: ExtensionTypes[]}[
       'delivery_customization',
       'pos_ui_extension',
       'shipping_rate_presenter',
+      'ui_extension',
     ],
   },
 ]
