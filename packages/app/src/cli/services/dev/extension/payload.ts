@@ -22,7 +22,7 @@ export async function getUIExtensionPayload(
   )
 
   const renderer = await getUIExtensionRendererVersion(extension.configuration.type, options.app)
-  return {
+  const defaultConfig = {
     assets: {
       main: {
         name: 'main',
@@ -46,7 +46,7 @@ export async function getUIExtensionPayload(
       status: options.currentDevelopmentPayload?.status || 'success',
       ...(options.currentDevelopmentPayload || {status: 'success'}),
     },
-    extensionPoints: extension.configuration.extensionPoints ?? null,
+    extensionPoints: null,
     localization: localization ?? null,
     categories: extension.configuration.categories ?? null,
     metafields: extension.configuration.metafields.length === 0 ? null : extension.configuration.metafields,
@@ -64,4 +64,5 @@ export async function getUIExtensionPayload(
     title: extension.configuration.name,
     approvalScopes: options.grantedScopes,
   }
+  return {...defaultConfig, ...extension.payloadConfiguration()}
 }

@@ -25,7 +25,7 @@ export interface ExtensionsEndpointPayload extends ExtensionsPayloadInterface {
 export interface UIExtensionPayload {
   assets: {
     main: {
-      name: 'main'
+      name: string
       url: string
       lastUpdated: number
     }

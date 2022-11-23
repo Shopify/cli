@@ -1,7 +1,9 @@
 import {ExtensionsPayloadStore} from './payload/store.js'
 import {ExtensionDevOptions} from '../extension.js'
 import {bundleExtension} from '../../extensions/bundle.js'
-import {abort, path, output} from '@shopify/cli-kit'
+import {UIExtension} from '../../../models/app/extensions.js'
+import {NewExtensionPointsSchema} from '../../../models/extensions/schemas.js'
+import {abort, path, output, schema} from '@shopify/cli-kit'
 import chokidar from 'chokidar'
 
 export interface WatchEvent {
@@ -18,21 +20,40 @@ export interface FileWatcher {
   close: () => void
 }
 
+// PENDING: Probably move this to ExtensionInstance
+export type NewExtensionPointType = schema.define.infer<typeof NewExtensionPointsSchema>
+export function getBundleExtensionStdIn({configuration, directory, entrySourceFilePath}: UIExtension) {
+  if (configuration.type === 'ui_extension') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const unknownConfig = configuration as any
+    const extensionPoints: NewExtensionPointType = unknownConfig.extensionPoints
+    return extensionPoints.map(({module}) => `import '${module}';`).join('\n')
+  }
+
+  const relativeImportPath = entrySourceFilePath.replace(directory, '')
+  return `import '.${relativeImportPath}';`
+}
+
 export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
   const abortController = new abort.Controller()
 
   const bundlers: Promise<void>[] = []
 
-  options.devOptions.extensions.forEach((extension) => {
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  options.devOptions.extensions.forEach(async (extension) => {
     bundlers.push(
       bundleExtension({
         minify: false,
         outputBundlePath: extension.outputBundlePath,
-        sourceFilePath: extension.entrySourceFilePath,
         environment: 'development',
         env: {
           ...(options.devOptions.app.dotenv?.variables ?? {}),
           APP_URL: options.devOptions.url,
+        },
+        stdin: {
+          contents: getBundleExtensionStdIn(extension),
+          resolveDir: extension.directory,
+          loader: 'tsx',
         },
         stderr: options.devOptions.stderr,
         stdout: options.devOptions.stdout,

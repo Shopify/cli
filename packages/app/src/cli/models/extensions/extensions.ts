@@ -1,11 +1,10 @@
 import {BaseExtensionSchema, ExtensionPointSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionPointSpec} from './extension-points.js'
 import {allExtensionSpecifications} from './specifications.js'
-import {AppInterface} from '../app/app.js'
-import {bundleExtension} from '../../services/extensions/bundle.js'
 import {ExtensionIdentifier, ThemeExtension, UIExtension} from '../app/extensions.js'
+import {UIExtensionPayload} from '../../services/dev/extension/payload/models.js'
 import {id, path, schema, api, output, environment, string} from '@shopify/cli-kit'
-import {Writable} from 'node:stream'
+import {ok, Result} from '@shopify/cli-kit/common/result'
 
 // Base config type that all config schemas must extend.
 export type BaseConfigContents = schema.define.infer<typeof BaseExtensionSchema>
@@ -27,7 +26,9 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
   templatePath?: string
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
+  payloadConfiguration?: (config: TConfiguration) => Partial<UIExtensionPayload>
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
+  validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (config: TConfiguration) => Promise<void>
   resourceUrl?: (config: TConfiguration) => string
   previewMessage?: (
@@ -120,22 +121,17 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
   }
 
-  async build(stdout: Writable, stderr: Writable, app: AppInterface) {
-    stdout.write(`Bundling UI extension ${this.localIdentifier}...`)
-    await bundleExtension({
-      minify: true,
-      outputBundlePath: this.outputBundlePath,
-      sourceFilePath: this.entrySourceFilePath,
-      environment: 'production',
-      env: app.dotenv?.variables ?? {},
-      stderr,
-      stdout,
-    })
-    stdout.write(`${this.localIdentifier} successfully built`)
-  }
-
   deployConfig(): Promise<{[key: string]: unknown}> {
     return this.specification.deployConfig?.(this.configuration, this.directory) ?? Promise.resolve({})
+  }
+
+  payloadConfiguration() {
+    return this.specification.payloadConfiguration?.(this.configuration) ?? {}
+  }
+
+  validate() {
+    if (!this.specification.validate) return Promise.resolve(ok(undefined))
+    return this.specification.validate(this.configuration, this.directory)
   }
 
   preDeployValidation() {
@@ -201,6 +197,8 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
   graphQLType?: string
   singleEntryPath?: boolean
   schema: ZodSchemaType<TConfiguration>
+  payloadConfiguration?: (config: TConfiguration) => Partial<UIExtensionPayload>
+  validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
   preDeployValidation?: (config: TConfiguration) => Promise<void>
   resourceUrl?: (config: TConfiguration) => string

@@ -277,7 +277,7 @@ class AppLoader {
         }
       }
 
-      return new ExtensionInstance({
+      const extensionInstance = new ExtensionInstance({
         configuration,
         configurationPath,
         entryPath: entryPath ?? '',
@@ -286,6 +286,13 @@ class AppLoader {
         remoteSpecification: undefined,
         extensionPointSpecs: undefined,
       })
+      if (configuration.type) {
+        const validateResult = await extensionInstance.validate()
+        if (validateResult.isErr()) {
+          this.abortOrReport(output.content`\n${validateResult.error}`, undefined, configurationPath)
+        }
+      }
+      return extensionInstance
     })
 
     const uiExtensions = getArrayRejectingUndefined(await Promise.all(extensions))

@@ -6,6 +6,7 @@ const dependency = {name: '@shopify/customer-account-ui-extensions-react', versi
 
 const CustomerAccountsSchema = BaseExtensionSchema.extend({
   categories: schema.define.array(schema.define.string()).optional(),
+  extensionPoints: schema.define.array(schema.define.string()).optional(),
   localization: schema.define.any().optional(),
 })
 
