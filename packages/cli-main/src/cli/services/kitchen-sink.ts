@@ -1,6 +1,7 @@
 import {error} from '@shopify/cli-kit'
 import {
   renderConcurrent,
+  renderConfirmation,
   renderFatalError,
   renderInfo,
   renderPrompt,
@@ -188,12 +189,16 @@ export async function kitchenSink() {
       {label: 'second', value: 'second', key: 's'},
       {label: 'third', value: 'third'},
       {label: 'fourth', value: 'fourth'},
-      {label: 'fifth', value: 'fifth'},
-      {label: 'sixth', value: 'sixth'},
+      {label: 'fifth', value: 'fifth', group: 'Automations'},
+      {label: 'sixth', value: 'sixth', group: 'Automations'},
       {label: 'seventh', value: 'seventh'},
-      {label: 'eighth', value: 'eighth'},
-      {label: 'ninth', value: 'ninth'},
+      {label: 'eighth', value: 'eighth', group: 'Merchant Admin'},
+      {label: 'ninth', value: 'ninth', group: 'Merchant Admin'},
     ],
+  })
+
+  await renderConfirmation({
+    question: 'Push the following changes to your Partners Dashboard?',
   })
 
   await renderConcurrent({processes: [backendProcess, frontendProcess]})

@@ -3,14 +3,18 @@ import React, {useState} from 'react'
 import {Box, Text} from 'ink'
 import {figures} from 'listr2'
 
-export interface Props {
+export interface Props<T> {
   message: string
-  choices: SelectProps['items']
-  onChoose?: SelectProps['onSelect']
+  choices: SelectProps<T>['items']
+  onChoose?: SelectProps<T>['onSelect']
 }
 
-const Prompt: React.FC<Props> = ({message, choices, onChoose = () => {}}): JSX.Element | null => {
-  const [answer, setAnswer] = useState<SelectItem | null>(null)
+export default function Prompt<T>({
+  message,
+  choices,
+  onChoose = () => {},
+}: React.PropsWithChildren<Props<T>>): JSX.Element | null {
+  const [answer, setAnswer] = useState<SelectItem<T> | null>(null)
 
   return (
     <Box flexDirection="column">
@@ -31,7 +35,7 @@ const Prompt: React.FC<Props> = ({message, choices, onChoose = () => {}}): JSX.E
       ) : (
         <SelectInput
           items={choices}
-          onSelect={(item: SelectItem) => {
+          onSelect={(item: SelectItem<T>) => {
             setAnswer(item)
             onChoose(item)
           }}
@@ -40,5 +44,3 @@ const Prompt: React.FC<Props> = ({message, choices, onChoose = () => {}}): JSX.E
     </Box>
   )
 }
-
-export default Prompt

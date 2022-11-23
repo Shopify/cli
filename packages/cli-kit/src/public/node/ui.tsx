@@ -6,6 +6,7 @@ import {alert} from '../../private/node/ui/alert.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
 import Prompt, {Props as PromptProps} from '../../private/node/ui/components/Prompt.js'
+import {Item as SelectItem} from '../../private/node/ui/components/SelectInput.js'
 import React from 'react'
 import {AbortController} from 'abort-controller'
 import {RenderOptions} from 'ink'
@@ -175,6 +176,28 @@ export function renderFatalError(error: Fatal) {
   return renderOnce(<FatalError error={error} />, 'error', consoleError)
 }
 
-export function renderPrompt(options: PromptProps) {
+export function renderPrompt<T>(options: PromptProps<T>) {
   return render(<Prompt {...options} />)
+}
+
+interface ConfirmationProps {
+  question: string
+  onChoose?: (choice: SelectItem<boolean>) => void
+}
+
+export function renderConfirmation({question, onChoose = () => {}}: ConfirmationProps) {
+  const choices = [
+    {
+      label: 'Yes, confirm',
+      value: true,
+      key: 'y',
+    },
+    {
+      label: 'Cancel',
+      value: false,
+      key: 'c',
+    },
+  ]
+
+  return render(<Prompt message={question} choices={choices} onChoose={onChoose} />)
 }

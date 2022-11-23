@@ -1,31 +1,39 @@
 import React, {useState, useEffect, useRef, useCallback} from 'react'
 import {Box, Text, useApp, useInput} from 'ink'
-import {isEqual} from 'lodash-es'
+import {groupBy, isEqual, mapValues} from 'lodash-es'
 
-export interface Props {
-  items: Item[]
-  onSelect: (item: Item) => void
+export interface Props<T> {
+  items: Item<T>[]
+  onSelect: (item: Item<T>) => void
 }
 
-export interface Item {
+export interface Item<T> {
   label: string
-  value: string
+  value: T
   key?: string
+  group?: string
 }
 
-interface ItemProps {
-  item: Item
-  isSelected: boolean
-  index: number
-  key?: string
+function groupItems<T>(items: Item<T>[]) {
+  let index = 0
+
+  return mapValues(groupBy(items, 'group'), (groupItems) =>
+    groupItems.map((groupItem) => {
+      const item = {...groupItem, key: groupItem.key ?? (index + 1).toString(), index}
+      index += 1
+      return item
+    }),
+  )
 }
 
-const SelectInput: React.FC<Props> = ({items, onSelect}): JSX.Element | null => {
+export default function SelectInput<T>({items, onSelect}: React.PropsWithChildren<Props<T>>): JSX.Element | null {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const keys = useRef(new Set(items.map((item) => item.key)))
   const {exit: unmountInk} = useApp()
+  const groupedItems = groupItems(items)
+  const groupTitles = Object.keys(groupedItems)
 
-  const previousItems = useRef<Item[]>(items)
+  const previousItems = useRef<Item<T>[]>(items)
 
   useEffect(() => {
     if (
@@ -71,14 +79,27 @@ const SelectInput: React.FC<Props> = ({items, onSelect}): JSX.Element | null => 
 
   return (
     <Box flexDirection="column">
-      {items.map((item, index) => {
-        const isSelected = index === selectedIndex
+      {groupTitles.map((title) => {
+        const hasTitle = title !== 'undefined'
 
         return (
-          <Box key={item.value}>
-            <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
+          <Box key={title} flexDirection="column" marginTop={hasTitle ? 1 : 0}>
+            {hasTitle && (
+              <Box marginLeft={3}>
+                <Text bold>{title}</Text>
+              </Box>
+            )}
+            {groupedItems[title]!.map((item) => {
+              const isSelected = item.index === selectedIndex
 
-            <Text color={isSelected ? 'cyan' : undefined}>{`(${item.key ?? index + 1}) ${item.label}`}</Text>
+              return (
+                <Box key={item.key}>
+                  <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
+
+                  <Text color={isSelected ? 'cyan' : undefined}>{`(${item.key}) ${item.label}`}</Text>
+                </Box>
+              )
+            })}
           </Box>
         )
       })}
@@ -89,5 +110,3 @@ const SelectInput: React.FC<Props> = ({items, onSelect}): JSX.Element | null => 
     </Box>
   )
 }
-
-export default SelectInput
