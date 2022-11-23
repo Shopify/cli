@@ -1,5 +1,4 @@
 import en from './translations/en.json'
-import {Action} from './Action'
 import * as styles from './ActionSet.module.scss'
 // eslint-disable-next-line @shopify/strict-component-boundaries
 import * as rowStyles from '../ExtensionRow/ExtensionRow.module.scss'
@@ -7,7 +6,8 @@ import React, {useCallback} from 'react'
 import {ExternalMinor, HideMinor, LinkMinor, MobileMajor, RefreshMinor, ViewMinor} from '@shopify/polaris-icons'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
-import {useDevConsoleInternal} from '@/hooks/useDevConsoleInternal'
+import {Action} from '@/components/Action'
+import {useExtensionsInternal} from '@/sections/Extensions/hooks/useExtensionsInternal'
 
 export interface ActionSetProps {
   className?: string
@@ -23,7 +23,7 @@ export function ActionSet(props: ActionSetProps) {
     fallback: en,
   })
   const {extension, className, onShowMobileQRCode} = props
-  const {embedded, hide, navigate, refresh, show, state} = useDevConsoleInternal()
+  const {embedded, hide, navigate, refresh, show, state} = useExtensionsInternal()
   const hidden = extension.development.hidden
   const hideWebUrl = extension.surface === 'pos'
 
