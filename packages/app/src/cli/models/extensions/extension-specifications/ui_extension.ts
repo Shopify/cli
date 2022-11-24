@@ -1,7 +1,6 @@
 import {createExtensionSpec} from '../extensions.js'
-import {BaseExtensionSchema, NewExtensionPointsSchema} from '../schemas.js'
+import {BaseExtensionSchema, NewExtensionPointsSchema, NewExtensionPointType} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
-import {NewExtensionPointType} from '../../../services/dev/extension/bundler.js'
 import {configurationFileNames} from '../../../constants.js'
 import {file, output, path, schema} from '@shopify/cli-kit'
 import {err, ok, Result} from '@shopify/cli-kit/common/result'
@@ -42,6 +41,9 @@ const spec = createExtensionSpec({
       settings: config.settings,
       localization: await loadLocalesConfig(directory, 'checkout_ui'),
     }
+  },
+  getBundleExtensionStdinContent: (config) => {
+    return config.extensionPoints.map(({module}) => `import '${module}';`).join('\n')
   },
 })
 

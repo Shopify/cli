@@ -132,6 +132,7 @@ const EXTENSION_A: UIExtension = {
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
   payloadConfiguration: () => ({}),
+  getBundleExtensionStdinContent: () => '',
 }
 
 const LOCAL_APP = testApp({

@@ -43,6 +43,7 @@ export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigCo
   outputBundlePath: string
   devUUID: string
   surface: string
+  getBundleExtensionStdinContent(): string
   validate(): Promise<Result<unknown, string>>
   payloadConfiguration(): Partial<UIExtensionPayload>
   preDeployValidation(): Promise<void>

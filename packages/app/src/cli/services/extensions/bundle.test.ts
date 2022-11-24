@@ -1,7 +1,6 @@
 import {bundleExtension} from './bundle.js'
 import {testApp, testUIExtension} from '../../models/app/app.test-data.js'
-import {getBundleExtensionStdIn} from '../dev/extension/bundler.js'
-import {describe, expect, it, test, vi} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {build as esBuild, BuildOptions, WatchMode} from 'esbuild'
 import {abort} from '@shopify/cli-kit'
 
@@ -227,47 +226,4 @@ describe('bundleExtension()', () => {
       ],
     }
   }
-})
-
-describe('getBundleExtensionStdIn()', () => {
-  describe('if the extension is a ui_extension type', () => {
-    it('imports each extension entryPoint module', async () => {
-      const extension = await testUIExtension({
-        directory: 'mock/directory',
-        entrySourceFilePath: undefined,
-        configuration: {
-          name: 'name',
-          type: 'ui_extension',
-          metafields: [],
-          extensionPoints: [
-            {module: './src/mock1.js', target: 'MOCK::1'},
-            {module: './src/mock2.js', target: 'MOCK::2'},
-          ],
-        },
-      })
-
-      const result = getBundleExtensionStdIn(extension)
-
-      expect(result).toContain("import './src/mock1.js';")
-      expect(result).toContain("import './src/mock2.js';")
-    })
-  })
-
-  describe('if the extension is not a ui_extension type', () => {
-    it('imports each the entrySourceFilePath', async () => {
-      const extension = await testUIExtension({
-        directory: 'mock/directory',
-        entrySourceFilePath: 'mock/directory/src/mock1.js',
-        configuration: {
-          name: 'name',
-          metafields: [],
-          type: 'pos_ui_extension',
-        },
-      })
-
-      const result = getBundleExtensionStdIn(extension)
-
-      expect(result).toBe("import './src/mock1.js';")
-    })
-  })
 })

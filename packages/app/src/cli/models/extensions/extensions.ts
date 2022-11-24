@@ -26,6 +26,7 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
   templatePath?: string
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
+  getBundleExtensionStdinContent?: (config: TConfiguration) => string
   payloadConfiguration?: (config: TConfiguration) => Partial<UIExtensionPayload>
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
   validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
@@ -175,6 +176,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
 
     return output.content`${heading}\n${message.value}\n`
   }
+
+  getBundleExtensionStdinContent() {
+    if (this.specification.getBundleExtensionStdinContent) {
+      return this.specification.getBundleExtensionStdinContent(this.configuration)
+    }
+    const relativeImportPath = this.entrySourceFilePath?.replace(this.directory, '')
+    return `import '.${relativeImportPath}';`
+  }
 }
 
 /**
@@ -202,6 +211,7 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
   graphQLType?: string
   singleEntryPath?: boolean
   schema: ZodSchemaType<TConfiguration>
+  getBundleExtensionStdinContent?: (config: TConfiguration) => string
   payloadConfiguration?: (config: TConfiguration) => Partial<UIExtensionPayload>
   validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>

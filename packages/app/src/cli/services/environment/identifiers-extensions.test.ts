@@ -55,6 +55,7 @@ const EXTENSION_A: UIExtension = {
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
   payloadConfiguration: () => ({}),
+  getBundleExtensionStdinContent: () => '',
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -81,6 +82,7 @@ const EXTENSION_A_2: UIExtension = {
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
   payloadConfiguration: () => ({}),
+  getBundleExtensionStdinContent: () => '',
 }
 
 const EXTENSION_B: UIExtension = {
@@ -107,6 +109,7 @@ const EXTENSION_B: UIExtension = {
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
   payloadConfiguration: () => ({}),
+  getBundleExtensionStdinContent: () => '',
 }
 
 const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): AppInterface => {

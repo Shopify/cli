@@ -77,3 +77,5 @@ export const BaseFunctionMetadataSchema = schema.define.object({
     }),
   ),
 })
+
+export type NewExtensionPointType = schema.define.infer<typeof NewExtensionPointsSchema>

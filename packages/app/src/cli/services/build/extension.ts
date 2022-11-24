@@ -1,7 +1,6 @@
 import {AppInterface} from '../../models/app/app.js'
 import {UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {bundleExtension} from '../extensions/bundle.js'
-import {getBundleExtensionStdIn} from '../dev/extension/bundler.js'
 import {error, system, abort, output} from '@shopify/cli-kit'
 import {execThemeCheckCLI} from '@shopify/cli-kit/node/ruby'
 import {Writable} from 'node:stream'
@@ -85,7 +84,7 @@ export async function buildUIExtension(extension: UIExtension, options: Extensio
     minify: true,
     outputBundlePath: extension.outputBundlePath,
     stdin: {
-      contents: getBundleExtensionStdIn(extension),
+      contents: extension.getBundleExtensionStdinContent(),
       resolveDir: extension.directory,
       loader: 'tsx',
     },
