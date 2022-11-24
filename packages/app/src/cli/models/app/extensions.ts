@@ -1,7 +1,6 @@
 import {ExtensionTypes} from '../../constants.js'
 import {BaseConfigContents} from '../extensions/extensions.js'
 import {FunctionConfigType, MetadataType} from '../extensions/functions.js'
-import {UIExtensionPayload} from '../../services/dev/extension/payload/models.js'
 import {output} from '@shopify/cli-kit'
 import {Result} from '@shopify/cli-kit/common/result'
 
@@ -45,7 +44,6 @@ export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigCo
   surface: string
   getBundleExtensionStdinContent(): string
   validate(): Promise<Result<unknown, string>>
-  payloadConfiguration(): Partial<UIExtensionPayload>
   preDeployValidation(): Promise<void>
   deployConfig(): Promise<{[key: string]: unknown}>
   previewMessage(url: string, storeFqdn: string): output.TokenizedString | undefined

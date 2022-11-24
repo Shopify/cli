@@ -25,9 +25,6 @@ const spec = createExtensionSpec({
       categories: config.categories,
     }
   },
-  payloadConfiguration: (config) => {
-    return {extensionPoints: config.extensionPoints}
-  },
   previewMessage: (host, uuid, _, storeFqdn) => {
     const [storeName, ...storeDomainParts] = storeFqdn.split('.')
     const accountsUrl = `${storeName}.account.${storeDomainParts.join('.')}`

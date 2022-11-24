@@ -42,7 +42,6 @@ const EXTENSION_A: UIExtension = {
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
-  payloadConfiguration: () => ({}),
   getBundleExtensionStdinContent: () => '',
 }
 
@@ -69,7 +68,6 @@ const EXTENSION_A_2: UIExtension = {
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
-  payloadConfiguration: () => ({}),
   getBundleExtensionStdinContent: () => '',
 }
 
@@ -96,7 +94,6 @@ const EXTENSION_B: UIExtension = {
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
-  payloadConfiguration: () => ({}),
   getBundleExtensionStdinContent: () => '',
 }
 

@@ -2,7 +2,6 @@ import {BaseExtensionSchema, ExtensionPointSchema, ZodSchemaType} from './schema
 import {ExtensionPointSpec} from './extension-points.js'
 import {allExtensionSpecifications} from './specifications.js'
 import {ExtensionIdentifier, ThemeExtension, UIExtension} from '../app/extensions.js'
-import {UIExtensionPayload} from '../../services/dev/extension/payload/models.js'
 import {id, path, schema, api, output, environment, string} from '@shopify/cli-kit'
 import {ok, Result} from '@shopify/cli-kit/common/result'
 
@@ -27,7 +26,6 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
   getBundleExtensionStdinContent?: (config: TConfiguration) => string
-  payloadConfiguration?: (config: TConfiguration) => Partial<UIExtensionPayload>
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
   validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (config: TConfiguration) => Promise<void>
@@ -126,10 +124,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     return this.specification.deployConfig?.(this.configuration, this.directory) ?? Promise.resolve({})
   }
 
-  payloadConfiguration() {
-    return this.specification.payloadConfiguration?.(this.configuration) ?? {}
-  }
-
   validate() {
     if (!this.specification.validate) return Promise.resolve(ok(undefined))
     return this.specification.validate(this.configuration, this.directory)
@@ -212,7 +206,6 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
   singleEntryPath?: boolean
   schema: ZodSchemaType<TConfiguration>
   getBundleExtensionStdinContent?: (config: TConfiguration) => string
-  payloadConfiguration?: (config: TConfiguration) => Partial<UIExtensionPayload>
   validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
   preDeployValidation?: (config: TConfiguration) => Promise<void>

@@ -97,7 +97,6 @@ const EXTENSION_A: UIExtension = {
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
-  payloadConfiguration: () => ({}),
   getBundleExtensionStdinContent: () => '',
 }
 
@@ -124,7 +123,6 @@ const EXTENSION_A_2: UIExtension = {
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
-  payloadConfiguration: () => ({}),
   getBundleExtensionStdinContent: () => '',
 }
 
@@ -151,7 +149,6 @@ const EXTENSION_B: UIExtension = {
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
-  payloadConfiguration: () => ({}),
   getBundleExtensionStdinContent: () => '',
 }
 
@@ -178,7 +175,6 @@ const EXTENSION_B_2: UIExtension = {
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
-  payloadConfiguration: () => ({}),
   getBundleExtensionStdinContent: () => '',
 }
 
@@ -205,7 +201,6 @@ const EXTENSION_C: UIExtension = {
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
-  payloadConfiguration: () => ({}),
   getBundleExtensionStdinContent: () => '',
 }
 
@@ -232,7 +227,6 @@ const EXTENSION_D: UIExtension = {
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
-  payloadConfiguration: () => ({}),
   getBundleExtensionStdinContent: () => '',
 }
 

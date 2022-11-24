@@ -46,7 +46,7 @@ export async function getUIExtensionPayload(
       status: options.currentDevelopmentPayload?.status || 'success',
       ...(options.currentDevelopmentPayload || {status: 'success'}),
     },
-    extensionPoints: null,
+    extensionPoints: extension.configuration.extensionPoints,
     localization: localization ?? null,
     categories: extension.configuration.categories ?? null,
     metafields: extension.configuration.metafields.length === 0 ? null : extension.configuration.metafields,
@@ -64,5 +64,5 @@ export async function getUIExtensionPayload(
     title: extension.configuration.name,
     approvalScopes: options.grantedScopes,
   }
-  return {...defaultConfig, ...extension.payloadConfiguration()}
+  return defaultConfig
 }

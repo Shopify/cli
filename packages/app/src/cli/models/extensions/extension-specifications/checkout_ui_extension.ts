@@ -18,9 +18,6 @@ const spec = createExtensionSpec({
   dependency,
   partnersWebIdentifier: 'checkout_ui_extension',
   schema: CheckoutSchema,
-  payloadConfiguration: (config) => {
-    return {extensionPoints: config.extensionPoints}
-  },
   deployConfig: async (config, directory) => {
     return {
       extension_points: config.extensionPoints,
