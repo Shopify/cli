@@ -7,6 +7,7 @@ import {glob, join} from '../../path.js'
 import constants from '../../constants.js'
 import {AdminSession} from '../../session.js'
 import {content, token} from '../../output.js'
+import {platformAndArch} from '../../os.js'
 import {AbortSignal} from 'abort-controller'
 import {Writable} from 'node:stream'
 
@@ -243,7 +244,13 @@ function createThemeCheckCLIWorkingDirectory() {
 
 async function createShopifyCLIGemfile() {
   const gemPath = join(shopifyCLIDirectory(), 'Gemfile')
-  await file.write(gemPath, `source 'https://rubygems.org'\ngem 'shopify-cli', '${RubyCLIVersion}'`)
+  const gemFileContent = ["source 'https://rubygems.org'", `gem 'shopify-cli', '${RubyCLIVersion}'`]
+  const {platform} = platformAndArch()
+  if (platform === 'windows') {
+    // 'wdm' is required by 'listen', see https://github.com/Shopify/cli/issues/780
+    gemFileContent.push("gem 'wdm'")
+  }
+  await file.write(gemPath, gemFileContent.join('\n'))
 }
 
 async function createThemeCheckGemfile() {
