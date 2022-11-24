@@ -11,6 +11,7 @@
       {"path": "./packages/create-app"},
       {"path": "./packages/ui-extensions-server-kit"},
       {"path": "./packages/ui-extensions-test-utils"},
-      {"path": "./packages/plugin-ngrok"}
+      {"path": "./packages/plugin-ngrok"},
+      {"path": "./workspace"}
     ]
 }

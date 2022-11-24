@@ -75,14 +75,14 @@
     "@oclif/core": "1.9.2",
     "@shopify/cli-kit": "3.23.0",
     "@shopify/shopify-cli-extensions": "3.21.0",
-    "abort-controller": "^3.0.0",
+    "abort-controller": "3.0.0",
     "chokidar": "3.5.3",
-    "diff": "^5.1.0",
+    "diff": "5.1.0",
     "esbuild": "0.15.7",
-    "http-proxy": "^1.18.1",
+    "http-proxy": "1.18.1",
     "serve-static": "1.15.0",
     "ws": "8.8.1",
-    "lodash-es": "^4.17.21"
+    "lodash-es": "4.17.21"
   },
   "repository": {
     "type": "git",
