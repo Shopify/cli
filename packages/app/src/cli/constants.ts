@@ -14,6 +14,8 @@ export const dotEnvFileNames = {
   production: '.env',
 }
 
+export const defaultFunctionRegistationLimit = 10
+
 export const environmentVariables = {
   /**
    * Environment variable to instructs the CLI on running the extensions' CLI through its sources.
