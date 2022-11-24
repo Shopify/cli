@@ -28,7 +28,6 @@ const spec = createExtensionSpec({
     return {extensionPoints: config.extensionPoints}
   },
   previewMessage(host, uuid, config, storeFqdn) {
-    // PENDING: Implement preview URLs for UI Extension
     const links = config.extensionPoints.map((point) => `Preview link: ${host}/extensions/${uuid}/${point.target}`)
     return output.content`${links.join('\n')}`
   },
