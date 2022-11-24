@@ -324,13 +324,8 @@ class AppLoader {
       }
 
       const configuration = await this.parseConfigurationFile(specification.configSchema, configurationPath)
-      const metadata = await this.parseConfigurationFile(
-        specification.metadataSchema,
-        path.join(directory, 'metadata.json'),
-        JSON.parse,
-      )
 
-      return new FunctionInstance({configuration, configurationPath, metadata, specification, directory})
+      return new FunctionInstance({configuration, configurationPath, specification, directory})
     })
     const functions = getArrayRejectingUndefined(await Promise.all(allFunctions))
     return {functions, usedCustomLayout: extensionDirectories !== undefined}

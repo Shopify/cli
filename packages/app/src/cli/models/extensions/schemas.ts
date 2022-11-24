@@ -69,13 +69,4 @@ export const BaseFunctionConfigurationSchema = schema.define.object({
   apiVersion: schema.define.string(),
 })
 
-export const BaseFunctionMetadataSchema = schema.define.object({
-  schemaVersions: schema.define.object({}).catchall(
-    schema.define.object({
-      major: schema.define.number(),
-      minor: schema.define.number(),
-    }),
-  ),
-})
-
 export type NewExtensionPointType = schema.define.infer<typeof NewExtensionPointsSchema>
