@@ -128,16 +128,14 @@ class AppInfo {
       this.functionExtensionSubSection.bind(this),
     )
 
-    const invalidExtensions = [...this.app.extensions.ui, ...this.app.extensions.theme, ...this.app.extensions.function]
-    //   .flat()
-    //   .filter((extension) => !extension.configuration || !extension.configuration.type)
-    // if (invalidExtensions[0]) {
-    body += `\n\n${output.content`${output.token.subheading('Extensions with errors')}`.value}`
-    invalidExtensions.forEach((extension) => {
-      body += `${this.invalidExtensionSubSection(extension)}`
-    })
-    // }
+    const allExtensions = [...this.app.extensions.ui, ...this.app.extensions.theme, ...this.app.extensions.function]
 
+    if (this.app.errors?.isEmpty() === false) {
+      body += `\n\n${output.content`${output.token.subheading('Extensions with errors')}`.value}`
+      allExtensions.forEach((extension) => {
+        body += `${this.invalidExtensionSubSection(extension)}`
+      })
+    }
     return [title, body]
   }
 
