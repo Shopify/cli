@@ -48,7 +48,7 @@ export class Ok<TValue, TError> {
    * A safe mode to throw the `error` of the `Result`
    */
   valueOrBug(): TValue {
-    throw this.value
+    return this.value
   }
 
   /**
