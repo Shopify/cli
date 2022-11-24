@@ -87,6 +87,7 @@ export default class Dev extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
+    const {environment} = flags
 
     await metadata.addPublic(() => ({
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
@@ -96,11 +97,17 @@ export default class Dev extends Command {
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: AppInterface = await loadApp(directory)
     const commandConfig = this.config
+    let envApiKey: string | undefined
+    let envStore: string | undefined
+    if (environment && app.environments) {
+      envApiKey = app.environments[environment]?.apiKey
+      envStore = app.environments[environment]?.store
+    }
 
     await dev({
       app,
-      apiKey: flags['api-key'],
-      storeFqdn: flags.store,
+      apiKey: flags['api-key'] ?? envApiKey,
+      storeFqdn: flags.store ?? envStore,
       reset: flags.reset,
       update: !flags['no-update'],
       skipDependenciesInstallation: flags['skip-dependencies-installation'],

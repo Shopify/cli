@@ -20,6 +20,7 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     app.extensions?.theme ?? [],
     app.extensions?.function ?? [],
     app.usesWorkspaces ?? false,
+    app.environments ?? {},
     app.dotenv,
     app.errors,
   )

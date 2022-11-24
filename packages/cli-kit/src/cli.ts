@@ -5,10 +5,11 @@ import {Flags} from '@oclif/core'
  * are shared across all the commands.
  */
 export const globalFlags = {
-  preset: Flags.string({
+  environment: Flags.string({
     hidden: true,
-    description: 'The preset to apply to the current command.',
-    env: 'SHOPIFY_FLAG_PRESET',
+    description: 'The environment to apply to the current command.',
+    env: 'SHOPIFY_FLAG_ENVIRONMENT',
+    char: 'e',
   }),
   verbose: Flags.boolean({
     hidden: false,

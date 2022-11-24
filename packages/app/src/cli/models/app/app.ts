@@ -4,10 +4,16 @@ import {path, schema, file} from '@shopify/cli-kit'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 
+export const EnvironmentSchema = schema.define.object({}).catchall(schema.define.object({
+  apiKey: schema.define.string().optional(),
+  store: schema.define.string().optional(),
+})).optional()
+
 export const AppConfigurationSchema = schema.define.object({
   scopes: schema.define.string().default(''),
   extensionDirectories: schema.define.array(schema.define.string()).optional(),
   webDirectories: schema.define.array(schema.define.string()).optional(),
+  environments: EnvironmentSchema,
 })
 
 export enum WebType {
@@ -36,6 +42,8 @@ export interface Web {
   framework?: string
 }
 
+export type AppEnvironment = schema.define.infer<typeof EnvironmentSchema>
+
 export interface AppInterface {
   name: string
   idEnvironmentVariableName: string
@@ -57,6 +65,7 @@ export interface AppInterface {
   hasUIExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => Extension[]
+  environments: AppEnvironment
 }
 
 export class App implements AppInterface {
@@ -76,6 +85,7 @@ export class App implements AppInterface {
     theme: ThemeExtension[]
     function: FunctionExtension[]
   }
+  environments: AppEnvironment
 
   // eslint-disable-next-line max-params
   constructor(
@@ -91,6 +101,7 @@ export class App implements AppInterface {
     theme: ThemeExtension[],
     functions: FunctionExtension[],
     usesWorkspaces: boolean,
+    environments: AppEnvironment,
     dotenv?: DotEnvFile,
     errors?: AppErrors,
   ) {
@@ -110,6 +121,7 @@ export class App implements AppInterface {
     }
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
+    this.environments = environments
   }
 
   async updateDependencies() {

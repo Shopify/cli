@@ -98,6 +98,7 @@ class AppLoader {
       themeExtensions,
       functions,
       usesWorkspaces,
+      configuration.environments ?? {},
       dotenv,
     )
 
