@@ -22,8 +22,6 @@ interface Chunk {
   lines: string[]
 }
 
-const OUTPUT_MIN_WIDTH = 80
-
 /**
  * Renders output from concurrent processes to the terminal.
  * Output will be divided in a three column layout

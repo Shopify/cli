@@ -55,7 +55,7 @@ const TokenizedText: React.FC<Props> = ({item}) => {
   } else if ('link' in item) {
     return <Link {...item.link} />
   } else if ('char' in item) {
-    return <Text dimColor>{item.char[0]}</Text>
+    return <Text>{item.char[0]}</Text>
   } else if ('userInput' in item) {
     return <UserInput userInput={item.userInput} />
   } else if ('filePath' in item) {

@@ -57,7 +57,7 @@ const BoxWithBorder: React.FC<Props> = ({type, marginY, children}) => {
   )
 }
 
-const BoxWithTopLine: React.FC<Props> = ({type, marginY, children}) => {
+const BoxWithTopBottomLines: React.FC<Props> = ({type, marginY, children}) => {
   const {stdout} = useStdout()
   const width = calculateWidth(stdout)
 
@@ -81,16 +81,12 @@ const BoxWithTopLine: React.FC<Props> = ({type, marginY, children}) => {
   )
 }
 
-const BannerBox: React.FC<Props> = ({children, ...props}) => {
-  if (props.type === 'external_error') {
-    return <BoxWithTopLine {...props}>{children}</BoxWithTopLine>
-  }
-
-  return <BoxWithBorder {...props}>{children}</BoxWithBorder>
-}
-
 const Banner: React.FC<Props> = ({children, ...props}) => {
-  return <BannerBox {...props}>{children}</BannerBox>
+  if (props.type === 'external_error') {
+    return React.createElement(BoxWithTopBottomLines, props, children)
+  } else {
+    return React.createElement(BoxWithBorder, props, children)
+  }
 }
 
 export {Banner}
