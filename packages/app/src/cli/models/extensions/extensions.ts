@@ -3,7 +3,7 @@ import {ExtensionPointSpec} from './extension-points.js'
 import {allExtensionSpecifications} from './specifications.js'
 import {AppInterface} from '../app/app.js'
 import {bundleExtension} from '../../services/extensions/bundle.js'
-import {ThemeExtension, UIExtension} from '../app/extensions.js'
+import {ExtensionIdentifier, ThemeExtension, UIExtension} from '../app/extensions.js'
 import {id, path, schema, api, output, environment, string} from '@shopify/cli-kit'
 import {Writable} from 'node:stream'
 
@@ -14,7 +14,8 @@ export type ExtensionPointContents = schema.define.infer<typeof ExtensionPointSc
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
-export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents> {
+export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>
+  extends ExtensionIdentifier {
   identifier: string
   externalIdentifier: string
   externalName: string

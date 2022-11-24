@@ -78,7 +78,7 @@ class AppLoader {
       configuration.extensionDirectories,
     )
     const packageJSONPath = path.join(this.appDirectory, 'package.json')
-    const name = (await getPackageName(packageJSONPath)) ?? path.basename(this.appDirectory)
+    const name = await loadAppName(this.appDirectory)
     const nodeDependencies = await getDependencies(packageJSONPath)
     const packageManager = await getPackageManager(this.appDirectory)
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs()
@@ -377,6 +377,11 @@ class AppLoader {
       return fallback
     }
   }
+}
+
+export async function loadAppName(appDirectory: string): Promise<string> {
+  const packageJSONPath = path.join(appDirectory, 'package.json')
+  return (await getPackageName(packageJSONPath)) ?? path.basename(appDirectory)
 }
 
 async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'frontend' | undefined> {

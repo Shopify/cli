@@ -3,6 +3,12 @@ import {BaseConfigContents} from '../extensions/extensions.js'
 import {FunctionConfigType, MetadataType} from '../extensions/functions.js'
 import {output} from '@shopify/cli-kit'
 
+export interface ExtensionIdentifier {
+  identifier: string
+  externalIdentifier: string
+  externalName: string
+}
+
 export interface Extension {
   idEnvironmentVariableName: string
   localIdentifier: string
