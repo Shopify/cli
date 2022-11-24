@@ -190,10 +190,10 @@ describe('getExtensionAssetMiddleware()', () => {
       const options = {
         devOptions: {
           extensions: [
-            {
+            await testUIExtension({
               devUUID: '123abc',
               outputBundlePath: path.join(tmpDir, 'dist', 'main.js'),
-            },
+            }),
           ],
         },
         payloadStore: {},
@@ -273,10 +273,9 @@ describe('getExtensionPayloadMiddleware()', () => {
       devOptions: {
         url: 'http://mock.url',
         extensions: [
-          {
+          await testUIExtension({
             devUUID: actualExtensionId,
-            outputBundlePath: '/mock/output/bundle/path',
-          },
+          }),
         ],
       },
       payloadStore: {},
@@ -309,14 +308,15 @@ describe('getExtensionPayloadMiddleware()', () => {
       vi.spyOn(utilities, 'getExtensionUrl').mockReturnValue('http://www.mock.com/extension/url')
 
       const extensionId = '123abc'
-      const extension = await testUIExtension({
-        configuration: {type: 'checkout_post_purchase', name: 'name', metafields: []},
-        devUUID: extensionId,
-      })
       const options = {
         devOptions: {
           url: 'http://mock.url',
-          extensions: [extension],
+          extensions: [
+            await testUIExtension({
+              configuration: {type: 'checkout_post_purchase', name: 'name', metafields: []},
+              devUUID: extensionId,
+            }),
+          ],
         },
         payloadStore: {},
       } as unknown as GetExtensionsMiddlewareOptions
@@ -359,12 +359,14 @@ describe('getExtensionPayloadMiddleware()', () => {
           url: 'http://mock.url',
           storeFqdn: 'mock-store.myshopify.com',
           extensions: [
-            {
+            await testUIExtension({
               devUUID: extensionId,
               configuration: {
+                name: 'name',
+                metafields: [],
                 type: 'checkout_ui_extension',
               },
-            },
+            }),
           ],
         },
         payloadStore: {},
@@ -404,12 +406,9 @@ describe('getExtensionPayloadMiddleware()', () => {
           storeFqdn: 'mock-store.myshopify.com',
           apiKey: 'mock-api-key',
           extensions: [
-            {
+            await testUIExtension({
               devUUID: extensionId,
-              configuration: {
-                type: 'checkout_ui_extension',
-              },
-            },
+            }),
           ],
         },
         payloadStore: {},
@@ -465,10 +464,9 @@ describe('getExtensionPointMiddleware()', () => {
       devOptions: {
         url: 'http://mock.url',
         extensions: [
-          {
+          await testUIExtension({
             devUUID: actualExtensionId,
-            outputBundlePath: '/mock/output/bundle/path',
-          },
+          }),
         ],
       },
       payloadStore: {},
@@ -503,17 +501,19 @@ describe('getExtensionPointMiddleware()', () => {
       devOptions: {
         url: 'http://mock.url',
         extensions: [
-          {
+          await testUIExtension({
             devUUID: extensionId,
-            outputBundlePath: '/mock/output/bundle/path',
             configuration: {
+              name: 'testName',
+              type: 'ui_extension',
+              metafields: [],
               extensionPoints: [
                 {
                   target: 'Checkout::Dynamic::Render',
                 },
               ],
             },
-          },
+          }),
         ],
       },
       payloadStore: {},
@@ -549,17 +549,19 @@ describe('getExtensionPointMiddleware()', () => {
       devOptions: {
         url: 'http://mock.url',
         extensions: [
-          {
+          await testUIExtension({
             devUUID: extensionId,
-            outputBundlePath: '/mock/output/bundle/path',
             configuration: {
+              name: 'testName',
+              type: 'ui_extension',
+              metafields: [],
               extensionPoints: [
                 {
                   target: extensionPointTarget,
                 },
               ],
             },
-          },
+          }),
         ],
       },
       payloadStore: {},
@@ -582,7 +584,7 @@ describe('getExtensionPointMiddleware()', () => {
 
     expect(utilities.sendError).toHaveBeenCalledWith(response, {
       statusCode: 404,
-      statusMessage: `Redirect url cannot be constructed for extension with id ${extensionId} and extension point "${extensionPointTarget}"`,
+      statusMessage: `Redirect url can't be constructed for extension with id ${extensionId} and extension point "${extensionPointTarget}"`,
     })
   })
 
@@ -597,17 +599,19 @@ describe('getExtensionPointMiddleware()', () => {
         url: 'http://mock.url',
         storeFqdn: 'mock-store.myshopify.com',
         extensions: [
-          {
+          await testUIExtension({
             devUUID: extensionId,
-            outputBundlePath: '/mock/output/bundle/path',
             configuration: {
+              name: 'testName',
+              type: 'ui_extension',
+              metafields: [],
               extensionPoints: [
                 {
                   target: extensionPointTarget,
                 },
               ],
             },
-          },
+          }),
         ],
       },
       payloadStore: {},
