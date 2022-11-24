@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useMemo} from 'react'
 import {createMount} from '@shopify/react-testing'
 import enTranslations from '@shopify/polaris/locales/en.json'
 import {AppProvider} from '@shopify/polaris'
@@ -29,14 +29,17 @@ export const mount = createMount<MountOptions, Context>({
   },
   render(element, context) {
     const locale = 'en'
-
-    const i18nManager = new I18nManager({
-      locale,
-      onError(error) {
-        // eslint-disable-next-line no-console
-        console.log(error)
-      },
-    })
+    const i18nManager = useMemo(
+      () =>
+        new I18nManager({
+          locale,
+          onError(error) {
+            // eslint-disable-next-line no-console
+            console.log(error)
+          },
+        }),
+      [],
+    )
 
     return (
       <I18nContext.Provider value={i18nManager}>
