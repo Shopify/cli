@@ -1,14 +1,23 @@
 import React from 'react';
-import {extend, render, Button} from '@shopify/admin-ui-extensions-react';
+import {extend, render, Button, TextBlock, useExtensionApi} from '@shopify/admin-ui-extensions-react';
 
 function App() {
+  const api = useExtensionApi();
+
+  const metafield = "";
+  const query = "YOUR TEMPLATE QUERY";
+
   return (
-    <Button
-      title="Press Me"
-      primary
-      onPress={() => console.log('Pressed')}
-      disabled={false}
-    />
+    <>
+      <TextBlock size="medium" variation="subdued">YOUR TEMPLATE TITLE</TextBlock>
+      <TextBlock size="base">{query}</TextBlock>
+      <Button
+        title="Use this template"
+        primary
+        onPress={() => api?.onUseTemplate?.(query, metafield)}
+        disabled={false}
+      />
+    </>
   );
 }
 
