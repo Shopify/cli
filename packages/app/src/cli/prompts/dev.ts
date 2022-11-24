@@ -3,20 +3,20 @@ import {fetchOrgAndApps} from '../services/dev/fetch.js'
 import {output, ui} from '@shopify/cli-kit'
 import {debounce} from 'lodash-es'
 
-export async function selectEnvironmentPrompt(environments: string[]): Promise<string> {
+export async function selectEnvironmentPrompt(environments: string[]): Promise<string | undefined> {
   if (environments.length === 1) {
     return environments[0]!
   }
-  const envList = environments.map((env) => ({name: env, value: env}))
+  const envList = [...environments.map((env, index) => ({name: env, value: index.toString()})), {name: "Create a new environment", value: "new"}]
   const choice = await ui.prompt([
     {
       type: 'autocomplete',
-      name: 'name',
+      name: 'index',
       message: 'Which environment do you want to use?',
       choices: envList,
     },
   ])
-  return choice.name
+  return choice.index === "new" ? undefined : environments[parseInt(choice.index)]
 }
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
@@ -144,6 +144,26 @@ export async function appNamePrompt(currentName: string): Promise<string> {
         }
         if (value.includes('shopify')) {
           return 'Name can\'t contain "shopify." Enter another name.'
+        }
+        return true
+      },
+    },
+  ])
+  return input.name
+}
+
+export async function envNamePrompt(): Promise<string> {
+  const input = await ui.prompt([
+    {
+      type: 'input',
+      name: 'name',
+      message: 'What would you like to call this environment?',
+      validate: (value) => {
+        if (value.length === 0) {
+          return "Environment name can't be empty"
+        }
+        if (value.length > 30) {
+          return 'Enter a shorter name (30 character max.)'
         }
         return true
       },

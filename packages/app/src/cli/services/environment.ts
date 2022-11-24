@@ -12,14 +12,14 @@ import {
 import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
 import {createExtension, ExtensionRegistration} from './dev/create-extension.js'
-import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
+import {envNamePrompt, reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
 import {ThemeExtension} from '../models/app/extensions.js'
 import {loadAppName} from '../models/app/loader.js'
-import {error as kitError, output, session, store, ui, environment, error, string} from '@shopify/cli-kit'
+import {error as kitError, file, output, session, store, toml, ui, environment, error, string} from '@shopify/cli-kit'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
@@ -229,7 +229,15 @@ export async function ensureDevEnvironment(
     tunnelPlugin: cachedInfo?.tunnelPlugin,
   }
   await logMetadataForLoadedDevEnvironment(result)
+  await storeDevEnvironment(result, options.app)
   return result
+}
+
+async function storeDevEnvironment({identifiers, storeFqdn}: {identifiers: {app: string}, storeFqdn: string}, app: AppInterface): Promise<void> {
+  const environment = {apiKey: identifiers.app, store: storeFqdn}
+  const envName = await envNamePrompt()
+  const appConfigFile = app.configurationPath
+  await file.appendFile(appConfigFile, `\n${toml.encode({environments: {[envName]: environment}})}`)
 }
 
 async function updateDevOptions(options: DevEnvironmentOptions & {apiKey: string}) {

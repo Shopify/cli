@@ -103,8 +103,10 @@ export default class Dev extends Command {
     const envList = Object.keys(app.environments)
     if (envList.length > 0) {
       if (!environment) environment = await selectEnvironmentPrompt(envList)
-      envApiKey = app.environments[environment]?.apiKey
-      envStore = app.environments[environment]?.store
+      if (environment) {
+        envApiKey = app.environments[environment]?.apiKey
+        envStore = app.environments[environment]?.store
+      }
     }
 
     await dev({
