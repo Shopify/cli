@@ -7,8 +7,7 @@ export interface BundleOptions {
   minify: boolean
   env: {[variable: string]: string}
   outputBundlePath: string
-  sourceFilePath?: string
-  stdin?: StdinOptions
+  stdin: StdinOptions
   stdout: Writable
   stderr: Writable
 
