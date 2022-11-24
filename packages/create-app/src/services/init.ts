@@ -165,9 +165,6 @@ async function init(options: InitOptions) {
         {command: `${output.formatPackageManagerCommand(packageManager, 'shopify app', '--help')}`},
       ],
     ],
-    styles: {
-      marginY: 1,
-    },
   })
 }
 
