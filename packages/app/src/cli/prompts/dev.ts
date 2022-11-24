@@ -3,6 +3,22 @@ import {fetchOrgAndApps} from '../services/dev/fetch.js'
 import {output, ui} from '@shopify/cli-kit'
 import {debounce} from 'lodash-es'
 
+export async function selectEnvironmentPrompt(environments: string[]): Promise<string> {
+  if (environments.length === 1) {
+    return environments[0]!
+  }
+  const envList = environments.map((env) => ({name: env, value: env}))
+  const choice = await ui.prompt([
+    {
+      type: 'autocomplete',
+      name: 'name',
+      message: 'Which environment do you want to use?',
+      choices: envList,
+    },
+  ])
+  return choice.name
+}
+
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
   if (organizations.length === 1) {
     return organizations[0]!

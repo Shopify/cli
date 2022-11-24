@@ -7,13 +7,13 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 export const EnvironmentSchema = schema.define.object({}).catchall(schema.define.object({
   apiKey: schema.define.string().optional(),
   store: schema.define.string().optional(),
-})).optional()
+}))
 
 export const AppConfigurationSchema = schema.define.object({
   scopes: schema.define.string().default(''),
   extensionDirectories: schema.define.array(schema.define.string()).optional(),
   webDirectories: schema.define.array(schema.define.string()).optional(),
-  environments: EnvironmentSchema,
+  environments: EnvironmentSchema.optional(),
 })
 
 export enum WebType {

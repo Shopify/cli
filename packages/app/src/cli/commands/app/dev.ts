@@ -1,6 +1,7 @@
 import {appFlags} from '../../flags.js'
 import {AppInterface} from '../../models/app/app.js'
 import dev from '../../services/dev.js'
+import {selectEnvironmentPrompt} from '../../prompts/dev.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import Command from '../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
@@ -87,7 +88,7 @@ export default class Dev extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
-    const {environment} = flags
+    let {environment} = flags
 
     await metadata.addPublic(() => ({
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
@@ -99,7 +100,9 @@ export default class Dev extends Command {
     const commandConfig = this.config
     let envApiKey: string | undefined
     let envStore: string | undefined
-    if (environment && app.environments) {
+    const envList = Object.keys(app.environments)
+    if (envList.length > 0) {
+      if (!environment) environment = await selectEnvironmentPrompt(envList)
       envApiKey = app.environments[environment]?.apiKey
       envStore = app.environments[environment]?.store
     }
