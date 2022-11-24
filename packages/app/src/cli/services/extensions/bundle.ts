@@ -80,9 +80,7 @@ function getESBuildOptions(options: BundleOptions): Parameters<typeof esBuild>[0
     {'process.env.NODE_ENV': JSON.stringify(options.environment)},
   )
   let esbuildOptions: Parameters<typeof esBuild>[0] = {
-    // entryPoints: [options.sourceFilePath],
     outfile: options.outputBundlePath,
-    // sourceRoot: path.dirname(options.sourceFilePath),
     stdin: options.stdin,
     bundle: true,
     define,

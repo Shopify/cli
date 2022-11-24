@@ -2,7 +2,6 @@ import {getExtensionUrl, getRedirectUrl, sendError} from './utilities.js'
 import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {getHTML} from '../templates.js'
-import {NewExtensionPointType} from '../bundler.js'
 import {file, http, output, path} from '@shopify/cli-kit'
 
 export function corsMiddleware(
@@ -190,60 +189,6 @@ export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlew
         await http.sendRedirect(response.event, url, 307)
         return
       }
-    }
-
-    response.setHeader('content-type', 'application/json')
-    response.end(
-      JSON.stringify({
-        app: {
-          apiKey: devOptions.apiKey,
-        },
-        version: '3',
-        root: {
-          url: new URL('/extensions', devOptions.url).toString(),
-        },
-        socket: {
-          url: getWebsocketUrl(devOptions),
-        },
-        devConsole: {
-          url: new URL('/extensions/dev-console', devOptions.url).toString(),
-        },
-        store: devOptions.storeFqdn,
-        extension: await getUIExtensionPayload(extension, devOptions),
-      }),
-    )
-  }
-}
-
-export function getExtensionPointPayloadMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
-  return async (request: http.IncomingMessage, response: http.ServerResponse, next: (err?: Error) => unknown) => {
-    const {extensionId, extensionPoint} = request.context.params
-    const extension = devOptions.extensions.find((extension) => extension.devUUID === extensionId)
-
-    if (!extension) {
-      return sendError(response, {
-        statusCode: 404,
-        statusMessage: `Extension with id ${extensionId} not found`,
-      })
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const config: any = extension.configuration
-    const points: NewExtensionPointType = config.extensionPoints
-    const point = points.find((point) => point.target === extensionPoint)
-
-    if (!point) {
-      return sendError(response, {
-        statusCode: 404,
-        statusMessage: `Extension with id ${extensionId} does not have an extension point target ${extensionPoint}`,
-      })
-    }
-
-    if (request.headers.accept?.startsWith('text/html')) {
-      const extensionSurface = extension.surface
-
-      const url = getRedirectUrl(extension, devOptions)
-      await http.sendRedirect(response.event, url, 307)
-      return
     }
 
     response.setHeader('content-type', 'application/json')

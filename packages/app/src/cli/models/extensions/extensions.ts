@@ -155,11 +155,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
    * - Implement the `redirectUrl` method in all points, but have a default implementation
    * - Connect everything with the middleware in getExtensionPointPayloadMiddleware
    */
-  redirectUrl(extensionPointTarget: string) {
-    // const extensionPointSpec = this.extensionPointSpecs?.find((spec) => spec.type === extensionPointTarget)
-    // if (!extensionPointSpec) return ''
-    // return extensionPointSpec.redirectUrl?.(host, uuid, storeFqdn) ?? ''
-  }
+  redirectUrl(extensionPointTarget: string) {}
 
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
     const partnersFqdn = await environment.fqdn.partners()
