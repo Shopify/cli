@@ -29,7 +29,7 @@ export const mount = createMount<MountOptions, Context>({
   },
   render(element, context) {
     const locale = 'en'
-    // eslint-disable-next-line react/jsx-no-constructed-context-values
+
     const i18nManager = new I18nManager({
       locale,
       onError(error) {
