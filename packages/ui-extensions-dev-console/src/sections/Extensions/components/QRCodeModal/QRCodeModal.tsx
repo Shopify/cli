@@ -7,7 +7,7 @@ import {useI18n} from '@shopify/react-i18n'
 import copyToClipboard from 'copy-to-clipboard'
 import QRCode from 'qrcode.react'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
-import {useDevConsoleInternal} from '@/hooks/useDevConsoleInternal'
+import {useExtensionsInternal} from '@/sections/Extensions/hooks/useExtensionsInternal'
 import {useToast} from '@/hooks/useToast'
 
 export interface QRCodeModalProps extends Pick<ModalProps, 'open' | 'onClose'> {
@@ -33,7 +33,7 @@ export function QRCodeContent(props: Pick<QRCodeModalProps, 'extension'>) {
     fallback: en,
   })
   const {extension} = props
-  const {state} = useDevConsoleInternal()
+  const {state} = useExtensionsInternal()
 
   const showToast = useToast()
 
@@ -69,12 +69,10 @@ export function QRCodeContent(props: Pick<QRCodeModalProps, 'extension'>) {
 
   if (!isDevelopment && extension.development.root.url.includes('localhost')) {
     return (
-      <div className={styles.PopoverContent}>
-        <Stack alignment="center" vertical>
-          <Icon source={CircleAlertMajor} color="subdued" />
-          <p>{i18n.translate('qrcode.useSecureURL')}</p>
-        </Stack>
-      </div>
+      <Stack alignment="center" vertical>
+        <Icon source={CircleAlertMajor} color="subdued" />
+        <p>{i18n.translate('qrcode.useSecureURL')}</p>
+      </Stack>
     )
   }
 
@@ -87,13 +85,11 @@ export function QRCodeContent(props: Pick<QRCodeModalProps, 'extension'>) {
           </Button>
         </div>
         <QRCode value={mobileQRCode} />
-        <div className={styles.PopoverContent}>
-          <p>
-            {i18n.translate('qrcode.content', {
-              thisExtension: <b>{i18n.translate('qrcode.thisExtension')}</b>,
-            })}
-          </p>
-        </div>
+        <p>
+          {i18n.translate('qrcode.content', {
+            thisExtension: <b>{i18n.translate('qrcode.thisExtension')}</b>,
+          })}
+        </p>
       </div>
     )
   }

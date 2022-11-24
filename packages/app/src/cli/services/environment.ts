@@ -22,26 +22,11 @@ import {loadAppName} from '../models/app/loader.js'
 import {error as kitError, output, session, store, ui, environment, error, string} from '@shopify/cli-kit'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
-export const InvalidApiKeyError = (apiKey: string) => {
-  return new kitError.Abort(
-    output.content`Invalid API key: ${apiKey}`,
-    output.content`You can find the API key in the app settings in the Partners Dashboard.`,
-  )
-}
-
-export const DeployAppNotFound = (apiKey: string, packageManager: PackageManager) => {
-  return new kitError.Abort(
-    output.content`Couldn't find the app with API key ${apiKey}`,
-    output.content`• If you didn't intend to select this app, run ${
-      output.content`${output.token.packagejsonScript(packageManager, 'deploy', '--reset')}`.value
-    }`,
-  )
-}
-
-export const AppOrganizationNotFoundError = (apiKey: string, organizations: string[]) => {
-  return new kitError.Abort(
-    `The application with API Key ${apiKey} doesn't belong to any of your organizations: ${organizations.join(', ')}`,
-  )
+export const InvalidApiKeyErrorMessage = (apiKey: string) => {
+  return {
+    message: output.content`Invalid API key: ${apiKey}`,
+    tryMessage: output.content`You can find the API key in the app settings in the Partners Dashboard.`,
+  }
 }
 
 export interface DevEnvironmentOptions {
@@ -77,7 +62,10 @@ export async function ensureGenerateEnvironment(options: {
 }): Promise<string> {
   if (options.apiKey) {
     const app = await fetchAppFromApiKey(options.apiKey, options.token)
-    if (!app) throw InvalidApiKeyError(options.apiKey)
+    if (!app) {
+      const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
+      throw new kitError.Abort(errorMessage.message, errorMessage.tryMessage)
+    }
     return app.apiKey
   }
   const cachedInfo = await getAppDevCachedInfo({reset: options.reset, directory: options.directory})
@@ -92,7 +80,10 @@ export async function ensureGenerateEnvironment(options: {
   if (cachedInfo?.appId && cachedInfo?.orgId) {
     const org = await fetchOrgFromId(cachedInfo.orgId, options.token)
     const app = await fetchAppFromApiKey(cachedInfo.appId, options.token)
-    if (!app || !org) throw InvalidApiKeyError(cachedInfo.appId)
+    if (!app || !org) {
+      const errorMessage = InvalidApiKeyErrorMessage(cachedInfo.appId)
+      throw new kitError.Abort(errorMessage.message, errorMessage.tryMessage)
+    }
     const packageManager = await getPackageManager(options.directory)
     showGenerateReusedValues(org.businessName, cachedInfo, packageManager)
     return app.apiKey
@@ -349,7 +340,14 @@ export async function fetchAppAndIdentifiers(
   } else if (envIdentifiers.app) {
     const apiKey = options.apiKey ?? envIdentifiers.app
     partnersApp = await fetchAppFromApiKey(apiKey, token)
-    if (!partnersApp) throw DeployAppNotFound(apiKey, options.app.packageManager)
+    if (!partnersApp) {
+      throw new kitError.Abort(
+        output.content`Couldn't find the app with API key ${apiKey}`,
+        output.content`• If you didn't intend to select this app, run ${
+          output.content`${output.token.packagejsonScript(options.app.packageManager, 'deploy', '--reset')}`.value
+        }`,
+      )
+    }
   } else {
     partnersApp = await fetchDevAppAndPrompt(options.app, token)
   }
@@ -397,7 +395,10 @@ async function fetchDevDataFromOptions(
 
   if (options.apiKey) {
     selectedApp = await fetchAppFromApiKey(options.apiKey, token)
-    if (!selectedApp) throw InvalidApiKeyError(options.apiKey)
+    if (!selectedApp) {
+      const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
+      throw new kitError.Abort(errorMessage.message, errorMessage.tryMessage)
+    }
   }
 
   if (options.storeFqdn) {

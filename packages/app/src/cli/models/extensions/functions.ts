@@ -1,6 +1,7 @@
 import {BaseFunctionConfigurationSchema, BaseFunctionMetadataSchema, ZodSchemaType} from './schemas.js'
 import {allFunctionSpecifications} from './specifications.js'
 import {ExtensionIdentifier, FunctionExtension} from '../app/extensions.js'
+import {defaultFunctionRegistationLimit} from '../../constants.js'
 import {schema, path, error, system, abort, string, environment} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
@@ -161,7 +162,7 @@ export function createFunctionSpec<
     metadataSchema: BaseFunctionMetadataSchema,
     public: true,
     options: {
-      registrationLimit: spec.registrationLimit ?? 10,
+      registrationLimit: spec.registrationLimit ?? defaultFunctionRegistationLimit,
     },
   }
 

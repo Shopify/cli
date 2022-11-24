@@ -1,34 +1,29 @@
-import {Checkbox} from './CheckBox'
-import {ExtensionRow} from './ExtensionRow'
-import {Action} from './ActionSet/Action'
-import * as styles from './DevConsole.module.scss'
+import * as styles from './Extensions.module.scss'
+
 // eslint-disable-next-line @shopify/strict-component-boundaries
-import * as actionSetStyles from './ActionSet/ActionSet.module.scss'
+import {QRCodeModal} from './components/QRCodeModal'
 import en from './translations/en.json'
-import {QRCodeModal} from './QRCodeModal'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {useI18n} from '@shopify/react-i18n'
-import {ChevronRightMinor, RefreshMinor, ToolsMajor, ViewMinor, HideMinor, MobileMajor} from '@shopify/polaris-icons'
+import {RefreshMinor, ViewMinor, HideMinor, MobileMajor} from '@shopify/polaris-icons'
 import React, {useCallback, useMemo, useState} from 'react'
-import {ToastProvider} from '@/hooks/useToast'
-import {useDevConsoleInternal} from '@/hooks/useDevConsoleInternal'
-
-// Hiding content until there are more options in the side nav
-const DISPLAY_SIDENAV = false
+import {Action} from '@/components/Action'
+import {ExtensionRow} from '@/sections/Extensions/components/ExtensionRow'
+import {Checkbox} from '@/components/CheckBox'
+import {useExtensionsInternal} from '@/sections/Extensions/hooks/useExtensionsInternal'
 
 function getUuid({uuid}: {uuid: string}) {
   return uuid
 }
 
-export function DevConsole() {
+export function Extensions() {
   const [i18n] = useI18n({
-    id: 'DevConsole',
+    id: 'Extensions',
     fallback: en,
   })
   const [selectedExtensionsSet, setSelectedExtensionsSet] = useState<Set<string>>(new Set())
   const {
     state: {extensions},
-    connect,
     refresh,
     show,
     hide,
@@ -37,7 +32,7 @@ export function DevConsole() {
     client: {
       options: {surface},
     },
-  } = useDevConsoleInternal()
+  } = useExtensionsInternal()
 
   const allSelected = selectedExtensionsSet.size === extensions.length
 
@@ -96,20 +91,6 @@ export function DevConsole() {
     }
   }, [selectedExtensions, show, hide, i18n])
 
-  const ConsoleSidenav = () =>
-    DISPLAY_SIDENAV ? (
-      <aside className={styles.SideBar}>
-        <nav>
-          <ul>
-            <li className={styles.MenuItem}>
-              {i18n.translate('extensionList.title')}
-              <ChevronRightMinor />
-            </li>
-          </ul>
-        </nav>
-      </aside>
-    ) : null
-
   const ConsoleContent = () => (
     <section className={styles.ExtensionList}>
       <table>
@@ -129,7 +110,7 @@ export function DevConsole() {
             <th>{i18n.translate('extensionList.type')}</th>
             <th>{i18n.translate('extensionList.status')}</th>
             <th>
-              <div className={actionSetStyles.ActionGroup}>
+              <div className={styles.ActionGroup}>
                 {actionHeaderMarkup}
                 <Action
                   source={RefreshMinor}
@@ -170,26 +151,13 @@ export function DevConsole() {
   }
 
   return (
-    <ToastProvider>
-      <div className={styles.OuterContainer}>
-        <div className={styles.DevTool}>
-          <header className={styles.Header}>
-            <section className={styles.HeaderLeft}>
-              <ToolsMajor />
-              <h1>&nbsp;{i18n.translate('title')}</h1>
-            </section>
-          </header>
-          <main>
-            <ConsoleSidenav />
-            {extensions.length > 0 ? <ConsoleContent /> : <ConsoleEmpty />}
-            <QRCodeModal
-              extension={activeMobileQRCodeExtension}
-              open={activeMobileQRCodeExtension !== undefined}
-              onClose={() => setActiveMobileQRCodeExtension(undefined)}
-            />
-          </main>
-        </div>
-      </div>
-    </ToastProvider>
+    <>
+      {extensions.length > 0 ? <ConsoleContent /> : <ConsoleEmpty />}
+      <QRCodeModal
+        extension={activeMobileQRCodeExtension}
+        open={activeMobileQRCodeExtension !== undefined}
+        onClose={() => setActiveMobileQRCodeExtension(undefined)}
+      />
+    </>
   )
 }
