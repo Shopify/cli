@@ -123,14 +123,16 @@ async function uiExtensionInit({
             throw new error.Bug(`Couldn't find the template for ${extensionType}`)
           }
 
+          const srcFileExtension = getSrcFileExtension(extensionFlavor ?? 'vanilla-js')
           await template.recursiveDirectoryCopy(templateDirectory, extensionDirectory, {
+            srcFileExtension,
             flavor: extensionFlavor ?? '',
             type: extensionType,
             name,
           })
 
           if (extensionFlavor) {
-            await changeIndexFileExtension(extensionDirectory, extensionFlavor)
+            await changeIndexFileExtension(extensionDirectory, srcFileExtension)
             await removeUnwantedTemplateFilesPerFlavor(extensionDirectory, extensionFlavor)
           }
 
@@ -141,6 +143,18 @@ async function uiExtensionInit({
     {rendererSilent: environment.local.isUnitTest()},
   )
   await list.run()
+}
+
+type SrcFileExtension = 'ts' | 'tsx' | 'js' | 'jsx'
+function getSrcFileExtension(extensionFlavor: ExtensionFlavor): SrcFileExtension {
+  const flavorToSrcFileExtension: {[key in ExtensionFlavor]: SrcFileExtension} = {
+    'vanilla-js': 'js',
+    react: 'jsx',
+    typescript: 'ts',
+    'typescript-react': 'tsx',
+  }
+
+  return flavorToSrcFileExtension[extensionFlavor]
 }
 
 export function getRuntimeDependencies({
@@ -158,22 +172,15 @@ export function getRuntimeDependencies({
   return dependencies
 }
 
-async function changeIndexFileExtension(extensionDirectory: string, extensionFlavor: ExtensionFlavor) {
-  const fileExtensionsMapper = {
-    'vanilla-js': 'js',
-    react: 'jsx',
-    typescript: 'ts',
-    'typescript-react': 'tsx',
+async function changeIndexFileExtension(extensionDirectory: string, fileExtension: SrcFileExtension) {
+  const srcFilePaths = await path.glob(path.join(extensionDirectory, 'src', '*'))
+  const srcFileExensionsToChange = []
+
+  for (const srcFilePath of srcFilePaths) {
+    srcFileExensionsToChange.push(file.move(srcFilePath, `${srcFilePath}.${fileExtension}`))
   }
 
-  const fileExtension = fileExtensionsMapper[extensionFlavor]
-
-  if (fileExtension) {
-    await file.move(
-      path.join(extensionDirectory, 'src/index'),
-      path.join(extensionDirectory, `src/index.${fileExtension}`),
-    )
-  }
+  await Promise.all(srcFileExensionsToChange)
 }
 
 async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, extensionFlavor: ExtensionFlavor) {

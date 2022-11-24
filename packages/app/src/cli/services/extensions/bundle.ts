@@ -1,12 +1,13 @@
-import {abort, path} from '@shopify/cli-kit'
+import {abort} from '@shopify/cli-kit'
 import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
 import {Writable} from 'node:stream'
+import type {StdinOptions} from 'esbuild'
 
-interface BundleOptions {
+export interface BundleOptions {
   minify: boolean
   env: {[variable: string]: string}
   outputBundlePath: string
-  sourceFilePath: string
+  stdin: StdinOptions
   stdout: Writable
   stderr: Writable
 
@@ -78,9 +79,8 @@ function getESBuildOptions(options: BundleOptions): Parameters<typeof esBuild>[0
     {'process.env.NODE_ENV': JSON.stringify(options.environment)},
   )
   let esbuildOptions: Parameters<typeof esBuild>[0] = {
-    entryPoints: [options.sourceFilePath],
     outfile: options.outputBundlePath,
-    sourceRoot: path.dirname(options.sourceFilePath),
+    stdin: options.stdin,
     bundle: true,
     define,
     jsx: 'automatic',

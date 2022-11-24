@@ -128,16 +128,14 @@ class AppInfo {
       this.functionExtensionSubSection.bind(this),
     )
 
-    const invalidExtensions = Object.values(this.app.extensions)
-      .flat()
-      .filter((extension) => !extension.configuration || !extension.configuration.type)
-    if (invalidExtensions[0]) {
+    const allExtensions = [...this.app.extensions.ui, ...this.app.extensions.theme, ...this.app.extensions.function]
+
+    if (this.app.errors?.isEmpty() === false) {
       body += `\n\n${output.content`${output.token.subheading('Extensions with errors')}`.value}`
-      invalidExtensions.forEach((extension) => {
+      allExtensions.forEach((extension) => {
         body += `${this.invalidExtensionSubSection(extension)}`
       })
     }
-
     return [title, body]
   }
 
@@ -196,13 +194,15 @@ class AppInfo {
     return `\n${string.linesToColumns(details)}`
   }
 
-  invalidExtensionSubSection(extension: UIExtension | FunctionExtension | ThemeExtension) {
+  invalidExtensionSubSection(extension: UIExtension | FunctionExtension | ThemeExtension): string {
+    const error = this.app.errors?.getError(extension.configurationPath)
+    if (!error) return ''
     const details = [
-      [`📂 ${UNKNOWN_TEXT}`, path.relative(this.app.directory, extension.directory)],
+      [`📂 ${extension.configuration?.type}`, path.relative(this.app.directory, extension.directory)],
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
-    const error = this.formattedError(this.app.errors!.getError(extension.configurationPath)!)
-    return `\n${string.linesToColumns(details)}\n${error}`
+    const formattedError = this.formattedError(error)
+    return `\n${string.linesToColumns(details)}\n${formattedError}`
   }
 
   formattedError(str: output.Message): string {

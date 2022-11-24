@@ -14,7 +14,7 @@ export const CapabilitiesSchema = schema.define.object({
 })
 
 export const TypeSchema = schema.define.object({
-  type: schema.define.string().default('ui-extension'),
+  type: schema.define.string().default('ui_extension'),
 })
 
 export const ExtensionPointSchema = schema.define.object({
@@ -24,10 +24,19 @@ export const ExtensionPointSchema = schema.define.object({
   capabilities: CapabilitiesSchema.optional(),
 })
 
+export const OldExtensionPointsSchema = schema.define.array(schema.define.string()).default([])
+export const NewExtensionPointsSchema = schema.define.array(
+  schema.define.object({
+    target: schema.define.string(),
+    module: schema.define.string(),
+    metafields: schema.define.array(MetafieldSchema).optional(),
+  }),
+)
+
 export const BaseExtensionSchema = schema.define.object({
   name: schema.define.string(),
-  type: schema.define.string(),
-  extensionPoints: schema.define.array(schema.define.string()).optional(),
+  type: schema.define.string().default('ui_extension'),
+  extensionPoints: schema.define.any().optional(),
   capabilities: schema.define
     .object({
       block_progress: schema.define.boolean().optional(),
@@ -68,3 +77,5 @@ export const BaseFunctionMetadataSchema = schema.define.object({
     }),
   ),
 })
+
+export type NewExtensionPointType = schema.define.infer<typeof NewExtensionPointsSchema>

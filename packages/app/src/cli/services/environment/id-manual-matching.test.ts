@@ -3,6 +3,7 @@ import {ExtensionRegistration} from '../dev/create-extension.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {ui} from '@shopify/cli-kit'
+import {ok} from '@shopify/cli-kit/common/result.js'
 
 const REGISTRATION_A: ExtensionRegistration = {
   uuid: 'UUID_A',
@@ -40,6 +41,8 @@ const EXTENSION_A: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  getBundleExtensionStdinContent: () => '',
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -64,6 +67,8 @@ const EXTENSION_A_2: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  getBundleExtensionStdinContent: () => '',
 }
 
 const EXTENSION_B: UIExtension = {
@@ -88,6 +93,8 @@ const EXTENSION_B: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  getBundleExtensionStdinContent: () => '',
 }
 
 beforeEach(() => {

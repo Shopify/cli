@@ -255,34 +255,45 @@ class AppLoader {
 
       const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
 
-      const entrySourceFilePath = (
-        await Promise.all(
-          ['index']
-            .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
-            .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
-            .map((relativePath) => path.join(directory, relativePath))
-            .map(async (sourcePath) => ((await file.exists(sourcePath)) ? sourcePath : undefined)),
-        )
-      ).find((sourcePath) => sourcePath !== undefined)
-      if (!entrySourceFilePath) {
-        this.abortOrReport(
-          output.content`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${output.token.path(
+      let entryPath
+      if (specification.singleEntryPath) {
+        entryPath = (
+          await Promise.all(
+            ['index']
+              .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
+              .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
+              .map((relativePath) => path.join(directory, relativePath))
+              .map(async (sourcePath) => ((await file.exists(sourcePath)) ? sourcePath : undefined)),
+          )
+        ).find((sourcePath) => sourcePath !== undefined)
+        if (!entryPath) {
+          this.abortOrReport(
+            output.content`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${output.token.path(
+              directory,
+            )} or ${output.token.path(path.join(directory, 'src'))}`,
+            undefined,
             directory,
-          )} or ${output.token.path(path.join(directory, 'src'))}`,
-          undefined,
-          directory,
-        )
+          )
+        }
       }
 
-      return new ExtensionInstance({
+      // PENDING: load extensionPointSpecs depending on the points defined in the configuartion file and pass it to the constructor
+      const extensionInstance = new ExtensionInstance({
         configuration,
         configurationPath,
-        entryPath: entrySourceFilePath ?? '',
+        entryPath: entryPath ?? '',
         directory,
         specification,
         remoteSpecification: undefined,
         extensionPointSpecs: undefined,
       })
+      if (configuration.type) {
+        const validateResult = await extensionInstance.validate()
+        if (validateResult.isErr()) {
+          this.abortOrReport(output.content`\n${validateResult.error}`, undefined, configurationPath)
+        }
+      }
+      return extensionInstance
     })
 
     const uiExtensions = getArrayRejectingUndefined(await Promise.all(extensions))

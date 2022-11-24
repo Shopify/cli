@@ -52,6 +52,8 @@ const EXTENSION_A: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  getBundleExtensionStdinContent: () => '',
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -76,6 +78,8 @@ const EXTENSION_A_2: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  getBundleExtensionStdinContent: () => '',
 }
 
 const FUNCTION_C: FunctionExtension = {
