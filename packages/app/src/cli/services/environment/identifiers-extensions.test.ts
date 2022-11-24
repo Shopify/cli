@@ -53,6 +53,8 @@ const EXTENSION_A: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  payloadConfiguration: () => ({}),
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -77,6 +79,8 @@ const EXTENSION_A_2: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  payloadConfiguration: () => ({}),
 }
 
 const EXTENSION_B: UIExtension = {
@@ -101,6 +105,8 @@ const EXTENSION_B: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  payloadConfiguration: () => ({}),
 }
 
 const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): AppInterface => {

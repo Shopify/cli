@@ -29,7 +29,6 @@ describe('getUIExtensionPayload', () => {
           name: 'test-ui-extension',
           type: 'product_subscription',
           metafields: [],
-          extensionPoints: ['EXTENSION-POINT'],
           capabilities: {
             block_progress: false,
             network_access: true,

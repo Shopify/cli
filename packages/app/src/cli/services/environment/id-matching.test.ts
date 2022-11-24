@@ -96,6 +96,8 @@ const EXTENSION_A: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  payloadConfiguration: () => ({}),
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -120,6 +122,8 @@ const EXTENSION_A_2: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  payloadConfiguration: () => ({}),
 }
 
 const EXTENSION_B: UIExtension = {
@@ -144,6 +148,8 @@ const EXTENSION_B: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  payloadConfiguration: () => ({}),
 }
 
 const EXTENSION_B_2: UIExtension = {
@@ -168,6 +174,8 @@ const EXTENSION_B_2: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  payloadConfiguration: () => ({}),
 }
 
 const EXTENSION_C: UIExtension = {
@@ -192,6 +200,8 @@ const EXTENSION_C: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  payloadConfiguration: () => ({}),
 }
 
 const EXTENSION_D: UIExtension = {
@@ -216,6 +226,8 @@ const EXTENSION_D: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  payloadConfiguration: () => ({}),
 }
 
 describe('automaticMatchmaking: case 3 some local extensions, no remote ones', () => {

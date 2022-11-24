@@ -39,7 +39,7 @@ export type ThemeExtension<TConfiguration extends BaseConfigContents = BaseConfi
 
 export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigContents> = Extension & {
   configuration: TConfiguration
-  entrySourceFilePath: string
+  entrySourceFilePath?: string
   outputBundlePath: string
   devUUID: string
   surface: string

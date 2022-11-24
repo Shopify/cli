@@ -27,6 +27,7 @@ import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
 import {store, api, outputMocker} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
+import {ok} from '@shopify/cli-kit/common/result.js'
 
 beforeEach(() => {
   vi.mock('./dev/fetch')
@@ -129,6 +130,8 @@ const EXTENSION_A: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  payloadConfiguration: () => ({}),
 }
 
 const LOCAL_APP = testApp({

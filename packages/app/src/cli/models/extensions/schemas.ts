@@ -36,6 +36,7 @@ export const NewExtensionPointsSchema = schema.define.array(
 export const BaseExtensionSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.string().default('ui_extension'),
+  extensionPoints: schema.define.any().optional(),
   capabilities: schema.define
     .object({
       block_progress: schema.define.boolean().optional(),
