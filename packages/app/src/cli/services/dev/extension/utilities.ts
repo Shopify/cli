@@ -19,5 +19,5 @@ export async function getCartPathFromExtensions(extensions: UIExtension[], store
  * Returns the surface for UI extension from an extension point target
  */
 export function getExtensionPointTargetSurface(extensionPointTarget: string) {
-  return extensionPointTarget.toLowerCase().replace(/\:\:.+$/, '')
+  return extensionPointTarget.toLowerCase().replace(/::.+$/, '')
 }

@@ -238,7 +238,7 @@ export function getExtensionPointMiddleware({devOptions}: GetExtensionsMiddlewar
     if (!url) {
       return sendError(response, {
         statusCode: 404,
-        statusMessage: `Redirect url cannot be constructed for extension with id ${extensionID} and extension point "${requestedTarget}"`,
+        statusMessage: `Redirect url can't be constructed for extension with id ${extensionID} and extension point "${requestedTarget}"`,
       })
     }
 
