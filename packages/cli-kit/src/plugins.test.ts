@@ -1,5 +1,5 @@
 import {getListOfTunnelPlugins, runTunnelPlugin} from './plugins.js'
-import {err, ok} from './public/common/result.js'
+import {err, ok} from './public/node/result.js'
 import {describe, expect, it, vi} from 'vitest'
 import {Config} from '@oclif/core'
 
@@ -67,7 +67,7 @@ describe('runTunnelPlugin', () => {
     const got = await runTunnelPlugin(config, 1234, 'ngrok')
 
     // Then
-    expect(got.valueOrThrow()).toEqual('tunnel_url')
+    expect(got.valueOrAbort()).toEqual('tunnel_url')
   })
 
   it('returns tunnel url when there are two tunnel providers and one not matched the requested', async () => {
@@ -85,7 +85,7 @@ describe('runTunnelPlugin', () => {
     const got = await runTunnelPlugin(config, 1234, 'ngrok')
 
     // Then
-    expect(got.valueOrThrow()).toEqual('tunnel_url')
+    expect(got.valueOrAbort()).toEqual('tunnel_url')
   })
 
   it('returns error if multiple plugins responded to the hook', async () => {

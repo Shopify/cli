@@ -2,7 +2,7 @@ import {automaticMatchmaking} from './id-matching.js'
 import {ExtensionRegistration} from '../dev/create-extension.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {err, ok} from '@shopify/cli-kit/common/result'
+import {err, ok} from '@shopify/cli-kit/node/result'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {

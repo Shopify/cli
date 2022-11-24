@@ -23,10 +23,10 @@ describe('err', () => {
   })
 })
 
-describe('valueOrThrow', () => {
+describe('valueOrBug', () => {
   it('when ok result should return value', () => {
     // When
-    const result = ok(123).valueOrThrow()
+    const result = ok(123).valueOrBug()
 
     // Then
     expect(result).toEqual(123)
@@ -37,7 +37,7 @@ describe('valueOrThrow', () => {
     const result = err(new Error('custom error'))
 
     // Then
-    expect(() => result.valueOrThrow()).toThrow(new Error('custom error'))
+    expect(() => result.valueOrBug()).toThrow(new Error('custom error'))
   })
 })
 
@@ -55,7 +55,7 @@ describe('mapError', () => {
     const result = err(new Error('Original error')).mapError(() => new Error('Mapped error'))
 
     // Then
-    expect(() => result.valueOrThrow()).toThrow('Mapped error')
+    expect(() => result.valueOrBug()).toThrow('Mapped error')
   })
 })
 
@@ -87,6 +87,6 @@ describe('map', () => {
     const result = err(new Error('Original error')).map(() => 'mapped value')
 
     // Then
-    expect(() => result.valueOrThrow()).toThrow('Original error')
+    expect(() => result.valueOrBug()).toThrow('Original error')
   })
 })
