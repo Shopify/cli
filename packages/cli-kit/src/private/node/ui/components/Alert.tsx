@@ -16,23 +16,11 @@ export interface AlertProps {
     url: string
   }
   orderedNextSteps?: boolean
-  styles?: {
-    marginY?: number
-  }
 }
 
-const Alert: React.FC<AlertProps> = ({
-  type,
-  headline,
-  body,
-  nextSteps,
-  reference,
-  link,
-  orderedNextSteps = false,
-  styles = {},
-}) => {
+const Alert: React.FC<AlertProps> = ({type, headline, body, nextSteps, reference, link, orderedNextSteps = false}) => {
   return (
-    <Banner type={type} {...styles}>
+    <Banner type={type} marginY={1}>
       <Box>
         <Text>{headline}</Text>
       </Box>
