@@ -196,7 +196,7 @@ export type ExternalExtensionTypes = typeof externalExtensionTypes.types[number]
 
 // The order of the groups in extensionTypesGroups will be the same displayed in the select prompt
 export const extensionTypesGroups: {name: string; extensions: ExtensionTypes[]}[] = [
-  {name: 'Online store', extensions: ['theme', 'theme_app_extension']},
+  {name: 'Online store', extensions: ['theme']},
   {
     name: 'Discounts and checkout',
     extensions: [
@@ -208,7 +208,7 @@ export const extensionTypesGroups: {name: string; extensions: ExtensionTypes[]}[
     ],
   },
   {name: 'Analytics', extensions: ['web_pixel_extension']},
-  {name: 'Merchant admin', extensions: ['product_subscription', 'subscription_management']},
+  {name: 'Merchant admin', extensions: ['product_subscription']},
   {
     name: 'Shopify private',
     extensions: [

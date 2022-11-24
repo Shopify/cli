@@ -130,11 +130,7 @@ export class App implements AppInterface {
   extensionsForType(specification: {identifier: string; externalIdentifier: string}): Extension[] {
     const allExternsions = [...this.extensions.ui, ...this.extensions.function, ...this.extensions.theme]
     return allExternsions.filter(
-      (extension) =>
-        extension.type === specification.identifier ||
-        extension.type === specification.externalIdentifier ||
-        (extension.type === 'theme' && specification.identifier === 'theme_app_extension') ||
-        (extension.type === 'product_subscription' && specification.identifier === 'subscription_management'),
+      (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
   }
 }

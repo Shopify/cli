@@ -22,10 +22,9 @@ import {ensureGenerateEnvironment} from '../../../services/environment.js'
 import {fetchExtensionSpecifications} from '../../../utilities/extensions/fetch-extension-specifications.js'
 import {allFunctionSpecifications} from '../../../models/extensions/specifications.js'
 import {FunctionSpec} from '../../../models/extensions/functions.js'
-import {output, path, cli, error, environment, session} from '@shopify/cli-kit'
+import {output, path, cli, error, environment, session, api} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {RemoteSpecification} from '@shopify/cli-kit/src/api/graphql/extension_specifications.js'
 
 export default class AppScaffoldExtension extends Command {
   static description = 'Scaffold an Extension'
@@ -164,12 +163,13 @@ export default class AppScaffoldExtension extends Command {
     output.info(formattedSuccessfulMessage)
   }
 
-  findSpecification(type: string | undefined, extensionSpecs: RemoteSpecification[], functionSpecs: FunctionSpec[]) {
+  findSpecification(
+    type: string | undefined,
+    extensionSpecs: api.graphql.RemoteSpecification[],
+    functionSpecs: FunctionSpec[],
+  ) {
     if (!type) return
     // Harcode some types that are not present in the remote specs with the same words
-    if (type === 'theme') return extensionSpecs.find((spec) => spec.identifier === 'theme_app_extension')
-    if (type === 'product_subscription')
-      return extensionSpecs.find((spec) => spec.identifier === 'subscription_management')
     const extensionSpec = extensionSpecs.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
     const functionSpec = functionSpecs.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
     return extensionSpec ?? functionSpec
