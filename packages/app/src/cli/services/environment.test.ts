@@ -14,7 +14,6 @@ import {
   ensureDevEnvironment,
   ensureDeployEnvironment,
   ensureThemeExtensionDevEnvironment,
-  DeployAppNotFound,
   ensureGenerateEnvironment,
 } from './environment.js'
 import {createExtension} from './dev/create-extension.js'
@@ -513,7 +512,7 @@ describe('ensureDeployEnvironment', () => {
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
   })
 
-  test("throws a AppOrganizationNotFoundError error if the app with the API key doesn't exist", async () => {
+  test("throws an app not found error if the app with the API key doesn't exist", async () => {
     // Given
     const app = testApp()
     vi.mocked(getAppIdentifiers).mockResolvedValue({app: APP1.apiKey})
@@ -521,7 +520,7 @@ describe('ensureDeployEnvironment', () => {
 
     // When
     await expect(ensureDeployEnvironment({app, reset: false})).rejects.toThrow(
-      DeployAppNotFound(APP1.apiKey, LOCAL_APP.packageManager),
+      /Couldn't find the app with API key key1/,
     )
   })
 
