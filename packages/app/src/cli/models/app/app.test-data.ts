@@ -2,6 +2,7 @@ import {App, AppInterface} from './app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {ExtensionInstance, specForType} from '../extensions/extensions.js'
 import {FunctionInstance, functionSpecForType} from '../extensions/functions.js'
+import {api} from '@shopify/cli-kit'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -99,3 +100,117 @@ export async function testFunctionExtension(): Promise<FunctionExtension> {
     directory: './my-extension',
   })
 }
+
+export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
+  {
+    name: 'Checkout Post Purchase',
+    externalName: 'Post-purchase UI',
+    identifier: 'checkout_post_purchase',
+    externalIdentifier: 'post_purchase_ui',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+    features: {
+      argo: {
+        surface: 'checkout',
+      },
+    },
+  },
+  {
+    name: 'Online Store - App Theme Extension',
+    externalName: 'Theme App Extension',
+    identifier: 'theme',
+    externalIdentifier: 'theme_app_extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+  {
+    name: 'Product Subscription',
+    externalName: 'Subscription UI',
+    identifier: 'product_subscription',
+    externalIdentifier: 'subscription_ui',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+    features: {
+      argo: {
+        surface: 'admin',
+      },
+    },
+  },
+  {
+    name: 'UI Extension',
+    externalName: 'UI Extension',
+    identifier: 'ui_extension',
+    externalIdentifier: 'ui_extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 50,
+    },
+    features: {
+      argo: {
+        surface: 'all',
+      },
+    },
+  },
+  {
+    name: 'Customer Accounts',
+    externalName: 'Customer Accounts',
+    identifier: 'customer_accounts_ui_extension',
+    externalIdentifier: 'customer_accounts_ui_extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 10,
+    },
+    features: {
+      argo: {
+        surface: 'customer_accounts',
+      },
+    },
+  },
+  {
+    name: 'Checkout Extension',
+    externalName: 'Checkout UI',
+    identifier: 'checkout_ui_extension',
+    externalIdentifier: 'checkout_ui',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 5,
+    },
+    features: {
+      argo: {
+        surface: 'checkout',
+      },
+    },
+  },
+  {
+    name: 'Product Subscription',
+    externalName: 'Subscription UI',
+    identifier: 'subscription_management',
+    externalIdentifier: 'subscription_ui',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+    features: {
+      argo: {
+        surface: 'admin',
+      },
+    },
+  },
+  {
+    name: 'Online Store - App Theme Extension',
+    externalName: 'Theme App Extension',
+    identifier: 'theme_app_extension',
+    externalIdentifier: 'theme_app_extension',
+    gated: false,
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+]

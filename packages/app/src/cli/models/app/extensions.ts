@@ -3,7 +3,7 @@ import {BaseConfigContents, ExtensionSpec} from '../extensions/extensions.js'
 import {FunctionConfigType, FunctionSpec, MetadataType} from '../extensions/functions.js'
 import {output} from '@shopify/cli-kit'
 import {Result} from '@shopify/cli-kit/common/result'
-import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager.js'
+import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 
 export type ExtensionCategory = 'ui' | 'function' | 'theme'
 

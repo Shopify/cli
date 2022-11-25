@@ -14,7 +14,7 @@ import {output, path, cli, error, environment, session} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
-export default class AppScaffoldExtension extends Command {
+export default class AppGenerateExtension extends Command {
   static description = 'Scaffold an Extension'
   static examples = ['<%= config.bin %> <%= command.id %>']
 
@@ -66,7 +66,7 @@ export default class AppScaffoldExtension extends Command {
   }
 
   public async run(): Promise<void> {
-    const {flags} = await this.parse(AppScaffoldExtension)
+    const {flags} = await this.parse(AppGenerateExtension)
 
     await metadata.addPublic(() => ({
       cmd_scaffold_required_auth: true,

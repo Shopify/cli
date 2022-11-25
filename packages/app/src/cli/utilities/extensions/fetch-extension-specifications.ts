@@ -1,7 +1,7 @@
 import {ExtensionSpec} from '../../models/extensions/extensions.js'
 import {allExtensionSpecifications} from '../../models/extensions/specifications.js'
 import {api} from '@shopify/cli-kit'
-import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array.js'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
 /**
  * Fetch all extension specifications the user has access to
