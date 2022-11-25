@@ -13,10 +13,6 @@ interface InitOptions {
   local: boolean
 }
 
-const DirectoryExistsError = (name: string) => {
-  return new error.Abort(`\nA directory with this name (${name}) already exists.\nChoose a new name for your app.`)
-}
-
 async function init(options: InitOptions) {
   const packageManager: PackageManager = inferPackageManager(options.packageManager)
   const hyphenizedName = string.hyphenize(options.name)
@@ -178,7 +174,8 @@ function inferPackageManager(optionsPackageManager: string | undefined): Package
 
 async function ensureAppDirectoryIsAvailable(directory: string, name: string): Promise<void> {
   const exists = await file.exists(directory)
-  if (exists) throw DirectoryExistsError(name)
+  if (exists)
+    throw new error.Abort(`\nA directory with this name (${name}) already exists.\nChoose a new name for your app.`)
 }
 
 export default init
