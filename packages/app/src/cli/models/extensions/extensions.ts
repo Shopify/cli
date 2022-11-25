@@ -1,7 +1,8 @@
 import {BaseExtensionSchema, ExtensionPointSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionPointSpec} from './extension-points.js'
 import {allExtensionSpecifications} from './specifications.js'
-import {ExtensionIdentifier, ThemeExtension, UIExtension} from '../app/extensions.js'
+import {ExtensionCategory, GenericSpecification, ThemeExtension, UIExtension} from '../app/extensions.js'
+import {blocks} from '../../constants.js'
 import {id, path, schema, api, output, environment, string} from '@shopify/cli-kit'
 import {ok, Result} from '@shopify/cli-kit/common/result'
 
@@ -13,7 +14,7 @@ export type ExtensionPointContents = schema.define.infer<typeof ExtensionPointSc
  * Extension specification with all the needed properties and methods to load an extension.
  */
 export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>
-  extends ExtensionIdentifier {
+  extends GenericSpecification {
   identifier: string
   externalIdentifier: string
   externalName: string
@@ -21,6 +22,7 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
   surface: string
   showInCLIHelp: boolean
   singleEntryPath: boolean
+  registrationLimit: number
   dependency?: {name: string; version: string}
   templatePath?: string
   graphQLType?: string
@@ -30,6 +32,7 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
   validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (config: TConfiguration) => Promise<void>
   resourceUrl?: (config: TConfiguration) => string
+  category: () => ExtensionCategory
   previewMessage?: (
     host: string,
     uuid: string,
@@ -220,6 +223,8 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
   const defaults = {
     showInCLIHelp: true,
     singleEntryPath: true,
+    registrationLimit: blocks.extensions.defaultRegistrationLimit,
+    category: (): ExtensionCategory => (spec.identifier === 'theme' ? 'theme' : 'ui'),
   }
   return {...defaults, ...spec}
 }

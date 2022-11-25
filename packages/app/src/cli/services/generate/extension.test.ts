@@ -1,12 +1,5 @@
 import extensionInit, {getRuntimeDependencies} from './extension.js'
-import {
-  blocks,
-  configurationFileNames,
-  ExtensionTypes,
-  uiExtensions,
-  getUIExtensionRendererDependency,
-  UIExtensionTypes,
-} from '../../constants.js'
+import {blocks, configurationFileNames, ExtensionTypes, uiExtensions, UIExtensionTypes} from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
 import {file, output, path, template} from '@shopify/cli-kit'

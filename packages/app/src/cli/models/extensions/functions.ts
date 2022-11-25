@@ -1,7 +1,7 @@
 import {BaseFunctionConfigurationSchema, BaseFunctionMetadataSchema, ZodSchemaType} from './schemas.js'
 import {allFunctionSpecifications} from './specifications.js'
-import {ExtensionIdentifier, FunctionExtension} from '../app/extensions.js'
-import {defaultFunctionRegistationLimit} from '../../constants.js'
+import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
+import {blocks} from '../../constants.js'
 import {schema, path, error, system, abort, string, environment} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
@@ -15,7 +15,7 @@ export type MetadataType = schema.define.infer<typeof BaseFunctionMetadataSchema
 export interface FunctionSpec<
   TConfiguration extends FunctionConfigType = FunctionConfigType,
   TMetadata extends MetadataType = MetadataType,
-> extends ExtensionIdentifier {
+> extends GenericSpecification {
   identifier: string
   externalIdentifier: string
   externalName: string
@@ -25,10 +25,9 @@ export interface FunctionSpec<
   languages?: {name: string; value: string}[]
   configSchema: ZodSchemaType<TConfiguration>
   metadataSchema: ZodSchemaType<TMetadata>
-  options: {
-    registrationLimit: number
-  }
+  registrationLimit: number
   templatePath: (lang: string) => string
+  category: () => ExtensionCategory
 }
 
 /**
@@ -161,9 +160,10 @@ export function createFunctionSpec<
     configSchema: BaseFunctionConfigurationSchema,
     metadataSchema: BaseFunctionMetadataSchema,
     public: true,
-    options: {
-      registrationLimit: spec.registrationLimit ?? defaultFunctionRegistationLimit,
-    },
+    isFunction: true,
+    registrationLimit: spec.registrationLimit ?? blocks.functions.defaultRegistrationLimit,
+
+    category: (): ExtensionCategory => 'function',
   }
 
   return {...defaults, ...spec}

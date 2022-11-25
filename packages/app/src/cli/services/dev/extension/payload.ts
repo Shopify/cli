@@ -21,7 +21,7 @@ export async function getUIExtensionPayload(
     options.currentLocalizationPayload,
   )
 
-  const renderer = await getUIExtensionRendererVersion(extension.configuration.type, options.app)
+  const renderer = await getUIExtensionRendererVersion(extension, options.app)
   const defaultConfig = {
     assets: {
       main: {
