@@ -26,7 +26,9 @@ const spec = createExtensionSpec({
     return validateUIExtensionPointConfig(directory, config.extensionPoints)
   },
   previewMessage(host, uuid, config, storeFqdn) {
-    const links = config.extensionPoints.map((point) => `Preview link: ${host}/extensions/${uuid}/${point.target}`)
+    const links = config.extensionPoints.map(
+      ({target}) => `${target} preview link: ${host}/extensions/${uuid}/${target}`,
+    )
     return output.content`${links.join('\n')}`
   },
   deployConfig: async (config, directory) => {
