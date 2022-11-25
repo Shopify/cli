@@ -73,7 +73,7 @@ export interface ExtensionPayload {
   version: string
   surface: Surface
   title: string
-  extensionPoints?: string[]
+  extensionPoints?: string[] | {target: string; module: string; main: {url: string}}
   categories?: string[]
   localization?: {
     defaultLocale: string
