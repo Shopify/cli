@@ -1,6 +1,6 @@
 import {ExtensionTypes} from '../../constants.js'
-import {BaseConfigContents} from '../extensions/extensions.js'
-import {FunctionConfigType, MetadataType} from '../extensions/functions.js'
+import {BaseConfigContents, ExtensionSpec} from '../extensions/extensions.js'
+import {FunctionConfigType, FunctionSpec, MetadataType} from '../extensions/functions.js'
 import {output} from '@shopify/cli-kit'
 import {Result} from '@shopify/cli-kit/common/result'
 import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager.js'
@@ -15,6 +15,9 @@ export interface GenericSpecification {
   externalIdentifier: string
   externalName: string
   registrationLimit: number
+  helpURL?: string
+  additionalHelp?: string
+  supportedFlavors: {name: string; value: string}[]
   category: () => ExtensionCategory
 }
 
@@ -56,4 +59,16 @@ export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigCo
   preDeployValidation(): Promise<void>
   deployConfig(): Promise<{[key: string]: unknown}>
   previewMessage(url: string, storeFqdn: string): output.TokenizedString | undefined
+}
+
+export function isUIExtension(spec: GenericSpecification): spec is ExtensionSpec {
+  return spec.category() === 'ui'
+}
+
+export function isThemeExtension(spec: GenericSpecification): spec is ExtensionSpec {
+  return spec.category() === 'theme'
+}
+
+export function isFunctionExtension(spec: GenericSpecification): spec is FunctionSpec {
+  return spec.category() === 'function'
 }

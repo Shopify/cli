@@ -1,4 +1,3 @@
-import {ExtensionTypes, ExternalExtensionTypes} from '../../../../constants.js'
 import {Localization} from '../localization.js'
 
 export interface ExtensionsPayloadInterface {
@@ -46,8 +45,8 @@ export interface UIExtensionPayload {
   localization: Localization | null
   categories: string[] | null
   metafields?: {namespace: string; key: string}[] | null
-  type: ExtensionTypes
-  externalType: ExternalExtensionTypes
+  type: string
+  externalType: string
   uuid: string
   version?: string
   surface: string

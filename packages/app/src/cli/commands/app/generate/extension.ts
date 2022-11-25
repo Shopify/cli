@@ -1,18 +1,9 @@
 import {appFlags} from '../../../flags.js'
-import {
-  ExtensionTypes,
-  getExtensionOutputConfig,
-  isUiExtensionType,
-  isThemeExtensionType,
-  isFunctionExtensionType,
-  functionExtensionTemplates,
-  extensionTypeIsGated,
-} from '../../../constants.js'
+import {extensionTypeIsGated} from '../../../constants.js'
 import generateExtensionPrompt from '../../../prompts/generate/extension.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import generateExtensionService, {ExtensionFlavor} from '../../../services/generate/extension.js'
-import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration.js'
 import metadata from '../../../metadata.js'
 import Command from '../../../utilities/app-command.js'
 import {ensureGenerateEnvironment} from '../../../services/environment.js'
@@ -121,7 +112,7 @@ export default class AppScaffoldExtension extends Command {
       })
     }
 
-    this.validateExtensionFlavor(specification?.identifier, flags.template)
+    this.validateExtensionFlavor(specification, flags.template)
 
     const promptAnswers = await generateExtensionPrompt({
       extensionType: flags.type,
@@ -155,7 +146,7 @@ export default class AppScaffoldExtension extends Command {
     })
 
     const formattedSuccessfulMessage = this.formatSuccessfulRunMessage(
-      promptAnswers.extensionType,
+      selectedSpecification,
       path.relative(app.directory, extensionDirectory),
       app.packageManager,
     )
@@ -166,35 +157,24 @@ export default class AppScaffoldExtension extends Command {
     return specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
   }
 
-  validateExtensionFlavor(type: string | undefined, flavor: string | undefined) {
-    if (!flavor || !type) {
-      return
-    }
-    const uiExtensionTemplateNames = getUIExtensionTemplates(type).map((template) => template.value)
-    const functionExtensionTemplateNames = functionExtensionTemplates.map((template) => template.value)
+  validateExtensionFlavor(specification: GenericSpecification | undefined, flavor: string | undefined) {
+    if (!flavor || !specification) return
 
-    const invalidTemplateError = (templates: string[]) => {
-      // eslint-disable-next-line rulesdir/no-error-factory-functions
-      return new error.Abort(
+    const possibleFlavors = specification.supportedFlavors.map((flavor) => flavor.name)
+    if (possibleFlavors.includes(flavor)) {
+      throw new error.Abort(
         'Specified extension template on invalid extension type',
-        `You can only specify a template for these extension types: ${templates.join(', ')}.`,
+        `You can only specify a template for these extension types: ${possibleFlavors.join(', ')}.`,
       )
-    }
-    if (isUiExtensionType(type) && !uiExtensionTemplateNames.includes(flavor)) {
-      throw invalidTemplateError(uiExtensionTemplateNames)
-    }
-    if (isFunctionExtensionType(type) && !functionExtensionTemplateNames.includes(flavor)) {
-      throw invalidTemplateError(functionExtensionTemplateNames)
     }
   }
 
   formatSuccessfulRunMessage(
-    extensionType: ExtensionTypes,
+    specification: GenericSpecification,
     extensionDirectory: string,
     depndencyManager: PackageManager,
   ): string {
-    const extensionOutputConfig = getExtensionOutputConfig(extensionType)
-    output.completed(`Your ${extensionOutputConfig.humanKey} extension was added to your project!`)
+    output.completed(`Your ${specification.externalName} extension was added to your project!`)
 
     const outputTokens = []
     outputTokens.push(
@@ -203,20 +183,19 @@ export default class AppScaffoldExtension extends Command {
       )}`.value,
     )
 
-    if (isUiExtensionType(extensionType) || isThemeExtensionType(extensionType)) {
+    if (specification.category() === 'ui' || specification.category() === 'theme') {
       outputTokens.push(
         output.content`  To preview your project, run ${output.token.packagejsonScript(depndencyManager, 'dev')}`.value,
       )
     }
 
-    if (extensionOutputConfig.additionalHelp) {
-      outputTokens.push(`  ${extensionOutputConfig.additionalHelp}`)
+    if (specification.additionalHelp) {
+      outputTokens.push(`  ${specification.additionalHelp}`)
     }
 
-    if (extensionOutputConfig.helpURL) {
+    if (specification.helpURL) {
       outputTokens.push(
-        output.content`  For more details, see the ${output.token.link('docs', extensionOutputConfig.helpURL)} ✨`
-          .value,
+        output.content`  For more details, see the ${output.token.link('docs', specification.helpURL)} ✨`.value,
       )
     }
 

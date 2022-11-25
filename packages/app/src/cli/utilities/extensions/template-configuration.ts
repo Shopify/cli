@@ -1,20 +1,12 @@
-import {isUiExtensionType, uiExtensionTemplates} from '../../constants.js'
+import {GenericSpecification} from '../../models/app/extensions.js'
+import {ExtensionSpec} from '../../models/extensions/extensions.js'
 
-export function getUIExtensionTemplates(extensionType: string): {name: string; value: string}[] {
-  let filteredFlavors: string[] = []
-  if (extensionType === 'web_pixel_extension') {
-    filteredFlavors = [...filteredFlavors, 'react', 'typescript-react']
-  }
-  return uiExtensionTemplates.filter((template) => !filteredFlavors.includes(template.value))
-}
+export function isValidUIExtensionTemplate(
+  specification: GenericSpecification,
+  uiExtensionTemplateValue?: string,
+): boolean {
+  if (specification.category() !== 'ui') return false
+  const uiSpec = specification as ExtensionSpec
 
-export function isValidUIExtensionTemplate(extensionType: string, uiExtensionTemplateValue?: string): boolean {
-  return (
-    isUiExtensionType(extensionType) &&
-    Boolean(
-      getUIExtensionTemplates(extensionType).find(
-        (extensionTemplate) => extensionTemplate.value === uiExtensionTemplateValue,
-      ),
-    )
-  )
+  return Boolean(uiSpec.supportedFlavors.find((flavor) => flavor.value === uiExtensionTemplateValue))
 }

@@ -2,7 +2,7 @@ import {BaseExtensionSchema, ExtensionPointSchema, ZodSchemaType} from './schema
 import {ExtensionPointSpec} from './extension-points.js'
 import {allExtensionSpecifications} from './specifications.js'
 import {ExtensionCategory, GenericSpecification, ThemeExtension, UIExtension} from '../app/extensions.js'
-import {blocks} from '../../constants.js'
+import {blocks, defualtExtensionFlavors} from '../../constants.js'
 import {id, path, schema, api, output, environment, string} from '@shopify/cli-kit'
 import {ok, Result} from '@shopify/cli-kit/common/result'
 
@@ -23,6 +23,7 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
   showInCLIHelp: boolean
   singleEntryPath: boolean
   registrationLimit: number
+  supportedFlavors: {name: string; value: string}[]
   dependency?: {name: string; version: string}
   templatePath?: string
   graphQLType?: string
@@ -202,6 +203,7 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
   partnersWebIdentifier: string
   surface: string
   externalName: string
+  supportedFlavors?: {name: string; value: string}[]
   showInCLIHelp?: boolean
   dependency?: {name: string; version: string}
   templatePath?: string
@@ -224,6 +226,7 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
     showInCLIHelp: true,
     singleEntryPath: true,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
+    supportedFlavors: defualtExtensionFlavors,
     category: (): ExtensionCategory => (spec.identifier === 'theme' ? 'theme' : 'ui'),
   }
   return {...defaults, ...spec}

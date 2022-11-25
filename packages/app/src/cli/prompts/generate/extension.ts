@@ -1,11 +1,5 @@
-import {
-  ExtensionTypes,
-  isUiExtensionType,
-  isFunctionExtensionType,
-  functionExtensionTemplates,
-  extensionTypesGroups,
-} from '../../constants.js'
-import {getUIExtensionTemplates, isValidUIExtensionTemplate} from '../../utilities/extensions/template-configuration.js'
+import {ExtensionTypes, extensionTypesGroups} from '../../constants.js'
+import {isValidUIExtensionTemplate} from '../../utilities/extensions/template-configuration.js'
 import {AppInterface} from '../../models/app/app.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {ui} from '@shopify/cli-kit'
@@ -27,19 +21,12 @@ interface GenerateExtensionOutput {
   extensionFlavor?: string
 }
 
-export const extensionFlavorQuestion = (extensionType: string): ui.Question => {
-  let choices: {name: string; value: string}[] = []
-  if (isUiExtensionType(extensionType)) {
-    choices = choices.concat(getUIExtensionTemplates(extensionType))
-  }
-  if (isFunctionExtensionType(extensionType)) {
-    choices = choices.concat(functionExtensionTemplates)
-  }
+export const extensionFlavorQuestion = (specification: GenericSpecification): ui.Question => {
   return {
     type: 'select',
     name: 'extensionFlavor',
     message: 'What would you like to work in?',
-    choices,
+    choices: specification.supportedFlavors,
     default: 'react',
   }
 }
@@ -77,7 +64,7 @@ const generateExtensionPrompt = async (
   if (!options.extensionType) {
     if (options.extensionFlavor) {
       allExtensions = allExtensions.filter((relevantExtensionType) =>
-        isValidUIExtensionTemplate(relevantExtensionType.identifier, options.extensionFlavor),
+        isValidUIExtensionTemplate(relevantExtensionType, options.extensionFlavor),
       )
     }
 
@@ -98,12 +85,13 @@ const generateExtensionPrompt = async (
   }
   let promptOutput: GenerateExtensionOutput = await prompt(questions)
   const extensionType = {...options, ...promptOutput}.extensionType
-  if (!options.extensionFlavor && (isUiExtensionType(extensionType) || isFunctionExtensionType(extensionType))) {
+  const specification = options.extensionSpecifications.find((spec) => spec.identifier === extensionType)!
+  if (!options.extensionFlavor && specification.supportedFlavors.length > 1) {
     promptOutput = {
       ...promptOutput,
       extensionFlavor: (
         (await prompt([
-          extensionFlavorQuestion(extensionType),
+          extensionFlavorQuestion(specification),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ])) as any
       ).extensionFlavor,

@@ -1,7 +1,7 @@
 import {BaseFunctionConfigurationSchema, BaseFunctionMetadataSchema, ZodSchemaType} from './schemas.js'
 import {allFunctionSpecifications} from './specifications.js'
 import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
-import {blocks} from '../../constants.js'
+import {blocks, defaultFunctionsFlavors} from '../../constants.js'
 import {schema, path, error, system, abort, string, environment} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
@@ -22,7 +22,7 @@ export interface FunctionSpec<
   helpURL?: string
   public: boolean
   templateURL?: string
-  languages?: {name: string; value: string}[]
+  supportedFlavors: {name: string; value: string}[]
   configSchema: ZodSchemaType<TConfiguration>
   metadataSchema: ZodSchemaType<TMetadata>
   registrationLimit: number
@@ -145,7 +145,7 @@ export function createFunctionSpec<
   helpURL?: string
   public?: boolean
   templateURL?: string
-  languages?: {name: string; value: string}[]
+  supportedFlavors?: {name: string; value: string}[]
   registrationLimit?: number
   configSchema?: ZodSchemaType<TConfiguration>
   metadataSchema?: ZodSchemaType<TMetadata>
@@ -153,10 +153,7 @@ export function createFunctionSpec<
 }): FunctionSpec {
   const defaults = {
     templateURL: 'https://github.com/Shopify/function-examples',
-    languages: [
-      {name: 'Wasm', value: 'wasm'},
-      {name: 'Rust', value: 'rust'},
-    ],
+    supportedFlavors: defaultFunctionsFlavors,
     configSchema: BaseFunctionConfigurationSchema,
     metadataSchema: BaseFunctionMetadataSchema,
     public: true,
