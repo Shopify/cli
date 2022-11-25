@@ -14,7 +14,7 @@ const DOT = '•'
  * `List` displays an unordered or ordered list with text aligned with the bullet point
  * and wrapped to the container width.
  */
-const List: React.FC<Props> = ({title, items, ordered = false}: React.PropsWithChildren<Props>): JSX.Element => {
+const List: React.FC<Props> = ({title, items, ordered = false}): JSX.Element => {
   return (
     <Box flexDirection="column">
       {title && <Text bold>{title}</Text>}
