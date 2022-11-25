@@ -12,13 +12,6 @@ export const dotEnvFileNames = {
   production: '.env',
 }
 
-export const environmentVariables = {
-  /**
-   * Environment variable to instructs the CLI on running the extensions' CLI through its sources.
-   */
-  useExtensionsCLISources: 'SHOPIFY_USE_EXTENSIONS_CLI_SOURCES',
-} as const
-
 export const versions = {
   react: '^17.0.0',
   reactTypes: '17.0.30',
@@ -80,31 +73,3 @@ export const extensionTypesGroups: {name: string; extensions: string[]}[] = [
     ],
   },
 ]
-
-/**
- * Each extension has a different ID in GraphQL.
- * Sometimes the ID is the same as the type, sometimes it's different.
- * @param type - The extension type
- * @returns The extension GraphQL ID
- */
-export const extensionGraphqlId = (type: string) => {
-  switch (type) {
-    case 'product_subscription':
-      return 'SUBSCRIPTION_MANAGEMENT'
-    case 'checkout_ui_extension':
-      return 'CHECKOUT_UI_EXTENSION'
-    case 'checkout_post_purchase':
-      return 'CHECKOUT_POST_PURCHASE'
-    case 'pos_ui_extension':
-      return 'POS_UI_EXTENSION'
-    case 'theme':
-      return 'THEME_APP_EXTENSION'
-    case 'web_pixel_extension':
-      return 'WEB_PIXEL_EXTENSION'
-    case 'customer_accounts_ui_extension':
-      return 'CUSTOMER_ACCOUNTS_UI_EXTENSION'
-    default:
-      // As we add new extensions, this bug will force us to add a new case here.
-      return type.toUpperCase()
-  }
-}
