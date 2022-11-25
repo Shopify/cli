@@ -207,6 +207,11 @@ async function uploadFunctionExtension(
     apiType: extension.configuration.type,
     apiVersion: extension.configuration.apiVersion,
     inputQuery,
+    inputQueryVariables: extension.configuration.input?.variables
+      ? {
+          singleJsonMetafield: extension.configuration.input.variables,
+        }
+      : undefined,
     appBridge: extension.configuration.ui?.paths
       ? {
           detailsPath: extension.configuration.ui.paths.details,
