@@ -3,7 +3,7 @@ import {Link} from './Link.js'
 import {List} from './List.js'
 import {UserInput} from './UserInput.js'
 import {FilePath} from './FilePath.js'
-import {Text} from 'ink'
+import {Box, Text} from 'ink'
 import React from 'react'
 
 interface CommandToken {
@@ -31,7 +31,7 @@ interface FilePathToken {
 
 interface ListToken {
   list: {
-    items: string[]
+    items: TokenItem[]
     ordered?: boolean
   }
 }
@@ -93,7 +93,7 @@ const TokenizedText: React.FC<Props> = ({item}) => {
     const groupedItems = item.map(tokenToBlock).reduce(splitByDisplayType, [])
 
     return (
-      <>
+      <Box flexDirection="column">
         {groupedItems.map((items, groupIndex) => {
           if (items[0]!.display === 'inline') {
             return (
@@ -110,7 +110,7 @@ const TokenizedText: React.FC<Props> = ({item}) => {
             return <List key={groupIndex} items={(items[0]!.value as ListToken).list.items} />
           }
         })}
-      </>
+      </Box>
     )
   }
 }

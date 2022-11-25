@@ -7,8 +7,8 @@ import React from 'react'
 describe('Alert', async () => {
   test('renders correctly with all the options', async () => {
     const options = {
-      headline: 'Title',
-      body: 'Body',
+      headline: [{userInput: 'my-app'}, 'initialized and ready to build.'],
+      body: ['You can find the build files in the ', {filePath: 'dist'}, 'folder.'],
       nextSteps: [
         [
           'Run',
@@ -58,9 +58,9 @@ describe('Alert', async () => {
     expect(unstyled(output!)).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Title                                                                       │
+      │  my-app initialized and ready to build.                                      │
       │                                                                              │
-      │  Body                                                                        │
+      │  You can find the build files in the  \\"dist\\" folder.                         │
       │                                                                              │
       │  Next steps                                                                  │
       │    • Run \`cd santorini-goods\`                                                │
