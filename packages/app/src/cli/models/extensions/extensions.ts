@@ -24,6 +24,7 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
   singleEntryPath: boolean
   registrationLimit: number
   supportedFlavors: {name: string; value: string}[]
+  gated: boolean
   helpURL?: string
   dependency?: {name: string; version: string}
   templatePath?: string
@@ -227,6 +228,7 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
   const defaults = {
     showInCLIHelp: true,
     singleEntryPath: true,
+    gated: false,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     supportedFlavors: defualtExtensionFlavors,
     category: (): ExtensionCategory => (spec.identifier === 'theme' ? 'theme' : 'ui'),

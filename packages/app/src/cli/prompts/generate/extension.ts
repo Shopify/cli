@@ -1,4 +1,4 @@
-import {ExtensionTypes, extensionTypesGroups} from '../../constants.js'
+import {extensionTypesGroups} from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {ui} from '@shopify/cli-kit'
@@ -16,7 +16,7 @@ interface GenerateExtensionOptions {
 
 interface GenerateExtensionOutput {
   name: string
-  extensionType: ExtensionTypes
+  extensionType: string
   extensionFlavor?: string
 }
 
@@ -30,8 +30,8 @@ export const extensionFlavorQuestion = (specification: GenericSpecification): ui
   }
 }
 
-export function buildChoices(extensionTypes: GenericSpecification[]) {
-  return extensionTypes
+export function buildChoices(specifications: GenericSpecification[]) {
+  return specifications
     .map((type) => {
       const choiceWithoutGroup = {
         name: type.externalName,

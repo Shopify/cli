@@ -20,7 +20,7 @@ export interface FunctionSpec<
   externalIdentifier: string
   externalName: string
   helpURL?: string
-  public: boolean
+  gated: boolean
   templateURL?: string
   supportedFlavors: {name: string; value: string}[]
   configSchema: ZodSchemaType<TConfiguration>
@@ -143,7 +143,7 @@ export function createFunctionSpec<
   externalIdentifier: string
   externalName: string
   helpURL?: string
-  public?: boolean
+  gated?: boolean
   templateURL?: string
   supportedFlavors?: {name: string; value: string}[]
   registrationLimit?: number
@@ -156,7 +156,7 @@ export function createFunctionSpec<
     supportedFlavors: defaultFunctionsFlavors,
     configSchema: BaseFunctionConfigurationSchema,
     metadataSchema: BaseFunctionMetadataSchema,
-    public: true,
+    gated: false,
     registrationLimit: spec.registrationLimit ?? blocks.functions.defaultRegistrationLimit,
 
     category: (): ExtensionCategory => 'function',

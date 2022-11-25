@@ -1,4 +1,3 @@
-import {ExtensionTypes} from '../../constants.js'
 import {BaseConfigContents, ExtensionSpec} from '../extensions/extensions.js'
 import {FunctionConfigType, FunctionSpec, MetadataType} from '../extensions/functions.js'
 import {output} from '@shopify/cli-kit'
@@ -17,6 +16,7 @@ export interface GenericSpecification {
   registrationLimit: number
   helpURL?: string
   supportedFlavors: {name: string; value: string}[]
+  gated: boolean
   category: () => ExtensionCategory
 }
 
@@ -25,7 +25,7 @@ export interface Extension {
   localIdentifier: string
   configurationPath: string
   directory: string
-  type: ExtensionTypes
+  type: string
   externalType: string
   graphQLType: string
   publishURL(options: {orgId: string; appId: string; extensionId?: string}): Promise<string>

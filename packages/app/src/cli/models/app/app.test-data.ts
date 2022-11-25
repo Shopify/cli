@@ -107,6 +107,7 @@ export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
     externalName: 'Post-purchase UI',
     identifier: 'checkout_post_purchase',
     externalIdentifier: 'post_purchase_ui',
+    gated: false,
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
@@ -122,6 +123,7 @@ export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
     externalName: 'Theme App Extension',
     identifier: 'theme',
     externalIdentifier: 'theme_app_extension',
+    gated: false,
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
@@ -132,6 +134,7 @@ export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
     externalName: 'Subscription UI',
     identifier: 'product_subscription',
     externalIdentifier: 'subscription_ui',
+    gated: false,
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
@@ -147,6 +150,7 @@ export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
     externalName: 'UI Extension',
     identifier: 'ui_extension',
     externalIdentifier: 'ui_extension',
+    gated: false,
     options: {
       managementExperience: 'cli',
       registrationLimit: 50,
@@ -162,6 +166,7 @@ export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
     externalName: 'Customer Accounts',
     identifier: 'customer_accounts_ui_extension',
     externalIdentifier: 'customer_accounts_ui_extension',
+    gated: false,
     options: {
       managementExperience: 'cli',
       registrationLimit: 10,
@@ -177,6 +182,7 @@ export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
     externalName: 'Checkout UI',
     identifier: 'checkout_ui_extension',
     externalIdentifier: 'checkout_ui',
+    gated: false,
     options: {
       managementExperience: 'cli',
       registrationLimit: 5,
@@ -192,6 +198,7 @@ export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
     externalName: 'Subscription UI',
     identifier: 'subscription_management',
     externalIdentifier: 'subscription_ui',
+    gated: false,
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
@@ -207,6 +214,7 @@ export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
     externalName: 'Marketing Activity',
     identifier: 'marketing_activity_extension',
     externalIdentifier: 'marketing_activity_extension',
+    gated: false,
     options: {
       managementExperience: 'dashboard',
       registrationLimit: 100,

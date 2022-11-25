@@ -1,4 +1,4 @@
-import {extensionGraphqlId, ExtensionTypes} from '../../constants.js'
+import {extensionGraphqlId} from '../../constants.js'
 import {api, error} from '@shopify/cli-kit'
 
 export interface ExtensionRegistration {
@@ -18,7 +18,7 @@ export interface ExtensionRegistration {
 
 export async function createExtension(
   apiKey: string,
-  type: ExtensionTypes,
+  type: string,
   name: string,
   token: string,
 ): Promise<ExtensionRegistration> {

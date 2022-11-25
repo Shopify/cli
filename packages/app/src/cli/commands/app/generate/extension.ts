@@ -1,5 +1,4 @@
 import {appFlags} from '../../../flags.js'
-import {extensionTypeIsGated} from '../../../constants.js'
 import generateExtensionPrompt from '../../../prompts/generate/extension.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
@@ -80,7 +79,7 @@ export default class AppGenerateExtension extends Command {
     const token = await session.ensureAuthenticatedPartners()
     const apiKey = await ensureGenerateEnvironment({apiKey: flags['api-key'], directory, reset: flags.reset, token})
     const extensionsSpecs = await fetchExtensionSpecifications(token, apiKey)
-    const functionSpecs = await (await allFunctionSpecifications()).filter((spec) => spec.public || isShopify)
+    const functionSpecs = await (await allFunctionSpecifications()).filter((spec) => !spec.gated || isShopify)
     let allExtensionSpecs: GenericSpecification[] = [...extensionsSpecs, ...functionSpecs]
 
     // Pending: use specs to load local extensions
@@ -133,7 +132,7 @@ export default class AppGenerateExtension extends Command {
       cmd_scaffold_template_flavor: extensionFlavor,
       cmd_scaffold_type: extensionType,
       cmd_scaffold_type_category: selectedSpecification.category(),
-      cmd_scaffold_type_gated: extensionTypeIsGated(extensionType),
+      cmd_scaffold_type_gated: selectedSpecification.gated,
       cmd_scaffold_used_prompts_for_type: extensionType !== flags.type,
     }))
 
