@@ -56,6 +56,7 @@ export const defualtExtensionFlavors = [
 export const publicFunctionExtensions = {
   types: ['product_discounts', 'order_discounts', 'shipping_discounts'],
 } as const
+
 export const functionExtensions = {
   types: [
     ...publicFunctionExtensions.types,
@@ -83,14 +84,6 @@ export const themeExtensions = {
   types: ['theme'],
 } as const
 
-export type ThemeExtensionTypes = typeof themeExtensions.types[number] | string
-
-export function isThemeExtensionType(extensionType: string) {
-  return (themeExtensions.types as ReadonlyArray<string>).includes(extensionType)
-}
-
-export type FunctionExtensionTypes = typeof functionExtensions.types[number] | string
-
 export const extensions: {types: string[]; publicTypes: string[]} = {
   types: [...themeExtensions.types, ...uiExtensions.types, ...functionExtensions.types],
   publicTypes: [...themeExtensions.types, ...publicUIExtensions.types, ...publicFunctionExtensions.types],
@@ -103,41 +96,6 @@ type GatedExtensionTypes = Exclude<ExtensionTypes, PublicExtensionTypes>
 export function extensionTypeIsGated(extensionType: ExtensionTypes): extensionType is GatedExtensionTypes {
   return !extensions.publicTypes.includes(extensionType)
 }
-
-export const uiExternalExtensionTypes = {
-  types: ['web_pixel', 'post_purchase_ui', 'checkout_ui', 'pos_ui', 'subscription_ui', 'customer_accounts_ui'],
-} as const
-
-export type UIExternalExtensionTypes = typeof uiExternalExtensionTypes.types[number] | string
-
-export const themeExternalExtensionTypes = {
-  types: ['theme_app_extension'],
-} as const
-
-export type ThemeExternalExtensionTypes = typeof themeExternalExtensionTypes.types[number] | string
-
-export const functionExternalExtensionTypes = {
-  types: [
-    'product_discount',
-    'order_discount',
-    'shipping_discount',
-    'payment_customization',
-    'delivery_option_presenter',
-    'delivery_customization',
-  ],
-} as const
-
-export type FunctionExternalExtensionTypes = typeof functionExternalExtensionTypes.types[number] | string
-
-export const externalExtensionTypes = {
-  types: [
-    ...uiExternalExtensionTypes.types,
-    ...themeExternalExtensionTypes.types,
-    ...functionExternalExtensionTypes.types,
-  ],
-} as const
-
-export type ExternalExtensionTypes = typeof externalExtensionTypes.types[number] | string
 
 // The order of the groups in extensionTypesGroups will be the same displayed in the select prompt
 export const extensionTypesGroups: {name: string; extensions: ExtensionTypes[]}[] = [
