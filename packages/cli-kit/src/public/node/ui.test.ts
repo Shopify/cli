@@ -251,7 +251,7 @@ describe('renderFatalError', async () => {
 })
 
 describe('renderConcurrent', async () => {
-  test.skip('renders a stream of concurrent outputs from sub-processes', async () => {
+  test('renders a stream of concurrent outputs from sub-processes', async () => {
     // When
     const {stdout} = await run('render-concurrent')
     const lastFrame = stripAnsi(stdout).replace(/\d/g, '0')
@@ -266,5 +266,14 @@ describe('renderConcurrent', async () => {
       0000-00-00 00:00:00 | frontend | third frontend message
       "
     `)
+  })
+
+  test('renders an error message correctly when a process throws an error', async () => {
+    // When
+    const {stdout} = await run('render-concurrent-throws-error')
+    const lastFrame = stripAnsi(stdout).replace(/\d/g, '0')
+
+    // Then
+    expect(lastFrame).toMatchInlineSnapshot('""')
   })
 })

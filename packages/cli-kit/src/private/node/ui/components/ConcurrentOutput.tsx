@@ -1,4 +1,6 @@
 import {OutputProcess} from '../../../../output.js'
+import {Fatal} from '../../../../error.js'
+import {fatalError} from '../error.js'
 import React, {FunctionComponent, useEffect, useState} from 'react'
 import {Box, Static, Text, useApp} from 'ink'
 import stripAnsi from 'strip-ansi'
@@ -103,7 +105,10 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
     } catch (error) {
       abortController.abort()
       unmountInk()
-      throw error
+      if (error instanceof Fatal) fatalError(error)
+      else {
+        throw error
+      }
     }
   }
 
