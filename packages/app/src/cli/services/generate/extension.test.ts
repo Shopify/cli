@@ -13,6 +13,7 @@ beforeEach(() => {
 })
 
 describe('initialize a extension', async () => {
+  // ALL UI Specs, filter out theme
   const allSpecs: GenericSpecification[] = await (
     await allExtensionSpecifications()
   ).filter((spec) => spec.identifier !== 'theme')
