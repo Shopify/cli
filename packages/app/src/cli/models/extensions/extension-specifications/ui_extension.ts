@@ -1,5 +1,5 @@
 import {createExtensionSpec} from '../extensions.js'
-import {BaseExtensionSchema, NewExtensionPointsSchema, NewExtensionPointsSchemaType} from '../schemas.js'
+import {BaseExtensionSchema, NewExtensionPointSchemaType, NewExtensionPointsSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
@@ -60,7 +60,7 @@ const spec = createExtensionSpec({
 
 async function validateUIExtensionPointConfig(
   directory: string,
-  extensionPoints: NewExtensionPointsSchemaType,
+  extensionPoints: NewExtensionPointSchemaType[],
 ): Promise<Result<unknown, string>> {
   const errors: string[] = []
   const uniqueTargets: string[] = []
