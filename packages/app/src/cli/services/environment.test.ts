@@ -108,6 +108,7 @@ const STORE2: OrganizationStore = {
   transferDisabled: false,
   convertableToPartnerTest: false,
 }
+
 const EXTENSION_A: UIExtension = {
   idEnvironmentVariableName: 'EXTENSION_A_ID',
   localIdentifier: 'EXTENSION_A',
@@ -132,6 +133,8 @@ const EXTENSION_A: UIExtension = {
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
   getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: () => true,
 }
 
 const LOCAL_APP = testApp({
