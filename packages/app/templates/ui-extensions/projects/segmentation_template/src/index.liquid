@@ -1,11 +1,13 @@
 import React from 'react';
-import {extend, render, Button, TextBlock, useExtensionApi} from '@shopify/admin-ui-extensions-react';
+import {extend, render, Button, TextBlock, SegmentationTemplate, useExtensionApi} from '@shopify/admin-ui-extensions-react';
 
 function App() {
   const api = useExtensionApi();
 
   const metafield = "";
   const query = "YOUR TEMPLATE QUERY";
+
+  // This extension contains two examples: one with existing UI primitives (TextBlock + Button) and another one with a custom component
 
   return (
     <>
@@ -16,6 +18,16 @@ function App() {
         primary
         onPress={() => api?.onUseTemplate?.(query, metafield)}
         disabled={false}
+      />
+      <SegmentationTemplate
+        localizedTitle=""
+        localizedDescription=""
+        polarisIcon="AbandonedCartMajor"
+        tokens={[]}
+        qlQuery=""
+        metafieldDependencies={[]}
+        // https://shopify.dev/apps/metafields/definitions/standard
+        standardMetafieldDependencies={[]}
       />
     </>
   );
