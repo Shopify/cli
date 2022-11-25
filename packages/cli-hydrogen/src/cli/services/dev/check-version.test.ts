@@ -82,7 +82,8 @@ describe('checkHydrogenVersion()', () => {
         await checkHydrogenVersion('dir')
 
         expect(outputMock.info()).toMatchInlineSnapshot(`
-          "╭─ info ───────────────────────────────────────────────────────────────────────╮
+          "
+          ╭─ info ───────────────────────────────────────────────────────────────────────╮
           │                                                                              │
           │  Upgrade available                                                           │
           │                                                                              │
@@ -93,7 +94,8 @@ describe('checkHydrogenVersion()', () => {
           │  Reference                                                                   │
           │    • Hydrogen releases: https://github.com/Shopify/hydrogen/releases         │
           │                                                                              │
-          ╰──────────────────────────────────────────────────────────────────────────────╯"
+          ╰──────────────────────────────────────────────────────────────────────────────╯
+          "
         `)
       })
     })
