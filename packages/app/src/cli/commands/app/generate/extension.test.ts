@@ -63,7 +63,7 @@ describe('after extension command finishes correctly', () => {
 
     // Then
     expect(outputInfo.completed()).toMatchInlineSnapshot(
-      '"Your Theme app extension extension was added to your project!"',
+      '"Your Theme App Extension extension was added to your project!"',
     )
     expect(outputInfo.info()).toMatchInlineSnapshot(
       '"\n  To find your extension, remember to cd extensions/name\n  To preview your project, run yarn dev\n"',
