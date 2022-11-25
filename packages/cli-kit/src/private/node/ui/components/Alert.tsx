@@ -20,7 +20,7 @@ export interface AlertProps {
 
 const Alert: React.FC<AlertProps> = ({type, headline, body, nextSteps, reference, link, orderedNextSteps = false}) => {
   return (
-    <Banner type={type}>
+    <Banner type={type} marginY={1}>
       <Box>
         <Text>{headline}</Text>
       </Box>

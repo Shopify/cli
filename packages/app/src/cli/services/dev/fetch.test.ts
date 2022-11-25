@@ -204,7 +204,8 @@ describe('NoOrgError', () => {
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "
+      ╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  No Organization found                                                       │
       │                                                                              │
@@ -217,7 +218,8 @@ describe('NoOrgError', () => {
       │    • Do you have access to the right Shopify Partners organization? The CLI  │
       │       is loading this organization: https://partner.shopify.com/3            │
       │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯"
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 })

@@ -39,7 +39,7 @@ const FatalError: React.FC<FatalErrorProps> = ({error}) => {
   }
 
   return (
-    <Banner type={tool ? 'external_error' : 'error'}>
+    <Banner type={tool ? 'external_error' : 'error'} marginY={1}>
       {tool && (
         <Box marginBottom={1}>
           <Text>
