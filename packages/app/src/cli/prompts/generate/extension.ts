@@ -1,5 +1,4 @@
 import {ExtensionTypes, extensionTypesGroups} from '../../constants.js'
-import {isValidUIExtensionTemplate} from '../../utilities/extensions/template-configuration.js'
 import {AppInterface} from '../../models/app/app.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {ui} from '@shopify/cli-kit'
@@ -63,9 +62,8 @@ const generateExtensionPrompt = async (
 
   if (!options.extensionType) {
     if (options.extensionFlavor) {
-      allExtensions = allExtensions.filter((relevantExtensionType) =>
-        isValidUIExtensionTemplate(relevantExtensionType, options.extensionFlavor),
-      )
+      const flavor = options.extensionFlavor
+      allExtensions = allExtensions.filter((spec) => spec.supportedFlavors.map((elem) => elem.name).includes(flavor))
     }
 
     questions.push({

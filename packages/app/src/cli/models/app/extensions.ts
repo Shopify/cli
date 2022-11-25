@@ -16,7 +16,6 @@ export interface GenericSpecification {
   externalName: string
   registrationLimit: number
   helpURL?: string
-  additionalHelp?: string
   supportedFlavors: {name: string; value: string}[]
   category: () => ExtensionCategory
 }

@@ -189,10 +189,6 @@ export default class AppScaffoldExtension extends Command {
       )
     }
 
-    if (specification.additionalHelp) {
-      outputTokens.push(`  ${specification.additionalHelp}`)
-    }
-
     if (specification.helpURL) {
       outputTokens.push(
         output.content`  For more details, see the ${output.token.link('docs', specification.helpURL)} ✨`.value,

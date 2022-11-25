@@ -167,70 +167,6 @@ export const extensionTypesGroups: {name: string; extensions: ExtensionTypes[]}[
   },
 ]
 
-export const externalExtensionTypeNames = {
-  types: [
-    'Web pixel',
-    'Post-purchase UI',
-    'Theme app extension',
-    'Checkout UI',
-    'POS UI',
-    'Customer accounts UI',
-    'Subscription UI',
-    'Function - Product discount',
-    'Function - Order discount',
-    'Function - Shipping discount',
-    'Payment customization',
-    'Delivery option presenter',
-    'Delivery customization',
-  ],
-} as const
-
-export type ExternalExtensionTypeNames = typeof externalExtensionTypeNames.types[number] | string
-export interface ExtensionOutputConfig {
-  humanKey: ExternalExtensionTypeNames
-  helpURL?: string
-  additionalHelp?: string
-}
-
-export function getExtensionOutputConfig(extensionType: ExtensionTypes): ExtensionOutputConfig {
-  switch (extensionType) {
-    case 'web_pixel_extension':
-      return buildExtensionOutputConfig('Web pixel')
-    case 'checkout_post_purchase':
-      return buildExtensionOutputConfig('Post-purchase UI', 'https://shopify.dev/apps/checkout/post-purchase')
-    case 'theme':
-      return buildExtensionOutputConfig('Theme app extension')
-    case 'checkout_ui_extension':
-      return buildExtensionOutputConfig('Checkout UI')
-    case 'customer_accounts_ui_extension':
-      return buildExtensionOutputConfig('Customer accounts UI')
-    case 'product_subscription':
-      return buildExtensionOutputConfig('Subscription UI')
-    case 'pos_ui_extension':
-      return buildExtensionOutputConfig('POS UI')
-    case 'product_discounts':
-      return buildExtensionOutputConfig(
-        'Function - Product discount',
-        'https://shopify.dev/apps/subscriptions/discounts',
-      )
-    case 'order_discounts':
-      return buildExtensionOutputConfig('Function - Order discount', 'https://shopify.dev/apps/subscriptions/discounts')
-    case 'shipping_discounts':
-      return buildExtensionOutputConfig(
-        'Function - Shipping discount',
-        'https://shopify.dev/apps/subscriptions/discounts',
-      )
-    case 'payment_customization':
-      return buildExtensionOutputConfig('Payment customization')
-    case 'shipping_rate_presenter':
-      return buildExtensionOutputConfig('Delivery option presenter')
-    case 'delivery_customization':
-      return buildExtensionOutputConfig('Delivery customization')
-    default:
-      return buildExtensionOutputConfig('Other')
-  }
-}
-
 /**
  * Each extension has a different ID in GraphQL.
  * Sometimes the ID is the same as the type, sometimes it's different.
@@ -256,13 +192,5 @@ export const extensionGraphqlId = (type: ExtensionTypes) => {
     default:
       // As we add new extensions, this bug will force us to add a new case here.
       return type.toUpperCase()
-  }
-}
-
-function buildExtensionOutputConfig(humanKey: ExternalExtensionTypeNames, helpURL?: string, additionalHelp?: string) {
-  return {
-    humanKey,
-    helpURL,
-    additionalHelp,
   }
 }

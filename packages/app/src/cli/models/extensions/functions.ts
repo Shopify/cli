@@ -157,7 +157,6 @@ export function createFunctionSpec<
     configSchema: BaseFunctionConfigurationSchema,
     metadataSchema: BaseFunctionMetadataSchema,
     public: true,
-    isFunction: true,
     registrationLimit: spec.registrationLimit ?? blocks.functions.defaultRegistrationLimit,
 
     category: (): ExtensionCategory => 'function',

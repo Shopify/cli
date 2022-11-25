@@ -24,6 +24,7 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
   singleEntryPath: boolean
   registrationLimit: number
   supportedFlavors: {name: string; value: string}[]
+  helpURL?: string
   dependency?: {name: string; version: string}
   templatePath?: string
   graphQLType?: string
@@ -203,6 +204,7 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
   partnersWebIdentifier: string
   surface: string
   externalName: string
+  helpURL?: string
   supportedFlavors?: {name: string; value: string}[]
   showInCLIHelp?: boolean
   dependency?: {name: string; version: string}
