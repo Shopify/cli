@@ -40,13 +40,12 @@ export async function getUIExtensionPayload(
       root: {
         url,
       },
-
       hidden: options.currentDevelopmentPayload?.hidden || false,
       localizationStatus,
       status: options.currentDevelopmentPayload?.status || 'success',
       ...(options.currentDevelopmentPayload || {status: 'success'}),
     },
-    extensionPoints: extension.configuration.extensionPoints,
+    extensionPoints: getExtensionPoints(extension.configuration.extensionPoints, url),
     localization: localization ?? null,
     categories: extension.configuration.categories ?? null,
     metafields: extension.configuration.metafields.length === 0 ? null : extension.configuration.metafields,
@@ -65,4 +64,23 @@ export async function getUIExtensionPayload(
     approvalScopes: options.grantedScopes,
   }
   return defaultConfig
+}
+
+function getExtensionPoints(extensionPoints: UIExtension['configuration']['extensionPoints'], url: string) {
+  if (!extensionPoints) {
+    return extensionPoints
+  }
+
+  return extensionPoints.map((extensionPoint: unknown) => {
+    if (extensionPoint && typeof extensionPoint === 'object') {
+      return {
+        ...extensionPoint,
+        root: {
+          url: `${url}/${extensionPoint}`,
+        },
+      }
+    }
+
+    return extensionPoint
+  })
 }
