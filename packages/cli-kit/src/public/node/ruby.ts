@@ -248,7 +248,7 @@ async function createShopifyCLIGemfile() {
   const {platform} = platformAndArch()
   if (platform === 'windows') {
     // 'wdm' is required by 'listen', see https://github.com/Shopify/cli/issues/780
-    gemFileContent.push("gem 'wdm'")
+    gemFileContent.push("gem 'wdm', '>= 0.1.0'")
   }
   await file.write(gemPath, gemFileContent.join('\n'))
 }
