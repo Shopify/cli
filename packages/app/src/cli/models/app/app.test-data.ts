@@ -203,14 +203,13 @@ export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
     },
   },
   {
-    name: 'Online Store - App Theme Extension',
-    externalName: 'Theme App Extension',
-    identifier: 'theme_app_extension',
-    externalIdentifier: 'theme_app_extension',
-    gated: false,
+    name: 'Marketing Activity',
+    externalName: 'Marketing Activity',
+    identifier: 'marketing_activity_extension',
+    externalIdentifier: 'marketing_activity_extension',
     options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
+      managementExperience: 'dashboard',
+      registrationLimit: 100,
     },
   },
 ]

@@ -35,7 +35,7 @@ export async function fetchExtensionSpecifications(token: string, apiKey: string
 function mergeLocalAndRemoteSpecs(local: ExtensionSpec[], remote: Partial<ExtensionSpec>[]): ExtensionSpec[] {
   const updated = local.map((spec) => {
     const remoteSpec = remote.find((remote) => remote.identifier === spec.identifier)
-    if (remoteSpec) return {...spec, ...remote}
+    if (remoteSpec) return {...spec, ...remoteSpec}
     return undefined
   })
   return getArrayRejectingUndefined(updated)

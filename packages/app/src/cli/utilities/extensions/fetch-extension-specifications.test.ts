@@ -1,4 +1,5 @@
 import {fetchExtensionSpecifications} from './fetch-extension-specifications.js'
+import {testRemoteSpecifications} from '../../models/app/app.test-data.js'
 import {describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
 
@@ -18,124 +19,65 @@ vi.mock('@shopify/cli-kit', async () => {
 describe('fetchExtensionSpecifications', () => {
   it('returns the filtered and mapped results', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValue({extensionSpecifications: rawResponse})
+    vi.mocked(api.partners.request).mockResolvedValue({extensionSpecifications: testRemoteSpecifications})
 
     // When
     const got = await fetchExtensionSpecifications('token', 'apiKey')
 
     // Then
-    expect(got).toEqual(expectedResult)
+    expect(got).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          externalName: 'Post-purchase UI',
+          identifier: 'checkout_post_purchase',
+          externalIdentifier: 'post_purchase_ui',
+          registrationLimit: 1,
+          surface: 'checkout',
+        }),
+        expect.objectContaining({
+          externalName: 'Theme App Extension',
+          identifier: 'theme',
+          externalIdentifier: 'theme_app_extension',
+          registrationLimit: 1,
+        }),
+        expect.objectContaining({
+          externalName: 'Subscription UI',
+          identifier: 'product_subscription',
+          externalIdentifier: 'subscription_ui',
+          registrationLimit: 1,
+          surface: 'admin',
+        }),
+        expect.objectContaining({
+          externalName: 'UI Extension',
+          identifier: 'ui_extension',
+          externalIdentifier: 'ui_extension',
+          registrationLimit: 50,
+          surface: 'all',
+        }),
+        expect.objectContaining({
+          externalName: 'Customer Accounts',
+          identifier: 'customer_accounts_ui_extension',
+          externalIdentifier: 'customer_accounts_ui_extension',
+          registrationLimit: 10,
+          surface: 'customer_accounts',
+        }),
+        expect.objectContaining({
+          name: 'Checkout Extension',
+          externalName: 'Checkout UI',
+          identifier: 'checkout_ui_extension',
+          externalIdentifier: 'checkout_ui',
+          registrationLimit: 5,
+          surface: 'checkout',
+        }),
+        expect.objectContaining({
+          name: 'Product Subscription',
+          externalName: 'Subscription UI',
+          identifier: 'product_subscription',
+          externalIdentifier: 'subscription_ui',
+          registrationLimit: 1,
+          surface: 'admin',
+        }),
+      ]),
+    )
   })
 })
-
-const expectedResult = [
-  {
-    name: 'Checkout Post Purchase',
-    externalName: 'Post-purchase UI',
-    identifier: 'checkout_post_purchase',
-    externalIdentifier: 'post_purchase_ui',
-    gated: false,
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-    },
-    features: {
-      argo: {
-        surface: 'checkout',
-      },
-    },
-  },
-  {
-    name: 'Online Store - App Theme Extension',
-    externalName: 'Theme App Extension',
-    identifier: 'theme',
-    externalIdentifier: 'theme_app_extension',
-    gated: false,
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-    },
-    features: {
-      argo: null,
-    },
-  },
-  {
-    name: 'Product Subscription',
-    externalName: 'Subscription UI',
-    identifier: 'product_subscription',
-    externalIdentifier: 'subscription_ui',
-    gated: false,
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-    },
-    features: {
-      argo: {
-        surface: 'admin',
-      },
-    },
-  },
-]
-
-const rawResponse = [
-  {
-    name: 'Checkout Post Purchase',
-    externalName: 'Post-purchase UI',
-    identifier: 'checkout_post_purchase',
-    externalIdentifier: 'post_purchase_ui',
-    gated: false,
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-    },
-    features: {
-      argo: {
-        surface: 'checkout',
-      },
-    },
-  },
-  {
-    name: 'Marketing Activity',
-    externalName: 'Marketing Activity',
-    identifier: 'marketing_activity_extension',
-    externalIdentifier: 'marketing_activity_extension',
-    gated: false,
-    options: {
-      managementExperience: 'dashboard',
-      registrationLimit: 100,
-    },
-    features: {
-      argo: null,
-    },
-  },
-  {
-    name: 'Online Store - App Theme Extension',
-    externalName: 'Theme App Extension',
-    identifier: 'theme_app_extension',
-    externalIdentifier: 'theme_app_extension',
-    gated: false,
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-    },
-    features: {
-      argo: null,
-    },
-  },
-  {
-    name: 'Product Subscription',
-    externalName: 'Subscription UI',
-    identifier: 'subscription_management',
-    externalIdentifier: 'subscription_ui',
-    gated: false,
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-    },
-    features: {
-      argo: {
-        surface: 'admin',
-      },
-    },
-  },
-]
