@@ -1,0 +1,15 @@
+query shop {
+  shop {
+    name
+    description
+    allProductTypes
+  }
+  products(first: 10) {
+    edges {
+      node {
+        id
+        title
+      }
+    }
+  }
+}
