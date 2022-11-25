@@ -1,6 +1,7 @@
-import {getRedirectUrl} from './utilities.js'
+import {getRedirectUrl, getExtensionPointRedirectUrl} from './utilities.js'
 import {ExtensionDevOptions} from '../../extension.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
+import {UIExtension} from '../../../../models/app/extensions.js'
 import {describe, expect, it} from 'vitest'
 
 describe('getRedirectURL()', () => {
@@ -36,5 +37,55 @@ describe('getRedirectURL()', () => {
     const result = getRedirectUrl(extension, options)
 
     expect(result).toBe('https://example.myshopify.com/mock/cart/url?dev=https%3A%2F%2Flocalhost%3A8081%2Fextensions')
+  })
+})
+
+describe('getExtensionPointRedirectUrl()', () => {
+  it('returns Admin dev server URL if the extension point targets Admin', () => {
+    const extension = {
+      devUUID: '123abc',
+    } as UIExtension
+
+    const options = {
+      storeFqdn: 'example.myshopify.com',
+      url: 'https://localhost:8081',
+    } as unknown as ExtensionDevOptions
+
+    const result = getExtensionPointRedirectUrl('Admin::CheckoutEditor::RenderSettings', extension, options)
+
+    expect(result).toBe(
+      'https://example.myshopify.com/admin/extensions-dev?url=https%3A%2F%2Flocalhost%3A8081%2Fextensions%2F123abc',
+    )
+  })
+
+  it('returns Checkout dev server URL if the extension point targets Checkout', () => {
+    const extension = {
+      devUUID: '123abc',
+    } as UIExtension
+
+    const options = {
+      storeFqdn: 'example.myshopify.com',
+      url: 'https://localhost:8081',
+      checkoutCartUrl: 'mock/cart/url',
+    } as unknown as ExtensionDevOptions
+
+    const result = getExtensionPointRedirectUrl('Checkout::Dynamic::Render', extension, options)
+
+    expect(result).toBe('https://example.myshopify.com/mock/cart/url?dev=https%3A%2F%2Flocalhost%3A8081%2Fextensions')
+  })
+
+  it('returns undefined if the extension point surface is not supported', () => {
+    const extension = {
+      devUUID: '123abc',
+    } as UIExtension
+
+    const options = {
+      storeFqdn: 'example.myshopify.com',
+      url: 'https://localhost:8081',
+      checkoutCartUrl: 'mock/cart/url',
+    } as unknown as ExtensionDevOptions
+
+    expect(getExtensionPointRedirectUrl('ABC', extension, options)).toBeUndefined()
+    expect(getExtensionPointRedirectUrl('SomeOtherArea::Test::Extension', extension, options)).toBeUndefined()
   })
 })

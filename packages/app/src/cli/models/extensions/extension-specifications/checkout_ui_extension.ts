@@ -32,6 +32,7 @@ const spec = createExtensionSpec({
       localization: await loadLocalesConfig(directory, 'checkout_ui'),
     }
   },
+  shouldFetchCartUrl: () => true,
 })
 
 export default spec
