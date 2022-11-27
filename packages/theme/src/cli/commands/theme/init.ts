@@ -27,11 +27,14 @@ export default class Init extends ThemeCommand {
     }),
   }
 
+  static cli2Flags = ['clone-url']
+
   async run(): Promise<void> {
     const {args, flags} = await this.parse(Init)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const name = args.name || (await this.promptName(directory))
-    const command = ['theme', 'init', name]
+    const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Init.cli2Flags})
+    const command = ['theme', 'init', name, ...flagsToPass]
     await execCLI2(command, {
       directory,
     })
