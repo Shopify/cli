@@ -27,7 +27,7 @@ export default class Publish extends ThemeCommand {
     const {flags, args} = await this.parse(Publish)
 
     const store = await getThemeStore(flags)
-    const flagsToPass = this.passThroughFlags(flags, {relevantFlags: Publish.cli2Flags})
+    const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Publish.cli2Flags})
     const command = ['theme', 'publish']
     if (args.themeId) {
       command.push(args.themeId)

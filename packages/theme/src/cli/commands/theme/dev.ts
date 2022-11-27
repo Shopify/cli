@@ -78,7 +78,7 @@ export default class Dev extends ThemeCommand {
   async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
 
-    const flagsToPass = this.passThroughFlags(flags, {relevantFlags: Dev.cli2Flags})
+    const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Dev.cli2Flags})
     const command = ['theme', 'serve', flags.path, ...flagsToPass]
 
     const store = await getThemeStore(flags)

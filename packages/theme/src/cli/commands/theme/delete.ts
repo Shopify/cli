@@ -45,7 +45,7 @@ export default class Delete extends ThemeCommand {
       command.push(...argv)
     }
 
-    const flagsToPass = this.passThroughFlags(flags, {relevantFlags: Delete.cli2Flags})
+    const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Delete.cli2Flags})
     command.push(...flagsToPass)
 
     const adminSession = await session.ensureAuthenticatedThemes(store, flags.password)
