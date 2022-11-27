@@ -51,7 +51,7 @@ export default class Pull extends ThemeCommand {
     }),
   }
 
-  static cli2Flags = ['theme', 'development', 'live', 'nodelete', 'only', 'ignore']
+  static cli2Flags = ['theme', 'development', 'live', 'nodelete', 'only', 'ignore', 'force']
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Pull)
