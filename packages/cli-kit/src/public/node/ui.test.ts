@@ -1,9 +1,11 @@
-import {renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
+import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
 import {Abort, Bug} from '../../error.js'
 import * as outputMocker from '../../testing/output.js'
 import {run} from '../../testing/ui.js'
+import {Signal} from '../../abort.js'
 import {afterEach, describe, expect, test} from 'vitest'
 import stripAnsi from 'strip-ansi'
+import {Writable} from 'node:stream'
 
 afterEach(() => {
   outputMocker.mockAndCaptureOutput().clear()
@@ -269,11 +271,26 @@ describe('renderConcurrent', async () => {
   })
 
   test('renders an error message correctly when a process throws an error', async () => {
+    // Given
+    const mockOutput = outputMocker.mockAndCaptureOutput()
+
     // When
-    const {stdout} = await run('render-concurrent-throws-error')
-    const lastFrame = stripAnsi(stdout).replace(/\d/g, '0')
+    const throwingProcess = {
+      prefix: 'backend',
+      action: async (_stdout: Writable, _stderr: Writable, _signal: Signal) => {
+        throw new Error('example error')
+      },
+    }
+
+    await renderConcurrent({processes: [throwingProcess], renderOptions: {patchConsole: false}})
 
     // Then
-    expect(lastFrame).toMatchInlineSnapshot('""')
+    expect(mockOutput.error()).toMatchInlineSnapshot(`
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  example error                                                               │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯"
+    `)
   })
 })
