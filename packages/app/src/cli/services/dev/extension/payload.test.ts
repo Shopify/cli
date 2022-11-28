@@ -128,4 +128,59 @@ describe('getUIExtensionPayload', () => {
       })
     })
   })
+
+  test('adds root.url to extensionPoints[n] when extensionPoints[n] is an object', async () => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const uiExtension = await testUIExtension({
+        devUUID: 'devUUID',
+        configuration: {
+          name: 'UI Extension',
+          type: 'ui_extension',
+          metafields: [],
+          capabilities: {
+            block_progress: false,
+            network_access: false,
+          },
+          extensionPoints: [
+            {
+              target: 'Extension::Point::A',
+              module: './src/ExtensionPointA.js',
+            },
+            {
+              target: 'Extension::Point::B',
+              module: './src/ExtensionPointB.js',
+            },
+          ],
+        },
+      })
+      const options: ExtensionDevOptions = {} as ExtensionDevOptions
+      const development: Partial<UIExtensionPayload['development']> = {}
+
+      // When
+      const got = await getUIExtensionPayload(uiExtension, {
+        ...options,
+        currentDevelopmentPayload: development,
+        url: 'http://tunnel-url.com',
+      })
+
+      // Then
+      expect(got.extensionPoints).toStrictEqual([
+        {
+          target: 'Extension::Point::A',
+          module: './src/ExtensionPointA.js',
+          root: {
+            url: 'http://tunnel-url.com/extensions/devUUID/Extension::Point::A',
+          },
+        },
+        {
+          target: 'Extension::Point::B',
+          module: './src/ExtensionPointB.js',
+          root: {
+            url: 'http://tunnel-url.com/extensions/devUUID/Extension::Point::B',
+          },
+        },
+      ])
+    })
+  })
 })

@@ -73,10 +73,12 @@ function getExtensionPoints(extensionPoints: UIExtension['configuration']['exten
 
   return extensionPoints.map((extensionPoint: unknown) => {
     if (extensionPoint && typeof extensionPoint === 'object') {
+      const {target} = extensionPoint as {target: string}
+
       return {
         ...extensionPoint,
         root: {
-          url: `${url}/${extensionPoint}`,
+          url: `${url}/${target}`,
         },
       }
     }
