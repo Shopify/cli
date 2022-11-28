@@ -58,7 +58,6 @@ describe('uploadFunctionExtensions', () => {
       externalType: 'order_discounts',
       idEnvironmentVariableName: 'SHOPIFY_FUNCTION_ID',
       localIdentifier: 'my-function',
-      metadata: {schemaVersions: {order_discounts: {major: 1, minor: 0}}},
       type: 'order_discounts',
       graphQLType: 'order_discounts',
     }

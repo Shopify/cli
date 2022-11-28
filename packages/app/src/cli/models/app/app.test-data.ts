@@ -94,7 +94,6 @@ export async function testFunctionExtension(): Promise<FunctionExtension> {
   return new FunctionInstance({
     configuration,
     configurationPath: '',
-    metadata: {schemaVersions: {}},
     specification: specification!,
     directory: './my-extension',
   })

@@ -1,6 +1,6 @@
 import {ExtensionTypes} from '../../constants.js'
 import {BaseConfigContents} from '../extensions/extensions.js'
-import {FunctionConfigType, MetadataType} from '../extensions/functions.js'
+import {FunctionConfigType} from '../extensions/functions.js'
 import {output} from '@shopify/cli-kit'
 import {Result} from '@shopify/cli-kit/common/result'
 
@@ -21,12 +21,8 @@ export interface Extension {
   publishURL(options: {orgId: string; appId: string; extensionId?: string}): Promise<string>
 }
 
-export type FunctionExtension<
-  TConfiguration extends FunctionConfigType = FunctionConfigType,
-  TMetadata extends MetadataType = MetadataType,
-> = Extension & {
+export type FunctionExtension<TConfiguration extends FunctionConfigType = FunctionConfigType> = Extension & {
   configuration: TConfiguration
-  metadata: TMetadata
   buildWasmPath: () => string
   inputQueryPath: () => string
 }

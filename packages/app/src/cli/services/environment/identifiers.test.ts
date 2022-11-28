@@ -87,9 +87,6 @@ const EXTENSION_A_2: UIExtension = {
 }
 
 const FUNCTION_C: FunctionExtension = {
-  metadata: {
-    schemaVersions: {},
-  },
   idEnvironmentVariableName: 'FUNCTION_C_ID',
   localIdentifier: 'FUNCTION_C',
   configurationPath: '/function/shopify.function.extension.toml',

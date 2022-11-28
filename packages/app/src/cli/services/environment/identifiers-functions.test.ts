@@ -31,9 +31,6 @@ const REGISTRATION_B = {
 }
 
 const FUNCTION_A: FunctionExtension = {
-  metadata: {
-    schemaVersions: {},
-  },
   idEnvironmentVariableName: 'FUNCTION_A_ID',
   localIdentifier: 'FUNCTION_A',
   configurationPath: '/function/shopify.function.extension.toml',
@@ -58,9 +55,6 @@ const FUNCTION_A: FunctionExtension = {
 }
 
 const FUNCTION_A_2: FunctionExtension = {
-  metadata: {
-    schemaVersions: {},
-  },
   idEnvironmentVariableName: 'FUNCTION_A_2_ID',
   localIdentifier: 'FUNCTION_A_2',
   configurationPath: '/function/shopify.function.extension.toml',
@@ -85,9 +79,6 @@ const FUNCTION_A_2: FunctionExtension = {
 }
 
 const FUNCTION_B: FunctionExtension = {
-  metadata: {
-    schemaVersions: {},
-  },
   idEnvironmentVariableName: 'FUNCTION_B_ID',
   localIdentifier: 'FUNCTION_B',
   configurationPath: '/function/shopify.function.extension.toml',
