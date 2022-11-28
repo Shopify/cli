@@ -4,6 +4,7 @@ import {getUIExtensionResourceURL} from '../../../utilities/extensions/configura
 import {ExtensionDevOptions} from '../extension.js'
 import {UIExtension} from '../../../models/app/extensions.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
+import {NewExtensionPointSchemaType} from '../../../models/extensions/schemas.js'
 import {file} from '@shopify/cli-kit'
 
 type GetUIExtensionPayloadOptions = ExtensionDevOptions & {
@@ -73,7 +74,7 @@ function getExtensionPoints(extensionPoints: UIExtension['configuration']['exten
 
   return extensionPoints.map((extensionPoint: unknown) => {
     if (extensionPoint && typeof extensionPoint === 'object') {
-      const {target} = extensionPoint as {target: string}
+      const {target} = extensionPoint as NewExtensionPointSchemaType
 
       return {
         ...extensionPoint,
