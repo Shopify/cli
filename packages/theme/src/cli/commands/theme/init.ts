@@ -1,8 +1,8 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
+import {rawClone, latestClone} from '../../services/init.js'
 import {Flags} from '@oclif/core'
 import {cli, path, ui} from '@shopify/cli-kit'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 
 export default class Init extends ThemeCommand {
@@ -21,23 +21,30 @@ export default class Init extends ThemeCommand {
     path: themeFlags.path,
     'clone-url': Flags.string({
       char: 'u',
+      default: 'https://github.com/Shopify/dawn.git',
       description:
         "The Git URL to clone from. Defaults to Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git",
       env: 'SHOPIFY_FLAG_CLONE_URL',
     }),
+    latest: Flags.boolean({
+      char: 'l',
+      description: 'Downloads the latest release of the `clone-url`',
+      env: 'SHOPIFY_FLAG_LATEST',
+    }),
   }
-
-  static cli2Flags = ['clone-url']
 
   async run(): Promise<void> {
     const {args, flags} = await this.parse(Init)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const name = args.name || (await this.promptName(directory))
-    const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Init.cli2Flags})
-    const command = ['theme', 'init', name, ...flagsToPass]
-    await execCLI2(command, {
-      directory,
-    })
+    const destination = path.resolve(flags.path, name)
+    const repoUrl = flags['clone-url']
+
+    if (flags.latest) {
+      await latestClone(repoUrl, destination)
+    } else {
+      await rawClone(repoUrl, destination)
+    }
   }
 
   async promptName(directory: string) {
