@@ -1,5 +1,5 @@
 import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
-import {Abort, Bug} from '../../error.js'
+import {Abort, Bug, Fatal} from '../../error.js'
 import * as outputMocker from '../../testing/output.js'
 import {run} from '../../testing/ui.js'
 import {Signal} from '../../abort.js'
@@ -282,7 +282,12 @@ describe('renderConcurrent', async () => {
       },
     }
 
-    await renderConcurrent({processes: [throwingProcess], renderOptions: {patchConsole: false}})
+    try {
+      await renderConcurrent({processes: [throwingProcess], renderOptions: {patchConsole: false}})
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      renderFatalError(error as Fatal)
+    }
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`

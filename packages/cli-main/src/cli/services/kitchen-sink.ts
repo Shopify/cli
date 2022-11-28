@@ -131,7 +131,6 @@ export async function kitchenSink() {
   const backendProcess = {
     prefix: 'backend',
     action: async (stdout: Writable, _stderr: Writable, _signal: Signal) => {
-      throw new Error('asd')
       stdout.write('first backend message')
       await new Promise((resolve) => setTimeout(resolve, 1000))
       stdout.write('second backend message')
