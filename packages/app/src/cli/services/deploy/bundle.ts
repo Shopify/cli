@@ -30,10 +30,7 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
                 const extensionId = options.identifiers.extensions[themeExtension.localIdentifier]!
                 const mappedThemeExtension: typeof themeExtension = {
                   ...themeExtension,
-                  outputBundlePath: path.join(
-                    bundleDirectory,
-                    extensionId
-                  ),
+                  outputBundlePath: path.join(bundleDirectory, extensionId),
                 }
                 return mappedThemeExtension
               }),

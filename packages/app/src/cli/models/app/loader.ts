@@ -344,6 +344,7 @@ class AppLoader {
         type: configuration.type,
         graphQLType: extensionGraphqlId(configuration.type),
         idEnvironmentVariableName: `SHOPIFY_${string.constantize(path.basename(directory))}_ID`,
+        outputBundlePath: directory,
         localIdentifier: path.basename(directory),
       }
     })

@@ -58,6 +58,7 @@ export function testThemeExtensions(): ThemeExtension {
       name: 'theme extension name',
       type: 'theme',
     },
+    outputBundlePath: '/tmp/project/extensions/test-theme-app-extension',
     idEnvironmentVariableName: '',
     localIdentifier: 'extension title',
     configurationPath: '',

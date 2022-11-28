@@ -56,8 +56,9 @@ export async function buildThemeExtensions(options: ThemeExtensionBuildOptions):
   if (environment.local.useThemeBundling()) {
     await Promise.all(
       options.extensions.map(async (extension) => {
+        options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
         await file.copy(extension.directory, extension.outputBundlePath)
-      })
+      }),
     )
   }
 }

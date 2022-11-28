@@ -16,7 +16,6 @@ import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType, UIExte
 import {loadLocalesConfig} from '../utilities/extensions/locales-configuration.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
-import { themeExtensionConfig as generateThemeExtensionConfig} from './deploy/theme-extension-config.js'
 import {path, output, file, error, environment} from '@shopify/cli-kit'
 import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
 
@@ -60,10 +59,10 @@ export const deploy = async (options: DeployOptions) => {
       options.app.extensions.theme.map(async (extension) => {
         return {
           uuid: identifiers.extensions[extension.localIdentifier]!,
-          config: JSON.stringify(await generateThemeExtensionConfig(extension)),
+          config: '{"theme_extension": {"files": {}}}',
           context: '',
         }
-      })
+      }),
     )
     extensions.push(...themeExtensions)
   }
