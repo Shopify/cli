@@ -1,8 +1,20 @@
-import {getLocalization, Localization} from './localization.js'
+import {getLocalization} from './localization.js'
 import {testUIExtension} from '../../../models/app/app.test-data.js'
 import {ExtensionDevOptions} from '../extension.js'
 import {file, path, output} from '@shopify/cli-kit'
 import {describe, expect, it, vi} from 'vitest'
+import {ExtensionPayload, Status} from '@shopify/ui-extensions-server-kit'
+
+type Localization = ExtensionPayload['localization']
+
+interface ResultWithLocalization {
+  status: Status.Success
+  localization: {
+    lastUpdated: number
+    defaultLocale: string
+    translations: {[key: string]: any}
+  }
+}
 
 async function testGetLocalization(tmpDir: string, currentLocalization?: Localization) {
   const mockOptions = {} as unknown as ExtensionDevOptions
@@ -54,9 +66,9 @@ describe('when there are locale files', () => {
       await file.write(path.join(tmpDir, 'locales', 'en.json'), '{"lorem": "ipsum}')
       await file.write(path.join(tmpDir, 'locales', 'de.default.json'), '{"lorem": "ipsum}')
 
-      const result = await testGetLocalization(tmpDir)
+      const result = (await testGetLocalization(tmpDir)) as ResultWithLocalization
 
-      expect(result.localization!.defaultLocale).toBe('de')
+      expect(result.localization.defaultLocale).toBe('de')
     })
   })
 
@@ -66,9 +78,9 @@ describe('when there are locale files', () => {
       await file.write(path.join(tmpDir, 'locales', 'en.json'), '{"lorem": "ipsum}')
       await file.write(path.join(tmpDir, 'locales', 'de.json'), '{"lorem": "ipsum}')
 
-      const result = await testGetLocalization(tmpDir)
+      const result = (await testGetLocalization(tmpDir)) as ResultWithLocalization
 
-      expect(result.localization!.defaultLocale).toBe('en')
+      expect(result.localization.defaultLocale).toBe('en')
     })
   })
 
@@ -78,9 +90,9 @@ describe('when there are locale files', () => {
       await file.write(path.join(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
       await file.write(path.join(tmpDir, 'locales', 'fr.json'), '{"greeting": "Bonjour!"}')
 
-      const result = await testGetLocalization(tmpDir)
+      const result = (await testGetLocalization(tmpDir)) as ResultWithLocalization
 
-      expect(result.localization!.translations).toStrictEqual({
+      expect(result.localization.translations).toStrictEqual({
         en: {greeting: 'Hi!'},
         fr: {greeting: 'Bonjour!'},
       })
@@ -99,10 +111,10 @@ describe('when there are locale files', () => {
       await file.write(path.join(tmpDir, 'locales', 'fr.json'), '{"greeting": "Bonjour!"}')
       await file.write(path.join(tmpDir, 'locales', 'es.json'), '{"greeting": "Hola!"}')
 
-      const result = await testGetLocalization(tmpDir)
+      const result = (await testGetLocalization(tmpDir)) as ResultWithLocalization
 
       expect(Date.now).toBeCalledTimes(4)
-      expect(result.localization!.lastUpdated).equals(timestamp)
+      expect(result.localization.lastUpdated).equals(timestamp)
     })
   })
   it('returns the last succesful locale built when there are JSON errors', async () => {
@@ -114,13 +126,13 @@ describe('when there are locale files', () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       await file.mkdir(path.join(tmpDir, 'locales'))
       await file.write(path.join(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
-      const {localization: lastSuccesfulLocalization} = await testGetLocalization(tmpDir)
+      const {localization: lastSuccesfulLocalization} = (await testGetLocalization(tmpDir)) as ResultWithLocalization
 
       await file.write(path.join(tmpDir, 'locales', 'es.json'), '{"greeting: "Hola!"}')
 
-      const result = await testGetLocalization(tmpDir, lastSuccesfulLocalization)
+      const result = (await testGetLocalization(tmpDir, lastSuccesfulLocalization)) as ResultWithLocalization
 
-      expect(result.localization!.lastUpdated).equals(lastSuccesfulLocalization!.lastUpdated)
+      expect(result.localization.lastUpdated).equals(lastSuccesfulLocalization.lastUpdated)
     })
   })
   it("returns 'success' as the status when there are no JSON errors", async () => {

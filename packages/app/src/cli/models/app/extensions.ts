@@ -5,6 +5,7 @@ import {BaseConfigContents} from '../extensions/schemas.js'
 import {output} from '@shopify/cli-kit'
 import {Result} from '@shopify/cli-kit/node/result'
 import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
+import {Surface} from '@shopify/ui-extensions-server-kit'
 
 export type ExtensionCategory = 'ui' | 'function' | 'theme'
 
@@ -49,8 +50,8 @@ export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigCo
   entrySourceFilePath?: string
   outputBundlePath: string
   devUUID: string
-  surface: string
   dependency?: DependencyVersion
+  surface: Surface
   getBundleExtensionStdinContent(): string
   validate(): Promise<Result<unknown, string>>
   preDeployValidation(): Promise<void>

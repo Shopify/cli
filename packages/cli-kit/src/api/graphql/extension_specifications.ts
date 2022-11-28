@@ -37,13 +37,15 @@ export interface RemoteSpecification {
   }
   features?: {
     argo?: {
-      surface: string
+      surface: Surface
     }
   }
 }
 
+type Surface = 'admin' | 'checkout' | 'post-checkout' | 'pos' | 'customer-accounts' | 'all' | null | undefined
+
 export interface FlattenedRemoteSpecification extends RemoteSpecification {
-  surface?: string
+  surface: Surface
   registrationLimit: number
 }
 

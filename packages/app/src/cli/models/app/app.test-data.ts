@@ -170,7 +170,7 @@ export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
     },
     features: {
       argo: {
-        surface: 'customer_accounts',
+        surface: 'customer-accounts',
       },
     },
   },

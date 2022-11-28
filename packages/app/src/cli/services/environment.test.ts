@@ -126,7 +126,7 @@ const EXTENSION_A: UIExtension = {
   outputBundlePath: '',
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
-  surface: 'surface',
+  surface: 'checkout',
   preDeployValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,

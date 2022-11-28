@@ -1,10 +1,10 @@
-import {UIExtensionPayload} from './payload/models.js'
 import {getUIExtensionPayload} from './payload.js'
 import {ExtensionDevOptions} from '../extension.js'
 import {testApp, testUIExtension} from '../../../models/app/app.test-data.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
+import {ExtensionPayload, Status} from '@shopify/ui-extensions-server-kit'
 
 vi.mock('../../../models/app/app.js')
 
@@ -54,9 +54,9 @@ describe('getUIExtensionPayload', () => {
         checkoutCartUrl: 'https://my-domain.com/cart',
         subscriptionProductUrl: 'https://my-domain.com/subscription',
       }
-      const development: Partial<UIExtensionPayload['development']> = {
+      const development: Partial<ExtensionPayload['development']> = {
         hidden: true,
-        status: 'success',
+        status: Status.Success,
       }
 
       // When
@@ -66,42 +66,44 @@ describe('getUIExtensionPayload', () => {
       })
 
       // Then
-      expect(got).toMatchObject({
-        assets: {
-          main: {
-            lastUpdated: expect.any(Number),
-            name: 'main',
-            url: 'http://tunnel-url.com/extensions/devUUID/assets/main.js',
+      expect(got).toStrictEqual(
+        expect.objectContaining({
+          assets: {
+            main: {
+              lastUpdated: expect.any(Number),
+              name: 'main',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/main.js',
+            },
           },
-        },
-        capabilities: {
-          blockProgress: false,
-          networkAccess: true,
-          apiAccess: true,
-        },
-        development: {
-          hidden: true,
-          localizationStatus: '',
-          resource: {
-            url: 'https://my-domain.com/cart',
+          capabilities: {
+            blockProgress: false,
+            networkAccess: true,
+            apiAccess: true,
           },
-          root: {
-            url: 'http://tunnel-url.com/extensions/devUUID',
+          development: {
+            hidden: true,
+            localizationStatus: '',
+            resource: {
+              url: 'https://my-domain.com/cart',
+            },
+            root: {
+              url: 'http://tunnel-url.com/extensions/devUUID',
+            },
+            status: Status.Success,
           },
-          status: 'success',
-        },
-        categories: null,
-        extensionPoints: ['CUSTOM_EXTENSION_POINT'],
-        externalType: 'checkout_ui',
-        localization: null,
-        metafields: null,
-        surface: 'checkout',
-        title: 'test-ui-extension',
-        type: 'checkout_ui_extension',
-        uuid: 'devUUID',
-        version: '1.2.3',
-        approvalScopes: ['scope-a'],
-      })
+          categories: undefined,
+          extensionPoints: ['CUSTOM_EXTENSION_POINT'],
+          externalType: 'checkout_ui',
+          localization: undefined,
+          metafields: null,
+          surface: 'checkout',
+          title: 'test-ui-extension',
+          type: 'checkout_ui_extension',
+          uuid: 'devUUID',
+          version: '1.2.3',
+          approvalScopes: ['scope-a'],
+        }),
+      )
     })
   })
 
@@ -110,7 +112,7 @@ describe('getUIExtensionPayload', () => {
       // Given
       const uiExtension = await testUIExtension({directory: tmpDir})
       const options: ExtensionDevOptions = {} as ExtensionDevOptions
-      const development: Partial<UIExtensionPayload['development']> = {}
+      const development: Partial<ExtensionPayload['development']> = {}
 
       // When
       const got = await getUIExtensionPayload(uiExtension, {
@@ -160,7 +162,7 @@ describe('getUIExtensionPayload', () => {
       })
 
       const options: ExtensionDevOptions = {} as ExtensionDevOptions
-      const development: Partial<UIExtensionPayload['development']> = {}
+      const development: Partial<ExtensionPayload['development']> = {}
 
       // When
       const got = await getUIExtensionPayload(uiExtension, {

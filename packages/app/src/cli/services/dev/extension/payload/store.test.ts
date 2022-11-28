@@ -4,9 +4,10 @@ import {
   getExtensionsPayloadStoreRawPayload,
   ExtensionsPayloadStoreEvent,
 } from './store.js'
-import {UIExtensionPayload, ExtensionsEndpointPayload} from './models.js'
+import {ExtensionsEndpointPayload} from './models.js'
 import * as payload from '../payload.js'
 import {UIExtension} from '../../../../models/app/extensions.js'
+import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 
 describe('getExtensionsPayloadStoreRawPayload()', () => {
@@ -14,7 +15,7 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
     // Given
     vi.spyOn(payload, 'getUIExtensionPayload').mockResolvedValue({
       mock: 'extension-payload',
-    } as unknown as UIExtensionPayload)
+    } as unknown as ExtensionPayload)
 
     const options = {
       apiKey: 'mock-api-key',
@@ -155,7 +156,7 @@ describe('ExtensionsPayloadStore()', () => {
       extensionsPayloadStore.updateExtensions([
         {uuid: '123', test: 'value'},
         {uuid: '789'},
-      ] as unknown as UIExtensionPayload[])
+      ] as unknown as ExtensionPayload[])
 
       // Then
       expect(extensionsPayloadStore.getRawPayload().extensions.length).toEqual(1)
@@ -177,7 +178,7 @@ describe('ExtensionsPayloadStore()', () => {
       extensionsPayloadStore.on(ExtensionsPayloadStoreEvent.Update, onUpdateSpy)
 
       // When
-      extensionsPayloadStore.updateExtensions([{uuid: '123'}, {uuid: '789'}] as unknown as UIExtensionPayload[])
+      extensionsPayloadStore.updateExtensions([{uuid: '123'}, {uuid: '789'}] as unknown as ExtensionPayload[])
 
       // Then
       expect(onUpdateSpy).toHaveBeenCalledWith(['123', '789'])
@@ -187,7 +188,7 @@ describe('ExtensionsPayloadStore()', () => {
   describe('updateExtension()', () => {
     beforeEach(() => {
       vi.spyOn(payload, 'getUIExtensionPayload').mockImplementation(async (extension, _options) => {
-        return {mock: 'getExtensionsPayloadResponse'} as unknown as UIExtensionPayload
+        return {mock: 'getExtensionsPayloadResponse'} as unknown as ExtensionPayload
       })
     })
 

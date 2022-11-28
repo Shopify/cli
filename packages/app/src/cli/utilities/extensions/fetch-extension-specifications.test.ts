@@ -59,7 +59,7 @@ describe('fetchExtensionSpecifications', () => {
           identifier: 'customer_accounts_ui_extension',
           externalIdentifier: 'customer_accounts_ui_extension',
           registrationLimit: 10,
-          surface: 'customer_accounts',
+          surface: 'customer-accounts',
         }),
         expect.objectContaining({
           name: 'Checkout Extension',

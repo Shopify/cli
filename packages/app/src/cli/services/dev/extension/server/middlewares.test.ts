@@ -11,8 +11,8 @@ import * as utilities from './utilities.js'
 import {GetExtensionsMiddlewareOptions} from './models.js'
 import * as templates from '../templates.js'
 import * as payload from '../payload.js'
-import {UIExtensionPayload} from '../payload/models.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
+import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {http, file, path} from '@shopify/cli-kit'
 import {describe, expect, it, vi} from 'vitest'
 
@@ -302,7 +302,7 @@ describe('getExtensionPayloadMiddleware()', () => {
   })
 
   describe('if the accept header starts with text/html', () => {
-    it('returns html if the extension surface is post_purchase', async () => {
+    it('returns html if the extension surface is post-checkout', async () => {
       vi.spyOn(http, 'send')
       vi.spyOn(templates, 'getHTML').mockResolvedValue('mock html')
       vi.spyOn(utilities, 'getExtensionUrl').mockReturnValue('http://www.mock.com/extension/url')
@@ -343,13 +343,13 @@ describe('getExtensionPayloadMiddleware()', () => {
           url: 'http://www.mock.com/extension/url',
         },
         template: 'index',
-        extensionSurface: 'post_purchase',
+        extensionSurface: 'post-checkout',
       })
 
       expect(http.send).toHaveBeenCalledWith(response.event, 'mock html')
     })
 
-    it('returns the redirect URL if the extension surface is not post_purchase', async () => {
+    it('returns the redirect URL if the extension surface is not post-checkout', async () => {
       vi.spyOn(http, 'sendRedirect')
       vi.spyOn(utilities, 'getRedirectUrl').mockReturnValue('http://www.mock.com/redirect/url')
 
@@ -397,7 +397,7 @@ describe('getExtensionPayloadMiddleware()', () => {
     it('returns the app JSON', async () => {
       vi.spyOn(payload, 'getUIExtensionPayload').mockResolvedValue({
         mock: 'extension payload',
-      } as unknown as UIExtensionPayload)
+      } as unknown as ExtensionPayload)
 
       const extensionId = '123abc'
       const options = {

@@ -1,18 +1,9 @@
-import {ExtensionAssetBuildStatus} from './payload/models.js'
-import {GetUIExtensionPayloadOptions} from './payload.js'
 import {UIExtension} from '../../../models/app/extensions.js'
 import {path, file, output} from '@shopify/cli-kit'
+import {ExtensionPayload, Status} from '@shopify/ui-extensions-server-kit'
+import type {GetUIExtensionPayloadOptions} from './payload.js'
 
-export type Locale = string
-
-export interface Localization {
-  // TOOD: Should this be strongly typed?
-  defaultLocale: Locale
-  translations: {
-    [key: Locale]: {[key: string]: string}
-  }
-  lastUpdated: number
-}
+type Localization = ExtensionPayload['localization']
 
 export async function getLocalizationFilePaths(extension: UIExtension): Promise<string[]> {
   const localePath = path.join(extension.directory, 'locales')
@@ -22,21 +13,14 @@ export async function getLocalizationFilePaths(extension: UIExtension): Promise<
 export async function getLocalization(
   extension: UIExtension,
   options: GetUIExtensionPayloadOptions,
-): Promise<{localization: Localization | undefined; status: ExtensionAssetBuildStatus}> {
+): Promise<{localization: Localization; status: Status}> {
   const localeFiles = await getLocalizationFilePaths(extension)
 
   if (!localeFiles.length) {
-    return {localization: undefined, status: ''}
+    return {localization: undefined, status: Status.Unknown}
   }
 
-  const localization = options.currentLocalizationPayload
-    ? options.currentLocalizationPayload
-    : ({
-        defaultLocale: 'en',
-        translations: {},
-        lastUpdated: 0,
-      } as Localization)
-
+  const localization = defaultLocalizationIfUndefined(options.currentLocalizationPayload)
   const compilingTranslations = []
 
   for (const path of localeFiles) {
@@ -51,7 +35,7 @@ export async function getLocalization(
     }
   }
 
-  let status: ExtensionAssetBuildStatus = 'success'
+  let status = Status.Success
 
   await Promise.all(compilingTranslations)
     .then(async () => {
@@ -62,7 +46,7 @@ export async function getLocalization(
       )
     })
     .catch(() => {
-      status = 'error'
+      status = Status.Error
     })
 
   return {
@@ -71,10 +55,20 @@ export async function getLocalization(
   }
 }
 
+function defaultLocalizationIfUndefined(localization: Localization) {
+  return localization
+    ? localization
+    : {
+        defaultLocale: 'en',
+        translations: {},
+        lastUpdated: 0,
+      }
+}
+
 async function compileLocalizationFiles(
   locale: string,
   path: string,
-  localization: Localization,
+  localization: ReturnType<typeof defaultLocalizationIfUndefined>,
   extension: UIExtension,
   options: GetUIExtensionPayloadOptions,
 ): Promise<void> {

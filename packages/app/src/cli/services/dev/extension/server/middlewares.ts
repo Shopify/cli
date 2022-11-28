@@ -172,7 +172,7 @@ export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlew
     if (request.headers.accept?.startsWith('text/html')) {
       const extensionSurface = extension.surface
 
-      if (extensionSurface === 'post_purchase') {
+      if (extensionSurface === 'post-checkout') {
         const body = await getHTML({
           data: {
             url: getExtensionUrl(extension, devOptions),

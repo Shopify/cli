@@ -29,6 +29,7 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
       },
       ...((obj.assets || {}) as any),
     },
+    approvalScopes: ['read_products'],
     development: {
       hidden: false,
       status: Status.Success,

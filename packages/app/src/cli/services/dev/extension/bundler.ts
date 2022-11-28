@@ -3,6 +3,7 @@ import {ExtensionDevOptions} from '../extension.js'
 import {bundleExtension} from '../../extensions/bundle.js'
 import {abort, path, output} from '@shopify/cli-kit'
 import chokidar from 'chokidar'
+import {Status} from '@shopify/ui-extensions-server-kit'
 
 export interface WatchEvent {
   path: string
@@ -52,7 +53,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
 
           options.payloadStore
             .updateExtension(extension, options.devOptions, {
-              status: error ? 'error' : 'success',
+              status: error ? Status.Error : Status.Success,
             })
             // ESBuild handles error output
             .then((_) => {})

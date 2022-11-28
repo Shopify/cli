@@ -6,13 +6,14 @@ interface GetUIExensionResourceURLOptions {
 export function getUIExtensionResourceURL(
   uiExtensionType: string,
   options: GetUIExensionResourceURLOptions,
-): {url: string | undefined} {
-  switch (uiExtensionType) {
-    case 'checkout_ui_extension':
-      return {url: options.checkoutCartUrl}
-    case 'product_subscription':
-      return {url: options.subscriptionProductUrl ?? ''}
-    default:
-      return {url: ''}
+): {url: string} {
+  if (uiExtensionType === 'checkout_ui_extension' && options.checkoutCartUrl) {
+    return {url: options.checkoutCartUrl}
   }
+
+  if (uiExtensionType === 'product_subscription') {
+    return {url: options.subscriptionProductUrl ?? ''}
+  }
+
+  return {url: ''}
 }

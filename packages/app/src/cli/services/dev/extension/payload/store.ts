@@ -1,7 +1,8 @@
-import {UIExtensionPayload, ExtensionsEndpointPayload} from './models.js'
+import {ExtensionsEndpointPayload} from './models.js'
 import {ExtensionDevOptions} from '../../extension.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {UIExtension} from '../../../../models/app/extensions.js'
+import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 import {output} from '@shopify/cli-kit'
 import {EventEmitter} from 'node:events'
@@ -73,7 +74,7 @@ export class ExtensionsPayloadStore extends EventEmitter {
     this.emitUpdate([])
   }
 
-  updateExtensions(extensions: UIExtensionPayload[]) {
+  updateExtensions(extensions: ExtensionPayload[]) {
     const updatedExtensionsPayload = this.rawPayload.extensions.map((rawPayloadExtension) => {
       const foundExtension = extensions.find((ext) => ext.uuid === rawPayloadExtension.uuid)
       if (foundExtension) {
@@ -92,7 +93,7 @@ export class ExtensionsPayloadStore extends EventEmitter {
   async updateExtension(
     extension: UIExtension,
     options: ExtensionDevOptions,
-    development?: Partial<UIExtensionPayload['development']>,
+    development?: Partial<ExtensionPayload['development']>,
   ) {
     const payloadExtensions = this.rawPayload.extensions
     const index = payloadExtensions.findIndex((extensionPayload) => extensionPayload.uuid === extension.devUUID)

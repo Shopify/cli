@@ -31,7 +31,7 @@ const spec = createUIExtensionSpec({
   identifier: 'customer_accounts_ui_extension',
   externalIdentifier: 'customer_accounts_ui',
   externalName: 'Customer accounts UI',
-  surface: 'customer_accounts',
+  surface: 'customer-accounts',
   dependency,
   partnersWebIdentifier: 'customer_accounts_ui_extension',
   schema: CustomerAccountsSchema,

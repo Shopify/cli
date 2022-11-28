@@ -16,7 +16,7 @@ const spec = createUIExtensionSpec({
   identifier: 'web_pixel_extension',
   externalIdentifier: 'web_pixel',
   externalName: 'Web pixel',
-  surface: 'unknown',
+  surface: null,
   dependency,
   partnersWebIdentifier: 'web_pixel',
   supportedFlavors: defualtExtensionFlavors.filter((flavor) => !flavor.value.includes('react')),

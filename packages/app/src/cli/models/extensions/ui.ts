@@ -4,6 +4,7 @@ import {ExtensionCategory, GenericSpecification, UIExtension} from '../app/exten
 import {blocks, defualtExtensionFlavors} from '../../constants.js'
 import {id, path, api, output, environment, string} from '@shopify/cli-kit'
 import {ok, Result} from '@shopify/cli-kit/node/result'
+import {Surface} from '@shopify/ui-extensions-server-kit'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -14,7 +15,7 @@ export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = Bas
   externalIdentifier: string
   externalName: string
   partnersWebIdentifier: string
-  surface: string
+  surface: Surface
   showInCLIHelp: boolean
   singleEntryPath: boolean
   registrationLimit: number
@@ -187,7 +188,7 @@ export function createUIExtensionSpec<TConfiguration extends BaseConfigContents 
   identifier: string
   externalIdentifier: string
   partnersWebIdentifier: string
-  surface: string
+  surface: Surface
   externalName: string
   helpURL?: string
   supportedFlavors?: {name: string; value: string}[]
