@@ -1,6 +1,5 @@
 import {isUnitTest} from '../../environment/local.js'
 import {collectLog, consoleLog, Logger, LogLevel, outputWhereAppropriate} from '../../output.js'
-import {errorHandler} from '../../public/node/error-handler.js'
 import {ReactElement} from 'react'
 import {render as inkRender, RenderOptions} from 'ink'
 import {EventEmitter} from 'events'
@@ -18,7 +17,7 @@ export function renderOnce(element: JSX.Element, logLevel: LogLevel = 'info', lo
 
 export function render(element: JSX.Element, options?: RenderOptions) {
   const {waitUntilExit} = inkRender(element, options)
-  return waitUntilExit().catch(errorHandler)
+  return waitUntilExit()
 }
 
 interface Instance {
