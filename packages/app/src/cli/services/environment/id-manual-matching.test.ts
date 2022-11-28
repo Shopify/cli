@@ -36,13 +36,15 @@ const EXTENSION_A: UIExtension = {
   entrySourceFilePath: '',
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
+  publishURL: (_) => Promise.resolve(''),
   surface: 'surface',
+  validate: () => Promise.resolve({} as any),
   preDeployValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
-  publishURL: (_) => Promise.resolve(''),
-  validate: () => Promise.resolve(ok({})),
   getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: (target: string) => true,
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -69,6 +71,8 @@ const EXTENSION_A_2: UIExtension = {
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
   getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: (target: string) => true,
 }
 
 const EXTENSION_B: UIExtension = {
@@ -95,6 +99,8 @@ const EXTENSION_B: UIExtension = {
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
   getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: (target: string) => true,
 }
 
 beforeEach(() => {

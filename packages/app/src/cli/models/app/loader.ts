@@ -287,6 +287,7 @@ class AppLoader {
         remoteSpecification: undefined,
         extensionPointSpecs: undefined,
       })
+
       if (configuration.type) {
         const validateResult = await extensionInstance.validate()
         if (validateResult.isErr()) {

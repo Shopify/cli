@@ -5,6 +5,7 @@ import {
   fileServerMiddleware,
   noCacheMiddleware,
   redirectToDevConsoleMiddleware,
+  getExtensionPointMiddleware,
 } from './middlewares.js'
 import * as utilities from './utilities.js'
 import {GetExtensionsMiddlewareOptions} from './models.js'
@@ -189,10 +190,10 @@ describe('getExtensionAssetMiddleware()', () => {
       const options = {
         devOptions: {
           extensions: [
-            {
+            await testUIExtension({
               devUUID: '123abc',
               outputBundlePath: path.join(tmpDir, 'dist', 'main.js'),
-            },
+            }),
           ],
         },
         payloadStore: {},
@@ -272,10 +273,9 @@ describe('getExtensionPayloadMiddleware()', () => {
       devOptions: {
         url: 'http://mock.url',
         extensions: [
-          {
+          await testUIExtension({
             devUUID: actualExtensionId,
-            outputBundlePath: '/mock/output/bundle/path',
-          },
+          }),
         ],
       },
       payloadStore: {},
@@ -308,14 +308,15 @@ describe('getExtensionPayloadMiddleware()', () => {
       vi.spyOn(utilities, 'getExtensionUrl').mockReturnValue('http://www.mock.com/extension/url')
 
       const extensionId = '123abc'
-      const extension = await testUIExtension({
-        configuration: {type: 'checkout_post_purchase', name: 'name', metafields: []},
-        devUUID: extensionId,
-      })
       const options = {
         devOptions: {
           url: 'http://mock.url',
-          extensions: [extension],
+          extensions: [
+            await testUIExtension({
+              configuration: {type: 'checkout_post_purchase', name: 'name', metafields: []},
+              devUUID: extensionId,
+            }),
+          ],
         },
         payloadStore: {},
       } as unknown as GetExtensionsMiddlewareOptions
@@ -358,12 +359,14 @@ describe('getExtensionPayloadMiddleware()', () => {
           url: 'http://mock.url',
           storeFqdn: 'mock-store.myshopify.com',
           extensions: [
-            {
+            await testUIExtension({
               devUUID: extensionId,
               configuration: {
+                name: 'name',
+                metafields: [],
                 type: 'checkout_ui_extension',
               },
-            },
+            }),
           ],
         },
         payloadStore: {},
@@ -403,12 +406,9 @@ describe('getExtensionPayloadMiddleware()', () => {
           storeFqdn: 'mock-store.myshopify.com',
           apiKey: 'mock-api-key',
           extensions: [
-            {
+            await testUIExtension({
               devUUID: extensionId,
-              configuration: {
-                type: 'checkout_ui_extension',
-              },
-            },
+            }),
           ],
         },
         payloadStore: {},
@@ -451,5 +451,190 @@ describe('getExtensionPayloadMiddleware()', () => {
         }),
       )
     })
+  })
+})
+
+describe('getExtensionPointMiddleware()', () => {
+  it('returns a 404 if the extension is not found', async () => {
+    vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
+
+    const actualExtensionId = '123abc'
+    const requestedExtensionId = '456dev'
+    const options = {
+      devOptions: {
+        url: 'http://mock.url',
+        extensions: [
+          await testUIExtension({
+            devUUID: actualExtensionId,
+          }),
+        ],
+      },
+      payloadStore: {},
+    } as unknown as GetExtensionsMiddlewareOptions
+
+    const response = getMockResponse()
+
+    await getExtensionPointMiddleware(options)(
+      getMockRequest({
+        context: {
+          params: {
+            extensionId: requestedExtensionId,
+          },
+        },
+      }),
+      response,
+      getMockNext(),
+    )
+
+    expect(utilities.sendError).toHaveBeenCalledWith(response, {
+      statusCode: 404,
+      statusMessage: `Extension with id ${requestedExtensionId} not found`,
+    })
+  })
+
+  it('returns a 404 if requested extension point target is not configured', async () => {
+    vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
+
+    const extensionId = '123abc'
+    const requestedExtensionPointTarget = 'Admin::CheckoutEditor::RenderSettings'
+    const options = {
+      devOptions: {
+        url: 'http://mock.url',
+        extensions: [
+          await testUIExtension({
+            devUUID: extensionId,
+            configuration: {
+              name: 'testName',
+              type: 'ui_extension',
+              metafields: [],
+              extensionPoints: [
+                {
+                  target: 'Checkout::Dynamic::Render',
+                },
+              ],
+            },
+          }),
+        ],
+      },
+      payloadStore: {},
+    } as unknown as GetExtensionsMiddlewareOptions
+
+    const response = getMockResponse()
+
+    await getExtensionPointMiddleware(options)(
+      getMockRequest({
+        context: {
+          params: {
+            extensionId,
+            extensionPointTarget: requestedExtensionPointTarget,
+          },
+        },
+      }),
+      response,
+      getMockNext(),
+    )
+
+    expect(utilities.sendError).toHaveBeenCalledWith(response, {
+      statusCode: 404,
+      statusMessage: `Extension with id ${extensionId} has not configured the "${requestedExtensionPointTarget}" extension point`,
+    })
+  })
+
+  it('returns a 404 if requested extension point target is invalid and no redirect url can be constructed', async () => {
+    vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
+
+    const extensionId = '123abc'
+    const extensionPointTarget = 'abc'
+    const options = {
+      devOptions: {
+        url: 'http://mock.url',
+        extensions: [
+          await testUIExtension({
+            devUUID: extensionId,
+            configuration: {
+              name: 'testName',
+              type: 'ui_extension',
+              metafields: [],
+              extensionPoints: [
+                {
+                  target: extensionPointTarget,
+                },
+              ],
+            },
+          }),
+        ],
+      },
+      payloadStore: {},
+    } as unknown as GetExtensionsMiddlewareOptions
+
+    const response = getMockResponse()
+
+    await getExtensionPointMiddleware(options)(
+      getMockRequest({
+        context: {
+          params: {
+            extensionId,
+            extensionPointTarget,
+          },
+        },
+      }),
+      response,
+      getMockNext(),
+    )
+
+    expect(utilities.sendError).toHaveBeenCalledWith(response, {
+      statusCode: 404,
+      statusMessage: `Redirect url can't be constructed for extension with id ${extensionId} and extension point "${extensionPointTarget}"`,
+    })
+  })
+
+  it('returns the redirect URL if the requested extension point target is configured', async () => {
+    vi.spyOn(http, 'sendRedirect')
+    vi.spyOn(utilities, 'getRedirectUrl').mockReturnValue('http://www.mock.com/redirect/url')
+
+    const extensionId = '123abc'
+    const extensionPointTarget = 'Checkout::Dynamic::Render'
+    const options = {
+      devOptions: {
+        url: 'http://mock.url',
+        storeFqdn: 'mock-store.myshopify.com',
+        extensions: [
+          await testUIExtension({
+            devUUID: extensionId,
+            configuration: {
+              name: 'testName',
+              type: 'ui_extension',
+              metafields: [],
+              extensionPoints: [
+                {
+                  target: extensionPointTarget,
+                },
+              ],
+            },
+          }),
+        ],
+      },
+      payloadStore: {},
+    } as unknown as GetExtensionsMiddlewareOptions
+
+    const response = getMockResponse()
+
+    await getExtensionPayloadMiddleware(options)(
+      getMockRequest({
+        headers: {
+          accept: 'text/html',
+        },
+        context: {
+          params: {
+            extensionId,
+            extensionPointTarget,
+          },
+        },
+      }),
+      response,
+      getMockNext(),
+    )
+
+    expect(http.sendRedirect).toHaveBeenCalledWith(response.event, 'http://www.mock.com/redirect/url', 307)
   })
 })

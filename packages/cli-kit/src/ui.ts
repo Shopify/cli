@@ -37,17 +37,35 @@ export function newListr(tasks: ListrTask[], options?: object | ListrBaseClassOp
 
 export type ListrTasks = ConstructorParameters<typeof OriginalListr>[0]
 export type {ListrTaskWrapper, ListrDefaultRenderer, ListrTask} from 'listr2'
-
-export interface Question<TName extends string = string> {
+interface BaseQuestion<TName extends string> {
   name: TName
   message: string
   preface?: string
   validate?: (value: string) => string | true
   default?: string
   result?: (value: string) => string | boolean
-  type: 'input' | 'select' | 'autocomplete' | 'password'
   choices?: QuestionChoiceType[]
 }
+
+type TextQuestion<TName extends string> = BaseQuestion<TName> & {
+  type: 'input'
+  // a default is required, otherwise we'd show a prompt like 'undefined'
+  default: string
+}
+
+type PasswordQuestion<TName extends string> = BaseQuestion<TName> & {
+  type: 'password'
+}
+
+type SelectableQuestion<TName extends string> = BaseQuestion<TName> & {
+  type: 'select' | 'autocomplete'
+  choices: QuestionChoiceType[]
+}
+
+export type Question<TName extends string = string> =
+  | TextQuestion<TName>
+  | SelectableQuestion<TName>
+  | PasswordQuestion<TName>
 
 export interface QuestionChoiceType {
   name: string
