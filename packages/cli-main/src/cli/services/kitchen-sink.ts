@@ -157,4 +157,6 @@ export async function kitchenSink() {
 
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
   renderConcurrent({processes: [backendProcess, frontendProcess]})
+
+  // Add your component here
 }
