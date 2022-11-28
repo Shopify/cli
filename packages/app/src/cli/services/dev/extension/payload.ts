@@ -52,6 +52,9 @@ export async function getUIExtensionPayload(
     metafields: extension.configuration.metafields.length === 0 ? null : extension.configuration.metafields,
     type: extension.configuration.type,
 
+    authenticatedRedirectStartUrl: extension.configuration.authenticatedRedirectStartUrl,
+    authenticatedRedirectRedirectUrls: extension.configuration.authenticatedRedirectRedirectUrls,
+
     externalType: extension.externalType,
     uuid: extension.devUUID,
 

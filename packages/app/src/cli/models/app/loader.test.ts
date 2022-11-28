@@ -621,4 +621,148 @@ scopes = "read_products"
 
     expect(metadata.getAllPublic()).toMatchObject({project_type: 'node', env_package_manager_workspaces: true})
   })
+
+  describe('customer_accounts_ui_extension', () => {
+    it('should not throw when "authenticatedRedirectStartUrl" and "authenticatedRedirectRedirectUrls" are unset', async () => {
+      // Given
+      await writeConfig(appConfiguration)
+      const blockConfiguration = `
+        name = "my_extension"
+        type = "customer_accounts_ui_extension"
+      `
+      await writeBlockConfig({
+        blockType: 'ui',
+        blockConfiguration,
+        name: 'my-extension',
+      })
+      await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
+
+      // When
+      await expect(load(tmpDir)).resolves.toBeDefined()
+    })
+
+    it('should not throw when "authenticatedRedirectStartUrl" and "authenticatedRedirectRedirectUrls" are set and valid', async () => {
+      // Given
+      await writeConfig(appConfiguration)
+      const blockConfiguration = `
+        name = "my_extension"
+        type = "customer_accounts_ui_extension"
+
+        authenticated_redirect_start_url = 'https://www.shopify.com/start'
+        authenticated_redirect_redirect_urls = ['https://www.shopify.com/finalize', 'https://www.loop.com/finalize']
+
+      `
+      await writeBlockConfig({
+        blockType: 'ui',
+        blockConfiguration,
+        name: 'my-extension',
+      })
+      await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
+
+      // When
+      await expect(load(tmpDir)).resolves.toBeDefined()
+    })
+
+    it('should throw when "authenticatedRedirectStartUrl" is not a valid URL', async () => {
+      // Given
+      await writeConfig(appConfiguration)
+      const blockConfiguration = `
+        name = "my_extension"
+        type = "customer_accounts_ui_extension"
+
+        authenticated_redirect_start_url = '/start-url'
+      `
+      await writeBlockConfig({
+        blockType: 'ui',
+        blockConfiguration,
+        name: 'my-extension',
+      })
+      await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
+
+      // When
+      await expect(load(tmpDir)).rejects.toThrow(/authenticated_redirect_start_url must be a valid URL./)
+    })
+
+    it('should throw when "authenticatedRedirectStartUrl" is an empty string', async () => {
+      // Given
+      await writeConfig(appConfiguration)
+      const blockConfiguration = `
+        name = "my_extension"
+        type = "customer_accounts_ui_extension"
+
+        authenticated_redirect_start_url = ''
+      `
+      await writeBlockConfig({
+        blockType: 'ui',
+        blockConfiguration,
+        name: 'my-extension',
+      })
+      await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
+
+      // When
+      await expect(load(tmpDir)).rejects.toThrow(/authenticated_redirect_start_url must be a valid URL./)
+    })
+
+    it('should throw when "authenticatedRedirectRedirectUrls" contains an invalid URL', async () => {
+      // Given
+      await writeConfig(appConfiguration)
+      const blockConfiguration = `
+        name = "my_extension"
+        type = "customer_accounts_ui_extension"
+
+        authenticated_redirect_redirect_urls = ['/start-url']
+      `
+      await writeBlockConfig({
+        blockType: 'ui',
+        blockConfiguration,
+        name: 'my-extension',
+      })
+      await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
+
+      // When
+      await expect(load(tmpDir)).rejects.toThrow(/authenticated_redirect_redirect_urls does contain invalid URLs./)
+    })
+
+    it('should throw when one of the "authenticatedRedirectRedirectUrls" is an invalid URL', async () => {
+      // Given
+      await writeConfig(appConfiguration)
+      const blockConfiguration = `
+        name = "my_extension"
+        type = "customer_accounts_ui_extension"
+
+        authenticated_redirect_redirect_urls = ['/start-url', 'https://www.shopify.com/', '/end-url']
+      `
+      await writeBlockConfig({
+        blockType: 'ui',
+        blockConfiguration,
+        name: 'my-extension',
+      })
+      await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
+
+      // When
+      await expect(load(tmpDir)).rejects.toThrow(/authenticated_redirect_redirect_urls does contain invalid URLs./)
+    })
+
+    it('should throw when "authenticatedRedirectRedirectUrls" is an empty array', async () => {
+      // Given
+      await writeConfig(appConfiguration)
+      const blockConfiguration = `
+        name = "my_extension"
+        type = "customer_accounts_ui_extension"
+
+        authenticated_redirect_redirect_urls = []
+      `
+      await writeBlockConfig({
+        blockType: 'ui',
+        blockConfiguration,
+        name: 'my-extension',
+      })
+      await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
+
+      // When
+      await expect(load(tmpDir)).rejects.toThrow(
+        /authenticated_redirect_redirect_urls can not be an empty array! It may only contain one or multiple valid URLs./,
+      )
+    })
+  })
 })
