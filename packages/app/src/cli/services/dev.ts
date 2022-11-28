@@ -4,6 +4,7 @@ import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
 import {outputAppURL, outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
+import {vscodeExtensionServer} from './dev/vscode.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -155,6 +156,8 @@ async function dev(options: DevOptions) {
   await logMetadataForDev({devOptions: options, tunnelUrl: frontendUrl, shouldUpdateURLs, storeFqdn})
 
   await analytics.reportEvent({config: options.commandConfig})
+
+  vscodeExtensionServer(options)
 
   if (proxyTargets.length === 0) {
     await renderConcurrent({processes: additionalProcesses})

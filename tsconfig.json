@@ -12,6 +12,7 @@
       {"path": "./packages/ui-extensions-server-kit"},
       {"path": "./packages/ui-extensions-test-utils"},
       {"path": "./packages/plugin-ngrok"},
+      {"path": "./packages/vscode-extension"},
       {"path": "./workspace"}
     ]
 }

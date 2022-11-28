@@ -8,6 +8,7 @@ export {default as formData} from './http/formdata.js'
 
 export {
   createApp,
+  eventHandler,
   createRouter,
   IncomingMessage,
   ServerResponse,

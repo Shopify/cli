@@ -1,0 +1,59 @@
+{
+  "name": "@shopify/cli-vscode-extension",
+  "displayName": "vscode-extension",
+  "description": "Provides utilities to develop app, themes, and storefronts for Shopify",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.73.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:shopify-cli-vscode-extension.helloWorld",
+    "onView:dev-tools"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "shopify-cli-vscode-extension.helloWorld",
+        "title": "Hello World"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "shopify",
+          "title": "Shopify",
+          "icon": "assets/shopify_glyph_black.svg"
+        }
+      ]
+    },
+    "views": {
+      "shopify": [
+        {
+          "id": "dev-tools",
+          "name": "Dev tools"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "yarn run build",
+    "clean": "nx clean",
+    "build": "nx build",
+    "build:watch": "nx build:watch"
+  },
+  "devDependencies": {
+    "@hediet/node-reload": "^0.7.3",
+    "@hediet/std": "^0.6.0",
+    "@types/glob": "^8.0.0",
+    "@types/vscode": "^1.73.0",
+    "@vscode/test-electron": "^2.2.0",
+    "glob": "^8.0.3"
+  },
+  "dependencies": {
+    "node-fetch": "2"
+  }
+}

@@ -5,6 +5,18 @@
     "version": "0.2.0",
     "configurations": [
       {
+        "name": "Run VSCode extension",
+        "type": "extensionHost",
+        "request": "launch",
+        "args": [
+          "--extensionDevelopmentPath=${workspaceFolder}/packages/vscode-extension"
+        ],
+        "outFiles": [
+          "${workspaceFolder}/packages/vscode-extension/dist/**/*.js"
+        ],
+        "preLaunchTask": "build-vscode-extension"
+      },
+      {
         "type": "node",
         "request": "launch",
         "name": "shopify app build",

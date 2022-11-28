@@ -9,3 +9,4 @@ templates/
 fixtures/
 workspace/
 .eslintrc.cjs
+packages/vscode-extension

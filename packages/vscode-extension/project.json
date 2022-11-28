@@ -1,0 +1,41 @@
+{
+  "name": "vscode-extension",
+  "root": "packages/vscode-extension",
+  "sourceRoot": "packages/vscode-extension/src",
+  "projectType": "library",
+  "tags": ["scope:feature"],
+  "targets": {
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn rimraf dist/",
+        "cwd": "packages/vscode-extension"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["dist"],
+      "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json"],
+      "options": {
+        "command": "yarn tsc -p ./",
+        "cwd": "packages/vscode-extension"
+      }
+    },
+    "build:watch": {
+      "executor": "nx:run-commands",
+      "outputs": ["dist"],
+      "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json"],
+      "options": {
+        "command": "yarn tsc -watch -p ./",
+        "cwd": "packages/vscode-extension"
+      }
+    },
+    "type-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn tsc -p --noEmit ./",
+        "cwd": "packages/vscode-extension"
+      }
+    }
+  }
+}
