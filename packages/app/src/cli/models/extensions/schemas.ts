@@ -39,6 +39,8 @@ export const BaseExtensionSchema = schema.define.object({
     .optional(),
   metafields: schema.define.array(MetafieldSchema).optional().default([]),
   categories: schema.define.array(schema.define.string()).optional(),
+  authenticatedRedirectStartUrl: schema.define.string().optional(),
+  authenticatedRedirectRedirectUrls: schema.define.array(schema.define.string()).optional(),
 })
 
 export const BaseFunctionConfigurationSchema = schema.define.object({
