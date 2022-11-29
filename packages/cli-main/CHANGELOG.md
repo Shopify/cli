@@ -1,5 +1,17 @@
 # @shopify/cli
 
+## 3.24.0
+
+### Patch Changes
+
+- cb0990df: Fixed no organization error formatting
+- Updated dependencies [d47a6e80]
+- Updated dependencies [a9d4be9e]
+- Updated dependencies [aca90638]
+- Updated dependencies [cb0990df]
+  - @shopify/cli-kit@3.24.0
+  - @shopify/plugin-ngrok@3.24.0
+
 ## 3.23.0
 
 ### Patch Changes
