@@ -5,14 +5,14 @@ interface FlagValues {
 }
 interface PassThroughFlagsOptions {
   // Only pass on flags that are relevant to CLI2
-  relevantFlags?: string[]
+  allowedFlags?: string[]
 }
 
 export default abstract class ThemeCommand extends Command {
-  passThroughFlags(flags: FlagValues, {relevantFlags}: PassThroughFlagsOptions): string[] {
+  passThroughFlags(flags: FlagValues, { allowedFlags }: PassThroughFlagsOptions): string[] {
     const passThroughFlags: string[] = []
     for (const [label, value] of Object.entries(flags)) {
-      if (!(relevantFlags ?? []).includes(label)) {
+      if (!(allowedFlags ?? []).includes(label)) {
         continue
       } else if (typeof value === 'boolean') {
         if (value) passThroughFlags.push(`--${label}`)

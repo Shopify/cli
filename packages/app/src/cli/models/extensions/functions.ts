@@ -1,32 +1,30 @@
-import {BaseFunctionConfigurationSchema, BaseFunctionMetadataSchema, ZodSchemaType} from './schemas.js'
+import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
 import {allFunctionSpecifications} from './specifications.js'
-import {FunctionExtension} from '../app/extensions.js'
-import {ExtensionTypes} from '../../constants.js'
+import {ExtensionIdentifier, FunctionExtension} from '../app/extensions.js'
+import {defaultFunctionRegistationLimit} from '../../constants.js'
 import {schema, path, error, system, abort, string, environment} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
-// Base config types that all config schemas must extend
+// Base config type that all config schemas must extend
 export type FunctionConfigType = schema.define.infer<typeof BaseFunctionConfigurationSchema>
-export type MetadataType = schema.define.infer<typeof BaseFunctionMetadataSchema>
 
 /**
  * Specification with all the needed properties and methods to load a function.
  */
-export interface FunctionSpec<
-  TConfiguration extends FunctionConfigType = FunctionConfigType,
-  TMetadata extends MetadataType = MetadataType,
-> {
+export interface FunctionSpec<TConfiguration extends FunctionConfigType = FunctionConfigType>
+  extends ExtensionIdentifier {
   identifier: string
-  externalType: string
+  externalIdentifier: string
   externalName: string
   helpURL?: string
-  public?: boolean
+  public: boolean
   templateURL?: string
   languages?: {name: string; value: string}[]
-  configSchema?: ZodSchemaType<TConfiguration>
-  metadataSchema?: ZodSchemaType<TMetadata>
+  configSchema: ZodSchemaType<TConfiguration>
+  options: {
+    registrationLimit: number
+  }
   templatePath: (lang: string) => string
-  validate?: (config: TConfiguration) => unknown
 }
 
 /**
@@ -34,37 +32,31 @@ export interface FunctionSpec<
  * Before creating this class we've validated that:
  * - There is a spec for this type of function
  * - The Config Schema for that spec is followed by the function config toml file
- * - The Metadata Schema for that spec is followed by the function metadata file
  *
  * This class holds the public interface to interact with functions
  */
-export class FunctionInstance<
-  TConfiguration extends FunctionConfigType = FunctionConfigType,
-  TMetadata extends MetadataType = MetadataType,
-> implements FunctionExtension
+export class FunctionInstance<TConfiguration extends FunctionConfigType = FunctionConfigType>
+  implements FunctionExtension
 {
   idEnvironmentVariableName: string
   localIdentifier: string
   directory: string
   configuration: TConfiguration
   configurationPath: string
-  metadata: TMetadata
 
   private specification: FunctionSpec<TConfiguration>
 
-  constructor(
-    configuration: TConfiguration,
-    configurationPath: string,
-    metadata: TMetadata,
-    specification: FunctionSpec<TConfiguration>,
-    directory: string,
-  ) {
-    this.configuration = configuration
-    this.configurationPath = configurationPath
-    this.metadata = metadata
-    this.specification = specification
-    this.directory = directory
-    this.localIdentifier = path.basename(directory)
+  constructor(options: {
+    configuration: TConfiguration
+    configurationPath: string
+    specification: FunctionSpec<TConfiguration>
+    directory: string
+  }) {
+    this.configuration = options.configuration
+    this.configurationPath = options.configurationPath
+    this.specification = options.specification
+    this.directory = options.directory
+    this.localIdentifier = path.basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
   }
 
@@ -76,9 +68,12 @@ export class FunctionInstance<
     return this.specification.identifier
   }
 
-  get type(): ExtensionTypes {
-    return 'checkout_post_purchase'
-    // return this.specification.identifier
+  get type() {
+    return this.specification.identifier
+  }
+
+  get externalType() {
+    return this.specification.externalIdentifier
   }
 
   get name() {
@@ -92,10 +87,6 @@ export class FunctionInstance<
   buildWasmPath() {
     const relativePath = this.configuration.build.path ?? path.join('dist', 'index.wasm')
     return path.join(this.directory, relativePath)
-  }
-
-  validate() {
-    return this.specification.validate?.(this.configuration)
   }
 
   async build(stdout: Writable, stderr: Writable, signal: abort.Signal) {
@@ -135,10 +126,18 @@ export async function functionSpecForType(type: string): Promise<FunctionSpec | 
   return (await allFunctionSpecifications()).find((spec) => spec.identifier === type)
 }
 
-export function createFunctionSpec<
-  TConfiguration extends FunctionConfigType = FunctionConfigType,
-  TMetadata extends MetadataType = MetadataType,
->(spec: FunctionSpec): FunctionSpec {
+export function createFunctionSpec<TConfiguration extends FunctionConfigType = FunctionConfigType>(spec: {
+  identifier: string
+  externalIdentifier: string
+  externalName: string
+  helpURL?: string
+  public?: boolean
+  templateURL?: string
+  languages?: {name: string; value: string}[]
+  registrationLimit?: number
+  configSchema?: ZodSchemaType<TConfiguration>
+  templatePath: (lang: string) => string
+}): FunctionSpec {
   const defaults = {
     templateURL: 'https://github.com/Shopify/function-examples',
     languages: [
@@ -146,8 +145,10 @@ export function createFunctionSpec<
       {name: 'Rust', value: 'rust'},
     ],
     configSchema: BaseFunctionConfigurationSchema,
-    metadataSchema: BaseFunctionMetadataSchema,
     public: true,
+    options: {
+      registrationLimit: spec.registrationLimit ?? defaultFunctionRegistationLimit,
+    },
   }
 
   return {...defaults, ...spec}

@@ -9,14 +9,12 @@ import {
 
 import {ensureDeployEnvironment} from './environment.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
-import {AppInterface, getUIExtensionRendererVersion} from '../models/app/app.js'
+import {AppInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
-import {Extension, UIExtension} from '../models/app/extensions.js'
-import {isFunctionExtensionType, isThemeExtensionType, isUiExtensionType} from '../constants.js'
-import {loadLocalesConfig} from '../utilities/extensions/locales-configuration.js'
+import {Extension} from '../models/app/extensions.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
-import {path, output, file, error, environment} from '@shopify/cli-kit'
+import {path, output, file} from '@shopify/cli-kit'
 import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
 
 interface DeployOptions {
@@ -49,7 +47,7 @@ export const deploy = async (options: DeployOptions) => {
     options.app.extensions.ui.map(async (extension) => {
       return {
         uuid: identifiers.extensions[extension.localIdentifier]!,
-        config: JSON.stringify(await configFor(extension, app)),
+        config: JSON.stringify(await extension.deployConfig()),
         context: '',
       }
     }),
@@ -157,7 +155,7 @@ async function outputCompletionMessage({
       })?.id ?? ''
     return output.content`    · Publish ${output.token.link(
       extension.localIdentifier,
-      await getExtensionPublishURL({extension, partnersApp, partnersOrganizationId, extensionId}),
+      await extension.publishURL({orgId: partnersOrganizationId, appId: partnersApp.id, extensionId}),
     )}`
   }
   if (app.extensions.ui.length !== 0 || app.extensions.function.length !== 0) {
@@ -166,87 +164,5 @@ async function outputCompletionMessage({
       output.info('  Next steps in Shopify Partners:')
       lines.forEach((line) => output.info(line))
     }
-  }
-}
-
-async function configFor(extension: UIExtension, app: AppInterface) {
-  const type = extension.type
-  switch (extension.type) {
-    case 'checkout_post_purchase':
-      return {metafields: extension.configuration.metafields}
-    case 'pos_ui_extension':
-    case 'product_subscription': {
-      const result = await getUIExtensionRendererVersion(type, app)
-      if (result === 'not_found') {
-        throw new error.Bug(
-          `Couldn't find renderer version for extension ${type}`,
-          'Make sure you have all your dependencies up to date',
-        )
-      }
-      return {renderer_version: result?.version}
-    }
-    case 'checkout_ui_extension': {
-      return {
-        extension_points: extension.configuration.extensionPoints,
-        capabilities: extension.configuration.capabilities,
-        metafields: extension.configuration.metafields,
-        name: extension.configuration.name,
-        settings: extension.configuration.settings,
-        localization: await loadLocalesConfig(extension.directory),
-      }
-    }
-    case 'customer_accounts_ui_extension': {
-      return {
-        extension_points: extension.configuration.extensionPoints,
-        name: extension.configuration.name,
-        categories: extension.configuration.categories,
-      }
-    }
-    case 'web_pixel_extension': {
-      return {
-        runtime_context: extension.configuration.runtimeContext,
-
-        runtime_configuration_definition: extension.configuration.settings,
-      }
-    }
-  }
-}
-
-async function getExtensionPublishURL({
-  extension,
-  partnersApp,
-  partnersOrganizationId,
-  extensionId,
-}: {
-  extension: Extension
-  partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
-  partnersOrganizationId: string
-  extensionId: string
-}): Promise<string> {
-  const partnersFqdn = await environment.fqdn.partners()
-  if (isUiExtensionType(extension.type)) {
-    /**
-     * The source of truth for UI extensions' slugs is the client-side
-     * Partners' React application:
-     * https://github.com/Shopify/partners/tree/master/app/assets/javascripts/sections/apps/app-extensions/extensions
-     */
-    let pathComponent: string
-    switch (extension.type) {
-      case 'checkout_post_purchase':
-        pathComponent = 'post_purchase'
-        break
-      case 'web_pixel_extension':
-        pathComponent = 'web_pixel'
-        break
-      default:
-        pathComponent = extension.type
-    }
-    return `https://${partnersFqdn}/${partnersOrganizationId}/apps/${partnersApp.id}/extensions/${pathComponent}/${extensionId}`
-  } else if (isFunctionExtensionType(extension.type)) {
-    return `https://${partnersFqdn}/${partnersOrganizationId}/apps/${partnersApp.id}/extensions`
-  } else if (isThemeExtensionType(extension.type)) {
-    return `https://${partnersFqdn}/${partnersOrganizationId}/apps/${partnersApp.id}/extensions/theme_app_extension/${extensionId}`
-  } else {
-    return ''
   }
 }

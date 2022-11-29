@@ -1,5 +1,5 @@
 import {selectStore} from './select-store.js'
-import {fetchAllStores, fetchStoreByDomain} from './fetch.js'
+import {fetchAllDevStores, fetchStoreByDomain} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
@@ -172,13 +172,13 @@ describe('selectStore', async () => {
     vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
     vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(true)
     vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(false)
-    vi.mocked(fetchAllStores).mockResolvedValue([])
+    vi.mocked(fetchAllDevStores).mockResolvedValue([])
 
     // When
     const got = selectStore([], ORG1, 'token')
 
     // Then
     await expect(got).rejects.toThrow()
-    expect(fetchAllStores).toHaveBeenCalledTimes(10)
+    expect(fetchAllDevStores).toHaveBeenCalledTimes(10)
   })
 })

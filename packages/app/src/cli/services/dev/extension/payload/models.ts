@@ -1,6 +1,5 @@
 import {ExtensionTypes, ExternalExtensionTypes} from '../../../../constants.js'
 import {Localization} from '../localization.js'
-import {UIExtensionSurface} from '../../../../utilities/extensions/configuration.js'
 
 export interface ExtensionsPayloadInterface {
   app: {
@@ -26,7 +25,7 @@ export interface ExtensionsEndpointPayload extends ExtensionsPayloadInterface {
 export interface UIExtensionPayload {
   assets: {
     main: {
-      name: 'main'
+      name: string
       url: string
       lastUpdated: number
     }
@@ -43,15 +42,17 @@ export interface UIExtensionPayload {
     status: ExtensionAssetBuildStatus
     localizationStatus: ExtensionAssetBuildStatus
   }
-  extensionPoints: string[] | null
+  extensionPoints: string[] | null | {metafields?: {namespace: string; key: string}[]; target: string; module: string}[]
   localization: Localization | null
   categories: string[] | null
+  authenticatedRedirectStartUrl?: string
+  authenticatedRedirectRedirectUrls?: string[]
   metafields?: {namespace: string; key: string}[] | null
   type: ExtensionTypes
   externalType: ExternalExtensionTypes
   uuid: string
   version?: string
-  surface: UIExtensionSurface
+  surface: string
   title: string
   approvalScopes: string[]
 }

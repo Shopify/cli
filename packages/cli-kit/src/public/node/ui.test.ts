@@ -1,4 +1,4 @@
-import {renderError, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
+import {renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
 import {Abort, Bug} from '../../error.js'
 import * as outputMocker from '../../testing/output.js'
 import {run} from '../../testing/ui.js'
@@ -64,7 +64,8 @@ describe('renderInfo', async () => {
 
     // Then
     expect(mockOutput.info()).toMatchInlineSnapshot(`
-      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      "
+      ╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Title                                                                       │
       │                                                                              │
@@ -82,7 +83,8 @@ describe('renderInfo', async () => {
       │                                                                              │
       │  Link: https://shopify.com                                                   │
       │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯"
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 })
@@ -99,11 +101,13 @@ describe('renderSuccess', async () => {
 
     // Then
     expect(mockOutput.info()).toMatchInlineSnapshot(`
-      "╭─ success ────────────────────────────────────────────────────────────────────╮
+      "
+      ╭─ success ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Title                                                                       │
       │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯"
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 })
@@ -126,7 +130,8 @@ describe('renderWarning', async () => {
 
     // Then
     expect(mockOutput.warn()).toMatchInlineSnapshot(`
-      "╭─ warning ────────────────────────────────────────────────────────────────────╮
+      "
+      ╭─ warning ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Title                                                                       │
       │                                                                              │
@@ -144,31 +149,8 @@ describe('renderWarning', async () => {
       │       proident, sunt in culpa qui officia deserunt mollit anim id est        │
       │      laborum.                                                                │
       │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯"
-    `)
-  })
-})
-
-describe('renderError', async () => {
-  test('renders an error inside a banner', async () => {
-    // Given
-    const mockOutput = outputMocker.mockAndCaptureOutput()
-
-    // When
-    renderError({
-      headline: 'Something went wrong.',
-      tryMessage: 'Check your internet connection.',
-    })
-
-    // Then
-    expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "╭─ error ──────────────────────────────────────────────────────────────────────╮
-      │                                                                              │
-      │  Something went wrong.                                                       │
-      │                                                                              │
-      │  Check your internet connection.                                             │
-      │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯"
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 })
@@ -185,13 +167,15 @@ describe('renderFatalError', async () => {
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "
+      ╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Couldn't connect to the Shopify Partner Dashboard.                          │
       │                                                                              │
       │  Check your internet connection and try again.                               │
       │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯"
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 
@@ -212,7 +196,8 @@ describe('renderFatalError', async () => {
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "
+      ╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Unexpected error                                                            │
       │                                                                              │
@@ -222,13 +207,63 @@ describe('renderFatalError', async () => {
       │  at load (internal/modules/cjs/loader.js:985)                                │
       │  at _load (internal/modules/cjs/loader.js:878)                               │
       │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯"
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
+  })
+
+  test('renders a fatal error inside a banner with some next steps', async () => {
+    // Given
+    const mockOutput = outputMocker.mockAndCaptureOutput()
+
+    const nextSteps = [
+      [
+        'Have you',
+        {
+          link: {
+            label: 'created a Shopify Partners organization',
+            url: 'https://partners.shopify.com/signup',
+          },
+        },
+        {
+          char: '?',
+        },
+      ],
+      'Have you confirmed your accounts from the emails you received?',
+      [
+        'Need to connect to a different App or organization? Run the command again with',
+        {
+          command: '--reset',
+        },
+      ],
+    ]
+
+    // When
+    const error = new Abort('No Organization found', undefined, nextSteps)
+    renderFatalError(error)
+
+    // Then
+    expect(mockOutput.error()).toMatchInlineSnapshot(`
+      "
+      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  No Organization found                                                       │
+      │                                                                              │
+      │  Next steps                                                                  │
+      │    • Have you created a Shopify Partners organization:                       │
+      │      https://partners.shopify.com/signup?                                    │
+      │    • Have you confirmed your accounts from the emails you received?          │
+      │    • Need to connect to a different App or organization? Run the command     │
+      │      again with \`--reset\`                                                    │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 })
 
 describe('renderConcurrent', async () => {
-  test('renders a stream of concurrent outputs from sub-processes', async () => {
+  test.skip('renders a stream of concurrent outputs from sub-processes', async () => {
     // When
     const {stdout} = await run('render-concurrent')
     const lastFrame = stripAnsi(stdout).replace(/\d/g, '0')

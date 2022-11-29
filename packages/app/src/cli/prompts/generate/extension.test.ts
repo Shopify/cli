@@ -1,5 +1,5 @@
-import generateExtensionPrompt, {extensionFlavorQuestion} from './extension.js'
-import {extensions, extensionTypesGroups, getExtensionOutputConfig} from '../../constants.js'
+import generateExtensionPrompt, {buildChoices, extensionFlavorQuestion} from './extension.js'
+import {testApp} from '../../models/app/app.test-data.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {environment} from '@shopify/cli-kit'
 
@@ -10,6 +10,7 @@ vi.mock('@shopify/cli-kit', async () => {
     environment: {
       local: {
         isShopify: vi.fn(),
+        isUnitTest: vi.fn(() => true),
       },
     },
   }
@@ -24,7 +25,7 @@ describe('extension prompt', async () => {
     type: 'select',
     name: 'extensionType',
     message: 'Type of extension?',
-    choices: await buildChoices(),
+    choices: buildChoices([]),
   }
   const extensionNameQuestion = {
     type: 'input',
@@ -36,7 +37,7 @@ describe('extension prompt', async () => {
   it('when name is not passed', async () => {
     const prompt = vi.fn()
     const answers = {name: 'ext'}
-    const options = {extensionTypesAlreadyAtQuota: [], directory: '/'}
+    const options = {directory: '/', app: testApp(), reset: false, extensionSpecifications: []}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers))
@@ -52,7 +53,13 @@ describe('extension prompt', async () => {
   it('when name is passed', async () => {
     const prompt = vi.fn()
     const answers = {name: 'my-special-extension'}
-    const options = {name: 'my-special-extension', extensionTypesAlreadyAtQuota: [], directory: '/'}
+    const options = {
+      name: 'my-special-extension',
+      directory: '/',
+      app: testApp(),
+      reset: false,
+      extensionSpecifications: [],
+    }
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers))
@@ -65,10 +72,16 @@ describe('extension prompt', async () => {
     expect(got).toEqual({...options, ...answers})
   })
 
-  it('when extensionTypesAlreadyAtQuota is not empty', async () => {
+  it('when there is a registration Limit is not empty', async () => {
     const prompt = vi.fn()
     const answers = {name: 'my-special-extension'}
-    const options = {name: 'my-special-extension', extensionTypesAlreadyAtQuota: ['theme'], directory: '/'}
+    const options = {
+      name: 'my-special-extension',
+      directory: '/',
+      app: testApp(),
+      reset: false,
+      extensionSpecifications: [],
+    }
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers))
@@ -82,7 +95,7 @@ describe('extension prompt', async () => {
         type: 'select',
         name: 'extensionType',
         message: 'Type of extension?',
-        choices: (await buildChoices()).filter((choice) => choice.name !== 'Theme app extension'),
+        choices: (await buildChoices([])).filter((choice) => choice.name !== 'Theme app extension'),
       },
     ])
     expect(got).toEqual({...options, ...answers})
@@ -93,9 +106,11 @@ describe('extension prompt', async () => {
     const answers = {extensionFlavor: 'react'}
     const options = {
       name: 'my-special-extension',
-      extensionTypesAlreadyAtQuota: [],
       extensionType: 'checkout_post_purchase',
       directory: '/',
+      app: testApp(),
+      reset: false,
+      extensionSpecifications: [],
     }
 
     // Given
@@ -115,9 +130,11 @@ describe('extension prompt', async () => {
     const answers = {}
     const options = {
       name: 'my-special-extension',
-      extensionTypesAlreadyAtQuota: [],
       extensionType: 'theme',
       directory: '/',
+      app: testApp(),
+      reset: false,
+      extensionSpecifications: [],
     }
 
     // Given
@@ -137,9 +154,11 @@ describe('extension prompt', async () => {
     const answers = {extensionLanguage: 'rust'}
     const options = {
       name: 'my-product-discount',
-      extensionTypesAlreadyAtQuota: [],
       extensionType: 'product_discounts',
       directory: '/',
+      app: testApp(),
+      reset: false,
+      extensionSpecifications: [],
     }
 
     // Given
@@ -155,33 +174,6 @@ describe('extension prompt', async () => {
     expect(got).toEqual({...options, ...answers})
   })
 })
-
-const buildChoices = async (): Promise<
-  {
-    name: string
-    value: string
-  }[]
-> => {
-  return extensions.types
-    .map((type) => {
-      const choiceWithoutGroup = {
-        name: getExtensionOutputConfig(type).humanKey,
-        value: type,
-      }
-      const group = extensionTypesGroups.find((group) => includes(group.extensions, type))
-      if (group) {
-        return {
-          ...choiceWithoutGroup,
-          group: {
-            name: group.name,
-            order: extensionTypesGroups.indexOf(group),
-          },
-        }
-      }
-      return choiceWithoutGroup
-    })
-    .sort((c1, c2) => c1.name.localeCompare(c2.name))
-}
 
 function includes<TNarrow extends TWide, TWide>(coll: ReadonlyArray<TNarrow>, el: TWide): el is TNarrow {
   return coll.includes(el as TNarrow)

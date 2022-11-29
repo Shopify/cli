@@ -106,6 +106,7 @@ export async function uploadUIExtensionsBundle(
     .map((ver) => {
       return {uuid: ver.extensionVersion.registrationUuid, errors: ver.extensionVersion.validationErrors}
     })
+
   return validationErrors
 }
 

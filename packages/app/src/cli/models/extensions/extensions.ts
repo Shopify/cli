@@ -1,30 +1,33 @@
-import {BaseExtensionSchema, ExtensionPointSchema, ZodSchemaType} from './schemas.js'
+import {BaseExtensionSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionPointSpec} from './extension-points.js'
 import {allExtensionSpecifications} from './specifications.js'
-import {AppInterface} from '../app/app.js'
-import {bundleExtension} from '../../services/extensions/bundle.js'
-import {ThemeExtension, UIExtension} from '../app/extensions.js'
+import {ExtensionIdentifier, ThemeExtension, UIExtension} from '../app/extensions.js'
 import {id, path, schema, api, output, environment, string} from '@shopify/cli-kit'
-import {Writable} from 'node:stream'
+import {ok, Result} from '@shopify/cli-kit/common/result'
 
 // Base config type that all config schemas must extend.
 export type BaseConfigContents = schema.define.infer<typeof BaseExtensionSchema>
-export type ExtensionPointContents = schema.define.infer<typeof ExtensionPointSchema>
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
-export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents> {
+export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>
+  extends ExtensionIdentifier {
   identifier: string
   externalIdentifier: string
-  partnersWebId: string
+  externalName: string
+  partnersWebIdentifier: string
   surface: string
+  showInCLIHelp: boolean
+  singleEntryPath: boolean
   dependency?: {name: string; version: string}
   templatePath?: string
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
+  getBundleExtensionStdinContent?: (config: TConfiguration) => string
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
-  preDeployValidation?: (config: TConfiguration) => boolean
+  validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
+  preDeployValidation?: (config: TConfiguration) => Promise<void>
   resourceUrl?: (config: TConfiguration) => string
   previewMessage?: (
     host: string,
@@ -32,6 +35,8 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
     config: TConfiguration,
     storeFqdn: string,
   ) => output.TokenizedString | undefined
+  shouldFetchCartUrl?(config: TConfiguration): boolean
+  hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
 }
 
 /**
@@ -75,7 +80,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
   }
 
   get humanName() {
-    return this.remoteSpecification?.externalName ?? this.specification.identifier
+    return this.remoteSpecification?.externalName ?? this.specification.externalName
   }
 
   get name() {
@@ -94,40 +99,26 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     return this.specification.surface
   }
 
-  constructor(
-    configuration: TConfiguration,
-    configuationPath: string,
-    entryPath: string,
-    directory: string,
-    specification: ExtensionSpec,
-    remoteSpecification?: api.graphql.RemoteSpecification,
-    extensionPointSpecs?: ExtensionPointSpec[],
-  ) {
-    this.configuration = configuration
-    this.configurationPath = configuationPath
-    this.entrySourceFilePath = entryPath
-    this.directory = directory
-    this.specification = specification
-    this.remoteSpecification = remoteSpecification
-    this.extensionPointSpecs = extensionPointSpecs
-    this.outputBundlePath = path.join(directory, 'dist/main.js')
+  constructor(options: {
+    configuration: TConfiguration
+    configurationPath: string
+    entryPath: string
+    directory: string
+    specification: ExtensionSpec
+    remoteSpecification?: api.graphql.RemoteSpecification
+    extensionPointSpecs?: ExtensionPointSpec[]
+  }) {
+    this.configuration = options.configuration
+    this.configurationPath = options.configurationPath
+    this.entrySourceFilePath = options.entryPath
+    this.directory = options.directory
+    this.specification = options.specification
+    this.remoteSpecification = options.remoteSpecification
+    this.extensionPointSpecs = options.extensionPointSpecs
+    this.outputBundlePath = path.join(options.directory, 'dist/main.js')
     this.devUUID = `dev-${id.generateRandomUUID()}`
-    this.localIdentifier = path.basename(directory)
+    this.localIdentifier = path.basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
-  }
-
-  async build(stderr: Writable, stdout: Writable, app: AppInterface) {
-    stdout.write(`Bundling UI extension ${this.localIdentifier}...`)
-    await bundleExtension({
-      minify: true,
-      outputBundlePath: this.outputBundlePath,
-      sourceFilePath: this.entrySourceFilePath,
-      environment: 'production',
-      env: app.dotenv?.variables ?? {},
-      stderr,
-      stdout,
-    })
-    stdout.write(`${this.localIdentifier} successfully built`)
   }
 
   deployConfig(): Promise<{[key: string]: unknown}> {
@@ -135,7 +126,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
   }
 
   validate() {
-    if (!this.specification.preDeployValidation) return true
+    if (!this.specification.validate) return Promise.resolve(ok(undefined))
+    return this.specification.validate(this.configuration, this.directory)
+  }
+
+  preDeployValidation() {
+    if (!this.specification.preDeployValidation) return Promise.resolve()
     return this.specification.preDeployValidation(this.configuration)
   }
 
@@ -148,24 +144,48 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     }
   }
 
+  // PENDING:
+  /**
+   * - Create and load all the extension point specs for all supported points
+   * - Load all extension point specs from specifications.ts
+   * - Implement the `redirectUrl` method in all points, but have a default implementation
+   * - Connect everything with the middleware in getExtensionPointPayloadMiddleware
+   */
+  redirectUrl(extensionPointTarget: string) {}
+
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
     const partnersFqdn = await environment.fqdn.partners()
-    const parnersPath = this.specification.partnersWebId
+    const parnersPath = this.specification.partnersWebIdentifier
     return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }
 
   previewMessage(url: string, storeFqdn: string) {
-    if (this.specification.previewMessage)
-      return this.specification.previewMessage(url, this.devUUID, this.configuration, storeFqdn)
-
     const heading = output.token.heading(`${this.name} (${this.humanName})`)
-    const publicURL = `${url}/extensions/${this.devUUID}`
-    const message = output.content`Preview link: ${publicURL}`
+    let message = output.content`Preview link: ${url}/extensions/${this.devUUID}`
+
+    if (this.specification.previewMessage) {
+      const customMessage = this.specification.previewMessage(url, this.devUUID, this.configuration, storeFqdn)
+      if (!customMessage) return
+      message = customMessage
+    }
+
     return output.content`${heading}\n${message.value}\n`
   }
 
-  private extensionPointURL(point: ExtensionPointSpec, config: ExtensionPointContents): string {
-    return point.resourceUrl?.(config) ?? ''
+  getBundleExtensionStdinContent() {
+    if (this.specification.getBundleExtensionStdinContent) {
+      return this.specification.getBundleExtensionStdinContent(this.configuration)
+    }
+    const relativeImportPath = this.entrySourceFilePath?.replace(this.directory, '')
+    return `import '.${relativeImportPath}';`
+  }
+
+  shouldFetchCartUrl(): boolean {
+    return this.specification.shouldFetchCartUrl?.(this.configuration) || false
+  }
+
+  hasExtensionPointTarget(target: string): boolean {
+    return this.specification.hasExtensionPointTarget?.(this.configuration, target) || false
   }
 }
 
@@ -182,8 +202,35 @@ function remoteSpecForType(type: string): api.graphql.RemoteSpecification | unde
   return undefined
 }
 
-export function createExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(
-  spec: ExtensionSpec<TConfiguration>,
-): ExtensionSpec<TConfiguration> {
-  return spec
+export function createExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(spec: {
+  identifier: string
+  externalIdentifier: string
+  partnersWebIdentifier: string
+  surface: string
+  externalName: string
+  showInCLIHelp?: boolean
+  dependency?: {name: string; version: string}
+  templatePath?: string
+  graphQLType?: string
+  singleEntryPath?: boolean
+  schema: ZodSchemaType<TConfiguration>
+  getBundleExtensionStdinContent?: (config: TConfiguration) => string
+  validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
+  deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
+  preDeployValidation?: (config: TConfiguration) => Promise<void>
+  resourceUrl?: (config: TConfiguration) => string
+  previewMessage?: (
+    host: string,
+    uuid: string,
+    config: TConfiguration,
+    storeFqdn: string,
+  ) => output.TokenizedString | undefined
+  shouldFetchCartUrl?(config: TConfiguration): boolean
+  hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
+}): ExtensionSpec<TConfiguration> {
+  const defaults = {
+    showInCLIHelp: true,
+    singleEntryPath: true,
+  }
+  return {...defaults, ...spec}
 }

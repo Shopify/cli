@@ -1,6 +1,5 @@
 import {fetchAppFromApiKey} from './fetch.js'
 import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {AppInterface} from '../../models/app/app.js'
 import {Organization, OrganizationApp} from '../../models/organization.js'
 import {api, error, output} from '@shopify/cli-kit'
 
@@ -16,7 +15,7 @@ import {api, error, output} from '@shopify/cli-kit'
  * @returns The selected (or created) app
  */
 export async function selectOrCreateApp(
-  localApp: AppInterface,
+  localAppName: string,
   apps: OrganizationApp[],
   org: Organization,
   token: string,
@@ -32,12 +31,12 @@ export async function selectOrCreateApp(
     output.info(`\nBefore you preview your work, it needs to be associated with an app.\n`)
     createNewApp = await createAsNewAppPrompt()
   }
-  const app = createNewApp ? await createApp(org, localApp, token) : await selectAppPrompt(apps)
+  const app = createNewApp ? await createApp(org, localAppName, token) : await selectAppPrompt(apps)
   return app
 }
 
-export async function createApp(org: Organization, app: AppInterface, token: string): Promise<OrganizationApp> {
-  const name = await appNamePrompt(app.name)
+export async function createApp(org: Organization, appName: string, token: string): Promise<OrganizationApp> {
+  const name = await appNamePrompt(appName)
 
   const type = org.appsNext ? 'undecided' : await appTypePrompt()
   const variables: api.graphql.CreateAppQueryVariables = {

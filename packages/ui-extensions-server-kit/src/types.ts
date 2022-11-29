@@ -75,6 +75,8 @@ export interface ExtensionPayload {
   title: string
   extensionPoints?: string[]
   categories?: string[]
+  authenticatedRedirectStartUrl?: string
+  authenticatedRedirectRedirectUrls?: string[]
   localization?: {
     defaultLocale: string
     lastUpdated: number

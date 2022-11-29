@@ -1,0 +1,47 @@
+.Hidden {
+  visibility: hidden;
+}
+
+.ExtensionList {
+  width: 100%;
+  overflow: auto;
+  flex: 1;
+
+  table {
+    text-align: left;
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  hr {
+    color: var(--dc-subdued);
+  }
+
+  tr {
+    line-height: 3rem;
+    border-bottom: 1px solid var(--dc-dark);
+  }
+
+  th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 1rem;
+    background: var(--dc-background);
+  }
+
+  svg {
+    fill: var(--dc-subdued);
+  }
+}
+
+.Empty {
+  width: 100%;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.ActionGroup {
+  display: flex;
+  justify-content: flex-end;
+}

@@ -14,20 +14,23 @@ export const CapabilitiesSchema = schema.define.object({
 })
 
 export const TypeSchema = schema.define.object({
-  type: schema.define.string().default('ui-extension'),
+  type: schema.define.string().default('ui_extension'),
 })
 
-export const ExtensionPointSchema = schema.define.object({
-  type: schema.define.string(),
+export const NewExtensionPointSchema = schema.define.object({
+  target: schema.define.string(),
   module: schema.define.string(),
   metafields: schema.define.array(MetafieldSchema).optional(),
-  capabilities: CapabilitiesSchema.optional(),
 })
+
+export const OldExtensionPointsSchema = schema.define.array(schema.define.string()).default([])
+export const NewExtensionPointsSchema = schema.define.array(NewExtensionPointSchema)
+export const ExtensionPointSchema = schema.define.union([OldExtensionPointsSchema, NewExtensionPointsSchema])
 
 export const BaseExtensionSchema = schema.define.object({
   name: schema.define.string(),
-  type: schema.define.string(),
-  extensionPoints: schema.define.array(schema.define.string()).optional(),
+  type: schema.define.string().default('ui_extension'),
+  extensionPoints: schema.define.any().optional(),
   capabilities: schema.define
     .object({
       block_progress: schema.define.boolean().optional(),
@@ -36,6 +39,8 @@ export const BaseExtensionSchema = schema.define.object({
     .optional(),
   metafields: schema.define.array(MetafieldSchema).optional().default([]),
   categories: schema.define.array(schema.define.string()).optional(),
+  authenticatedRedirectStartUrl: schema.define.string().optional(),
+  authenticatedRedirectRedirectUrls: schema.define.array(schema.define.string()).optional(),
 })
 
 export const BaseFunctionConfigurationSchema = schema.define.object({
@@ -60,11 +65,4 @@ export const BaseFunctionConfigurationSchema = schema.define.object({
   apiVersion: schema.define.string(),
 })
 
-export const BaseFunctionMetadataSchema = schema.define.object({
-  schemaVersions: schema.define.object({}).catchall(
-    schema.define.object({
-      major: schema.define.number(),
-      minor: schema.define.number(),
-    }),
-  ),
-})
+export type NewExtensionPointSchemaType = schema.define.infer<typeof NewExtensionPointSchema>

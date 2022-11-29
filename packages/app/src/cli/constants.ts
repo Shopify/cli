@@ -14,6 +14,8 @@ export const dotEnvFileNames = {
   production: '.env',
 }
 
+export const defaultFunctionRegistationLimit = 10
+
 export const environmentVariables = {
   /**
    * Environment variable to instructs the CLI on running the extensions' CLI through its sources.
@@ -80,7 +82,7 @@ export const publicUIExtensions = {
 } as const
 
 export const uiExtensions = {
-  types: [...publicUIExtensions.types, 'pos_ui_extension', 'customer_accounts_ui_extension'],
+  types: [...publicUIExtensions.types, 'pos_ui_extension', 'customer_accounts_ui_extension', 'ui_extension'],
 } as const
 
 export const activeUIExtensions = {
@@ -122,7 +124,7 @@ type PublicExtensionTypes = typeof extensions.publicTypes[number] | string
 type GatedExtensionTypes = Exclude<ExtensionTypes, PublicExtensionTypes>
 
 export function extensionTypeCategory(extensionType: ExtensionTypes): 'theme' | 'function' | 'ui' {
-  if (extensionType === 'theme') {
+  if (extensionType === 'theme_app_extension' || extensionType === 'theme') {
     return 'theme'
   }
   if ((functionExtensions.types as ReadonlyArray<string>).includes(extensionType)) {
@@ -215,6 +217,7 @@ export const extensionTypesGroups: {name: string; extensions: ExtensionTypes[]}[
       'delivery_customization',
       'pos_ui_extension',
       'shipping_rate_presenter',
+      'ui_extension',
     ],
   },
 ]

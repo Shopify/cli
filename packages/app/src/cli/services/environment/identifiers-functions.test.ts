@@ -31,9 +31,6 @@ const REGISTRATION_B = {
 }
 
 const FUNCTION_A: FunctionExtension = {
-  metadata: {
-    schemaVersions: {},
-  },
   idEnvironmentVariableName: 'FUNCTION_A_ID',
   localIdentifier: 'FUNCTION_A',
   configurationPath: '/function/shopify.function.extension.toml',
@@ -53,12 +50,11 @@ const FUNCTION_A: FunctionExtension = {
   },
   buildWasmPath: () => '/function/dist/index.wasm',
   inputQueryPath: () => '/function/input.graphql',
+  externalType: 'function',
+  publishURL: (_) => Promise.resolve(''),
 }
 
 const FUNCTION_A_2: FunctionExtension = {
-  metadata: {
-    schemaVersions: {},
-  },
   idEnvironmentVariableName: 'FUNCTION_A_2_ID',
   localIdentifier: 'FUNCTION_A_2',
   configurationPath: '/function/shopify.function.extension.toml',
@@ -78,12 +74,11 @@ const FUNCTION_A_2: FunctionExtension = {
   },
   buildWasmPath: () => '/function/dist/index.wasm',
   inputQueryPath: () => '/function/input.graphql',
+  externalType: 'function',
+  publishURL: (_) => Promise.resolve(''),
 }
 
 const FUNCTION_B: FunctionExtension = {
-  metadata: {
-    schemaVersions: {},
-  },
   idEnvironmentVariableName: 'FUNCTION_B_ID',
   localIdentifier: 'FUNCTION_B',
   configurationPath: '/function/shopify.function.extension.toml',
@@ -103,6 +98,8 @@ const FUNCTION_B: FunctionExtension = {
   },
   buildWasmPath: () => '/function/dist/index.wasm',
   inputQueryPath: () => '/function/input.graphql',
+  externalType: 'function',
+  publishURL: (_) => Promise.resolve(''),
 }
 
 const LOCAL_APP = (functionExtensions: FunctionExtension[]): AppInterface => {

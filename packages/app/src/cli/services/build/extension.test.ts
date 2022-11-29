@@ -39,16 +39,15 @@ describe('buildFunctionExtension', () => {
         configurationUi: true,
         apiVersion: '2022-07',
       },
-      metadata: {
-        schemaVersions: {},
-      },
       buildWasmPath: () => '/test/myfunction/dist/index.wasm',
       inputQueryPath: () => '/test/myfunction/input.graphql',
+      publishURL: () => Promise.resolve(''),
       graphQLType: 'product_discounts',
       directory: '/test/myfunction',
       configurationPath: '/test/myfunction/shopify.function.extension.toml',
       idEnvironmentVariableName: 'MY_FUNCTION_ID',
       localIdentifier: 'myfunction',
+      externalType: 'product_discounts',
       type: 'product_discounts',
     }
   })

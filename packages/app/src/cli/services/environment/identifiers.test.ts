@@ -46,6 +46,16 @@ const EXTENSION_A: UIExtension = {
   outputBundlePath: '',
   entrySourceFilePath: '',
   devUUID: 'devUUID',
+  externalType: 'checkout_ui',
+  surface: 'surface',
+  validate: () => Promise.resolve({} as any),
+  preDeployValidation: () => Promise.resolve(),
+  deployConfig: () => Promise.resolve({}),
+  previewMessage: (_) => undefined,
+  publishURL: (_) => Promise.resolve(''),
+  getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: (target: string) => true,
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -64,12 +74,19 @@ const EXTENSION_A_2: UIExtension = {
   outputBundlePath: '',
   entrySourceFilePath: '',
   devUUID: 'devUUID',
+  externalType: 'checkout_ui',
+  surface: 'surface',
+  validate: () => Promise.resolve({} as any),
+  preDeployValidation: () => Promise.resolve(),
+  deployConfig: () => Promise.resolve({}),
+  previewMessage: (_) => undefined,
+  publishURL: (_) => Promise.resolve(''),
+  getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: (target: string) => true,
 }
 
 const FUNCTION_C: FunctionExtension = {
-  metadata: {
-    schemaVersions: {},
-  },
   idEnvironmentVariableName: 'FUNCTION_C_ID',
   localIdentifier: 'FUNCTION_C',
   configurationPath: '/function/shopify.function.extension.toml',
@@ -89,6 +106,8 @@ const FUNCTION_C: FunctionExtension = {
   },
   buildWasmPath: () => '/function/dist/index.wasm',
   inputQueryPath: () => '/function/input.graphql',
+  externalType: 'function',
+  publishURL: (_) => Promise.resolve(''),
 }
 
 const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): AppInterface => {

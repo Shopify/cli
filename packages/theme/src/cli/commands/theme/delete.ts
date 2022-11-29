@@ -1,9 +1,9 @@
-import {getThemeStore} from '../../utilities/theme-store.js'
+import { getThemeStore } from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {themeFlags} from '../../flags.js'
-import {Flags} from '@oclif/core'
-import {cli, session} from '@shopify/cli-kit'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import { themeFlags } from '../../flags.js'
+import { Flags } from '@oclif/core'
+import { cli, session } from '@shopify/cli-kit'
+import { execCLI2 } from '@shopify/cli-kit/node/ruby'
 
 export default class Delete extends ThemeCommand {
   static description = "Delete remote themes from the connected store. This command can't be undone"
@@ -35,7 +35,7 @@ export default class Delete extends ThemeCommand {
   static cli2Flags = ['development', 'show-all', 'force']
 
   async run(): Promise<void> {
-    const {flags, argv} = await this.parse(Delete)
+    const { flags, argv } = await this.parse(Delete)
 
     const store = await getThemeStore(flags)
 
@@ -45,10 +45,10 @@ export default class Delete extends ThemeCommand {
       command.push(...argv)
     }
 
-    const flagsToPass = this.passThroughFlags(flags, {relevantFlags: Delete.cli2Flags})
+    const flagsToPass = this.passThroughFlags(flags, { allowedFlags: Delete.cli2Flags })
     command.push(...flagsToPass)
 
     const adminSession = await session.ensureAuthenticatedThemes(store, flags.password)
-    await execCLI2(command, {adminSession})
+    await execCLI2(command, { adminSession })
   }
 }

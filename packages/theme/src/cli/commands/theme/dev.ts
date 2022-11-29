@@ -1,9 +1,9 @@
-import {themeFlags} from '../../flags.js'
-import {getThemeStore} from '../../utilities/theme-store.js'
+import { themeFlags } from '../../flags.js'
+import { getThemeStore } from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {Flags} from '@oclif/core'
-import {cli, output, session, abort} from '@shopify/cli-kit'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import { Flags } from '@oclif/core'
+import { cli, output, session, abort } from '@shopify/cli-kit'
+import { execCLI2 } from '@shopify/cli-kit/node/ruby'
 
 export default class Dev extends ThemeCommand {
   static description =
@@ -87,9 +87,9 @@ export default class Dev extends ThemeCommand {
   ThemeRefreshTimeoutInMinutes = 90
 
   async run(): Promise<void> {
-    const {flags} = await this.parse(Dev)
+    const { flags } = await this.parse(Dev)
 
-    const flagsToPass = this.passThroughFlags(flags, {relevantFlags: Dev.cli2Flags})
+    const flagsToPass = this.passThroughFlags(flags, { allowedFlags: Dev.cli2Flags })
     const command = ['theme', 'serve', flags.path, ...flagsToPass]
 
     const store = await getThemeStore(flags)
@@ -111,6 +111,6 @@ export default class Dev extends ThemeCommand {
   async execute(store: string, command: string[], controller: AbortController) {
     const adminSession = await session.ensureAuthenticatedThemes(store, undefined, [], true)
     const storefrontToken = await session.ensureAuthenticatedStorefront()
-    await execCLI2(command, {adminSession, storefrontToken, signal: controller.signal as abort.Signal})
+    await execCLI2(command, { adminSession, storefrontToken, signal: controller.signal as abort.Signal })
   }
 }

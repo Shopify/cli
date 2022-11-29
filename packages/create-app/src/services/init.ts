@@ -1,8 +1,9 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
 import cleanup from '../utils/template/cleanup.js'
 
-import {string, path, file, output, ui, template, npm, git, github, environment, error} from '@shopify/cli-kit'
+import {string, path, file, ui, template, npm, git, github, environment, error, output} from '@shopify/cli-kit'
 import {packageManager, PackageManager, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
+import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 interface InitOptions {
   name: string
@@ -10,10 +11,6 @@ interface InitOptions {
   template: string
   packageManager: string | undefined
   local: boolean
-}
-
-const DirectoryExistsError = (name: string) => {
-  return new error.Abort(`\nA directory with this name (${name}) already exists.\nChoose a new name for your app.`)
 }
 
 async function init(options: InitOptions) {
@@ -150,18 +147,21 @@ async function init(options: InitOptions) {
     await file.move(templateScaffoldDir, outputDirectory)
   })
 
-  output.info(output.content`
-  ${hyphenizedName} is ready for you to build! Remember to ${output.token.genericShellCommand(`cd ${hyphenizedName}`)}
-  Check the setup instructions in your README file
-  To preview your project, run ${output.token.packagejsonScript(packageManager, 'dev')}
-  To add extensions, run ${output.token.packagejsonScript(packageManager, 'generate extension')}
-  For more details on all that you can build, see the docs: ${output.token.link(
-    'shopify.dev',
-    'https://shopify.dev',
-  )} ✨
-
-  For help and a list of commands, enter ${output.token.packagejsonScript(packageManager, 'shopify app', '--help')}
-  `)
+  renderSuccess({
+    headline: `${hyphenizedName} is ready for you to build!`,
+    nextSteps: [
+      ['Run', {command: `cd ${hyphenizedName}`}],
+      ['For extensions, run', {command: output.formatPackageManagerCommand(packageManager, 'generate extension')}],
+      ['To see your app, run', {command: output.formatPackageManagerCommand(packageManager, 'dev')}],
+    ],
+    reference: [
+      {link: {label: 'Shopify docs', url: 'https://shopify.dev'}},
+      [
+        'For an overview of commands, run',
+        {command: `${output.formatPackageManagerCommand(packageManager, 'shopify app', '--help')}`},
+      ],
+    ],
+  })
 }
 
 function inferPackageManager(optionsPackageManager: string | undefined): PackageManager {
@@ -174,7 +174,8 @@ function inferPackageManager(optionsPackageManager: string | undefined): Package
 
 async function ensureAppDirectoryIsAvailable(directory: string, name: string): Promise<void> {
   const exists = await file.exists(directory)
-  if (exists) throw DirectoryExistsError(name)
+  if (exists)
+    throw new error.Abort(`\nA directory with this name (${name}) already exists.\nChoose a new name for your app.`)
 }
 
 export default init

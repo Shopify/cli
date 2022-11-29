@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.23.0
+
+### Minor Changes
+
+- c15ad5df: Rename port to tcp and export its API from the module @shopify/cli-kit/node/tcp instead of @shopify/cli-kit
+- 1ee1cfd1: Expose the semver API from the @shopify/cli-kit/node/semver and improve the function semantics
+
 ## 3.22.1
 
 ## 3.22.0

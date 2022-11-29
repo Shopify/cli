@@ -22,20 +22,22 @@ describe('getUIExtensionPayload', () => {
         version: '1.2.3',
       })
 
-      const uiExtension = testUIExtension({
+      const uiExtension = await testUIExtension({
         outputBundlePath,
         directory: tmpDir,
         configuration: {
           name: 'test-ui-extension',
-          type: 'product_subscription',
+          type: 'checkout_ui_extension',
           metafields: [],
-          extensionPoints: ['EXTENSION-POINT'],
           capabilities: {
             block_progress: false,
             network_access: true,
           },
+          extensionPoints: ['CUSTOM_EXTENSION_POINT'],
         },
+        devUUID: 'devUUID',
       })
+
       const options: ExtensionDevOptions = {
         signal,
         stdout,
@@ -79,22 +81,24 @@ describe('getUIExtensionPayload', () => {
           hidden: true,
           localizationStatus: '',
           resource: {
-            url: 'https://my-domain.com/subscription',
+            url: 'https://my-domain.com/cart',
           },
           root: {
             url: 'http://tunnel-url.com/extensions/devUUID',
           },
           status: 'success',
         },
-        extensionPoints: ['EXTENSION-POINT'],
-        externalType: 'subscription_ui',
+        categories: null,
+        extensionPoints: ['CUSTOM_EXTENSION_POINT'],
+        externalType: 'checkout_ui',
         localization: null,
         metafields: null,
-        surface: 'admin',
+        surface: 'checkout',
         title: 'test-ui-extension',
-        type: 'product_subscription',
+        type: 'checkout_ui_extension',
         uuid: 'devUUID',
         version: '1.2.3',
+        approvalScopes: ['scope-a'],
       })
     })
   })
@@ -102,7 +106,7 @@ describe('getUIExtensionPayload', () => {
   test('default values', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const uiExtension = testUIExtension({directory: tmpDir})
+      const uiExtension = await testUIExtension({directory: tmpDir})
       const options: ExtensionDevOptions = {} as ExtensionDevOptions
       const development: Partial<UIExtensionPayload['development']> = {}
 

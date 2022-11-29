@@ -1,8 +1,8 @@
-import {themeFlags} from '../../flags.js'
+import { themeFlags } from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {cli} from '@shopify/cli-kit'
-import {Flags} from '@oclif/core'
+import { execCLI2 } from '@shopify/cli-kit/node/ruby'
+import { cli } from '@shopify/cli-kit'
+import { Flags } from '@oclif/core'
 
 export default class Check extends ThemeCommand {
   static description = 'Validate the theme'
@@ -88,8 +88,8 @@ Excludes checks matching any category when specified more than once`,
   ]
 
   async run(): Promise<void> {
-    const {flags} = await this.parse(Check)
-    await execCLI2(['theme', 'check', flags.path, ...this.passThroughFlags(flags, {relevantFlags: Check.cli2Flags})], {
+    const { flags } = await this.parse(Check)
+    await execCLI2(['theme', 'check', flags.path, ...this.passThroughFlags(flags, { allowedFlags: Check.cli2Flags })], {
       directory: flags.path,
     })
   }
