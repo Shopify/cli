@@ -107,6 +107,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     specification: ExtensionSpec
     remoteSpecification?: api.graphql.RemoteSpecification
     extensionPointSpecs?: ExtensionPointSpec[]
+    outputBundlePath?: string
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
@@ -115,7 +116,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     this.specification = options.specification
     this.remoteSpecification = options.remoteSpecification
     this.extensionPointSpecs = options.extensionPointSpecs
-    this.outputBundlePath = path.join(options.directory, 'dist/main.js')
+    if (options.outputBundlePath) {
+      this.outputBundlePath = options.outputBundlePath
+    } else {
+      this.outputBundlePath = path.join(options.directory, 'dist/main.js')
+    }
     this.devUUID = `dev-${id.generateRandomUUID()}`
     this.localIdentifier = path.basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`

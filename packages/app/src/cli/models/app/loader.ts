@@ -368,6 +368,7 @@ class AppLoader {
         specification,
         remoteSpecification: undefined,
         extensionPointSpecs: undefined,
+        outputBundlePath: directory,
       })
     })
 

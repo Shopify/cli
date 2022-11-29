@@ -30,6 +30,7 @@ export type FunctionExtension<TConfiguration extends FunctionConfigType = Functi
 export type ThemeExtension<TConfiguration extends BaseConfigContents = BaseConfigContents> = Extension & {
   configuration: TConfiguration
   previewMessage(url: string, storeFqdn: string): output.TokenizedString | undefined
+  outputBundlePath: string
 }
 
 export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigContents> = Extension & {
