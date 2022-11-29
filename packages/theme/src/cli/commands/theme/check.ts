@@ -74,9 +74,22 @@ Excludes checks matching any category when specified more than once`,
     }),
   }
 
+  static cli2Flags = [
+    'auto-correct',
+    'category',
+    'config',
+    'exclude-category',
+    'fail-level',
+    'init',
+    'list',
+    'output',
+    'print',
+    'version',
+  ]
+
   async run(): Promise<void> {
     const {flags} = await this.parse(Check)
-    await execCLI2(['theme', 'check', flags.path, ...this.passThroughFlags(flags, {exclude: ['path', 'verbose']})], {
+    await execCLI2(['theme', 'check', flags.path, ...this.passThroughFlags(flags, {allowedFlags: Check.cli2Flags})], {
       directory: flags.path,
     })
   }
