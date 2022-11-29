@@ -154,6 +154,7 @@ describe('getUIExtensionPayload', () => {
           ],
         },
       })
+
       const options: ExtensionDevOptions = {} as ExtensionDevOptions
       const development: Partial<UIExtensionPayload['development']> = {}
 
