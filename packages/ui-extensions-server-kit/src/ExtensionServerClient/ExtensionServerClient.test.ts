@@ -57,7 +57,7 @@ describe('ExtensionServerClient', () => {
         expect(client.api.url).toBe(url.replace('wss', 'https'))
       })
 
-      test('returns extensions filtered by surface option', async () => {
+      test('returns extensions filtered by extension surface', async () => {
         const extensions = [
           {uuid: '123', surface: 'admin'},
           {uuid: '456', surface: 'checkout'},
@@ -68,6 +68,27 @@ describe('ExtensionServerClient', () => {
         const {socket, client} = setup({...defaultOptions, surface: 'admin'})
         await expect(client.api.extensions()).resolves.toStrictEqual({
           extensions: [{uuid: '123', surface: 'admin'}],
+        })
+
+        socket.close()
+      })
+
+      test('returns extensions filtered by extensionPoint surface', async () => {
+        const extensions = [
+          {uuid: '123', surface: 'admin'},
+          {uuid: '456', surface: 'checkout'},
+          {uuid: '789', surface: '', extensionPoints: [{surface: 'admin'}, {surface: 'checkout'}]},
+          {uuid: '101', surface: '', extensionPoints: [{surface: 'pos'}, {surface: 'pos'}]},
+        ]
+
+        mockGet('http://example-host.com:8000').willResolve({extensions})
+
+        const {socket, client} = setup({...defaultOptions, surface: 'admin'})
+        await expect(client.api.extensions()).resolves.toStrictEqual({
+          extensions: [
+            {uuid: '123', surface: 'admin'},
+            {uuid: '789', surface: '', extensionPoints: [{surface: 'admin'}, {surface: 'checkout'}]},
+          ],
         })
 
         socket.close()
