@@ -147,7 +147,7 @@ declare global {
       interface Extension {
         assets: Assets
         development: Development
-        extensionPoints: string[] | {target: string; module: string; main: {url: string}} | null
+        extensionPoints: string[] | {target: string; module: string; surface: Surface; main: {url: string}}[] | null
         surface: Surface
         name?: string
         title?: string
