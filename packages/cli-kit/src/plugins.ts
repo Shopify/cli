@@ -1,6 +1,6 @@
 import {JsonMap} from './json.js'
 import {PickByPrefix} from './typing/pick-by-prefix.js'
-import {MonorailEventPublic, MonorailEventSensitive} from './monorail.js'
+import {MonorailEventPublic, MonorailEventSensitive} from './private/node/monorail.js'
 import {HookReturnPerTunnelPlugin} from './public/node/plugins/tunnel.js'
 import {getArrayContainsDuplicates, getArrayRejectingUndefined} from './public/common/array.js'
 import {err, Result} from './public/common/result.js'

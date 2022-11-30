@@ -7,14 +7,14 @@ import * as ruby from './public/node/ruby.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {getAppInfo} from './store.js'
 import constants from './constants.js'
-import {publishEvent} from './monorail.js'
+import {publishMonorailEvent} from './private/node/monorail.js'
 import {inTemporaryDirectory, touch as touchFile, mkdir} from './file.js'
 import {getListOfTunnelPlugins} from './plugins.js'
 import {it, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
 describe('event tracking', () => {
   const currentDate = new Date(Date.UTC(2022, 1, 1, 10, 0, 0))
-  let publishEventMock: MockedFunction<typeof publishEvent>
+  let publishMonorailEventMock: MockedFunction<typeof publishMonorailEvent>
 
   beforeEach(() => {
     vi.setSystemTime(currentDate)
@@ -25,7 +25,7 @@ describe('event tracking', () => {
     vi.mock('./string.js')
 
     vi.mock('./version.js')
-    vi.mock('./monorail.js')
+    vi.mock('./private/node/monorail.js')
     vi.mock('./public/node/cli.js')
     vi.mocked(environment.local.isShopify).mockResolvedValue(false)
     vi.mocked(environment.local.isDevelopment).mockReturnValue(false)
@@ -36,7 +36,7 @@ describe('event tracking', () => {
     vi.mocked(environment.local.cloudEnvironment).mockReturnValue({platform: 'spin', editor: false})
     vi.mocked(ruby.version).mockResolvedValue('3.1.1')
     vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
-    publishEventMock = vi.mocked(publishEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
+    publishMonorailEventMock = vi.mocked(publishMonorailEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
     vi.mock('./plugins.js', async () => {
       const plugins: any = await vi.importActual('./plugins.js')
       return {
@@ -109,9 +109,9 @@ describe('event tracking', () => {
         metadata: expect.anything(),
         env_plugin_installed_all: JSON.stringify(['@shopify/built-in', 'a-custom-plugin']),
       }
-      expect(publishEventMock).toHaveBeenCalledOnce()
-      expect(publishEventMock.mock.calls[0]![1]).toMatchObject(expectedPayloadPublic)
-      expect(publishEventMock.mock.calls[0]![2]).toMatchObject(expectedPayloadSensitive)
+      expect(publishMonorailEventMock).toHaveBeenCalledOnce()
+      expect(publishMonorailEventMock.mock.calls[0]![1]).toMatchObject(expectedPayloadPublic)
+      expect(publishMonorailEventMock.mock.calls[0]![2]).toMatchObject(expectedPayloadSensitive)
     })
   })
 
@@ -147,9 +147,9 @@ describe('event tracking', () => {
         error_message: 'Permission denied',
         metadata: expect.anything(),
       }
-      expect(publishEventMock).toHaveBeenCalledOnce()
-      expect(publishEventMock.mock.calls[0]![1]).toMatchObject(expectedPayloadPublic)
-      expect(publishEventMock.mock.calls[0]![2]).toMatchObject(expectedPayloadSensitive)
+      expect(publishMonorailEventMock).toHaveBeenCalledOnce()
+      expect(publishMonorailEventMock.mock.calls[0]![1]).toMatchObject(expectedPayloadPublic)
+      expect(publishMonorailEventMock.mock.calls[0]![2]).toMatchObject(expectedPayloadSensitive)
     })
   })
 
@@ -168,7 +168,7 @@ describe('event tracking', () => {
       await reportEvent({config})
 
       // Then
-      expect(publishEvent).not.toHaveBeenCalled()
+      expect(publishMonorailEvent).not.toHaveBeenCalled()
     })
   })
 

@@ -4,7 +4,7 @@ import {version as rubyVersion} from './public/node/ruby.js'
 import {content, debug, token} from './output.js'
 import constants from './constants.js'
 import * as metadata from './metadata.js'
-import {publishEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
+import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC} from './private/node/monorail.js'
 import {fanoutHooks, getListOfTunnelPlugins} from './plugins.js'
 import {getPackageManager, packageManagerUsedForCreating} from './public/node/node-package-manager.js'
 import BaseCommand from './public/node/base-command.js'
@@ -65,7 +65,7 @@ export async function reportEvent(options: ReportEventOptions) {
       debug(content`Skipping command analytics, payload: ${token.json(payload)}`)
       return
     }
-    const response = await publishEvent(MONORAIL_COMMAND_TOPIC, payload.public, payload.sensitive)
+    const response = await publishMonorailEvent(MONORAIL_COMMAND_TOPIC, payload.public, payload.sensitive)
     if (response.type === 'error') {
       debug(response.message)
     }

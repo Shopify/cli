@@ -1,6 +1,6 @@
 import {isUnitTest} from './environment/local.js'
 import {AnyJson} from './json.js'
-import {MonorailEventPublic} from './monorail.js'
+import {MonorailEventPublic} from './private/node/monorail.js'
 import {sendErrorToBugsnag} from './public/node/error-handler.js'
 import {PickByPrefix} from './typing/pick-by-prefix.js'
 

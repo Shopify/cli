@@ -1,7 +1,7 @@
-import {fetch} from './http.js'
-import {debug, content, token} from './output.js'
-import {JsonMap} from './json.js'
-import {DeepRequired} from './typing/deep-required.js'
+import {fetch} from '../../http.js'
+import {debug, content, token} from '../../output.js'
+import {JsonMap} from '../../json.js'
+import {DeepRequired} from '../../typing/deep-required.js'
 
 const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 
@@ -10,7 +10,7 @@ type Optional<T> = T | null
 // This is the topic name of the main event we log to Monorail, the command tracker
 export const MONORAIL_COMMAND_TOPIC = 'app_cli3_command/1.2' as const
 
-export interface Schemas {
+export interface MonorailSchemas {
   [MONORAIL_COMMAND_TOPIC]: {
     sensitive: {
       args: string
@@ -114,16 +114,15 @@ export interface Schemas {
 
 // In reality, we're normally most interested in just this from Schemas, so export it for ease of use.
 // The monorail schema itself has lots of optional values as it must be backwards-compatible. For our schema we want mandatory values instead.
-export type MonorailEventPublic = DeepRequired<Schemas[typeof MONORAIL_COMMAND_TOPIC]['public']>
-export type MonorailEventSensitive = Schemas[typeof MONORAIL_COMMAND_TOPIC]['sensitive']
+export type MonorailEventPublic = DeepRequired<MonorailSchemas[typeof MONORAIL_COMMAND_TOPIC]['public']>
+export type MonorailEventSensitive = MonorailSchemas[typeof MONORAIL_COMMAND_TOPIC]['sensitive']
 
 type MonorailResult = {type: 'ok'} | {type: 'error'; message: string}
 
-export async function publishEvent<TSchemaId extends keyof Schemas, TPayload extends Schemas[TSchemaId]>(
-  schemaId: TSchemaId,
-  publicData: TPayload['public'],
-  sensitiveData: TPayload['sensitive'],
-): Promise<MonorailResult> {
+export async function publishMonorailEvent<
+  TSchemaId extends keyof MonorailSchemas,
+  TPayload extends MonorailSchemas[TSchemaId],
+>(schemaId: TSchemaId, publicData: TPayload['public'], sensitiveData: TPayload['sensitive']): Promise<MonorailResult> {
   try {
     const currentTime = new Date().getTime()
     const payload = {...publicData, ...sensitiveData}
