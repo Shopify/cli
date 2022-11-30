@@ -4,7 +4,7 @@ import {loadLocalesConfig} from '../../../utilities/extensions/locales-configura
 import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {file, output, path, schema} from '@shopify/cli-kit'
-import {err, ok, Result} from '@shopify/cli-kit/common/result'
+import {err, ok, Result} from '@shopify/cli-kit/node/result'
 
 const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.20.0'}
 

@@ -1,7 +1,6 @@
 import {FatalError} from './error.js'
 import {Abort, ExtendableError} from '../../error.js'
 
-/* eslint-disable node/handle-callback-err */
 export type Result<TValue, TError> = Ok<TValue, TError> | Err<TValue, TError>
 
 /**
@@ -80,6 +79,7 @@ export class Ok<TValue, TError> {
 }
 
 export class Err<TValue, TError> {
+  // eslint-disable-next-line node/handle-callback-err
   constructor(readonly error: TError) {}
 
   /**

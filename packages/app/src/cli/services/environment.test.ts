@@ -27,7 +27,7 @@ import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
 import {store, api, outputMocker} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
-import {ok} from '@shopify/cli-kit/common/result.js'
+import {ok} from '@shopify/cli-kit/node/result.js'
 
 beforeEach(() => {
   vi.mock('./dev/fetch')

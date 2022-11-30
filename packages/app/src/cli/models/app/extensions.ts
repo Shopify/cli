@@ -2,7 +2,7 @@ import {ExtensionTypes} from '../../constants.js'
 import {BaseConfigContents} from '../extensions/extensions.js'
 import {FunctionConfigType} from '../extensions/functions.js'
 import {output} from '@shopify/cli-kit'
-import {Result} from '@shopify/cli-kit/common/result'
+import {Result} from '@shopify/cli-kit/node/result'
 
 export interface ExtensionIdentifier {
   identifier: string
