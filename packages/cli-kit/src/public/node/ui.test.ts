@@ -268,7 +268,7 @@ describe('renderConcurrent', async () => {
       0000-00-00 00:00:00 | frontend | third frontend message
       "
     `)
-  })
+  }, 10000)
 
   test('renders an error message correctly when a process throws an error', async () => {
     // Given
