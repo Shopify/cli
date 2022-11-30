@@ -31,6 +31,7 @@ const spec = createExtensionSpec({
     )
     return output.content`${links.join('\n')}`
   },
+  // TODO: Test this
   deployConfig: async (config, directory) => {
     return {
       extension_points: config.extensionPoints,
@@ -38,6 +39,7 @@ const spec = createExtensionSpec({
       metafields: config.metafields,
       name: config.name,
       settings: config.settings,
+      // TODO: Is this correct?
       localization: await loadLocalesConfig(directory, 'checkout_ui'),
     }
   },
