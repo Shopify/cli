@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.24.1
+
+### Patch Changes
+
+- 7e5c492a: Fix errors not being displayed properly when coming from processes rendered concurrently
+
 ## 3.24.0
 
 ### Patch Changes
