@@ -76,11 +76,6 @@ declare global {
       connection: WebSocket
 
       /**
-       * API Client
-       */
-      api: API.Client
-
-      /**
        * Function to add an event listener to messages coming from
        * the extension server connection.
        */
