@@ -47,6 +47,7 @@ describe('uploadFunctionExtensions', () => {
             create: '/create',
             details: '/details/:id',
           },
+          enable_create: true,
         },
         configurationUi: false,
         apiVersion: '2022-07',
@@ -378,6 +379,7 @@ describe('uploadFunctionExtensions', () => {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
             createPath: (extension.configuration.ui?.paths ?? {}).create,
           },
+          enableCreationUi: true,
           moduleUploadUrl: uploadUrl,
         },
       )
@@ -448,6 +450,7 @@ describe('uploadFunctionExtensions', () => {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
             createPath: (extension.configuration.ui?.paths ?? {}).create,
           },
+          enableCreationUi: true,
           moduleUploadUrl: uploadUrl,
         },
       )
@@ -515,6 +518,7 @@ describe('uploadFunctionExtensions', () => {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
             createPath: (extension.configuration.ui?.paths ?? {}).create,
           },
+          enableCreationUi: true,
           moduleUploadUrl: uploadUrl,
         },
       )
@@ -523,7 +527,7 @@ describe('uploadFunctionExtensions', () => {
 
   test('appBridge is set to undefined when there is no configuration.ui.paths', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
-      extension.configuration.ui = undefined
+      extension.configuration.ui!.paths = undefined
 
       const uploadUrl = `test://test.com/moduleId.wasm`
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
@@ -567,6 +571,63 @@ describe('uploadFunctionExtensions', () => {
           apiType: 'order_discounts',
           apiVersion: extension.configuration.apiVersion,
           appBridge: undefined,
+          enableCreationUi: true,
+          moduleUploadUrl: uploadUrl,
+        },
+      )
+    })
+  })
+
+  test('enableCreationUi is set to false when configuration.ui.enable_create is false', async () => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
+      extension.configuration.ui!.enable_create = false
+
+      const uploadUrl = `test://test.com/moduleId.wasm`
+      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      await file.write(extension.buildWasmPath(), '')
+      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
+        data: {
+          uploadUrlGenerate: {
+            headers: {},
+            maxSize: '200',
+            url: uploadUrl,
+          },
+        },
+      }
+      const functionSetMutationResponse: api.graphql.AppFunctionSetMutationSchema = {
+        data: {
+          functionSet: {
+            userErrors: [],
+            function: {
+              id: 'uuid',
+            },
+          },
+        },
+      }
+      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
+      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
+
+      // When
+      await uploadFunctionExtensions([extension], {token, identifiers})
+
+      // Then
+      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+        2,
+        identifiers.app,
+        api.graphql.AppFunctionSetMutation,
+        token,
+        {
+          id: undefined,
+          title: extension.configuration.name,
+          description: extension.configuration.description,
+          apiType: 'order_discounts',
+          apiVersion: extension.configuration.apiVersion,
+          appBridge: {
+            detailsPath: (extension.configuration.ui?.paths ?? {}).details,
+            createPath: (extension.configuration.ui?.paths ?? {}).create,
+          },
+          enableCreationUi: false,
           moduleUploadUrl: uploadUrl,
         },
       )
@@ -637,6 +698,7 @@ describe('uploadFunctionExtensions', () => {
             detailsPath: (extension.configuration.ui?.paths ?? {}).details,
             createPath: (extension.configuration.ui?.paths ?? {}).create,
           },
+          enableCreationUi: true,
           moduleUploadUrl: uploadUrl,
         },
       )
