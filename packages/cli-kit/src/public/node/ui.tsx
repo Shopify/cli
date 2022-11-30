@@ -7,26 +7,32 @@ import {fatalError} from '../../private/node/ui/error.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
 import React from 'react'
 import {AbortController} from 'abort-controller'
+import {RenderOptions} from 'ink'
 
 interface RenderConcurrentOptions {
   processes: OutputProcess[]
   abortController?: AbortController
   showTimestamps?: boolean
+  renderOptions?: RenderOptions
 }
 
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
  */
-export async function renderConcurrent({processes, abortController, showTimestamps = true}: RenderConcurrentOptions) {
-  const {waitUntilExit} = render(
+export async function renderConcurrent({
+  processes,
+  abortController,
+  showTimestamps = true,
+  renderOptions = {},
+}: RenderConcurrentOptions) {
+  return render(
     <ConcurrentOutput
       processes={processes}
       abortController={abortController ?? new AbortController()}
       showTimestamps={showTimestamps}
     />,
+    renderOptions,
   )
-
-  return waitUntilExit()
 }
 
 type RenderAlertOptions = Omit<AlertProps, 'type'>
