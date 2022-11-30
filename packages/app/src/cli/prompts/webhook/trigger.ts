@@ -1,4 +1,4 @@
-import {DELIVERY_METHOD, isAddressAllowedForDeliveryMethod} from '../../services/event/trigger-options.js'
+import {DELIVERY_METHOD, isAddressAllowedForDeliveryMethod} from '../../services/webhook/trigger-options.js'
 import {ui, output} from '@shopify/cli-kit'
 
 export async function topicPrompt(): Promise<string> {
