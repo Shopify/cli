@@ -1,5 +1,14 @@
 # @shopify/cli-kit
 
+## 3.24.0
+
+### Patch Changes
+
+- d47a6e80: Improve success message style in create-app command
+- a9d4be9e: Generate creative suggested names for new themes
+- aca90638: Removed unnecessary line breaks in concurrent output
+- cb0990df: Fixed no organization error formatting
+
 ## 3.23.0
 
 ### Minor Changes
