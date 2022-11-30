@@ -1,3 +1,5 @@
+import {ExtensionPoints, Status} from 'types'
+
 declare global {
   namespace ExtensionServer {
     /**
@@ -147,7 +149,7 @@ declare global {
       interface Extension {
         assets: Assets
         development: Development
-        extensionPoints: string[] | {target: string; module: string; surface: Surface; main: {url: string}}[] | null
+        extensionPoints: ExtensionPoints
         surface: Surface
         name?: string
         title?: string
@@ -171,13 +173,13 @@ declare global {
       interface Development {
         root: ResourceURL
         resource: ResourceURL
-        renderer?: Renderer
+        renderer: Renderer
         hidden: boolean
         buildDir?: string
         rootDir?: string
         template?: string
         entries?: {[key: string]: string}
-        status: string
+        status: Status
       }
 
       interface ResourceURL {
