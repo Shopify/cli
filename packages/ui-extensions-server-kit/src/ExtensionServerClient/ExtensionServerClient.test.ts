@@ -57,28 +57,11 @@ describe('ExtensionServerClient', () => {
         expect(client.api.url).toBe(url.replace('wss', 'https'))
       })
 
-      test('returns extensions filtered by extension surface', async () => {
+      test('returns extensions filtered by extension and extensionPoint surface', async () => {
         const extensions = [
           {uuid: '123', surface: 'admin'},
           {uuid: '456', surface: 'checkout'},
-        ]
-
-        mockGet('http://example-host.com:8000').willResolve({extensions})
-
-        const {socket, client} = setup({...defaultOptions, surface: 'admin'})
-        await expect(client.api.extensions()).resolves.toStrictEqual({
-          extensions: [{uuid: '123', surface: 'admin'}],
-        })
-
-        socket.close()
-      })
-
-      test('returns extensions filtered by extensionPoint surface', async () => {
-        const extensions = [
-          {uuid: '123', surface: 'admin'},
-          {uuid: '456', surface: 'checkout'},
-          {uuid: '789', surface: '', extensionPoints: [{surface: 'admin'}, {surface: 'checkout'}]},
-          {uuid: '101', surface: '', extensionPoints: [{surface: 'pos'}, {surface: 'pos'}]},
+          {uuid: '456', surface: '', extensionPoints: [{surface: 'admin'}]},
         ]
 
         mockGet('http://example-host.com:8000').willResolve({extensions})
@@ -87,7 +70,7 @@ describe('ExtensionServerClient', () => {
         await expect(client.api.extensions()).resolves.toStrictEqual({
           extensions: [
             {uuid: '123', surface: 'admin'},
-            {uuid: '789', surface: '', extensionPoints: [{surface: 'admin'}, {surface: 'checkout'}]},
+            {uuid: '456', surface: '', extensionPoints: [{surface: 'admin'}]},
           ],
         })
 
@@ -121,6 +104,7 @@ describe('ExtensionServerClient', () => {
         extensions: [
           {uuid: '123', surface: 'admin'},
           {uuid: '456', surface: 'checkout'},
+          {uuid: '456', surface: '', extensionPoints: [{surface: 'admin'}]},
         ],
       }
 
@@ -130,7 +114,10 @@ describe('ExtensionServerClient', () => {
       expect(connectSpy).toHaveBeenCalledTimes(1)
       expect(connectSpy).toHaveBeenCalledWith(
         expect.objectContaining({
-          extensions: [{uuid: '123', surface: 'admin'}],
+          extensions: [
+            {uuid: '123', surface: 'admin'},
+            {uuid: '456', surface: '', extensionPoints: [{surface: 'admin'}]},
+          ],
         }),
       )
 
@@ -169,6 +156,7 @@ describe('ExtensionServerClient', () => {
         extensions: [
           {uuid: '123', surface: 'admin'},
           {uuid: '456', surface: 'checkout'},
+          {uuid: '456', surface: '', extensionPoints: [{surface: 'admin'}]},
         ],
       }
 
@@ -178,7 +166,10 @@ describe('ExtensionServerClient', () => {
       expect(updateSpy).toHaveBeenCalledTimes(1)
       expect(updateSpy).toHaveBeenCalledWith(
         expect.objectContaining({
-          extensions: [{uuid: '123', surface: 'admin'}],
+          extensions: [
+            {uuid: '123', surface: 'admin'},
+            {uuid: '456', surface: '', extensionPoints: [{surface: 'admin'}]},
+          ],
         }),
       )
 
