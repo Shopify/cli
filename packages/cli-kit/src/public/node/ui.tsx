@@ -1,12 +1,16 @@
 import ConcurrentOutput from '../../private/node/ui/components/ConcurrentOutput.js'
 import {OutputProcess} from '../../output.js'
-import {render} from '../../private/node/ui.js'
+import {render, renderOnce} from '../../private/node/ui.js'
 import {Fatal} from '../../error.js'
 import {alert} from '../../private/node/ui/alert.js'
 import {fatalError} from '../../private/node/ui/error.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import {AbortController} from 'abort-controller'
+import type {Writable, Readable} from 'node:stream'
+import FullScreen from '../../private/node/ui/components/FullScreen.js'
+import { Box, Spacer, useInput, useStdout } from 'ink'
+import {Text} from "ink";
 
 interface RenderConcurrentOptions {
   processes: OutputProcess[]
@@ -69,6 +73,54 @@ type RenderAlertOptions = Omit<AlertProps, 'type'>
  */
 export function renderInfo(options: RenderAlertOptions) {
   alert({...options, type: 'info'})
+}
+
+interface RenderOutputWithFooterMenu {
+  stdout: string,
+  keyPressCallback: (key: string) => void,
+  menu: {label: string, key: string}[]
+}
+
+function OutputWithFooter(options: RenderOutputWithFooterMenu) {
+  const [date, setDate] = useState(new Date())
+  const {stdout} = useStdout()
+  const width = stdout!.columns
+  const fillSpaces = (width - options.menu.map((option) => option.key.length + option.label.length).reduce((a, b) => a + b) - options.menu.length * 5)
+  useInput((input, key) => {
+    options.keyPressCallback(key)
+  })
+
+  useEffect(() => {
+    setInterval(() => {
+      setDate(new Date())
+    }, 1000)
+  }, [])
+  return <FullScreen>
+    <Box flexDirection='column' width="100%">
+      <Box flexGrow={1}>
+        <Text>{`${options.stdout}: ${date.toString()}`}</Text>
+      </Box>
+      <Box flexDirection='column'>
+        <Box>
+          {options.menu.map((menuOption) => {
+            return <Box marginRight={5}>
+                <Text>{menuOption.key}</Text>
+                <Text inverse color={"cyan"}>{menuOption.label}</Text>
+              </Box>
+          })}
+          <Box>
+            <Text backgroundColor="cyan">{" ".repeat(fillSpaces)}</Text>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  </FullScreen>
+}
+
+export function renderOutputWithFooterMenu(options: RenderOutputWithFooterMenu) {
+  render(
+    <OutputWithFooter {...options}/>
+  )
 }
 
 /**
