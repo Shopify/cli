@@ -1,4 +1,4 @@
-import {createExtensionSpec} from '../extensions.js'
+import {createUIExtensionSpec} from '../ui.js'
 import {BaseExtensionSchema} from '../schemas.js'
 import {defualtExtensionFlavors} from '../../../constants.js'
 import {error, schema} from '@shopify/cli-kit'
@@ -12,7 +12,7 @@ const WebPixelSchema = BaseExtensionSchema.extend({
   settings: schema.define.any(),
 })
 
-const spec = createExtensionSpec({
+const spec = createUIExtensionSpec({
   identifier: 'web_pixel_extension',
   externalIdentifier: 'web_pixel',
   externalName: 'Web pixel',

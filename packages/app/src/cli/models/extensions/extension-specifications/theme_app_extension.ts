@@ -1,8 +1,8 @@
-import {createExtensionSpec} from '../extensions.js'
+import {createUIExtensionSpec} from '../ui.js'
 import {BaseExtensionSchema} from '../schemas.js'
 import {output} from '@shopify/cli-kit'
 
-const spec = createExtensionSpec({
+const spec = createUIExtensionSpec({
   identifier: 'theme',
   externalIdentifier: 'theme_app_extension',
   externalName: 'Theme app extension',

@@ -1,6 +1,6 @@
 import {App, AppInterface} from './app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
-import {ExtensionInstance, specForType} from '../extensions/extensions.js'
+import {UIExtensionInstance, specForType} from '../extensions/ui.js'
 import {FunctionInstance, functionSpecForType} from '../extensions/functions.js'
 import {api} from '@shopify/cli-kit'
 
@@ -48,7 +48,7 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
 
   const specification = await specForType(configuration.type)
 
-  const extension = new ExtensionInstance({
+  const extension = new UIExtensionInstance({
     configuration,
     configurationPath,
     entryPath: entrySourceFilePath,
@@ -68,7 +68,7 @@ export async function testThemeExtensions(): Promise<ThemeExtension> {
   }
 
   const specification = await specForType(configuration.type)
-  return new ExtensionInstance({
+  return new UIExtensionInstance({
     configuration,
     configurationPath: '',
     entryPath: '',

@@ -1,4 +1,4 @@
-import {createExtensionSpec} from '../extensions.js'
+import {createUIExtensionSpec} from '../ui.js'
 import {BaseExtensionSchema, NewExtensionPointSchemaType, NewExtensionPointsSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
@@ -13,7 +13,7 @@ const UIExtensionSchema = BaseExtensionSchema.extend({
   extensionPoints: NewExtensionPointsSchema,
 })
 
-const spec = createExtensionSpec({
+const spec = createUIExtensionSpec({
   identifier: 'ui_extension',
   externalIdentifier: 'ui_extension',
   externalName: 'UI Extension',

@@ -1,4 +1,4 @@
-import {createExtensionSpec} from '../extensions.js'
+import {createUIExtensionSpec} from '../ui.js'
 import {BaseExtensionSchema} from '../schemas.js'
 import {schema, output} from '@shopify/cli-kit'
 
@@ -27,7 +27,7 @@ const CustomerAccountsSchema = BaseExtensionSchema.extend({
     .optional(),
 })
 
-const spec = createExtensionSpec({
+const spec = createUIExtensionSpec({
   identifier: 'customer_accounts_ui_extension',
   externalIdentifier: 'customer_accounts_ui',
   externalName: 'Customer accounts UI',

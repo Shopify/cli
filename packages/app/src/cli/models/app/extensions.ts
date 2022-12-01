@@ -1,5 +1,5 @@
 import {BaseConfigContents, ExtensionSpec} from '../extensions/extensions.js'
-import {FunctionConfigType, FunctionSpec} from '../extensions/functions.js'
+import {FunctionSpec, FunctionConfigType} from '../extensions/functions.js'
 import {output} from '@shopify/cli-kit'
 import {Result} from '@shopify/cli-kit/node/result'
 import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'

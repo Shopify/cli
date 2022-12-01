@@ -1,10 +1,10 @@
-import {ExtensionSpec} from './extensions.js'
+import {UIExtensionSpec} from './ui.js'
 import {FunctionSpec} from './functions.js'
 import {os, path} from '@shopify/cli-kit'
 import {memoize} from 'lodash-es'
 import {fileURLToPath} from 'url'
 
-export async function allExtensionSpecifications(): Promise<ExtensionSpec[]> {
+export async function allExtensionSpecifications(): Promise<UIExtensionSpec[]> {
   return memLoadSpecs('extension-specifications')
 }
 

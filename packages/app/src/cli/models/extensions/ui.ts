@@ -11,7 +11,7 @@ export type BaseConfigContents = schema.define.infer<typeof BaseExtensionSchema>
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
-export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>
+export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>
   extends GenericSpecification {
   identifier: string
   externalIdentifier: string
@@ -56,7 +56,7 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
  *
  * This class holds the public interface to interact with extensions
  */
-export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseConfigContents>
+export class UIExtensionInstance<TConfiguration extends BaseConfigContents = BaseConfigContents>
   implements UIExtension<TConfiguration>, ThemeExtension<TConfiguration>
 {
   entrySourceFilePath: string
@@ -68,7 +68,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
   configuration: TConfiguration
   configurationPath: string
 
-  private specification: ExtensionSpec
+  private specification: UIExtensionSpec
   private remoteSpecification?: api.graphql.RemoteSpecification
 
   get graphQLType() {
@@ -108,7 +108,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     configurationPath: string
     entryPath: string
     directory: string
-    specification: ExtensionSpec
+    specification: UIExtensionSpec
     remoteSpecification?: api.graphql.RemoteSpecification
   }) {
     this.configuration = options.configuration
@@ -176,7 +176,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
 /**
  * Find the registered spececification for a given extension type
  */
-export async function specForType(type: string): Promise<ExtensionSpec | undefined> {
+export async function specForType(type: string): Promise<UIExtensionSpec | undefined> {
   const allSpecs = await allExtensionSpecifications()
   return allSpecs.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
 }
@@ -186,7 +186,7 @@ function remoteSpecForType(type: string): api.graphql.RemoteSpecification | unde
   return undefined
 }
 
-export function createExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(spec: {
+export function createUIExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(spec: {
   identifier: string
   externalIdentifier: string
   partnersWebIdentifier: string
@@ -212,7 +212,7 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
   ) => output.TokenizedString | undefined
   shouldFetchCartUrl?(config: TConfiguration): boolean
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
-}): ExtensionSpec<TConfiguration> {
+}): UIExtensionSpec<TConfiguration> {
   const defaults = {
     showInCLIHelp: true,
     singleEntryPath: true,

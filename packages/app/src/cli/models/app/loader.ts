@@ -2,7 +2,7 @@ import {UIExtension, ThemeExtension, FunctionExtension, Extension} from './exten
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
-import {ExtensionInstance, specForType} from '../extensions/extensions.js'
+import {UIExtensionInstance, specForType} from '../extensions/ui.js'
 import {TypeSchema} from '../extensions/schemas.js'
 import {FunctionInstance, functionSpecForType} from '../extensions/functions.js'
 import {error, file, path, schema, string, toml, output} from '@shopify/cli-kit'
@@ -281,7 +281,7 @@ class AppLoader {
         }
       }
 
-      const extensionInstance = new ExtensionInstance({
+      const extensionInstance = new UIExtensionInstance({
         configuration,
         configurationPath,
         entryPath: entryPath ?? '',
@@ -362,7 +362,7 @@ class AppLoader {
 
       const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
 
-      return new ExtensionInstance({
+      return new UIExtensionInstance({
         configuration,
         configurationPath,
         entryPath: '',
