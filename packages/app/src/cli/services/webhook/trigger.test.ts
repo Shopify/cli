@@ -1,7 +1,7 @@
-import {eventTriggerService} from './trigger.js'
-import {EventTriggerOptions} from './trigger-options.js'
-import {getEventSample} from './request-sample.js'
-import {triggerLocalEvent} from './trigger-local-event.js'
+import {webhookTriggerService} from './trigger.js'
+import {WebhookTriggerOptions} from './trigger-options.js'
+import {getWebhookSample} from './request-sample.js'
+import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {output} from '@shopify/cli-kit'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -17,7 +17,7 @@ const anAddress = 'http://example.org'
 beforeEach(async () => {
   vi.mock('@shopify/cli-kit')
   vi.mock('./request-sample.js')
-  vi.mock('./trigger-local-event.js')
+  vi.mock('./trigger-local-webhook.js')
 })
 
 afterEach(async () => {
@@ -51,12 +51,12 @@ describe('execute', () => {
         {message: 'Error 2', fields: ['field1']},
       ],
     }
-    vi.mocked(getEventSample).mockResolvedValue(response)
+    vi.mocked(getWebhookSample).mockResolvedValue(response)
 
     const outputSpy = vi.spyOn(output, 'consoleError')
 
     // When
-    await eventTriggerService(sampleOptions())
+    await webhookTriggerService(sampleOptions())
 
     // Then
     expect(outputSpy).toHaveBeenCalledWith(JSON.stringify(response.userErrors))
@@ -64,56 +64,56 @@ describe('execute', () => {
 
   it('notifies about real delivery being sent', async () => {
     // Given
-    vi.mocked(triggerLocalEvent)
-    vi.mocked(getEventSample).mockResolvedValue(successEmptyResponse)
+    vi.mocked(triggerLocalWebhook)
+    vi.mocked(getWebhookSample).mockResolvedValue(successEmptyResponse)
 
     const outputSpy = vi.spyOn(output, 'success')
 
     // When
-    await eventTriggerService(sampleRemoteOptions())
+    await webhookTriggerService(sampleRemoteOptions())
 
     // Then
-    expect(getEventSample).toHaveBeenCalledWith(aTopic, aVersion, 'http', anAddress, aSecret)
-    expect(triggerLocalEvent).toHaveBeenCalledTimes(0)
+    expect(getWebhookSample).toHaveBeenCalledWith(aTopic, aVersion, 'http', anAddress, aSecret)
+    expect(triggerLocalWebhook).toHaveBeenCalledTimes(0)
     expect(outputSpy).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
   })
 
   describe('Localhost delivery', () => {
     it('delivers to localhost', async () => {
       // Given
-      vi.mocked(getEventSample).mockResolvedValue(successDirectResponse)
-      vi.mocked(triggerLocalEvent).mockResolvedValue(true)
+      vi.mocked(getWebhookSample).mockResolvedValue(successDirectResponse)
+      vi.mocked(triggerLocalWebhook).mockResolvedValue(true)
 
       const outputSpy = vi.spyOn(output, 'success')
 
       // When
-      await eventTriggerService(sampleLocalhostOptions())
+      await webhookTriggerService(sampleLocalhostOptions())
 
       // Then
-      expect(getEventSample).toHaveBeenCalledWith(aTopic, aVersion, 'localhost', aFullLocalAddress, aSecret)
-      expect(triggerLocalEvent).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
+      expect(getWebhookSample).toHaveBeenCalledWith(aTopic, aVersion, 'localhost', aFullLocalAddress, aSecret)
+      expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
       expect(outputSpy).toHaveBeenCalledWith('Localhost delivery sucessful')
     })
 
     it('shows an error if localhost is not ready', async () => {
       // Given
-      vi.mocked(getEventSample).mockResolvedValue(successDirectResponse)
-      vi.mocked(triggerLocalEvent).mockResolvedValue(false)
+      vi.mocked(getWebhookSample).mockResolvedValue(successDirectResponse)
+      vi.mocked(triggerLocalWebhook).mockResolvedValue(false)
 
       const outputSpy = vi.spyOn(output, 'consoleError')
 
       // When
-      await eventTriggerService(sampleLocalhostOptions())
+      await webhookTriggerService(sampleLocalhostOptions())
 
       // Then
-      expect(getEventSample).toHaveBeenCalledWith(aTopic, aVersion, 'localhost', aFullLocalAddress, aSecret)
-      expect(triggerLocalEvent).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
+      expect(getWebhookSample).toHaveBeenCalledWith(aTopic, aVersion, 'localhost', aFullLocalAddress, aSecret)
+      expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
       expect(outputSpy).toHaveBeenCalledWith('Localhost delivery failed')
     })
   })
 
-  function sampleOptions(): EventTriggerOptions {
-    const options: EventTriggerOptions = {
+  function sampleOptions(): WebhookTriggerOptions {
+    const options: WebhookTriggerOptions = {
       topic: aTopic,
       apiVersion: aVersion,
       deliveryMethod: 'event-bridge',
@@ -124,8 +124,8 @@ describe('execute', () => {
     return options
   }
 
-  function sampleLocalhostOptions(): EventTriggerOptions {
-    const options: EventTriggerOptions = {
+  function sampleLocalhostOptions(): WebhookTriggerOptions {
+    const options: WebhookTriggerOptions = {
       topic: aTopic,
       apiVersion: aVersion,
       deliveryMethod: 'localhost',
@@ -136,8 +136,8 @@ describe('execute', () => {
     return options
   }
 
-  function sampleRemoteOptions(): EventTriggerOptions {
-    const options: EventTriggerOptions = {
+  function sampleRemoteOptions(): WebhookTriggerOptions {
+    const options: WebhookTriggerOptions = {
       topic: aTopic,
       apiVersion: aVersion,
       deliveryMethod: 'http',

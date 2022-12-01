@@ -41,7 +41,7 @@ const sendSampleWebhookMutation = `
  * @param sharedSecret - A secret to generate the HMAC header apps can use to validate the origin
  * @returns Empty if a remote delivery was requested, payload data if a local delivery was requested
  */
-export async function getEventSample(
+export async function getWebhookSample(
   topic: string,
   apiVersion: string,
   deliveryMethod: string,

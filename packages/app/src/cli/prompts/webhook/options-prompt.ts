@@ -8,16 +8,16 @@ import {
 } from './trigger.js'
 import {
   DELIVERY_METHOD,
-  EventTriggerOptions,
+  WebhookTriggerOptions,
   deliveryMethodForAddress,
   isAddressAllowedForDeliveryMethod,
-} from '../../services/event/trigger-options.js'
+} from '../../services/webhook/trigger-options.js'
 import {error} from '@shopify/cli-kit'
 
 /**
  * Flags collected from the command line parameters
  */
-export interface EventTriggerFlags {
+export interface WebhookTriggerFlags {
   topic?: string
   apiVersion?: string
   deliveryMethod?: string
@@ -36,10 +36,10 @@ export interface EventTriggerFlags {
  *   needing ngrok
  *
  * @param flags - Flags collected from the command-line arguments
- * @returns flags/prompts transformed into EventTriggerOptions to pass to the service
+ * @returns flags/prompts transformed into WebhookTriggerOptions to pass to the service
  */
-export async function optionsPrompt(flags: EventTriggerFlags): Promise<EventTriggerOptions> {
-  const options: EventTriggerOptions = {
+export async function optionsPrompt(flags: WebhookTriggerFlags): Promise<WebhookTriggerOptions> {
+  const options: WebhookTriggerOptions = {
     topic: '',
     apiVersion: '',
     sharedSecret: '',
@@ -63,7 +63,7 @@ export async function optionsPrompt(flags: EventTriggerFlags): Promise<EventTrig
       options.deliveryMethod = inferMethodFromAddress(options.address)
     } else {
       throw new error.Abort(
-        "Can't deliver your webhook payload to this address. Run 'shopify event trigger --address=<VALUE>' with a valid URL",
+        "Can't deliver your webhook payload to this address. Run 'shopify webhook trigger --address=<VALUE>' with a valid URL",
         undefined,
         deliveryMethodInstructions(flags.deliveryMethod as string),
       )

@@ -1,4 +1,4 @@
-import {triggerLocalEvent} from './trigger-local-event.js'
+import {triggerLocalWebhook} from './trigger-local-webhook.js'
 
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {http} from '@shopify/cli-kit'
@@ -14,7 +14,7 @@ afterEach(async () => {
   vi.clearAllMocks()
 })
 
-describe('triggerLocalEvent', () => {
+describe('triggerLocalWebhook', () => {
   it('delivers to localhost port', async () => {
     // Given
     const successResponse: any = {status: 200}
@@ -22,7 +22,7 @@ describe('triggerLocalEvent', () => {
     const fetchSpy = vi.spyOn(http, 'fetch')
 
     // When
-    const got = await triggerLocalEvent('http://localhost:1234/a/url/path', samplePayload, sampleHeaders)
+    const got = await triggerLocalWebhook('http://localhost:1234/a/url/path', samplePayload, sampleHeaders)
 
     // Then
     expect(fetchSpy).toHaveBeenCalledWith('http://localhost:1234/a/url/path', {
@@ -43,7 +43,7 @@ describe('triggerLocalEvent', () => {
     const fetchSpy = vi.spyOn(http, 'fetch')
 
     // When
-    const got = await triggerLocalEvent('http://localhost:1234/api/webhooks', samplePayload, sampleHeaders)
+    const got = await triggerLocalWebhook('http://localhost:1234/api/webhooks', samplePayload, sampleHeaders)
 
     // Then
     expect(fetchSpy).toHaveBeenCalledOnce()

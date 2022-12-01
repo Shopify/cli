@@ -1,4 +1,4 @@
-import {getEventSample} from './request-sample.js'
+import {getWebhookSample} from './request-sample.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {api, session} from '@shopify/cli-kit'
 
@@ -13,7 +13,7 @@ afterEach(async () => {
   vi.clearAllMocks()
 })
 
-describe('getEventSample', () => {
+describe('getWebhookSample', () => {
   beforeEach(async () => {
     vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue('A_TOKEN')
   })
@@ -51,7 +51,7 @@ describe('getEventSample', () => {
     const sessionSpy = vi.spyOn(session, 'ensureAuthenticatedPartners')
 
     // When
-    const got = await getEventSample(
+    const got = await getWebhookSample(
       inputValues.topic,
       inputValues.apiVersion,
       inputValues.value,

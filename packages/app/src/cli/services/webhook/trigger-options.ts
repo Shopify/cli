@@ -15,7 +15,7 @@ const PROTOCOL = {
 /**
  * Transformed flags
  */
-export interface EventTriggerOptions {
+export interface WebhookTriggerOptions {
   topic: string
   apiVersion: string
   deliveryMethod: string

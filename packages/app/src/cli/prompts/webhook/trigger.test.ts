@@ -1,5 +1,5 @@
 import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, sharedSecretPrompt, topicPrompt} from './trigger.js'
-import {DELIVERY_METHOD} from '../../services/event/trigger-options.js'
+import {DELIVERY_METHOD} from '../../services/webhook/trigger-options.js'
 import {describe, it, expect, vi, afterEach, beforeEach} from 'vitest'
 import {ui} from '@shopify/cli-kit'
 
