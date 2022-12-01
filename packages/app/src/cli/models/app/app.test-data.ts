@@ -72,7 +72,6 @@ export async function testThemeExtensions(): Promise<ThemeExtension> {
   return new ThemeExtensionInstance({
     configuration,
     configurationPath: '',
-    entryPath: '',
     directory: './my-extension',
     specification: specification!,
     remoteSpecification: undefined,
