@@ -129,7 +129,7 @@ describe('getUIExtensionPayload', () => {
     })
   })
 
-  test('adds root.url to extensionPoints[n] when extensionPoints[n] is an object', async () => {
+  test('adds root.url and surface to extensionPoints[n] when extensionPoints[n] is an object', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uiExtension = await testUIExtension({
@@ -144,12 +144,12 @@ describe('getUIExtensionPayload', () => {
           },
           extensionPoints: [
             {
-              target: 'Extension::Point::A',
-              module: './src/ExtensionPointA.js',
+              target: 'Admin::Checkout::Editor::Settings',
+              module: './src/AdminCheckoutEditorSettings.js',
             },
             {
-              target: 'Extension::Point::B',
-              module: './src/ExtensionPointB.js',
+              target: 'Checkout::ShippingMethods::RenderAfter',
+              module: './src/CheckoutShippingMethodsRenderAfter.js',
             },
           ],
         },
@@ -168,17 +168,19 @@ describe('getUIExtensionPayload', () => {
       // Then
       expect(got.extensionPoints).toStrictEqual([
         {
-          target: 'Extension::Point::A',
-          module: './src/ExtensionPointA.js',
+          target: 'Admin::Checkout::Editor::Settings',
+          module: './src/AdminCheckoutEditorSettings.js',
+          surface: 'admin',
           root: {
-            url: 'http://tunnel-url.com/extensions/devUUID/Extension::Point::A',
+            url: 'http://tunnel-url.com/extensions/devUUID/Admin::Checkout::Editor::Settings',
           },
         },
         {
-          target: 'Extension::Point::B',
-          module: './src/ExtensionPointB.js',
+          target: 'Checkout::ShippingMethods::RenderAfter',
+          module: './src/CheckoutShippingMethodsRenderAfter.js',
+          surface: 'checkout',
           root: {
-            url: 'http://tunnel-url.com/extensions/devUUID/Extension::Point::B',
+            url: 'http://tunnel-url.com/extensions/devUUID/Checkout::ShippingMethods::RenderAfter',
           },
         },
       ])

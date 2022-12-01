@@ -1,5 +1,6 @@
 import {getLocalization} from './localization.js'
 import {UIExtensionPayload} from './payload/models.js'
+import {getExtensionPointTargetSurface} from './utilities.js'
 import {getUIExtensionResourceURL} from '../../../utilities/extensions/configuration.js'
 import {ExtensionDevOptions} from '../extension.js'
 import {UIExtension} from '../../../models/app/extensions.js'
@@ -78,6 +79,7 @@ function getExtensionPoints(extensionPoints: UIExtension['configuration']['exten
 
       return {
         ...extensionPoint,
+        surface: getExtensionPointTargetSurface(target),
         root: {
           url: `${url}/${target}`,
         },
