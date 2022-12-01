@@ -3,8 +3,8 @@ import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, 
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {UIExtensionInstance, uiSpecForType} from '../extensions/ui.js'
-import {ThemeExtensionInstance, themeSpecForType} from '../extensions/theme.js'
-import {TypeSchema} from '../extensions/schemas.js'
+import {ThemeExtensionInstance} from '../extensions/theme.js'
+import {ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
 import {FunctionInstance, functionSpecForType} from '../extensions/functions.js'
 import {error, file, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -345,29 +345,12 @@ class AppLoader {
 
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
-      const fileContent = await file.read(configurationPath)
-      const obj = toml.decode(fileContent)
-      const {type} = TypeSchema.parse(obj)
-      const specification = await themeSpecForType(type)
-
-      if (!specification) {
-        this.abortOrReport(
-          output.content`Unknown extension type ${output.token.yellow(type)} in ${output.token.path(
-            configurationPath,
-          )}`,
-          undefined,
-          configurationPath,
-        )
-        return undefined
-      }
-
-      const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
+      const configuration = await this.parseConfigurationFile(ThemeExtensionSchema, configurationPath)
 
       return new ThemeExtensionInstance({
         configuration,
         configurationPath,
         directory,
-        specification,
         remoteSpecification: undefined,
       })
     })

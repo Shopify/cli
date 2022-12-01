@@ -1,37 +1,30 @@
-import {BaseThemeExtensionSchema, ZodSchemaType} from './schemas.js'
-import {allThemeSpecifications} from './specifications.js'
-import {ExtensionIdentifier, ThemeExtension} from '../app/extensions.js'
+import {ThemeExtensionSchema} from './schemas.js'
+import {ThemeExtension} from '../app/extensions.js'
 import {id, path, schema, api, output, environment, string} from '@shopify/cli-kit'
 
-// Base config type that all config schemas must extend.
-export type BaseThemeConfigContents = schema.define.infer<typeof BaseThemeExtensionSchema>
+// Base config type for a theme extension.
+export type ThemeConfigContents = schema.define.infer<typeof ThemeExtensionSchema>
 
 /**
- * Extension specification with all the needed properties and methods to load an extension.
+ * Extension specification with all properties and methods needed to load a theme extension.
  */
-export interface ThemeExtensionSpec<TConfiguration extends BaseThemeConfigContents = BaseThemeConfigContents>
-  extends ExtensionIdentifier {
-  identifier: string
-  externalIdentifier: string
-  externalName: string
-  partnersWebIdentifier: string
-  graphQLType?: string
-  schema: ZodSchemaType<TConfiguration>
+const specification = {
+  identifier: 'theme',
+  externalIdentifier: 'theme_app_extension',
+  partnersWebIdentifier: 'theme_app_extension',
+  externalName: 'Theme app extension',
+  graphQLType: 'theme_app_extension',
+  schema: ThemeExtensionSchema,
 }
 
 /**
- * Class that represents an instance of a local extension
- * Before creating this class we've validated that:
- * - There is a spec for this type of extension
- * - The Schema for that spec is followed by the extension config toml file
- * - We were able to find an entry point file for that extension
+ * Class that represents an instance of a local theme extension
+ * Before creating this class we've validated that
+ * the config toml file for the theme extension follow the ThemeExtensionSchema
  *
- * It supports extension points, making this Class compatible with both new ui-extension
- * and legacy extension types. Extension points are optional and this class will handle them if present.
- *
- * This class holds the public interface to interact with extensions
+ * This class holds the public interface to interact with theme extensions
  */
-export class ThemeExtensionInstance<TConfiguration extends BaseThemeConfigContents = BaseThemeConfigContents>
+export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents = ThemeConfigContents>
   implements ThemeExtension<TConfiguration>
 {
   outputBundlePath: string
@@ -42,23 +35,22 @@ export class ThemeExtensionInstance<TConfiguration extends BaseThemeConfigConten
   configuration: TConfiguration
   configurationPath: string
 
-  private specification: ThemeExtensionSpec
   private remoteSpecification?: api.graphql.RemoteSpecification
 
   get graphQLType() {
-    return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
+    return specification.graphQLType.toUpperCase()
   }
 
   get identifier() {
-    return this.specification.identifier
+    return specification.identifier
   }
 
   get type() {
-    return this.specification.identifier
+    return specification.identifier
   }
 
   get humanName() {
-    return this.remoteSpecification?.externalName ?? this.specification.externalName
+    return this.remoteSpecification?.externalName ?? specification.externalName
   }
 
   get name() {
@@ -66,20 +58,18 @@ export class ThemeExtensionInstance<TConfiguration extends BaseThemeConfigConten
   }
 
   get externalType() {
-    return this.remoteSpecification?.externalIdentifier ?? this.specification.externalIdentifier
+    return this.remoteSpecification?.externalIdentifier ?? specification.externalIdentifier
   }
 
   constructor(options: {
     configuration: TConfiguration
     configurationPath: string
     directory: string
-    specification: ThemeExtensionSpec
     remoteSpecification?: api.graphql.RemoteSpecification
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
     this.directory = options.directory
-    this.specification = options.specification
     this.remoteSpecification = options.remoteSpecification
     this.outputBundlePath = path.join(options.directory, 'dist/main.js')
     this.devUUID = `dev-${id.generateRandomUUID()}`
@@ -89,7 +79,7 @@ export class ThemeExtensionInstance<TConfiguration extends BaseThemeConfigConten
 
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
     const partnersFqdn = await environment.fqdn.partners()
-    const parnersPath = this.specification.partnersWebIdentifier
+    const parnersPath = specification.partnersWebIdentifier
     return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }
 
@@ -105,28 +95,7 @@ export class ThemeExtensionInstance<TConfiguration extends BaseThemeConfigConten
   }
 }
 
-/**
- * Find the registered spececification for a given extension type
- */
-export async function themeSpecForType(type: string): Promise<ThemeExtensionSpec | undefined> {
-  const allSpecs = await allThemeSpecifications()
-  return allSpecs.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
-}
-
 // PENDING: Fetch remote specs
 function remoteSpecForType(type: string): api.graphql.RemoteSpecification | undefined {
   return undefined
-}
-
-export function createThemeExtensionSpec<
-  TConfiguration extends BaseThemeConfigContents = BaseThemeConfigContents,
->(spec: {
-  identifier: string
-  externalIdentifier: string
-  partnersWebIdentifier: string
-  externalName: string
-  graphQLType?: string
-  schema: ZodSchemaType<TConfiguration>
-}): ThemeExtensionSpec<TConfiguration> {
-  return spec
 }

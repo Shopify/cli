@@ -37,7 +37,7 @@ export const BaseUIExtensionSchema = schema.define.object({
   categories: schema.define.array(schema.define.string()).optional(),
 })
 
-export const BaseThemeExtensionSchema = schema.define.object({
+export const ThemeExtensionSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.literal('theme'),
 })
