@@ -1,0 +1,34 @@
+{%- if flavor contains "react" -%}
+import React from 'react'
+import {render, extend, Text, useExtensionApi} from '@shopify/admin-ui-extensions-react'
+
+extend(
+  'Admin::ProductDetails::RenderBundlesCard',
+  render(() => <App />),
+)
+extend(
+  'Admin::ProductVariantDetails::RenderBundlesCard',
+  render(() => <App />),
+)
+
+function App() {
+  const {extensionPoint} = useExtensionApi()
+  return <Text>Welcome to the {extensionPoint} extension!</Text>
+}
+{%- else -%}
+import { Text, extend } from "@shopify/admin-ui-extensions";
+
+extend("Admin::ProductDetails::RenderBundlesCard", App);
+extend("Admin::ProductVariantDetails::RenderBundlesCard", App);
+
+function App(root, { extensionPoint }) {
+  root.appendChild(
+    root.createComponent(
+      Text,
+      {},
+      `Welcome to the ${extensionPoint} extension!`
+    )
+  );
+  root.mount();
+}
+{%- endif -%}
