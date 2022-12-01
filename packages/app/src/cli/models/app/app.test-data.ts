@@ -1,7 +1,8 @@
 import {App, AppInterface} from './app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
-import {UIExtensionInstance, specForType} from '../extensions/ui.js'
+import {UIExtensionInstance, uiSpecForType} from '../extensions/ui.js'
 import {FunctionInstance, functionSpecForType} from '../extensions/functions.js'
+import {ThemeExtensionInstance, themeSpecForType} from '../extensions/theme.js'
 import {api} from '@shopify/cli-kit'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
@@ -46,7 +47,7 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
   const configurationPath = uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`
   const entrySourceFilePath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
 
-  const specification = await specForType(configuration.type)
+  const specification = await uiSpecForType(configuration.type)
 
   const extension = new UIExtensionInstance({
     configuration,
@@ -63,12 +64,12 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
 export async function testThemeExtensions(): Promise<ThemeExtension> {
   const configuration = {
     name: 'theme extension name',
-    type: 'theme',
-    metafields: [],
+    type: 'theme' as const,
   }
 
-  const specification = await specForType(configuration.type)
-  return new UIExtensionInstance({
+  const specification = await themeSpecForType(configuration.type)
+
+  return new ThemeExtensionInstance({
     configuration,
     configurationPath: '',
     entryPath: '',

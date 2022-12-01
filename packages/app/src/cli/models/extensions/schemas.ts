@@ -28,13 +28,18 @@ export const OldExtensionPointsSchema = schema.define.array(schema.define.string
 export const NewExtensionPointsSchema = schema.define.array(NewExtensionPointSchema)
 export const ExtensionPointSchema = schema.define.union([OldExtensionPointsSchema, NewExtensionPointsSchema])
 
-export const BaseExtensionSchema = schema.define.object({
+export const BaseUIExtensionSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.string().default('ui_extension'),
   extensionPoints: schema.define.any().optional(),
   capabilities: CapabilitiesSchema.optional(),
   metafields: schema.define.array(MetafieldSchema).optional().default([]),
   categories: schema.define.array(schema.define.string()).optional(),
+})
+
+export const BaseThemeExtensionSchema = schema.define.object({
+  name: schema.define.string(),
+  type: schema.define.literal('theme'),
 })
 
 export const BaseFunctionConfigurationSchema = schema.define.object({

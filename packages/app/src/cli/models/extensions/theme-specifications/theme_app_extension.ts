@@ -1,16 +1,15 @@
-import {createUIExtensionSpec} from '../ui.js'
-import {BaseExtensionSchema} from '../schemas.js'
+import {createThemeExtensionSpec} from '../theme.js'
+import {BaseThemeExtensionSchema} from '../schemas.js'
 import {output} from '@shopify/cli-kit'
 
-const spec = createUIExtensionSpec({
+const spec = createThemeExtensionSpec({
   identifier: 'theme',
   externalIdentifier: 'theme_app_extension',
   externalName: 'Theme app extension',
   surface: 'unknown',
   graphQLType: 'theme_app_extension',
   partnersWebIdentifier: 'theme_app_extension',
-  schema: BaseExtensionSchema,
-  supportedFlavors: [],
+  schema: BaseThemeExtensionSchema,
   previewMessage(_) {
     const link = output.token.link(
       'dev doc instructions',

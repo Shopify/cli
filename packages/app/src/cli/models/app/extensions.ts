@@ -1,5 +1,6 @@
 import {BaseConfigContents, ExtensionSpec} from '../extensions/extensions.js'
 import {FunctionSpec, FunctionConfigType} from '../extensions/functions.js'
+import {BaseThemeConfigContents} from '../extensions/theme.js'
 import {output} from '@shopify/cli-kit'
 import {Result} from '@shopify/cli-kit/node/result'
 import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
@@ -37,7 +38,7 @@ export type FunctionExtension<TConfiguration extends FunctionConfigType = Functi
   inputQueryPath: () => string
 }
 
-export type ThemeExtension<TConfiguration extends BaseConfigContents = BaseConfigContents> = Extension & {
+export type ThemeExtension<TConfiguration extends BaseThemeConfigContents = BaseThemeConfigContents> = Extension & {
   configuration: TConfiguration
   previewMessage(url: string, storeFqdn: string): output.TokenizedString | undefined
 }

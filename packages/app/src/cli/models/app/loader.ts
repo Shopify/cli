@@ -2,7 +2,8 @@ import {UIExtension, ThemeExtension, FunctionExtension, Extension} from './exten
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
-import {UIExtensionInstance, specForType} from '../extensions/ui.js'
+import {UIExtensionInstance, uiSpecForType} from '../extensions/ui.js'
+import {ThemeExtensionInstance, themeSpecForType} from '../extensions/theme.js'
 import {TypeSchema} from '../extensions/schemas.js'
 import {FunctionInstance, functionSpecForType} from '../extensions/functions.js'
 import {error, file, path, schema, string, toml, output} from '@shopify/cli-kit'
@@ -244,7 +245,7 @@ class AppLoader {
       const fileContent = await file.read(configurationPath)
       const obj = toml.decode(fileContent)
       const {type} = TypeSchema.parse(obj)
-      const specification = await specForType(type)
+      const specification = await uiSpecForType(type)
 
       if (!specification) {
         this.abortOrReport(
@@ -347,7 +348,7 @@ class AppLoader {
       const fileContent = await file.read(configurationPath)
       const obj = toml.decode(fileContent)
       const {type} = TypeSchema.parse(obj)
-      const specification = await specForType(type)
+      const specification = await themeSpecForType(type)
 
       if (!specification) {
         this.abortOrReport(
@@ -362,7 +363,7 @@ class AppLoader {
 
       const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
 
-      return new UIExtensionInstance({
+      return new ThemeExtensionInstance({
         configuration,
         configurationPath,
         entryPath: '',

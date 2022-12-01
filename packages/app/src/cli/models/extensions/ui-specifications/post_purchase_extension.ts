@@ -1,5 +1,5 @@
 import {createUIExtensionSpec} from '../ui.js'
-import {BaseExtensionSchema} from '../schemas.js'
+import {BaseUIExtensionSchema} from '../schemas.js'
 import {output} from '@shopify/cli-kit'
 
 const dependency = {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'}
@@ -11,8 +11,8 @@ const spec = createUIExtensionSpec({
   surface: 'post_purchase',
   dependency,
   partnersWebIdentifier: 'post_purchase',
-  schema: BaseExtensionSchema,
   helpURL: 'https://shopify.dev/apps/checkout/post-purchase',
+  schema: BaseUIExtensionSchema,
   deployConfig: async (config, _) => {
     return {metafields: config.metafields}
   },
