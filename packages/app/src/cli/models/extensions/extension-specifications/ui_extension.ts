@@ -38,7 +38,7 @@ const spec = createExtensionSpec({
       metafields: config.metafields,
       name: config.name,
       settings: config.settings,
-      localization: await loadLocalesConfig(directory, 'checkout_ui'),
+      localization: await loadLocalesConfig(directory, config.type),
     }
   },
   getBundleExtensionStdinContent: (config) => {
