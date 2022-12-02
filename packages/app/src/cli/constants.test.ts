@@ -148,4 +148,17 @@ describe('get extension type output configuration', () => {
       humanKey: 'Delivery option presenter',
     })
   })
+
+  it('obtain the correct configuration for extension type bundle_management_ui_extension', () => {
+    // Given
+    const extensionType = 'bundle_management_ui_extension'
+
+    // When
+    const extensionOutputConfig = getExtensionOutputConfig(extensionType)
+
+    // Then
+    expect(extensionOutputConfig).toEqual({
+      humanKey: 'Bundle management UI',
+    })
+  })
 })

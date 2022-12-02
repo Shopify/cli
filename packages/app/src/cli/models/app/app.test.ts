@@ -74,6 +74,23 @@ describe('getUIExtensionRendererVersion', () => {
     })
   })
 
+  test('returns the version of the dependency package for bundle_management_ui_extension', async () => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      await createPackageJson(tmpDir, 'admin-ui-extensions', '2.4.5')
+      DEFAULT_APP.directory = tmpDir
+
+      // When
+      const got = await getUIExtensionRendererVersion('bundle_management_ui_extension', DEFAULT_APP)
+
+      // Then
+      expect(got).not.toEqual('not-found')
+      if (got === 'not_found') return
+      expect(got?.name).to.toEqual('@shopify/admin-ui-extensions')
+      expect(got?.version).toEqual('2.4.5')
+    })
+  })
+
   test('returns not_found if there is no renderer package', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       DEFAULT_APP.directory = tmpDir

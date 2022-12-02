@@ -82,11 +82,22 @@ export const publicUIExtensions = {
 } as const
 
 export const uiExtensions = {
-  types: [...publicUIExtensions.types, 'pos_ui_extension', 'customer_accounts_ui_extension', 'bundle_management_ui_extension', 'ui_extension'],
+  types: [
+    ...publicUIExtensions.types,
+    'pos_ui_extension',
+    'customer_accounts_ui_extension',
+    'bundle_management_ui_extension',
+    'ui_extension',
+  ],
 } as const
 
 export const activeUIExtensions = {
-  types: [...publicUIExtensions.types, 'pos_ui_extension', 'customer_accounts_ui_extension', 'bundle_management_ui_extension'].filter,
+  types: [
+    ...publicUIExtensions.types,
+    'pos_ui_extension',
+    'customer_accounts_ui_extension',
+    'bundle_management_ui_extension',
+  ].filter,
 }
 
 export type UIExtensionTypes = typeof uiExtensions.types[number] | string
@@ -161,7 +172,15 @@ export function getUIExtensionRendererDependency(extensionType: UIExtensionTypes
 }
 
 export const uiExternalExtensionTypes = {
-  types: ['web_pixel', 'post_purchase_ui', 'checkout_ui', 'pos_ui', 'subscription_ui', 'customer_accounts_ui', 'bundle_management_ui'],
+  types: [
+    'web_pixel',
+    'post_purchase_ui',
+    'checkout_ui',
+    'pos_ui',
+    'subscription_ui',
+    'customer_accounts_ui',
+    'bundle_management_ui',
+  ],
 } as const
 
 export type UIExternalExtensionTypes = typeof uiExternalExtensionTypes.types[number] | string
@@ -219,7 +238,7 @@ export const extensionTypesGroups: {name: string; extensions: ExtensionTypes[]}[
       'pos_ui_extension',
       'shipping_rate_presenter',
       'ui_extension',
-      'bundle_management_ui_extension', // TODO: Move this to 'Merchant admin' once it's public
+      'bundle_management_ui_extension',
     ],
   },
 ]
