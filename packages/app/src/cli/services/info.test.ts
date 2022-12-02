@@ -177,7 +177,7 @@ describe('info', () => {
     `)
   })
 
-  it.only('returns errors alongside extensions when extensions have errors', async () => {
+  it('returns errors alongside extensions when extensions have errors', async () => {
     // Given
     const uiExtension1 = await testUIExtension({
       configuration: {
