@@ -24,7 +24,7 @@ const nodeVersion = process.version;
 
 const {stdout: typescriptCompilerVersion} = await execa(join(rootDirectory, "node_modules/.bin/tsc"), ['--version'], {cwd: rootDirectory});
 const {stdout: gitSha} = await execa("git", ['rev-parse', '--short', 'HEAD'], {cwd: rootDirectory});
-const yarnLockfileContent = (await readFile(join(rootDirectory, "yarn.lock"))).toString();
+const yarnLockfileContent = (await readFile(join(rootDirectory, "pnpm-lock.yaml"))).toString();
 
 const hashableInputs = [
   nodeVersion.trim(),
