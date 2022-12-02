@@ -238,11 +238,11 @@ describe('info', () => {
     const result = await info(app, {format: 'text', webEnv: false})
 
     // Then
-    expect(result).toMatch(/Extensions with errors/)
-    expect(result).toMatch(/📂 ui_extension[ ]+tmp\/project\/extensions\/test-ui-extension/)
-    expect(result).toMatch(/! Mock error with ui_extension/)
-    expect(result).toMatch(/📂 checkout_ui_extension[ ]+tmp\/project\/extensions\/test-ui-extension/)
-    expect(result).toMatch(/! Mock error with checkout_ui_extension/)
+    expect(result).toContain('Extensions with errors')
+    expect(result).toContain('📂 ui_extension    tmp/project/extensions/test-ui-extension')
+    expect(result).toContain('! Mock error with ui_extension')
+    expect(result).toContain('📂 ui_extension    tmp/project/extensions/test-ui-extension')
+    expect(result).toContain('! Mock error with checkout_ui_extension')
   })
 })
 
