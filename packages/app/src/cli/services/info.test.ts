@@ -96,7 +96,6 @@ describe('info', () => {
   it('returns the web environment as a text when webEnv is true', async () => {
     // Given
     const app = mockApp()
-    const token = 'token'
     const organization = {
       id: '123',
       appsNext: false,
@@ -104,15 +103,13 @@ describe('info', () => {
       website: '',
       apps: {nodes: []},
     }
-    const apiKey = 'api-key'
-    const apiSecret = 'api-secret'
     const organizationApp = {
       id: '123',
       title: 'Test app',
       appType: 'custom',
-      apiSecretKeys: [{secret: apiSecret}],
+      apiSecretKeys: [{secret: 'api-secret'}],
       organizationId: '1',
-      apiKey,
+      apiKey: 'api-key',
       grantedScopes: [],
     }
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])
@@ -123,7 +120,7 @@ describe('info', () => {
       apps: [organizationApp],
     })
     vi.mocked(selectApp).mockResolvedValue(organizationApp)
-    vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
+    vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue('token')
 
     // When
     const result = await info(app, {format: 'text', webEnv: true})
@@ -141,7 +138,6 @@ describe('info', () => {
   it('returns the web environment as a json when webEnv is true', async () => {
     // Given
     const app = mockApp()
-    const token = 'token'
     const organization = {
       id: '123',
       appsNext: false,
@@ -149,15 +145,13 @@ describe('info', () => {
       website: '',
       apps: {nodes: []},
     }
-    const apiKey = 'api-key'
-    const apiSecret = 'api-secret'
     const organizationApp = {
       id: '123',
       title: 'Test app',
       appType: 'custom',
-      apiSecretKeys: [{secret: apiSecret}],
+      apiSecretKeys: [{secret: 'api-secret'}],
       organizationId: '1',
-      apiKey,
+      apiKey: 'api-key',
       grantedScopes: [],
     }
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])
@@ -168,7 +162,7 @@ describe('info', () => {
       apps: [organizationApp],
     })
     vi.mocked(selectApp).mockResolvedValue(organizationApp)
-    vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
+    vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue('token')
 
     // When
     const result = await info(app, {format: 'json', webEnv: true})
