@@ -7,7 +7,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {err, ok} from '@shopify/cli-kit/common/result'
+import {err, ok} from '@shopify/cli-kit/node/result'
 import {ui} from '@shopify/cli-kit'
 
 const REGISTRATION_A: RemoteSource = {
@@ -55,6 +55,8 @@ const EXTENSION_A: UIExtension = {
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
   getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: (target: string) => true,
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -81,6 +83,8 @@ const EXTENSION_A_2: UIExtension = {
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
   getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: (target: string) => true,
 }
 
 const EXTENSION_B: UIExtension = {
@@ -107,6 +111,8 @@ const EXTENSION_B: UIExtension = {
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
   getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: (target: string) => true,
 }
 
 const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): AppInterface => {

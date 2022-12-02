@@ -10,6 +10,7 @@ export const AppFunctionSetMutation = gql`
     $apiVersion: String!
     $inputQuery: String
     $appBridge: AppBridgeInput
+    $enableCreationUi: Boolean
     $moduleUploadUrl: String!
   ) {
     functionSet(
@@ -21,6 +22,7 @@ export const AppFunctionSetMutation = gql`
       apiVersion: $apiVersion
       inputQuery: $inputQuery
       appBridge: $appBridge
+      enableCreationUi: $enableCreationUi
       moduleUploadUrl: $moduleUploadUrl
     ) {
       userErrors {
@@ -62,5 +64,6 @@ export interface AppFunctionSetVariables {
     createPath?: string
     detailsPath?: string
   }
+  enableCreationUi: boolean
   moduleUploadUrl: string
 }

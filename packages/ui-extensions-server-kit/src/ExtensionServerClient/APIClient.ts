@@ -1,3 +1,4 @@
+import {filterExtensionsBySurface} from './utilties'
 import type {Surface} from './types'
 
 export class APIClient implements ExtensionServer.API.Client {
@@ -6,7 +7,9 @@ export class APIClient implements ExtensionServer.API.Client {
   async extensions(): Promise<ExtensionServer.API.ExtensionsResponse> {
     const response = await fetch(this.url)
     const dto: ExtensionServer.API.ExtensionsResponse = await response.json()
-    const filteredExtensions = dto.extensions.filter((extension) => !this.surface || extension.surface === this.surface)
+
+    const filteredExtensions = filterExtensionsBySurface(dto.extensions, this.surface)
+
     return {...dto, extensions: filteredExtensions}
   }
 

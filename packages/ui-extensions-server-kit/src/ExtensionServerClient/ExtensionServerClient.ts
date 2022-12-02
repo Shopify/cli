@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import {filterExtensionsBySurface} from './utilties'
 import {APIClient} from './APIClient'
 import {isValidSurface} from '../utilities'
 import {DeepPartial} from '../types'
@@ -115,9 +116,10 @@ export class ExtensionServerClient implements ExtensionServer.Client {
           return
         }
 
-        const filteredExtensions = data.extensions?.filter(
-          (extension: any) => !this.options.surface || extension.surface === this.options.surface,
-        )
+        const filteredExtensions = data.extensions
+          ? filterExtensionsBySurface(data.extensions, this.options.surface)
+          : data.extensions
+
         this.listeners[event]?.forEach((listener) => {
           listener({...data, extensions: filteredExtensions})
         })

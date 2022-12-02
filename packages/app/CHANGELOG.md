@@ -1,5 +1,28 @@
 # @shopify/app
 
+## 3.24.1
+
+### Patch Changes
+
+- Updated dependencies [7e5c492a]
+  - @shopify/cli-kit@3.24.1
+
+## 3.24.0
+
+### Minor Changes
+
+- 76120036: Remove metadata.json from function extension
+- fdaee1fc: Bring consistency to the environment variables that we pass to the web frontend and backend processes
+
+### Patch Changes
+
+- cb0990df: Fixed no organization error formatting
+- Updated dependencies [d47a6e80]
+- Updated dependencies [a9d4be9e]
+- Updated dependencies [aca90638]
+- Updated dependencies [cb0990df]
+  - @shopify/cli-kit@3.24.0
+
 ## 3.23.0
 
 ### Patch Changes

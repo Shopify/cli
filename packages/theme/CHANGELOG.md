@@ -1,5 +1,23 @@
 # @shopify/theme
 
+## 3.24.1
+
+### Patch Changes
+
+- Updated dependencies [7e5c492a]
+  - @shopify/cli-kit@3.24.1
+
+## 3.24.0
+
+### Patch Changes
+
+- a9d4be9e: Generate creative suggested names for new themes
+- Updated dependencies [d47a6e80]
+- Updated dependencies [a9d4be9e]
+- Updated dependencies [aca90638]
+- Updated dependencies [cb0990df]
+  - @shopify/cli-kit@3.24.0
+
 ## 3.23.0
 
 ### Patch Changes

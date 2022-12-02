@@ -94,7 +94,7 @@ export async function generateURL(config: Config, frontendPort: number): Promise
   return (await plugins.runTunnelPlugin(config, frontendPort, provider))
     .doOnOk(() => output.success('The tunnel is running and you can now view your app'))
     .mapError(mapRunTunnelPluginError)
-    .valueOrThrow()
+    .valueOrAbort()
 }
 
 export function generatePartnersURLs(baseURL: string, authCallbackPath?: string): PartnersURLs {

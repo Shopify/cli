@@ -32,6 +32,8 @@ export default class Delete extends ThemeCommand {
     store: themeFlags.store,
   }
 
+  static cli2Flags = ['development', 'show-all', 'force']
+
   async run(): Promise<void> {
     const {flags, argv} = await this.parse(Delete)
 
@@ -43,7 +45,7 @@ export default class Delete extends ThemeCommand {
       command.push(...argv)
     }
 
-    const flagsToPass = this.passThroughFlags(flags, {exclude: ['store', 'verbose', 'password']})
+    const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Delete.cli2Flags})
     command.push(...flagsToPass)
 
     const adminSession = await session.ensureAuthenticatedThemes(store, flags.password)

@@ -1,4 +1,4 @@
-import {err, Result} from '../../common/result.js'
+import {err, Result} from '../result.js'
 import {FanoutHookFunction, PluginReturnsForHook} from '../../../plugins.js'
 import {ExtendableError} from '../../../error.js'
 

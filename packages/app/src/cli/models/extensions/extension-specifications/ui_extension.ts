@@ -1,9 +1,10 @@
 import {createExtensionSpec} from '../extensions.js'
-import {BaseExtensionSchema, NewExtensionPointsSchema, NewExtensionPointType} from '../schemas.js'
+import {BaseExtensionSchema, NewExtensionPointSchemaType, NewExtensionPointsSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
+import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {file, output, path, schema} from '@shopify/cli-kit'
-import {err, ok, Result} from '@shopify/cli-kit/common/result'
+import {err, ok, Result} from '@shopify/cli-kit/node/result'
 
 const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.20.0'}
 
@@ -25,7 +26,9 @@ const spec = createExtensionSpec({
     return validateUIExtensionPointConfig(directory, config.extensionPoints)
   },
   previewMessage(host, uuid, config, storeFqdn) {
-    const links = config.extensionPoints.map((point) => `Preview link: ${host}/extensions/${uuid}/${point.target}`)
+    const links = config.extensionPoints.map(
+      ({target}) => `${target} preview link: ${host}/extensions/${uuid}/${target}`,
+    )
     return output.content`${links.join('\n')}`
   },
   deployConfig: async (config, directory) => {
@@ -35,17 +38,31 @@ const spec = createExtensionSpec({
       metafields: config.metafields,
       name: config.name,
       settings: config.settings,
-      localization: await loadLocalesConfig(directory, 'checkout_ui'),
+      localization: await loadLocalesConfig(directory, config.type),
     }
   },
   getBundleExtensionStdinContent: (config) => {
     return config.extensionPoints.map(({module}) => `import '${module}';`).join('\n')
   },
+  shouldFetchCartUrl: (config) => {
+    return (
+      config.extensionPoints.find((extensionPoint) => {
+        return getExtensionPointTargetSurface(extensionPoint.target) === 'checkout'
+      }) !== undefined
+    )
+  },
+  hasExtensionPointTarget: (config, requestedTarget) => {
+    return (
+      config.extensionPoints.find((extensionPoint) => {
+        return extensionPoint.target === requestedTarget
+      }) !== undefined
+    )
+  },
 })
 
 async function validateUIExtensionPointConfig(
   directory: string,
-  extensionPoints: NewExtensionPointType,
+  extensionPoints: NewExtensionPointSchemaType[],
 ): Promise<Result<unknown, string>> {
   const errors: string[] = []
   const uniqueTargets: string[] = []

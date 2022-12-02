@@ -8,7 +8,7 @@ import {http} from '@shopify/cli-kit'
  * @param headers - Webhook headers
  * @returns true if the message was delivered
  */
-export async function triggerLocalEvent(address: string, body: string, headers: string) {
+export async function triggerLocalWebhook(address: string, body: string, headers: string) {
   const options = {
     method: 'POST',
     body,

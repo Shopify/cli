@@ -1,3 +1,4 @@
+import {NewExtensionPointSchemaType} from '../../../../models/extensions/schemas.js'
 import {Localization} from '../localization.js'
 
 export interface ExtensionsPayloadInterface {
@@ -17,6 +18,12 @@ export interface ExtensionsEndpointPayload extends ExtensionsPayloadInterface {
     url: string
   }
   socket: {
+    url: string
+  }
+}
+
+interface NewExtensionPointSchema extends NewExtensionPointSchemaType {
+  main: {
     url: string
   }
 }
@@ -41,9 +48,11 @@ export interface UIExtensionPayload {
     status: ExtensionAssetBuildStatus
     localizationStatus: ExtensionAssetBuildStatus
   }
-  extensionPoints: string[] | null | {metafields?: {namespace: string; key: string}[]; target: string; module: string}[]
+  extensionPoints: string[] | null | NewExtensionPointSchema[]
   localization: Localization | null
   categories: string[] | null
+  authenticatedRedirectStartUrl?: string
+  authenticatedRedirectRedirectUrls?: string[]
   metafields?: {namespace: string; key: string}[] | null
   type: string
   externalType: string

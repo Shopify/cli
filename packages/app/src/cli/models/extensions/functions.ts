@@ -1,21 +1,18 @@
-import {BaseFunctionConfigurationSchema, BaseFunctionMetadataSchema, ZodSchemaType} from './schemas.js'
+import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
 import {allFunctionSpecifications} from './specifications.js'
 import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
 import {blocks, defaultFunctionsFlavors} from '../../constants.js'
 import {schema, path, error, system, abort, string, environment} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
-// Base config types that all config schemas must extend
+// Base config type that all config schemas must extend
 export type FunctionConfigType = schema.define.infer<typeof BaseFunctionConfigurationSchema>
-export type MetadataType = schema.define.infer<typeof BaseFunctionMetadataSchema>
 
 /**
  * Specification with all the needed properties and methods to load a function.
  */
-export interface FunctionSpec<
-  TConfiguration extends FunctionConfigType = FunctionConfigType,
-  TMetadata extends MetadataType = MetadataType,
-> extends GenericSpecification {
+export interface FunctionSpec<TConfiguration extends FunctionConfigType = FunctionConfigType>
+  extends GenericSpecification {
   identifier: string
   externalIdentifier: string
   externalName: string
@@ -24,7 +21,6 @@ export interface FunctionSpec<
   templateURL?: string
   supportedFlavors: {name: string; value: string}[]
   configSchema: ZodSchemaType<TConfiguration>
-  metadataSchema: ZodSchemaType<TMetadata>
   registrationLimit: number
   templatePath: (lang: string) => string
   category: () => ExtensionCategory
@@ -35,34 +31,28 @@ export interface FunctionSpec<
  * Before creating this class we've validated that:
  * - There is a spec for this type of function
  * - The Config Schema for that spec is followed by the function config toml file
- * - The Metadata Schema for that spec is followed by the function metadata file
  *
  * This class holds the public interface to interact with functions
  */
-export class FunctionInstance<
-  TConfiguration extends FunctionConfigType = FunctionConfigType,
-  TMetadata extends MetadataType = MetadataType,
-> implements FunctionExtension
+export class FunctionInstance<TConfiguration extends FunctionConfigType = FunctionConfigType>
+  implements FunctionExtension
 {
   idEnvironmentVariableName: string
   localIdentifier: string
   directory: string
   configuration: TConfiguration
   configurationPath: string
-  metadata: TMetadata
 
   private specification: FunctionSpec<TConfiguration>
 
   constructor(options: {
     configuration: TConfiguration
     configurationPath: string
-    metadata: TMetadata
     specification: FunctionSpec<TConfiguration>
     directory: string
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
-    this.metadata = options.metadata
     this.specification = options.specification
     this.directory = options.directory
     this.localIdentifier = path.basename(options.directory)
@@ -135,10 +125,7 @@ export async function functionSpecForType(type: string): Promise<FunctionSpec | 
   return (await allFunctionSpecifications()).find((spec) => spec.identifier === type)
 }
 
-export function createFunctionSpec<
-  TConfiguration extends FunctionConfigType = FunctionConfigType,
-  TMetadata extends MetadataType = MetadataType,
->(spec: {
+export function createFunctionSpec<TConfiguration extends FunctionConfigType = FunctionConfigType>(spec: {
   identifier: string
   externalIdentifier: string
   externalName: string
@@ -148,14 +135,12 @@ export function createFunctionSpec<
   supportedFlavors?: {name: string; value: string}[]
   registrationLimit?: number
   configSchema?: ZodSchemaType<TConfiguration>
-  metadataSchema?: ZodSchemaType<TMetadata>
   templatePath: (lang: string) => string
 }): FunctionSpec {
   const defaults = {
     templateURL: 'https://github.com/Shopify/function-examples',
     supportedFlavors: defaultFunctionsFlavors,
     configSchema: BaseFunctionConfigurationSchema,
-    metadataSchema: BaseFunctionMetadataSchema,
     gated: false,
     registrationLimit: spec.registrationLimit ?? blocks.functions.defaultRegistrationLimit,
 

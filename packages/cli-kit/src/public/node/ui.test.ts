@@ -1,9 +1,11 @@
-import {renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
-import {Abort, Bug} from '../../error.js'
+import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
+import {Abort, Bug, Fatal} from '../../error.js'
 import * as outputMocker from '../../testing/output.js'
 import {run} from '../../testing/ui.js'
+import {Signal} from '../../abort.js'
 import {afterEach, describe, expect, test} from 'vitest'
 import stripAnsi from 'strip-ansi'
+import {Writable} from 'node:stream'
 
 afterEach(() => {
   outputMocker.mockAndCaptureOutput().clear()
@@ -64,7 +66,8 @@ describe('renderInfo', async () => {
 
     // Then
     expect(mockOutput.info()).toMatchInlineSnapshot(`
-      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      "
+      ╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Title                                                                       │
       │                                                                              │
@@ -82,7 +85,8 @@ describe('renderInfo', async () => {
       │                                                                              │
       │  Link: https://shopify.com                                                   │
       │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯"
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 })
@@ -99,11 +103,13 @@ describe('renderSuccess', async () => {
 
     // Then
     expect(mockOutput.info()).toMatchInlineSnapshot(`
-      "╭─ success ────────────────────────────────────────────────────────────────────╮
+      "
+      ╭─ success ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Title                                                                       │
       │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯"
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 })
@@ -126,7 +132,8 @@ describe('renderWarning', async () => {
 
     // Then
     expect(mockOutput.warn()).toMatchInlineSnapshot(`
-      "╭─ warning ────────────────────────────────────────────────────────────────────╮
+      "
+      ╭─ warning ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Title                                                                       │
       │                                                                              │
@@ -144,7 +151,8 @@ describe('renderWarning', async () => {
       │       proident, sunt in culpa qui officia deserunt mollit anim id est        │
       │      laborum.                                                                │
       │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯"
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 })
@@ -161,13 +169,15 @@ describe('renderFatalError', async () => {
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "
+      ╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Couldn't connect to the Shopify Partner Dashboard.                          │
       │                                                                              │
       │  Check your internet connection and try again.                               │
       │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯"
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 
@@ -188,7 +198,8 @@ describe('renderFatalError', async () => {
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "
+      ╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Unexpected error                                                            │
       │                                                                              │
@@ -198,7 +209,8 @@ describe('renderFatalError', async () => {
       │  at load (internal/modules/cjs/loader.js:985)                                │
       │  at _load (internal/modules/cjs/loader.js:878)                               │
       │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯"
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 
@@ -234,7 +246,8 @@ describe('renderFatalError', async () => {
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "
+      ╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  No Organization found                                                       │
       │                                                                              │
@@ -245,13 +258,14 @@ describe('renderFatalError', async () => {
       │    • Need to connect to a different App or organization? Run the command     │
       │      again with \`--reset\`                                                    │
       │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯"
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 })
 
 describe('renderConcurrent', async () => {
-  test.skip('renders a stream of concurrent outputs from sub-processes', async () => {
+  test('renders a stream of concurrent outputs from sub-processes', async () => {
     // When
     const {stdout} = await run('render-concurrent')
     const lastFrame = stripAnsi(stdout).replace(/\d/g, '0')
@@ -264,6 +278,37 @@ describe('renderConcurrent', async () => {
       0000-00-00 00:00:00 | frontend | first frontend message
       0000-00-00 00:00:00 | frontend | second frontend message
       0000-00-00 00:00:00 | frontend | third frontend message
+      "
+    `)
+  }, 10000)
+
+  test('renders an error message correctly when a process throws an error', async () => {
+    // Given
+    const mockOutput = outputMocker.mockAndCaptureOutput()
+
+    // When
+    const throwingProcess = {
+      prefix: 'backend',
+      action: async (_stdout: Writable, _stderr: Writable, _signal: Signal) => {
+        throw new Error('example error')
+      },
+    }
+
+    try {
+      await renderConcurrent({processes: [throwingProcess], renderOptions: {patchConsole: false}})
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      renderFatalError(error as Fatal)
+    }
+
+    // Then
+    expect(mockOutput.error()).toMatchInlineSnapshot(`
+      "
+      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  example error                                                               │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
       "
     `)
   })

@@ -6,8 +6,8 @@ export const DELIVERY_METHOD = {
 }
 
 const PROTOCOL = {
-  LOCALHOST: new RegExp('^http:'),
-  HTTP: new RegExp('^https:'),
+  LOCALHOST: new RegExp('^http:', 'i'),
+  HTTP: new RegExp('^https:', 'i'),
   PUBSUB: new RegExp('^pubsub:'),
   EVENTBRIDGE: new RegExp('^arn:aws:events:'),
 }
@@ -15,7 +15,7 @@ const PROTOCOL = {
 /**
  * Transformed flags
  */
-export interface EventTriggerOptions {
+export interface WebhookTriggerOptions {
   topic: string
   apiVersion: string
   deliveryMethod: string

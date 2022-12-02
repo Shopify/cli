@@ -1,7 +1,7 @@
 import {BaseConfigContents, ExtensionSpec} from '../extensions/extensions.js'
-import {FunctionConfigType, FunctionSpec, MetadataType} from '../extensions/functions.js'
+import {FunctionConfigType, FunctionSpec} from '../extensions/functions.js'
 import {output} from '@shopify/cli-kit'
-import {Result} from '@shopify/cli-kit/common/result'
+import {Result} from '@shopify/cli-kit/node/result'
 import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 
 export type ExtensionCategory = 'ui' | 'function' | 'theme'
@@ -31,12 +31,8 @@ export interface Extension {
   publishURL(options: {orgId: string; appId: string; extensionId?: string}): Promise<string>
 }
 
-export type FunctionExtension<
-  TConfiguration extends FunctionConfigType = FunctionConfigType,
-  TMetadata extends MetadataType = MetadataType,
-> = Extension & {
+export type FunctionExtension<TConfiguration extends FunctionConfigType = FunctionConfigType> = Extension & {
   configuration: TConfiguration
-  metadata: TMetadata
   buildWasmPath: () => string
   inputQueryPath: () => string
 }
@@ -58,6 +54,8 @@ export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigCo
   preDeployValidation(): Promise<void>
   deployConfig(): Promise<{[key: string]: unknown}>
   previewMessage(url: string, storeFqdn: string): output.TokenizedString | undefined
+  shouldFetchCartUrl(): boolean
+  hasExtensionPointTarget(target: string): boolean
 }
 
 export function isUIExtension(spec: GenericSpecification): spec is ExtensionSpec {

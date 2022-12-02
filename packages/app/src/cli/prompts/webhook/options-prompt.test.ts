@@ -1,6 +1,6 @@
-import {optionsPrompt, EventTriggerFlags} from './options-prompt.js'
+import {optionsPrompt, WebhookTriggerFlags} from './options-prompt.js'
 import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, sharedSecretPrompt, topicPrompt} from './trigger.js'
-import {EventTriggerOptions} from '../../services/event/trigger-options.js'
+import {WebhookTriggerOptions} from '../../services/webhook/trigger-options.js'
 import {describe, it, expect, vi, afterEach, beforeEach} from 'vitest'
 import {error} from '@shopify/cli-kit'
 
@@ -41,7 +41,7 @@ describe('optionsPrompt', () => {
       const options = await optionsPrompt({})
 
       // Then
-      const expected: EventTriggerOptions = {
+      const expected: WebhookTriggerOptions = {
         topic: aTopic,
         apiVersion: aVersion,
         sharedSecret: aSecret,
@@ -62,7 +62,7 @@ describe('optionsPrompt', () => {
       const options = await optionsPrompt({})
 
       // Then
-      const expected: EventTriggerOptions = {
+      const expected: WebhookTriggerOptions = {
         topic: aTopic,
         apiVersion: aVersion,
         sharedSecret: aSecret,
@@ -93,7 +93,7 @@ describe('optionsPrompt', () => {
     describe('all params', () => {
       it('collects localhost delivery method required params', async () => {
         // Given
-        const flags: EventTriggerFlags = {
+        const flags: WebhookTriggerFlags = {
           topic: aTopic,
           apiVersion: aVersion,
           sharedSecret: aSecret,
@@ -105,7 +105,7 @@ describe('optionsPrompt', () => {
         const options = await optionsPrompt(flags)
 
         // Then
-        const expected: EventTriggerOptions = {
+        const expected: WebhookTriggerOptions = {
           topic: aTopic,
           apiVersion: aVersion,
           sharedSecret: aSecret,
@@ -118,7 +118,7 @@ describe('optionsPrompt', () => {
 
       it('collects remote delivery method required params', async () => {
         // Given
-        const flags: EventTriggerFlags = {
+        const flags: WebhookTriggerFlags = {
           topic: aTopic,
           apiVersion: aVersion,
           sharedSecret: aSecret,
@@ -130,7 +130,7 @@ describe('optionsPrompt', () => {
         const options = await optionsPrompt(flags)
 
         // Then
-        const expected: EventTriggerOptions = {
+        const expected: WebhookTriggerOptions = {
           topic: aTopic,
           apiVersion: aVersion,
           sharedSecret: aSecret,
@@ -143,7 +143,7 @@ describe('optionsPrompt', () => {
 
       it('fails when delivery method and address are not compatible', async () => {
         // Given
-        const flags: EventTriggerFlags = {
+        const flags: WebhookTriggerFlags = {
           topic: aTopic,
           apiVersion: aVersion,
           sharedSecret: aSecret,
@@ -157,7 +157,7 @@ describe('optionsPrompt', () => {
 
       it('fails when delivery method is not valid', async () => {
         // Given
-        const flags: EventTriggerFlags = {
+        const flags: WebhookTriggerFlags = {
           topic: aTopic,
           apiVersion: aVersion,
           sharedSecret: aSecret,
@@ -173,7 +173,7 @@ describe('optionsPrompt', () => {
     describe('Address passed but not method', async () => {
       it('infers the method from the address', async () => {
         // Given
-        const flags: EventTriggerFlags = {
+        const flags: WebhookTriggerFlags = {
           topic: aTopic,
           apiVersion: aVersion,
           sharedSecret: aSecret,
@@ -184,7 +184,7 @@ describe('optionsPrompt', () => {
         const options = await optionsPrompt(flags)
 
         // Then
-        const expected: EventTriggerOptions = {
+        const expected: WebhookTriggerOptions = {
           topic: aTopic,
           apiVersion: aVersion,
           sharedSecret: aSecret,
@@ -199,7 +199,7 @@ describe('optionsPrompt', () => {
     describe('Method passed but not address', async () => {
       it('prompts for the address', async () => {
         // Given
-        const flags: EventTriggerFlags = {
+        const flags: WebhookTriggerFlags = {
           topic: aTopic,
           apiVersion: aVersion,
           sharedSecret: aSecret,
@@ -211,7 +211,7 @@ describe('optionsPrompt', () => {
         const options = await optionsPrompt(flags)
 
         // Then
-        const expected: EventTriggerOptions = {
+        const expected: WebhookTriggerOptions = {
           topic: aTopic,
           apiVersion: aVersion,
           sharedSecret: aSecret,

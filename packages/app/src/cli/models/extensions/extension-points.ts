@@ -1,7 +1,7 @@
-import {ExtensionPointSchema} from './schemas.js'
+import {NewExtensionPointSchema} from './schemas.js'
 import {schema} from '@shopify/cli-kit'
 
-type BasePointConfigContents = schema.define.infer<typeof ExtensionPointSchema>
+type BasePointConfigContents = schema.define.infer<typeof NewExtensionPointSchema>
 
 /**
  * Extension Point specification

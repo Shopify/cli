@@ -3,7 +3,7 @@ import {automaticMatchmaking} from './id-matching.js'
 import {EnsureDeploymentIdsPresenceOptions, MatchingError, RemoteSource} from './identifiers.js'
 import {matchConfirmationPrompt} from './prompts.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {err, ok, Result} from '@shopify/cli-kit/common/result'
+import {err, ok, Result} from '@shopify/cli-kit/node/result'
 
 export async function ensureFunctionsIds(
   options: EnsureDeploymentIdsPresenceOptions,

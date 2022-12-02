@@ -89,27 +89,23 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
   }
 
   const runProcesses = async () => {
-    try {
-      await Promise.all(
-        processes.map(async (process, index) => {
-          const stdout = writableStream(process, index)
-          const stderr = writableStream(process, index)
+    await Promise.all(
+      processes.map(async (process, index) => {
+        const stdout = writableStream(process, index)
+        const stderr = writableStream(process, index)
 
-          await process.action(stdout, stderr, abortController.signal)
-        }),
-      )
+        await process.action(stdout, stderr, abortController.signal)
+      }),
+    )
 
-      unmountInk()
-    } catch (error) {
-      abortController.abort()
-      unmountInk()
-      throw error
-    }
+    unmountInk()
   }
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    runProcesses()
+    runProcesses().catch((error) => {
+      abortController.abort()
+      unmountInk(error)
+    })
   }, [])
 
   return (

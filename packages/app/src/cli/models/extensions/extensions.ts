@@ -1,14 +1,13 @@
-import {BaseExtensionSchema, ExtensionPointSchema, ZodSchemaType} from './schemas.js'
+import {BaseExtensionSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionPointSpec} from './extension-points.js'
 import {allExtensionSpecifications} from './specifications.js'
 import {ExtensionCategory, GenericSpecification, ThemeExtension, UIExtension} from '../app/extensions.js'
 import {blocks, defualtExtensionFlavors} from '../../constants.js'
 import {id, path, schema, api, output, environment, string} from '@shopify/cli-kit'
-import {ok, Result} from '@shopify/cli-kit/common/result'
+import {ok, Result} from '@shopify/cli-kit/node/result'
 
 // Base config type that all config schemas must extend.
 export type BaseConfigContents = schema.define.infer<typeof BaseExtensionSchema>
-export type ExtensionPointContents = schema.define.infer<typeof ExtensionPointSchema>
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -42,6 +41,8 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
     config: TConfiguration,
     storeFqdn: string,
   ) => output.TokenizedString | undefined
+  shouldFetchCartUrl?(config: TConfiguration): boolean
+  hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
 }
 
 /**
@@ -184,6 +185,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     const relativeImportPath = this.entrySourceFilePath?.replace(this.directory, '')
     return `import '.${relativeImportPath}';`
   }
+
+  shouldFetchCartUrl(): boolean {
+    return this.specification.shouldFetchCartUrl?.(this.configuration) || false
+  }
+
+  hasExtensionPointTarget(target: string): boolean {
+    return this.specification.hasExtensionPointTarget?.(this.configuration, target) || false
+  }
 }
 
 /**
@@ -224,6 +233,8 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
     config: TConfiguration,
     storeFqdn: string,
   ) => output.TokenizedString | undefined
+  shouldFetchCartUrl?(config: TConfiguration): boolean
+  hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
 }): ExtensionSpec<TConfiguration> {
   const defaults = {
     showInCLIHelp: true,

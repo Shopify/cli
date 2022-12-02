@@ -27,7 +27,7 @@ import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
 import {store, api, outputMocker} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
-import {ok} from '@shopify/cli-kit/common/result.js'
+import {ok} from '@shopify/cli-kit/node/result.js'
 
 beforeEach(() => {
   vi.mock('./dev/fetch')
@@ -108,6 +108,7 @@ const STORE2: OrganizationStore = {
   transferDisabled: false,
   convertableToPartnerTest: false,
 }
+
 const EXTENSION_A: UIExtension = {
   idEnvironmentVariableName: 'EXTENSION_A_ID',
   localIdentifier: 'EXTENSION_A',
@@ -132,6 +133,8 @@ const EXTENSION_A: UIExtension = {
   publishURL: (_) => Promise.resolve(''),
   validate: () => Promise.resolve(ok({})),
   getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: () => true,
 }
 
 const LOCAL_APP = testApp({

@@ -5,6 +5,7 @@ export type BannerType = 'success' | 'error' | 'warning' | 'info' | 'external_er
 
 interface Props {
   type: BannerType
+  marginY?: number
 }
 
 function typeToColor(type: Props['type']) {
@@ -35,7 +36,7 @@ function calculateWidth(stdout: NodeJS.WriteStream | undefined) {
   return width
 }
 
-const BoxWithBorder: React.FC<Props> = ({type, children}) => {
+const BoxWithBorder: React.FC<Props> = ({type, marginY, children}) => {
   const {stdout} = useStdout()
 
   return (
@@ -43,6 +44,7 @@ const BoxWithBorder: React.FC<Props> = ({type, children}) => {
       width={calculateWidth(stdout)}
       paddingY={1}
       paddingX={2}
+      marginY={marginY}
       borderStyle="round"
       flexDirection="column"
       borderColor={typeToColor(type)}
@@ -55,12 +57,12 @@ const BoxWithBorder: React.FC<Props> = ({type, children}) => {
   )
 }
 
-const BoxWithTopLine: React.FC<Props> = ({type, children}) => {
+const BoxWithTopLine: React.FC<Props> = ({type, marginY, children}) => {
   const {stdout} = useStdout()
   const width = calculateWidth(stdout)
 
   return (
-    <Box marginY={1} flexDirection="column">
+    <Box marginY={marginY} flexDirection="column">
       <Box marginBottom={1}>
         <Text>
           <Text color={typeToColor(type)}>{'─'.repeat(2)}</Text>
@@ -79,16 +81,16 @@ const BoxWithTopLine: React.FC<Props> = ({type, children}) => {
   )
 }
 
-const BannerBox: React.FC<Props> = ({type, children}) => {
-  if (type === 'external_error') {
-    return <BoxWithTopLine type={type}>{children}</BoxWithTopLine>
+const BannerBox: React.FC<Props> = ({children, ...props}) => {
+  if (props.type === 'external_error') {
+    return <BoxWithTopLine {...props}>{children}</BoxWithTopLine>
   }
 
-  return <BoxWithBorder type={type}>{children}</BoxWithBorder>
+  return <BoxWithBorder {...props}>{children}</BoxWithBorder>
 }
 
-const Banner: React.FC<Props> = ({type, children}) => {
-  return <BannerBox type={type}>{children}</BannerBox>
+const Banner: React.FC<Props> = ({children, ...props}) => {
+  return <BannerBox {...props}>{children}</BannerBox>
 }
 
 export {Banner}

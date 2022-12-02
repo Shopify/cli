@@ -52,7 +52,7 @@ There are scenarios where a function needs to inform the caller about the succes
 
 ```ts
 import { FatalError } from "@shopify/cli-kit/node/error"
-import {err, ok, Result} from '@shopify/cli-kit/common/result'
+import {err, ok, Result} from '@shopify/cli-kit/node/result'
 
 class ActionError extends FatalError {}
 
@@ -67,13 +67,13 @@ function action({success}: {success: boolean}): Result<string, ActionError> {
 // OK result
 let result = action({success: true})
 result.isErr() // false
-result.valueOrThrow() // ok
+result.valueOrBug() // ok
 result.mapError((error) => new FatalError("other error"))
 
 // Error result
 let result = action({success: false})
 result.isErr() // true
-result.valueOrThrow() // throws!
+result.valueOrBug() // throws!
 result.mapError((error) => new FatalError("other error"))
 ```
 

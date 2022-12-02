@@ -1,6 +1,6 @@
-import {DELIVERY_METHOD, EventTriggerOptions} from './trigger-options.js'
-import {getEventSample} from './request-sample.js'
-import {triggerLocalEvent} from './trigger-local-event.js'
+import {DELIVERY_METHOD, WebhookTriggerOptions} from './trigger-options.js'
+import {getWebhookSample} from './request-sample.js'
+import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {output} from '@shopify/cli-kit'
 
 /**
@@ -9,8 +9,8 @@ import {output} from '@shopify/cli-kit'
  *
  * @param options - Request options once the flags, prompts, and transformations have been performed
  */
-export async function eventTriggerService(options: EventTriggerOptions) {
-  const sample = await getEventSample(
+export async function webhookTriggerService(options: WebhookTriggerOptions) {
+  const sample = await getWebhookSample(
     options.topic,
     options.apiVersion,
     options.deliveryMethod,
@@ -24,7 +24,7 @@ export async function eventTriggerService(options: EventTriggerOptions) {
   }
 
   if (options.deliveryMethod === DELIVERY_METHOD.LOCALHOST) {
-    const result = await triggerLocalEvent(options.address, sample.samplePayload, sample.headers)
+    const result = await triggerLocalWebhook(options.address, sample.samplePayload, sample.headers)
 
     if (result) {
       output.success('Localhost delivery sucessful')
@@ -36,6 +36,6 @@ export async function eventTriggerService(options: EventTriggerOptions) {
   }
 
   if (sample.samplePayload === JSON.stringify({})) {
-    output.success('Webhook will be delivered shortly')
+    output.success('Webhook has been enqueued for delivery')
   }
 }
