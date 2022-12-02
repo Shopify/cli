@@ -1,6 +1,6 @@
-import {fetch} from './http.js'
-import {Abort} from './error.js'
-import {content, debug} from './output.js'
+import {err, ok, Result} from './result.js'
+import {fetch} from '../../http.js'
+import {content, debug} from '../../output.js'
 
 class GitHubClientError extends Error {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -24,17 +24,23 @@ export interface GithubRelease {
   tarball_url: string
 }
 
-interface Options {
+interface GetLatestGitHubReleaseOptions {
   filter: (release: GithubRelease) => boolean
 }
 
-export async function getLatestRelease(
-  user: string,
+/**
+ * Given a GitHub repository it obtains the latest release.
+ * @param owner - Repository owner (e.g., shopify)
+ * @param repo - Repository name (e.g., cli)
+ * @param options - Options
+ */
+export async function getLatestGitHubRelease(
+  owner: string,
   repo: string,
-  {filter}: Options = {filter: () => true},
+  options: GetLatestGitHubReleaseOptions = {filter: () => true},
 ): Promise<GithubRelease> {
-  debug(content`Getting the latest release of GitHub repository ${user}/${repo}...`)
-  const url = `https://api.github.com/repos/${user}/${repo}/releases`
+  debug(content`Getting the latest release of GitHub repository ${owner}/${repo}...`)
+  const url = `https://api.github.com/repos/${owner}/${repo}/releases`
   const fetchResult = await fetch(url)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const jsonBody: any = await fetchResult.json()
@@ -43,13 +49,28 @@ export async function getLatestRelease(
     throw new GitHubClientError(url, fetchResult.status, jsonBody)
   }
 
-  return jsonBody.find(filter)
+  return jsonBody.find(options.filter)
 }
 
-export function parseRepoUrl(src: string) {
+interface ParseRepositoryURLOutput {
+  full: string
+  site: string
+  user: string
+  name: string
+  ref: string
+  subDirectory: string
+  ssh: string
+  http: string
+}
+
+/**
+ * Given a GitHub repository URL, it parses it and returns its coomponents.
+ * @param url - The GitHub repository URL
+ */
+export function parseGitHubRepositoryURL(url: string): Result<ParseRepositoryURLOutput, Error> {
   const match =
     /^(?:(?:https:\/\/)?([^:/]+\.[^:/]+)\/|git@([^:/]+)[:/]|([^/]+):)?([^/\s]+)\/([^/\s#]+)(?:((?:\/[^/\s#]+)+))?(?:\/)?(?:#(.+))?/.exec(
-      src,
+      url,
     )
 
   if (!match) {
@@ -61,7 +82,7 @@ export function parseRepoUrl(src: string) {
       'https://github.com/user/repo',
     ]
 
-    throw new Abort(`Parsing the url ${src} failed. Supported formats are ${exampleFormats.join(', ')}.`)
+    return err(new Error(`Parsing the url ${url} failed. Supported formats are ${exampleFormats.join(', ')}.`))
   }
 
   const site = match[1] || match[2] || match[3] || 'github.com'
@@ -75,23 +96,28 @@ export function parseRepoUrl(src: string) {
   const http = `https://${normalizedSite}/${user}/${name}`
   const full = ['https:/', normalizedSite, user, name, subDirectory].join('/').concat(branch)
 
-  return {full, site: normalizedSite, user, name, ref, subDirectory, ssh, http}
+  return ok({full, site: normalizedSite, user, name, ref, subDirectory, ssh, http})
 }
 
-export interface GithubRepoReference {
-  repoBaseUrl: string
+export interface GithubRepositoryReference {
+  baseURL: string
   branch?: string
   filePath?: string
 }
 
-export function parseGithubRepoReference(src: string): GithubRepoReference {
-  const url = new URL(src)
+/**
+ * Given a GitHub repository URL it parses it and extracts the branch, file path,
+ * and base URL components
+ * @param reference - A GitHub repository URL (e.g. https://github.com/Shopify/cli/blob/main/package.json)
+ */
+export function parseGitHubRepositoryReference(reference: string): GithubRepositoryReference {
+  const url = new URL(reference)
   const branch = url.hash ? url.hash.slice(1) : undefined
   const [_, user, repo, ...repoPath] = url.pathname.split('/')
   const filePath = repoPath.length > 0 ? repoPath.join('/') : undefined
 
   return {
-    repoBaseUrl: `${url.origin}/${user}/${repo}`,
+    baseURL: `${url.origin}/${user}/${repo}`,
     branch,
     filePath,
   }

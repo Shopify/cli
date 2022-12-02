@@ -1,11 +1,16 @@
-import {fetch} from './http.js'
-import {getLatestRelease, parseRepoUrl, GithubRelease, parseGithubRepoReference} from './github.js'
+import {
+  getLatestGitHubRelease,
+  parseGitHubRepositoryURL,
+  GithubRelease,
+  parseGitHubRepositoryReference,
+} from './github.js'
+import {fetch} from '../../http.js'
 import {Response} from 'node-fetch'
 import {describe, expect, it, vi} from 'vitest'
 
-vi.mock('./http')
+vi.mock('../../http.js')
 
-describe('getLatestRelease', () => {
+describe('getLatestGitHubRelease', () => {
   it('delegates to fetch', async () => {
     // Given
     const user = 'shopify'
@@ -16,7 +21,7 @@ describe('getLatestRelease', () => {
     vi.mocked(fetch).mockResolvedValue(response)
 
     // When
-    const latest = await getLatestRelease(user, repo)
+    const latest = await getLatestGitHubRelease(user, repo)
 
     // Then
     expect(vi.mocked(fetch)).toHaveBeenCalledWith(`https://api.github.com/repos/${user}/${repo}/releases`)
@@ -34,7 +39,7 @@ describe('getLatestRelease', () => {
     vi.mocked(fetch).mockResolvedValue(response)
 
     // When
-    const latest = await getLatestRelease(user, repo, {filter})
+    const latest = await getLatestGitHubRelease(user, repo, {filter})
 
     // Then
     expect(vi.mocked(fetch)).toHaveBeenCalledWith(`https://api.github.com/repos/${user}/${repo}/releases`)
@@ -42,7 +47,7 @@ describe('getLatestRelease', () => {
   })
 })
 
-describe('parseRepoUrl', () => {
+describe('parseGitHubRepositoryURL', () => {
   ;[
     'Shopify/hydrogen-app',
     'github:Shopify/hydrogen-app',
@@ -50,8 +55,8 @@ describe('parseRepoUrl', () => {
     'https://github.com/Shopify/hydrogen-app',
   ].forEach((url) => {
     it(url, async () => {
-      const latest = parseRepoUrl(url)
-      await expect(latest).toMatchObject({
+      const latest = parseGitHubRepositoryURL(url)
+      await expect(latest.valueOrAbort()).toMatchObject({
         site: 'github.com',
         user: 'Shopify',
         name: 'hydrogen-app',
@@ -66,10 +71,10 @@ describe('parseRepoUrl', () => {
     const url = 'git@github.com:Shopify/hydrogen/examples/template-hydrogen-default'
 
     // When
-    const latest = parseRepoUrl(url)
+    const latest = parseGitHubRepositoryURL(url)
 
     // Then
-    await expect(latest).toMatchObject({
+    await expect(latest.valueOrAbort()).toMatchObject({
       site: 'github.com',
       user: 'Shopify',
       name: 'hydrogen',
@@ -83,10 +88,10 @@ describe('parseRepoUrl', () => {
     const url = 'git@github.com:Shopify/hydrogen/examples/template-hydrogen-default#someBranch'
 
     // When
-    const latest = parseRepoUrl(url)
+    const latest = parseGitHubRepositoryURL(url)
 
     // Then
-    await expect(latest).toMatchObject({
+    await expect(latest.valueOrAbort()).toMatchObject({
       site: 'github.com',
       user: 'Shopify',
       name: 'hydrogen',
@@ -97,17 +102,17 @@ describe('parseRepoUrl', () => {
   })
 })
 
-describe('parseGithubRepoReference', () => {
+describe('parseGitHubRepositoryReference', () => {
   it('parses a repository reference', async () => {
     // Given
     const url = 'https://github.com/Shopify/foo'
 
     // When
-    const repoUrl = parseGithubRepoReference(url)
+    const repoUrl = parseGitHubRepositoryReference(url)
 
     // Then
     await expect(repoUrl).toMatchObject({
-      repoBaseUrl: 'https://github.com/Shopify/foo',
+      baseURL: 'https://github.com/Shopify/foo',
       branch: undefined,
       filePath: undefined,
     })
@@ -118,11 +123,11 @@ describe('parseGithubRepoReference', () => {
     const url = 'https://github.com/Shopify/foo#main'
 
     // When
-    const repoUrl = parseGithubRepoReference(url)
+    const repoUrl = parseGitHubRepositoryReference(url)
 
     // Then
     await expect(repoUrl).toMatchObject({
-      repoBaseUrl: 'https://github.com/Shopify/foo',
+      baseURL: 'https://github.com/Shopify/foo',
       branch: 'main',
       filePath: undefined,
     })
@@ -133,11 +138,11 @@ describe('parseGithubRepoReference', () => {
     const url = 'https://github.com/Shopify/foo/bar/baz#main'
 
     // When
-    const repoUrl = parseGithubRepoReference(url)
+    const repoUrl = parseGitHubRepositoryReference(url)
 
     // Then
     await expect(repoUrl).toMatchObject({
-      repoBaseUrl: 'https://github.com/Shopify/foo',
+      baseURL: 'https://github.com/Shopify/foo',
       branch: 'main',
       filePath: 'bar/baz',
     })

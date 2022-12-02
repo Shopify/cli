@@ -3,7 +3,7 @@ import {ExtensionPointSpec} from './extension-points.js'
 import {allExtensionSpecifications} from './specifications.js'
 import {ExtensionIdentifier, ThemeExtension, UIExtension} from '../app/extensions.js'
 import {id, path, schema, api, output, environment, string} from '@shopify/cli-kit'
-import {ok, Result} from '@shopify/cli-kit/common/result'
+import {ok, Result} from '@shopify/cli-kit/node/result'
 
 // Base config type that all config schemas must extend.
 export type BaseConfigContents = schema.define.infer<typeof BaseExtensionSchema>

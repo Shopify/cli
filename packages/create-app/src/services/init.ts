@@ -1,9 +1,10 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
 import cleanup from '../utils/template/cleanup.js'
 
-import {string, path, file, ui, template, npm, git, github, environment, error, output} from '@shopify/cli-kit'
+import {string, path, file, ui, template, npm, git, environment, error, output} from '@shopify/cli-kit'
 import {packageManager, PackageManager, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
 
 interface InitOptions {
   name: string
@@ -17,7 +18,7 @@ async function init(options: InitOptions) {
   const packageManager: PackageManager = inferPackageManager(options.packageManager)
   const hyphenizedName = string.hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
-  const githubRepo = github.parseGithubRepoReference(options.template)
+  const githubRepo = parseGitHubRepositoryReference(options.template)
 
   await ensureAppDirectoryIsAvailable(outputDirectory, hyphenizedName)
 
@@ -27,7 +28,7 @@ async function init(options: InitOptions) {
       ? path.join(templateDownloadDir, githubRepo.filePath)
       : templateDownloadDir
     const templateScaffoldDir = path.join(tmpDir, 'app')
-    const repoUrl = githubRepo.branch ? `${githubRepo.repoBaseUrl}#${githubRepo.branch}` : githubRepo.repoBaseUrl
+    const repoUrl = githubRepo.branch ? `${githubRepo.baseURL}#${githubRepo.branch}` : githubRepo.baseURL
 
     await file.mkdir(templateDownloadDir)
     let tasks: ui.ListrTasks = []

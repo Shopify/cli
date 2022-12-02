@@ -1,4 +1,6 @@
-/* eslint-disable node/handle-callback-err */
+import {FatalError} from './error.js'
+import {Abort, ExtendableError} from '../../error.js'
+
 export type Result<TValue, TError> = Ok<TValue, TError> | Err<TValue, TError>
 
 /**
@@ -42,11 +44,16 @@ export class Ok<TValue, TError> {
   }
 
   /**
-   * A safe mode to get the `value` of the `Result`
-   *
-   * @returns the `value` of the `Result`
+   * A safe mode to throw the `error` of the `Result`
    */
-  valueOrThrow(): TValue {
+  valueOrBug(): TValue {
+    return this.value
+  }
+
+  /**
+   * Throws an abort error if the result doesn't represent a value.
+   */
+  valueOrAbort(): TValue {
     return this.value
   }
 
@@ -72,6 +79,7 @@ export class Ok<TValue, TError> {
 }
 
 export class Err<TValue, TError> {
+  // eslint-disable-next-line node/handle-callback-err
   constructor(readonly error: TError) {}
 
   /**
@@ -96,8 +104,23 @@ export class Err<TValue, TError> {
   /**
    * A safe mode to throw the `error` of the `Result`
    */
-  valueOrThrow(): TValue {
+  valueOrBug(): TValue {
     throw this.error
+  }
+
+  /**
+   * Throws an abort error if the result doesn't represent a value.
+   */
+  valueOrAbort(): TValue {
+    if (this.error instanceof FatalError) {
+      throw this.error
+    } else if (this.error instanceof ExtendableError || this.error instanceof Error) {
+      const error = new Abort(this.error.message)
+      error.stack = this.error.stack
+      throw error
+    } else {
+      throw new Abort(`${this.error}`)
+    }
   }
 
   /**
@@ -106,7 +129,7 @@ export class Err<TValue, TError> {
    * @param _mapper - This mapper method is not used for an `Error` value
    * @returns a new result with the new value type and an unaltered error
    */
-  map<TMappedValue>(_mapper: (valueOrThrow: TValue) => TMappedValue): Result<TMappedValue, TError> {
+  map<TMappedValue>(_mapper: (valueOrBug: TValue) => TMappedValue): Result<TMappedValue, TError> {
     return err(this.error)
   }
 
