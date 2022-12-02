@@ -11,13 +11,15 @@ describe('FatalError', async () => {
     const {output} = renderString(<FatalError error={error} />)
 
     expect(unstyled(output!)).toMatchInlineSnapshot(`
-      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "
+      ╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  test                                                                        │
       │                                                                              │
       │  try this                                                                    │
       │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯"
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 
@@ -34,7 +36,8 @@ describe('FatalError', async () => {
     const {output} = renderString(<FatalError error={error} />)
 
     expect(unstyled(output!)).toMatchInlineSnapshot(`
-      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "
+      ╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Unexpected error                                                            │
       │                                                                              │
@@ -44,7 +47,8 @@ describe('FatalError', async () => {
       │  at load (internal/modules/cjs/loader.js:985)                                │
       │  at _load (internal/modules/cjs/loader.js:878)                               │
       │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯"
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 
@@ -83,7 +87,8 @@ describe('FatalError', async () => {
     const {output} = renderString(<FatalError error={error} />)
 
     expect(unstyled(output!)).toMatchInlineSnapshot(`
-      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "
+      ╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Unexpected error                                                            │
       │                                                                              │
@@ -100,7 +105,8 @@ describe('FatalError', async () => {
       │  at load (internal/modules/cjs/loader.js:985)                                │
       │  at _load (internal/modules/cjs/loader.js:878)                               │
       │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯"
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 
