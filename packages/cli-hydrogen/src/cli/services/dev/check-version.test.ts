@@ -92,7 +92,7 @@ describe('checkHydrogenVersion()', () => {
           │  You are currently running v1.0.0.                                           │
           │                                                                              │
           │  Reference                                                                   │
-          │    • Hydrogen releases: https://github.com/Shopify/hydrogen/releases         │
+          │    • Hydrogen releases (https://github.com/Shopify/hydrogen/releases)        │
           │                                                                              │
           ╰──────────────────────────────────────────────────────────────────────────────╯
           "
