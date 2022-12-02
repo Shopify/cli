@@ -3,7 +3,8 @@ import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
 import {selectApp} from './app/select-app.js'
 import {AppInterface} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
-import {testApp} from '../models/app/app.test-data.js'
+import {testApp, testUIExtension} from '../models/app/app.test-data.js'
+import {AppErrors} from '../models/app/loader.js'
 import {path, session, output, store} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
@@ -181,11 +182,80 @@ describe('info', () => {
       }"
     `)
   })
+
+  it.only('returns errors alongside extensions when extensions have errors', async () => {
+    // Given
+    const uiExtension1 = await testUIExtension({
+      configuration: {
+        name: 'Extension 1',
+        type: 'ui_extension',
+        metafields: [],
+      },
+      configurationPath: 'extension/path/1',
+    })
+    const uiExtension2 = await testUIExtension({
+      configuration: {
+        name: 'Extension 2',
+        type: 'checkout_ui_extension',
+        metafields: [],
+      },
+      configurationPath: 'extension/path/2',
+    })
+
+    const errors = new AppErrors()
+    errors.addError(uiExtension1.configurationPath, 'Mock error with ui_extension')
+    errors.addError(uiExtension2.configurationPath, 'Mock error with checkout_ui_extension')
+
+    const app = mockApp(undefined, {
+      errors,
+      extensions: {
+        ui: [uiExtension1, uiExtension2],
+        theme: [],
+        function: [],
+      },
+    })
+    const organization = {
+      id: '123',
+      appsNext: false,
+      businessName: 'test',
+      website: '',
+      apps: {nodes: []},
+    }
+    const organizationApp = {
+      id: '123',
+      title: 'Test app',
+      appType: 'custom',
+      apiSecretKeys: [{secret: 'api-secret'}],
+      organizationId: '1',
+      apiKey: 'api-key',
+      grantedScopes: [],
+    }
+    vi.mocked(fetchOrganizations).mockResolvedValue([organization])
+    vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
+    vi.mocked(fetchOrgAndApps).mockResolvedValue({
+      organization,
+      stores: [],
+      apps: [organizationApp],
+    })
+    vi.mocked(selectApp).mockResolvedValue(organizationApp)
+    vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue('token')
+
+    // When
+    const result = await info(app, {format: 'text', webEnv: false})
+
+    // Then
+    expect(result).toMatch(/Extensions with errors/)
+    expect(result).toMatch(/📂 ui_extension[ ]+tmp\/project\/extensions\/test-ui-extension/)
+    expect(result).toMatch(/! Mock error with ui_extension/)
+    expect(result).toMatch(/📂 checkout_ui_extension[ ]+tmp\/project\/extensions\/test-ui-extension/)
+    expect(result).toMatch(/! Mock error with checkout_ui_extension/)
+  })
 })
 
-function mockApp(currentVersion = '2.2.2'): AppInterface {
+function mockApp(currentVersion = '2.2.2', app?: Partial<AppInterface>): AppInterface {
   const nodeDependencies: {[key: string]: string} = {}
   nodeDependencies['@shopify/cli'] = currentVersion
+
   return testApp({
     name: 'myapp',
     directory: '/',
@@ -195,5 +265,6 @@ function mockApp(currentVersion = '2.2.2'): AppInterface {
       extensionDirectories: ['extensions/*'],
     },
     nodeDependencies,
+    ...(app ? app : {}),
   })
 }
