@@ -8,8 +8,6 @@ export class ExtensionServerClient implements ExtensionServer.Client {
 
   public connection!: WebSocket
 
-  public api!: ExtensionServer.API.Client
-
   public options: ExtensionServer.Options
 
   protected EVENT_THAT_WILL_MUTATE_THE_SERVER = ['update']
