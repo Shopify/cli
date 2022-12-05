@@ -52,7 +52,7 @@
     "graphql-request": "4.3.0"
   },
   "devDependencies": {
-    "@types/fs-extra": "^9.0.12",
+    "@types/fs-extra": "9.0.13",
     "vitest": "^0.22.1"
   },
   "engine-strict": true,
