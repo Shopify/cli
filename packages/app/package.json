@@ -68,7 +68,10 @@
     "@types/serve-static": "^1.15.0",
     "@types/ws": "^8.5.3",
     "@types/lodash-es": "^4.17.6",
-    "vitest": "^0.22.1"
+    "vitest": "^0.22.1",
+    "vite": "^2.9.13",
+    "graphql-tag": "^2.11.0",
+    "graphql": "^16.0.0"
   },
   "dependencies": {
     "@luckycatfactory/esbuild-graphql-loader": "3.7.0",

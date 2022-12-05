@@ -9,6 +9,8 @@
     "type-check": "nx type-check"
   },
   "devDependencies": {
+    "cucumber": "^6.0.0",
+    "@cucumber/messages": "20.0.0",
     "fs-extra": "^10.0.0",
     "@types/cucumber": "^7.0.0",
     "@cucumber/cucumber": "^8.2.2",

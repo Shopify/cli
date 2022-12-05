@@ -53,7 +53,10 @@
   },
   "devDependencies": {
     "@types/fs-extra": "9.0.13",
-    "vitest": "^0.22.1"
+    "vitest": "^0.22.1",
+    "graphql": "^16.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "engine-strict": true,
   "engines": {
