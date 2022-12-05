@@ -7,11 +7,21 @@ describe('Link', async () => {
   test("renders correctly with a fallback for terminals that don't support hyperlinks", async () => {
     const link = {
       url: 'https://example.com',
-      text: 'Example',
+      label: 'Example',
     }
 
     const {output} = renderString(<Link {...link} />)
 
-    expect(output).toMatchInlineSnapshot('"https://example.com [2m(https://example.com)[22m"')
+    expect(output).toMatchInlineSnapshot('"Example [2m(https://example.com)[22m"')
+  })
+
+  test("it doesn't render a fallback if only url is passed", async () => {
+    const link = {
+      url: 'https://example.com',
+    }
+
+    const {output} = renderString(<Link {...link} />)
+
+    expect(output).toMatchInlineSnapshot('"https://example.com"')
   })
 })
