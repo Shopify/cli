@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.25.0
+
+### Patch Changes
+
+- 78196a78: Improve text contrast of UI kit components and introduce several new text tokens
+
 ## 3.24.1
 
 ### Patch Changes
