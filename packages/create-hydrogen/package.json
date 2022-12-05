@@ -56,6 +56,7 @@
   },
   "devDependencies": {
     "vitest": "^0.22.1",
+    "vite": "^2.9.13",
     "@types/download": "8.0.0"
   },
   "engine-strict": true,
