@@ -30,7 +30,7 @@ function multipleLockfilesWarning(lockfiles: Lockfile[]) {
   }
 
   const lockfileList = lockfiles.map((lockfile) => {
-    return `• ${lockfile} (created by ${packageManagers[lockfile]})`
+    return `${lockfile} (created by ${packageManagers[lockfile]})`
   })
 
   renderWarning({
@@ -38,8 +38,8 @@ function multipleLockfilesWarning(lockfiles: Lockfile[]) {
     body: [
       `Your project contains more than one lockfile. This can cause version ` +
         `conflicts when installing and deploying your app. The following ` +
-        `lockfiles were detected:\n\n`,
-      lockfileList.join('\n '),
+        `lockfiles were detected:\n`,
+      {list: {items: lockfileList}},
     ],
     nextSteps: ['Delete any unneeded lockfiles', 'Commit the change to your repository'],
   })

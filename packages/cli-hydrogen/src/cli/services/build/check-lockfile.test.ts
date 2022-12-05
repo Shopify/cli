@@ -120,8 +120,8 @@ describe('checkLockfileStatus()', () => {
           │  conflicts when installing and deploying your app. The following lockfiles   │
           │  were detected:                                                              │
           │                                                                              │
-          │   • yarn.lock (created by yarn)                                              │
-          │   • package-lock.json (created by npm)                                       │
+          │    • yarn.lock (created by yarn)                                             │
+          │    • package-lock.json (created by npm)                                      │
           │                                                                              │
           │  Next steps                                                                  │
           │    • Delete any unneeded lockfiles                                           │
