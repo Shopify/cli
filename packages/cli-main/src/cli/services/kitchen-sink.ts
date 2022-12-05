@@ -10,7 +10,26 @@ export async function kitchenSink() {
   })
 
   renderInfo({
-    headline: 'App initialized and ready to build.',
+    headline: [
+      "To connect this project to your shopify store's inventory:",
+      {filePath: '/my-store/hydrogen.config.js'},
+      'with your store ID and Storefront API key.',
+    ],
+    body: [
+      'You can also try the following steps:',
+      {
+        list: {
+          items: [
+            ['Run', {command: 'shopify project connect'}],
+            ['Run', {command: 'hydrogen start'}],
+          ],
+        },
+      },
+    ],
+  })
+
+  renderInfo({
+    headline: [{userInput: 'my-app'}, 'initialized and ready to build.'],
     nextSteps: [
       [
         'Run',

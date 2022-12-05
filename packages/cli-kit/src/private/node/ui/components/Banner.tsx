@@ -50,14 +50,14 @@ const BoxWithBorder: React.FC<Props> = ({type, marginY, children}) => {
       borderColor={typeToColor(type)}
     >
       <Box marginTop={-2} marginBottom={1} marginLeft={-1}>
-        <Text dimColor bold>{` ${type.replace(/_/g, ' ')} `}</Text>
+        <Text>{` ${type.replace(/_/g, ' ')} `}</Text>
       </Box>
       {children}
     </Box>
   )
 }
 
-const BoxWithTopLine: React.FC<Props> = ({type, marginY, children}) => {
+const BoxWithTopBottomLines: React.FC<Props> = ({type, marginY, children}) => {
   const {stdout} = useStdout()
   const width = calculateWidth(stdout)
 
@@ -66,7 +66,7 @@ const BoxWithTopLine: React.FC<Props> = ({type, marginY, children}) => {
       <Box marginBottom={1}>
         <Text>
           <Text color={typeToColor(type)}>{'─'.repeat(2)}</Text>
-          <Text dimColor bold>{` ${type.replace(/_/g, ' ')} `}</Text>
+          <Text>{` ${type.replace(/_/g, ' ')} `}</Text>
           {/* 2 initial dashes + 2 spaces surrounding the type */}
           <Text color={typeToColor(type)}>{'─'.repeat(width - 2 - type.length - 2)}</Text>
         </Text>
@@ -81,16 +81,12 @@ const BoxWithTopLine: React.FC<Props> = ({type, marginY, children}) => {
   )
 }
 
-const BannerBox: React.FC<Props> = ({children, ...props}) => {
-  if (props.type === 'external_error') {
-    return <BoxWithTopLine {...props}>{children}</BoxWithTopLine>
-  }
-
-  return <BoxWithBorder {...props}>{children}</BoxWithBorder>
-}
-
 const Banner: React.FC<Props> = ({children, ...props}) => {
-  return <BannerBox {...props}>{children}</BannerBox>
+  if (props.type === 'external_error') {
+    return React.createElement(BoxWithTopBottomLines, props, children)
+  } else {
+    return React.createElement(BoxWithBorder, props, children)
+  }
 }
 
 export {Banner}
