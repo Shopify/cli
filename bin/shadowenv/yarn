@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+printf "\033[1;32myarn \033[0;32mhas been superseded by \033[1;32mpnpm \033[0;32mso use that instead.\n\033[0m"
+printf "\033[0;30mCheck out X to understand the rationale behind the move.\n"
+
