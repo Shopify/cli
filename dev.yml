@@ -10,7 +10,12 @@ up:
     - delve
     - pnpm
     - pnpm:
-        version: 7.9.3
+        version: 7.18.1
+  - custom:
+      name: 'Install PNPM dependencies'
+      met?: test -d node_modules
+      meet: pnpm install
+
 
 env:
   SHOPIFY_CLI_ENV: development

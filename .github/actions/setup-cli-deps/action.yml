@@ -20,15 +20,15 @@ runs:
     - name: Install Bundler
       run: gem install bundler -v ${{ env.BUNDLER_VERSION }}
       shell: bash
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2.2.2
+      with:
+        version:  ${{ env.PNPM_VERSION }}
     - name: Set Node.js
       uses: actions/setup-node@master
       with:
         node-version: ${{ inputs.node-version }}
         cache: 'pnpm'
-    - name: Install pnpm
-      uses: pnpm/action-setup@v2.2.2
-      with:
-        version:  ${{ env.PNPM_VERSION }}
     - name: Install yarn
       run: npm install --global yarn@${{ env.YARN_VERSION }}
       shell: bash
