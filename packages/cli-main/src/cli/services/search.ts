@@ -1,24 +1,37 @@
-import {output, http} from '@shopify/cli-kit'
+import {http, abort} from '@shopify/cli-kit'
+import {renderInteractiveList} from '@shopify/cli-kit/node/ui'
 
 export async function searchService(query: string) {
+  // await search(query)
+
+  renderInteractiveList({question: 'What are you searching for?', fetch: search})
+}
+
+async function search(query: string, signal: abort.Signal) {
   const searchParams = new URLSearchParams()
   searchParams.append('query', query)
   searchParams.append('page', '1')
   //   searchParams.append('version', '2022-10')
+  try {
+    const res = await http.fetch(`https://shopify.dev/search/autocomplete?${searchParams.toString()}`, {signal})
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const jsonResponse: any = await res.json()
+    return jsonResponse.results
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (err) {
+    return []
+    // eslint-disable-next-line no-warning-comments
+    // TODO: handle errors + when the request is terminated
+  }
 
-  const res = await http.fetch(`https://shopify.dev/search/autocomplete?${searchParams.toString()}`)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const jsonResponse: any = await res.json()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  jsonResponse.results.slice(0, 3).forEach((result: any) => {
-    output.info(output.content`${output.token.heading(`${result.title}`)}`)
-    output.info(output.content`${output.token.genericShellCommand(`${result.breadcrumb}`)}`)
-    output.info(result.description)
-    output.info(output.content`${output.token.link('Link', `https://shopify.dev${result.url}`)}`)
-    output.newline()
-  })
+  // .slice(0, 3).forEach((result: any) => {
+  //   output.info(output.content`${output.token.heading(`${result.title}`)}`)
+  //   output.info(output.content`${output.token.genericShellCommand(`${result.breadcrumb}`)}`)
+  //   output.info(result.description)
+  //   output.info(output.content`${output.token.link('Link', `https://shopify.dev${result.url}`)}`)
+  //   output.newline()
+  // })
 }
-
 // {
 //     "query": "cli",
 //     "page": 1,
