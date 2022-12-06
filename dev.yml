@@ -3,12 +3,12 @@ name: shopify-cli-next
 up:
   - node:
       version: v18.7.0
+      packages: []
   - ruby:
       version: 3.1.2
   - homebrew:
     - jq
     - delve
-    - pnpm
     - pnpm:
         version: 7.18.1
   - custom:
@@ -20,6 +20,7 @@ up:
 env:
   SHOPIFY_CLI_ENV: development
   SHOPIFY_SERVICE_ENV: production
+  SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION: "1"
 
 open:
   app: http://localhost:3000
