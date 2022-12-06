@@ -22,7 +22,7 @@ describe('installNPMDependenciesRecursively', () => {
       await expect(
         installNPMDependenciesRecursively({
           directory: tmpDir,
-          packageManager: 'yarn',
+          packageManager: 'pnpm',
         }),
       ).resolves.toBe(undefined)
     })
