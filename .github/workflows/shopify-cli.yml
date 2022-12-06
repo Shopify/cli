@@ -170,6 +170,7 @@ jobs:
           output: report-markdown
           coverage-file: packages/cli-main/coverage/coverage-final.json
           base-coverage-file: packages/cli-main/coverage/coverage-final.json
+          threshold: 0
       - uses: marocchino/sticky-pull-request-comment@v2
         with:
           message: ${{ steps.coverage.outputs.report }}
