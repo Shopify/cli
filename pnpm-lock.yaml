@@ -19,13 +19,7 @@ importers:
       '@nrwl/workspace': ^14.5.10
       '@octokit/core': ^4.0.5
       '@octokit/rest': ^19.0.4
-      '@shopify/admin-ui-extensions': 1.0.1
-      '@shopify/admin-ui-extensions-react': 1.0.1
-      '@shopify/checkout-ui-extensions-react': 0.20.0
-      '@shopify/customer-account-ui-extensions-react': ^0.0.8
       '@shopify/eslint-plugin': ^41.3.0
-      '@shopify/post-purchase-ui-extensions-react': 0.13.3
-      '@shopify/retail-ui-extensions': 0.19.0
       '@shopify/typescript-configs': ^5.1.0
       '@shopify/web-pixels-extension': 0.1.4
       '@types/node': ^17.0.38
@@ -86,13 +80,7 @@ importers:
       '@nrwl/workspace': 14.8.6_sdrupnyfaaa2avpmkkxmp6o45e
       '@octokit/core': 4.1.0
       '@octokit/rest': 19.0.5
-      '@shopify/admin-ui-extensions': 1.0.1
-      '@shopify/admin-ui-extensions-react': 1.0.1_react@17.0.2
-      '@shopify/checkout-ui-extensions-react': 0.20.0_react@17.0.2
-      '@shopify/customer-account-ui-extensions-react': 0.0.8_react@17.0.2
       '@shopify/eslint-plugin': 41.3.1_mv2tj3snwl6ouczzsxhkjqoqni
-      '@shopify/post-purchase-ui-extensions-react': 0.13.3_react@17.0.2
-      '@shopify/retail-ui-extensions': 0.19.0
       '@shopify/typescript-configs': 5.1.0
       '@shopify/web-pixels-extension': 0.1.4
       '@types/node': 17.0.45
@@ -145,21 +133,27 @@ importers:
 
   fixtures/app:
     specifiers:
-      '@shopify/admin-ui-extensions-react': ^1.0.1
+      '@shopify/admin-ui-extensions': 1.0.1
+      '@shopify/admin-ui-extensions-react': 1.0.1
       '@shopify/app': 3.25.0
       '@shopify/checkout-ui-extensions-react': ^0.20.0
       '@shopify/cli': 3.25.0
       '@shopify/customer-account-ui-extensions-react': ^0.0.8
+      '@shopify/post-purchase-ui-extensions': ^0.13.3
       '@shopify/post-purchase-ui-extensions-react': ^0.13.3
+      '@shopify/retail-ui-extensions': 0.19.0
       '@shopify/web-pixels-extension': ^0.1.1
       react: ^17.0.2
     dependencies:
-      '@shopify/admin-ui-extensions-react': 1.0.4_react@17.0.2
+      '@shopify/admin-ui-extensions': 1.0.1
+      '@shopify/admin-ui-extensions-react': 1.0.1_react@17.0.2
       '@shopify/app': link:../../packages/app
       '@shopify/checkout-ui-extensions-react': 0.20.0_react@17.0.2
       '@shopify/cli': link:../../packages/cli-main
       '@shopify/customer-account-ui-extensions-react': 0.0.8_react@17.0.2
+      '@shopify/post-purchase-ui-extensions': 0.13.3
       '@shopify/post-purchase-ui-extensions-react': 0.13.3_react@17.0.2
+      '@shopify/retail-ui-extensions': 0.19.0
       '@shopify/web-pixels-extension': 0.1.6
       react: 17.0.2
 
@@ -175,6 +169,7 @@ importers:
       pretty-quick: ^3.1.3
       serve-static: ^1.14.1
       supertest: ^6.2.2
+      vite: 2.9.12
       vitest: ^0.22.1
     dependencies:
       '@shopify/shopify-api': 3.1.3
@@ -188,6 +183,7 @@ importers:
       prettier: 2.8.0
       pretty-quick: 3.1.3_prettier@2.8.0
       supertest: 6.3.1
+      vite: 2.9.12
       vitest: 0.22.1
 
   fixtures/app/web/frontend:
@@ -3576,12 +3572,14 @@ packages:
     resolution: {integrity: sha512-Mc7iZ4nCIizdG/UWTW31HdtdmGpmjTah6Im+NJgwmmXZ8cnfFjxHFgpKc+kIhJTVKdmuN4KFHmNIXVSmeMTZdA==}
     dependencies:
       '@remote-ui/rpc': 1.3.4
+    dev: false
 
   /@remote-ui/core/2.1.16:
     resolution: {integrity: sha512-PcaljPmv0Ra8PeRT+M/vKPTYSkU1KssjwB2gjcE+TK2zM2SBbJwB5K18MjJhNlb9n6LTFE99fDqYxc5DbCyMIg==}
     dependencies:
       '@remote-ui/rpc': 1.3.4
       '@remote-ui/types': 1.1.2
+    dev: false
 
   /@remote-ui/react/4.5.13_react@17.0.2:
     resolution: {integrity: sha512-T3AhJClw5clZ2QO4ay02ACtUEaCuGIGwJI0glxA2CXsqOZUpy5LWWnK5OEek/G0XWplN3Mzcx8O+5hnl3x6IvA==}
@@ -3594,12 +3592,15 @@ packages:
       react-reconciler: 0.26.2_react@17.0.2
     transitivePeerDependencies:
       - react
+    dev: false
 
   /@remote-ui/rpc/1.3.4:
     resolution: {integrity: sha512-KwZ2egbGQqO+DjgwoZlQ4QedMZHeFuGY/2FiGUrqvyhp4bGheSLr5bm3jF23+2tQVywUHB2gDPqzUgR/47Lb2g==}
+    dev: false
 
   /@remote-ui/types/1.1.2:
     resolution: {integrity: sha512-F2u6McqvHj2c89FHeozQ0O8qbqhOFMMNYR2HqF33mHCMNTEXzUVheCj7laNO1/dGNXwcJHpoWIBNwfChbEfVyA==}
+    dev: false
 
   /@rollup/pluginutils/4.2.1:
     resolution: {integrity: sha512-iKnFXr7NkdZAIHiIWE+BX5ULi/ucVFYWD6TbAV+rZctiRTY2PL6tsIKhoIOaoskiWAkgu+VsbXgUVDNLHf+InQ==}
@@ -3614,17 +3615,6 @@ packages:
       react: '>=17.0.0 <18.0.0'
     dependencies:
       '@remote-ui/react': 4.5.13_react@17.0.2
-      '@shopify/admin-ui-extensions': 1.0.1
-      '@types/react': 16.14.0
-      react: 17.0.2
-    dev: true
-
-  /@shopify/admin-ui-extensions-react/1.0.4_react@17.0.2:
-    resolution: {integrity: sha512-lhnwYAcZ7tL3zHoeiGnDaOWavKkKjkofWyrqZHMtiwjeVWex9Xu2Pd3aB/RFSKsj1faBRsMd5vNQ5pKh8ALwVg==}
-    peerDependencies:
-      react: '>=17.0.0 <18.0.0'
-    dependencies:
-      '@remote-ui/react': 4.5.13_react@17.0.2
       '@shopify/admin-ui-extensions': 1.0.4
       '@types/react': 16.14.0
       react: 17.0.2
@@ -3635,7 +3625,7 @@ packages:
     dependencies:
       '@remote-ui/core': 2.1.16
       '@shopify/ui-extensions': 1.0.2
-    dev: true
+    dev: false
 
   /@shopify/admin-ui-extensions/1.0.4:
     resolution: {integrity: sha512-SnF9eoF+jd0YOT5NvyPZRbDoh3TOrCfumQjjxvijBjNUnem6ASzVYGTTHj5XEm324G7zH08+6ndPTFlSolTWlw==}
@@ -3675,6 +3665,7 @@ packages:
       '@shopify/checkout-ui-extensions': 0.17.1
       '@types/react': 16.14.0
       react: 17.0.2
+    dev: false
 
   /@shopify/checkout-ui-extensions-react/0.20.0_react@17.0.2:
     resolution: {integrity: sha512-G2B52oje2ODwWk4jJ5Qg6X2yq4Q3QAMyp2RlJt5d28lpoXHqon0oUnty1xfMK7HIlXJwasNCBer7uvRd4vJ9sA==}
@@ -3686,18 +3677,21 @@ packages:
       '@shopify/checkout-ui-extensions': 0.20.0
       '@types/react': 16.14.0
       react: 17.0.2
+    dev: false
 
   /@shopify/checkout-ui-extensions/0.17.1:
     resolution: {integrity: sha512-45Zx2AQpq+rMRkhR8NtH5tyTif/KgjF9m+pTtME2tfoJyTXJUtQU5A1woDFpTLvenwf3e7r4ARauQGRqZS1PAA==}
     dependencies:
       '@remote-ui/async-subscription': 2.1.13
       '@remote-ui/core': 2.1.16
+    dev: false
 
   /@shopify/checkout-ui-extensions/0.20.0:
     resolution: {integrity: sha512-mQCidC90I8sKc9IxXIBsxaKo6Lw1HcXTw5PfDyGKUoMkBUNzxR4ln/0XCRaj53/TSa/zY/HNJnlZSH7H6bIzdQ==}
     dependencies:
       '@remote-ui/async-subscription': 2.1.13
       '@remote-ui/core': 2.1.16
+    dev: false
 
   /@shopify/customer-account-ui-extensions-react/0.0.8_react@17.0.2:
     resolution: {integrity: sha512-JvEfPEwgAY5bk7g2LoY98GPjw5o6f8OvoYubxYsohU7ed6rcVsF08e8RJNqmWRMhSH9WE9BNIktS6zuuKWRWfA==}
@@ -3708,12 +3702,14 @@ packages:
       '@shopify/checkout-ui-extensions-react': 0.17.1_react@17.0.2
       '@shopify/customer-account-ui-extensions': 0.0.8
       react: 17.0.2
+    dev: false
 
   /@shopify/customer-account-ui-extensions/0.0.8:
     resolution: {integrity: sha512-cAwyPY9Hrz3Il/h4kMZWX264dZnu+cKtq0Opygsv+aIx9wBs0+kmcdcCHw41NfFDgAz9F46nzuhRrvhQweGWkw==}
     dependencies:
       '@remote-ui/core': 2.1.16
       '@shopify/checkout-ui-extensions': 0.17.1
+    dev: false
 
   /@shopify/dates/1.1.5:
     resolution: {integrity: sha512-WpShtWjylq0iH4FQhpEz1g5tCZRw/GgZ00uYUxUinVyBqaUbRqiAq7EnwXzGO/aTpAUF6yXgDTxoji3aFOiC8A==}
@@ -3955,11 +3951,13 @@ packages:
       '@shopify/post-purchase-ui-extensions': 0.13.3
       '@types/react': 16.14.0
       react: 17.0.2
+    dev: false
 
   /@shopify/post-purchase-ui-extensions/0.13.3:
     resolution: {integrity: sha512-Vun08ZdDF+59B4aM3PNk0Zg0kaycjZQtJyV9PwiF04lw+AAPdTGAbHgGiZDsBUoEQXayJP6aJsDJELt36ff6OQ==}
     dependencies:
       '@remote-ui/core': 2.1.16
+    dev: false
 
   /@shopify/prettier-config/1.1.2:
     resolution: {integrity: sha512-5ugCL9sPGzmOaZjeRGaWUWhHgAbemrS6z+R7v6gwiD+BiqSeoFhIY+imLpfdFCVpuOGalpHeCv6o3gv++EHs0A==}
@@ -4034,7 +4032,7 @@ packages:
     resolution: {integrity: sha512-gYGzrGzWVZ4Ns3B9UkM6Xi+JkJ7e6OttfRitjbxuDVj7bnBuBm28bQn0qaFqPVh1V4CM8rQ7MwxutEitA8Pr0g==}
     dependencies:
       '@remote-ui/core': 2.1.16
-    dev: true
+    dev: false
 
   /@shopify/shopify-api/3.1.3:
     resolution: {integrity: sha512-ju3ynMjY5WOur9SaZ8kY66pSOwK8j6puLDMhXPaiKuXuJwNYjqaTNUxdU9hT58sz2wWUPlAQB+WQ/J7ozWW7Lg==}
@@ -4078,7 +4076,7 @@ packages:
 
   /@shopify/ui-extensions/1.0.2:
     resolution: {integrity: sha512-vH6wGbVqfTbatyJmL6N33aHzK/hYry4gWNzZcvh/xdPmeciEyORh+CcZRrtf2yNz2p3hRpDPqbEJgB7BGHEQfA==}
-    dev: true
+    dev: false
 
   /@shopify/useful-types/4.0.3:
     resolution: {integrity: sha512-vT48uKFSTfI3HPqtNI3lahWRDncFuuzBVfj2eUxEpQO//3Sn+IIo4zRPT9W4EHBiVWJyBeW5CTzVtvGhQma4EA==}
@@ -4431,6 +4429,7 @@ packages:
     resolution: {integrity: sha512-mBDYl8x+oyPX/VBb3E638N0B7xG+SPk/EAMcVPeexqus/5aTpTphQi0curhhshOqRrc9t6OPoJfEUkbymse/lQ==}
     dependencies:
       '@types/react': 16.14.0
+    dev: false
 
   /@types/react-transition-group/4.4.5:
     resolution: {integrity: sha512-juKD/eiSM3/xZYzjuzH6ZwpP+/lejltmiS3QEzV/vmb/Q8+HfDmxu+Baga8UEMGBqV88Nbg4l2hY/K2DkyaLLA==}
@@ -14649,7 +14648,7 @@ packages:
       globrex: 0.1.2
       recrawl-sync: 2.2.3
       tsconfig-paths: 4.1.1
-      vite: 2.9.12
+      vite: 2.9.12_sass@1.56.1
     transitivePeerDependencies:
       - supports-color
     dev: true
