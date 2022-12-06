@@ -61,9 +61,9 @@
   "devDependencies": {
     "vitest": "^0.22.1",
     "vite": "^2.9.13",
-    "@shopify/app": "3.24.1",
-    "@shopify/cli-hydrogen": "3.24.1",
-    "@shopify/theme": "3.24.1"
+    "@shopify/app": "3.25.0",
+    "@shopify/cli-hydrogen": "3.25.0",
+    "@shopify/theme": "3.25.0"
   },
   "engine-strict": true,
   "engines": {
