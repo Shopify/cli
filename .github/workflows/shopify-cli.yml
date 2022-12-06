@@ -67,7 +67,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Build the fixture app
-        run: yarn shopify app build --path ./fixtures/app
+        run: pnpm run shopify app build --path ./fixtures/app
 
   main:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
@@ -88,19 +88,19 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Build
-        run: yarn nx affected --target=build
+        run: pnpm nx affected --target=build
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Lint
-        run: yarn nx affected --target=lint
+        run: pnpm nx affected --target=lint
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Type-check
-        run: yarn nx affected --target=type-check
+        run: pnpm nx affected --target=type-check
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
       - name: Unit tests
-        run: yarn nx affected --target=test --exclude=features
+        run: pnpm nx affected --target=test --exclude=features
       - name: Acceptance tests
         if: ${{ matrix.node == '18.7.0' }}
-        run: yarn nx run features:test
+        run: pnpm nx run features:test
 
   pr-platform-agnostic:
     name: ${{ matrix.target }} with Node ${{ matrix.node }} in ${{ matrix.os }}
@@ -123,7 +123,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: ${{ matrix.target }}
-        run: yarn nx run-many --all --skip-nx-cache --target=${{ matrix.target }}
+        run: pnpm nx run-many --all --skip-nx-cache --target=${{ matrix.target }}
 
   pr-platform-dependent:
     name: Testing with Node ${{ matrix.node }} in ${{ matrix.os }}
@@ -146,10 +146,10 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Unit tests
-        run: yarn nx run-many --all --skip-nx-cache --target=test --exclude=features
+        run: pnpm nx run-many --all --skip-nx-cache --target=test --exclude=features
       - name: Acceptance tests
         if: ${{ matrix.node == '18.7.0' }}
-        run: yarn nx run features:test
+        run: pnpm nx run features:test
 
   manually-triggered:
     name: Testing with Node ${{ inputs.node-version }} in ${{ inputs.os }}
@@ -166,9 +166,9 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
       - name: Unit tests
-        run: yarn nx run-many --all --skip-nx-cache --target=test --exclude=features
+        run: pnpm nx run-many --all --skip-nx-cache --target=test --exclude=features
       - name: Acceptance tests
-        run: yarn nx run features:test
+        run: pnpm nx run features:test
       - name: Setup tmate session
         if: ${{ failure() && inputs.debug-enabled }}
         uses: mxschmitt/action-tmate@v3

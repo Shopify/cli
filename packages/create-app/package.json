@@ -31,7 +31,7 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "build": "nx build",
     "clean": "nx clean",
     "lint": "nx lint",

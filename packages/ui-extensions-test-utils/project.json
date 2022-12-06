@@ -8,7 +8,7 @@
       "clean": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn rimraf dist/",
+          "command": "pnpm rimraf dist/",
           "cwd": "packages/ui-extensions-test-utils"
         }
       },
@@ -17,21 +17,21 @@
         "outputs": ["dist"],
         "inputs": ["{projectRoot}/src/**/*"],
         "options": {
-          "command": "yarn tsc",
+          "command": "pnpm tsc",
           "cwd": "packages/ui-extensions-test-utils"
         }
       },
       "lint": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn eslint src",
+          "command": "pnpm eslint src",
           "cwd": "packages/ui-extensions-test-utils"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn eslint src --fix",
+          "command": "pnpm eslint src --fix",
           "cwd": "packages/ui-extensions-test-utils"
         }
       }
