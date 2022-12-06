@@ -99,6 +99,7 @@ export default class Editions extends Command {
   }
 }
 
+/* istanbul ignore next -- @preserve */
 function unindent(value: string): string {
   const lines = value.split('\n')
   // Remove empty lines at start and end

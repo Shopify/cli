@@ -42,6 +42,13 @@
           "cwd": "packages/cli-main"
         }
       },
+      "test:coverage": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "yarn vitest run --coverage",
+          "cwd": "packages/cli-main"
+        }
+      },
       "test:watch": {
         "executor": "nx:run-commands",
         "dependsOn": ["^build"],
