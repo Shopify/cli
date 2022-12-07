@@ -23,6 +23,7 @@ export interface DevOptions {
   app: AppInterface
   apiKey?: string
   storeFqdn?: string
+  orgId?: string
   reset: boolean
   update: boolean
   commandConfig: Config

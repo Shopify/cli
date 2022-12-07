@@ -7,6 +7,7 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 export const EnvironmentSchema = schema.define.object({}).catchall(schema.define.object({
   apiKey: schema.define.string().optional(),
   store: schema.define.string().optional(),
+  orgId: schema.define.string().optional(),
 }))
 
 export const AppConfigurationSchema = schema.define.object({

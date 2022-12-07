@@ -33,6 +33,7 @@ export interface DevEnvironmentOptions {
   app: AppInterface
   apiKey?: string
   storeFqdn?: string
+  orgId?: string
   reset: boolean
 }
 
@@ -42,6 +43,7 @@ interface DevEnvironmentOutput {
   identifiers: UuidOnlyIdentifiers
   updateURLs: boolean | undefined
   tunnelPlugin: string | undefined
+  orgId: string
 }
 
 /**
@@ -135,7 +137,7 @@ export async function ensureDevEnvironment(
     output.info(explanation)
   }
 
-  const orgId = cachedInfo?.orgId || (await selectOrg(token))
+  const orgId = options.orgId || cachedInfo?.orgId || (await selectOrg(token))
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
   if (selectedApp && selectedStore) {
@@ -163,6 +165,7 @@ export async function ensureDevEnvironment(
       },
       updateURLs: cachedInfo?.updateURLs,
       tunnelPlugin: cachedInfo?.tunnelPlugin,
+      orgId,
     }
   }
 
@@ -227,14 +230,15 @@ export async function ensureDevEnvironment(
     },
     updateURLs: cachedInfo?.updateURLs,
     tunnelPlugin: cachedInfo?.tunnelPlugin,
+    orgId,
   }
   await logMetadataForLoadedDevEnvironment(result)
   await storeDevEnvironment(result, options.app)
   return result
 }
 
-async function storeDevEnvironment({identifiers, storeFqdn}: {identifiers: {app: string}, storeFqdn: string}, app: AppInterface): Promise<void> {
-  const environment = {apiKey: identifiers.app, store: storeFqdn}
+async function storeDevEnvironment({identifiers, storeFqdn, orgId}: {identifiers: {app: string}, storeFqdn: string, orgId: string}, app: AppInterface): Promise<void> {
+  const environment = {apiKey: identifiers.app, store: storeFqdn, orgId}
   const envName = await envNamePrompt()
   const appConfigFile = app.configurationPath
   await file.appendFile(appConfigFile, `\n${toml.encode({environments: {[envName]: environment}})}`)

@@ -100,12 +100,14 @@ export default class Dev extends Command {
     const commandConfig = this.config
     let envApiKey: string | undefined
     let envStore: string | undefined
+    let orgId: string | undefined
     const envList = Object.keys(app.environments)
     if (envList.length > 0) {
       if (!environment) environment = await selectEnvironmentPrompt(envList)
       if (environment) {
         envApiKey = app.environments[environment]?.apiKey
         envStore = app.environments[environment]?.store
+        orgId = app.environments[environment]?.orgId
       }
     }
 
@@ -113,6 +115,7 @@ export default class Dev extends Command {
       app,
       apiKey: flags['api-key'] ?? envApiKey,
       storeFqdn: flags.store ?? envStore,
+      orgId,
       reset: flags.reset,
       update: !flags['no-update'],
       skipDependenciesInstallation: flags['skip-dependencies-installation'],
