@@ -54,10 +54,10 @@ Then you can clone the CLI repository:
 git clone https://github.com/Shopify/cli.git
 ```
 
-Now you can install dependencies with `yarn install`. If Yarn yields "unsigned scripts" errors execute the following command:
+Now you can install dependencies with `pnpm install`. If Yarn yields "unsigned scripts" errors execute the following command:
 
 ```bash
 Set-ExecutionPolicy Unrestricted -Scope LocalMachine
 ```
 
-Now you can run the test suite with `yarn test` and verify that everything works properly.
+Now you can run the test suite with `pnpm test` and verify that everything works properly.
