@@ -154,14 +154,14 @@ jobs:
       #   run: pnpm nx run features:test
       - name: Unit tests with coverage
         run: pnpm nx run-many --all --skip-nx-cache --target=test:coverage --exclude=features
-      - uses: ArtiomTr/jest-coverage-report-action@v2
+      - uses: ArtiomTr/jest-coverage-report-action@v2.1.2
         id: coverage
         with:
           output: report-markdown
           coverage-file: "./packages/cli-main/coverage/coverage-final.json"
           base-coverage-file: "./packages/cli-main/coverage/coverage-final.json"
           threshold: 0
-      - uses: marocchino/sticky-pull-request-comment@v2
+      - uses: marocchino/sticky-pull-request-comment@latest
         with:
           message: ${{ steps.coverage.outputs.report }}
 
