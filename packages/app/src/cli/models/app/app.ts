@@ -8,6 +8,7 @@ export const EnvironmentSchema = schema.define.object({}).catchall(schema.define
   apiKey: schema.define.string().optional(),
   store: schema.define.string().optional(),
   orgId: schema.define.string().optional(),
+  noUpdate: schema.define.boolean().optional(),
 }))
 
 export const AppConfigurationSchema = schema.define.object({

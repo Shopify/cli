@@ -35,6 +35,7 @@ export interface DevEnvironmentOptions {
   storeFqdn?: string
   orgId?: string
   reset: boolean
+  update: boolean
 }
 
 interface DevEnvironmentOutput {
@@ -44,6 +45,7 @@ interface DevEnvironmentOutput {
   updateURLs: boolean | undefined
   tunnelPlugin: string | undefined
   orgId: string
+  update: boolean
 }
 
 /**
@@ -139,7 +141,7 @@ export async function ensureDevEnvironment(
 
   const orgId = options.orgId || cachedInfo?.orgId || (await selectOrg(token))
 
-  let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
+  let {app: selectedApp, store: selectedStore, update} = await fetchDevDataFromOptions(options, orgId, token)
   if (selectedApp && selectedStore) {
     // eslint-disable-next-line no-param-reassign
     options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
@@ -166,6 +168,7 @@ export async function ensureDevEnvironment(
       updateURLs: cachedInfo?.updateURLs,
       tunnelPlugin: cachedInfo?.tunnelPlugin,
       orgId,
+      update,
     }
   }
 
@@ -231,14 +234,15 @@ export async function ensureDevEnvironment(
     updateURLs: cachedInfo?.updateURLs,
     tunnelPlugin: cachedInfo?.tunnelPlugin,
     orgId,
+    update,
   }
   await logMetadataForLoadedDevEnvironment(result)
   await storeDevEnvironment(result, options.app)
   return result
 }
 
-async function storeDevEnvironment({identifiers, storeFqdn, orgId}: {identifiers: {app: string}, storeFqdn: string, orgId: string}, app: AppInterface): Promise<void> {
-  const environment = {apiKey: identifiers.app, store: storeFqdn, orgId}
+async function storeDevEnvironment({identifiers, storeFqdn, orgId, update}: {identifiers: {app: string}, storeFqdn: string, orgId: string, update: boolean}, app: AppInterface): Promise<void> {
+  const environment = {apiKey: identifiers.app, store: storeFqdn, orgId, noUpdate: !update}
   const envName = await envNamePrompt()
   const appConfigFile = app.configurationPath
   await file.appendFile(appConfigFile, `\n${toml.encode({environments: {[envName]: environment}})}`)
@@ -423,7 +427,7 @@ async function fetchDevDataFromOptions(
   options: DevEnvironmentOptions,
   orgId: string,
   token: string,
-): Promise<{app?: OrganizationApp; store?: OrganizationStore}> {
+): Promise<{app?: OrganizationApp; store?: OrganizationStore, update: boolean}> {
   let selectedApp: OrganizationApp | undefined
   let selectedStore: OrganizationStore | undefined
 
@@ -450,7 +454,7 @@ async function fetchDevDataFromOptions(
     selectedStore = orgWithStore.store
   }
 
-  return {app: selectedApp, store: selectedStore}
+  return {app: selectedApp, store: selectedStore, update: options.update}
 }
 
 /**

@@ -101,6 +101,7 @@ export default class Dev extends Command {
     let envApiKey: string | undefined
     let envStore: string | undefined
     let orgId: string | undefined
+    let noUpdate = Boolean(flags['no-update'])
     const envList = Object.keys(app.environments)
     if (envList.length > 0) {
       if (!environment) environment = await selectEnvironmentPrompt(envList)
@@ -108,6 +109,7 @@ export default class Dev extends Command {
         envApiKey = app.environments[environment]?.apiKey
         envStore = app.environments[environment]?.store
         orgId = app.environments[environment]?.orgId
+        noUpdate = app.environments[environment]?.noUpdate || noUpdate
       }
     }
 
@@ -117,7 +119,7 @@ export default class Dev extends Command {
       storeFqdn: flags.store ?? envStore,
       orgId,
       reset: flags.reset,
-      update: !flags['no-update'],
+      update: !noUpdate,
       skipDependenciesInstallation: flags['skip-dependencies-installation'],
       commandConfig,
       subscriptionProductUrl: flags['subscription-product-url'],
