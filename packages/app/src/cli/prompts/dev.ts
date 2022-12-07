@@ -4,10 +4,6 @@ import {output, ui} from '@shopify/cli-kit'
 import {debounce} from 'lodash-es'
 
 export async function selectEnvironmentPrompt(environments: string[]): Promise<string | undefined> {
-  if (environments.length === 1) {
-    output.completed(output.content`Using your environment ${output.token.yellow(environments[0]!)} to preview your project.`)
-    return environments[0]!
-  }
   const envList = [...environments.map((env, index) => ({name: env, value: index.toString()})), {name: "Create a new environment", value: "new"}]
   const choice = await ui.prompt([
     {
