@@ -132,6 +132,10 @@ module.exports = {
             onlyDependOnLibsWithTargs: ['scope:foundation'],
           },
           {
+            sourceTag: 'scope:plugin',
+            onlyDependOnLibsWithTargs: ['scope:foundation'],
+          },
+          {
             sourceTag: 'scope:cli',
             onlyDependOnLibsWithTargs: ['scope:foundation', 'scope:feature'],
           },

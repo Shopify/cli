@@ -1,0 +1,6 @@
+packages:
+  - packages/*
+  - workspace
+  - fixtures/**/*
+  - fixtures/app/web
+  - fixtures/app/web/frontend

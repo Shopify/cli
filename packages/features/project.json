@@ -10,28 +10,28 @@
       "executor": "nx:run-commands",
       "dependsOn": ["^build"],
       "options": {
-        "command": "yarn cucumber-js -p default -c cucumber.js",
+        "command": "pnpm cucumber-js -p default -c cucumber.js",
         "cwd": "packages/features"
       }
     },
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "yarn eslint \"**/*.ts\"",
+        "command": "pnpm eslint \"**/*.ts\"",
         "cwd": "packages/features"
       }
     },
     "lint:fix": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "yarn eslint '**/*.ts' --fix",
+        "command": "pnpm eslint '**/*.ts' --fix",
         "cwd": "packages/features"
       }
     },
     "type-check": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "yarn tsc --noEmit",
+        "command": "pnpm tsc --noEmit",
         "cwd": "packages/features"
       }
     }
