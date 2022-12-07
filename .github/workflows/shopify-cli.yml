@@ -163,13 +163,13 @@ jobs:
       # - name: Unit tests
       #   run: yarn nx run-many --all --skip-nx-cache --target=test --exclude=features
       - name: Unit tests with coverage
-        run: yarn nx affected --target=test:coverage --exclude=features
+        run: yarn nx run-many --all --skip-nx-cache --target=test:coverage --exclude=features
       - uses: ArtiomTr/jest-coverage-report-action@v2
         id: coverage
         with:
           output: report-markdown
-          coverage-file: packages/cli-main/coverage/coverage-final.json
-          base-coverage-file: packages/cli-main/coverage/coverage-final.json
+          coverage-file: ./packages/cli-main/coverage/coverage-final.json
+          base-coverage-file: ./packages/cli-main/coverage/coverage-final.json
           threshold: 0
       - uses: marocchino/sticky-pull-request-comment@v2
         with:
