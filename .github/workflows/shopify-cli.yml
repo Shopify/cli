@@ -160,8 +160,8 @@ jobs:
         id: coverage
         with:
           output: report-markdown
-          coverage-file: "./packages/cli-main/coverage/coverage-final.json"
-          base-coverage-file: "./packages/cli-main/coverage/coverage-final.json"
+          coverage-file: "./packages/cli-main/coverage/report.json"
+          base-coverage-file: "./packages/cli-main/coverage/report.json"
           threshold: 0
       - uses: marocchino/sticky-pull-request-comment@v2.3.1
         with:
