@@ -161,7 +161,7 @@ jobs:
           coverage-file: "./packages/cli-main/coverage/coverage-final.json"
           base-coverage-file: "./packages/cli-main/coverage/coverage-final.json"
           threshold: 0
-      - uses: marocchino/sticky-pull-request-comment@latest
+      - uses: marocchino/sticky-pull-request-comment@v2.3.1
         with:
           message: ${{ steps.coverage.outputs.report }}
 
