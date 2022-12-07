@@ -106,7 +106,9 @@ export default class Dev extends Command {
     if (flags['no-update']) noUpdate = flags['no-update']
 
     const envList = Object.keys(app.environments)
-    if (envList.length > 0 && !flags.reset) {
+    if (envList.length === 0) {
+      reset = true
+    } else if (!reset) {
       if (!environment) environment = await selectEnvironmentPrompt(envList)
       if (environment) {
         envApiKey = app.environments[environment]?.apiKey
