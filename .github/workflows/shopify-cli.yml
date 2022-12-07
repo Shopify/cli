@@ -154,6 +154,8 @@ jobs:
       #   run: pnpm nx run features:test
       - name: Unit tests with coverage
         run: pnpm nx run-many --all --skip-nx-cache --target=test:coverage --exclude=features
+      - name: Convert coverage to Jest
+        run: ./bin/save-coverage-file.js
       - uses: ArtiomTr/jest-coverage-report-action@v2.1.2
         id: coverage
         with:
