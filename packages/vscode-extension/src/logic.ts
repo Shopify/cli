@@ -31,12 +31,22 @@ export class ShopifyCLIExtension {
     const commandDisposable = vscode.commands.registerCommand('shopify-cli-vscode-extension.helloWorld', () => {
       vscode.window.showInformationMessage('Hello World from vscode-extension!')
     })
+    const commandShowTomlDoc = vscode.commands.registerCommand('shopify-cli-vscode-extension.showTomlDoc', () => {
+      const editor = vscode.window.activeTextEditor
+      if (editor) {
+        let document = editor.document
+        const documentText = document.getText()
+        vscode.window.showInformationMessage(documentText)
+      }
+      vscode.env.openExternal(vscode.Uri.parse('https://shopify.dev/apps/tools/cli/migrate#shopify-web-toml'))
+    })
     const devToolsTreeDataProvider = new DevToolsTreeDataProvider()
     const devToolsDisposable = vscode.window.createTreeView('dev-tools', {
       treeDataProvider: devToolsTreeDataProvider,
     })
 
     this.disposables.push(commandDisposable)
+    this.disposables.push(commandShowTomlDoc)
     this.disposables.push(devToolsDisposable)
     this.timers.push(
       setInterval(() => {

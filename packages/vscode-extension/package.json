@@ -11,6 +11,7 @@
   ],
   "activationEvents": [
     "onCommand:shopify-cli-vscode-extension.helloWorld",
+    "onCommand:shopify-cli-vscode-extension.showTomlDoc",
     "onView:dev-tools"
   ],
   "main": "./dist/extension.js",
@@ -19,6 +20,11 @@
       {
         "command": "shopify-cli-vscode-extension.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "shopify-cli-vscode-extension.showTomlDoc",
+        "title": "Show Toml Documentation",
+        "icon": "assets/shopify_glyph_black.svg"
       }
     ],
     "viewsContainers": {
@@ -37,6 +43,22 @@
           "name": "Dev tools"
         }
       ]
+    },
+    "menus": {
+      "editor/context":[
+       {
+        "command": "shopify-cli-vscode-extension.showTomlDoc",
+        "group": "navigation",
+        "when": "resourceFilename =~ /^shopify.*$/ && resourceExtname == .toml"
+       }
+      ],
+      "editor/title":[
+        {
+         "command": "shopify-cli-vscode-extension.showTomlDoc",
+         "group": "navigation",
+         "when": "resourceFilename =~ /^shopify.*$/ && resourceExtname == .toml"
+        }
+       ]
     }
   },
   "scripts": {
