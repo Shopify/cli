@@ -22,7 +22,7 @@ export default function config(packagePath: string) {
         provider: 'istanbul',
         include: ['**/src/**'],
         all: true,
-        reporter: ['text', 'json'],
+        reporter: ['text', 'json', 'lcov'],
       },
     },
   })
