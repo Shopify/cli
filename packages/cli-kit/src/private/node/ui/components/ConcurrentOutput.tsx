@@ -91,19 +91,18 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
       await Promise.all(
         processes.map(async (process, index) => {
           const stdout = writableStream(process, index)
-          stdout.write.bind(stdout)
           const stderr = writableStream(process, index)
-          stderr.write.bind(stderr)
 
-        await process.action(stdout, stderr, abortController.signal)
-      }),
-    )
+          await process.action(stdout, stderr, abortController.signal)
+        }),
+      )
 
-    unmountInk()
-  } catch (error) {
-    abortController.abort()
-    unmountInk()
-    throw error
+      unmountInk()
+    } catch (error) {
+      abortController.abort()
+      unmountInk()
+      throw error
+    }
   }
 
   useEffect(() => {
