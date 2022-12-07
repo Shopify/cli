@@ -5,7 +5,6 @@ import {deliveryMethodInstructionsAsString} from '../../prompts/webhook/trigger.
 import {Command, Flags} from '@oclif/core'
 
 export default class WebhookTrigger extends Command {
-  static hidden = true
   static description = 'Trigger delivery of a sample webhook topic payload to a designated address'
 
   static flags = {

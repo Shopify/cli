@@ -64,7 +64,7 @@ describe('execute', () => {
     )
   })
 
-  it('notifies about request errors', async () => {
+  it('Safe notification in case of unexpected request errors', async () => {
     // Given
     const response = {
       samplePayload: emptyJson,
