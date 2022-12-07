@@ -49,7 +49,7 @@ env:
   YARN_VERSION: "1.22.19"
   RUBY_VERSION: "3.1.2"
   BUNDLER_VERSION: "2.3.18"
-  PNPM_VERSION: "7.9.4"
+  PNPM_VERSION: "7.18.1"
 
 jobs:
   fixture:
@@ -67,7 +67,7 @@ jobs:
       #   with:
       #     node-version: ${{ matrix.node }}
       # - name: Build the fixture app
-      #   run: yarn shopify app build --path ./fixtures/app
+      #   run: pnpm run shopify app build --path ./fixtures/app --skip-dependencies-installation
 
   main:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
@@ -76,10 +76,8 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        # os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        # node: ['14.20.0', '16.17.0', '18.7.0']
-        os: ['ubuntu-latest']
-        node: ['18.7.0']
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+        node: ['14.20.0', '16.17.0', '18.7.0']
     steps:
       - uses: actions/checkout@v2
         name: Checkout [main]
@@ -89,31 +87,20 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: ${{ matrix.node }}
-      # - name: Build
-      #   run: yarn nx affected --target=build
-      #   if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
-      # - name: Lint
-      #   run: yarn nx affected --target=lint
-      #   if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
-      # - name: Type-check
-      #   run: yarn nx affected --target=type-check
-      #   if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
-      # - name: Unit tests
-      #   run: yarn nx affected --target=test --exclude=features
-      - name: Unit tests with coverage
-        run: yarn nx affected --target=test:coverage --exclude=features
-      - uses: ArtiomTr/jest-coverage-report-action@v2
-        id: coverage
-        with:
-            output: report-markdown
-            coverage-file: packages/cli-main/coverage/coverage-final.json
-            base-coverage-file: packages/cli-main/coverage/coverage-final.json
-      - uses: marocchino/sticky-pull-request-comment@v2
-        with:
-            message: ${{ steps.coverage.outputs.report }}
-      # - name: Acceptance tests
-      #   if: ${{ matrix.node == '18.7.0' }}
-      #   run: yarn nx run features:test
+      - name: Build
+        run: pnpm nx affected --target=build
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+      - name: Lint
+        run: pnpm nx affected --target=lint
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+      - name: Type-check
+        run: pnpm nx affected --target=type-check
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+      - name: Unit tests
+        run: pnpm nx affected --target=test --exclude=features
+      - name: Acceptance tests
+        if: ${{ matrix.node == '18.7.0' }}
+        run: pnpm nx run features:test
 
   pr-platform-agnostic:
     name: ${{ matrix.target }} with Node ${{ matrix.node }} in ${{ matrix.os }}
@@ -136,7 +123,7 @@ jobs:
       #   with:
       #     node-version: ${{ matrix.node }}
       # - name: ${{ matrix.target }}
-      #   run: yarn nx run-many --all --skip-nx-cache --target=${{ matrix.target }}
+      #   run: pnpm nx run-many --all --skip-nx-cache --target=${{ matrix.target }}
 
   pr-platform-dependent:
     name: Testing with Node ${{ matrix.node }} in ${{ matrix.os }}
@@ -161,9 +148,12 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       # - name: Unit tests
-      #   run: yarn nx run-many --all --skip-nx-cache --target=test --exclude=features
+      #   run: pnpm nx run-many --all --skip-nx-cache --target=test --exclude=features
+      # - name: Acceptance tests
+      #   if: ${{ matrix.node == '18.7.0' }}
+      #   run: pnpm nx run features:test
       - name: Unit tests with coverage
-        run: yarn nx run-many --all --skip-nx-cache --target=test:coverage --exclude=features
+        run: pnpm nx run-many --all --skip-nx-cache --target=test:coverage --exclude=features
       - uses: ArtiomTr/jest-coverage-report-action@v2
         id: coverage
         with:
@@ -174,9 +164,6 @@ jobs:
       - uses: marocchino/sticky-pull-request-comment@v2
         with:
           message: ${{ steps.coverage.outputs.report }}
-      # - name: Acceptance tests
-      #   if: ${{ matrix.node == '18.7.0' }}
-      #   run: yarn nx run features:test
 
   manually-triggered:
     name: Testing with Node ${{ inputs.node-version }} in ${{ inputs.os }}
@@ -193,9 +180,9 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
       - name: Unit tests
-        run: yarn nx run-many --all --skip-nx-cache --target=test --exclude=features
+        run: pnpm nx run-many --all --skip-nx-cache --target=test --exclude=features
       - name: Acceptance tests
-        run: yarn nx run features:test
+        run: pnpm nx run features:test
       - name: Setup tmate session
         if: ${{ failure() && inputs.debug-enabled }}
         uses: mxschmitt/action-tmate@v3

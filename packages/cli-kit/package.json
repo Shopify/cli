@@ -39,7 +39,7 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "build": "nx build",
     "clean": "nx clean",
     "lint": "nx lint",
@@ -123,13 +123,16 @@
     "zod": "3.17.3"
   },
   "devDependencies": {
+    "@types/fs-extra": "9.0.13",
+    "@types/react": "17.0.2",
     "@types/commondir": "^1.0.0",
     "@types/cross-zip": "^4.0.0",
     "@types/diff": "^5.0.2",
     "@types/inquirer": "^8.2.1",
     "@types/semver": "^7.3.9",
     "node-stream-zip": "^1.15.0",
-    "vitest": "^0.22.1"
+    "vitest": "^0.22.1",
+    "vite": "^2.9.13"
   },
   "repository": {
     "type": "git",

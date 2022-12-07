@@ -32,7 +32,7 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "build": "nx build",
     "clean": "nx clean",
     "lint": "nx lint",
@@ -68,7 +68,10 @@
     "@types/serve-static": "^1.15.0",
     "@types/ws": "^8.5.3",
     "@types/lodash-es": "^4.17.6",
-    "vitest": "^0.22.1"
+    "vitest": "^0.22.1",
+    "vite": "^2.9.13",
+    "graphql-tag": "^2.11.0",
+    "graphql": "^16.0.0"
   },
   "dependencies": {
     "@luckycatfactory/esbuild-graphql-loader": "3.7.0",

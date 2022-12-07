@@ -17,9 +17,6 @@ if (platform() === 'win32') {
   common.push(`--tags "not @skip_windows"`)
 }
 
-if (isCI) {
-  common.push('--format node_modules/cucumber-junit-formatter:/tmp/artifacts/acceptance.junit')
-}
 if (featureToRun) {
   common.push(featureToRun)
 } else {

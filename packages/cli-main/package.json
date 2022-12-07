@@ -36,7 +36,7 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "build": "nx build",
     "clean": "nx clean",
     "lint": "nx lint",
@@ -61,7 +61,11 @@
   },
   "devDependencies": {
     "@vitest/coverage-istanbul": "^0.22.0",
-    "vitest": "^0.22.1"
+    "vitest": "^0.22.1",
+    "vite": "^2.9.13",
+    "@shopify/app": "3.25.0",
+    "@shopify/cli-hydrogen": "3.25.0",
+    "@shopify/theme": "3.25.0"
   },
   "engine-strict": true,
   "engines": {

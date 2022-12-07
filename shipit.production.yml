@@ -3,11 +3,12 @@ ci:
 
 dependencies:
   override:
-    - yarn install
+    - curl -fsSL https://get.pnpm.io/install.sh | sh -
+    - pnpm install
 
 deploy:
   override:
-    - npm_config_loglevel=verbose yarn run changeset publish
+    - npm_config_loglevel=verbose pnpm run changeset publish
     - ./bin/package.js
   post:
-    - yarn run update-bugsnag
+    - pnpm run update-bugsnag

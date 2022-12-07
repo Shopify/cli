@@ -28,7 +28,7 @@ Run the following command from the CLI directory to create an temporary virtual 
 podman run --rm --interactive --tty node:18 /bin/bash
 ```
 
-Then clone the [CLI repository](https://github.com/Shopify/cli) and install the dependencies with `yarn install`.
+Then clone the [CLI repository](https://github.com/Shopify/cli) and install the dependencies with `pnpm install`.
 
 #### Windows ([Parallels](https://www.parallels.com/pd/general/))
 
@@ -36,7 +36,7 @@ After you've installed Parallels and virtualized the Windows environment, you ne
 
 - [Git](https://git-scm.com/download/win)
 - [Node](https://nodejs.org/en/download/)
-- [Yarn](https://yarnpkg.com/)
+- [PNPM](https://pnpm.io/installation)
 - [Python](https://www.python.org/downloads/windows/) (needed for `node-gyp`)
 - [Visual Studio](https://code.visualstudio.com/download) (needed for `node-gyp`, make sure you install the "Desktop development with C++" workload)
 - [Ruby](https://rubyinstaller.org/downloads/) (needed for themes, Ruby+DevKit 3.0.4 is recommended)
