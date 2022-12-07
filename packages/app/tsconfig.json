@@ -9,6 +9,7 @@
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
   "references": [
-    {"path": "../cli-kit"}
+    {"path": "../cli-kit"},
+    {"path": "../ui-extensions-server-kit"}
   ]
 }

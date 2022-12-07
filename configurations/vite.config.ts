@@ -37,5 +37,9 @@ export const aliases = (packagePath: string) => {
       },
     },
     {find: '@shopify/cli-kit', replacement: path.join(packagePath, '../cli-kit/src/index')},
+    {
+      find: '@shopify/ui-extensions-server-kit',
+      replacement: path.join(packagePath, '../ui-extensions-server-kit/src'),
+    },
   ]
 }

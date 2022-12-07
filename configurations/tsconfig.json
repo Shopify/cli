@@ -23,6 +23,7 @@
         "@shopify/cli-kit": ["../packages/cli-kit/src/index"],
         "@shopify/cli-kit/*": ["../packages/cli-kit/src/public/*"],
         "@shopify/cli-kit/typing/*": ["../packages/cli-kit/src/typing/*"],
+        "@shopify/ui-extensions-server-kit": ["../packages/ui-extensions-server-kit"],
       },
     },
     "exclude": ["**/dist/**"]

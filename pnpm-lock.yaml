@@ -229,7 +229,7 @@ importers:
       '@oclif/core': 1.9.2
       '@shopify/cli-kit': 3.28.0
       '@shopify/shopify-cli-extensions': 3.21.0
-      '@shopify/ui-extensions-server-kit': 3.23.0
+      '@shopify/ui-extensions-server-kit': 4.0.0
       '@types/diff': ^5.0.2
       '@types/http-proxy': ^1.17.9
       '@types/lodash-es': ^4.17.6
@@ -252,7 +252,6 @@ importers:
       '@oclif/core': 1.9.2
       '@shopify/cli-kit': link:../cli-kit
       '@shopify/shopify-cli-extensions': 3.21.0_graphql-tag@2.12.6
-      '@shopify/ui-extensions-server-kit': 3.23.0
       abort-controller: 3.0.0
       chokidar: 3.5.3
       diff: 5.1.0
@@ -262,6 +261,7 @@ importers:
       serve-static: 1.15.0
       ws: 8.8.1
     devDependencies:
+      '@shopify/ui-extensions-server-kit': link:../ui-extensions-server-kit
       '@types/diff': 5.0.2
       '@types/http-proxy': 1.17.9
       '@types/lodash-es': 4.17.6
@@ -3984,12 +3984,6 @@ packages:
   /@shopify/typescript-configs/5.1.0:
     resolution: {integrity: sha512-RywGBTR+nQyJLxcrUcihPkHPIG3pIQI6i0YwMrM5rs9nWJ0+9A5HKEcboyGPLH+8V08EXGfFQ6H820O9ajyk4A==}
     dev: true
-
-  /@shopify/ui-extensions-server-kit/3.23.0:
-    resolution: {integrity: sha512-ncuH/dI8KOzMFk8ksDSXPvEJtBfka9ZW0QFATDcJAdNzgTiIrwvbGBfbl7pqEoSfAyXImDzlzPN54EFwMfNveg==, tarball: '@shopify/ui-extensions-server-kit/-/3.23.0/ui-extensions-server-kit-3.23.0.tgz'}
-    peerDependencies:
-      react: ^17.0.2
-    dev: false
 
   /@shopify/ui-extensions/1.0.2:
     resolution: {integrity: sha512-vH6wGbVqfTbatyJmL6N33aHzK/hYry4gWNzZcvh/xdPmeciEyORh+CcZRrtf2yNz2p3hRpDPqbEJgB7BGHEQfA==}
