@@ -24,8 +24,8 @@ export interface DevOptions {
   apiKey?: string
   storeFqdn?: string
   orgId?: string
-  reset: boolean
-  update: boolean
+  reset?: boolean
+  update?: boolean
   commandConfig: Config
   skipDependenciesInstallation: boolean
   subscriptionProductUrl?: string
@@ -78,14 +78,8 @@ async function dev(options: DevOptions) {
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
   let shouldUpdateURLs = false
   if ((frontendConfig || backendConfig) && options.update) {
-    const currentURLs = await getURLs(apiKey, token)
     const newURLs = generatePartnersURLs(exposedUrl, backendConfig?.configuration.authCallbackPath)
-    shouldUpdateURLs = await shouldOrPromptUpdateURLs({
-      currentURLs,
-      appDirectory: options.app.directory,
-      cachedUpdateURLs,
-      newApp: app.newApp,
-    })
+    shouldUpdateURLs = cachedUpdateURLs
     if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
     await outputUpdateURLsResult(shouldUpdateURLs, newURLs, app)
     outputAppURL(storeFqdn, exposedUrl)

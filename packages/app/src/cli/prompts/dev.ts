@@ -5,6 +5,7 @@ import {debounce} from 'lodash-es'
 
 export async function selectEnvironmentPrompt(environments: string[]): Promise<string | undefined> {
   if (environments.length === 1) {
+    output.completed(output.content`Using your environment ${output.token.yellow(environments[0]!)} to preview your project.`)
     return environments[0]!
   }
   const envList = [...environments.map((env, index) => ({name: env, value: index.toString()})), {name: "Create a new environment", value: "new"}]
@@ -217,6 +218,23 @@ export async function reuseDevConfigPrompt(): Promise<boolean> {
       type: 'select',
       name: 'value',
       message: 'Deploy to the same org and app as you used for dev?',
+      choices: options,
+    },
+  ])
+  return choice.value === 'yes'
+}
+
+export async function updateURLsSimplePrompt(): Promise<boolean> {
+  const options = [
+    {name: 'Yes', value: 'yes'},
+    {name: 'No', value: 'no'},
+  ]
+
+  const choice = await ui.prompt([
+    {
+      type: 'select',
+      name: 'value',
+      message: `Have Shopify automatically update your app's URL in order to create a preview experience? (Choose no in a production environment, otherwise yes is recommended.)`,
       choices: options,
     },
   ])

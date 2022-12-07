@@ -12,7 +12,7 @@ import {
 import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
 import {createExtension, ExtensionRegistration} from './dev/create-extension.js'
-import {envNamePrompt, reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
+import {envNamePrompt, reuseDevConfigPrompt, selectOrganizationPrompt, updateURLsSimplePrompt} from '../prompts/dev.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -34,18 +34,17 @@ export interface DevEnvironmentOptions {
   apiKey?: string
   storeFqdn?: string
   orgId?: string
-  reset: boolean
-  update: boolean
+  update?: boolean
+  reset?: boolean
 }
 
 interface DevEnvironmentOutput {
   app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string}
   storeFqdn: string
   identifiers: UuidOnlyIdentifiers
-  updateURLs: boolean | undefined
+  updateURLs: boolean
   tunnelPlugin: string | undefined
   orgId: string
-  update: boolean
 }
 
 /**
@@ -128,8 +127,8 @@ export async function ensureDevEnvironment(
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
 
   const cachedInfo = await getAppDevCachedInfo({
-    reset: options.reset,
     directory: options.app.directory,
+    reset: Boolean(options.reset),
   })
 
   if (cachedInfo === undefined && !options.reset) {
@@ -141,8 +140,11 @@ export async function ensureDevEnvironment(
 
   const orgId = options.orgId || cachedInfo?.orgId || (await selectOrg(token))
 
-  let {app: selectedApp, store: selectedStore, update} = await fetchDevDataFromOptions(options, orgId, token)
+  let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
+
   if (selectedApp && selectedStore) {
+    const updateURLs = options.update ?? cachedInfo?.updateURLs ?? (await updateURLsSimplePrompt())
+
     // eslint-disable-next-line no-param-reassign
     options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
 
@@ -165,10 +167,9 @@ export async function ensureDevEnvironment(
         app: selectedApp.apiKey,
         extensions,
       },
-      updateURLs: cachedInfo?.updateURLs,
+      updateURLs,
       tunnelPlugin: cachedInfo?.tunnelPlugin,
       orgId,
-      update,
     }
   }
 
@@ -221,6 +222,9 @@ export async function ensureDevEnvironment(
   }
 
   const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
+
+  const updateURLs = options.update ?? cachedInfo?.updateURLs ?? (await updateURLsSimplePrompt())
+
   const result = {
     app: {
       ...selectedApp,
@@ -231,18 +235,17 @@ export async function ensureDevEnvironment(
       app: selectedApp.apiKey,
       extensions,
     },
-    updateURLs: cachedInfo?.updateURLs,
+    updateURLs,
     tunnelPlugin: cachedInfo?.tunnelPlugin,
     orgId,
-    update,
   }
   await logMetadataForLoadedDevEnvironment(result)
   await storeDevEnvironment(result, options.app)
   return result
 }
 
-async function storeDevEnvironment({identifiers, storeFqdn, orgId, update}: {identifiers: {app: string}, storeFqdn: string, orgId: string, update: boolean}, app: AppInterface): Promise<void> {
-  const environment = {apiKey: identifiers.app, store: storeFqdn, orgId, noUpdate: !update}
+async function storeDevEnvironment({identifiers, storeFqdn, orgId, updateURLs}: {identifiers: {app: string}, storeFqdn: string, orgId: string, updateURLs: boolean}, app: AppInterface): Promise<void> {
+  const environment = {apiKey: identifiers.app, store: storeFqdn, orgId, noUpdate: !updateURLs}
   const envName = await envNamePrompt()
   const appConfigFile = app.configurationPath
   await file.appendFile(appConfigFile, `\n${toml.encode({environments: {[envName]: environment}})}`)
@@ -427,7 +430,7 @@ async function fetchDevDataFromOptions(
   options: DevEnvironmentOptions,
   orgId: string,
   token: string,
-): Promise<{app?: OrganizationApp; store?: OrganizationStore, update: boolean}> {
+): Promise<{app?: OrganizationApp; store?: OrganizationStore}> {
   let selectedApp: OrganizationApp | undefined
   let selectedStore: OrganizationStore | undefined
 
@@ -454,7 +457,7 @@ async function fetchDevDataFromOptions(
     selectedStore = orgWithStore.store
   }
 
-  return {app: selectedApp, store: selectedStore, update: options.update}
+  return {app: selectedApp, store: selectedStore}
 }
 
 /**
