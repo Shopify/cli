@@ -244,9 +244,9 @@ export async function ensureDevEnvironment(
   return result
 }
 
-async function storeDevEnvironment({identifiers, storeFqdn, orgId, updateURLs}: {identifiers: {app: string}, storeFqdn: string, orgId: string, updateURLs: boolean}, app: AppInterface): Promise<void> {
+async function storeDevEnvironment({app: organizationApp, identifiers, storeFqdn, orgId, updateURLs}: {app: OrganizationApp, identifiers: {app: string}, storeFqdn: string, orgId: string, updateURLs: boolean}, app: AppInterface): Promise<void> {
   const environment = {apiKey: identifiers.app, store: storeFqdn, orgId, noUpdate: !updateURLs}
-  const envName = await envNamePrompt()
+  const envName = await envNamePrompt(organizationApp.title)
   const appConfigFile = app.configurationPath
   await file.appendFile(appConfigFile, `\n${toml.encode({environments: {[envName]: environment}})}`)
 }

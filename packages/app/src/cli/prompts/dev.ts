@@ -1,6 +1,6 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
 import {fetchOrgAndApps} from '../services/dev/fetch.js'
-import {output, ui} from '@shopify/cli-kit'
+import {output, ui, string} from '@shopify/cli-kit'
 import {debounce} from 'lodash-es'
 
 export async function selectEnvironmentPrompt(environments: string[]): Promise<string | undefined> {
@@ -149,11 +149,12 @@ export async function appNamePrompt(currentName: string): Promise<string> {
   return input.name
 }
 
-export async function envNamePrompt(): Promise<string> {
+export async function envNamePrompt(defaultName: string = "my-env"): Promise<string> {
   const input = await ui.prompt([
     {
       type: 'input',
       name: 'name',
+      default: string.hyphenize(defaultName),
       message: 'What would you like to call this environment?',
       validate: (value) => {
         if (value.length === 0) {
