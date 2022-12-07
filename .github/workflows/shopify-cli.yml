@@ -166,9 +166,11 @@ jobs:
       # - uses: marocchino/sticky-pull-request-comment@v2.3.1
       #   with:
       #     message: ${{ steps.coverage.outputs.report }}
+      - name: Combine lcov files
+        run: npx lcov-result-merger "packages/*/coverage/lcov.info"  --prepend-source-files
       - uses: romeovs/lcov-reporter-action@v0.3.1
         with:
-          lcov-file: ./packages/cli-main/coverage/lcov.info
+          lcov-file: ./lcov.info
 
   manually-triggered:
     name: Testing with Node ${{ inputs.node-version }} in ${{ inputs.os }}

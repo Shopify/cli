@@ -43,6 +43,13 @@
           "cwd": "packages/cli-kit"
         }
       },
+      "test:coverage": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "pnpm vitest run --coverage --outputFile ./coverage/report.json",
+          "cwd": "packages/cli-kit"
+        }
+      },
       "test:watch": {
         "executor": "nx:run-commands",
         "dependsOn": ["build"],
