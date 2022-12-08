@@ -2,6 +2,7 @@ import {UIExtensionPayload, ExtensionsEndpointPayload} from './models.js'
 import {ExtensionDevOptions} from '../../extension.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {UIExtension} from '../../../../models/app/extensions.js'
+import {buildAppURL} from '../../../../utilities/app/app-url.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 import {output} from '@shopify/cli-kit'
 import {EventEmitter} from 'events'
@@ -20,6 +21,8 @@ export async function getExtensionsPayloadStoreRawPayload(
   return {
     app: {
       apiKey: options.apiKey,
+      url: buildAppURL(options.storeFqdn, options.url),
+      title: options.app.name,
     },
     appId: options.id,
     version: '3',
