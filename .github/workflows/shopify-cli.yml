@@ -101,6 +101,9 @@ jobs:
       - name: Acceptance tests
         if: ${{ matrix.node == '18.7.0' }}
         run: pnpm nx run features:test
+      - name: Run and save test coverage
+        uses: ./.github/actions/run-and-save-test-coverage
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
 
   pr-platform-agnostic:
     name: ${{ matrix.target }} with Node ${{ matrix.node }} in ${{ matrix.os }}
@@ -150,6 +153,12 @@ jobs:
       - name: Acceptance tests
         if: ${{ matrix.node == '18.7.0' }}
         run: pnpm nx run features:test
+      - name: Run and save test coverage
+        uses: ./.github/actions/run-and-save-test-coverage
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+      - name: Download and publish test coverage
+        uses: ./.github/actions/download-and-publish-test-coverage
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
 
   manually-triggered:
     name: Testing with Node ${{ inputs.node-version }} in ${{ inputs.os }}

@@ -1,0 +1,30 @@
+name: "Run and save test coverage"
+description: "Runs unit tests in coverage mode, merges results across packages, and uploads for future comparisons"
+runs:
+  using: "composite"
+  steps:
+    - name: Unit tests with coverage
+      run: pnpm nx run-many --all --skip-nx-cache --target=test:coverage --exclude=features
+      shell: bash
+    - name: Combine Jest coverages
+      run: npx istanbul-merge --out="coverage.raw.json" "packages/*/coverage/coverage-final.json"
+      shell: bash
+    - name: Convert coverage to Jest
+      run: ./bin/save-coverage-file.js
+      shell: bash
+    - name: Take copy of report as new baseline for branch
+      run: cp ./report.json ./baseline-report.json
+      shell: bash
+    # Strips forward slashes and dots as not supported by artifact commands
+    - name: Clean ref name
+      shell: bash
+      env:
+          SAFE_REF_NAME: "${{ github.head_ref }}"
+      run: |
+        SAFE_REF_NAME=${{ env.SAFE_REF_NAME }}
+        SAFE_REF_NAME=${SAFE_REF_NAME//[\/.]/}
+        echo SAFE_REF_NAME=${SAFE_REF_NAME} >> $GITHUB_ENV
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{ env.SAFE_REF_NAME }}--coverage-report
+        path: ./baseline-report.json
