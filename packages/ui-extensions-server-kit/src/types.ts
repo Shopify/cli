@@ -97,6 +97,7 @@ export enum Status {
 export interface App {
   id: string
   apiKey: string
+  url: string
   applicationUrl: string
   handle?: string | null
   title: string

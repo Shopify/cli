@@ -5,6 +5,8 @@ import {Localization} from '../localization.js'
 export interface ExtensionsPayloadInterface {
   app: {
     apiKey: string
+    url: string
+    title: string
   }
   store: string
   extensions: UIExtensionPayload[]
@@ -32,7 +34,6 @@ interface NewExtensionPointSchema extends NewExtensionPointSchemaType {
 export interface UIExtensionPayload {
   assets: {
     main: {
-      name: string
       url: string
       lastUpdated: number
     }
