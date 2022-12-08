@@ -46,6 +46,7 @@
     "lint:fix": "nx lint:fix",
     "test": "nx run cli-kit:test",
     "test:watch": "nx test:watch",
+    "test:coverage": "nx test:coverage",
     "type-check": "nx type-check"
   },
   "eslintConfig": {
@@ -130,6 +131,7 @@
     "@types/diff": "^5.0.2",
     "@types/inquirer": "^8.2.1",
     "@types/semver": "^7.3.9",
+    "@vitest/coverage-istanbul": "^0.22.0",
     "node-stream-zip": "^1.15.0",
     "vitest": "^0.22.1",
     "vite": "^2.9.13"

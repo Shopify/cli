@@ -3,11 +3,16 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const fs = require("fs");
 
+/**
+ * This takes a large combined Jest-format coverage file, and a collection of JSON test reports, and combines them into one master file.
+ */
+
 const coveragePackages = ["cli-main", "cli-kit"];
 
 const masterCoverageFile = process.cwd() + "/coverage.raw.json";
 const masterReportFile = process.cwd() + "/report.json";
 
+// Create the starting file -- the master coverage file and empty test results
 const masterCoverage = {
   numTotalTestSuites: 0,
   numPassedTestSuites: 0,
@@ -24,6 +29,7 @@ const masterCoverage = {
   coverageMap: require(masterCoverageFile),
 };
 
+// merge each package's test results into the master file
 coveragePackages.forEach((pkg) => {
   const testReportFilename =
     process.cwd() + `/packages/${pkg}/coverage/report.json`;
@@ -48,6 +54,7 @@ coveragePackages.forEach((pkg) => {
   ];
 });
 
+// write it out
 fs.writeFile(masterReportFile, JSON.stringify(masterCoverage), (err) => {
   if (err) {
     console.error(err);
