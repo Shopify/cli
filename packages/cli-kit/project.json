@@ -47,7 +47,7 @@
         "executor": "nx:run-commands",
         "dependsOn": ["build"],
         "options": {
-          "command": "pnpm vitest run --coverage --outputFile ./coverage/report.json",
+          "command": "pnpm vitest run --reporter json --coverage --outputFile ./coverage/report.json",
           "cwd": "packages/cli-kit"
         }
       },

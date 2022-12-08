@@ -45,7 +45,7 @@
       "test:coverage": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm vitest run --coverage --outputFile ./coverage/report.json",
+          "command": "pnpm vitest run --reporter json --coverage --outputFile ./coverage/report.json",
           "cwd": "packages/cli-main"
         }
       },
