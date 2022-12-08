@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import {isUnitTest, isVerbose} from './environment/local.js'
+import {isUnitTest, isNoColor, isVerbose} from './environment/local.js'
 import {PackageManager} from './public/node/node-package-manager.js'
 import colors from './public/node/colors.js'
 import {
@@ -339,6 +339,7 @@ export function unstyled(message: string): string {
 }
 
 export function shouldDisplayColors(): boolean {
+  if (isNoColor()) return false
   return Boolean(process.stdout.isTTY || process.env.FORCE_COLOR)
 }
 

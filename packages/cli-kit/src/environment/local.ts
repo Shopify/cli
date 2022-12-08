@@ -42,6 +42,21 @@ export function isVerbose(env = process.env): boolean {
 }
 
 /**
+ * Returns true if the CLI is running in color-disabled mode.
+ * Ways to activate color-disabled mode are based on https://clig.dev/#output
+ * @param env - The environment variables from the environment of the current process.
+ * @returns true if SHOPIFY_FLAG_NO_COLOR or NO_COLOR is truthy, TERM=dumb, or the flag --no-color has been passed
+ */
+export function isNoColor(env = process.env): boolean {
+  return (
+    isTruthy(env[constants.environmentVariables.noColor]) ||
+    isTruthy(env[constants.environmentVariables.shopifyNoColor]) ||
+    env.TERM === 'dumb' ||
+    process.argv.includes('--no-color')
+  )
+}
+
+/**
  * Returns true if the environment in which the CLI is running is either
  * a local environment (where dev is present) or a cloud environment (spin).
  * @returns True if the CLI is used in a Shopify environment.

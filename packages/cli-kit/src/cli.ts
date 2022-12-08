@@ -15,4 +15,9 @@ export const globalFlags = {
     description: 'Increase the verbosity of the logs.',
     env: 'SHOPIFY_FLAG_VERBOSE',
   }),
+  'no-color': Flags.boolean({
+    hidden: false,
+    description: 'Disable color output.',
+    env: 'SHOPIFY_FLAG_NO_COLOR',
+  }),
 }
