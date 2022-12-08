@@ -39,6 +39,11 @@ export interface ExtensionDevOptions {
   app: AppInterface
 
   /**
+   * The ID of the app that contains the extension.
+   */
+  id?: number
+
+  /**
    * The app identifier
    */
   apiKey: string
