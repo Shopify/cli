@@ -160,13 +160,27 @@ jobs:
         run: ./bin/save-coverage-file.js
       - name: Take copy of report as new baseline for branch
         run: cp ./report.json ./baseline-report.json
+      - name: Clean ref name
+        env:
+            SAFE_REF_NAME: "${{ github.head_ref }}"
+        run: |
+          SAFE_REF_NAME=${{ env.SAFE_REF_NAME }}
+          SAFE_REF_NAME=${SAFE_REF_NAME//[\/.]/}
+          echo SAFE_REF_NAME=${SAFE_REF_NAME} >> $GITHUB_ENV
+      - name: Clean base ref name
+        env:
+            SAFE_BASE_REF_NAME: "${{ github.base_ref }}"
+        run: |
+          SAFE_BASE_REF_NAME=${{ env.SAFE_BASE_REF_NAME }}
+          SAFE_BASE_REF_NAME=${SAFE_BASE_REF_NAME//[\/.]/}
+          echo SAFE_BASE_REF_NAME=${SAFE_BASE_REF_NAME} >> $GITHUB_ENV
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{ github.ref_name }}--coverage-report
+          name: ${{ env.SAFE_REF_NAME }}--coverage-report
           path: ./baseline-report.json
       - uses: actions/download-artifact@v3
         with:
-          name: ${{ github.base_ref }}--coverage-report
+          name: ${{ env.SAFE_BASE_REF_NAME }}--coverage-report
       - uses: ArtiomTr/jest-coverage-report-action@v2.1.2
         id: coverage
         with:
