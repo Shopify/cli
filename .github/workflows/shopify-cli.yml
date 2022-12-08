@@ -179,6 +179,7 @@ jobs:
           name: ${{ env.SAFE_REF_NAME }}--coverage-report
           path: ./baseline-report.json
       - uses: actions/download-artifact@v3
+        continue-on-error: true
         with:
           name: ${{ env.SAFE_BASE_REF_NAME }}--coverage-report
       - uses: ArtiomTr/jest-coverage-report-action@v2.1.2
