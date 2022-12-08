@@ -3,6 +3,7 @@ import * as styles from './Extensions.module.scss'
 // eslint-disable-next-line @shopify/strict-component-boundaries
 import {QRCodeModal} from './components/QRCodeModal'
 import en from './translations/en.json'
+import {AppRow} from './components/AppRow/AppRow.js'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {useI18n} from '@shopify/react-i18n'
 import {RefreshMinor, ViewMinor, HideMinor, MobileMajor} from '@shopify/polaris-icons'
@@ -23,7 +24,7 @@ export function Extensions() {
   })
   const [selectedExtensionsSet, setSelectedExtensionsSet] = useState<Set<string>>(new Set())
   const {
-    state: {extensions},
+    state: {extensions, app},
     refresh,
     show,
     hide,
@@ -122,6 +123,7 @@ export function Extensions() {
           </tr>
         </thead>
         <tbody>
+          {app ? <AppRow url={app.url} title={app.title} /> : null}
           {extensions.map((extension) => {
             const uuid = extension.uuid
             return (

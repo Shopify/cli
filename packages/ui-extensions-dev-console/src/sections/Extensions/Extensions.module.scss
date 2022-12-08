@@ -33,6 +33,14 @@
   svg {
     fill: var(--dc-subdued);
   }
+
+  td {
+    padding: 1rem;
+  }
+
+  .Url {
+    color: var(--dc-text);
+  }
 }
 
 .Empty {

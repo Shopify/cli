@@ -1,0 +1,50 @@
+@function rowHoverBackgroundImage($xOffset, $extraWidth, $borderRadius) {
+  $background-hover: #4e4f51;
+
+  @return url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'><rect y='0.25rem' x='#{$xOffset}' width='calc(100% + #{$extraWidth})' height='calc(100% - 0.4rem)' rx='#{$borderRadius}' style='fill:rgb(#{red($background-hover)}, #{green($background-hover)}, #{blue($background-hover)});' /></svg>")
+}
+
+.DevToolRow {
+  border-bottom: 1px solid var(--dc-dark);
+
+  td {
+    padding: 1rem;
+  }
+
+  label {
+    vertical-align: middle;
+  }
+
+  &:hover {
+    cursor: pointer;
+
+    // The complexity in this hover state is necessary to achieve the desired design of having spacing between the row's borders and having rounded corners.
+    // For more details view the "Why is this so complex and what was tried to get to this solution?" section in https://github.com/Shopify/cli/pull/378
+    td {
+      background-image: rowHoverBackgroundImage('0rem', '0rem', 0);
+
+      &:first-child {
+        background-image: rowHoverBackgroundImage('0.3rem', '5rem', 5);
+      }
+
+      &:last-child {
+        background-image: rowHoverBackgroundImage('-0.5rem', '0.25rem', 5);
+      }
+    }
+
+    .ActionSet {
+      opacity: 1;
+    }
+  }
+
+  .Url {
+    color: var(--dc-text);
+  }
+}
+
+.ActionSet {
+  vertical-align: middle;
+  opacity: 0;
+  display: flex;
+  justify-content: flex-end;
+}
