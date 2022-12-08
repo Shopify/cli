@@ -320,6 +320,7 @@ importers:
       '@types/inquirer': ^8.2.1
       '@types/react': 16.14.0
       '@types/semver': ^7.3.9
+      '@vitest/coverage-istanbul': ^0.22.0
       abort-controller: 3.0.0
       archiver: 5.3.1
       chalk: 5.1.0
@@ -444,6 +445,7 @@ importers:
       '@types/inquirer': 8.2.5
       '@types/react': 16.14.0
       '@types/semver': 7.3.13
+      '@vitest/coverage-istanbul': 0.22.1
       node-stream-zip: 1.15.0
       vite: 2.9.12
       vitest: 0.22.1
@@ -459,6 +461,7 @@ importers:
       '@shopify/cli-kit': 3.25.0
       '@shopify/plugin-ngrok': 3.25.0
       '@shopify/theme': 3.25.0
+      '@vitest/coverage-istanbul': ^0.22.0
       vite: 2.9.12
       vitest: ^0.22.1
     dependencies:
@@ -472,6 +475,7 @@ importers:
       '@shopify/app': link:../app
       '@shopify/cli-hydrogen': link:../cli-hydrogen
       '@shopify/theme': link:../theme
+      '@vitest/coverage-istanbul': 0.22.1
       vite: 2.9.12
       vitest: 0.22.1
 
@@ -4744,6 +4748,28 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: false
+
+  /@vitest/coverage-istanbul/0.22.1:
+    resolution: {integrity: sha512-S29NBnmu8ko3Yj69yYX0F17RvyVO+3KOKvhExNX8/a1qL3Z+4EeT03DSdXTxkpq+gyxWlaIIMduxKct/imy3Dg==}
+    dependencies:
+      istanbul-lib-coverage: 3.2.0
+      istanbul-lib-instrument: 5.2.1
+      istanbul-lib-report: 3.0.0
+      istanbul-lib-source-maps: 4.0.1
+      istanbul-reports: 3.1.5
+      test-exclude: 6.0.0
+      vitest: 0.22.1
+    transitivePeerDependencies:
+      - '@edge-runtime/vm'
+      - '@vitest/browser'
+      - '@vitest/ui'
+      - happy-dom
+      - jsdom
+      - less
+      - sass
+      - stylus
+      - supports-color
+    dev: true
 
   /@wry/context/0.7.0:
     resolution: {integrity: sha512-LcDAiYWRtwAoSOArfk7cuYvFXytxfVrdX7yxoUmK7pPITLk5jYh2F8knCwS7LjgYL8u1eidPlKKV6Ikqq0ODqQ==}
@@ -14648,7 +14674,7 @@ packages:
       globrex: 0.1.2
       recrawl-sync: 2.2.3
       tsconfig-paths: 4.1.1
-      vite: 2.9.12_sass@1.56.1
+      vite: 2.9.12
     transitivePeerDependencies:
       - supports-color
     dev: true

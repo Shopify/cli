@@ -43,6 +43,7 @@
     "lint:fix": "nx lint:fix",
     "test": "nx run cli-main:test",
     "test:watch": "nx test:watch",
+    "test:coverage": "nx test:coverage",
     "type-check": "nx type-check"
   },
   "eslintConfig": {
@@ -59,6 +60,7 @@
     "@shopify/plugin-ngrok": "3.25.0"
   },
   "devDependencies": {
+    "@vitest/coverage-istanbul": "^0.22.0",
     "vitest": "^0.22.1",
     "vite": "^2.9.13",
     "@shopify/app": "3.25.0",
