@@ -1,81 +1,58 @@
 #!/usr/bin/env node
-import {createRequire} from 'module'
-const require = createRequire(import.meta.url)
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
 const fs = require("fs");
 
-/*
-  don't forget to update `coverage-file` input inside workflow when specifying path here
-  `test.yml`
-  with:
-    coverage-file: ./coverage/report.json
-*/
+const coveragePackages = ["cli-main", "cli-kit"];
 
-const coveragePackages = ['cli-main', 'cli-kit']
-
-// coveragePackages.forEach(pkg => {
-//     const testReportFilename = process.cwd() + `/packages/${pkg}/coverage/report.json`;
-//     const coverageReportFilename = process.cwd() + `/packages/${pkg}/coverage/coverage-final.json`;
-
-//     const testReport = require(testReportFilename);
-//     const coverageReport = require(coverageReportFilename);
-
-//     testReport.coverageMap = coverageReport;
-
-//     fs.writeFile(testReportFilename, JSON.stringify(testReport), (err) => {
-//     if (err) {
-//         console.error(err);
-//         process.exit(1);
-//     }
-
-//     console.log("Coverage report appended to " + testReportFilename);
-//     });
-// });
-
-const masterCoverageFile = process.cwd() + "/coverage.raw.json"
-const masterReportFile = process.cwd() + "/report.json"
+const masterCoverageFile = process.cwd() + "/coverage.raw.json";
+const masterReportFile = process.cwd() + "/report.json";
 
 const masterCoverage = {
-    "numTotalTestSuites": 0,
-  "numPassedTestSuites": 0,
-  "numFailedTestSuites": 0,
-  "numPendingTestSuites": 0,
-  "numTotalTests": 0,
-  "numPassedTests": 0,
-  "numFailedTests": 0,
-  "numPendingTests": 0,
-  "numTodoTests": 0,
-  "startTime": 999999999999999,
-  "success": true,
+  numTotalTestSuites: 0,
+  numPassedTestSuites: 0,
+  numFailedTestSuites: 0,
+  numPendingTestSuites: 0,
+  numTotalTests: 0,
+  numPassedTests: 0,
+  numFailedTests: 0,
+  numPendingTests: 0,
+  numTodoTests: 0,
+  startTime: 999999999999999,
+  success: true,
   testResults: [],
-  coverageMap: require(masterCoverageFile)
-}
+  coverageMap: require(masterCoverageFile),
+};
 
-coveragePackages.forEach(pkg => {
-    const testReportFilename = process.cwd() + `/packages/${pkg}/coverage/report.json`;
-    const testReport = require(testReportFilename);
-    masterCoverage.numTotalTestSuites += testReport.numTotalTestSuites
-    masterCoverage.numPassedTestSuites += testReport.numPassedTestSuites
-    masterCoverage.numFailedTestSuites += testReport.numFailedTestSuites
-    masterCoverage.numPendingTestSuites += testReport.numPendingTestSuites
-    masterCoverage.numTotalTests += testReport.numTotalTests
-    masterCoverage.numPassedTests += testReport.numPassedTests
-    masterCoverage.numFailedTests += testReport.numFailedTests
-    masterCoverage.numPendingTests += testReport.numPendingTests
-    masterCoverage.numTodoTests += testReport.numTodoTests
-    masterCoverage.startTime = Math.min(masterCoverage.startTime, testReport.startTime)
-    masterCoverage.success = masterCoverage.success && testReport.success
-    masterCoverage.testResults = [
-        ...masterCoverage.testResults,
-        ...testReport.testResults
-    ]
-})
-
+coveragePackages.forEach((pkg) => {
+  const testReportFilename =
+    process.cwd() + `/packages/${pkg}/coverage/report.json`;
+  const testReport = require(testReportFilename);
+  masterCoverage.numTotalTestSuites += testReport.numTotalTestSuites;
+  masterCoverage.numPassedTestSuites += testReport.numPassedTestSuites;
+  masterCoverage.numFailedTestSuites += testReport.numFailedTestSuites;
+  masterCoverage.numPendingTestSuites += testReport.numPendingTestSuites;
+  masterCoverage.numTotalTests += testReport.numTotalTests;
+  masterCoverage.numPassedTests += testReport.numPassedTests;
+  masterCoverage.numFailedTests += testReport.numFailedTests;
+  masterCoverage.numPendingTests += testReport.numPendingTests;
+  masterCoverage.numTodoTests += testReport.numTodoTests;
+  masterCoverage.startTime = Math.min(
+    masterCoverage.startTime,
+    testReport.startTime
+  );
+  masterCoverage.success = masterCoverage.success && testReport.success;
+  masterCoverage.testResults = [
+    ...masterCoverage.testResults,
+    ...testReport.testResults,
+  ];
+});
 
 fs.writeFile(masterReportFile, JSON.stringify(masterCoverage), (err) => {
-    if (err) {
-        console.error(err);
-        process.exit(1);
-    }
+  if (err) {
+    console.error(err);
+    process.exit(1);
+  }
 
-    console.log("Coverage report appended to " + masterReportFile);
-    });
+  console.log("Coverage report appended to " + masterReportFile);
+});

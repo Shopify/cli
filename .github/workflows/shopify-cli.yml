@@ -62,12 +62,12 @@ jobs:
         name: Checkout [main]
         with:
           fetch-depth: 0
-      # - name: Setup deps
-      #   uses: ./.github/actions/setup-cli-deps
-      #   with:
-      #     node-version: ${{ matrix.node }}
-      # - name: Build the fixture app
-      #   run: pnpm run shopify app build --path ./fixtures/app --skip-dependencies-installation
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Build the fixture app
+        run: pnpm run shopify app build --path ./fixtures/app --skip-dependencies-installation
 
   main:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
@@ -101,6 +101,31 @@ jobs:
       - name: Acceptance tests
         if: ${{ matrix.node == '18.7.0' }}
         run: pnpm nx run features:test
+      - name: Unit tests with coverage
+        if: ${{ matrix.node == '18.7.0' && os == 'ubuntu-latest' }}
+        run: pnpm nx run-many --all --skip-nx-cache --target=test:coverage --exclude=features
+      - name: Combine Jest coverages
+        run: npx istanbul-merge --out="coverage.raw.json" "packages/*/coverage/coverage-final.json"
+        if: ${{ matrix.node == '18.7.0' && os == 'ubuntu-latest' }}
+      - name: Convert coverage to Jest
+        run: ./bin/save-coverage-file.js
+        if: ${{ matrix.node == '18.7.0' && os == 'ubuntu-latest' }}
+      - name: Take copy of report as new baseline for branch
+        run: cp ./report.json ./baseline-report.json
+        if: ${{ matrix.node == '18.7.0' && os == 'ubuntu-latest' }}
+      - name: Clean ref name
+        if: ${{ matrix.node == '18.7.0' && os == 'ubuntu-latest' }}
+        env:
+            SAFE_REF_NAME: "${{ github.head_ref }}"
+        run: |
+          SAFE_REF_NAME=${{ env.SAFE_REF_NAME }}
+          SAFE_REF_NAME=${SAFE_REF_NAME//[\/.]/}
+          echo SAFE_REF_NAME=${SAFE_REF_NAME} >> $GITHUB_ENV
+      - uses: actions/upload-artifact@v3
+        if: ${{ matrix.node == '18.7.0' && os == 'ubuntu-latest' }}
+        with:
+          name: ${{ env.SAFE_REF_NAME }}--coverage-report
+          path: ./baseline-report.json
 
   pr-platform-agnostic:
     name: ${{ matrix.target }} with Node ${{ matrix.node }} in ${{ matrix.os }}
@@ -118,12 +143,12 @@ jobs:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
-      # - name: Setup deps
-      #   uses: ./.github/actions/setup-cli-deps
-      #   with:
-      #     node-version: ${{ matrix.node }}
-      # - name: ${{ matrix.target }}
-      #   run: pnpm nx run-many --all --skip-nx-cache --target=${{ matrix.target }}
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ matrix.node }}
+      - name: ${{ matrix.target }}
+        run: pnpm nx run-many --all --skip-nx-cache --target=${{ matrix.target }}
 
   pr-platform-dependent:
     name: Testing with Node ${{ matrix.node }} in ${{ matrix.os }}
@@ -133,10 +158,8 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        # os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        # node: ['14.20.0', '16.17.0', '18.7.0']
-        os: ['ubuntu-latest']
-        node: ['18.7.0']
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+        node: ['14.20.0', '16.17.0', '18.7.0']
     steps:
       - uses: actions/checkout@v2
         with:
@@ -147,20 +170,25 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: ${{ matrix.node }}
-      # - name: Unit tests
-      #   run: pnpm nx run-many --all --skip-nx-cache --target=test --exclude=features
-      # - name: Acceptance tests
-      #   if: ${{ matrix.node == '18.7.0' }}
-      #   run: pnpm nx run features:test
+      - name: Unit tests
+        run: pnpm nx run-many --all --skip-nx-cache --target=test --exclude=features
+      - name: Acceptance tests
+        if: ${{ matrix.node == '18.7.0' }}
+        run: pnpm nx run features:test
       - name: Unit tests with coverage
+        if: ${{ matrix.node == '18.7.0' && os == 'ubuntu-latest' }}
         run: pnpm nx run-many --all --skip-nx-cache --target=test:coverage --exclude=features
       - name: Combine Jest coverages
         run: npx istanbul-merge --out="coverage.raw.json" "packages/*/coverage/coverage-final.json"
+        if: ${{ matrix.node == '18.7.0' && os == 'ubuntu-latest' }}
       - name: Convert coverage to Jest
         run: ./bin/save-coverage-file.js
+        if: ${{ matrix.node == '18.7.0' && os == 'ubuntu-latest' }}
       - name: Take copy of report as new baseline for branch
         run: cp ./report.json ./baseline-report.json
+        if: ${{ matrix.node == '18.7.0' && os == 'ubuntu-latest' }}
       - name: Clean ref name
+        if: ${{ matrix.node == '18.7.0' && os == 'ubuntu-latest' }}
         env:
             SAFE_REF_NAME: "${{ github.head_ref }}"
         run: |
@@ -168,6 +196,7 @@ jobs:
           SAFE_REF_NAME=${SAFE_REF_NAME//[\/.]/}
           echo SAFE_REF_NAME=${SAFE_REF_NAME} >> $GITHUB_ENV
       - name: Clean base ref name
+        if: ${{ matrix.node == '18.7.0' && os == 'ubuntu-latest' }}
         env:
             SAFE_BASE_REF_NAME: "${{ github.base_ref }}"
         run: |
@@ -175,14 +204,17 @@ jobs:
           SAFE_BASE_REF_NAME=${SAFE_BASE_REF_NAME//[\/.]/}
           echo SAFE_BASE_REF_NAME=${SAFE_BASE_REF_NAME} >> $GITHUB_ENV
       - uses: actions/upload-artifact@v3
+        if: ${{ matrix.node == '18.7.0' && os == 'ubuntu-latest' }}
         with:
           name: ${{ env.SAFE_REF_NAME }}--coverage-report
           path: ./baseline-report.json
       - uses: actions/download-artifact@v3
+        if: ${{ matrix.node == '18.7.0' && os == 'ubuntu-latest' }}
         continue-on-error: true
         with:
           name: ${{ env.SAFE_BASE_REF_NAME }}--coverage-report
       - uses: ArtiomTr/jest-coverage-report-action@v2.1.2
+        if: ${{ matrix.node == '18.7.0' && os == 'ubuntu-latest' }}
         id: coverage
         with:
           output: report-markdown
@@ -190,13 +222,9 @@ jobs:
           base-coverage-file: "./baseline-report.json"
           threshold: 0
       - uses: marocchino/sticky-pull-request-comment@v2.3.1
+        if: ${{ matrix.node == '18.7.0' && os == 'ubuntu-latest' }}
         with:
           message: ${{ steps.coverage.outputs.report }}
-      # - name: Combine lcov files
-      #   run: npx lcov-result-merger "packages/*/coverage/lcov.info"  --prepend-source-files
-      # - uses: romeovs/lcov-reporter-action@v0.3.1
-      #   with:
-      #     lcov-file: ./lcov.info
 
   manually-triggered:
     name: Testing with Node ${{ inputs.node-version }} in ${{ inputs.os }}
