@@ -158,12 +158,20 @@ jobs:
         run: npx istanbul-merge --out="coverage.raw.json" "packages/*/coverage/coverage-final.json"
       - name: Convert coverage to Jest
         run: ./bin/save-coverage-file.js
+      - run: cp ./report.json ./baseline-report.json
+      - uses: actions/upload-artifact@v3
+        with:
+          name: {{ github.ref_name }}--coverage-report
+          path: ./baseline-report.json
+      - uses: actions/download-artifact@v3
+        with:
+          name: {{ github.base_ref }}--coverage-report
       - uses: ArtiomTr/jest-coverage-report-action@v2.1.2
         id: coverage
         with:
           output: report-markdown
           coverage-file: "./report.json"
-          base-coverage-file: "./report.json"
+          base-coverage-file: "./baseline-report.json"
           threshold: 0
       - uses: marocchino/sticky-pull-request-comment@v2.3.1
         with:
