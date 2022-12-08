@@ -70,12 +70,33 @@ export default class Push extends ThemeCommand {
         'Performs the upload by relying in the legacy upload approach (slower, but it might be more stable in some scenarios)',
       env: 'SHOPIFY_FLAG_STABLE',
     }),
+    force: Flags.boolean({
+      hidden: true,
+      char: 'f',
+      description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
+      env: 'SHOPIFY_FLAG_FORCE',
+    }),
   }
+
+  static cli2Flags = [
+    'theme',
+    'development',
+    'live',
+    'unpublished',
+    'nodelete',
+    'only',
+    'ignore',
+    'json',
+    'allow-live',
+    'publish',
+    'stable',
+    'force',
+  ]
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Push)
 
-    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'store', 'verbose', 'password']})
+    const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Push.cli2Flags})
     const command = ['theme', 'push', flags.path, ...flagsToPass]
 
     const store = await getThemeStore(flags)

@@ -8,7 +8,7 @@ describe('updateAppIdentifiers', () => {
   test("persists the ids that are not environment variables in the system and it's deploy", async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
-      const uiExtension = testUIExtension()
+      const uiExtension = await testUIExtension()
       const app = testApp({
         directory: tmpDir,
         extensions: {
@@ -42,7 +42,7 @@ describe('updateAppIdentifiers', () => {
   test("doesn't persist the ids that come from the system's environment and it's deploy", async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
-      const uiExtension = testUIExtension()
+      const uiExtension = await testUIExtension()
       const app = testApp({
         directory: tmpDir,
         extensions: {
@@ -82,7 +82,8 @@ describe('getAppIdentifiers', () => {
   test('returns the right identifiers when variables are defined in the .env file', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
-      const uiExtension = testUIExtension({
+      const uiExtension = await testUIExtension({
+        directory: '/tmp/project/extensions/my-extension',
         localIdentifier: 'my-extension',
         idEnvironmentVariableName: 'SHOPIFY_MY_EXTENSION_ID',
       })
@@ -113,7 +114,8 @@ describe('getAppIdentifiers', () => {
   test('returns the right identifiers when variables are defined in the system environment', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
-      const uiExtension = testUIExtension({
+      const uiExtension = await testUIExtension({
+        directory: '/tmp/project/extensions/my-extension',
         localIdentifier: 'my-extension',
         idEnvironmentVariableName: 'SHOPIFY_MY_EXTENSION_ID',
       })

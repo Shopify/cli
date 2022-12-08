@@ -1,3 +1,4 @@
+import {checkLockfileStatus} from './build/check-lockfile.js'
 import {build as viteBuild} from 'vite'
 import {ui, environment, error as kitError} from '@shopify/cli-kit'
 
@@ -49,6 +50,8 @@ export function buildTaskList({directory, targets, base, assetBaseURL, verbose}:
 }
 
 export async function build(options: DevOptions) {
+  await checkLockfileStatus(options.directory)
+
   const tasks = await buildTaskList(options)
 
   const list = ui.newListr(tasks, {rendererSilent: environment.local.isUnitTest()})

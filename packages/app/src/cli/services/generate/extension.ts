@@ -123,14 +123,16 @@ async function uiExtensionInit({
             throw new error.Bug(`Couldn't find the template for ${extensionType}`)
           }
 
+          const srcFileExtension = getSrcFileExtension(extensionFlavor ?? 'vanilla-js')
           await template.recursiveDirectoryCopy(templateDirectory, extensionDirectory, {
+            srcFileExtension,
             flavor: extensionFlavor ?? '',
             type: extensionType,
             name,
           })
 
           if (extensionFlavor) {
-            await changeIndexFileExtension(extensionDirectory, extensionFlavor)
+            await changeIndexFileExtension(extensionDirectory, srcFileExtension)
             await removeUnwantedTemplateFilesPerFlavor(extensionDirectory, extensionFlavor)
           }
 
@@ -143,46 +145,42 @@ async function uiExtensionInit({
   await list.run()
 }
 
-export function getRuntimeDependencies({
-  extensionType,
-  extensionFlavor,
-}: Pick<UIExtensionInitOptions, 'extensionType' | 'extensionFlavor'>): DependencyVersion[] {
-  switch (extensionType) {
-    case 'product_subscription':
-    case 'checkout_ui_extension':
-    case 'pos_ui_extension':
-    case 'web_pixel_extension':
-    case 'customer_accounts_ui_extension':
-    case 'checkout_post_purchase': {
-      const dependencies: DependencyVersion[] = []
-      if (extensionFlavor?.includes('react')) {
-        dependencies.push({name: 'react', version: versions.react})
-      }
-      const rendererDependency = getUIExtensionRendererDependency(extensionType)
-      if (rendererDependency) {
-        dependencies.push(rendererDependency)
-      }
-      return dependencies
-    }
-  }
-}
-
-async function changeIndexFileExtension(extensionDirectory: string, extensionFlavor: ExtensionFlavor) {
-  const fileExtensionsMapper = {
+type SrcFileExtension = 'ts' | 'tsx' | 'js' | 'jsx'
+function getSrcFileExtension(extensionFlavor: ExtensionFlavor): SrcFileExtension {
+  const flavorToSrcFileExtension: {[key in ExtensionFlavor]: SrcFileExtension} = {
     'vanilla-js': 'js',
     react: 'jsx',
     typescript: 'ts',
     'typescript-react': 'tsx',
   }
 
-  const fileExtension = fileExtensionsMapper[extensionFlavor]
+  return flavorToSrcFileExtension[extensionFlavor]
+}
 
-  if (fileExtension) {
-    await file.move(
-      path.join(extensionDirectory, 'src/index'),
-      path.join(extensionDirectory, `src/index.${fileExtension}`),
-    )
+export function getRuntimeDependencies({
+  extensionType,
+  extensionFlavor,
+}: Pick<UIExtensionInitOptions, 'extensionType' | 'extensionFlavor'>): DependencyVersion[] {
+  const dependencies: DependencyVersion[] = []
+  if (extensionFlavor?.includes('react')) {
+    dependencies.push({name: 'react', version: versions.react})
   }
+  const rendererDependency = getUIExtensionRendererDependency(extensionType)
+  if (rendererDependency) {
+    dependencies.push(rendererDependency)
+  }
+  return dependencies
+}
+
+async function changeIndexFileExtension(extensionDirectory: string, fileExtension: SrcFileExtension) {
+  const srcFilePaths = await path.glob(path.join(extensionDirectory, 'src', '*'))
+  const srcFileExensionsToChange = []
+
+  for (const srcFilePath of srcFilePaths) {
+    srcFileExensionsToChange.push(file.move(srcFilePath, `${srcFilePath}.${fileExtension}`))
+  }
+
+  await Promise.all(srcFileExensionsToChange)
 }
 
 async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, extensionFlavor: ExtensionFlavor) {
@@ -236,6 +234,8 @@ function functionTemplatePath({extensionType, extensionFlavor}: FunctionExtensio
       return `checkout/${lang}/shipping-rate-presenter/default`
     case 'delivery_customization':
       return `checkout/${lang}/delivery-customization/default`
+    default:
+      return 'unknown'
   }
 }
 

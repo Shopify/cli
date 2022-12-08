@@ -13,8 +13,6 @@
     "@shopify/fixtures-app",
     "@shopify/theme",
     "@shopify/ui-extensions-dev-console-app",
-    "@shopify/ui-extensions-server-kit",
-    "@shopify/ui-extensions-test-utils",
     "@shopify/plugin-ngrok"
   ]],
   "access": "public",

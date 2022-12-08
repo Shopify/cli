@@ -1,6 +1,6 @@
 {
   "name": "@shopify/theme",
-  "version": "3.22.1",
+  "version": "3.25.0",
   "private": false,
   "description": "Utilities for building and publishing themes",
   "homepage": "https://github.com/shopify/cli#readme",
@@ -17,7 +17,7 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "build": "nx build",
     "clean": "nx clean",
     "lint": "nx lint",
@@ -33,14 +33,15 @@
   },
   "dependencies": {
     "@oclif/core": "1.9.2",
-    "@shopify/cli-kit": "3.22.1"
+    "@shopify/cli-kit": "3.25.0"
   },
   "devDependencies": {
-    "vitest": "^0.22.1"
+    "vitest": "^0.22.1",
+    "vite": "^2.9.13"
   },
   "engine-strict": true,
   "engines": {
-    "node": ">=14.13.1"
+    "node": ">=14.17.0"
   },
   "os": [
     "darwin",

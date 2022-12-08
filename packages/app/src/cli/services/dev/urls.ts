@@ -1,8 +1,9 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
 import {AppInterface} from '../../models/app/app.js'
-import {api, environment, output, plugins, port, store} from '@shopify/cli-kit'
+import {api, environment, output, plugins, store} from '@shopify/cli-kit'
 import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
+import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 
 export interface PartnersURLs {
   applicationUrl: string
@@ -75,10 +76,10 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   }
 
   if (needsTunnel) {
-    frontendPort = await port.getRandomPort()
+    frontendPort = await getAvailableTCPPort()
     frontendUrl = await generateURL(options.commandConfig, frontendPort)
   } else {
-    frontendPort = await port.getRandomPort()
+    frontendPort = await getAvailableTCPPort()
     frontendUrl = 'http://localhost'
     usingLocalhost = true
   }
@@ -93,7 +94,7 @@ export async function generateURL(config: Config, frontendPort: number): Promise
   return (await plugins.runTunnelPlugin(config, frontendPort, provider))
     .doOnOk(() => output.success('The tunnel is running and you can now view your app'))
     .mapError(mapRunTunnelPluginError)
-    .valueOrThrow()
+    .valueOrAbort()
 }
 
 export function generatePartnersURLs(baseURL: string, authCallbackPath?: string): PartnersURLs {

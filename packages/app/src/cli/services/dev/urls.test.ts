@@ -10,10 +10,13 @@ import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {api, environment, error, outputMocker, plugins, store, ui} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
-import {err, ok} from '@shopify/cli-kit/common/result'
+import {err, ok} from '@shopify/cli-kit/node/result'
 import {AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
+import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 
 beforeEach(() => {
+  vi.mock('@shopify/cli-kit/node/tcp')
+  vi.mocked(getAvailableTCPPort).mockResolvedValue(3042)
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
@@ -36,9 +39,6 @@ beforeEach(() => {
       },
       store: {
         setAppInfo: vi.fn(),
-      },
-      port: {
-        getRandomPort: async () => 3042,
       },
       environment: {
         local: {

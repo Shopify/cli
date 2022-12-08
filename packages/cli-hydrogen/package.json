@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-hydrogen",
-  "version": "3.22.1",
+  "version": "3.25.0",
   "private": false,
   "description": "Commands for building Hydrogen storefronts",
   "license": "MIT",
@@ -23,7 +23,7 @@
     }
   },
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "build": "nx build",
     "clean": "nx clean",
     "lint": "nx lint",
@@ -39,25 +39,28 @@
   },
   "dependencies": {
     "@oclif/core": "1.9.2",
-    "@shopify/hydrogen": "^0.26.0",
-    "@shopify/mini-oxygen": "^0.2.0",
-    "@types/prettier": "^2.6.3",
-    "prettier": "^2.6.1",
-    "vite": "^2.9.13",
-    "@shopify/cli-kit": "3.22.1",
-    "fast-glob": "^3.2.11",
-    "fs-extra": "^10.0.0",
-    "typescript": "^4.8.4",
-    "@shopify/prettier-config": "^1.1.2",
-    "graphql-request": "^4.3.0"
+    "@shopify/hydrogen": "0.26.0",
+    "@shopify/mini-oxygen": "0.2.0",
+    "@types/prettier": "2.6.3",
+    "prettier": "2.6.1",
+    "vite": "2.9.13",
+    "@shopify/cli-kit": "3.25.0",
+    "fast-glob": "3.2.11",
+    "fs-extra": "10.0.0",
+    "typescript": "4.6.4",
+    "@shopify/prettier-config": "1.1.2",
+    "graphql-request": "4.3.0"
   },
   "devDependencies": {
-    "@types/fs-extra": "^9.0.12",
-    "vitest": "^0.22.1"
+    "@types/fs-extra": "9.0.13",
+    "vitest": "^0.22.1",
+    "graphql": "^16.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "engine-strict": true,
   "engines": {
-    "node": ">=14.13.1"
+    "node": ">=14.17.0"
   },
   "os": [
     "darwin",

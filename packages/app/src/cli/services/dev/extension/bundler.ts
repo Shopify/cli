@@ -23,16 +23,21 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
 
   const bundlers: Promise<void>[] = []
 
-  options.devOptions.extensions.forEach((extension) => {
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  options.devOptions.extensions.forEach(async (extension) => {
     bundlers.push(
       bundleExtension({
         minify: false,
         outputBundlePath: extension.outputBundlePath,
-        sourceFilePath: extension.entrySourceFilePath,
         environment: 'development',
         env: {
           ...(options.devOptions.app.dotenv?.variables ?? {}),
           APP_URL: options.devOptions.url,
+        },
+        stdin: {
+          contents: extension.getBundleExtensionStdinContent(),
+          resolveDir: extension.directory,
+          loader: 'tsx',
         },
         stderr: options.devOptions.stderr,
         stdout: options.devOptions.stdout,

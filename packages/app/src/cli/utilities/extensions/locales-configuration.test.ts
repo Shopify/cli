@@ -15,7 +15,7 @@ describe('loadLocalesConfig', () => {
       await file.write(es, JSON.stringify({hello: 'Hola'}))
 
       // When
-      const got = await loadLocalesConfig(tmpDir)
+      const got = await loadLocalesConfig(tmpDir, 'checkout_ui')
       expect(got).toEqual({
         default_locale: 'en',
         translations: {en: 'eyJoZWxsbyI6IkhlbGxvIn0=', es: 'eyJoZWxsbyI6IkhvbGEifQ=='},
@@ -35,7 +35,7 @@ describe('loadLocalesConfig', () => {
       await file.write(es, '')
 
       // When
-      const got = loadLocalesConfig(tmpDir)
+      const got = loadLocalesConfig(tmpDir, 'checkout_ui')
       await expect(got).rejects.toThrow(/Error loading checkout_ui/)
     })
   })
@@ -53,7 +53,7 @@ describe('loadLocalesConfig', () => {
       await file.write(es, JSON.stringify(bigArray))
 
       // When
-      const got = loadLocalesConfig(tmpDir)
+      const got = loadLocalesConfig(tmpDir, 'checkout_ui')
       await expect(got).rejects.toThrow(/Error loading checkout_ui/)
     })
   })
@@ -70,7 +70,7 @@ describe('loadLocalesConfig', () => {
       await file.write(es, JSON.stringify({hello: 'Hola'}))
 
       // When
-      const got = loadLocalesConfig(tmpDir)
+      const got = loadLocalesConfig(tmpDir, 'checkout_ui')
       await expect(got).rejects.toThrow(/Missing default language in checkout_ui configuration/)
     })
   })
@@ -87,7 +87,7 @@ describe('loadLocalesConfig', () => {
       await file.write(es, JSON.stringify({hello: 'Hola'}))
 
       // When
-      const got = loadLocalesConfig(tmpDir)
+      const got = loadLocalesConfig(tmpDir, 'checkout_ui')
       await expect(got).rejects.toThrow(/Error loading checkout_ui/)
     })
   })
@@ -106,7 +106,7 @@ describe('loadLocalesConfig', () => {
       await file.write(es, JSON.stringify(bigArray))
 
       // When
-      const got = loadLocalesConfig(tmpDir)
+      const got = loadLocalesConfig(tmpDir, 'checkout_ui')
       await expect(got).rejects.toThrow(/Error loading checkout_ui/)
     })
   })

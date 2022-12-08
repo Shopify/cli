@@ -21,11 +21,13 @@ export default class Publish extends ThemeCommand {
     store: themeFlags.store,
   }
 
+  static cli2Flags = ['force']
+
   async run(): Promise<void> {
     const {flags, args} = await this.parse(Publish)
 
     const store = await getThemeStore(flags)
-    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'store', 'verbose', 'password']})
+    const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Publish.cli2Flags})
     const command = ['theme', 'publish']
     if (args.themeId) {
       command.push(args.themeId)

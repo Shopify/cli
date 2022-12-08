@@ -1,5 +1,5 @@
 import {
-  fetchAllStores,
+  fetchAllDevStores,
   fetchOrgAndApps,
   fetchOrganizations,
   fetchStoreByDomain,
@@ -8,7 +8,8 @@ import {
 } from './fetch.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {describe, expect, it, test, vi} from 'vitest'
-import {api} from '@shopify/cli-kit'
+import {api, outputMocker} from '@shopify/cli-kit'
+import {renderFatalError} from '@shopify/cli-kit/node/ui'
 
 const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
 const ORG2: Organization = {id: '2', businessName: 'org2', appsNext: false}
@@ -128,17 +129,19 @@ describe('fetchApp', async () => {
   })
 })
 
-describe('fetchAllStores', async () => {
+describe('fetchAllDevStores', async () => {
   it('returns fetched stores', async () => {
     // Given
     vi.mocked(api.partners.request).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
 
     // When
-    const got = await fetchAllStores(ORG1.id, 'token')
+    const got = await fetchAllDevStores(ORG1.id, 'token')
 
     // Then
     expect(got).toEqual([STORE1])
-    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.AllStoresByOrganizationQuery, 'token', {id: ORG1.id})
+    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.AllDevStoresByOrganizationQuery, 'token', {
+      id: ORG1.id,
+    })
   })
 })
 
@@ -191,21 +194,32 @@ describe('fetchAppExtensionRegistrations', () => {
 })
 
 describe('NoOrgError', () => {
-  test('tryMessage has the right content', () => {
+  test('renders correctly', () => {
     // Given
+    const mockOutput = outputMocker.mockAndCaptureOutput()
     const subject = NoOrgError('3')
 
     // When
-    const got = subject.tryMessage
+    const got = renderFatalError(subject)
 
     // Then
-    /* eslint-disable no-irregular-whitespace */
-    expect(got).toMatchInlineSnapshot(`
-      "· Have you [32mcreated a Shopify Partners organization[39m (​https://partners.shopify.com/signup​)?
-      · Have you confirmed your accounts from the emails you received?
-      · Need to connect to a different App or organization? Run the command again with [1m[33m--reset[39m[22m
-      · Do you have access to the right Shopify Partners organization? The CLI is loading [32mthis organization[39m (​https://partner.shopify.com/3​)"
+    expect(mockOutput.error()).toMatchInlineSnapshot(`
+      "
+      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  No Organization found                                                       │
+      │                                                                              │
+      │  Next steps                                                                  │
+      │    • Have you created a Shopify Partners organization                        │
+      │      (https://partners.shopify.com/signup)?                                  │
+      │    • Have you confirmed your accounts from the emails you received?          │
+      │    • Need to connect to a different App or organization? Run the command     │
+      │      again with \`--reset\`                                                    │
+      │    • Do you have access to the right Shopify Partners organization? The CLI  │
+      │       is loading this organization (https://partner.shopify.com/3)           │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
-    /* eslint-enable no-irregular-whitespace */
   })
 })

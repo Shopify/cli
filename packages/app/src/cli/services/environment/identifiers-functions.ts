@@ -4,7 +4,7 @@ import {EnsureDeploymentIdsPresenceOptions, MatchingError, RemoteSource} from '.
 import {confirmPartialDeploymentPrompt, matchConfirmationPrompt} from './prompts.js'
 import {displaySourceSummaryTable} from './source-summary-table.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {err, ok, Result} from '@shopify/cli-kit/common/result'
+import {err, ok, Result} from '@shopify/cli-kit/node/result'
 
 export async function ensureFunctionsIds(
   options: EnsureDeploymentIdsPresenceOptions,

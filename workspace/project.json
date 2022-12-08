@@ -1,0 +1,18 @@
+{
+  "root": "workspace",
+  "sourceRoot": "workspace/",
+  "projectType": "library",
+  "implicitDependencies": [],
+  "tags": ["scope:workspace"],
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "node src/lint.js"
+        ],
+        "cwd": "workspace"
+      }
+    }
+  }
+}

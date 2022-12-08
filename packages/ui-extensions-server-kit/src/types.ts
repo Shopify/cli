@@ -50,6 +50,11 @@ export interface ResourceURL {
   lastUpdated: number
 }
 
+export type ExtensionPoints =
+  | string[]
+  | {target: string; module: string; surface: Surface; main: {url: string}}[]
+  | null
+
 export interface ExtensionPayload {
   type: string
   externalType: string
@@ -73,8 +78,10 @@ export interface ExtensionPayload {
   version: string
   surface: Surface
   title: string
-  extensionPoints?: string[]
+  extensionPoints: ExtensionPoints
   categories?: string[]
+  authenticatedRedirectStartUrl?: string
+  authenticatedRedirectRedirectUrls?: string[]
   localization?: {
     defaultLocale: string
     lastUpdated: number

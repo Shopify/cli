@@ -1,5 +1,8 @@
 import {schema} from '@shopify/cli-kit'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ZodSchemaType<T> = schema.define.ZodType<T, any, any>
+
 export const MetafieldSchema = schema.define.object({
   namespace: schema.define.string(),
   key: schema.define.string(),
@@ -11,33 +14,37 @@ export const CapabilitiesSchema = schema.define.object({
 })
 
 export const TypeSchema = schema.define.object({
-  type: schema.define.string().default('ui-extension'),
+  type: schema.define.string().default('ui_extension'),
 })
 
-export const ExtensionPointSchema = schema.define.object({
-  type: schema.define.string(),
+export const NewExtensionPointSchema = schema.define.object({
+  target: schema.define.string(),
   module: schema.define.string(),
   metafields: schema.define.array(MetafieldSchema).optional(),
-  capabilities: CapabilitiesSchema.optional(),
 })
+
+export const OldExtensionPointsSchema = schema.define.array(schema.define.string()).default([])
+export const NewExtensionPointsSchema = schema.define.array(NewExtensionPointSchema)
+export const ExtensionPointSchema = schema.define.union([OldExtensionPointsSchema, NewExtensionPointsSchema])
 
 export const BaseExtensionSchema = schema.define.object({
   name: schema.define.string(),
-  type: schema.define.string(),
-  extension_points: schema.define.array(ExtensionPointSchema).optional(),
+  type: schema.define.string().default('ui_extension'),
+  extensionPoints: schema.define.any().optional(),
   capabilities: schema.define
     .object({
       block_progress: schema.define.boolean().optional(),
       network_access: schema.define.boolean().optional(),
     })
     .optional(),
-  metafields: schema.define.array(MetafieldSchema).optional(),
+  metafields: schema.define.array(MetafieldSchema).optional().default([]),
+  categories: schema.define.array(schema.define.string()).optional(),
 })
 
 export const BaseFunctionConfigurationSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.string(),
-  description: schema.define.string().default(''),
+  description: schema.define.string().optional().default(''),
   build: schema.define.object({
     command: schema.define.string(),
     path: schema.define.string().optional(),
@@ -45,6 +52,7 @@ export const BaseFunctionConfigurationSchema = schema.define.object({
   configurationUi: schema.define.boolean().optional().default(true),
   ui: schema.define
     .object({
+      enable_create: schema.define.boolean().optional(),
       paths: schema.define
         .object({
           create: schema.define.string(),
@@ -56,11 +64,4 @@ export const BaseFunctionConfigurationSchema = schema.define.object({
   apiVersion: schema.define.string(),
 })
 
-export const BaseFunctionMetadataSchema = schema.define.object({
-  schemaVersions: schema.define.object({}).catchall(
-    schema.define.object({
-      major: schema.define.number(),
-      minor: schema.define.number(),
-    }),
-  ),
-})
+export type NewExtensionPointSchemaType = schema.define.infer<typeof NewExtensionPointSchema>

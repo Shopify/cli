@@ -1,14 +1,12 @@
 /* eslint-disable no-console */
-import {APIClient} from './APIClient'
+import {Surface} from './types.js'
 import {isValidSurface} from '../utilities'
-import {DeepPartial} from '../types'
+import {DeepPartial, ExtensionPayload} from '../types'
 
 export class ExtensionServerClient implements ExtensionServer.Client {
   public id: string
 
   public connection!: WebSocket
-
-  public api!: ExtensionServer.API.Client
 
   public options: ExtensionServer.Options
 
@@ -81,17 +79,6 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     this.connection?.send(JSON.stringify({event: 'dispatch', data: {type: event, payload: data}}))
   }
 
-  protected initializeApiClient() {
-    let url = ''
-    if (this.options.connection.url) {
-      // eslint-disable-next-line node/no-unsupported-features/node-builtins
-      const socketUrl = new URL(this.options.connection.url)
-      socketUrl.protocol = socketUrl.protocol === 'ws:' ? 'http:' : 'https:'
-      url = socketUrl.origin
-    }
-    this.api = new APIClient(url, this.options.surface)
-  }
-
   protected initializeConnection() {
     if (!this.connection) {
       return
@@ -115,9 +102,10 @@ export class ExtensionServerClient implements ExtensionServer.Client {
           return
         }
 
-        const filteredExtensions = data.extensions?.filter(
-          (extension: any) => !this.options.surface || extension.surface === this.options.surface,
-        )
+        const filteredExtensions = data.extensions
+          ? filterExtensionsBySurface(data.extensions, this.options.surface)
+          : data.extensions
+
         this.listeners[event]?.forEach((listener) => {
           listener({...data, extensions: filteredExtensions})
         })
@@ -134,10 +122,6 @@ export class ExtensionServerClient implements ExtensionServer.Client {
   protected setupConnection(connectWebsocket = true) {
     if (!this.options.connection.url) {
       return
-    }
-
-    if (!this.api || this.api.url !== this.connection.url) {
-      this.initializeApiClient()
     }
 
     if (!connectWebsocket) {
@@ -174,4 +158,31 @@ function getValidatedOptions<TOptions extends DeepPartial<ExtensionServer.Option
     delete options.surface
   }
   return options
+}
+
+function filterExtensionsBySurface(extensions: ExtensionPayload[], surface: Surface | undefined): ExtensionPayload[] {
+  if (!surface) {
+    return extensions
+  }
+
+  return extensions.filter((extension) => {
+    if (extension.surface === surface) {
+      return true
+    }
+
+    if (Array.isArray(extension.extensionPoints)) {
+      const extensionPoints: (string | {surface: Surface; [key: string]: any})[] = extension.extensionPoints
+      const extensionPointMatchingSurface = extensionPoints.filter((extensionPoint) => {
+        if (typeof extensionPoint === 'string') {
+          return false
+        }
+
+        return extensionPoint.surface === surface
+      })
+
+      return extensionPointMatchingSurface.length > 0
+    }
+
+    return false
+  })
 }

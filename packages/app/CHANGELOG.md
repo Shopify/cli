@@ -1,5 +1,49 @@
 # @shopify/app
 
+## 3.25.0
+
+### Minor Changes
+
+- d7064a0c: Fix issue where extensions could not import .graphql files
+- 2555e5a9: Add ui.enable_create option for function toml configuration
+
+### Patch Changes
+
+- Updated dependencies [78196a78]
+  - @shopify/cli-kit@3.25.0
+
+## 3.24.1
+
+### Patch Changes
+
+- Updated dependencies [7e5c492a]
+  - @shopify/cli-kit@3.24.1
+
+## 3.24.0
+
+### Minor Changes
+
+- 76120036: Remove metadata.json from function extension
+- fdaee1fc: Bring consistency to the environment variables that we pass to the web frontend and backend processes
+
+### Patch Changes
+
+- cb0990df: Fixed no organization error formatting
+- Updated dependencies [d47a6e80]
+- Updated dependencies [a9d4be9e]
+- Updated dependencies [aca90638]
+- Updated dependencies [cb0990df]
+  - @shopify/cli-kit@3.24.0
+
+## 3.23.0
+
+### Patch Changes
+
+- 5afb99e5: Add event trigger command
+- Updated dependencies [c15ad5df]
+- Updated dependencies [1ee1cfd1]
+  - @shopify/cli-kit@3.23.0
+
 ## 3.22.1
 
 ### Patch Changes

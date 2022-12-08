@@ -75,7 +75,7 @@ describe('createApp', () => {
     }
 
     // When
-    const got = await createApp(ORG2, LOCAL_APP, 'token')
+    const got = await createApp(ORG2, LOCAL_APP.name, 'token')
 
     // Then
     expect(got).toEqual(APP1)
@@ -89,7 +89,7 @@ describe('createApp', () => {
     vi.mocked(api.partners.request).mockResolvedValueOnce({appCreate: {app: {}, userErrors: [{message: 'some-error'}]}})
 
     // When
-    const got = createApp(ORG2, LOCAL_APP, 'token')
+    const got = createApp(ORG2, LOCAL_APP.name, 'token')
 
     // Then
     await expect(got).rejects.toThrow(`some-error`)
@@ -103,7 +103,7 @@ describe('selectOrCreateApp', () => {
     vi.mocked(api.partners.request).mockResolvedValueOnce({app: APP1})
 
     // When
-    const got = await selectOrCreateApp(LOCAL_APP, [APP1, APP2], ORG1, 'token', cachedApiKey)
+    const got = await selectOrCreateApp(LOCAL_APP.name, [APP1, APP2], ORG1, 'token', cachedApiKey)
 
     // Then
     expect(got).toEqual(APP1)
@@ -116,7 +116,7 @@ describe('selectOrCreateApp', () => {
     vi.mocked(createAsNewAppPrompt).mockResolvedValue(false)
 
     // When
-    const got = await selectOrCreateApp(LOCAL_APP, [APP1, APP2], ORG1, 'token')
+    const got = await selectOrCreateApp(LOCAL_APP.name, [APP1, APP2], ORG1, 'token')
 
     // Then
     expect(got).toEqual(APP1)
@@ -131,7 +131,7 @@ describe('selectOrCreateApp', () => {
     vi.mocked(createAsNewAppPrompt).mockResolvedValue(false)
 
     // When
-    const got = await selectOrCreateApp(LOCAL_APP, [APP1, APP2], ORG1, 'token', cachedApiKey)
+    const got = await selectOrCreateApp(LOCAL_APP.name, [APP1, APP2], ORG1, 'token', cachedApiKey)
 
     // Then
     expect(got).toEqual(APP1)
@@ -152,7 +152,7 @@ describe('selectOrCreateApp', () => {
     }
 
     // When
-    const got = await selectOrCreateApp(LOCAL_APP, [APP1, APP2], ORG1, 'token')
+    const got = await selectOrCreateApp(LOCAL_APP.name, [APP1, APP2], ORG1, 'token')
 
     // Then
     expect(got).toEqual(APP1)

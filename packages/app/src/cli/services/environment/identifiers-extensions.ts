@@ -5,7 +5,7 @@ import {matchConfirmationPrompt, confirmPartialDeploymentPrompt} from './prompts
 import {displaySourceSummaryTable} from './source-summary-table.js'
 import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {err, ok, Result} from '@shopify/cli-kit/common/result'
+import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {output, session} from '@shopify/cli-kit'
 
 export async function ensureExtensionsIds(

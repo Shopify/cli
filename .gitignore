@@ -147,3 +147,4 @@ fixtures/app/extensions/*/build
 .build
 
 packaging/dist
+!./.shadowenv.d/yarn.lisp

@@ -1,10 +1,11 @@
 import {getLocalization} from './localization.js'
 import {UIExtensionPayload} from './payload/models.js'
-import {getUIExtensionResourceURL, getUIExtensionSurface} from '../../../utilities/extensions/configuration.js'
-import {mapExtensionTypeToExternalExtensionType} from '../../../utilities/extensions/name-mapper.js'
+import {getExtensionPointTargetSurface} from './utilities.js'
+import {getUIExtensionResourceURL} from '../../../utilities/extensions/configuration.js'
 import {ExtensionDevOptions} from '../extension.js'
 import {UIExtension} from '../../../models/app/extensions.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
+import {NewExtensionPointSchemaType} from '../../../models/extensions/schemas.js'
 import {file} from '@shopify/cli-kit'
 
 type GetUIExtensionPayloadOptions = ExtensionDevOptions & {
@@ -23,7 +24,7 @@ export async function getUIExtensionPayload(
   )
 
   const renderer = await getUIExtensionRendererVersion(extension.configuration.type, options.app)
-  return {
+  const defaultConfig = {
     assets: {
       main: {
         name: 'main',
@@ -41,22 +42,21 @@ export async function getUIExtensionPayload(
       root: {
         url,
       },
-
       hidden: options.currentDevelopmentPayload?.hidden || false,
       localizationStatus,
       status: options.currentDevelopmentPayload?.status || 'success',
       ...(options.currentDevelopmentPayload || {status: 'success'}),
     },
-    extensionPoints: extension.configuration.extensionPoints ?? null,
+    extensionPoints: getExtensionPoints(extension.configuration.extensionPoints, url),
     localization: localization ?? null,
     categories: extension.configuration.categories ?? null,
     metafields: extension.configuration.metafields.length === 0 ? null : extension.configuration.metafields,
     type: extension.configuration.type,
 
-    externalType: mapExtensionTypeToExternalExtensionType(extension.configuration.type),
+    externalType: extension.externalType,
     uuid: extension.devUUID,
 
-    surface: getUIExtensionSurface(extension.configuration.type),
+    surface: extension.surface,
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -65,4 +65,27 @@ export async function getUIExtensionPayload(
     title: extension.configuration.name,
     approvalScopes: options.grantedScopes,
   }
+  return defaultConfig
+}
+
+function getExtensionPoints(extensionPoints: UIExtension['configuration']['extensionPoints'], url: string) {
+  if (!extensionPoints) {
+    return extensionPoints
+  }
+
+  return extensionPoints.map((extensionPoint: unknown) => {
+    if (extensionPoint && typeof extensionPoint === 'object') {
+      const {target} = extensionPoint as NewExtensionPointSchemaType
+
+      return {
+        ...extensionPoint,
+        surface: getExtensionPointTargetSurface(target),
+        root: {
+          url: `${url}/${target}`,
+        },
+      }
+    }
+
+    return extensionPoint
+  })
 }

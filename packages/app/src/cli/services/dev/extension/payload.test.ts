@@ -22,20 +22,22 @@ describe('getUIExtensionPayload', () => {
         version: '1.2.3',
       })
 
-      const uiExtension = testUIExtension({
+      const uiExtension = await testUIExtension({
         outputBundlePath,
         directory: tmpDir,
         configuration: {
           name: 'test-ui-extension',
-          type: 'product_subscription',
+          type: 'checkout_ui_extension',
           metafields: [],
-          extensionPoints: ['EXTENSION-POINT'],
           capabilities: {
             block_progress: false,
             network_access: true,
           },
+          extensionPoints: ['CUSTOM_EXTENSION_POINT'],
         },
+        devUUID: 'devUUID',
       })
+
       const options: ExtensionDevOptions = {
         signal,
         stdout,
@@ -79,22 +81,24 @@ describe('getUIExtensionPayload', () => {
           hidden: true,
           localizationStatus: '',
           resource: {
-            url: 'https://my-domain.com/subscription',
+            url: 'https://my-domain.com/cart',
           },
           root: {
             url: 'http://tunnel-url.com/extensions/devUUID',
           },
           status: 'success',
         },
-        extensionPoints: ['EXTENSION-POINT'],
-        externalType: 'subscription_ui',
+        categories: null,
+        extensionPoints: ['CUSTOM_EXTENSION_POINT'],
+        externalType: 'checkout_ui',
         localization: null,
         metafields: null,
-        surface: 'admin',
+        surface: 'checkout',
         title: 'test-ui-extension',
-        type: 'product_subscription',
+        type: 'checkout_ui_extension',
         uuid: 'devUUID',
         version: '1.2.3',
+        approvalScopes: ['scope-a'],
       })
     })
   })
@@ -102,7 +106,7 @@ describe('getUIExtensionPayload', () => {
   test('default values', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const uiExtension = testUIExtension({directory: tmpDir})
+      const uiExtension = await testUIExtension({directory: tmpDir})
       const options: ExtensionDevOptions = {} as ExtensionDevOptions
       const development: Partial<UIExtensionPayload['development']> = {}
 
@@ -122,6 +126,64 @@ describe('getUIExtensionPayload', () => {
           networkAccess: false,
         },
       })
+    })
+  })
+
+  test('adds root.url and surface to extensionPoints[n] when extensionPoints[n] is an object', async () => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const uiExtension = await testUIExtension({
+        devUUID: 'devUUID',
+        configuration: {
+          name: 'UI Extension',
+          type: 'ui_extension',
+          metafields: [],
+          capabilities: {
+            block_progress: false,
+            network_access: false,
+          },
+          extensionPoints: [
+            {
+              target: 'Admin::Checkout::Editor::Settings',
+              module: './src/AdminCheckoutEditorSettings.js',
+            },
+            {
+              target: 'Checkout::ShippingMethods::RenderAfter',
+              module: './src/CheckoutShippingMethodsRenderAfter.js',
+            },
+          ],
+        },
+      })
+
+      const options: ExtensionDevOptions = {} as ExtensionDevOptions
+      const development: Partial<UIExtensionPayload['development']> = {}
+
+      // When
+      const got = await getUIExtensionPayload(uiExtension, {
+        ...options,
+        currentDevelopmentPayload: development,
+        url: 'http://tunnel-url.com',
+      })
+
+      // Then
+      expect(got.extensionPoints).toStrictEqual([
+        {
+          target: 'Admin::Checkout::Editor::Settings',
+          module: './src/AdminCheckoutEditorSettings.js',
+          surface: 'admin',
+          root: {
+            url: 'http://tunnel-url.com/extensions/devUUID/Admin::Checkout::Editor::Settings',
+          },
+        },
+        {
+          target: 'Checkout::ShippingMethods::RenderAfter',
+          module: './src/CheckoutShippingMethodsRenderAfter.js',
+          surface: 'checkout',
+          root: {
+            url: 'http://tunnel-url.com/extensions/devUUID/Checkout::ShippingMethods::RenderAfter',
+          },
+        },
+      ])
     })
   })
 })

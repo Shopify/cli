@@ -8,7 +8,7 @@
       "clean": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn rimraf dist/",
+          "command": "pnpm rimraf dist/",
           "cwd": "packages/cli-main"
         }
       },
@@ -17,28 +17,35 @@
         "outputs": ["dist"],
         "inputs": ["{projectRoot}/src/**/*"],
         "options": {
-          "command": "yarn tsc -b ./tsconfig.build.json",
+          "command": "pnpm tsc -b ./tsconfig.build.json",
           "cwd": "packages/cli-main"
         }
       },
       "lint": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn eslint \"src/**/*.ts\"",
+          "command": "pnpm eslint \"src/**/*.ts\"",
           "cwd": "packages/cli-main"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn eslint 'src/**/*.ts' --fix",
+          "command": "pnpm eslint 'src/**/*.ts' --fix",
           "cwd": "packages/cli-main"
         }
       },
       "test": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn vitest run",
+          "command": "pnpm vitest run",
+          "cwd": "packages/cli-main"
+        }
+      },
+      "test:coverage": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "pnpm vitest run --reporter json --coverage --outputFile ./coverage/report.json",
           "cwd": "packages/cli-main"
         }
       },
@@ -46,14 +53,14 @@
         "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "command": "yarn vitest watch",
+          "command": "pnpm vitest watch",
           "cwd": "packages/cli-main"
         }
       },
       "type-check": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "yarn tsc --noEmit",
+          "command": "pnpm tsc --noEmit",
           "cwd": "packages/cli-main"
         }
       }

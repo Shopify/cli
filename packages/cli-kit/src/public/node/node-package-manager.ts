@@ -1,9 +1,9 @@
 import {AbortError, BugError} from './error.js'
+import {Version} from './semver.js'
 import {exec} from '../../system.js'
 import {exists as fileExists, read as readFile, write as writeFile} from '../../file.js'
 import {glob, dirname, join as pathJoin, findUp} from '../../path.js'
 import {latestNpmPackageVersion} from '../../version.js'
-import {Version} from '../../semver.js'
 import {content, token, debug} from '../../output.js'
 import {AbortController, AbortSignal} from 'abort-controller'
 import type {Writable} from 'node:stream'
@@ -12,6 +12,9 @@ import type {ExecOptions} from '../../system.js'
 /** The name of the Yarn lock file */
 export const yarnLockfile = 'yarn.lock'
 
+/** The name of the npm lock file */
+export const npmLockfile = 'package-lock.json'
+
 /** The name of the pnpm lock file */
 export const pnpmLockfile = 'pnpm-lock.yaml'
 
@@ -19,7 +22,8 @@ export const pnpmLockfile = 'pnpm-lock.yaml'
 export const pnpmWorkspaceFile = 'pnpm-workspace.yaml'
 
 /** An array containing the lockfiles from all the package managers */
-export const lockfiles = [yarnLockfile, pnpmLockfile]
+export const lockfiles: Lockfile[] = [yarnLockfile, pnpmLockfile, npmLockfile]
+export type Lockfile = 'yarn.lock' | 'package-lock.json' | 'pnpm-lock.yaml'
 
 /**
  * A union type that represents the type of dependencies in the package.json

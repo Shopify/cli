@@ -8,7 +8,6 @@ import {
   ui,
   npm,
   environment,
-  github,
   template,
   git,
   constants,
@@ -21,6 +20,7 @@ import {
   packageManagerUsedForCreating,
 } from '@shopify/cli-kit/node/node-package-manager'
 
+import {parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
 import {Writable} from 'stream'
 
 interface InitOptions {
@@ -61,7 +61,7 @@ async function init(options: InitOptions) {
 
     let tasks: ui.ListrTasks = []
 
-    const templateInfo = await github.parseRepoUrl(options.template)
+    const templateInfo = await parseGitHubRepositoryURL(options.template).valueOrAbort()
     const branch = templateInfo.ref ? `#${templateInfo.ref}` : ''
     const templatePath = templateInfo.subDirectory
       ? path.join(templateDownloadDir, templateInfo.subDirectory)

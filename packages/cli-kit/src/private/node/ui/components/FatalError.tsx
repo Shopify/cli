@@ -1,6 +1,7 @@
 import {Banner} from './Banner.js'
 import {TokenizedText} from './TokenizedText.js'
 import {Command} from './Command.js'
+import {List} from './List.js'
 import {Bug, cleanSingleStackTracePath, ExternalError, Fatal} from '../../../../error.js'
 import {Box, Text} from 'ink'
 import React from 'react'
@@ -38,7 +39,7 @@ const FatalError: React.FC<FatalErrorProps> = ({error}) => {
   }
 
   return (
-    <Banner type={tool ? 'external_error' : 'error'}>
+    <Banner type={tool ? 'external_error' : 'error'} marginY={1}>
       {tool && (
         <Box marginBottom={1}>
           <Text>
@@ -56,9 +57,16 @@ const FatalError: React.FC<FatalErrorProps> = ({error}) => {
           <TokenizedText item={error.tryMessage} />
         </Box>
       )}
+
+      {error.nextSteps && (
+        <Box marginTop={1}>
+          <List title="Next steps" items={error.nextSteps} />
+        </Box>
+      )}
+
       {stack && stack.items.length !== 0 && (
         <Box marginTop={1} flexDirection="column">
-          <Text dimColor>To investigate the issue, examine this stack trace:</Text>
+          <Text>To investigate the issue, examine this stack trace:</Text>
           {stack.items.map((item, index) => (
             <Box flexDirection="column" key={index}>
               <Text>

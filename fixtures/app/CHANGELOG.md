@@ -1,5 +1,43 @@
 # app
 
+## 3.25.0
+
+### Patch Changes
+
+- Updated dependencies [d7064a0c]
+- Updated dependencies [2555e5a9]
+  - @shopify/app@3.25.0
+  - @shopify/cli@3.25.0
+
+## 3.24.1
+
+### Patch Changes
+
+- @shopify/app@3.24.1
+- @shopify/cli@3.24.1
+
+## 3.24.0
+
+### Minor Changes
+
+- 76120036: Remove metadata.json from function extension
+
+### Patch Changes
+
+- Updated dependencies [76120036]
+- Updated dependencies [cb0990df]
+- Updated dependencies [fdaee1fc]
+  - @shopify/app@3.24.0
+  - @shopify/cli@3.24.0
+
+## 3.23.0
+
+### Patch Changes
+
+- Updated dependencies [5afb99e5]
+  - @shopify/app@3.23.0
+  - @shopify/cli@3.23.0
+
 ## 3.22.1
 
 ### Patch Changes

@@ -43,7 +43,15 @@ export default class Pull extends ThemeCommand {
       description: 'Skip downloading the specified files (Multiple flags allowed).',
       env: 'SHOPIFY_FLAG_IGNORE',
     }),
+    force: Flags.boolean({
+      hidden: true,
+      char: 'f',
+      description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
+      env: 'SHOPIFY_FLAG_FORCE',
+    }),
   }
+
+  static cli2Flags = ['theme', 'development', 'live', 'nodelete', 'only', 'ignore', 'force']
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Pull)
@@ -53,7 +61,7 @@ export default class Pull extends ThemeCommand {
       validPath = path.resolve(flags.path)
     }
 
-    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'verbose', 'store', 'password']})
+    const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Pull.cli2Flags})
 
     const command = ['theme', 'pull', validPath, ...flagsToPass]
 

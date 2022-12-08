@@ -1,16 +1,17 @@
+import {coerceSemverVersion} from './semver.js'
 import * as file from '../../file.js'
 import * as ui from '../../ui.js'
 import * as system from '../../system.js'
 import {Abort, AbortSilent} from '../../error.js'
 import {glob, join} from '../../path.js'
 import constants from '../../constants.js'
-import {coerce} from '../../semver.js'
 import {AdminSession} from '../../session.js'
 import {content, token} from '../../output.js'
+import {platformAndArch} from '../../os.js'
 import {AbortSignal} from 'abort-controller'
 import {Writable} from 'node:stream'
 
-const RubyCLIVersion = '2.31.0'
+const RubyCLIVersion = '2.32.0'
 const ThemeCheckVersion = '1.10.3'
 const MinBundlerVersion = '2.3.8'
 const MinRubyVersion = '2.7.5'
@@ -187,7 +188,7 @@ async function validateRuby() {
   let version
   try {
     const stdout = await system.captureOutput(rubyExecutable(), ['-v'])
-    version = coerce(stdout)
+    version = coerceSemverVersion(stdout)
   } catch {
     throw new Abort(
       'Ruby environment not found',
@@ -212,7 +213,7 @@ async function validateBundler() {
   let version
   try {
     const stdout = await system.captureOutput(bundleExecutable(), ['-v'])
-    version = coerce(stdout)
+    version = coerceSemverVersion(stdout)
   } catch {
     throw new Abort(
       'Bundler not found',
@@ -243,7 +244,13 @@ function createThemeCheckCLIWorkingDirectory() {
 
 async function createShopifyCLIGemfile() {
   const gemPath = join(shopifyCLIDirectory(), 'Gemfile')
-  await file.write(gemPath, `source 'https://rubygems.org'\ngem 'shopify-cli', '${RubyCLIVersion}'`)
+  const gemFileContent = ["source 'https://rubygems.org'", `gem 'shopify-cli', '${RubyCLIVersion}'`]
+  const {platform} = platformAndArch()
+  if (platform === 'windows') {
+    // 'wdm' is required by 'listen', see https://github.com/Shopify/cli/issues/780
+    gemFileContent.push("gem 'wdm', '>= 0.1.0'")
+  }
+  await file.write(gemPath, gemFileContent.join('\n'))
 }
 
 async function createThemeCheckGemfile() {

@@ -106,6 +106,7 @@ export async function uploadUIExtensionsBundle(
     .map((ver) => {
       return {uuid: ver.extensionVersion.registrationUuid, errors: ver.extensionVersion.validationErrors}
     })
+
   return validationErrors
 }
 
@@ -213,6 +214,7 @@ async function uploadFunctionExtension(
           createPath: extension.configuration.ui.paths.create,
         }
       : undefined,
+    enableCreationUi: extension.configuration.ui?.enable_create ?? true,
     moduleUploadUrl: url,
   }
 

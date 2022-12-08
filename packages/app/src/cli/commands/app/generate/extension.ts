@@ -3,12 +3,10 @@ import {
   extensions,
   ExtensionTypes,
   getExtensionOutputConfig,
-  limitedExtensions,
   isUiExtensionType,
   isThemeExtensionType,
   isFunctionExtensionType,
   functionExtensionTemplates,
-  ExternalExtensionTypes,
   extensionTypeCategory,
   extensionTypeIsGated,
 } from '../../../constants.js'
@@ -17,14 +15,14 @@ import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import generateExtensionService, {ExtensionFlavor} from '../../../services/generate/extension.js'
 import {getUIExtensionTemplates} from '../../../utilities/extensions/template-configuration.js'
-import {
-  mapExternalExtensionTypeToExtensionType,
-  mapExtensionTypesToExternalExtensionTypes,
-  mapExtensionTypeToExternalExtensionType,
-} from '../../../utilities/extensions/name-mapper.js'
+import {mapExtensionTypesToExternalExtensionTypes} from '../../../utilities/extensions/name-mapper.js'
 import metadata from '../../../metadata.js'
 import Command from '../../../utilities/app-command.js'
-import {output, path, cli, error, environment} from '@shopify/cli-kit'
+import {ensureGenerateEnvironment} from '../../../services/environment.js'
+import {fetchExtensionSpecifications} from '../../../utilities/extensions/fetch-extension-specifications.js'
+import {allFunctionSpecifications} from '../../../models/extensions/specifications.js'
+import {FunctionSpec} from '../../../models/extensions/functions.js'
+import {output, path, cli, error, environment, session, api} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -62,6 +60,17 @@ export default class AppScaffoldExtension extends Command {
       options: ['vanilla-js', 'react', 'typescript', 'typescript-react', 'wasm', 'rust'],
       env: 'SHOPIFY_FLAG_TEMPLATE',
     }),
+    reset: Flags.boolean({
+      hidden: false,
+      description: 'Reset all your settings.',
+      env: 'SHOPIFY_FLAG_RESET',
+      default: false,
+    }),
+    'api-key': Flags.string({
+      hidden: false,
+      description: 'The API key of your app.',
+      env: 'SHOPIFY_FLAG_APP_API_KEY',
+    }),
   }
 
   static args = [{name: 'file'}]
@@ -74,26 +83,59 @@ export default class AppScaffoldExtension extends Command {
     const {flags} = await this.parse(AppScaffoldExtension)
 
     await metadata.addPublic(() => ({
-      cmd_scaffold_required_auth: false,
+      cmd_scaffold_required_auth: true,
       cmd_scaffold_template_custom: flags['clone-url'] !== undefined,
       cmd_scaffold_type_owner: '@shopify/app',
     }))
 
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+
+    const isShopify = await environment.local.isShopify()
+    const token = await session.ensureAuthenticatedPartners()
+    const apiKey = await ensureGenerateEnvironment({apiKey: flags['api-key'], directory, reset: flags.reset, token})
+    const extensionsSpecs = await fetchExtensionSpecifications(token, apiKey)
+    const functionSpecs = await (await allFunctionSpecifications()).filter((spec) => spec.public || isShopify)
+    let allExtensionSpecs = [...extensionsSpecs, ...functionSpecs]
+
+    // Pending: use specs to load local extensions
     const app: AppInterface = await loadApp(directory)
+    const specification = this.findSpecification(flags.type, extensionsSpecs, functionSpecs)
+    const allExternalTypes = allExtensionSpecs.map((spec) => spec.externalIdentifier)
 
-    flags.type = mapExternalExtensionTypeToExtensionType(flags.type as ExternalExtensionTypes)
+    if (flags.type && !specification) {
+      throw new error.Abort(`The following extension types are supported: ${allExternalTypes.join(', ')}`)
+    }
 
-    await this.validateExtensionType(flags.type)
-    this.validateExtensionTypeLimit(app, flags.type)
-    this.validateExtensionFlavor(flags.type, flags.template)
+    // Map to always use the internal type from now on
+    flags.type = specification?.identifier || flags.type
+
+    if (specification) {
+      const existing = app.extensionsForType(specification)
+      const limit = specification.options.registrationLimit
+      if (existing.length >= limit) {
+        throw new error.Abort(
+          'Invalid extension type',
+          `You can only generate ${limit} extension(s) of type ${specification.externalIdentifier} per app`,
+        )
+      }
+    } else {
+      allExtensionSpecs = allExtensionSpecs.filter((spec) => {
+        const existing = app.extensionsForType(spec)
+        output.debug(`${existing.length}: ${spec.externalIdentifier}`)
+        return existing.length < spec.options.registrationLimit
+      })
+    }
+
+    this.validateExtensionFlavor(specification?.identifier, flags.template)
 
     const promptAnswers = await generateExtensionPrompt({
       extensionType: flags.type,
-      extensionTypesAlreadyAtQuota: this.limitedExtensionsAlreadyScaffolded(app),
       name: flags.name,
       extensionFlavor: flags.template,
       directory: path.join(directory, 'extensions'),
+      app,
+      extensionSpecifications: allExtensionSpecs,
+      reset: flags.reset,
     })
 
     const {extensionType, extensionFlavor} = promptAnswers
@@ -121,36 +163,16 @@ export default class AppScaffoldExtension extends Command {
     output.info(formattedSuccessfulMessage)
   }
 
-  async validateExtensionType(type: string | undefined) {
-    if (!type) {
-      return
-    }
-    const isShopify = await environment.local.isShopify()
-    const supportedExtensions = isShopify ? extensions.types : extensions.publicTypes
-    if (!(supportedExtensions as string[]).includes(type)) {
-      throw new error.Abort(
-        `The following extension types are supported: ${mapExtensionTypesToExternalExtensionTypes(
-          supportedExtensions,
-        ).join(', ')}`,
-      )
-    }
-  }
-
-  /**
-   * If the type passed as flag is not valid because it has already been scaffolded
-   * and we don't allow multiple extensions of that type, throw an error
-   * @param app - current App
-   * @param type - extension type
-   */
-  validateExtensionTypeLimit(app: AppInterface, type: string | undefined) {
-    if (type && this.limitedExtensionsAlreadyScaffolded(app).includes(type)) {
-      throw new error.Abort(
-        'Invalid extension type',
-        `You can only scaffold one extension of type ${mapExtensionTypeToExternalExtensionType(
-          type as ExtensionTypes,
-        )} per app`,
-      )
-    }
+  findSpecification(
+    type: string | undefined,
+    extensionSpecs: api.graphql.RemoteSpecification[],
+    functionSpecs: FunctionSpec[],
+  ) {
+    if (!type) return
+    // Harcode some types that are not present in the remote specs with the same words
+    const extensionSpec = extensionSpecs.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
+    const functionSpec = functionSpecs.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
+    return extensionSpec ?? functionSpec
   }
 
   validateExtensionFlavor(type: string | undefined, flavor: string | undefined) {
@@ -173,22 +195,6 @@ export default class AppScaffoldExtension extends Command {
     if (isFunctionExtensionType(type) && !functionExtensionTemplateNames.includes(flavor)) {
       throw invalidTemplateError(functionExtensionTemplateNames)
     }
-  }
-
-  /**
-   * Some extension types like `theme` and `product_subscription` are limited to one per app
-   * Use this method to retrieve a list of the limited types that have already been scaffolded
-   *
-   * @param app - current App
-   * @returns list of extensions that are limited by quantity and are already scaffolded
-   */
-  limitedExtensionsAlreadyScaffolded(app: AppInterface): string[] {
-    const themeTypes = app.extensions.theme.map((ext) => ext.configuration.type)
-    const uiTypes = app.extensions.ui.map((ext) => ext.configuration.type)
-
-    const themeExtensions = themeTypes.filter((type) => limitedExtensions.theme.includes(type))
-    const uiExtensions = uiTypes.filter((type) => limitedExtensions.ui.includes(type))
-    return [...themeExtensions, ...uiExtensions]
   }
 
   formatSuccessfulRunMessage(

@@ -22,9 +22,9 @@ jobs:
     - uses: actions/stale@v4
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-        days-before-issue-stale: 90
+        days-before-issue-stale: 21
         days-before-pr-stale: 30
-        days-before-close: 10
+        days-before-close: 7
         stale-issue-message: |-
           This issue seems inactive. If it's still relevant, please add a comment saying so. Otherwise, take no action.
           → If there's no activity within a week, then a bot will automatically close this.
