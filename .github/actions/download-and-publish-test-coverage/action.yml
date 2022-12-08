@@ -3,7 +3,9 @@ description: "Downloads test coverage stats from the base branch, publishes a co
 runs:
   using: "composite"
   steps:
+    # Strips forward slashes and dots as not supported by artifact commands
     - name: Clean base ref name
+      shell: bash
       env:
           SAFE_BASE_REF_NAME: "${{ github.base_ref }}"
       run: |
