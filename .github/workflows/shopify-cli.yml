@@ -162,11 +162,11 @@ jobs:
         run: cp ./report.json ./baseline-report.json
       - uses: actions/upload-artifact@v3
         with:
-          name: {{ github.ref_name }}--coverage-report
+          name: ${{ github.ref_name }}--coverage-report
           path: ./baseline-report.json
       - uses: actions/download-artifact@v3
         with:
-          name: {{ github.base_ref }}--coverage-report
+          name: ${{ github.base_ref }}--coverage-report
       - uses: ArtiomTr/jest-coverage-report-action@v2.1.2
         id: coverage
         with:
