@@ -1,5 +1,9 @@
 name: "Download and publish test coverage"
 description: "Downloads test coverage stats from the base branch, publishes a comment with a summary"
+inputs:
+  base-branch-name:
+    required: true
+    description: "Name of the branch to compare coverage with"
 runs:
   using: "composite"
   steps:
@@ -7,7 +11,7 @@ runs:
     - name: Clean base ref name
       shell: bash
       env:
-          SAFE_BASE_REF_NAME: "${{ github.base_ref }}"
+          SAFE_BASE_REF_NAME: "${{ inputs.base-branch-name }}"
       run: |
         SAFE_BASE_REF_NAME=${{ env.SAFE_BASE_REF_NAME }}
         SAFE_BASE_REF_NAME=${SAFE_BASE_REF_NAME//[\/.]/}

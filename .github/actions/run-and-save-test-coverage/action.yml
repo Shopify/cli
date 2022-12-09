@@ -1,5 +1,9 @@
 name: "Run and save test coverage"
 description: "Runs unit tests in coverage mode, merges results across packages, and uploads for future comparisons"
+inputs:
+  branch-name:
+    required: true
+    description: "Name of the branch being tested"
 runs:
   using: "composite"
   steps:
@@ -19,7 +23,7 @@ runs:
     - name: Clean ref name
       shell: bash
       env:
-          SAFE_REF_NAME: "${{ github.head_ref }}"
+          SAFE_REF_NAME: "${{ inputs.branch-name }}"
       run: |
         SAFE_REF_NAME=${{ env.SAFE_REF_NAME }}
         SAFE_REF_NAME=${SAFE_REF_NAME//[\/.]/}
