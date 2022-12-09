@@ -18,7 +18,7 @@ describe('upgrade command', () => {
     outputMocker.mockAndCaptureOutput().clear()
   })
 
-  test.each(['bfs', 'hydrogen', 'devtools'])('launches service with %s', async (mode) => {
+  test.each(['bfs'])('launches service with %s', async (mode) => {
     vi.mocked(ui.prompt).mockResolvedValue({editionschoice: mode})
     const mockOutput = outputMocker.mockAndCaptureOutput()
     await Editions.run([], import.meta.url)
