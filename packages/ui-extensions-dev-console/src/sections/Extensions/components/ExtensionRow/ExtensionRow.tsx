@@ -1,15 +1,11 @@
 import * as styles from './ExtensionRow.module.scss'
 import en from './translations/en.json'
 import {ActionSet, ActionSetProps} from '../ActionSet'
-import {useExtensionsInternal} from '../../hooks/useExtensionsInternal.js'
+import {PreviewLink} from '../PreviewLink'
 import React, {MouseEvent, useCallback, useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
-import {Link} from '@shopify/polaris'
-import {ClipboardMinor} from '@shopify/polaris-icons'
 import {Checkbox} from '@/components/CheckBox'
-import {Action} from '@/components/Action/Action'
-import {useToast} from '@/hooks/useToast.js'
 
 export type ExtensionRowProps = {
   extension: ExtensionPayload
@@ -43,70 +39,20 @@ export function ExtensionRow({
     [extension, onSelect],
   )
 
-  const showToast = useToast()
-
   const [isFocus, setFocus] = useState(false)
 
   const textClass = hidden ? styles.Hidden : undefined
   const statusClass = status ? styles[status || 'error'] : styles.error
-  const {embedded, navigate} = useExtensionsInternal()
-
-  const handleOpenRoot = useCallback(() => {
-    const roolUrl = extension.development.root.url
-    if (embedded && window.top) {
-      navigate(extension)
-      return
-    }
-    window.open(roolUrl, '_blank')
-  }, [embedded, extension, navigate])
-
-  function handleCopy(toCopy: string) {
-    if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard
-        .writeText(toCopy)
-        .then(() =>
-          showToast({
-            content: i18n.translate('copy.toast'),
-          }),
-        )
-        .catch(() =>
-          showToast({
-            content: i18n.translate('copy.error'),
-          }),
-        )
-    }
-  }
 
   const extensionPointsMarkup = Array.isArray(extension.extensionPoints) ? (
     extension.extensionPoints.map((extensionPoint) => {
       const target = typeof extensionPoint === 'object' ? extensionPoint.target : extensionPoint
-      // TODO: Typing is incorrect here
       const url = typeof extensionPoint === 'object' ? extensionPoint.root.url : extension.development.root.url
 
-      return (
-        <span className={styles.UrlWrapper} key={target}>
-          <Link url={url} external onClick={handleOpenRoot}>
-            {target}
-          </Link>
-          <Action
-            source={ClipboardMinor}
-            accessibilityLabel={i18n.translate('copy.label')}
-            onAction={() => handleCopy(url)}
-          />
-        </span>
-      )
+      return <PreviewLink key={target} title={target} url={url} />
     })
   ) : (
-    <span className={styles.UrlWrapper}>
-      <Link url={extension.development.root.url} external onClick={handleOpenRoot}>
-        {extension.title}
-      </Link>
-      <Action
-        source={ClipboardMinor}
-        accessibilityLabel={i18n.translate('copy.label')}
-        onAction={() => handleCopy(extension.development.root.url)}
-      />
-    </span>
+    <PreviewLink title={extension.title} url={extension.development.root.url} />
   )
 
   return (
@@ -130,10 +76,7 @@ export function ExtensionRow({
           </div>
         }
       </td>
-      {/* TODO: This is ugly.  Might not matter if we removed the checkboxes in the row */}
-      <td className={textClass} onClick={(event) => event.stopPropagation()}>
-        {extensionPointsMarkup}
-      </td>
+      <td className={textClass}>{extensionPointsMarkup}</td>
       <td className={textClass}>{extension.externalType}</td>
       <td>
         <span className={`${styles.Status} ${statusClass}`}>{i18n.translate(`statuses.${status}`)}</span>

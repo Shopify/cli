@@ -1,0 +1,7 @@
+{
+  "copy": {
+    "label": "Copy preview URL to clipboard",
+    "toast": "Preview URL copied to clipboard",
+    "error": "Could not copy preview URL"
+  }
+}

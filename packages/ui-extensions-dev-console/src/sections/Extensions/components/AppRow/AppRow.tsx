@@ -1,10 +1,11 @@
 import * as styles from './AppRow.module.scss'
 import en from './translations/en.json'
 import {useExtensionsInternal} from '../../hooks/useExtensionsInternal.js'
+import {PreviewLink} from '../PreviewLink/PreviewLink.js'
 import React, {useMemo, useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {MobileMajor} from '@shopify/polaris-icons'
-import {Link, Modal} from '@shopify/polaris'
+import {Modal} from '@shopify/polaris'
 import QRCode from 'qrcode.react'
 import {Action} from '@/components/Action'
 
@@ -30,13 +31,9 @@ export function AppRow({url, title, apiKey}: ExtensionRowProps) {
     <>
       <tr className={styles.DevToolRow}>
         <td></td>
-        <td>
-          <Link url={url} external>
-            {title}
-          </Link>
+        <td colSpan={3}>
+          <PreviewLink url={url} title={title} />
         </td>
-        <td></td>
-        <td></td>
         <td>
           <div className={styles.ActionSet}>
             <Action
