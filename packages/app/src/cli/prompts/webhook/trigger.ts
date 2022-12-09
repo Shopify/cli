@@ -66,10 +66,11 @@ export async function addressPrompt(deliveryMethod: string): Promise<string> {
       message: 'Address for delivery',
       default: '',
       validate: (value) => {
-        if (value.length === 0) {
+        const trimmed = value.trim()
+        if (trimmed.length === 0) {
           return "Address can't be empty"
         }
-        if (isAddressAllowedForDeliveryMethod(value, deliveryMethod)) {
+        if (isAddressAllowedForDeliveryMethod(trimmed, deliveryMethod)) {
           return true
         }
 
@@ -78,7 +79,7 @@ export async function addressPrompt(deliveryMethod: string): Promise<string> {
     },
   ])
 
-  return input.address
+  return input.address.trim()
 }
 
 export async function sharedSecretPrompt(): Promise<string> {
