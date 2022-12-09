@@ -60,41 +60,41 @@ describe('downloadRepository()', async () => {
     expect(mockedClone).toHaveBeenCalledWith('http://repoUrl', destination, options)
   })
 
-  it('fails when the shallow and latestRelease properties are passed', async () => {
+  it('fails when the shallow and latestTag properties are passed', async () => {
     await expect(async () => {
       // Given
       const repoUrl = 'http://repoUrl'
       const destination = 'destination'
       const shallow = true
-      const latestRelease = true
+      const latestTag = true
 
       // When
-      await git.downloadRepository({repoUrl, destination, shallow, latestRelease})
+      await git.downloadRepository({repoUrl, destination, shallow, latestTag})
 
       // Then
     }).rejects.toThrowError(/Git can't clone the latest release with the 'shallow' property/)
   })
 
-  it('fails when the branch and latestRelease properties are passed', async () => {
+  it('fails when the branch and latestTag properties are passed', async () => {
     await expect(async () => {
       // Given
       const repoUrl = 'http://repoUrl#my-branch'
       const destination = 'destination'
-      const latestRelease = true
+      const latestTag = true
 
       // When
-      await git.downloadRepository({repoUrl, destination, latestRelease})
+      await git.downloadRepository({repoUrl, destination, latestTag})
 
       // Then
     }).rejects.toThrowError(/Git can't clone the latest release with a 'branch'/)
   })
 
-  it("fails when the latestRelease doesn't exist ", async () => {
+  it("fails when the latestTag doesn't exist ", async () => {
     await expect(async () => {
       // Given
       const repoUrl = 'http://repoUrl'
       const destination = 'destination'
-      const latestRelease = true
+      const latestTag = true
       const mockedTags = vi.fn(async () => ({
         all: [],
         latest: undefined,
@@ -106,22 +106,22 @@ describe('downloadRepository()', async () => {
       })
 
       // When
-      await git.downloadRepository({repoUrl, destination, latestRelease})
+      await git.downloadRepository({repoUrl, destination, latestTag})
 
       // Then
-    }).rejects.toThrowError(/Git can't clone the latest release when it doesn't exist/)
+    }).rejects.toThrowError(/Couldn't obtain the most recent tag of the repository http:\/\/repoUrl/)
   })
 
   it('calls simple-git to clone a repo with branch and checkouts the latest release', async () => {
     // Given
     const repoUrl = 'http://repoUrl'
     const destination = 'destination'
-    const latestRelease = true
+    const latestTag = true
     const options: any = {'--recurse-submodules': null}
-    const latestTag = '1.2.3'
+    const expectedLatestTag = '1.2.3'
     const mockedTags = vi.fn(async () => ({
       all: [],
-      latest: latestTag,
+      latest: expectedLatestTag,
     }))
     const mockCheckout = vi.fn(async () => ({current: 'Mocked'}))
 
@@ -132,11 +132,11 @@ describe('downloadRepository()', async () => {
     })
 
     // When
-    await git.downloadRepository({repoUrl, destination, latestRelease})
+    await git.downloadRepository({repoUrl, destination, latestTag})
 
     // Then
     expect(mockedClone).toHaveBeenCalledWith('http://repoUrl', destination, options)
-    expect(mockCheckout).toHaveBeenCalledWith(latestTag)
+    expect(mockCheckout).toHaveBeenCalledWith(expectedLatestTag)
   })
 })
 

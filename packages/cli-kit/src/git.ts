@@ -68,27 +68,27 @@ export async function downloadRepository({
   destination,
   progressUpdater,
   shallow,
-  latestRelease,
+  latestTag,
 }: {
   repoUrl: string
   destination: string
   progressUpdater?: (statusString: string) => void
   shallow?: boolean
-  latestRelease?: boolean
+  latestTag?: boolean
 }) {
   debug(content`Git-cloning repository ${repoUrl} into ${token.path(destination)}...`)
   await ensurePresentOrAbort()
   const [repository, branch] = repoUrl.split('#')
   const options: TaskOptions = {'--recurse-submodules': null}
 
-  if (branch && latestRelease) {
+  if (branch && latestTag) {
     throw new Abort("Error cloning the repository. Git can't clone the latest release with a 'branch'.")
   }
   if (branch) {
     options['--branch'] = branch
   }
 
-  if (shallow && latestRelease) {
+  if (shallow && latestTag) {
     throw new Abort("Error cloning the repository. Git can't clone the latest release with the 'shallow' property.")
   }
   if (shallow) {
@@ -107,9 +107,9 @@ export async function downloadRepository({
   try {
     await git(simpleGitOptions).clone(repository!, destination, options)
 
-    if (latestRelease) {
+    if (latestTag) {
       const localGitRepository = git(destination)
-      const latestTag = await getLocalLatestRelease(localGitRepository)
+      const latestTag = await getLocalLatestTag(localGitRepository, repoUrl)
       await localGitRepository.checkout(latestTag)
     }
   } catch (err) {
@@ -122,14 +122,14 @@ export async function downloadRepository({
   }
 }
 
-async function getLocalLatestRelease(repository: SimpleGit) {
-  const latestTag = (await repository.tags()).latest
+async function getLocalLatestTag(repository: SimpleGit, repoUrl: string) {
+  const latest = (await repository.tags()).latest
 
-  if (!latestTag) {
-    throw new Abort("Error cloning the repository. Git can't clone the latest release when it doesn't exist.")
+  if (!latest) {
+    throw new Abort(`Couldn't obtain the most recent tag of the repository ${repoUrl}`)
   }
 
-  return latestTag
+  return latest
 }
 
 export async function getLatestCommit(directory?: string): Promise<DefaultLogFields & ListLogLine> {

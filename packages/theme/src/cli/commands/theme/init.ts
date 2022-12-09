@@ -1,6 +1,6 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {rawClone, latestClone} from '../../services/init.js'
+import {cloneRepoAndCheckoutLatestTag, cloneRepo} from '../../services/init.js'
 import {Flags} from '@oclif/core'
 import {cli, path, ui} from '@shopify/cli-kit'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
@@ -41,9 +41,9 @@ export default class Init extends ThemeCommand {
     const repoUrl = flags['clone-url']
 
     if (flags.latest) {
-      await latestClone(repoUrl, destination)
+      await cloneRepoAndCheckoutLatestTag(repoUrl, destination)
     } else {
-      await rawClone(repoUrl, destination)
+      await cloneRepo(repoUrl, destination)
     }
   }
 

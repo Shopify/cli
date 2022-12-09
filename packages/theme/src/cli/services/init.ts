@@ -1,14 +1,14 @@
 import {git, ui} from '@shopify/cli-kit'
 
-export async function rawClone(repoUrl: string, destination: string) {
+export async function cloneRepo(repoUrl: string, destination: string) {
   await downloadRepository(repoUrl, destination)
 }
 
-export async function latestClone(repoUrl: string, destination: string) {
+export async function cloneRepoAndCheckoutLatestTag(repoUrl: string, destination: string) {
   await downloadRepository(repoUrl, destination, true)
 }
 
-async function downloadRepository(repoUrl: string, destination: string, latestRelease?: boolean) {
+async function downloadRepository(repoUrl: string, destination: string, latestTag?: boolean) {
   await ui
     .newListr([
       {
@@ -17,7 +17,7 @@ async function downloadRepository(repoUrl: string, destination: string, latestRe
           await git.downloadRepository({
             repoUrl,
             destination,
-            latestRelease,
+            latestTag,
           })
           return {
             successMessage: `Cloned into ${destination}`,

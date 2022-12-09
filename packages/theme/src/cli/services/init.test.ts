@@ -1,4 +1,4 @@
-import {latestClone, rawClone} from './init.js'
+import {cloneRepoAndCheckoutLatestTag, cloneRepo} from './init.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {git} from '@shopify/cli-kit'
 
@@ -15,23 +15,23 @@ beforeEach(async () => {
   })
 })
 
-describe('latestClone()', async () => {
+describe('cloneRepoAndCheckoutLatestTag()', async () => {
   it('calls downloadRepository function from git service to clone a repo without branch', async () => {
     // Given
     const repoUrl = 'https://github.com/Shopify/dawn.git'
     const destination = 'destination'
-    const latestRelease = true
+    const latestTag = true
     const downloadRepositorySpy = vi.spyOn(git, 'downloadRepository')
 
     // When
-    await latestClone(repoUrl, destination)
+    await cloneRepoAndCheckoutLatestTag(repoUrl, destination)
 
     // Then
-    expect(downloadRepositorySpy).toHaveBeenCalledWith({repoUrl, destination, latestRelease})
+    expect(downloadRepositorySpy).toHaveBeenCalledWith({repoUrl, destination, latestTag})
   })
 })
 
-describe('rawClone()', async () => {
+describe('cloneRepo()', async () => {
   it('calls downloadRepository function from git service to clone a repo without branch', async () => {
     // Given
     const repoUrl = 'https://github.com/Shopify/dawn.git'
@@ -39,7 +39,7 @@ describe('rawClone()', async () => {
     const downloadRepositorySpy = vi.spyOn(git, 'downloadRepository')
 
     // When
-    await rawClone(repoUrl, destination)
+    await cloneRepo(repoUrl, destination)
 
     // Then
     expect(downloadRepositorySpy).toHaveBeenCalledWith({repoUrl, destination})
