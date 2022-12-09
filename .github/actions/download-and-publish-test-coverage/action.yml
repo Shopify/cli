@@ -19,6 +19,7 @@ runs:
     - name: Download artifact
       continue-on-error: true
       id: download-artifact
+      # We use this action and not Github's default, due to https://github.com/actions/download-artifact/issues/3
       uses: dawidd6/action-download-artifact@v2.24.2
       with:
         workflow: shopify-cli.yml
