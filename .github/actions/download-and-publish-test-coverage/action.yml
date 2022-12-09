@@ -12,10 +12,33 @@ runs:
         SAFE_BASE_REF_NAME=${{ env.SAFE_BASE_REF_NAME }}
         SAFE_BASE_REF_NAME=${SAFE_BASE_REF_NAME//[\/.]/}
         echo SAFE_BASE_REF_NAME=${SAFE_BASE_REF_NAME} >> $GITHUB_ENV
-    - uses: actions/download-artifact@v3
+    - name: Download artifact
       continue-on-error: true
+      id: download-artifact
+      uses: dawidd6/action-download-artifact@v2.24.2
       with:
+        # Optional, workflow file name or ID
+        # If not specified, will be inferred from run_id (if run_id is specified), or will be the current workflow
+        workflow: shopify-cli.yml
+        # Optional, the status or conclusion of a completed workflow to search for
+        # Can be one of a workflow conclusion:
+        #   "failure", "success", "neutral", "cancelled", "skipped", "timed_out", "action_required"
+        # Or a workflow status:
+        #   "completed", "in_progress", "queued"
+        # Use the empty string ("") to ignore status or conclusion in the search
+        workflow_conclusion: success
+        # Optional, will use the specified branch. Defaults to all branches
+        branch: main
+        # Optional, uploaded artifact name,
+        # will download all artifacts if not specified
+        # and extract them into respective subdirectories
+        # https://github.com/actions/download-artifact#download-all-artifacts
         name: ${{ env.SAFE_BASE_REF_NAME }}--coverage-report
+        # Optional, choose how to exit the action if no artifact is found
+        # can be one of:
+        #  "fail", "warn", "ignore"
+        # default fail
+        if_no_artifact_found: ignore
     - uses: ArtiomTr/jest-coverage-report-action@v2.1.2
       id: coverage
       with:
