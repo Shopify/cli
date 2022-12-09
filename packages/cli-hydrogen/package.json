@@ -48,7 +48,7 @@
     "@shopify/cli-kit": "3.28.0",
     "fast-glob": "3.2.11",
     "fs-extra": "10.0.0",
-    "typescript": "4.6.4",
+    "typescript": "4.8.4",
     "@shopify/prettier-config": "1.1.2",
     "graphql-request": "4.3.0"
   },
