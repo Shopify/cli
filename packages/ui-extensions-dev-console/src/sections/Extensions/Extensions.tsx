@@ -123,7 +123,7 @@ export function Extensions() {
           </tr>
         </thead>
         <tbody>
-          {app ? <AppRow url={app.url} title={app.title} /> : null}
+          {app ? <AppRow url={app.url} title={app.title} apiKey={app.apiKey} /> : null}
           {extensions.map((extension) => {
             const uuid = extension.uuid
             return (

@@ -11,9 +11,10 @@ import {Action} from '@/components/Action'
 export interface ExtensionRowProps {
   url: string
   title: string
+  apiKey: string
 }
 
-export function AppRow({url, title}: ExtensionRowProps) {
+export function AppRow({url, title, apiKey}: ExtensionRowProps) {
   const [showModel, setShowModal] = useState(false)
   const [i18n] = useI18n({
     id: 'ExtensionRow',
@@ -23,9 +24,7 @@ export function AppRow({url, title}: ExtensionRowProps) {
     state: {store},
   } = useExtensionsInternal()
 
-  // TODO: This is the URL for an extension
-  // Is there an equivelant URL for an app home page?
-  const qrCodeUrl = useMemo(() => `https://${store}/admin/extensions-dev/mobile?url=${url}`, [store, url])
+  const qrCodeUrl = useMemo(() => `https://${store}/admin/apps/${apiKey}`, [store, url])
 
   console.log(qrCodeUrl)
 
