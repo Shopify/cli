@@ -60,14 +60,54 @@ export function ExtensionRow({
     window.open(roolUrl, '_blank')
   }, [embedded, extension, navigate])
 
-  async function handleCopyUrl() {
+  function handleCopy(toCopy: string) {
     if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
-      showToast({
-        content: i18n.translate('copy.toast'),
-      })
-      return navigator.clipboard.writeText(extension.development.root.url)
+      navigator.clipboard
+        .writeText(toCopy)
+        .then(() =>
+          showToast({
+            content: i18n.translate('copy.toast'),
+          }),
+        )
+        .catch(() =>
+          showToast({
+            content: i18n.translate('copy.error'),
+          }),
+        )
     }
   }
+
+  const extensionPointsMarkup = Array.isArray(extension.extensionPoints) ? (
+    extension.extensionPoints.map((extensionPoint) => {
+      const target = typeof extensionPoint === 'object' ? extensionPoint.target : extensionPoint
+      // TODO: Typing is incorrect here
+      const url = typeof extensionPoint === 'object' ? extensionPoint.root.url : extension.development.root.url
+
+      return (
+        <span className={styles.UrlWrapper} key={target}>
+          <Link url={url} external onClick={handleOpenRoot}>
+            {target}
+          </Link>
+          <Action
+            source={ClipboardMinor}
+            accessibilityLabel={i18n.translate('copy.label')}
+            onAction={() => handleCopy(url)}
+          />
+        </span>
+      )
+    })
+  ) : (
+    <span className={styles.UrlWrapper}>
+      <Link url={extension.development.root.url} external onClick={handleOpenRoot}>
+        {extension.title}
+      </Link>
+      <Action
+        source={ClipboardMinor}
+        accessibilityLabel={i18n.translate('copy.label')}
+        onAction={() => handleCopy(extension.development.root.url)}
+      />
+    </span>
+  )
 
   return (
     <tr
@@ -92,12 +132,7 @@ export function ExtensionRow({
       </td>
       {/* TODO: This is ugly.  Might not matter if we removed the checkboxes in the row */}
       <td className={textClass} onClick={(event) => event.stopPropagation()}>
-        <span className={styles.UrlWrapper}>
-          <Link url={extension.development.root.url} external onClick={handleOpenRoot}>
-            {extension.title}
-          </Link>
-          <Action source={ClipboardMinor} accessibilityLabel={i18n.translate('copy.label')} onAction={handleCopyUrl} />
-        </span>
+        {extensionPointsMarkup}
       </td>
       <td className={textClass}>{extension.externalType}</td>
       <td>
