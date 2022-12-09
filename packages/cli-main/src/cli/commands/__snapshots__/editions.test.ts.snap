@@ -1,0 +1,94 @@
+// Vitest Snapshot v1
+
+exports[`upgrade command > launches service with bfs 1`] = `
+"   _____ __                _ ____         ______    ___ __  _
+  / ___// /_  ____  ____  (_) __/_  __   / ____/___/ (_) /_(_)___  ____  _____
+  \\\\__ \\\\/ __ \\\\/ __ \\\\/ __ \\\\/ / /_/ / / /  / __/ / __  / / __/ / __ \\\\/ __ \\\\/ ___/
+ ___/ / / / / /_/ / /_/ / / __/ /_/ /  / /___/ /_/ / / /_/ / /_/ / / / (__  )
+/____/_/ /_/\\\\____/ .___/_/_/  \\\\__, /  /_____/\\\\__,_/_/\\\\__/_/\\\\____/_/ /_/____/
+                /_/          /____/
+    ____               __  ___          __
+   / __ \\\\___ _   __   /  |/  /___  ____/ /__
+  / / / / _ \\\\ | / /  / /|_/ / __ \\\\/ __  / _ \\\\
+ / /_/ /  __/ |/ /  / /  / / /_/ / /_/ /  __/
+/_____/\\\\___/|___/  /_/  /_/\\\\____/\\\\__,_/\\\\___/
+
+
+Welcome to Dev Mode for the Summer 2022 Edition
+https://shopify.com/editions/dev
+
+
+- Built for Shopify: Build great commerce apps that look and perform like they’re part of Shopify
+- Shopify Functions: New ways to extend Shopify: Build custom discounts, shipping, and payments
+- Checkout Extensibility: Apps for checkout are here: Powerful customizations that work with Shop Pay
+
+
+
+Read more here: https://shopify.com/editions/dev#chapter-1
+
+
+
+"
+`;
+
+exports[`upgrade command > launches service with devtools 1`] = `
+"   _____ __                _ ____         ______    ___ __  _
+  / ___// /_  ____  ____  (_) __/_  __   / ____/___/ (_) /_(_)___  ____  _____
+  \\\\__ \\\\/ __ \\\\/ __ \\\\/ __ \\\\/ / /_/ / / /  / __/ / __  / / __/ / __ \\\\/ __ \\\\/ ___/
+ ___/ / / / / /_/ / /_/ / / __/ /_/ /  / /___/ /_/ / / /_/ / /_/ / / / (__  )
+/____/_/ /_/\\\\____/ .___/_/_/  \\\\__, /  /_____/\\\\__,_/_/\\\\__/_/\\\\____/_/ /_/____/
+                /_/          /____/
+    ____               __  ___          __
+   / __ \\\\___ _   __   /  |/  /___  ____/ /__
+  / / / / _ \\\\ | / /  / /|_/ / __ \\\\/ __  / _ \\\\
+ / /_/ /  __/ |/ /  / /  / / /_/ / /_/ /  __/
+/_____/\\\\___/|___/  /_/  /_/\\\\____/\\\\__,_/\\\\___/
+
+
+Welcome to Dev Mode for the Summer 2022 Edition
+https://shopify.com/editions/dev
+
+
+- Developer Experience: Simplified updates to write and distribute an app
+- Embedded App Improvements: Offer a truly seamless app experience
+- Data Protection: Future-proof the apps you build
+
+
+
+Read more here: https://shopify.com/editions/dev#chapter-2
+
+
+
+"
+`;
+
+exports[`upgrade command > launches service with hydrogen 1`] = `
+"   _____ __                _ ____         ______    ___ __  _
+  / ___// /_  ____  ____  (_) __/_  __   / ____/___/ (_) /_(_)___  ____  _____
+  \\\\__ \\\\/ __ \\\\/ __ \\\\/ __ \\\\/ / /_/ / / /  / __/ / __  / / __/ / __ \\\\/ __ \\\\/ ___/
+ ___/ / / / / /_/ / /_/ / / __/ /_/ /  / /___/ /_/ / / /_/ / /_/ / / / (__  )
+/____/_/ /_/\\\\____/ .___/_/_/  \\\\__, /  /_____/\\\\__,_/_/\\\\__/_/\\\\____/_/ /_/____/
+                /_/          /____/
+    ____               __  ___          __
+   / __ \\\\___ _   __   /  |/  /___  ____/ /__
+  / / / / _ \\\\ | / /  / /|_/ / __ \\\\/ __  / _ \\\\
+ / /_/ /  __/ |/ /  / /  / / /_/ / /_/ /  __/
+/_____/\\\\___/|___/  /_/  /_/\\\\____/\\\\__,_/\\\\___/
+
+
+Welcome to Dev Mode for the Summer 2022 Edition
+https://shopify.com/editions/dev
+
+
+- Hydrogen + Oxygen: The Shopify stack for headless commerce
+- Pixels: Intelligent interactions—powered by secure data
+- Marketplace Kit: Add commerce to any platform
+
+
+
+Read more here: https://shopify.com/editions/dev#chapter-3
+
+
+
+"
+`;
