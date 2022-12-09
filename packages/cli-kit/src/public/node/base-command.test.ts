@@ -239,7 +239,7 @@ describe('applying presets', async () => {
     await MockCommand.run(['--path', tmpDir, '--preset', 'presetWithExclusiveArguments'])
 
     // Then
-    expect(testError?.message).toMatch('--someBoolean= cannot also be provided when using --someExclusiveString')
+    expect(testError?.message).toMatch('--someBoolean=true cannot also be provided when using --someExclusiveString')
   })
 
   runTestInTmpDir('throws on negated booleans', async (tmpDir: string) => {
@@ -267,7 +267,7 @@ describe('applying presets', async () => {
       await MockCommand.run(['--path', tmpDir, '--preset', 'validPreset', '--someExclusiveString', 'stringy'])
 
       // Then
-      expect(testError?.message).toMatch('--someBoolean= cannot also be provided when using --someExclusiveString')
+      expect(testError?.message).toMatch('--someBoolean=true cannot also be provided when using --someExclusiveString')
     },
   )
 
