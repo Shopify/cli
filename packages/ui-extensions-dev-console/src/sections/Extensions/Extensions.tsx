@@ -4,6 +4,8 @@ import * as styles from './Extensions.module.scss'
 import {QRCodeModal} from './components/QRCodeModal'
 import en from './translations/en.json'
 import {AppRow} from './components/AppRow/AppRow.js'
+import {PostPurchaseExtensionRow} from './components/PostPurchaseExtensionRow'
+import {PostPurchaseModal} from './components/PostPurchaseModal'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {useI18n} from '@shopify/react-i18n'
 import {RefreshMinor, ViewMinor, HideMinor, MobileMajor} from '@shopify/polaris-icons'
@@ -60,7 +62,12 @@ export function Extensions() {
 
   const refreshSelectedExtensions = () => refresh(selectedExtensions)
 
+  // This is really horrible
+  // It's caused by the fact that updates to state in useExtensionsInternal re-renders EVERYTHING
+  // All state in child components is lost
+  // Ideally this would be rendered by the child
   const [activeMobileQRCodeExtension, setActiveMobileQRCodeExtension] = useState<ExtensionPayload>()
+  const [activePostPurchaseExtension, setActivePostPurchaseExtension] = useState<ExtensionPayload>()
 
   const actionHeaderMarkup = useMemo(() => {
     if (!selectedExtensions.length) return null
@@ -126,6 +133,21 @@ export function Extensions() {
           {app ? <AppRow url={app.url} title={app.title} apiKey={app.apiKey} /> : null}
           {extensions.map((extension) => {
             const uuid = extension.uuid
+
+            if (extension.type === 'checkout_post_purchase') {
+              return (
+                <PostPurchaseExtensionRow
+                  key={uuid}
+                  extension={extension}
+                  onSelect={toggleSelect}
+                  selected={selectedExtensionsSet.has(uuid)}
+                  onHighlight={focus}
+                  onClearHighlight={unfocus}
+                  onShowInstructionsModal={setActivePostPurchaseExtension}
+                />
+              )
+            }
+
             return (
               <ExtensionRow
                 key={uuid}
@@ -159,6 +181,10 @@ export function Extensions() {
         extension={activeMobileQRCodeExtension}
         open={activeMobileQRCodeExtension !== undefined}
         onClose={() => setActiveMobileQRCodeExtension(undefined)}
+      />
+      <PostPurchaseModal
+        onClose={() => setActivePostPurchaseExtension(undefined)}
+        extension={activePostPurchaseExtension}
       />
     </>
   )
