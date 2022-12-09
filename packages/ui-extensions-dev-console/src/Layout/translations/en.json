@@ -1,6 +1,10 @@
 {
   "title": "Developer Console",
   "close": "Close Developer Console",
+  "extensions": {
+    "show": "Show",
+    "hide": "Hide"
+  },
   "nav": {
     "extensions": "Extensions"
   }
