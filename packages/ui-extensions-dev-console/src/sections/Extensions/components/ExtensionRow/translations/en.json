@@ -3,5 +3,9 @@
     "success": "Connected",
     "disconnected": "Disconnected",
     "error": "Build Error"
+  },
+  "copy": {
+    "label": "Copy preview URL to clipboard",
+    "toast": "Preview URL copied to clipboard"
   }
 }

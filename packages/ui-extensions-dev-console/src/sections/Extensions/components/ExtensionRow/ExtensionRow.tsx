@@ -6,7 +6,10 @@ import React, {MouseEvent, useCallback, useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {Link} from '@shopify/polaris'
+import {ClipboardMinor} from '@shopify/polaris-icons'
 import {Checkbox} from '@/components/CheckBox'
+import {Action} from '@/components/Action/Action'
+import {useToast} from '@/hooks/useToast.js'
 
 export type ExtensionRowProps = {
   extension: ExtensionPayload
@@ -40,23 +43,31 @@ export function ExtensionRow({
     [extension, onSelect],
   )
 
+  const showToast = useToast()
+
   const [isFocus, setFocus] = useState(false)
 
   const textClass = hidden ? styles.Hidden : undefined
   const statusClass = status ? styles[status || 'error'] : styles.error
   const {embedded, navigate} = useExtensionsInternal()
 
-  const handleOpenRoot = useCallback(
-    (event) => {
-      const roolUrl = extension.development.root.url
-      if (embedded && window.top) {
-        navigate(extension)
-        return
-      }
-      window.open(roolUrl, '_blank')
-    },
-    [embedded, extension, navigate],
-  )
+  const handleOpenRoot = useCallback(() => {
+    const roolUrl = extension.development.root.url
+    if (embedded && window.top) {
+      navigate(extension)
+      return
+    }
+    window.open(roolUrl, '_blank')
+  }, [embedded, extension, navigate])
+
+  async function handleCopyUrl() {
+    if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+      showToast({
+        content: i18n.translate('copy.toast'),
+      })
+      return navigator.clipboard.writeText(extension.development.root.url)
+    }
+  }
 
   return (
     <tr
@@ -81,9 +92,12 @@ export function ExtensionRow({
       </td>
       {/* TODO: This is ugly.  Might not matter if we removed the checkboxes in the row */}
       <td className={textClass} onClick={(event) => event.stopPropagation()}>
-        <Link url={extension.development.root.url} external onClick={handleOpenRoot}>
-          {extension.title}
-        </Link>
+        <span className={styles.UrlWrapper}>
+          <Link url={extension.development.root.url} external onClick={handleOpenRoot}>
+            {extension.title}
+          </Link>
+          <Action source={ClipboardMinor} accessibilityLabel={i18n.translate('copy.label')} onAction={handleCopyUrl} />
+        </span>
       </td>
       <td className={textClass}>{extension.externalType}</td>
       <td>

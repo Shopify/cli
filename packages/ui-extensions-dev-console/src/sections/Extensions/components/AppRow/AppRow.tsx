@@ -17,7 +17,7 @@ export interface ExtensionRowProps {
 export function AppRow({url, title, apiKey}: ExtensionRowProps) {
   const [showModel, setShowModal] = useState(false)
   const [i18n] = useI18n({
-    id: 'ExtensionRow',
+    id: 'AppRow',
     fallback: en,
   })
   const {
@@ -25,8 +25,6 @@ export function AppRow({url, title, apiKey}: ExtensionRowProps) {
   } = useExtensionsInternal()
 
   const qrCodeUrl = useMemo(() => `https://${store}/admin/apps/${apiKey}`, [store, url])
-
-  console.log(qrCodeUrl)
 
   return (
     <>
