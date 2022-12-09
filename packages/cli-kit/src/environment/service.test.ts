@@ -1,6 +1,12 @@
 import {isSpinEnvironment, serviceEnvironment} from './service.js'
 import {Environment} from '../network/service.js'
-import {expect, it, describe} from 'vitest'
+import {expect, it, describe, afterEach} from 'vitest'
+
+const OLD_ENV = {...process.env}
+
+afterEach(() => {
+  process.env = {...OLD_ENV}
+})
 
 describe('serviceEnvironment', () => {
   it('returns local when the environment variable points to the local environment', () => {
