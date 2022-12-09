@@ -1,9 +1,11 @@
 import * as styles from './ExtensionRow.module.scss'
 import en from './translations/en.json'
 import {ActionSet, ActionSetProps} from '../ActionSet'
+import {useExtensionsInternal} from '../../hooks/useExtensionsInternal.js'
 import React, {MouseEvent, useCallback, useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
+import {Link} from '@shopify/polaris'
 import {Checkbox} from '@/components/CheckBox'
 
 export type ExtensionRowProps = {
@@ -42,6 +44,19 @@ export function ExtensionRow({
 
   const textClass = hidden ? styles.Hidden : undefined
   const statusClass = status ? styles[status || 'error'] : styles.error
+  const {embedded, navigate} = useExtensionsInternal()
+
+  const handleOpenRoot = useCallback(
+    (event) => {
+      const roolUrl = extension.development.root.url
+      if (embedded && window.top) {
+        navigate(extension)
+        return
+      }
+      window.open(roolUrl, '_blank')
+    },
+    [embedded, extension, navigate],
+  )
 
   return (
     <tr
@@ -64,7 +79,12 @@ export function ExtensionRow({
           </div>
         }
       </td>
-      <td className={textClass}>{extension.title}</td>
+      {/* TODO: This is ugly.  Might not matter if we removed the checkboxes in the row */}
+      <td className={textClass} onClick={(event) => event.stopPropagation()}>
+        <Link url={extension.development.root.url} external onClick={handleOpenRoot}>
+          {extension.title}
+        </Link>
+      </td>
       <td className={textClass}>{extension.externalType}</td>
       <td>
         <span className={`${styles.Status} ${statusClass}`}>{i18n.translate(`statuses.${status}`)}</span>
