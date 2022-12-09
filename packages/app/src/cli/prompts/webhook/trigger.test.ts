@@ -116,7 +116,8 @@ describe('sharedSecretPrompt', () => {
       {
         type: 'input',
         name: 'sharedSecret',
-        message: 'Shared Secret to encode the webhook payload',
+        message:
+          'Shared Secret to encode the webhook payload. If you are using the app template, this is your Client Secret, which can be found in the partners dashboard',
         default: 'shopify_test',
         validate: expect.any(Function),
       },
