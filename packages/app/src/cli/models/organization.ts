@@ -5,10 +5,13 @@ export interface Organization {
   appsNext: boolean
 }
 
-export interface OrganizationApp {
+export interface MinimalOrganizationApp {
   id: string
   title: string
   apiKey: string
+}
+
+export type OrganizationApp = MinimalOrganizationApp & {
   organizationId: string
   apiSecretKeys: {
     secret: string
@@ -17,8 +20,6 @@ export interface OrganizationApp {
   newApp?: boolean
   grantedScopes: string[]
 }
-
-export type ScopelessOrganizationApp = Omit<OrganizationApp, 'grantedScopes'>
 
 export interface OrganizationStore {
   shopId: string

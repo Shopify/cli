@@ -13,11 +13,6 @@ export const FindOrganizationQuery = gql`
             id
             title
             apiKey
-            organizationId
-            apiSecretKeys {
-              secret
-            }
-            appType
           }
         }
       }
@@ -37,11 +32,6 @@ export interface FindOrganizationQuerySchema {
           id: string
           title: string
           apiKey: string
-          organizationId: string
-          apiSecretKeys: {
-            secret: string
-          }[]
-          appType: string
         }[]
       }
     }[]

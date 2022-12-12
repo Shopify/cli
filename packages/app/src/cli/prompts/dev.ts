@@ -1,4 +1,4 @@
-import {Organization, ScopelessOrganizationApp, OrganizationStore} from '../models/organization.js'
+import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
 import {output, ui} from '@shopify/cli-kit'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
@@ -17,7 +17,7 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
   return organizations.find((org) => org.id === choice.id)!
 }
 
-export async function selectAppPrompt(apps: ScopelessOrganizationApp[]): Promise<ScopelessOrganizationApp> {
+export async function selectAppPrompt(apps: MinimalOrganizationApp[]): Promise<MinimalOrganizationApp> {
   const appList = apps.map((app) => ({name: app.title, value: app.apiKey}))
   const choice = await ui.prompt([
     {

@@ -1,6 +1,6 @@
 import {createApp, selectOrCreateApp} from './select-app.js'
 import {AppInterface, WebType} from '../../models/app/app.js'
-import {Organization, OrganizationApp} from '../../models/organization.js'
+import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../models/organization.js'
 import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
@@ -40,6 +40,10 @@ const APP2: OrganizationApp = {
   organizationId: '1',
   grantedScopes: [],
 }
+const APP_LIST: MinimalOrganizationApp[] = [
+  {id: APP1.id, title: APP1.title, apiKey: APP1.apiKey},
+  {id: APP2.id, title: APP2.title, apiKey: APP2.apiKey},
+]
 
 beforeEach(() => {
   vi.mock('../../prompts/dev')
@@ -101,13 +105,14 @@ describe('selectOrCreateApp', () => {
     // Given
     vi.mocked(selectAppPrompt).mockResolvedValueOnce(APP1)
     vi.mocked(createAsNewAppPrompt).mockResolvedValue(false)
+    vi.mocked(api.partners.request).mockResolvedValueOnce({app: APP1})
 
     // When
-    const got = await selectOrCreateApp(LOCAL_APP.name, [APP1, APP2], ORG1, 'token')
+    const got = await selectOrCreateApp(LOCAL_APP.name, APP_LIST, ORG1, 'token')
 
     // Then
     expect(got).toEqual(APP1)
-    expect(selectAppPrompt).toHaveBeenCalledWith([APP1, APP2])
+    expect(selectAppPrompt).toHaveBeenCalledWith(APP_LIST)
   })
 
   it('prompts user to create if chooses to create', async () => {
@@ -124,7 +129,7 @@ describe('selectOrCreateApp', () => {
     }
 
     // When
-    const got = await selectOrCreateApp(LOCAL_APP.name, [APP1, APP2], ORG1, 'token')
+    const got = await selectOrCreateApp(LOCAL_APP.name, APP_LIST, ORG1, 'token')
 
     // Then
     expect(got).toEqual(APP1)

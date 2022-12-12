@@ -1,5 +1,5 @@
 import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {Organization, OrganizationApp, ScopelessOrganizationApp} from '../../models/organization.js'
+import {Organization, OrganizationApp, MinimalOrganizationApp} from '../../models/organization.js'
 import {fetchAppFromApiKey} from '../dev/fetch.js'
 import {api, error, output} from '@shopify/cli-kit'
 
@@ -16,7 +16,7 @@ import {api, error, output} from '@shopify/cli-kit'
  */
 export async function selectOrCreateApp(
   localAppName: string,
-  apps: ScopelessOrganizationApp[],
+  apps: MinimalOrganizationApp[],
   org: Organization,
   token: string,
 ): Promise<OrganizationApp> {
