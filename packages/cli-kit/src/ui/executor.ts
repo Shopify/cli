@@ -3,6 +3,7 @@ import {CustomAutocomplete} from './inquirer/autocomplete.js'
 import {CustomSelect} from './inquirer/select.js'
 import {CustomPassword} from './inquirer/password.js'
 import {Question, QuestionChoiceType} from '../ui.js'
+import {getEnvironmentVariables} from '../public/node/environment.js'
 import inquirer, {Answers, QuestionCollection} from 'inquirer'
 import fuzzy from 'fuzzy'
 
@@ -69,7 +70,7 @@ function containsFilter(answers: {name: string; value: string}[], input = '') {
 }
 
 function getAutompleteFilterType() {
-  return process.env.SHOPIFY_USE_AUTOCOMPLETE_FILTER === 'fuzzy' ? fuzzyFilter : containsFilter
+  return getEnvironmentVariables().SHOPIFY_USE_AUTOCOMPLETE_FILTER === 'fuzzy' ? fuzzyFilter : containsFilter
 }
 
 export function groupAndMapChoices(choices: QuestionChoiceType[]) {

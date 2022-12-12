@@ -20,6 +20,7 @@ import {
   OAuthSession,
 } from './session.js'
 import {partners} from './api.js'
+import {getEnvironmentVariables} from './public/node/environment.js'
 
 import {identity} from './environment/fqdn.js'
 import {useDeviceAuth} from './environment/local.js'
@@ -108,6 +109,8 @@ beforeAll(() => {
   vi.mock('./session/validate')
   vi.mock('./api')
   vi.mock('./store')
+  vi.mock('./public/node/environment.js')
+  vi.mocked(allDefaultScopes).mockImplementation((scopes) => scopes || [])
 })
 
 beforeEach(() => {
@@ -122,7 +125,7 @@ beforeEach(() => {
   // eslint-disable-next-line no-warning-comments
   // TODO: Add tests for ensureUserHasPartnerAccount
   vi.mocked(partners.request).mockResolvedValue(undefined)
-  vi.mocked(allDefaultScopes).mockImplementation((scopes) => scopes || [])
+  vi.mocked(getEnvironmentVariables).mockReturnValue({})
 })
 
 describe('ensureAuthenticated when previous session is invalid', () => {
@@ -202,10 +205,11 @@ describe('when existing session is valid', () => {
     vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(secureFetch).mockResolvedValue(validSession)
     const env = {SHOPIFY_CLI_PARTNERS_TOKEN: 'custom_cli_token'}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
     const expected = {...validTokens, partners: 'custom_partners_token'}
 
     // When
-    const got = await ensureAuthenticated(defaultApplications, env)
+    const got = await ensureAuthenticated(defaultApplications)
 
     // Then
     expect(authorize).not.toHaveBeenCalled()
@@ -222,7 +226,7 @@ describe('when existing session is valid', () => {
     vi.mocked(secureFetch).mockResolvedValue(validSession)
 
     // When
-    const got = await ensureAuthenticated(defaultApplications, process.env, true)
+    const got = await ensureAuthenticated(defaultApplications, true)
 
     // Then
     expect(authorize).not.toHaveBeenCalledOnce()
@@ -355,9 +359,10 @@ describe('ensureAuthenticatedPartners', () => {
     vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(secureFetch).mockResolvedValue(validSession)
     const env = {SHOPIFY_CLI_PARTNERS_TOKEN: 'custom_cli_token'}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = await ensureAuthenticatedPartners([], env)
+    const got = await ensureAuthenticatedPartners([])
 
     // Then
     expect(got).toEqual('custom_partners_token')

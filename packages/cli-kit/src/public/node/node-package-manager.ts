@@ -1,5 +1,6 @@
 import {AbortError, BugError} from './error.js'
 import {Version} from './semver.js'
+import {getEnvironmentVariables} from './environment.js'
 import {exec} from '../../system.js'
 import {exists as fileExists, read as readFile, write as writeFile} from '../../file.js'
 import {glob, dirname, join as pathJoin, findUp, moduleDirectory} from '../../path.js'
@@ -62,10 +63,10 @@ export const FindUpAndReadPackageJsonNotFoundError = (directory: string) => {
 
 /**
  * Returns the dependency manager used to run the create workflow.
- * @param env - The environment variables of the process in which the CLI runs.
  * @returns The dependency manager
  */
-export function packageManagerUsedForCreating(env = process.env): PackageManager | 'unknown' {
+export function packageManagerUsedForCreating(): PackageManager | 'unknown' {
+  const env = getEnvironmentVariables()
   if (env.npm_config_user_agent?.includes('yarn')) {
     return 'yarn'
   } else if (env.npm_config_user_agent?.includes('pnpm')) {

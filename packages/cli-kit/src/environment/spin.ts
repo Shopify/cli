@@ -5,6 +5,7 @@ import {captureOutput} from '../system.js'
 import {Abort} from '../error.js'
 import {content, token} from '../output.js'
 import {exists, readSync} from '../file.js'
+import {getEnvironmentVariables} from '../public/node/environment.js'
 
 export const SpinInstanceNotFound = (spinInstance: string | undefined, error: string) => {
   const errorMessage = content`${token.genericShellCommand(
@@ -28,15 +29,15 @@ const spinFqdnFilePath = '/etc/spin/machine/fqdn'
  * To avoid multiple calls to `readSync` or `show`
  * @returns fqdn of the Spin environment.
  */
-export async function fqdn(env = process.env): Promise<string> {
+export async function fqdn(): Promise<string> {
   let spinFqdn = getCachedSpinFqdn()
   if (spinFqdn) return spinFqdn
 
   if (await exists(spinFqdnFilePath)) {
     spinFqdn = await readSync(spinFqdnFilePath).toString()
   } else {
-    const spinInstance = await instance(env)
-    const showResponse = await show(spinInstance, env)
+    const spinInstance = await instance()
+    const showResponse = await show(spinInstance)
 
     spinFqdn = showResponse.fqdn
   }
@@ -50,10 +51,10 @@ export async function fqdn(env = process.env): Promise<string> {
  * @returns The JSON-parsed output of the Spin CLI.
  * @throws Any error raised from the underlying Spin CLI.
  */
-export async function show(spinInstance: string | undefined, env = process.env): Promise<{fqdn: string}> {
+export async function show(spinInstance: string | undefined): Promise<{fqdn: string}> {
   const latest = spinInstance === undefined
   const args = latest ? ['show', '--latest', '--json'] : ['show', '--json']
-  const output = await captureOutput('spin', args, {env})
+  const output = await captureOutput('spin', args, {env: getEnvironmentVariables()})
   const json = JSON.parse(output)
   if (json.error) {
     throw SpinInstanceNotFound(spinInstance, json.error)
@@ -64,45 +65,40 @@ export async function show(spinInstance: string | undefined, env = process.env):
 
 /**
  * Returns true if the CLI is running in a Spin environment.
- * @param env - Environment variables
  * @returns True if the CLI is running in a Spin environment.
  */
-export function isSpin(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.spin])
+export function isSpin(): boolean {
+  return isTruthy(getEnvironmentVariables()[constants.environmentVariables.spin])
 }
 
 /**
  * Returns the value of the SPIN_INSTANCE environment variable.
- * @param env - Environment variables
  * @returns The value of the SPIN_INSTANCE environment variable.
  */
-export function instance(env = process.env): string | undefined {
-  return env[constants.environmentVariables.spinInstance]
+export function instance(): string | undefined {
+  return getEnvironmentVariables()[constants.environmentVariables.spinInstance]
 }
 
 /**
  * Returns the value of the SPIN_WORKSPACE environment variable.
- * @param env - Environment variables
  * @returns The value of the SPIN_WORKSPACE environment variable.
  */
-export function workspace(env = process.env): string | undefined {
-  return env[constants.environmentVariables.spinWorkspace]
+export function workspace(): string | undefined {
+  return getEnvironmentVariables()[constants.environmentVariables.spinWorkspace]
 }
 
 /**
  * Returns the value of the SPIN_NAMESPACE environment variable.
- * @param env - Environment variables
  * @returns The value of the SPIN_NAMESPACE environment variable.
  */
-export function namespace(env = process.env): string | undefined {
-  return env[constants.environmentVariables.spinNamespace]
+export function namespace(): string | undefined {
+  return getEnvironmentVariables()[constants.environmentVariables.spinNamespace]
 }
 
 /**
  * Returns the value of the SPIN_HOST environment variable.
- * @param env - Environment variables
  * @returns The value of the SPIN_HOST environment variable.
  */
-export function host(env = process.env): string | undefined {
-  return env[constants.environmentVariables.spinHost]
+export function host(): string | undefined {
+  return getEnvironmentVariables()[constants.environmentVariables.spinHost]
 }

@@ -17,6 +17,7 @@ import {
   SubHeadingContentToken,
 } from './content-tokens.js'
 import {logToFile} from './log.js'
+import {getEnvironmentVariables} from './public/node/environment.js'
 import {AbortSignal} from 'abort-controller'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'node:stream'
@@ -343,7 +344,7 @@ export function unstyled(message: string): string {
 }
 
 export function shouldDisplayColors(): boolean {
-  return Boolean(process.stdout.isTTY || process.env.FORCE_COLOR)
+  return Boolean(process.stdout.isTTY || getEnvironmentVariables().FORCE_COLOR)
 }
 
 /**

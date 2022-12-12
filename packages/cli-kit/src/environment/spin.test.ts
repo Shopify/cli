@@ -1,10 +1,18 @@
 import {show, fqdn, isSpin, instance, workspace, namespace, host, SpinInstanceNotFound} from './spin.js'
 import {getCachedSpinFqdn, setCachedSpinFqdn} from './spin-cache.js'
 import {captureOutput} from '../system.js'
-import {describe, test, expect, vi, it} from 'vitest'
+import {getEnvironmentVariables} from '../public/node/environment.js'
+import {describe, test, expect, vi, it, beforeAll, beforeEach} from 'vitest'
 
-vi.mock('../system')
-vi.mock('./spin-cache')
+beforeAll(() => {
+  vi.mock('../system')
+  vi.mock('./spin-cache')
+  vi.mock('../public/node/environment.js')
+})
+
+beforeEach(() => {
+  vi.mocked(getEnvironmentVariables).mockReturnValue({})
+})
 
 const mockedCaptureOutput = vi.mocked(captureOutput)
 
@@ -15,9 +23,10 @@ describe('fqdn', () => {
     const showResponse = {fqdn: 'fqdn'}
     vi.mocked(getCachedSpinFqdn).mockReturnValue(undefined)
     mockedCaptureOutput.mockResolvedValue(JSON.stringify(showResponse))
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = await fqdn(env)
+    const got = await fqdn()
 
     // Then
     expect(got).toEqual('fqdn')
@@ -31,9 +40,10 @@ describe('fqdn', () => {
     const showResponse = {fqdn: 'fqdn'}
     vi.mocked(getCachedSpinFqdn).mockReturnValue(undefined)
     mockedCaptureOutput.mockResolvedValue(JSON.stringify(showResponse))
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = await fqdn(env)
+    const got = await fqdn()
 
     // Then
     expect(got).toEqual('fqdn')
@@ -45,9 +55,10 @@ describe('fqdn', () => {
     // Given
     const env = {}
     vi.mocked(getCachedSpinFqdn).mockReturnValue('cachedFQDN')
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = await fqdn(env)
+    const got = await fqdn()
 
     // Then
     expect(got).toEqual('cachedFQDN')
@@ -62,9 +73,10 @@ describe('show', () => {
     const showResponse = {fqdn: 'fqdn'}
     mockedCaptureOutput.mockResolvedValue(JSON.stringify(showResponse))
     const env = {}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = await show(undefined, env)
+    const got = await show(undefined)
 
     // Then
     expect(got).toEqual(showResponse)
@@ -76,9 +88,10 @@ describe('show', () => {
     const showResponse = {fqdn: 'fqdn'}
     mockedCaptureOutput.mockResolvedValue(JSON.stringify(showResponse))
     const env = {}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = await show('instance', env)
+    const got = await show('instance')
 
     // Then
     expect(got).toEqual(showResponse)
@@ -91,9 +104,10 @@ describe('show', () => {
     const showResponse = {error: errorMessage}
     mockedCaptureOutput.mockResolvedValue(JSON.stringify(showResponse))
     const env = {}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    await expect(() => show('instance', env)).rejects.toThrowError(SpinInstanceNotFound('instance', errorMessage))
+    await expect(() => show('instance')).rejects.toThrowError(SpinInstanceNotFound('instance', errorMessage))
   })
 })
 
@@ -101,9 +115,10 @@ describe('isSpin', () => {
   test('returns true if SPIN=1', () => {
     // Given
     const env = {SPIN: '1'}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = isSpin(env)
+    const got = isSpin()
 
     // Then
     expect(got).toBeTruthy()
@@ -115,9 +130,10 @@ describe('instance', () => {
     // Given
     const instanceName = 'instance'
     const env = {SPIN_INSTANCE: instanceName}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = instance(env)
+    const got = instance()
 
     // Then
     expect(got).toBe(instanceName)
@@ -126,9 +142,10 @@ describe('instance', () => {
   test('returns undefined value when SPIN_INSTANCE is not defined', () => {
     // Given
     const env = {}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = instance(env)
+    const got = instance()
 
     // Then
     expect(got).toBeUndefined()
@@ -140,9 +157,10 @@ describe('workspace', () => {
     // Given
     const workspaceName = 'workspace'
     const env = {SPIN_WORKSPACE: workspaceName}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = workspace(env)
+    const got = workspace()
 
     // Then
     expect(got).toBe(workspaceName)
@@ -151,9 +169,10 @@ describe('workspace', () => {
   test('returns undefined value when SPIN_WORKSPACE is not defined', () => {
     // Given
     const env = {}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = workspace(env)
+    const got = workspace()
 
     // Then
     expect(got).toBeUndefined()
@@ -165,9 +184,10 @@ describe('namespace', () => {
     // Given
     const namespaceName = 'namespace'
     const env = {SPIN_NAMESPACE: namespaceName}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = namespace(env)
+    const got = namespace()
 
     // Then
     expect(got).toBe(namespaceName)
@@ -176,9 +196,10 @@ describe('namespace', () => {
   test('returns undefined value when SPIN_NAMESPACE is not defined', () => {
     // Given
     const env = {}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = namespace(env)
+    const got = namespace()
 
     // Then
     expect(got).toBeUndefined()
@@ -190,9 +211,10 @@ describe('host', () => {
     // Given
     const hostName = 'host'
     const env = {SPIN_HOST: hostName}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = host(env)
+    const got = host()
 
     // Then
     expect(got).toBe(hostName)
@@ -201,9 +223,10 @@ describe('host', () => {
   test('returns undefined value when SPIN_HOST is not defined', () => {
     // Given
     const env = {}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = host(env)
+    const got = host()
 
     // Then
     expect(got).toBeUndefined()

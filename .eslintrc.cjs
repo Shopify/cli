@@ -21,6 +21,7 @@ module.exports = {
         groups: ['index', 'sibling', 'parent', 'internal', 'external', 'builtin', 'object', 'type'],
       },
     ],
+    'no-process-env': 'error',
     'no-catch-shadow': 'off',
     'no-catch-all/no-catch-all': 'error',
     'no-console': 'error',

@@ -1,11 +1,12 @@
 import * as path from '../path.js'
+import {getEnvironmentVariables} from '../public/node/environment.js'
 import {ExecaChildProcess, execaNode} from 'execa'
 
 type Run = (fixture: string, props?: {env?: {[key: string]: unknown}}) => ExecaChildProcess<string>
 
 export const run: Run = (fixture, props) => {
   const env = {
-    ...process.env,
+    ...getEnvironmentVariables(),
     ...props?.env,
     // we need this because ink treats the CI environment differently
     // by only writing the last frame to stdout on unmount

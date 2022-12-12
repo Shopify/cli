@@ -9,17 +9,19 @@ interface RunCLIOptions {
   development: boolean
 }
 
-function setupEnvironmentVariables(options: Pick<RunCLIOptions, 'development'>) {
+async function setupEnvironmentVariables(options: Pick<RunCLIOptions, 'development'>) {
+  const {getEnvironmentVariables, setEnvironmentVariable} = await import('./environment.js')
+  const env = getEnvironmentVariables()
   /**
    * By setting DEBUG=* when --verbose is passed we are increasing the
    * verbosity of oclif. Oclif uses debug (https://www.npmjs.com/package/debug)
    * for logging, and it's configured through the DEBUG= environment variable.
    */
   if (process.argv.includes('--verbose')) {
-    process.env.DEBUG = process.env.DEBUG ?? '*'
+    setEnvironmentVariable('DEBUG', env.DEBUG ?? '*')
   }
   if (options.development) {
-    process.env.SHOPIFY_CLI_ENV = process.env.SHOPIFY_CLI_ENV ?? 'development'
+    setEnvironmentVariable('SHOPIFY_CLI_ENV', env.SHOPIFY_CLI_ENV ?? 'development')
   }
 }
 
@@ -29,7 +31,7 @@ function setupEnvironmentVariables(options: Pick<RunCLIOptions, 'development'>) 
  * @param options - Options.
  */
 export async function runCLI(options: RunCLIOptions) {
-  setupEnvironmentVariables(options)
+  await setupEnvironmentVariables(options)
   /**
    * These imports need to be dynamic because if they are static
    * they are loaded before we set the DEBUG=* environment variable
@@ -52,7 +54,7 @@ export async function runCLI(options: RunCLIOptions) {
  * A function for create-x CLIs that automatically runs the "init" command.
  */
 export async function runCreateCLI(options: RunCLIOptions) {
-  setupEnvironmentVariables(options)
+  await setupEnvironmentVariables(options)
 
   const {findUpAndReadPackageJson} = await import('./node-package-manager.js')
   const {moduleDirectory} = await import('../../path.js')
@@ -71,19 +73,21 @@ export async function runCreateCLI(options: RunCLIOptions) {
 }
 
 export async function useLocalCLIIfDetected(filepath: string): Promise<boolean> {
+  const {getEnvironmentVariables} = await import('./environment.js')
   const {isTruthy} = await import('../../environment/utilities.js')
   const constants = await import('../../constants.js')
   const {join} = await import('../../path.js')
   const {exec} = await import('../../system.js')
+  const env = getEnvironmentVariables()
 
   // Temporary flag while we test out this feature and ensure it won't break anything!
-  if (!isTruthy(process.env[constants.default.environmentVariables.enableCliRedirect])) return false
+  if (!isTruthy(env[constants.default.environmentVariables.enableCliRedirect])) return false
 
   // Setting an env variable in the child process prevents accidental recursion.
-  if (isTruthy(process.env[constants.default.environmentVariables.skipCliRedirect])) return false
+  if (isTruthy(env[constants.default.environmentVariables.skipCliRedirect])) return false
 
   // If already running via package manager, we can assume it's running correctly already.
-  if (process.env.npm_config_user_agent) return false
+  if (env.npm_config_user_agent) return false
 
   const cliPackage = await localCliPackage()
   if (!cliPackage) return false

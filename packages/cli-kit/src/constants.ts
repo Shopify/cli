@@ -1,11 +1,13 @@
 import {join as pathJoin} from './path.js'
 import {findPackageVersionUp} from './public/node/node-package-manager.js'
+import {getEnvironmentVariables} from './public/node/environment.js'
 import envPaths from 'env-paths'
 
 const identifier = 'shopify-cli'
 
 const cacheFolder = () => {
-  if (process.env.XDG_CACHE_HOME) return process.env.XDG_CACHE_HOME
+  const env = getEnvironmentVariables()
+  if (env.XDG_CACHE_HOME) return env.XDG_CACHE_HOME
   return envPaths(identifier).cache
 }
 

@@ -10,18 +10,24 @@ import {
 } from './local.js'
 import {exists as fileExists} from '../file.js'
 import {exec} from '../system.js'
-import {expect, it, describe, vi, test} from 'vitest'
+import {getEnvironmentVariables} from '../public/node/environment.js'
+import {expect, it, describe, vi, test, beforeEach} from 'vitest'
 
-vi.mock('../file')
-vi.mock('../system')
+beforeEach(() => {
+  vi.mock('../file')
+  vi.mock('../system')
+  vi.mock('../public/node/environment.js')
+  vi.mocked(getEnvironmentVariables).mockReturnValue({})
+})
 
 describe('isUnitTest', () => {
   it('returns true when SHOPIFY_UNIT_TEST is truthy', () => {
     // Given
     const env = {SHOPIFY_UNIT_TEST: '1'}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = isUnitTest(env)
+    const got = isUnitTest()
 
     // Then
     expect(got).toBe(true)
@@ -32,9 +38,10 @@ describe('isDevelopment', () => {
   it('returns true when SHOPIFY_CLI_ENV is debug', () => {
     // Given
     const env = {SHOPIFY_CLI_ENV: 'development'}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = isDevelopment(env)
+    const got = isDevelopment()
 
     // Then
     expect(got).toBe(true)
@@ -45,17 +52,19 @@ describe('isShopify', () => {
   it('returns false when the SHOPIFY_RUN_AS_USER env. variable is truthy', async () => {
     // Given
     const env = {SHOPIFY_RUN_AS_USER: '1'}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    await expect(isShopify(env)).resolves.toEqual(false)
+    await expect(isShopify()).resolves.toEqual(false)
   })
 
   it('returns true when the SHOPIFY_RUN_AS_USER env. variable is falsy', async () => {
     // Given
     const env = {SHOPIFY_RUN_AS_USER: '0'}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    await expect(isShopify(env)).resolves.toEqual(true)
+    await expect(isShopify()).resolves.toEqual(true)
   })
 
   it('returns true when dev is installed', async () => {
@@ -69,9 +78,10 @@ describe('isShopify', () => {
   it('returns true when it is a spin environment', async () => {
     // Given
     const env = {SPIN: '1'}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    await expect(isShopify(env)).resolves.toBe(true)
+    await expect(isShopify()).resolves.toBe(true)
   })
 })
 
@@ -103,9 +113,10 @@ describe('analitycsDisabled', () => {
   it('returns true when SHOPIFY_CLI_NO_ANALYTICS is truthy', () => {
     // Given
     const env = {SHOPIFY_CLI_NO_ANALYTICS: '1'}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = analyticsDisabled(env)
+    const got = analyticsDisabled()
 
     // Then
     expect(got).toBe(true)
@@ -114,9 +125,10 @@ describe('analitycsDisabled', () => {
   it('returns true when in development', () => {
     // Given
     const env = {SHOPIFY_CLI_ENV: 'development'}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = analyticsDisabled(env)
+    const got = analyticsDisabled()
 
     // Then
     expect(got).toBe(true)
@@ -125,9 +137,10 @@ describe('analitycsDisabled', () => {
   it('returns false without env variables', () => {
     // Given
     const env = {}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = analyticsDisabled(env)
+    const got = analyticsDisabled()
 
     // Then
     expect(got).toBe(false)
@@ -138,9 +151,10 @@ describe('useDeviceAuth', () => {
   it('returns true if SHOPIFY_CLI_DEVICE_AUTH is truthy', () => {
     // Given
     const env = {SHOPIFY_CLI_DEVICE_AUTH: '1'}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = useDeviceAuth(env)
+    const got = useDeviceAuth()
 
     // Then
     expect(got).toBe(true)
@@ -149,9 +163,10 @@ describe('useDeviceAuth', () => {
   it('returns true if SPIN is truthy', () => {
     // Given
     const env = {SPIN: '1'}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = useDeviceAuth(env)
+    const got = useDeviceAuth()
 
     // Then
     expect(got).toBe(true)
@@ -160,9 +175,10 @@ describe('useDeviceAuth', () => {
   it('returns true if CODESPACES is truthy', () => {
     // Given
     const env = {CODESPACES: '1'}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = useDeviceAuth(env)
+    const got = useDeviceAuth()
 
     // Then
     expect(got).toBe(true)
@@ -171,9 +187,10 @@ describe('useDeviceAuth', () => {
   it('returns true if GITPOD_WORKSPACE_URL is set', () => {
     // Given
     const env = {GITPOD_WORKSPACE_URL: 'http://custom.gitpod.io'}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = useDeviceAuth(env)
+    const got = useDeviceAuth()
 
     // Then
     expect(got).toBe(true)
@@ -182,9 +199,10 @@ describe('useDeviceAuth', () => {
   it('returns false when SHOPIFY_CLI_DEVICE_AUTH, SPIN, CODESPACES or GITPOD_WORKSPACE_URL are missing', () => {
     // Given
     const env = {}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = useDeviceAuth(env)
+    const got = useDeviceAuth()
 
     // Then
     expect(got).toBe(false)
@@ -205,9 +223,10 @@ describe('cloudEnvironment', () => {
   it('when spin environmentreturns correct cloud platform', () => {
     // Given
     const env = {SPIN: '1'}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = cloudEnvironment(env)
+    const got = cloudEnvironment()
 
     // Then
     expect(got.platform).toBe('spin')
@@ -216,9 +235,10 @@ describe('cloudEnvironment', () => {
   it('when codespace environmentreturns correct cloud platform', () => {
     // Given
     const env = {CODESPACES: '1'}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = cloudEnvironment(env)
+    const got = cloudEnvironment()
 
     // Then
     expect(got.platform).toBe('codespaces')
@@ -227,9 +247,10 @@ describe('cloudEnvironment', () => {
   it('when gitpod environmentreturns correct cloud platform', () => {
     // Given
     const env = {GITPOD_WORKSPACE_URL: 'http://custom.gitpod.io'}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = cloudEnvironment(env)
+    const got = cloudEnvironment()
 
     // Then
     expect(got.platform).toBe('gitpod')
@@ -238,9 +259,10 @@ describe('cloudEnvironment', () => {
   it('returns localhost when no cloud enviroment varible exist', () => {
     // Given
     const env = {}
+    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = cloudEnvironment(env)
+    const got = cloudEnvironment()
 
     // Then
     expect(got.platform).toBe('localhost')

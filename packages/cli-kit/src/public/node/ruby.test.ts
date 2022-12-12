@@ -1,11 +1,18 @@
 import {execCLI2} from './ruby.js'
+import {getEnvironmentVariables} from './environment.js'
 import * as file from '../../file.js'
 import * as system from '../../system.js'
-import {beforeAll, describe, expect, it, vi} from 'vitest'
+
+import {beforeAll, beforeEach, describe, expect, it, vi} from 'vitest'
 
 beforeAll(() => {
   vi.mock('../../file')
   vi.mock('../../system')
+  vi.mock('./environment.js')
+})
+
+beforeEach(() => {
+  vi.mocked(getEnvironmentVariables).mockReturnValue({})
 })
 
 describe('execCLI', () => {
@@ -59,15 +66,11 @@ describe('execCLI', () => {
   })
 
   it('passes token to the CLI2', async () => {
-    // Setup
-    const originalEnv = process.env
-
     // Given
     const execSpy = vi.spyOn(system, 'exec')
 
-    process.env = {...originalEnv, SHOPIFY_CLI_2_0_DIRECTORY: './CLI2'}
+    vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_2_0_DIRECTORY: './CLI2'})
 
-    vi.mocked(file.exists).mockResolvedValue(true)
     vi.mocked(system.captureOutput).mockResolvedValueOnce('2.7.5')
     vi.mocked(system.captureOutput).mockResolvedValueOnce('2.4.0')
 
@@ -82,7 +85,7 @@ describe('execCLI', () => {
       stdio: 'inherit',
       cwd: './directory',
       env: {
-        ...process.env,
+        ...getEnvironmentVariables(),
         SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: undefined,
         SHOPIFY_CLI_ADMIN_AUTH_TOKEN: undefined,
         SHOPIFY_CLI_STORE: undefined,
@@ -91,8 +94,5 @@ describe('execCLI', () => {
         BUNDLE_GEMFILE: 'CLI2/Gemfile',
       },
     })
-
-    // Teardown
-    process.env = originalEnv
   })
 })

@@ -2,6 +2,7 @@ import {shouldDisplayColors, debug} from './output.js'
 import {platformAndArch} from './os.js'
 import {ExternalError} from './error.js'
 import {renderConcurrent} from './public/node/ui.js'
+import {getEnvironmentVariables} from './public/node/environment.js'
 import {execa, ExecaChildProcess} from 'execa'
 import {AbortSignal} from 'abort-controller'
 import type {Writable, Readable} from 'node:stream'
@@ -56,7 +57,7 @@ export const exec = async (command: string, args: string[], options?: ExecOption
 }
 
 const buildExec = (command: string, args: string[], options?: ExecOptions): ExecaChildProcess<string> => {
-  const env = options?.env ?? process.env
+  const env = options?.env ?? getEnvironmentVariables()
   if (shouldDisplayColors()) {
     env.FORCE_COLOR = '1'
   }
@@ -119,8 +120,8 @@ export const concurrentExec = async (commands: ConcurrentExecCommand[]): Promise
  */
 export async function page(filename: string) {
   let executable: string
-  if (process.env.PAGER) {
-    executable = process.env.PAGER
+  if (getEnvironmentVariables().PAGER) {
+    executable = getEnvironmentVariables().PAGER as string
   } else if ((await platformAndArch()).platform === 'windows') {
     executable = 'more'
   } else {

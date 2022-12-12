@@ -1,4 +1,5 @@
 import {coerceSemverVersion} from './semver.js'
+import {getEnvironmentVariables} from './environment.js'
 import * as file from '../../file.js'
 import * as ui from '../../ui.js'
 import * as system from '../../system.js'
@@ -42,7 +43,7 @@ export async function execCLI2(
 ) {
   await installCLIDependencies()
   const env = {
-    ...process.env,
+    ...getEnvironmentVariables(),
     SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: storefrontToken,
     SHOPIFY_CLI_ADMIN_AUTH_TOKEN: adminSession?.token,
     SHOPIFY_SHOP: adminSession?.storeFqdn,
@@ -162,7 +163,7 @@ async function installCLIDependencies() {
       {
         title: 'Installing theme dependencies',
         task: async () => {
-          const usingLocalCLI2 = Boolean(process.env.SHOPIFY_CLI_2_0_DIRECTORY)
+          const usingLocalCLI2 = Boolean(getEnvironmentVariables().SHOPIFY_CLI_2_0_DIRECTORY)
           await validateRubyEnv()
           if (usingLocalCLI2) {
             await bundleInstallLocalShopifyCLI()
@@ -278,7 +279,7 @@ async function bundleInstallThemeCheck() {
 
 function shopifyCLIDirectory() {
   return (
-    process.env.SHOPIFY_CLI_2_0_DIRECTORY ??
+    getEnvironmentVariables().SHOPIFY_CLI_2_0_DIRECTORY ??
     join(constants.paths.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
   )
 }
@@ -296,7 +297,7 @@ export async function version(): Promise<string | undefined> {
 }
 
 function getRubyBinDir(): string | undefined {
-  return process.env.SHOPIFY_RUBY_BINDIR
+  return getEnvironmentVariables().SHOPIFY_RUBY_BINDIR
 }
 
 function rubyExecutable(): string {

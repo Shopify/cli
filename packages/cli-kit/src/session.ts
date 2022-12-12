@@ -26,6 +26,7 @@ import {partners} from './api.js'
 import {RequestClientError} from './api/common.js'
 import {firstPartyDev, useDeviceAuth} from './environment/local.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
+import {getEnvironmentVariables} from './public/node/environment.js'
 import {gql} from 'graphql-request'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')
@@ -95,11 +96,11 @@ export interface OAuthSession {
  * @param scopes - Optional array of extra scopes to authenticate with.
  * @returns The access token for the Partners API.
  */
-export async function ensureAuthenticatedPartners(scopes: string[] = [], env = process.env): Promise<string> {
+export async function ensureAuthenticatedPartners(scopes: string[] = []): Promise<string> {
   debug(content`Ensuring that the user is authenticated with the Partners API with the following scopes:
 ${token.json(scopes)}
 `)
-  const envToken = env[constants.environmentVariables.partnersToken]
+  const envToken = getEnvironmentVariables()[constants.environmentVariables.partnersToken]
   if (envToken) {
     return (await exchangeCustomPartnerToken(envToken)).accessToken
   }
@@ -142,7 +143,7 @@ export async function ensureAuthenticatedAdmin(
   )}:
 ${token.json(scopes)}
 `)
-  const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}}, process.env, forceRefresh)
+  const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}}, forceRefresh)
   if (!tokens.admin) {
     throw MissingAdminTokenError
   }
@@ -178,7 +179,6 @@ ${token.json(scopes)}
  */
 export async function ensureAuthenticated(
   applications: OAuthApplications,
-  env = process.env,
   forceRefresh = false,
 ): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
@@ -221,7 +221,7 @@ ${token.json(applications)}
   const tokens = await tokensFor(applications, completeSession, fqdn)
 
   // Overwrite partners token if using a custom CLI Token
-  const envToken = env[constants.environmentVariables.partnersToken]
+  const envToken = getEnvironmentVariables()[constants.environmentVariables.partnersToken]
   if (envToken && applications.partnersApi) {
     tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
   }
