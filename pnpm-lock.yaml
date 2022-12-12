@@ -318,6 +318,7 @@ importers:
       '@types/diff': ^5.0.2
       '@types/fs-extra': 9.0.13
       '@types/inquirer': ^8.2.1
+      '@types/lodash-es': ^4.17.6
       '@types/react': 16.14.0
       '@types/semver': ^7.3.9
       '@vitest/coverage-istanbul': ^0.23.4
@@ -446,6 +447,7 @@ importers:
       '@types/diff': 5.0.2
       '@types/fs-extra': 9.0.13
       '@types/inquirer': 8.2.5
+      '@types/lodash-es': 4.17.6
       '@types/react': 16.14.0
       '@types/semver': 7.3.13
       '@vitest/coverage-istanbul': 0.23.4
