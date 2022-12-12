@@ -1,6 +1,7 @@
 import {os, output, string, store as conf} from '@shopify/cli-kit'
 import {version as rubyVersion} from '@shopify/cli-kit/node/ruby'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
+import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 
 export async function themeInfo(config: {cliVersion: string}): Promise<output.Message> {
   const sections: [string, string][] = [await themeConfigSection(), await systemInfoSection(config)]
@@ -22,7 +23,7 @@ async function systemInfoSection(config: {cliVersion: string}): Promise<[string,
   const lines: string[][] = [
     ['Shopify CLI', await cliVersionInfo(config)],
     ['OS', `${platform}-${arch}`],
-    ['Shell', process.env.SHELL || 'unknown'],
+    ['Shell', getEnvironmentVariables().SHELL || 'unknown'],
     ['Node version', process.version],
     ['Ruby version', ruby],
   ]
