@@ -347,6 +347,7 @@ importers:
       graphql-request: 4.3.0
       h3: 0.7.21
       ink: 3.2.0
+      ink-testing-library: ^2.1.0
       inquirer: 8.2.4
       inquirer-autocomplete-prompt: 2.0.0
       is-interactive: 2.0.0
@@ -448,6 +449,7 @@ importers:
       '@types/react': 16.14.0
       '@types/semver': 7.3.13
       '@vitest/coverage-istanbul': 0.23.4
+      ink-testing-library: 2.1.0_@types+react@16.14.0
       node-stream-zip: 1.15.0
       vite: 2.9.12
       vitest: 0.23.4
@@ -9341,6 +9343,18 @@ packages:
   /ini/2.0.0:
     resolution: {integrity: sha512-7PnF4oN3CvZF23ADhA5wRaYEQpJ8qygSkbtTXWBeXWXmEVRXK+1ITciHWwHhsjv1TmW0MgacIv6hEi5pX5NQdA==}
     engines: {node: '>=10'}
+    dev: true
+
+  /ink-testing-library/2.1.0_@types+react@16.14.0:
+    resolution: {integrity: sha512-7TNlOjJlJXB33vG7yVa+MMO7hCjaC1bCn+zdpSjknWoLbOWMaFdKc7LJvqVkZ0rZv2+akhjXPrcR/dbxissjUw==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      '@types/react': '>=16.8.0'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+    dependencies:
+      '@types/react': 16.14.0
     dev: true
 
   /ink/3.2.0_hw3ykagcixqw57etxpo4kpffqq:
