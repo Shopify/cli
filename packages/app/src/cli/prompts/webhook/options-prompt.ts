@@ -59,7 +59,7 @@ export async function optionsPrompt(flags: WebhookTriggerFlags): Promise<Webhook
 
   if (methodPassed && addressPassed) {
     if (isAddressAllowedForDeliveryMethod(flags.address as string, flags.deliveryMethod as string)) {
-      options.address = flags.address as string
+      options.address = (flags.address as string).trim()
       options.deliveryMethod = inferMethodFromAddress(options.address)
     } else {
       throw new error.Abort(
@@ -71,7 +71,7 @@ export async function optionsPrompt(flags: WebhookTriggerFlags): Promise<Webhook
   }
 
   if (!methodPassed && addressPassed) {
-    options.address = flags.address as string
+    options.address = (flags.address as string).trim()
     options.deliveryMethod = inferMethodFromAddress(options.address)
   }
 

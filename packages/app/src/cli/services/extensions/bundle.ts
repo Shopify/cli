@@ -1,7 +1,10 @@
 import {abort} from '@shopify/cli-kit'
 import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
 import {Writable} from 'node:stream'
+import {createRequire} from 'module'
 import type {StdinOptions} from 'esbuild'
+
+const require = createRequire(import.meta.url)
 
 export interface BundleOptions {
   minify: boolean

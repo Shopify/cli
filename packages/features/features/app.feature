@@ -6,7 +6,7 @@ Background:
 # "yarn install" on Windows introduces flakiness: https://github.com/Shopify/cli/runs/7988961342?check_suite_focus=true
 @skip_windows
 Scenario: I scaffold theme, ui, and function extensions
-  And I create an app named MyExtendedApp with yarn as package manager
+  And I create an app named MyExtendedApp with pnpm as package manager
   # When I create an extension named TestPurchaseExtensionReact of type post_purchase_ui and flavor react
   # Then I have a ui extension named TestPurchaseExtensionReact of type checkout_post_purchase and flavor react
   # When I create an extension named TestThemeExtension of type theme_app_extension

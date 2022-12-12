@@ -88,6 +88,8 @@ describe('bundleExtension()', () => {
 
       "
     `)
+    const plugins = options.plugins?.map(({name}) => name)
+    expect(plugins).toContain('graphql-loader')
   })
 
   test('stops the ESBuild when the abort signal receives an event', async () => {

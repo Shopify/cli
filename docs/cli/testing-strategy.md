@@ -30,10 +30,10 @@ it("loads the app", async () => {
 })
 ```
 
-Tests can be run with `yarn test` or `yarn test:watch` for the entire workspace or individual packages. `test:watch` keeps the process alive and runs tests as files are changed. If you want to run a single test, pass the path to the file as argument:
+Tests can be run with `pnpm test` or `pnpm test:watch` for the entire workspace or individual packages. `test:watch` keeps the process alive and runs tests as files are changed. If you want to run a single test, pass the path to the file as argument:
 
 ```
-yarn test path/to/my.test.ts
+pnpm test path/to/my.test.ts
 ```
 
 ### Filesystem I/O and temporary directories
@@ -79,10 +79,10 @@ it("writes", async () => {
 They are defined as user stories which are a set of steps a user would take and the expectations they'd have while navigating through those steps.
 
 ```feature
-Scenario: I create a new app with Yarn
+Scenario: I create a new app with pnpm
   Given I have a working directory
-  When I create an app named MyApp with yarn as dependency manager
-  Then I have an app named MyApp with yarn as dependency manager
+  When I create an app named MyApp with pnpm as dependency manager
+  Then I have an app named MyApp with pnpm as dependency manager
 ```
 Acceptance tests live under `packages/features` and implemented using [Cucumber](https://cucumber.io/). We create a working directory for every test that isolates the test from the rest. Moreover, the CLIs are invoked, configuring them to store global states in those temporary directories. That way, we prevent the global state from leaking into other tests and making them fail.
 

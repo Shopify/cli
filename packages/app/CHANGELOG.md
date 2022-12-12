@@ -1,5 +1,17 @@
 # @shopify/app
 
+## 3.25.0
+
+### Minor Changes
+
+- d7064a0c: Fix issue where extensions could not import .graphql files
+- 2555e5a9: Add ui.enable_create option for function toml configuration
+
+### Patch Changes
+
+- Updated dependencies [78196a78]
+  - @shopify/cli-kit@3.25.0
+
 ## 3.24.1
 
 ### Patch Changes

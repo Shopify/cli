@@ -17,6 +17,13 @@ export default function config(packagePath: string) {
       mockReset: true,
       setupFiles: [path.join(__dirname, './vitest/setup.js')],
       threads: false,
+      reporters: ['default'],
+      coverage: {
+        provider: 'istanbul',
+        include: ['**/src/**'],
+        all: true,
+        reporter: ['text', 'json', 'lcov'],
+      },
     },
   })
 }

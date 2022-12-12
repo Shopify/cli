@@ -1,6 +1,6 @@
 {
   "name": "@shopify/plugin-ngrok",
-  "version": "3.24.1",
+  "version": "3.25.0",
   "description": "Enables the creation of ngrok tunnels from `shopify app dev`, allowing previews from any device",
   "keywords": [
     "shopify",
@@ -23,7 +23,7 @@
   },
   "author": "Shopify",
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "build": "nx build",
     "clean": "nx clean",
     "lint": "nx lint",
@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@oclif/core": "1.9.2",
-    "@shopify/cli-kit": "3.24.1",
+    "@shopify/cli-kit": "3.25.0",
     "@shopify/ngrok": "4.3.2"
   },
   "eslintConfig": {
@@ -43,7 +43,8 @@
     ]
   },
   "devDependencies": {
-    "vitest": "^0.22.1"
+    "vitest": "^0.22.1",
+    "vite": "^2.9.13"
   },
   "engine-strict": true,
   "engines": {

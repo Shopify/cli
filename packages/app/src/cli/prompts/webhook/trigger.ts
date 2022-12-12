@@ -66,10 +66,11 @@ export async function addressPrompt(deliveryMethod: string): Promise<string> {
       message: 'Address for delivery',
       default: '',
       validate: (value) => {
-        if (value.length === 0) {
+        const trimmed = value.trim()
+        if (trimmed.length === 0) {
           return "Address can't be empty"
         }
-        if (isAddressAllowedForDeliveryMethod(value, deliveryMethod)) {
+        if (isAddressAllowedForDeliveryMethod(trimmed, deliveryMethod)) {
           return true
         }
 
@@ -78,7 +79,7 @@ export async function addressPrompt(deliveryMethod: string): Promise<string> {
     },
   ])
 
-  return input.address
+  return input.address.trim()
 }
 
 export async function sharedSecretPrompt(): Promise<string> {
@@ -86,7 +87,8 @@ export async function sharedSecretPrompt(): Promise<string> {
     {
       type: 'input',
       name: 'sharedSecret',
-      message: 'Shared Secret to encode the webhook payload',
+      message:
+        'Shared Secret to encode the webhook payload. If you are using the app template, this is your Client Secret, which can be found in the partners dashboard',
       default: 'shopify_test',
       validate: (value: string) => {
         if (value.length === 0) {
