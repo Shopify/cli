@@ -5,6 +5,7 @@ import {configurationFileNames} from '../constants.js'
 import {allExtensionSpecifications, allFunctionSpecifications} from '../models/extensions/specifications.js'
 import {os, output, path, store, string} from '@shopify/cli-kit'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
+import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment.js'
 
 export type Format = 'json' | 'text'
 interface InfoOptions {
@@ -220,6 +221,7 @@ class AppInfo {
   }
 
   async systemInfoSection(): Promise<[string, string]> {
+    const env = getEnvironmentVariables()
     const title = 'Tooling and System'
     const {platform, arch} = os.platformAndArch()
     const versionUpgradeMessage = await this.versionUpgradeMessage()
@@ -228,7 +230,7 @@ class AppInfo {
       ['Shopify CLI', cliVersionInfo],
       ['Package manager', this.app.packageManager],
       ['OS', `${platform}-${arch}`],
-      ['Shell', process.env.SHELL || 'unknown'],
+      ['Shell', env.SHELL || 'unknown'],
       ['Node version', process.version],
     ]
     return [title, `${string.linesToColumns(lines)}`]

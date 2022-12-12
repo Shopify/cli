@@ -17,6 +17,7 @@ import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment.js'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
@@ -223,8 +224,9 @@ async function devFrontendProxyTarget(options: DevFrontendTargetOptions): Promis
 }
 
 async function getDevEnvironmentVariables(options: DevWebOptions) {
+  const env = getEnvironmentVariables()
   return {
-    ...process.env,
+    ...env,
     SHOPIFY_API_KEY: options.apiKey,
     SHOPIFY_API_SECRET: options.apiSecret,
     HOST: options.hostname,
@@ -256,7 +258,7 @@ async function devBackendTarget(web: Web, options: DevWebOptions): Promise<outpu
         stderr,
         signal,
         env: {
-          ...process.env,
+          ...getEnvironmentVariables(),
           ...env,
         },
       })

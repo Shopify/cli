@@ -2,6 +2,7 @@ import {Extension} from './extensions.js'
 import {dotEnvFileNames} from '../../constants.js'
 import {path, string} from '@shopify/cli-kit'
 import {writeDotEnv} from '@shopify/cli-kit/node/dot-env'
+import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import type {AppInterface} from './app'
 
 export interface IdentifiersExtensions {
@@ -36,10 +37,12 @@ interface UpdateAppIdentifiersOptions {
  * @param options - Options.
  * @returns An copy of the app with the environment updated to reflect the updated identifiers.
  */
-export async function updateAppIdentifiers(
-  {app, identifiers, command}: UpdateAppIdentifiersOptions,
-  systemEnvironment = process.env,
-): Promise<AppInterface> {
+export async function updateAppIdentifiers({
+  app,
+  identifiers,
+  command,
+}: UpdateAppIdentifiersOptions): Promise<AppInterface> {
+  const env = getEnvironmentVariables()
   let dotenvFile = app.dotenv
   if (!dotenvFile) {
     dotenvFile = {
@@ -48,12 +51,12 @@ export async function updateAppIdentifiers(
     }
   }
   const updatedVariables: {[key: string]: string} = {...(app.dotenv?.variables ?? {})}
-  if (!systemEnvironment[app.idEnvironmentVariableName]) {
+  if (!env[app.idEnvironmentVariableName]) {
     updatedVariables[app.idEnvironmentVariableName] = identifiers.app
   }
   Object.keys(identifiers.extensions).forEach((identifier) => {
     const envVariable = `SHOPIFY_${string.constantize(identifier)}_ID`
-    if (!systemEnvironment[envVariable]) {
+    if (!env[envVariable]) {
       updatedVariables[envVariable] = identifiers.extensions[identifier]!
     }
   })
@@ -76,13 +79,11 @@ interface GetAppIdentifiersOptions {
  * Given an app and a environment, it fetches the ids from the environment
  * and returns them.
  */
-export function getAppIdentifiers(
-  {app}: GetAppIdentifiersOptions,
-  systemEnvironment = process.env,
-): Partial<UuidOnlyIdentifiers> {
+export function getAppIdentifiers({app}: GetAppIdentifiersOptions): Partial<UuidOnlyIdentifiers> {
+  const env = getEnvironmentVariables()
   const envVariables = {
     ...app.dotenv?.variables,
-    ...(systemEnvironment as {[variable: string]: string}),
+    ...(env as {[variable: string]: string}),
   }
   const extensionsIdentifiers: {[key: string]: string} = {}
   const processExtension = (extension: Extension) => {

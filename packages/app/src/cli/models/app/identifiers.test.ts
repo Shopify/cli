@@ -1,9 +1,14 @@
 import {updateAppIdentifiers, getAppIdentifiers} from './identifiers.js'
 import {testApp, testUIExtension} from './app.test-data.js'
-import {describe, expect, test} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
+import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 
+beforeEach(() => {
+  vi.mock('@shopify/cli-kit/node/environment')
+  vi.mocked(getEnvironmentVariables).mockReturnValue({})
+})
 describe('updateAppIdentifiers', () => {
   test("persists the ids that are not environment variables in the system and it's deploy", async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
@@ -51,21 +56,19 @@ describe('updateAppIdentifiers', () => {
           theme: [],
         },
       })
+      vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_API_KEY: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'})
 
       // When
-      await updateAppIdentifiers(
-        {
-          app,
-          identifiers: {
-            app: 'FOO',
-            extensions: {
-              my_extension: 'BAR',
-            },
+      await updateAppIdentifiers({
+        app,
+        identifiers: {
+          app: 'FOO',
+          extensions: {
+            my_extension: 'BAR',
           },
-          command: 'deploy',
         },
-        {SHOPIFY_API_KEY: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
-      )
+        command: 'deploy',
+      })
 
       // Then
       const dotEnvFilePath = path.join(tmpDir, '.env')
@@ -127,14 +130,12 @@ describe('getAppIdentifiers', () => {
           theme: [],
         },
       })
+      vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_API_KEY: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'})
 
       // When
-      const got = await getAppIdentifiers(
-        {
-          app,
-        },
-        {SHOPIFY_API_KEY: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
-      )
+      const got = await getAppIdentifiers({
+        app,
+      })
 
       // Then
       expect(got.app).toEqual('FOO')
