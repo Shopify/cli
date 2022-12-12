@@ -30,6 +30,7 @@
       "../../.eslintrc.cjs"
     ],
     "rules": {
+      "no-process-env": "off",
       "no-console": "off",
       "import/extensions": [
         "error",
