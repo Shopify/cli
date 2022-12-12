@@ -170,7 +170,7 @@ importers:
       serve-static: ^1.14.1
       supertest: ^6.2.2
       vite: 2.9.12
-      vitest: ^0.22.1
+      vitest: ^0.23.4
     dependencies:
       '@shopify/shopify-api': 3.1.3
       compression: 1.7.4
@@ -184,7 +184,7 @@ importers:
       pretty-quick: 3.1.3_prettier@2.8.0
       supertest: 6.3.1
       vite: 2.9.12
-      vitest: 0.22.1
+      vitest: 0.23.4
 
   fixtures/app/web/frontend:
     specifiers:
@@ -242,7 +242,7 @@ importers:
       lodash-es: 4.17.21
       serve-static: 1.15.0
       vite: 2.9.12
-      vitest: ^0.22.1
+      vitest: ^0.23.4
       ws: 8.8.1
     dependencies:
       '@luckycatfactory/esbuild-graphql-loader': 3.7.0_t5hz6ir3hkf4yglirnvrkce4ii
@@ -266,7 +266,7 @@ importers:
       graphql: 16.6.0
       graphql-tag: 2.12.6_graphql@16.6.0
       vite: 2.9.12
-      vitest: 0.22.1
+      vitest: 0.23.4
 
   packages/cli-hydrogen:
     specifiers:
@@ -286,7 +286,7 @@ importers:
       react-dom: ^18.2.0
       typescript: 4.6.4
       vite: 2.9.12
-      vitest: ^0.22.1
+      vitest: ^0.23.4
     dependencies:
       '@oclif/core': 1.9.2
       '@shopify/cli-kit': link:../cli-kit
@@ -305,7 +305,7 @@ importers:
       graphql: 16.6.0
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
-      vitest: 0.22.1
+      vitest: 0.23.4
 
   packages/cli-kit:
     specifiers:
@@ -320,7 +320,7 @@ importers:
       '@types/inquirer': ^8.2.1
       '@types/react': 16.14.0
       '@types/semver': ^7.3.9
-      '@vitest/coverage-istanbul': ^0.22.0
+      '@vitest/coverage-istanbul': ^0.23.4
       abort-controller: 3.0.0
       archiver: 5.3.1
       chalk: 5.1.0
@@ -376,7 +376,7 @@ importers:
       ts-error: 1.0.6
       unique-string: 3.0.0
       vite: 2.9.12
-      vitest: ^0.22.1
+      vitest: ^0.23.4
       zod: 3.17.3
     dependencies:
       '@bugsnag/js': 7.16.7
@@ -445,10 +445,10 @@ importers:
       '@types/inquirer': 8.2.5
       '@types/react': 16.14.0
       '@types/semver': 7.3.13
-      '@vitest/coverage-istanbul': 0.22.1
+      '@vitest/coverage-istanbul': 0.23.4
       node-stream-zip: 1.15.0
       vite: 2.9.12
-      vitest: 0.22.1
+      vitest: 0.23.4
 
   packages/cli-main:
     specifiers:
@@ -461,9 +461,9 @@ importers:
       '@shopify/cli-kit': 3.25.0
       '@shopify/plugin-ngrok': 3.25.0
       '@shopify/theme': 3.25.0
-      '@vitest/coverage-istanbul': ^0.22.0
+      '@vitest/coverage-istanbul': ^0.23.4
       vite: 2.9.12
-      vitest: ^0.22.1
+      vitest: ^0.23.4
     dependencies:
       '@oclif/core': 1.9.2
       '@oclif/plugin-commands': 2.2.0
@@ -475,22 +475,22 @@ importers:
       '@shopify/app': link:../app
       '@shopify/cli-hydrogen': link:../cli-hydrogen
       '@shopify/theme': link:../theme
-      '@vitest/coverage-istanbul': 0.22.1
+      '@vitest/coverage-istanbul': 0.23.4
       vite: 2.9.12
-      vitest: 0.22.1
+      vitest: 0.23.4
 
   packages/create-app:
     specifiers:
       '@oclif/core': 1.9.2
       '@shopify/cli-kit': 3.25.0
       vite: 2.9.12
-      vitest: ^0.22.1
+      vitest: ^0.23.4
     dependencies:
       '@oclif/core': 1.9.2
       '@shopify/cli-kit': link:../cli-kit
     devDependencies:
       vite: 2.9.12
-      vitest: 0.22.1
+      vitest: 0.23.4
 
   packages/create-hydrogen:
     specifiers:
@@ -499,7 +499,7 @@ importers:
       '@types/download': 8.0.0
       download: 8.0.0
       vite: 2.9.12
-      vitest: ^0.22.1
+      vitest: ^0.23.4
     dependencies:
       '@oclif/core': 1.9.2
       '@shopify/cli-kit': link:../cli-kit
@@ -507,7 +507,7 @@ importers:
     devDependencies:
       '@types/download': 8.0.0
       vite: 2.9.12
-      vitest: 0.22.1
+      vitest: 0.23.4
 
   packages/features:
     specifiers:
@@ -543,27 +543,27 @@ importers:
       '@shopify/cli-kit': 3.25.0
       '@shopify/ngrok': 4.3.2
       vite: 2.9.12
-      vitest: ^0.22.1
+      vitest: ^0.23.4
     dependencies:
       '@oclif/core': 1.9.2
       '@shopify/cli-kit': link:../cli-kit
       '@shopify/ngrok': 4.3.2
     devDependencies:
       vite: 2.9.12
-      vitest: 0.22.1
+      vitest: 0.23.4
 
   packages/theme:
     specifiers:
       '@oclif/core': 1.9.2
       '@shopify/cli-kit': 3.25.0
       vite: 2.9.12
-      vitest: ^0.22.1
+      vitest: ^0.23.4
     dependencies:
       '@oclif/core': 1.9.2
       '@shopify/cli-kit': link:../cli-kit
     devDependencies:
       vite: 2.9.12
-      vitest: 0.22.1
+      vitest: 0.23.4
 
   packages/ui-extensions-dev-console:
     specifiers:
@@ -589,7 +589,7 @@ importers:
       typescript: 4.6.4
       vite: 2.9.12
       vite-tsconfig-paths: ^3.3.14
-      vitest: ^0.22.1
+      vitest: ^0.23.4
     dependencies:
       '@shopify/polaris': 6.6.0_sfoxds7t5ydpegc3knd667wn6m
       '@shopify/polaris-icons': 4.23.0
@@ -614,7 +614,7 @@ importers:
       typescript: 4.6.4
       vite: 2.9.12_sass@1.56.1
       vite-tsconfig-paths: 3.6.0_vite@2.9.12
-      vitest: 0.22.1_sass@1.56.1
+      vitest: 0.23.4_sass@1.56.1
 
   packages/ui-extensions-server-kit:
     specifiers:
@@ -634,7 +634,7 @@ importers:
       vi-fetch: ^0.8.0
       vite: 2.9.12
       vite-tsconfig-paths: ^3.3.14
-      vitest: ^0.22.1
+      vitest: ^0.23.4
     devDependencies:
       '@shopify/react-testing': 3.3.10_sfoxds7t5ydpegc3knd667wn6m
       '@shopify/ui-extensions-test-utils': link:../ui-extensions-test-utils
@@ -652,7 +652,7 @@ importers:
       vi-fetch: 0.8.0
       vite: 2.9.12
       vite-tsconfig-paths: 3.6.0_vite@2.9.12
-      vitest: 0.22.1_jsdom@20.0.3
+      vitest: 0.23.4_jsdom@20.0.3
 
   packages/ui-extensions-test-utils:
     specifiers:
@@ -4749,8 +4749,8 @@ packages:
       - supports-color
     dev: false
 
-  /@vitest/coverage-istanbul/0.22.1:
-    resolution: {integrity: sha512-S29NBnmu8ko3Yj69yYX0F17RvyVO+3KOKvhExNX8/a1qL3Z+4EeT03DSdXTxkpq+gyxWlaIIMduxKct/imy3Dg==}
+  /@vitest/coverage-istanbul/0.23.4:
+    resolution: {integrity: sha512-vl+c682jwCkthdOomO7aBRY/H2bXfxjYAo+WZoGktdWEiSBfwhFUOcJJW3+Ery9i8ja+M1Jd19HrqYriLixGPw==}
     dependencies:
       istanbul-lib-coverage: 3.2.0
       istanbul-lib-instrument: 5.2.1
@@ -4758,7 +4758,7 @@ packages:
       istanbul-lib-source-maps: 4.0.1
       istanbul-reports: 3.1.5
       test-exclude: 6.0.0
-      vitest: 0.22.1
+      vitest: 0.23.4
     transitivePeerDependencies:
       - '@edge-runtime/vm'
       - '@vitest/browser'
@@ -13758,6 +13758,12 @@ packages:
     resolution: {integrity: sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==}
     engines: {node: '>=8'}
 
+  /strip-literal/0.4.2:
+    resolution: {integrity: sha512-pv48ybn4iE1O9RLgCAN0iU4Xv7RlBTiit6DKmMiErbs9x1wH6vXBs45tWc0H5wUIF6TLTrKweqkmYF/iraQKNw==}
+    dependencies:
+      acorn: 8.8.1
+    dev: true
+
   /strip-outer/1.0.1:
     resolution: {integrity: sha512-k55yxKHwaXnpYGsOzg4Vl8+tDrWylxDEpknGjhTiZB8dFRU5rTo9CAzeycivxV3s+zlTKwrs6WxMxR95n26kwg==}
     engines: {node: '>=0.10.0'}
@@ -14043,6 +14049,10 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: false
 
+  /tinybench/2.3.1:
+    resolution: {integrity: sha512-hGYWYBMPr7p4g5IarQE7XhlyWveh1EKhy4wUBS1LrHXCKYgvz+4/jCqgmJqZxxldesn05vccrtME2RLLZNW7iA==}
+    dev: true
+
   /tinycolor2/1.4.2:
     resolution: {integrity: sha512-vJhccZPs965sV/L2sU4oRQVAos0pQXwsvTLkWYdqJ+a8Q5kPFzJTuOFwy7UniPli44NKQGAglksjvOcpo95aZA==}
     dev: false
@@ -14057,6 +14067,12 @@ packages:
   /tinypool/0.2.4:
     resolution: {integrity: sha512-Vs3rhkUH6Qq1t5bqtb816oT+HeJTXfwt2cbPH17sWHIYKTotQIFPk3tf2fgqRrVyMDVOc1EnPgzIxfIulXVzwQ==}
     engines: {node: '>=14.0.0'}
+    dev: false
+
+  /tinypool/0.3.0:
+    resolution: {integrity: sha512-NX5KeqHOBZU6Bc0xj9Vr5Szbb1j8tUHIeD18s41aDJaPeC5QTdEhK0SpdpUrZlj2nv5cctNcSjaKNanXlfcVEQ==}
+    engines: {node: '>=14.0.0'}
+    dev: true
 
   /tinyspy/1.0.2:
     resolution: {integrity: sha512-bSGlgwLBYf7PnUsQ6WOc6SJ3pGOcd+d8AA6EUnLDDM0kWEstC1JIlSZA3UNliDXhd9ABoS7hiRBDCu+XP/sf1Q==}
@@ -14763,9 +14779,50 @@ packages:
       - sass
       - stylus
       - supports-color
+    dev: false
 
-  /vitest/0.22.1_jsdom@20.0.3:
-    resolution: {integrity: sha512-+x28YTnSLth4KbXg7MCzoDAzPJlJex7YgiZbUh6YLp0/4PqVZ7q7/zyfdL0OaPtKTpNiQFPpMC8Y2MSzk8F7dw==}
+  /vitest/0.23.4:
+    resolution: {integrity: sha512-iukBNWqQAv8EKDBUNntspLp9SfpaVFbmzmM0sNcnTxASQZMzRw3PsM6DMlsHiI+I6GeO5/sYDg3ecpC+SNFLrQ==}
+    engines: {node: '>=v14.16.0'}
+    hasBin: true
+    peerDependencies:
+      '@edge-runtime/vm': '*'
+      '@vitest/browser': '*'
+      '@vitest/ui': '*'
+      happy-dom: '*'
+      jsdom: '*'
+    peerDependenciesMeta:
+      '@edge-runtime/vm':
+        optional: true
+      '@vitest/browser':
+        optional: true
+      '@vitest/ui':
+        optional: true
+      happy-dom:
+        optional: true
+      jsdom:
+        optional: true
+    dependencies:
+      '@types/chai': 4.3.4
+      '@types/chai-subset': 1.3.3
+      '@types/node': 18.11.10
+      chai: 4.3.7
+      debug: 4.3.4
+      local-pkg: 0.4.2
+      strip-literal: 0.4.2
+      tinybench: 2.3.1
+      tinypool: 0.3.0
+      tinyspy: 1.0.2
+      vite: 2.9.12
+    transitivePeerDependencies:
+      - less
+      - sass
+      - stylus
+      - supports-color
+    dev: true
+
+  /vitest/0.23.4_jsdom@20.0.3:
+    resolution: {integrity: sha512-iukBNWqQAv8EKDBUNntspLp9SfpaVFbmzmM0sNcnTxASQZMzRw3PsM6DMlsHiI+I6GeO5/sYDg3ecpC+SNFLrQ==}
     engines: {node: '>=v14.16.0'}
     hasBin: true
     peerDependencies:
@@ -14793,7 +14850,9 @@ packages:
       debug: 4.3.4
       jsdom: 20.0.3
       local-pkg: 0.4.2
-      tinypool: 0.2.4
+      strip-literal: 0.4.2
+      tinybench: 2.3.1
+      tinypool: 0.3.0
       tinyspy: 1.0.2
       vite: 2.9.12
     transitivePeerDependencies:
@@ -14803,8 +14862,8 @@ packages:
       - supports-color
     dev: true
 
-  /vitest/0.22.1_sass@1.56.1:
-    resolution: {integrity: sha512-+x28YTnSLth4KbXg7MCzoDAzPJlJex7YgiZbUh6YLp0/4PqVZ7q7/zyfdL0OaPtKTpNiQFPpMC8Y2MSzk8F7dw==}
+  /vitest/0.23.4_sass@1.56.1:
+    resolution: {integrity: sha512-iukBNWqQAv8EKDBUNntspLp9SfpaVFbmzmM0sNcnTxASQZMzRw3PsM6DMlsHiI+I6GeO5/sYDg3ecpC+SNFLrQ==}
     engines: {node: '>=v14.16.0'}
     hasBin: true
     peerDependencies:
@@ -14831,7 +14890,9 @@ packages:
       chai: 4.3.7
       debug: 4.3.4
       local-pkg: 0.4.2
-      tinypool: 0.2.4
+      strip-literal: 0.4.2
+      tinybench: 2.3.1
+      tinypool: 0.3.0
       tinyspy: 1.0.2
       vite: 2.9.12_sass@1.56.1
     transitivePeerDependencies:
