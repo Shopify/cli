@@ -130,6 +130,28 @@ jobs:
       - name: ${{ matrix.target }}
         run: pnpm nx run-many --all --skip-nx-cache --target=${{ matrix.target }}
 
+  oclif-manifests:
+    name: Check OCLIF manifests
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: 18.7.0
+      - name: Build
+        run: pnpm build
+      - name: Refresh manifests
+        run: pnpm refresh-manifests
+      - name: Check if there are changes
+        run: 'test -z "$(git status --porcelain "**/oclif.manifest.json" )" || { echo ''Run pnpm refresh-manifests before pushing new commands or flags'' ; exit 1; }'
+
   pr-platform-dependent:
     name: Testing with Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
