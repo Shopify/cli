@@ -5,7 +5,8 @@ import {Fatal} from '../../error.js'
 import {alert} from '../../private/node/ui/alert.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
-import Prompt, {Props as PromptProps} from '../../private/node/ui/components/Prompt.js'
+import {Props as PromptProps} from '../../private/node/ui/components/Prompt.js'
+import Tasks, {Task} from '../../private/node/ui/components/Tasks.js'
 import React from 'react'
 import {AbortController} from 'abort-controller'
 import {RenderOptions} from 'ink'
@@ -234,4 +235,8 @@ export async function renderConfirmation({question, infoTable}: ConfirmationProp
   ]
 
   return prompt({message: question, choices, infoTable})
+}
+
+export function renderTasks(tasks: Task[]) {
+  return render(<Tasks tasks={tasks} />)
 }
