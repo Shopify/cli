@@ -194,6 +194,7 @@ export async function kitchenSink() {
       {label: 'seventh', value: 'seventh'},
       {label: 'eighth', value: 'eighth', group: 'Merchant Admin'},
       {label: 'ninth', value: 'ninth', group: 'Merchant Admin'},
+      {label: 'tenth', value: 'tenth'},
     ],
     infoTable: {Add: ['new-ext'], Remove: ['integrated-demand-ext', 'order-discount']},
   })

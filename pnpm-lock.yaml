@@ -356,6 +356,7 @@ importers:
       latest-version: 6.0.0
       liquidjs: 9.36.0
       listr2: 4.0.5
+      lodash-es: 4.17.21
       log-update: 4.0.0
       macaddress: 0.5.3
       md5-file: 5.0.0
@@ -418,6 +419,7 @@ importers:
       latest-version: 6.0.0
       liquidjs: 9.36.0
       listr2: 4.0.5
+      lodash-es: 4.17.21
       log-update: 4.0.0
       macaddress: 0.5.3
       md5-file: 5.0.0

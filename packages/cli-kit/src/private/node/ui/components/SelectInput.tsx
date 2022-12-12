@@ -1,6 +1,5 @@
-import {AbortSilent} from '../../../../error.js'
 import React, {useState, useEffect, useRef, useCallback} from 'react'
-import {Box, Text, useApp, useInput} from 'ink'
+import {Box, Key, Text, useApp, useInput} from 'ink'
 import {groupBy, isEqual, mapValues} from 'lodash-es'
 
 export interface Props<T> {
@@ -28,6 +27,8 @@ function groupItems<T>(items: Item<T>[]) {
 }
 
 export default function SelectInput<T>({items, onSelect}: React.PropsWithChildren<Props<T>>): JSX.Element | null {
+  const [inputStack, setInputStack] = useState<string | null>(null)
+  const [inputTimeout, setInputTimeout] = useState<NodeJS.Timeout | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const keys = useRef(new Set(items.map((item) => item.key)))
   const {exit: unmountInk} = useApp()
@@ -49,38 +50,58 @@ export default function SelectInput<T>({items, onSelect}: React.PropsWithChildre
     previousItems.current = items
   }, [items])
 
-  useInput(
-    useCallback(
-      (input, key) => {
-        if (input === 'c' && key.ctrl) {
-          throw new AbortSilent()
+  const handleInput = useCallback(
+    (input: string, key: Key) => {
+      if (input === 'c' && key.ctrl) {
+        process.exit(1)
+      }
+
+      const parsedInput = parseInt(input, 10)
+
+      if (parsedInput !== 0 && parsedInput <= items.length + 1) {
+        setSelectedIndex(parsedInput - 1)
+      } else if (keys.current.has(input)) {
+        const index = items.findIndex((item) => item.key === input)
+        if (index !== -1) {
+          setSelectedIndex(index)
         }
+      }
 
-        const parsedInput = parseInt(input, 10)
+      if (key.upArrow) {
+        const lastIndex = items.length - 1
 
-        if (parsedInput !== 0 && parsedInput <= items.length + 1) {
-          setSelectedIndex(parsedInput - 1)
-        } else if (keys.current.has(input)) {
-          const index = items.findIndex((item) => item.key === input)
-          if (index !== -1) {
-            setSelectedIndex(index)
-          }
-        }
-
-        if (key.upArrow) {
-          const lastIndex = items.length - 1
-
-          setSelectedIndex(selectedIndex === 0 ? lastIndex : selectedIndex - 1)
-        } else if (key.downArrow) {
-          setSelectedIndex(selectedIndex === items.length - 1 ? 0 : selectedIndex + 1)
-        } else if (key.return) {
-          onSelect(items[selectedIndex]!)
-          unmountInk()
-        }
-      },
-      [selectedIndex, items, onSelect],
-    ),
+        setSelectedIndex(selectedIndex === 0 ? lastIndex : selectedIndex - 1)
+      } else if (key.downArrow) {
+        setSelectedIndex(selectedIndex === items.length - 1 ? 0 : selectedIndex + 1)
+      } else if (key.return) {
+        onSelect(items[selectedIndex]!)
+        unmountInk()
+      }
+    },
+    [selectedIndex, items, onSelect],
   )
+
+  useInput((input, key) => {
+    if (input.length > 0 && Object.values(key).every((value) => value === false)) {
+      const newInputStack = inputStack === null ? input : inputStack + input
+
+      setInputStack(newInputStack)
+
+      if (inputTimeout !== null) {
+        clearTimeout(inputTimeout)
+      }
+
+      setInputTimeout(
+        setTimeout(() => {
+          handleInput(newInputStack, key)
+          setInputStack(null)
+          setInputTimeout(null)
+        }, 300),
+      )
+    } else {
+      handleInput(input, key)
+    }
+  })
 
   return (
     <Box flexDirection="column">
