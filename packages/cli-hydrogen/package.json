@@ -10,7 +10,8 @@
   "homepage": "https://github.com/shopify/cli#readme",
   "type": "module",
   "files": [
-    "/dist"
+    "/dist",
+    "/oclif.manifest.json"
   ],
   "publishConfig": {
     "access": "public",

@@ -10,7 +10,8 @@
   "type": "module",
   "license": "MIT",
   "files": [
-    "/dist"
+    "/dist",
+    "/oclif.manifest.json"
   ],
   "publishConfig": {
     "access": "public",
