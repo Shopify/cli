@@ -11,7 +11,7 @@ export const MetafieldSchema = schema.define.object({
 export const CapabilitiesSchema = schema.define.object({
   network_access: schema.define.boolean().optional(),
   block_progress: schema.define.boolean().optional(),
-  storefront_api: schema.define.boolean().optional(),
+  api_access: schema.define.boolean().optional(),
 })
 
 export const TypeSchema = schema.define.object({

@@ -15,7 +15,7 @@ async function testGetLocalization(tmpDir: string, currentLocalization?: Localiz
       capabilities: {
         block_progress: false,
         network_access: false,
-        storefront_api: false,
+        api_access: false,
       },
     },
     idEnvironmentVariableName: 'mockId',

@@ -32,7 +32,7 @@ describe('getUIExtensionPayload', () => {
           capabilities: {
             block_progress: false,
             network_access: true,
-            storefront_api: true,
+            api_access: true,
           },
           extensionPoints: ['CUSTOM_EXTENSION_POINT'],
         },
@@ -77,7 +77,7 @@ describe('getUIExtensionPayload', () => {
         capabilities: {
           blockProgress: false,
           networkAccess: true,
-          storefrontApi: true,
+          apiAccess: true,
         },
         development: {
           hidden: true,
@@ -126,7 +126,7 @@ describe('getUIExtensionPayload', () => {
         capabilities: {
           blockProgress: false,
           networkAccess: false,
-          storefrontApi: false,
+          apiAccess: false,
         },
       })
     })
@@ -144,7 +144,7 @@ describe('getUIExtensionPayload', () => {
           capabilities: {
             block_progress: false,
             network_access: false,
-            storefront_api: false,
+            api_access: false,
           },
           extensionPoints: [
             {
