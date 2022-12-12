@@ -60,8 +60,8 @@
     "@shopify/plugin-ngrok": "3.25.0"
   },
   "devDependencies": {
-    "@vitest/coverage-istanbul": "^0.22.0",
-    "vitest": "^0.22.1",
+    "@vitest/coverage-istanbul": "^0.23.4",
+    "vitest": "^0.23.4",
     "vite": "^2.9.13",
     "@shopify/app": "3.25.0",
     "@shopify/cli-hydrogen": "3.25.0",
