@@ -150,14 +150,7 @@ jobs:
       - name: Refresh manifests
         run: pnpm refresh-manifests
       - name: Check if there are changes
-        id: changes
-        uses: UnicornGlobal/has-changes-action@v1.0.12
-        with:
-          pathspec: "**/oclif.manifest.json"
-      - name: And if there are
-        if: steps.changes.outputs.changed == 1
-        run: echo "Run pnpm refresh-manifests before pushing new commands or flags"; exit 1
-
+        run: test -z "$(git status --porcelain "**/oclif.manifest.json" )" || { echo 'Run pnpm refresh-manifests before pushing new commands or flags' ; exit 1; }
 
   pr-platform-dependent:
     name: Testing with Node ${{ matrix.node }} in ${{ matrix.os }}
