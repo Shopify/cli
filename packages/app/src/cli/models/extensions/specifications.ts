@@ -1,5 +1,6 @@
 import {UIExtensionSpec} from './ui.js'
 import {FunctionSpec} from './functions.js'
+import {ThemeExtensionSpec, themeSpecification} from './theme.js'
 import {os, path} from '@shopify/cli-kit'
 import {memoize} from 'lodash-es'
 import {fileURLToPath} from 'url'
@@ -10,6 +11,10 @@ export async function allUISpecifications(): Promise<UIExtensionSpec[]> {
 
 export async function allFunctionSpecifications(): Promise<FunctionSpec[]> {
   return memLoadSpecs('function-specifications')
+}
+
+export function allThemeSpecifications(): ThemeExtensionSpec[] {
+  return [themeSpecification]
 }
 
 const memLoadSpecs = memoize(loadSpecs)

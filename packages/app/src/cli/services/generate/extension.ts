@@ -2,7 +2,8 @@ import {blocks, versions} from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionSpec} from '../../models/extensions/functions.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
-import {ExtensionSpec} from '../../models/extensions/extensions.js'
+import {UIExtensionSpec} from '../../models/extensions/ui.js'
+import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
 import {error, file, git, path, string, template, ui, environment} from '@shopify/cli-kit'
 import {
   addNPMDependenciesIfNeeded,
@@ -39,8 +40,8 @@ interface ExtensionDirectory {
 export type ExtensionFlavor = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react'
 
 type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionSpec> & ExtensionDirectory
-type UIExtensionInitOptions = ExtensionInitOptions<ExtensionSpec> & ExtensionDirectory
-type ThemeExtensionInitOptions = ExtensionInitOptions<ExtensionSpec> & ExtensionDirectory
+type UIExtensionInitOptions = ExtensionInitOptions<UIExtensionSpec> & ExtensionDirectory
+type ThemeExtensionInitOptions = ExtensionInitOptions<ThemeExtensionSpec> & ExtensionDirectory
 
 async function extensionInit(options: ExtensionInitOptions): Promise<string> {
   const extensionDirectory = await ensureExtensionDirectoryExists({app: options.app, name: options.name})

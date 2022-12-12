@@ -1,6 +1,7 @@
-import {BaseConfigContents, ExtensionSpec} from '../extensions/extensions.js'
 import {FunctionSpec, FunctionConfigType} from '../extensions/functions.js'
-import {ThemeConfigContents} from '../extensions/theme.js'
+import {ThemeConfigContents, ThemeExtensionSpec} from '../extensions/theme.js'
+import {UIExtensionSpec} from '../extensions/ui.js'
+import {BaseConfigContents} from '../extensions/schemas.js'
 import {output} from '@shopify/cli-kit'
 import {Result} from '@shopify/cli-kit/node/result'
 import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
@@ -59,11 +60,11 @@ export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigCo
   hasExtensionPointTarget(target: string): boolean
 }
 
-export function isUIExtension(spec: GenericSpecification): spec is ExtensionSpec {
+export function isUIExtension(spec: GenericSpecification): spec is UIExtensionSpec {
   return spec.category() === 'ui'
 }
 
-export function isThemeExtension(spec: GenericSpecification): spec is ExtensionSpec {
+export function isThemeExtension(spec: GenericSpecification): spec is ThemeExtensionSpec {
   return spec.category() === 'theme'
 }
 

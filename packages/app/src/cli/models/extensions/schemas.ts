@@ -66,3 +66,6 @@ export const BaseFunctionConfigurationSchema = schema.define.object({
 })
 
 export type NewExtensionPointSchemaType = schema.define.infer<typeof NewExtensionPointSchema>
+
+// Base config type that all config schemas must extend.
+export type BaseConfigContents = schema.define.infer<typeof BaseUIExtensionSchema>

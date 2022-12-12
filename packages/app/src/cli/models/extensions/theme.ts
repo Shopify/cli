@@ -8,14 +8,20 @@ export type ThemeConfigContents = schema.define.infer<typeof ThemeExtensionSchem
 /**
  * Extension specification with all properties and methods needed to load a theme extension.
  */
-const specification = {
+export const themeSpecification = {
   identifier: 'theme',
   externalIdentifier: 'theme_app_extension',
-  partnersWebIdentifier: 'theme_app_extension',
   externalName: 'Theme app extension',
+  supportedFlavors: [],
+  registrationLimit: 1,
+  gated: false,
+  category: () => 'theme' as const,
+  partnersWebIdentifier: 'theme_app_extension',
   graphQLType: 'theme_app_extension',
   schema: ThemeExtensionSchema,
 }
+
+export type ThemeExtensionSpec = typeof themeSpecification
 
 /**
  * Class that represents an instance of a local theme extension
@@ -36,19 +42,19 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
   private remoteSpecification?: api.graphql.RemoteSpecification
 
   get graphQLType() {
-    return specification.graphQLType.toUpperCase()
+    return themeSpecification.graphQLType.toUpperCase()
   }
 
   get identifier() {
-    return specification.identifier
+    return themeSpecification.identifier
   }
 
   get type() {
-    return specification.identifier
+    return themeSpecification.identifier
   }
 
   get humanName() {
-    return this.remoteSpecification?.externalName ?? specification.externalName
+    return this.remoteSpecification?.externalName ?? themeSpecification.externalName
   }
 
   get name() {
@@ -56,7 +62,7 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
   }
 
   get externalType() {
-    return this.remoteSpecification?.externalIdentifier ?? specification.externalIdentifier
+    return this.remoteSpecification?.externalIdentifier ?? themeSpecification.externalIdentifier
   }
 
   constructor(options: {
@@ -75,7 +81,7 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
 
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
     const partnersFqdn = await environment.fqdn.partners()
-    const parnersPath = specification.partnersWebIdentifier
+    const parnersPath = themeSpecification.partnersWebIdentifier
     return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }
 

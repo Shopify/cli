@@ -1,12 +1,9 @@
-import {BaseUIExtensionSchema, ZodSchemaType} from './schemas.js'
+import {BaseConfigContents, ZodSchemaType} from './schemas.js'
 import {allUISpecifications} from './specifications.js'
 import {ExtensionCategory, GenericSpecification, UIExtension} from '../app/extensions.js'
 import {blocks, defualtExtensionFlavors} from '../../constants.js'
-import {id, path, schema, api, output, environment, string} from '@shopify/cli-kit'
+import {id, path, api, output, environment, string} from '@shopify/cli-kit'
 import {ok, Result} from '@shopify/cli-kit/node/result'
-
-// Base config type that all config schemas must extend.
-export type BaseConfigContents = schema.define.infer<typeof BaseUIExtensionSchema>
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.

@@ -18,6 +18,7 @@ export interface FunctionSpec<TConfiguration extends FunctionConfigType = Functi
   externalName: string
   helpURL?: string
   gated: boolean
+  surface: 'none'
   templateURL?: string
   supportedFlavors: {name: string; value: string}[]
   configSchema: ZodSchemaType<TConfiguration>
@@ -143,9 +144,8 @@ export function createFunctionSpec<TConfiguration extends FunctionConfigType = F
     configSchema: BaseFunctionConfigurationSchema,
     gated: false,
     registrationLimit: spec.registrationLimit ?? blocks.functions.defaultRegistrationLimit,
-
     category: (): ExtensionCategory => 'function',
   }
 
-  return {...defaults, ...spec}
+  return {...defaults, ...spec, surface: 'none'}
 }
