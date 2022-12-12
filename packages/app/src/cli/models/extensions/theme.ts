@@ -1,6 +1,6 @@
 import {ThemeExtensionSchema} from './schemas.js'
 import {ThemeExtension} from '../app/extensions.js'
-import {id, path, schema, api, output, environment, string} from '@shopify/cli-kit'
+import {path, schema, api, output, environment, string} from '@shopify/cli-kit'
 
 // Base config type for a theme extension.
 export type ThemeConfigContents = schema.define.infer<typeof ThemeExtensionSchema>
@@ -27,8 +27,6 @@ const specification = {
 export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents = ThemeConfigContents>
   implements ThemeExtension<TConfiguration>
 {
-  outputBundlePath: string
-  devUUID: string
   localIdentifier: string
   idEnvironmentVariableName: string
   directory: string
@@ -71,8 +69,6 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
     this.configurationPath = options.configurationPath
     this.directory = options.directory
     this.remoteSpecification = options.remoteSpecification
-    this.outputBundlePath = path.join(options.directory, 'dist/main.js')
-    this.devUUID = `dev-${id.generateRandomUUID()}`
     this.localIdentifier = path.basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
   }
