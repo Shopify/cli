@@ -68,6 +68,7 @@ const buildExec = (command: string, args: string[], options?: ExecOptions): Exec
     stdin: options?.stdin,
     stdout: options?.stdout === 'inherit' ? 'inherit' : undefined,
     stderr: options?.stderr === 'inherit' ? 'inherit' : undefined,
+    windowsHide: false,
   })
   debug(`
 Running system process:
