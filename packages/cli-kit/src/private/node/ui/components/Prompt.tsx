@@ -27,7 +27,7 @@ export default function Prompt<T>({
         </Box>
         <Text>{message}</Text>
       </Box>
-      {infoTable && (
+      {infoTable && !answer && (
         <Box marginLeft={7}>
           <Table table={infoTable} />
         </Box>
