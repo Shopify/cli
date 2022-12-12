@@ -61,13 +61,13 @@ export const extensionTypesGroups: {name: string; extensions: string[]}[] = [
   },
   {name: 'Analytics', extensions: ['web_pixel_extension']},
   {name: 'Merchant admin', extensions: ['product_subscription']},
+  {name: 'Point-of-Sale', extensions: ['pos_ui_extension']},
   {
     name: 'Shopify private',
     extensions: [
       'customer_accounts_ui_extension',
       'payment_customization',
       'delivery_customization',
-      'pos_ui_extension',
       'shipping_rate_presenter',
       'ui_extension',
     ],
