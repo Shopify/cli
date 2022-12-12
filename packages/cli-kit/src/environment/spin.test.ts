@@ -1,4 +1,4 @@
-import {show, fqdn, isSpin, instance, workspace, namespace, host, SpinInstanceNotFound} from './spin.js'
+import {show, fqdn, isSpin, instance, workspace, namespace, host} from './spin.js'
 import {getCachedSpinFqdn, setCachedSpinFqdn} from './spin-cache.js'
 import {captureOutput} from '../system.js'
 import {getEnvironmentVariables} from '../public/node/environment.js'
@@ -107,7 +107,11 @@ describe('show', () => {
     vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    await expect(() => show('instance')).rejects.toThrowError(SpinInstanceNotFound('instance', errorMessage))
+    await expect(() => show('instance')).rejects.toThrowErrorMatchingInlineSnapshot(`
+      "[1m[33mspin[39m[22m yielded the following error trying to obtain the fully qualified domain name of the Spin instance:
+        Something went wrong
+          "
+    `)
   })
 })
 

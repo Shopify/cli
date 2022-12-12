@@ -7,19 +7,6 @@ import {content, token} from '../output.js'
 import {exists, readSync} from '../file.js'
 import {getEnvironmentVariables} from '../public/node/environment.js'
 
-export const SpinInstanceNotFound = (spinInstance: string | undefined, error: string) => {
-  const errorMessage = content`${token.genericShellCommand(
-    `spin`,
-  )} yielded the following error trying to obtain the fully qualified domain name of the Spin instance:
-${error}
-  `
-  let nextSteps: string | undefined
-  if (spinInstance) {
-    nextSteps = `Make sure ${spinInstance} is the instance name and not a fully qualified domain name`
-  }
-  return new Abort(errorMessage, nextSteps)
-}
-
 const spinFqdnFilePath = '/etc/spin/machine/fqdn'
 
 /**
@@ -57,7 +44,16 @@ export async function show(spinInstance: string | undefined): Promise<{fqdn: str
   const output = await captureOutput('spin', args, {env: getEnvironmentVariables()})
   const json = JSON.parse(output)
   if (json.error) {
-    throw SpinInstanceNotFound(spinInstance, json.error)
+    const errorMessage = content`${token.genericShellCommand(
+      `spin`,
+    )} yielded the following error trying to obtain the fully qualified domain name of the Spin instance:
+  ${json.error}
+    `
+    let nextSteps: string | undefined
+    if (spinInstance) {
+      nextSteps = `Make sure ${spinInstance} is the instance name and not a fully qualified domain name`
+    }
+    throw new Abort(errorMessage, nextSteps)
   } else {
     return json
   }
