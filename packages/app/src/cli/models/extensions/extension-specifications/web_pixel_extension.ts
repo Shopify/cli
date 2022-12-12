@@ -1,5 +1,6 @@
 import {createExtensionSpec} from '../extensions.js'
 import {BaseExtensionSchema} from '../schemas.js'
+import {defualtExtensionFlavors} from '../../../constants.js'
 import {error, schema} from '@shopify/cli-kit'
 
 const dependency = {name: '@shopify/web-pixels-extension', version: '^0.1.1'}
@@ -18,6 +19,7 @@ const spec = createExtensionSpec({
   surface: 'unknown',
   dependency,
   partnersWebIdentifier: 'web_pixel',
+  supportedFlavors: defualtExtensionFlavors.filter((flavor) => !flavor.value.includes('react')),
   schema: WebPixelSchema,
   deployConfig: async (config, _) => {
     return {

@@ -3,7 +3,6 @@ import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {AppInterface} from '../../models/app/app.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
-import {ExtensionTypes} from '../../constants.js'
 import {output, error, environment} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -25,7 +24,7 @@ export interface RemoteSource {
 export interface LocalSource {
   localIdentifier: string
   graphQLType: string
-  type: ExtensionTypes
+  type: string
   configuration: {name: string}
 }
 

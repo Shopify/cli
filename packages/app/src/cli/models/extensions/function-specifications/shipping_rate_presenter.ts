@@ -5,7 +5,7 @@ const spec = createFunctionSpec({
   externalIdentifier: 'delivery_option_presenter',
   externalName: 'Delivery option presenter',
   templatePath: (lang) => `checkout/${lang}/shipping-rate-presenter/default`,
-  public: false,
+  gated: true,
 })
 
 export default spec

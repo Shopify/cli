@@ -1,13 +1,6 @@
-import {
-  ExtensionTypes,
-  isUiExtensionType,
-  isFunctionExtensionType,
-  functionExtensionTemplates,
-  extensionTypesGroups,
-} from '../../constants.js'
-import {getUIExtensionTemplates, isValidUIExtensionTemplate} from '../../utilities/extensions/template-configuration.js'
+import {extensionTypesGroups} from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
-import {ExtensionIdentifier} from '../../models/app/extensions.js'
+import {GenericSpecification} from '../../models/app/extensions.js'
 import {ui} from '@shopify/cli-kit'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 
@@ -17,35 +10,28 @@ interface GenerateExtensionOptions {
   extensionFlavor?: string
   directory: string
   app: AppInterface
-  extensionSpecifications: ExtensionIdentifier[]
+  extensionSpecifications: GenericSpecification[]
   reset: boolean
 }
 
 interface GenerateExtensionOutput {
   name: string
-  extensionType: ExtensionTypes
+  extensionType: string
   extensionFlavor?: string
 }
 
-export const extensionFlavorQuestion = (extensionType: string): ui.Question => {
-  let choices: {name: string; value: string}[] = []
-  if (isUiExtensionType(extensionType)) {
-    choices = choices.concat(getUIExtensionTemplates(extensionType))
-  }
-  if (isFunctionExtensionType(extensionType)) {
-    choices = choices.concat(functionExtensionTemplates)
-  }
+export const extensionFlavorQuestion = (specification: GenericSpecification): ui.Question => {
   return {
     type: 'select',
     name: 'extensionFlavor',
     message: 'What would you like to work in?',
-    choices,
+    choices: specification.supportedFlavors,
     default: 'react',
   }
 }
 
-export function buildChoices(extensionTypes: ExtensionIdentifier[]) {
-  return extensionTypes
+export function buildChoices(specifications: GenericSpecification[]) {
+  return specifications
     .map((type) => {
       const choiceWithoutGroup = {
         name: type.externalName,
@@ -76,9 +62,8 @@ const generateExtensionPrompt = async (
 
   if (!options.extensionType) {
     if (options.extensionFlavor) {
-      allExtensions = allExtensions.filter((relevantExtensionType) =>
-        isValidUIExtensionTemplate(relevantExtensionType.identifier, options.extensionFlavor),
-      )
+      const flavor = options.extensionFlavor
+      allExtensions = allExtensions.filter((spec) => spec.supportedFlavors.map((elem) => elem.name).includes(flavor))
     }
 
     questions.push({
@@ -98,12 +83,13 @@ const generateExtensionPrompt = async (
   }
   let promptOutput: GenerateExtensionOutput = await prompt(questions)
   const extensionType = {...options, ...promptOutput}.extensionType
-  if (!options.extensionFlavor && (isUiExtensionType(extensionType) || isFunctionExtensionType(extensionType))) {
+  const specification = options.extensionSpecifications.find((spec) => spec.identifier === extensionType)!
+  if (!options.extensionFlavor && specification.supportedFlavors.length > 1) {
     promptOutput = {
       ...promptOutput,
       extensionFlavor: (
         (await prompt([
-          extensionFlavorQuestion(extensionType),
+          extensionFlavorQuestion(specification),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ])) as any
       ).extensionFlavor,

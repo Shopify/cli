@@ -12,6 +12,7 @@ const spec = createExtensionSpec({
   dependency,
   partnersWebIdentifier: 'post_purchase',
   schema: BaseExtensionSchema,
+  helpURL: 'https://shopify.dev/apps/checkout/post-purchase',
   deployConfig: async (config, _) => {
     return {metafields: config.metafields}
   },

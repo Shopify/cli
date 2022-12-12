@@ -1,7 +1,8 @@
 import {BaseExtensionSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionPointSpec} from './extension-points.js'
 import {allExtensionSpecifications} from './specifications.js'
-import {ExtensionIdentifier, ThemeExtension, UIExtension} from '../app/extensions.js'
+import {ExtensionCategory, GenericSpecification, ThemeExtension, UIExtension} from '../app/extensions.js'
+import {blocks, defualtExtensionFlavors} from '../../constants.js'
 import {id, path, schema, api, output, environment, string} from '@shopify/cli-kit'
 import {ok, Result} from '@shopify/cli-kit/node/result'
 
@@ -12,7 +13,7 @@ export type BaseConfigContents = schema.define.infer<typeof BaseExtensionSchema>
  * Extension specification with all the needed properties and methods to load an extension.
  */
 export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>
-  extends ExtensionIdentifier {
+  extends GenericSpecification {
   identifier: string
   externalIdentifier: string
   externalName: string
@@ -20,6 +21,10 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
   surface: string
   showInCLIHelp: boolean
   singleEntryPath: boolean
+  registrationLimit: number
+  supportedFlavors: {name: string; value: string}[]
+  gated: boolean
+  helpURL?: string
   dependency?: {name: string; version: string}
   templatePath?: string
   graphQLType?: string
@@ -29,6 +34,7 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
   validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (config: TConfiguration) => Promise<void>
   resourceUrl?: (config: TConfiguration) => string
+  category: () => ExtensionCategory
   previewMessage?: (
     host: string,
     uuid: string,
@@ -208,6 +214,8 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
   partnersWebIdentifier: string
   surface: string
   externalName: string
+  helpURL?: string
+  supportedFlavors?: {name: string; value: string}[]
   showInCLIHelp?: boolean
   dependency?: {name: string; version: string}
   templatePath?: string
@@ -231,6 +239,10 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
   const defaults = {
     showInCLIHelp: true,
     singleEntryPath: true,
+    gated: false,
+    registrationLimit: blocks.extensions.defaultRegistrationLimit,
+    supportedFlavors: defualtExtensionFlavors,
+    category: (): ExtensionCategory => (spec.identifier === 'theme' ? 'theme' : 'ui'),
   }
   return {...defaults, ...spec}
 }

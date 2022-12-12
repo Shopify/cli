@@ -1,5 +1,6 @@
 import generateExtensionPrompt, {buildChoices, extensionFlavorQuestion} from './extension.js'
 import {testApp} from '../../models/app/app.test-data.js'
+import {allExtensionSpecifications, allFunctionSpecifications} from '../../models/extensions/specifications.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {environment} from '@shopify/cli-kit'
 
@@ -21,11 +22,15 @@ beforeEach(() => {
 })
 
 describe('extension prompt', async () => {
+  // ALL UI Specs, filter out theme
+  const allSpecs = await allExtensionSpecifications()
+  const allFunctionSpecs = await allFunctionSpecifications()
+
   const extensionTypeQuestion = {
     type: 'select',
     name: 'extensionType',
     message: 'Type of extension?',
-    choices: buildChoices([]),
+    choices: buildChoices(allSpecs),
   }
   const extensionNameQuestion = {
     type: 'input',
@@ -36,8 +41,8 @@ describe('extension prompt', async () => {
 
   it('when name is not passed', async () => {
     const prompt = vi.fn()
-    const answers = {name: 'ext'}
-    const options = {directory: '/', app: testApp(), reset: false, extensionSpecifications: []}
+    const answers = {name: 'ext', extensionType: 'theme'}
+    const options = {directory: '/', app: testApp(), reset: false, extensionSpecifications: allSpecs}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers))
@@ -52,13 +57,13 @@ describe('extension prompt', async () => {
 
   it('when name is passed', async () => {
     const prompt = vi.fn()
-    const answers = {name: 'my-special-extension'}
+    const answers = {extensionType: 'theme'}
     const options = {
       name: 'my-special-extension',
       directory: '/',
       app: testApp(),
       reset: false,
-      extensionSpecifications: [],
+      extensionSpecifications: allSpecs,
     }
 
     // Given
@@ -72,45 +77,17 @@ describe('extension prompt', async () => {
     expect(got).toEqual({...options, ...answers})
   })
 
-  it('when there is a registration Limit is not empty', async () => {
-    const prompt = vi.fn()
-    const answers = {name: 'my-special-extension'}
-    const options = {
-      name: 'my-special-extension',
-      directory: '/',
-      app: testApp(),
-      reset: false,
-      extensionSpecifications: [],
-    }
-
-    // Given
-    prompt.mockResolvedValue(Promise.resolve(answers))
-
-    // When
-    const got = await generateExtensionPrompt(options, prompt)
-
-    // Then
-    expect(prompt).toHaveBeenCalledWith([
-      {
-        type: 'select',
-        name: 'extensionType',
-        message: 'Type of extension?',
-        choices: (await buildChoices([])).filter((choice) => choice.name !== 'Theme app extension'),
-      },
-    ])
-    expect(got).toEqual({...options, ...answers})
-  })
-
   it('when scaffolding a UI extension type prompts for language/framework preference', async () => {
     const prompt = vi.fn()
     const answers = {extensionFlavor: 'react'}
+    const postPurchaseSpec = allSpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
     const options = {
       name: 'my-special-extension',
       extensionType: 'checkout_post_purchase',
       directory: '/',
       app: testApp(),
       reset: false,
-      extensionSpecifications: [],
+      extensionSpecifications: allSpecs,
     }
 
     // Given
@@ -121,7 +98,7 @@ describe('extension prompt', async () => {
 
     // Then
     expect(prompt).toHaveBeenNthCalledWith(1, [])
-    expect(prompt).toHaveBeenNthCalledWith(2, [extensionFlavorQuestion('checkout_post_purchase')])
+    expect(prompt).toHaveBeenNthCalledWith(2, [extensionFlavorQuestion(postPurchaseSpec)])
     expect(got).toEqual({...options, ...answers})
   })
 
@@ -134,7 +111,7 @@ describe('extension prompt', async () => {
       directory: '/',
       app: testApp(),
       reset: false,
-      extensionSpecifications: [],
+      extensionSpecifications: allSpecs,
     }
 
     // Given
@@ -152,13 +129,14 @@ describe('extension prompt', async () => {
   it('when scaffolding a function extension prompts for the language', async () => {
     const prompt = vi.fn()
     const answers = {extensionLanguage: 'rust'}
+    const productDiscountsSpec = allFunctionSpecs.find((spec) => spec.identifier === 'product_discounts')!
     const options = {
       name: 'my-product-discount',
       extensionType: 'product_discounts',
       directory: '/',
       app: testApp(),
       reset: false,
-      extensionSpecifications: [],
+      extensionSpecifications: allFunctionSpecs,
     }
 
     // Given
@@ -169,7 +147,7 @@ describe('extension prompt', async () => {
 
     // Then
     expect(prompt).toHaveBeenNthCalledWith(1, [])
-    expect(prompt).toHaveBeenNthCalledWith(2, [extensionFlavorQuestion('product_discounts')])
+    expect(prompt).toHaveBeenNthCalledWith(2, [extensionFlavorQuestion(productDiscountsSpec)])
 
     expect(got).toEqual({...options, ...answers})
   })
