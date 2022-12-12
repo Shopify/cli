@@ -166,4 +166,75 @@ describe('List', async () => {
          [2mnavigate with arrows, enter to select[22m"
     `)
   })
+
+  test('rotate after reaching the end of the list', async () => {
+    const items = [
+      {
+        label: 'First',
+        value: 'first',
+      },
+      {
+        label: 'Second',
+        value: 'second',
+      },
+      {
+        label: 'Third',
+        value: 'third',
+      },
+    ]
+
+    const renderInstance = render(<SelectInput items={items} onSelect={() => {}} />)
+
+    await delay(100)
+    renderInstance.stdin.write(ARROW_DOWN)
+    await delay(100)
+    renderInstance.stdin.write(ARROW_DOWN)
+    await delay(100)
+    renderInstance.stdin.write(ARROW_DOWN)
+    await delay(100)
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "[36m>[39m  [36m(1) First[39m
+         (2) Second
+         (3) Third
+
+         [2mnavigate with arrows, enter to select[22m"
+    `)
+  })
+
+  test('support groups', async () => {
+    const items = [
+      {label: 'first', value: 'first', key: 'f'},
+      {label: 'second', value: 'second', key: 's'},
+      {label: 'third', value: 'third'},
+      {label: 'fourth', value: 'fourth'},
+      {label: 'fifth', value: 'fifth', group: 'Automations'},
+      {label: 'sixth', value: 'sixth', group: 'Automations'},
+      {label: 'seventh', value: 'seventh'},
+      {label: 'eighth', value: 'eighth', group: 'Merchant Admin'},
+      {label: 'ninth', value: 'ninth', group: 'Merchant Admin'},
+      {label: 'tenth', value: 'tenth'},
+    ]
+
+    const renderInstance = render(<SelectInput items={items} onSelect={() => {}} />)
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "[36m>[39m  [36m(f) first[39m
+         (s) second
+         (3) third
+         (4) fourth
+         (5) seventh
+         (6) tenth
+
+         [1mAutomations[22m
+         (7) fifth
+         (8) sixth
+
+         [1mMerchant Admin[22m
+         (9) eighth
+         (10) ninth
+
+         [2mnavigate with arrows, enter to select[22m"
+    `)
+  })
 })
