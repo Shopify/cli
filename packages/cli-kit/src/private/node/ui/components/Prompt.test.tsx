@@ -8,7 +8,7 @@ const ENTER = '\r'
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-describe('List', async () => {
+describe('Prompt', async () => {
   test('choose an answer', async () => {
     const items = [
       {label: 'first', value: 'first'},

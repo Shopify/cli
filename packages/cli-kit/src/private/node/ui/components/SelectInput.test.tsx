@@ -9,7 +9,7 @@ const ENTER = '\r'
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-describe('List', async () => {
+describe('SelectInput', async () => {
   test('move up with up arrow key', async () => {
     const items = [
       {
