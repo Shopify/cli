@@ -120,7 +120,7 @@ const EXTENSION_A: UIExtension = {
     name: '',
     type: 'checkout_post_purchase',
     metafields: [],
-    capabilities: {block_progress: false, network_access: false},
+    capabilities: {block_progress: false, network_access: false, storefront_api: false},
   },
   entrySourceFilePath: '',
   outputBundlePath: '',

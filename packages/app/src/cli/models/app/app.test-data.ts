@@ -40,6 +40,7 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
     capabilities: {
       block_progress: false,
       network_access: false,
+      storefront_api: false,
     },
   }
   const configurationPath = uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`

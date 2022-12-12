@@ -3,3 +3,4 @@ name = "ext-01"
 
 [capabilities]
 network_access = true
+storefront_api = true
