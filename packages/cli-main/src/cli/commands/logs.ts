@@ -9,7 +9,7 @@ export default class Logs extends Command {
     ...cli.globalFlags,
     'last-command': Flags.boolean({
       hidden: true,
-      description: 'View logs for only the most recent command',
+      description: 'View logs for the most recent command only',
       default: false,
       env: 'SHOPIFY_FLAG_LAST_COMMAND',
     }),
