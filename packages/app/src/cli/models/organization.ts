@@ -18,6 +18,8 @@ export interface OrganizationApp {
   grantedScopes: string[]
 }
 
+export type ScopelessOrganizationApp = Omit<OrganizationApp, 'grantedScopes'>
+
 export interface OrganizationStore {
   shopId: string
   link: string

@@ -18,7 +18,6 @@ export const FindOrganizationQuery = gql`
               secret
             }
             appType
-            grantedScopes
           }
         }
       }
@@ -43,7 +42,6 @@ export interface FindOrganizationQuerySchema {
             secret: string
           }[]
           appType: string
-          grantedScopes: string[]
         }[]
       }
     }[]
