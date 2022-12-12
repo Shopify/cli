@@ -3,6 +3,7 @@ import {HydrogenApp} from '../models/hydrogen.js'
 // @ts-ignore
 import {HydrogenConfig} from '@shopify/hydrogen/config'
 import {output, string, os} from '@shopify/cli-kit'
+import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 
 interface InfoOptions {
   showPrivateData: boolean
@@ -140,7 +141,7 @@ class AppInfo {
       ...this.dependencyCheck(['@shopify/hydrogen', '@shopify/cli-hydrogen', '@shopify/cli']),
       ['Package manager', this.app.packageManager],
       ['OS', `${platform}-${arch}`],
-      ['Shell', process.env.SHELL || 'unknown'],
+      ['Shell', getEnvironmentVariables().SHELL || 'unknown'],
       ['Node.js version', process.version],
     ]
 

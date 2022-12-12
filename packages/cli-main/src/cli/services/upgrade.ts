@@ -1,4 +1,5 @@
-import {error, output, path, system} from '@shopify/cli-kit'
+import {error, output, path, system, environment} from '@shopify/cli-kit'
+import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {
   addNPMDependencies,
   findUpAndReadPackageJson,
@@ -73,7 +74,7 @@ async function upgradeGlobalShopify(currentVersion: string): Promise<string | vo
 
   outputUpgradeMessage(currentVersion, newestVersion)
 
-  const homebrewPackage = process.env.SHOPIFY_HOMEBREW_FORMULA as HomebrewPackageName | undefined
+  const homebrewPackage = getEnvironmentVariables().SHOPIFY_HOMEBREW_FORMULA as HomebrewPackageName | undefined
   try {
     await (homebrewPackage ? upgradeGlobalViaHomebrew(homebrewPackage) : upgradeGlobalViaNpm())
   } catch (err) {
@@ -163,5 +164,5 @@ async function packageJsonContents(): Promise<PackageJsonWithName> {
 }
 
 function usingPackageManager(): boolean {
-  return Boolean(process.env.npm_config_user_agent)
+  return environment.utilities.isTruthy(getEnvironmentVariables().npm_config_user_agent)
 }

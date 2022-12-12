@@ -3,14 +3,14 @@ import * as upgradeService from './upgrade.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {file, os, outputMocker, path, system} from '@shopify/cli-kit'
 import * as nodePackageManager from '@shopify/cli-kit/node/node-package-manager'
+import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 
 const oldCliVersion = '3.0.0'
 // just needs to be higher than oldCliVersion for these tests
 const currentCliVersion = '3.10.0'
 
-const OLD_ENV = {...process.env}
-
 beforeEach(async () => {
+  vi.mock('@shopify/cli-kit/node/environment')
   vi.mock('@shopify/cli-kit', async () => {
     const module: any = await vi.importActual('@shopify/cli-kit')
     return {
@@ -30,15 +30,18 @@ beforeEach(async () => {
     }
   })
   vi.mocked(os.platformAndArch).mockReturnValue({platform: 'win32', arch: 'amd64'})
+  vi.mocked(getEnvironmentVariables).mockReturnValue({})
 })
 afterEach(() => {
   outputMocker.mockAndCaptureOutput().clear()
-  process.env = {...OLD_ENV}
 })
 
 describe('upgrade global CLI', () => {
-  beforeEach(() => {
-    process.env = {...OLD_ENV, npm_config_user_agent: undefined}
+  beforeEach(async () => {
+    vi.mocked(getEnvironmentVariables).mockReturnValue({
+      ...((await vi.importActual('@shopify/cli-kit/node/environment')) as any).getEnvironmentVariables(),
+      npm_config_user_agent: undefined,
+    })
   })
 
   it('does not upgrade globally if the latest version is found', async () => {
@@ -88,7 +91,10 @@ describe('upgrade global CLI', () => {
         // Given
         const outputMock = outputMocker.mockAndCaptureOutput()
         vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(currentCliVersion)
-        process.env.SHOPIFY_HOMEBREW_FORMULA = homebrewPackageName
+        vi.mocked(getEnvironmentVariables).mockReturnValue({
+          ...((await vi.importActual('@shopify/cli-kit/node/environment')) as any).getEnvironmentVariables(),
+          SHOPIFY_HOMEBREW_FORMULA: homebrewPackageName,
+        })
 
         // When
         await upgrade(tmpDir, oldCliVersion)
@@ -109,8 +115,11 @@ describe('upgrade global CLI', () => {
 })
 
 describe('upgrade local CLI', () => {
-  beforeEach(() => {
-    process.env = {...OLD_ENV, npm_config_user_agent: 'npm'}
+  beforeEach(async () => {
+    vi.mocked(getEnvironmentVariables).mockReturnValue({
+      ...((await vi.importActual('@shopify/cli-kit/node/environment')) as any).getEnvironmentVariables(),
+      npm_config_user_agent: 'npm',
+    })
   })
 
   it('does not upgrade locally if the latest version is found', async () => {

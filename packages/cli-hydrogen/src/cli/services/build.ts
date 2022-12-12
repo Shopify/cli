@@ -1,6 +1,7 @@
 import {checkLockfileStatus} from './build/check-lockfile.js'
 import {build as viteBuild} from 'vite'
 import {ui, environment, error as kitError} from '@shopify/cli-kit'
+import {setEnvironmentVariable} from '@shopify/cli-kit/node/environment'
 
 type Target = 'node' | 'client' | 'worker'
 
@@ -21,10 +22,10 @@ export function buildTaskList({directory, targets, base, assetBaseURL, verbose}:
       title: `Building ${key} code`,
       task: async (_, task) => {
         if (key === 'worker') {
-          process.env.WORKER = 'true'
+          setEnvironmentVariable('WORKER', 'true')
         }
         if (assetBaseURL) {
-          process.env.HYDROGEN_ASSET_BASE_URL = assetBaseURL
+          setEnvironmentVariable('HYDROGEN_ASSET_BASE_URL', assetBaseURL)
         }
 
         try {
