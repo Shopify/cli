@@ -1,5 +1,18 @@
 # @shopify/app
 
+## 3.26.0
+
+### Patch Changes
+
+- a6a3f2b4: Redirect extension output messages to concurrent output UI component
+- 32cec194: Checkout ui extension React TypeScript template has ts error
+- 127c0558: Fixed backend's shopify.web.toml parsing issue which causes auth_callback_path setting getting ignored
+- Updated dependencies [0d8ac8c9]
+- Updated dependencies [ab76be51]
+- Updated dependencies [a6a3f2b4]
+- Updated dependencies [ca8141bc]
+  - @shopify/cli-kit@3.26.0
+
 ## 3.25.0
 
 ### Minor Changes

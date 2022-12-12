@@ -1,5 +1,17 @@
 # @shopify/cli-kit
 
+## 3.26.0
+
+### Minor Changes
+
+- 0d8ac8c9: Not show a message when we truncate the logs file
+- ab76be51: Add 'wdm' to bundled CLI 2.x Gemfile
+
+### Patch Changes
+
+- a6a3f2b4: Redirect extension output messages to concurrent output UI component
+- ca8141bc: Fix CLI not killing Node processes after quitting `dev` on Windows
+
 ## 3.25.0
 
 ### Patch Changes
