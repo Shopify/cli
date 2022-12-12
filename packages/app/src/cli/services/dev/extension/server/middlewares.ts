@@ -152,9 +152,7 @@ export async function devConsoleAssetsMiddleware(
 
 export function getLogMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
   return async (request: http.IncomingMessage, response: http.ServerResponse, next: (err?: Error) => unknown) => {
-    output.debug(`UI extensions server received a ${request.method} request to URL ${request.url}`, (message) =>
-      devOptions.stdout.write(message, 'utf8'),
-    )
+    output.debug(`UI extensions server received a ${request.method} request to URL ${request.url}`, devOptions.stdout)
     next()
   }
 }
