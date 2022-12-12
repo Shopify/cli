@@ -91,7 +91,7 @@ export async function ensureGenerateEnvironment(options: {
     const orgId = cachedInfo?.orgId || (await selectOrg(options.token))
     const {organization, apps} = await fetchOrgAndApps(orgId, options.token)
     const localAppName = await loadAppName(options.directory)
-    const selectedApp = await selectOrCreateApp(localAppName, apps, organization, options.token, cachedInfo?.appId)
+    const selectedApp = await selectOrCreateApp(localAppName, apps, organization, options.token)
     await store.setAppInfo({
       appId: selectedApp.apiKey,
       title: selectedApp.title,
@@ -166,8 +166,20 @@ export async function ensureDevEnvironment(
     }
   }
 
-  const {organization, apps} = await fetchOrgAndApps(orgId, token)
-  selectedApp = selectedApp || (await selectOrCreateApp(options.app.name, apps, organization, token, cachedInfo?.appId))
+  const organization = await fetchOrgFromId(orgId, token)
+  if (!organization) throw new error.Bug(`Couldn't find Organization with id ${orgId}.`)
+
+  if (!selectedApp) {
+    if (cachedInfo?.appId) {
+      const app = await fetchAppFromApiKey(cachedInfo.appId, token)
+      if (!app) throw new error.Bug(`Couldn't find App with apiKey ${cachedInfo.appId}.`)
+      selectedApp = app
+    } else {
+      const {apps} = await fetchOrgAndApps(orgId, token)
+      selectedApp = await selectOrCreateApp(options.app.name, apps, organization, token)
+    }
+  }
+
   await store.setAppInfo({
     appId: selectedApp.apiKey,
     title: selectedApp.title,
@@ -178,8 +190,18 @@ export async function ensureDevEnvironment(
   // eslint-disable-next-line no-param-reassign
   options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
   if (!selectedStore) {
-    const allStores = await fetchAllDevStores(orgId, token)
-    selectedStore = await selectStore(allStores, organization, token, cachedInfo?.storeFqdn)
+    if (cachedInfo?.storeFqdn) {
+      const result = await fetchStoreByDomain(organization.id, token, cachedInfo.storeFqdn)
+      if (result?.store) {
+        await convertToTestStoreIfNeeded(result.store, organization, token)
+        selectedStore = result.store
+      } else {
+        throw new error.Bug(`Couldn't find Store with domain ${cachedInfo.storeFqdn}.`)
+      }
+    } else {
+      const allStores = await fetchAllDevStores(orgId, token)
+      selectedStore = await selectStore(allStores, organization, token)
+    }
   }
 
   await store.setAppInfo({
@@ -323,7 +345,7 @@ export async function fetchOrganizationAndFetchOrCreateApp(
 ): Promise<{partnersApp: OrganizationApp; orgId: string}> {
   const orgId = await selectOrg(token)
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
-  const partnersApp = await selectOrCreateApp(app.name, apps, organization, token, undefined)
+  const partnersApp = await selectOrCreateApp(app.name, apps, organization, token)
   return {orgId, partnersApp}
 }
 

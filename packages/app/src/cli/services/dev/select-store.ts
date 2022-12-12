@@ -1,21 +1,7 @@
-import {fetchAllDevStores, fetchStoreByDomain} from './fetch.js'
+import {fetchAllDevStores} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {error, output, api, system, ui, environment} from '@shopify/cli-kit'
-
-const ConvertToDevError = (storeName: string, message: string) => {
-  return new error.Bug(
-    `Error converting store ${storeName} to a Test store: ${message}`,
-    'This store might not be compatible with draft apps, please try a different store',
-  )
-}
-
-const InvalidStore = (storeName: string) => {
-  return new error.Abort(
-    `The store you specified (${storeName}) is not a dev store`,
-    'Run dev --reset and select an eligible dev store.',
-  )
-}
 
 const CreateStoreLink = async (orgId: string) => {
   const url = `https://${await environment.fqdn.partners()}/${orgId}/stores/new?store_type=dev_store`
@@ -39,16 +25,7 @@ export async function selectStore(
   stores: OrganizationStore[],
   org: Organization,
   token: string,
-  cachedStoreName?: string,
 ): Promise<OrganizationStore> {
-  if (cachedStoreName) {
-    const result = await fetchStoreByDomain(org.id, token, cachedStoreName)
-    if (result?.store) {
-      await convertToTestStoreIfNeeded(result.store, org, token)
-      return result.store
-    }
-  }
-
   const store = await selectStorePrompt(stores)
   if (store) {
     await convertToTestStoreIfNeeded(store, org, token)
@@ -122,7 +99,12 @@ export async function convertToTestStoreIfNeeded(
    * Is not possible to convert stores to dev ones in spin environmets. Should be created directly as development.
    */
   if (environment.service.isSpinEnvironment() && environment.local.firstPartyDev()) return
-  if (!store.transferDisabled && !store.convertableToPartnerTest) throw InvalidStore(store.shopDomain)
+  if (!store.transferDisabled && !store.convertableToPartnerTest) {
+    throw new error.Abort(
+      `The store you specified (${store.shopDomain}) is not a dev store`,
+      'Run dev --reset and select an eligible dev store.',
+    )
+  }
   if (!store.transferDisabled) await convertStoreToTest(store, org.id, token)
 }
 
@@ -144,7 +126,10 @@ export async function convertStoreToTest(store: OrganizationStore, orgId: string
   const result: api.graphql.ConvertDevToTestStoreSchema = await api.partners.request(query, token, variables)
   if (!result.convertDevToTestStore.convertedToTestStore) {
     const errors = result.convertDevToTestStore.userErrors.map((error) => error.message).join(', ')
-    throw ConvertToDevError(store.shopDomain, errors)
+    throw new error.Bug(
+      `Error converting store ${store.shopDomain} to a Test store: ${errors}`,
+      'This store might not be compatible with draft apps, please try a different store',
+    )
   }
   output.success(`Converted ${store.shopDomain} to a Test store`)
 }
