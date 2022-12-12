@@ -133,7 +133,7 @@ jobs:
   oclif-manifests:
     name: Check OCLIF manifests
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v2
@@ -152,6 +152,8 @@ jobs:
       - name: Check if there are changes
         id: changes
         uses: UnicornGlobal/has-changes-action@v1.0.12
+        with:
+          pathspec: "**/oclif.manifest.json"
       - name: And if there are
         if: steps.changes.outputs.changed == 1
         run: echo "Run pnpm refresh-manifests before pushing new commands or flags"; exit 1
