@@ -22,8 +22,6 @@ interface Chunk {
   lines: string[]
 }
 
-const OUTPUT_MIN_WIDTH = 80
-
 /**
  * Renders output from concurrent processes to the terminal.
  * Output will be divided in a three column layout
@@ -72,7 +70,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
   const writableStream = (process: OutputProcess, index: number) => {
     return new Writable({
       write(chunk, _encoding, next) {
-        const lines = stripAnsi(chunk.toString('ascii')).split(/\n/)
+        const lines = stripAnsi(chunk.toString('ascii').replace(/(\n)$/, '')).split(/\n/)
 
         setProcessOutput((previousProcessOutput) => [
           ...previousProcessOutput,
@@ -89,27 +87,23 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
   }
 
   const runProcesses = async () => {
-    try {
-      await Promise.all(
-        processes.map(async (process, index) => {
-          const stdout = writableStream(process, index)
-          const stderr = writableStream(process, index)
+    await Promise.all(
+      processes.map(async (process, index) => {
+        const stdout = writableStream(process, index)
+        const stderr = writableStream(process, index)
 
-          await process.action(stdout, stderr, abortController.signal)
-        }),
-      )
+        await process.action(stdout, stderr, abortController.signal)
+      }),
+    )
 
-      unmountInk()
-    } catch (error) {
-      abortController.abort()
-      unmountInk()
-      throw error
-    }
+    unmountInk()
   }
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    runProcesses()
+    runProcesses().catch((error) => {
+      abortController.abort()
+      unmountInk(error)
+    })
   }, [])
 
   return (

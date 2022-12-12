@@ -1,12 +1,10 @@
-import {UIExtensionTypes} from '../../constants.js'
-
 interface GetUIExensionResourceURLOptions {
   checkoutCartUrl?: string
   subscriptionProductUrl?: string
 }
 
 export function getUIExtensionResourceURL(
-  uiExtensionType: UIExtensionTypes,
+  uiExtensionType: string,
   options: GetUIExensionResourceURLOptions,
 ): {url: string | undefined} {
   switch (uiExtensionType) {

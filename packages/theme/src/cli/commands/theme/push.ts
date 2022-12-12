@@ -78,10 +78,25 @@ export default class Push extends ThemeCommand {
     }),
   }
 
+  static cli2Flags = [
+    'theme',
+    'development',
+    'live',
+    'unpublished',
+    'nodelete',
+    'only',
+    'ignore',
+    'json',
+    'allow-live',
+    'publish',
+    'stable',
+    'force',
+  ]
+
   async run(): Promise<void> {
     const {flags} = await this.parse(Push)
 
-    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'store', 'verbose', 'password']})
+    const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Push.cli2Flags})
     const command = ['theme', 'push', flags.path, ...flagsToPass]
 
     const store = await getThemeStore(flags)

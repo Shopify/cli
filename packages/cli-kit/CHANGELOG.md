@@ -1,5 +1,26 @@
 # @shopify/cli-kit
 
+## 3.25.0
+
+### Patch Changes
+
+- 78196a78: Improve text contrast of UI kit components and introduce several new text tokens
+
+## 3.24.1
+
+### Patch Changes
+
+- 7e5c492a: Fix errors not being displayed properly when coming from processes rendered concurrently
+
+## 3.24.0
+
+### Patch Changes
+
+- d47a6e80: Improve success message style in create-app command
+- a9d4be9e: Generate creative suggested names for new themes
+- aca90638: Removed unnecessary line breaks in concurrent output
+- cb0990df: Fixed no organization error formatting
+
 ## 3.23.0
 
 ### Minor Changes

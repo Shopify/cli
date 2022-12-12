@@ -6,7 +6,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {err, ok} from '@shopify/cli-kit/common/result'
+import {err, ok} from '@shopify/cli-kit/node/result'
 import {environment} from '@shopify/cli-kit'
 
 const REGISTRATION_A: RemoteSource = {
@@ -48,10 +48,14 @@ const EXTENSION_A: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  validate: () => Promise.resolve({} as any),
   preDeployValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: (target: string) => true,
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -72,16 +76,17 @@ const EXTENSION_A_2: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  validate: () => Promise.resolve({} as any),
   preDeployValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: (target: string) => true,
 }
 
 const FUNCTION_C: FunctionExtension = {
-  metadata: {
-    schemaVersions: {},
-  },
   idEnvironmentVariableName: 'FUNCTION_C_ID',
   localIdentifier: 'FUNCTION_C',
   configurationPath: '/function/shopify.function.extension.toml',

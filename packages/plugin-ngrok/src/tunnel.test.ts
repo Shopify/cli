@@ -40,7 +40,7 @@ describe('start', () => {
 
     // Then
     expect(ngrok.connect).toHaveBeenCalledWith({proto: 'http', addr: 1234})
-    expect(got.valueOrThrow()).toEqual({url: 'https://fake.ngrok.io'})
+    expect(got.valueOrBug()).toEqual({url: 'https://fake.ngrok.io'})
   })
 
   it('asks for the token and authenticates if the configuration file is wrong', async () => {

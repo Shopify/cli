@@ -70,7 +70,8 @@ describe('checkLockfileStatus()', () => {
           await checkLockfileStatus(tmpDir)
 
           expect(outputMock.warn()).toMatchInlineSnapshot(`
-            "╭─ warning ────────────────────────────────────────────────────────────────────╮
+            "
+            ╭─ warning ────────────────────────────────────────────────────────────────────╮
             │                                                                              │
             │  Lockfile ignored by Git                                                     │
             │                                                                              │
@@ -82,7 +83,8 @@ describe('checkLockfileStatus()', () => {
             │    • In your project’s .gitignore file, delete any references to yarn.lock   │
             │    • Commit the change to your repository                                    │
             │                                                                              │
-            ╰──────────────────────────────────────────────────────────────────────────────╯"
+            ╰──────────────────────────────────────────────────────────────────────────────╯
+            "
           `)
         })
       })
@@ -109,7 +111,8 @@ describe('checkLockfileStatus()', () => {
         await checkLockfileStatus(tmpDir)
 
         expect(outputMock.warn()).toMatchInlineSnapshot(`
-          "╭─ warning ────────────────────────────────────────────────────────────────────╮
+          "
+          ╭─ warning ────────────────────────────────────────────────────────────────────╮
           │                                                                              │
           │  Multiple lockfiles found                                                    │
           │                                                                              │
@@ -117,14 +120,15 @@ describe('checkLockfileStatus()', () => {
           │  conflicts when installing and deploying your app. The following lockfiles   │
           │  were detected:                                                              │
           │                                                                              │
-          │   • yarn.lock (created by yarn)                                              │
-          │   • package-lock.json (created by npm)                                       │
+          │    • yarn.lock (created by yarn)                                             │
+          │    • package-lock.json (created by npm)                                      │
           │                                                                              │
           │  Next steps                                                                  │
           │    • Delete any unneeded lockfiles                                           │
           │    • Commit the change to your repository                                    │
           │                                                                              │
-          ╰──────────────────────────────────────────────────────────────────────────────╯"
+          ╰──────────────────────────────────────────────────────────────────────────────╯
+          "
         `)
       })
     })
@@ -144,7 +148,8 @@ describe('checkLockfileStatus()', () => {
         await checkLockfileStatus(tmpDir)
 
         expect(outputMock.warn()).toMatchInlineSnapshot(`
-          "╭─ warning ────────────────────────────────────────────────────────────────────╮
+          "
+          ╭─ warning ────────────────────────────────────────────────────────────────────╮
           │                                                                              │
           │  No lockfile found                                                           │
           │                                                                              │
@@ -156,7 +161,8 @@ describe('checkLockfileStatus()', () => {
           │    • Generate a lockfile. Run \`npm|yarn|pnpm install\`                        │
           │    • Commit the new file to your repository                                  │
           │                                                                              │
-          ╰──────────────────────────────────────────────────────────────────────────────╯"
+          ╰──────────────────────────────────────────────────────────────────────────────╯
+          "
         `)
       })
     })

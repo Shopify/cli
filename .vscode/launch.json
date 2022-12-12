@@ -47,8 +47,9 @@
         "type": "node",
         "request": "launch",
         "name": "shopify app generate extension",
-        "runtimeExecutable": "yarn",
+        "runtimeExecutable": "pnpm",
         "runtimeArgs": [
+          "run",
           "shopify",
           "app",
           "generate",

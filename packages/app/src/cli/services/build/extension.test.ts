@@ -39,9 +39,6 @@ describe('buildFunctionExtension', () => {
         configurationUi: true,
         apiVersion: '2022-07',
       },
-      metadata: {
-        schemaVersions: {},
-      },
       buildWasmPath: () => '/test/myfunction/dist/index.wasm',
       inputQueryPath: () => '/test/myfunction/input.graphql',
       publishURL: () => Promise.resolve(''),

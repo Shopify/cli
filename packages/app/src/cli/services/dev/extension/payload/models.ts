@@ -1,4 +1,4 @@
-import {ExtensionTypes, ExternalExtensionTypes} from '../../../../constants.js'
+import {NewExtensionPointSchemaType} from '../../../../models/extensions/schemas.js'
 import {Localization} from '../localization.js'
 
 export interface ExtensionsPayloadInterface {
@@ -22,10 +22,16 @@ export interface ExtensionsEndpointPayload extends ExtensionsPayloadInterface {
   }
 }
 
+interface NewExtensionPointSchema extends NewExtensionPointSchemaType {
+  main: {
+    url: string
+  }
+}
+
 export interface UIExtensionPayload {
   assets: {
     main: {
-      name: 'main'
+      name: string
       url: string
       lastUpdated: number
     }
@@ -42,12 +48,14 @@ export interface UIExtensionPayload {
     status: ExtensionAssetBuildStatus
     localizationStatus: ExtensionAssetBuildStatus
   }
-  extensionPoints: string[] | null
+  extensionPoints: string[] | null | NewExtensionPointSchema[]
   localization: Localization | null
   categories: string[] | null
+  authenticatedRedirectStartUrl?: string
+  authenticatedRedirectRedirectUrls?: string[]
   metafields?: {namespace: string; key: string}[] | null
-  type: ExtensionTypes
-  externalType: ExternalExtensionTypes
+  type: string
+  externalType: string
   uuid: string
   version?: string
   surface: string

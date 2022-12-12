@@ -1,18 +1,38 @@
-/* eslint-disable no-irregular-whitespace */
-import AppScaffoldExtension from './extension.js'
-import {ExternalExtensionTypeNames, isThemeExtensionType, getExtensionOutputConfig} from '../../../constants.js'
+import AppGenerateExtension from './extension.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import generateExtensionPrompt from '../../../prompts/generate/extension.js'
 import generateExtensionService from '../../../services/generate/extension.js'
-import {testApp} from '../../../models/app/app.test-data.js'
+import {testApp, testRemoteSpecifications} from '../../../models/app/app.test-data.js'
+import {ensureGenerateEnvironment} from '../../../services/environment.js'
 import {describe, expect, it, vi, beforeAll, afterEach} from 'vitest'
-import {path, outputMocker} from '@shopify/cli-kit'
+import {path, outputMocker, api} from '@shopify/cli-kit'
 
 beforeAll(() => {
   vi.mock('../../../constants.js')
   vi.mock('../../../models/app/loader.js')
   vi.mock('../../../prompts/generate/extension.js')
   vi.mock('../../../services/generate/extension.js')
+  vi.mock('../../../services/environment.js')
+  vi.mock('@shopify/cli-kit', async () => {
+    const cliKit: any = await vi.importActual('@shopify/cli-kit')
+    return {
+      ...cliKit,
+      session: {
+        ensureAuthenticatedPartners: () => 'token',
+      },
+      api: {
+        partners: {
+          request: vi.fn(),
+        },
+        graphql: cliKit.api.graphql,
+      },
+      store: {
+        getAppInfo: vi.fn(),
+        setAppInfo: vi.fn(),
+        clearAppInfo: vi.fn(),
+      },
+    }
+  })
 })
 
 afterEach(() => {
@@ -20,107 +40,58 @@ afterEach(() => {
 })
 
 describe('after extension command finishes correctly', () => {
-  it('displays a confirmation message with only the human-facing name', async () => {
+  it('displays a confirmation message with instructions to run dev', async () => {
     // Given
-    const outputInfo = mockSuccessfulCommandExecution({
-      humanKey: 'Checkout UI',
-    })
+    const outputInfo = mockSuccessfulCommandExecution('checkout_ui')
 
     // When
-    await AppScaffoldExtension.run()
+    await AppGenerateExtension.run()
 
     // Then
-    expect(outputInfo.completed()).toMatchInlineSnapshot('"Your Checkout UI extension was added to your project!"')
-    expect(outputInfo.info()).toMatchInlineSnapshot('"\n  To find your extension, remember to cd extensions/name\n"')
-  })
-
-  it('displays a confirmation message with human-facing name and help url when app has a checkout UI extension', async () => {
-    // Given
-    const outputInfo = mockSuccessfulCommandExecution({
-      humanKey: 'Checkout UI',
-      helpURL: 'http://help.com',
-    })
-
-    // When
-    await AppScaffoldExtension.run()
-
-    // Then
-
     expect(outputInfo.completed()).toMatchInlineSnapshot('"Your Checkout UI extension was added to your project!"')
     expect(outputInfo.info()).toMatchInlineSnapshot(
-      `"\n  To find your extension, remember to cd extensions/name\n  For more details, see the docs (​http://help.com​) ✨\n"`,
+      '"\n  To find your extension, remember to cd extensions/name\n  To preview your project, run yarn dev\n"',
     )
   })
 
-  it('displays a confirmation message with human-facing name and help url when app has a theme app extension', async () => {
+  it('displays a confirmation message for a theme app extension', async () => {
     // Given
-    const outputInfo = mockSuccessfulCommandExecution({
-      humanKey: 'Theme app extension',
-      helpURL: 'http://help.com',
-    })
-    vi.mocked(isThemeExtensionType).mockReturnValue(true)
+    const outputInfo = mockSuccessfulCommandExecution('theme')
 
     // When
-    await AppScaffoldExtension.run()
+    await AppGenerateExtension.run()
 
     // Then
     expect(outputInfo.completed()).toMatchInlineSnapshot(
-      '"Your Theme app extension extension was added to your project!"',
+      '"Your Theme App Extension extension was added to your project!"',
     )
     expect(outputInfo.info()).toMatchInlineSnapshot(
-      '"\n  To find your extension, remember to cd extensions/name' +
-        '\n  To preview your project, run yarn dev' +
-        '\n  For more details, see the docs (​http://help.com​) ✨\n"',
+      '"\n  To find your extension, remember to cd extensions/name\n  To preview your project, run yarn dev\n"',
     )
   })
 
-  it('displays a confirmation message with human-facing name and additional help', async () => {
+  it('displays a confirmation message for a function', async () => {
     // Given
-    const outputInfo = mockSuccessfulCommandExecution({
-      humanKey: 'Checkout UI',
-      additionalHelp: 'Additional help',
-    })
+    const outputInfo = mockSuccessfulCommandExecution('product_discounts')
 
     // When
-    await AppScaffoldExtension.run()
+    await AppGenerateExtension.run()
 
     // Then
-    expect(outputInfo.completed()).toMatchInlineSnapshot('"Your Checkout UI extension was added to your project!"')
-    expect(outputInfo.info()).toMatchInlineSnapshot(
-      `"\n  To find your extension, remember to cd extensions/name\n  Additional help\n"`,
-    )
-  })
-
-  it('displays a confirmation message with human-facing name , help url and additional help', async () => {
-    // Given
-    const outputInfo = mockSuccessfulCommandExecution({
-      humanKey: 'Checkout UI',
-      helpURL: 'http://help.com',
-      additionalHelp: 'Additional help',
-    })
-
-    // When
-    await AppScaffoldExtension.run()
-
-    // Then
-    expect(outputInfo.completed()).toMatchInlineSnapshot('"Your Checkout UI extension was added to your project!"')
-    expect(outputInfo.info()).toMatchInlineSnapshot(
-      `"\n  To find your extension, remember to cd extensions/name\n  Additional help\n  For more details, see the docs (​http://help.com​) ✨\n"`,
+    expect(outputInfo.completed()).toMatchInlineSnapshot(
+      '"Your Function - Product discount extension was added to your project!"',
     )
   })
 })
 
-function mockSuccessfulCommandExecution(outputConfig: {
-  humanKey: ExternalExtensionTypeNames
-  helpURL?: string
-  additionalHelp?: string
-}) {
+function mockSuccessfulCommandExecution(identifier: string) {
   const appRoot = '/'
   const app = testApp({directory: appRoot, configurationPath: path.join(appRoot, 'shopify.app.toml')})
 
-  vi.mocked(getExtensionOutputConfig).mockReturnValue(outputConfig)
   vi.mocked(loadApp).mockResolvedValue(app)
-  vi.mocked(generateExtensionPrompt).mockResolvedValue({name: 'name', extensionType: 'theme'})
+  vi.mocked(api.partners.request).mockResolvedValueOnce({extensionSpecifications: testRemoteSpecifications})
+  vi.mocked(ensureGenerateEnvironment).mockResolvedValue('api-key')
+  vi.mocked(generateExtensionPrompt).mockResolvedValue({name: 'name', extensionType: identifier})
   vi.mocked(generateExtensionService).mockResolvedValue(path.join(appRoot, 'extensions', 'name'))
 
   return outputMocker.mockAndCaptureOutput()

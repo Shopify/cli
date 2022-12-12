@@ -6,7 +6,25 @@ const dependency = {name: '@shopify/customer-account-ui-extensions-react', versi
 
 const CustomerAccountsSchema = BaseExtensionSchema.extend({
   categories: schema.define.array(schema.define.string()).optional(),
+  extensionPoints: schema.define.array(schema.define.string()).optional(),
   localization: schema.define.any().optional(),
+  authenticatedRedirectStartUrl: schema.define
+    .string()
+    .url({
+      message: 'authenticated_redirect_start_url must be a valid URL.',
+    })
+    .optional(),
+  authenticatedRedirectRedirectUrls: schema.define
+    .array(
+      schema.define.string().url({
+        message: 'authenticated_redirect_redirect_urls does contain invalid URLs.',
+      }),
+    )
+    .nonempty({
+      message:
+        'authenticated_redirect_redirect_urls can not be an empty array! It may only contain one or multiple valid URLs.',
+    })
+    .optional(),
 })
 
 const spec = createExtensionSpec({
@@ -22,6 +40,8 @@ const spec = createExtensionSpec({
       extension_points: config.extensionPoints,
       name: config.name,
       categories: config.categories,
+      authenticated_redirect_start_url: config.authenticatedRedirectStartUrl,
+      authenticated_redirect_redirect_urls: config.authenticatedRedirectRedirectUrls,
     }
   },
   previewMessage: (host, uuid, _, storeFqdn) => {

@@ -4,7 +4,7 @@ const spec = createFunctionSpec({
   identifier: 'delivery_customization',
   externalIdentifier: 'delivery_customization',
   externalName: 'Delivery customization',
-  public: false,
+  gated: true,
   templatePath: (lang) => `checkout/${lang}/delivery-customization/defaultt`,
 })
 

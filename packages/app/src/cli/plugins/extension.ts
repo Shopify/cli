@@ -3,7 +3,7 @@ import {ExtensionSpec} from '../models/extensions/extensions.js'
 import {FunctionSpec} from '../models/extensions/functions.js'
 import {plugins} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
-import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array.js'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
 /**
  * Extension Plugins types

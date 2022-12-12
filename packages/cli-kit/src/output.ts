@@ -24,7 +24,7 @@ import type {Change} from 'diff'
 
 export {default as logUpdate} from 'log-update'
 
-export type Logger = (message: string) => void
+export type Logger = Writable | ((message: string) => void)
 
 export class TokenizedString {
   value: string
@@ -77,7 +77,7 @@ export const token = {
     return new ColorContentToken(value, colors.green)
   },
   packagejsonScript: (packageManager: PackageManager, scriptName: string, ...scriptArgs: string[]) => {
-    return new CommandContentToken(formatPackageManagerCommand(packageManager, scriptName, scriptArgs))
+    return new CommandContentToken(formatPackageManagerCommand(packageManager, scriptName, ...scriptArgs))
   },
   successIcon: () => {
     return new ColorContentToken('✔', colors.green)
@@ -90,7 +90,11 @@ export const token = {
   },
 }
 
-function formatPackageManagerCommand(packageManager: PackageManager, scriptName: string, scriptArgs: string[]): string {
+export function formatPackageManagerCommand(
+  packageManager: PackageManager,
+  scriptName: string,
+  ...scriptArgs: string[]
+): string {
   switch (packageManager) {
     case 'yarn': {
       const pieces = ['yarn', scriptName, ...scriptArgs]
@@ -303,20 +307,6 @@ export interface OutputProcess {
   action: (stdout: Writable, stderr: Writable, signal: AbortSignal) => Promise<void>
 }
 
-/**
- * This regex can be used to find the erase cursor Ansii characters
- * to strip them from the string.
- * https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#erase-functions
- */
-const eraseCursorAnsiRegex = [
-  // Erase the entire line
-  '2K',
-  // Clear vertical tab stop at current line
-  '1G',
-]
-  .map((element) => `[\\u001B\\u009B][[\\]()#;?]*${element}`)
-  .join('|')
-
 export function consoleLog(message: string): void {
   console.log(withOrWithoutStyle(message))
 }
@@ -331,7 +321,11 @@ export function consoleWarn(message: string): void {
 
 export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, message: string): void {
   if (shouldOutput(logLevel)) {
-    logger(message)
+    if (logger instanceof Writable) {
+      logger.write(message)
+    } else {
+      logger(message)
+    }
   }
   logToFile(message, logLevel.toUpperCase())
 }

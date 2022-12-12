@@ -2,7 +2,7 @@ import {bundleExtension} from './bundle.js'
 import {testApp, testUIExtension} from '../../models/app/app.test-data.js'
 import {describe, expect, test, vi} from 'vitest'
 import {build as esBuild, BuildOptions, WatchMode} from 'esbuild'
-import {abort, path} from '@shopify/cli-kit'
+import {abort} from '@shopify/cli-kit'
 
 vi.mock('esbuild', async () => {
   const esbuild: any = await vi.importActual('esbuild')
@@ -12,7 +12,7 @@ vi.mock('esbuild', async () => {
   }
 })
 
-describe('buildExtension', () => {
+describe('bundleExtension()', () => {
   test('invokes ESBuild with the right options and forwards the logs', async () => {
     // Given
     const extension = await testUIExtension()
@@ -44,7 +44,11 @@ describe('buildExtension', () => {
       outputBundlePath: extension.outputBundlePath,
       minify: true,
       environment: 'production',
-      sourceFilePath: extension.entrySourceFilePath,
+      stdin: {
+        contents: 'console.log("mock stdin content")',
+        resolveDir: 'mock/resolve/dir',
+        loader: 'tsx',
+      },
       stdout,
       stderr,
     })
@@ -55,9 +59,12 @@ describe('buildExtension', () => {
     const options: BuildOptions = call[0]
 
     expect(options.bundle).toBeTruthy()
-    expect(options.entryPoints).toEqual([extension.entrySourceFilePath])
+    expect(options.stdin).toStrictEqual({
+      contents: 'console.log("mock stdin content")',
+      resolveDir: 'mock/resolve/dir',
+      loader: 'tsx',
+    })
     expect(options.outfile).toEqual(extension.outputBundlePath)
-    expect(options.sourceRoot).toEqual(path.dirname(extension.entrySourceFilePath))
     expect(options.loader).toEqual({
       '.esnext': 'ts',
       '.js': 'jsx',
@@ -81,6 +88,8 @@ describe('buildExtension', () => {
 
       "
     `)
+    const plugins = options.plugins?.map(({name}) => name)
+    expect(plugins).toContain('graphql-loader')
   })
 
   test('stops the ESBuild when the abort signal receives an event', async () => {
@@ -121,7 +130,11 @@ describe('buildExtension', () => {
       outputBundlePath: extension.outputBundlePath,
       minify: true,
       environment: 'production',
-      sourceFilePath: extension.entrySourceFilePath,
+      stdin: {
+        contents: 'console.log("mock stdin content")',
+        resolveDir: 'mock/resolve/dir',
+        loader: 'tsx',
+      },
       stdout,
       stderr,
       watchSignal: abortController.signal,
@@ -163,7 +176,11 @@ describe('buildExtension', () => {
       outputBundlePath: extension.outputBundlePath,
       minify: true,
       environment: 'production',
-      sourceFilePath: extension.entrySourceFilePath,
+      stdin: {
+        contents: 'console.log("mock stdin content")',
+        resolveDir: 'mock/resolve/dir',
+        loader: 'tsx',
+      },
       stdout,
       stderr,
       watch: watcher,

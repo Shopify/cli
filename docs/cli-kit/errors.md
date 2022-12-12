@@ -23,6 +23,21 @@ throw new AbortError(
 )
 ```
 
+You can also pass some next steps to the error constructor to help the user recover from the error. The next steps are displayed after the error message.
+
+For example
+
+```ts
+throw new AbortError(
+  "The project doesn't exist",
+  undefined,
+  [
+    "Make sure the command is executed from a project's directory",
+    "Run the command again",
+  ]
+)
+```
+
 - **AbortError:** This error is used to terminate the execution of the CLI process and output a message and thenext steps to the user.
 - **BugError:** This error behaves as `AbortError` and gets reported to the error tracking platform.
 - **AbortSilentError:** This version of `AbortError` doesn't output anything to the user. It is helpful in cases when the thrower wants to control the formatting.
@@ -37,7 +52,7 @@ There are scenarios where a function needs to inform the caller about the succes
 
 ```ts
 import { FatalError } from "@shopify/cli-kit/node/error"
-import {err, ok, Result} from '@shopify/cli-kit/common/result'
+import {err, ok, Result} from '@shopify/cli-kit/node/result'
 
 class ActionError extends FatalError {}
 
@@ -52,13 +67,13 @@ function action({success}: {success: boolean}): Result<string, ActionError> {
 // OK result
 let result = action({success: true})
 result.isErr() // false
-result.valueOrThrow() // ok
+result.valueOrBug() // ok
 result.mapError((error) => new FatalError("other error"))
 
 // Error result
 let result = action({success: false})
 result.isErr() // true
-result.valueOrThrow() // throws!
+result.valueOrBug() // throws!
 result.mapError((error) => new FatalError("other error"))
 ```
 

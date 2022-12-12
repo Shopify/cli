@@ -9,7 +9,7 @@
           "build"
         ],
         "runtimeCacheInputs": [
-          "node bin/cache-inputs.js || node ../../bin/cache-inputs.js"
+          "node bin/cache-inputs.js || node ../../bin/cache-inputs.js || node ../bin/cache-inputs.js"
         ]
       }
     }

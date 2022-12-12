@@ -17,20 +17,20 @@ export function websocketUpgradeHandler(
     if (request.url !== '/extensions') {
       return
     }
-    output.debug(`Upgrading HTTP request to a websocket connection`)
+    output.debug(`Upgrading HTTP request to a websocket connection`, options.stdout)
     wss.handleUpgrade(request, socket, head, getConnectionDoneHandler(wss, options))
   }
 }
 
 export function getConnectionDoneHandler(wss: WebSocketServer, options: SetupWebSocketConnectionOptions) {
   return (ws: WebSocket) => {
-    output.debug(`Websocket connection successfully established`)
+    output.debug(`Websocket connection successfully established`, options.stdout)
     const connectedPayload = {
       event: 'connected',
       data: options.payloadStore.getConnectedPayload(),
       version: '3',
     }
-    output.debug(output.content`Sending connected payload: ${output.token.json(connectedPayload)}`)
+    output.debug(output.content`Sending connected payload: ${output.token.json(connectedPayload)}`, options.stdout)
     ws.send(JSON.stringify(connectedPayload))
     ws.on('message', getOnMessageHandler(wss, options))
   }
@@ -41,9 +41,12 @@ export function getOnMessageHandler(wss: WebSocketServer, options: SetupWebSocke
     const jsonData = JSON.parse(data.toString())
     const {event: eventType, data: eventData} = jsonData
 
-    output.debug(output.content`Received websocket message with event type ${eventType} and data:
+    output.debug(
+      output.content`Received websocket message with event type ${eventType} and data:
 ${output.token.json(eventData)}
-          `)
+          `,
+      options.stdout,
+    )
 
     if (eventType === 'update') {
       const payloadStoreApiKey = options.payloadStore.getRawPayload().app.apiKey
@@ -66,7 +69,7 @@ ${output.token.json(eventData)}
     } else if (eventType === 'dispatch') {
       const outGoingMessage = getOutgoingDispatchMessage(jsonData, options)
 
-      notifyClients(wss, outGoingMessage)
+      notifyClients(wss, outGoingMessage, options)
     }
   }
 }
@@ -83,17 +86,23 @@ export function getPayloadUpdateHandler(
         ...options.payloadStore.getRawPayloadFilteredByExtensionIds(extensionIds),
       },
     }
-    output.debug(output.content`Sending websocket update event to the websocket clients:
+    output.debug(
+      output.content`Sending websocket update event to the websocket clients:
   ${output.token.json(payload)}
-    `)
-    notifyClients(wss, payload)
+    `,
+      options.stdout,
+    )
+    notifyClients(wss, payload, options)
   }
 }
 
-function notifyClients(wss: WebSocketServer, payload: OutgoingMessage) {
-  output.debug(output.content`Sending websocket with event type ${payload.event} and data:
+function notifyClients(wss: WebSocketServer, payload: OutgoingMessage, options: SetupWebSocketConnectionOptions) {
+  output.debug(
+    output.content`Sending websocket with event type ${payload.event} and data:
 ${output.token.json(payload.data)}
-        `)
+        `,
+    options.stdout,
+  )
 
   const stringPayload = JSON.stringify(payload)
   wss.clients.forEach((ws) => ws.send(stringPayload))

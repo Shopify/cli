@@ -89,12 +89,19 @@ export class ExtensionsPayloadStore extends EventEmitter {
     this.emitUpdate(extensions.map((extension) => extension.uuid))
   }
 
-  async updateExtension(extension: UIExtension, development?: Partial<UIExtensionPayload['development']>) {
+  async updateExtension(
+    extension: UIExtension,
+    options: ExtensionDevOptions,
+    development?: Partial<UIExtensionPayload['development']>,
+  ) {
     const payloadExtensions = this.rawPayload.extensions
     const index = payloadExtensions.findIndex((extensionPayload) => extensionPayload.uuid === extension.devUUID)
 
     if (index === -1) {
-      output.debug(output.content`Could not updateExtension() for extension with uuid: ${extension.devUUID}`)
+      output.debug(
+        output.content`Could not updateExtension() for extension with uuid: ${extension.devUUID}`,
+        options.stderr,
+      )
       return
     }
 

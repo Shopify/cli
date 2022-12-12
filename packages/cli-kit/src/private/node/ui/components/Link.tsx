@@ -1,4 +1,5 @@
-import {Text, Transform} from 'ink'
+import chalk from 'chalk'
+import {Text} from 'ink'
 import React from 'react'
 import terminalLink from 'terminal-link'
 
@@ -7,18 +8,15 @@ interface Props {
   label?: string
 }
 
+function fallback(text: string, url: string) {
+  return `${text} ${chalk.dim(`(${url})`)}`
+}
+
 /**
  * `Link` displays a clickable link when supported by the terminal.
  */
 const Link: React.FC<Props> = ({url, label}: React.PropsWithChildren<Props>): JSX.Element => {
-  return (
-    <Text>
-      {label && <Text dimColor>{`${label}: `}</Text>}
-      <Transform transform={(children) => terminalLink(children, url, {fallback: false})}>
-        <Text underline>{url}</Text>
-      </Transform>
-    </Text>
-  )
+  return <Text>{terminalLink(label ?? url, url, {fallback: label ? fallback : false})}</Text>
 }
 
 export {Link}

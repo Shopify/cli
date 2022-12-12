@@ -205,7 +205,7 @@ describe('ExtensionsPayloadStore()', () => {
       const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as UIExtension
 
       // When
-      await extensionsPayloadStore.updateExtension(updatedExtension, {hidden: true})
+      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, {hidden: true})
 
       // Then
       expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, {
@@ -232,7 +232,7 @@ describe('ExtensionsPayloadStore()', () => {
       const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as UIExtension
 
       // When
-      await extensionsPayloadStore.updateExtension(updatedExtension)
+      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions)
 
       // Then
       expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, {
@@ -263,7 +263,7 @@ describe('ExtensionsPayloadStore()', () => {
       const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as UIExtension
 
       // When
-      await extensionsPayloadStore.updateExtension(updatedExtension)
+      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions)
 
       // Then
       expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, {
@@ -291,7 +291,7 @@ describe('ExtensionsPayloadStore()', () => {
       extensionsPayloadStore.on(ExtensionsPayloadStoreEvent.Update, onUpdateSpy)
 
       // When
-      await extensionsPayloadStore.updateExtension(updatedExtension)
+      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions)
 
       // Then
       expect(onUpdateSpy).toHaveBeenCalledWith(['123'])
@@ -311,7 +311,7 @@ describe('ExtensionsPayloadStore()', () => {
       extensionsPayloadStore.on(ExtensionsPayloadStoreEvent.Update, onUpdateSpy)
 
       // When
-      await extensionsPayloadStore.updateExtension(updatedExtension)
+      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions)
 
       // Then
       expect(initialRawPayload).toStrictEqual(extensionsPayloadStore.getRawPayload())

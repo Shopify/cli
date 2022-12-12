@@ -146,9 +146,9 @@ async function dev(options: DevOptions) {
     }
 
     if (usingLocalhost) {
-      additionalProcesses.push(devFrontendNonProxyTarget(frontendOptions, frontendPort))
+      additionalProcesses.push(await devFrontendNonProxyTarget(frontendOptions, frontendPort))
     } else {
-      proxyTargets.push(devFrontendProxyTarget(frontendOptions))
+      proxyTargets.push(await devFrontendProxyTarget(frontendOptions))
     }
   }
 
@@ -168,8 +168,11 @@ interface DevFrontendTargetOptions extends DevWebOptions {
   backendPort: number
 }
 
-function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: number): output.OutputProcess {
-  const devFrontend = devFrontendProxyTarget(options)
+async function devFrontendNonProxyTarget(
+  options: DevFrontendTargetOptions,
+  port: number,
+): Promise<output.OutputProcess> {
+  const devFrontend = await devFrontendProxyTarget(options)
   return {
     prefix: devFrontend.logPrefix,
     action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
@@ -192,17 +195,9 @@ function devThemeExtensionTarget(
   }
 }
 
-function devFrontendProxyTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyTarget {
+async function devFrontendProxyTarget(options: DevFrontendTargetOptions): Promise<ReverseHTTPProxyTarget> {
   const {commands} = options.web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
-  const env = {
-    SHOPIFY_API_KEY: options.apiKey,
-    SHOPIFY_API_SECRET: options.apiSecret,
-    HOST: options.hostname,
-    SCOPES: options.scopes,
-    BACKEND_PORT: `${options.backendPort}`,
-    NODE_ENV: `development`,
-  }
 
   return {
     logPrefix: options.web.configuration.type,
@@ -212,8 +207,8 @@ function devFrontendProxyTarget(options: DevFrontendTargetOptions): ReverseHTTPP
         stdout,
         stderr,
         env: {
-          ...process.env,
-          ...env,
+          ...(await getDevEnvironmentVariables(options)),
+          BACKEND_PORT: `${options.backendPort}`,
           PORT: `${port}`,
           FRONTEND_PORT: `${port}`,
           APP_URL: options.hostname,
@@ -227,22 +222,29 @@ function devFrontendProxyTarget(options: DevFrontendTargetOptions): ReverseHTTPP
   }
 }
 
-async function devBackendTarget(web: Web, options: DevWebOptions): Promise<output.OutputProcess> {
-  const {commands} = web.configuration
-  const [cmd, ...args] = commands.dev.split(' ')
-  const env = {
+async function getDevEnvironmentVariables(options: DevWebOptions) {
+  return {
+    ...process.env,
     SHOPIFY_API_KEY: options.apiKey,
     SHOPIFY_API_SECRET: options.apiSecret,
     HOST: options.hostname,
-    // SERVER_PORT is the convention Artisan uses
-    PORT: `${options.backendPort}`,
-    SERVER_PORT: `${options.backendPort}`,
-    BACKEND_PORT: `${options.backendPort}`,
     SCOPES: options.scopes,
     NODE_ENV: `development`,
     ...(environment.service.isSpinEnvironment() && {
       SHOP_CUSTOM_DOMAIN: `shopify.${await environment.spin.fqdn()}`,
     }),
+  }
+}
+
+async function devBackendTarget(web: Web, options: DevWebOptions): Promise<output.OutputProcess> {
+  const {commands} = web.configuration
+  const [cmd, ...args] = commands.dev.split(' ')
+  const env = {
+    ...(await getDevEnvironmentVariables(options)),
+    // SERVER_PORT is the convention Artisan uses
+    PORT: `${options.backendPort}`,
+    SERVER_PORT: `${options.backendPort}`,
+    BACKEND_PORT: `${options.backendPort}`,
   }
 
   return {

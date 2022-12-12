@@ -1,4 +1,4 @@
-import {getExtensionUrl, getRedirectUrl, sendError} from './utilities.js'
+import {getExtensionPointRedirectUrl, getExtensionUrl, getRedirectUrl, sendError} from './utilities.js'
 import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {getHTML} from '../templates.js'
@@ -152,9 +152,7 @@ export async function devConsoleAssetsMiddleware(
 
 export function getLogMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
   return async (request: http.IncomingMessage, response: http.ServerResponse, next: (err?: Error) => unknown) => {
-    output.debug(`UI extensions server received a ${request.method} request to URL ${request.url}`, (message) =>
-      devOptions.stdout.write(message, 'utf8'),
-    )
+    output.debug(`UI extensions server received a ${request.method} request to URL ${request.url}`, devOptions.stdout)
     next()
   }
 }
@@ -211,6 +209,38 @@ export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlew
         extension: await getUIExtensionPayload(extension, devOptions),
       }),
     )
+  }
+}
+
+export function getExtensionPointMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
+  return async (request: http.IncomingMessage, response: http.ServerResponse, _next: (err?: Error) => unknown) => {
+    const extensionID = request.context.params.extensionId
+    const requestedTarget = request.context.params.extensionPointTarget
+    const extension = devOptions.extensions.find((extension) => extension.devUUID === extensionID)
+
+    if (!extension) {
+      return sendError(response, {
+        statusCode: 404,
+        statusMessage: `Extension with id ${extensionID} not found`,
+      })
+    }
+
+    if (!extension.hasExtensionPointTarget(requestedTarget)) {
+      return sendError(response, {
+        statusCode: 404,
+        statusMessage: `Extension with id ${extensionID} has not configured the "${requestedTarget}" extension point`,
+      })
+    }
+
+    const url = getExtensionPointRedirectUrl(requestedTarget, extension, devOptions)
+    if (!url) {
+      return sendError(response, {
+        statusCode: 404,
+        statusMessage: `Redirect url can't be constructed for extension with id ${extensionID} and extension point "${requestedTarget}"`,
+      })
+    }
+
+    await http.sendRedirect(response.event, url, 307)
   }
 }
 

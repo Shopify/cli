@@ -18,40 +18,15 @@ import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifier
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
 import {ThemeExtension} from '../models/app/extensions.js'
+import {loadAppName} from '../models/app/loader.js'
 import {error as kitError, output, session, store, ui, environment, error, string} from '@shopify/cli-kit'
-import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
-export const InvalidApiKeyError = (apiKey: string) => {
-  return new kitError.Abort(
-    output.content`Invalid API key: ${apiKey}`,
-    output.content`You can find the API key in the app settings in the Partners Dashboard.`,
-  )
-}
-
-export const DeployAppNotFound = (apiKey: string, packageManager: PackageManager) => {
-  return new kitError.Abort(
-    output.content`Couldn't find the app with API key ${apiKey}`,
-    output.content`• If you didn't intend to select this app, run ${
-      output.content`${output.token.packagejsonScript(packageManager, 'deploy', '--reset')}`.value
-    }`,
-  )
-}
-
-export const AppOrganizationNotFoundError = (apiKey: string, organizations: string[]) => {
-  return new kitError.Abort(
-    `The application with API Key ${apiKey} doesn't belong to any of your organizations: ${organizations.join(', ')}`,
-  )
-}
-
-const OrganizationNotFoundError = (orgId: string) => {
-  return new error.Bug(`Could not find Organization for id ${orgId}.`)
-}
-
-const StoreNotFoundError = async (storeName: string, org: Organization) => {
-  return new error.Bug(
-    `Could not find ${storeName} in the Organization ${org.businessName} as a valid development store.`,
-    `Visit https://${await environment.fqdn.partners()}/${org.id}/stores to create a new store in your organization`,
-  )
+export const InvalidApiKeyErrorMessage = (apiKey: string) => {
+  return {
+    message: output.content`Invalid API key: ${apiKey}`,
+    tryMessage: output.content`You can find the API key in the app settings in the Partners Dashboard.`,
+  }
 }
 
 export interface DevEnvironmentOptions {
@@ -67,6 +42,64 @@ interface DevEnvironmentOutput {
   identifiers: UuidOnlyIdentifiers
   updateURLs: boolean | undefined
   tunnelPlugin: string | undefined
+}
+
+/**
+ * Make sure there is a valid environment to execute `generate extension`
+ *
+ * We just need a valid app API key to access the Specifications API.
+ * - If the API key is provided via flag, we use it.
+ * - Else, if there is cached API key for the current directory, we use it.
+ * - Else, we prompt the user to select/create an app.
+ *
+ * The selection is then cached as the "dev" app for the current directory.
+ */
+export async function ensureGenerateEnvironment(options: {
+  apiKey?: string
+  directory: string
+  reset: boolean
+  token: string
+}): Promise<string> {
+  if (options.apiKey) {
+    const app = await fetchAppFromApiKey(options.apiKey, options.token)
+    if (!app) {
+      const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
+      throw new kitError.Abort(errorMessage.message, errorMessage.tryMessage)
+    }
+    return app.apiKey
+  }
+  const cachedInfo = await getAppDevCachedInfo({reset: options.reset, directory: options.directory})
+
+  if (cachedInfo === undefined && !options.reset) {
+    const explanation =
+      `\nLooks like this is the first time you're running 'generate extension' for this project.\n` +
+      'Configure your preferences by answering a few questions.\n'
+    output.info(explanation)
+  }
+
+  if (cachedInfo?.appId && cachedInfo?.orgId) {
+    const org = await fetchOrgFromId(cachedInfo.orgId, options.token)
+    const app = await fetchAppFromApiKey(cachedInfo.appId, options.token)
+    if (!app || !org) {
+      const errorMessage = InvalidApiKeyErrorMessage(cachedInfo.appId)
+      throw new kitError.Abort(errorMessage.message, errorMessage.tryMessage)
+    }
+    const packageManager = await getPackageManager(options.directory)
+    showGenerateReusedValues(org.businessName, cachedInfo, packageManager)
+    return app.apiKey
+  } else {
+    const orgId = cachedInfo?.orgId || (await selectOrg(options.token))
+    const {organization, apps} = await fetchOrgAndApps(orgId, options.token)
+    const localAppName = await loadAppName(options.directory)
+    const selectedApp = await selectOrCreateApp(localAppName, apps, organization, options.token)
+    await store.setAppInfo({
+      appId: selectedApp.apiKey,
+      title: selectedApp.title,
+      directory: options.directory,
+      orgId,
+    })
+    return selectedApp.apiKey
+  }
 }
 
 /**
@@ -143,7 +176,7 @@ export async function ensureDevEnvironment(
       selectedApp = app
     } else {
       const {apps} = await fetchOrgAndApps(orgId, token)
-      selectedApp = await selectOrCreateApp(options.app, apps, organization, token)
+      selectedApp = await selectOrCreateApp(options.app.name, apps, organization, token)
     }
   }
 
@@ -264,7 +297,7 @@ export async function ensureThemeExtensionDevEnvironment(
     return remoteRegistrations[0]!
   }
 
-  const registration = await createExtension(apiKey, extension.type, extension.localIdentifier, token)
+  const registration = await createExtension(apiKey, extension.graphQLType, extension.localIdentifier, token)
 
   return registration
 }
@@ -312,11 +345,11 @@ export async function fetchOrganizationAndFetchOrCreateApp(
 ): Promise<{partnersApp: OrganizationApp; orgId: string}> {
   const orgId = await selectOrg(token)
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
-  const partnersApp = await selectOrCreateApp(app, apps, organization, token)
+  const partnersApp = await selectOrCreateApp(app.name, apps, organization, token)
   return {orgId, partnersApp}
 }
 
-async function fetchAppAndIdentifiers(
+export async function fetchAppAndIdentifiers(
   options: {app: AppInterface; reset: boolean; packageManager?: PackageManager; apiKey?: string},
   token: string,
 ): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
@@ -329,7 +362,14 @@ async function fetchAppAndIdentifiers(
   } else if (envIdentifiers.app) {
     const apiKey = options.apiKey ?? envIdentifiers.app
     partnersApp = await fetchAppFromApiKey(apiKey, token)
-    if (!partnersApp) throw DeployAppNotFound(apiKey, options.app.packageManager)
+    if (!partnersApp) {
+      throw new kitError.Abort(
+        output.content`Couldn't find the app with API key ${apiKey}`,
+        output.content`• If you didn't intend to select this app, run ${
+          output.content`${output.token.packagejsonScript(options.app.packageManager, 'deploy', '--reset')}`.value
+        }`,
+      )
+    }
   } else {
     partnersApp = await fetchDevAppAndPrompt(options.app, token)
   }
@@ -377,13 +417,23 @@ async function fetchDevDataFromOptions(
 
   if (options.apiKey) {
     selectedApp = await fetchAppFromApiKey(options.apiKey, token)
-    if (!selectedApp) throw InvalidApiKeyError(options.apiKey)
+    if (!selectedApp) {
+      const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
+      throw new kitError.Abort(errorMessage.message, errorMessage.tryMessage)
+    }
   }
 
   if (options.storeFqdn) {
     const orgWithStore = await fetchStoreByDomain(orgId, token, options.storeFqdn)
-    if (!orgWithStore) throw OrganizationNotFoundError(orgId)
-    if (!orgWithStore.store) throw await StoreNotFoundError(options.storeFqdn, orgWithStore?.organization)
+    if (!orgWithStore) throw new error.Bug(`Could not find Organization for id ${orgId}.`)
+    if (!orgWithStore.store) {
+      const partners = await environment.fqdn.partners()
+      const org = orgWithStore.organization
+      throw new error.Bug(
+        `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid development store.`,
+        `Visit https://${partners}/${org.id}/stores to create a new store in your organization`,
+      )
+    }
     await convertToTestStoreIfNeeded(orgWithStore.store, orgWithStore.organization, token)
     selectedStore = orgWithStore.store
   }
@@ -440,6 +490,19 @@ function showReusedValues(org: string, cachedAppInfo: store.CachedAppInfo, packa
     output.content`\nTo reset your default dev config, run ${output.token.packagejsonScript(
       packageManager,
       'dev',
+      '--reset',
+    )}\n`,
+  )
+}
+
+function showGenerateReusedValues(org: string, cachedAppInfo: store.CachedAppInfo, packageManager: PackageManager) {
+  output.info('\nUsing your previous dev settings:')
+  output.info(`- Org:          ${org}`)
+  output.info(`- App:          ${cachedAppInfo.title}`)
+  output.info(
+    output.content`\nTo reset your default config, run ${output.token.packagejsonScript(
+      packageManager,
+      'generate extension',
       '--reset',
     )}\n`,
   )

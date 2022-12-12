@@ -1,6 +1,5 @@
-import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
+import {Extension, FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {AppErrors} from './loader.js'
-import {getUIExtensionRendererDependency, UIExtensionTypes} from '../../constants.js'
 import {path, schema, file} from '@shopify/cli-kit'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -56,6 +55,7 @@ export interface AppInterface {
   hasExtensions: () => boolean
   hasUIExtensions: () => boolean
   updateDependencies: () => Promise<void>
+  extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => Extension[]
 }
 
 export class App implements AppInterface {
@@ -125,6 +125,13 @@ export class App implements AppInterface {
   hasUIExtensions(): boolean {
     return this.extensions.ui.length > 0
   }
+
+  extensionsForType(specification: {identifier: string; externalIdentifier: string}): Extension[] {
+    const allExternsions = [...this.extensions.ui, ...this.extensions.function, ...this.extensions.theme]
+    return allExternsions.filter(
+      (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
+    )
+  }
 }
 
 type RendererVersionResult = {name: string; version: string} | undefined | 'not_found'
@@ -137,11 +144,11 @@ type RendererVersionResult = {name: string; version: string} | undefined | 'not_
  * @returns The version if the dependency exists.
  */
 export async function getUIExtensionRendererVersion(
-  uiExtensionType: UIExtensionTypes,
+  extension: UIExtension,
   app: AppInterface,
 ): Promise<RendererVersionResult> {
   // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)
-  const rendererDependency = getUIExtensionRendererDependency(uiExtensionType)
+  const rendererDependency = extension.dependency
   if (!rendererDependency) return undefined
   return getDependencyVersion(rendererDependency.name, app.directory)
 }

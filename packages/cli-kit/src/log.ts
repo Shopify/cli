@@ -8,9 +8,8 @@ import {
   readSync as fileReadSync,
 } from './file.js'
 import {join as pathJoin} from './path.js'
-import {consoleLog} from './output.js'
+import {consoleLog, debug} from './output.js'
 import {page} from './system.js'
-import * as ui from './ui.js'
 import {promisify} from 'node:util'
 import {Stream, Transform, TransformCallback, TransformOptions} from 'node:stream'
 import {WriteStream, createWriteStream, createReadStream, unlinkSync} from 'node:fs'
@@ -146,24 +145,14 @@ async function truncateLogs(logFile: string) {
   if (size < maxLogFileSize) {
     return
   }
-  const list = ui.newListr([
-    {
-      title: 'Truncation of the log file',
-      task: async (_, task) => {
-        task.title = `Starting the truncation of the ${Math.floor(size / (1024 * 1024)).toLocaleString(
-          'en-US',
-        )}MB log file`
-        const tmpLogFile = logFile.concat('.tmp')
-        const truncateLines = new LinesTruncatorTransformer({fileSize: size})
-        const pipeline = promisify(Stream.pipeline)
-        await pipeline(createReadStream(logFile), truncateLines, createWriteStream(tmpLogFile))
-        await pipeline(createReadStream(tmpLogFile), createWriteStream(logFile))
-        unlinkSync(tmpLogFile)
-        task.title = 'Finished log truncation process'
-      },
-    },
-  ])
-  await list.run()
+  debug(`Starting the truncation of the ${Math.floor(size / (1024 * 1024)).toLocaleString('en-US')}MB log file`)
+  const tmpLogFile = logFile.concat('.tmp')
+  const truncateLines = new LinesTruncatorTransformer({fileSize: size})
+  const pipeline = promisify(Stream.pipeline)
+  await pipeline(createReadStream(logFile), truncateLines, createWriteStream(tmpLogFile))
+  await pipeline(createReadStream(tmpLogFile), createWriteStream(logFile))
+  unlinkSync(tmpLogFile)
+  debug('Finished log truncation process')
 }
 
 function logFileExists(): boolean {

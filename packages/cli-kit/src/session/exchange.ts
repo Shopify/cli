@@ -6,7 +6,7 @@ import {Abort} from '../error.js'
 import {API} from '../network/api.js'
 import {identity as identityFqdn} from '../environment/fqdn.js'
 import {shopifyFetch} from '../http.js'
-import {err, ok, Result} from '../public/common/result.js'
+import {err, ok, Result} from '../public/node/result.js'
 import {AbortError} from '../public/node/error.js'
 
 export class InvalidGrantError extends Error {}
@@ -36,7 +36,7 @@ export async function exchangeCodeForAccessToken(codeData: CodeAuthResult): Prom
   }
 
   const tokenResult = await tokenRequest(params)
-  const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrThrow()
+  const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
   return buildIdentityToken(value)
 }
 
@@ -80,7 +80,7 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
     client_id: clientId,
   }
   const tokenResult = await tokenRequest(params)
-  const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrThrow()
+  const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
   return buildIdentityToken(value)
 }
 
@@ -153,7 +153,7 @@ async function requestAppToken(
     identifier = `${store}-${appId}`
   }
   const tokenResult = await tokenRequest(params)
-  const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrThrow()
+  const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
   const appToken = await buildApplicationToken(value)
   return {[identifier]: appToken}
 }

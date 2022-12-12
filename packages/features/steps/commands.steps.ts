@@ -13,7 +13,7 @@ all commands can load successfully.
 It's normal to see this test fail when you add or remove a command in the CLI.
 In this case you can run this command to regenerate the snapshot file:
 
-$ yarn test:regenerate-snapshots
+$ pnpm test:regenerate-snapshots
 
 Then you can commit this change and this test will pass.
 

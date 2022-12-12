@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli",
-  "version": "3.23.0",
+  "version": "3.25.0",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
   "homepage": "https://github.com/shopify/cli#readme",
@@ -36,13 +36,14 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "build": "nx build",
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "test": "nx run cli-main:test",
     "test:watch": "nx test:watch",
+    "test:coverage": "nx test:coverage",
     "type-check": "nx type-check"
   },
   "eslintConfig": {
@@ -52,14 +53,19 @@
   },
   "dependencies": {
     "@oclif/core": "1.9.2",
-    "@oclif/plugin-commands": "^2.2.0",
-    "@oclif/plugin-help": "^5.1.12",
-    "@oclif/plugin-plugins": "^2.1.0",
-    "@shopify/cli-kit": "3.23.0",
-    "@shopify/plugin-ngrok": "^3.23.0"
+    "@oclif/plugin-commands": "2.2.0",
+    "@oclif/plugin-help": "5.1.12",
+    "@oclif/plugin-plugins": "2.1.0",
+    "@shopify/cli-kit": "3.25.0",
+    "@shopify/plugin-ngrok": "3.25.0"
   },
   "devDependencies": {
-    "vitest": "^0.22.1"
+    "@vitest/coverage-istanbul": "^0.22.0",
+    "vitest": "^0.22.1",
+    "vite": "^2.9.13",
+    "@shopify/app": "3.25.0",
+    "@shopify/cli-hydrogen": "3.25.0",
+    "@shopify/theme": "3.25.0"
   },
   "engine-strict": true,
   "engines": {

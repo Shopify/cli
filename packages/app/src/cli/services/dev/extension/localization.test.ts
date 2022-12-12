@@ -1,9 +1,12 @@
 import {getLocalization, Localization} from './localization.js'
 import {testUIExtension} from '../../../models/app/app.test-data.js'
+import {ExtensionDevOptions} from '../extension.js'
 import {file, path, output} from '@shopify/cli-kit'
 import {describe, expect, it, vi} from 'vitest'
 
 async function testGetLocalization(tmpDir: string, currentLocalization?: Localization) {
+  const mockOptions = {} as unknown as ExtensionDevOptions
+
   const extension = await testUIExtension({
     configuration: {
       name: 'mock-name',
@@ -24,7 +27,7 @@ async function testGetLocalization(tmpDir: string, currentLocalization?: Localiz
     outputBundlePath: `${tmpDir}/dist/main.js`,
     entrySourceFilePath: `${tmpDir}/dist/main.js`,
   })
-  return getLocalization(extension, currentLocalization)
+  return getLocalization(extension, {...mockOptions, currentLocalizationPayload: currentLocalization})
 }
 
 describe('when there are no locale files', () => {
@@ -140,8 +143,8 @@ describe('when there are locale files', () => {
 
       const result = await testGetLocalization(tmpDir)
 
-      expect(output.info).toHaveBeenCalledWith(expect.stringContaining('mock-name'))
-      expect(output.info).toHaveBeenCalledWith(expect.stringContaining(tmpDir))
+      expect(output.info).toHaveBeenCalledWith(expect.stringContaining('mock-name'), undefined)
+      expect(output.info).toHaveBeenCalledWith(expect.stringContaining(tmpDir), undefined)
     })
   })
 

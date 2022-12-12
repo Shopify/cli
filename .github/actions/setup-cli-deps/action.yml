@@ -20,15 +20,15 @@ runs:
     - name: Install Bundler
       run: gem install bundler -v ${{ env.BUNDLER_VERSION }}
       shell: bash
-    - name: Set Node.js
-      uses: actions/setup-node@master
-      with:
-        node-version: ${{ inputs.node-version }}
-        cache: 'yarn'
     - name: Install pnpm
       uses: pnpm/action-setup@v2.2.2
       with:
         version:  ${{ env.PNPM_VERSION }}
+    - name: Set Node.js
+      uses: actions/setup-node@master
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'pnpm'
     - name: Install yarn
       run: npm install --global yarn@${{ env.YARN_VERSION }}
       shell: bash
@@ -36,7 +36,7 @@ runs:
       run: yarn config set network-timeout 300000
       shell: bash
     - name: Install dependencies
-      run: yarn install --ignore-engines
+      run: pnpm install
       shell: bash
     - name: Derive appropriate SHAs for base and head for `nx affected` commands
       uses: nrwl/nx-set-shas@v2.2.5

@@ -11,7 +11,6 @@ import BaseCommand from './public/node/base-command.js'
 import {CommandContent} from './public/node/hooks/prerun.js'
 import {hashString} from './string.js'
 import {macAddress} from './environment/local.js'
-import {localCliPackage} from './public/node/cli.js'
 import {Config, Interfaces} from '@oclif/core'
 
 interface StartOptions {
@@ -171,7 +170,7 @@ export async function getEnvironmentData(config: Interfaces.Config) {
       : undefined,
     env_device_id: hashString(await macAddress()),
     env_cloud: environment.local.cloudEnvironment().platform,
-    env_package_manager: (await localCliPackage()) ? await getPackageManager(process.cwd()) : undefined,
+    env_package_manager: await getPackageManager(process.cwd()),
   }
 }
 

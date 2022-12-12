@@ -1,12 +1,14 @@
 import {getLocalization} from './localization.js'
 import {UIExtensionPayload} from './payload/models.js'
+import {getExtensionPointTargetSurface} from './utilities.js'
 import {getUIExtensionResourceURL} from '../../../utilities/extensions/configuration.js'
 import {ExtensionDevOptions} from '../extension.js'
 import {UIExtension} from '../../../models/app/extensions.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
+import {NewExtensionPointSchemaType} from '../../../models/extensions/schemas.js'
 import {file} from '@shopify/cli-kit'
 
-type GetUIExtensionPayloadOptions = ExtensionDevOptions & {
+export type GetUIExtensionPayloadOptions = ExtensionDevOptions & {
   currentDevelopmentPayload?: Partial<UIExtensionPayload['development']>
   currentLocalizationPayload?: UIExtensionPayload['localization']
 }
@@ -16,13 +18,10 @@ export async function getUIExtensionPayload(
   options: GetUIExtensionPayloadOptions,
 ): Promise<UIExtensionPayload> {
   const url = `${options.url}/extensions/${extension.devUUID}`
-  const {localization, status: localizationStatus} = await getLocalization(
-    extension,
-    options.currentLocalizationPayload,
-  )
+  const {localization, status: localizationStatus} = await getLocalization(extension, options)
 
-  const renderer = await getUIExtensionRendererVersion(extension.configuration.type, options.app)
-  return {
+  const renderer = await getUIExtensionRendererVersion(extension, options.app)
+  const defaultConfig = {
     assets: {
       main: {
         name: 'main',
@@ -40,13 +39,12 @@ export async function getUIExtensionPayload(
       root: {
         url,
       },
-
       hidden: options.currentDevelopmentPayload?.hidden || false,
       localizationStatus,
       status: options.currentDevelopmentPayload?.status || 'success',
       ...(options.currentDevelopmentPayload || {status: 'success'}),
     },
-    extensionPoints: extension.configuration.extensionPoints ?? null,
+    extensionPoints: getExtensionPoints(extension.configuration.extensionPoints, url),
     localization: localization ?? null,
     categories: extension.configuration.categories ?? null,
     metafields: extension.configuration.metafields.length === 0 ? null : extension.configuration.metafields,
@@ -64,4 +62,27 @@ export async function getUIExtensionPayload(
     title: extension.configuration.name,
     approvalScopes: options.grantedScopes,
   }
+  return defaultConfig
+}
+
+function getExtensionPoints(extensionPoints: UIExtension['configuration']['extensionPoints'], url: string) {
+  if (!extensionPoints) {
+    return extensionPoints
+  }
+
+  return extensionPoints.map((extensionPoint: unknown) => {
+    if (extensionPoint && typeof extensionPoint === 'object') {
+      const {target} = extensionPoint as NewExtensionPointSchemaType
+
+      return {
+        ...extensionPoint,
+        surface: getExtensionPointTargetSurface(target),
+        root: {
+          url: `${url}/${target}`,
+        },
+      }
+    }
+
+    return extensionPoint
+  })
 }

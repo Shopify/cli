@@ -1,7 +1,6 @@
 import {ExtensionServerClient} from './ExtensionServerClient'
 import {mockApp} from '../testing'
 import WS from 'jest-websocket-mock'
-import {mockGet} from 'vi-fetch'
 
 const defaultOptions = {
   connection: {url: 'ws://example-host.com:8000/extensions/'},
@@ -38,57 +37,6 @@ describe('ExtensionServerClient', () => {
 
       socket.close()
     })
-
-    // eslint-disable-next-line jest/max-nested-describe
-    describe('API client', () => {
-      test('is initialized with the given URL', () => {
-        const url = 'ws://initial.socket.com'
-
-        const client = new ExtensionServerClient({connection: {url}})
-
-        expect(client.api.url).toBe(url.replace('ws', 'http'))
-      })
-
-      test('is initialized with a secure URL', () => {
-        const url = 'wss://initial.socket.com'
-
-        const client = new ExtensionServerClient({connection: {url}})
-
-        expect(client.api.url).toBe(url.replace('wss', 'https'))
-      })
-
-      test('returns extensions filtered by surface option', async () => {
-        const extensions = [
-          {uuid: '123', surface: 'admin'},
-          {uuid: '456', surface: 'checkout'},
-        ]
-
-        mockGet('http://example-host.com:8000').willResolve({extensions})
-
-        const {socket, client} = setup({...defaultOptions, surface: 'admin'})
-        await expect(client.api.extensions()).resolves.toStrictEqual({
-          extensions: [{uuid: '123', surface: 'admin'}],
-        })
-
-        socket.close()
-      })
-
-      test('returns all extensions when surface option is not valid', async () => {
-        const extensions = [
-          {uuid: '123', surface: 'admin'},
-          {uuid: '456', surface: 'checkout'},
-        ]
-
-        mockGet('http://example-host.com:8000').willResolve({extensions})
-
-        const {socket, client} = setup({...defaultOptions, surface: 'abc' as any})
-        await expect(client.api.extensions()).resolves.toStrictEqual({
-          extensions,
-        })
-
-        socket.close()
-      })
-    })
   })
 
   describe('on()', () => {
@@ -100,6 +48,7 @@ describe('ExtensionServerClient', () => {
         extensions: [
           {uuid: '123', surface: 'admin'},
           {uuid: '456', surface: 'checkout'},
+          {uuid: '456', surface: '', extensionPoints: [{surface: 'admin'}]},
         ],
       }
 
@@ -109,7 +58,10 @@ describe('ExtensionServerClient', () => {
       expect(connectSpy).toHaveBeenCalledTimes(1)
       expect(connectSpy).toHaveBeenCalledWith(
         expect.objectContaining({
-          extensions: [{uuid: '123', surface: 'admin'}],
+          extensions: [
+            {uuid: '123', surface: 'admin'},
+            {uuid: '456', surface: '', extensionPoints: [{surface: 'admin'}]},
+          ],
         }),
       )
 
@@ -148,6 +100,7 @@ describe('ExtensionServerClient', () => {
         extensions: [
           {uuid: '123', surface: 'admin'},
           {uuid: '456', surface: 'checkout'},
+          {uuid: '456', surface: '', extensionPoints: [{surface: 'admin'}]},
         ],
       }
 
@@ -157,7 +110,10 @@ describe('ExtensionServerClient', () => {
       expect(updateSpy).toHaveBeenCalledTimes(1)
       expect(updateSpy).toHaveBeenCalledWith(
         expect.objectContaining({
-          extensions: [{uuid: '123', surface: 'admin'}],
+          extensions: [
+            {uuid: '123', surface: 'admin'},
+            {uuid: '456', surface: '', extensionPoints: [{surface: 'admin'}]},
+          ],
         }),
       )
 
@@ -356,18 +312,6 @@ describe('ExtensionServerClient', () => {
 
       initialSocket.close()
       updatedSocket.close()
-    })
-
-    test('initializes the API client if the URL was changed', () => {
-      const initialURL = 'ws://initial.socket.com'
-      const updatedURL = 'ws://updated.socket.com'
-      const client = new ExtensionServerClient({connection: {url: initialURL}})
-
-      expect(client.api.url).toBe(initialURL.replace('ws', 'http'))
-
-      client.connect({connection: {url: updatedURL}})
-
-      expect(client.api.url).toBe(updatedURL.replace('ws', 'http'))
     })
   })
 })

@@ -51,6 +51,8 @@ export default class Pull extends ThemeCommand {
     }),
   }
 
+  static cli2Flags = ['theme', 'development', 'live', 'nodelete', 'only', 'ignore', 'force']
+
   async run(): Promise<void> {
     const {flags} = await this.parse(Pull)
 
@@ -59,7 +61,7 @@ export default class Pull extends ThemeCommand {
       validPath = path.resolve(flags.path)
     }
 
-    const flagsToPass = this.passThroughFlags(flags, {exclude: ['path', 'verbose', 'store', 'password']})
+    const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Pull.cli2Flags})
 
     const command = ['theme', 'pull', validPath, ...flagsToPass]
 

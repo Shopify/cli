@@ -2,7 +2,7 @@ import {automaticMatchmaking} from './id-matching.js'
 import {ExtensionRegistration} from '../dev/create-extension.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {err, ok} from '@shopify/cli-kit/common/result'
+import {err, ok} from '@shopify/cli-kit/node/result'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {
@@ -53,13 +53,6 @@ const REGISTRATION_B = {
   type: 'SUBSCRIPTION_MANAGEMENT',
 }
 
-const REGISTRATION_B_2 = {
-  uuid: 'UUID_B_2',
-  id: 'B_2',
-  title: 'EXTENSION_B_2',
-  type: 'SUBSCRIPTION_MANAGEMENT',
-}
-
 const REGISTRATION_C = {
   uuid: 'UUID_C',
   id: 'C',
@@ -96,6 +89,10 @@ const EXTENSION_A: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: (target: string) => true,
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -120,6 +117,10 @@ const EXTENSION_A_2: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: (target: string) => true,
 }
 
 const EXTENSION_B: UIExtension = {
@@ -139,11 +140,15 @@ const EXTENSION_B: UIExtension = {
   entrySourceFilePath: '',
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
+  publishURL: (_) => Promise.resolve(''),
   surface: 'surface',
+  validate: () => Promise.resolve({} as any),
   preDeployValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
-  publishURL: (_) => Promise.resolve(''),
+  getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: (target: string) => true,
 }
 
 const EXTENSION_B_2: UIExtension = {
@@ -168,6 +173,10 @@ const EXTENSION_B_2: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: (target: string) => true,
 }
 
 const EXTENSION_C: UIExtension = {
@@ -192,6 +201,10 @@ const EXTENSION_C: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: (target: string) => true,
 }
 
 const EXTENSION_D: UIExtension = {
@@ -216,6 +229,10 @@ const EXTENSION_D: UIExtension = {
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
+  validate: () => Promise.resolve(ok({})),
+  getBundleExtensionStdinContent: () => '',
+  shouldFetchCartUrl: () => true,
+  hasExtensionPointTarget: (target: string) => true,
 }
 
 describe('automaticMatchmaking: case 3 some local extensions, no remote ones', () => {

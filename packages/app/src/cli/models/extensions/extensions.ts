@@ -1,39 +1,48 @@
-import {BaseExtensionSchema, ExtensionPointSchema, ZodSchemaType} from './schemas.js'
+import {BaseExtensionSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionPointSpec} from './extension-points.js'
 import {allExtensionSpecifications} from './specifications.js'
-import {AppInterface} from '../app/app.js'
-import {bundleExtension} from '../../services/extensions/bundle.js'
-import {ThemeExtension, UIExtension} from '../app/extensions.js'
+import {ExtensionCategory, GenericSpecification, ThemeExtension, UIExtension} from '../app/extensions.js'
+import {blocks, defualtExtensionFlavors} from '../../constants.js'
 import {id, path, schema, api, output, environment, string} from '@shopify/cli-kit'
-import {Writable} from 'node:stream'
+import {ok, Result} from '@shopify/cli-kit/node/result'
 
 // Base config type that all config schemas must extend.
 export type BaseConfigContents = schema.define.infer<typeof BaseExtensionSchema>
-export type ExtensionPointContents = schema.define.infer<typeof ExtensionPointSchema>
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
-export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents> {
+export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>
+  extends GenericSpecification {
   identifier: string
   externalIdentifier: string
   externalName: string
   partnersWebIdentifier: string
   surface: string
   showInCLIHelp: boolean
+  singleEntryPath: boolean
+  registrationLimit: number
+  supportedFlavors: {name: string; value: string}[]
+  gated: boolean
+  helpURL?: string
   dependency?: {name: string; version: string}
   templatePath?: string
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
+  getBundleExtensionStdinContent?: (config: TConfiguration) => string
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
+  validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (config: TConfiguration) => Promise<void>
   resourceUrl?: (config: TConfiguration) => string
+  category: () => ExtensionCategory
   previewMessage?: (
     host: string,
     uuid: string,
     config: TConfiguration,
     storeFqdn: string,
   ) => output.TokenizedString | undefined
+  shouldFetchCartUrl?(config: TConfiguration): boolean
+  hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
 }
 
 /**
@@ -118,22 +127,13 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
   }
 
-  async build(stdout: Writable, stderr: Writable, app: AppInterface) {
-    stdout.write(`Bundling UI extension ${this.localIdentifier}...`)
-    await bundleExtension({
-      minify: true,
-      outputBundlePath: this.outputBundlePath,
-      sourceFilePath: this.entrySourceFilePath,
-      environment: 'production',
-      env: app.dotenv?.variables ?? {},
-      stderr,
-      stdout,
-    })
-    stdout.write(`${this.localIdentifier} successfully built`)
-  }
-
   deployConfig(): Promise<{[key: string]: unknown}> {
     return this.specification.deployConfig?.(this.configuration, this.directory) ?? Promise.resolve({})
+  }
+
+  validate() {
+    if (!this.specification.validate) return Promise.resolve(ok(undefined))
+    return this.specification.validate(this.configuration, this.directory)
   }
 
   preDeployValidation() {
@@ -149,6 +149,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
       return this.specification.resourceUrl?.(this.configuration) ?? ''
     }
   }
+
+  // PENDING:
+  /**
+   * - Create and load all the extension point specs for all supported points
+   * - Load all extension point specs from specifications.ts
+   * - Implement the `redirectUrl` method in all points, but have a default implementation
+   * - Connect everything with the middleware in getExtensionPointPayloadMiddleware
+   */
+  redirectUrl(extensionPointTarget: string) {}
 
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
     const partnersFqdn = await environment.fqdn.partners()
@@ -169,8 +178,20 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     return output.content`${heading}\n${message.value}\n`
   }
 
-  private extensionPointURL(point: ExtensionPointSpec, config: ExtensionPointContents): string {
-    return point.resourceUrl?.(config) ?? ''
+  getBundleExtensionStdinContent() {
+    if (this.specification.getBundleExtensionStdinContent) {
+      return this.specification.getBundleExtensionStdinContent(this.configuration)
+    }
+    const relativeImportPath = this.entrySourceFilePath?.replace(this.directory, '')
+    return `import '.${relativeImportPath}';`
+  }
+
+  shouldFetchCartUrl(): boolean {
+    return this.specification.shouldFetchCartUrl?.(this.configuration) || false
+  }
+
+  hasExtensionPointTarget(target: string): boolean {
+    return this.specification.hasExtensionPointTarget?.(this.configuration, target) || false
   }
 }
 
@@ -193,11 +214,16 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
   partnersWebIdentifier: string
   surface: string
   externalName: string
+  helpURL?: string
+  supportedFlavors?: {name: string; value: string}[]
   showInCLIHelp?: boolean
   dependency?: {name: string; version: string}
   templatePath?: string
   graphQLType?: string
+  singleEntryPath?: boolean
   schema: ZodSchemaType<TConfiguration>
+  getBundleExtensionStdinContent?: (config: TConfiguration) => string
+  validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
   preDeployValidation?: (config: TConfiguration) => Promise<void>
   resourceUrl?: (config: TConfiguration) => string
@@ -207,9 +233,16 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
     config: TConfiguration,
     storeFqdn: string,
   ) => output.TokenizedString | undefined
+  shouldFetchCartUrl?(config: TConfiguration): boolean
+  hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
 }): ExtensionSpec<TConfiguration> {
   const defaults = {
     showInCLIHelp: true,
+    singleEntryPath: true,
+    gated: false,
+    registrationLimit: blocks.extensions.defaultRegistrationLimit,
+    supportedFlavors: defualtExtensionFlavors,
+    category: (): ExtensionCategory => (spec.identifier === 'theme' ? 'theme' : 'ui'),
   }
   return {...defaults, ...spec}
 }
