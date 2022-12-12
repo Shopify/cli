@@ -53,6 +53,8 @@ export default function SelectInput<T>({items, onSelect}: React.PropsWithChildre
   const handleInput = useCallback(
     (input: string, key: Key) => {
       if (input === 'c' && key.ctrl) {
+        // Exceptions being throw in these hooks aren't being caught by our errorHandler.
+        // See also how we handle exceptions in CouncurrentOutput for reference.
         process.exit(1)
       }
 
