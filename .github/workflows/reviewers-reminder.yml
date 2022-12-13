@@ -20,5 +20,6 @@ jobs:
             Depending on what you are working on, you may want to request a review from a Shopify team:
             - Themes: @shopify/theme-developer-tools
             - UI extensions: @shopify/ui-extensions-cli
+              - Checkout UI extensions: @shopify/checkout-ui-extensions-api-stewardship
             - Hydrogen: @shopify/hydrogen
             - Other: @shopify/cli-foundations
