@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@oclif/core": "1.9.2",
-    "@shopify/cli-kit": "3.26.0"
+    "@shopify/cli-kit": "workspace:@shopify/cli-kit@*"
   },
   "devDependencies": {
     "vitest": "^0.23.4",
