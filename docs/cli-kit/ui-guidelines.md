@@ -1,3 +1,5 @@
+# UI Guidelines
+
 The vast majority of the UI, including CLI plugins, is to be built using our CLI design system. This ensures a familiar-feeling interction patterns and reduces the complexity behind-the-scenes. It also helps our teams work faster and rely on validation rules
 
 Components include:
@@ -22,7 +24,7 @@ Components include:
 - Use “we” to refer to Shopify. (This "we" framing acts as a trust signal. In the platform context, Shopify and the developer are building value together. We're not slippery; we're not hiding.)
 
 ## Prompting user inputs with selection and text prompts:
-- A full-sentence question (“Have you installed your app on your dev store?”) 
+- A full-sentence question (“Have you installed your app on your dev store?”)
 - A text prompt with simple noun followed by a colon (“App name:”)
 - A list prompt followed by a colon: (“Select extension type:”)
 
@@ -33,4 +35,4 @@ Components include:
 - Each of the banner elements can support robust messaging with a next steps section and a reference section with links. The prompt components can also be customized with, for example, headings to group selection options.
 - For info banners: Use present perfect tense to describe a significan display  (“The REST API has been deprecated").
 - For error messages: Use the present tense to describe what’s happening in the error message context (“Can’t connect to the Storefront API”)
-- More examples in the CLI example page. Run <PACKAGEMANAGER> shopify kitchen-siink
+- More examples in the CLI example page. Run <PACKAGEMANAGER> shopify kitchen-sink
