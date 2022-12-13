@@ -63,9 +63,9 @@
     "@vitest/coverage-istanbul": "^0.23.4",
     "vitest": "^0.23.4",
     "vite": "^2.9.13",
-    "@shopify/app": "3.26.0",
-    "@shopify/cli-hydrogen": "3.26.0",
-    "@shopify/theme": "3.26.0"
+    "@shopify/app": "workspace:@shopify/app@*",
+    "@shopify/cli-hydrogen": "workspace:@shopify/cli-hydrogen@*",
+    "@shopify/theme": "workspace:@shopify/theme@*"
   },
   "engine-strict": true,
   "engines": {

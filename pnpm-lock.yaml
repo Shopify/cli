@@ -456,11 +456,11 @@ importers:
       '@oclif/plugin-commands': 2.2.0
       '@oclif/plugin-help': 5.1.12
       '@oclif/plugin-plugins': 2.1.0
-      '@shopify/app': 3.26.0
-      '@shopify/cli-hydrogen': 3.26.0
+      '@shopify/app': workspace:@shopify/app@*
+      '@shopify/cli-hydrogen': workspace:@shopify/cli-hydrogen@*
       '@shopify/cli-kit': workspace:@shopify/cli-kit@*
       '@shopify/plugin-ngrok': workspace:@shopify/plugin-ngrok@*
-      '@shopify/theme': 3.26.0
+      '@shopify/theme': workspace:@shopify/theme@*
       '@vitest/coverage-istanbul': ^0.23.4
       vite: 2.9.12
       vitest: ^0.23.4
