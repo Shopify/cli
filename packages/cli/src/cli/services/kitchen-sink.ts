@@ -149,23 +149,6 @@ export async function kitchenSink() {
 
   renderFatalError(new error.Abort('No Organization found', undefined, nextSteps))
 
-  const tasks = [
-    {
-      title: 'first',
-      task: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-      },
-    },
-    {
-      title: 'second',
-      task: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-      },
-    },
-  ]
-
-  await renderTasks(tasks)
-
   await renderPrompt({
     message: 'Associate your project with the org Castile Ventures?',
     choices: [
@@ -222,4 +205,22 @@ export async function kitchenSink() {
   }
 
   await renderConcurrent({processes: [backendProcess, frontendProcess]})
+
+  // renderTasks
+  const tasks = [
+    {
+      title: 'first',
+      task: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+      },
+    },
+    {
+      title: 'second',
+      task: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+      },
+    },
+  ]
+
+  await renderTasks(tasks)
 }

@@ -20,7 +20,7 @@ export default function Prompt<T>({
   const [answer, setAnswer] = useState<SelectItem<T> | null>(null)
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" marginBottom={1}>
       <Box>
         <Box marginRight={2}>
           <Text>?</Text>

@@ -1,8 +1,9 @@
 import {TextAnimation} from './TextAnimation.js'
+import useLayout from '../hooks/use-layout.js'
 import {Box, Text, useApp} from 'ink'
 import React, {useEffect, useState} from 'react'
 
-const loadingBar = '██████████████████████████████████████████████████████████'
+const loadingBarChar = '█'
 
 export interface Task {
   title: string
@@ -14,41 +15,40 @@ export interface Props {
 }
 
 const Tasks: React.FC<Props> = ({tasks}) => {
+  const {width} = useLayout()
+  const loadingBar = new Array(width).fill(loadingBarChar).join('')
   const {exit: unmountInk} = useApp()
   const [currentTask, setCurrentTask] = useState<Task>(tasks[0]!)
   const [state, setState] = useState<'success' | 'failure' | 'loading'>('loading')
 
   const runTasks = async () => {
-    try {
-      for (const task of tasks) {
-        setCurrentTask(task)
-        // eslint-disable-next-line no-await-in-loop
-        await task.task()
-      }
-      setState('success')
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (error) {
-      setState('failure')
-    } finally {
-      unmountInk()
+    for (const task of tasks) {
+      setCurrentTask(task)
+      // eslint-disable-next-line no-await-in-loop
+      await task.task()
     }
   }
 
   useEffect(() => {
-    runTasks().catch((error) => {
-      unmountInk(error)
-    })
+    runTasks()
+      .then(() => {
+        setState('success')
+      })
+      .catch((error) => {
+        setState('failure')
+        unmountInk(error)
+      })
   }, [])
 
   let message: string
-  let color: 'greenBright' | 'redBright' | undefined
+  let color: 'green' | 'red' | undefined
 
   if (state === 'success') {
     message = 'Done!'
-    color = 'greenBright'
+    color = 'green'
   } else if (state === 'failure') {
-    message = `Something went wrong when processing task ${currentTask.title}`
-    color = 'redBright'
+    message = currentTask.title
+    color = 'red'
   } else {
     message = currentTask.title
   }

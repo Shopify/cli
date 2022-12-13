@@ -1,4 +1,5 @@
-import {Box, Text, useStdout} from 'ink'
+import useLayout from '../hooks/use-layout.js'
+import {Box, Text} from 'ink'
 import React from 'react'
 
 export type BannerType = 'success' | 'error' | 'warning' | 'info' | 'external_error'
@@ -18,30 +19,12 @@ function typeToColor(type: Props['type']) {
   }[type]
 }
 
-const BANNER_MIN_WIDTH = 80
-
-function calculateWidth(stdout: NodeJS.WriteStream | undefined) {
-  const fullWidth = stdout?.columns ?? BANNER_MIN_WIDTH
-  const twoThirdsOfWidth = Math.floor((fullWidth / 3) * 2)
-  let width
-
-  if (fullWidth <= BANNER_MIN_WIDTH) {
-    width = fullWidth
-  } else if (twoThirdsOfWidth < BANNER_MIN_WIDTH) {
-    width = BANNER_MIN_WIDTH
-  } else {
-    width = twoThirdsOfWidth
-  }
-
-  return width
-}
-
 const BoxWithBorder: React.FC<Props> = ({type, marginY, children}) => {
-  const {stdout} = useStdout()
+  const {width} = useLayout()
 
   return (
     <Box
-      width={calculateWidth(stdout)}
+      width={width}
       paddingY={1}
       paddingX={2}
       marginY={marginY}
@@ -58,8 +41,7 @@ const BoxWithBorder: React.FC<Props> = ({type, marginY, children}) => {
 }
 
 const BoxWithTopBottomLines: React.FC<Props> = ({type, marginY, children}) => {
-  const {stdout} = useStdout()
-  const width = calculateWidth(stdout)
+  const {width} = useLayout()
 
   return (
     <Box marginY={marginY} flexDirection="column">
