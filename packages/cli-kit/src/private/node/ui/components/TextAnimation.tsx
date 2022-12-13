@@ -1,7 +1,7 @@
 import {renderString} from '../../ui.js'
 import chalkAnimation from 'chalk-animation'
 import {Text} from 'ink'
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useRef, useState} from 'react'
 
 type AnimationName = 'rainbow' | 'pulse' | 'glitch' | 'radar' | 'neon' | 'karaoke'
 
@@ -23,9 +23,9 @@ const delays: {[key in AnimationName]: number} = {
  * `TextAnimation` applies animations from [chalk-animation](https://github.com/bokub/chalk-animation) to `Text` Children
  */
 const TextAnimation: React.FC<Props> = ({name = 'rainbow', speed = 1, children}): JSX.Element => {
-  const [animationTimeout, setAnimationTimeout] = useState<NodeJS.Timeout | null>(null)
   const animation = chalkAnimation[name]('').stop()
   const [frame, setFrame] = useState('')
+  const timeout = useRef<NodeJS.Timeout>()
 
   const start = () => {
     const {output} = renderString(<Text>{children}</Text>)
@@ -35,27 +35,24 @@ const TextAnimation: React.FC<Props> = ({name = 'rainbow', speed = 1, children})
     // start of the frame that we're getting from `chalk-animation` that tells the terminal to
     // clear the lines.
 
-    const frame = animation
-      .replace(output ?? '')
-      .frame()
-      .replace(/^\u001B\[(\d)F\u001B\[G\u001B\[2K/, '') // eslint-disable-line no-control-regex
-
-    setFrame(frame)
-
-    setAnimationTimeout(
-      setTimeout(() => {
-        start()
-      }, delays[name] / speed),
+    setFrame(
+      animation
+        .replace(output ?? '')
+        .frame()
+        // eslint-disable-next-line no-control-regex
+        .replace(/^\u001B\[(\d)F\u001B\[G\u001B\[2K/, ''),
     )
+
+    timeout.current = setTimeout(() => {
+      start()
+    }, delays[name] / speed)
   }
 
   useEffect(() => {
     start()
 
     return () => {
-      if (animationTimeout) clearTimeout(animationTimeout)
-
-      setAnimationTimeout(null)
+      clearTimeout(timeout.current)
     }
   }, [])
 
