@@ -3,7 +3,7 @@ ci:
 
 dependencies:
   override:
-    - curl -fsSL https://get.pnpm.io/install.sh | sh -
+    - curl -fsSL https://get.pnpm.io/install.sh | SHELL=`which bash` bash -
     - pnpm install
 
 deploy:
