@@ -56,8 +56,8 @@
     "@oclif/plugin-commands": "2.2.0",
     "@oclif/plugin-help": "5.1.12",
     "@oclif/plugin-plugins": "2.1.0",
-    "@shopify/cli-kit": "3.26.0",
-    "@shopify/plugin-ngrok": "3.26.0"
+    "@shopify/cli-kit": "workspace:@shopify/cli-kit@*",
+    "@shopify/plugin-ngrok": "workspace:@shopify/plugin-ngrok@*"
   },
   "devDependencies": {
     "@vitest/coverage-istanbul": "^0.23.4",
