@@ -1,7 +1,8 @@
 import {TextAnimation} from './TextAnimation.js'
 import useLayout from '../hooks/use-layout.js'
-import {Box, Text, useApp} from 'ink'
-import React, {useEffect, useState} from 'react'
+import useAsync from '../hooks/use-async.js'
+import {Box, Text} from 'ink'
+import React, {useState} from 'react'
 
 const loadingBarChar = '█'
 
@@ -17,7 +18,6 @@ export interface Props {
 const Tasks: React.FC<Props> = ({tasks}) => {
   const {width} = useLayout()
   const loadingBar = new Array(width).fill(loadingBarChar).join('')
-  const {exit: unmountInk} = useApp()
   const [currentTask, setCurrentTask] = useState<Task>(tasks[0]!)
   const [state, setState] = useState<'success' | 'failure' | 'loading'>('loading')
 
@@ -29,34 +29,20 @@ const Tasks: React.FC<Props> = ({tasks}) => {
     }
   }
 
-  useEffect(() => {
-    runTasks()
-      .then(() => {
-        setState('success')
-      })
-      .catch((error) => {
-        setState('failure')
-        unmountInk(error)
-      })
-  }, [])
-
-  let message: string
-  let color: 'green' | 'red' | undefined
-
-  if (state === 'success') {
-    message = 'Done!'
-    color = 'green'
-  } else if (state === 'failure') {
-    message = currentTask.title
-    color = 'red'
-  } else {
-    message = currentTask.title
-  }
+  useAsync(runTasks, {onResolve: () => setState('success'), onReject: () => setState('failure')})
 
   return (
-    <Box flexDirection="column" paddingY={1}>
-      {state === 'loading' ? <TextAnimation>{loadingBar}</TextAnimation> : <Text color={color}>{loadingBar}</Text>}
-      <Text>{message}</Text>
+    <Box flexDirection="column" marginBottom={1}>
+      {state === 'loading' ? (
+        <TextAnimation>{loadingBar}</TextAnimation>
+      ) : (
+        <Text color={state === 'success' ? 'green' : 'red'}>{loadingBar}</Text>
+      )}
+      <Text>
+        {state === 'success' && <Text color="green">✓ </Text>}
+        {state === 'failure' && <Text color="red">✗ </Text>}
+        <Text>{currentTask.title}</Text>
+      </Text>
     </Box>
   )
 }

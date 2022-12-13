@@ -1,6 +1,6 @@
 import {OutputProcess} from '../../../../output.js'
-import {isTruthy} from '../../../../environment/utilities.js'
-import React, {FunctionComponent, useEffect, useState} from 'react'
+import useAsync from '../hooks/use-async.js'
+import React, {FunctionComponent, useState} from 'react'
 import {Box, Static, Text, useApp} from 'ink'
 import stripAnsi from 'strip-ansi'
 import AbortController from 'abort-controller'
@@ -87,8 +87,8 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
     })
   }
 
-  const runProcesses = async () => {
-    await Promise.all(
+  const runProcesses = () => {
+    return Promise.all(
       processes.map(async (process, index) => {
         const stdout = writableStream(process, index)
         const stderr = writableStream(process, index)
@@ -96,18 +96,9 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
         await process.action(stdout, stderr, abortController.signal)
       }),
     )
-
-    // This is a workaround needed because Ink behaves differently in CI when
-    // unmounting. See https://github.com/vadimdemedes/ink/pull/266
-    if (!isTruthy(process.env.CI)) unmountInk()
   }
 
-  useEffect(() => {
-    runProcesses().catch((error) => {
-      abortController.abort()
-      unmountInk(error)
-    })
-  }, [])
+  useAsync(runProcesses, {onReject: () => abortController.abort()})
 
   return (
     <Static items={processOutput}>
