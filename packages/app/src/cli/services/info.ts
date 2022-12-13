@@ -5,7 +5,7 @@ import {configurationFileNames} from '../constants.js'
 import {allExtensionSpecifications, allFunctionSpecifications} from '../models/extensions/specifications.js'
 import {os, output, path, store, string} from '@shopify/cli-kit'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
-import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment.js'
+import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 
 export type Format = 'json' | 'text'
 interface InfoOptions {

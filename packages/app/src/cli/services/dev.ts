@@ -17,7 +17,7 @@ import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
-import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment.js'
+import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
