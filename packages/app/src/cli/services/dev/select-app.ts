@@ -1,6 +1,6 @@
-import {fetchAppFromApiKey} from './fetch.js'
 import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {Organization, OrganizationApp} from '../../models/organization.js'
+import {Organization, OrganizationApp, MinimalOrganizationApp} from '../../models/organization.js'
+import {fetchAppFromApiKey} from '../dev/fetch.js'
 import {api, error, output} from '@shopify/cli-kit'
 
 /**
@@ -16,23 +16,22 @@ import {api, error, output} from '@shopify/cli-kit'
  */
 export async function selectOrCreateApp(
   localAppName: string,
-  apps: OrganizationApp[],
+  apps: MinimalOrganizationApp[],
   org: Organization,
   token: string,
-  cachedApiKey?: string,
 ): Promise<OrganizationApp> {
-  if (cachedApiKey) {
-    const cachedApp = await fetchAppFromApiKey(cachedApiKey, token)
-    if (cachedApp) return cachedApp
-  }
-
   let createNewApp = apps.length === 0
   if (!createNewApp) {
     output.info(`\nBefore you preview your work, it needs to be associated with an app.\n`)
     createNewApp = await createAsNewAppPrompt()
   }
-  const app = createNewApp ? await createApp(org, localAppName, token) : await selectAppPrompt(apps)
-  return app
+  if (createNewApp) {
+    return createApp(org, localAppName, token)
+  } else {
+    const selectedApp = await selectAppPrompt(apps)
+    const fullSelectedApp = await fetchAppFromApiKey(selectedApp.apiKey, token)
+    return fullSelectedApp!
+  }
 }
 
 export async function createApp(org: Organization, appName: string, token: string): Promise<OrganizationApp> {

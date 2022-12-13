@@ -78,7 +78,7 @@ async function dev(options: DevOptions) {
   let shouldUpdateURLs = false
   if ((frontendConfig || backendConfig) && options.update) {
     const currentURLs = await getURLs(apiKey, token)
-    const newURLs = generatePartnersURLs(exposedUrl, backendConfig?.configuration.auth_callback_path)
+    const newURLs = generatePartnersURLs(exposedUrl, backendConfig?.configuration.authCallbackPath)
     shouldUpdateURLs = await shouldOrPromptUpdateURLs({
       currentURLs,
       appDirectory: options.app.directory,

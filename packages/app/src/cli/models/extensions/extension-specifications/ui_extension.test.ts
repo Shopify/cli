@@ -34,7 +34,6 @@ describe('ui_extension', async () => {
       configurationPath,
       entryPath: '',
       remoteSpecification: undefined,
-      extensionPointSpecs: undefined,
     })
   }
 

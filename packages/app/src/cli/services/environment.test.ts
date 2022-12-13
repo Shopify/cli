@@ -185,6 +185,7 @@ beforeEach(async () => {
   vi.mocked(selectOrCreateApp).mockResolvedValue(APP1)
   vi.mocked(selectStore).mockResolvedValue(STORE1)
   vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
+  vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG1)
   vi.mocked(fetchOrgAndApps).mockResolvedValue(FETCH_RESPONSE)
 })
 
@@ -204,7 +205,6 @@ describe('ensureGenerateEnvironment', () => {
     // Given
     const input = {directory: '/app', reset: false, token: 'token'}
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG1)
     vi.mocked(store.getAppInfo).mockResolvedValue(CACHED1)
 
     // When
@@ -218,7 +218,6 @@ describe('ensureGenerateEnvironment', () => {
     const input = {directory: '/app', reset: true, token: 'token'}
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(loadAppName).mockResolvedValueOnce('my-app')
-    vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG1)
     vi.mocked(store.getAppInfo).mockResolvedValue(undefined)
 
     // When
@@ -226,7 +225,7 @@ describe('ensureGenerateEnvironment', () => {
 
     // Then
     expect(got).toEqual(APP1.apiKey)
-    expect(selectOrCreateApp).toHaveBeenCalledWith('my-app', [APP1, APP2], ORG1, 'token', undefined)
+    expect(selectOrCreateApp).toHaveBeenCalledWith('my-app', [APP1, APP2], ORG1, 'token')
     expect(store.setAppInfo).toHaveBeenCalledWith({
       appId: APP1.apiKey,
       title: APP1.title,
@@ -284,6 +283,8 @@ describe('ensureDevEnvironment', () => {
     // Given
     const outputMock = outputMocker.mockAndCaptureOutput()
     vi.mocked(store.getAppInfo).mockResolvedValue(CACHED1)
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
+    vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
     vi.mocked(getAppIdentifiers).mockResolvedValue({
       app: 'key1',
       extensions: {},
@@ -324,6 +325,7 @@ describe('ensureDevEnvironment', () => {
       command: 'dev',
     })
     expect(outputMock.output()).toMatch(/Using your previous dev settings:/)
+    expect(fetchOrgAndApps).not.toBeCalled()
   })
 
   it('returns extensions Ids if the selected app matches the env one', async () => {
@@ -409,6 +411,7 @@ describe('ensureDevEnvironment', () => {
     expect(selectOrganizationPrompt).toBeCalled()
     expect(selectOrCreateApp).not.toBeCalled()
     expect(selectStore).not.toBeCalled()
+    expect(fetchOrgAndApps).not.toBeCalled()
   })
 
   it('throws if the store input is not valid', async () => {
@@ -426,15 +429,13 @@ describe('ensureDevEnvironment', () => {
 
   it('resets cached state if reset is true', async () => {
     // When
-    vi.mocked(store.getAppInfo).mockResolvedValue({
-      appId: APP1.apiKey,
-      directory: LOCAL_APP.directory,
-    })
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
     await ensureDevEnvironment({...INPUT, reset: true}, 'token')
 
     // Then
     expect(store.clearAppInfo).toHaveBeenCalledWith(LOCAL_APP.directory)
+    expect(fetchOrgAndApps).toBeCalled()
   })
 })
 
@@ -506,7 +507,7 @@ describe('ensureDeployEnvironment', () => {
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')
-    expect(selectOrCreateApp).toHaveBeenCalledWith(app.name, [APP1, APP2], ORG1, 'token', undefined)
+    expect(selectOrCreateApp).toHaveBeenCalledWith(app.name, [APP1, APP2], ORG1, 'token')
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
       identifiers,
@@ -549,7 +550,7 @@ describe('ensureDeployEnvironment', () => {
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')
-    expect(selectOrCreateApp).toHaveBeenCalledWith(app.name, [APP1, APP2], ORG1, 'token', undefined)
+    expect(selectOrCreateApp).toHaveBeenCalledWith(app.name, [APP1, APP2], ORG1, 'token')
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
       identifiers,

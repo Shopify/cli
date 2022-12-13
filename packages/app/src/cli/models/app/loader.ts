@@ -290,7 +290,6 @@ class AppLoader {
         }
       }
 
-      // PENDING: load extensionPointSpecs depending on the points defined in the configuartion file and pass it to the constructor
       const extensionInstance = new ExtensionInstance({
         configuration,
         configurationPath,
@@ -298,7 +297,6 @@ class AppLoader {
         directory,
         specification,
         remoteSpecification: undefined,
-        extensionPointSpecs: undefined,
       })
 
       if (configuration.type) {
@@ -382,7 +380,6 @@ class AppLoader {
         directory,
         specification,
         remoteSpecification: undefined,
-        extensionPointSpecs: undefined,
       })
     })
 
