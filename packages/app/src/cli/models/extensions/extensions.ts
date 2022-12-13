@@ -1,5 +1,4 @@
 import {BaseExtensionSchema, ZodSchemaType} from './schemas.js'
-import {ExtensionPointSpec} from './extension-points.js'
 import {allExtensionSpecifications} from './specifications.js'
 import {ExtensionCategory, GenericSpecification, ThemeExtension, UIExtension} from '../app/extensions.js'
 import {blocks, defualtExtensionFlavors} from '../../constants.js'
@@ -70,7 +69,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
   configurationPath: string
 
   private specification: ExtensionSpec
-  private extensionPointSpecs?: ExtensionPointSpec[]
   private remoteSpecification?: api.graphql.RemoteSpecification
 
   get graphQLType() {
@@ -112,7 +110,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     directory: string
     specification: ExtensionSpec
     remoteSpecification?: api.graphql.RemoteSpecification
-    extensionPointSpecs?: ExtensionPointSpec[]
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
@@ -120,7 +117,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     this.directory = options.directory
     this.specification = options.specification
     this.remoteSpecification = options.remoteSpecification
-    this.extensionPointSpecs = options.extensionPointSpecs
     this.outputBundlePath = path.join(options.directory, 'dist/main.js')
     this.devUUID = `dev-${id.generateRandomUUID()}`
     this.localIdentifier = path.basename(options.directory)
@@ -140,24 +136,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     if (!this.specification.preDeployValidation) return Promise.resolve()
     return this.specification.preDeployValidation(this.configuration)
   }
-
-  resourceUrl() {
-    if (this.extensionPointSpecs) {
-      // PENDING: Add support for externsion pints
-      return ''
-    } else {
-      return this.specification.resourceUrl?.(this.configuration) ?? ''
-    }
-  }
-
-  // PENDING:
-  /**
-   * - Create and load all the extension point specs for all supported points
-   * - Load all extension point specs from specifications.ts
-   * - Implement the `redirectUrl` method in all points, but have a default implementation
-   * - Connect everything with the middleware in getExtensionPointPayloadMiddleware
-   */
-  redirectUrl(extensionPointTarget: string) {}
 
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
     const partnersFqdn = await environment.fqdn.partners()
@@ -226,7 +204,6 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
   validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
   preDeployValidation?: (config: TConfiguration) => Promise<void>
-  resourceUrl?: (config: TConfiguration) => string
   previewMessage?: (
     host: string,
     uuid: string,
