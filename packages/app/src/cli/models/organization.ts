@@ -5,10 +5,13 @@ export interface Organization {
   appsNext: boolean
 }
 
-export interface OrganizationApp {
+export interface MinimalOrganizationApp {
   id: string
   title: string
   apiKey: string
+}
+
+export type OrganizationApp = MinimalOrganizationApp & {
   organizationId: string
   apiSecretKeys: {
     secret: string

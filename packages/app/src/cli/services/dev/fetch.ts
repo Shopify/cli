@@ -1,4 +1,4 @@
-import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
+import {Organization, OrganizationApp, MinimalOrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {api, error} from '@shopify/cli-kit'
 
 export const NoOrgError = (organizationId?: string) => {
@@ -36,7 +36,7 @@ export const NoOrgError = (organizationId?: string) => {
 
 export interface FetchResponse {
   organization: Organization
-  apps: OrganizationApp[]
+  apps: MinimalOrganizationApp[]
   stores: OrganizationStore[]
 }
 
