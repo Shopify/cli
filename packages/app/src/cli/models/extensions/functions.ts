@@ -124,20 +124,22 @@ export function functionSpecForType(type: string, specs: FunctionSpec[]): Functi
   return specs.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
 }
 
-export function createFunctionSpec<TConfiguration extends FunctionConfigType = FunctionConfigType>(spec: {
+/**
+ * Partial FunctionSpec type used when creating a new FunctionSpec, the only mandatory fields are the identifier and the templatePath
+ */
+export interface CreateFunctionSpecType<TConfiguration extends FunctionConfigType = FunctionConfigType>
+  extends Partial<FunctionSpec<TConfiguration>> {
   identifier: string
-  externalIdentifier: string
-  externalName: string
-  helpURL?: string
-  gated?: boolean
-  templateURL?: string
-  supportedFlavors?: {name: string; value: string}[]
-  registrationLimit?: number
-  configSchema?: ZodSchemaType<TConfiguration>
   templatePath: (lang: string) => string
-}): FunctionSpec {
+}
+
+export function createFunctionSpec<TConfiguration extends FunctionConfigType = FunctionConfigType>(
+  spec: CreateFunctionSpecType<TConfiguration>,
+): FunctionSpec {
   const defaults = {
     templateURL: 'https://github.com/Shopify/function-examples',
+    externalIdentifier: spec.identifier,
+    externalName: spec.identifier,
     supportedFlavors: defaultFunctionsFlavors,
     configSchema: BaseFunctionConfigurationSchema,
     gated: false,

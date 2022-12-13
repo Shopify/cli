@@ -201,38 +201,26 @@ export function extensionSpecForType(type: string, specs: ExtensionSpec[]): Exte
   return specs.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
 }
 
-export function createExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(spec: {
+/**
+ * Partial ExtensionSpec type used when creating a new ExtensionSpec, the only mandatory field is the identifier
+ */
+export interface CreateExtensionSpecType<TConfiguration extends BaseConfigContents = BaseConfigContents>
+  extends Partial<ExtensionSpec<TConfiguration>> {
   identifier: string
-  externalIdentifier: string
-  partnersWebIdentifier: string
-  surface: string
-  externalName: string
-  helpURL?: string
-  supportedFlavors?: {name: string; value: string}[]
-  showInCLIHelp?: boolean
-  dependency?: {name: string; version: string}
-  templatePath?: string
-  graphQLType?: string
-  singleEntryPath?: boolean
-  schema: ZodSchemaType<TConfiguration>
-  getBundleExtensionStdinContent?: (config: TConfiguration) => string
-  validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
-  deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
-  preDeployValidation?: (config: TConfiguration) => Promise<void>
-  resourceUrl?: (config: TConfiguration) => string
-  previewMessage?: (
-    host: string,
-    uuid: string,
-    config: TConfiguration,
-    storeFqdn: string,
-  ) => output.TokenizedString | undefined
-  shouldFetchCartUrl?(config: TConfiguration): boolean
-  hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
-}): ExtensionSpec<TConfiguration> {
+}
+
+export function createExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(
+  spec: CreateExtensionSpecType<TConfiguration>,
+): ExtensionSpec<TConfiguration> {
   const defaults = {
+    externalIdentifier: spec.identifier,
+    externalName: spec.identifier,
+    surface: 'unknown',
+    partnersWebIdentifier: spec.identifier,
     showInCLIHelp: true,
     singleEntryPath: true,
     gated: false,
+    schema: BaseExtensionSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     supportedFlavors: defualtExtensionFlavors,
     category: (): ExtensionCategory => (spec.identifier === 'theme' ? 'theme' : 'ui'),

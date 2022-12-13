@@ -6,22 +6,34 @@ import {memoize} from 'lodash-es'
 import {Config} from '@oclif/core'
 import {fileURLToPath} from 'url'
 
+/**
+ * Load all ExtensionSpecs from plugins and local specs
+ */
 export async function allExtensionSpecifications(config: Config): Promise<ExtensionSpec[]> {
-  const extensionSpecsFromPlugins = await loadExtensionSpecsFromPlugins(config)
+  const pluginSpecs = await getListOfExtensionSpecs(config)
   const localSpecs = await allLocalExtensionSpecs()
-  return [...localSpecs, ...extensionSpecsFromPlugins]
+  return [...localSpecs, ...pluginSpecs]
 }
 
+/**
+ * Load all FunctionSpecs from plugins and local specs
+ */
 export async function allFunctionSpecifications(config: Config): Promise<FunctionSpec[]> {
-  const functionSpecsFromPlugins = await loadFunctionSpecsFromPlugins(config)
+  const pluginSpecs = await getListOfFunctionSpecs(config)
   const localSpecs = await allLocalFunctionSpecs()
-  return [...localSpecs, ...functionSpecsFromPlugins]
+  return [...localSpecs, ...pluginSpecs]
 }
 
+/**
+ * Load only local ExtensionSpecs
+ */
 export async function allLocalExtensionSpecs(): Promise<ExtensionSpec[]> {
   return memLoadSpecs('extension-specifications')
 }
 
+/**
+ * Load only local FunctionSpecs
+ */
 export async function allLocalFunctionSpecs(): Promise<FunctionSpec[]> {
   return memLoadSpecs('function-specifications')
 }
@@ -42,12 +54,4 @@ async function loadSpecs(directoryName: string) {
   const modules = await Promise.all(promises)
   const specs = modules.map((module) => module.default)
   return specs
-}
-
-async function loadExtensionSpecsFromPlugins(config: Config) {
-  return getListOfExtensionSpecs(config)
-}
-
-async function loadFunctionSpecsFromPlugins(config: Config) {
-  return getListOfFunctionSpecs(config)
 }

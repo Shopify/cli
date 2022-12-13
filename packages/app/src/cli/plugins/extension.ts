@@ -1,6 +1,6 @@
 import {ExtensionPointSpec} from '../models/extensions/extension-points.js'
-import {ExtensionSpec} from '../models/extensions/extensions.js'
-import {FunctionSpec} from '../models/extensions/functions.js'
+import {BaseConfigContents, CreateExtensionSpecType, ExtensionSpec} from '../models/extensions/extensions.js'
+import {CreateFunctionSpecType, FunctionSpec} from '../models/extensions/functions.js'
 import {plugins} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
@@ -35,15 +35,17 @@ export type ExtensionSpecsFunction = plugins.FanoutHookFunction<'extension_specs
 export type ExtensionPointsFunction = plugins.FanoutHookFunction<'extension_points', ''>
 export type FunctionSpecsFunction = plugins.FanoutHookFunction<'function_specs', ''>
 
-export const defineExtensionSpecs = (input: ExtensionSpec): ExtensionSpecsFunction => {
+export const defineExtensionSpecs = <TConfiguration extends BaseConfigContents = BaseConfigContents>(
+  input: CreateExtensionSpecType<TConfiguration>[],
+): ExtensionSpecsFunction => {
   return async () => input
 }
 
-export const defineExtensionPoints = (input: ExtensionPointSpec): ExtensionPointsFunction => {
+export const defineExtensionPoints = (input: ExtensionPointSpec[]): ExtensionPointsFunction => {
   return async () => input
 }
 
-export const defineFunctionSpecs = (input: FunctionSpec): FunctionSpecsFunction => {
+export const defineFunctionSpecs = (input: CreateFunctionSpecType[]): FunctionSpecsFunction => {
   return async () => input
 }
 
