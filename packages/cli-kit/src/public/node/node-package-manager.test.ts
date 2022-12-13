@@ -11,16 +11,20 @@ import {
   FindUpAndReadPackageJsonNotFoundError,
   usesWorkspaces,
   addResolutionOrOverride,
+  latestNpmPackageVersion,
+  findPackageVersionUp,
 } from './node-package-manager.js'
 import {exec} from '../../system.js'
-import {join as pathJoin, normalize as pathNormalize} from '../../path.js'
+import {join as pathJoin, normalize as pathNormalize, pathToFileURL} from '../../path.js'
 import {inTemporaryDirectory, mkdir, touch, write, write as writeFile} from '../../file.js'
-import {latestNpmPackageVersion} from '../../version.js'
 import {Abort} from '../../error.js'
 import {describe, it, expect, vi, test} from 'vitest'
+import latestVersion from 'latest-version'
 
 vi.mock('../../version.js')
 vi.mock('../../system.js')
+vi.mock('latest-version')
+
 const mockedExec = vi.mocked(exec)
 
 describe('packageManagerUsedForCreating', () => {
@@ -489,7 +493,7 @@ describe('checkForNewVersion', () => {
     const currentVersion = '2.2.2'
     const newestVersion = '2.2.2'
     const dependency = 'dependency'
-    vi.mocked(latestNpmPackageVersion).mockResolvedValue(newestVersion)
+    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
 
     // When
     const result = await checkForNewVersion(dependency, currentVersion)
@@ -503,7 +507,7 @@ describe('checkForNewVersion', () => {
     const currentVersion = '2.2.2'
     const newestVersion = '2.2.3'
     const dependency = 'dependency'
-    vi.mocked(latestNpmPackageVersion).mockResolvedValue(newestVersion)
+    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
 
     // When
     const result = await checkForNewVersion(dependency, currentVersion)
@@ -516,7 +520,7 @@ describe('checkForNewVersion', () => {
     // Given
     const currentVersion = '2.2.2'
     const dependency = 'dependency'
-    vi.mocked(latestNpmPackageVersion).mockRejectedValue(undefined)
+    vi.mocked(latestVersion).mockRejectedValue(undefined)
 
     // When
     const result = await checkForNewVersion(dependency, currentVersion)
@@ -672,6 +676,41 @@ describe('addResolutionOrOverride', () => {
       expect(packageJsonContent.resolutions).toBeDefined()
       expect(packageJsonContent.resolutions).toEqual({'@types/node': '^17.0.38', '@types/react': '17.0.30'})
       expect(packageJsonContent.overrides).toBeUndefined()
+    })
+  })
+})
+
+describe('latestNpmPackageVersion', () => {
+  it('proxies the fetching to latest-version', async () => {
+    // Given
+    const version = '1.2.3'
+    vi.mocked(latestVersion).mockResolvedValue(version)
+
+    // When
+    const got = await latestNpmPackageVersion('@shopify/cli')
+
+    // Then
+    expect(got).toBe(version)
+    expect(latestVersion).toHaveBeenCalledWith('@shopify/cli')
+  })
+})
+
+describe('findPackageVersionUp', () => {
+  test('returns the version if a package.json exists', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const subDirectory = pathJoin(tmpDir, 'subdir')
+      const version = '1.2.3'
+      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      await mkdir(subDirectory)
+      const packageJson = {version}
+      await write(packageJsonPath, JSON.stringify(packageJson))
+
+      // When
+      const got = await findPackageVersionUp({fromModuleURL: pathToFileURL(pathJoin(subDirectory, 'file.js'))})
+
+      // Then
+      expect(got).toEqual(version)
     })
   })
 })
