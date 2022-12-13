@@ -4,12 +4,11 @@ ci:
 dependencies:
   override:
     - curl -fsSL https://get.pnpm.io/install.sh | SHELL=`which bash` bash -
-    - cat ~/.bashrc >> ~/.profile
-    - pnpm install
+    - bash -c "pnpm install"
 
 deploy:
   override:
-    - npm_config_loglevel=verbose pnpm run changeset publish
-    - ./bin/package.js
+    - bash -c "npm_config_loglevel=verbose pnpm run changeset publish"
+    - bash -c "./bin/package.js"
   post:
-    - pnpm run update-bugsnag
+    - bash -c "pnpm run update-bugsnag"
