@@ -23,14 +23,14 @@ beforeEach(() => {
 
 describe('extension prompt', async () => {
   // ALL UI Specs, filter out theme
-  const allSpecs = await allUISpecifications()
+  const allUISpecs = await allUISpecifications()
   const allFunctionSpecs = await allFunctionSpecifications()
 
   const extensionTypeQuestion = {
     type: 'select',
     name: 'extensionType',
     message: 'Type of extension?',
-    choices: buildChoices(allSpecs),
+    choices: buildChoices(allUISpecs),
   }
   const extensionNameQuestion = {
     type: 'input',
@@ -41,8 +41,8 @@ describe('extension prompt', async () => {
 
   it('when name is not passed', async () => {
     const prompt = vi.fn()
-    const answers = {name: 'ext', extensionType: 'theme'}
-    const options = {directory: '/', app: testApp(), reset: false, extensionSpecifications: allSpecs}
+    const answers = {name: 'ext', extensionType: 'ui_extension'}
+    const options = {directory: '/', app: testApp(), reset: false, extensionSpecifications: allUISpecs}
 
     // Given
     prompt.mockResolvedValue(Promise.resolve(answers))
@@ -57,13 +57,13 @@ describe('extension prompt', async () => {
 
   it('when name is passed', async () => {
     const prompt = vi.fn()
-    const answers = {extensionType: 'theme'}
+    const answers = {extensionType: 'ui_extension'}
     const options = {
       name: 'my-special-extension',
       directory: '/',
       app: testApp(),
       reset: false,
-      extensionSpecifications: allSpecs,
+      extensionSpecifications: allUISpecs,
     }
 
     // Given
@@ -80,14 +80,14 @@ describe('extension prompt', async () => {
   it('when scaffolding a UI extension type prompts for language/framework preference', async () => {
     const prompt = vi.fn()
     const answers = {extensionFlavor: 'react'}
-    const postPurchaseSpec = allSpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
+    const postPurchaseSpec = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
     const options = {
       name: 'my-special-extension',
       extensionType: 'checkout_post_purchase',
       directory: '/',
       app: testApp(),
       reset: false,
-      extensionSpecifications: allSpecs,
+      extensionSpecifications: allUISpecs,
     }
 
     // Given
@@ -107,11 +107,11 @@ describe('extension prompt', async () => {
     const answers = {}
     const options = {
       name: 'my-special-extension',
-      extensionType: 'theme',
+      extensionType: 'ui_extension',
       directory: '/',
       app: testApp(),
       reset: false,
-      extensionSpecifications: allSpecs,
+      extensionSpecifications: allUISpecs,
     }
 
     // Given
@@ -152,7 +152,3 @@ describe('extension prompt', async () => {
     expect(got).toEqual({...options, ...answers})
   })
 })
-
-function includes<TNarrow extends TWide, TWide>(coll: ReadonlyArray<TNarrow>, el: TWide): el is TNarrow {
-  return coll.includes(el as TNarrow)
-}
