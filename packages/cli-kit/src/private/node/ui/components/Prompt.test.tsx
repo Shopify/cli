@@ -1,12 +1,11 @@
 import Prompt from './Prompt.js'
+import {waitForChange, waitForInputsToBeReady} from '../../../../testing/ui.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
 import {render} from 'ink-testing-library'
 
 const ARROW_DOWN = '\u001B[B'
 const ENTER = '\r'
-
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 describe('Prompt', async () => {
   test('choose an answer', async () => {
@@ -22,11 +21,9 @@ describe('Prompt', async () => {
       <Prompt message="Associate your project with the org Castile Ventures?" choices={items} infoTable={infoTable} />,
     )
 
-    await delay(100)
-    renderInstance.stdin.write(ARROW_DOWN)
-    await delay(100)
-    renderInstance.stdin.write(ENTER)
-    await delay(100)
+    await waitForInputsToBeReady()
+    await waitForChange(() => renderInstance.stdin.write(ARROW_DOWN), renderInstance.lastFrame)
+    await waitForChange(() => renderInstance.stdin.write(ENTER), renderInstance.lastFrame)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?

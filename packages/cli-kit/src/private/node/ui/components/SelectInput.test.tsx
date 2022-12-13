@@ -1,4 +1,5 @@
 import SelectInput from './SelectInput.js'
+import {waitForInputsToBeReady, waitForChange} from '../../../../testing/ui.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {render} from 'ink-testing-library'
@@ -6,8 +7,6 @@ import {render} from 'ink-testing-library'
 const ARROW_UP = '\u001B[A'
 const ARROW_DOWN = '\u001B[B'
 const ENTER = '\r'
-
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 describe('SelectInput', async () => {
   test('move up with up arrow key', async () => {
@@ -28,9 +27,8 @@ describe('SelectInput', async () => {
 
     const renderInstance = render(<SelectInput items={items} onSelect={() => {}} />)
 
-    await delay(100)
-    renderInstance.stdin.write(ARROW_UP)
-    await delay(100)
+    await waitForInputsToBeReady()
+    await waitForChange(() => renderInstance.stdin.write(ARROW_UP), renderInstance.lastFrame)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   (1) First
@@ -59,9 +57,8 @@ describe('SelectInput', async () => {
 
     const renderInstance = render(<SelectInput items={items} onSelect={() => {}} />)
 
-    await delay(100)
-    renderInstance.stdin.write(ARROW_DOWN)
-    await delay(100)
+    await waitForInputsToBeReady()
+    await waitForChange(() => renderInstance.stdin.write(ARROW_DOWN), renderInstance.lastFrame)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   (1) First
@@ -92,11 +89,12 @@ describe('SelectInput', async () => {
 
     const renderInstance = render(<SelectInput items={items} onSelect={onEnter} />)
 
-    await delay(100)
-    renderInstance.stdin.write(ARROW_DOWN)
-    await delay(100)
-    renderInstance.stdin.write(ENTER)
-    await delay(100)
+    await waitForInputsToBeReady()
+    await waitForChange(() => renderInstance.stdin.write(ARROW_DOWN), renderInstance.lastFrame)
+    await waitForChange(
+      () => renderInstance.stdin.write(ENTER),
+      () => onEnter.mock.calls.length,
+    )
 
     expect(onEnter).toBeCalledWith({label: 'Second', value: 'second'})
   })
@@ -120,11 +118,11 @@ describe('SelectInput', async () => {
 
     const renderInstance = render(<SelectInput items={items} onSelect={() => {}} />)
 
-    await delay(100)
-    renderInstance.stdin.write('1')
-    await delay(100)
-    renderInstance.stdin.write('0')
-    await delay(350)
+    await waitForInputsToBeReady()
+    await waitForChange(() => {
+      renderInstance.stdin.write('1')
+      renderInstance.stdin.write('0')
+    }, renderInstance.lastFrame)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   (1) First
@@ -154,9 +152,8 @@ describe('SelectInput', async () => {
 
     const renderInstance = render(<SelectInput items={items} onSelect={() => {}} />)
 
-    await delay(100)
-    renderInstance.stdin.write('t')
-    await delay(350)
+    await waitForInputsToBeReady()
+    await waitForChange(() => renderInstance.stdin.write('t'), renderInstance.lastFrame)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   (1) First
@@ -185,13 +182,10 @@ describe('SelectInput', async () => {
 
     const renderInstance = render(<SelectInput items={items} onSelect={() => {}} />)
 
-    await delay(100)
-    renderInstance.stdin.write(ARROW_DOWN)
-    await delay(100)
-    renderInstance.stdin.write(ARROW_DOWN)
-    await delay(100)
-    renderInstance.stdin.write(ARROW_DOWN)
-    await delay(100)
+    await waitForInputsToBeReady()
+    await waitForChange(() => renderInstance.stdin.write(ARROW_DOWN), renderInstance.lastFrame)
+    await waitForChange(() => renderInstance.stdin.write(ARROW_DOWN), renderInstance.lastFrame)
+    await waitForChange(() => renderInstance.stdin.write(ARROW_DOWN), renderInstance.lastFrame)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "[36m>[39m  [36m(1) First[39m
