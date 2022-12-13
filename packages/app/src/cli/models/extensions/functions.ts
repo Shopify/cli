@@ -1,5 +1,4 @@
 import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
-import {allFunctionSpecifications} from './specifications.js'
 import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
 import {blocks, defaultFunctionsFlavors} from '../../constants.js'
 import {schema, path, error, system, abort, string, environment} from '@shopify/cli-kit'
@@ -121,8 +120,8 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
 /**
  * Find the registered spec for a given function type
  */
-export async function functionSpecForType(type: string): Promise<FunctionSpec | undefined> {
-  return (await allFunctionSpecifications()).find((spec) => spec.identifier === type)
+export function functionSpecForType(type: string, specs: FunctionSpec[]): FunctionSpec | undefined {
+  return specs.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
 }
 
 export function createFunctionSpec<TConfiguration extends FunctionConfigType = FunctionConfigType>(spec: {

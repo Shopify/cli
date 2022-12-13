@@ -7,7 +7,7 @@ import metadata from '../../../metadata.js'
 import Command from '../../../utilities/app-command.js'
 import {ensureGenerateEnvironment} from '../../../services/environment.js'
 import {fetchExtensionSpecifications} from '../../../utilities/extensions/fetch-extension-specifications.js'
-import {allFunctionSpecifications} from '../../../models/extensions/specifications.js'
+import {allExtensionSpecifications, allFunctionSpecifications} from '../../../models/extensions/specifications.js'
 import {GenericSpecification} from '../../../models/app/extensions.js'
 import {output, path, cli, error, environment, session} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
@@ -78,12 +78,15 @@ export default class AppGenerateExtension extends Command {
     const isShopify = await environment.local.isShopify()
     const token = await session.ensureAuthenticatedPartners()
     const apiKey = await ensureGenerateEnvironment({apiKey: flags['api-key'], directory, reset: flags.reset, token})
-    const extensionsSpecs = await fetchExtensionSpecifications(token, apiKey)
-    const functionSpecs = await (await allFunctionSpecifications()).filter((spec) => !spec.gated || isShopify)
+    const localSpecs = await allExtensionSpecifications(this.config)
+    const extensionsSpecs = await fetchExtensionSpecifications(token, apiKey, localSpecs)
+    const functionSpecs = await (
+      await allFunctionSpecifications(this.config)
+    ).filter((spec) => !spec.gated || isShopify)
     let allExtensionSpecs: GenericSpecification[] = [...extensionsSpecs, ...functionSpecs]
 
     // Pending: use specs to load local extensions
-    const app: AppInterface = await loadApp(directory)
+    const app: AppInterface = await loadApp(directory, this.config)
     const specification = this.findSpecification(flags.type, allExtensionSpecs)
     const allExternalTypes = allExtensionSpecs.map((spec) => spec.externalIdentifier)
 

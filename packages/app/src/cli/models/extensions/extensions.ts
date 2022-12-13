@@ -1,6 +1,5 @@
 import {BaseExtensionSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionPointSpec} from './extension-points.js'
-import {allExtensionSpecifications} from './specifications.js'
 import {ExtensionCategory, GenericSpecification, ThemeExtension, UIExtension} from '../app/extensions.js'
 import {blocks, defualtExtensionFlavors} from '../../constants.js'
 import {id, path, schema, api, output, environment, string} from '@shopify/cli-kit'
@@ -196,16 +195,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
 }
 
 /**
- * Find the registered spececification for a given extension type
+ * Find the registered spec for a given function type
  */
-export async function specForType(type: string): Promise<ExtensionSpec | undefined> {
-  const allSpecs = await allExtensionSpecifications()
-  return allSpecs.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
-}
-
-// PENDING: Fetch remote specs
-function remoteSpecForType(type: string): api.graphql.RemoteSpecification | undefined {
-  return undefined
+export function extensionSpecForType(type: string, specs: ExtensionSpec[]): ExtensionSpec | undefined {
+  return specs.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
 }
 
 export function createExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(spec: {

@@ -5,35 +5,43 @@ import {configurationFileNames} from '../constants.js'
 import {allExtensionSpecifications, allFunctionSpecifications} from '../models/extensions/specifications.js'
 import {os, output, path, store, string} from '@shopify/cli-kit'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
+import {Config} from '@oclif/core'
 
 export type Format = 'json' | 'text'
 interface InfoOptions {
   format: Format
   /** When true the command outputs the env. variables necessary to deploy and run web/ */
   webEnv: boolean
+  config: Config
 }
 interface Configurable {
   type: string
   externalType: string
 }
 
-export async function info(app: AppInterface, {format, webEnv}: InfoOptions): Promise<output.Message> {
+export async function info(app: AppInterface, {format, webEnv, config}: InfoOptions): Promise<output.Message> {
   if (webEnv) {
     return infoWeb(app, {format})
   } else {
-    return infoApp(app, {format})
+    return infoApp(app, {format, config})
   }
 }
 
-export async function infoWeb(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
+export async function infoWeb(
+  app: AppInterface,
+  {format}: Omit<InfoOptions, 'webEnv' | 'config'>,
+): Promise<output.Message> {
   return outputEnv(app, format)
 }
 
-export async function infoApp(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.Message> {
+export async function infoApp(
+  app: AppInterface,
+  {format, config}: Omit<InfoOptions, 'webEnv'>,
+): Promise<output.Message> {
   if (format === 'json') {
     return output.content`${JSON.stringify(app, null, 2)}`
   } else {
-    const appInfo = new AppInfo(app)
+    const appInfo = new AppInfo(app, config)
     return appInfo.output()
   }
 }
@@ -43,10 +51,12 @@ const NOT_CONFIGURED_TEXT = output.content`${output.token.italic('Not yet config
 
 class AppInfo {
   private app: AppInterface
+  private config: Config
   private cachedAppInfo: store.CachedAppInfo | undefined
 
-  constructor(app: AppInterface) {
+  constructor(app: AppInterface, config: Config) {
     this.app = app
+    this.config = config
   }
 
   async output(): Promise<string> {
@@ -121,8 +131,8 @@ class AppInfo {
         }
       })
     }
-    const allExtensionSpecs = await allExtensionSpecifications()
-    const allFunctionsSpecs = await allFunctionSpecifications()
+    const allExtensionSpecs = await allExtensionSpecifications(this.config)
+    const allFunctionsSpecs = await allFunctionSpecifications(this.config)
     const uiTypes = allExtensionSpecs.map((spec) => spec.identifier).filter((spec) => spec !== 'theme')
     const themeTypes = allExtensionSpecs.map((spec) => spec.identifier).filter((spec) => spec === 'theme')
     const functionTypes = allFunctionsSpecs.map((spec) => spec.identifier)

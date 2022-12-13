@@ -2,9 +2,10 @@ import {UIExtension, ThemeExtension, FunctionExtension, Extension} from './exten
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
-import {ExtensionInstance, specForType} from '../extensions/extensions.js'
+import {ExtensionInstance, ExtensionSpec, extensionSpecForType} from '../extensions/extensions.js'
 import {TypeSchema} from '../extensions/schemas.js'
-import {FunctionInstance, functionSpecForType} from '../extensions/functions.js'
+import {FunctionInstance, FunctionSpec, functionSpecForType} from '../extensions/functions.js'
+import {allExtensionSpecifications, allFunctionSpecifications} from '../extensions/specifications.js'
 import {error, file, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
@@ -15,6 +16,7 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
+import {Config} from '@oclif/core'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -42,25 +44,28 @@ export class AppErrors {
   }
 }
 
-export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<AppInterface> {
-  const loader = new AppLoader({directory, mode})
+export async function load(directory: string, config: Config, mode: AppLoaderMode = 'strict'): Promise<AppInterface> {
+  const loader = new AppLoader({directory, mode, config})
   return loader.loaded()
 }
 
 interface AppLoaderConstructorArgs {
   directory: string
   mode: AppLoaderMode
+  config: Config
 }
 class AppLoader {
   private directory: string
   private mode: AppLoaderMode
   private appDirectory = ''
   private configurationPath = ''
+  private config: Config
   private errors: AppErrors = new AppErrors()
 
-  constructor({directory, mode}: AppLoaderConstructorArgs) {
+  constructor({directory, mode, config}: AppLoaderConstructorArgs) {
     this.mode = mode
     this.directory = directory
+    this.config = config
   }
 
   async loaded() {
@@ -68,14 +73,21 @@ class AppLoader {
     const configurationPath = await this.getConfigurationPath()
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
     const dotenv = await this.loadDotEnv()
+
+    const extensionSpecs = await allExtensionSpecifications(this.config)
+    const functionSpecs = await allFunctionSpecifications(this.config)
+
     const {functions, usedCustomLayout: usedCustomLayoutForFunctionExtensions} = await this.loadFunctions(
       configuration.extensionDirectories,
+      functionSpecs,
     )
     const {uiExtensions, usedCustomLayout: usedCustomLayoutForUIExtensions} = await this.loadUIExtensions(
       configuration.extensionDirectories,
+      extensionSpecs,
     )
     const {themeExtensions, usedCustomLayout: usedCustomLayoutForThemeExtensions} = await this.loadThemeExtensions(
       configuration.extensionDirectories,
+      extensionSpecs,
     )
     const packageJSONPath = path.join(this.appDirectory, 'package.json')
     const name = await loadAppName(this.appDirectory)
@@ -229,6 +241,7 @@ class AppLoader {
 
   async loadUIExtensions(
     extensionDirectories?: string[],
+    extensionSpecifications: ExtensionSpec[] = [],
   ): Promise<{uiExtensions: UIExtension[]; usedCustomLayout: boolean}> {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.ui}`)
@@ -240,7 +253,7 @@ class AppLoader {
       const fileContent = await file.read(configurationPath)
       const obj = toml.decode(fileContent)
       const {type} = TypeSchema.parse(obj)
-      const specification = await specForType(type)
+      const specification = await extensionSpecForType(type, extensionSpecifications)
 
       if (!specification) {
         this.abortOrReport(
@@ -303,6 +316,7 @@ class AppLoader {
 
   async loadFunctions(
     extensionDirectories?: string[],
+    functionSpecifications: FunctionSpec[] = [],
   ): Promise<{functions: FunctionExtension[]; usedCustomLayout: boolean}> {
     const functionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.function}`)
@@ -314,7 +328,7 @@ class AppLoader {
       const fileContent = await file.read(configurationPath)
       const obj = toml.decode(fileContent)
       const {type} = TypeSchema.parse(obj)
-      const specification = await functionSpecForType(type)
+      const specification = await functionSpecForType(type, functionSpecifications)
       if (!specification) {
         this.abortOrReport(
           output.content`Unknown function type ${output.token.yellow(type)} in ${output.token.path(configurationPath)}`,
@@ -334,6 +348,7 @@ class AppLoader {
 
   async loadThemeExtensions(
     extensionDirectories?: string[],
+    extensionSpecifications: ExtensionSpec[] = [],
   ): Promise<{themeExtensions: ThemeExtension[]; usedCustomLayout: boolean}> {
     const themeConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.theme}`)
@@ -345,7 +360,7 @@ class AppLoader {
       const fileContent = await file.read(configurationPath)
       const obj = toml.decode(fileContent)
       const {type} = TypeSchema.parse(obj)
-      const specification = await specForType(type)
+      const specification = await extensionSpecForType(type, extensionSpecifications)
 
       if (!specification) {
         this.abortOrReport(

@@ -4,6 +4,7 @@ import metadata from '../../metadata.js'
 import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
 import {yarnLockfile, pnpmLockfile, PackageJson, pnpmWorkspaceFile} from '@shopify/cli-kit/node/node-package-manager'
+import {Config} from '@oclif/core'
 
 describe('load', () => {
   type BlockType = 'ui' | 'function' | 'theme'
@@ -21,6 +22,8 @@ scopes = "read_products"
       await file.rmdir(tmpDir)
     }
   })
+
+  const oclifTestConfig = new Config({root: ''})
 
   const writeConfig = async (appConfiguration: string, packageJson?: PackageJson) => {
     const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
@@ -100,7 +103,7 @@ scopes = "read_products"
       await file.rmdir(tmp, {force: true})
 
       // When/Then
-      await expect(load(tmp)).rejects.toThrow(`Couldn't find directory ${tmp}`)
+      await expect(load(tmp, oclifTestConfig)).rejects.toThrow(`Couldn't find directory ${tmp}`)
     })
   })
 
@@ -109,7 +112,9 @@ scopes = "read_products"
     const currentDir = process.cwd()
 
     // When/Then
-    await expect(load(currentDir)).rejects.toThrow(`Couldn't find the configuration file for ${currentDir}`)
+    await expect(load(currentDir, oclifTestConfig)).rejects.toThrow(
+      `Couldn't find the configuration file for ${currentDir}`,
+    )
   })
 
   it('throws an error when the configuration file is invalid', async () => {
@@ -120,7 +125,7 @@ scopes = "read_products"
     await writeConfig(appConfiguration)
 
     // When/Then
-    await expect(load(tmpDir)).rejects.toThrow()
+    await expect(load(tmpDir, oclifTestConfig)).rejects.toThrow()
   })
 
   it('loads the app when the configuration is valid and has no blocks', async () => {
@@ -128,7 +133,7 @@ scopes = "read_products"
     await writeConfig(appConfiguration)
 
     // When
-    const app = await load(tmpDir)
+    const app = await load(tmpDir, oclifTestConfig)
 
     // Then
     expect(app.name).toBe('my_app')
@@ -139,7 +144,7 @@ scopes = "read_products"
     await writeConfig(appConfiguration)
 
     // When
-    const app = await load(tmpDir)
+    const app = await load(tmpDir, oclifTestConfig)
 
     // Then
     expect(app.packageManager).toBe('npm')
@@ -152,7 +157,7 @@ scopes = "read_products"
     await file.write(yarnLockPath, '')
 
     // When
-    const app = await load(tmpDir)
+    const app = await load(tmpDir, oclifTestConfig)
 
     // Then
     expect(app.packageManager).toBe('yarn')
@@ -165,7 +170,7 @@ scopes = "read_products"
     await file.write(pnpmLockPath, '')
 
     // When
-    const app = await load(tmpDir)
+    const app = await load(tmpDir, oclifTestConfig)
 
     // Then
     expect(app.packageManager).toBe('pnpm')
@@ -176,7 +181,7 @@ scopes = "read_products"
     await writeConfig(appConfiguration)
 
     // When
-    const app = await load(tmpDir)
+    const app = await load(tmpDir, oclifTestConfig)
 
     // Then
     expect(app.usesWorkspaces).toBe(false)
@@ -192,7 +197,7 @@ scopes = "read_products"
     })
 
     // When
-    const app = await load(tmpDir)
+    const app = await load(tmpDir, oclifTestConfig)
 
     // Then
     expect(app.usesWorkspaces).toBe(true)
@@ -205,7 +210,7 @@ scopes = "read_products"
     await file.write(pnpmWorkspaceFilePath, '')
 
     // When
-    const app = await load(tmpDir)
+    const app = await load(tmpDir, oclifTestConfig)
 
     // Then
     expect(app.usesWorkspaces).toBe(true)
@@ -216,7 +221,7 @@ scopes = "read_products"
     await makeBlockDir({blockType: 'ui', name: 'my-extension'})
 
     // When
-    await expect(load(tmpDir)).rejects.toThrow(/Couldn't find the configuration file/)
+    await expect(load(tmpDir, oclifTestConfig)).rejects.toThrow(/Couldn't find the configuration file/)
   })
 
   it('throws an error if the extension configuration file is invalid', async () => {
@@ -231,7 +236,7 @@ scopes = "read_products"
     })
 
     // When
-    await expect(load(tmpDir)).rejects.toThrow()
+    await expect(load(tmpDir, oclifTestConfig)).rejects.toThrow()
   })
 
   it('loads the app when it has a extension with a valid configuration', async () => {
@@ -253,7 +258,7 @@ scopes = "read_products"
     await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
 
     // When
-    const app = await load(tmpDir)
+    const app = await load(tmpDir, oclifTestConfig)
 
     // Then
     expect(app.extensions.ui[0]!.configuration.name).toBe('my_extension')
@@ -280,7 +285,7 @@ scopes = "read_products"
     await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
 
     // When
-    const app = await load(tmpDir)
+    const app = await load(tmpDir, oclifTestConfig)
 
     // Then
     expect(app.extensions.ui[0]!.configuration.name).toBe('my_extension')
@@ -310,7 +315,7 @@ scopes = "read_products"
     await file.write(path.join(customExtensionDirectory, 'index.js'), '')
 
     // When
-    const app = await load(tmpDir)
+    const app = await load(tmpDir, oclifTestConfig)
 
     // Then
     expect(app.extensions.ui[0]!.configuration.name).toBe('custom_extension')
@@ -333,7 +338,7 @@ scopes = "read_products"
     await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
 
     // When
-    const app = await load(blockDir)
+    const app = await load(blockDir, oclifTestConfig)
 
     // Then
     expect(app.name).toBe('my_app')
@@ -368,7 +373,7 @@ scopes = "read_products"
     await file.write(path.join(blockPath('my_extension_2'), 'index.js'), '')
 
     // When
-    const app = await load(tmpDir)
+    const app = await load(tmpDir, oclifTestConfig)
 
     // Then
     expect(app.extensions.ui).toHaveLength(2)
@@ -402,7 +407,7 @@ scopes = "read_products"
     )
 
     // When
-    await expect(load(tmpDir)).resolves.not.toBeUndefined()
+    await expect(load(tmpDir, oclifTestConfig)).resolves.not.toBeUndefined()
   })
 
   it(`throws an error if the extension doesn't have a source file`, async () => {
@@ -419,7 +424,9 @@ scopes = "read_products"
     })
 
     // When
-    await expect(load(blockDir)).rejects.toThrow(/Couldn't find an index.{js,jsx,ts,tsx} file in the directories/)
+    await expect(load(blockDir, oclifTestConfig)).rejects.toThrow(
+      /Couldn't find an index.{js,jsx,ts,tsx} file in the directories/,
+    )
   })
 
   it("throws an error if the configuration file doesn't exist", async () => {
@@ -427,7 +434,7 @@ scopes = "read_products"
     await makeBlockDir({blockType: 'function', name: 'my-functions'})
 
     // When
-    await expect(load(tmpDir)).rejects.toThrow(/Couldn't find the configuration file/)
+    await expect(load(tmpDir, oclifTestConfig)).rejects.toThrow(/Couldn't find the configuration file/)
   })
 
   it('throws an error if the function configuration file is invalid', async () => {
@@ -442,7 +449,7 @@ scopes = "read_products"
     })
 
     // When
-    await expect(() => load(tmpDir)).rejects.toThrowError()
+    await expect(() => load(tmpDir, oclifTestConfig)).rejects.toThrowError()
   })
 
   it('loads the app when it has a function with a valid configuration', async () => {
@@ -465,7 +472,7 @@ scopes = "read_products"
     })
 
     // When
-    const app = await load(tmpDir)
+    const app = await load(tmpDir, oclifTestConfig)
 
     // Then
     expect(app.extensions.function[0]!.configuration.name).toBe('my-function')
@@ -507,7 +514,7 @@ scopes = "read_products"
     })
 
     // When
-    const app = await load(tmpDir)
+    const app = await load(tmpDir, oclifTestConfig)
 
     // Then
     expect(app.extensions.function).toHaveLength(2)
@@ -541,7 +548,7 @@ scopes = "read_products"
     })
 
     // When
-    const app = await load(tmpDir)
+    const app = await load(tmpDir, oclifTestConfig)
 
     // Then
     expect(app.extensions.function[0]!.buildWasmPath()).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
@@ -565,7 +572,7 @@ scopes = "read_products"
     })
 
     // When
-    const app = await load(tmpDir)
+    const app = await load(tmpDir, oclifTestConfig)
 
     // Then
     expect(app.extensions.function[0]!.buildWasmPath()).toMatch(/.+dist\/index.wasm$/)
@@ -575,7 +582,7 @@ scopes = "read_products"
     const {webDirectory} = await writeConfig(appConfiguration)
     await file.write(path.join(webDirectory, 'package.json'), JSON.stringify({}))
 
-    await load(tmpDir)
+    await load(tmpDir, oclifTestConfig)
 
     expect(metadata.getAllPublic()).toMatchObject({project_type: 'node', env_package_manager_workspaces: false})
   })
@@ -589,7 +596,7 @@ scopes = "read_products"
     })
     await file.write(path.join(webDirectory, 'package.json'), JSON.stringify({}))
 
-    await load(tmpDir)
+    await load(tmpDir, oclifTestConfig)
 
     expect(metadata.getAllPublic()).toMatchObject({project_type: 'node', env_package_manager_workspaces: true})
   })
@@ -610,7 +617,7 @@ scopes = "read_products"
       await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
 
       // When
-      await expect(load(tmpDir)).resolves.toBeDefined()
+      await expect(load(tmpDir, oclifTestConfig)).resolves.toBeDefined()
     })
 
     it('should not throw when "authenticatedRedirectStartUrl" and "authenticatedRedirectRedirectUrls" are set and valid', async () => {
@@ -632,7 +639,7 @@ scopes = "read_products"
       await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
 
       // When
-      await expect(load(tmpDir)).resolves.toBeDefined()
+      await expect(load(tmpDir, oclifTestConfig)).resolves.toBeDefined()
     })
 
     it('should throw when "authenticatedRedirectStartUrl" is not a valid URL', async () => {
@@ -652,7 +659,9 @@ scopes = "read_products"
       await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
 
       // When
-      await expect(load(tmpDir)).rejects.toThrow(/authenticated_redirect_start_url must be a valid URL./)
+      await expect(load(tmpDir, oclifTestConfig)).rejects.toThrow(
+        /authenticated_redirect_start_url must be a valid URL./,
+      )
     })
 
     it('should throw when "authenticatedRedirectStartUrl" is an empty string', async () => {
@@ -672,7 +681,9 @@ scopes = "read_products"
       await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
 
       // When
-      await expect(load(tmpDir)).rejects.toThrow(/authenticated_redirect_start_url must be a valid URL./)
+      await expect(load(tmpDir, oclifTestConfig)).rejects.toThrow(
+        /authenticated_redirect_start_url must be a valid URL./,
+      )
     })
 
     it('should throw when "authenticatedRedirectRedirectUrls" contains an invalid URL', async () => {
@@ -692,7 +703,9 @@ scopes = "read_products"
       await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
 
       // When
-      await expect(load(tmpDir)).rejects.toThrow(/authenticated_redirect_redirect_urls does contain invalid URLs./)
+      await expect(load(tmpDir, oclifTestConfig)).rejects.toThrow(
+        /authenticated_redirect_redirect_urls does contain invalid URLs./,
+      )
     })
 
     it('should throw when one of the "authenticatedRedirectRedirectUrls" is an invalid URL', async () => {
@@ -712,7 +725,9 @@ scopes = "read_products"
       await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
 
       // When
-      await expect(load(tmpDir)).rejects.toThrow(/authenticated_redirect_redirect_urls does contain invalid URLs./)
+      await expect(load(tmpDir, oclifTestConfig)).rejects.toThrow(
+        /authenticated_redirect_redirect_urls does contain invalid URLs./,
+      )
     })
 
     it('should throw when "authenticatedRedirectRedirectUrls" is an empty array', async () => {
@@ -732,7 +747,7 @@ scopes = "read_products"
       await file.write(path.join(blockPath('my-extension'), 'index.js'), '')
 
       // When
-      await expect(load(tmpDir)).rejects.toThrow(
+      await expect(load(tmpDir, oclifTestConfig)).rejects.toThrow(
         /authenticated_redirect_redirect_urls can not be an empty array! It may only contain one or multiple valid URLs./,
       )
     })

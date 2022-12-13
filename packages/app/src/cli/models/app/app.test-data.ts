@@ -1,7 +1,8 @@
 import {App, AppInterface} from './app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
-import {ExtensionInstance, specForType} from '../extensions/extensions.js'
+import {ExtensionInstance, extensionSpecForType} from '../extensions/extensions.js'
 import {FunctionInstance, functionSpecForType} from '../extensions/functions.js'
+import {allLocalExtensionSpecs, allLocalFunctionSpecs} from '../extensions/specifications.js'
 import {api} from '@shopify/cli-kit'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
@@ -45,7 +46,8 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
   const configurationPath = uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`
   const entrySourceFilePath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
 
-  const specification = await specForType(configuration.type)
+  const specifications = await allLocalExtensionSpecs()
+  const specification = extensionSpecForType(configuration.type, specifications)
 
   const extension = new ExtensionInstance({
     configuration,
@@ -67,7 +69,9 @@ export async function testThemeExtensions(): Promise<ThemeExtension> {
     metafields: [],
   }
 
-  const specification = await specForType(configuration.type)
+  const specifications = await allLocalExtensionSpecs()
+  const specification = extensionSpecForType(configuration.type, specifications)
+
   return new ExtensionInstance({
     configuration,
     configurationPath: '',
@@ -91,7 +95,9 @@ export async function testFunctionExtension(): Promise<FunctionExtension> {
     configurationUi: true,
   }
 
-  const specification = await functionSpecForType(configuration.type)
+  const specifications = await allLocalFunctionSpecs()
+  const specification = functionSpecForType(configuration.type, specifications)
+
   return new FunctionInstance({
     configuration,
     configurationPath: '',

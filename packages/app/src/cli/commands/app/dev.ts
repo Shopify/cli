@@ -94,7 +94,7 @@ export default class Dev extends Command {
     }))
 
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const app: AppInterface = await loadApp(directory)
+    const app: AppInterface = await loadApp(directory, this.config)
     const commandConfig = this.config
 
     await dev({

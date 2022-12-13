@@ -17,7 +17,7 @@ export default class EnvShow extends Command {
     const {flags} = await this.parse(EnvShow)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const envFile = path.resolve(directory)
-    const app: AppInterface = await loadApp(directory, 'report')
+    const app: AppInterface = await loadApp(directory, this.config, 'report')
     output.info(await showEnv(app))
   }
 }

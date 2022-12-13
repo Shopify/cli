@@ -1,14 +1,28 @@
 import {ExtensionSpec} from './extensions.js'
 import {FunctionSpec} from './functions.js'
+import {getListOfExtensionSpecs, getListOfFunctionSpecs} from '../../plugins/extension.js'
 import {os, path} from '@shopify/cli-kit'
 import {memoize} from 'lodash-es'
+import {Config} from '@oclif/core'
 import {fileURLToPath} from 'url'
 
-export async function allExtensionSpecifications(): Promise<ExtensionSpec[]> {
+export async function allExtensionSpecifications(config: Config): Promise<ExtensionSpec[]> {
+  const extensionSpecsFromPlugins = await loadExtensionSpecsFromPlugins(config)
+  const localSpecs = await allLocalExtensionSpecs()
+  return [...localSpecs, ...extensionSpecsFromPlugins]
+}
+
+export async function allFunctionSpecifications(config: Config): Promise<FunctionSpec[]> {
+  const functionSpecsFromPlugins = await loadFunctionSpecsFromPlugins(config)
+  const localSpecs = await allLocalFunctionSpecs()
+  return [...localSpecs, ...functionSpecsFromPlugins]
+}
+
+export async function allLocalExtensionSpecs(): Promise<ExtensionSpec[]> {
   return memLoadSpecs('extension-specifications')
 }
 
-export async function allFunctionSpecifications(): Promise<FunctionSpec[]> {
+export async function allLocalFunctionSpecs(): Promise<FunctionSpec[]> {
   return memLoadSpecs('function-specifications')
 }
 
@@ -28,4 +42,12 @@ async function loadSpecs(directoryName: string) {
   const modules = await Promise.all(promises)
   const specs = modules.map((module) => module.default)
   return specs
+}
+
+async function loadExtensionSpecsFromPlugins(config: Config) {
+  return getListOfExtensionSpecs(config)
+}
+
+async function loadFunctionSpecsFromPlugins(config: Config) {
+  return getListOfFunctionSpecs(config)
 }

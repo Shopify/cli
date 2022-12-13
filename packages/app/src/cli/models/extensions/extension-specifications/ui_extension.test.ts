@@ -1,4 +1,5 @@
-import {ExtensionInstance, ExtensionSpec, specForType} from '../extensions.js'
+import uiExtensionSpec from './ui_extension.js'
+import {ExtensionInstance, ExtensionSpec} from '../extensions.js'
 import {configurationFileNames} from '../../../constants.js'
 import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -13,7 +14,7 @@ describe('ui_extension', async () => {
 
   async function getTestUIExtension({directory, extensionPoints}: GetUIExtensionProps) {
     const configurationPath = path.join(directory, configurationFileNames.extension.ui)
-    const specification = (await specForType('ui_extension')) as ExtensionSpec
+    const specification = uiExtensionSpec as ExtensionSpec
     const configuration = {
       extensionPoints,
       name: 'UI Extension',

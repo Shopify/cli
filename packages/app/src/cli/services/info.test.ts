@@ -8,6 +8,7 @@ import {AppErrors} from '../models/app/loader.js'
 import {path, session, output, store} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
+import {Config} from '@oclif/core'
 
 beforeEach(async () => {
   vi.mock('./dev/fetch.js')
@@ -30,6 +31,8 @@ beforeEach(async () => {
   vi.mock('@shopify/cli-kit/node/node-package-manager')
 })
 
+const oclifTestConfig = new Config({root: ''})
+
 describe('info', () => {
   it('returns update shopify cli reminder when last version is greater than current version', async () => {
     // Given
@@ -38,7 +41,7 @@ describe('info', () => {
     vi.mocked(checkForNewVersion).mockResolvedValue(latestVersion)
 
     // When
-    const result = output.stringifyMessage(await info(app, {format: 'text', webEnv: false}))
+    const result = output.stringifyMessage(await info(app, {format: 'text', webEnv: false, config: oclifTestConfig}))
     // Then
     expect(output.unstyled(result)).toMatch(
       'Shopify CLI       2.2.2 💡 Version 2.2.3 available! Run yarn shopify upgrade',
@@ -58,7 +61,7 @@ describe('info', () => {
     const app = mockApp()
 
     // When
-    const result = output.stringifyMessage(await info(app, {format: 'text', webEnv: false}))
+    const result = output.stringifyMessage(await info(app, {format: 'text', webEnv: false, config: oclifTestConfig}))
 
     // Then
     expect(output.unstyled(result)).toMatch(/App\s*My App/)
@@ -72,7 +75,7 @@ describe('info', () => {
     const app = mockApp()
 
     // When
-    const result = output.stringifyMessage(await info(app, {format: 'text', webEnv: false}))
+    const result = output.stringifyMessage(await info(app, {format: 'text', webEnv: false, config: oclifTestConfig}))
 
     // Then
     expect(output.unstyled(result)).toMatch(/App\s*Not yet configured/)
@@ -87,7 +90,7 @@ describe('info', () => {
     vi.mocked(checkForNewVersion).mockResolvedValue(undefined)
 
     // When
-    const result = output.stringifyMessage(await info(app, {format: 'text', webEnv: false}))
+    const result = output.stringifyMessage(await info(app, {format: 'text', webEnv: false, config: oclifTestConfig}))
     // Then
     expect(output.unstyled(result)).toMatch('Shopify CLI       2.2.2')
     expect(output.unstyled(result)).not.toMatch('CLI reminder')
@@ -123,7 +126,7 @@ describe('info', () => {
     vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue('token')
 
     // When
-    const result = await info(app, {format: 'text', webEnv: true})
+    const result = await info(app, {format: 'text', webEnv: true, config: oclifTestConfig})
 
     // Then
     expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
@@ -165,7 +168,7 @@ describe('info', () => {
     vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue('token')
 
     // When
-    const result = await info(app, {format: 'json', webEnv: true})
+    const result = await info(app, {format: 'json', webEnv: true, config: oclifTestConfig})
 
     // Then
     expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
@@ -235,7 +238,7 @@ describe('info', () => {
     vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue('token')
 
     // When
-    const result = await info(app, {format: 'text', webEnv: false})
+    const result = await info(app, {format: 'text', webEnv: false, config: oclifTestConfig})
 
     // Then
     expect(result).toContain('Extensions with errors')

@@ -28,8 +28,14 @@ export default class AppInfo extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(AppInfo)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const app: AppInterface = await loadApp(directory, 'report')
-    output.info(await info(app, {format: (flags.json ? 'json' : 'text') as Format, webEnv: flags['web-env']}))
+    const app: AppInterface = await loadApp(directory, this.config, 'report')
+    output.info(
+      await info(app, {
+        format: (flags.json ? 'json' : 'text') as Format,
+        webEnv: flags['web-env'],
+        config: this.config,
+      }),
+    )
     if (app.errors) process.exit(2)
   }
 }

@@ -1,5 +1,4 @@
 import {ExtensionSpec} from '../../models/extensions/extensions.js'
-import {allExtensionSpecifications} from '../../models/extensions/specifications.js'
 import {api} from '@shopify/cli-kit'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
@@ -10,7 +9,11 @@ import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
  * @param token - Token to access partners API
  * @returns List of extension specifications
  */
-export async function fetchExtensionSpecifications(token: string, apiKey: string): Promise<ExtensionSpec[]> {
+export async function fetchExtensionSpecifications(
+  token: string,
+  apiKey: string,
+  localSpecs: ExtensionSpec[],
+): Promise<ExtensionSpec[]> {
   const query = api.graphql.ExtensionSpecificationsQuery
   const result: api.graphql.ExtensionSpecificationsQuerySchema = await api.partners.request(query, token, {
     api_key: apiKey,
@@ -28,8 +31,7 @@ export async function fetchExtensionSpecifications(token: string, apiKey: string
       return newSpec
     })
 
-  const local = await allExtensionSpecifications()
-  return mergeLocalAndRemoteSpecs(local, extensionSpecifications)
+  return mergeLocalAndRemoteSpecs(localSpecs, extensionSpecifications)
 }
 
 function mergeLocalAndRemoteSpecs(local: ExtensionSpec[], remote: Partial<ExtensionSpec>[]): ExtensionSpec[] {

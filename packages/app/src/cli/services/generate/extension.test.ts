@@ -1,21 +1,24 @@
 import extensionInit, {getRuntimeDependencies} from './extension.js'
 import {blocks, configurationFileNames} from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
-import {allExtensionSpecifications} from '../../models/extensions/specifications.js'
+import {allLocalExtensionSpecs} from '../../models/extensions/specifications.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
 import {file, output, path, template} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
+import {Config} from '@oclif/core'
 import type {ExtensionFlavor} from './extension.js'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/node-package-manager')
 })
 
+const oclifTestConfig = new Config({root: ''})
+
 describe('initialize a extension', async () => {
   // ALL UI Specs, filter out theme
   const allSpecs: GenericSpecification[] = await (
-    await allExtensionSpecifications()
+    await allLocalExtensionSpecs()
   ).filter((spec) => spec.identifier !== 'theme')
 
   it(
@@ -27,7 +30,7 @@ describe('initialize a extension', async () => {
         const specification = allSpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
         const extensionFlavor = 'vanilla-js'
         await createFromTemplate({name, specification, extensionFlavor, appDirectory: tmpDir})
-        const generatedExtension = (await loadApp(tmpDir)).extensions.ui[0]!
+        const generatedExtension = (await loadApp(tmpDir, oclifTestConfig)).extensions.ui[0]!
         expect(generatedExtension.configuration.name).toBe(name)
       })
     },
@@ -57,7 +60,7 @@ describe('initialize a extension', async () => {
         const addDependenciesCalls = vi.mocked(addNPMDependenciesIfNeeded).mock.calls
         expect(addDependenciesCalls.length).toEqual(2)
 
-        const loadedApp = await loadApp(tmpDir)
+        const loadedApp = await loadApp(tmpDir, oclifTestConfig)
         const generatedExtension2 = loadedApp.extensions.ui.sort((lhs, rhs) =>
           lhs.directory < rhs.directory ? -1 : 1,
         )[1]!
@@ -216,7 +219,7 @@ describe('initialize a extension', async () => {
 describe('getRuntimeDependencies', () => {
   test('no not include React for flavored Vanilla UI extensions', async () => {
     // Given
-    const allSpecs = await allExtensionSpecifications()
+    const allSpecs = await allLocalExtensionSpecs()
     const extensionFlavor: ExtensionFlavor = 'vanilla-js'
 
     // When/then
@@ -228,7 +231,7 @@ describe('getRuntimeDependencies', () => {
 
   test('includes React for flavored React UI extensions', async () => {
     // Given
-    const allSpecs = await allExtensionSpecifications()
+    const allSpecs = await allLocalExtensionSpecs()
     const extensionFlavor: ExtensionFlavor = 'react'
 
     // When/then
@@ -240,7 +243,7 @@ describe('getRuntimeDependencies', () => {
 
   test('includes the renderer package for UI extensions', async () => {
     // Given
-    const allSpecs = await allExtensionSpecifications()
+    const allSpecs = await allLocalExtensionSpecs()
 
     // When/then
     allSpecs.forEach((specification) => {
@@ -263,7 +266,7 @@ async function createFromTemplate({name, specification, appDirectory, extensionF
   await extensionInit({
     name,
     specification,
-    app: await loadApp(appDirectory),
+    app: await loadApp(appDirectory, oclifTestConfig),
     cloneUrl: 'cloneurl',
     extensionFlavor,
   })
