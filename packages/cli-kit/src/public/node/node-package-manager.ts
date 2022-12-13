@@ -213,7 +213,7 @@ export async function usesWorkspaces(appDirectory: string): Promise<boolean> {
 export async function checkForNewVersion(dependency: string, currentVersion: string): Promise<string | undefined> {
   debug(content`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
   try {
-    const lastVersion = await latestNpmPackageVersion(dependency)
+    const lastVersion = await getLatestNPMPackageVersion(dependency)
     if (lastVersion && new Version(currentVersion).compare(lastVersion) < 0) {
       return lastVersion
     } else {
@@ -516,7 +516,7 @@ export async function addResolutionOrOverride(directory: string, dependencies: {
  * @param name - The name of the NPM package.
  * @returns A promise to get the latest available version of a package.
  */
-export async function latestNpmPackageVersion(name: string) {
+async function getLatestNPMPackageVersion(name: string) {
   debug(content`Getting the latest version of NPM package: ${token.raw(name)}`)
   return latestVersion(name)
 }

@@ -11,7 +11,6 @@ import {
   FindUpAndReadPackageJsonNotFoundError,
   usesWorkspaces,
   addResolutionOrOverride,
-  latestNpmPackageVersion,
   findPackageVersionUp,
 } from './node-package-manager.js'
 import {exec} from '../../system.js'
@@ -677,21 +676,6 @@ describe('addResolutionOrOverride', () => {
       expect(packageJsonContent.resolutions).toEqual({'@types/node': '^17.0.38', '@types/react': '17.0.30'})
       expect(packageJsonContent.overrides).toBeUndefined()
     })
-  })
-})
-
-describe('latestNpmPackageVersion', () => {
-  it('proxies the fetching to latest-version', async () => {
-    // Given
-    const version = '1.2.3'
-    vi.mocked(latestVersion).mockResolvedValue(version)
-
-    // When
-    const got = await latestNpmPackageVersion('@shopify/cli')
-
-    // Then
-    expect(got).toBe(version)
-    expect(latestVersion).toHaveBeenCalledWith('@shopify/cli')
   })
 })
 
