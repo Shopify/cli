@@ -1,27 +1,23 @@
-import {ThemeExtensionSchema} from './schemas.js'
-import {ThemeExtension} from '../app/extensions.js'
+import {ThemeExtensionSchema, ZodSchemaType} from './schemas.js'
+import {allThemeSpecifications} from './specifications.js'
+import {GenericSpecification, ThemeExtension} from '../app/extensions.js'
 import {path, schema, api, output, environment, string} from '@shopify/cli-kit'
 
 // Base config type for a theme extension.
 export type ThemeConfigContents = schema.define.infer<typeof ThemeExtensionSchema>
 
-/**
- * Extension specification with all properties and methods needed to load a theme extension.
- */
-export const themeSpecification = {
-  identifier: 'theme',
-  externalIdentifier: 'theme_app_extension',
-  externalName: 'Theme app extension',
-  supportedFlavors: [],
-  registrationLimit: 1,
-  gated: false,
-  category: () => 'theme' as const,
-  partnersWebIdentifier: 'theme_app_extension',
-  graphQLType: 'theme_app_extension',
-  schema: ThemeExtensionSchema,
+export interface ThemeExtensionSpec extends GenericSpecification {
+  identifier: 'theme'
+  externalIdentifier: 'theme_app_extension'
+  externalName: 'Theme app extension'
+  supportedFlavors: []
+  registrationLimit: 1
+  gated: false
+  category: () => 'theme'
+  partnersWebIdentifier: 'theme_app_extension'
+  graphQLType: 'theme_app_extension'
+  schema: ZodSchemaType<ThemeConfigContents>
 }
-
-export type ThemeExtensionSpec = typeof themeSpecification
 
 /**
  * Class that represents an instance of a local theme extension
@@ -38,23 +34,24 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
   directory: string
   configuration: TConfiguration
   configurationPath: string
+  specification: ThemeExtensionSpec
 
   private remoteSpecification?: api.graphql.RemoteSpecification
 
   get graphQLType() {
-    return themeSpecification.graphQLType.toUpperCase()
+    return this.specification.graphQLType.toUpperCase()
   }
 
   get identifier() {
-    return themeSpecification.identifier
+    return this.specification.identifier
   }
 
   get type() {
-    return themeSpecification.identifier
+    return this.specification.identifier
   }
 
   get humanName() {
-    return this.remoteSpecification?.externalName ?? themeSpecification.externalName
+    return this.remoteSpecification?.externalName ?? this.specification.externalName
   }
 
   get name() {
@@ -62,7 +59,7 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
   }
 
   get externalType() {
-    return this.remoteSpecification?.externalIdentifier ?? themeSpecification.externalIdentifier
+    return this.remoteSpecification?.externalIdentifier ?? this.specification.externalIdentifier
   }
 
   constructor(options: {
@@ -70,18 +67,20 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
     configurationPath: string
     directory: string
     remoteSpecification?: api.graphql.RemoteSpecification
+    specification: ThemeExtensionSpec
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
     this.directory = options.directory
     this.remoteSpecification = options.remoteSpecification
+    this.specification = options.specification
     this.localIdentifier = path.basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
   }
 
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
     const partnersFqdn = await environment.fqdn.partners()
-    const parnersPath = themeSpecification.partnersWebIdentifier
+    const parnersPath = this.specification.partnersWebIdentifier
     return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }
 
@@ -97,7 +96,8 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
   }
 }
 
-// PENDING: Fetch remote specs
-function remoteSpecForType(type: string): api.graphql.RemoteSpecification | undefined {
-  return undefined
+/* Find the registered spec for a given theme type
+ */
+export async function themeSpecForType(type: string): Promise<ThemeExtensionSpec | undefined> {
+  return (await allThemeSpecifications()).find((spec) => spec.identifier === type)
 }

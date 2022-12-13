@@ -3,7 +3,7 @@ import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, 
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {UIExtensionInstance, uiSpecForType} from '../extensions/ui.js'
-import {ThemeExtensionInstance} from '../extensions/theme.js'
+import {ThemeExtensionInstance, themeSpecForType} from '../extensions/theme.js'
 import {ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
 import {FunctionInstance, functionSpecForType} from '../extensions/functions.js'
 import {error, file, path, schema, string, toml, output} from '@shopify/cli-kit'
@@ -346,12 +346,23 @@ class AppLoader {
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
       const configuration = await this.parseConfigurationFile(ThemeExtensionSchema, configurationPath)
+      const specification = await themeSpecForType('theme')
+
+      if (!specification) {
+        this.abortOrReport(
+          output.content`Unknown theme type ${output.token.yellow('theme')} in ${output.token.path(configurationPath)}`,
+          undefined,
+          configurationPath,
+        )
+        return undefined
+      }
 
       return new ThemeExtensionInstance({
         configuration,
         configurationPath,
         directory,
         remoteSpecification: undefined,
+        specification,
       })
     })
 

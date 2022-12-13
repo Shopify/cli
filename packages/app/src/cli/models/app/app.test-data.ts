@@ -3,6 +3,7 @@ import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {UIExtensionInstance, uiSpecForType} from '../extensions/ui.js'
 import {FunctionInstance, functionSpecForType} from '../extensions/functions.js'
 import {ThemeExtensionInstance} from '../extensions/theme.js'
+import themeSpec from '../extensions/theme-specifications/theme.js'
 import {api} from '@shopify/cli-kit'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
@@ -72,6 +73,7 @@ export async function testThemeExtensions(): Promise<ThemeExtension> {
     configurationPath: '',
     directory: './my-extension',
     remoteSpecification: undefined,
+    specification: themeSpec,
   })
 }
 
