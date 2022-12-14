@@ -11,6 +11,7 @@ export const MetafieldSchema = schema.define.object({
 export const CapabilitiesSchema = schema.define.object({
   network_access: schema.define.boolean().optional(),
   block_progress: schema.define.boolean().optional(),
+  api_access: schema.define.boolean().optional(),
 })
 
 export const TypeSchema = schema.define.object({
@@ -31,12 +32,7 @@ export const BaseExtensionSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.string().default('ui_extension'),
   extensionPoints: schema.define.any().optional(),
-  capabilities: schema.define
-    .object({
-      block_progress: schema.define.boolean().optional(),
-      network_access: schema.define.boolean().optional(),
-    })
-    .optional(),
+  capabilities: CapabilitiesSchema.optional(),
   metafields: schema.define.array(MetafieldSchema).optional().default([]),
   categories: schema.define.array(schema.define.string()).optional(),
 })
