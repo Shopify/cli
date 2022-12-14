@@ -63,10 +63,10 @@ export const FindUpAndReadPackageJsonNotFoundError = (directory: string) => {
 
 /**
  * Returns the dependency manager used to run the create workflow.
+ * @param env - The environment variables of the process in which the CLI runs.
  * @returns The dependency manager
  */
-export function packageManagerUsedForCreating(): PackageManager | 'unknown' {
-  const env = getEnvironmentVariables()
+export function packageManagerUsedForCreating(env = getEnvironmentVariables()): PackageManager | 'unknown' {
   if (env.npm_config_user_agent?.includes('yarn')) {
     return 'yarn'
   } else if (env.npm_config_user_agent?.includes('pnpm')) {

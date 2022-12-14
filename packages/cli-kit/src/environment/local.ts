@@ -29,8 +29,8 @@ export function homeDirectory(): string {
  * @param env - The environment variables from the environment of the current process.
  * @returns true if SHOPIFY_ENV is development
  */
-export function isDevelopment(): boolean {
-  return getEnvironmentVariables()[constants.environmentVariables.env] === 'development'
+export function isDevelopment(env = getEnvironmentVariables()): boolean {
+  return env[constants.environmentVariables.env] === 'development'
 }
 
 /**
@@ -38,10 +38,8 @@ export function isDevelopment(): boolean {
  * @param env - The environment variables from the environment of the current process.
  * @returns true if SHOPIFY_FLAG_VERBOSE is truthy or the flag --verbose has been passed
  */
-export function isVerbose(): boolean {
-  return (
-    isTruthy(getEnvironmentVariables()[constants.environmentVariables.verbose]) || process.argv.includes('--verbose')
-  )
+export function isVerbose(env = getEnvironmentVariables()): boolean {
+  return isTruthy(env[constants.environmentVariables.verbose]) || process.argv.includes('--verbose')
 }
 
 /**
@@ -49,23 +47,23 @@ export function isVerbose(): boolean {
  * a local environment (where dev is present) or a cloud environment (spin).
  * @returns True if the CLI is used in a Shopify environment.
  */
-export async function isShopify(): Promise<boolean> {
-  const env = getEnvironmentVariables()
+export async function isShopify(env = getEnvironmentVariables()): Promise<boolean> {
   if (Object.prototype.hasOwnProperty.call(env, constants.environmentVariables.runAsUser)) {
-    return !isTruthy(getEnvironmentVariables()[constants.environmentVariables.runAsUser])
+    return !isTruthy(env[constants.environmentVariables.runAsUser])
   }
   const devInstalled = await fileExists(constants.paths.executables.dev)
-  return devInstalled || isSpin()
+  return devInstalled || isSpin(env)
 }
 
 /**
  * This variable is used when running unit tests to indicate that the CLI's business logic
  * is run as a subject of a unit test. We can use this variable to disable output through
  * the standard streams.
+ * @param env - The environment variables from the environment of the current process.
  * @returns True if the SHOPIFY_UNIT_TEST environment variable is truthy.
  */
-export function isUnitTest(): boolean {
-  return isTruthy(getEnvironmentVariables()[constants.environmentVariables.unitTest])
+export function isUnitTest(env = getEnvironmentVariables()): boolean {
+  return isTruthy(env[constants.environmentVariables.unitTest])
 }
 
 /**
@@ -73,62 +71,67 @@ export function isUnitTest(): boolean {
  * @param env - The environment variables from the environment of the current process.
  * @returns true unless SHOPIFY_CLI_NO_ANALYTICS is truthy or debug mode is enabled.
  */
-export function analyticsDisabled(): boolean {
-  return isTruthy(getEnvironmentVariables()[constants.environmentVariables.noAnalytics]) || isDevelopment()
+export function analyticsDisabled(env = getEnvironmentVariables()): boolean {
+  return isTruthy(env[constants.environmentVariables.noAnalytics]) || isDevelopment(env)
 }
 
 /** Returns true if reporting analytics should always happen, regardless of DEBUG mode etc. */
-export function alwaysLogAnalytics(): boolean {
-  return isTruthy(getEnvironmentVariables()[constants.environmentVariables.alwaysLogAnalytics])
+export function alwaysLogAnalytics(env = getEnvironmentVariables()): boolean {
+  return isTruthy(env[constants.environmentVariables.alwaysLogAnalytics])
 }
 
-export function firstPartyDev(): boolean {
-  return isTruthy(getEnvironmentVariables()[constants.environmentVariables.firstPartyDev])
+export function firstPartyDev(env = getEnvironmentVariables()): boolean {
+  return isTruthy(env[constants.environmentVariables.firstPartyDev])
 }
 
-export function useDeviceAuth(): boolean {
-  return isTruthy(getEnvironmentVariables()[constants.environmentVariables.deviceAuth]) || isCloudEnvironment()
+export function useDeviceAuth(env = getEnvironmentVariables()): boolean {
+  return isTruthy(env[constants.environmentVariables.deviceAuth]) || isCloudEnvironment(env)
 }
 
-export function useFunctionMatching(): boolean {
-  return isTruthy(getEnvironmentVariables()[constants.environmentVariables.functionMatching])
+export function useFunctionMatching(env = getEnvironmentVariables()): boolean {
+  return isTruthy(env[constants.environmentVariables.functionMatching])
 }
 
 // https://www.gitpod.io/docs/environment-variables#default-environment-variables
-export function gitpodURL(): string | undefined {
-  return getEnvironmentVariables()[constants.environmentVariables.gitpod]
+export function gitpodURL(env = getEnvironmentVariables()): string | undefined {
+  return env[constants.environmentVariables.gitpod]
 }
 
 // https://docs.github.com/en/codespaces/developing-in-codespaces/default-environment-variables-for-your-codespace#list-of-default-environment-variables
-export function codespaceURL(): string | undefined {
-  return getEnvironmentVariables()[constants.environmentVariables.codespaceName]
+export function codespaceURL(env = getEnvironmentVariables()): string | undefined {
+  return env[constants.environmentVariables.codespaceName]
 }
 
 /**
  * Checks if the CLI is run from a cloud environment
+ *
+ * @param env - Environment variables used when the cli is launched
+ *
  * @returns True in case the CLI is run from a cloud environment
  */
-export function isCloudEnvironment(): boolean {
-  return cloudEnvironment().platform !== 'localhost'
+export function isCloudEnvironment(env: NodeJS.ProcessEnv = getEnvironmentVariables()): boolean {
+  return cloudEnvironment(env).platform !== 'localhost'
 }
 
 /**
  * Returns the cloud environment platform name and if the platform support online IDE in case the CLI is run from one of
  * them. Platform name 'localhost' is returned otherwise
  *
+ * @param env - Environment variables used when the cli is launched
+ *
  * @returns Cloud platform information
  */
-export function cloudEnvironment(): {
+export function cloudEnvironment(env: NodeJS.ProcessEnv = getEnvironmentVariables()): {
   platform: 'spin' | 'codespaces' | 'gitpod' | 'localhost'
   editor: boolean
 } {
-  if (isSet(getEnvironmentVariables()[constants.environmentVariables.codespaces])) {
+  if (isSet(env[constants.environmentVariables.codespaces])) {
     return {platform: 'codespaces', editor: true}
   }
-  if (isSet(getEnvironmentVariables()[constants.environmentVariables.gitpod])) {
+  if (isSet(env[constants.environmentVariables.gitpod])) {
     return {platform: 'gitpod', editor: true}
   }
-  if (isSpin()) {
+  if (isSpin(env)) {
     return {platform: 'spin', editor: false}
   }
   return {platform: 'localhost', editor: false}
@@ -151,8 +154,9 @@ export async function hasGit(): Promise<boolean> {
 /**
  * Gets info on the CI platform the CLI is running on, if applicable
  */
-export function ciPlatform(): {isCI: true; name: string} | {isCI: false; name?: undefined} {
-  const env = getEnvironmentVariables()
+export function ciPlatform(
+  env = getEnvironmentVariables(),
+): {isCI: true; name: string} | {isCI: false; name?: undefined} {
   if (isTruthy(env.CI)) {
     let name = 'unknown'
     if (isTruthy(env.CIRCLECI)) {

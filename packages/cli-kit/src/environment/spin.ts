@@ -16,15 +16,15 @@ const spinFqdnFilePath = '/etc/spin/machine/fqdn'
  * To avoid multiple calls to `readSync` or `show`
  * @returns fqdn of the Spin environment.
  */
-export async function fqdn(): Promise<string> {
+export async function fqdn(env = getEnvironmentVariables()): Promise<string> {
   let spinFqdn = getCachedSpinFqdn()
   if (spinFqdn) return spinFqdn
 
   if (await exists(spinFqdnFilePath)) {
     spinFqdn = await readSync(spinFqdnFilePath).toString()
   } else {
-    const spinInstance = await instance()
-    const showResponse = await show(spinInstance)
+    const spinInstance = await instance(env)
+    const showResponse = await show(spinInstance, env)
 
     spinFqdn = showResponse.fqdn
   }
@@ -38,10 +38,10 @@ export async function fqdn(): Promise<string> {
  * @returns The JSON-parsed output of the Spin CLI.
  * @throws Any error raised from the underlying Spin CLI.
  */
-export async function show(spinInstance: string | undefined): Promise<{fqdn: string}> {
+export async function show(spinInstance: string | undefined, env = getEnvironmentVariables()): Promise<{fqdn: string}> {
   const latest = spinInstance === undefined
   const args = latest ? ['show', '--latest', '--json'] : ['show', '--json']
-  const output = await captureOutput('spin', args, {env: getEnvironmentVariables()})
+  const output = await captureOutput('spin', args, {env})
   const json = JSON.parse(output)
   if (json.error) {
     const errorMessage = content`${token.genericShellCommand(
@@ -61,40 +61,45 @@ export async function show(spinInstance: string | undefined): Promise<{fqdn: str
 
 /**
  * Returns true if the CLI is running in a Spin environment.
+ * @param env - Environment variables
  * @returns True if the CLI is running in a Spin environment.
  */
-export function isSpin(): boolean {
-  return isTruthy(getEnvironmentVariables()[constants.environmentVariables.spin])
+export function isSpin(env = getEnvironmentVariables()): boolean {
+  return isTruthy(env[constants.environmentVariables.spin])
 }
 
 /**
  * Returns the value of the SPIN_INSTANCE environment variable.
+ * @param env - Environment variables
  * @returns The value of the SPIN_INSTANCE environment variable.
  */
-export function instance(): string | undefined {
-  return getEnvironmentVariables()[constants.environmentVariables.spinInstance]
+export function instance(env = getEnvironmentVariables()): string | undefined {
+  return env[constants.environmentVariables.spinInstance]
 }
 
 /**
  * Returns the value of the SPIN_WORKSPACE environment variable.
+ * @param env - Environment variables
  * @returns The value of the SPIN_WORKSPACE environment variable.
  */
-export function workspace(): string | undefined {
-  return getEnvironmentVariables()[constants.environmentVariables.spinWorkspace]
+export function workspace(env = getEnvironmentVariables()): string | undefined {
+  return env[constants.environmentVariables.spinWorkspace]
 }
 
 /**
  * Returns the value of the SPIN_NAMESPACE environment variable.
+ * @param env - Environment variables
  * @returns The value of the SPIN_NAMESPACE environment variable.
  */
-export function namespace(): string | undefined {
-  return getEnvironmentVariables()[constants.environmentVariables.spinNamespace]
+export function namespace(env = getEnvironmentVariables()): string | undefined {
+  return env[constants.environmentVariables.spinNamespace]
 }
 
 /**
  * Returns the value of the SPIN_HOST environment variable.
+ * @param env - Environment variables
  * @returns The value of the SPIN_HOST environment variable.
  */
-export function host(): string | undefined {
-  return getEnvironmentVariables()[constants.environmentVariables.spinHost]
+export function host(env = getEnvironmentVariables()): string | undefined {
+  return env[constants.environmentVariables.spinHost]
 }

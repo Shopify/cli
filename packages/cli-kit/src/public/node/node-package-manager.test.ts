@@ -13,24 +13,16 @@ import {
   addResolutionOrOverride,
   findPackageVersionUp,
 } from './node-package-manager.js'
-import {getEnvironmentVariables} from './environment.js'
 import {exec} from '../../system.js'
 import {join as pathJoin, normalize as pathNormalize, pathToFileURL} from '../../path.js'
 import {inTemporaryDirectory, mkdir, touch, write, write as writeFile} from '../../file.js'
 import {Abort} from '../../error.js'
-import {describe, it, expect, vi, test, beforeEach} from 'vitest'
+import {describe, it, expect, vi, test} from 'vitest'
 import latestVersion from 'latest-version'
 
 vi.mock('../../version.js')
 vi.mock('../../system.js')
-
-beforeEach(() => {
-  vi.mock('../../version.js')
-  vi.mock('../../system.js')
-  vi.mock('./environment.js')
-  vi.mock('latest-version')
-  vi.mocked(getEnvironmentVariables).mockReturnValue({})
-})
+vi.mock('latest-version')
 
 const mockedExec = vi.mocked(exec)
 
@@ -38,10 +30,9 @@ describe('packageManagerUsedForCreating', () => {
   it('returns pnpm if the npm_config_user_agent variable contains yarn', () => {
     // Given
     const env = {npm_config_user_agent: 'yarn/1.22.17'}
-    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = packageManagerUsedForCreating()
+    const got = packageManagerUsedForCreating(env)
 
     // Then
     expect(got).toBe('yarn')
@@ -50,10 +41,9 @@ describe('packageManagerUsedForCreating', () => {
   it('returns pnpm if the npm_config_user_agent variable contains pnpm', () => {
     // Given
     const env = {npm_config_user_agent: 'pnpm'}
-    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = packageManagerUsedForCreating()
+    const got = packageManagerUsedForCreating(env)
 
     // Then
     expect(got).toBe('pnpm')
@@ -62,10 +52,9 @@ describe('packageManagerUsedForCreating', () => {
   it('returns npm if the npm_config_user_agent variable contains npm', () => {
     // Given
     const env = {npm_config_user_agent: 'npm'}
-    vi.mocked(getEnvironmentVariables).mockReturnValue(env)
 
     // When
-    const got = packageManagerUsedForCreating()
+    const got = packageManagerUsedForCreating(env)
 
     // Then
     expect(got).toBe('npm')
@@ -73,7 +62,7 @@ describe('packageManagerUsedForCreating', () => {
 
   it('returns unknown when the package manager cannot be detected', () => {
     // When
-    const got = packageManagerUsedForCreating()
+    const got = packageManagerUsedForCreating({})
 
     // Then
     expect(got).toBe('unknown')

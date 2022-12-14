@@ -37,12 +37,10 @@ interface UpdateAppIdentifiersOptions {
  * @param options - Options.
  * @returns An copy of the app with the environment updated to reflect the updated identifiers.
  */
-export async function updateAppIdentifiers({
-  app,
-  identifiers,
-  command,
-}: UpdateAppIdentifiersOptions): Promise<AppInterface> {
-  const env = getEnvironmentVariables()
+export async function updateAppIdentifiers(
+  {app, identifiers, command}: UpdateAppIdentifiersOptions,
+  systemEnvironment = getEnvironmentVariables(),
+): Promise<AppInterface> {
   let dotenvFile = app.dotenv
   if (!dotenvFile) {
     dotenvFile = {
@@ -51,12 +49,12 @@ export async function updateAppIdentifiers({
     }
   }
   const updatedVariables: {[key: string]: string} = {...(app.dotenv?.variables ?? {})}
-  if (!env[app.idEnvironmentVariableName]) {
+  if (!systemEnvironment[app.idEnvironmentVariableName]) {
     updatedVariables[app.idEnvironmentVariableName] = identifiers.app
   }
   Object.keys(identifiers.extensions).forEach((identifier) => {
     const envVariable = `SHOPIFY_${string.constantize(identifier)}_ID`
-    if (!env[envVariable]) {
+    if (!systemEnvironment[envVariable]) {
       updatedVariables[envVariable] = identifiers.extensions[identifier]!
     }
   })
@@ -79,11 +77,13 @@ interface GetAppIdentifiersOptions {
  * Given an app and a environment, it fetches the ids from the environment
  * and returns them.
  */
-export function getAppIdentifiers({app}: GetAppIdentifiersOptions): Partial<UuidOnlyIdentifiers> {
-  const env = getEnvironmentVariables()
+export function getAppIdentifiers(
+  {app}: GetAppIdentifiersOptions,
+  systemEnvironment = getEnvironmentVariables(),
+): Partial<UuidOnlyIdentifiers> {
   const envVariables = {
     ...app.dotenv?.variables,
-    ...(env as {[variable: string]: string}),
+    ...(systemEnvironment as {[variable: string]: string}),
   }
   const extensionsIdentifiers: {[key: string]: string} = {}
   const processExtension = (extension: Extension) => {
