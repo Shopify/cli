@@ -1,6 +1,6 @@
 import Prompt from './Prompt.js'
 import {waitForChange, waitForInputsToBeReady} from '../../../../testing/ui.js'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {render} from 'ink-testing-library'
 
@@ -9,6 +9,8 @@ const ENTER = '\r'
 
 describe('Prompt', async () => {
   test('choose an answer', async () => {
+    const onEnter = vi.fn()
+
     const items = [
       {label: 'first', value: 'first'},
       {label: 'second', value: 'second'},
@@ -18,12 +20,20 @@ describe('Prompt', async () => {
     const infoTable = {Add: ['new-ext'], Remove: ['integrated-demand-ext', 'order-discount']}
 
     const renderInstance = render(
-      <Prompt message="Associate your project with the org Castile Ventures?" choices={items} infoTable={infoTable} />,
+      <Prompt
+        message="Associate your project with the org Castile Ventures?"
+        choices={items}
+        infoTable={infoTable}
+        onChoose={onEnter}
+      />,
     )
 
     await waitForInputsToBeReady()
     await waitForChange(() => renderInstance.stdin.write(ARROW_DOWN), renderInstance.lastFrame)
-    await waitForChange(() => renderInstance.stdin.write(ENTER), renderInstance.lastFrame)
+    await waitForChange(
+      () => renderInstance.stdin.write(ENTER),
+      () => onEnter.mock.calls.length,
+    )
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
@@ -51,7 +61,12 @@ describe('Prompt', async () => {
     }
 
     const renderInstance = render(
-      <Prompt message="Associate your project with the org Castile Ventures?" choices={items} infoTable={infoTable} />,
+      <Prompt
+        message="Associate your project with the org Castile Ventures?"
+        choices={items}
+        infoTable={infoTable}
+        onChoose={() => {}}
+      />,
     )
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`

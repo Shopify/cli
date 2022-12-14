@@ -197,6 +197,7 @@ export async function kitchenSink() {
       {label: 'tenth', value: 'tenth'},
     ],
     infoTable: {Add: ['new-ext'], Remove: ['integrated-demand-ext', 'order-discount']},
+    onChoose: () => {},
   })
 
   await renderConfirmation({

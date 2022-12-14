@@ -7,7 +7,7 @@ import {figures} from 'listr2'
 export interface Props<T> {
   message: string
   choices: SelectProps<T>['items']
-  onChoose?: SelectProps<T>['onSelect']
+  onChoose: SelectProps<T>['onSelect']
   infoTable?: TableProps['table']
 }
 
@@ -15,7 +15,7 @@ export default function Prompt<T>({
   message,
   choices,
   infoTable,
-  onChoose = () => {},
+  onChoose,
 }: React.PropsWithChildren<Props<T>>): JSX.Element | null {
   const [answer, setAnswer] = useState<SelectItem<T> | null>(null)
 
