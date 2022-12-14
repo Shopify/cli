@@ -176,6 +176,32 @@ export function renderFatalError(error: Fatal) {
   return renderOnce(<FatalError error={error} />, 'error', consoleError)
 }
 
+/**
+ * Renders a select prompt to the console.
+ *
+ * ?  Associate your project with the org Castile Ventures?
+ *
+ *      Add:     • new-ext
+ *      Remove:  • integrated-demand-ext
+ *               • order-discount
+
+ * \>  (f) first
+ *     (s) second
+ *     (3) third
+ *     (4) fourth
+ *     (5) seventh
+ *     (6) tenth
+
+ *     Automations
+ *     (7) fifth
+ *     (8) sixth
+
+ *     Merchant Admin
+ *     (9) eighth
+ *     (10) ninth
+
+ *     navigate with arrows, enter to select
+ */
 export function renderPrompt<T>(options: PromptProps<T>) {
   return render(<Prompt {...options} />, {exitOnCtrlC: false})
 }
@@ -186,6 +212,15 @@ interface ConfirmationProps {
   infoTable?: PromptProps<boolean>['infoTable']
 }
 
+/**
+ * Renders a confirmation prompt to the console.
+ *
+ * ?  Push the following changes to your Partners Dashboard?
+ * \>  (y) Yes, confirm
+ *     (c) Cancel
+ *
+ * navigate with arrows, enter to select
+ */
 export function renderConfirmation({question, infoTable, onChoose = () => {}}: ConfirmationProps) {
   const choices = [
     {
