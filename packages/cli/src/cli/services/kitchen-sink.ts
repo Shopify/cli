@@ -209,13 +209,13 @@ export async function kitchenSink() {
   // renderTasks
   const tasks = [
     {
-      title: 'first',
+      title: 'Installing dependencies',
       task: async () => {
         await new Promise((resolve) => setTimeout(resolve, 2000))
       },
     },
     {
-      title: 'second',
+      title: 'Downloading assets',
       task: async () => {
         await new Promise((resolve) => setTimeout(resolve, 2000))
       },
