@@ -96,7 +96,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
       }),
     )
 
-    unmountInk()
+    if (process.env.CI !== 'true') unmountInk()
   }
 
   useEffect(() => {
