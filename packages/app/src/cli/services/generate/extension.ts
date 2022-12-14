@@ -30,6 +30,7 @@ interface ExtensionInitOptions<TSpec extends GenericSpecification = GenericSpeci
   cloneUrl?: string
   extensionFlavor?: ExtensionFlavor
   specification: TSpec
+  extensionType: string
 }
 
 interface ExtensionDirectory {

@@ -141,6 +141,7 @@ export default class AppGenerateExtension extends Command {
       extensionFlavor: extensionFlavor as ExtensionFlavor,
       specification: selectedSpecification,
       app,
+      extensionType: selectedSpecification.identifier,
       cloneUrl: flags['clone-url'],
     })
 
