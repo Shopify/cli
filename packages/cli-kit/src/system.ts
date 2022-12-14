@@ -49,6 +49,7 @@ export const exec = async (command: string, args: string[], options?: ExecOption
     await commandProcess
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (processError: any) {
+    if (processError.signal === 'SIGTERM') return
     const abortError = new ExternalError(processError.message, command, args)
     abortError.stack = processError.stack
     throw abortError

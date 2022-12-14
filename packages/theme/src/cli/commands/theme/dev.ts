@@ -2,7 +2,7 @@ import {themeFlags} from '../../flags.js'
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
-import {cli, output, session, abort} from '@shopify/cli-kit'
+import {cli, session, abort, system, output} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
 export default class Dev extends ThemeCommand {
@@ -84,7 +84,11 @@ export default class Dev extends ThemeCommand {
   ]
 
   // Tokens are valid for 120m, better to be safe and refresh every 90min
-  ThemeRefreshTimeoutInMinutes = 90
+  ThemeRefreshTimeoutInMinutes = 0.4
+
+  // We need to set a timeout to stop the server, otherwise it will keep running forever
+  // Set it to 24h to be safe
+  HardTimeoutInMinutes = 24 * 60
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
@@ -96,21 +100,23 @@ export default class Dev extends ThemeCommand {
 
     let controller: abort.Controller = new abort.Controller()
 
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    const refreshThemeSessionInterval = setInterval(async () => {
-      output.debug('Refreshing theme session...')
+    const refreshThemeSessionInterval = setInterval(() => {
+      output.debug('Refreshing theme session token and restarting theme server...')
       controller.abort()
       controller = new abort.Controller()
-      await this.execute(store, command, controller)
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      this.execute(store, command, controller)
     }, this.ThemeRefreshTimeoutInMinutes * 60 * 1000)
 
-    await this.execute(store, command, controller)
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.execute(store, command, controller)
+    await system.sleep(this.HardTimeoutInMinutes * 60)
     clearInterval(refreshThemeSessionInterval)
   }
 
-  async execute(store: string, command: string[], controller: AbortController) {
+  async execute(store: string, command: string[], controller: abort.Controller) {
     const adminSession = await session.ensureAuthenticatedThemes(store, undefined, [], true)
     const storefrontToken = await session.ensureAuthenticatedStorefront()
-    await execCLI2(command, {adminSession, storefrontToken, signal: controller.signal as abort.Signal})
+    return execCLI2(command, {adminSession, storefrontToken, signal: controller.signal})
   }
 }
