@@ -11,6 +11,7 @@ import {fileURLToPath} from 'url'
  */
 export async function allExtensionSpecifications(config: Config): Promise<ExtensionSpec[]> {
   const pluginSpecs = await getListOfExtensionSpecs(config)
+  console.log('EXTENSIONS: ', pluginSpecs.length)
   const localSpecs = await allLocalExtensionSpecs()
   return [...localSpecs, ...pluginSpecs]
 }
@@ -20,6 +21,8 @@ export async function allExtensionSpecifications(config: Config): Promise<Extens
  */
 export async function allFunctionSpecifications(config: Config): Promise<FunctionSpec[]> {
   const pluginSpecs = await getListOfFunctionSpecs(config)
+  console.log('FUNCTIONS')
+  console.log(pluginSpecs)
   const localSpecs = await allLocalFunctionSpecs()
   return [...localSpecs, ...pluginSpecs]
 }

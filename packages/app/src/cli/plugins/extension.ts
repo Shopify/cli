@@ -1,5 +1,15 @@
-import {BaseConfigContents, CreateExtensionSpecType, ExtensionSpec} from '../models/extensions/extensions.js'
-import {CreateFunctionSpecType, FunctionSpec} from '../models/extensions/functions.js'
+import {
+  BaseConfigContents,
+  createExtensionSpec,
+  CreateExtensionSpecType,
+  ExtensionSpec,
+} from '../models/extensions/extensions.js'
+import {
+  createFunctionSpec,
+  CreateFunctionSpecType,
+  FunctionConfigType,
+  FunctionSpec,
+} from '../models/extensions/functions.js'
 import {plugins} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
@@ -30,11 +40,13 @@ export type FunctionSpecsFunction = plugins.FanoutHookFunction<'function_specs',
 export const defineExtensionSpecs = <TConfiguration extends BaseConfigContents = BaseConfigContents>(
   input: CreateExtensionSpecType<TConfiguration>[],
 ): ExtensionSpecsFunction => {
-  return async () => input
+  return async () => input.map((elem) => createExtensionSpec(elem))
 }
 
-export const defineFunctionSpecs = (input: CreateFunctionSpecType[]): FunctionSpecsFunction => {
-  return async () => input
+export const defineFunctionSpecs = <TConfiguration extends FunctionConfigType = FunctionConfigType>(
+  input: CreateFunctionSpecType<TConfiguration>[],
+): FunctionSpecsFunction => {
+  return async () => input.map((elem) => createFunctionSpec(elem))
 }
 
 export async function getListOfExtensionSpecs(config: Config): Promise<ExtensionSpec[]> {
