@@ -25,21 +25,6 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
   addToApiKeyCache(apps)
   const toAnswer = (app: MinimalOrganizationApp) => ({name: app.title, value: app.apiKey})
   const appList = apps.map(toAnswer)
-  const cachedResults: {[input: string]: ui.PromptAnswer[]} = {'': appList}
-  let latestInput = ''
-  const resolveUponSearchCompletion: ((input: ui.PromptAnswer[]) => void)[] = []
-
-  const performSearch = debounce(
-    async (input: string, filterFunction: ui.FilterFunction): Promise<void> => {
-      if (input && !(cachedResults[input])) {
-        const result = await fetchOrgAndApps(orgId, token, input)
-        addToApiKeyCache(result.apps)
-        cachedResults[input] = await filterFunction(result.apps.map(toAnswer), input)
-      }
-      if (input === latestInput) resolveUponSearchCompletion.forEach((func)=>func(cachedResults[input]!))
-    },
-    300
-  )
 
   const choice = await ui.prompt([
     {
@@ -53,11 +38,28 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
        * fetches remote results when appropriate.
        */
       source: (filterFunction: ui.FilterFunction): ui.FilterFunction => {
+        let latestInput = ''
+        const searchAwaiters: ((input: ui.PromptAnswer[]) => void)[] = []
+        const cachedResults: {[input: string]: ui.PromptAnswer[]} = {'': appList}
+
+        const performSearch = debounce(
+          async (input: string): Promise<void> => {
+            if (input && !(cachedResults[input])) {
+              const result = await fetchOrgAndApps(orgId, token, input)
+              addToApiKeyCache(result.apps)
+              cachedResults[input] = await filterFunction(result.apps.map(toAnswer), input)
+            }
+            // Only resolve results if they match the latest search term.
+            if (input === latestInput) searchAwaiters.forEach((func)=>func(cachedResults[input]!))
+          },
+          300
+        )
+
         return async (_answers: ui.PromptAnswer[], input = ''): Promise<ui.PromptAnswer[]> => {
           latestInput = input
 
-          // Only perform remote search for apps if we haven't fetched them all
-          // and a new search term has been entered.
+          // Only perform remote search for apps if we haven't already fetched
+          // them all and a new search term has been entered.
           if (!input) {
             return appList
           } else if (appList.length < 100) {
@@ -66,8 +68,8 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
             return cachedResults[input]!
           }
 
-          performSearch(input, filterFunction)
-          return new Promise((resolve, _) => { resolveUponSearchCompletion.push(resolve) })
+          performSearch(input)
+          return new Promise((resolve, _) => { searchAwaiters.push(resolve) })
         }
       },
     },
