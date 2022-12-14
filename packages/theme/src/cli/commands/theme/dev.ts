@@ -83,13 +83,16 @@ export default class Dev extends ThemeCommand {
     'force',
   ]
 
-  // Tokens are valid for 120m, better to be safe and refresh every 90min
-  ThemeRefreshTimeoutInMinutes = 0.4
+  // Tokens are valid for 120m, better to be safe and refresh every 110min
+  ThemeRefreshTimeoutInMinutes = 110
 
-  // We need to set a timeout to stop the server, otherwise it will keep running forever
-  // Set it to 24h to be safe
+  // Timeout to stop the server, otherwise it will keep running forever. 24h to be safe.
   HardTimeoutInMinutes = 24 * 60
 
+  /**
+   * Executes the theme serve command.
+   * Every 110 minutes, it will refresh the session token and restart the server.
+   */
   async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
 
