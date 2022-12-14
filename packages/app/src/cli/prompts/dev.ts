@@ -20,13 +20,10 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
 }
 
 export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: string, token: string): Promise<MinimalOrganizationApp> {
-  const appsByApiKey: {[apiKey: string]: MinimalOrganizationApp} = {}
-  const addToApiKeyCache = (apps: MinimalOrganizationApp[]) => apps.forEach((app) => appsByApiKey[app.apiKey] = app)
-  addToApiKeyCache(apps)
   const toAnswer = (app: MinimalOrganizationApp) => ({name: app.title, value: app.apiKey})
   const appList = apps.map(toAnswer)
 
-  const choice = await ui.prompt([
+  return ui.prompt([
     {
       type: 'autocomplete',
       name: 'apiKey',
@@ -46,7 +43,6 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
           async (input: string): Promise<void> => {
             if (input && !(cachedResults[input])) {
               const result = await fetchOrgAndApps(orgId, token, input)
-              addToApiKeyCache(result.apps)
               cachedResults[input] = await filterFunction(result.apps.map(toAnswer), input)
             }
             // Only resolve results if they match the latest search term.
@@ -74,7 +70,6 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
       },
     },
   ])
-  return appsByApiKey[choice.apiKey]!
 }
 
 export async function selectStorePrompt(stores: OrganizationStore[]): Promise<OrganizationStore | undefined> {

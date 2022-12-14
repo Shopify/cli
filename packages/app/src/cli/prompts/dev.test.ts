@@ -106,7 +106,7 @@ describe('selectApp', () => {
     const got = await selectAppPrompt(apps, ORG1.id, 'token')
 
     // Then
-    expect(got).toEqual(APP2)
+    expect(got).toEqual({apiKey: APP2.apiKey})
     expect(ui.prompt).toHaveBeenCalledWith([
       {
         type: 'autocomplete',
