@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@oclif/core": "1.9.2",
-    "@shopify/cli-kit": "workspace:@shopify/cli-kit@*",
+    "@shopify/cli-kit": "3.26.0",
     "@shopify/ngrok": "4.3.2"
   },
   "eslintConfig": {
