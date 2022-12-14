@@ -77,7 +77,9 @@ export default function SelectInput<T>({items, onSelect}: React.PropsWithChildre
         setSelectedIndex(selectedIndex === items.length - 1 ? 0 : selectedIndex + 1)
       } else if (key.return) {
         onSelect(items[selectedIndex]!)
-        unmountInk()
+        // This is a workaround needed because Ink behaves differently in CI when
+        // unmounting. See https://github.com/vadimdemedes/ink/pull/266
+        if (process.env.CI !== 'true') unmountInk()
       }
     },
     [selectedIndex, items, onSelect],
