@@ -137,9 +137,9 @@ importers:
     specifiers:
       '@shopify/admin-ui-extensions': 1.0.1
       '@shopify/admin-ui-extensions-react': 1.0.1
-      '@shopify/app': 3.26.0
+      '@shopify/app': 3.27.0
       '@shopify/checkout-ui-extensions-react': ^0.20.0
-      '@shopify/cli': 3.26.0
+      '@shopify/cli': 3.27.0
       '@shopify/customer-account-ui-extensions-react': ^0.0.8
       '@shopify/post-purchase-ui-extensions': ^0.13.3
       '@shopify/post-purchase-ui-extensions-react': ^0.13.3
@@ -227,7 +227,7 @@ importers:
     specifiers:
       '@luckycatfactory/esbuild-graphql-loader': 3.7.0
       '@oclif/core': 1.9.2
-      '@shopify/cli-kit': 3.26.0
+      '@shopify/cli-kit': 3.27.0
       '@shopify/shopify-cli-extensions': 3.21.0
       '@types/diff': ^5.0.2
       '@types/http-proxy': ^1.17.9
@@ -273,7 +273,7 @@ importers:
   packages/cli-hydrogen:
     specifiers:
       '@oclif/core': 1.9.2
-      '@shopify/cli-kit': 3.26.0
+      '@shopify/cli-kit': 3.27.0
       '@shopify/hydrogen': 0.26.0
       '@shopify/mini-oxygen': 0.2.0
       '@shopify/prettier-config': 1.1.2
@@ -458,11 +458,11 @@ importers:
       '@oclif/plugin-commands': 2.2.0
       '@oclif/plugin-help': 5.1.12
       '@oclif/plugin-plugins': 2.1.0
-      '@shopify/app': 3.26.0
-      '@shopify/cli-hydrogen': 3.26.0
-      '@shopify/cli-kit': 3.26.0
-      '@shopify/plugin-ngrok': 3.26.0
-      '@shopify/theme': 3.26.0
+      '@shopify/app': 3.27.0
+      '@shopify/cli-hydrogen': 3.27.0
+      '@shopify/cli-kit': 3.27.0
+      '@shopify/plugin-ngrok': 3.27.0
+      '@shopify/theme': 3.27.0
       '@vitest/coverage-istanbul': ^0.23.4
       vite: 2.9.12
       vitest: ^0.23.4
@@ -484,7 +484,7 @@ importers:
   packages/create-app:
     specifiers:
       '@oclif/core': 1.9.2
-      '@shopify/cli-kit': 3.26.0
+      '@shopify/cli-kit': 3.27.0
       vite: 2.9.12
       vitest: ^0.23.4
     dependencies:
@@ -497,7 +497,7 @@ importers:
   packages/create-hydrogen:
     specifiers:
       '@oclif/core': 1.9.2
-      '@shopify/cli-kit': 3.26.0
+      '@shopify/cli-kit': 3.27.0
       '@types/download': 8.0.0
       download: 8.0.0
       vite: 2.9.12
@@ -542,7 +542,7 @@ importers:
   packages/plugin-ngrok:
     specifiers:
       '@oclif/core': 1.9.2
-      '@shopify/cli-kit': 3.26.0
+      '@shopify/cli-kit': 3.27.0
       '@shopify/ngrok': 4.3.2
       vite: 2.9.12
       vitest: ^0.23.4
@@ -557,7 +557,7 @@ importers:
   packages/theme:
     specifiers:
       '@oclif/core': 1.9.2
-      '@shopify/cli-kit': 3.26.0
+      '@shopify/cli-kit': 3.27.0
       vite: 2.9.12
       vitest: ^0.23.4
     dependencies:
@@ -14678,7 +14678,7 @@ packages:
       globrex: 0.1.2
       recrawl-sync: 2.2.3
       tsconfig-paths: 4.1.1
-      vite: 2.9.12
+      vite: 2.9.12_sass@1.56.1
     transitivePeerDependencies:
       - supports-color
     dev: true
