@@ -1,6 +1,6 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
 import {fetchOrgAndApps} from '../services/dev/fetch.js'
-import {output, system, ui} from '@shopify/cli-kit'
+import {output, ui} from '@shopify/cli-kit'
 import {debounce} from 'lodash-es'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
@@ -19,7 +19,11 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
   return organizations.find((org) => org.id === choice.id)!
 }
 
-export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: string, token: string): Promise<MinimalOrganizationApp> {
+export async function selectAppPrompt(
+  apps: MinimalOrganizationApp[],
+  orgId: string,
+  token: string,
+): Promise<MinimalOrganizationApp> {
   const toAnswer = (app: MinimalOrganizationApp) => ({name: app.title, value: app.apiKey})
   const appList = apps.map(toAnswer)
 
@@ -39,17 +43,15 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
         const searchAwaiters: ((input: ui.PromptAnswer[]) => void)[] = []
         const cachedResults: {[input: string]: ui.PromptAnswer[]} = {'': appList}
 
-        const performSearch = debounce(
-          async (input: string): Promise<void> => {
-            if (input && !(cachedResults[input])) {
-              const result = await fetchOrgAndApps(orgId, token, input)
-              cachedResults[input] = await filterFunction(result.apps.map(toAnswer), input)
-            }
-            // Only resolve results if they match the latest search term.
-            if (input === latestInput) searchAwaiters.forEach((func)=>func(cachedResults[input]!))
-          },
-          300
-        )
+        const performSearch = debounce(async (input: string): Promise<void> => {
+          if (input && !cachedResults[input]) {
+            const result = await fetchOrgAndApps(orgId, token, input)
+            // eslint-disable-next-line require-atomic-updates
+            cachedResults[input] = await filterFunction(result.apps.map(toAnswer), input)
+          }
+          // Only resolve results if they match the latest search term.
+          if (input === latestInput) searchAwaiters.forEach((func) => func(cachedResults[input]!))
+        }, 300)
 
         return async (_answers: ui.PromptAnswer[], input = ''): Promise<ui.PromptAnswer[]> => {
           latestInput = input
@@ -59,13 +61,15 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
           if (!input) {
             return appList
           } else if (appList.length < 100) {
-            return await filterFunction(appList, input)
+            return filterFunction(appList, input)
           } else if (cachedResults[input]) {
             return cachedResults[input]!
           }
 
-          performSearch(input)
-          return new Promise((resolve, _) => { searchAwaiters.push(resolve) })
+          await performSearch(input)
+          return new Promise((resolve, _reject) => {
+            searchAwaiters.push(resolve)
+          })
         }
       },
     },
