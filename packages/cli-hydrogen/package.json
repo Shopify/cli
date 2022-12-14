@@ -45,7 +45,7 @@
     "@types/prettier": "2.6.3",
     "prettier": "2.6.1",
     "vite": "2.9.13",
-    "@shopify/cli-kit": "workspace:@shopify/cli-kit@*",
+    "@shopify/cli-kit": "3.26.0",
     "fast-glob": "3.2.11",
     "fs-extra": "10.0.0",
     "typescript": "4.6.4",

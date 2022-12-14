@@ -25,7 +25,7 @@
       "dependsOn": ["^build"]
     },
     "refresh-manifests": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["build"]
     },
     "lint": {
     },
