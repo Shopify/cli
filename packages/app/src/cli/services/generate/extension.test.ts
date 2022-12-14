@@ -264,6 +264,7 @@ async function createFromTemplate({name, specification, appDirectory, extensionF
     app: await loadApp(appDirectory),
     cloneUrl: 'cloneurl',
     extensionFlavor,
+    extensionType: specification.identifier,
   })
 }
 async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | void) {
