@@ -39,6 +39,7 @@
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "test": "nx run app:test",
+    "test:coverage": "nx test:coverage",
     "test:watch": "nx test:watch",
     "type-check": "nx type-check"
   },
