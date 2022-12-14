@@ -1,6 +1,7 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
 import {fetchOrgAndApps} from '../services/dev/fetch.js'
 import {output, system, ui} from '@shopify/cli-kit'
+import {debounce} from 'lodash-es'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
   if (organizations.length === 1) {
@@ -24,34 +25,20 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
   addToApiKeyCache(apps)
   const toAnswer = (app: MinimalOrganizationApp) => ({name: app.title, value: app.apiKey})
   const appList = apps.map(toAnswer)
+  const cachedResults: {[input: string]: ui.PromptAnswer[]} = {'': appList}
+  let latestInput = ''
 
-  /* allInputs serves as a LIFO stack, so we always can pop off the latest input
-   * as the most urgent search term, then fill in intermediate steps in the
-   * background.
-   * latestRequest tracks the most recent input, so we know which result should
-   * be displayed at all times.
-   */
-  const allInputs = ['']
-  let latestRequest: string
-
-  /* Set up an event loop, searching for apps using the latest user input once
-   * per second to avoid hitting rate limits.
-   * If we don't have any previously unseen input to search for, return without
-   * action.
-   */
-  let cachedResults: {[input: string]: MinimalOrganizationApp[]} = {'': apps}
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  const fetchInterval = setInterval(async () => {
-    let input: string | undefined
-    do {
-      input = allInputs.pop()
-      if (input === undefined) return
-    } while (cachedResults[input])
-    const result = await fetchOrgAndApps(orgId, token, input)
-    addToApiKeyCache(result.apps)
-    // eslint-disable-next-line require-atomic-updates
-    cachedResults[input] = result.apps
-  }, 1000)
+  const performSearch = debounce(
+    async (input: string, filterFunction: ui.FilterFunction): Promise<string> => {
+      if (input && !(cachedResults[input])) {
+        const result = await fetchOrgAndApps(orgId, token, input)
+        addToApiKeyCache(result.apps)
+        cachedResults[input] = await filterFunction(result.apps.map(toAnswer), input)
+      }
+      return input
+    },
+    300
+  )
 
   const choice = await ui.prompt([
     {
@@ -65,37 +52,29 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
        * fetches remote results when appropriate.
        */
       source: (filterFunction: ui.FilterFunction): ui.FilterFunction => {
-        const cachedFiltered: {[input: string]: ui.PromptAnswer[]} = {'': appList}
-        return async (_answers: ui.PromptAnswer[], input = '') => {
-          // Only perform remote search for apps if we haven't fetched them all
-          if (appList.length < 100) return filterFunction(appList, input)
+        return async (_answers: ui.PromptAnswer[], input = ''): Promise<ui.PromptAnswer[]> => {
+          latestInput = input
 
-          latestRequest = input
-          allInputs.push(input)
-          // Await the event loop returning a result
-          while (!cachedResults[input]) {
-            // eslint-disable-next-line no-await-in-loop
+          // Only perform remote search for apps if we haven't fetched them all
+          // and a search term has been entered.
+          if (!input) {
+            return appList
+          } else if (appList.length < 100) {
+            return await filterFunction(appList, input)
+          }
+
+          performSearch(input, filterFunction)
+
+          // Always display the results set for the latest user input.
+          while (true) {
+            const results = cachedResults[latestInput]
+            if (results) return results
             await system.sleep(0.2)
           }
-
-          // Cache the answerified results to avoid race conditions
-          if (!cachedFiltered[input]) {
-            // eslint-disable-next-line require-atomic-updates
-            cachedFiltered[input] = await filterFunction(cachedResults[input]!.map(toAnswer), input)
-          }
-
-          /* If the user types "hello" we will have this function running 5
-           * times, for each substring ("h", "he", "hel", "hell", "hello").
-           * If the latest input "hello" is available, display that result.
-           * Otherwise, display the result of whatever intermediate step is
-           * available, so the user at least sees something is happening.
-           */
-          return cachedFiltered[latestRequest] || cachedFiltered[input]!
         }
       },
     },
   ])
-  clearInterval(fetchInterval)
   return appsByApiKey[choice.apiKey]!
 }
 
