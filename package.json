@@ -24,7 +24,7 @@
     "build:affected": "nx affected --target=build --all",
     "refresh-templates": "nx run-many --target=refresh-templates --all --skip-nx-cache",
     "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache",
-    "changeset-manifests": "changeset version && pnpm refresh-manifests",
+    "changeset-manifests": "changeset version && pnpm install && pnpm refresh-manifests",
     "postinstall": "patch-package"
   },
   "devDependencies": {
