@@ -1,4 +1,5 @@
 import colors from '../../public/node/colors.js'
+import {escapeRegExp} from '../../string.js'
 import AutocompletePrompt from 'inquirer-autocomplete-prompt'
 import DistinctChoice from 'inquirer/lib/objects/choices'
 import inquirer from 'inquirer'
@@ -103,10 +104,17 @@ function listRender(choices: DistinctChoice, pointer: number, searchToken?: stri
     }
 
     if (searchToken) {
+      const regexified = escapeRegExp(searchToken)
       line = line
-        .split(searchToken)
-        .map((token) => (isSelected ? colors.magenta(token) : token))
-        .join(colors.magenta.dim(searchToken))
+        .split(new RegExp(`(${regexified})`, 'ig'))
+        .map((token) => {
+          if (token.match(new RegExp(regexified, 'ig'))) {
+            return colors.magenta.dim(token)
+          } else {
+            return isSelected ? colors.magenta(token) : token
+          }
+        })
+        .join('')
     } else if (isSelected) {
       line = colors.magenta(line)
     }

@@ -66,7 +66,11 @@ function fuzzyFilter(answers: {name: string; value: string}[], input = ''): Prom
 
 function containsFilter(answers: {name: string; value: string}[], input = ''): Promise<PromptAnswer[]> {
   return new Promise((resolve) => {
-    resolve(Object.values(answers).filter((answer) => !answer.name || answer.name.includes(input)))
+    resolve(
+      Object.values(answers).filter(
+        (answer) => !answer.name || answer.name.toLowerCase().includes(input.toLowerCase()),
+      ),
+    )
   })
 }
 
