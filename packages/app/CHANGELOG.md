@@ -1,5 +1,16 @@
 # @shopify/app
 
+## 3.28.0
+
+### Minor Changes
+
+- 07c95c01: Adds api_access ability for UI Extensions
+
+### Patch Changes
+
+- 97e6e7bf: Fix bug generating functions without type
+  - @shopify/cli-kit@3.28.0
+
 ## 3.27.0
 
 ### Patch Changes
