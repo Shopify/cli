@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@shopify/ui-extensions-dev-console-app",
-  "version": "3.26.0",
+  "version": "3.27.0",
   "scripts": {
     "build": "nx build",
     "clean": "nx clean",

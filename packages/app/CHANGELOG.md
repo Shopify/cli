@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.27.0
+
+### Patch Changes
+
+- 2678d5a1: Fix bug generating theme app extensions
+- 93f22d6c: Only request necessary information to speed up fetching apps list
+- 26c8ef33: Fix template for Delivery Customization extensions
+- Updated dependencies [32bbe23d]
+  - @shopify/cli-kit@3.27.0
+
 ## 3.26.0
 
 ### Patch Changes
