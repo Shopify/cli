@@ -237,6 +237,9 @@ export async function renderConfirmation({question, infoTable}: ConfirmationProp
   return prompt({message: question, choices, infoTable})
 }
 
+/**
+ * Runs async tasks and displays their progress to the console.
+ */
 export function renderTasks(tasks: Task[]) {
   return render(<Tasks tasks={tasks} />)
 }

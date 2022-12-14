@@ -34,7 +34,8 @@ describe('Prompt', async () => {
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
-      [36m✔[39m  [36msecond[39m"
+      [36m✔[39m  [36msecond[39m
+      "
     `)
     expect(onEnter).toHaveBeenCalledWith(items[1]!.value)
   })
@@ -89,7 +90,8 @@ describe('Prompt', async () => {
          (9) eighth
          (10) ninth
 
-         [2mnavigate with arrows, enter to select[22m"
+         [2mnavigate with arrows, enter to select[22m
+      "
     `)
   })
 })
