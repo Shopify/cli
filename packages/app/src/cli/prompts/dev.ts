@@ -27,15 +27,16 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
   const appList = apps.map(toAnswer)
   const cachedResults: {[input: string]: ui.PromptAnswer[]} = {'': appList}
   let latestInput = ''
+  const resolveUponSearchCompletion: ((input: ui.PromptAnswer[]) => void)[] = []
 
   const performSearch = debounce(
-    async (input: string, filterFunction: ui.FilterFunction): Promise<string> => {
+    async (input: string, filterFunction: ui.FilterFunction): Promise<void> => {
       if (input && !(cachedResults[input])) {
         const result = await fetchOrgAndApps(orgId, token, input)
         addToApiKeyCache(result.apps)
         cachedResults[input] = await filterFunction(result.apps.map(toAnswer), input)
       }
-      return input
+      if (input === latestInput) resolveUponSearchCompletion.forEach((func)=>func(cachedResults[input]!))
     },
     300
   )
@@ -56,21 +57,17 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
           latestInput = input
 
           // Only perform remote search for apps if we haven't fetched them all
-          // and a search term has been entered.
+          // and a new search term has been entered.
           if (!input) {
             return appList
           } else if (appList.length < 100) {
             return await filterFunction(appList, input)
+          } else if (cachedResults[input]) {
+            return cachedResults[input]!
           }
 
           performSearch(input, filterFunction)
-
-          // Always display the results set for the latest user input.
-          while (true) {
-            const results = cachedResults[latestInput]
-            if (results) return results
-            await system.sleep(0.2)
-          }
+          return new Promise((resolve, _) => { resolveUponSearchCompletion.push(resolve) })
         }
       },
     },
