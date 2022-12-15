@@ -1,27 +1,17 @@
 import * as styles from './ExtensionRow.module.scss'
 import en from './translations/en.json'
 import {ActionSet, ActionSetProps} from '../ActionSet'
-import React, {MouseEvent, useCallback, useState} from 'react'
+import React, {useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
-import {Checkbox} from '@/components/CheckBox'
 
 export type ExtensionRowProps = {
   extension: ExtensionPayload
-  selected?: boolean
-  onSelect(extension: ExtensionPayload): void
   onHighlight(extension: ExtensionPayload): void
   onClearHighlight(): void
 } & Pick<ActionSetProps, 'onShowMobileQRCode' | 'onCloseMobileQRCode'>
 
-export function ExtensionRow({
-  extension,
-  selected,
-  onSelect,
-  onHighlight,
-  onClearHighlight,
-  ...actionSetProps
-}: ExtensionRowProps) {
+export function ExtensionRow({extension, onHighlight, onClearHighlight, ...actionSetProps}: ExtensionRowProps) {
   const [i18n] = useI18n({
     id: 'ExtensionRow',
     fallback: en,
@@ -29,14 +19,6 @@ export function ExtensionRow({
   const {
     development: {hidden, status},
   } = extension
-
-  const handleSelect = useCallback(
-    (event?: MouseEvent) => {
-      if (event) event.stopPropagation()
-      onSelect(extension)
-    },
-    [extension, onSelect],
-  )
 
   const [isFocus, setFocus] = useState(false)
 
@@ -46,7 +28,6 @@ export function ExtensionRow({
   return (
     <tr
       className={styles.DevToolRow}
-      onClick={handleSelect}
       onFocus={() => {
         setFocus(true)
       }}
@@ -56,14 +37,6 @@ export function ExtensionRow({
       onMouseEnter={() => onHighlight(extension)}
       onMouseLeave={onClearHighlight}
     >
-      <td>
-        {
-          // eslint-disable-next-line jsx-a11y/click-events-have-key-events
-          <div onClick={(event) => event.stopPropagation()}>
-            <Checkbox label="" checked={selected} onChange={() => handleSelect()} />
-          </div>
-        }
-      </td>
       <td className={textClass}>{extension.title}</td>
       <td className={textClass}>{extension.externalType}</td>
       <td>
@@ -71,7 +44,6 @@ export function ExtensionRow({
       </td>
       <ActionSet
         className={`${styles.ActionSet} ${isFocus ? styles.ForceVisible : ''}`}
-        selected={selected}
         extension={extension}
         {...actionSetProps}
       />

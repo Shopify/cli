@@ -11,7 +11,6 @@ import {useExtensionsInternal} from '@/sections/Extensions/hooks/useExtensionsIn
 
 export interface ActionSetProps {
   className?: string
-  selected?: boolean
   extension: ExtensionPayload
   onCloseMobileQRCode?: () => void
   onShowMobileQRCode?: (extension: ExtensionPayload) => void
@@ -23,7 +22,7 @@ export function ActionSet(props: ActionSetProps) {
     fallback: en,
   })
   const {extension, className, onShowMobileQRCode} = props
-  const {embedded, hide, navigate, refresh, show, state} = useExtensionsInternal()
+  const {embedded, hide, navigate, refresh, show} = useExtensionsInternal()
   const hidden = extension.development.hidden
   const hideWebUrl = extension.surface === 'pos'
 
