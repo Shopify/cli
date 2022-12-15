@@ -17,7 +17,6 @@ const spec = createUIExtensionSpec({
   identifier: 'ui_extension',
   externalIdentifier: 'ui_extension',
   externalName: 'UI Extension',
-  surface: 'all',
   dependency,
   partnersWebIdentifier: 'checkout_ui_extension',
   singleEntryPath: false,

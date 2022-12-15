@@ -133,6 +133,23 @@ export interface CreateFunctionSpecType<TConfiguration extends FunctionConfigTyp
   templatePath: (lang: string) => string
 }
 
+/**
+ * Create a new function spec.
+ *
+ * Everything but "identifer" and "templatePath" is optional.
+ * ```ts
+ * identifier: string // unique identifier for the function type
+ * externalIdentifier: string // unique identifier used externally (default: same as "identifier")
+ * externalName: string // human name used externally (default: same as "identifier")
+ * helpURL?: string // URL to documentation
+ * gated: boolean // whether the function is only accessible to shopifolk or not (default: false)
+ * supportedFlavors: {name: string; value: string}[] // list of supported flavors (default: 'wasm' and 'rust')
+ * configSchema: ZodSchemaType<TConfiguration> // schema for the function toml file (default: BaseFunctionConfigurationSchema)
+ * registrationLimit: number // max number of functions of this type that can be registered (default: 10)
+ * templateURL?: string // URL to the functions repository (default: 'https://github.com/Shopify/function-examples')
+ * templatePath: (lang: string) => string // path to the template directory for the given language inside the templateURL repo
+ * ```
+ */
 export function createFunctionSpec<TConfiguration extends FunctionConfigType = FunctionConfigType>(
   spec: CreateFunctionSpecType<TConfiguration>,
 ): FunctionSpec {

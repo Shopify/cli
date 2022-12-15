@@ -1,10 +1,5 @@
-import {CreateExtensionSpecType, createUIExtensionSpec, UIExtensionSpec} from '../models/extensions/ui.js'
-import {
-  createFunctionSpec,
-  CreateFunctionSpecType,
-  FunctionConfigType,
-  FunctionSpec,
-} from '../models/extensions/functions.js'
+import {UIExtensionSpec} from '../models/extensions/ui.js'
+import {FunctionSpec} from '../models/extensions/functions.js'
 import {BaseConfigContents} from '../models/extensions/schemas.js'
 import {plugins} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
@@ -30,19 +25,17 @@ interface HookReturnPerExtensionPlugin extends plugins.HookReturnsPerPlugin {
   }
 }
 
-export type ExtensionSpecsFunction = plugins.FanoutHookFunction<'extension_specs', ''>
-export type FunctionSpecsFunction = plugins.FanoutHookFunction<'function_specs', ''>
+export type ExtensionSpecsFunction = plugins.FanoutHookFunction<'extension_specs', '', HookReturnPerExtensionPlugin>
+export type FunctionSpecsFunction = plugins.FanoutHookFunction<'function_specs', '', HookReturnPerExtensionPlugin>
 
-export const defineExtensionSpecs = <TConfiguration extends BaseConfigContents = BaseConfigContents>(
-  input: CreateExtensionSpecType<TConfiguration>[],
+export const registerUIExtensionSpecs = <TConfiguration extends BaseConfigContents = BaseConfigContents>(
+  input: UIExtensionSpec<TConfiguration>[],
 ): ExtensionSpecsFunction => {
-  return async () => input.map((elem) => createUIExtensionSpec(elem))
+  return async () => input as UIExtensionSpec[]
 }
 
-export const defineFunctionSpecs = <TConfiguration extends FunctionConfigType = FunctionConfigType>(
-  input: CreateFunctionSpecType<TConfiguration>[],
-): FunctionSpecsFunction => {
-  return async () => input.map((elem) => createFunctionSpec(elem))
+export const registerFunctionSpecs = (input: FunctionSpec[]): FunctionSpecsFunction => {
+  return async () => input
 }
 
 export async function getListOfExtensionSpecs(config: Config): Promise<UIExtensionSpec[]> {

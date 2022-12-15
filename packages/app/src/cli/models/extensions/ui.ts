@@ -14,7 +14,6 @@ export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = Bas
   externalName: string
   partnersWebIdentifier: string
   surface: string
-  showInCLIHelp: boolean
   singleEntryPath: boolean
   registrationLimit: number
   supportedFlavors: {name: string; value: string}[]
@@ -28,7 +27,6 @@ export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = Bas
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
   validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (config: TConfiguration) => Promise<void>
-  resourceUrl?: (config: TConfiguration) => string
   category: () => ExtensionCategory
   previewMessage?: (
     host: string,
@@ -180,10 +178,35 @@ export function uiSpecForType(type: string, specs: UIExtensionSpec[]): UIExtensi
  * Partial ExtensionSpec type used when creating a new ExtensionSpec, the only mandatory field is the identifier
  */
 export interface CreateExtensionSpecType<TConfiguration extends BaseConfigContents = BaseConfigContents>
-  extends Partial<UIExtensionSpec<TConfiguration>> {
+  extends Partial<Omit<UIExtensionSpec<TConfiguration>, 'registrationLimit' | 'category' | 'surface'>> {
   identifier: string
 }
 
+/**
+ * Create a new UI extension spec.
+ *
+ * Everything but "identifer" is optional.
+ *
+ * ```ts
+ * identifier: string // unique identifier for the extension type
+ * externalIdentifier: string // identifier used externally (default: same as "identifier")
+ * partnersWebIdentifier: string // identifier used in the partners web UI (default: same as "identifier")
+ * singleEntryPath: boolean // whether the extension has a single entry point (default: true)
+ * supportedFlavors: {name: string; value: string}[] // list of supported flavors (default: 'javascript', 'typescript', 'typescript-react', 'javascript-react')
+ * helpURL?: string // url to the help page for the extension, shown after generating the extension
+ * dependency?: {name: string; version: string} // dependency to be added to the extension's package.json
+ * templatePath?: string // path to the template to be used when generating the extension
+ * graphQLType?: string // GraphQL type of the extension (default: same as "identifier")
+ * schema?: ZodSchemaType<TConfiguration> // schema used to validate the extension's configuration (default: BaseUIExtensionSchema)
+ * getBundleExtensionStdinContent?: (configuration: TConfiguration) => string // function to generate the content of the stdin file used to bundle the extension
+ * validate?: (configuration: TConfiguration, directory: string) => Promise<Result<undefined, Error>> // function to validate the extension's configuration
+ * preDeployValidation?: (configuration: TConfiguration) => Promise<void> // function to validate the extension's configuration before deploying it
+ * deployConfig?: (configuration: TConfiguration, directory: string) => Promise<{[key: string]: unknown}> // function to generate the extensions configuration payload to be deployed
+ * previewMessage?: (url: string, devUUID: string, configuration: TConfiguration, storeFqdn: string) => string | undefined // function to generate the preview message shown to the user during `dev`
+ * shouldFetchCartUrl?: (configuration: TConfiguration) => boolean // function to determine if the extension should fetch the cart url
+ * hasExtensionPointTarget?: (configuration: TConfiguration, target: string) => boolean // function to determine if the extension has a given extension point target
+ * ```
+ */
 export function createUIExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(
   spec: CreateExtensionSpecType<TConfiguration>,
 ): UIExtensionSpec<TConfiguration> {
@@ -192,7 +215,6 @@ export function createUIExtensionSpec<TConfiguration extends BaseConfigContents 
     externalName: spec.identifier,
     surface: 'unknown',
     partnersWebIdentifier: spec.identifier,
-    showInCLIHelp: true,
     singleEntryPath: true,
     gated: false,
     schema: BaseUIExtensionSchema as ZodSchemaType<TConfiguration>,
