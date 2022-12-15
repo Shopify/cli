@@ -1,7 +1,6 @@
 import {appFlags} from '../../flags.js'
 import {AppInterface} from '../../models/app/app.js'
 import dev from '../../services/dev.js'
-import {selectEnvironmentPrompt} from '../../prompts/dev.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import Command from '../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
@@ -98,36 +97,15 @@ export default class Dev extends Command {
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const app: AppInterface = await loadApp(directory)
     const commandConfig = this.config
-    let envApiKey: string | undefined
-    let envStore: string | undefined
-    let orgId: string | undefined
-    let reset = flags.reset
+    const reset = flags.reset
     let noUpdate: boolean | undefined
     if (flags['no-update']) noUpdate = flags['no-update']
 
-    const envList = Object.keys(app.environments)
-    if (envList.length === 0) {
-      reset = true
-    } else if (!reset) {
-      if (!environment) environment = await selectEnvironmentPrompt(envList)
-      if (environment) {
-        envApiKey = app.environments[environment]?.apiKey
-        envStore = app.environments[environment]?.store
-        orgId = app.environments[environment]?.orgId
-        const envNoUpdate = app.environments[environment]?.noUpdate
-        if (typeof envNoUpdate !== 'undefined' && typeof noUpdate === 'undefined') {
-          noUpdate = envNoUpdate
-        }
-      } else {
-        reset = true
-      }
-    }
-
     await dev({
       app,
-      apiKey: flags['api-key'] ?? envApiKey,
-      storeFqdn: flags.store ?? envStore,
-      orgId,
+      apiKey: flags['api-key'],
+      storeFqdn: flags.store,
+      environment,
       reset,
       update: (typeof noUpdate === 'undefined') ? undefined : !noUpdate,
       skipDependenciesInstallation: flags['skip-dependencies-installation'],

@@ -36,6 +36,7 @@ export interface DevEnvironmentOptions {
   orgId?: string
   update?: boolean
   reset?: boolean
+  environment?: string
 }
 
 interface DevEnvironmentOutput {
@@ -123,15 +124,29 @@ export async function ensureDevEnvironment(
   options: DevEnvironmentOptions,
   token: string,
 ): Promise<DevEnvironmentOutput> {
+  options = {...options}
   const prodEnvIdentifiers = await getAppIdentifiers({app: options.app})
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
 
-  const cachedInfo = await getAppDevCachedInfo({
+  let cachedInfo = await getAppDevCachedInfo({
     directory: options.app.directory,
     reset: Boolean(options.reset),
   })
 
-  if (cachedInfo === undefined && !options.reset) {
+  const environment = options.environment ?? cachedInfo?.environment
+
+  if (environment) {
+    output.info(output.content`Using stored settings from the ${output.token.yellow(environment)} environment...`)
+    if (!options.apiKey) options.apiKey = options.app.environments[environment]?.apiKey
+    if (!options.orgId) options.orgId = options.app.environments[environment]?.orgId
+    if (!options.storeFqdn) options.storeFqdn = options.app.environments[environment]?.store
+    const envNoUpdate = options.app.environments[environment]?.noUpdate
+    if (typeof envNoUpdate !== 'undefined' && typeof options.update === 'undefined') {
+      options.update = !envNoUpdate
+    }
+  }
+
+  if (cachedInfo === undefined && !options.reset && !environment) {
     const explanation =
       `\nLooks like this is the first time you're running dev for this project.\n` +
       'Configure your preferences by answering a few questions.\n'
@@ -153,6 +168,7 @@ export async function ensureDevEnvironment(
       directory: options.app.directory,
       storeFqdn: selectedStore.shopDomain,
       orgId,
+      environment,
     })
 
     // If the selected app is the "prod" one, we will use the real extension IDs for `dev`
@@ -192,6 +208,7 @@ export async function ensureDevEnvironment(
     title: selectedApp.title,
     directory: options.app.directory,
     orgId,
+    environment,
   })
 
   // eslint-disable-next-line no-param-reassign
@@ -215,6 +232,7 @@ export async function ensureDevEnvironment(
     appId: selectedApp.apiKey,
     directory: options.app.directory,
     storeFqdn: selectedStore?.shopDomain,
+    environment,
   })
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {

@@ -12,6 +12,7 @@ export interface CachedAppInfo {
   storeFqdn?: string
   updateURLs?: boolean
   tunnelPlugin?: string
+  environment?: string
 }
 
 interface ConfSchema {
@@ -68,6 +69,7 @@ export async function setAppInfo(options: {
   orgId?: string
   updateURLs?: boolean
   tunnelPlugin?: string
+  environment?: string
 }): Promise<void> {
   const store = await cliKitStore()
   store.setAppInfo(options)
@@ -123,6 +125,7 @@ export class CLIKitStore extends Conf<ConfSchema> {
     orgId?: string
     updateURLs?: boolean
     tunnelPlugin?: string
+    environment?: string
   }): void {
     debug(content`Storing app information for directory ${token.path(options.directory)}:${token.json(options)}`)
     const apps = this.get('appInfo') ?? []
@@ -139,6 +142,7 @@ export class CLIKitStore extends Conf<ConfSchema> {
         orgId: options.orgId ?? app.orgId,
         updateURLs: options.updateURLs ?? app.updateURLs,
         tunnelPlugin: options.tunnelPlugin ?? app.tunnelPlugin,
+        environment: options.environment ?? app.environment,
       }
     }
     this.set('appInfo', apps)

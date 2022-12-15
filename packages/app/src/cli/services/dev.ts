@@ -1,5 +1,5 @@
 import {ensureDevEnvironment} from './environment.js'
-import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
+import {generateFrontendURL, generatePartnersURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
 import {outputAppURL, outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
@@ -23,7 +23,7 @@ export interface DevOptions {
   app: AppInterface
   apiKey?: string
   storeFqdn?: string
-  orgId?: string
+  environment?: string
   reset?: boolean
   update?: boolean
   commandConfig: Config
