@@ -18,7 +18,18 @@ export enum WebType {
 export const WebConfigurationSchema = schema.define.object({
   type: schema.define.enum([WebType.Frontend, WebType.Backend]),
   authCallbackPath: schema.define
-    .preprocess((arg) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg), schema.define.string())
+    .union([
+      schema.define.preprocess(
+        (arg) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg),
+        schema.define.string(),
+      ),
+      schema.define
+        .preprocess(
+          (arg) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg),
+          schema.define.string(),
+        )
+        .array(),
+    ])
     .optional(),
   commands: schema.define.object({
     build: schema.define.string().optional(),
