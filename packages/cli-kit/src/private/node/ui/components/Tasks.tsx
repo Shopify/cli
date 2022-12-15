@@ -33,15 +33,17 @@ const Tasks: React.FC<Props> = ({tasks}) => {
 
   return (
     <Box flexDirection="column" marginBottom={1}>
-      {state === 'loading' ? (
-        <TextAnimation>{loadingBar}</TextAnimation>
-      ) : (
-        <Text color={state === 'success' ? 'green' : 'red'}>{loadingBar}</Text>
-      )}
+      <Box marginBottom={1}>
+        {state === 'loading' ? (
+          <TextAnimation speed={0.5}>{loadingBar}</TextAnimation>
+        ) : (
+          <Text color={state === 'success' ? 'green' : 'red'}>{loadingBar}</Text>
+        )}
+      </Box>
       <Text>
-        {state === 'success' && <Text color="green">✓ </Text>}
+        {state === 'success' && <Text>Complete!</Text>}
         {state === 'failure' && <Text color="red">✗ </Text>}
-        <Text>{currentTask.title}</Text>
+        {(state === 'loading' || state === 'failure') && <Text>{currentTask.title} ...</Text>}
       </Text>
     </Box>
   )
