@@ -26,6 +26,7 @@ describe('getRedirectURL()', () => {
   it('returns a URL with a dev param if the surface is checkout and the etension has a resourceURL', async () => {
     const extension = await testUIExtension({
       configuration: {type: 'checkout_ui_extension', name: 'test', metafields: []},
+      surface: 'checkout',
     })
 
     const options = {

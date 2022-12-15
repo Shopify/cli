@@ -50,14 +50,15 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
   const entrySourceFilePath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
 
   const specifications = await allLocalUISpecifications()
-  const specification = await uiSpecForType(configuration.type, specifications)
+  const specification = (await uiSpecForType(configuration.type, specifications))!
+  specification.surface = uiExtension.surface ?? 'unknown'
 
   const extension = new UIExtensionInstance({
     configuration,
     configurationPath,
     entryPath: entrySourceFilePath,
     directory,
-    specification: specification!,
+    specification,
     remoteSpecification: undefined,
   })
   extension.devUUID = uiExtension?.devUUID ?? 'test-ui-extension-uuid'

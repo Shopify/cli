@@ -25,6 +25,7 @@ describe('getUIExtensionPayload', () => {
       const uiExtension = await testUIExtension({
         outputBundlePath,
         directory: tmpDir,
+        surface: 'checkout',
         configuration: {
           name: 'test-ui-extension',
           type: 'checkout_ui_extension',

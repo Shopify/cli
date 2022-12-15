@@ -302,7 +302,7 @@ describe('getExtensionPayloadMiddleware()', () => {
   })
 
   describe('if the accept header starts with text/html', () => {
-    it('returns html if the extension surface is post_purchase', async () => {
+    it('returns html if the extension type is checkout_post_purchase', async () => {
       vi.spyOn(http, 'send')
       vi.spyOn(templates, 'getHTML').mockResolvedValue('mock html')
       vi.spyOn(utilities, 'getExtensionUrl').mockReturnValue('http://www.mock.com/extension/url')
@@ -343,7 +343,7 @@ describe('getExtensionPayloadMiddleware()', () => {
           url: 'http://www.mock.com/extension/url',
         },
         template: 'index',
-        extensionSurface: 'post_purchase',
+        extensionSurface: 'unknown',
       })
 
       expect(http.send).toHaveBeenCalledWith(response.event, 'mock html')
