@@ -43,9 +43,9 @@ export default function Prompt<T>({
       ) : (
         <SelectInput
           items={choices}
-          onSelect={(item: SelectItem<T>) => {
-            setAnswer(item)
-            onChoose(item)
+          onSelect={(value: T) => {
+            setAnswer(choices.find((choice) => choice.value === value) ?? null)
+            onChoose(value)
           }}
         />
       )}

@@ -1,12 +1,11 @@
 import ConcurrentOutput from '../../private/node/ui/components/ConcurrentOutput.js'
 import {consoleError, OutputProcess} from '../../output.js'
-import {render, renderOnce} from '../../private/node/ui.js'
+import {prompt, render, renderOnce} from '../../private/node/ui.js'
 import {Fatal} from '../../error.js'
 import {alert} from '../../private/node/ui/alert.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
 import Prompt, {Props as PromptProps} from '../../private/node/ui/components/Prompt.js'
-import {Item as SelectItem} from '../../private/node/ui/components/SelectInput.js'
 import React from 'react'
 import {AbortController} from 'abort-controller'
 import {RenderOptions} from 'ink'
@@ -202,13 +201,12 @@ export function renderFatalError(error: Fatal) {
 
  *     navigate with arrows, enter to select
  */
-export function renderPrompt<T>(options: PromptProps<T>) {
-  return render(<Prompt {...options} />, {exitOnCtrlC: false})
+export async function renderPrompt<T>(options: Omit<PromptProps<T>, 'onChoose'>) {
+  return prompt(options)
 }
 
 interface ConfirmationProps {
   question: string
-  onChoose?: (choice: SelectItem<boolean>) => void
   infoTable?: PromptProps<boolean>['infoTable']
 }
 
@@ -221,7 +219,7 @@ interface ConfirmationProps {
  *
  * navigate with arrows, enter to select
  */
-export function renderConfirmation({question, infoTable, onChoose = () => {}}: ConfirmationProps) {
+export async function renderConfirmation({question, infoTable}: ConfirmationProps) {
   const choices = [
     {
       label: 'Yes, confirm',
@@ -235,7 +233,5 @@ export function renderConfirmation({question, infoTable, onChoose = () => {}}: C
     },
   ]
 
-  return render(<Prompt message={question} choices={choices} onChoose={onChoose} infoTable={infoTable} />, {
-    exitOnCtrlC: false,
-  })
+  return prompt({message: question, choices, infoTable})
 }

@@ -196,8 +196,7 @@ export async function kitchenSink() {
       {label: 'ninth', value: 'ninth', group: 'Merchant Admin'},
       {label: 'tenth', value: 'tenth'},
     ],
-    infoTable: {Add: ['new-ext'], Remove: ['integrated-demand-ext', 'order-discount']},
-    onChoose: () => {},
+    infoTable: {add: ['new-ext'], remove: ['integrated-demand-ext', 'order-discount']},
   })
 
   await renderConfirmation({

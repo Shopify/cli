@@ -1,5 +1,5 @@
 import Prompt from './Prompt.js'
-import {waitForChange, waitForInputsToBeReady} from '../../../../testing/ui.js'
+import {sendInput, waitForInputsToBeReady} from '../../../../testing/ui.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {render} from 'ink-testing-library'
@@ -29,16 +29,14 @@ describe('Prompt', async () => {
     )
 
     await waitForInputsToBeReady()
-    await waitForChange(() => renderInstance.stdin.write(ARROW_DOWN), renderInstance.lastFrame)
-    await waitForChange(
-      () => renderInstance.stdin.write(ENTER),
-      () => onEnter.mock.calls.length,
-    )
+    await sendInput(renderInstance, ARROW_DOWN)
+    await sendInput(renderInstance, ENTER)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
       [36m✔[39m  [36msecond[39m"
     `)
+    expect(onEnter).toHaveBeenCalledWith(items[1]!.value)
   })
 
   test('supports an info table', async () => {

@@ -1,10 +1,11 @@
+import {isTruthy} from '../../../../environment/utilities.js'
 import React, {useState, useEffect, useRef, useCallback} from 'react'
 import {Box, Key, Text, useApp, useInput} from 'ink'
 import {groupBy, isEqual, mapValues} from 'lodash-es'
 
 export interface Props<T> {
   items: Item<T>[]
-  onSelect: (item: Item<T>) => void
+  onSelect: (value: T) => void
 }
 
 export interface Item<T> {
@@ -37,6 +38,7 @@ export default function SelectInput<T>({items, onSelect}: React.PropsWithChildre
 
   const previousItems = useRef<Item<T>[]>(items)
 
+  // reset index when items change
   useEffect(() => {
     if (
       !isEqual(
@@ -76,10 +78,10 @@ export default function SelectInput<T>({items, onSelect}: React.PropsWithChildre
       } else if (key.downArrow) {
         setSelectedIndex(selectedIndex === items.length - 1 ? 0 : selectedIndex + 1)
       } else if (key.return) {
-        onSelect(items[selectedIndex]!)
+        onSelect(items[selectedIndex]!.value)
         // This is a workaround needed because Ink behaves differently in CI when
         // unmounting. See https://github.com/vadimdemedes/ink/pull/266
-        if (process.env.CI !== 'true') unmountInk()
+        if (!isTruthy(process.env.CI)) unmountInk()
       }
     },
     [selectedIndex, items, onSelect],

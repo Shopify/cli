@@ -1,5 +1,7 @@
+import {render} from 'ink-testing-library'
+
 export function waitForInputsToBeReady() {
-  return new Promise((resolve) => setTimeout(resolve, 200))
+  return new Promise((resolve) => setTimeout(resolve, 100))
 }
 
 export function waitForChange(func: () => void, getChangingValue: () => string | number | undefined) {
@@ -15,4 +17,8 @@ export function waitForChange(func: () => void, getChangingValue: () => string |
       }
     }, 10)
   })
+}
+
+export async function sendInput(renderInstance: ReturnType<typeof render>, ...inputs: string[]) {
+  await waitForChange(() => inputs.forEach((input) => renderInstance.stdin.write(input)), renderInstance.lastFrame)
 }
