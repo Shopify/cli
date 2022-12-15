@@ -34,8 +34,8 @@
     "type-check": "nx type-check"
   },
   "dependencies": {
-    "@oclif/core": "1.9.2",
     "@shopify/cli-kit": "3.28.0",
+    "@oclif/core": "1.21.0",
     "@shopify/ngrok": "4.3.2"
   },
   "eslintConfig": {

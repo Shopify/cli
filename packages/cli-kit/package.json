@@ -66,7 +66,7 @@
   "dependencies": {
     "@bugsnag/js": "7.16.7",
     "@iarna/toml": "2.2.5",
-    "@oclif/core": "1.9.2",
+    "@oclif/core": "1.21.0",
     "@types/archiver": "5.3.1",
     "abort-controller": "3.0.0",
     "archiver": "5.3.1",
