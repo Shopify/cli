@@ -184,7 +184,7 @@ export interface CreateExtensionSpecType<TConfiguration extends BaseConfigConten
   identifier: string
 }
 
-export function createExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(
+export function createUIExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(
   spec: CreateExtensionSpecType<TConfiguration>,
 ): UIExtensionSpec<TConfiguration> {
   const defaults = {

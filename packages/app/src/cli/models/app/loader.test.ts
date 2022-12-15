@@ -245,7 +245,7 @@ scopes = "read_products"
     await file.move(webDirectory, path.join(tmpDir, 'we_check_everywhere'))
 
     // When
-    const app = await load(tmpDir)
+    const app = await load(tmpDir, oclifTestConfig)
 
     // Then
     expect(app.webs.length).toBe(1)
@@ -261,7 +261,7 @@ scopes = "read_products"
     await file.move(webDirectory, path.join(tmpDir, 'must_be_here'))
 
     // When
-    const app = await load(tmpDir)
+    const app = await load(tmpDir, oclifTestConfig)
 
     // Then
     expect(app.webs.length).toBe(1)
@@ -276,7 +276,7 @@ scopes = "read_products"
     await file.move(webDirectory, path.join(tmpDir, 'cannot_be_here'))
 
     // When
-    const app = await load(tmpDir)
+    const app = await load(tmpDir, oclifTestConfig)
 
     // Then
     expect(app.webs.length).toBe(0)

@@ -1,4 +1,4 @@
-import {createExtensionSpec, CreateExtensionSpecType, UIExtensionSpec} from '../models/extensions/ui.js'
+import {CreateExtensionSpecType, createUIExtensionSpec, UIExtensionSpec} from '../models/extensions/ui.js'
 import {
   createFunctionSpec,
   CreateFunctionSpecType,
@@ -36,7 +36,7 @@ export type FunctionSpecsFunction = plugins.FanoutHookFunction<'function_specs',
 export const defineExtensionSpecs = <TConfiguration extends BaseConfigContents = BaseConfigContents>(
   input: CreateExtensionSpecType<TConfiguration>[],
 ): ExtensionSpecsFunction => {
-  return async () => input.map((elem) => createExtensionSpec(elem))
+  return async () => input.map((elem) => createUIExtensionSpec(elem))
 }
 
 export const defineFunctionSpecs = <TConfiguration extends FunctionConfigType = FunctionConfigType>(

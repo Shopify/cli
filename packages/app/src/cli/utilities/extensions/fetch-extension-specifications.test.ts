@@ -1,6 +1,6 @@
 import {fetchExtensionSpecifications} from './fetch-extension-specifications.js'
 import {testRemoteSpecifications} from '../../models/app/app.test-data.js'
-import {allLocalExtensionSpecs} from '../../models/extensions/specifications.js'
+import {allLocalUISpecifications} from '../../models/extensions/specifications.js'
 import {describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
 
@@ -21,7 +21,7 @@ describe('fetchExtensionSpecifications', () => {
   it('returns the filtered and mapped results', async () => {
     // Given
     vi.mocked(api.partners.request).mockResolvedValue({extensionSpecifications: testRemoteSpecifications})
-    const local = await allLocalExtensionSpecs()
+    const local = await allLocalUISpecifications()
 
     // When
     const got = await fetchExtensionSpecifications('token', 'apiKey', local)
