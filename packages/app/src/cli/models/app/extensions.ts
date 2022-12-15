@@ -49,7 +49,7 @@ export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigCo
   entrySourceFilePath?: string
   outputBundlePath: string
   devUUID: string
-  surface: string | null
+  surface: string
   dependency?: DependencyVersion
   getBundleExtensionStdinContent(): string
   validate(): Promise<Result<unknown, string>>
