@@ -1,12 +1,13 @@
 import ConcurrentOutput from '../../private/node/ui/components/ConcurrentOutput.js'
 import {consoleError, OutputProcess} from '../../output.js'
-import {prompt, render, renderOnce} from '../../private/node/ui.js'
+import {selectPrompt, render, renderOnce} from '../../private/node/ui.js'
 import {Fatal} from '../../error.js'
 import {alert} from '../../private/node/ui/alert.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
-import {Props as PromptProps} from '../../private/node/ui/components/Prompt.js'
+import {Props as SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
 import Tasks, {Task} from '../../private/node/ui/components/Tasks.js'
+import {TextPrompt, Props as TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
 import React from 'react'
 import {AbortController} from 'abort-controller'
 import {RenderOptions} from 'ink'
@@ -202,13 +203,13 @@ export function renderFatalError(error: Fatal) {
 
  *     navigate with arrows, enter to select
  */
-export async function renderPrompt<T>(options: Omit<PromptProps<T>, 'onChoose'>) {
-  return prompt(options)
+export async function renderSelectPrompt<T>(options: Omit<SelectPromptProps<T>, 'onChoose'>) {
+  return selectPrompt(options)
 }
 
 interface ConfirmationProps {
   question: string
-  infoTable?: PromptProps<boolean>['infoTable']
+  infoTable?: SelectPromptProps<boolean>['infoTable']
 }
 
 /**
@@ -234,7 +235,7 @@ export async function renderConfirmation({question, infoTable}: ConfirmationProp
     },
   ]
 
-  return prompt({message: question, choices, infoTable})
+  return selectPrompt({message: question, choices, infoTable})
 }
 
 /**
@@ -242,4 +243,8 @@ export async function renderConfirmation({question, infoTable}: ConfirmationProp
  */
 export function renderTasks(tasks: Task[]) {
   return render(<Tasks tasks={tasks} />)
+}
+
+export function renderTextPrompt(props: TextPromptProps) {
+  return render(<TextPrompt {...props} />, {exitOnCtrlC: false})
 }

@@ -4,9 +4,10 @@ import {
   renderConfirmation,
   renderFatalError,
   renderInfo,
-  renderPrompt,
+  renderSelectPrompt,
   renderSuccess,
   renderTasks,
+  renderTextPrompt,
   renderWarning,
 } from '@shopify/cli-kit/node/ui'
 import {Signal} from '@shopify/cli-kit/src/abort'
@@ -149,7 +150,7 @@ export async function kitchenSink() {
 
   renderFatalError(new error.Abort('No Organization found', undefined, nextSteps))
 
-  await renderPrompt({
+  await renderSelectPrompt({
     message: 'Associate your project with the org Castile Ventures?',
     choices: [
       {label: 'first', value: 'first', key: 'f'},
@@ -168,6 +169,12 @@ export async function kitchenSink() {
 
   await renderConfirmation({
     question: 'Push the following changes to your Partners Dashboard?',
+  })
+
+  await renderTextPrompt({
+    message: 'App project name (can be changed later)',
+    placeholder: 'expansive commerce app',
+    onSubmit: () => {},
   })
 
   // renderConcurrent at the end

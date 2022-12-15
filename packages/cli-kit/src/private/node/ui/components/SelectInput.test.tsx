@@ -1,15 +1,16 @@
 import SelectInput from './SelectInput.js'
-import {waitForInputsToBeReady, waitForChange, sendInput} from '../../../../testing/ui.js'
+import {waitForInputsToBeReady, sendInput} from '../../../../testing/ui.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {render} from 'ink-testing-library'
 
 const ARROW_UP = '\u001B[A'
 const ARROW_DOWN = '\u001B[B'
-const ENTER = '\r'
 
 describe('SelectInput', async () => {
   test('move up with up arrow key', async () => {
+    const onChange = vi.fn()
+
     const items = [
       {
         label: 'First',
@@ -25,7 +26,7 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onSelect={() => {}} />)
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
 
     await waitForInputsToBeReady()
     await sendInput(renderInstance, ARROW_UP)
@@ -37,9 +38,12 @@ describe('SelectInput', async () => {
 
          [2mnavigate with arrows, enter to select[22m"
     `)
+    expect(onChange).toHaveBeenCalledWith(items[2]!)
   })
 
   test('move down with down arrow key', async () => {
+    const onChange = vi.fn()
+
     const items = [
       {
         label: 'First',
@@ -55,7 +59,7 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onSelect={() => {}} />)
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
 
     await waitForInputsToBeReady()
     await sendInput(renderInstance, ARROW_DOWN)
@@ -67,39 +71,11 @@ describe('SelectInput', async () => {
 
          [2mnavigate with arrows, enter to select[22m"
     `)
-  })
-
-  test('select item with enter key', async () => {
-    const onEnter = vi.fn()
-
-    const items = [
-      {
-        label: 'First',
-        value: 'first',
-      },
-      {
-        label: 'Second',
-        value: 'second',
-      },
-      {
-        label: 'Third',
-        value: 'third',
-      },
-    ]
-
-    const renderInstance = render(<SelectInput items={items} onSelect={onEnter} />)
-
-    await waitForInputsToBeReady()
-    await sendInput(renderInstance, ARROW_DOWN)
-    await waitForChange(
-      () => renderInstance.stdin.write(ENTER),
-      () => onEnter.mock.calls.length,
-    )
-
-    expect(onEnter).toHaveBeenCalledWith(items[1]!.value)
+    expect(onChange).toHaveBeenCalledWith(items[1]!)
   })
 
   test('handles keys with multiple digits', async () => {
+    const onChange = vi.fn()
     const items = [
       {
         label: 'First',
@@ -116,7 +92,7 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onSelect={() => {}} />)
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
 
     await waitForInputsToBeReady()
     await sendInput(renderInstance, '1', '0')
@@ -128,9 +104,11 @@ describe('SelectInput', async () => {
 
          [2mnavigate with arrows, enter to select[22m"
     `)
+    expect(onChange).toHaveBeenCalledWith(items[2]!)
   })
 
   test('handles custom keys', async () => {
+    const onChange = vi.fn()
     const items = [
       {
         label: 'First',
@@ -147,7 +125,7 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onSelect={() => {}} />)
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
 
     await waitForInputsToBeReady()
     await sendInput(renderInstance, 't')
@@ -159,9 +137,11 @@ describe('SelectInput', async () => {
 
          [2mnavigate with arrows, enter to select[22m"
     `)
+    expect(onChange).toHaveBeenCalledWith(items[2]!)
   })
 
   test('rotate after reaching the end of the list', async () => {
+    const onChange = vi.fn()
     const items = [
       {
         label: 'First',
@@ -177,7 +157,7 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onSelect={() => {}} />)
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
 
     await waitForInputsToBeReady()
     await sendInput(renderInstance, ARROW_DOWN)
@@ -191,6 +171,7 @@ describe('SelectInput', async () => {
 
          [2mnavigate with arrows, enter to select[22m"
     `)
+    expect(onChange).toHaveBeenCalledWith(items[0]!)
   })
 
   test('support groups', async () => {
@@ -207,7 +188,7 @@ describe('SelectInput', async () => {
       {label: 'tenth', value: 'tenth'},
     ]
 
-    const renderInstance = render(<SelectInput items={items} onSelect={() => {}} />)
+    const renderInstance = render(<SelectInput items={items} onChange={() => {}} />)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "[36m>[39m  [36m(f) first[39m

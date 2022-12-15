@@ -1,8 +1,8 @@
 import {isUnitTest} from '../../environment/local.js'
 import {collectLog, consoleLog, Logger, LogLevel, outputWhereAppropriate} from '../../output.js'
-import Prompt, {Props as PromptProps} from '../../private/node/ui/components/Prompt.js'
+import SelectPrompt, {Props as SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
 import React, {ReactElement} from 'react'
-import {render as inkRender, RenderOptions} from 'ink'
+import {Key, render as inkRender, RenderOptions} from 'ink'
 import {EventEmitter} from 'events'
 
 export function renderOnce(element: JSX.Element, logLevel: LogLevel = 'info', logger: Logger = consoleLog) {
@@ -65,7 +65,7 @@ export const renderString = (element: ReactElement): Instance => {
   }
 }
 
-export async function prompt<T>(options: Omit<PromptProps<T>, 'onChoose'>) {
+export async function selectPrompt<T>(options: Omit<SelectPromptProps<T>, 'onChoose'>) {
   let onChooseResolve: (choice: T) => void = () => {}
 
   const onChoosePromise = new Promise<T>((resolve) => {
@@ -77,7 +77,14 @@ export async function prompt<T>(options: Omit<PromptProps<T>, 'onChoose'>) {
     onChoose: onChooseResolve,
   }
 
-  await render(<Prompt {...props} />, {exitOnCtrlC: false})
+  await render(<SelectPrompt {...props} />, {exitOnCtrlC: false})
 
   return onChoosePromise
+}
+
+export function handleCtrlC(input: string, key: Key) {
+  if (input === 'c' && key.ctrl) {
+    // Exceptions being throw in hooks aren't being caught by our errorHandler.
+    process.exit(1)
+  }
 }
