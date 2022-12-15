@@ -12,7 +12,7 @@ import {
 import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
 import {createExtension, ExtensionRegistration} from './dev/create-extension.js'
-import {envNamePrompt, reuseDevConfigPrompt, selectOrganizationPrompt, storeAsEnvPrompt, updateURLsSimplePrompt} from '../prompts/dev.js'
+import {envNamePrompt, reuseDevConfigPrompt, selectEnvironmentPrompt, selectOrganizationPrompt, storeAsEnvPrompt, updateURLsSimplePrompt} from '../prompts/dev.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -133,7 +133,15 @@ export async function ensureDevEnvironment(
     reset: Boolean(options.reset),
   })
 
-  const environment = options.environment ?? cachedInfo?.environment
+  let environment = options.environment ?? cachedInfo?.environment
+  const envList = Object.keys(options.app.environments)
+  if (!environment && !options.reset) {
+    if (envList.length === 1) {
+      environment = envList[0]
+    } else if (envList.length > 1) {
+      environment = await selectEnvironmentPrompt(envList)
+    }
+  }
 
   if (environment) {
     output.info(output.content`Using stored settings from the ${output.token.yellow(environment)} environment...`)

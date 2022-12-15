@@ -4,7 +4,7 @@ import {output, ui, string} from '@shopify/cli-kit'
 import {debounce} from 'lodash-es'
 
 export async function selectEnvironmentPrompt(environments: string[]): Promise<string | undefined> {
-  const envList = [...environments.map((env, index) => ({name: env, value: index.toString()})), {name: "Create a new environment", value: "new"}]
+  const envList = [...environments.map((env, index) => ({name: env, value: index.toString()})), {name: "Don't use an existing environment", value: "none"}]
   const choice = await ui.prompt([
     {
       type: 'autocomplete',
@@ -13,7 +13,7 @@ export async function selectEnvironmentPrompt(environments: string[]): Promise<s
       choices: envList,
     },
   ])
-  return choice.index === "new" ? undefined : environments[parseInt(choice.index)]
+  return choice.index === "none" ? undefined : environments[parseInt(choice.index)]
 }
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
