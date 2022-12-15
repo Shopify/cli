@@ -1,15 +1,17 @@
 // eslint-disable-next-line @shopify/strict-component-boundaries
 import {ExtensionRow} from './components/ExtensionRow'
-import en from './translations/en.json'
 import {Extensions} from './Extensions.js'
+// eslint-disable-next-line @shopify/strict-component-boundaries
+import {QRCodeModal} from './components/QRCodeModal'
 import React from 'react'
 import {ExtensionServerClient} from '@shopify/ui-extensions-server-kit'
 import {mockExtension} from '@shopify/ui-extensions-server-kit/testing'
 import {render, withProviders} from '@shopify/ui-extensions-test-utils'
 import {DefaultProviders} from 'tests/DefaultProviders'
-import {mockI18n} from 'tests/mock-i18n'
 
-const i18n = mockI18n(en)
+vi.mock('./components/QRCodeModal', () => ({
+  QRCodeModal: () => null,
+}))
 
 describe('Extensions', () => {
   let client: ExtensionServerClient
@@ -80,5 +82,35 @@ describe('Extensions', () => {
         data: {type: 'unfocus'},
       }),
     )
+  })
+
+  test('Shows and hides a <QRCodeModal/>.  Hidden by default', async () => {
+    const extension1 = mockExtension({focused: true} as any)
+    const extension2 = mockExtension({focused: true} as any)
+    const container = render(<Extensions />, withProviders(DefaultProviders), {
+      client,
+      state: {extensions: [extension1, extension2], store: 'shop1.myshopify.io'},
+    })
+
+    expect(container).toContainReactComponent(QRCodeModal, {
+      open: false,
+    })
+
+    container.act(() => {
+      container.find(ExtensionRow, {extension: extension1})?.trigger('onShowMobileQRCode', extension1)
+    })
+
+    expect(container).toContainReactComponent(QRCodeModal, {
+      open: true,
+      extension: extension1,
+    })
+
+    container.act(() => {
+      container.find(QRCodeModal)?.trigger('onClose')
+    })
+
+    expect(container).toContainReactComponent(QRCodeModal, {
+      open: false,
+    })
   })
 })
