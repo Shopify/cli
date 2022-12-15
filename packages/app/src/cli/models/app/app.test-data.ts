@@ -1,8 +1,10 @@
 import {App, AppInterface} from './app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
-import {ExtensionInstance, extensionSpecForType} from '../extensions/extensions.js'
+import {UIExtensionInstance, uiSpecForType} from '../extensions/ui.js'
 import {FunctionInstance, functionSpecForType} from '../extensions/functions.js'
-import {allLocalExtensionSpecs, allLocalFunctionSpecs} from '../extensions/specifications.js'
+import {ThemeExtensionInstance} from '../extensions/theme.js'
+import themeSpec from '../extensions/theme-specifications/theme.js'
+import {allLocalFunctionSpecifications, allLocalUISpecifications} from '../extensions/specifications.js'
 import {api} from '@shopify/cli-kit'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
@@ -47,10 +49,10 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
   const configurationPath = uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`
   const entrySourceFilePath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
 
-  const specifications = await allLocalExtensionSpecs()
-  const specification = extensionSpecForType(configuration.type, specifications)
+  const specifications = await allLocalUISpecifications()
+  const specification = await uiSpecForType(configuration.type, specifications)
 
-  const extension = new ExtensionInstance({
+  const extension = new UIExtensionInstance({
     configuration,
     configurationPath,
     entryPath: entrySourceFilePath,
@@ -65,20 +67,15 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
 export async function testThemeExtensions(): Promise<ThemeExtension> {
   const configuration = {
     name: 'theme extension name',
-    type: 'theme',
-    metafields: [],
+    type: 'theme' as const,
   }
 
-  const specifications = await allLocalExtensionSpecs()
-  const specification = extensionSpecForType(configuration.type, specifications)
-
-  return new ExtensionInstance({
+  return new ThemeExtensionInstance({
     configuration,
     configurationPath: '',
-    entryPath: '',
     directory: './my-extension',
-    specification: specification!,
     remoteSpecification: undefined,
+    specification: themeSpec,
   })
 }
 
@@ -94,7 +91,7 @@ export async function testFunctionExtension(): Promise<FunctionExtension> {
     configurationUi: true,
   }
 
-  const specifications = await allLocalFunctionSpecs()
+  const specifications = await allLocalFunctionSpecifications()
   const specification = functionSpecForType(configuration.type, specifications)
 
   return new FunctionInstance({

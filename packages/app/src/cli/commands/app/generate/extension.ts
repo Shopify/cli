@@ -7,8 +7,12 @@ import metadata from '../../../metadata.js'
 import Command from '../../../utilities/app-command.js'
 import {ensureGenerateEnvironment} from '../../../services/environment.js'
 import {fetchExtensionSpecifications} from '../../../utilities/extensions/fetch-extension-specifications.js'
-import {allExtensionSpecifications, allFunctionSpecifications} from '../../../models/extensions/specifications.js'
 import {GenericSpecification} from '../../../models/app/extensions.js'
+import {
+  allFunctionSpecifications,
+  allThemeSpecifications,
+  allUIExtensionSpecifications,
+} from '../../../models/extensions/specifications.js'
 import {output, path, cli, error, environment, session} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
@@ -78,8 +82,9 @@ export default class AppGenerateExtension extends Command {
     const isShopify = await environment.local.isShopify()
     const token = await session.ensureAuthenticatedPartners()
     const apiKey = await ensureGenerateEnvironment({apiKey: flags['api-key'], directory, reset: flags.reset, token})
-    const localSpecs = await allExtensionSpecifications(this.config)
-    const extensionsSpecs = await fetchExtensionSpecifications(token, apiKey, localSpecs)
+    const localUISpecs = await allUIExtensionSpecifications(this.config)
+    const themeSpecs = await allThemeSpecifications()
+    const extensionsSpecs = await fetchExtensionSpecifications(token, apiKey, [...localUISpecs, ...themeSpecs])
     const functionSpecs = await (
       await allFunctionSpecifications(this.config)
     ).filter((spec) => !spec.gated || isShopify)
@@ -144,6 +149,7 @@ export default class AppGenerateExtension extends Command {
       extensionFlavor: extensionFlavor as ExtensionFlavor,
       specification: selectedSpecification,
       app,
+      extensionType: selectedSpecification.identifier,
       cloneUrl: flags['clone-url'],
     })
 

@@ -1,10 +1,10 @@
-import {createExtensionSpec} from '../extensions.js'
-import {BaseExtensionSchema} from '../schemas.js'
+import {createUIExtensionSpec} from '../ui.js'
+import {BaseUIExtensionSchema} from '../schemas.js'
 import {schema, output} from '@shopify/cli-kit'
 
 const dependency = {name: '@shopify/customer-account-ui-extensions-react', version: '^0.0.20'}
 
-const CustomerAccountsSchema = BaseExtensionSchema.extend({
+const CustomerAccountsSchema = BaseUIExtensionSchema.extend({
   categories: schema.define.array(schema.define.string()).optional(),
   extensionPoints: schema.define.array(schema.define.string()).optional(),
   localization: schema.define.any().optional(),
@@ -27,7 +27,7 @@ const CustomerAccountsSchema = BaseExtensionSchema.extend({
     .optional(),
 })
 
-const spec = createExtensionSpec({
+const spec = createUIExtensionSpec({
   identifier: 'customer_accounts_ui_extension',
   externalIdentifier: 'customer_accounts_ui',
   externalName: 'Customer accounts UI',

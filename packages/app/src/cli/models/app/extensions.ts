@@ -1,5 +1,7 @@
-import {BaseConfigContents, ExtensionSpec} from '../extensions/extensions.js'
-import {FunctionConfigType, FunctionSpec} from '../extensions/functions.js'
+import {FunctionSpec, FunctionConfigType} from '../extensions/functions.js'
+import {ThemeConfigContents, ThemeExtensionSpec} from '../extensions/theme.js'
+import {UIExtensionSpec} from '../extensions/ui.js'
+import {BaseConfigContents} from '../extensions/schemas.js'
 import {output} from '@shopify/cli-kit'
 import {Result} from '@shopify/cli-kit/node/result'
 import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
@@ -37,7 +39,7 @@ export type FunctionExtension<TConfiguration extends FunctionConfigType = Functi
   inputQueryPath: () => string
 }
 
-export type ThemeExtension<TConfiguration extends BaseConfigContents = BaseConfigContents> = Extension & {
+export type ThemeExtension<TConfiguration extends ThemeConfigContents = ThemeConfigContents> = Extension & {
   configuration: TConfiguration
   previewMessage(url: string, storeFqdn: string): output.TokenizedString | undefined
 }
@@ -58,11 +60,11 @@ export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigCo
   hasExtensionPointTarget(target: string): boolean
 }
 
-export function isUIExtension(spec: GenericSpecification): spec is ExtensionSpec {
+export function isUIExtension(spec: GenericSpecification): spec is UIExtensionSpec {
   return spec.category() === 'ui'
 }
 
-export function isThemeExtension(spec: GenericSpecification): spec is ExtensionSpec {
+export function isThemeExtension(spec: GenericSpecification): spec is ThemeExtensionSpec {
   return spec.category() === 'theme'
 }
 

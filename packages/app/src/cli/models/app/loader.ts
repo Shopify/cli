@@ -2,10 +2,15 @@ import {UIExtension, ThemeExtension, FunctionExtension, Extension} from './exten
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
-import {ExtensionInstance, ExtensionSpec, extensionSpecForType} from '../extensions/extensions.js'
-import {TypeSchema} from '../extensions/schemas.js'
+import {UIExtensionInstance, UIExtensionSpec, uiSpecForType} from '../extensions/ui.js'
+import {ThemeExtensionInstance, ThemeExtensionSpec, themeSpecForType} from '../extensions/theme.js'
+import {ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
 import {FunctionInstance, FunctionSpec, functionSpecForType} from '../extensions/functions.js'
-import {allExtensionSpecifications, allFunctionSpecifications} from '../extensions/specifications.js'
+import {
+  allFunctionSpecifications,
+  allThemeSpecifications,
+  allUIExtensionSpecifications,
+} from '../extensions/specifications.js'
 import {error, file, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
@@ -74,8 +79,9 @@ class AppLoader {
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
     const dotenv = await this.loadDotEnv()
 
-    const extensionSpecs = await allExtensionSpecifications(this.config)
+    const extensionSpecs = await allUIExtensionSpecifications(this.config)
     const functionSpecs = await allFunctionSpecifications(this.config)
+    const themeSpecs = await allThemeSpecifications()
 
     const {functions, usedCustomLayout: usedCustomLayoutForFunctionExtensions} = await this.loadFunctions(
       configuration.extensionDirectories,
@@ -87,7 +93,7 @@ class AppLoader {
     )
     const {themeExtensions, usedCustomLayout: usedCustomLayoutForThemeExtensions} = await this.loadThemeExtensions(
       configuration.extensionDirectories,
-      extensionSpecs,
+      themeSpecs,
     )
     const packageJSONPath = path.join(this.appDirectory, 'package.json')
     const name = await loadAppName(this.appDirectory)
@@ -245,7 +251,7 @@ class AppLoader {
 
   async loadUIExtensions(
     extensionDirectories?: string[],
-    extensionSpecifications: ExtensionSpec[] = [],
+    extensionSpecifications: UIExtensionSpec[] = [],
   ): Promise<{uiExtensions: UIExtension[]; usedCustomLayout: boolean}> {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.ui}`)
@@ -257,7 +263,7 @@ class AppLoader {
       const fileContent = await file.read(configurationPath)
       const obj = toml.decode(fileContent)
       const {type} = TypeSchema.parse(obj)
-      const specification = await extensionSpecForType(type, extensionSpecifications)
+      const specification = await uiSpecForType(type, extensionSpecifications)
 
       if (!specification) {
         this.abortOrReport(
@@ -294,7 +300,7 @@ class AppLoader {
         }
       }
 
-      const extensionInstance = new ExtensionInstance({
+      const extensionInstance = new UIExtensionInstance({
         configuration,
         configurationPath,
         entryPath: entryPath ?? '',
@@ -350,7 +356,7 @@ class AppLoader {
 
   async loadThemeExtensions(
     extensionDirectories?: string[],
-    extensionSpecifications: ExtensionSpec[] = [],
+    extensionSpecifications: ThemeExtensionSpec[] = [],
   ): Promise<{themeExtensions: ThemeExtension[]; usedCustomLayout: boolean}> {
     const themeConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.theme}`)
@@ -359,31 +365,24 @@ class AppLoader {
 
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
-      const fileContent = await file.read(configurationPath)
-      const obj = toml.decode(fileContent)
-      const {type} = TypeSchema.parse(obj)
-      const specification = await extensionSpecForType(type, extensionSpecifications)
+      const configuration = await this.parseConfigurationFile(ThemeExtensionSchema, configurationPath)
+      const specification = await themeSpecForType('theme')
 
       if (!specification) {
         this.abortOrReport(
-          output.content`Unknown extension type ${output.token.yellow(type)} in ${output.token.path(
-            configurationPath,
-          )}`,
+          output.content`Unknown theme type ${output.token.yellow('theme')} in ${output.token.path(configurationPath)}`,
           undefined,
           configurationPath,
         )
         return undefined
       }
 
-      const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
-
-      return new ExtensionInstance({
+      return new ThemeExtensionInstance({
         configuration,
         configurationPath,
-        entryPath: '',
         directory,
-        specification,
         remoteSpecification: undefined,
+        specification,
       })
     })
 

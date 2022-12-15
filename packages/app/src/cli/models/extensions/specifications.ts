@@ -1,5 +1,6 @@
-import {ExtensionSpec} from './extensions.js'
+import {UIExtensionSpec} from './ui.js'
 import {FunctionSpec} from './functions.js'
+import {ThemeExtensionSpec} from './theme.js'
 import {getListOfExtensionSpecs, getListOfFunctionSpecs} from '../../plugins/extension.js'
 import {os, path} from '@shopify/cli-kit'
 import {memoize} from 'lodash-es'
@@ -9,9 +10,9 @@ import {fileURLToPath} from 'url'
 /**
  * Load all ExtensionSpecs from plugins and local specs
  */
-export async function allExtensionSpecifications(config: Config): Promise<ExtensionSpec[]> {
+export async function allUIExtensionSpecifications(config: Config): Promise<UIExtensionSpec[]> {
   const pluginSpecs = await getListOfExtensionSpecs(config)
-  const localSpecs = await allLocalExtensionSpecs()
+  const localSpecs = await allLocalUISpecifications()
   return [...localSpecs, ...pluginSpecs]
 }
 
@@ -20,21 +21,22 @@ export async function allExtensionSpecifications(config: Config): Promise<Extens
  */
 export async function allFunctionSpecifications(config: Config): Promise<FunctionSpec[]> {
   const pluginSpecs = await getListOfFunctionSpecs(config)
-  const localSpecs = await allLocalFunctionSpecs()
+  const localSpecs = await allLocalFunctionSpecifications()
   return [...localSpecs, ...pluginSpecs]
 }
 
-/**
- * Load only local ExtensionSpecs
- */
-export async function allLocalExtensionSpecs(): Promise<ExtensionSpec[]> {
-  return memLoadSpecs('extension-specifications')
+export async function allThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
+  return memLoadSpecs('theme-specifications')
 }
 
 /**
  * Load only local FunctionSpecs
  */
-export async function allLocalFunctionSpecs(): Promise<FunctionSpec[]> {
+export async function allLocalUISpecifications(): Promise<UIExtensionSpec[]> {
+  return memLoadSpecs('ui-specifications')
+}
+
+export async function allLocalFunctionSpecifications(): Promise<FunctionSpec[]> {
   return memLoadSpecs('function-specifications')
 }
 

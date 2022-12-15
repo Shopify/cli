@@ -2,7 +2,7 @@ import {CustomInput} from './inquirer/input.js'
 import {CustomAutocomplete} from './inquirer/autocomplete.js'
 import {CustomSelect} from './inquirer/select.js'
 import {CustomPassword} from './inquirer/password.js'
-import {Question, QuestionChoiceType} from '../ui.js'
+import {PromptAnswer, Question, QuestionChoiceType} from '../ui.js'
 import inquirer, {Answers, QuestionCollection} from 'inquirer'
 import fuzzy from 'fuzzy'
 
@@ -35,20 +35,22 @@ export function mapper(question: Question): unknown {
       return {
         ...question,
         type: 'custom-select',
-        source: getAutompleteFilterType(),
+        source: getAutocompleteFilterType(),
         choices: question.choices ? groupAndMapChoices(question.choices) : undefined,
       }
-    case 'autocomplete':
+    case 'autocomplete': {
       inquirer.registerPrompt('autocomplete', CustomAutocomplete)
+      const filterType = getAutocompleteFilterType()
       return {
         ...question,
         type: 'autocomplete',
-        source: getAutompleteFilterType(),
+        source: question.source ? question.source(filterType) : filterType,
       }
+    }
   }
 }
 
-function fuzzyFilter(answers: {name: string; value: string}[], input = '') {
+function fuzzyFilter(answers: {name: string; value: string}[], input = ''): Promise<PromptAnswer[]> {
   return new Promise((resolve) => {
     resolve(
       fuzzy
@@ -62,13 +64,17 @@ function fuzzyFilter(answers: {name: string; value: string}[], input = '') {
   })
 }
 
-function containsFilter(answers: {name: string; value: string}[], input = '') {
+function containsFilter(answers: {name: string; value: string}[], input = ''): Promise<PromptAnswer[]> {
   return new Promise((resolve) => {
-    resolve(Object.values(answers).filter((answer) => !answer.name || answer.name.includes(input)))
+    resolve(
+      Object.values(answers).filter(
+        (answer) => !answer.name || answer.name.toLowerCase().includes(input.toLowerCase()),
+      ),
+    )
   })
 }
 
-function getAutompleteFilterType() {
+function getAutocompleteFilterType() {
   return process.env.SHOPIFY_USE_AUTOCOMPLETE_FILTER === 'fuzzy' ? fuzzyFilter : containsFilter
 }
 

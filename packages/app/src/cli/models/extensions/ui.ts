@@ -1,16 +1,13 @@
-import {BaseExtensionSchema, ZodSchemaType} from './schemas.js'
-import {ExtensionCategory, GenericSpecification, ThemeExtension, UIExtension} from '../app/extensions.js'
+import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema} from './schemas.js'
+import {ExtensionCategory, GenericSpecification, UIExtension} from '../app/extensions.js'
 import {blocks, defualtExtensionFlavors} from '../../constants.js'
-import {id, path, schema, api, output, environment, string} from '@shopify/cli-kit'
+import {id, path, api, output, environment, string} from '@shopify/cli-kit'
 import {ok, Result} from '@shopify/cli-kit/node/result'
-
-// Base config type that all config schemas must extend.
-export type BaseConfigContents = schema.define.infer<typeof BaseExtensionSchema>
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
-export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>
+export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>
   extends GenericSpecification {
   identifier: string
   externalIdentifier: string
@@ -55,8 +52,8 @@ export interface ExtensionSpec<TConfiguration extends BaseConfigContents = BaseC
  *
  * This class holds the public interface to interact with extensions
  */
-export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseConfigContents>
-  implements UIExtension<TConfiguration>, ThemeExtension<TConfiguration>
+export class UIExtensionInstance<TConfiguration extends BaseConfigContents = BaseConfigContents>
+  implements UIExtension<TConfiguration>
 {
   entrySourceFilePath: string
   outputBundlePath: string
@@ -67,7 +64,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
   configuration: TConfiguration
   configurationPath: string
 
-  private specification: ExtensionSpec
+  private specification: UIExtensionSpec
   private remoteSpecification?: api.graphql.RemoteSpecification
 
   get graphQLType() {
@@ -107,7 +104,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     configurationPath: string
     entryPath: string
     directory: string
-    specification: ExtensionSpec
+    specification: UIExtensionSpec
     remoteSpecification?: api.graphql.RemoteSpecification
   }) {
     this.configuration = options.configuration
@@ -173,9 +170,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
 }
 
 /**
- * Find the registered spec for a given function type
+ * Find the registered spec for a given extension type
  */
-export function extensionSpecForType(type: string, specs: ExtensionSpec[]): ExtensionSpec | undefined {
+export function uiSpecForType(type: string, specs: UIExtensionSpec[]): UIExtensionSpec | undefined {
   return specs.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
 }
 
@@ -183,13 +180,13 @@ export function extensionSpecForType(type: string, specs: ExtensionSpec[]): Exte
  * Partial ExtensionSpec type used when creating a new ExtensionSpec, the only mandatory field is the identifier
  */
 export interface CreateExtensionSpecType<TConfiguration extends BaseConfigContents = BaseConfigContents>
-  extends Partial<ExtensionSpec<TConfiguration>> {
+  extends Partial<UIExtensionSpec<TConfiguration>> {
   identifier: string
 }
 
 export function createExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(
   spec: CreateExtensionSpecType<TConfiguration>,
-): ExtensionSpec<TConfiguration> {
+): UIExtensionSpec<TConfiguration> {
   const defaults = {
     externalIdentifier: spec.identifier,
     externalName: spec.identifier,
@@ -198,7 +195,7 @@ export function createExtensionSpec<TConfiguration extends BaseConfigContents = 
     showInCLIHelp: true,
     singleEntryPath: true,
     gated: false,
-    schema: BaseExtensionSchema as ZodSchemaType<TConfiguration>,
+    schema: BaseUIExtensionSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     supportedFlavors: defualtExtensionFlavors,
     category: (): ExtensionCategory => (spec.identifier === 'theme' ? 'theme' : 'ui'),

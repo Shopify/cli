@@ -1,15 +1,11 @@
-import {
-  BaseConfigContents,
-  createExtensionSpec,
-  CreateExtensionSpecType,
-  ExtensionSpec,
-} from '../models/extensions/extensions.js'
+import {createExtensionSpec, CreateExtensionSpecType, UIExtensionSpec} from '../models/extensions/ui.js'
 import {
   createFunctionSpec,
   CreateFunctionSpecType,
   FunctionConfigType,
   FunctionSpec,
 } from '../models/extensions/functions.js'
+import {BaseConfigContents} from '../models/extensions/schemas.js'
 import {plugins} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
@@ -23,7 +19,7 @@ interface HookReturnPerExtensionPlugin extends plugins.HookReturnsPerPlugin {
   extension_specs: {
     options: {[key: string]: never}
     pluginReturns: {
-      [pluginName: string]: ExtensionSpec[]
+      [pluginName: string]: UIExtensionSpec[]
     }
   }
   function_specs: {
@@ -49,7 +45,7 @@ export const defineFunctionSpecs = <TConfiguration extends FunctionConfigType = 
   return async () => input.map((elem) => createFunctionSpec(elem))
 }
 
-export async function getListOfExtensionSpecs(config: Config): Promise<ExtensionSpec[]> {
+export async function getListOfExtensionSpecs(config: Config): Promise<UIExtensionSpec[]> {
   const hooks = await plugins.fanoutHooks<HookReturnPerExtensionPlugin, 'extension_specs'>(
     config,
     'extension_specs',
