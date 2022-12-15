@@ -149,6 +149,23 @@ export async function appNamePrompt(currentName: string): Promise<string> {
   return input.name
 }
 
+export async function storeAsEnvPrompt(): Promise<boolean> {
+  const options = [
+    {name: 'Yes', value: 'yes'},
+    {name: 'No', value: 'cancel'},
+  ]
+
+  const choice = await ui.prompt([
+    {
+      type: 'select',
+      name: 'value',
+      message: 'Save your selections for future use as a stored environment?',
+      choices: options,
+    },
+  ])
+  return choice.value === 'yes'
+}
+
 export async function envNamePrompt(defaultName: string = "my-env"): Promise<string> {
   const input = await ui.prompt([
     {

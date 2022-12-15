@@ -12,7 +12,7 @@ import {
 import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
 import {createExtension, ExtensionRegistration} from './dev/create-extension.js'
-import {envNamePrompt, reuseDevConfigPrompt, selectOrganizationPrompt, updateURLsSimplePrompt} from '../prompts/dev.js'
+import {envNamePrompt, reuseDevConfigPrompt, selectOrganizationPrompt, storeAsEnvPrompt, updateURLsSimplePrompt} from '../prompts/dev.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -246,9 +246,11 @@ export async function ensureDevEnvironment(
 
 async function storeDevEnvironment({app: organizationApp, identifiers, storeFqdn, orgId, updateURLs}: {app: OrganizationApp, identifiers: {app: string}, storeFqdn: string, orgId: string, updateURLs: boolean}, app: AppInterface): Promise<void> {
   const environment = {apiKey: identifiers.app, store: storeFqdn, orgId, noUpdate: !updateURLs}
-  const envName = await envNamePrompt(organizationApp.title)
-  const appConfigFile = app.configurationPath
-  await file.appendFile(appConfigFile, `\n${toml.encode({environments: {[envName]: environment}})}`)
+  if (await storeAsEnvPrompt()) {
+    const envName = await envNamePrompt(organizationApp.title)
+    const appConfigFile = app.configurationPath
+    await file.appendFile(appConfigFile, `\n${toml.encode({environments: {[envName]: environment}})}`)
+  }
 }
 
 async function updateDevOptions(options: DevEnvironmentOptions & {apiKey: string}) {
