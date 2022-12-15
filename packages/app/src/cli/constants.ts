@@ -70,6 +70,7 @@ export const extensionTypesGroups: {name: string; extensions: string[]}[] = [
       'delivery_customization',
       'shipping_rate_presenter',
       'ui_extension',
+      'order_routing_location_rule',
     ],
   },
 ]
