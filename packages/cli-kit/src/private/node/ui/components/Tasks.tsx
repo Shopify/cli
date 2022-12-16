@@ -42,7 +42,6 @@ const Tasks: React.FC<Props> = ({tasks}) => {
       </Box>
       <Text>
         {state === 'success' && <Text>Complete!</Text>}
-        {state === 'failure' && <Text color="red">✗ </Text>}
         {(state === 'loading' || state === 'failure') && <Text>{currentTask.title} ...</Text>}
       </Text>
     </Box>
