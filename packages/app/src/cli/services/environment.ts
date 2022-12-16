@@ -139,9 +139,6 @@ export async function ensureDevEnvironment(
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
   if (selectedApp && selectedStore) {
-    // eslint-disable-next-line no-param-reassign
-    options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
-
     await store.setAppInfo({
       appId: selectedApp.apiKey,
       directory: options.app.directory,
@@ -187,8 +184,6 @@ export async function ensureDevEnvironment(
     orgId,
   })
 
-  // eslint-disable-next-line no-param-reassign
-  options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
   if (!selectedStore) {
     if (cachedInfo?.storeFqdn) {
       const result = await fetchStoreByDomain(organization.id, token, cachedInfo.storeFqdn)
@@ -230,21 +225,6 @@ export async function ensureDevEnvironment(
   }
   await logMetadataForLoadedDevEnvironment(result)
   return result
-}
-
-async function updateDevOptions(options: DevEnvironmentOptions & {apiKey: string}) {
-  const updatedApp = await updateAppIdentifiers({
-    app: options.app,
-    identifiers: {
-      app: options.apiKey,
-      extensions: {},
-    },
-    command: 'dev',
-  })
-  return {
-    ...options,
-    app: updatedApp,
-  }
 }
 
 export interface DeployEnvironmentOptions {
