@@ -3,7 +3,7 @@ import * as styles from './ActionSet.module.scss'
 // eslint-disable-next-line @shopify/strict-component-boundaries
 import * as rowStyles from '../ExtensionRow/ExtensionRow.module.scss'
 import React, {useCallback} from 'react'
-import {ExternalMinor, HideMinor, LinkMinor, MobileMajor, RefreshMinor, ViewMinor} from '@shopify/polaris-icons'
+import {HideMinor, MobileMajor, RefreshMinor, ViewMinor} from '@shopify/polaris-icons'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {Action} from '@/components/Action'
@@ -12,19 +12,16 @@ import {useExtensionsInternal} from '@/sections/Extensions/hooks/useExtensionsIn
 export interface ActionSetProps {
   className?: string
   extension: ExtensionPayload
-  onCloseMobileQRCode?: () => void
   onShowMobileQRCode?: (extension: ExtensionPayload) => void
 }
 
-export function ActionSet(props: ActionSetProps) {
+export function ActionSet({extension, className, onShowMobileQRCode}: ActionSetProps) {
   const [i18n] = useI18n({
     id: 'ActionSet',
     fallback: en,
   })
-  const {extension, className, onShowMobileQRCode} = props
-  const {embedded, hide, navigate, refresh, show} = useExtensionsInternal()
+  const {hide, refresh, show} = useExtensionsInternal()
   const hidden = extension.development.hidden
-  const hideWebUrl = extension.surface === 'pos'
 
   const handleShowHide = useCallback(() => {
     if (hidden) {
@@ -34,32 +31,12 @@ export function ActionSet(props: ActionSetProps) {
     }
   }, [extension, hidden, hide, show])
 
-  const handleOpenRoot = useCallback(() => {
-    const roolUrl = extension.development.root.url
-    if (embedded && window.top) {
-      navigate(extension)
-      return
-    }
-    window.open(roolUrl, '_blank')
-  }, [embedded, extension, navigate])
-
   const refreshExtension = useCallback(() => refresh([extension]), [extension, refresh])
-
-  // If the dev console is embedded then links should be opened in the current top window
-  const LinkIcon = embedded ? LinkMinor : ExternalMinor
 
   return (
     <>
       <td>
         <div className={styles.ActionGroup}>
-          {!hideWebUrl && (
-            <Action
-              source={LinkIcon}
-              accessibilityLabel={i18n.translate('openRootUrl')}
-              onAction={handleOpenRoot}
-              className={className}
-            />
-          )}
           <div className={`${hidden ? rowStyles.ForceVisible : ''}`}>
             <Action
               source={hidden ? HideMinor : ViewMinor}
