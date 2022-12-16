@@ -9,6 +9,7 @@ const spec = createUIExtensionSpec({
   identifier: 'pos_ui_extension',
   externalIdentifier: 'pos_ui',
   externalName: 'POS UI',
+  surface: 'pos',
   dependency,
   partnersWebIdentifier: 'pos_ui_extension',
   schema: BaseUIExtensionSchema,

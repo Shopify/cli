@@ -8,6 +8,7 @@ const spec = createUIExtensionSpec({
   identifier: 'checkout_post_purchase',
   externalIdentifier: 'post_purchase_ui',
   externalName: 'Post-purchase UI',
+  surface: 'post_purchase',
   dependency,
   partnersWebIdentifier: 'post_purchase',
   helpURL: 'https://shopify.dev/apps/checkout/post-purchase',

@@ -9,6 +9,7 @@ const spec = createUIExtensionSpec({
   identifier: 'product_subscription',
   externalIdentifier: 'subscription_ui',
   externalName: 'Subscription UI',
+  surface: 'admin',
   dependency,
   graphQLType: 'subscription_management',
   partnersWebIdentifier: 'product_subscription',

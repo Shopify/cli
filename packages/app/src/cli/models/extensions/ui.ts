@@ -178,19 +178,19 @@ export function uiSpecForType(type: string, specs: UIExtensionSpec[]): UIExtensi
  * Partial ExtensionSpec type used when creating a new ExtensionSpec, the only mandatory field is the identifier
  */
 export interface CreateExtensionSpecType<TConfiguration extends BaseConfigContents = BaseConfigContents>
-  extends Partial<Omit<UIExtensionSpec<TConfiguration>, 'registrationLimit' | 'category' | 'surface'>> {
+  extends Partial<Omit<UIExtensionSpec<TConfiguration>, 'registrationLimit' | 'category'>> {
   identifier: string
 }
 
 /**
- * Create a new UI extension spec.
+ * Create a new ui extension spec.
  *
  * Everything but "identifer" is optional.
- *
  * ```ts
  * identifier: string // unique identifier for the extension type
  * externalIdentifier: string // identifier used externally (default: same as "identifier")
  * partnersWebIdentifier: string // identifier used in the partners web UI (default: same as "identifier")
+ * surface?: string // surface where the extension is going to be rendered (default: 'unknown')
  * singleEntryPath: boolean // whether the extension has a single entry point (default: true)
  * supportedFlavors: {name: string; value: string}[] // list of supported flavors (default: 'javascript', 'typescript', 'typescript-react', 'javascript-react')
  * helpURL?: string // url to the help page for the extension, shown after generating the extension
