@@ -74,6 +74,7 @@ export async function testThemeExtensions(): Promise<ThemeExtension> {
     directory: './my-extension',
     remoteSpecification: undefined,
     specification: themeSpec,
+    outputBundlePath: './my-extension',
   })
 }
 
