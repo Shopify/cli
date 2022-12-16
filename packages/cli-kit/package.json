@@ -58,10 +58,8 @@
         "files": ["**/node/cli.ts"],
         "rules": {
           "rulesdir/specific-imports-in-bootstrap-code": ["error", {
-            "allow": {
-              ".*/public/node/cli\\.ts$": ["./node-package-manager.js", "./error-handler.js", "../../environment/local.js", "@oclif/core", "../../environment/utilities.js", "../../constants.js", "../../path.js", "../../system.js"]
-            },
-            "enableStaticImports": false
+            "dynamic": ["./node-package-manager.js", "./error-handler.js", "../../environment/local.js", "@oclif/core", "../../environment/utilities.js", "../../constants.js", "../../path.js", "../../system.js"],
+            "static": []
           }]
         }
       }

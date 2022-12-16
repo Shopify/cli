@@ -3,7 +3,7 @@
 /**
  * Check if importing is allowed for static or dynamic definition
  *
- * @param {Record<string, string[]>} allowList
+ * @param {string[]} allowList
  * @param {import('eslint').Rule.RuleContext} context
  * @param {import('estree').ImportDeclaration | import('estree').ImportExpression} node
  */
@@ -12,20 +12,8 @@ function checkImport(allowList, context, node) {
   if (typeof importTarget !== 'string') {
     return
   }
-  const sourceFile = context.getFilename()
 
-  let gotMatch = false
-  Object.entries(allowList).forEach(([globPath, allowedImports]) => {
-    if (gotMatch) {
-      return
-    }
-    const re = new RegExp(globPath)
-    if (sourceFile.match(re)) {
-      if (allowedImports.includes(importTarget)) {
-        gotMatch = true
-      }
-    }
-  })
+  const gotMatch = allowList.includes(importTarget)
 
   if (!gotMatch) {
     context.report(node, `Forbidden import source "${importTarget}", update allow list if required`)
@@ -44,39 +32,37 @@ module.exports = {
       {
         type: 'object',
         properties: {
-          allow: {
-            type: 'object',
-            patternProperties: {
-              '.*': {
-                type: 'array',
-                items: {
-                  type: 'string',
-                },
-              },
+          dynamic: {
+            description: 'Allowed modules to import dynamically',
+            type: 'array',
+            items: {
+              type: 'string',
             },
           },
-          enableStaticImports: {type: 'boolean'},
+          static: {
+            description: 'Allowed modules to import statically',
+            type: 'array',
+            items: {
+              type: 'string',
+            },
+          },
         },
       },
     ],
   },
   create(context) {
-    /** @type {{enableStaticImports?: boolean, allow?: Record<string, string[]>}} */
+    /** @type {{dynamic?: string[], static?: string[]}} */
     const options = context.options[0] ?? {}
 
-    const allowList = options?.allow ?? {}
-    const enableStaticImports = options?.enableStaticImports ?? false
+    const dynamic = options?.dynamic ?? []
+    const static = options?.static ?? []
 
     return {
       ImportDeclaration(node) {
-        if (!enableStaticImports) {
-          context.report(node, 'Only dynamic imports via `await import(...)` are allowed in bootstrap code')
-          return
-        }
-        checkImport(allowList, context, node)
+        checkImport(static, context, node)
       },
       ImportExpression(node) {
-        checkImport(allowList, context, node)
+        checkImport(dynamic, context, node)
       },
     }
   },
