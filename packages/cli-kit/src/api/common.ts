@@ -13,18 +13,21 @@ export class RequestClientError extends ExtendableError {
   }
 }
 
-export async function buildHeaders(token: string): Promise<{[key: string]: string}> {
+export async function buildHeaders(token?: string): Promise<{[key: string]: string}> {
   const userAgent = `Shopify CLI; v=${await constants.versions.cliKit()}`
 
-  const headers = {
+  const headers: {[header: string]: string} = {
     'User-Agent': userAgent,
     // 'Sec-CH-UA': secCHUA, This header requires the Git sha.
     'Sec-CH-UA-PLATFORM': process.platform,
     'X-Request-Id': randomUUID(),
-    authorization: `Bearer ${token}`,
-    'X-Shopify-Access-Token': `Bearer ${token}`,
     'Content-Type': 'application/json',
     ...(firstPartyDev() && {'X-Shopify-Cli-Employee': '1'}),
+  }
+  if (token) {
+    // eslint-disable-next-line dot-notation
+    headers['authorization'] = `Bearer ${token}`
+    headers['X-Shopify-Access-Token'] = `Bearer ${token}`
   }
 
   return headers
@@ -56,9 +59,9 @@ export function debugLogRequest<T>(
   variables?: Variables,
   headers: {[key: string]: string} = {},
 ) {
-  debug(`
+  debug(content`
 Sending ${token.json(api)} GraphQL request:
-${query}
+${token.raw(query.toString())}
 
 With variables:
 ${variables ? JSON.stringify(variables, null, 2) : ''}
