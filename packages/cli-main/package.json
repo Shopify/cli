@@ -49,6 +49,33 @@
   "eslintConfig": {
     "extends": [
       "../../.eslintrc.cjs"
+    ],
+    "overrides": [
+      {
+        "files": ["**/bin/*.js"],
+        "parser": "espree",
+        "rules": {
+          "rulesdir/specific-imports-in-bootstrap-code": ["error", {
+            "static": ["../dist/index.js"]
+          }],
+          "@typescript-eslint/switch-exhaustiveness-check": "off",
+          "@typescript-eslint/naming-convention": "off",
+          "@typescript-eslint/no-misused-promises": "off",
+          "@typescript-eslint/no-floating-promises": "off",
+          "@typescript-eslint/no-unnecessary-type-assertion": "off",
+          "node/shebang": "off",
+          "import/first": "off",
+          "import/no-unresolved": "off"
+        }
+      },
+      {
+        "files": ["src/index.ts"],
+        "rules": {
+          "rulesdir/specific-imports-in-bootstrap-code": ["error", {
+            "static": ["@shopify/cli-kit/node/cli"]
+          }]
+        }
+      }
     ]
   },
   "dependencies": {

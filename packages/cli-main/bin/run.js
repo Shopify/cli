@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-process.removeAllListeners('warning');
+process.removeAllListeners('warning')
 
-import runCLI from "../dist/index.js";
+import runCLI from '../dist/index.js'
 
 runCLI({development: false})
