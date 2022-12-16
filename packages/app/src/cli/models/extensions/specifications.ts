@@ -20,19 +20,13 @@ export async function allThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
 const memLoadSpecs = memoize(loadSpecs)
 
 async function loadSpecs(directoryName: string) {
-  const url = path.join(path.dirname(fileURLToPath(import.meta.url)), directoryName)
   /**
    * When running tests, "await import('.../spec..ts')" is handled by Vitest which does
    * transform the TS module into a JS one before loading it. Hence the inclusion of .ts
    * in the list of files.
    */
-  let files = (await path.glob(path.join(url, '*'))).filter((filePath) => {
-    const isTest = filePath.endsWith('.test.ts')
-    const isTypescript = filePath.endsWith('.ts')
-    const isDeclaration = filePath.endsWith('.d.ts')
-    const isJS = filePath.endsWith('.js')
-    return isJS || (isTypescript && !isDeclaration && !isTest)
-  })
+  const url = path.join(path.dirname(fileURLToPath(import.meta.url)), path.join(directoryName, '*.{js,ts}'))
+  let files = await path.glob(url, {ignore: ['**.d.ts', '**.test.ts'], dot: true})
 
   // From Node 18, all windows paths must start with file://
   const {platform} = os.platformAndArch()
