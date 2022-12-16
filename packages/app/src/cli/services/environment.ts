@@ -30,7 +30,7 @@ export const InvalidApiKeyErrorMessage = (apiKey: string) => {
 }
 
 export interface DevEnvironmentOptions {
-  app: AppInterface
+  directory: string
   apiKey?: string
   storeFqdn?: string
   reset: boolean
@@ -120,12 +120,12 @@ export async function ensureDevEnvironment(
   options: DevEnvironmentOptions,
   token: string,
 ): Promise<DevEnvironmentOutput> {
-  const prodEnvIdentifiers = await getAppIdentifiers({app: options.app})
-  const envExtensionsIds = prodEnvIdentifiers.extensions || {}
+  // const prodEnvIdentifiers = await getAppIdentifiers({app: options.app})
+  // const envExtensionsIds = prodEnvIdentifiers.extensions || {}
 
   const cachedInfo = await getAppDevCachedInfo({
     reset: options.reset,
-    directory: options.app.directory,
+    directory: options.directory,
   })
 
   if (cachedInfo === undefined && !options.reset) {
@@ -141,13 +141,13 @@ export async function ensureDevEnvironment(
   if (selectedApp && selectedStore) {
     await store.setAppInfo({
       appId: selectedApp.apiKey,
-      directory: options.app.directory,
+      directory: options.directory,
       storeFqdn: selectedStore.shopDomain,
       orgId,
     })
 
     // If the selected app is the "prod" one, we will use the real extension IDs for `dev`
-    const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
+    // const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
     return {
       app: {
         ...selectedApp,
@@ -156,7 +156,7 @@ export async function ensureDevEnvironment(
       storeFqdn: selectedStore.shopDomain,
       identifiers: {
         app: selectedApp.apiKey,
-        extensions,
+        extensions: {},
       },
       updateURLs: cachedInfo?.updateURLs,
       tunnelPlugin: cachedInfo?.tunnelPlugin,
@@ -173,14 +173,15 @@ export async function ensureDevEnvironment(
       selectedApp = app
     } else {
       const {apps} = await fetchOrgAndApps(orgId, token)
-      selectedApp = await selectOrCreateApp(options.app.name, apps, organization, token)
+      const localAppName = await loadAppName(options.directory)
+      selectedApp = await selectOrCreateApp(localAppName, apps, organization, token)
     }
   }
 
   await store.setAppInfo({
     appId: selectedApp.apiKey,
     title: selectedApp.title,
-    directory: options.app.directory,
+    directory: options.directory,
     orgId,
   })
 
@@ -201,15 +202,16 @@ export async function ensureDevEnvironment(
 
   await store.setAppInfo({
     appId: selectedApp.apiKey,
-    directory: options.app.directory,
+    directory: options.directory,
     storeFqdn: selectedStore?.shopDomain,
   })
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
-    showReusedValues(organization.businessName, cachedInfo, options.app.packageManager)
+    const packageManager = await getPackageManager(options.directory)
+    showReusedValues(organization.businessName, cachedInfo, packageManager)
   }
 
-  const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
+  // const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
   const result = {
     app: {
       ...selectedApp,
@@ -218,7 +220,7 @@ export async function ensureDevEnvironment(
     storeFqdn: selectedStore.shopDomain,
     identifiers: {
       app: selectedApp.apiKey,
-      extensions,
+      extensions: {},
     },
     updateURLs: cachedInfo?.updateURLs,
     tunnelPlugin: cachedInfo?.tunnelPlugin,
