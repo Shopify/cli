@@ -1,62 +1,47 @@
-import {renderString} from '../../ui.js'
-import chalkAnimation from 'chalk-animation'
+/* eslint-disable id-length */
 import {Text} from 'ink'
 import React, {useEffect, useRef, useState} from 'react'
-
-type AnimationName = 'rainbow' | 'pulse' | 'glitch' | 'radar' | 'neon' | 'karaoke'
+import gradient from 'gradient-string'
 
 interface Props {
-  name?: AnimationName
-  speed?: number
+  text: string
 }
 
-const delays: {[key in AnimationName]: number} = {
-  rainbow: 15,
-  pulse: 16,
-  glitch: 55,
-  radar: 50,
-  neon: 500,
-  karaoke: 50,
+function rainbow(text: string, frame: number) {
+  const hue = 5 * frame
+  const leftColor = {h: hue % 360, s: 0.5, v: 1}
+  const rightColor = {h: (hue + 1) % 360, s: 0.5, v: 1}
+  return gradient(leftColor, rightColor)(text, {interpolation: 'hsv', hsvSpin: 'long'})
 }
 
 /**
- * `TextAnimation` applies animations from [chalk-animation](https://github.com/bokub/chalk-animation) to `Text` Children
+ * `TextAnimation` applies a rainbow animation to text.
  */
-const TextAnimation: React.FC<Props> = ({name = 'rainbow', speed = 1, children}): JSX.Element => {
-  const animation = chalkAnimation[name]('').stop()
-  const [frame, setFrame] = useState('')
+const TextAnimation: React.FC<Props> = ({text}): JSX.Element => {
+  const frame = useRef(0)
+  const [renderedFrame, setRenderedFrame] = useState(text)
   const timeout = useRef<NodeJS.Timeout>()
 
-  const start = () => {
-    const {output} = renderString(<Text>{children}</Text>)
+  const renderAnimation = () => {
+    const newFrame = frame.current + 1
+    frame.current = newFrame
 
-    // There's probably some clashing between `chalk-animation` and Ink's rendering mechanism
-    // (which uses `log-update`). The solution is to remove the ANSI escape sequence at the
-    // start of the frame that we're getting from `chalk-animation` that tells the terminal to
-    // clear the lines.
-
-    setFrame(
-      animation
-        .replace(output ?? '')
-        .frame()
-        // eslint-disable-next-line no-control-regex
-        .replace(/^\u001B\[(\d)F\u001B\[G\u001B\[2K/, ''),
-    )
+    setRenderedFrame(rainbow(text, frame.current))
 
     timeout.current = setTimeout(() => {
-      start()
-    }, delays[name] / speed)
+      renderAnimation()
+    }, 40)
   }
 
   useEffect(() => {
-    start()
+    renderAnimation()
 
     return () => {
       clearTimeout(timeout.current)
     }
   }, [])
 
-  return <Text>{frame}</Text>
+  return <Text>{renderedFrame}</Text>
 }
 
 export {TextAnimation}

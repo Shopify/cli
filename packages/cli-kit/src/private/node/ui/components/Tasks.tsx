@@ -35,7 +35,7 @@ const Tasks: React.FC<Props> = ({tasks}) => {
     <Box flexDirection="column" marginBottom={1}>
       <Box marginBottom={1}>
         {state === 'loading' ? (
-          <TextAnimation speed={0.5}>{loadingBar}</TextAnimation>
+          <TextAnimation text={loadingBar} />
         ) : (
           <Text color={state === 'success' ? 'green' : 'red'}>{loadingBar}</Text>
         )}
