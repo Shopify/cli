@@ -84,7 +84,7 @@ export default class Dev extends ThemeCommand {
   ]
 
   // Tokens are valid for 120m, better to be safe and refresh every 110min
-  ThemeRefreshTimeoutInMinutes = 0.3
+  ThemeRefreshTimeoutInMinutes = 110
 
   // Timeout to stop the server, otherwise it will keep running forever. 24h to be safe.
   HardTimeoutInMinutes = 24 * 60
