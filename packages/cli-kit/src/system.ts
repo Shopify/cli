@@ -46,11 +46,12 @@ export const exec = async (command: string, args: string[], options?: ExecOption
   let aborted = false
   options?.signal?.addEventListener('abort', () => {
     const pid = commandProcess.pid
-    aborted = true
-    if (pid)
+    if (pid) {
+      aborted = true
       treeKill(pid, (err) => {
         if (err) throw new Abort(`Failed to kill process ${pid}: ${err}`)
       })
+    }
   })
   try {
     await commandProcess
