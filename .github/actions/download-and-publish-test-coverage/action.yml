@@ -30,6 +30,7 @@ runs:
     - uses: ArtiomTr/jest-coverage-report-action@v2.1.2
       id: coverage
       with:
+        annotations: none
         output: report-markdown
         coverage-file: "./report.json"
         base-coverage-file: "./baseline-report.json"

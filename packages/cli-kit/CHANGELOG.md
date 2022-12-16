@@ -1,5 +1,13 @@
 # @shopify/cli-kit
 
+## 3.28.0
+
+## 3.27.0
+
+### Minor Changes
+
+- 32bbe23d: Remove the version export from the @shopify/cli-kit module and merge its functions into @shopify/cli-kit/node/node-package-manager
+
 ## 3.26.0
 
 ### Minor Changes

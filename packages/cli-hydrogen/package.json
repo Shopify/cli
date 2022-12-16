@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-hydrogen",
-  "version": "3.26.0",
+  "version": "3.28.0",
   "private": false,
   "description": "Commands for building Hydrogen storefronts",
   "license": "MIT",
@@ -39,16 +39,16 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "1.9.2",
+    "@oclif/core": "1.21.0",
     "@shopify/hydrogen": "0.26.0",
     "@shopify/mini-oxygen": "0.2.0",
     "@types/prettier": "2.6.3",
     "prettier": "2.6.1",
     "vite": "2.9.13",
-    "@shopify/cli-kit": "workspace:@shopify/cli-kit@*",
+    "@shopify/cli-kit": "3.28.0",
     "fast-glob": "3.2.11",
     "fs-extra": "10.0.0",
-    "typescript": "4.6.4",
+    "typescript": "4.8.4",
     "@shopify/prettier-config": "1.1.2",
     "graphql-request": "4.3.0"
   },

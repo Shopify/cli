@@ -14,6 +14,16 @@ import {Action} from '@/components/Action'
 const i18n = mockI18n(en)
 
 describe('Extensions', () => {
+  let client: ExtensionServerClient
+
+  beforeEach(() => {
+    client = new ExtensionServerClient({connection: {url: 'ws://localhost'}})
+  })
+
+  afterEach(() => {
+    client.connection.close()
+  })
+
   test('renders ExtensionRow based on localStorage', async () => {
     const extensions = [mockExtension()]
 
@@ -33,7 +43,6 @@ describe('Extensions', () => {
   test('calls refresh with selected extensions', async () => {
     const selectedExtension = mockExtension()
     const unselectedExtension = mockExtension()
-    const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}})
     const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined)
 
     const container = render(<Extensions />, withProviders(DefaultProviders), {
@@ -115,7 +124,6 @@ describe('Extensions', () => {
   test('calls to set focused to true for the current extension', async () => {
     const focusExtension = mockExtension()
     const prevFocusedExtension = mockExtension()
-    const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}})
     const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined)
 
     const container = render(<Extensions />, withProviders(DefaultProviders), {
@@ -138,7 +146,6 @@ describe('Extensions', () => {
   test('clear focus state of all extensions when onClearHighlight for a row is triggered', async () => {
     const extension1 = mockExtension({focused: true} as any)
     const extension2 = mockExtension({focused: true} as any)
-    const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}})
     const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined)
 
     const container = render(<Extensions />, withProviders(DefaultProviders), {
@@ -162,7 +169,6 @@ describe('Extensions', () => {
     const unselectedExtension = mockExtension()
     const selectedExtension = mockExtension()
     selectedExtension.development.hidden = true
-    const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}})
     const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined)
 
     const container = render(<Extensions />, withProviders(DefaultProviders), {
@@ -189,7 +195,6 @@ describe('Extensions', () => {
   test('calls hide with selected extensions', async () => {
     const selectedExtension = mockExtension()
     const unselectedExtension = mockExtension()
-    const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}})
     const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined)
 
     const container = render(<Extensions />, withProviders(DefaultProviders), {

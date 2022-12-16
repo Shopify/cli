@@ -8,7 +8,7 @@ export async function selectApp(): Promise<OrganizationApp> {
   const orgs = await fetchOrganizations(token)
   const org = await selectOrganizationPrompt(orgs)
   const {apps} = await fetchOrgAndApps(org.id, token)
-  const selectedApp = await selectAppPrompt(apps)
+  const selectedApp = await selectAppPrompt(apps, org.id, token)
   const fullSelectedApp = await fetchAppFromApiKey(selectedApp.apiKey, token)
   return fullSelectedApp!
 }

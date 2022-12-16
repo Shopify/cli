@@ -11,6 +11,7 @@ export const MetafieldSchema = schema.define.object({
 export const CapabilitiesSchema = schema.define.object({
   network_access: schema.define.boolean().optional(),
   block_progress: schema.define.boolean().optional(),
+  api_access: schema.define.boolean().optional(),
 })
 
 export const TypeSchema = schema.define.object({
@@ -27,18 +28,18 @@ export const OldExtensionPointsSchema = schema.define.array(schema.define.string
 export const NewExtensionPointsSchema = schema.define.array(NewExtensionPointSchema)
 export const ExtensionPointSchema = schema.define.union([OldExtensionPointsSchema, NewExtensionPointsSchema])
 
-export const BaseExtensionSchema = schema.define.object({
+export const BaseUIExtensionSchema = schema.define.object({
   name: schema.define.string(),
   type: schema.define.string().default('ui_extension'),
   extensionPoints: schema.define.any().optional(),
-  capabilities: schema.define
-    .object({
-      block_progress: schema.define.boolean().optional(),
-      network_access: schema.define.boolean().optional(),
-    })
-    .optional(),
+  capabilities: CapabilitiesSchema.optional(),
   metafields: schema.define.array(MetafieldSchema).optional().default([]),
   categories: schema.define.array(schema.define.string()).optional(),
+})
+
+export const ThemeExtensionSchema = schema.define.object({
+  name: schema.define.string(),
+  type: schema.define.literal('theme'),
 })
 
 export const BaseFunctionConfigurationSchema = schema.define.object({
@@ -65,3 +66,6 @@ export const BaseFunctionConfigurationSchema = schema.define.object({
 })
 
 export type NewExtensionPointSchemaType = schema.define.infer<typeof NewExtensionPointSchema>
+
+// Base config type that all config schemas must extend.
+export type BaseConfigContents = schema.define.infer<typeof BaseUIExtensionSchema>

@@ -42,6 +42,11 @@ export interface RemoteSpecification {
   }
 }
 
+export interface FlattenedRemoteSpecification extends RemoteSpecification {
+  surface?: string
+  registrationLimit: number
+}
+
 export interface ExtensionSpecificationsQuerySchema {
   extensionSpecifications: RemoteSpecification[]
 }

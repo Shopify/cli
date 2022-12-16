@@ -1,5 +1,29 @@
 # app
 
+## 3.28.0
+
+### Minor Changes
+
+- 07c95c01: Adds api_access ability for UI Extensions
+
+### Patch Changes
+
+- Updated dependencies [07c95c01]
+- Updated dependencies [97e6e7bf]
+  - @shopify/app@3.28.0
+  - @shopify/cli@3.28.0
+
+## 3.27.0
+
+### Patch Changes
+
+- Updated dependencies [2678d5a1]
+- Updated dependencies [081db917]
+- Updated dependencies [93f22d6c]
+- Updated dependencies [26c8ef33]
+  - @shopify/app@3.27.0
+  - @shopify/cli@3.27.0
+
 ## 3.26.0
 
 ### Patch Changes

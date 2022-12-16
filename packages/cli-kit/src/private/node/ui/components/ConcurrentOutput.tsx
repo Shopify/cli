@@ -1,4 +1,5 @@
 import {OutputProcess} from '../../../../output.js'
+import {isTruthy} from '../../../../environment/utilities.js'
 import React, {FunctionComponent, useEffect, useState} from 'react'
 import {Box, Static, Text, useApp} from 'ink'
 import stripAnsi from 'strip-ansi'
@@ -96,7 +97,9 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
       }),
     )
 
-    unmountInk()
+    // This is a workaround needed because Ink behaves differently in CI when
+    // unmounting. See https://github.com/vadimdemedes/ink/pull/266
+    if (!isTruthy(process.env.CI)) unmountInk()
   }
 
   useEffect(() => {

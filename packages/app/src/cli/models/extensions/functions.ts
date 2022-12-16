@@ -143,7 +143,6 @@ export function createFunctionSpec<TConfiguration extends FunctionConfigType = F
     configSchema: BaseFunctionConfigurationSchema,
     gated: false,
     registrationLimit: spec.registrationLimit ?? blocks.functions.defaultRegistrationLimit,
-
     category: (): ExtensionCategory => 'function',
   }
 

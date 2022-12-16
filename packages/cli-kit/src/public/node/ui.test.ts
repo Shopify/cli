@@ -1,10 +1,8 @@
 import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
 import {Abort, Bug, Fatal} from '../../error.js'
 import * as outputMocker from '../../testing/output.js'
-import {run} from '../../testing/ui.js'
 import {Signal} from '../../abort.js'
 import {afterEach, describe, expect, test} from 'vitest'
-import stripAnsi from 'strip-ansi'
 import {Writable} from 'node:stream'
 
 afterEach(() => {
@@ -265,23 +263,6 @@ describe('renderFatalError', async () => {
 })
 
 describe('renderConcurrent', async () => {
-  test('renders a stream of concurrent outputs from sub-processes', async () => {
-    // When
-    const {stdout} = await run('render-concurrent')
-    const lastFrame = stripAnsi(stdout).replace(/\d/g, '0')
-
-    // Then
-    expect(lastFrame).toMatchInlineSnapshot(`
-      "0000-00-00 00:00:00 | backend  | first backend message
-      0000-00-00 00:00:00 | backend  | second backend message
-      0000-00-00 00:00:00 | backend  | third backend message
-      0000-00-00 00:00:00 | frontend | first frontend message
-      0000-00-00 00:00:00 | frontend | second frontend message
-      0000-00-00 00:00:00 | frontend | third frontend message
-      "
-    `)
-  }, 10000)
-
   test('renders an error message correctly when a process throws an error', async () => {
     // Given
     const mockOutput = outputMocker.mockAndCaptureOutput()

@@ -28,7 +28,7 @@ export async function selectOrCreateApp(
   if (createNewApp) {
     return createApp(org, localAppName, token)
   } else {
-    const selectedApp = await selectAppPrompt(apps)
+    const selectedApp = await selectAppPrompt(apps, org.id, token)
     const fullSelectedApp = await fetchAppFromApiKey(selectedApp.apiKey, token)
     return fullSelectedApp!
   }

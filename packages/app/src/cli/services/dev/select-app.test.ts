@@ -112,7 +112,7 @@ describe('selectOrCreateApp', () => {
 
     // Then
     expect(got).toEqual(APP1)
-    expect(selectAppPrompt).toHaveBeenCalledWith(APP_LIST)
+    expect(selectAppPrompt).toHaveBeenCalledWith(APP_LIST, ORG1.id, 'token')
   })
 
   it('prompts user to create if chooses to create', async () => {

@@ -13,6 +13,16 @@ vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 const i18n = mockI18n(en)
 
 describe('ActionSet', () => {
+  let client: ExtensionServerClient
+
+  beforeEach(() => {
+    client = new ExtensionServerClient({connection: {url: 'ws://localhost'}})
+  })
+
+  afterEach(() => {
+    client.connection.close()
+  })
+
   function TableWrapper({children}: React.PropsWithChildren<{[key: string]: unknown}>) {
     return (
       <table>
@@ -25,7 +35,6 @@ describe('ActionSet', () => {
 
   test('calls refresh with given extension when refresh button is clicked', async () => {
     const extension = mockExtension()
-    const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}})
     const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined)
     const container = render(<ActionSet extension={extension} />, withProviders(DefaultProviders, TableWrapper), {
       client,
@@ -43,7 +52,6 @@ describe('ActionSet', () => {
 
   test('calls show with given extension when show button is clicked', async () => {
     const extension = mockExtension({development: {hidden: true}})
-    const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}})
     const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined)
     const container = render(<ActionSet extension={extension} />, withProviders(DefaultProviders, TableWrapper), {
       client,
@@ -61,7 +69,6 @@ describe('ActionSet', () => {
 
   test('calls hide with given extension when hide button is clicked', async () => {
     const extension = mockExtension({development: {hidden: false}})
-    const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}})
     const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined)
     const container = render(<ActionSet extension={extension} />, withProviders(DefaultProviders, TableWrapper), {
       client,
@@ -79,7 +86,6 @@ describe('ActionSet', () => {
 
   test('web url does not render if surface is pos', async () => {
     const extension = mockExtension({surface: 'pos'})
-    const client = new ExtensionServerClient({connection: {url: 'ws://localhost'}})
     const container = render(<ActionSet extension={extension} />, withProviders(DefaultProviders, TableWrapper), {
       client,
     })

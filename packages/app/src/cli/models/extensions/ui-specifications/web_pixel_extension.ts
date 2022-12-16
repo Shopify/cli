@@ -1,18 +1,18 @@
-import {createExtensionSpec} from '../extensions.js'
-import {BaseExtensionSchema} from '../schemas.js'
+import {createUIExtensionSpec} from '../ui.js'
 import {defualtExtensionFlavors} from '../../../constants.js'
+import {BaseUIExtensionSchema} from '../schemas.js'
 import {error, schema} from '@shopify/cli-kit'
 
 const dependency = {name: '@shopify/web-pixels-extension', version: '^0.1.1'}
 
-const WebPixelSchema = BaseExtensionSchema.extend({
+const WebPixelSchema = BaseUIExtensionSchema.extend({
   runtimeContext: schema.define.string(),
   version: schema.define.string().optional(),
   configuration: schema.define.any(),
   settings: schema.define.any(),
 })
 
-const spec = createExtensionSpec({
+const spec = createUIExtensionSpec({
   identifier: 'web_pixel_extension',
   externalIdentifier: 'web_pixel',
   externalName: 'Web pixel',
