@@ -108,9 +108,9 @@ export default class Dev extends ThemeCommand {
     clearInterval(refreshThemeSessionInterval)
   }
 
-  async execute(store: string, command: string[], controller: AbortController) {
+  async execute(store: string, command: string[], controller: abort.Controller) {
     const adminSession = await session.ensureAuthenticatedThemes(store, undefined, [], true)
     const storefrontToken = await session.ensureAuthenticatedStorefront()
-    await execCLI2(command, {adminSession, storefrontToken, signal: controller.signal as abort.Signal})
+    await execCLI2(command, {adminSession, storefrontToken, signal: controller.signal})
   }
 }

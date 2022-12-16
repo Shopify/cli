@@ -68,6 +68,8 @@ const buildExec = (command: string, args: string[], options?: ExecOptions): Exec
     stdin: options?.stdin,
     stdout: options?.stdout === 'inherit' ? 'inherit' : undefined,
     stderr: options?.stderr === 'inherit' ? 'inherit' : undefined,
+    // Setting this to false makes it possible to kill the main process
+    // and all its sub-processes with Ctrl+C on Windows
     windowsHide: false,
   })
   debug(`

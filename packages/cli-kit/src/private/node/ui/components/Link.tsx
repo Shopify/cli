@@ -15,7 +15,7 @@ function fallback(text: string, url: string) {
 /**
  * `Link` displays a clickable link when supported by the terminal.
  */
-const Link: React.FC<Props> = ({url, label}: React.PropsWithChildren<Props>): JSX.Element => {
+const Link: React.FC<Props> = ({url, label}): JSX.Element => {
   return <Text>{terminalLink(label ?? url, url, {fallback: label ? fallback : false})}</Text>
 }
 
