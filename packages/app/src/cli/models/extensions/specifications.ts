@@ -26,7 +26,7 @@ async function loadSpecs(directoryName: string) {
    * in the list of files.
    */
   const url = path.join(path.dirname(fileURLToPath(import.meta.url)), path.join(directoryName, '*.{js,ts}'))
-  let files = await path.glob(url, {ignore: ['**.d.ts', '**.test.ts'], dot: true})
+  let files = await path.glob(url, {ignore: ['**.d.ts', '**.test.ts']})
 
   // From Node 18, all windows paths must start with file://
   const {platform} = os.platformAndArch()
