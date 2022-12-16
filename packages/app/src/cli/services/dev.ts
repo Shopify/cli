@@ -12,6 +12,8 @@ import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js
 import metadata from '../metadata.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
+import {UuidOnlyIdentifiers} from '../models/app/identifiers.js'
+import {OrganizationApp} from '../models/organization.js'
 import {analytics, output, system, session, abort, string, environment} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -42,6 +44,7 @@ interface DevWebOptions {
   apiSecret?: string
   hostname?: string
   scopes?: AppConfiguration['scopes']
+  storeFqdn?: string
 }
 
 async function dev(options: DevOptions) {
@@ -53,14 +56,33 @@ async function dev(options: DevOptions) {
       app: await installAppDependencies(options.app),
     }
   }
-  const token = await session.ensureAuthenticatedPartners()
-  const {
-    identifiers,
-    storeFqdn,
-    app,
-    updateURLs: cachedUpdateURLs,
-    tunnelPlugin,
-  } = await ensureDevEnvironment(options, token)
+  const siletMode = process.env.SHOPIFY_API_SECRET && options.apiKey && options.storeFqdn
+  let token = 'token'
+  let identifiers: UuidOnlyIdentifiers = {
+    app: options.apiKey ?? '',
+    extensions: {},
+  }
+  let storeFqdn = environment.service.isSpinEnvironment()
+    ? `${options.storeFqdn}.shopify.${await environment.spin.fqdn()}`
+    : `${options.storeFqdn}.myshopify.com`
+  let app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string} = {
+    id: 'ID',
+    title: 'Title',
+    organizationId: 'org',
+    apiSecret: process.env.SHOPIFY_API_SECRET ?? '',
+    grantedScopes: [],
+  }
+  let tunnelPlugin
+  let cachedUpdateURLs = false
+  if (!siletMode) {
+    token = await session.ensureAuthenticatedPartners()
+    const devEnvironment = await ensureDevEnvironment(options, token)
+    identifiers = devEnvironment.identifiers
+    storeFqdn = devEnvironment.storeFqdn
+    app = devEnvironment.app
+    cachedUpdateURLs = devEnvironment.updateURLs ?? false
+    tunnelPlugin = devEnvironment.tunnelPlugin
+  }
   const apiKey = identifiers.app
 
   const {frontendUrl, frontendPort, usingLocalhost} = await generateFrontendURL({
@@ -76,7 +98,7 @@ async function dev(options: DevOptions) {
   /** If the app doesn't have web/ the link message is not necessary */
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
   let shouldUpdateURLs = false
-  if ((frontendConfig || backendConfig) && options.update) {
+  if ((frontendConfig || backendConfig) && options.update && !siletMode) {
     const currentURLs = await getURLs(apiKey, token)
     const newURLs = generatePartnersURLs(exposedUrl, backendConfig?.configuration.authCallbackPath)
     shouldUpdateURLs = await shouldOrPromptUpdateURLs({
@@ -99,6 +121,7 @@ async function dev(options: DevOptions) {
     scopes: options.app.configuration.scopes,
     apiSecret: (app.apiSecret as string) ?? '',
     hostname: exposedUrl,
+    storeFqdn,
   }
 
   const proxyTargets: ReverseHTTPProxyTarget[] = []
@@ -229,6 +252,7 @@ async function getDevEnvironmentVariables(options: DevWebOptions) {
     SHOPIFY_API_SECRET: options.apiSecret,
     HOST: options.hostname,
     SCOPES: options.scopes,
+    STORE: options.storeFqdn,
     NODE_ENV: `development`,
     ...(environment.service.isSpinEnvironment() && {
       SHOP_CUSTOM_DOMAIN: `shopify.${await environment.spin.fqdn()}`,
