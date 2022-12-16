@@ -38,7 +38,7 @@ module.exports = {
     type: 'problem',
     docs: {
       description:
-        "This rule blocks imports that have not been explicitly allowed - it's ideal for bootstrapping code that needs to minimise the overhead of importing",
+        "This rule blocks imports that have not been explicitly allowed - it's ideal for bootstrapping code that needs to minimise the number of modules imported (and hence start-up time)",
     },
     schema: [
       {
