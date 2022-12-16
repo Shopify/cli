@@ -24,8 +24,7 @@
     "build:affected": "nx affected --target=build --all",
     "refresh-templates": "nx run-many --target=refresh-templates --all --skip-nx-cache",
     "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache",
-    "changeset-manifests": "changeset version && pnpm install --no-frozen-lockfile && pnpm refresh-manifests",
-    "postinstall": "patch-package"
+    "changeset-manifests": "changeset version && pnpm install --no-frozen-lockfile && pnpm refresh-manifests"
   },
   "devDependencies": {
     "@apollo/client": "^3.4.8",
@@ -72,7 +71,6 @@
     "nx": "^15.3.0",
     "oclif": "^3.4.2",
     "octokit-plugin-create-pull-request": "^3.12.2",
-    "patch-package": "^6.4.7",
     "pathe": "0.2.0",
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^2.6.1",
