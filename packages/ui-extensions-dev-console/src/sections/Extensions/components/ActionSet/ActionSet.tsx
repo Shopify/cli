@@ -3,7 +3,7 @@ import * as styles from './ActionSet.module.scss'
 // eslint-disable-next-line @shopify/strict-component-boundaries
 import * as rowStyles from '../ExtensionRow/ExtensionRow.module.scss'
 import React, {useCallback} from 'react'
-import {HideMinor, MobileMajor, RefreshMinor, ViewMinor} from '@shopify/polaris-icons'
+import {HideMinor, RefreshMinor, ViewMinor} from '@shopify/polaris-icons'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {Action} from '@/components/Action'
@@ -12,10 +12,9 @@ import {useExtensionsInternal} from '@/sections/Extensions/hooks/useExtensionsIn
 export interface ActionSetProps {
   className?: string
   extension: ExtensionPayload
-  onShowMobileQRCode?: (extension: ExtensionPayload) => void
 }
 
-export function ActionSet({extension, className, onShowMobileQRCode}: ActionSetProps) {
+export function ActionSet({extension, className}: ActionSetProps) {
   const [i18n] = useI18n({
     id: 'ActionSet',
     fallback: en,
@@ -45,14 +44,6 @@ export function ActionSet({extension, className, onShowMobileQRCode}: ActionSetP
               className={className}
             />
           </div>
-          {onShowMobileQRCode && (
-            <Action
-              source={MobileMajor}
-              accessibilityLabel={i18n.translate('qrcode')}
-              onAction={() => onShowMobileQRCode(extension)}
-              className={className}
-            />
-          )}
           <Action
             source={RefreshMinor}
             accessibilityLabel={i18n.translate('refresh')}

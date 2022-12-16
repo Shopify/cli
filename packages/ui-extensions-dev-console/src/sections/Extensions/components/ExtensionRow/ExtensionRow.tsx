@@ -1,18 +1,20 @@
 import * as styles from './ExtensionRow.module.scss'
 import en from './translations/en.json'
-import {ActionSet, ActionSetProps} from '../ActionSet'
+import {ActionSet} from '../ActionSet'
 import {useExtensionsInternal} from '../../hooks/useExtensionsInternal.js'
 import React, {useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
+import {Button} from '@/components/Button'
 
-export type ExtensionRowProps = {
+export interface ExtensionRowProps {
   extension: ExtensionPayload
   onHighlight(extension: ExtensionPayload): void
   onClearHighlight(): void
-} & Pick<ActionSetProps, 'onShowMobileQRCode'>
+  onShowMobileQRCode(extension: ExtensionPayload): void
+}
 
-export function ExtensionRow({extension, onHighlight, onClearHighlight, ...actionSetProps}: ExtensionRowProps) {
+export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMobileQRCode}: ExtensionRowProps) {
   const [i18n] = useI18n({
     id: 'ExtensionRow',
     fallback: en,
@@ -59,15 +61,15 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, ...actio
           {extension.type.replaceAll('_', ' ')}
         </a>
       </td>
-      <td className={textClass}>{extension.externalType}</td>
+      <td>
+        <Button type="button" onClick={() => onShowMobileQRCode(extension)}>
+          View mobile
+        </Button>
+      </td>
       <td>
         <span className={`${styles.Status} ${statusClass}`}>{i18n.translate(`statuses.${status}`)}</span>
       </td>
-      <ActionSet
-        className={`${styles.ActionSet} ${isFocus ? styles.ForceVisible : ''}`}
-        extension={extension}
-        {...actionSetProps}
-      />
+      <ActionSet className={`${styles.ActionSet} ${isFocus ? styles.ForceVisible : ''}`} extension={extension} />
     </tr>
   )
 }

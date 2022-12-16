@@ -2,11 +2,11 @@
   "intro": "See code changes reflected live. Share preview links with teammates or clients.",
   "extensionList": {
     "name": "Name",
-    "type": "Type",
+    "preview": "Preview link",
+    "mobile": "Mobile",
     "status": "Status",
     "refresh": "Refresh",
-    "delete": "Delete",
-    "preview": "Preview link"
+    "delete": "Delete"
   },
   "bulkActions": {
     "show": "Show",
