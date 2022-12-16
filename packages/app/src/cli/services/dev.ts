@@ -10,8 +10,11 @@ import {
 } from '../utilities/app/http-reverse-proxy.js'
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import metadata from '../metadata.js'
-import {UIExtension} from '../models/app/extensions.js'
+import {GenericSpecification, UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
+import {load} from '../models/app/loader.js'
+import {fetchExtensionSpecifications} from '../utilities/extensions/fetch-extension-specifications.js'
+import {allFunctionSpecifications} from '../models/extensions/specifications.js'
 import {analytics, output, system, session, abort, string, environment} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -20,7 +23,7 @@ import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {Writable} from 'node:stream'
 
 export interface DevOptions {
-  app: AppInterface
+  directory: string
   apiKey?: string
   storeFqdn?: string
   reset: boolean
@@ -46,32 +49,43 @@ interface DevWebOptions {
 
 async function dev(options: DevOptions) {
   const skipDependenciesInstallation = options.skipDependenciesInstallation
-  if (!skipDependenciesInstallation) {
-    // eslint-disable-next-line no-param-reassign
-    options = {
-      ...options,
-      app: await installAppDependencies(options.app),
-    }
-  }
+
+  // First ensure we have a valid environment, we can't load the local app until we are logged in
+  // We need to fetch the Specifications from remote
   const token = await session.ensureAuthenticatedPartners()
   const {
     identifiers,
     storeFqdn,
-    app,
+    remoteApp,
     updateURLs: cachedUpdateURLs,
     tunnelPlugin,
   } = await ensureDevEnvironment(options, token)
+
   const apiKey = identifiers.app
+
+  const extensionsSpecs = await fetchExtensionSpecifications(token, apiKey)
+  const functionSpecs = await allFunctionSpecifications()
+
+  // This is the list of all extensions/functions the user has access to
+  const allExtensionSpecs: GenericSpecification[] = [...extensionsSpecs, ...functionSpecs]
+
+  // Only load the app if the user has access to all extensions defined in it
+  let localApp = await load(options.directory, allExtensionSpecs)
+
+  if (!skipDependenciesInstallation) {
+    localApp = await installAppDependencies(localApp)
+  }
 
   const {frontendUrl, frontendPort, usingLocalhost} = await generateFrontendURL({
     ...options,
+    app: localApp,
     cachedTunnelPlugin: tunnelPlugin,
   })
 
   const backendPort = await getAvailableTCPPort()
 
-  const frontendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Frontend)
-  const backendConfig = options.app.webs.find(({configuration}) => configuration.type === WebType.Backend)
+  const frontendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Frontend)
+  const backendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Backend)
 
   /** If the app doesn't have web/ the link message is not necessary */
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
@@ -81,23 +95,23 @@ async function dev(options: DevOptions) {
     const newURLs = generatePartnersURLs(exposedUrl, backendConfig?.configuration.authCallbackPath)
     shouldUpdateURLs = await shouldOrPromptUpdateURLs({
       currentURLs,
-      appDirectory: options.app.directory,
+      appDirectory: localApp.directory,
       cachedUpdateURLs,
-      newApp: app.newApp,
+      newApp: remoteApp.newApp,
     })
     if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
-    await outputUpdateURLsResult(shouldUpdateURLs, newURLs, app)
+    await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
     outputAppURL(storeFqdn, exposedUrl)
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
-  options.app.extensions.ui.forEach((ext) => (ext.devUUID = identifiers.extensions[ext.localIdentifier] ?? ext.devUUID))
+  localApp.extensions.ui.forEach((ext) => (ext.devUUID = identifiers.extensions[ext.localIdentifier] ?? ext.devUUID))
 
   const backendOptions = {
     apiKey,
     backendPort,
-    scopes: options.app.configuration.scopes,
-    apiSecret: (app.apiSecret as string) ?? '',
+    scopes: localApp.configuration.scopes,
+    apiSecret: (remoteApp.apiSecret as string) ?? '',
     hostname: exposedUrl,
   }
 
@@ -105,27 +119,27 @@ async function dev(options: DevOptions) {
   const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
 
-  if (options.app.extensions.ui.length > 0) {
+  if (localApp.extensions.ui.length > 0) {
     const devExt = await devUIExtensionsTarget({
-      app: options.app,
+      app: localApp,
       apiKey,
       url: proxyUrl,
       storeFqdn,
-      grantedScopes: app.grantedScopes,
+      grantedScopes: remoteApp.grantedScopes,
       subscriptionProductUrl: options.subscriptionProductUrl,
       checkoutCartUrl: options.checkoutCartUrl,
     })
     proxyTargets.push(devExt)
   }
 
-  outputExtensionsMessages(options.app, storeFqdn, proxyUrl)
+  outputExtensionsMessages(localApp, storeFqdn, proxyUrl)
 
   const additionalProcesses: output.OutputProcess[] = []
 
-  if (options.app.extensions.theme.length > 0) {
+  if (localApp.extensions.theme.length > 0) {
     const adminSession = await session.ensureAuthenticatedAdmin(storeFqdn)
     const storefrontToken = await session.ensureAuthenticatedStorefront()
-    const extension = options.app.extensions.theme[0]!
+    const extension = localApp.extensions.theme[0]!
     const args = await themeExtensionArgs(extension, apiKey, token, options)
     const devExt = await devThemeExtensionTarget(args, adminSession, storefrontToken, token)
     additionalProcesses.push(devExt)
@@ -139,8 +153,8 @@ async function dev(options: DevOptions) {
     const frontendOptions: DevFrontendTargetOptions = {
       web: frontendConfig,
       apiKey,
-      scopes: options.app.configuration.scopes,
-      apiSecret: (app.apiSecret as string) ?? '',
+      scopes: localApp.configuration.scopes,
+      apiSecret: (remoteApp.apiSecret as string) ?? '',
       hostname: frontendUrl,
       backendPort,
     }

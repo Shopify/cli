@@ -37,7 +37,7 @@ export interface DevEnvironmentOptions {
 }
 
 interface DevEnvironmentOutput {
-  app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string}
+  remoteApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string}
   storeFqdn: string
   identifiers: UuidOnlyIdentifiers
   updateURLs: boolean | undefined
@@ -149,7 +149,7 @@ export async function ensureDevEnvironment(
     // If the selected app is the "prod" one, we will use the real extension IDs for `dev`
     // const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
     return {
-      app: {
+      remoteApp: {
         ...selectedApp,
         apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0]!.secret,
       },
@@ -213,7 +213,7 @@ export async function ensureDevEnvironment(
 
   // const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
   const result = {
-    app: {
+    remoteApp: {
       ...selectedApp,
       apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0]!.secret,
     },

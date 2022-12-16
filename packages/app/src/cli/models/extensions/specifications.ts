@@ -3,6 +3,7 @@ import {FunctionSpec} from './functions.js'
 import {ThemeExtensionSpec} from './theme.js'
 import {os, path} from '@shopify/cli-kit'
 import {memoize} from 'lodash-es'
+import {isShopify} from '@shopify/cli-kit/src/environment/local.js'
 import {fileURLToPath} from 'url'
 
 export async function allUISpecifications(): Promise<UIExtensionSpec[]> {
@@ -10,7 +11,7 @@ export async function allUISpecifications(): Promise<UIExtensionSpec[]> {
 }
 
 export async function allFunctionSpecifications(): Promise<FunctionSpec[]> {
-  return memLoadSpecs('function-specifications')
+  return (await memLoadSpecs('function-specifications')).filter((spec) => !spec.gated || isShopify)
 }
 
 export async function allThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
