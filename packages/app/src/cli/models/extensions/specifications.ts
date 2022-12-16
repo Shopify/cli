@@ -20,8 +20,8 @@ export async function allThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
 const memLoadSpecs = memoize(loadSpecs)
 
 async function loadSpecs(directoryName: string) {
-  const url = path.join(path.dirname(fileURLToPath(import.meta.url)), path.join(directoryName, '*.{js,ts}'))
-  let files = await path.glob(url, {ignore: ['**.d.ts', '**.test.ts']})
+  const url = path.join(path.dirname(fileURLToPath(import.meta.url)), path.join(directoryName, '*.js}'))
+  let files = await path.glob(url)
 
   // From Node 18, all windows paths must start with file://
   const {platform} = os.platformAndArch()
