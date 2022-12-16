@@ -1,6 +1,7 @@
 import ConcurrentOutput from './ConcurrentOutput.js'
 import {Signal} from '../../../../abort.js'
 import {unstyled} from '../../../../output.js'
+import {getLastFrame} from '../../../../testing/ui.js'
 import React from 'react'
 import {describe, expect, test} from 'vitest'
 import {AbortController} from 'abort-controller'
@@ -46,7 +47,7 @@ describe('ConcurrentOutput', () => {
     }
     // When
 
-    const {lastFrame} = render(
+    const renderInstance = render(
       <ConcurrentOutput processes={[backendProcess, frontendProcess]} abortController={new AbortController()} />,
     )
 
@@ -54,7 +55,7 @@ describe('ConcurrentOutput', () => {
     await frontendPromise
 
     // Then
-    expect(unstyled(lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+    expect(unstyled(getLastFrame(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "0000-00-00 00:00:00 | backend  | first backend message
       0000-00-00 00:00:00 | backend  | second backend message
       0000-00-00 00:00:00 | backend  | third backend message

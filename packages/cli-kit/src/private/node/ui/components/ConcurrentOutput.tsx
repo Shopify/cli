@@ -1,16 +1,12 @@
 import {OutputProcess} from '../../../../output.js'
 import useAsync from '../hooks/use-async.js'
 import React, {FunctionComponent, useState} from 'react'
-import {Box, Static, Text, useApp} from 'ink'
+import {Box, Static, Text} from 'ink'
 import stripAnsi from 'strip-ansi'
 import AbortController from 'abort-controller'
 import {Writable} from 'node:stream'
 
 export type WritableStream = (process: OutputProcess, index: number) => Writable
-export type RunProcesses = (
-  writableStream: WritableStream,
-  unmountInk: (error?: Error | undefined) => void,
-) => Promise<void>
 
 interface Props {
   processes: OutputProcess[]
@@ -61,7 +57,6 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const concurrentColors = ['yellow', 'cyan', 'magenta', 'green', 'blue']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
-  const {exit: unmountInk} = useApp()
 
   function lineColor(index: number) {
     const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length

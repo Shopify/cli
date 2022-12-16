@@ -16,7 +16,7 @@ export default function useAsync(
     asyncFunction()
       .then(() => {
         onResolve()
-        if (process.env.CI !== 'true') unmountInk()
+        unmountInk()
       })
       .catch((error) => {
         onReject(error)
