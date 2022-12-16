@@ -113,7 +113,7 @@ export default class Dev extends ThemeCommand {
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.execute(store, command, controller)
-    await system.sleep(this.HardTimeoutInMinutes * 60)
+    await system.sleep(this.HardTimeoutInMinutes * 60 * 1000)
     clearInterval(refreshThemeSessionInterval)
   }
 
