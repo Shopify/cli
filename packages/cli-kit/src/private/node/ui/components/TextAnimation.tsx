@@ -9,8 +9,8 @@ interface Props {
 
 function rainbow(text: string, frame: number) {
   const hue = 5 * frame
-  const leftColor = {h: hue % 360, s: 0.5, v: 1}
-  const rightColor = {h: (hue + 1) % 360, s: 0.5, v: 1}
+  const leftColor = {h: hue % 360, s: 0.8, v: 1}
+  const rightColor = {h: (hue + 1) % 360, s: 0.8, v: 1}
   return gradient(leftColor, rightColor)(text, {interpolation: 'hsv', hsvSpin: 'long'})
 }
 
@@ -30,7 +30,7 @@ const TextAnimation: React.FC<Props> = ({text}): JSX.Element => {
 
     timeout.current = setTimeout(() => {
       renderAnimation()
-    }, 40)
+    }, 35)
   }
 
   useEffect(() => {

@@ -32,8 +32,8 @@ const Tasks: React.FC<Props> = ({tasks}) => {
   useAsync(runTasks, {onResolve: () => setState('success'), onReject: () => setState('failure')})
 
   return (
-    <Box flexDirection="column" marginBottom={1}>
-      <Box marginBottom={1}>
+    <Box flexDirection="column">
+      <Box>
         {state === 'loading' ? (
           <TextAnimation text={loadingBar} />
         ) : (
