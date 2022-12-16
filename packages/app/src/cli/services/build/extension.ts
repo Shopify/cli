@@ -1,7 +1,7 @@
 import {AppInterface} from '../../models/app/app.js'
 import {UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {bundleExtension} from '../extensions/bundle.js'
-import {error, system, abort, output, file, environment, path} from '@shopify/cli-kit'
+import {error, system, abort, output} from '@shopify/cli-kit'
 import {execThemeCheckCLI} from '@shopify/cli-kit/node/ruby'
 import {Writable} from 'node:stream'
 
@@ -52,25 +52,6 @@ export async function buildThemeExtensions(options: ThemeExtensionBuildOptions):
     stdout: options.stdout,
     stderr: options.stderr,
   })
-
-  if (environment.local.useThemeBundling()) {
-    await Promise.all(
-      options.extensions.map(async (extension) => {
-        options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
-        const files = await path.glob(path.join(extension.directory, '/**/*'))
-
-        await Promise.all(
-          files.map(function (filepath) {
-            if (!(filepath.includes('.gitkeep') || filepath.includes('.toml'))) {
-              const relativePath = path.relative(extension.directory, filepath)
-              const outputFile = path.join(extension.outputBundlePath, relativePath)
-              return file.copy(filepath, outputFile)
-            }
-          }),
-        )
-      }),
-    )
-  }
 }
 
 interface BuildUIExtensionsOptions {
