@@ -8,7 +8,7 @@
       "clean": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm rimraf dist/",
+          "command": "$npm_execpath rimraf dist/",
           "cwd": "packages/ui-extensions-test-utils"
         }
       },
@@ -17,21 +17,21 @@
         "outputs": ["dist"],
         "inputs": ["{projectRoot}/src/**/*"],
         "options": {
-          "command": "pnpm tsc",
+          "command": "$npm_execpath tsc",
           "cwd": "packages/ui-extensions-test-utils"
         }
       },
       "lint": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm eslint src",
+          "command": "$npm_execpath eslint src",
           "cwd": "packages/ui-extensions-test-utils"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm eslint src --fix",
+          "command": "$npm_execpath eslint src --fix",
           "cwd": "packages/ui-extensions-test-utils"
         }
       }

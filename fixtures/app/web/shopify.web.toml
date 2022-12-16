@@ -2,4 +2,4 @@ type="backend"
 
 [commands]
 dev = "npm run dev"
-build = "pnpm run build"
+build = "$npm_execpath run build"

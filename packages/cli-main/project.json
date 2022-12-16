@@ -8,7 +8,7 @@
       "clean": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm rimraf dist/",
+          "command": "$npm_execpath rimraf dist/",
           "cwd": "packages/cli-main"
         }
       },
@@ -17,35 +17,35 @@
         "outputs": ["dist"],
         "inputs": ["{projectRoot}/src/**/*"],
         "options": {
-          "command": "pnpm tsc -b ./tsconfig.build.json",
+          "command": "$npm_execpath tsc -b ./tsconfig.build.json",
           "cwd": "packages/cli-main"
         }
       },
       "lint": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm eslint \"src/**/*.ts\" 'bin/*.js' ",
+          "command": "$npm_execpath eslint \"src/**/*.ts\" 'bin/*.js' ",
           "cwd": "packages/cli-main"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm eslint 'src/**/*.ts' 'bin/*.js' --fix",
+          "command": "$npm_execpath eslint 'src/**/*.ts' 'bin/*.js' --fix",
           "cwd": "packages/cli-main"
         }
       },
       "test": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm vitest run",
+          "command": "$npm_execpath vitest run",
           "cwd": "packages/cli-main"
         }
       },
       "test:coverage": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm vitest run --reporter json --coverage --outputFile ./coverage/report.json",
+          "command": "$npm_execpath vitest run --reporter json --coverage --outputFile ./coverage/report.json",
           "cwd": "packages/cli-main"
         }
       },
@@ -53,21 +53,21 @@
         "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "command": "pnpm vitest watch",
+          "command": "$npm_execpath vitest watch",
           "cwd": "packages/cli-main"
         }
       },
       "type-check": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm tsc --noEmit",
+          "command": "$npm_execpath tsc --noEmit",
           "cwd": "packages/cli-main"
         }
       },
       "refresh-manifests": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm oclif manifest",
+          "command": "$npm_execpath oclif manifest",
           "cwd": "packages/cli-main"
         }
       }

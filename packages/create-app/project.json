@@ -8,7 +8,7 @@
       "clean": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm rimraf dist/",
+          "command": "$npm_execpath rimraf dist/",
           "cwd": "packages/create-app"
         }
       },
@@ -17,28 +17,28 @@
         "outputs": ["dist"],
         "inputs": ["{projectRoot}/src/**/*"],
         "options": {
-          "command": "pnpm tsc -b ./tsconfig.build.json",
+          "command": "$npm_execpath tsc -b ./tsconfig.build.json",
           "cwd": "packages/create-app"
         }
       },
       "lint": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm eslint \"src/**/*.ts\"",
+          "command": "$npm_execpath eslint \"src/**/*.ts\"",
           "cwd": "packages/create-app"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm eslint 'src/**/*.ts' --fix",
+          "command": "$npm_execpath eslint 'src/**/*.ts' --fix",
           "cwd": "packages/create-app"
         }
       },
       "test": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm vitest run",
+          "command": "$npm_execpath vitest run",
           "cwd": "packages/create-app"
         }
       },
@@ -46,21 +46,21 @@
         "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "command": "pnpm vitest watch",
+          "command": "$npm_execpath vitest watch",
           "cwd": "packages/create-app"
         }
       },
       "type-check": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm tsc --noEmit",
+          "command": "$npm_execpath tsc --noEmit",
           "cwd": "packages/create-app"
         }
       },
       "refresh-manifests": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm oclif manifest",
+          "command": "$npm_execpath oclif manifest",
           "cwd": "packages/create-app"
         }
       }

@@ -9,7 +9,7 @@
       "clean": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm rimraf dist/ ../app/assets/dev-console",
+          "command": "$npm_execpath rimraf dist/ ../app/assets/dev-console",
           "cwd": "packages/ui-extensions-dev-console"
         }
       },
@@ -17,28 +17,28 @@
         "outputs": ["../app/assets/dev-console"],
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm vite build",
+          "command": "$npm_execpath vite build",
           "cwd": "packages/ui-extensions-dev-console"
         }
       },
       "lint": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm eslint src tests",
+          "command": "$npm_execpath eslint src tests",
           "cwd": "packages/ui-extensions-dev-console"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm eslint src tests --fix",
+          "command": "$npm_execpath eslint src tests --fix",
           "cwd": "packages/ui-extensions-dev-console"
         }
       },
       "dev": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm vite dev",
+          "command": "$npm_execpath vite dev",
           "cwd": "packages/ui-extensions-dev-console"
         }
       },
@@ -46,7 +46,7 @@
         "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "command": "pnpm vitest run",
+          "command": "$npm_execpath vitest run",
           "cwd": "packages/ui-extensions-dev-console"
         }
       },
@@ -54,7 +54,7 @@
         "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "command": "pnpm vitest watch",
+          "command": "$npm_execpath vitest watch",
           "cwd": "packages/ui-extensions-dev-console"
         }
       }

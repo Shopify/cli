@@ -5,7 +5,7 @@
 ```json
 {
   "scripts": {
-    "build": "pnpm clean && tsc",
+    "build": "$npm_execpath clean && tsc",
     "clean": "rm -rf dist/"
   }
 }

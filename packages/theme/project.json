@@ -8,7 +8,7 @@
       "clean": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm rimraf dist/",
+          "command": "$npm_execpath rimraf dist/",
           "cwd": "packages/theme"
         }
       },
@@ -17,21 +17,21 @@
         "outputs": ["dist"],
         "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json"],
         "options": {
-          "command": "pnpm tsc -b ./tsconfig.build.json",
+          "command": "$npm_execpath tsc -b ./tsconfig.build.json",
           "cwd": "packages/theme"
         }
       },
       "lint": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm eslint \"src/**/*.ts\"",
+          "command": "$npm_execpath eslint \"src/**/*.ts\"",
           "cwd": "packages/theme"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm eslint 'src/**/*.ts' --fix",
+          "command": "$npm_execpath eslint 'src/**/*.ts' --fix",
           "cwd": "packages/theme"
         }
       },
@@ -39,7 +39,7 @@
         "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "command": "pnpm vitest run",
+          "command": "$npm_execpath vitest run",
           "cwd": "packages/theme"
         }
       },
@@ -47,21 +47,21 @@
         "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "command": "pnpm vitest watch",
+          "command": "$npm_execpath vitest watch",
           "cwd": "packages/theme"
         }
       },
       "type-check": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm tsc --noEmit",
+          "command": "$npm_execpath tsc --noEmit",
           "cwd": "packages/theme"
         }
       },
       "refresh-manifests": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm oclif manifest",
+          "command": "$npm_execpath oclif manifest",
           "cwd": "packages/theme"
         }
       }
