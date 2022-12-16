@@ -7,6 +7,7 @@ export const ExtensionSpecificationsQuery = gql`
       externalName
       externalIdentifier
       identifier
+      gated
       options {
         managementExperience
         registrationLimit
@@ -28,6 +29,7 @@ export interface RemoteSpecification {
   name: string
   externalName: string
   identifier: string
+  gated: boolean
   externalIdentifier: string
   options: {
     managementExperience: 'cli' | 'custom' | 'dashboard'
@@ -38,6 +40,11 @@ export interface RemoteSpecification {
       surface: string
     }
   }
+}
+
+export interface FlattenedRemoteSpecification extends RemoteSpecification {
+  surface?: string
+  registrationLimit: number
 }
 
 export interface ExtensionSpecificationsQuerySchema {

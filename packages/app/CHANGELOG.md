@@ -1,5 +1,75 @@
 # @shopify/app
 
+## 3.28.0
+
+### Minor Changes
+
+- 07c95c01: Adds api_access ability for UI Extensions
+
+### Patch Changes
+
+- 97e6e7bf: Fix bug generating functions without type
+  - @shopify/cli-kit@3.28.0
+
+## 3.27.0
+
+### Patch Changes
+
+- 2678d5a1: Fix bug generating theme app extensions
+- 081db917: Add support for configuring the directories to load shopify.web.toml files from via the attribute web_directories in the shopify.app.toml file
+- 93f22d6c: Only request necessary information to speed up fetching apps list
+- 26c8ef33: Fix template for Delivery Customization extensions
+- Updated dependencies [32bbe23d]
+  - @shopify/cli-kit@3.27.0
+
+## 3.26.0
+
+### Patch Changes
+
+- a6a3f2b4: Redirect extension output messages to concurrent output UI component
+- 32cec194: Checkout ui extension React TypeScript template has ts error
+- 127c0558: Fixed backend's shopify.web.toml parsing issue which causes auth_callback_path setting getting ignored
+- Updated dependencies [0d8ac8c9]
+- Updated dependencies [ab76be51]
+- Updated dependencies [a6a3f2b4]
+- Updated dependencies [ca8141bc]
+  - @shopify/cli-kit@3.26.0
+
+## 3.25.0
+
+### Minor Changes
+
+- d7064a0c: Fix issue where extensions could not import .graphql files
+- 2555e5a9: Add ui.enable_create option for function toml configuration
+
+### Patch Changes
+
+- Updated dependencies [78196a78]
+  - @shopify/cli-kit@3.25.0
+
+## 3.24.1
+
+### Patch Changes
+
+- Updated dependencies [7e5c492a]
+  - @shopify/cli-kit@3.24.1
+
+## 3.24.0
+
+### Minor Changes
+
+- 76120036: Remove metadata.json from function extension
+- fdaee1fc: Bring consistency to the environment variables that we pass to the web frontend and backend processes
+
+### Patch Changes
+
+- cb0990df: Fixed no organization error formatting
+- Updated dependencies [d47a6e80]
+- Updated dependencies [a9d4be9e]
+- Updated dependencies [aca90638]
+- Updated dependencies [cb0990df]
+  - @shopify/cli-kit@3.24.0
+
 ## 3.23.0
 
 ### Patch Changes

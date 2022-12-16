@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.23.0",
+  "version": "3.28.0",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -39,13 +39,14 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "build": "nx build",
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "test": "nx run cli-kit:test",
     "test:watch": "nx test:watch",
+    "test:coverage": "nx test:coverage",
     "type-check": "nx type-check"
   },
   "eslintConfig": {
@@ -65,7 +66,7 @@
   "dependencies": {
     "@bugsnag/js": "7.16.7",
     "@iarna/toml": "2.2.5",
-    "@oclif/core": "1.9.2",
+    "@oclif/core": "1.21.0",
     "@types/archiver": "5.3.1",
     "abort-controller": "3.0.0",
     "archiver": "5.3.1",
@@ -102,6 +103,7 @@
     "latest-version": "6.0.0",
     "liquidjs": "9.36.0",
     "listr2": "4.0.5",
+    "lodash-es": "4.17.21",
     "log-update": "4.0.0",
     "macaddress": "0.5.3",
     "md5-file": "5.0.0",
@@ -126,10 +128,16 @@
     "@types/commondir": "^1.0.0",
     "@types/cross-zip": "^4.0.0",
     "@types/diff": "^5.0.2",
+    "@types/fs-extra": "9.0.13",
     "@types/inquirer": "^8.2.1",
+    "@types/lodash-es": "^4.17.6",
+    "@types/react": "17.0.2",
     "@types/semver": "^7.3.9",
+    "@vitest/coverage-istanbul": "^0.23.4",
+    "ink-testing-library": "^2.1.0",
     "node-stream-zip": "^1.15.0",
-    "vitest": "^0.22.1"
+    "vite": "^2.9.13",
+    "vitest": "^0.23.4"
   },
   "repository": {
     "type": "git",

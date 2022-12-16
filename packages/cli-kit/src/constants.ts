@@ -1,5 +1,5 @@
 import {join as pathJoin} from './path.js'
-import {findPackageVersionUp} from './version.js'
+import {findPackageVersionUp} from './public/node/node-package-manager.js'
 import envPaths from 'env-paths'
 
 const identifier = 'shopify-cli'

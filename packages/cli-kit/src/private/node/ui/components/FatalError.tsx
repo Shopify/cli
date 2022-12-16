@@ -66,7 +66,7 @@ const FatalError: React.FC<FatalErrorProps> = ({error}) => {
 
       {stack && stack.items.length !== 0 && (
         <Box marginTop={1} flexDirection="column">
-          <Text dimColor>To investigate the issue, examine this stack trace:</Text>
+          <Text>To investigate the issue, examine this stack trace:</Text>
           {stack.items.map((item, index) => (
             <Box flexDirection="column" key={index}>
               <Text>

@@ -1,5 +1,46 @@
 # @shopify/cli-kit
 
+## 3.28.0
+
+## 3.27.0
+
+### Minor Changes
+
+- 32bbe23d: Remove the version export from the @shopify/cli-kit module and merge its functions into @shopify/cli-kit/node/node-package-manager
+
+## 3.26.0
+
+### Minor Changes
+
+- 0d8ac8c9: Not show a message when we truncate the logs file
+- ab76be51: Add 'wdm' to bundled CLI 2.x Gemfile
+
+### Patch Changes
+
+- a6a3f2b4: Redirect extension output messages to concurrent output UI component
+- ca8141bc: Fix CLI not killing Node processes after quitting `dev` on Windows
+
+## 3.25.0
+
+### Patch Changes
+
+- 78196a78: Improve text contrast of UI kit components and introduce several new text tokens
+
+## 3.24.1
+
+### Patch Changes
+
+- 7e5c492a: Fix errors not being displayed properly when coming from processes rendered concurrently
+
+## 3.24.0
+
+### Patch Changes
+
+- d47a6e80: Improve success message style in create-app command
+- a9d4be9e: Generate creative suggested names for new themes
+- aca90638: Removed unnecessary line breaks in concurrent output
+- cb0990df: Fixed no organization error formatting
+
 ## 3.23.0
 
 ### Minor Changes

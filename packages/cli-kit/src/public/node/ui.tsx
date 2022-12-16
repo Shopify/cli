@@ -1,32 +1,39 @@
 import ConcurrentOutput from '../../private/node/ui/components/ConcurrentOutput.js'
-import {OutputProcess} from '../../output.js'
-import {render} from '../../private/node/ui.js'
+import {consoleError, OutputProcess} from '../../output.js'
+import {prompt, render, renderOnce} from '../../private/node/ui.js'
 import {Fatal} from '../../error.js'
 import {alert} from '../../private/node/ui/alert.js'
-import {fatalError} from '../../private/node/ui/error.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
+import {FatalError} from '../../private/node/ui/components/FatalError.js'
+import Prompt, {Props as PromptProps} from '../../private/node/ui/components/Prompt.js'
 import React from 'react'
 import {AbortController} from 'abort-controller'
+import {RenderOptions} from 'ink'
 
 interface RenderConcurrentOptions {
   processes: OutputProcess[]
   abortController?: AbortController
   showTimestamps?: boolean
+  renderOptions?: RenderOptions
 }
 
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
  */
-export async function renderConcurrent({processes, abortController, showTimestamps = true}: RenderConcurrentOptions) {
-  const {waitUntilExit} = render(
+export async function renderConcurrent({
+  processes,
+  abortController,
+  showTimestamps = true,
+  renderOptions = {},
+}: RenderConcurrentOptions) {
+  return render(
     <ConcurrentOutput
       processes={processes}
       abortController={abortController ?? new AbortController()}
       showTimestamps={showTimestamps}
     />,
+    renderOptions,
   )
-
-  return waitUntilExit()
 }
 
 type RenderAlertOptions = Omit<AlertProps, 'type'>
@@ -68,7 +75,7 @@ type RenderAlertOptions = Omit<AlertProps, 'type'>
  * ```
  */
 export function renderInfo(options: RenderAlertOptions) {
-  alert({...options, type: 'info'})
+  return alert({...options, type: 'info'})
 }
 
 /**
@@ -108,7 +115,7 @@ export function renderInfo(options: RenderAlertOptions) {
  * ```
  */
 export function renderSuccess(options: RenderAlertOptions) {
-  alert({...options, type: 'success'})
+  return alert({...options, type: 'success'})
 }
 
 /**
@@ -148,7 +155,7 @@ export function renderSuccess(options: RenderAlertOptions) {
  * ```
  */
 export function renderWarning(options: RenderAlertOptions) {
-  alert({...options, type: 'warning'})
+  return alert({...options, type: 'warning'})
 }
 
 /**
@@ -165,5 +172,66 @@ export function renderWarning(options: RenderAlertOptions) {
  * ```
  */
 export function renderFatalError(error: Fatal) {
-  fatalError(error)
+  return renderOnce(<FatalError error={error} />, 'error', consoleError)
+}
+
+/**
+ * Renders a select prompt to the console.
+ *
+ * ?  Associate your project with the org Castile Ventures?
+ *
+ *      Add:     • new-ext
+ *      Remove:  • integrated-demand-ext
+ *               • order-discount
+
+ * \>  (f) first
+ *     (s) second
+ *     (3) third
+ *     (4) fourth
+ *     (5) seventh
+ *     (6) tenth
+
+ *     Automations
+ *     (7) fifth
+ *     (8) sixth
+
+ *     Merchant Admin
+ *     (9) eighth
+ *     (10) ninth
+
+ *     navigate with arrows, enter to select
+ */
+export async function renderPrompt<T>(options: Omit<PromptProps<T>, 'onChoose'>) {
+  return prompt(options)
+}
+
+interface ConfirmationProps {
+  question: string
+  infoTable?: PromptProps<boolean>['infoTable']
+}
+
+/**
+ * Renders a confirmation prompt to the console.
+ *
+ * ?  Push the following changes to your Partners Dashboard?
+ * \>  (y) Yes, confirm
+ *     (c) Cancel
+ *
+ * navigate with arrows, enter to select
+ */
+export async function renderConfirmation({question, infoTable}: ConfirmationProps) {
+  const choices = [
+    {
+      label: 'Yes, confirm',
+      value: true,
+      key: 'y',
+    },
+    {
+      label: 'Cancel',
+      value: false,
+      key: 'c',
+    },
+  ]
+
+  return prompt({message: question, choices, infoTable})
 }

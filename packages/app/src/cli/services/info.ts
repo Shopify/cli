@@ -1,7 +1,12 @@
 import {outputEnv} from './app/env/show.js'
 import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
-import {configurationFileNames, functionExtensions, themeExtensions, uiExtensions} from '../constants.js'
+import {configurationFileNames} from '../constants.js'
+import {
+  allFunctionSpecifications,
+  allThemeSpecifications,
+  allUISpecifications,
+} from '../models/extensions/specifications.js'
 import {os, output, path, store, string} from '@shopify/cli-kit'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -52,7 +57,7 @@ class AppInfo {
     const sections: [string, string][] = [
       await this.devConfigsSection(),
       this.projectSettingsSection(),
-      this.appComponentsSection(),
+      await this.appComponentsSection(),
       this.accessScopesSection(),
       await this.systemInfoSection(),
     ]
@@ -100,7 +105,7 @@ class AppInfo {
     return [title, string.linesToColumns(lines)]
   }
 
-  appComponentsSection(): [string, string] {
+  async appComponentsSection(): Promise<[string, string]> {
     const title = 'Directory Components'
 
     let body = `\n${this.webComponentsSection()}`
@@ -120,13 +125,12 @@ class AppInfo {
         }
       })
     }
-    augmentWithExtensions(uiExtensions.types, this.app.extensions.ui, this.uiExtensionSubSection.bind(this))
-    augmentWithExtensions(themeExtensions.types, this.app.extensions.theme, this.themeExtensionSubSection.bind(this))
-    augmentWithExtensions(
-      functionExtensions.types,
-      this.app.extensions.function,
-      this.functionExtensionSubSection.bind(this),
-    )
+    const uiTypes = (await allUISpecifications()).map((spec) => spec.identifier)
+    const themeTypes = (await allThemeSpecifications()).map((spec) => spec.identifier)
+    const functionTypes = (await allFunctionSpecifications()).map((spec) => spec.identifier)
+    augmentWithExtensions(uiTypes, this.app.extensions.ui, this.uiExtensionSubSection.bind(this))
+    augmentWithExtensions(themeTypes, this.app.extensions.theme, this.themeExtensionSubSection.bind(this))
+    augmentWithExtensions(functionTypes, this.app.extensions.function, this.functionExtensionSubSection.bind(this))
 
     const allExtensions = [...this.app.extensions.ui, ...this.app.extensions.theme, ...this.app.extensions.function]
 

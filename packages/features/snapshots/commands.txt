@@ -41,3 +41,4 @@
  theme share            @shopify/theme         
  upgrade                @shopify/cli           
  version                @shopify/cli           
+ webhook trigger        @shopify/app           

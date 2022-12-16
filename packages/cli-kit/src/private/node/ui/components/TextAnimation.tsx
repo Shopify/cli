@@ -22,11 +22,7 @@ const delays: {[key in AnimationName]: number} = {
 /**
  * `TextAnimation` applies animations from [chalk-animation](https://github.com/bokub/chalk-animation) to `Text` Children
  */
-const TextAnimation: React.FC<Props> = ({
-  name = 'rainbow',
-  speed = 1,
-  children,
-}: React.PropsWithChildren<Props>): JSX.Element => {
+const TextAnimation: React.FC<Props> = ({name = 'rainbow', speed = 1, children}): JSX.Element => {
   const [animationTimeout, setAnimationTimeout] = useState<NodeJS.Timeout | null>(null)
   const animation = chalkAnimation[name]('').stop()
   const [frame, setFrame] = useState('')

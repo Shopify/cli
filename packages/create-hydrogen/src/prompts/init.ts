@@ -1,4 +1,5 @@
-import {ui, github, string, output} from '@shopify/cli-kit'
+import {ui, string, output} from '@shopify/cli-kit'
+import {parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
 
 const TEMPLATE_BASE = 'https://github.com/Shopify/hydrogen/templates/'
 const BRANCH = `dist`
@@ -139,7 +140,7 @@ const convertTemplateNameToUrl = (templateName: string): string => `${TEMPLATE_B
  * @returns The parsed URL.
  */
 const parseTemplateUrl = (templateUrl: string): string => {
-  const parsedTemplate = github.parseRepoUrl(templateUrl)
+  const parsedTemplate = parseGitHubRepositoryURL(templateUrl).valueOrAbort()
   const missingBranch = !parsedTemplate.ref
   const looksLikeHydrogenTemplate =
     parsedTemplate.name === 'hydrogen' &&

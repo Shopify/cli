@@ -1,4 +1,5 @@
 import {ExtensionAssetBuildStatus} from './payload/models.js'
+import {GetUIExtensionPayloadOptions} from './payload.js'
 import {UIExtension} from '../../../models/app/extensions.js'
 import {path, file, output} from '@shopify/cli-kit'
 
@@ -20,7 +21,7 @@ export async function getLocalizationFilePaths(extension: UIExtension): Promise<
 
 export async function getLocalization(
   extension: UIExtension,
-  currentLocalizattion?: Localization | null,
+  options: GetUIExtensionPayloadOptions,
 ): Promise<{localization: Localization | undefined; status: ExtensionAssetBuildStatus}> {
   const localeFiles = await getLocalizationFilePaths(extension)
 
@@ -28,8 +29,8 @@ export async function getLocalization(
     return {localization: undefined, status: ''}
   }
 
-  const localization = currentLocalizattion
-    ? currentLocalizattion
+  const localization = options.currentLocalizationPayload
+    ? options.currentLocalizationPayload
     : ({
         defaultLocale: 'en',
         translations: {},
@@ -46,7 +47,7 @@ export async function getLocalization(
         localization.defaultLocale = locale
       }
 
-      compilingTranslations.push(compileLocalizationFiles(locale, path, localization, extension))
+      compilingTranslations.push(compileLocalizationFiles(locale, path, localization, extension, options))
     }
   }
 
@@ -55,7 +56,10 @@ export async function getLocalization(
   await Promise.all(compilingTranslations)
     .then(async () => {
       localization.lastUpdated = Date.now()
-      output.info(`Parsed locales for extension ${extension.configuration.name} at ${extension.directory}`)
+      output.info(
+        `Parsed locales for extension ${extension.configuration.name} at ${extension.directory}`,
+        options.stdout,
+      )
     })
     .catch(() => {
       status = 'error'
@@ -72,13 +76,14 @@ async function compileLocalizationFiles(
   path: string,
   localization: Localization,
   extension: UIExtension,
+  options: GetUIExtensionPayloadOptions,
 ): Promise<void> {
   try {
     localization.translations[locale] = JSON.parse(await file.read(path))
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     const message = `Error parsing ${locale} locale for ${extension.configuration.name} at ${path}: ${error.message}`
-    await output.warn(message)
+    await output.warn(message, options.stderr)
     throw new Error(message)
   }
 }

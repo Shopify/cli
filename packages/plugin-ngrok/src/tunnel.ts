@@ -3,7 +3,7 @@ import {os, output, ui, error as cliKitError} from '@shopify/cli-kit'
 import {startTunnel, TunnelError, TunnelErrorType} from '@shopify/cli-kit/node/plugins/tunnel'
 import ngrok from '@shopify/ngrok'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
-import {err, ok, Result} from '@shopify/cli-kit/common/result'
+import {err, ok, Result} from '@shopify/cli-kit/node/result'
 
 export default startTunnel({provider: TUNNEL_PROVIDER, action: hookStart})
 

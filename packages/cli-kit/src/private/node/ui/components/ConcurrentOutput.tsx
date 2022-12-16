@@ -1,4 +1,5 @@
 import {OutputProcess} from '../../../../output.js'
+import {isTruthy} from '../../../../environment/utilities.js'
 import React, {FunctionComponent, useEffect, useState} from 'react'
 import {Box, Static, Text, useApp} from 'ink'
 import stripAnsi from 'strip-ansi'
@@ -21,8 +22,6 @@ interface Chunk {
   prefix: string
   lines: string[]
 }
-
-const OUTPUT_MIN_WIDTH = 80
 
 /**
  * Renders output from concurrent processes to the terminal.
@@ -89,27 +88,25 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
   }
 
   const runProcesses = async () => {
-    try {
-      await Promise.all(
-        processes.map(async (process, index) => {
-          const stdout = writableStream(process, index)
-          const stderr = writableStream(process, index)
+    await Promise.all(
+      processes.map(async (process, index) => {
+        const stdout = writableStream(process, index)
+        const stderr = writableStream(process, index)
 
-          await process.action(stdout, stderr, abortController.signal)
-        }),
-      )
+        await process.action(stdout, stderr, abortController.signal)
+      }),
+    )
 
-      unmountInk()
-    } catch (error) {
-      abortController.abort()
-      unmountInk()
-      throw error
-    }
+    // This is a workaround needed because Ink behaves differently in CI when
+    // unmounting. See https://github.com/vadimdemedes/ink/pull/266
+    if (!isTruthy(process.env.CI)) unmountInk()
   }
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    runProcesses()
+    runProcesses().catch((error) => {
+      abortController.abort()
+      unmountInk(error)
+    })
   }, [])
 
   return (

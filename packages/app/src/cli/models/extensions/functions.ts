@@ -1,7 +1,7 @@
 import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
 import {allFunctionSpecifications} from './specifications.js'
-import {ExtensionIdentifier, FunctionExtension} from '../app/extensions.js'
-import {defaultFunctionRegistationLimit} from '../../constants.js'
+import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
+import {blocks, defaultFunctionsFlavors} from '../../constants.js'
 import {schema, path, error, system, abort, string, environment} from '@shopify/cli-kit'
 import {Writable} from 'stream'
 
@@ -12,19 +12,18 @@ export type FunctionConfigType = schema.define.infer<typeof BaseFunctionConfigur
  * Specification with all the needed properties and methods to load a function.
  */
 export interface FunctionSpec<TConfiguration extends FunctionConfigType = FunctionConfigType>
-  extends ExtensionIdentifier {
+  extends GenericSpecification {
   identifier: string
   externalIdentifier: string
   externalName: string
   helpURL?: string
-  public: boolean
+  gated: boolean
   templateURL?: string
-  languages?: {name: string; value: string}[]
+  supportedFlavors: {name: string; value: string}[]
   configSchema: ZodSchemaType<TConfiguration>
-  options: {
-    registrationLimit: number
-  }
+  registrationLimit: number
   templatePath: (lang: string) => string
+  category: () => ExtensionCategory
 }
 
 /**
@@ -131,24 +130,20 @@ export function createFunctionSpec<TConfiguration extends FunctionConfigType = F
   externalIdentifier: string
   externalName: string
   helpURL?: string
-  public?: boolean
+  gated?: boolean
   templateURL?: string
-  languages?: {name: string; value: string}[]
+  supportedFlavors?: {name: string; value: string}[]
   registrationLimit?: number
   configSchema?: ZodSchemaType<TConfiguration>
   templatePath: (lang: string) => string
 }): FunctionSpec {
   const defaults = {
     templateURL: 'https://github.com/Shopify/function-examples',
-    languages: [
-      {name: 'Wasm', value: 'wasm'},
-      {name: 'Rust', value: 'rust'},
-    ],
+    supportedFlavors: defaultFunctionsFlavors,
     configSchema: BaseFunctionConfigurationSchema,
-    public: true,
-    options: {
-      registrationLimit: spec.registrationLimit ?? defaultFunctionRegistationLimit,
-    },
+    gated: false,
+    registrationLimit: spec.registrationLimit ?? blocks.functions.defaultRegistrationLimit,
+    category: (): ExtensionCategory => 'function',
   }
 
   return {...defaults, ...spec}

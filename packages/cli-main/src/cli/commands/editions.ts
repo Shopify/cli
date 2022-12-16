@@ -99,11 +99,12 @@ export default class Editions extends Command {
   }
 }
 
+/* istanbul ignore next -- @preserve */
 function unindent(value: string): string {
   const lines = value.split('\n')
   // Remove empty lines at start and end
   if (lines[0]?.trim() === '') lines.shift()
-  if (lines.at(-1)?.trim() === '') lines.pop()
+  if (lines[lines.length - 1]?.trim() === '') lines.pop()
   const nonEmptyLines = lines.filter((line) => line.trim().length > 0)
   const numSpacesToCut = Math.min(...nonEmptyLines.map((line) => (/^[\s]*[^\s]/.exec(line)?.[0]?.length || 1) - 1))
   return lines.map((line) => line.slice(numSpacesToCut)).join('\n')

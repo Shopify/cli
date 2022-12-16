@@ -1,4 +1,4 @@
-This package contains a Shopify CLI plugin that enables the creation of ngrok tunnels from `shopify app dev`, 
+This package contains a Shopify CLI plugin that enables the creation of ngrok tunnels from `shopify app dev`,
 allowing previews from any device.
 
 ## Requirements
@@ -33,7 +33,7 @@ shopify tunnel auth <TOKEN>
 ## Run tests
 
 ```bash
-yarn test
+pnpm test
 ```
 
 or

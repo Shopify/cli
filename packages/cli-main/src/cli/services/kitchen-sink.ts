@@ -1,5 +1,13 @@
 import {error} from '@shopify/cli-kit'
-import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {
+  renderConcurrent,
+  renderConfirmation,
+  renderFatalError,
+  renderInfo,
+  renderPrompt,
+  renderSuccess,
+  renderWarning,
+} from '@shopify/cli-kit/node/ui'
 import {Signal} from '@shopify/cli-kit/src/abort'
 import {Writable} from 'node:stream'
 
@@ -10,7 +18,26 @@ export async function kitchenSink() {
   })
 
   renderInfo({
-    headline: 'App initialized and ready to build.',
+    headline: [
+      "To connect this project to your shopify store's inventory:",
+      {filePath: '/my-store/hydrogen.config.js'},
+      'with your store ID and Storefront API key.',
+    ],
+    body: [
+      'You can also try the following steps:',
+      {
+        list: {
+          items: [
+            ['Run', {command: 'shopify project connect'}],
+            ['Run', {command: 'hydrogen start'}],
+          ],
+        },
+      },
+    ],
+  })
+
+  renderInfo({
+    headline: [{userInput: 'my-app'}, 'initialized and ready to build.'],
     nextSteps: [
       [
         'Run',
@@ -155,6 +182,26 @@ export async function kitchenSink() {
     },
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  renderConcurrent({processes: [backendProcess, frontendProcess]})
+  await renderPrompt({
+    message: 'Associate your project with the org Castile Ventures?',
+    choices: [
+      {label: 'first', value: 'first', key: 'f'},
+      {label: 'second', value: 'second', key: 's'},
+      {label: 'third', value: 'third'},
+      {label: 'fourth', value: 'fourth'},
+      {label: 'fifth', value: 'fifth', group: 'Automations'},
+      {label: 'sixth', value: 'sixth', group: 'Automations'},
+      {label: 'seventh', value: 'seventh'},
+      {label: 'eighth', value: 'eighth', group: 'Merchant Admin'},
+      {label: 'ninth', value: 'ninth', group: 'Merchant Admin'},
+      {label: 'tenth', value: 'tenth'},
+    ],
+    infoTable: {add: ['new-ext'], remove: ['integrated-demand-ext', 'order-discount']},
+  })
+
+  await renderConfirmation({
+    question: 'Push the following changes to your Partners Dashboard?',
+  })
+
+  await renderConcurrent({processes: [backendProcess, frontendProcess]})
 }

@@ -1,5 +1,69 @@
 # app
 
+## 3.28.0
+
+### Minor Changes
+
+- 07c95c01: Adds api_access ability for UI Extensions
+
+### Patch Changes
+
+- Updated dependencies [07c95c01]
+- Updated dependencies [97e6e7bf]
+  - @shopify/app@3.28.0
+  - @shopify/cli@3.28.0
+
+## 3.27.0
+
+### Patch Changes
+
+- Updated dependencies [2678d5a1]
+- Updated dependencies [081db917]
+- Updated dependencies [93f22d6c]
+- Updated dependencies [26c8ef33]
+  - @shopify/app@3.27.0
+  - @shopify/cli@3.27.0
+
+## 3.26.0
+
+### Patch Changes
+
+- Updated dependencies [a6a3f2b4]
+- Updated dependencies [32cec194]
+- Updated dependencies [127c0558]
+  - @shopify/app@3.26.0
+  - @shopify/cli@3.26.0
+
+## 3.25.0
+
+### Patch Changes
+
+- Updated dependencies [d7064a0c]
+- Updated dependencies [2555e5a9]
+  - @shopify/app@3.25.0
+  - @shopify/cli@3.25.0
+
+## 3.24.1
+
+### Patch Changes
+
+- @shopify/app@3.24.1
+- @shopify/cli@3.24.1
+
+## 3.24.0
+
+### Minor Changes
+
+- 76120036: Remove metadata.json from function extension
+
+### Patch Changes
+
+- Updated dependencies [76120036]
+- Updated dependencies [cb0990df]
+- Updated dependencies [fdaee1fc]
+  - @shopify/app@3.24.0
+  - @shopify/cli@3.24.0
+
 ## 3.23.0
 
 ### Patch Changes

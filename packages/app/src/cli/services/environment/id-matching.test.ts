@@ -2,7 +2,7 @@ import {automaticMatchmaking} from './id-matching.js'
 import {ExtensionRegistration} from '../dev/create-extension.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {err, ok} from '@shopify/cli-kit/common/result'
+import {err, ok} from '@shopify/cli-kit/node/result'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {
@@ -78,7 +78,7 @@ const EXTENSION_A: UIExtension = {
     name: 'EXTENSION A',
     type: 'checkout_post_purchase',
     metafields: [],
-    capabilities: {network_access: false, block_progress: false},
+    capabilities: {network_access: false, block_progress: false, api_access: false},
   },
   outputBundlePath: '',
   entrySourceFilePath: '',
@@ -106,7 +106,7 @@ const EXTENSION_A_2: UIExtension = {
     name: 'EXTENSION A 2',
     type: 'checkout_post_purchase',
     metafields: [],
-    capabilities: {network_access: false, block_progress: false},
+    capabilities: {network_access: false, block_progress: false, api_access: false},
   },
   outputBundlePath: '',
   entrySourceFilePath: '',
@@ -134,7 +134,7 @@ const EXTENSION_B: UIExtension = {
     name: 'EXTENSION B',
     type: 'checkout_post_purchase',
     metafields: [],
-    capabilities: {network_access: false, block_progress: false},
+    capabilities: {network_access: false, block_progress: false, api_access: false},
   },
   outputBundlePath: '',
   entrySourceFilePath: '',
@@ -162,7 +162,7 @@ const EXTENSION_B_2: UIExtension = {
     name: 'EXTENSION B 2',
     type: 'checkout_post_purchase',
     metafields: [],
-    capabilities: {network_access: false, block_progress: false},
+    capabilities: {network_access: false, block_progress: false, api_access: false},
   },
   outputBundlePath: '',
   entrySourceFilePath: '',
@@ -190,7 +190,7 @@ const EXTENSION_C: UIExtension = {
     name: 'EXTENSION C',
     type: 'checkout_post_purchase',
     metafields: [],
-    capabilities: {network_access: false, block_progress: false},
+    capabilities: {network_access: false, block_progress: false, api_access: false},
   },
   outputBundlePath: '',
   entrySourceFilePath: '',
@@ -218,7 +218,7 @@ const EXTENSION_D: UIExtension = {
     name: 'EXTENSION D',
     type: 'checkout_post_purchase',
     metafields: [],
-    capabilities: {network_access: false, block_progress: false},
+    capabilities: {network_access: false, block_progress: false, api_access: false},
   },
   outputBundlePath: '',
   entrySourceFilePath: '',

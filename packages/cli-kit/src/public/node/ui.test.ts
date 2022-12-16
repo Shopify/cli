@@ -1,9 +1,9 @@
-import {renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
-import {Abort, Bug} from '../../error.js'
+import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
+import {Abort, Bug, Fatal} from '../../error.js'
 import * as outputMocker from '../../testing/output.js'
-import {run} from '../../testing/ui.js'
+import {Signal} from '../../abort.js'
 import {afterEach, describe, expect, test} from 'vitest'
-import stripAnsi from 'strip-ansi'
+import {Writable} from 'node:stream'
 
 afterEach(() => {
   outputMocker.mockAndCaptureOutput().clear()
@@ -78,10 +78,10 @@ describe('renderInfo', async () => {
       │                                                                              │
       │  Reference                                                                   │
       │    • Run \`npm shopify help\`                                                  │
-      │    • Press 'return' to open the really amazing and clean dev docs:           │
-      │      https://shopify.dev                                                     │
+      │    • Press 'return' to open the really amazing and clean dev docs            │
+      │      (https://shopify.dev)                                                   │
       │                                                                              │
-      │  Link: https://shopify.com                                                   │
+      │  Link (https://shopify.com)                                                  │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
@@ -250,8 +250,8 @@ describe('renderFatalError', async () => {
       │  No Organization found                                                       │
       │                                                                              │
       │  Next steps                                                                  │
-      │    • Have you created a Shopify Partners organization:                       │
-      │      https://partners.shopify.com/signup?                                    │
+      │    • Have you created a Shopify Partners organization                        │
+      │      (https://partners.shopify.com/signup)?                                  │
       │    • Have you confirmed your accounts from the emails you received?          │
       │    • Need to connect to a different App or organization? Run the command     │
       │      again with \`--reset\`                                                    │
@@ -263,19 +263,33 @@ describe('renderFatalError', async () => {
 })
 
 describe('renderConcurrent', async () => {
-  test.skip('renders a stream of concurrent outputs from sub-processes', async () => {
+  test('renders an error message correctly when a process throws an error', async () => {
+    // Given
+    const mockOutput = outputMocker.mockAndCaptureOutput()
+
     // When
-    const {stdout} = await run('render-concurrent')
-    const lastFrame = stripAnsi(stdout).replace(/\d/g, '0')
+    const throwingProcess = {
+      prefix: 'backend',
+      action: async (_stdout: Writable, _stderr: Writable, _signal: Signal) => {
+        throw new Error('example error')
+      },
+    }
+
+    try {
+      await renderConcurrent({processes: [throwingProcess], renderOptions: {patchConsole: false}})
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      renderFatalError(error as Fatal)
+    }
 
     // Then
-    expect(lastFrame).toMatchInlineSnapshot(`
-      "0000-00-00 00:00:00 | backend  | first backend message
-      0000-00-00 00:00:00 | backend  | second backend message
-      0000-00-00 00:00:00 | backend  | third backend message
-      0000-00-00 00:00:00 | frontend | first frontend message
-      0000-00-00 00:00:00 | frontend | second frontend message
-      0000-00-00 00:00:00 | frontend | third frontend message
+    expect(mockOutput.error()).toMatchInlineSnapshot(`
+      "
+      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  example error                                                               │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
       "
     `)
   })

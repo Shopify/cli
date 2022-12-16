@@ -47,8 +47,9 @@
         "type": "node",
         "request": "launch",
         "name": "shopify app generate extension",
-        "runtimeExecutable": "yarn",
+        "runtimeExecutable": "pnpm",
         "runtimeArgs": [
+          "run",
           "shopify",
           "app",
           "generate",
@@ -94,7 +95,8 @@
           "shipping_discounts",
           "payment_customization",
           "shipping_rate_presenter",
-          "delivery_customization"
+          "delivery_customization",
+          "order_routing_location_rule",
         ],
         "default": "checkout_ui_extension",
     },

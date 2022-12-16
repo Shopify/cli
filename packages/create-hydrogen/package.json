@@ -1,6 +1,6 @@
 {
   "name": "@shopify/create-hydrogen",
-  "version": "3.23.0",
+  "version": "3.28.0",
   "private": false,
   "description": "A CLI tool to create a new Shopify hydrogen app.",
   "type": "module",
@@ -32,7 +32,7 @@
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production yarn nx build && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "build": "nx build",
     "clean": "nx clean",
     "lint": "nx lint",
@@ -50,12 +50,13 @@
     }
   },
   "dependencies": {
-    "@oclif/core": "1.9.2",
-    "@shopify/cli-kit": "3.23.0",
+    "@shopify/cli-kit": "3.28.0",
+    "@oclif/core": "1.21.0",
     "download": "8.0.0"
   },
   "devDependencies": {
-    "vitest": "^0.22.1",
+    "vitest": "^0.23.4",
+    "vite": "^2.9.13",
     "@types/download": "8.0.0"
   },
   "engine-strict": true,

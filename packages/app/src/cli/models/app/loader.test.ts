@@ -234,6 +234,49 @@ scopes = "read_products"
     await expect(load(tmpDir)).rejects.toThrow()
   })
 
+  it('loads the app with web blocks', async () => {
+    // Given
+    const {webDirectory} = await writeConfig(appConfiguration)
+    await file.move(webDirectory, path.join(tmpDir, 'we_check_everywhere'))
+
+    // When
+    const app = await load(tmpDir)
+
+    // Then
+    expect(app.webs.length).toBe(1)
+    expect(app.webs[0]!.configuration.type).toBe('backend')
+  })
+
+  it('loads the app with custom located web blocks', async () => {
+    // Given
+    const {webDirectory} = await writeConfig(`
+    scopes = ""
+    web_directories = ["must_be_here"]
+    `)
+    await file.move(webDirectory, path.join(tmpDir, 'must_be_here'))
+
+    // When
+    const app = await load(tmpDir)
+
+    // Then
+    expect(app.webs.length).toBe(1)
+  })
+
+  it('loads the app with custom located web blocks, only checks given directory', async () => {
+    // Given
+    const {webDirectory} = await writeConfig(`
+    scopes = ""
+    web_directories = ["must_be_here"]
+    `)
+    await file.move(webDirectory, path.join(tmpDir, 'cannot_be_here'))
+
+    // When
+    const app = await load(tmpDir)
+
+    // Then
+    expect(app.webs.length).toBe(0)
+  })
+
   it('loads the app when it has a extension with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)

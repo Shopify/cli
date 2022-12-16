@@ -1,26 +1,13 @@
+import {string, path, error, file, output, os, ui, npm, environment, template, git, constants} from '@shopify/cli-kit'
 import {
-  string,
-  path,
-  error,
-  file,
-  output,
-  os,
-  ui,
-  npm,
-  environment,
-  github,
-  template,
-  git,
-  constants,
-  version,
-} from '@shopify/cli-kit'
-import {
+  findPackageVersionUp,
   installNodeModules,
   packageManager,
   PackageManager,
   packageManagerUsedForCreating,
 } from '@shopify/cli-kit/node/node-package-manager'
 
+import {parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
 import {Writable} from 'stream'
 
 interface InitOptions {
@@ -41,7 +28,7 @@ Help us make Hydrogen better by reporting this error so we can improve this mess
 `
 
 async function init(options: InitOptions) {
-  const hydrogenVersion = await version.findPackageVersionUp({fromModuleURL: import.meta.url})
+  const hydrogenVersion = await findPackageVersionUp({fromModuleURL: import.meta.url})
   const user = (await os.username()) ?? ''
   const cliPackageVersion = options.shopifyCliVersion ?? (await constants.versions.cliKit())
   const cliHydrogenPackageVersion = options.cliHydrogenPackageVersion ?? hydrogenVersion
@@ -61,7 +48,7 @@ async function init(options: InitOptions) {
 
     let tasks: ui.ListrTasks = []
 
-    const templateInfo = await github.parseRepoUrl(options.template)
+    const templateInfo = await parseGitHubRepositoryURL(options.template).valueOrAbort()
     const branch = templateInfo.ref ? `#${templateInfo.ref}` : ''
     const templatePath = templateInfo.subDirectory
       ? path.join(templateDownloadDir, templateInfo.subDirectory)

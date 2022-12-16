@@ -1,5 +1,7 @@
-import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
+import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
+import {fetchOrgAndApps} from '../services/dev/fetch.js'
 import {output, ui} from '@shopify/cli-kit'
+import {debounce} from 'lodash-es'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
   if (organizations.length === 1) {
@@ -17,17 +19,61 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
   return organizations.find((org) => org.id === choice.id)!
 }
 
-export async function selectAppPrompt(apps: OrganizationApp[]): Promise<OrganizationApp> {
-  const appList = apps.map((app) => ({name: app.title, value: app.apiKey}))
-  const choice = await ui.prompt([
+export async function selectAppPrompt(
+  apps: MinimalOrganizationApp[],
+  orgId: string,
+  token: string,
+): Promise<MinimalOrganizationApp> {
+  const toAnswer = (app: MinimalOrganizationApp) => ({name: app.title, value: app.apiKey})
+  const appList = apps.map(toAnswer)
+
+  return ui.prompt([
     {
       type: 'autocomplete',
       name: 'apiKey',
       message: 'Which existing app is this for?',
       choices: appList,
+      /* filterFunction is a local filter-and-search, to be applied to the
+       * results from the remote search for proper sorting and display.
+       * This source function wraps the local function in a function that
+       * fetches remote results when appropriate.
+       */
+      source: (filterFunction: ui.FilterFunction): ui.FilterFunction => {
+        let latestInput = ''
+        const searchAwaiters: ((input: ui.PromptAnswer[]) => void)[] = []
+        const cachedResults: {[input: string]: ui.PromptAnswer[]} = {'': appList}
+
+        const performSearch = debounce(async (input: string): Promise<void> => {
+          if (input && !cachedResults[input]) {
+            const result = await fetchOrgAndApps(orgId, token, input)
+            // eslint-disable-next-line require-atomic-updates
+            cachedResults[input] = await filterFunction(result.apps.map(toAnswer), input)
+          }
+          // Only resolve results if they match the latest search term.
+          if (input === latestInput) searchAwaiters.forEach((func) => func(cachedResults[input]!))
+        }, 300)
+
+        return async (_answers: ui.PromptAnswer[], input = ''): Promise<ui.PromptAnswer[]> => {
+          latestInput = input
+
+          // Only perform remote search for apps if we haven't already fetched
+          // them all and a new search term has been entered.
+          if (!input) {
+            return appList
+          } else if (appList.length < 100) {
+            return filterFunction(appList, input)
+          } else if (cachedResults[input]) {
+            return cachedResults[input]!
+          }
+
+          await performSearch(input)
+          return new Promise((resolve, _reject) => {
+            searchAwaiters.push(resolve)
+          })
+        }
+      },
     },
   ])
-  return apps.find((app) => app.apiKey === choice.apiKey)!
 }
 
 export async function selectStorePrompt(stores: OrganizationStore[]): Promise<OrganizationStore | undefined> {

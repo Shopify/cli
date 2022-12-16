@@ -6,7 +6,7 @@
     "build": "vite build frontend --outDir ../dist --emptyOutDir",
     "debug": "node --inspect-brk backend/index.js",
     "dev": "cross-env NODE_ENV=development nodemon backend/index.js --watch ./backend",
-    "preserve": "npm run build",
+    "preserve": "pnpm run build",
     "serve": "cross-env NODE_ENV=production node backend/index.js",
     "test": "vitest --reporter=verbose"
   },
@@ -27,6 +27,7 @@
     "prettier": "^2.6.1",
     "pretty-quick": "^3.1.3",
     "supertest": "^6.2.2",
-    "vitest": "^0.22.1"
+    "vitest": "^0.23.4",
+    "vite": "2.9.12"
   }
 }

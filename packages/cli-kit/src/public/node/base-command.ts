@@ -35,25 +35,27 @@ abstract class BaseCommand extends Command {
 
   protected async parse<
     TFlags extends Interfaces.FlagOutput & {path?: string; verbose?: boolean},
+    TGlobalFlags extends Interfaces.FlagOutput,
     TArgs extends Interfaces.OutputArgs,
   >(
-    options?: Interfaces.Input<TFlags> | undefined,
-    argv?: string[] | undefined,
-  ): Promise<Interfaces.ParserOutput<TFlags, TArgs>> {
-    let result = await super.parse<TFlags, TArgs>(options, argv)
-    result = await this.resultWithPreset<TFlags, TArgs>(options, argv, result)
+    options?: Interfaces.Input<TFlags, TGlobalFlags>,
+    argv?: string[],
+  ): Promise<Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>> {
+    let result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
+    result = await this.resultWithPreset<TFlags, TGlobalFlags, TArgs>(result, options, argv)
     await addFromParsedFlags(result.flags)
     return result
   }
 
   protected async resultWithPreset<
     TFlags extends Interfaces.FlagOutput & {path?: string; verbose?: boolean},
+    TGlobalFlags extends Interfaces.FlagOutput,
     TArgs extends Interfaces.OutputArgs,
   >(
-    options: Interfaces.Input<TFlags> | undefined,
-    argv: string[] | undefined,
-    originalResult: Interfaces.ParserOutput<TFlags, TArgs>,
-  ): Promise<Interfaces.ParserOutput<TFlags, TArgs>> {
+    originalResult: Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>,
+    options?: Interfaces.Input<TFlags, TGlobalFlags>,
+    argv?: string[],
+  ): Promise<Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>> {
     // If no preset is specified, don't modify the results
     const flags = originalResult.flags as PresettableFlags
     if (!flags.preset) return originalResult
@@ -65,19 +67,19 @@ abstract class BaseCommand extends Command {
 
     // Parse using noDefaultsOptions to derive a list of flags specified as
     // command-line arguments.
-    const noDefaultsResult = await super.parse<TFlags, TArgs>(noDefaultsOptions(options), argv)
+    const noDefaultsResult = await super.parse<TFlags, TGlobalFlags, TArgs>(noDefaultsOptions(options), argv)
 
     // Add the preset's settings to argv and pass them to `super.parse`. This
     // invokes oclif's validation system without breaking the oclif black box.
     // Replace the original result with this one.
-    const result = await super.parse<TFlags, TArgs>(options, [
+    const result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, [
       // Need to specify argv default because we're merging with argsFromPreset.
       ...(argv || this.argv),
-      ...argsFromPreset<TFlags, TArgs>(preset, options, noDefaultsResult),
+      ...argsFromPreset<TFlags, TGlobalFlags, TArgs>(preset, options, noDefaultsResult),
     ])
 
     // Report successful application of the preset.
-    reportPresetApplication<TFlags, TArgs>(noDefaultsResult.flags, result.flags, flags.preset, preset)
+    reportPresetApplication<TFlags, TGlobalFlags, TArgs>(noDefaultsResult.flags, result.flags, flags.preset, preset)
 
     return result
   }
@@ -111,9 +113,13 @@ export async function addFromParsedFlags(flags: {path?: string; verbose?: boolea
  * It doesn't matter if the preset flag's value was the same as the default; from
  * the user's perspective, they want to know their preset was applied.
  */
-function reportPresetApplication<TFlags extends Interfaces.FlagOutput, TArgs extends Interfaces.OutputArgs>(
-  noDefaultsFlags: Interfaces.ParserOutput<TFlags, TArgs>['flags'],
-  flagsWithPresets: Interfaces.ParserOutput<TFlags, TArgs>['flags'],
+function reportPresetApplication<
+  TFlags extends Interfaces.FlagOutput,
+  TGlobalFlags extends Interfaces.FlagOutput,
+  TArgs extends Interfaces.OutputArgs,
+>(
+  noDefaultsFlags: Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>['flags'],
+  flagsWithPresets: Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>['flags'],
   presetName: string,
   preset: JsonMap,
 ): void {
@@ -153,9 +159,9 @@ ${Object.entries(changes)
  * the user actually passed on the command line.
  */
 
-function noDefaultsOptions<TFlags extends Interfaces.FlagOutput>(
-  options: Interfaces.Input<TFlags> | undefined,
-): Interfaces.Input<TFlags> | undefined {
+function noDefaultsOptions<TFlags extends Interfaces.FlagOutput, TGlobalFlags extends Interfaces.FlagOutput>(
+  options: Interfaces.Input<TFlags, TGlobalFlags> | undefined,
+): Interfaces.Input<TFlags, TGlobalFlags> | undefined {
   if (!options?.flags) return options
   return {
     ...options,
@@ -173,9 +179,13 @@ function noDefaultsOptions<TFlags extends Interfaces.FlagOutput>(
  * Converts the preset's settings to arguments as though passed on the command
  * line, skipping any arguments the user specified on the command line.
  */
-function argsFromPreset<TFlags extends Interfaces.FlagOutput, TArgs extends Interfaces.OutputArgs>(
+function argsFromPreset<
+  TFlags extends Interfaces.FlagOutput,
+  TGlobalFlags extends Interfaces.FlagOutput,
+  TArgs extends Interfaces.OutputArgs,
+>(
   preset: JsonMap,
-  options: Interfaces.Input<TFlags> | undefined,
+  options: Interfaces.Input<TFlags, TGlobalFlags> | undefined,
   noDefaultsResult: Interfaces.ParserOutput<TFlags, TArgs>,
 ): string[] {
   const args: string[] = []

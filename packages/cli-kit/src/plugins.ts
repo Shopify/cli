@@ -3,7 +3,7 @@ import {PickByPrefix} from './typing/pick-by-prefix.js'
 import {MonorailEventPublic, MonorailEventSensitive} from './monorail.js'
 import {HookReturnPerTunnelPlugin} from './public/node/plugins/tunnel.js'
 import {getArrayContainsDuplicates, getArrayRejectingUndefined} from './public/common/array.js'
-import {err, Result} from './public/common/result.js'
+import {err, Result} from './public/node/result.js'
 import {Config, Interfaces} from '@oclif/core'
 
 /**

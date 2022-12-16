@@ -3,7 +3,7 @@ import {ExtensionRegistration} from '../dev/create-extension.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {ui} from '@shopify/cli-kit'
-import {ok} from '@shopify/cli-kit/common/result.js'
+import {ok} from '@shopify/cli-kit/node/result.js'
 
 const REGISTRATION_A: ExtensionRegistration = {
   uuid: 'UUID_A',
@@ -30,7 +30,7 @@ const EXTENSION_A: UIExtension = {
     name: '',
     type: 'checkout_post_purchase',
     metafields: [],
-    capabilities: {network_access: false, block_progress: false},
+    capabilities: {network_access: false, block_progress: false, api_access: false},
   },
   outputBundlePath: '',
   entrySourceFilePath: '',
@@ -58,7 +58,7 @@ const EXTENSION_A_2: UIExtension = {
     name: '',
     type: 'checkout_post_purchase',
     metafields: [],
-    capabilities: {network_access: false, block_progress: false},
+    capabilities: {network_access: false, block_progress: false, api_access: false},
   },
   outputBundlePath: '',
   entrySourceFilePath: '',
@@ -86,7 +86,7 @@ const EXTENSION_B: UIExtension = {
     name: '',
     type: 'checkout_post_purchase',
     metafields: [],
-    capabilities: {network_access: false, block_progress: false},
+    capabilities: {network_access: false, block_progress: false, api_access: false},
   },
   outputBundlePath: '',
   entrySourceFilePath: '',

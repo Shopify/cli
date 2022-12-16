@@ -1,6 +1,5 @@
 import {Extension, FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {AppErrors} from './loader.js'
-import {getUIExtensionRendererDependency, UIExtensionTypes} from '../../constants.js'
 import {path, schema, file} from '@shopify/cli-kit'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -8,6 +7,7 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 export const AppConfigurationSchema = schema.define.object({
   scopes: schema.define.string().default(''),
   extensionDirectories: schema.define.array(schema.define.string()).optional(),
+  webDirectories: schema.define.array(schema.define.string()).optional(),
 })
 
 export enum WebType {
@@ -17,7 +17,7 @@ export enum WebType {
 
 export const WebConfigurationSchema = schema.define.object({
   type: schema.define.enum([WebType.Frontend, WebType.Backend]),
-  auth_callback_path: schema.define
+  authCallbackPath: schema.define
     .preprocess((arg) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg), schema.define.string())
     .optional(),
   commands: schema.define.object({
@@ -145,11 +145,11 @@ type RendererVersionResult = {name: string; version: string} | undefined | 'not_
  * @returns The version if the dependency exists.
  */
 export async function getUIExtensionRendererVersion(
-  uiExtensionType: UIExtensionTypes,
+  extension: UIExtension,
   app: AppInterface,
 ): Promise<RendererVersionResult> {
   // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)
-  const rendererDependency = getUIExtensionRendererDependency(uiExtensionType)
+  const rendererDependency = extension.dependency
   if (!rendererDependency) return undefined
   return getDependencyVersion(rendererDependency.name, app.directory)
 }

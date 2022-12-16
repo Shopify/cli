@@ -1,5 +1,53 @@
 # @shopify/create-app
 
+## 3.28.0
+
+### Patch Changes
+
+- @shopify/cli-kit@3.28.0
+
+## 3.27.0
+
+### Patch Changes
+
+- Updated dependencies [32bbe23d]
+  - @shopify/cli-kit@3.27.0
+
+## 3.26.0
+
+### Patch Changes
+
+- Updated dependencies [0d8ac8c9]
+- Updated dependencies [ab76be51]
+- Updated dependencies [a6a3f2b4]
+- Updated dependencies [ca8141bc]
+  - @shopify/cli-kit@3.26.0
+
+## 3.25.0
+
+### Patch Changes
+
+- Updated dependencies [78196a78]
+  - @shopify/cli-kit@3.25.0
+
+## 3.24.1
+
+### Patch Changes
+
+- Updated dependencies [7e5c492a]
+  - @shopify/cli-kit@3.24.1
+
+## 3.24.0
+
+### Patch Changes
+
+- d47a6e80: Improve success message style in create-app command
+- Updated dependencies [d47a6e80]
+- Updated dependencies [a9d4be9e]
+- Updated dependencies [aca90638]
+- Updated dependencies [cb0990df]
+  - @shopify/cli-kit@3.24.0
+
 ## 3.23.0
 
 ### Patch Changes

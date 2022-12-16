@@ -24,6 +24,9 @@
     "build": {
       "dependsOn": ["^build"]
     },
+    "refresh-manifests": {
+      "dependsOn": ["build"]
+    },
     "lint": {
     },
     "lint:fix": {

@@ -6,7 +6,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {err, ok} from '@shopify/cli-kit/common/result'
+import {err, ok} from '@shopify/cli-kit/node/result'
 import {environment} from '@shopify/cli-kit'
 
 const REGISTRATION_A: RemoteSource = {
@@ -41,7 +41,7 @@ const EXTENSION_A: UIExtension = {
     name: '',
     type: 'checkout_post_purchase',
     metafields: [],
-    capabilities: {network_access: false, block_progress: false},
+    capabilities: {network_access: false, block_progress: false, api_access: false},
   },
   outputBundlePath: '',
   entrySourceFilePath: '',
@@ -69,7 +69,7 @@ const EXTENSION_A_2: UIExtension = {
     name: '',
     type: 'checkout_post_purchase',
     metafields: [],
-    capabilities: {network_access: false, block_progress: false},
+    capabilities: {network_access: false, block_progress: false, api_access: false},
   },
   outputBundlePath: '',
   entrySourceFilePath: '',

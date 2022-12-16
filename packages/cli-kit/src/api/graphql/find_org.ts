@@ -1,24 +1,18 @@
 import {gql} from 'graphql-request'
 
 export const FindOrganizationQuery = gql`
-  query FindOrganization($id: ID!) {
+  query FindOrganization($id: ID!, $title: String) {
     organizations(id: $id, first: 1) {
       nodes {
         id
         businessName
         website
         appsNext
-        apps(first: 100) {
+        apps(first: 100, title: $title) {
           nodes {
             id
             title
             apiKey
-            organizationId
-            apiSecretKeys {
-              secret
-            }
-            appType
-            grantedScopes
           }
         }
       }
@@ -38,12 +32,6 @@ export interface FindOrganizationQuerySchema {
           id: string
           title: string
           apiKey: string
-          organizationId: string
-          apiSecretKeys: {
-            secret: string
-          }[]
-          appType: string
-          grantedScopes: string[]
         }[]
       }
     }[]

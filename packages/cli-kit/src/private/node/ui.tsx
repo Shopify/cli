@@ -1,7 +1,8 @@
 import {isUnitTest} from '../../environment/local.js'
 import {collectLog, consoleLog, Logger, LogLevel, outputWhereAppropriate} from '../../output.js'
-import {ReactElement} from 'react'
-import {render as inkRender} from 'ink'
+import Prompt, {Props as PromptProps} from '../../private/node/ui/components/Prompt.js'
+import React, {ReactElement} from 'react'
+import {render as inkRender, RenderOptions} from 'ink'
 import {EventEmitter} from 'events'
 
 export function renderOnce(element: JSX.Element, logLevel: LogLevel = 'info', logger: Logger = consoleLog) {
@@ -15,8 +16,9 @@ export function renderOnce(element: JSX.Element, logLevel: LogLevel = 'info', lo
   unmount()
 }
 
-export function render(element: JSX.Element) {
-  return inkRender(element)
+export function render(element: JSX.Element, options?: RenderOptions) {
+  const {waitUntilExit} = inkRender(element, options)
+  return waitUntilExit()
 }
 
 interface Instance {
@@ -61,4 +63,21 @@ export const renderString = (element: ReactElement): Instance => {
     output: stdout.lastFrame(),
     unmount: instance.unmount,
   }
+}
+
+export async function prompt<T>(options: Omit<PromptProps<T>, 'onChoose'>) {
+  let onChooseResolve: (choice: T) => void = () => {}
+
+  const onChoosePromise = new Promise<T>((resolve) => {
+    onChooseResolve = resolve
+  })
+
+  const props = {
+    ...options,
+    onChoose: onChooseResolve,
+  }
+
+  await render(<Prompt {...props} />, {exitOnCtrlC: false})
+
+  return onChoosePromise
 }

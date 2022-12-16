@@ -1,16 +1,9 @@
-import {
-  blocks,
-  extensionTypeCategory,
-  ExtensionTypes,
-  getExtensionOutputConfig,
-  getUIExtensionRendererDependency,
-  ThemeExtensionTypes,
-  UIExtensionTypes,
-  FunctionExtensionTypes,
-  versions,
-} from '../../constants.js'
+import {blocks, versions} from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
-import {mapExtensionTypeToExternalExtensionType} from '../../utilities/extensions/name-mapper.js'
+import {FunctionSpec} from '../../models/extensions/functions.js'
+import {GenericSpecification} from '../../models/app/extensions.js'
+import {UIExtensionSpec} from '../../models/extensions/ui.js'
+import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
 import {error, file, git, path, string, template, ui, environment} from '@shopify/cli-kit'
 import {
   addNPMDependenciesIfNeeded,
@@ -32,27 +25,28 @@ async function getTemplatePath(name: string): Promise<string> {
   }
 }
 
-interface ExtensionInitOptions<TExtensionTypes extends ExtensionTypes = ExtensionTypes> {
+interface ExtensionInitOptions<TSpec extends GenericSpecification = GenericSpecification> {
   name: string
-  extensionType: TExtensionTypes
   app: AppInterface
   cloneUrl?: string
   extensionFlavor?: ExtensionFlavor
+  specification: TSpec
+  extensionType: string
 }
-
-export type ExtensionFlavor = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react'
 
 interface ExtensionDirectory {
   extensionDirectory: string
 }
 
-type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionExtensionTypes> & ExtensionDirectory
-type UIExtensionInitOptions = ExtensionInitOptions<UIExtensionTypes> & ExtensionDirectory
-type ThemeExtensionInitOptions = ExtensionInitOptions<ThemeExtensionTypes> & ExtensionDirectory
+export type ExtensionFlavor = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react'
+
+type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionSpec> & ExtensionDirectory
+type UIExtensionInitOptions = ExtensionInitOptions<UIExtensionSpec> & ExtensionDirectory
+type ThemeExtensionInitOptions = ExtensionInitOptions<ThemeExtensionSpec> & ExtensionDirectory
 
 async function extensionInit(options: ExtensionInitOptions): Promise<string> {
   const extensionDirectory = await ensureExtensionDirectoryExists({app: options.app, name: options.name})
-  switch (extensionTypeCategory(options.extensionType)) {
+  switch (options.specification.category()) {
     case 'theme':
       await themeExtensionInit({...(options as ThemeExtensionInitOptions), extensionDirectory})
       break
@@ -66,14 +60,14 @@ async function extensionInit(options: ExtensionInitOptions): Promise<string> {
   return extensionDirectory
 }
 
-async function themeExtensionInit({name, app, extensionType, extensionDirectory}: ThemeExtensionInitOptions) {
+async function themeExtensionInit({name, app, specification, extensionDirectory}: ThemeExtensionInitOptions) {
   const templatePath = await getTemplatePath('theme-extension')
-  await template.recursiveDirectoryCopy(templatePath, extensionDirectory, {name, extensionType})
+  await template.recursiveDirectoryCopy(templatePath, extensionDirectory, {name, type: specification.identifier})
 }
 
 async function uiExtensionInit({
   name,
-  extensionType,
+  specification,
   app,
   extensionFlavor,
   extensionDirectory,
@@ -85,7 +79,7 @@ async function uiExtensionInit({
         task: async (_, task) => {
           task.title = 'Installing additional dependencies...'
           await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor)
-          const requiredDependencies = getRuntimeDependencies({extensionType, extensionFlavor})
+          const requiredDependencies = getRuntimeDependencies({specification, extensionFlavor})
           await addNPMDependenciesIfNeeded(requiredDependencies, {
             packageManager: app.packageManager,
             type: 'prod',
@@ -107,12 +101,12 @@ async function uiExtensionInit({
         },
       },
       {
-        title: `Generate ${getExtensionOutputConfig(extensionType).humanKey} extension`,
+        title: `Generate ${specification.externalName} extension`,
         task: async (_, task) => {
-          task.title = `Generating ${getExtensionOutputConfig(extensionType).humanKey} extension...`
+          task.title = `Generating ${specification.externalName} extension...`
 
           const templateDirectory = await path.findUp(
-            `templates/ui-extensions/projects/${mapExtensionTypeToExternalExtensionType(extensionType)}`,
+            `templates/ui-extensions/projects/${specification.externalIdentifier}`,
             {
               type: 'directory',
               cwd: path.moduleDirectory(import.meta.url),
@@ -120,14 +114,14 @@ async function uiExtensionInit({
           )
 
           if (!templateDirectory) {
-            throw new error.Bug(`Couldn't find the template for ${extensionType}`)
+            throw new error.Bug(`Couldn't find the template for ${specification.externalIdentifier}`)
           }
 
           const srcFileExtension = getSrcFileExtension(extensionFlavor ?? 'vanilla-js')
           await template.recursiveDirectoryCopy(templateDirectory, extensionDirectory, {
             srcFileExtension,
             flavor: extensionFlavor ?? '',
-            type: extensionType,
+            type: specification.identifier,
             name,
           })
 
@@ -136,7 +130,7 @@ async function uiExtensionInit({
             await removeUnwantedTemplateFilesPerFlavor(extensionDirectory, extensionFlavor)
           }
 
-          task.title = `${getExtensionOutputConfig(extensionType).humanKey} extension generated`
+          task.title = `${specification.externalName} extension generated`
         },
       },
     ],
@@ -158,14 +152,14 @@ function getSrcFileExtension(extensionFlavor: ExtensionFlavor): SrcFileExtension
 }
 
 export function getRuntimeDependencies({
-  extensionType,
+  specification,
   extensionFlavor,
-}: Pick<UIExtensionInitOptions, 'extensionType' | 'extensionFlavor'>): DependencyVersion[] {
+}: Pick<UIExtensionInitOptions, 'specification' | 'extensionFlavor'>): DependencyVersion[] {
   const dependencies: DependencyVersion[] = []
   if (extensionFlavor?.includes('react')) {
     dependencies.push({name: 'react', version: versions.react})
   }
-  const rendererDependency = getUIExtensionRendererDependency(extensionType)
+  const rendererDependency = specification.dependency
   if (rendererDependency) {
     dependencies.push(rendererDependency)
   }
@@ -193,11 +187,12 @@ async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, 
 
 async function functionExtensionInit(options: FunctionExtensionInitOptions) {
   const url = options.cloneUrl || blocks.functions.defaultUrl
+  const spec = options.specification
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
 
     await ui.task({
-      title: `Generating ${getExtensionOutputConfig(options.extensionType).humanKey} extension...`,
+      title: `Generating ${spec.externalName} extension...`,
       task: async () => {
         await file.mkdir(templateDownloadDir)
         await git.downloadRepository({
@@ -205,38 +200,19 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
           destination: templateDownloadDir,
           shallow: true,
         })
-        const origin = path.join(templateDownloadDir, functionTemplatePath(options))
+        const templatePath = spec.templatePath(options.extensionFlavor ?? blocks.functions.defaultLanguage)
+        const origin = path.join(templateDownloadDir, templatePath)
         await template.recursiveDirectoryCopy(origin, options.extensionDirectory, options)
         const configYamlPath = path.join(options.extensionDirectory, 'script.config.yml')
         if (await file.exists(configYamlPath)) {
           await file.remove(configYamlPath)
         }
         return {
-          successMessage: `${getExtensionOutputConfig(options.extensionType).humanKey} extension generated`,
+          successMessage: `${spec.externalName} extension generated`,
         }
       },
     })
   })
-}
-
-function functionTemplatePath({extensionType, extensionFlavor}: FunctionExtensionInitOptions): string {
-  const lang = extensionFlavor || blocks.functions.defaultLanguage
-  switch (extensionType) {
-    case 'product_discounts':
-      return `discounts/${lang}/product-discounts/default`
-    case 'order_discounts':
-      return `discounts/${lang}/order-discounts/default`
-    case 'shipping_discounts':
-      return `discounts/${lang}/shipping-discounts/default`
-    case 'payment_customization':
-      return `checkout/${lang}/payment-customization/default`
-    case 'shipping_rate_presenter':
-      return `checkout/${lang}/shipping-rate-presenter/default`
-    case 'delivery_customization':
-      return `checkout/${lang}/delivery-customization/default`
-    default:
-      return 'unknown'
-  }
 }
 
 async function ensureExtensionDirectoryExists({name, app}: {name: string; app: AppInterface}): Promise<string> {

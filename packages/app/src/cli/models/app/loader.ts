@@ -2,8 +2,9 @@ import {UIExtension, ThemeExtension, FunctionExtension, Extension} from './exten
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
-import {ExtensionInstance, specForType} from '../extensions/extensions.js'
-import {TypeSchema} from '../extensions/schemas.js'
+import {UIExtensionInstance, uiSpecForType} from '../extensions/ui.js'
+import {ThemeExtensionInstance, themeSpecForType} from '../extensions/theme.js'
+import {ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
 import {FunctionInstance, functionSpecForType} from '../extensions/functions.js'
 import {error, file, path, schema, string, toml, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -81,7 +82,7 @@ class AppLoader {
     const name = await loadAppName(this.appDirectory)
     const nodeDependencies = await getDependencies(packageJSONPath)
     const packageManager = await getPackageManager(this.appDirectory)
-    const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs()
+    const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(configuration.webDirectories)
     const usesWorkspaces = await appUsesWorkspaces(this.appDirectory)
 
     const appClass = new App(
@@ -147,15 +148,19 @@ class AppLoader {
     return configurationPath
   }
 
-  async loadWebs(): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
-    const webTomlPaths = await path.glob(path.join(this.appDirectory, `**/${configurationFileNames.web}`))
+  async loadWebs(webDirectories?: string[]): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
+    const defaultWebDirectory = '**'
+    const webConfigGlobs = [...(webDirectories ?? [defaultWebDirectory])].map((webGlob) => {
+      return path.join(this.appDirectory, webGlob, configurationFileNames.web)
+    })
+    const webTomlPaths = await path.glob(webConfigGlobs)
 
     const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
 
     const webTomlsInStandardLocation = await path.glob(
       path.join(this.appDirectory, `web/**/${configurationFileNames.web}`),
     )
-    const usedCustomLayout = webTomlsInStandardLocation.length !== webTomlPaths.length
+    const usedCustomLayout = webDirectories !== undefined || webTomlsInStandardLocation.length !== webTomlPaths.length
 
     return {webs, usedCustomLayout}
   }
@@ -240,7 +245,7 @@ class AppLoader {
       const fileContent = await file.read(configurationPath)
       const obj = toml.decode(fileContent)
       const {type} = TypeSchema.parse(obj)
-      const specification = await specForType(type)
+      const specification = await uiSpecForType(type)
 
       if (!specification) {
         this.abortOrReport(
@@ -277,15 +282,13 @@ class AppLoader {
         }
       }
 
-      // PENDING: load extensionPointSpecs depending on the points defined in the configuartion file and pass it to the constructor
-      const extensionInstance = new ExtensionInstance({
+      const extensionInstance = new UIExtensionInstance({
         configuration,
         configurationPath,
         entryPath: entryPath ?? '',
         directory,
         specification,
         remoteSpecification: undefined,
-        extensionPointSpecs: undefined,
       })
 
       if (configuration.type) {
@@ -342,32 +345,24 @@ class AppLoader {
 
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
-      const fileContent = await file.read(configurationPath)
-      const obj = toml.decode(fileContent)
-      const {type} = TypeSchema.parse(obj)
-      const specification = await specForType(type)
+      const configuration = await this.parseConfigurationFile(ThemeExtensionSchema, configurationPath)
+      const specification = await themeSpecForType('theme')
 
       if (!specification) {
         this.abortOrReport(
-          output.content`Unknown extension type ${output.token.yellow(type)} in ${output.token.path(
-            configurationPath,
-          )}`,
+          output.content`Unknown theme type ${output.token.yellow('theme')} in ${output.token.path(configurationPath)}`,
           undefined,
           configurationPath,
         )
         return undefined
       }
 
-      const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
-
-      return new ExtensionInstance({
+      return new ThemeExtensionInstance({
         configuration,
         configurationPath,
-        entryPath: '',
         directory,
-        specification,
         remoteSpecification: undefined,
-        extensionPointSpecs: undefined,
+        specification,
         outputBundlePath: directory,
       })
     })

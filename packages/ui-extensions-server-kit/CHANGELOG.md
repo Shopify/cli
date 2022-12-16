@@ -1,5 +1,17 @@
 # @shopify/ui-extensions-server-kit
 
+## 4.0.0
+
+### Major Changes
+
+- feee9215: Remove APIClient from ui-extensions-server-kit. APIClient is not used by the package and although it's exposed externally, all its functionality is also handled by ExtensionServerClient
+
+## 3.25.0
+
+## 3.24.1
+
+## 3.24.0
+
 ## 3.23.0
 
 ## 3.22.1

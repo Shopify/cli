@@ -1,5 +1,5 @@
 import {selectStore} from './select-store.js'
-import {fetchAllDevStores, fetchStoreByDomain} from './fetch.js'
+import {fetchAllDevStores} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
@@ -72,20 +72,7 @@ beforeEach(() => {
 })
 
 describe('selectStore', async () => {
-  it('returns store if cachedStoreName and is valid', async () => {
-    // Given
-    const fqdn = STORE1.shopDomain
-    vi.mocked(fetchStoreByDomain).mockResolvedValueOnce({organization: ORG1, store: STORE1})
-
-    // When
-    const got = await selectStore([STORE1, STORE2], ORG1, 'token', fqdn)
-
-    // Then
-    expect(got).toEqual(STORE1)
-    expect(selectStorePrompt).not.toHaveBeenCalled()
-  })
-
-  it('prompts user to select if there is no cachedApiKey', async () => {
+  it('prompts user to select', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
 
@@ -95,19 +82,6 @@ describe('selectStore', async () => {
     // Then
     expect(got).toEqual(STORE1)
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
-  })
-
-  it('prompts to select a new store if cached store fqdn is invalid', async () => {
-    // Given
-    const fqdn = 'invalid-store-domain'
-    vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
-    vi.mocked(fetchStoreByDomain).mockResolvedValueOnce({organization: ORG1, store: undefined})
-
-    // When
-    const got = await selectStore([STORE1, STORE2], ORG1, 'token', fqdn)
-
-    // Then
-    expect(got).toEqual(STORE1)
   })
 
   it('prompts user to convert store to non-transferable if selection is invalid', async () => {
