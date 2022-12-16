@@ -67,7 +67,8 @@
           "@typescript-eslint/no-floating-promises": "off",
           "@typescript-eslint/no-unnecessary-type-assertion": "off",
           "node/shebang": "off",
-          "import/first": "off"
+          "import/first": "off",
+          "import/no-unresolved": "off"
         }
       },
       {
