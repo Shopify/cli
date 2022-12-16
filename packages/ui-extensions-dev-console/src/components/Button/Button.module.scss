@@ -1,0 +1,16 @@
+.Button {
+  all: unset;
+
+  padding: 0.6rem 0.8rem;
+
+  font-family: var(--dc-font-pro);
+  line-height: 1.2rem;
+
+  background: var(--dc-color-border);
+  border-radius: var(--dc-border-radius);
+
+  &:hover {
+    background: var(--dc-color-icon);
+  }
+}
+
