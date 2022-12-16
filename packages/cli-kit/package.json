@@ -119,22 +119,23 @@
     "tempy": "3.0.0",
     "term-size": "3.0.1",
     "terminal-link": "3.0.0",
+    "tree-kill": "^1.2.2",
     "ts-error": "1.0.6",
     "unique-string": "3.0.0",
     "zod": "3.17.3"
   },
   "devDependencies": {
-    "@types/fs-extra": "9.0.13",
-    "@types/react": "17.0.2",
     "@types/commondir": "^1.0.0",
     "@types/cross-zip": "^4.0.0",
     "@types/diff": "^5.0.2",
+    "@types/fs-extra": "9.0.13",
     "@types/inquirer": "^8.2.1",
+    "@types/react": "17.0.2",
     "@types/semver": "^7.3.9",
     "@vitest/coverage-istanbul": "^0.23.4",
     "node-stream-zip": "^1.15.0",
-    "vitest": "^0.23.4",
-    "vite": "^2.9.13"
+    "vite": "^2.9.13",
+    "vitest": "^0.23.4"
   },
   "repository": {
     "type": "git",

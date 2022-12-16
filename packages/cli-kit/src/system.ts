@@ -1,9 +1,10 @@
 import {shouldDisplayColors, debug} from './output.js'
 import {platformAndArch} from './os.js'
-import {ExternalError} from './error.js'
+import {Abort, ExternalError} from './error.js'
 import {renderConcurrent} from './public/node/ui.js'
 import {execa, ExecaChildProcess} from 'execa'
 import {AbortSignal} from 'abort-controller'
+import treeKill from 'tree-kill'
 import type {Writable, Readable} from 'node:stream'
 
 export interface ExecOptions {
@@ -42,14 +43,22 @@ export const exec = async (command: string, args: string[], options?: ExecOption
   if (options?.stdout && options.stdout !== 'inherit') {
     commandProcess.stdout?.pipe(options.stdout)
   }
+  let aborted = false
   options?.signal?.addEventListener('abort', () => {
-    commandProcess.kill('SIGTERM', {forceKillAfterTimeout: 1000})
+    const pid = commandProcess.pid
+    aborted = true
+    if (pid)
+      treeKill(pid, (err) => {
+        if (err) throw new Abort(`Failed to kill process ${pid}: ${err}`)
+      })
   })
   try {
     await commandProcess
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (processError: any) {
-    if (processError.signal === 'SIGTERM') return
+    // Windows will throw an error whenever the process is killed, no matter the reason.
+    // The aborted flag tell use that we killed it, so we can ignore the error.
+    if (aborted) return
     const abortError = new ExternalError(processError.message, command, args)
     abortError.stack = processError.stack
     throw abortError
