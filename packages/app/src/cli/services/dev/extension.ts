@@ -41,7 +41,7 @@ export interface ExtensionDevOptions {
   /**
    * The ID of the app that contains the extension.
    */
-  id?: number
+  id?: string
 
   /**
    * The app identifier

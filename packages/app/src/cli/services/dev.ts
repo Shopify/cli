@@ -109,7 +109,7 @@ async function dev(options: DevOptions) {
   if (options.app.extensions.ui.length > 0) {
     const devExt = await devUIExtensionsTarget({
       app: options.app,
-      id: options.id,
+      id: app.id,
       apiKey,
       url: proxyUrl,
       storeFqdn,
@@ -272,7 +272,7 @@ interface DevUIExtensionsTargetOptions {
   url: string
   storeFqdn: string
   grantedScopes: string[]
-  id?: number
+  id?: string
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
 }
