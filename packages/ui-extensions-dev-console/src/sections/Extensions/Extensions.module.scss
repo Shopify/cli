@@ -1,7 +1,8 @@
 
 .Intro {
-  padding: 0.8rem 1.5rem 1.2rem;
-  font-family: --var(--dc-font-pro);
+  padding: 0.6rem 1.5rem 1.8rem;
+  font-family: var(--dc-font-pro);
+  border-bottom: 1px solid var(--dc-color-border);
 }
 
 .ExtensionList {
