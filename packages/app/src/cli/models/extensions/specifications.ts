@@ -26,7 +26,11 @@ async function loadSpecs(directoryName: string) {
    * transform the TS module into a JS one before loading it. Hence the inclusion of .ts
    * in the list of files.
    */
-  let files = await path.glob([path.join(url, '*.{ts, js}'), `!${path.join(url, '*.{d.ts}')}`])
+  let files = await path.glob([
+    path.join(url, '*.{ts, js}'),
+    `!${path.join(url, '*.{d.ts}')}`,
+    `!${path.join(url, '*.{test.ts}')}`,
+  ])
 
   // From Node 18, all windows paths must start with file://
   const {platform} = os.platformAndArch()
