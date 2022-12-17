@@ -73,14 +73,14 @@ async function dev(options: DevOptions) {
     grantedScopes: [],
   }
   let tunnelPlugin
-  let cachedUpdateURLs = false
+  let cachedUpdateURLs
   if (!siletMode) {
     token = await session.ensureAuthenticatedPartners()
     const devEnvironment = await ensureDevEnvironment(options, token)
     identifiers = devEnvironment.identifiers
     storeFqdn = devEnvironment.storeFqdn
     app = devEnvironment.app
-    cachedUpdateURLs = devEnvironment.updateURLs ?? false
+    cachedUpdateURLs = devEnvironment.updateURLs
     tunnelPlugin = devEnvironment.tunnelPlugin
   }
   const apiKey = identifiers.app
