@@ -53,8 +53,10 @@ export async function exchangeAccessForApplicationTokens(
 ): Promise<{[x: string]: ApplicationToken}> {
   const token = identityToken.accessToken
 
-  const partners = await requestAppToken('partners', token, scopes.partners)
-  const storefront = await requestAppToken('storefront-renderer', token, scopes.storefront)
+  const [partners, storefront] = await Promise.all([
+    requestAppToken('partners', token, scopes.partners),
+    requestAppToken('storefront-renderer', token, scopes.storefront),
+  ])
 
   const result = {
     ...partners,
