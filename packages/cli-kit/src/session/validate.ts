@@ -2,7 +2,7 @@ import {applicationId} from './identity.js'
 import {ApplicationToken, IdentityToken} from './schema.js'
 import constants from '../constants.js'
 import {OAuthApplications} from '../session.js'
-import {identity, partners} from '../api.js'
+import {identity} from '../api.js'
 import {debug} from '../output.js'
 import {firstPartyDev} from '../environment/local.js'
 
@@ -37,12 +37,10 @@ export async function validateSession(
   const identityIsValid = await identity.validateIdentityToken(session.identity.accessToken)
   if (!scopesAreValid) return 'needs_full_auth'
   let tokensAreExpired = isTokenExpired(session.identity)
-  let tokensAreRevoked = false
 
   if (applications.partnersApi) {
     const appId = applicationId('partners')
     const token = session.applications[appId]!
-    tokensAreRevoked = tokensAreRevoked || (await isPartnersTokenRevoked(token))
     tokensAreExpired = tokensAreExpired || isTokenExpired(token)
   }
 
@@ -62,24 +60,17 @@ export async function validateSession(
   debug(`
 The validation of the token for application/identity completed with the following results:
 - It's expired: ${tokensAreExpired}
-- It's been revoked: ${tokensAreRevoked}
 - It's invalid in identity: ${!identityIsValid}
   `)
 
-  if (tokensAreRevoked) return 'needs_full_auth'
-  if (!identityIsValid) return 'needs_full_auth'
   if (tokensAreExpired) return 'needs_refresh'
+  if (!identityIsValid) return 'needs_full_auth'
   return 'ok'
 }
 
-function isTokenExpired(token: ApplicationToken): boolean {
-  if (!token) return true
+function isTokenExpired(token: ApplicationToken): boolean | undefined {
+  if (!token) return undefined
   return token.expiresAt < expireThreshold()
-}
-
-async function isPartnersTokenRevoked(token: ApplicationToken) {
-  if (!token) return false
-  return partners.checkIfTokenIsRevoked(token.accessToken)
 }
 
 function expireThreshold(): Date {
