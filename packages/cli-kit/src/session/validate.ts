@@ -68,8 +68,8 @@ The validation of the token for application/identity completed with the followin
   return 'ok'
 }
 
-function isTokenExpired(token: ApplicationToken): boolean | undefined {
-  if (!token) return undefined
+function isTokenExpired(token: ApplicationToken): boolean {
+  if (!token) return true
   return token.expiresAt < expireThreshold()
 }
 

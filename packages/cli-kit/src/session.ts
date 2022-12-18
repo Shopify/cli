@@ -200,13 +200,15 @@ ${token.json(applications)}
 
   let newSession = {}
 
-  if (validationResult === 'needs_refresh' || forceRefresh) {
-    debug(content`The current session may be valid, but needs refresh. Refreshing...`)
+  if (validationResult === 'needs_full_auth') {
+    debug(content`Initiating the full authentication flow...`)
+    newSession = await executeCompleteFlow(applications, fqdn)
+  } else if (validationResult === 'needs_refresh' || forceRefresh) {
+    debug(content`The current session is valid but needs refresh. Refreshing...`)
     try {
       newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
     } catch (error) {
       if (error instanceof InvalidGrantError) {
-        debug(content`Initiating the full authentication flow...`)
         newSession = await executeCompleteFlow(applications, fqdn)
       } else {
         throw error
