@@ -2,7 +2,7 @@ import {applicationId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {validateSession} from './validate.js'
 import {OAuthApplications} from '../session.js'
-import {identity, partners} from '../api.js'
+import {identity} from '../api.js'
 import {expect, describe, it, vi, afterAll, beforeEach} from 'vitest'
 
 const pastDate = new Date(2022, 1, 1, 9)
@@ -72,7 +72,6 @@ beforeEach(() => {
   vi.mocked(applicationId).mockImplementation((id: any) => id)
   vi.setSystemTime(currentDate)
   vi.mock('../api')
-  vi.mocked(partners.checkIfTokenIsRevoked).mockResolvedValue(false)
   vi.mocked(identity.validateIdentityToken).mockResolvedValue(true)
 })
 
@@ -131,33 +130,6 @@ describe('validateSession', () => {
 
     // When
     const got = await validateSession(['random_scope'], defaultApps, session)
-
-    // Then
-    expect(got).toBe('needs_full_auth')
-  })
-
-  it('returns needs_full_auth if partners token is revoked', async () => {
-    // Given
-    const session = {identity: validIdentity, applications: validApplications}
-    vi.mocked(partners.checkIfTokenIsRevoked).mockResolvedValueOnce(true)
-
-    // When
-    const got = await validateSession(requestedScopes, defaultApps, session)
-
-    // Then
-    expect(got).toBe('needs_full_auth')
-  })
-
-  it('returns needs_full_auth if identity token is invalid and partners token is revoked', async () => {
-    // Given
-    const session = {
-      identity: expiredIdentity,
-      applications: validApplications,
-    }
-    vi.mocked(partners.checkIfTokenIsRevoked).mockResolvedValueOnce(true)
-
-    // When
-    const got = await validateSession(requestedScopes, defaultApps, session)
 
     // Then
     expect(got).toBe('needs_full_auth')
