@@ -41,9 +41,7 @@ export async function fetchSpecifications(token: string, apiKey: string): Promis
       if (spec.identifier === 'theme_app_extension') spec.identifier = 'theme'
       if (spec.identifier === 'subscription_management') spec.identifier = 'product_subscription'
       newSpec.registrationLimit = spec.options.registrationLimit
-
-      // PENDING: override the default value for the surface when the extension server is ready
-      // newSpec.surface = spec.features?.argo?.surface
+      newSpec.surface = spec.features?.argo?.surface
 
       return newSpec
     })
