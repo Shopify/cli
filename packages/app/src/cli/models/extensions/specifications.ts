@@ -1,6 +1,7 @@
 import {UIExtensionSpec} from './ui.js'
 import {FunctionSpec} from './functions.js'
 import {ThemeExtensionSpec} from './theme.js'
+import {GenericSpecification} from '../app/extensions.js'
 import {os, path} from '@shopify/cli-kit'
 import {memoize} from 'lodash-es'
 import {isShopify} from '@shopify/cli-kit/src/environment/local.js'
@@ -16,6 +17,13 @@ export async function allFunctionSpecifications(): Promise<FunctionSpec[]> {
 
 export async function allThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
   return memLoadSpecs('theme-specifications')
+}
+
+export async function allLocalSpecs(): Promise<GenericSpecification[]> {
+  const ui = await allUISpecifications()
+  const functions = await allFunctionSpecifications()
+  const theme = await allThemeSpecifications()
+  return [...ui, ...functions, ...theme]
 }
 
 const memLoadSpecs = memoize(loadSpecs)
