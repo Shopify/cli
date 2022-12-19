@@ -29,6 +29,11 @@ export async function allLocalSpecs(): Promise<GenericSpecification[]> {
 const memLoadSpecs = memoize(loadSpecs)
 
 async function loadSpecs(directoryName: string) {
+  /**
+   * When running tests, "await import('.../spec..ts')" is handled by Vitest which does
+   * transform the TS module into a JS one before loading it. Hence the inclusion of .ts
+   * in the list of files.
+   */
   const url = path.join(path.dirname(fileURLToPath(import.meta.url)), path.join(directoryName, '*.{js,ts}'))
   let files = await path.glob(url, {ignore: ['**.d.ts', '**.test.ts']})
 
