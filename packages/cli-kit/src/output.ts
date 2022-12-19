@@ -357,7 +357,7 @@ export function getOutputUpdateCLIReminder(
   const versionMessage = `💡 Version ${version} available!`
   if (!packageManager || packageManager === 'unknown') return versionMessage
 
-  const updateCommand = token.packagejsonScript(packageManager, 'shopify', 'upgrade')
+  const updateCommand = token.packagejsonScript(packageManager, 'shopify upgrade')
   return content`${versionMessage} Run ${updateCommand}`.value
 }
 
