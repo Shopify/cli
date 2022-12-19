@@ -18,7 +18,6 @@ describe('ui_extension', async () => {
       extensionPoints,
       name: 'UI Extension',
       type: 'ui_extension',
-      metafields: [],
       capabilities: {
         block_progress: false,
         network_access: false,
