@@ -84,10 +84,10 @@ export default class Dev extends ThemeCommand {
   ]
 
   // Tokens are valid for 120m, better to be safe and refresh every 110min
-  ThemeRefreshTimeoutInMinutes = 110
+  ThemeRefreshTimeoutInMs = 110 * 60 * 1000
 
-  // Timeout to stop the server, otherwise it will keep running forever. 24h to be safe.
-  HardTimeoutInMinutes = 24 * 60
+  // Sleep timeout, server could run forever but we need to put a number. 1 Year.
+  HardTimeoutInSeconds = 60 * 60 * 24 * 365
 
   /**
    * Executes the theme serve command.
@@ -109,11 +109,11 @@ export default class Dev extends ThemeCommand {
       controller = new abort.Controller()
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.execute(store, command, controller)
-    }, this.ThemeRefreshTimeoutInMinutes * 60 * 1000)
+    }, this.ThemeRefreshTimeoutInMs)
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.execute(store, command, controller)
-    await system.sleep(this.HardTimeoutInMinutes * 60 * 1000)
+    await system.sleep(this.HardTimeoutInSeconds)
     clearInterval(refreshThemeSessionInterval)
   }
 
