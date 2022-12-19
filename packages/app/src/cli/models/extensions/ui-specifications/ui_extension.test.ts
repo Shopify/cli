@@ -18,6 +18,7 @@ describe('ui_extension', async () => {
       extensionPoints,
       name: 'UI Extension',
       type: 'ui_extension',
+      metafields: [],
       capabilities: {
         block_progress: false,
         network_access: false,
@@ -187,7 +188,6 @@ Please check the configuration in ${tomlPath}`),
           localization,
           extension_points: uiExtension.configuration.extensionPoints,
           capabilities: uiExtension.configuration.capabilities,
-          metafields: uiExtension.configuration.metafields,
           name: uiExtension.configuration.name,
           settings: uiExtension.configuration.settings,
         })
