@@ -170,15 +170,13 @@ export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlew
     }
 
     if (request.headers.accept?.startsWith('text/html')) {
-      const extensionSurface = extension.surface
-
-      if (extensionSurface === 'post_purchase') {
+      if (extension.type === 'checkout_post_purchase') {
         const body = await getHTML({
           data: {
             url: getExtensionUrl(extension, devOptions),
           },
           template: 'index',
-          extensionSurface,
+          extensionSurface: 'post_purchase',
         })
         await http.send(response.event, body)
         return
