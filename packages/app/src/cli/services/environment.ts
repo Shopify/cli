@@ -504,7 +504,7 @@ function showDevValues(org: string, appName: string) {
 
 async function logMetadataForLoadedDevEnvironment(env: DevEnvironmentOutput) {
   await metadata.addPublic(() => ({
-    partner_id: string.tryParseInt(env.app.organizationId),
+    partner_id: string.tryParseInt(env.remoteApp.organizationId),
     api_key: env.identifiers.app,
   }))
 }

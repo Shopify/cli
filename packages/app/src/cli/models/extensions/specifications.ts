@@ -2,9 +2,8 @@ import {UIExtensionSpec} from './ui.js'
 import {FunctionSpec} from './functions.js'
 import {ThemeExtensionSpec} from './theme.js'
 import {GenericSpecification} from '../app/extensions.js'
-import {os, path} from '@shopify/cli-kit'
+import {os, path, environment} from '@shopify/cli-kit'
 import {memoize} from 'lodash-es'
-import {isShopify} from '@shopify/cli-kit/src/environment/local.js'
 import {fileURLToPath} from 'url'
 
 export async function allUISpecifications(): Promise<UIExtensionSpec[]> {
@@ -12,7 +11,7 @@ export async function allUISpecifications(): Promise<UIExtensionSpec[]> {
 }
 
 export async function allFunctionSpecifications(): Promise<FunctionSpec[]> {
-  return (await memLoadSpecs('function-specifications')).filter((spec) => !spec.gated || isShopify)
+  return (await memLoadSpecs('function-specifications')).filter((spec) => !spec.gated || environment.local.isShopify())
 }
 
 export async function allThemeSpecifications(): Promise<ThemeExtensionSpec[]> {

@@ -2,6 +2,7 @@ import {generateSchemaService} from '../../../services/generate-schema.js'
 import {appFlags} from '../../../flags.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
+import {allLocalSpecs} from '../../../models/extensions/specifications.js'
 import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
 import {path, error, cli, output} from '@shopify/cli-kit'
@@ -26,7 +27,8 @@ export default class GenerateSchema extends Command {
     const {flags, args} = await this.parse(GenerateSchema)
     const apiKey = flags['api-key']
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const app: AppInterface = await loadApp(directory)
+    const specifications = await allLocalSpecs()
+    const app: AppInterface = await loadApp(directory, specifications)
     const extension = app.extensions.function.find((extension) => extension.localIdentifier === args.function)
 
     if (!extension) {
