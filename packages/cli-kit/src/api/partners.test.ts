@@ -3,7 +3,7 @@ import {buildHeaders} from './common.js'
 import {partners} from '../environment/fqdn.js'
 import {graphqlClient} from '../http/graphql.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
-import {GraphQLClient, ClientError} from 'graphql-request'
+import {GraphQLClient} from 'graphql-request'
 
 vi.mock('../http/graphql.js')
 vi.mock('./common.js', async () => {
@@ -65,36 +65,5 @@ describe('partners-api', () => {
 
     // Then
     expect(buildHeaders).toHaveBeenCalledWith(mockedToken)
-  })
-})
-
-describe('checkIfTokenIsRevoked', () => {
-  test('returns true if error is 401', async () => {
-    const graphQLError = new ClientError({status: 401}, {query: ''})
-    vi.mocked(client.request).mockRejectedValueOnce(graphQLError)
-    vi.mocked(partners).mockResolvedValue(partnersFQDN)
-
-    const got = await partnersApi.checkIfTokenIsRevoked(mockedToken)
-
-    expect(got).toBe(true)
-  })
-
-  test('returns false if error is not 401', async () => {
-    const graphQLError = new ClientError({status: 404}, {query: ''})
-    vi.mocked(client.request).mockRejectedValueOnce(graphQLError)
-    vi.mocked(partners).mockResolvedValue(partnersFQDN)
-
-    const got = await partnersApi.checkIfTokenIsRevoked(mockedToken)
-
-    expect(got).toBe(false)
-  })
-
-  test('returns false if there is no error', async () => {
-    vi.mocked(client.request).mockResolvedValue(mockedResult)
-    vi.mocked(partners).mockResolvedValue(partnersFQDN)
-
-    const got = await partnersApi.checkIfTokenIsRevoked(mockedToken)
-
-    expect(got).toBe(false)
   })
 })
