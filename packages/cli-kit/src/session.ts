@@ -167,7 +167,7 @@ export async function ensureAuthenticatedThemes(
   debug(content`Ensuring that the user is authenticated with the Theme API with the following scopes:
 ${token.json(scopes)}
 `)
-  if (password) return {token: password, storeFqdn: normalizeStoreName(store)}
+  if (password) return {token: password, storeFqdn: await normalizeStoreName(store)}
   return ensureAuthenticatedAdmin(store, scopes, forceRefresh)
 }
 
@@ -184,7 +184,8 @@ export async function ensureAuthenticated(
   const fqdn = await identityFqdn()
 
   if (applications.adminApi?.storeFqdn) {
-    applications.adminApi.storeFqdn = normalizeStoreName(applications.adminApi.storeFqdn)
+    // eslint-disable-next-line require-atomic-updates
+    applications.adminApi.storeFqdn = await normalizeStoreName(applications.adminApi.storeFqdn)
   }
 
   const currentSession = (await secureStore.fetch()) || {}

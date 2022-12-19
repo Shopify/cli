@@ -1,3 +1,4 @@
+import {environment} from './index.js'
 import {unstyled} from './output.js'
 import crypto from 'crypto'
 
@@ -43,11 +44,13 @@ export function capitalize(string: string) {
  * @param store - Original store name provided by the user
  * @returns a valid store fqdn
  */
-export function normalizeStoreName(store: string) {
+export async function normalizeStoreName(store: string) {
   const storeFqdn = store.replace(/^https?:\/\//, '').replace(/\/$/, '')
-  return storeFqdn.includes('.myshopify.com') || storeFqdn.includes('spin.dev')
-    ? storeFqdn
-    : `${storeFqdn}.myshopify.com`
+  const addHost = async (storeName: string) =>
+    environment.service.isSpinEnvironment()
+      ? `${storeName}.shopify.${await environment.spin.fqdn()}`
+      : `${storeName}.myshopify.com`
+  return storeFqdn.includes('.myshopify.com') || storeFqdn.includes('spin.dev') ? storeFqdn : addHost(storeFqdn)
 }
 
 /**

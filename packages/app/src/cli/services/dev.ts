@@ -56,15 +56,13 @@ async function dev(options: DevOptions) {
       app: await installAppDependencies(options.app),
     }
   }
-  const siletMode = process.env.SHOPIFY_API_SECRET && options.apiKey && options.storeFqdn
+  const silentMode = process.env.SHOPIFY_API_SECRET && options.apiKey && options.storeFqdn
   let token = 'token'
   let identifiers: UuidOnlyIdentifiers = {
     app: options.apiKey ?? '',
     extensions: {},
   }
-  let storeFqdn = environment.service.isSpinEnvironment()
-    ? `${options.storeFqdn}.shopify.${await environment.spin.fqdn()}`
-    : `${options.storeFqdn}.myshopify.com`
+  let storeFqdn = options.storeFqdn ?? ''
   let app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string} = {
     id: 'ID',
     title: 'Title',
@@ -74,7 +72,7 @@ async function dev(options: DevOptions) {
   }
   let tunnelPlugin
   let cachedUpdateURLs
-  if (!siletMode) {
+  if (!silentMode) {
     token = await session.ensureAuthenticatedPartners()
     const devEnvironment = await ensureDevEnvironment(options, token)
     identifiers = devEnvironment.identifiers
@@ -98,7 +96,7 @@ async function dev(options: DevOptions) {
   /** If the app doesn't have web/ the link message is not necessary */
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
   let shouldUpdateURLs = false
-  if ((frontendConfig || backendConfig) && options.update && !siletMode) {
+  if ((frontendConfig || backendConfig) && options.update && !silentMode) {
     const currentURLs = await getURLs(apiKey, token)
     const newURLs = generatePartnersURLs(exposedUrl, backendConfig?.configuration.authCallbackPath)
     shouldUpdateURLs = await shouldOrPromptUpdateURLs({
@@ -145,7 +143,7 @@ async function dev(options: DevOptions) {
 
   const additionalProcesses: output.OutputProcess[] = []
 
-  if (options.app.extensions.theme.length > 0) {
+  if (options.app.extensions.theme.length > 0 && !silentMode) {
     const adminSession = await session.ensureAuthenticatedAdmin(storeFqdn)
     const storefrontToken = await session.ensureAuthenticatedStorefront()
     const extension = options.app.extensions.theme[0]!
