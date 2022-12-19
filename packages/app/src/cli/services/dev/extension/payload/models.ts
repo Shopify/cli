@@ -4,7 +4,6 @@ import {Localization} from '../localization.js'
 export interface ExtensionsPayloadInterface {
   app: {
     apiKey: string
-    id?: string
   }
   store: string
   extensions: UIExtensionPayload[]
