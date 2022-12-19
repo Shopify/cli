@@ -1,4 +1,4 @@
-import {fetchExtensionSpecifications} from './fetch-extension-specifications.js'
+import {fetchSpecifications} from './fetch-extension-specifications.js'
 import {testRemoteSpecifications} from '../../models/app/app.test-data.js'
 import {describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
@@ -22,7 +22,7 @@ describe('fetchExtensionSpecifications', () => {
     vi.mocked(api.partners.request).mockResolvedValue({extensionSpecifications: testRemoteSpecifications})
 
     // When
-    const got = await fetchExtensionSpecifications('token', 'apiKey')
+    const got = await fetchSpecifications('token', 'apiKey')
 
     // Then
     expect(got).toEqual(

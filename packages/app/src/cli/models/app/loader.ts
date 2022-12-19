@@ -43,6 +43,10 @@ export class AppErrors {
   }
 }
 
+/**
+ * Load the local app from the given directory and using the provided extensions/functions specifications.
+ * If the App contains extensions not supported by the current specs and mode is strict, it will throw an error.
+ */
 export async function load(
   directory: string,
   specifications: GenericSpecification[],

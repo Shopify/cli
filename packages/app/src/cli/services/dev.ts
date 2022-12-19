@@ -10,11 +10,10 @@ import {
 } from '../utilities/app/http-reverse-proxy.js'
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import metadata from '../metadata.js'
-import {GenericSpecification, UIExtension} from '../models/app/extensions.js'
+import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {load} from '../models/app/loader.js'
-import {fetchExtensionSpecifications} from '../utilities/extensions/fetch-extension-specifications.js'
-import {allFunctionSpecifications} from '../models/extensions/specifications.js'
+import {fetchSpecifications} from '../utilities/extensions/fetch-extension-specifications.js'
 import {analytics, output, system, session, abort, string, environment} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -63,12 +62,7 @@ async function dev(options: DevOptions) {
   } = await ensureDevEnvironment(options, token)
 
   const apiKey = identifiers.app
-
-  const extensionsSpecs = await fetchExtensionSpecifications(token, apiKey)
-  const functionSpecs = await allFunctionSpecifications()
-
-  // This is the list of all extensions/functions the user has access to
-  const allExtensionSpecs: GenericSpecification[] = [...extensionsSpecs, ...functionSpecs]
+  const allExtensionSpecs = await fetchSpecifications(token, apiKey)
 
   // Only load the app if the user has access to all extensions defined in it
   let localApp = await load(options.directory, allExtensionSpecs)

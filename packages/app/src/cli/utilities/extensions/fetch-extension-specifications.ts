@@ -1,4 +1,8 @@
-import {allThemeSpecifications, allUISpecifications} from '../../models/extensions/specifications.js'
+import {
+  allFunctionSpecifications,
+  allThemeSpecifications,
+  allUISpecifications,
+} from '../../models/extensions/specifications.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
@@ -9,13 +13,20 @@ import {FlattenedRemoteSpecification} from '@shopify/cli-kit/src/api/graphql/ext
 type ExtensionSpec = UIExtensionSpec | ThemeExtensionSpec
 
 /**
- * Fetch all extension specifications the user has access to
+ * Returns all extension/function specifications the user has access to.
+ * This includes:
+ * - UI extensions
+ * - Theme extensions
+ * - Functions
+ *
  * Will return a merge of the local and remote specs (remote values override local ones)
  * Will only return the specifications that are also defined locally
+ * (Functions are not validated againts remote specs, gated access is defined locally)
+ *
  * @param token - Token to access partners API
  * @returns List of extension specifications
  */
-export async function fetchExtensionSpecifications(token: string, apiKey: string): Promise<GenericSpecification[]> {
+export async function fetchSpecifications(token: string, apiKey: string): Promise<GenericSpecification[]> {
   const query = api.graphql.ExtensionSpecificationsQuery
   const result: api.graphql.ExtensionSpecificationsQuerySchema = await api.partners.request(query, token, {
     api_key: apiKey,
@@ -36,9 +47,11 @@ export async function fetchExtensionSpecifications(token: string, apiKey: string
 
   const ui = await allUISpecifications()
   const theme = await allThemeSpecifications()
+  const functions = await allFunctionSpecifications()
   const local = [...ui, ...theme]
 
-  return mergeLocalAndRemoteSpecs(local, extensionSpecifications)
+  const updatedSpecs = mergeLocalAndRemoteSpecs(local, extensionSpecifications)
+  return [...updatedSpecs, ...functions]
 }
 
 function mergeLocalAndRemoteSpecs(
