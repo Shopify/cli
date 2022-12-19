@@ -14,6 +14,7 @@ import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {load} from '../models/app/loader.js'
 import {fetchSpecifications} from '../utilities/extensions/fetch-extension-specifications.js'
+import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {analytics, output, system, session, abort, string, environment} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -53,15 +54,9 @@ async function dev(options: DevOptions) {
   // First ensure we have a valid environment, we can't load the local app until we are logged in
   // We need to fetch the Specifications from remote
   const token = await session.ensureAuthenticatedPartners()
-  const {
-    identifiers,
-    storeFqdn,
-    remoteApp,
-    updateURLs: cachedUpdateURLs,
-    tunnelPlugin,
-  } = await ensureDevEnvironment(options, token)
+  const {storeFqdn, remoteApp, updateURLs: cachedUpdateURLs, tunnelPlugin} = await ensureDevEnvironment(options, token)
 
-  const apiKey = identifiers.app
+  const apiKey = remoteApp.apiKey
   const allExtensionSpecs = await fetchSpecifications(token, apiKey)
 
   // Only load the app if the user has access to all extensions defined in it
@@ -100,7 +95,10 @@ async function dev(options: DevOptions) {
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
-  localApp.extensions.ui.forEach((ext) => (ext.devUUID = identifiers.extensions[ext.localIdentifier] ?? ext.devUUID))
+  const prodEnvIdentifiers = await getAppIdentifiers({app: localApp})
+  const envExtensionsIds = prodEnvIdentifiers.extensions || {}
+  const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
+  localApp.extensions.ui.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
 
   const backendOptions = {
     apiKey,

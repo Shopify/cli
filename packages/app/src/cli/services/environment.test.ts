@@ -18,7 +18,7 @@ import {
 } from './environment.js'
 import {createExtension} from './dev/create-extension.js'
 import {OrganizationApp, OrganizationStore} from '../models/organization.js'
-import {getAppIdentifiers} from '../models/app/identifiers.js'
+import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp, testThemeExtensions} from '../models/app/app.test-data.js'
@@ -137,19 +137,19 @@ const EXTENSION_A: UIExtension = {
 }
 
 const INPUT: DevEnvironmentOptions = {
-  directory: '/app',
+  directory: 'app_directory',
   reset: false,
 }
 
 const INPUT_WITH_DATA: DevEnvironmentOptions = {
-  directory: '/app',
+  directory: 'app_directory',
   reset: false,
   apiKey: 'key1',
   storeFqdn: 'domain1',
 }
 
 const BAD_INPUT_WITH_DATA: DevEnvironmentOptions = {
-  directory: '/app',
+  directory: 'app_directory',
   reset: false,
   apiKey: 'key1',
   storeFqdn: 'invalid_store_domain',
@@ -229,10 +229,8 @@ describe('ensureDevEnvironment', () => {
     expect(got).toEqual({
       remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
-      identifiers: {
-        app: 'key1',
-        extensions: {},
-      },
+      tunnelPlugin: undefined,
+      updateURLs: undefined,
     })
     expect(store.setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
@@ -258,10 +256,6 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(store.getAppInfo).mockResolvedValue(CACHED1)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
-    vi.mocked(getAppIdentifiers).mockResolvedValue({
-      app: 'key1',
-      extensions: {},
-    })
 
     // When
     const got = await ensureDevEnvironment(INPUT, 'token')
@@ -270,10 +264,8 @@ describe('ensureDevEnvironment', () => {
     expect(got).toEqual({
       remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
-      identifiers: {
-        app: 'key1',
-        extensions: {},
-      },
+      tunnelPlugin: undefined,
+      updateURLs: undefined,
     })
     expect(fetchOrganizations).not.toBeCalled()
     expect(selectOrganizationPrompt).not.toBeCalled()
@@ -292,48 +284,6 @@ describe('ensureDevEnvironment', () => {
     expect(fetchOrgAndApps).not.toBeCalled()
   })
 
-  it('returns extensions Ids if the selected app matches the env one', async () => {
-    // Given
-    vi.mocked(getAppIdentifiers).mockResolvedValue({
-      app: 'key1',
-      extensions: {EXTENSION_A: 'UUID_EXTENSION_A'},
-    })
-
-    // When
-    const got = await ensureDevEnvironment(INPUT, 'token')
-
-    // Then
-    expect(got).toEqual({
-      remoteApp: {...APP1, apiSecret: 'secret1'},
-      storeFqdn: STORE1.shopDomain,
-      identifiers: {
-        app: 'key1',
-        extensions: {EXTENSION_A: 'UUID_EXTENSION_A'},
-      },
-    })
-  })
-
-  it('ignores extensions Ids if the selected app does not match the env one', async () => {
-    // Given
-    vi.mocked(getAppIdentifiers).mockResolvedValue({
-      app: 'env-app',
-      extensions: {EXTENSION_A: 'UUID_EXTENSION_A'},
-    })
-
-    // When
-    const got = await ensureDevEnvironment(INPUT, 'token')
-
-    // Then
-    expect(got).toEqual({
-      remoteApp: {...APP1, apiSecret: 'secret1'},
-      storeFqdn: STORE1.shopDomain,
-      identifiers: {
-        app: 'key1',
-        extensions: {},
-      },
-    })
-  })
-
   it('returns selected data and updates internal state, with inputs from flags', async () => {
     // Given
     vi.mocked(store.getAppInfo).mockResolvedValue(undefined)
@@ -348,10 +298,8 @@ describe('ensureDevEnvironment', () => {
     expect(got).toEqual({
       remoteApp: {...APP2, apiSecret: 'secret2'},
       storeFqdn: STORE1.shopDomain,
-      identifiers: {
-        app: 'key2',
-        extensions: {},
-      },
+      tunnelPlugin: undefined,
+      updateURLs: undefined,
     })
     expect(store.setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP2.apiKey,
@@ -458,6 +406,11 @@ describe('ensureDeployEnvironment', () => {
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')
     expect(selectOrCreateApp).toHaveBeenCalledWith(app.name, [APP1, APP2], ORG1, 'token')
+    expect(updateAppIdentifiers).toBeCalledWith({
+      app,
+      identifiers,
+      command: 'deploy',
+    })
     expect(got.partnersApp.id).toEqual(APP1.id)
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
@@ -496,6 +449,11 @@ describe('ensureDeployEnvironment', () => {
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')
     expect(selectOrCreateApp).toHaveBeenCalledWith(app.name, [APP1, APP2], ORG1, 'token')
+    expect(updateAppIdentifiers).toBeCalledWith({
+      app,
+      identifiers,
+      command: 'deploy',
+    })
     expect(got.partnersApp.id).toEqual(APP1.id)
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)

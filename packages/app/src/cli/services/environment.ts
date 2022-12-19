@@ -37,9 +37,8 @@ export interface DevEnvironmentOptions {
 }
 
 interface DevEnvironmentOutput {
-  remoteApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string}
+  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {apiSecret?: string}
   storeFqdn: string
-  identifiers: UuidOnlyIdentifiers
   updateURLs: boolean | undefined
   tunnelPlugin: string | undefined
 }
@@ -120,9 +119,6 @@ export async function ensureDevEnvironment(
   options: DevEnvironmentOptions,
   token: string,
 ): Promise<DevEnvironmentOutput> {
-  // const prodEnvIdentifiers = await getAppIdentifiers({app: options.app})
-  // const envExtensionsIds = prodEnvIdentifiers.extensions || {}
-
   const cachedInfo = await getAppDevCachedInfo({
     reset: options.reset,
     directory: options.directory,
@@ -146,21 +142,7 @@ export async function ensureDevEnvironment(
       orgId,
     })
 
-    // If the selected app is the "prod" one, we will use the real extension IDs for `dev`
-    // const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
-    return {
-      remoteApp: {
-        ...selectedApp,
-        apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0]!.secret,
-      },
-      storeFqdn: selectedStore.shopDomain,
-      identifiers: {
-        app: selectedApp.apiKey,
-        extensions: {},
-      },
-      updateURLs: cachedInfo?.updateURLs,
-      tunnelPlugin: cachedInfo?.tunnelPlugin,
-    }
+    return buildOutput(selectedApp, selectedStore, cachedInfo)
   }
 
   const organization = await fetchOrgFromId(orgId, token)
@@ -211,22 +193,25 @@ export async function ensureDevEnvironment(
     showReusedValues(organization.businessName, cachedInfo, packageManager)
   }
 
-  // const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
-  const result = {
+  const result = buildOutput(selectedApp, selectedStore, cachedInfo)
+  await logMetadataForLoadedDevEnvironment(result)
+  return result
+}
+
+function buildOutput(
+  app: OrganizationApp,
+  store: OrganizationStore,
+  cachedInfo?: store.CachedAppInfo,
+): DevEnvironmentOutput {
+  return {
     remoteApp: {
-      ...selectedApp,
-      apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0]!.secret,
+      ...app,
+      apiSecret: app.apiSecretKeys.length === 0 ? undefined : app.apiSecretKeys[0]!.secret,
     },
-    storeFqdn: selectedStore.shopDomain,
-    identifiers: {
-      app: selectedApp.apiKey,
-      extensions: {},
-    },
+    storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
     tunnelPlugin: cachedInfo?.tunnelPlugin,
   }
-  await logMetadataForLoadedDevEnvironment(result)
-  return result
 }
 
 export interface DeployEnvironmentOptions {
@@ -505,7 +490,7 @@ function showDevValues(org: string, appName: string) {
 async function logMetadataForLoadedDevEnvironment(env: DevEnvironmentOutput) {
   await metadata.addPublic(() => ({
     partner_id: string.tryParseInt(env.remoteApp.organizationId),
-    api_key: env.identifiers.app,
+    api_key: env.remoteApp.apiKey,
   }))
 }
 
