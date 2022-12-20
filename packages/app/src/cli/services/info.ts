@@ -3,9 +3,9 @@ import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
 import {configurationFileNames} from '../constants.js'
 import {
-  allFunctionSpecifications,
-  allThemeSpecifications,
-  allUISpecifications,
+  loadFunctionSpecifications,
+  loadThemeSpecifications,
+  loadUIExtensionSpecifications,
 } from '../models/extensions/specifications.js'
 import {os, output, path, store, string} from '@shopify/cli-kit'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
@@ -125,9 +125,9 @@ class AppInfo {
         }
       })
     }
-    const uiTypes = (await allUISpecifications()).map((spec) => spec.identifier)
-    const themeTypes = (await allThemeSpecifications()).map((spec) => spec.identifier)
-    const functionTypes = (await allFunctionSpecifications()).map((spec) => spec.identifier)
+    const uiTypes = (await loadUIExtensionSpecifications()).map((spec) => spec.identifier)
+    const themeTypes = (await loadThemeSpecifications()).map((spec) => spec.identifier)
+    const functionTypes = (await loadFunctionSpecifications()).map((spec) => spec.identifier)
     augmentWithExtensions(uiTypes, this.app.extensions.ui, this.uiExtensionSubSection.bind(this))
     augmentWithExtensions(themeTypes, this.app.extensions.theme, this.themeExtensionSubSection.bind(this))
     augmentWithExtensions(functionTypes, this.app.extensions.function, this.functionExtensionSubSection.bind(this))

@@ -1,7 +1,7 @@
 import {
-  allFunctionSpecifications,
-  allThemeSpecifications,
-  allUISpecifications,
+  loadFunctionSpecifications,
+  loadThemeSpecifications,
+  loadUIExtensionSpecifications,
 } from '../../models/extensions/specifications.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
@@ -46,9 +46,9 @@ export async function fetchSpecifications(token: string, apiKey: string): Promis
       return newSpec
     })
 
-  const ui = await allUISpecifications()
-  const theme = await allThemeSpecifications()
-  const functions = await allFunctionSpecifications()
+  const ui = await loadUIExtensionSpecifications()
+  const theme = await loadThemeSpecifications()
+  const functions = await loadFunctionSpecifications()
   const local = [...ui, ...theme]
 
   const updatedSpecs = mergeLocalAndRemoteSpecs(local, extensionSpecifications)

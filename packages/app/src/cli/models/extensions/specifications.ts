@@ -6,22 +6,22 @@ import {os, path, environment} from '@shopify/cli-kit'
 import {memoize} from 'lodash-es'
 import {fileURLToPath} from 'url'
 
-export async function allUISpecifications(): Promise<UIExtensionSpec[]> {
+export async function loadUIExtensionSpecifications(): Promise<UIExtensionSpec[]> {
   return memLoadSpecs('ui-specifications')
 }
 
-export async function allFunctionSpecifications(): Promise<FunctionSpec[]> {
+export async function loadFunctionSpecifications(): Promise<FunctionSpec[]> {
   return (await memLoadSpecs('function-specifications')).filter((spec) => !spec.gated || environment.local.isShopify())
 }
 
-export async function allThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
+export async function loadThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
   return memLoadSpecs('theme-specifications')
 }
 
-export async function allLocalSpecs(): Promise<GenericSpecification[]> {
-  const ui = await allUISpecifications()
-  const functions = await allFunctionSpecifications()
-  const theme = await allThemeSpecifications()
+export async function loadLocalExtensionsSpecifications(): Promise<GenericSpecification[]> {
+  const ui = await loadUIExtensionSpecifications()
+  const functions = await loadFunctionSpecifications()
+  const theme = await loadThemeSpecifications()
   return [...ui, ...functions, ...theme]
 }
 

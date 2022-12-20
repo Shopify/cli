@@ -54,7 +54,7 @@ async function dev(options: DevOptions) {
 
   const apiKey = remoteApp.apiKey
   const allExtensionSpecs = await fetchSpecifications(token, apiKey)
-  let localApp = await load(options.directory, allExtensionSpecs)
+  let localApp = await load({directory: options.directory, specifications: allExtensionSpecs})
 
   if (!options.skipDependenciesInstallation) {
     localApp = await installAppDependencies(localApp)

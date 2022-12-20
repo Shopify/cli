@@ -43,23 +43,19 @@ export class AppErrors {
   }
 }
 
+interface AppLoaderConstructorArgs {
+  directory: string
+  mode?: AppLoaderMode
+  specifications: GenericSpecification[]
+}
+
 /**
  * Load the local app from the given directory and using the provided extensions/functions specifications.
  * If the App contains extensions not supported by the current specs and mode is strict, it will throw an error.
  */
-export async function load(
-  directory: string,
-  specifications: GenericSpecification[],
-  mode: AppLoaderMode = 'strict',
-): Promise<AppInterface> {
-  const loader = new AppLoader({directory, mode, specifications})
+export async function load(options: AppLoaderConstructorArgs): Promise<AppInterface> {
+  const loader = new AppLoader(options)
   return loader.loaded()
-}
-
-interface AppLoaderConstructorArgs {
-  directory: string
-  mode: AppLoaderMode
-  specifications: GenericSpecification[]
 }
 
 class AppLoader {
@@ -71,7 +67,7 @@ class AppLoader {
   private specifications: GenericSpecification[]
 
   constructor({directory, mode, specifications}: AppLoaderConstructorArgs) {
-    this.mode = mode
+    this.mode = mode ?? 'strict'
     this.directory = directory
     this.specifications = specifications
   }

@@ -3,7 +3,7 @@ import {deploy} from '../../services/deploy.js'
 import {AppInterface} from '../../models/app/app.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import Command from '../../utilities/app-command.js'
-import {allLocalSpecs} from '../../models/extensions/specifications.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/specifications.js'
 import {Flags} from '@oclif/core'
 import {path, cli, metadata} from '@shopify/cli-kit'
 
@@ -34,8 +34,8 @@ export default class Deploy extends Command {
     }))
 
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const specifications = await allLocalSpecs()
-    const app: AppInterface = await loadApp(directory, specifications)
+    const specifications = await loadLocalExtensionsSpecifications()
+    const app: AppInterface = await loadApp({directory, specifications})
     await deploy({app, apiKey: flags['api-key'], reset: flags.reset})
   }
 }
