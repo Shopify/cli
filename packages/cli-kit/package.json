@@ -129,6 +129,7 @@
     "liquidjs": "9.36.0",
     "listr2": "4.0.5",
     "lodash-es": "4.17.21",
+    "lodash": "4.17.21",
     "log-update": "4.0.0",
     "macaddress": "0.5.3",
     "md5-file": "5.0.0",
@@ -151,6 +152,7 @@
     "zod": "3.17.3"
   },
   "devDependencies": {
+    "@types/lodash": "4.14.191",
     "@types/commondir": "^1.0.0",
     "@types/cross-zip": "^4.0.0",
     "@types/diff": "^5.0.2",
