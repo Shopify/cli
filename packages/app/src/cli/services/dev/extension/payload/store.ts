@@ -21,6 +21,7 @@ export async function getExtensionsPayloadStoreRawPayload(
     app: {
       apiKey: options.apiKey,
     },
+    appId: options.id,
     version: '3',
     root: {
       url: new URL('/extensions', options.url).toString(),
@@ -50,6 +51,7 @@ export class ExtensionsPayloadStore extends EventEmitter {
     const rawPayload = this.getRawPayload()
     return {
       app: rawPayload.app,
+      appId: rawPayload.appId,
       store: rawPayload.store,
       extensions: rawPayload.extensions,
     }
