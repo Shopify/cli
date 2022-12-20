@@ -1,7 +1,7 @@
 import {
-  allFunctionSpecifications,
   allThemeSpecifications,
   allUISpecifications,
+  allFunctionSpecifications,
 } from '../../models/extensions/specifications.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
@@ -9,6 +9,7 @@ import {GenericSpecification} from '../../models/app/extensions.js'
 import {api} from '@shopify/cli-kit'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {FlattenedRemoteSpecification} from '@shopify/cli-kit/src/api/graphql/extension_specifications.js'
+import {Config} from '@oclif/core'
 
 type ExtensionSpec = UIExtensionSpec | ThemeExtensionSpec
 
@@ -26,7 +27,11 @@ type ExtensionSpec = UIExtensionSpec | ThemeExtensionSpec
  * @param token - Token to access partners API
  * @returns List of extension specifications
  */
-export async function fetchSpecifications(token: string, apiKey: string): Promise<GenericSpecification[]> {
+export async function fetchSpecifications(
+  token: string,
+  apiKey: string,
+  config: Config,
+): Promise<GenericSpecification[]> {
   const query = api.graphql.ExtensionSpecificationsQuery
   const result: api.graphql.ExtensionSpecificationsQuerySchema = await api.partners.request(query, token, {
     api_key: apiKey,
@@ -46,9 +51,9 @@ export async function fetchSpecifications(token: string, apiKey: string): Promis
       return newSpec
     })
 
-  const ui = await allUISpecifications()
+  const ui = await allUISpecifications(config)
   const theme = await allThemeSpecifications()
-  const functions = await allFunctionSpecifications()
+  const functions = await allFunctionSpecifications(config)
   const local = [...ui, ...theme]
 
   const updatedSpecs = mergeLocalAndRemoteSpecs(local, extensionSpecifications)

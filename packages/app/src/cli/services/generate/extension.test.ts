@@ -2,7 +2,7 @@ import extensionInit, {getRuntimeDependencies} from './extension.js'
 import {blocks, configurationFileNames} from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
-import {allLocalSpecs, allUISpecifications} from '../../models/extensions/specifications.js'
+import {allLocalSpecs, allLocalUISpecifications} from '../../models/extensions/specifications.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
 import {file, output, path, template} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
@@ -13,7 +13,7 @@ beforeEach(() => {
 })
 
 describe('initialize a extension', async () => {
-  const allUISpecs = await allUISpecifications()
+  const allUISpecs = await allLocalUISpecifications()
   const allSpecs = await allLocalSpecs()
 
   it(
@@ -218,7 +218,7 @@ describe('initialize a extension', async () => {
 describe('getRuntimeDependencies', () => {
   test('no not include React for flavored Vanilla UI extensions', async () => {
     // Given
-    const allUISpecs = await allUISpecifications()
+    const allUISpecs = await allLocalUISpecifications()
     const extensionFlavor: ExtensionFlavor = 'vanilla-js'
 
     // When/then
@@ -230,7 +230,7 @@ describe('getRuntimeDependencies', () => {
 
   test('includes React for flavored React UI extensions', async () => {
     // Given
-    const allUISpecs = await allUISpecifications()
+    const allUISpecs = await allLocalUISpecifications()
     const extensionFlavor: ExtensionFlavor = 'react'
 
     // When/then
@@ -242,7 +242,7 @@ describe('getRuntimeDependencies', () => {
 
   test('includes the renderer package for UI extensions', async () => {
     // Given
-    const allUISpecs = await allUISpecifications()
+    const allUISpecs = await allLocalUISpecifications()
 
     // When/then
     allUISpecs.forEach((specification) => {

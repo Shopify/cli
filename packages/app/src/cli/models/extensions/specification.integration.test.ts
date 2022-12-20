@@ -1,15 +1,15 @@
 import {
-  allFunctionSpecifications,
+  allLocalFunctionSpecifications,
   allLocalSpecs,
   allThemeSpecifications,
-  allUISpecifications,
+  allLocalUISpecifications,
 } from './specifications.js'
 import {describe, test, expect} from 'vitest'
 
 describe('allUISpecifications', () => {
   test('loads the specifications successfully', async () => {
     // When
-    const got = await allUISpecifications()
+    const got = await allLocalUISpecifications()
 
     // Then
     expect(got.length).not.toEqual(0)
@@ -19,7 +19,7 @@ describe('allUISpecifications', () => {
 describe('allFunctionSpecifications', () => {
   test('loads the specifications successfully', async () => {
     // When
-    const got = await allFunctionSpecifications()
+    const got = await allLocalFunctionSpecifications()
 
     // Then
     expect(got.length).not.toEqual(0)

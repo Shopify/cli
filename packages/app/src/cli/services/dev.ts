@@ -53,7 +53,7 @@ async function dev(options: DevOptions) {
   const {storeFqdn, remoteApp, updateURLs: cachedUpdateURLs, tunnelPlugin} = await ensureDevEnvironment(options, token)
 
   const apiKey = remoteApp.apiKey
-  const allExtensionSpecs = await fetchSpecifications(token, apiKey)
+  const allExtensionSpecs = await fetchSpecifications(token, apiKey, options.commandConfig)
   let localApp = await load(options.directory, allExtensionSpecs)
 
   if (!options.skipDependenciesInstallation) {
