@@ -5,6 +5,7 @@ export interface ExtensionsPayloadInterface {
   app: {
     apiKey: string
   }
+  appId?: string
   store: string
   extensions: UIExtensionPayload[]
 }
