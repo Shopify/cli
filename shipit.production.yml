@@ -3,6 +3,9 @@ ci:
 
 dependencies:
   override:
+    # We are making sure the deploys point to the NPM registry to prevent
+    # 404 issues like the one described in this comment:
+    # https://github.com/yarnpkg/yarn/issues/2935#issuecomment-355292633
     - echo 'registry "https://registry.npmjs.org/"' | tee .npmrc
     - echo 'registry "https://registry.npmjs.org/"' | tee .yarnrc
     - curl -fsSL https://get.pnpm.io/install.sh | SHELL=`which bash` bash -
