@@ -3,9 +3,10 @@ ci:
 
 dependencies:
   override:
+    - echo 'registry "https://registry.npmjs.org/"' | tee .npmrc
+    - echo 'registry "https://registry.npmjs.org/"' | tee .yarnrc
     - curl -fsSL https://get.pnpm.io/install.sh | SHELL=`which bash` bash -
     - bash -i -c "pnpm install"
-    - echo 'registry "https://registry.npmjs.org/"' | tee .npmrc
 deploy:
   override:
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish"
