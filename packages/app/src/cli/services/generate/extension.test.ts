@@ -213,6 +213,30 @@ describe('initialize a extension', async () => {
     },
     30 * 1000,
   )
+
+  it(
+    'uses the custom templatePath when available',
+    async () => {
+      await withTemporaryApp(async (tmpDir) => {
+        vi.spyOn(file, 'move').mockResolvedValue()
+        const name = 'my-ext-1'
+        const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
+        specification.templatePath = 'path/to/custom/template'
+        const extensionFlavor = 'vanilla-js'
+
+        const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveDirectoryCopy').mockResolvedValue()
+        await createFromTemplate({name, specification, extensionFlavor, appDirectory: tmpDir, allSpecs})
+
+        expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith('path/to/custom/template', expect.any(String), {
+          type: specification.identifier,
+          flavor: extensionFlavor,
+          srcFileExtension: 'js',
+          name,
+        })
+      })
+    },
+    30 * 1000,
+  )
 })
 
 describe('getRuntimeDependencies', () => {
