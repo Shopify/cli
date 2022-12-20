@@ -68,6 +68,7 @@ export default class Dev extends ThemeCommand {
       description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
       env: 'SHOPIFY_FLAG_FORCE',
     }),
+    password: themeFlags.password,
   }
 
   static cli2Flags = [
@@ -108,18 +109,18 @@ export default class Dev extends ThemeCommand {
       controller.abort()
       controller = new abort.Controller()
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.execute(store, command, controller)
+      this.execute(store, flags.password, command, controller)
     }, this.ThemeRefreshTimeoutInMs)
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.execute(store, command, controller)
+    this.execute(store, flags.password, command, controller)
     await system.sleep(this.HardTimeoutInSeconds)
     clearInterval(refreshThemeSessionInterval)
   }
 
-  async execute(store: string, command: string[], controller: abort.Controller) {
-    const adminSession = await session.ensureAuthenticatedThemes(store, undefined, [], true)
-    const storefrontToken = await session.ensureAuthenticatedStorefront()
+  async execute(store: string, password: string | undefined, command: string[], controller: abort.Controller) {
+    const adminSession = await session.ensureAuthenticatedThemes(store, password, [], true)
+    const storefrontToken = await session.ensureAuthenticatedStorefront([], password)
     return execCLI2(command, {adminSession, storefrontToken, signal: controller.signal})
   }
 }

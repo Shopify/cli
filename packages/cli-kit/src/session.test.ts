@@ -286,6 +286,14 @@ describe('ensureAuthenticatedStorefront', () => {
     expect(got).toEqual('storefront_token')
   })
 
+  it('returns the password if provided', async () => {
+    // Given/When
+    const got = await ensureAuthenticatedStorefront([], 'theme_access_password')
+
+    // Then
+    expect(got).toEqual('theme_access_password')
+  })
+
   it('throws error if there is no storefront token', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('ok')
