@@ -1,5 +1,20 @@
 # @shopify/cli-kit
 
+## 3.29.0
+
+### Minor Changes
+
+- aeca53c6: Upgrade CLI 2.0 and theme-check dependencies
+- b549291a: Update @oclif/core to 1.21.0
+- 06b6b00d: Allow passing a filter function to autocomplete prompts
+
+### Patch Changes
+
+- eaf98706: - Refresh token if possible, fallback to full login when it's not possible
+  - Parallelize access token refreshes
+- d12ece22: Add new single select prompt to the UI library
+- 3b37c679: Enable password flag for theme dev
+
 ## 3.28.0
 
 ## 3.27.0
