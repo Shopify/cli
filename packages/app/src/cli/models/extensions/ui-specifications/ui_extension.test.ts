@@ -188,7 +188,6 @@ Please check the configuration in ${tomlPath}`),
           localization,
           extension_points: uiExtension.configuration.extensionPoints,
           capabilities: uiExtension.configuration.capabilities,
-          metafields: uiExtension.configuration.metafields,
           name: uiExtension.configuration.name,
           settings: uiExtension.configuration.settings,
         })

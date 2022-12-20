@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli",
-  "version": "3.28.0",
+  "version": "3.29.0",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
   "homepage": "https://github.com/shopify/cli#readme",
@@ -52,12 +52,19 @@
     ],
     "overrides": [
       {
-        "files": ["**/bin/*.js"],
+        "files": [
+          "**/bin/*.js"
+        ],
         "parser": "espree",
         "rules": {
-          "rulesdir/specific-imports-in-bootstrap-code": ["error", {
-            "static": ["../dist/index.js"]
-          }],
+          "rulesdir/specific-imports-in-bootstrap-code": [
+            "error",
+            {
+              "static": [
+                "../dist/index.js"
+              ]
+            }
+          ],
           "@typescript-eslint/switch-exhaustiveness-check": "off",
           "@typescript-eslint/naming-convention": "off",
           "@typescript-eslint/no-misused-promises": "off",
@@ -69,11 +76,18 @@
         }
       },
       {
-        "files": ["src/index.ts"],
+        "files": [
+          "src/index.ts"
+        ],
         "rules": {
-          "rulesdir/specific-imports-in-bootstrap-code": ["error", {
-            "static": ["@shopify/cli-kit/node/cli"]
-          }]
+          "rulesdir/specific-imports-in-bootstrap-code": [
+            "error",
+            {
+              "static": [
+                "@shopify/cli-kit/node/cli"
+              ]
+            }
+          ]
         }
       }
     ]
@@ -83,16 +97,16 @@
     "@oclif/plugin-commands": "2.2.0",
     "@oclif/plugin-help": "5.1.12",
     "@oclif/plugin-plugins": "2.1.0",
-    "@shopify/cli-kit": "3.28.0",
-    "@shopify/plugin-ngrok": "3.28.0"
+    "@shopify/cli-kit": "3.29.0",
+    "@shopify/plugin-ngrok": "3.29.0"
   },
   "devDependencies": {
     "@vitest/coverage-istanbul": "^0.23.4",
     "vitest": "^0.23.4",
     "vite": "^2.9.13",
-    "@shopify/app": "3.28.0",
-    "@shopify/cli-hydrogen": "3.28.0",
-    "@shopify/theme": "3.28.0"
+    "@shopify/app": "3.29.0",
+    "@shopify/cli-hydrogen": "3.29.0",
+    "@shopify/theme": "3.29.0"
   },
   "engine-strict": true,
   "engines": {

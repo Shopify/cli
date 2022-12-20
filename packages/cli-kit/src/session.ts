@@ -115,7 +115,12 @@ ${token.json(scopes)}
  * @param scopes - Optional array of extra scopes to authenticate with.
  * @returns The access token for the Storefront API.
  */
-export async function ensureAuthenticatedStorefront(scopes: string[] = []): Promise<string> {
+export async function ensureAuthenticatedStorefront(
+  scopes: string[] = [],
+  password: string | undefined = undefined,
+): Promise<string> {
+  if (password) return password
+
   debug(content`Ensuring that the user is authenticated with the Storefront API with the following scopes:
 ${token.json(scopes)}
 `)
