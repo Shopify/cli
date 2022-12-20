@@ -1,9 +1,9 @@
 import {UIExtensionSpec} from '../models/extensions/ui.js'
 import {FunctionSpec} from '../models/extensions/functions.js'
+import {BaseConfigContents} from '../models/extensions/schemas.js'
 import {plugins} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-
 /**
  * Extension Plugins types
  *
@@ -24,14 +24,16 @@ interface HookReturnPerExtensionPlugin extends plugins.HookReturnsPerPlugin {
   }
 }
 
-export type ExtensionSpecsFunction = plugins.FanoutHookFunction<'extension_specs', ''>
-export type FunctionSpecsFunction = plugins.FanoutHookFunction<'function_specs', ''>
+export type ExtensionSpecsFunction = plugins.FanoutHookFunction<'extension_specs', '', HookReturnPerExtensionPlugin>
+export type FunctionSpecsFunction = plugins.FanoutHookFunction<'function_specs', '', HookReturnPerExtensionPlugin>
 
-export const defineExtensionSpecs = (input: UIExtensionSpec): ExtensionSpecsFunction => {
-  return async () => input
+export const registerUIExtensionSpecs = <TConfiguration extends BaseConfigContents = BaseConfigContents>(
+  input: UIExtensionSpec<TConfiguration>[],
+): ExtensionSpecsFunction => {
+  return async () => input as UIExtensionSpec[]
 }
 
-export const defineFunctionSpecs = (input: FunctionSpec): FunctionSpecsFunction => {
+export const registerFunctionSpecs = (input: FunctionSpec[]): FunctionSpecsFunction => {
   return async () => input
 }
 
@@ -44,7 +46,6 @@ export async function getListOfExtensionSpecs(config: Config): Promise<UIExtensi
   const specs = getArrayRejectingUndefined(Object.values(hooks)).flat()
   return specs
 }
-
 export async function getListOfFunctionSpecs(config: Config): Promise<FunctionSpec[]> {
   const hooks = await plugins.fanoutHooks<HookReturnPerExtensionPlugin, 'function_specs'>(config, 'function_specs', {})
   const specs = getArrayRejectingUndefined(Object.values(hooks)).flat()
