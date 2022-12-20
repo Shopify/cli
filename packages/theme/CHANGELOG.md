@@ -1,5 +1,22 @@
 # @shopify/theme
 
+## 3.29.0
+
+### Minor Changes
+
+- 3b37c679: Enable password flag for theme dev
+- b549291a: Update @oclif/core to 1.21.0
+
+### Patch Changes
+
+- Updated dependencies [eaf98706]
+- Updated dependencies [d12ece22]
+- Updated dependencies [aeca53c6]
+- Updated dependencies [3b37c679]
+- Updated dependencies [b549291a]
+- Updated dependencies [06b6b00d]
+  - @shopify/cli-kit@3.29.0
+
 ## 3.28.0
 
 ### Patch Changes
