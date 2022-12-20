@@ -477,6 +477,22 @@ scopes = "read_products"
     )
   })
 
+  it('throws an error if the extension has a type non included in the specs', async () => {
+    // Given
+    const blockConfiguration = `
+    name = "my-extension"
+    type = "wrong_type"
+    `
+    await writeBlockConfig({
+      blockType: 'ui',
+      blockConfiguration,
+      name: 'my-extension',
+    })
+
+    // When
+    await expect(() => load(tmpDir, specifications)).rejects.toThrowError()
+  })
+
   it("throws an error if the configuration file doesn't exist", async () => {
     // Given
     await makeBlockDir({blockType: 'function', name: 'my-functions'})
@@ -489,6 +505,23 @@ scopes = "read_products"
     // Given
     const blockConfiguration = `
       wrong = "my-function"
+    `
+    await writeBlockConfig({
+      blockType: 'function',
+      blockConfiguration,
+      name: 'my-function',
+    })
+
+    // When
+    await expect(() => load(tmpDir, specifications)).rejects.toThrowError()
+  })
+
+  it('throws an error if the function has a type non included in the specs', async () => {
+    // Given
+    const blockConfiguration = `
+    name = "my-function"
+    type = "wrong_type"
+    apiVersion = "2022-07"
     `
     await writeBlockConfig({
       blockType: 'function',
