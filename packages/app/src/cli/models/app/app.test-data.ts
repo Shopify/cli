@@ -1,10 +1,11 @@
 import {App, AppInterface} from './app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
-import {UIExtensionInstance, uiSpecForType} from '../extensions/ui.js'
+import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
 import {FunctionInstance, functionSpecForType} from '../extensions/functions.js'
 import {ThemeExtensionInstance} from '../extensions/theme.js'
 import themeSpec from '../extensions/theme-specifications/theme.js'
 import {api} from '@shopify/cli-kit'
+import {allLocalSpecs} from '../extensions/specifications.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -48,14 +49,15 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
   const configurationPath = uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`
   const entrySourceFilePath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
 
-  const specification = await uiSpecForType(configuration.type)
+  const allSpecs = await allLocalSpecs()
+  const specification = allSpecs.find((spec) => spec.identifier === configuration.type) as UIExtensionSpec
 
   const extension = new UIExtensionInstance({
     configuration,
     configurationPath,
     entryPath: entrySourceFilePath,
     directory,
-    specification: specification!,
+    specification,
     remoteSpecification: undefined,
   })
   extension.devUUID = uiExtension?.devUUID ?? 'test-ui-extension-uuid'
