@@ -9,7 +9,11 @@ import {err, ok, Result} from '@shopify/cli-kit/node/result'
 const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.21.2'}
 
 const UIExtensionSchema = BaseUIExtensionSchema.extend({
-  settings: schema.define.string().optional(),
+  settings: schema.define
+    .object({
+      fields: schema.define.any().optional(),
+    })
+    .optional(),
   extensionPoints: NewExtensionPointsSchema,
 })
 
@@ -35,7 +39,6 @@ const spec = createUIExtensionSpec({
     return {
       extension_points: config.extensionPoints,
       capabilities: config.capabilities,
-      metafields: config.metafields,
       name: config.name,
       settings: config.settings,
       localization: await loadLocalesConfig(directory, config.type),
