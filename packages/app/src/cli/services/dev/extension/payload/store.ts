@@ -20,6 +20,7 @@ export async function getExtensionsPayloadStoreRawPayload(
   return {
     app: {
       apiKey: options.apiKey,
+      id: options.id,
     },
     version: '3',
     root: {

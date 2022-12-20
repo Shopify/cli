@@ -21,6 +21,7 @@ import {Writable} from 'node:stream'
 
 export interface DevOptions {
   app: AppInterface
+  id?: number
   apiKey?: string
   storeFqdn?: string
   reset: boolean
@@ -108,6 +109,7 @@ async function dev(options: DevOptions) {
   if (options.app.extensions.ui.length > 0) {
     const devExt = await devUIExtensionsTarget({
       app: options.app,
+      id: app.id,
       apiKey,
       url: proxyUrl,
       storeFqdn,
@@ -270,6 +272,7 @@ interface DevUIExtensionsTargetOptions {
   url: string
   storeFqdn: string
   grantedScopes: string[]
+  id?: string
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
 }
@@ -277,6 +280,7 @@ interface DevUIExtensionsTargetOptions {
 async function devUIExtensionsTarget({
   app,
   apiKey,
+  id,
   url,
   storeFqdn,
   grantedScopes,
@@ -290,6 +294,7 @@ async function devUIExtensionsTarget({
     action: async (stdout: Writable, stderr: Writable, signal: abort.Signal, port: number) => {
       await devUIExtensions({
         app,
+        id,
         extensions: app.extensions.ui,
         stdout,
         stderr,
