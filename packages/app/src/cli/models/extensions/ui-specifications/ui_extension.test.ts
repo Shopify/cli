@@ -1,10 +1,10 @@
 import {configurationFileNames} from '../../../constants.js'
 import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
 import {UIExtensionInstance, UIExtensionSpec} from '../ui.js'
+import {allLocalSpecs} from '../specifications.js'
 import {describe, expect, test, vi} from 'vitest'
 import {file, path} from '@shopify/cli-kit'
 import {err, ok} from '@shopify/cli-kit/node/result'
-import {allLocalSpecs} from '../specifications.js'
 
 describe('ui_extension', async () => {
   interface GetUIExtensionProps {
