@@ -1,7 +1,7 @@
 import {App, AppInterface} from './app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
-import {FunctionInstance, functionSpecForType} from '../extensions/functions.js'
+import {FunctionInstance, FunctionSpec} from '../extensions/functions.js'
 import {ThemeExtensionInstance} from '../extensions/theme.js'
 import themeSpec from '../extensions/theme-specifications/theme.js'
 import {api} from '@shopify/cli-kit'
@@ -91,7 +91,9 @@ export async function testFunctionExtension(): Promise<FunctionExtension> {
     configurationUi: true,
   }
 
-  const specification = await functionSpecForType(configuration.type)
+  const allSpecs = await allLocalSpecs()
+  const specification = allSpecs.find((spec) => spec.identifier === configuration.type) as FunctionSpec
+
   return new FunctionInstance({
     configuration,
     configurationPath: '',

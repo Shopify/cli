@@ -1,5 +1,4 @@
 import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
-import {allLocalFunctionSpecifications} from './specifications.js'
 import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
 import {blocks, defaultFunctionsFlavors} from '../../constants.js'
 import {schema, path, error, system, abort, string, environment} from '@shopify/cli-kit'
@@ -119,26 +118,38 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
 }
 
 /**
- * Find the registered spec for a given function type
+ * Partial FunctionSpec type used when creating a new FunctionSpec, the only mandatory fields are the identifier and the templatePath
  */
-export async function functionSpecForType(type: string): Promise<FunctionSpec | undefined> {
-  return (await allLocalFunctionSpecifications()).find((spec) => spec.identifier === type)
+export interface CreateFunctionSpecType<TConfiguration extends FunctionConfigType = FunctionConfigType>
+  extends Partial<FunctionSpec<TConfiguration>> {
+  identifier: string
+  templatePath: (lang: string) => string
 }
 
-export function createFunctionSpec<TConfiguration extends FunctionConfigType = FunctionConfigType>(spec: {
-  identifier: string
-  externalIdentifier: string
-  externalName: string
-  helpURL?: string
-  gated?: boolean
-  templateURL?: string
-  supportedFlavors?: {name: string; value: string}[]
-  registrationLimit?: number
-  configSchema?: ZodSchemaType<TConfiguration>
-  templatePath: (lang: string) => string
-}): FunctionSpec {
+/**
+ * Create a new function spec.
+ *
+ * Everything but "identifer" and "templatePath" is optional.
+ * ```ts
+ * identifier: string // unique identifier for the function type
+ * externalIdentifier: string // unique identifier used externally (default: same as "identifier")
+ * externalName: string // human name used externally (default: same as "identifier")
+ * helpURL?: string // URL to documentation
+ * gated: boolean // whether the function is only accessible to shopifolk or not (default: false)
+ * supportedFlavors: {name: string; value: string}[] // list of supported flavors (default: 'wasm' and 'rust')
+ * configSchema: ZodSchemaType<TConfiguration> // schema for the function toml file (default: BaseFunctionConfigurationSchema)
+ * registrationLimit: number // max number of functions of this type that can be registered (default: 10)
+ * templateURL?: string // URL to the functions repository (default: 'https://github.com/Shopify/function-examples')
+ * templatePath: (lang: string) => string // path to the template directory for the given language inside the templateURL repo
+ * ```
+ */
+export function createFunctionSpec<TConfiguration extends FunctionConfigType = FunctionConfigType>(
+  spec: CreateFunctionSpecType<TConfiguration>,
+): FunctionSpec {
   const defaults = {
     templateURL: 'https://github.com/Shopify/function-examples',
+    externalIdentifier: spec.identifier,
+    externalName: spec.identifier,
     supportedFlavors: defaultFunctionsFlavors,
     configSchema: BaseFunctionConfigurationSchema,
     gated: false,
