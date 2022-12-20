@@ -49,20 +49,14 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
-  const skipDependenciesInstallation = options.skipDependenciesInstallation
-
-  // First ensure we have a valid environment, we can't load the local app until we are logged in
-  // We need to fetch the Specifications from remote
   const token = await session.ensureAuthenticatedPartners()
   const {storeFqdn, remoteApp, updateURLs: cachedUpdateURLs, tunnelPlugin} = await ensureDevEnvironment(options, token)
 
   const apiKey = remoteApp.apiKey
   const allExtensionSpecs = await fetchSpecifications(token, apiKey)
-
-  // Only load the app if the user has access to all extensions defined in it
   let localApp = await load(options.directory, allExtensionSpecs)
 
-  if (!skipDependenciesInstallation) {
+  if (!options.skipDependenciesInstallation) {
     localApp = await installAppDependencies(localApp)
   }
 
