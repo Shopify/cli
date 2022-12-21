@@ -39,7 +39,7 @@ interface ExecCLI2Options {
 export async function execCLI2(
   args: string[],
   {adminSession, storefrontToken, token, directory, signal}: ExecCLI2Options = {},
-) {
+): Promise<void> {
   await installCLIDependencies()
   const env = {
     ...process.env,

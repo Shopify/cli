@@ -8,7 +8,7 @@ import {parse, stringify} from 'envfile'
  * @param path - Path to the .env file.
  * @returns An abort error.
  */
-export const DotEnvNotFoundError = (path: string) => {
+export const DotEnvNotFoundError = (path: string): AbortError => {
   return new AbortError(`The environment file at ${path} does not exist.`)
 }
 
@@ -47,7 +47,7 @@ export async function readAndParseDotEnv(path: string): Promise<DotEnvFile> {
  * Writes a .env file to disk.
  * @param file - .env file to be written.
  */
-export async function writeDotEnv(file: DotEnvFile) {
+export async function writeDotEnv(file: DotEnvFile): Promise<void> {
   await writeFile(file.path, stringify(file.variables))
 }
 
