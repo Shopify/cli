@@ -251,15 +251,18 @@ describe('initialize a extension', async () => {
     'uses the custom templatePath when available',
     async () => {
       await withTemporaryApp(async (tmpDir) => {
+        // Given
         vi.spyOn(file, 'move').mockResolvedValue()
         const name = 'my-ext-1'
         const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
         specification.templatePath = 'path/to/custom/template'
         const extensionFlavor = 'vanilla-js'
-
         const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveDirectoryCopy').mockResolvedValue()
+
+        // When
         await createFromTemplate({name, specification, extensionFlavor, appDirectory: tmpDir, specifications})
 
+        // Then
         expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith('path/to/custom/template', expect.any(String), {
           type: specification.identifier,
           flavor: extensionFlavor,
