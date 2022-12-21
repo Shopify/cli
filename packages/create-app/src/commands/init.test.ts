@@ -42,7 +42,7 @@ describe('create app command', () => {
   })
 
   it('throw an error when using a non supported template alias name', async () => {
-    vi.mocked(errorHandler).mockReturnValue(undefined)
+    vi.mocked(errorHandler).mockImplementation(async () => {})
 
     // When
     await Init.run(['--template', 'java'])
