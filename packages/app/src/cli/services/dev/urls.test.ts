@@ -649,12 +649,4 @@ describe('validURL', () => {
     // Then
     expect(got).toBe(false)
   })
-
-  it('returns false if the URL includes unsupported characters', () => {
-    // Given/When
-    const got = validURL('https://^.com')
-
-    // Then
-    expect(got).toBe(false)
-  })
 })
