@@ -78,8 +78,7 @@
     "esbuild": "0.15.7",
     "http-proxy": "1.18.1",
     "serve-static": "1.15.0",
-    "ws": "8.8.1",
-    "lodash-es": "4.17.21"
+    "ws": "8.8.1"
   },
   "repository": {
     "type": "git",

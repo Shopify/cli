@@ -2,8 +2,9 @@ import {MatchingError, RemoteSource} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {string} from '@shopify/cli-kit'
-import {difference, partition, pickBy, uniqBy} from 'lodash-es'
-import {groupBy} from '@shopify/cli-kit/common/collection'
+import {groupBy, partition} from '@shopify/cli-kit/common/collection'
+import {uniqBy, difference} from '@shopify/cli-kit/common/array'
+import {pickBy} from '@shopify/cli-kit/common/object'
 import type {LocalSource} from './identifiers'
 
 export interface MatchResult {
