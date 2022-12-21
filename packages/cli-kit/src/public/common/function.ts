@@ -1,3 +1,4 @@
+import {DebouncedFunc, DebounceSettings} from 'lodash'
 import {createRequire} from 'node:module'
 
 const require = createRequire(import.meta.url)
@@ -16,48 +17,6 @@ const require = createRequire(import.meta.url)
 export function memoize<T extends (...args: any) => any>(func: T, resolver?: (...args: Parameters<T>) => unknown): T {
   const memoize = require('lodash/memoize')
   return memoize(func, resolver)
-}
-
-interface DebounceSettings {
-  /**
-   * @see _.leading
-   */
-  leading?: boolean | undefined
-  /**
-   * @see _.maxWait
-   */
-  maxWait?: number | undefined
-  /**
-   * @see _.trailing
-   */
-  trailing?: boolean | undefined
-}
-
-interface DebouncedFunc<T extends (...args: unknown[]) => unknown> {
-  /**
-   * Call the original function, but applying the debounce rules.
-   *
-   * If the debounced function can be run immediately, this calls it and returns its return
-   * value.
-   *
-   * Otherwise, it returns the return value of the last invocation, or undefined if the debounced
-   * function was not invoked yet.
-   */
-  (...args: Parameters<T>): ReturnType<T> | undefined
-
-  /**
-   * Throw away any pending invocation of the debounced function.
-   */
-  cancel(): void
-
-  /**
-   * If there is a pending invocation of the debounced function, invoke it immediately and return
-   * its return value.
-   *
-   * Otherwise, return the value from the last invocation, or undefined if the debounced function
-   * was never invoked.
-   */
-  flush(): ReturnType<T> | undefined
 }
 
 /**

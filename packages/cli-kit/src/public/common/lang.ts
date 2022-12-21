@@ -1,4 +1,6 @@
-// import {groupBy, isEqual, mapValues} from 'lodash-es'
+import {createRequire} from 'node:module'
+
+const require = createRequire(import.meta.url)
 
 /**
  * Performs a deep comparison between two values to determine if they are
