@@ -1,16 +1,9 @@
 import {appFlags} from '../../../flags.js'
-import generateExtensionPrompt from '../../../prompts/generate/extension.js'
-import {AppInterface} from '../../../models/app/app.js'
-import {load as loadApp} from '../../../models/app/loader.js'
-import generateExtensionService, {ExtensionFlavor} from '../../../services/generate/extension.js'
 import metadata from '../../../metadata.js'
 import Command from '../../../utilities/app-command.js'
-import {ensureGenerateEnvironment} from '../../../services/environment.js'
-import {fetchSpecifications} from '../../../utilities/extensions/fetch-extension-specifications.js'
-import {GenericSpecification} from '../../../models/app/extensions.js'
-import {output, path, cli, error, session} from '@shopify/cli-kit'
+import generate from '../../../services/generate.js'
+import {path, cli} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
-import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 export default class AppGenerateExtension extends Command {
   static description = 'Scaffold an Extension'
@@ -74,122 +67,14 @@ export default class AppGenerateExtension extends Command {
 
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
 
-    const token = await session.ensureAuthenticatedPartners()
-    const apiKey = await ensureGenerateEnvironment({apiKey: flags['api-key'], directory, reset: flags.reset, token})
-    let specifications = await fetchSpecifications(token, apiKey)
-    const app: AppInterface = await loadApp({directory, specifications})
-    const specification = this.findSpecification(flags.type, specifications)
-    const allExternalTypes = specifications.map((spec) => spec.externalIdentifier)
-
-    if (flags.type && !specification) {
-      throw new error.Abort(`The following extension types are supported: ${allExternalTypes.join(', ')}`)
-    }
-
-    // Map to always use the internal type from now on
-    flags.type = specification?.identifier || flags.type
-
-    if (specification) {
-      const existing = app.extensionsForType(specification)
-      const limit = specification.registrationLimit
-      if (existing.length >= limit) {
-        throw new error.Abort(
-          'Invalid extension type',
-          `You can only generate ${limit} extension(s) of type ${specification.externalIdentifier} per app`,
-        )
-      }
-    } else {
-      // Filter out any extension types that have reached their limit
-      specifications = specifications.filter((spec) => {
-        const existing = app.extensionsForType(spec)
-        output.debug(`${existing.length}: ${spec.externalIdentifier}`)
-        return existing.length < spec.registrationLimit
-      })
-    }
-
-    this.validateExtensionFlavor(specification, flags.template)
-
-    const promptAnswers = await generateExtensionPrompt({
-      extensionType: flags.type,
-      name: flags.name,
-      extensionFlavor: flags.template,
-      directory: path.join(directory, 'extensions'),
-      app,
-      extensionSpecifications: specifications,
+    await generate({
+      directory,
       reset: flags.reset,
-    })
-
-    const {extensionType, extensionFlavor, name} = promptAnswers
-    const selectedSpecification = this.findSpecification(extensionType, specifications)
-    if (!selectedSpecification)
-      throw new error.Abort(`The following extension types are supported: ${allExternalTypes.join(', ')}`)
-
-    await metadata.addPublic(() => ({
-      cmd_scaffold_template_flavor: extensionFlavor,
-      cmd_scaffold_type: extensionType,
-      cmd_scaffold_type_category: selectedSpecification.category(),
-      cmd_scaffold_type_gated: selectedSpecification.gated,
-      cmd_scaffold_used_prompts_for_type: extensionType !== flags.type,
-    }))
-
-    const extensionDirectory = await generateExtensionService({
-      name,
-      extensionFlavor: extensionFlavor as ExtensionFlavor,
-      specification: selectedSpecification,
-      app,
-      extensionType: selectedSpecification.identifier,
+      apiKey: flags['api-key'],
+      type: flags.type,
+      name: flags.name,
       cloneUrl: flags['clone-url'],
+      template: flags.template,
     })
-
-    const formattedSuccessfulMessage = this.formatSuccessfulRunMessage(
-      selectedSpecification,
-      path.relative(app.directory, extensionDirectory),
-      app.packageManager,
-    )
-    output.info(formattedSuccessfulMessage)
-  }
-
-  findSpecification(type: string | undefined, specifications: GenericSpecification[]) {
-    return specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
-  }
-
-  validateExtensionFlavor(specification: GenericSpecification | undefined, flavor: string | undefined) {
-    if (!flavor || !specification) return
-
-    const possibleFlavors = specification.supportedFlavors.map((flavor) => flavor.name)
-    if (possibleFlavors.includes(flavor)) {
-      throw new error.Abort(
-        'Specified extension template on invalid extension type',
-        `You can only specify a template for these extension types: ${possibleFlavors.join(', ')}.`,
-      )
-    }
-  }
-
-  formatSuccessfulRunMessage(
-    specification: GenericSpecification,
-    extensionDirectory: string,
-    depndencyManager: PackageManager,
-  ): string {
-    output.completed(`Your ${specification.externalName} extension was added to your project!`)
-
-    const outputTokens = []
-    outputTokens.push(
-      output.content`\n  To find your extension, remember to ${output.token.genericShellCommand(
-        output.content`cd ${output.token.path(extensionDirectory)}`,
-      )}`.value,
-    )
-
-    if (specification.category() === 'ui' || specification.category() === 'theme') {
-      outputTokens.push(
-        output.content`  To preview your project, run ${output.token.packagejsonScript(depndencyManager, 'dev')}`.value,
-      )
-    }
-
-    if (specification.helpURL) {
-      outputTokens.push(
-        output.content`  For more details, see the ${output.token.link('docs', specification.helpURL)} ✨`.value,
-      )
-    }
-
-    return outputTokens.join('\n').concat('\n')
   }
 }
