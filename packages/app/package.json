@@ -18,10 +18,6 @@
     "./node/plugins/*": {
       "import": "./dist/cli/public/plugins/*.js",
       "require": "./dist/cli/public/plugins/*.d.ts"
-    },
-    "./node/utilities/extensions/*": {
-      "import": "./dist/cli/public/utilities/extensions/*.js",
-      "require": "./dist/cli/public/utilities/extensions/*.d.ts"
     }
   },
   "publishConfig": {

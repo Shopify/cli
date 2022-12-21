@@ -1,6 +1,6 @@
 import {createUIExtensionSpecification} from '../ui.js'
 import {BaseUIExtensionSchema, NewExtensionPointSchemaType, NewExtensionPointsSchema} from '../schemas.js'
-import {loadLocalesConfig} from '../../../public/utilities/extensions/locales-configuration.js'
+import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {file, output, path, schema} from '@shopify/cli-kit'

@@ -7,6 +7,9 @@ import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
 export {createUIExtensionSpecification, UIExtensionSpec, CreateExtensionSpecType} from '../../models/extensions/ui.js'
 export {createFunctionSpecification, FunctionSpec, CreateFunctionSpecType} from '../../models/extensions/functions.js'
+export {fetchProductVariant} from '../../utilities/extensions/fetch-product-variant.js'
+export {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
+
 export * from '../../models/extensions/schemas.js'
 
 /**
