@@ -52,6 +52,7 @@ export function uniqBy<T>(array: List<T> | null | undefined, iteratee: ValueIter
  * @returns Returns the new array of filtered values.
  */
 export function difference<T>(array: List<T> | null | undefined, ...values: List<T>[]): T[] {
-  const lodashDifference = require('lodash/difference')
-  return lodashDifference(array, values)
+  const lodashDifferenceBy = require('lodash/differenceBy')
+  const lodashIsEqual = require('lodash/isEqual')
+  return lodashDifferenceBy(array, values, lodashIsEqual)
 }

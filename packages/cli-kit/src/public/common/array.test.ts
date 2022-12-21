@@ -39,13 +39,13 @@ describe('uniqBy', () => {
 describe('difference', () => {
   test('returns the different elements', () => {
     // Given
-    const first = [1, 2, 3]
-    const second = [1, 2, 3, 4]
+    const first = [2, 1]
+    const second = [2, 3]
 
     // When
     const got = difference(first, second)
 
     // Then
-    expect(got).toEqual([1, 2, 3])
+    expect(got).toEqual([1])
   })
 })
