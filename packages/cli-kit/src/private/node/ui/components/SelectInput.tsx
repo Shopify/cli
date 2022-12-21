@@ -1,7 +1,8 @@
 import {isTruthy} from '../../../../environment/utilities.js'
+import {isEqual} from '../../../../public/common/lang.js'
 import React, {useState, useEffect, useRef, useCallback} from 'react'
 import {Box, Key, Text, useApp, useInput} from 'ink'
-import {groupBy, isEqual, mapValues} from 'lodash-es'
+import {groupBy, mapValues} from 'lodash-es'
 
 export interface Props<T> {
   items: Item<T>[]
