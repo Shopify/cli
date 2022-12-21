@@ -13,6 +13,11 @@ import {Config} from '@oclif/core'
 
 type ExtensionSpec = UIExtensionSpec | ThemeExtensionSpec
 
+export interface FetchSpecificationsOptions {
+  token: string
+  apiKey: string
+  config: Config
+}
 /**
  * Returns all extension/function specifications the user has access to.
  * This includes:
@@ -27,11 +32,11 @@ type ExtensionSpec = UIExtensionSpec | ThemeExtensionSpec
  * @param token - Token to access partners API
  * @returns List of extension specifications
  */
-export async function fetchSpecifications(
-  token: string,
-  apiKey: string,
-  config: Config,
-): Promise<GenericSpecification[]> {
+export async function fetchSpecifications({
+  token,
+  apiKey,
+  config,
+}: FetchSpecificationsOptions): Promise<GenericSpecification[]> {
   const query = api.graphql.ExtensionSpecificationsQuery
   const result: api.graphql.ExtensionSpecificationsQuerySchema = await api.partners.request(query, token, {
     api_key: apiKey,

@@ -23,7 +23,7 @@ describe('fetchExtensionSpecifications', () => {
     vi.mocked(api.partners.request).mockResolvedValue({extensionSpecifications: testRemoteSpecifications})
 
     // When
-    const got = await fetchSpecifications('token', 'apiKey', new Config({root: ''}))
+    const got = await fetchSpecifications({token: 'token', apiKey: 'apiKey', config: new Config({root: ''})})
 
     // Then
     expect(got).toEqual(

@@ -76,7 +76,7 @@ export default class AppGenerateExtension extends Command {
 
     const token = await session.ensureAuthenticatedPartners()
     const apiKey = await ensureGenerateEnvironment({apiKey: flags['api-key'], directory, reset: flags.reset, token})
-    let specifications = await fetchSpecifications(token, apiKey, this.config)
+    let specifications = await fetchSpecifications({token, apiKey, config: this.config})
     const app: AppInterface = await loadApp({directory, specifications})
     const specification = this.findSpecification(flags.type, specifications)
     const allExternalTypes = specifications.map((spec) => spec.externalIdentifier)
