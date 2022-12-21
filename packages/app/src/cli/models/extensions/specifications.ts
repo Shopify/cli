@@ -25,9 +25,9 @@ export async function loadLocalExtensionsSpecifications(): Promise<GenericSpecif
   return [...ui, ...functions, ...theme]
 }
 
-const memLoadSpecs = memoize(loadSpecs)
+const memLoadSpecs = memoize(loadSpecifications)
 
-async function loadSpecs(directoryName: string) {
+async function loadSpecifications(directoryName: string) {
   /**
    * When running tests, "await import('.../spec..ts')" is handled by Vitest which does
    * transform the TS module into a JS one before loading it. Hence the inclusion of .ts

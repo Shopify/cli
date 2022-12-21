@@ -19,9 +19,9 @@ type ExtensionSpec = UIExtensionSpec | ThemeExtensionSpec
  * - Theme extensions
  * - Functions
  *
- * Will return a merge of the local and remote specs (remote values override local ones)
+ * Will return a merge of the local and remote specifications (remote values override local ones)
  * Will only return the specifications that are also defined locally
- * (Functions are not validated againts remote specs, gated access is defined locally)
+ * (Functions are not validated againts remote specifications, gated access is defined locally)
  *
  * @param token - Token to access partners API
  * @returns List of extension specifications
