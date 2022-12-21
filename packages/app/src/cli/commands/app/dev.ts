@@ -1,7 +1,5 @@
 import {appFlags} from '../../flags.js'
-import {AppInterface} from '../../models/app/app.js'
 import dev from '../../services/dev.js'
-import {load as loadApp} from '../../models/app/loader.js'
 import Command from '../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
 import {path, string, cli, metadata} from '@shopify/cli-kit'
@@ -94,11 +92,10 @@ export default class Dev extends Command {
     }))
 
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const app: AppInterface = await loadApp(directory)
     const commandConfig = this.config
 
     await dev({
-      app,
+      directory,
       apiKey: flags['api-key'],
       storeFqdn: flags.store,
       reset: flags.reset,

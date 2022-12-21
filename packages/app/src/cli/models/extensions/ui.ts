@@ -1,5 +1,5 @@
 import {BaseConfigContents, ZodSchemaType} from './schemas.js'
-import {allUISpecifications} from './specifications.js'
+import {loadUIExtensionSpecifications} from './specifications.js'
 import {ExtensionCategory, GenericSpecification, UIExtension} from '../app/extensions.js'
 import {blocks, defualtExtensionFlavors} from '../../constants.js'
 import {id, path, api, output, environment, string} from '@shopify/cli-kit'
@@ -174,8 +174,8 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
  * Find the registered spececification for a given extension type
  */
 export async function uiSpecForType(type: string): Promise<UIExtensionSpec | undefined> {
-  const allSpecs = await allUISpecifications()
-  return allSpecs.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
+  const allSpecifications = await loadUIExtensionSpecifications()
+  return allSpecifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
 }
 
 // PENDING: Fetch remote specs

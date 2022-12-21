@@ -30,16 +30,15 @@ export const InvalidApiKeyErrorMessage = (apiKey: string) => {
 }
 
 export interface DevEnvironmentOptions {
-  app: AppInterface
+  directory: string
   apiKey?: string
   storeFqdn?: string
   reset: boolean
 }
 
 interface DevEnvironmentOutput {
-  app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string}
+  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {apiSecret?: string}
   storeFqdn: string
-  identifiers: UuidOnlyIdentifiers
   updateURLs: boolean | undefined
   tunnelPlugin: string | undefined
 }
@@ -120,12 +119,9 @@ export async function ensureDevEnvironment(
   options: DevEnvironmentOptions,
   token: string,
 ): Promise<DevEnvironmentOutput> {
-  const prodEnvIdentifiers = await getAppIdentifiers({app: options.app})
-  const envExtensionsIds = prodEnvIdentifiers.extensions || {}
-
   const cachedInfo = await getAppDevCachedInfo({
     reset: options.reset,
-    directory: options.app.directory,
+    directory: options.directory,
   })
 
   if (cachedInfo === undefined && !options.reset) {
@@ -139,31 +135,14 @@ export async function ensureDevEnvironment(
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
   if (selectedApp && selectedStore) {
-    // eslint-disable-next-line no-param-reassign
-    options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
-
     await store.setAppInfo({
       appId: selectedApp.apiKey,
-      directory: options.app.directory,
+      directory: options.directory,
       storeFqdn: selectedStore.shopDomain,
       orgId,
     })
 
-    // If the selected app is the "prod" one, we will use the real extension IDs for `dev`
-    const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
-    return {
-      app: {
-        ...selectedApp,
-        apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0]!.secret,
-      },
-      storeFqdn: selectedStore.shopDomain,
-      identifiers: {
-        app: selectedApp.apiKey,
-        extensions,
-      },
-      updateURLs: cachedInfo?.updateURLs,
-      tunnelPlugin: cachedInfo?.tunnelPlugin,
-    }
+    return buildOutput(selectedApp, selectedStore, cachedInfo)
   }
 
   const organization = await fetchOrgFromId(orgId, token)
@@ -176,19 +155,18 @@ export async function ensureDevEnvironment(
       selectedApp = app
     } else {
       const {apps} = await fetchOrgAndApps(orgId, token)
-      selectedApp = await selectOrCreateApp(options.app.name, apps, organization, token)
+      const localAppName = await loadAppName(options.directory)
+      selectedApp = await selectOrCreateApp(localAppName, apps, organization, token)
     }
   }
 
   await store.setAppInfo({
     appId: selectedApp.apiKey,
     title: selectedApp.title,
-    directory: options.app.directory,
+    directory: options.directory,
     orgId,
   })
 
-  // eslint-disable-next-line no-param-reassign
-  options = await updateDevOptions({...options, apiKey: selectedApp.apiKey})
   if (!selectedStore) {
     if (cachedInfo?.storeFqdn) {
       const result = await fetchStoreByDomain(organization.id, token, cachedInfo.storeFqdn)
@@ -206,44 +184,33 @@ export async function ensureDevEnvironment(
 
   await store.setAppInfo({
     appId: selectedApp.apiKey,
-    directory: options.app.directory,
+    directory: options.directory,
     storeFqdn: selectedStore?.shopDomain,
   })
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
-    showReusedValues(organization.businessName, cachedInfo, options.app.packageManager)
+    const packageManager = await getPackageManager(options.directory)
+    showReusedValues(organization.businessName, cachedInfo, packageManager)
   }
 
-  const extensions = prodEnvIdentifiers.app === selectedApp.apiKey ? envExtensionsIds : {}
-  const result = {
-    app: {
-      ...selectedApp,
-      apiSecret: selectedApp.apiSecretKeys.length === 0 ? undefined : selectedApp.apiSecretKeys[0]!.secret,
-    },
-    storeFqdn: selectedStore.shopDomain,
-    identifiers: {
-      app: selectedApp.apiKey,
-      extensions,
-    },
-    updateURLs: cachedInfo?.updateURLs,
-    tunnelPlugin: cachedInfo?.tunnelPlugin,
-  }
+  const result = buildOutput(selectedApp, selectedStore, cachedInfo)
   await logMetadataForLoadedDevEnvironment(result)
   return result
 }
 
-async function updateDevOptions(options: DevEnvironmentOptions & {apiKey: string}) {
-  const updatedApp = await updateAppIdentifiers({
-    app: options.app,
-    identifiers: {
-      app: options.apiKey,
-      extensions: {},
-    },
-    command: 'dev',
-  })
+function buildOutput(
+  app: OrganizationApp,
+  store: OrganizationStore,
+  cachedInfo?: store.CachedAppInfo,
+): DevEnvironmentOutput {
   return {
-    ...options,
-    app: updatedApp,
+    remoteApp: {
+      ...app,
+      apiSecret: app.apiSecretKeys.length === 0 ? undefined : app.apiSecretKeys[0]!.secret,
+    },
+    storeFqdn: store.shopDomain,
+    updateURLs: cachedInfo?.updateURLs,
+    tunnelPlugin: cachedInfo?.tunnelPlugin,
   }
 }
 
@@ -522,8 +489,8 @@ function showDevValues(org: string, appName: string) {
 
 async function logMetadataForLoadedDevEnvironment(env: DevEnvironmentOutput) {
   await metadata.addPublic(() => ({
-    partner_id: string.tryParseInt(env.app.organizationId),
-    api_key: env.identifiers.app,
+    partner_id: string.tryParseInt(env.remoteApp.organizationId),
+    api_key: env.remoteApp.apiKey,
   }))
 }
 

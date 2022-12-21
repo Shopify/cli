@@ -18,7 +18,6 @@ import {
 } from './environment.js'
 import {createExtension} from './dev/create-extension.js'
 import {OrganizationApp, OrganizationStore} from '../models/organization.js'
-import {WebType} from '../models/app/app.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
@@ -137,37 +136,20 @@ const EXTENSION_A: UIExtension = {
   hasExtensionPointTarget: () => true,
 }
 
-const LOCAL_APP = testApp({
-  name: 'my-app',
-  directory: '/app',
-  configurationPath: '/shopify.app.toml',
-  configuration: {scopes: 'read_products', extensionDirectories: ['extensions/*']},
-  webs: [
-    {
-      directory: '',
-      configuration: {
-        type: WebType.Backend,
-        commands: {dev: ''},
-      },
-    },
-  ],
-  extensions: {ui: [EXTENSION_A], theme: [], function: []},
-})
-
 const INPUT: DevEnvironmentOptions = {
-  app: LOCAL_APP,
+  directory: 'app_directory',
   reset: false,
 }
 
 const INPUT_WITH_DATA: DevEnvironmentOptions = {
-  app: LOCAL_APP,
+  directory: 'app_directory',
   reset: false,
   apiKey: 'key1',
   storeFqdn: 'domain1',
 }
 
 const BAD_INPUT_WITH_DATA: DevEnvironmentOptions = {
-  app: LOCAL_APP,
+  directory: 'app_directory',
   reset: false,
   apiKey: 'key1',
   storeFqdn: 'invalid_store_domain',
@@ -239,38 +221,27 @@ describe('ensureDevEnvironment', () => {
   it('returns selected data and updates internal state, without cached state', async () => {
     // Given
     vi.mocked(store.getAppInfo).mockResolvedValue(undefined)
-    vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
 
     // When
     const got = await ensureDevEnvironment(INPUT, 'token')
 
     // Then
     expect(got).toEqual({
-      app: {...APP1, apiSecret: 'secret1'},
+      remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
-      identifiers: {
-        app: 'key1',
-        extensions: {},
-      },
+      tunnelPlugin: undefined,
+      updateURLs: undefined,
     })
     expect(store.setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
       title: APP1.title,
-      directory: LOCAL_APP.directory,
+      directory: INPUT.directory,
       orgId: ORG1.id,
     })
     expect(store.setAppInfo).toHaveBeenNthCalledWith(2, {
       appId: APP1.apiKey,
-      directory: LOCAL_APP.directory,
+      directory: INPUT.directory,
       storeFqdn: STORE1.shopDomain,
-    })
-    expect(updateAppIdentifiers).toBeCalledWith({
-      app: LOCAL_APP,
-      identifiers: {
-        app: APP1.apiKey,
-        extensions: {},
-      },
-      command: 'dev',
     })
 
     expect(metadata.getAllPublic()).toMatchObject({
@@ -285,91 +256,32 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(store.getAppInfo).mockResolvedValue(CACHED1)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
-    vi.mocked(getAppIdentifiers).mockResolvedValue({
-      app: 'key1',
-      extensions: {},
-    })
-    vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
 
     // When
     const got = await ensureDevEnvironment(INPUT, 'token')
 
     // Then
     expect(got).toEqual({
-      app: {...APP1, apiSecret: 'secret1'},
+      remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
-      identifiers: {
-        app: 'key1',
-        extensions: {},
-      },
+      tunnelPlugin: undefined,
+      updateURLs: undefined,
     })
     expect(fetchOrganizations).not.toBeCalled()
     expect(selectOrganizationPrompt).not.toBeCalled()
     expect(store.setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
       title: APP1.title,
-      directory: LOCAL_APP.directory,
+      directory: INPUT.directory,
       orgId: ORG1.id,
     })
     expect(store.setAppInfo).toHaveBeenNthCalledWith(2, {
       appId: APP1.apiKey,
-      directory: LOCAL_APP.directory,
+      directory: INPUT.directory,
       storeFqdn: STORE1.shopDomain,
-    })
-    expect(updateAppIdentifiers).toBeCalledWith({
-      app: LOCAL_APP,
-      identifiers: {
-        app: APP1.apiKey,
-        extensions: {},
-      },
-      command: 'dev',
     })
     expect(outputMock.output()).toMatch(/Using your previous dev settings:/)
     expect(fetchOrgAndApps).not.toBeCalled()
-  })
-
-  it('returns extensions Ids if the selected app matches the env one', async () => {
-    // Given
-    vi.mocked(getAppIdentifiers).mockResolvedValue({
-      app: 'key1',
-      extensions: {EXTENSION_A: 'UUID_EXTENSION_A'},
-    })
-    vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
-
-    // When
-    const got = await ensureDevEnvironment(INPUT, 'token')
-
-    // Then
-    expect(got).toEqual({
-      app: {...APP1, apiSecret: 'secret1'},
-      storeFqdn: STORE1.shopDomain,
-      identifiers: {
-        app: 'key1',
-        extensions: {EXTENSION_A: 'UUID_EXTENSION_A'},
-      },
-    })
-  })
-
-  it('ignores extensions Ids if the selected app does not match the env one', async () => {
-    // Given
-    vi.mocked(getAppIdentifiers).mockResolvedValue({
-      app: 'env-app',
-      extensions: {EXTENSION_A: 'UUID_EXTENSION_A'},
-    })
-    vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
-
-    // When
-    const got = await ensureDevEnvironment(INPUT, 'token')
-
-    // Then
-    expect(got).toEqual({
-      app: {...APP1, apiSecret: 'secret1'},
-      storeFqdn: STORE1.shopDomain,
-      identifiers: {
-        app: 'key1',
-        extensions: {},
-      },
-    })
   })
 
   it('returns selected data and updates internal state, with inputs from flags', async () => {
@@ -377,7 +289,6 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(store.getAppInfo).mockResolvedValue(undefined)
     vi.mocked(convertToTestStoreIfNeeded).mockResolvedValueOnce()
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
     // When
@@ -385,28 +296,17 @@ describe('ensureDevEnvironment', () => {
 
     // Then
     expect(got).toEqual({
-      app: {...APP2, apiSecret: 'secret2'},
+      remoteApp: {...APP2, apiSecret: 'secret2'},
       storeFqdn: STORE1.shopDomain,
-      identifiers: {
-        app: 'key2',
-        extensions: {},
-      },
+      tunnelPlugin: undefined,
+      updateURLs: undefined,
     })
     expect(store.setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP2.apiKey,
-      directory: LOCAL_APP.directory,
+      directory: INPUT_WITH_DATA.directory,
       storeFqdn: STORE1.shopDomain,
       orgId: ORG1.id,
     })
-    expect(updateAppIdentifiers).toBeCalledWith({
-      app: LOCAL_APP,
-      identifiers: {
-        app: APP2.apiKey,
-        extensions: {},
-      },
-      command: 'dev',
-    })
-
     expect(fetchOrganizations).toBeCalled()
     expect(selectOrganizationPrompt).toBeCalled()
     expect(selectOrCreateApp).not.toBeCalled()
@@ -418,7 +318,6 @@ describe('ensureDevEnvironment', () => {
     // Given
     vi.mocked(store.getAppInfo).mockResolvedValue(undefined)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: undefined})
 
     // When
@@ -430,11 +329,10 @@ describe('ensureDevEnvironment', () => {
   it('resets cached state if reset is true', async () => {
     // When
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(updateAppIdentifiers).mockResolvedValue(LOCAL_APP)
     await ensureDevEnvironment({...INPUT, reset: true}, 'token')
 
     // Then
-    expect(store.clearAppInfo).toHaveBeenCalledWith(LOCAL_APP.directory)
+    expect(store.clearAppInfo).toHaveBeenCalledWith(BAD_INPUT_WITH_DATA.directory)
     expect(fetchOrgAndApps).toBeCalled()
   })
 })

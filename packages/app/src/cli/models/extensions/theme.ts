@@ -1,5 +1,5 @@
 import {ThemeExtensionSchema, ZodSchemaType} from './schemas.js'
-import {allThemeSpecifications} from './specifications.js'
+import {loadThemeSpecifications} from './specifications.js'
 import {GenericSpecification, ThemeExtension} from '../app/extensions.js'
 import {path, schema, api, output, environment, string} from '@shopify/cli-kit'
 
@@ -99,5 +99,5 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
 /* Find the registered spec for a given theme type
  */
 export async function themeSpecForType(type: string): Promise<ThemeExtensionSpec | undefined> {
-  return (await allThemeSpecifications()).find((spec) => spec.identifier === type)
+  return (await loadThemeSpecifications()).find((spec) => spec.identifier === type)
 }

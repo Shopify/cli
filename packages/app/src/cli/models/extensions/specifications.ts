@@ -1,25 +1,33 @@
 import {UIExtensionSpec} from './ui.js'
 import {FunctionSpec} from './functions.js'
 import {ThemeExtensionSpec} from './theme.js'
-import {os, path} from '@shopify/cli-kit'
+import {GenericSpecification} from '../app/extensions.js'
+import {os, path, environment} from '@shopify/cli-kit'
 import {memoize} from 'lodash-es'
 import {fileURLToPath} from 'url'
 
-export async function allUISpecifications(): Promise<UIExtensionSpec[]> {
+export async function loadUIExtensionSpecifications(): Promise<UIExtensionSpec[]> {
   return memLoadSpecs('ui-specifications')
 }
 
-export async function allFunctionSpecifications(): Promise<FunctionSpec[]> {
-  return memLoadSpecs('function-specifications')
+export async function loadFunctionSpecifications(): Promise<FunctionSpec[]> {
+  return (await memLoadSpecs('function-specifications')).filter((spec) => !spec.gated || environment.local.isShopify())
 }
 
-export async function allThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
+export async function loadThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
   return memLoadSpecs('theme-specifications')
 }
 
-const memLoadSpecs = memoize(loadSpecs)
+export async function loadLocalExtensionsSpecifications(): Promise<GenericSpecification[]> {
+  const ui = await loadUIExtensionSpecifications()
+  const functions = await loadFunctionSpecifications()
+  const theme = await loadThemeSpecifications()
+  return [...ui, ...functions, ...theme]
+}
 
-async function loadSpecs(directoryName: string) {
+const memLoadSpecs = memoize(loadSpecifications)
+
+async function loadSpecifications(directoryName: string) {
   /**
    * When running tests, "await import('.../spec..ts')" is handled by Vitest which does
    * transform the TS module into a JS one before loading it. Hence the inclusion of .ts
