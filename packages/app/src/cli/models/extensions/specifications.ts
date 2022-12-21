@@ -8,23 +8,23 @@ import {memoize} from 'lodash-es'
 import {Config} from '@oclif/core'
 import {fileURLToPath} from 'url'
 
-export async function allUISpecifications(config: Config): Promise<UIExtensionSpec[]> {
-  const local = await allLocalUISpecifications()
+export async function loadUIExtensionSpecifications(config: Config): Promise<UIExtensionSpec[]> {
+  const local = await loadLocalUIExtensionsSpecifications()
   const plugins = await getListOfExtensionSpecs(config)
   return [...local, ...plugins]
 }
 
-export async function allFunctionSpecifications(config: Config): Promise<FunctionSpec[]> {
-  const local = await allLocalFunctionSpecifications()
+export async function loadFunctionSpecifications(config: Config): Promise<FunctionSpec[]> {
+  const local = await loadLocalFunctionSpecifications()
   const plugins = await getListOfFunctionSpecs(config)
   return [...local, ...plugins]
 }
 
-export async function allLocalUISpecifications(): Promise<UIExtensionSpec[]> {
+export async function loadLocalUIExtensionsSpecifications(): Promise<UIExtensionSpec[]> {
   return memLoadSpecs('ui-specifications')
 }
 
-export async function allLocalFunctionSpecifications(): Promise<FunctionSpec[]> {
+export async function loadLocalFunctionSpecifications(): Promise<FunctionSpec[]> {
   return (await memLoadSpecs('function-specifications')).filter((spec) => !spec.gated || environment.local.isShopify())
 }
 
@@ -32,16 +32,16 @@ export async function loadThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
   return memLoadSpecs('theme-specifications')
 }
 
-export async function allSpecifications(config: Config): Promise<GenericSpecification[]> {
-  const ui = await allUISpecifications(config)
-  const functions = await allFunctionSpecifications(config)
+export async function loadExtensionsSpecifications(config: Config): Promise<GenericSpecification[]> {
+  const ui = await loadUIExtensionSpecifications(config)
+  const functions = await loadFunctionSpecifications(config)
   const theme = await loadThemeSpecifications()
   return [...ui, ...functions, ...theme]
 }
 
-export async function allLocalSpecs(): Promise<GenericSpecification[]> {
-  const ui = await allLocalUISpecifications()
-  const functions = await allLocalFunctionSpecifications()
+export async function loadLocalExtensionsSpecifications(): Promise<GenericSpecification[]> {
+  const ui = await loadLocalUIExtensionsSpecifications()
+  const functions = await loadLocalFunctionSpecifications()
   const theme = await loadThemeSpecifications()
   return [...ui, ...functions, ...theme]
 }
