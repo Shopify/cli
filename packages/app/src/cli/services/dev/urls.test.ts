@@ -5,6 +5,9 @@ import {
   shouldOrPromptUpdateURLs,
   generateFrontendURL,
   generatePartnersURLs,
+  PartnersURLs,
+  validateParntersURLs,
+  validURL,
 } from './urls.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
@@ -579,5 +582,79 @@ describe('generatePartnersURLs', () => {
       applicationUrl,
       redirectUrlWhitelist: [`${applicationUrl}${overridePath}`],
     })
+  })
+})
+
+describe('validatePartnersURLs', () => {
+  it('does not throw any error when the URLs are valid', () => {
+    // Given
+    const applicationUrl = 'http://example.com'
+    const redirectUrlWhitelist = ['http://example.com/callback1', 'http://example.com/callback2']
+    const urls: PartnersURLs = {applicationUrl, redirectUrlWhitelist}
+
+    // When/Then
+    validateParntersURLs(urls)
+  })
+
+  it('it raises an error when the application URL is not valid', () => {
+    // Given
+    const applicationUrl = 'wrong'
+    const redirectUrlWhitelist = ['http://example.com/callback1', 'http://example.com/callback2']
+    const urls: PartnersURLs = {applicationUrl, redirectUrlWhitelist}
+
+    // When/Then
+    expect(() => validateParntersURLs(urls)).toThrow(/Invalid application URL/)
+  })
+
+  it('it raises an error when the redirection URLs are not valid', () => {
+    // Given
+    const applicationUrl = 'http://example.com'
+    const redirectUrlWhitelist = ['http://example.com/callback1', 'wrong']
+    const urls: PartnersURLs = {applicationUrl, redirectUrlWhitelist}
+
+    // When/Then
+    expect(() => validateParntersURLs(urls)).toThrow(/Invalid redirection URLs/)
+  })
+})
+
+describe('validURL', () => {
+  it('returns true if the URL is valid', () => {
+    // Given/When
+    const got = validURL('https://example.com')
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  it('returns false if the URL is empty', () => {
+    // Given/When
+    const got = validURL('')
+
+    // Then
+    expect(got).toBe(false)
+  })
+
+  it('returns false if the format is invalid', () => {
+    // Given/When
+    const got = validURL('wrong')
+
+    // Then
+    expect(got).toBe(false)
+  })
+
+  it('returns false if the URL is missing the protocol', () => {
+    // Given/When
+    const got = validURL('example.com')
+
+    // Then
+    expect(got).toBe(false)
+  })
+
+  it('returns false if the URL includes unsupported characters', () => {
+    // Given/When
+    const got = validURL('https://^.com')
+
+    // Then
+    expect(got).toBe(false)
   })
 })
