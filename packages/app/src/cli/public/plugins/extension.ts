@@ -32,17 +32,17 @@ interface HookReturnPerExtensionPlugin extends plugins.HookReturnsPerPlugin {
 export type ExtensionSpecsFunction = plugins.FanoutHookFunction<'extension_specs', '', HookReturnPerExtensionPlugin>
 export type FunctionSpecsFunction = plugins.FanoutHookFunction<'function_specs', '', HookReturnPerExtensionPlugin>
 
-export const registerUIExtensionSpecs = <TConfiguration extends BaseConfigContents = BaseConfigContents>(
+export const registerUIExtensionSpecifications = <TConfiguration extends BaseConfigContents = BaseConfigContents>(
   input: UIExtensionSpec<TConfiguration>[],
 ): ExtensionSpecsFunction => {
   return async () => input as UIExtensionSpec[]
 }
 
-export const registerFunctionSpecs = (input: FunctionSpec[]): FunctionSpecsFunction => {
+export const registerFunctionSpecifications = (input: FunctionSpec[]): FunctionSpecsFunction => {
   return async () => input
 }
 
-export async function getListOfExtensionSpecs(config: Config): Promise<UIExtensionSpec[]> {
+export async function loadUIExtensionSpecificiationsFromPlugins(config: Config): Promise<UIExtensionSpec[]> {
   const hooks = await plugins.fanoutHooks<HookReturnPerExtensionPlugin, 'extension_specs'>(
     config,
     'extension_specs',
@@ -51,7 +51,7 @@ export async function getListOfExtensionSpecs(config: Config): Promise<UIExtensi
   const specs = getArrayRejectingUndefined(Object.values(hooks)).flat()
   return specs
 }
-export async function getListOfFunctionSpecs(config: Config): Promise<FunctionSpec[]> {
+export async function loadFunctionSpecificationsFromPlugins(config: Config): Promise<FunctionSpec[]> {
   const hooks = await plugins.fanoutHooks<HookReturnPerExtensionPlugin, 'function_specs'>(config, 'function_specs', {})
   const specs = getArrayRejectingUndefined(Object.values(hooks)).flat()
   return specs

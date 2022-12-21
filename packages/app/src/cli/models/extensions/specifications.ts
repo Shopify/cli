@@ -2,7 +2,10 @@ import {UIExtensionSpec} from './ui.js'
 import {FunctionSpec} from './functions.js'
 import {ThemeExtensionSpec} from './theme.js'
 import {GenericSpecification} from '../app/extensions.js'
-import {getListOfExtensionSpecs, getListOfFunctionSpecs} from '../../public/plugins/extension.js'
+import {
+  loadUIExtensionSpecificiationsFromPlugins,
+  loadFunctionSpecificationsFromPlugins,
+} from '../../public/plugins/extension.js'
 import {os, path, environment} from '@shopify/cli-kit'
 import {memoize} from 'lodash-es'
 import {Config} from '@oclif/core'
@@ -10,13 +13,13 @@ import {fileURLToPath} from 'url'
 
 export async function loadUIExtensionSpecifications(config: Config): Promise<UIExtensionSpec[]> {
   const local = await loadLocalUIExtensionsSpecifications()
-  const plugins = await getListOfExtensionSpecs(config)
+  const plugins = await loadUIExtensionSpecificiationsFromPlugins(config)
   return [...local, ...plugins]
 }
 
 export async function loadFunctionSpecifications(config: Config): Promise<FunctionSpec[]> {
   const local = await loadLocalFunctionSpecifications()
-  const plugins = await getListOfFunctionSpecs(config)
+  const plugins = await loadFunctionSpecificationsFromPlugins(config)
   return [...local, ...plugins]
 }
 
