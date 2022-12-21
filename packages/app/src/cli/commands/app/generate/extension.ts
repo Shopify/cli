@@ -8,7 +8,7 @@ import Command from '../../../utilities/app-command.js'
 import {ensureGenerateEnvironment} from '../../../services/environment.js'
 import {fetchSpecifications} from '../../../utilities/extensions/fetch-extension-specifications.js'
 import {GenericSpecification} from '../../../models/app/extensions.js'
-import {output, path, cli, error, session} from '@shopify/cli-kit'
+import {output, path, cli, error, session, environment} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -82,7 +82,9 @@ export default class AppGenerateExtension extends Command {
     const allExternalTypes = specifications.map((spec) => spec.externalIdentifier)
 
     if (flags.type && !specification) {
-      throw new error.Abort(`The following extension types are supported: ${allExternalTypes.join(', ')}`)
+      const isShopify = await environment.local.isShopify()
+      const tryMsg = isShopify ? 'You might need to enable some beta flags on your Organization or App' : undefined
+      throw new error.Abort(`The following extension types are supported: ${allExternalTypes.join(', ')}`, tryMsg)
     }
 
     // Map to always use the internal type from now on

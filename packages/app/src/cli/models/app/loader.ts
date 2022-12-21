@@ -6,7 +6,7 @@ import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
 import {ThemeExtensionInstance, ThemeExtensionSpec} from '../extensions/theme.js'
 import {ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
 import {FunctionInstance, FunctionSpec} from '../extensions/functions.js'
-import {error, file, path, schema, string, toml, output} from '@shopify/cli-kit'
+import {error, file, path, schema, string, toml, output, environment} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
   getDependencies,
@@ -260,10 +260,12 @@ class AppLoader {
       const specification = this.findSpecificationForType(type) as UIExtensionSpec | undefined
 
       if (!specification) {
+        const isShopify = await environment.local.isShopify()
+        const shopifolkMessage = '\nYou might need to enable some beta flags on your Organization or App'
         this.abortOrReport(
           output.content`Unknown extension type ${output.token.yellow(type)} in ${output.token.path(
             configurationPath,
-          )}.`,
+          )}. ${isShopify ? shopifolkMessage : ''}`,
           undefined,
           configurationPath,
         )

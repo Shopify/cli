@@ -32,6 +32,9 @@ export async function loadThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
   return memLoadSpecs('theme-specifications')
 }
 
+/**
+ * Load all specifications from the local file system AND plugins
+ */
 export async function loadExtensionsSpecifications(config: Config): Promise<GenericSpecification[]> {
   const ui = await loadUIExtensionSpecifications(config)
   const functions = await loadFunctionSpecifications(config)
@@ -39,6 +42,9 @@ export async function loadExtensionsSpecifications(config: Config): Promise<Gene
   return [...ui, ...functions, ...theme]
 }
 
+/**
+ * Load all specifications ONLY from the local file system
+ */
 export async function loadLocalExtensionsSpecifications(): Promise<GenericSpecification[]> {
   const ui = await loadLocalUIExtensionsSpecifications()
   const functions = await loadLocalFunctionSpecifications()
