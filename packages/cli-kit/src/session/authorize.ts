@@ -20,8 +20,9 @@ export interface CodeAuthResult {
 
 export async function authorize(scopes: string[], state: string = randomHex(30)): Promise<CodeAuthResult> {
   const port = 3456
-  const host = '127.0.0.1'
-  const redirectUri = `http://${host}:${port}`
+  const host = '0.0.0.0'
+  const redirectHost = '127.0.0.1'
+  const redirectUri = `http://${redirectHost}:${port}`
   const fqdn = await identityFqdn()
   const identityClientId = await clientId()
 
