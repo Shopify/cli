@@ -6,13 +6,10 @@ import {graphqlClient} from '../http/graphql.js'
 import {gql, RequestDocument, Variables} from 'graphql-request'
 
 const UnauthorizedAccessError = (store: string) => {
-  const adminLink = outputToken.link(`URL`, `https://${store}/admin`)
   const storeName = store.replace('.myshopify.com', '')
   return new Abort(
-    content`Looks like you need access to this dev store (${outputToken.link(storeName, `https://${store}`)})`,
-    content`• Log in to the store directly from this ${adminLink}. If you're the store owner, then that direct log in should solve your access issue.
-• If you're not the owner, create a dev store staff account for yourself. Then log in directly from the link above.
-    `,
+    content`Looks like you don't have access this dev store: (${outputToken.link(storeName, `https://${store}`)})`,
+    content`If you're not the owner, create a dev store staff account for yourself`,
   )
 }
 
