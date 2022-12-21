@@ -5,18 +5,6 @@ import {Bug, Abort} from '../error.js'
 import {graphqlClient} from '../http/graphql.js'
 import {gql, RequestDocument, Variables} from 'graphql-request'
 
-const UnauthorizedAccessError = (store: string) => {
-  const storeName = store.replace('.myshopify.com', '')
-  return new Abort(
-    content`Looks like you don't have access this dev store: (${outputToken.link(storeName, `https://${store}`)})`,
-    content`If you're not the owner, create a dev store staff account for yourself`,
-  )
-}
-
-const UnknownError = () => {
-  return new Bug(`Unknown error connecting to your store`)
-}
-
 export async function request<T>(query: RequestDocument, session: AdminSession, variables?: Variables): Promise<T> {
   const api = 'Admin'
   return handlingErrors(api, async () => {
@@ -44,7 +32,17 @@ ${query}
       publicApiVersions: {handle: string; supported: boolean}[]
     }>(query, {})
     .catch((err) => {
-      throw err.response.status === 403 ? UnauthorizedAccessError(session.storeFqdn) : UnknownError()
+      if (err.response.status === 403) {
+        const storeName = session.storeFqdn.replace('.myshopify.com', '')
+        throw new Abort(
+          content`Looks like you don't have access this dev store: (${outputToken.link(
+            storeName,
+            `https://${session.storeFqdn}`,
+          )})`,
+          content`If you're not the owner, create a dev store staff account for yourself`,
+        )
+      }
+      throw new Bug(`Unknown error connecting to your store`)
     })
 
   return data.publicApiVersions
