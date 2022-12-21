@@ -1,5 +1,5 @@
 import {configurationFileNames} from '../../../constants.js'
-import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
+import * as loadLocales from '../../../public/utilities/extensions/locales-configuration.js'
 import {UIExtensionInstance, UIExtensionSpec} from '../ui.js'
 import {loadLocalExtensionsSpecifications} from '../specifications.js'
 import {describe, expect, test, vi} from 'vitest'

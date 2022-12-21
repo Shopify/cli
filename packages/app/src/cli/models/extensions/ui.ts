@@ -200,7 +200,7 @@ export interface CreateExtensionSpecType<TConfiguration extends BaseConfigConten
  * hasExtensionPointTarget?: (configuration: TConfiguration, target: string) => boolean // function to determine if the extension has a given extension point target
  * ```
  */
-export function createUIExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(
+export function createUIExtensionSpecification<TConfiguration extends BaseConfigContents = BaseConfigContents>(
   spec: CreateExtensionSpecType<TConfiguration>,
 ): UIExtensionSpec<TConfiguration> {
   const defaults = {

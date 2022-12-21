@@ -16,12 +16,12 @@
   ],
   "exports": {
     "./node/plugins/*": {
-      "import": "./dist/cli/plugins/*.js",
-      "require": "./dist/cli/plugins/*.d.ts"
+      "import": "./dist/cli/public/plugins/*.js",
+      "require": "./dist/cli/public/plugins/*.d.ts"
     },
     "./node/utilities/extensions/*": {
-      "import": "./dist/cli/utilities/extensions/*.js",
-      "require": "./dist/cli/utilities/extensions/*.d.ts"
+      "import": "./dist/cli/public/utilities/extensions/*.js",
+      "require": "./dist/cli/public/utilities/extensions/*.d.ts"
     }
   },
   "publishConfig": {

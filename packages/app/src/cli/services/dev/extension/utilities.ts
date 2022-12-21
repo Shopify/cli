@@ -1,6 +1,6 @@
 import {UIExtension} from '../../../models/app/extensions.js'
 
-import {fetchProductVariant} from '../../../utilities/extensions/fetch-product-variant.js'
+import {fetchProductVariant} from '../../../public/utilities/extensions/fetch-product-variant.js'
 
 /**
  * To prepare UI Extensions targeting Checkout for dev'ing we need to retrieve a valid product variant ID

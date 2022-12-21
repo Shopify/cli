@@ -1,6 +1,6 @@
-import {createUIExtensionSpec} from '../ui.js'
+import {createUIExtensionSpecification} from '../ui.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
-import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
+import {loadLocalesConfig} from '../../../public/utilities/extensions/locales-configuration.js'
 import {schema} from '@shopify/cli-kit'
 
 const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.21.2'}
@@ -14,7 +14,7 @@ const CheckoutSchema = BaseUIExtensionSchema.extend({
     .optional(),
 })
 
-const spec = createUIExtensionSpec({
+const spec = createUIExtensionSpecification({
   identifier: 'checkout_ui_extension',
   externalIdentifier: 'checkout_ui',
   externalName: 'Checkout UI',

@@ -143,7 +143,7 @@ export interface CreateFunctionSpecType<TConfiguration extends FunctionConfigTyp
  * templatePath: (lang: string) => string // path to the template directory for the given language inside the templateURL repo
  * ```
  */
-export function createFunctionSpec<TConfiguration extends FunctionConfigType = FunctionConfigType>(
+export function createFunctionSpecification<TConfiguration extends FunctionConfigType = FunctionConfigType>(
   spec: CreateFunctionSpecType<TConfiguration>,
 ): FunctionSpec {
   const defaults = {

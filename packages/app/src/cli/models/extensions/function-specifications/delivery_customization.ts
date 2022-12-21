@@ -1,6 +1,6 @@
-import {createFunctionSpec} from '../functions.js'
+import {createFunctionSpecification} from '../functions.js'
 
-const spec = createFunctionSpec({
+const spec = createFunctionSpecification({
   identifier: 'delivery_customization',
   externalIdentifier: 'delivery_customization',
   externalName: 'Delivery customization',

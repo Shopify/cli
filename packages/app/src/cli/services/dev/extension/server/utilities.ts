@@ -1,5 +1,5 @@
 import {UIExtension} from '../../../../models/app/extensions.js'
-import {getUIExtensionResourceURL} from '../../../../utilities/extensions/configuration.js'
+import {getUIExtensionResourceURL} from '../../../../public/utilities/extensions/configuration.js'
 import {ExtensionDevOptions} from '../../extension.js'
 import {getExtensionPointTargetSurface} from '../utilities.js'
 import {http} from '@shopify/cli-kit'

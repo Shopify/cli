@@ -11,7 +11,7 @@ import {
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import metadata from '../metadata.js'
 import {UIExtension} from '../models/app/extensions.js'
-import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
+import {fetchProductVariant} from '../public/utilities/extensions/fetch-product-variant.js'
 import {load} from '../models/app/loader.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'

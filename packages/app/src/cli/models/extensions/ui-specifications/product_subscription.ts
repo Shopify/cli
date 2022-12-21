@@ -1,11 +1,11 @@
 import {getDependencyVersion} from '../../app/app.js'
-import {createUIExtensionSpec} from '../ui.js'
+import {createUIExtensionSpecification} from '../ui.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
 import {error} from '@shopify/cli-kit'
 
 const dependency = {name: '@shopify/admin-ui-extensions-react', version: '^1.0.1'}
 
-const spec = createUIExtensionSpec({
+const spec = createUIExtensionSpecification({
   identifier: 'product_subscription',
   externalIdentifier: 'subscription_ui',
   externalName: 'Subscription UI',

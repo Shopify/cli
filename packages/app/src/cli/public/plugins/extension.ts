@@ -1,13 +1,13 @@
-import {UIExtensionSpec} from '../models/extensions/ui.js'
-import {FunctionSpec} from '../models/extensions/functions.js'
-import {BaseConfigContents} from '../models/extensions/schemas.js'
+import {UIExtensionSpec} from '../../models/extensions/ui.js'
+import {FunctionSpec} from '../../models/extensions/functions.js'
+import {BaseConfigContents} from '../../models/extensions/schemas.js'
 import {plugins} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
-export {createUIExtensionSpec, UIExtensionSpec, CreateExtensionSpecType} from '../models/extensions/ui.js'
-export {createFunctionSpec, FunctionSpec, CreateFunctionSpecType} from '../models/extensions/functions.js'
-export * from '../models/extensions/schemas.js'
+export {createUIExtensionSpecification, UIExtensionSpec, CreateExtensionSpecType} from '../../models/extensions/ui.js'
+export {createFunctionSpecification, FunctionSpec, CreateFunctionSpecType} from '../../models/extensions/functions.js'
+export * from '../../models/extensions/schemas.js'
 
 /**
  * Extension Plugins types
