@@ -15,15 +15,11 @@
     "/oclif.manifest.json"
   ],
   "exports": {
-    "./extensions/*": {
-      "import": "./dist/cli/models/extensions/*.js",
-      "require": "./dist/cli/models/extensions/*.d.ts"
-    },
-    "./plugins/*": {
+    "./node/plugins/*": {
       "import": "./dist/cli/plugins/*.js",
       "require": "./dist/cli/plugins/*.d.ts"
     },
-    "./utilities/extensions/*": {
+    "./node/utilities/extensions/*": {
       "import": "./dist/cli/utilities/extensions/*.js",
       "require": "./dist/cli/utilities/extensions/*.d.ts"
     }

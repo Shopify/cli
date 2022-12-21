@@ -6,7 +6,7 @@ import generateExtensionService, {ExtensionFlavor} from '../../../services/gener
 import metadata from '../../../metadata.js'
 import Command from '../../../utilities/app-command.js'
 import {ensureGenerateEnvironment} from '../../../services/environment.js'
-import {fetchSpecifications} from '../../../utilities/extensions/fetch-extension-specifications.js'
+import {fetchSpecifications} from '../../../services/generate/fetch-extension-specifications.js'
 import {GenericSpecification} from '../../../models/app/extensions.js'
 import {output, path, cli, error, session, environment} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'

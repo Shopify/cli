@@ -4,6 +4,11 @@ import {BaseConfigContents} from '../models/extensions/schemas.js'
 import {plugins} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
+
+export {createUIExtensionSpec, UIExtensionSpec} from '../models/extensions/ui.js'
+export {createFunctionSpec, FunctionSpec} from '../models/extensions/functions.js'
+export * as schemas from '../models/extensions/schemas.js'
+
 /**
  * Extension Plugins types
  *
