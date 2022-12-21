@@ -34,8 +34,8 @@ export default class Build extends Command {
     }))
 
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const specs = await allSpecifications(this.config)
-    const app: AppInterface = await loadApp(directory, specs)
+    const specifications = await allSpecifications(this.config)
+    const app: AppInterface = await loadApp({directory, specifications})
     await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey: flags['api-key']})
   }
 }

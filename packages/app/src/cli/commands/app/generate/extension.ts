@@ -76,10 +76,10 @@ export default class AppGenerateExtension extends Command {
 
     const token = await session.ensureAuthenticatedPartners()
     const apiKey = await ensureGenerateEnvironment({apiKey: flags['api-key'], directory, reset: flags.reset, token})
-    let allExtensionSpecs = await fetchSpecifications(token, apiKey, this.config)
-    const app: AppInterface = await loadApp(directory, allExtensionSpecs)
-    const specification = this.findSpecification(flags.type, allExtensionSpecs)
-    const allExternalTypes = allExtensionSpecs.map((spec) => spec.externalIdentifier)
+    let specifications = await fetchSpecifications(token, apiKey, this.config)
+    const app: AppInterface = await loadApp({directory, specifications})
+    const specification = this.findSpecification(flags.type, specifications)
+    const allExternalTypes = specifications.map((spec) => spec.externalIdentifier)
 
     if (flags.type && !specification) {
       throw new error.Abort(`The following extension types are supported: ${allExternalTypes.join(', ')}`)
@@ -99,7 +99,7 @@ export default class AppGenerateExtension extends Command {
       }
     } else {
       // Filter out any extension types that have reached their limit
-      allExtensionSpecs = allExtensionSpecs.filter((spec) => {
+      specifications = specifications.filter((spec) => {
         const existing = app.extensionsForType(spec)
         output.debug(`${existing.length}: ${spec.externalIdentifier}`)
         return existing.length < spec.registrationLimit
@@ -114,12 +114,12 @@ export default class AppGenerateExtension extends Command {
       extensionFlavor: flags.template,
       directory: path.join(directory, 'extensions'),
       app,
-      extensionSpecifications: allExtensionSpecs,
+      extensionSpecifications: specifications,
       reset: flags.reset,
     })
 
     const {extensionType, extensionFlavor, name} = promptAnswers
-    const selectedSpecification = this.findSpecification(extensionType, allExtensionSpecs)
+    const selectedSpecification = this.findSpecification(extensionType, specifications)
     if (!selectedSpecification)
       throw new error.Abort(`The following extension types are supported: ${allExternalTypes.join(', ')}`)
 

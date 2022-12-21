@@ -28,27 +28,27 @@ export async function allLocalFunctionSpecifications(): Promise<FunctionSpec[]> 
   return (await memLoadSpecs('function-specifications')).filter((spec) => !spec.gated || environment.local.isShopify())
 }
 
-export async function allThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
+export async function loadThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
   return memLoadSpecs('theme-specifications')
 }
 
 export async function allSpecifications(config: Config): Promise<GenericSpecification[]> {
   const ui = await allUISpecifications(config)
   const functions = await allFunctionSpecifications(config)
-  const theme = await allThemeSpecifications()
+  const theme = await loadThemeSpecifications()
   return [...ui, ...functions, ...theme]
 }
 
 export async function allLocalSpecs(): Promise<GenericSpecification[]> {
   const ui = await allLocalUISpecifications()
   const functions = await allLocalFunctionSpecifications()
-  const theme = await allThemeSpecifications()
+  const theme = await loadThemeSpecifications()
   return [...ui, ...functions, ...theme]
 }
 
-const memLoadSpecs = memoize(loadSpecs)
+const memLoadSpecs = memoize(loadSpecifications)
 
-async function loadSpecs(directoryName: string) {
+async function loadSpecifications(directoryName: string) {
   /**
    * When running tests, "await import('.../spec..ts')" is handled by Vitest which does
    * transform the TS module into a JS one before loading it. Hence the inclusion of .ts
