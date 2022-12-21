@@ -43,6 +43,9 @@ export async function fetchSpecifications(token: string, apiKey: string): Promis
       newSpec.registrationLimit = spec.options.registrationLimit
       newSpec.surface = spec.features?.argo?.surface
 
+      // Hardcoded value for the post purchase extension because the value is wrong in the API
+      if (spec.identifier === 'checkout_post_purchase') newSpec.surface = 'post_purchase'
+
       return newSpec
     })
 
