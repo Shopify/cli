@@ -1,4 +1,4 @@
-import {memoize} from './function.js'
+import {debounce, memoize} from './function.js'
 import {describe, test, expect} from 'vitest'
 
 describe('memoize', () => {
@@ -14,5 +14,24 @@ describe('memoize', () => {
     // When/Then
     expect(memoizedFunction()).toEqual(1)
     expect(memoizedFunction()).toEqual(1)
+  })
+})
+
+describe('debounce', () => {
+  test('debounces the function', async () => {
+    // Given
+    let value = 0
+    await new Promise<void>((resolve, reject) => {
+      const debounced = debounce(() => {
+        value += 1
+        resolve()
+      }, 200)
+      debounced()
+      debounced()
+      debounced()
+    })
+
+    // Then
+    expect(value).toEqual(1)
   })
 })
