@@ -197,6 +197,11 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
         with:
           branch-name: "${{ github.head_ref }}"
+      - name: Download and publish benchmark
+        uses: ./.github/actions/download-and-publish-benchmark
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        with:
+          base-branch-name: "${{ github.base_ref }}"
 
   manually-triggered:
     name: Testing with Node ${{ inputs.node-version }} in ${{ inputs.os }}

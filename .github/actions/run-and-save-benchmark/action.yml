@@ -9,7 +9,7 @@ runs:
   steps:
     - name: Build
       working-directory: workspace
-      run: pnpm run benchmark benchmark.json
+      run: pnpm run benchmark -- ../benchmark.json
       shell: bash
     - name: Clean ref name
       shell: bash
@@ -19,7 +19,10 @@ runs:
         SAFE_REF_NAME=${{ env.SAFE_REF_NAME }}
         SAFE_REF_NAME=${SAFE_REF_NAME//[\/.]/}
         echo SAFE_REF_NAME=${SAFE_REF_NAME} >> $GITHUB_ENV
+    - name: Take copy of report as new baseline for branch
+      run: cp ./benchmark.json ./baseline-benchmark.json
+      shell: bash
     - uses: actions/upload-artifact@v3
       with:
         name: ${{ env.SAFE_REF_NAME }}--benchmark
-        path: ./workspace/benchmark.json
+        path: ./baseline-benchmark.json

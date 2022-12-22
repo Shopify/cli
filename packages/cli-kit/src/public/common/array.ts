@@ -1,5 +1,5 @@
-import {List, ValueIteratee} from 'lodash'
 import {createRequire} from 'node:module'
+import type {List, ValueIteratee} from 'lodash'
 
 const require = createRequire(import.meta.url)
 
@@ -52,7 +52,6 @@ export function uniqBy<T>(array: List<T> | null | undefined, iteratee: ValueIter
  * @returns Returns the new array of filtered values.
  */
 export function difference<T>(array: List<T> | null | undefined, ...values: List<T>[]): T[] {
-  const lodashDifferenceBy = require('lodash/differenceBy')
-  const lodashIsEqual = require('lodash/isEqual')
-  return lodashDifferenceBy(array, values, lodashIsEqual)
+  const lodashDifference = require('lodash/difference')
+  return lodashDifference(array, ...values)
 }

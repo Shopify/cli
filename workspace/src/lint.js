@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import * as path from 'pathe'
 import fg from 'fast-glob'
 import * as url from 'node:url'

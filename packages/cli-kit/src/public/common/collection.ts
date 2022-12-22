@@ -1,5 +1,5 @@
-import {List, ValueIteratee} from 'lodash'
 import {createRequire} from 'node:module'
+import type {List, ValueIteratee} from 'lodash'
 
 const require = createRequire(import.meta.url)
 

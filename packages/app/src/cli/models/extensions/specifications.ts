@@ -24,17 +24,17 @@ export async function loadFunctionSpecifications(config: Config): Promise<Functi
 }
 
 export async function loadLocalUIExtensionsSpecifications(): Promise<UIExtensionSpec[]> {
-  return memoizedLoadSpecs()('ui-specifications')
+  return memoizedLoadSpecs('ui-specifications')
 }
 
 export async function loadLocalFunctionSpecifications(): Promise<FunctionSpec[]> {
-  return (await memoizedLoadSpecs()('function-specifications')).filter(
+  return (await memoizedLoadSpecs('function-specifications')).filter(
     (spec) => !spec.gated || environment.local.isShopify(),
   )
 }
 
 export async function loadThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
-  return memoizedLoadSpecs()('theme-specifications')
+  return memoizedLoadSpecs('theme-specifications')
 }
 
 /**
@@ -57,9 +57,7 @@ export async function loadLocalExtensionsSpecifications(): Promise<GenericSpecif
   return [...ui, ...functions, ...theme]
 }
 
-const memoizedLoadSpecs = () => {
-  return memoize(loadSpecifications)
-}
+const memoizedLoadSpecs = memoize(loadSpecifications)
 
 async function loadSpecifications(directoryName: string) {
   /**
