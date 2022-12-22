@@ -6,7 +6,7 @@ import {GenericSpecification} from '../models/app/extensions.js'
 import generateExtensionPrompt from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
 import generateExtensionService, {ExtensionFlavor} from '../services/generate/extension.js'
-import {error, output, path, session} from '@shopify/cli-kit'
+import {environment, error, output, path, session} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager.js'
 import {Config} from '@oclif/core'
 
@@ -32,7 +32,14 @@ async function generate(options: GenerateOptions) {
   const allExternalTypes = specifications.map((spec) => spec.externalIdentifier)
 
   if (options.type && !specification) {
-    throw new error.Abort(`The following extension types are supported: ${allExternalTypes.join(', ')}`)
+    const isShopify = await environment.local.isShopify()
+    const tryMsg = isShopify ? 'You might need to enable some beta flags on your Organization or App' : undefined
+    throw new error.Abort(
+      `Unknown extension type: ${options.type}.\nThe following extension types are supported: ${allExternalTypes.join(
+        ', ',
+      )}`,
+      tryMsg,
+    )
   }
 
   // Validate limits for selected type.
@@ -101,7 +108,7 @@ function validateExtensionFlavor(specification: GenericSpecification | undefined
   if (!flavor || !specification) return
 
   const possibleFlavors = specification.supportedFlavors.map((flavor) => flavor.name)
-  if (possibleFlavors.includes(flavor)) {
+  if (!possibleFlavors.includes(flavor)) {
     throw new error.Abort(
       'Specified extension template on invalid extension type',
       `You can only specify a template for these extension types: ${possibleFlavors.join(', ')}.`,

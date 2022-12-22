@@ -30,6 +30,9 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   if (app.hasUIExtensions) {
     Object.getPrototypeOf(newApp).hasUIExtensions = app.hasUIExtensions
   }
+  if (app.extensionsForType) {
+    Object.getPrototypeOf(newApp).extensionsForType = app.extensionsForType
+  }
   return newApp
 }
 

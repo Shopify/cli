@@ -2,8 +2,9 @@ import generate from './generate.js'
 import {load as loadApp} from '../models/app/loader.js'
 import generateExtensionPrompt from '../prompts/generate/extension.js'
 import generateExtensionService from '../services/generate/extension.js'
-import {testApp, testRemoteSpecifications} from '../models/app/app.test-data.js'
+import {testApp, testRemoteSpecifications, testThemeExtensions} from '../models/app/app.test-data.js'
 import {ensureGenerateEnvironment} from '../services/environment.js'
+import {Extension} from '../models/app/extensions.js'
 import {describe, expect, it, vi, beforeAll, afterEach} from 'vitest'
 import {path, outputMocker, api} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
@@ -84,11 +85,49 @@ describe('after extension command finishes correctly', () => {
       '"Your Function - Product discount extension was added to your project!"',
     )
   })
+
+  it('throws error if trying to generate a non existing type', async () => {
+    // Given
+    await mockSuccessfulCommandExecution('unknown_type')
+
+    // When
+    const got = generate({directory: '/', reset: false, config: mockConfig, type: 'unknown_type'})
+
+    // Then
+    await expect(got).rejects.toThrow(/Unknown extension type: unknown_type/)
+  })
+
+  it('throws error if trying to generate a type over the registration limit', async () => {
+    // Given
+    const themeExtension = await testThemeExtensions()
+    await mockSuccessfulCommandExecution('theme', [themeExtension])
+
+    // When
+    const got = generate({directory: '/', reset: false, config: mockConfig, type: 'theme'})
+
+    // Then
+    await expect(got).rejects.toThrow(/Invalid extension type/)
+  })
+
+  it('throws error if trying to generate with an unsupported flavor', async () => {
+    // Given
+    await mockSuccessfulCommandExecution('checkout_ui')
+
+    // When
+    const got = generate({directory: '/', reset: false, config: mockConfig, type: 'checkout_ui', template: 'unknown'})
+
+    // Then
+    await expect(got).rejects.toThrow(/Specified extension template on invalid extension type/)
+  })
 })
 
-async function mockSuccessfulCommandExecution(identifier: string) {
+async function mockSuccessfulCommandExecution(identifier: string, existingExtensions: Extension[] = []) {
   const appRoot = '/'
-  const app = testApp({directory: appRoot, configurationPath: path.join(appRoot, 'shopify.app.toml')})
+  const app = testApp({
+    directory: appRoot,
+    configurationPath: path.join(appRoot, 'shopify.app.toml'),
+    extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => existingExtensions,
+  })
 
   vi.mocked(loadApp).mockResolvedValue(app)
   vi.mocked(api.partners.request).mockResolvedValueOnce({extensionSpecifications: testRemoteSpecifications})
