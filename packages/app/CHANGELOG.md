@@ -1,5 +1,17 @@
 # @shopify/app
 
+## 3.30.0
+
+### Minor Changes
+
+- eb1ef02d: Added support for extensions and functions plugins
+
+### Patch Changes
+
+- 31de285b: Add appId to extensions payload
+- Updated dependencies [737ca469]
+  - @shopify/cli-kit@3.30.0
+
 ## 3.29.0
 
 ### Minor Changes
