@@ -1,5 +1,11 @@
 # @shopify/features
 
+## 0.6.0
+
+### Minor Changes
+
+- 737ca469: Remove logs functionality
+
 ## 0.5.0
 
 ### Minor Changes
