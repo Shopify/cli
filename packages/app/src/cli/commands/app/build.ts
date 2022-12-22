@@ -3,7 +3,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import build from '../../services/build.js'
 import Command from '../../utilities/app-command.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/specifications.js'
+import {loadExtensionsSpecifications} from '../../models/extensions/specifications.js'
 import {Flags} from '@oclif/core'
 import {path, cli, metadata} from '@shopify/cli-kit'
 
@@ -34,7 +34,7 @@ export default class Build extends Command {
     }))
 
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const specifications = await loadLocalExtensionsSpecifications()
+    const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({directory, specifications})
     await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey: flags['api-key']})
   }

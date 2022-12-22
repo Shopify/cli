@@ -1,5 +1,5 @@
 import {ensureGenerateEnvironment} from './environment.js'
-import {fetchSpecifications} from '../utilities/extensions/fetch-extension-specifications.js'
+import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {AppInterface} from '../models/app/app.js'
 import {load as loadApp} from '../models/app/loader.js'
 import {GenericSpecification} from '../models/app/extensions.js'
@@ -8,10 +8,12 @@ import metadata from '../metadata.js'
 import generateExtensionService, {ExtensionFlavor} from '../services/generate/extension.js'
 import {error, output, path, session} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager.js'
+import {Config} from '@oclif/core'
 
 export interface GenerateOptions {
   directory: string
   reset: boolean
+  config: Config
   apiKey?: string
   type?: string
   template?: string
@@ -22,7 +24,7 @@ export interface GenerateOptions {
 async function generate(options: GenerateOptions) {
   const token = await session.ensureAuthenticatedPartners()
   const apiKey = await ensureGenerateEnvironment({...options, token})
-  let specifications = await fetchSpecifications(token, apiKey)
+  let specifications = await fetchSpecifications({token, apiKey, config: options.config})
   const app: AppInterface = await loadApp({directory: options.directory, specifications})
 
   // If the user has specified a type, we need to validate it

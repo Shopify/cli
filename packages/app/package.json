@@ -15,17 +15,9 @@
     "/oclif.manifest.json"
   ],
   "exports": {
-    "./extensions/*": {
-      "import": "./dist/cli/models/extensions/*.js",
-      "require": "./dist/cli/models/extensions/*.d.ts"
-    },
-    "./plugins/*": {
-      "import": "./dist/cli/plugins/*.js",
-      "require": "./dist/cli/plugins/*.d.ts"
-    },
-    "./utilities/extensions/*": {
-      "import": "./dist/cli/utilities/extensions/*.js",
-      "require": "./dist/cli/utilities/extensions/*.d.ts"
+    "./node/plugins/*": {
+      "import": "./dist/cli/public/plugins/*.js",
+      "require": "./dist/cli/public/plugins/*.d.ts"
     }
   },
   "publishConfig": {

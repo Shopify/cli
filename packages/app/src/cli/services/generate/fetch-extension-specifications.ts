@@ -1,7 +1,7 @@
 import {
-  loadFunctionSpecifications,
   loadThemeSpecifications,
   loadUIExtensionSpecifications,
+  loadFunctionSpecifications,
 } from '../../models/extensions/specifications.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
@@ -9,9 +9,15 @@ import {GenericSpecification} from '../../models/app/extensions.js'
 import {api} from '@shopify/cli-kit'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {FlattenedRemoteSpecification} from '@shopify/cli-kit/src/api/graphql/extension_specifications.js'
+import {Config} from '@oclif/core'
 
 type ExtensionSpec = UIExtensionSpec | ThemeExtensionSpec
 
+export interface FetchSpecificationsOptions {
+  token: string
+  apiKey: string
+  config: Config
+}
 /**
  * Returns all extension/function specifications the user has access to.
  * This includes:
@@ -26,7 +32,11 @@ type ExtensionSpec = UIExtensionSpec | ThemeExtensionSpec
  * @param token - Token to access partners API
  * @returns List of extension specifications
  */
-export async function fetchSpecifications(token: string, apiKey: string): Promise<GenericSpecification[]> {
+export async function fetchSpecifications({
+  token,
+  apiKey,
+  config,
+}: FetchSpecificationsOptions): Promise<GenericSpecification[]> {
   const query = api.graphql.ExtensionSpecificationsQuery
   const result: api.graphql.ExtensionSpecificationsQuerySchema = await api.partners.request(query, token, {
     api_key: apiKey,
@@ -43,12 +53,15 @@ export async function fetchSpecifications(token: string, apiKey: string): Promis
       newSpec.registrationLimit = spec.options.registrationLimit
       newSpec.surface = spec.features?.argo?.surface
 
+      // Hardcoded value for the post purchase extension because the value is wrong in the API
+      if (spec.identifier === 'checkout_post_purchase') newSpec.surface = 'post_purchase'
+
       return newSpec
     })
 
-  const ui = await loadUIExtensionSpecifications()
+  const ui = await loadUIExtensionSpecifications(config)
   const theme = await loadThemeSpecifications()
-  const functions = await loadFunctionSpecifications()
+  const functions = await loadFunctionSpecifications(config)
   const local = [...ui, ...theme]
 
   const updatedSpecs = mergeLocalAndRemoteSpecs(local, extensionSpecifications)

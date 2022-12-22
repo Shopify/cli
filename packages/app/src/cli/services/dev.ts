@@ -4,6 +4,7 @@ import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
 import {outputAppURL, outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
+import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -13,7 +14,6 @@ import metadata from '../metadata.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {load} from '../models/app/loader.js'
-import {fetchSpecifications} from '../utilities/extensions/fetch-extension-specifications.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {analytics, output, system, session, abort, string, environment} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
@@ -53,7 +53,7 @@ async function dev(options: DevOptions) {
   const {storeFqdn, remoteApp, updateURLs: cachedUpdateURLs, tunnelPlugin} = await ensureDevEnvironment(options, token)
 
   const apiKey = remoteApp.apiKey
-  const specifications = await fetchSpecifications(token, apiKey)
+  const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
   let localApp = await load({directory: options.directory, specifications})
 
   if (!options.skipDependenciesInstallation) {

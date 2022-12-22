@@ -2,6 +2,7 @@ import {fetchSpecifications} from './fetch-extension-specifications.js'
 import {testRemoteSpecifications} from '../../models/app/app.test-data.js'
 import {describe, expect, it, vi} from 'vitest'
 import {api} from '@shopify/cli-kit'
+import {Config} from '@oclif/core'
 
 vi.mock('@shopify/cli-kit', async () => {
   const cliKit: any = await vi.importActual('@shopify/cli-kit')
@@ -22,7 +23,7 @@ describe('fetchExtensionSpecifications', () => {
     vi.mocked(api.partners.request).mockResolvedValue({extensionSpecifications: testRemoteSpecifications})
 
     // When
-    const got = await fetchSpecifications('token', 'apiKey')
+    const got = await fetchSpecifications({token: 'token', apiKey: 'apiKey', config: new Config({root: ''})})
 
     // Then
     expect(got).toEqual(
@@ -32,7 +33,7 @@ describe('fetchExtensionSpecifications', () => {
           identifier: 'checkout_post_purchase',
           externalIdentifier: 'post_purchase_ui',
           registrationLimit: 1,
-          surface: 'checkout',
+          surface: 'post_purchase',
         }),
         expect.objectContaining({
           externalName: 'Theme App Extension',

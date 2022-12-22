@@ -4,7 +4,7 @@ import {load as loadApp} from '../../models/app/loader.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {
   loadLocalExtensionsSpecifications,
-  loadUIExtensionSpecifications,
+  loadLocalUIExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
 import {file, output, path, template} from '@shopify/cli-kit'
@@ -16,7 +16,7 @@ beforeEach(() => {
 })
 
 describe('initialize a extension', async () => {
-  const allUISpecs = await loadUIExtensionSpecifications()
+  const allUISpecs = await loadLocalUIExtensionsSpecifications()
   const specifications = await loadLocalExtensionsSpecifications()
 
   it(
@@ -246,12 +246,39 @@ describe('initialize a extension', async () => {
     },
     30 * 1000,
   )
+
+  it(
+    'uses the custom templatePath when available',
+    async () => {
+      await withTemporaryApp(async (tmpDir) => {
+        // Given
+        vi.spyOn(file, 'move').mockResolvedValue()
+        const name = 'my-ext-1'
+        const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
+        specification.templatePath = 'path/to/custom/template'
+        const extensionFlavor = 'vanilla-js'
+        const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveDirectoryCopy').mockResolvedValue()
+
+        // When
+        await createFromTemplate({name, specification, extensionFlavor, appDirectory: tmpDir, specifications})
+
+        // Then
+        expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith('path/to/custom/template', expect.any(String), {
+          type: specification.identifier,
+          flavor: extensionFlavor,
+          srcFileExtension: 'js',
+          name,
+        })
+      })
+    },
+    30 * 1000,
+  )
 })
 
 describe('getRuntimeDependencies', () => {
   test('no not include React for flavored Vanilla UI extensions', async () => {
     // Given
-    const allUISpecs = await loadUIExtensionSpecifications()
+    const allUISpecs = await loadLocalUIExtensionsSpecifications()
     const extensionFlavor: ExtensionFlavor = 'vanilla-js'
 
     // When/then
@@ -263,7 +290,7 @@ describe('getRuntimeDependencies', () => {
 
   test('includes React for flavored React UI extensions', async () => {
     // Given
-    const allUISpecs = await loadUIExtensionSpecifications()
+    const allUISpecs = await loadLocalUIExtensionsSpecifications()
     const extensionFlavor: ExtensionFlavor = 'react'
 
     // When/then
@@ -275,7 +302,7 @@ describe('getRuntimeDependencies', () => {
 
   test('includes the renderer package for UI extensions', async () => {
     // Given
-    const allUISpecs = await loadUIExtensionSpecifications()
+    const allUISpecs = await loadLocalUIExtensionsSpecifications()
 
     // When/then
     allUISpecs.forEach((specification) => {
