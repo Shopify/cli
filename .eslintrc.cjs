@@ -172,5 +172,11 @@ module.exports = {
         'no-restricted-syntax': 'off',
       },
     },
+    {
+      files: ['src/public/**/*.ts'],
+      rules: {
+        '@typescript-eslint/explicit-module-boundary-types': 'error',
+      },
+    },
   ],
 }

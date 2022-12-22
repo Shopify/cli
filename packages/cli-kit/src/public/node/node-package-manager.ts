@@ -46,7 +46,7 @@ export type PackageManager = typeof packageManager[number]
  * @param directory - The path to the directory that should contain a package.json
  * @returns An abort error.
  */
-export const PackageJsonNotFoundError = (directory: string) => {
+export const PackageJsonNotFoundError = (directory: string): AbortError => {
   return new AbortError(`The directory ${directory} doesn't have a package.json.`)
 }
 
@@ -56,7 +56,7 @@ export const PackageJsonNotFoundError = (directory: string) => {
  * @param directory - The directory from which the traverse has been done
  * @returns An abort error.
  */
-export const FindUpAndReadPackageJsonNotFoundError = (directory: string) => {
+export const FindUpAndReadPackageJsonNotFoundError = (directory: string): BugError => {
   return new BugError(content`Couldn't find a a package.json traversing directories from ${token.path(directory)}`)
 }
 
@@ -116,7 +116,9 @@ interface InstallNPMDependenciesRecursivelyOptions {
  * provided by dependency managers.
  * @param options - Options to install dependencies recursively.
  */
-export async function installNPMDependenciesRecursively(options: InstallNPMDependenciesRecursivelyOptions) {
+export async function installNPMDependenciesRecursively(
+  options: InstallNPMDependenciesRecursivelyOptions,
+): Promise<void> {
   const packageJsons = await glob(pathJoin(options.directory, '**/package.json'), {
     ignore: [pathJoin(options.directory, 'node_modules/**/package.json')],
     cwd: options.directory,
@@ -153,7 +155,7 @@ interface InstallNodeModulesOptions {
   signal?: AbortSignal
 }
 
-export async function installNodeModules(options: InstallNodeModulesOptions) {
+export async function installNodeModules(options: InstallNodeModulesOptions): Promise<void> {
   const execOptions: ExecOptions = {
     cwd: options.directory,
     stdin: undefined,
@@ -345,7 +347,7 @@ export interface DependencyVersion {
 export async function addNPMDependenciesIfNeeded(
   dependencies: DependencyVersion[],
   options: AddNPMDependenciesIfNeededOptions,
-) {
+): Promise<void> {
   debug(content`Adding the following dependencies if needed:
 ${token.json(dependencies)}
 With options:
@@ -369,7 +371,7 @@ ${token.json(options)}
 export async function addNPMDependencies(
   dependencies: DependencyVersion[],
   options: AddNPMDependenciesIfNeededOptions,
-) {
+): Promise<void> {
   let args: string[]
   const depedenciesWithVersion = dependencies.map((dep) => {
     return dep.version ? `${dep.name}@${dep.version}` : dep.name
@@ -397,7 +399,7 @@ export async function addNPMDependencies(
 export async function addNPMDependenciesWithoutVersionIfNeeded(
   dependencies: string[],
   options: AddNPMDependenciesIfNeededOptions,
-) {
+): Promise<void> {
   await addNPMDependenciesIfNeeded(
     dependencies.map((dependency) => {
       return {name: dependency, version: undefined}
@@ -492,7 +494,7 @@ export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{
   }
 }
 
-export async function addResolutionOrOverride(directory: string, dependencies: {[key: string]: string}) {
+export async function addResolutionOrOverride(directory: string, dependencies: {[key: string]: string}): Promise<void> {
   const packageManager = await getPackageManager(directory)
   const packageJsonPath = pathJoin(directory, 'package.json')
   const packageJsonContent = await readAndParsePackageJson(packageJsonPath)

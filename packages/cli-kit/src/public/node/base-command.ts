@@ -19,7 +19,7 @@ abstract class BaseCommand extends Command {
     return undefined
   }
 
-  async catch(error: Error & {exitCode?: number | undefined}) {
+  async catch(error: Error & {exitCode?: number | undefined}): Promise<void> {
     await errorHandler(error, this.config)
   }
 
@@ -93,7 +93,7 @@ abstract class BaseCommand extends Command {
   }
 }
 
-export async function addFromParsedFlags(flags: {path?: string; verbose?: boolean}) {
+export async function addFromParsedFlags(flags: {path?: string; verbose?: boolean}): Promise<void> {
   await addPublic(() => ({
     cmd_all_verbose: flags.verbose,
     cmd_all_path_override: flags.path !== undefined,
