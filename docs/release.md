@@ -22,3 +22,9 @@ The steps are:
     2. Publishing of the CLI packages to the [NPM registry](https://www.npmjs.com/package/@shopify/cli). In case an error is produced the extension binary release should be deleted manually from Github and retry again from _step 3_
 5. Once the deployment completes, [find the PR](https://github.com/Shopify/homebrew-shopify/pulls?q=is%3Apr+is%3Aopen+Shopify+CLI) in the homebrew-shopify repository and merge the changes in the formula.
 6. Go through all the [PRs labeled with `includes-post-release-steps`](https://github.com/Shopify/cli/issues?q=label%3Aincludes-post-release-steps+is%3Aclosed) and follow the post-release steps described in those PRs. Delete the labels afterward.
+7. Create a new tag with the new version: `git tag 3.x.x && git push --tags`
+8. [Create a new release in the CLI repo](https://github.com/Shopify/cli/releases/new):
+    * Use the created tag ("3.x.x")
+    * Release title: "3.x.x"
+    * Description: summary of the most important changes from Version Packages PR
+    * Click "Publish release"
