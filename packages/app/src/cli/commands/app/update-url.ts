@@ -1,5 +1,5 @@
 import Command from '../../utilities/app-command.js'
-import updateURL from '../../services/app/update-url.js'
+import updateURL, {UpdateURLOptions} from '../../services/app/update-url.js'
 import {Flags} from '@oclif/core'
 import {cli} from '@shopify/cli-kit'
 
@@ -15,18 +15,23 @@ export default class UpdateURL extends Command {
     }),
     'app-url': Flags.string({
       hidden: false,
-      description: 'App URL.',
+      description: 'URL through which merchants will access your app.',
       env: 'SHOPIFY_FLAG_APP_URL',
     }),
     'redirect-urls': Flags.string({
       hidden: false,
-      description: 'Comma separated list of allowed redirection URLs.',
+      description: 'Comma separated list of allowed URLs where merchants are redirected after the app is installed',
       env: 'SHOPIFY_FLAG_REDIRECT_URLS',
     }),
   }
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(UpdateURL)
-    await updateURL(flags['api-key'], flags['app-url'], flags['redirect-urls']?.split(','))
+    const options: UpdateURLOptions = {
+      apiKey: flags['api-key'],
+      appURL: flags['app-url'],
+      redirectURLs: flags['redirect-urls']?.split(','),
+    }
+    await updateURL(options)
   }
 }

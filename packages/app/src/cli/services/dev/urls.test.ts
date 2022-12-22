@@ -6,8 +6,7 @@ import {
   generateFrontendURL,
   generatePartnersURLs,
   PartnersURLs,
-  validateParntersURLs,
-  validURL,
+  validatePartnersURLs,
 } from './urls.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
@@ -593,7 +592,7 @@ describe('validatePartnersURLs', () => {
     const urls: PartnersURLs = {applicationUrl, redirectUrlWhitelist}
 
     // When/Then
-    validateParntersURLs(urls)
+    validatePartnersURLs(urls)
   })
 
   it('it raises an error when the application URL is not valid', () => {
@@ -603,7 +602,7 @@ describe('validatePartnersURLs', () => {
     const urls: PartnersURLs = {applicationUrl, redirectUrlWhitelist}
 
     // When/Then
-    expect(() => validateParntersURLs(urls)).toThrow(/Invalid application URL/)
+    expect(() => validatePartnersURLs(urls)).toThrow(/Invalid application URL/)
   })
 
   it('it raises an error when the redirection URLs are not valid', () => {
@@ -613,40 +612,6 @@ describe('validatePartnersURLs', () => {
     const urls: PartnersURLs = {applicationUrl, redirectUrlWhitelist}
 
     // When/Then
-    expect(() => validateParntersURLs(urls)).toThrow(/Invalid redirection URLs/)
-  })
-})
-
-describe('validURL', () => {
-  it('returns true if the URL is valid', () => {
-    // Given/When
-    const got = validURL('https://example.com')
-
-    // Then
-    expect(got).toBe(true)
-  })
-
-  it('returns false if the URL is empty', () => {
-    // Given/When
-    const got = validURL('')
-
-    // Then
-    expect(got).toBe(false)
-  })
-
-  it('returns false if the format is invalid', () => {
-    // Given/When
-    const got = validURL('wrong')
-
-    // Then
-    expect(got).toBe(false)
-  })
-
-  it('returns false if the URL is missing the protocol', () => {
-    // Given/When
-    const got = validURL('example.com')
-
-    // Then
-    expect(got).toBe(false)
+    expect(() => validatePartnersURLs(urls)).toThrow(/Invalid redirection URLs/)
   })
 })

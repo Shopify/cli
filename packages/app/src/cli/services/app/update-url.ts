@@ -1,33 +1,30 @@
 import {selectApp} from './select-app.js'
-import {getURLs, PartnersURLs, updateURLs, validateParntersURLs} from '../dev/urls.js'
+import {getURLs, PartnersURLs, updateURLs, validatePartnersURLs} from '../dev/urls.js'
 import {allowedRedirectionURLsPrompt, appUrlPrompt} from '../../prompts/update-url.js'
 import {output, session} from '@shopify/cli-kit'
 
-export default async function updateURL(
-  flagApiKey: string | undefined,
-  flagAppURL: string | undefined,
-  flagRedirectURLs: string[] | undefined,
-): Promise<void> {
+export interface UpdateURLOptions {
+  apiKey?: string
+  appURL?: string
+  redirectURLs?: string[]
+}
+
+export default async function updateURL(options: UpdateURLOptions): Promise<void> {
   const token = await session.ensureAuthenticatedPartners()
-  const apiKey = flagApiKey || (await selectApp()).apiKey
-  const newURLs = await getNewURLs(apiKey, token, flagAppURL, flagRedirectURLs)
+  const apiKey = options.apiKey || (await selectApp()).apiKey
+  const newURLs = await getNewURLs(token, apiKey, {appURL: options.appURL, redirectURLs: options.redirectURLs})
   await updateURLs(newURLs, apiKey, token)
   printResult(newURLs)
 }
 
-async function getNewURLs(
-  apiKey: string,
-  token: string,
-  flagAppURL: string | undefined,
-  flagRedirectURLs: string[] | undefined,
-): Promise<PartnersURLs> {
+async function getNewURLs(token: string, apiKey: string, options: UpdateURLOptions): Promise<PartnersURLs> {
   const currentURLs: PartnersURLs = await getURLs(apiKey, token)
   const newURLs: PartnersURLs = {
-    applicationUrl: flagAppURL || (await appUrlPrompt(currentURLs.applicationUrl)),
+    applicationUrl: options.appURL || (await appUrlPrompt(currentURLs.applicationUrl)),
     redirectUrlWhitelist:
-      flagRedirectURLs || (await allowedRedirectionURLsPrompt(currentURLs.redirectUrlWhitelist.join(','))),
+      options.redirectURLs || (await allowedRedirectionURLsPrompt(currentURLs.redirectUrlWhitelist.join(','))),
   }
-  validateParntersURLs(newURLs)
+  validatePartnersURLs(newURLs)
   return newURLs
 }
 

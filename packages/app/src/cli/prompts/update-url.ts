@@ -1,4 +1,4 @@
-import {validURL} from '../services/dev/urls.js'
+import {isValidURL} from '@shopify/cli-kit/common/url'
 import {ui} from '@shopify/cli-kit'
 
 export async function appUrlPrompt(defaultValue: string): Promise<string> {
@@ -9,7 +9,7 @@ export async function appUrlPrompt(defaultValue: string): Promise<string> {
       message: 'App URL',
       default: defaultValue,
       validate: (value: string) => {
-        if (validURL(value)) return true
+        if (isValidURL(value)) return true
         return 'Invalid URL'
       },
     },
@@ -25,7 +25,7 @@ export async function allowedRedirectionURLsPrompt(defaultValue: string): Promis
       message: 'Allowed redirection URLs (comma separated)',
       default: defaultValue,
       validate: (value: string) => {
-        if (value.split(',').every((url) => validURL(url))) return true
+        if (value.split(',').every((url) => isValidURL(url))) return true
         return 'Invalid URLs'
       },
     },
