@@ -49,37 +49,4 @@ if (dependenciesWithLooseVersionRequirement.length !== 0) {
   }
 }
 
-/**
- * LINT 2 - Startup time
- * ----
- * This lint runs all the CLI commands and fails if the startup time for any is above 1s
- */
-console.info(colors.green.bold(`Linting that startup time is bellow 1s`))
-for (const pluginName of ['app', 'theme']) {
-  const oclifManifestPath = path.join(rootDirectory, 'packages', pluginName, 'oclif.manifest.json')
-  const oclifManifest = JSON.parse(await fs.readFile(oclifManifestPath))
-  const commands = Object.keys(oclifManifest.commands).map((command) => command.split(':'))
-  for (const command of commands) {
-    const startTimestamp = Date.now()
-    const {stdout} = await execa(path.join(rootDirectory, 'packages/cli-main/bin/dev.js'), command, {
-      env: {SHOPIFY_CLI_ENV_STARTUP_PERFORMANCE_RUN: '1'},
-      stdout: 'pipe',
-      stderr: 'pipe',
-    })
-    const endTimestamp = JSON.parse(
-      stdout.replace('SHOPIFY_CLI_TIMESTAMP_START', '').replace('SHOPIFY_CLI_TIMESTAMP_END', ''),
-    ).timestamp
-    const diff = endTimestamp - startTimestamp
-    console.log(`Startup time for 'shopify ${command.join(' ')}': ${diff} ms`)
-    if (diff > 1000) {
-      exitCode = 1
-      console.error(
-        colors.red.bold(
-          `The startup time for 'shopify ${command.join(' ')}' is above 1s (${diff}ms). This is not allowed.`,
-        ),
-      )
-    }
-  }
-}
-
 process.exit(exitCode)

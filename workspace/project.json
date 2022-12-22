@@ -7,10 +7,20 @@
   "targets": {
     "lint": {
       "executor": "nx:run-commands",
-      "dependsOn": ["^build"],
+      "dependsOn": [],
       "options": {
         "commands": [
           "node src/lint.js"
+        ],
+        "cwd": "workspace"
+      }
+    },
+    "benchmark": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["^build"],
+      "options": {
+        "commands": [
+          "node src/benchmark.js"
         ],
         "cwd": "workspace"
       }

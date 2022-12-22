@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "lint": "nx lint",
-    "benchmark-startup-time": "nx benchmark-startup-time"
+    "benchmark": "nx benchmark"
   },
   "eslintConfig": {
     "extends": [

@@ -1,0 +1,25 @@
+name: "Run and save benchmark"
+description: "Benchmarks the startup time of the CLI and stores it for future comparisons"
+inputs:
+  branch-name:
+    required: true
+    description: "Name of the branch being tested"
+runs:
+  using: "composite"
+  steps:
+    - name: Build
+      working-directory: workspace
+      run: pnpm run benchmark benchmark.json
+      shell: bash
+    - name: Clean ref name
+      shell: bash
+      env:
+          SAFE_REF_NAME: "${{ inputs.branch-name }}"
+      run: |
+        SAFE_REF_NAME=${{ env.SAFE_REF_NAME }}
+        SAFE_REF_NAME=${SAFE_REF_NAME//[\/.]/}
+        echo SAFE_REF_NAME=${SAFE_REF_NAME} >> $GITHUB_ENV
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{ env.SAFE_REF_NAME }}--benchmark
+        path: ./workspace/benchmark.json
