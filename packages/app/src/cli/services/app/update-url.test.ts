@@ -1,4 +1,4 @@
-import updateURL from './update-url.js'
+import updateURL, {UpdateURLOptions} from './update-url.js'
 import {selectApp} from './select-app.js'
 import {getURLs, updateURLs} from '../dev/urls.js'
 import {OrganizationApp} from '../../models/organization.js'
@@ -33,8 +33,15 @@ beforeEach(async () => {
 
 describe('update-url', () => {
   it('updates the URLs provided as flags', async () => {
-    // Given/When
-    await updateURL('api-key-from-flag', 'https://example.com', ['https://example.com/callback'])
+    // Given
+    const options: UpdateURLOptions = {
+      apiKey: 'api-key-from-flag',
+      appURL: 'https://example.com',
+      redirectURLs: ['https://example.com/callback'],
+    }
+
+    // When
+    await updateURL(options)
 
     // Then
     expect(updateURLs).toHaveBeenCalledWith(
@@ -50,9 +57,13 @@ describe('update-url', () => {
   it('asks for the application when the api key is not provided', async () => {
     // Given
     vi.mocked(selectApp).mockResolvedValue(APP1)
+    const options: UpdateURLOptions = {
+      appURL: 'https://example.com',
+      redirectURLs: ['https://example.com/callback'],
+    }
 
     // When
-    await updateURL(undefined, 'https://example.com', ['https://example.com/callback'])
+    await updateURL(options)
 
     // Then
     expect(updateURLs).toHaveBeenCalledWith(
@@ -69,9 +80,13 @@ describe('update-url', () => {
     // Given
     vi.mocked(getURLs).mockResolvedValue({applicationUrl: 'https://example.com', redirectUrlWhitelist: []})
     vi.mocked(appUrlPrompt).mockResolvedValue('https://myapp.example.com')
+    const options: UpdateURLOptions = {
+      apiKey: 'api-key-from-flag',
+      redirectURLs: ['https://example.com/callback'],
+    }
 
     // When
-    await updateURL('api-key-from-flag', undefined, ['https://example.com/callback'])
+    await updateURL(options)
 
     // Then
     expect(updateURLs).toHaveBeenCalledWith(
@@ -91,9 +106,13 @@ describe('update-url', () => {
       'https://example.com/callback1',
       'https://example.com/callback2',
     ])
+    const options: UpdateURLOptions = {
+      apiKey: 'api-key-from-flag',
+      appURL: 'https://example.com',
+    }
 
     // When
-    await updateURL('api-key-from-flag', 'https://example.com', undefined)
+    await updateURL(options)
 
     // Then
     expect(updateURLs).toHaveBeenCalledWith(
