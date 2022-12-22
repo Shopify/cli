@@ -61,7 +61,7 @@ ${rows.map((row) => `| ${row.join(' | ')} |`).join('\n')}
 `
 setOutput(
   'report',
-  `# Benchmark report
+  `## Benchmark report
 The following table contains a summary of the startup time for all commands.
 ${markdownTable}
 `,
