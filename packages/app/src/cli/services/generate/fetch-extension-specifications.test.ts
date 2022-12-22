@@ -33,7 +33,7 @@ describe('fetchExtensionSpecifications', () => {
           identifier: 'checkout_post_purchase',
           externalIdentifier: 'post_purchase_ui',
           registrationLimit: 1,
-          surface: 'checkout',
+          surface: 'post_purchase',
         }),
         expect.objectContaining({
           externalName: 'Theme App Extension',
