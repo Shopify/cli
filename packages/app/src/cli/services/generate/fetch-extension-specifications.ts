@@ -1,21 +1,42 @@
-import {allThemeSpecifications, allUISpecifications} from '../../models/extensions/specifications.js'
+import {
+  loadThemeSpecifications,
+  loadUIExtensionSpecifications,
+  loadFunctionSpecifications,
+} from '../../models/extensions/specifications.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {api} from '@shopify/cli-kit'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {FlattenedRemoteSpecification} from '@shopify/cli-kit/src/api/graphql/extension_specifications.js'
+import {Config} from '@oclif/core'
 
 type ExtensionSpec = UIExtensionSpec | ThemeExtensionSpec
 
+export interface FetchSpecificationsOptions {
+  token: string
+  apiKey: string
+  config: Config
+}
 /**
- * Fetch all extension specifications the user has access to
- * Will return a merge of the local and remote specs (remote values override local ones)
+ * Returns all extension/function specifications the user has access to.
+ * This includes:
+ * - UI extensions
+ * - Theme extensions
+ * - Functions
+ *
+ * Will return a merge of the local and remote specifications (remote values override local ones)
  * Will only return the specifications that are also defined locally
+ * (Functions are not validated againts remote specifications, gated access is defined locally)
+ *
  * @param token - Token to access partners API
  * @returns List of extension specifications
  */
-export async function fetchExtensionSpecifications(token: string, apiKey: string): Promise<GenericSpecification[]> {
+export async function fetchSpecifications({
+  token,
+  apiKey,
+  config,
+}: FetchSpecificationsOptions): Promise<GenericSpecification[]> {
   const query = api.graphql.ExtensionSpecificationsQuery
   const result: api.graphql.ExtensionSpecificationsQuerySchema = await api.partners.request(query, token, {
     api_key: apiKey,
@@ -31,14 +52,20 @@ export async function fetchExtensionSpecifications(token: string, apiKey: string
       if (spec.identifier === 'subscription_management') spec.identifier = 'product_subscription'
       newSpec.registrationLimit = spec.options.registrationLimit
       newSpec.surface = spec.features?.argo?.surface
+
+      // Hardcoded value for the post purchase extension because the value is wrong in the API
+      if (spec.identifier === 'checkout_post_purchase') newSpec.surface = 'post_purchase'
+
       return newSpec
     })
 
-  const ui = await allUISpecifications()
-  const theme = await allThemeSpecifications()
+  const ui = await loadUIExtensionSpecifications(config)
+  const theme = await loadThemeSpecifications()
+  const functions = await loadFunctionSpecifications(config)
   const local = [...ui, ...theme]
 
-  return mergeLocalAndRemoteSpecs(local, extensionSpecifications)
+  const updatedSpecs = mergeLocalAndRemoteSpecs(local, extensionSpecifications)
+  return [...updatedSpecs, ...functions]
 }
 
 function mergeLocalAndRemoteSpecs(

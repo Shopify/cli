@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.30.0
+
+### Minor Changes
+
+- 737ca469: Remove logs functionality
+
 ## 3.29.0
 
 ### Minor Changes

@@ -16,7 +16,6 @@
  hydrogen dev           @shopify/cli-hydrogen  
  hydrogen info          @shopify/cli-hydrogen  
  hydrogen preview       @shopify/cli-hydrogen  
- logs                   @shopify/cli           
  ngrok auth             @shopify/plugin-ngrok  
  plugins                @oclif/plugin-plugins  
  plugins add            @oclif/plugin-plugins  

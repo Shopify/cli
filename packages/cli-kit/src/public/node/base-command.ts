@@ -6,7 +6,6 @@ import {Abort} from '../../error.js'
 import {addPublic} from '../../metadata.js'
 import {content, info, token} from '../../output.js'
 import {hashString} from '../../string.js'
-import {initiateLogging} from '../../log.js'
 import {Command, Interfaces} from '@oclif/core'
 
 interface PresettableFlags {
@@ -19,7 +18,7 @@ abstract class BaseCommand extends Command {
     return undefined
   }
 
-  async catch(error: Error & {exitCode?: number | undefined}) {
+  async catch(error: Error & {exitCode?: number | undefined}): Promise<void> {
     await errorHandler(error, this.config)
   }
 
@@ -29,7 +28,6 @@ abstract class BaseCommand extends Command {
       // This function runs just prior to `run`
       await registerCleanBugsnagErrorsFromWithinPlugins(this.config)
     }
-    await initiateLogging()
     return super.init()
   }
 
@@ -93,7 +91,7 @@ abstract class BaseCommand extends Command {
   }
 }
 
-export async function addFromParsedFlags(flags: {path?: string; verbose?: boolean}) {
+export async function addFromParsedFlags(flags: {path?: string; verbose?: boolean}): Promise<void> {
   await addPublic(() => ({
     cmd_all_verbose: flags.verbose,
     cmd_all_path_override: flags.path !== undefined,

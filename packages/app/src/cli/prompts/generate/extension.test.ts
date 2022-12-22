@@ -1,6 +1,9 @@
 import generateExtensionPrompt, {buildChoices, extensionFlavorQuestion} from './extension.js'
 import {testApp} from '../../models/app/app.test-data.js'
-import {allFunctionSpecifications, allUISpecifications} from '../../models/extensions/specifications.js'
+import {
+  loadLocalFunctionSpecifications,
+  loadLocalUIExtensionsSpecifications,
+} from '../../models/extensions/specifications.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {environment} from '@shopify/cli-kit'
 
@@ -23,8 +26,8 @@ beforeEach(() => {
 
 describe('extension prompt', async () => {
   // ALL UI Specs, filter out theme
-  const allUISpecs = await allUISpecifications()
-  const allFunctionSpecs = await allFunctionSpecifications()
+  const allUISpecs = await loadLocalUIExtensionsSpecifications()
+  const allFunctionSpecs = await loadLocalFunctionSpecifications()
 
   const extensionTypeQuestion = {
     type: 'select',

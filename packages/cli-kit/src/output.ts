@@ -16,7 +16,6 @@ import {
   RawContentToken,
   SubHeadingContentToken,
 } from './content-tokens.js'
-import {logToFile} from './log.js'
 import {AbortSignal} from 'abort-controller'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'node:stream'
@@ -327,7 +326,6 @@ export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, messa
       logger(message)
     }
   }
-  logToFile(message, logLevel.toUpperCase())
 }
 
 function withOrWithoutStyle(message: string): string {

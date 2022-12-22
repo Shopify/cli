@@ -1,9 +1,10 @@
 import {App, AppInterface} from './app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
-import {UIExtensionInstance, uiSpecForType} from '../extensions/ui.js'
-import {FunctionInstance, functionSpecForType} from '../extensions/functions.js'
+import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
+import {FunctionInstance, FunctionSpec} from '../extensions/functions.js'
 import {ThemeExtensionInstance} from '../extensions/theme.js'
 import themeSpec from '../extensions/theme-specifications/theme.js'
+import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js'
 import {api} from '@shopify/cli-kit'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
@@ -48,14 +49,15 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
   const configurationPath = uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`
   const entrySourceFilePath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
 
-  const specification = await uiSpecForType(configuration.type)
+  const allSpecs = await loadLocalExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === configuration.type) as UIExtensionSpec
 
   const extension = new UIExtensionInstance({
     configuration,
     configurationPath,
     entryPath: entrySourceFilePath,
     directory,
-    specification: specification!,
+    specification,
     remoteSpecification: undefined,
   })
   extension.devUUID = uiExtension?.devUUID ?? 'test-ui-extension-uuid'
@@ -89,11 +91,13 @@ export async function testFunctionExtension(): Promise<FunctionExtension> {
     configurationUi: true,
   }
 
-  const specification = await functionSpecForType(configuration.type)
+  const allSpecs = await loadLocalExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === configuration.type) as FunctionSpec
+
   return new FunctionInstance({
     configuration,
     configurationPath: '',
-    specification: specification!,
+    specification,
     directory: './my-extension',
   })
 }

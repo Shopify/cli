@@ -6,10 +6,9 @@ import generateExtensionService, {ExtensionFlavor} from '../../../services/gener
 import metadata from '../../../metadata.js'
 import Command from '../../../utilities/app-command.js'
 import {ensureGenerateEnvironment} from '../../../services/environment.js'
-import {fetchExtensionSpecifications} from '../../../utilities/extensions/fetch-extension-specifications.js'
-import {allFunctionSpecifications} from '../../../models/extensions/specifications.js'
+import {fetchSpecifications} from '../../../services/generate/fetch-extension-specifications.js'
 import {GenericSpecification} from '../../../models/app/extensions.js'
-import {output, path, cli, error, environment, session} from '@shopify/cli-kit'
+import {output, path, cli, error, session, environment} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -75,20 +74,17 @@ export default class AppGenerateExtension extends Command {
 
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
 
-    const isShopify = await environment.local.isShopify()
     const token = await session.ensureAuthenticatedPartners()
     const apiKey = await ensureGenerateEnvironment({apiKey: flags['api-key'], directory, reset: flags.reset, token})
-    const extensionsSpecs = await fetchExtensionSpecifications(token, apiKey)
-    const functionSpecs = await (await allFunctionSpecifications()).filter((spec) => !spec.gated || isShopify)
-    let allExtensionSpecs: GenericSpecification[] = [...extensionsSpecs, ...functionSpecs]
-
-    // Pending: use specs to load local extensions
-    const app: AppInterface = await loadApp(directory)
-    const specification = this.findSpecification(flags.type, allExtensionSpecs)
-    const allExternalTypes = allExtensionSpecs.map((spec) => spec.externalIdentifier)
+    let specifications = await fetchSpecifications({token, apiKey, config: this.config})
+    const app: AppInterface = await loadApp({directory, specifications})
+    const specification = this.findSpecification(flags.type, specifications)
+    const allExternalTypes = specifications.map((spec) => spec.externalIdentifier)
 
     if (flags.type && !specification) {
-      throw new error.Abort(`The following extension types are supported: ${allExternalTypes.join(', ')}`)
+      const isShopify = await environment.local.isShopify()
+      const tryMsg = isShopify ? 'You might need to enable some beta flags on your Organization or App' : undefined
+      throw new error.Abort(`The following extension types are supported: ${allExternalTypes.join(', ')}`, tryMsg)
     }
 
     // Map to always use the internal type from now on
@@ -104,7 +100,8 @@ export default class AppGenerateExtension extends Command {
         )
       }
     } else {
-      allExtensionSpecs = allExtensionSpecs.filter((spec) => {
+      // Filter out any extension types that have reached their limit
+      specifications = specifications.filter((spec) => {
         const existing = app.extensionsForType(spec)
         output.debug(`${existing.length}: ${spec.externalIdentifier}`)
         return existing.length < spec.registrationLimit
@@ -119,12 +116,12 @@ export default class AppGenerateExtension extends Command {
       extensionFlavor: flags.template,
       directory: path.join(directory, 'extensions'),
       app,
-      extensionSpecifications: allExtensionSpecs,
+      extensionSpecifications: specifications,
       reset: flags.reset,
     })
 
     const {extensionType, extensionFlavor, name} = promptAnswers
-    const selectedSpecification = this.findSpecification(extensionType, allExtensionSpecs)
+    const selectedSpecification = this.findSpecification(extensionType, specifications)
     if (!selectedSpecification)
       throw new error.Abort(`The following extension types are supported: ${allExternalTypes.join(', ')}`)
 

@@ -1,5 +1,17 @@
 # @shopify/cli
 
+## 3.30.0
+
+### Minor Changes
+
+- 737ca469: Remove logs functionality
+
+### Patch Changes
+
+- Updated dependencies [737ca469]
+  - @shopify/cli-kit@3.30.0
+  - @shopify/plugin-ngrok@3.30.0
+
 ## 3.29.0
 
 ### Minor Changes

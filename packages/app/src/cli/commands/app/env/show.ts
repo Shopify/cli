@@ -3,6 +3,7 @@ import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import {showEnv} from '../../../services/app/env/show.js'
 import Command from '../../../utilities/app-command.js'
+import {loadExtensionsSpecifications} from '../../../models/extensions/specifications.js'
 import {output, path, cli} from '@shopify/cli-kit'
 
 export default class EnvShow extends Command {
@@ -16,8 +17,8 @@ export default class EnvShow extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(EnvShow)
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const envFile = path.resolve(directory)
-    const app: AppInterface = await loadApp(directory, 'report')
+    const specifications = await loadExtensionsSpecifications(this.config)
+    const app: AppInterface = await loadApp({directory, specifications, mode: 'report'})
     output.info(await showEnv(app))
   }
 }

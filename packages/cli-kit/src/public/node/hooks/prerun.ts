@@ -20,7 +20,7 @@ export const hook: Hook.Prerun = async (options) => {
   await start({commandContent, args, commandClass: options.Command as unknown as typeof Command})
 }
 
-export function parseCommandContent(cmdInfo: {id: string; aliases: string[]; pluginAlias?: string}) {
+export function parseCommandContent(cmdInfo: {id: string; aliases: string[]; pluginAlias?: string}): CommandContent {
   let commandContent = parseCreateCommand(cmdInfo.pluginAlias)
   if (!commandContent) {
     commandContent = parseNormalCommand(cmdInfo.id, cmdInfo.aliases)
