@@ -1,11 +1,11 @@
 import {getDependencyVersion} from '../../app/app.js'
-import {createUIExtensionSpec} from '../ui.js'
+import {createUIExtensionSpecification} from '../ui.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
 import {error} from '@shopify/cli-kit'
 
 const dependency = {name: '@shopify/retail-ui-extensions-react', version: '^0.19.0'}
 
-const spec = createUIExtensionSpec({
+const spec = createUIExtensionSpecification({
   identifier: 'pos_ui_extension',
   externalIdentifier: 'pos_ui',
   externalName: 'POS UI',

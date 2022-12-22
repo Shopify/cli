@@ -1,6 +1,6 @@
-import {createFunctionSpec} from '../functions.js'
+import {createFunctionSpecification} from '../functions.js'
 
-const spec = createFunctionSpec({
+const spec = createFunctionSpecification({
   identifier: 'order_routing_location_rule',
   externalIdentifier: 'order_routing_location_rule',
   externalName: 'Order routing location rule',

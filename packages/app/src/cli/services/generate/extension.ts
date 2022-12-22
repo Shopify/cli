@@ -105,13 +105,12 @@ async function uiExtensionInit({
         task: async (_, task) => {
           task.title = `Generating ${specification.externalName} extension...`
 
-          const templateDirectory = await path.findUp(
-            `templates/ui-extensions/projects/${specification.externalIdentifier}`,
-            {
+          const templateDirectory =
+            specification.templatePath ??
+            (await path.findUp(`templates/ui-extensions/projects/${specification.externalIdentifier}`, {
               type: 'directory',
               cwd: path.moduleDirectory(import.meta.url),
-            },
-          )
+            }))
 
           if (!templateDirectory) {
             throw new error.Bug(`Couldn't find the template for ${specification.externalIdentifier}`)

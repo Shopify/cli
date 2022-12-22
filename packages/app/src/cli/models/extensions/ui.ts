@@ -1,5 +1,4 @@
-import {BaseConfigContents, ZodSchemaType} from './schemas.js'
-import {loadUIExtensionSpecifications} from './specifications.js'
+import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, UIExtension} from '../app/extensions.js'
 import {blocks, defualtExtensionFlavors} from '../../constants.js'
 import {id, path, api, output, environment, string} from '@shopify/cli-kit'
@@ -15,7 +14,6 @@ export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = Bas
   externalName: string
   partnersWebIdentifier: string
   surface: string
-  showInCLIHelp: boolean
   singleEntryPath: boolean
   registrationLimit: number
   supportedFlavors: {name: string; value: string}[]
@@ -29,7 +27,6 @@ export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = Bas
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
   validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (config: TConfiguration) => Promise<void>
-  resourceUrl?: (config: TConfiguration) => string
   category: () => ExtensionCategory
   previewMessage?: (
     host: string,
@@ -171,49 +168,49 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
 }
 
 /**
- * Find the registered spececification for a given extension type
+ * Partial ExtensionSpec type used when creating a new ExtensionSpec, the only mandatory field is the identifier
  */
-export async function uiSpecForType(type: string): Promise<UIExtensionSpec | undefined> {
-  const allSpecifications = await loadUIExtensionSpecifications()
-  return allSpecifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
-}
-
-// PENDING: Fetch remote specs
-function remoteSpecForType(type: string): api.graphql.RemoteSpecification | undefined {
-  return undefined
-}
-
-export function createUIExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>(spec: {
+export interface CreateExtensionSpecType<TConfiguration extends BaseConfigContents = BaseConfigContents>
+  extends Partial<Omit<UIExtensionSpec<TConfiguration>, 'registrationLimit' | 'category'>> {
   identifier: string
-  externalIdentifier: string
-  partnersWebIdentifier: string
-  surface: string
-  externalName: string
-  helpURL?: string
-  supportedFlavors?: {name: string; value: string}[]
-  showInCLIHelp?: boolean
-  dependency?: {name: string; version: string}
-  templatePath?: string
-  graphQLType?: string
-  singleEntryPath?: boolean
-  schema: ZodSchemaType<TConfiguration>
-  getBundleExtensionStdinContent?: (config: TConfiguration) => string
-  validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
-  deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
-  preDeployValidation?: (config: TConfiguration) => Promise<void>
-  previewMessage?: (
-    host: string,
-    uuid: string,
-    config: TConfiguration,
-    storeFqdn: string,
-  ) => output.TokenizedString | undefined
-  shouldFetchCartUrl?(config: TConfiguration): boolean
-  hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
-}): UIExtensionSpec<TConfiguration> {
+}
+
+/**
+ * Create a new ui extension spec.
+ *
+ * Everything but "identifer" is optional.
+ * ```ts
+ * identifier: string // unique identifier for the extension type
+ * externalIdentifier: string // identifier used externally (default: same as "identifier")
+ * partnersWebIdentifier: string // identifier used in the partners web UI (default: same as "identifier")
+ * surface?: string // surface where the extension is going to be rendered (default: 'unknown')
+ * singleEntryPath: boolean // whether the extension has a single entry point (default: true)
+ * supportedFlavors: {name: string; value: string}[] // list of supported flavors (default: 'javascript', 'typescript', 'typescript-react', 'javascript-react')
+ * helpURL?: string // url to the help page for the extension, shown after generating the extension
+ * dependency?: {name: string; version: string} // dependency to be added to the extension's package.json
+ * templatePath?: string // path to the template to be used when generating the extension
+ * graphQLType?: string // GraphQL type of the extension (default: same as "identifier")
+ * schema?: ZodSchemaType<TConfiguration> // schema used to validate the extension's configuration (default: BaseUIExtensionSchema)
+ * getBundleExtensionStdinContent?: (configuration: TConfiguration) => string // function to generate the content of the stdin file used to bundle the extension
+ * validate?: (configuration: TConfiguration, directory: string) => Promise<Result<undefined, Error>> // function to validate the extension's configuration
+ * preDeployValidation?: (configuration: TConfiguration) => Promise<void> // function to validate the extension's configuration before deploying it
+ * deployConfig?: (configuration: TConfiguration, directory: string) => Promise<{[key: string]: unknown}> // function to generate the extensions configuration payload to be deployed
+ * previewMessage?: (url: string, devUUID: string, configuration: TConfiguration, storeFqdn: string) => string | undefined // function to generate the preview message shown to the user during `dev`
+ * shouldFetchCartUrl?: (configuration: TConfiguration) => boolean // function to determine if the extension should fetch the cart url
+ * hasExtensionPointTarget?: (configuration: TConfiguration, target: string) => boolean // function to determine if the extension has a given extension point target
+ * ```
+ */
+export function createUIExtensionSpecification<TConfiguration extends BaseConfigContents = BaseConfigContents>(
+  spec: CreateExtensionSpecType<TConfiguration>,
+): UIExtensionSpec<TConfiguration> {
   const defaults = {
-    showInCLIHelp: true,
+    externalIdentifier: spec.identifier,
+    externalName: spec.identifier,
+    surface: 'unknown',
+    partnersWebIdentifier: spec.identifier,
     singleEntryPath: true,
     gated: false,
+    schema: BaseUIExtensionSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     supportedFlavors: defualtExtensionFlavors,
     category: (): ExtensionCategory => (spec.identifier === 'theme' ? 'theme' : 'ui'),

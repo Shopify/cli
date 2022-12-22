@@ -1,15 +1,14 @@
 import {
-  loadFunctionSpecifications,
-  loadLocalExtensionsSpecifications,
+  loadLocalFunctionSpecifications,
+  loadLocalUIExtensionsSpecifications,
   loadThemeSpecifications,
-  loadUIExtensionSpecifications,
 } from './specifications.js'
 import {describe, test, expect} from 'vitest'
 
 describe('allUISpecifications', () => {
   test('loads the specifications successfully', async () => {
     // When
-    const got = await loadUIExtensionSpecifications()
+    const got = await loadLocalUIExtensionsSpecifications()
 
     // Then
     expect(got.length).not.toEqual(0)
@@ -19,7 +18,7 @@ describe('allUISpecifications', () => {
 describe('allFunctionSpecifications', () => {
   test('loads the specifications successfully', async () => {
     // When
-    const got = await loadFunctionSpecifications()
+    const got = await loadLocalFunctionSpecifications()
 
     // Then
     expect(got.length).not.toEqual(0)
@@ -39,7 +38,7 @@ describe('allThemeSpecifications', () => {
 describe('allLocalSpecs', () => {
   test('loads the specifications successfully', async () => {
     // When
-    const got = await loadLocalExtensionsSpecifications()
+    const got = await loadLocalUIExtensionsSpecifications()
 
     // Then
     expect(got.length).not.toEqual(0)
