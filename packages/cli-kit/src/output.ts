@@ -257,7 +257,7 @@ export const completed = (content: Message, logger: Logger = consoleLog) => {
 export const debug = (content: Message, logger: Logger = consoleLog) => {
   if (isUnitTest()) collectLog('debug', content)
   const message = colors.gray(stringifyMessage(content))
-  outputWhereAppropriate('debug', logger, message)
+  outputWhereAppropriate('debug', logger, `${new Date().toISOString()}: ${message}`)
 }
 
 /**
