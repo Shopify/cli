@@ -1,8 +1,6 @@
 import {ApplicationToken, IdentityToken} from './schema.js'
 import {applicationId, clientId as getIdentityClientId} from './identity.js'
 import {CodeAuthResult} from './authorize.js'
-import * as secureStore from './store.js'
-import {Abort} from '../error.js'
 import {API} from '../network/api.js'
 import {identity as identityFqdn} from '../environment/fqdn.js'
 import {shopifyFetch} from '../http.js'
@@ -10,9 +8,7 @@ import {err, ok, Result} from '../public/node/result.js'
 import {AbortError} from '../public/node/error.js'
 
 export class InvalidGrantError extends Error {}
-
-const InvalidIdentityError = () =>
-  new Abort('\nError validating auth session', "We've cleared the current session, please try again")
+export class InvalidRequestError extends Error {}
 
 export interface ExchangeScopes {
   admin: string[]
@@ -74,7 +70,7 @@ export async function exchangeAccessForApplicationTokens(
  * Given an expired access token, refresh it to get a new one.
  */
 export async function refreshAccessToken(currentToken: IdentityToken): Promise<IdentityToken> {
-  const clientId = await getIdentityClientId()
+  const clientId = getIdentityClientId()
   const params = {
     grant_type: 'refresh_token',
     access_token: currentToken.accessToken,
@@ -167,7 +163,7 @@ interface TokenRequestResult {
   scope: string
 }
 
-async function tokenRequestErrorHandler(error: string) {
+function tokenRequestErrorHandler(error: string) {
   if (error === 'invalid_grant') {
     // There's an scenario when Identity returns "invalid_grant" when trying to refresh the token
     // using a valid refresh token. When that happens, we take the user through the authentication flow.
@@ -176,8 +172,7 @@ async function tokenRequestErrorHandler(error: string) {
   if (error === 'invalid_request') {
     // There's an scenario when Identity returns "invalid_request" when exchanging an identity token.
     // This means the token is invalid. We clear the session and throw an error to let the caller know.
-    await secureStore.remove()
-    return new AbortError('\nError validating auth session', "We've cleared the current session, please try again")
+    return new InvalidRequestError()
   }
   return new AbortError(error)
 }
