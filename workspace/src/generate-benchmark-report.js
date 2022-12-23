@@ -38,13 +38,13 @@ const baselineBenchmark = JSON.parse(await fs.readFile(baselineBenchmarkPath, 'u
 const benchmark = JSON.parse(await fs.readFile(benchmarkPath, 'utf8'))
 
 const rows = []
-for (const command in benchmark) {
+for (const command of Object.keys(benchmark).sort()) {
   if (baselineBenchmark[command] === undefined) {
     rows.push(['⚪️', `\`${command}\``, 'N/A', `${benchmark[command]} ms`, 'N/A'])
   } else {
     const diff = (benchmark[command] / baselineBenchmark[command] - 1) * 100
     let icon = '⚪️'
-    if (diff < 0) {
+    if (diff <= 0) {
       icon = '🟢'
     } else if (diff < 2) {
       icon = '🟡'
