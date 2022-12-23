@@ -61,7 +61,8 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   }
 
   if (environment.spin.isSpin() && !options.tunnelUrl) {
-    frontendUrl = `https://cli.${await environment.spin.fqdn()}`
+    frontendPort = environment.local.getSpinServerPort() ?? (await getAvailableTCPPort())
+    frontendUrl = `https://${environment.local.getSpinAppHost()}` ?? 'http://localhost'
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 

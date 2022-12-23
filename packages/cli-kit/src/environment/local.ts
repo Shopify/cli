@@ -182,3 +182,13 @@ export function ciPlatform(env = process.env): {isCI: true; name: string} | {isC
 export function macAddress() {
   return macaddress.one()
 }
+
+export function getSpinServerPort(env = process.env): number | undefined {
+  return env[constants.environmentVariables.spinServerPort]
+    ? Number(env[constants.environmentVariables.spinServerPort])
+    : undefined
+}
+
+export function getSpinAppHost(env = process.env): string | undefined {
+  return env[constants.environmentVariables.spinAppHost]
+}

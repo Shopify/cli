@@ -143,7 +143,7 @@ async function dev(options: DevOptions) {
 
   const additionalProcesses: output.OutputProcess[] = []
 
-  if (options.app.extensions.theme.length > 0 && !silentMode) {
+  if (options.app.extensions.theme.length > 0 && !environment.service.isSpinEnvironment()) {
     const adminSession = await session.ensureAuthenticatedAdmin(storeFqdn)
     const storefrontToken = await session.ensureAuthenticatedStorefront()
     const extension = options.app.extensions.theme[0]!
