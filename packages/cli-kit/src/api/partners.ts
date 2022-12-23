@@ -4,6 +4,7 @@ import {partners as partnersFqdn} from '../environment/fqdn.js'
 import {graphqlClient} from '../http/graphql.js'
 import {debug} from '../output.js'
 import {Variables, RequestDocument} from 'graphql-request'
+import {performance} from 'perf_hooks'
 
 export async function request<T>(query: RequestDocument, token: string, variables?: Variables): Promise<T> {
   const api = 'Partners'

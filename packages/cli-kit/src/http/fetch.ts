@@ -2,6 +2,7 @@ import {httpsAgent} from '../http.js'
 import {buildHeaders, sanitizedHeadersOutput} from '../api/common.js'
 import {content, debug} from '../output.js'
 import nodeFetch from 'node-fetch'
+import {performance} from 'perf_hooks'
 import type {RequestInfo, RequestInit} from 'node-fetch'
 
 type Response = ReturnType<typeof nodeFetch>
