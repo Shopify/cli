@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.30.1
+
+### Patch Changes
+
+- Updated dependencies [2ac83ce6]
+  - @shopify/cli-kit@3.30.1
+
 ## 3.30.0
 
 ### Patch Changes
