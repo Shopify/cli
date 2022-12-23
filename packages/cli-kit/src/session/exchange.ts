@@ -6,9 +6,10 @@ import {identity as identityFqdn} from '../environment/fqdn.js'
 import {shopifyFetch} from '../http.js'
 import {err, ok, Result} from '../public/node/result.js'
 import {AbortError} from '../public/node/error.js'
+import {ExtendableError} from '../error.js'
 
-export class InvalidGrantError extends Error {}
-export class InvalidRequestError extends Error {}
+export class InvalidGrantError extends ExtendableError {}
+export class InvalidRequestError extends ExtendableError {}
 
 export interface ExchangeScopes {
   admin: string[]
