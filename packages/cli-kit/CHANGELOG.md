@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.30.1
+
+### Patch Changes
+
+- 2ac83ce6: Fix error handling on session refresh
+
 ## 3.30.0
 
 ### Minor Changes

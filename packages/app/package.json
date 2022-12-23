@@ -1,6 +1,6 @@
 {
   "name": "@shopify/app",
-  "version": "3.30.0",
+  "version": "3.30.1",
   "description": "Utilities for loading, building, and publishing apps.",
   "license": "MIT",
   "homepage": "https://github.com/shopify/cli#readme",
@@ -69,7 +69,7 @@
   },
   "dependencies": {
     "@luckycatfactory/esbuild-graphql-loader": "3.7.0",
-    "@shopify/cli-kit": "3.30.0",
+    "@shopify/cli-kit": "3.30.1",
     "@oclif/core": "1.21.0",
     "@shopify/shopify-cli-extensions": "3.21.0",
     "abort-controller": "3.0.0",
