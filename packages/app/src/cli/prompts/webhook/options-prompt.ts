@@ -12,7 +12,8 @@ import {
   deliveryMethodForAddress,
   isAddressAllowedForDeliveryMethod,
 } from '../../services/webhook/trigger-options.js'
-import {error} from '@shopify/cli-kit'
+import {requestApiVersions} from '../../services/webhook/request-api-versions.js'
+import {error, output} from '@shopify/cli-kit'
 
 /**
  * Flags collected from the command line parameters
@@ -47,6 +48,22 @@ export async function optionsPrompt(flags: WebhookTriggerFlags): Promise<Webhook
     address: '',
   }
 
+  const availableVersions = await requestApiVersions()
+
+  const apiVersionPassed = flagPassed(flags.apiVersion)
+
+  if (apiVersionPassed) {
+    const passedApiVersion = (flags.apiVersion as string).trim()
+    if (availableVersions.includes(passedApiVersion)) {
+      options.apiVersion = passedApiVersion
+    } else {
+      await output.consoleError(
+        `Api Version ${passedApiVersion} does not exist. Allowed values: ${availableVersions.join(', ')}`,
+      )
+      options.apiVersion = await apiVersionPrompt(availableVersions)
+    }
+  }
+
   const methodPassed = flagPassed(flags.deliveryMethod)
   const addressPassed = flagPassed(flags.address)
 
@@ -76,7 +93,6 @@ export async function optionsPrompt(flags: WebhookTriggerFlags): Promise<Webhook
   }
 
   options.topic = await useFlagOrPrompt(flags.topic, topicPrompt)
-  options.apiVersion = await useFlagOrPrompt(flags.apiVersion, apiVersionPrompt)
   options.sharedSecret = await useFlagOrPrompt(flags.sharedSecret, sharedSecretPrompt)
 
   if (!methodPassed && !addressPassed) {

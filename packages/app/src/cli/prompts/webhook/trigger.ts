@@ -20,19 +20,15 @@ export async function topicPrompt(): Promise<string> {
   return input.topic
 }
 
-export async function apiVersionPrompt(): Promise<string> {
+export async function apiVersionPrompt(availableVersions: string[]): Promise<string> {
+  const choices = availableVersions.map((version) => ({name: version, value: version}))
+
   const input = await ui.prompt([
     {
-      type: 'input',
+      type: 'select',
       name: 'apiVersion',
       message: 'Webhook ApiVersion',
-      default: '2022-10',
-      validate: (value: string) => {
-        if (value.length === 0) {
-          return "ApiVersion name can't be empty"
-        }
-        return true
-      },
+      choices,
     },
   ])
 
