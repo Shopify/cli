@@ -11,7 +11,7 @@ import {execa} from 'execa'
 const require = createRequire(import.meta.url)
 const rootDirectory = path.join(url.fileURLToPath(new URL('.', import.meta.url)), '../..')
 
-const baselineBenchmarkPath = require(path.join(rootDirectory, 'baseline-benchmark.json'))
+const baselineBenchmarkPath = path.join(path.join(rootDirectory, 'baseline-benchmark.json'))
 const benchmarkPath = path.join(rootDirectory, 'benchmark.json')
 
 if (!existsSync(baselineBenchmarkPath)) {
