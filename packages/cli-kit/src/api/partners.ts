@@ -2,6 +2,7 @@ import {buildHeaders, debugLogRequest, handlingErrors} from './common.js'
 import {ScriptServiceProxyQuery} from './graphql/index.js'
 import {partners as partnersFqdn} from '../environment/fqdn.js'
 import {graphqlClient} from '../http/graphql.js'
+import {debug} from '../output.js'
 import {Variables, RequestDocument} from 'graphql-request'
 
 export async function request<T>(query: RequestDocument, token: string, variables?: Variables): Promise<T> {
@@ -12,7 +13,10 @@ export async function request<T>(query: RequestDocument, token: string, variable
     const headers = await buildHeaders(token)
     debugLogRequest(api, query, variables, headers)
     const client = await graphqlClient({headers, url})
+    const t0 = performance.now()
     const response = await client.request<T>(query, variables)
+    const t1 = performance.now()
+    debug(`Request to ${url.toString()} completed in ${Math.round(t1 - t0)} ms`)
     return response
   })
 }

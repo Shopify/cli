@@ -39,6 +39,9 @@ export async function shopifyFetch(url: RequestInfo, init?: RequestInit): Respon
 Sending ${options.method ?? 'GET'} request to URL ${url.toString()} and headers:
 ${sanitizedHeadersOutput((options?.headers ?? {}) as {[header: string]: string})}
 `)
+  const t0 = performance.now()
   const response = await nodeFetch(url, {...init, agent: await httpsAgent()})
+  const t1 = performance.now()
+  debug(`Request to ${url.toString()} completed with status ${response.status} in ${Math.round(t1 - t0)} ms`)
   return response
 }
