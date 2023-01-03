@@ -24,6 +24,10 @@
   font-weight: var(--dc-font-weight-subdued);
 }
 
+.NotApplicable {
+  font-family: var(--dc-font-compact);
+}
+
 .ActionSet {
   vertical-align: middle;
   opacity: 0;
@@ -33,7 +37,6 @@
 .ForceVisible .ActionSet {
   opacity: 1;
 }
-
 
 .Hidden {
   text-decoration: line-through;
