@@ -42,10 +42,10 @@ describe('FatalError', async () => {
       │  Unexpected error                                                            │
       │                                                                              │
       │  To investigate the issue, examine this stack trace:                         │
-      │  at _compile (internal/modules/cjs/loader.js:1137)                           │
-      │  at js (internal/modules/cjs/loader.js:1157)                                 │
-      │  at load (internal/modules/cjs/loader.js:985)                                │
-      │  at _load (internal/modules/cjs/loader.js:878)                               │
+      │    at _compile (internal/modules/cjs/loader.js:1137)                         │
+      │    at js (internal/modules/cjs/loader.js:1157)                               │
+      │    at load (internal/modules/cjs/loader.js:985)                              │
+      │    at _load (internal/modules/cjs/loader.js:878)                             │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
@@ -100,10 +100,10 @@ describe('FatalError', async () => {
       │      again with \`--reset\`                                                    │
       │                                                                              │
       │  To investigate the issue, examine this stack trace:                         │
-      │  at _compile (internal/modules/cjs/loader.js:1137)                           │
-      │  at js (internal/modules/cjs/loader.js:1157)                                 │
-      │  at load (internal/modules/cjs/loader.js:985)                                │
-      │  at _load (internal/modules/cjs/loader.js:878)                               │
+      │    at _compile (internal/modules/cjs/loader.js:1137)                         │
+      │    at js (internal/modules/cjs/loader.js:1157)                               │
+      │    at load (internal/modules/cjs/loader.js:985)                              │
+      │    at _load (internal/modules/cjs/loader.js:878)                             │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
