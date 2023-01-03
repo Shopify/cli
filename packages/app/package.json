@@ -62,7 +62,7 @@
     "@types/serve-static": "^1.15.0",
     "@types/ws": "^8.5.3",
     "@types/lodash-es": "^4.17.6",
-    "vitest": "^0.23.4",
+    "vitest": "^0.26.3",
     "vite": "^2.9.13",
     "graphql-tag": "^2.11.0",
     "graphql": "^16.0.0"

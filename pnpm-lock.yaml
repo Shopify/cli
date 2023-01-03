@@ -170,7 +170,7 @@ importers:
       serve-static: ^1.14.1
       supertest: ^6.2.2
       vite: 2.9.12
-      vitest: ^0.23.4
+      vitest: ^0.26.3
     dependencies:
       '@shopify/shopify-api': 3.1.3
       compression: 1.7.4
@@ -184,7 +184,7 @@ importers:
       pretty-quick: 3.1.3_prettier@2.8.0
       supertest: 6.3.1
       vite: 2.9.12
-      vitest: 0.23.4
+      vitest: 0.26.3
 
   fixtures/app/web/frontend:
     specifiers:
@@ -241,7 +241,7 @@ importers:
       http-proxy: 1.18.1
       serve-static: 1.15.0
       vite: 2.9.12
-      vitest: ^0.23.4
+      vitest: ^0.26.3
       ws: 8.8.1
     dependencies:
       '@luckycatfactory/esbuild-graphql-loader': 3.7.0_t5hz6ir3hkf4yglirnvrkce4ii
@@ -264,7 +264,7 @@ importers:
       graphql: 16.6.0
       graphql-tag: 2.12.6_graphql@16.6.0
       vite: 2.9.12
-      vitest: 0.23.4
+      vitest: 0.26.3
 
   packages/cli-hydrogen:
     specifiers:
@@ -284,7 +284,7 @@ importers:
       react-dom: ^18.2.0
       typescript: 4.8.4
       vite: 2.9.12
-      vitest: ^0.23.4
+      vitest: ^0.26.3
     dependencies:
       '@oclif/core': 1.21.0
       '@shopify/cli-kit': link:../cli-kit
@@ -303,7 +303,7 @@ importers:
       graphql: 16.6.0
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
-      vitest: 0.23.4
+      vitest: 0.26.3
 
   packages/cli-kit:
     specifiers:
@@ -319,7 +319,7 @@ importers:
       '@types/lodash': 4.14.191
       '@types/react': 16.14.0
       '@types/semver': ^7.3.9
-      '@vitest/coverage-istanbul': ^0.23.4
+      '@vitest/coverage-istanbul': ^0.26.3
       abort-controller: 3.0.0
       archiver: 5.3.1
       chalk: 5.1.0
@@ -378,7 +378,7 @@ importers:
       ts-error: 1.0.6
       unique-string: 3.0.0
       vite: 2.9.12
-      vitest: ^0.23.4
+      vitest: ^0.26.3
       zod: 3.17.3
     dependencies:
       '@bugsnag/js': 7.16.7
@@ -450,11 +450,11 @@ importers:
       '@types/lodash': 4.14.191
       '@types/react': 16.14.0
       '@types/semver': 7.3.13
-      '@vitest/coverage-istanbul': 0.23.4
+      '@vitest/coverage-istanbul': 0.26.3
       ink-testing-library: 2.1.0_@types+react@16.14.0
       node-stream-zip: 1.15.0
       vite: 2.9.12
-      vitest: 0.23.4
+      vitest: 0.26.3
 
   packages/cli-main:
     specifiers:
@@ -467,9 +467,9 @@ importers:
       '@shopify/cli-kit': 3.30.2
       '@shopify/plugin-ngrok': 3.30.2
       '@shopify/theme': 3.30.2
-      '@vitest/coverage-istanbul': ^0.23.4
+      '@vitest/coverage-istanbul': ^0.26.3
       vite: 2.9.12
-      vitest: ^0.23.4
+      vitest: ^0.26.3
     dependencies:
       '@oclif/core': 1.21.0
       '@oclif/plugin-commands': 2.2.0
@@ -481,22 +481,22 @@ importers:
       '@shopify/app': link:../app
       '@shopify/cli-hydrogen': link:../cli-hydrogen
       '@shopify/theme': link:../theme
-      '@vitest/coverage-istanbul': 0.23.4
+      '@vitest/coverage-istanbul': 0.26.3
       vite: 2.9.12
-      vitest: 0.23.4
+      vitest: 0.26.3
 
   packages/create-app:
     specifiers:
       '@oclif/core': 1.21.0
       '@shopify/cli-kit': 3.30.2
       vite: 2.9.12
-      vitest: ^0.23.4
+      vitest: ^0.26.3
     dependencies:
       '@oclif/core': 1.21.0
       '@shopify/cli-kit': link:../cli-kit
     devDependencies:
       vite: 2.9.12
-      vitest: 0.23.4
+      vitest: 0.26.3
 
   packages/create-hydrogen:
     specifiers:
@@ -505,7 +505,7 @@ importers:
       '@types/download': 8.0.0
       download: 8.0.0
       vite: 2.9.12
-      vitest: ^0.23.4
+      vitest: ^0.26.3
     dependencies:
       '@oclif/core': 1.21.0
       '@shopify/cli-kit': link:../cli-kit
@@ -513,7 +513,7 @@ importers:
     devDependencies:
       '@types/download': 8.0.0
       vite: 2.9.12
-      vitest: 0.23.4
+      vitest: 0.26.3
 
   packages/features:
     specifiers:
@@ -549,27 +549,27 @@ importers:
       '@shopify/cli-kit': 3.30.2
       '@shopify/ngrok': 4.3.2
       vite: 2.9.12
-      vitest: ^0.23.4
+      vitest: ^0.26.3
     dependencies:
       '@oclif/core': 1.21.0
       '@shopify/cli-kit': link:../cli-kit
       '@shopify/ngrok': 4.3.2
     devDependencies:
       vite: 2.9.12
-      vitest: 0.23.4
+      vitest: 0.26.3
 
   packages/theme:
     specifiers:
       '@oclif/core': 1.21.0
       '@shopify/cli-kit': 3.30.2
       vite: 2.9.12
-      vitest: ^0.23.4
+      vitest: ^0.26.3
     dependencies:
       '@oclif/core': 1.21.0
       '@shopify/cli-kit': link:../cli-kit
     devDependencies:
       vite: 2.9.12
-      vitest: 0.23.4
+      vitest: 0.26.3
 
   packages/ui-extensions-dev-console:
     specifiers:
@@ -595,7 +595,7 @@ importers:
       typescript: 4.8.4
       vite: 2.9.12
       vite-tsconfig-paths: ^3.3.14
-      vitest: ^0.23.4
+      vitest: ^0.26.3
     dependencies:
       '@shopify/polaris': 6.6.0_sfoxds7t5ydpegc3knd667wn6m
       '@shopify/polaris-icons': 4.23.0
@@ -620,7 +620,7 @@ importers:
       typescript: 4.8.4
       vite: 2.9.12_sass@1.56.1
       vite-tsconfig-paths: 3.6.0_vite@2.9.12
-      vitest: 0.23.4_sass@1.56.1
+      vitest: 0.26.3_sass@1.56.1
 
   packages/ui-extensions-server-kit:
     specifiers:
@@ -640,7 +640,7 @@ importers:
       vi-fetch: ^0.8.0
       vite: 2.9.12
       vite-tsconfig-paths: ^3.3.14
-      vitest: ^0.23.4
+      vitest: ^0.26.3
     devDependencies:
       '@shopify/react-testing': 3.3.10_sfoxds7t5ydpegc3knd667wn6m
       '@shopify/ui-extensions-test-utils': link:../ui-extensions-test-utils
@@ -658,7 +658,7 @@ importers:
       vi-fetch: 0.8.0
       vite: 2.9.12
       vite-tsconfig-paths: 3.6.0_vite@2.9.12
-      vitest: 0.23.4_jsdom@20.0.3
+      vitest: 0.26.3_jsdom@20.0.3
 
   packages/ui-extensions-test-utils:
     specifiers:
@@ -4621,8 +4621,8 @@ packages:
       - supports-color
     dev: false
 
-  /@vitest/coverage-istanbul/0.23.4:
-    resolution: {integrity: sha512-vl+c682jwCkthdOomO7aBRY/H2bXfxjYAo+WZoGktdWEiSBfwhFUOcJJW3+Ery9i8ja+M1Jd19HrqYriLixGPw==}
+  /@vitest/coverage-istanbul/0.26.3:
+    resolution: {integrity: sha512-pJRxb+mGy11WdYiam6iW6N4CyhaBbpne+CGPqYGid74SplcR8N07JT3ETDoHKqh5vJCX5UnEIYIreanvFjgLHg==}
     dependencies:
       istanbul-lib-coverage: 3.2.0
       istanbul-lib-instrument: 5.2.1
@@ -4630,7 +4630,7 @@ packages:
       istanbul-lib-source-maps: 4.0.1
       istanbul-reports: 3.1.5
       test-exclude: 6.0.0
-      vitest: 0.23.4
+      vitest: 0.26.3
     transitivePeerDependencies:
       - '@edge-runtime/vm'
       - '@vitest/browser'
@@ -6047,7 +6047,7 @@ packages:
     dev: false
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
+    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
   /concat-stream/1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
@@ -10876,6 +10876,15 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  /mlly/1.0.0:
+    resolution: {integrity: sha512-QL108Hwt+u9bXdWgOI0dhzZfACovn5Aen4Xvc8Jasd9ouRH4NjnrXEiyP3nVvJo91zPlYjVRckta0Nt2zfoR6g==}
+    dependencies:
+      acorn: 8.8.1
+      pathe: 1.0.0
+      pkg-types: 1.0.1
+      ufo: 1.0.1
+    dev: true
+
   /mock-socket/9.1.5:
     resolution: {integrity: sha512-3DeNIcsQixWHHKk6NdoBhWI4t1VMj5/HzfnI1rE/pLl5qKx7+gd4DNA07ehTaZ6MoUU053si6Hd+YtiM/tQZfg==}
     engines: {node: '>= 8'}
@@ -11872,6 +11881,10 @@ packages:
   /pathe/0.2.0:
     resolution: {integrity: sha512-sTitTPYnn23esFR3RlqYBWn4c45WGeLcsKzQiUpXJAyfcWkolvlYpV8FLo7JishK946oQwMFUCHXQ9AjGPKExw==}
 
+  /pathe/1.0.0:
+    resolution: {integrity: sha512-nPdMG0Pd09HuSsr7QOKUXO2Jr9eqaDiZvDwdyIhNG5SHYujkQHYKDfGQkulBxvbDHz8oHLsTgKN86LSwYzSHAg==}
+    dev: true
+
   /pathval/1.1.1:
     resolution: {integrity: sha512-Dp6zGqpTdETdR63lehJYPeIOqpiNBNtc7BpWSLrOje7UaIsE5aY92r/AunQA7rsXvet3lrJ3JnZX29UPTKXyKQ==}
 
@@ -12009,6 +12022,14 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       find-up: 5.0.0
+    dev: true
+
+  /pkg-types/1.0.1:
+    resolution: {integrity: sha512-jHv9HB+Ho7dj6ItwppRDDl0iZRYBD0jsakHXtFgoLr+cHSF6xC+QL54sJmWxyGxOLYSHm0afhXhXcQDQqH9z8g==}
+    dependencies:
+      jsonc-parser: 3.2.0
+      mlly: 1.0.0
+      pathe: 1.0.0
     dev: true
 
   /pkg-up/3.1.0:
@@ -13665,8 +13686,8 @@ packages:
     resolution: {integrity: sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==}
     engines: {node: '>=8'}
 
-  /strip-literal/0.4.2:
-    resolution: {integrity: sha512-pv48ybn4iE1O9RLgCAN0iU4Xv7RlBTiit6DKmMiErbs9x1wH6vXBs45tWc0H5wUIF6TLTrKweqkmYF/iraQKNw==}
+  /strip-literal/1.0.0:
+    resolution: {integrity: sha512-5o4LsH1lzBzO9UFH63AJ2ad2/S2AVx6NtjOcaz+VTT2h1RiRvbipW72z8M/lxEhcPHDBQwpDrnTF7sXy/7OwCQ==}
     dependencies:
       acorn: 8.8.1
     dev: true
@@ -14344,6 +14365,10 @@ packages:
     resolution: {integrity: sha512-fk6CmUgwKCfX79EzcDQQpSCMxrHstvbLswFChHS0Vump+kFkw7nJBfTZoC1j0bOGoY9I7R3n2DGek5ajbcYnOw==}
     dev: false
 
+  /ufo/1.0.1:
+    resolution: {integrity: sha512-boAm74ubXHY7KJQZLlXrtMz52qFvpsbOxDcZOnw/Wf+LS4Mmyu7JxmzD4tDLtUQtmZECypJ0FrCz4QIe6dvKRA==}
+    dev: true
+
   /unbox-primitive/1.0.2:
     resolution: {integrity: sha512-61pPlCD9h51VoreyJ0BReideM3MDKMKnh6+V9L08331ipq6Q8OFXZYiqP6n/tbHx4s5I9uRhcye6BrbkizkBDw==}
     dependencies:
@@ -14633,6 +14658,42 @@ packages:
       replace-ext: 1.0.1
     dev: true
 
+  /vite-node/0.26.3:
+    resolution: {integrity: sha512-Te2bq0Bfvq6XiO718I+1EinMjpNYKws6SNHKOmVbILAQimKoZKDd+IZLlkaYcBXPpK3HFe2U80k8Zw+m3w/a2w==}
+    engines: {node: '>=v14.16.0'}
+    hasBin: true
+    dependencies:
+      debug: 4.3.4
+      mlly: 1.0.0
+      pathe: 0.2.0
+      source-map: 0.6.1
+      source-map-support: 0.5.21
+      vite: 2.9.12
+    transitivePeerDependencies:
+      - less
+      - sass
+      - stylus
+      - supports-color
+    dev: true
+
+  /vite-node/0.26.3_sass@1.56.1:
+    resolution: {integrity: sha512-Te2bq0Bfvq6XiO718I+1EinMjpNYKws6SNHKOmVbILAQimKoZKDd+IZLlkaYcBXPpK3HFe2U80k8Zw+m3w/a2w==}
+    engines: {node: '>=v14.16.0'}
+    hasBin: true
+    dependencies:
+      debug: 4.3.4
+      mlly: 1.0.0
+      pathe: 0.2.0
+      source-map: 0.6.1
+      source-map-support: 0.5.21
+      vite: 2.9.12_sass@1.56.1
+    transitivePeerDependencies:
+      - less
+      - sass
+      - stylus
+      - supports-color
+    dev: true
+
   /vite-plugin-inspect/0.3.15_vite@2.9.12:
     resolution: {integrity: sha512-WlAnh0L14jtQA3q6+6cbhU3+ZcOE5iOeNuyQqUAK/T3IKsv1PwDwpHUSWjpP25uBO0WTbw2zsY0R3Hpbtfw+AA==}
     engines: {node: '>=14'}
@@ -14749,8 +14810,8 @@ packages:
       - supports-color
     dev: false
 
-  /vitest/0.23.4:
-    resolution: {integrity: sha512-iukBNWqQAv8EKDBUNntspLp9SfpaVFbmzmM0sNcnTxASQZMzRw3PsM6DMlsHiI+I6GeO5/sYDg3ecpC+SNFLrQ==}
+  /vitest/0.26.3:
+    resolution: {integrity: sha512-FmHxU9aUCxTi23keF3vxb/Qp0lYXaaJ+jRLGOUmMS3qVTOJvgGE+f1VArupA6pEhaG2Ans4X+zV9dqM5WISMbg==}
     engines: {node: '>=v14.16.0'}
     hasBin: true
     peerDependencies:
@@ -14774,14 +14835,18 @@ packages:
       '@types/chai': 4.3.4
       '@types/chai-subset': 1.3.3
       '@types/node': 18.11.10
+      acorn: 8.8.1
+      acorn-walk: 8.2.0
       chai: 4.3.7
       debug: 4.3.4
       local-pkg: 0.4.2
-      strip-literal: 0.4.2
+      source-map: 0.6.1
+      strip-literal: 1.0.0
       tinybench: 2.3.1
       tinypool: 0.3.0
       tinyspy: 1.0.2
       vite: 2.9.12
+      vite-node: 0.26.3
     transitivePeerDependencies:
       - less
       - sass
@@ -14789,8 +14854,8 @@ packages:
       - supports-color
     dev: true
 
-  /vitest/0.23.4_jsdom@20.0.3:
-    resolution: {integrity: sha512-iukBNWqQAv8EKDBUNntspLp9SfpaVFbmzmM0sNcnTxASQZMzRw3PsM6DMlsHiI+I6GeO5/sYDg3ecpC+SNFLrQ==}
+  /vitest/0.26.3_jsdom@20.0.3:
+    resolution: {integrity: sha512-FmHxU9aUCxTi23keF3vxb/Qp0lYXaaJ+jRLGOUmMS3qVTOJvgGE+f1VArupA6pEhaG2Ans4X+zV9dqM5WISMbg==}
     engines: {node: '>=v14.16.0'}
     hasBin: true
     peerDependencies:
@@ -14814,15 +14879,19 @@ packages:
       '@types/chai': 4.3.4
       '@types/chai-subset': 1.3.3
       '@types/node': 18.11.10
+      acorn: 8.8.1
+      acorn-walk: 8.2.0
       chai: 4.3.7
       debug: 4.3.4
       jsdom: 20.0.3
       local-pkg: 0.4.2
-      strip-literal: 0.4.2
+      source-map: 0.6.1
+      strip-literal: 1.0.0
       tinybench: 2.3.1
       tinypool: 0.3.0
       tinyspy: 1.0.2
       vite: 2.9.12
+      vite-node: 0.26.3
     transitivePeerDependencies:
       - less
       - sass
@@ -14830,8 +14899,8 @@ packages:
       - supports-color
     dev: true
 
-  /vitest/0.23.4_sass@1.56.1:
-    resolution: {integrity: sha512-iukBNWqQAv8EKDBUNntspLp9SfpaVFbmzmM0sNcnTxASQZMzRw3PsM6DMlsHiI+I6GeO5/sYDg3ecpC+SNFLrQ==}
+  /vitest/0.26.3_sass@1.56.1:
+    resolution: {integrity: sha512-FmHxU9aUCxTi23keF3vxb/Qp0lYXaaJ+jRLGOUmMS3qVTOJvgGE+f1VArupA6pEhaG2Ans4X+zV9dqM5WISMbg==}
     engines: {node: '>=v14.16.0'}
     hasBin: true
     peerDependencies:
@@ -14855,14 +14924,18 @@ packages:
       '@types/chai': 4.3.4
       '@types/chai-subset': 1.3.3
       '@types/node': 18.11.10
+      acorn: 8.8.1
+      acorn-walk: 8.2.0
       chai: 4.3.7
       debug: 4.3.4
       local-pkg: 0.4.2
-      strip-literal: 0.4.2
+      source-map: 0.6.1
+      strip-literal: 1.0.0
       tinybench: 2.3.1
       tinypool: 0.3.0
       tinyspy: 1.0.2
       vite: 2.9.12_sass@1.56.1
+      vite-node: 0.26.3_sass@1.56.1
     transitivePeerDependencies:
       - less
       - sass
