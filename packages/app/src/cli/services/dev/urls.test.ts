@@ -48,6 +48,8 @@ beforeEach(() => {
         spin: {
           isSpin: vi.fn(),
           fqdn: vi.fn(),
+          appHost: vi.fn(),
+          appPort: vi.fn(),
         },
       },
     }
@@ -510,10 +512,12 @@ describe('generateFrontendURL', () => {
     expect(ui.prompt).not.toBeCalled()
   })
 
-  it('Returns a spin url if we are in a spin environment', async () => {
+  it('Returns a cli spin url if we are in a spin environment running a non 1p app', async () => {
     // Given
     vi.mocked(environment.spin.isSpin).mockReturnValue(true)
     vi.mocked(environment.spin.fqdn).mockResolvedValue('spin.domain.dev')
+    vi.mocked(environment.spin.appPort).mockReturnValue(undefined)
+    vi.mocked(environment.spin.appHost).mockReturnValue(undefined)
     const options = {
       app: testApp({hasUIExtensions: () => false}),
       tunnel: false,
@@ -528,6 +532,31 @@ describe('generateFrontendURL', () => {
     expect(got).toEqual({
       frontendUrl: 'https://cli.spin.domain.dev',
       frontendPort: 4040,
+      usingLocalhost: false,
+    })
+    expect(store.setAppInfo).not.toBeCalled()
+    expect(ui.prompt).not.toBeCalled()
+  })
+
+  it('Returns a 1p app spin url if we are in a spin environment running a 1p app', async () => {
+    // Given
+    vi.mocked(environment.spin.isSpin).mockReturnValue(true)
+    vi.mocked(environment.spin.appPort).mockReturnValue(1234)
+    vi.mocked(environment.spin.appHost).mockReturnValue('1p-app-host.spin.domain.dev')
+    const options = {
+      app: testApp({hasUIExtensions: () => false}),
+      tunnel: false,
+      noTunnel: false,
+      commandConfig: new Config({root: ''}),
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({
+      frontendUrl: 'https://1p-app-host.spin.domain.dev',
+      frontendPort: 1234,
       usingLocalhost: false,
     })
     expect(store.setAppInfo).not.toBeCalled()

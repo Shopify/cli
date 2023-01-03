@@ -106,3 +106,22 @@ export function namespace(env = process.env): string | undefined {
 export function host(env = process.env): string | undefined {
   return env[constants.environmentVariables.spinHost]
 }
+
+/**
+ * Returns the value of the SERVER_PORT environment variable.
+ * @param env - Environment variables
+ * @returns The value of the SERVER_PORT environment variable.
+ */
+export function appPort(env = process.env): number | undefined {
+  const port = Number(env[constants.environmentVariables.spinAppPort])
+  return (!isNaN(port) && port) || undefined
+}
+
+/**
+ * Returns the value of the SPIN_APP_HOST environment variable.
+ * @param env - Environment variables
+ * @returns The value of the SPIN_APP_HOST environment variable.
+ */
+export function appHost(env = process.env): string | undefined {
+  return env[constants.environmentVariables.spinAppHost]
+}

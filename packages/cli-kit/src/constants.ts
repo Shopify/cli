@@ -34,6 +34,8 @@ const constants = {
     codespaces: 'CODESPACES',
     gitpod: 'GITPOD_WORKSPACE_URL',
     spin: 'SPIN',
+    spinAppPort: 'SERVER_PORT',
+    spinAppHost: 'SPIN_APP_HOST',
   },
   paths: {
     executables: {
