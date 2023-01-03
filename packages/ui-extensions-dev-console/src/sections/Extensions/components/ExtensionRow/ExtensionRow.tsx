@@ -1,6 +1,5 @@
 import * as styles from './ExtensionRow.module.scss'
 import en from './translations/en.json'
-import {ActionSet} from '../ActionSet'
 import {useExtensionsInternal} from '../../hooks/useExtensionsInternal.js'
 import React, {useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
@@ -83,7 +82,6 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
       <td>
         <span className={`${styles.Status} ${statusClass}`}>{i18n.translate(`statuses.${status}`)}</span>
       </td>
-      <ActionSet className={`${styles.ActionSet} ${isFocus ? styles.ForceVisible : ''}`} extension={extension} />
     </tr>
   )
 }
