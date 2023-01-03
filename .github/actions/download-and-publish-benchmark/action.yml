@@ -1,0 +1,26 @@
+name: "Download and publish benchmark"
+description: "Downloads benchmark coverage stats from the base branch, publishes a comment with a summary"
+inputs:
+  base-branch-name:
+    required: true
+    description: "Name of the branch to compare coverage with"
+runs:
+  using: "composite"
+  steps:
+    # Strips forward slashes and dots as not supported by artifact commands
+    - name: Clean base ref name
+      shell: bash
+      env:
+          SAFE_BASE_REF_NAME: "${{ inputs.base-branch-name }}"
+      run: |
+        SAFE_BASE_REF_NAME=${{ env.SAFE_BASE_REF_NAME }}
+        SAFE_BASE_REF_NAME=${SAFE_BASE_REF_NAME//[\/.]/}
+        echo SAFE_BASE_REF_NAME=${SAFE_BASE_REF_NAME} >> $GITHUB_ENV
+    - name: Generate report
+      id: benchmark
+      run: node workspace/src/generate-benchmark-report.js
+      shell: bash
+    - uses: marocchino/sticky-pull-request-comment@v2.3.1
+      with:
+        header: Benchmark
+        message: ${{ steps.benchmark.outputs.report }}

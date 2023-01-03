@@ -6,6 +6,7 @@ import {Abort} from '../../error.js'
 import {addPublic} from '../../metadata.js'
 import {content, info, token} from '../../output.js'
 import {hashString} from '../../string.js'
+import {isTruthy} from '../../environment/utilities.js'
 import {Command, Interfaces} from '@oclif/core'
 
 interface PresettableFlags {
@@ -24,11 +25,24 @@ abstract class BaseCommand extends Command {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected async init(): Promise<any> {
+    this.exitWithTimestampWhenEnvVariablePresent()
     if (!isDevelopment()) {
       // This function runs just prior to `run`
       await registerCleanBugsnagErrorsFromWithinPlugins(this.config)
     }
     return super.init()
+  }
+
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+  protected exitWithTimestampWhenEnvVariablePresent() {
+    if (isTruthy(process.env.SHOPIFY_CLI_ENV_STARTUP_PERFORMANCE_RUN)) {
+      info(`
+      SHOPIFY_CLI_TIMESTAMP_START
+      { "timestamp": ${Date.now()} }
+      SHOPIFY_CLI_TIMESTAMP_END
+      `)
+      process.exit(0)
+    }
   }
 
   protected async parse<
