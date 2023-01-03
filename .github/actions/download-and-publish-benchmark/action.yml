@@ -16,6 +16,17 @@ runs:
         SAFE_BASE_REF_NAME=${{ env.SAFE_BASE_REF_NAME }}
         SAFE_BASE_REF_NAME=${SAFE_BASE_REF_NAME//[\/.]/}
         echo SAFE_BASE_REF_NAME=${SAFE_BASE_REF_NAME} >> $GITHUB_ENV
+    - name: Download artifact
+      continue-on-error: true
+      id: download-artifact
+      # We use this action and not Github's default, due to https://github.com/actions/download-artifact/issues/3
+      uses: dawidd6/action-download-artifact@v2.24.2
+      with:
+        workflow: shopify-cli.yml
+        workflow_conclusion: success
+        branch: ${{ inputs.base-branch-name }}
+        name: ${{ env.SAFE_BASE_REF_NAME }}--benchmark
+        if_no_artifact_found: ignore
     - name: Generate report
       id: benchmark
       run: node workspace/src/generate-benchmark-report.js
