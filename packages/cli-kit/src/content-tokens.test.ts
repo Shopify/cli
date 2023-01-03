@@ -1,5 +1,5 @@
-import {describe, expect, test} from 'vitest'
 import {LinkContentToken} from './content-tokens.js'
+import {describe, expect, test} from 'vitest'
 
 describe('LinkContentToken', () => {
   test('the link includes spaces between the URL and the parenthesis for command/control click to work', () => {
