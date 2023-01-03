@@ -44,7 +44,7 @@ for (const command of Object.keys(benchmark).sort()) {
   } else {
     const diff = Math.round((benchmark[command] / baselineBenchmark[command] - 1) * 100 * 100) / 100
     let icon = '⚪️'
-    if (diff <= 0) {
+    if (diff < 8) {
       icon = '🟢'
     } else if (diff < 10) {
       icon = '🟡'
