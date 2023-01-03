@@ -40,6 +40,7 @@ The [`@shopify/cli-kit`](https://www.npmjs.com/package/@shopify/cli-kit) NPM pac
 
 The following pages document the rationale behind some decisions that we made:
 
+* [December 2022 - Dynamically importing Lodash using CommonJS](./decision-record/2022-12-21-dynamically-importing-lodash-using-commonjs.md)
 * [August 2022 - Automating via Nx](./decision-record/2022_08-automation-via-nx.md)
 * [May 2022 - IDs' persistence](./decision-record/2022_05-IDs'-persistence.md)
 * [March 2022 - Lazy downloading a fixed version of the extension binary](./decision-record/2022_03-Lazy-downloading-a-fixed-version-of-the-extension-binary.md)

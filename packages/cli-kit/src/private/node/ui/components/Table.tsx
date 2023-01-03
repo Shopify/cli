@@ -1,7 +1,7 @@
 import {List} from './List.js'
+import {capitalize} from '../../../../string.js'
 import {Box, Text} from 'ink'
 import React from 'react'
-import {capitalize} from 'lodash-es'
 
 export interface Props {
   table: {

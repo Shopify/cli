@@ -1,7 +1,7 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
 import {fetchOrgAndApps} from '../services/dev/fetch.js'
 import {output, ui} from '@shopify/cli-kit'
-import {debounce} from 'lodash-es'
+import {debounce} from '@shopify/cli-kit/common/function'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
   if (organizations.length === 1) {
