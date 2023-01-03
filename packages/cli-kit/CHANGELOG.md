@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.30.2
+
+### Patch Changes
+
+- ba91a2da: Fix terminal links adding a zero-width character
+- 23b1cc84: Add timing information to verbose logs
+
 ## 3.30.1
 
 ### Patch Changes
