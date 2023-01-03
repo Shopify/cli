@@ -2,24 +2,24 @@ import {useApp} from 'ink'
 import {useEffect} from 'react'
 
 interface Options {
-  onResolve?: () => unknown
-  onReject?: (error: Error) => void
+  onFulfilled?: () => unknown
+  onRejected?: (error: Error) => void
 }
 
-export default function useAsync(
+export default function useEffectAsync(
   asyncFunction: () => Promise<unknown>,
-  {onResolve = () => {}, onReject = () => {}}: Options,
+  {onFulfilled = () => {}, onRejected = () => {}}: Options,
 ) {
   const {exit: unmountInk} = useApp()
 
   useEffect(() => {
     asyncFunction()
       .then(() => {
-        onResolve()
+        onFulfilled()
         unmountInk()
       })
       .catch((error) => {
-        onReject(error)
+        onRejected(error)
         unmountInk(error)
       })
   }, [])

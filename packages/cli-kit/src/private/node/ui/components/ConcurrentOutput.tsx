@@ -1,5 +1,5 @@
 import {OutputProcess} from '../../../../output.js'
-import useAsync from '../hooks/use-async.js'
+import useEffectAsync from '../hooks/use-effect-async.js'
 import React, {FunctionComponent, useState} from 'react'
 import {Box, Static, Text} from 'ink'
 import stripAnsi from 'strip-ansi'
@@ -93,7 +93,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
     )
   }
 
-  useAsync(runProcesses, {onReject: () => abortController.abort()})
+  useEffectAsync(runProcesses, {onRejected: () => abortController.abort()})
 
   return (
     <Static items={processOutput}>

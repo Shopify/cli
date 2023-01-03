@@ -1,6 +1,6 @@
 import {TextAnimation} from './TextAnimation.js'
 import useLayout from '../hooks/use-layout.js'
-import useAsync from '../hooks/use-async.js'
+import useEffectAsync from '../hooks/use-effect-async.js'
 import {Box, Text} from 'ink'
 import React, {useState} from 'react'
 
@@ -29,7 +29,7 @@ const Tasks: React.FC<Props> = ({tasks}) => {
     }
   }
 
-  useAsync(runTasks, {onResolve: () => setState('success'), onReject: () => setState('failure')})
+  useEffectAsync(runTasks, {onFulfilled: () => setState('success'), onRejected: () => setState('failure')})
 
   return (
     <Box flexDirection="column">
