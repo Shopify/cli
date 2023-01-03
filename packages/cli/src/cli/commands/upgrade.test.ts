@@ -23,6 +23,6 @@ describe('upgrade command', () => {
 
     await Upgrade.run([], import.meta.url)
 
-    expect(upgradeService).toHaveBeenCalledWith(expect.stringMatching(/cli-main$/), expect.stringMatching(/3\./))
+    expect(upgradeService).toHaveBeenCalledWith(expect.stringMatching(/cli$/), expect.stringMatching(/3\./))
   })
 })

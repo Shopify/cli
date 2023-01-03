@@ -31,7 +31,7 @@ for (const pluginName of ['app', 'theme']) {
   const commands = Object.keys(oclifManifest.commands).map((command) => command.split(':'))
   for (const command of commands) {
     const startTimestamp = Date.now()
-    const {stdout} = await execa(path.join(rootDirectory, 'packages/cli-main/bin/dev.js'), command, {
+    const {stdout} = await execa(path.join(rootDirectory, 'packages/cli/bin/dev.js'), command, {
       env: {SHOPIFY_CLI_ENV_STARTUP_PERFORMANCE_RUN: '1'},
       stdout: 'pipe',
       stderr: 'pipe',

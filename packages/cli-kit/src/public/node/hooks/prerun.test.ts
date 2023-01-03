@@ -25,7 +25,7 @@ describe('parseCommandContent', () => {
     const cmdInfo = {
       id: 'upgrade',
       aliases: [],
-      pluginAlias: '@shopify/cli-main',
+      pluginAlias: '@shopify/cli',
     }
 
     // When
@@ -43,7 +43,7 @@ describe('parseCommandContent', () => {
     const cmdInfo = {
       id: 'app:dev',
       aliases: [],
-      pluginAlias: '@shopify/cli-main',
+      pluginAlias: '@shopify/cli',
     }
 
     // When
@@ -61,7 +61,7 @@ describe('parseCommandContent', () => {
     const cmdInfo = {
       id: 'upgrade',
       aliases: ['upgradeAlias'],
-      pluginAlias: '@shopify/cli-main',
+      pluginAlias: '@shopify/cli',
     }
     process.argv = ['upgradeAlias']
 

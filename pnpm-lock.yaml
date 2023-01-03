@@ -149,7 +149,7 @@ importers:
       '@shopify/admin-ui-extensions-react': 1.0.1_react@17.0.2
       '@shopify/app': link:../../packages/app
       '@shopify/checkout-ui-extensions-react': 0.21.2_react@17.0.2
-      '@shopify/cli': link:../../packages/cli-main
+      '@shopify/cli': link:../../packages/cli
       '@shopify/customer-account-ui-extensions-react': 0.0.8_react@17.0.2
       '@shopify/post-purchase-ui-extensions': 0.13.3
       '@shopify/post-purchase-ui-extensions-react': 0.13.3_react@17.0.2
@@ -456,7 +456,7 @@ importers:
       vite: 2.9.12
       vitest: 0.26.3
 
-  packages/cli-main:
+  packages/cli:
     specifiers:
       '@oclif/core': 1.21.0
       '@oclif/plugin-commands': 2.2.0
