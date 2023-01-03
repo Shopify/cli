@@ -12,5 +12,9 @@
   &:hover {
     background: var(--dc-color-icon);
   }
+
+  &[aria-pressed=true] {
+    background-color: var(--dc-color-pressed);
+  }
 }
 
