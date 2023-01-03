@@ -30,7 +30,9 @@ export class LinkContentToken extends ContentToken<Message> {
   }
 
   output() {
-    return terminalLink(colors.green(stringifyMessage(this.value)), this.link ?? '')
+    const text = colors.green(stringifyMessage(this.value))
+    const url = this.link ?? ''
+    return terminalLink(text, url, {fallback: () => `${text} ( ${url} )`})
   }
 }
 
