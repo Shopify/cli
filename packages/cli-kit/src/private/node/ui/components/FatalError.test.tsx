@@ -93,8 +93,8 @@ describe('FatalError', async () => {
       │  Unexpected error                                                            │
       │                                                                              │
       │  Next steps                                                                  │
-      │    • Have you created a Shopify Partners organization                        │
-      │      (https://partners.shopify.com/signup)?                                  │
+      │    • Have you created a Shopify Partners organization (                      │
+      │      https://partners.shopify.com/signup )?                                  │
       │    • Have you confirmed your accounts from the emails you received?          │
       │    • Need to connect to a different App or organization? Run the command     │
       │      again with \`--reset\`                                                    │

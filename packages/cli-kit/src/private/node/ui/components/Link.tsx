@@ -9,7 +9,7 @@ interface Props {
 }
 
 function fallback(text: string, url: string) {
-  return `${text} ${chalk.dim(`(${url})`)}`
+  return `${text} ${chalk.dim(`( ${url} )`)}`
 }
 
 /**
