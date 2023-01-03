@@ -44,10 +44,10 @@ export function outputDevConsoleURL(url: string) {
   output.info(output.content`${heading}\n\n  ${devConsoleURL}\n`)
 }
 
-export function outputExtensionsMessages(app: AppInterface, storeFqdn: string, url: string) {
+export function outputExtensionsMessages(app: AppInterface, storeFqdn: string, url: string, interactiveMode = true) {
   outputUIExtensionsURLs(app.extensions.ui, storeFqdn, url)
   outputFunctionsMessage(app.extensions.function)
-  outputThemeExtensionsMessage(app.extensions.theme)
+  outputThemeExtensionsMessage(app.extensions.theme, interactiveMode)
 }
 
 function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, url: string) {
@@ -70,10 +70,10 @@ One testing option is to use a separate app dedicated to staging.`
   output.info(output.content`${heading}\n${message}\n`)
 }
 
-function outputThemeExtensionsMessage(extensions: ThemeExtension[]) {
+function outputThemeExtensionsMessage(extensions: ThemeExtension[], interactiveMode: boolean) {
   if (extensions.length === 0) return
   for (const extension of extensions) {
-    const message = extension.previewMessage('', '')
+    const message = extension.previewMessage('', '', interactiveMode)
     if (message) output.info(message)
   }
 }

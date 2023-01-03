@@ -15,6 +15,11 @@ export default class Dev extends Command {
       description: 'The API key of your app.',
       env: 'SHOPIFY_FLAG_APP_API_KEY',
     }),
+    'api-secret': Flags.string({
+      hidden: false,
+      description: 'The API secret of your app.',
+      env: 'SHOPIFY_FLAG_APP_API_SECRET',
+    }),
     store: Flags.string({
       hidden: false,
       char: 's',
@@ -97,6 +102,7 @@ export default class Dev extends Command {
     await dev({
       directory,
       apiKey: flags['api-key'],
+      apiSecret: flags['api-secret'],
       storeFqdn: flags.store,
       reset: flags.reset,
       update: !flags['no-update'],

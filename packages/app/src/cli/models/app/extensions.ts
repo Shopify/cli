@@ -41,7 +41,7 @@ export type FunctionExtension<TConfiguration extends FunctionConfigType = Functi
 
 export type ThemeExtension<TConfiguration extends ThemeConfigContents = ThemeConfigContents> = Extension & {
   configuration: TConfiguration
-  previewMessage(url: string, storeFqdn: string): output.TokenizedString | undefined
+  previewMessage(url: string, storeFqdn: string, interactiveMode: boolean): output.TokenizedString | undefined
 }
 
 export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigContents> = Extension & {

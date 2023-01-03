@@ -36,7 +36,7 @@ export interface DevEnvironmentOptions {
   reset: boolean
 }
 
-interface DevEnvironmentOutput {
+export interface DevEnvironmentOutput {
   remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {apiSecret?: string}
   storeFqdn: string
   updateURLs: boolean | undefined

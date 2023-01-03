@@ -1,4 +1,4 @@
-import {ensureDevEnvironment} from './environment.js'
+import {DevEnvironmentOutput, ensureDevEnvironment} from './environment.js'
 import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
@@ -26,6 +26,7 @@ export interface DevOptions {
   directory: string
   id?: number
   apiKey?: string
+  apiSecret?: string
   storeFqdn?: string
   reset: boolean
   update: boolean
@@ -49,11 +50,16 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
-  const token = await session.ensureAuthenticatedPartners()
-  const {storeFqdn, remoteApp, updateURLs: cachedUpdateURLs, tunnelPlugin} = await ensureDevEnvironment(options, token)
+  const {token, devOutput, interactiveMode} = await resolveDevParameters(options)
+  const {storeFqdn, remoteApp, updateURLs: cachedUpdateURLs, tunnelPlugin} = devOutput
 
   const apiKey = remoteApp.apiKey
-  const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
+  const specifications = await fetchSpecifications({
+    token,
+    apiKey,
+    config: options.commandConfig,
+    fetchRemote: interactiveMode,
+  })
   let localApp = await load({directory: options.directory, specifications})
 
   if (!options.skipDependenciesInstallation) {
@@ -74,17 +80,19 @@ async function dev(options: DevOptions) {
   /** If the app doesn't have web/ the link message is not necessary */
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
   let shouldUpdateURLs = false
-  if ((frontendConfig || backendConfig) && options.update) {
-    const currentURLs = await getURLs(apiKey, token)
-    const newURLs = generatePartnersURLs(exposedUrl, backendConfig?.configuration.authCallbackPath)
-    shouldUpdateURLs = await shouldOrPromptUpdateURLs({
-      currentURLs,
-      appDirectory: localApp.directory,
-      cachedUpdateURLs,
-      newApp: remoteApp.newApp,
-    })
-    if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
-    await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
+  if (frontendConfig || backendConfig) {
+    if (options.update && interactiveMode) {
+      const currentURLs = await getURLs(apiKey, token)
+      const newURLs = generatePartnersURLs(exposedUrl, backendConfig?.configuration.authCallbackPath)
+      shouldUpdateURLs = await shouldOrPromptUpdateURLs({
+        currentURLs,
+        appDirectory: localApp.directory,
+        cachedUpdateURLs,
+        newApp: remoteApp.newApp,
+      })
+      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
+      await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
+    }
     outputAppURL(storeFqdn, exposedUrl)
   }
 
@@ -120,11 +128,11 @@ async function dev(options: DevOptions) {
     proxyTargets.push(devExt)
   }
 
-  outputExtensionsMessages(localApp, storeFqdn, proxyUrl)
+  outputExtensionsMessages(localApp, storeFqdn, proxyUrl, interactiveMode)
 
   const additionalProcesses: output.OutputProcess[] = []
 
-  if (localApp.extensions.theme.length > 0) {
+  if (localApp.extensions.theme.length > 0 && interactiveMode) {
     const adminSession = await session.ensureAuthenticatedAdmin(storeFqdn)
     const storefrontToken = await session.ensureAuthenticatedStorefront()
     const extension = localApp.extensions.theme[0]!
@@ -344,6 +352,34 @@ async function logMetadataForDev(options: {
     store_fqdn: options.storeFqdn,
     cmd_dev_tunnel_custom: tunnelType === 'custom' ? options.tunnelUrl : undefined,
   }))
+}
+
+async function resolveDevParameters(
+  options: DevOptions,
+): Promise<{interactiveMode: boolean; token: string; devOutput: DevEnvironmentOutput}> {
+  const providedParameters = options.apiKey && options.apiSecret && options.storeFqdn
+  if (providedParameters && !options.reset) {
+    return {
+      interactiveMode: false,
+      token: 'token',
+      devOutput: {
+        remoteApp: {
+          id: 'ID',
+          title: 'Title',
+          organizationId: 'organization',
+          apiSecret: options.apiSecret,
+          grantedScopes: [],
+          apiKey: options.apiKey ?? '',
+        },
+        storeFqdn: options.storeFqdn ?? '',
+        updateURLs: undefined,
+        tunnelPlugin: undefined,
+      },
+    }
+  }
+
+  const token = await session.ensureAuthenticatedPartners()
+  return {interactiveMode: true, token, devOutput: await ensureDevEnvironment(options, token)}
 }
 
 export default dev

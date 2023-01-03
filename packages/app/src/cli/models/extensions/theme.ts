@@ -84,13 +84,16 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
     return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }
 
-  previewMessage() {
+  previewMessage(_url: string, _storeFqdn: string, interactiveMode = false) {
     const heading = output.token.heading(`${this.name} (${this.humanName})`)
     const link = output.token.link(
       'dev doc instructions',
       'https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-3-test-your-changes',
     )
-    const message = output.content`Follow the ${link} by deploying your work as a draft`
+    let message = output.content`Follow the ${link} by deploying your work as a draft`
+    if (!interactiveMode) {
+      message = output.content`Theme app extensions not supported in non-interactive mode`
+    }
 
     return output.content`${heading}\n${message.value}\n`
   }

@@ -17,6 +17,7 @@ export interface FetchSpecificationsOptions {
   token: string
   apiKey: string
   config: Config
+  fetchRemote?: boolean
 }
 /**
  * Returns all extension/function specifications the user has access to.
@@ -36,13 +37,42 @@ export async function fetchSpecifications({
   token,
   apiKey,
   config,
+  fetchRemote = true,
 }: FetchSpecificationsOptions): Promise<GenericSpecification[]> {
+  const ui = await loadUIExtensionSpecifications(config)
+  const theme = await loadThemeSpecifications()
+  const functions = await loadFunctionSpecifications(config)
+  const local = [...ui, ...theme]
+
+  const updatedSpecs = fetchRemote
+    ? mergeLocalAndRemoteSpecs(local, await fetchRemoteExtensionSpecifications(token, apiKey))
+    : local
+  return [...updatedSpecs, ...functions]
+}
+
+function mergeLocalAndRemoteSpecs(
+  local: ExtensionSpec[],
+  remote: FlattenedRemoteSpecification[],
+): GenericSpecification[] {
+  const updated = local.map((spec) => {
+    const remoteSpec = remote.find((remote) => remote.identifier === spec.identifier)
+    if (remoteSpec) return {...spec, ...remoteSpec}
+    return undefined
+  })
+
+  return getArrayRejectingUndefined<GenericSpecification>(updated)
+}
+
+async function fetchRemoteExtensionSpecifications(
+  token: string,
+  apiKey: string,
+): Promise<FlattenedRemoteSpecification[]> {
   const query = api.graphql.ExtensionSpecificationsQuery
   const result: api.graphql.ExtensionSpecificationsQuerySchema = await api.partners.request(query, token, {
     api_key: apiKey,
   })
 
-  const extensionSpecifications: FlattenedRemoteSpecification[] = result.extensionSpecifications
+  return result.extensionSpecifications
     .filter((specification) => specification.options.managementExperience === 'cli')
     .map((spec) => {
       const newSpec = spec as FlattenedRemoteSpecification
@@ -58,25 +88,4 @@ export async function fetchSpecifications({
 
       return newSpec
     })
-
-  const ui = await loadUIExtensionSpecifications(config)
-  const theme = await loadThemeSpecifications()
-  const functions = await loadFunctionSpecifications(config)
-  const local = [...ui, ...theme]
-
-  const updatedSpecs = mergeLocalAndRemoteSpecs(local, extensionSpecifications)
-  return [...updatedSpecs, ...functions]
-}
-
-function mergeLocalAndRemoteSpecs(
-  local: ExtensionSpec[],
-  remote: FlattenedRemoteSpecification[],
-): GenericSpecification[] {
-  const updated = local.map((spec) => {
-    const remoteSpec = remote.find((remote) => remote.identifier === spec.identifier)
-    if (remoteSpec) return {...spec, ...remoteSpec}
-    return undefined
-  })
-
-  return getArrayRejectingUndefined<GenericSpecification>(updated)
 }
