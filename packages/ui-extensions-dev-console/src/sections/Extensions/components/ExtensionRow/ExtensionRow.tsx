@@ -6,6 +6,7 @@ import React, {useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {Button} from '@/components/Button'
+import {ButtonGroup} from '@/components/ButtonGroup/ButtonGroup'
 
 export interface ExtensionRowProps {
   extension: ExtensionPayload
@@ -20,14 +21,12 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
     fallback: en,
   })
   const {
-    development: {hidden, status},
+    development: {status},
   } = extension
 
   const [isFocus, setFocus] = useState(false)
-
-  const textClass = hidden ? styles.Hidden : undefined
   const statusClass = status ? styles[status || 'error'] : styles.error
-  const {embedded, navigate} = useExtensionsInternal()
+  const {embedded, navigate, show, hide} = useExtensionsInternal()
 
   const handleOpenRoot = (event: React.MouseEvent<HTMLElement>) => {
     if (embedded && window.top) {
@@ -62,14 +61,24 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
       onMouseEnter={() => onHighlight(extension)}
       onMouseLeave={onClearHighlight}
     >
-      <td className={textClass}>
+      <td>
         <span className={styles.Title}>{extension.title}</span>
       </td>
-      <td className={textClass}>{previewLink}</td>
+      <td>{previewLink}</td>
       <td>
         <Button type="button" onClick={() => onShowMobileQRCode(extension)}>
           View mobile
         </Button>
+      </td>
+      <td>
+        <ButtonGroup>
+          <Button type="button" selected={!extension.development.hidden} onClick={() => show([extension])}>
+            Local
+          </Button>
+          <Button type="button" selected={extension.development.hidden} onClick={() => hide([extension])}>
+            Live
+          </Button>
+        </ButtonGroup>
       </td>
       <td>
         <span className={`${styles.Status} ${statusClass}`}>{i18n.translate(`statuses.${status}`)}</span>
