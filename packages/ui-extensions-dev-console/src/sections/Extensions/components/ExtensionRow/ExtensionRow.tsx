@@ -36,6 +36,20 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
     }
   }
 
+  const previewLink =
+    extension.surface === 'pos' ? (
+      <span className={styles.NotApplicable}>--</span>
+    ) : (
+      <a
+        href={extension.development.root.url}
+        target="_blank"
+        aria-label="Preview this extension"
+        onClick={handleOpenRoot}
+      >
+        {extension.type.replaceAll('_', ' ')}
+      </a>
+    )
+
   return (
     <tr
       className={styles.DevToolRow}
@@ -51,16 +65,7 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
       <td className={textClass}>
         <span className={styles.Title}>{extension.title}</span>
       </td>
-      <td className={textClass}>
-        <a
-          href={extension.development.root.url}
-          target="_blank"
-          aria-label="Preview this extension"
-          onClick={handleOpenRoot}
-        >
-          {extension.type.replaceAll('_', ' ')}
-        </a>
-      </td>
+      <td className={textClass}>{previewLink}</td>
       <td>
         <Button type="button" onClick={() => onShowMobileQRCode(extension)}>
           View mobile
