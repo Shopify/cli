@@ -35,6 +35,7 @@ export function Extensions() {
             <th>{i18n.translate('extensionList.name')}</th>
             <th>{i18n.translate('extensionList.preview')}</th>
             <th>{i18n.translate('extensionList.mobile')}</th>
+            <th>{i18n.translate('extensionList.view')}</th>
             <th>{i18n.translate('extensionList.status')}</th>
             <th></th>
           </tr>

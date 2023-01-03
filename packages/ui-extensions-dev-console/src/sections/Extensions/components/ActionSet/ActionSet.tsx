@@ -2,7 +2,7 @@ import en from './translations/en.json'
 import * as styles from './ActionSet.module.scss'
 
 import React, {useCallback} from 'react'
-import {ExternalMinor, LinkMinor, RefreshMinor} from '@shopify/polaris-icons'
+import {RefreshMinor} from '@shopify/polaris-icons'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {Action} from '@/components/Action'
@@ -18,35 +18,13 @@ export function ActionSet({extension, className}: ActionSetProps) {
     id: 'ActionSet',
     fallback: en,
   })
-  const {refresh, embedded, navigate} = useExtensionsInternal()
-  const hideWebUrl = extension.surface === 'point_of_sale'
-
-  const handleOpenRoot = useCallback(() => {
-    const roolUrl = extension.development.root.url
-    if (embedded && window.top) {
-      navigate(extension)
-      return
-    }
-    window.open(roolUrl, '_blank')
-  }, [embedded, extension, navigate])
-
+  const {refresh} = useExtensionsInternal()
   const refreshExtension = useCallback(() => refresh([extension]), [extension, refresh])
-
-  // If the dev console is embedded then links should be opened in the current top window
-  const LinkIcon = embedded ? LinkMinor : ExternalMinor
 
   return (
     <>
       <td>
         <div className={styles.ActionGroup}>
-          {!hideWebUrl && (
-            <Action
-              source={LinkIcon}
-              accessibilityLabel={i18n.translate('openRootUrl')}
-              onAction={handleOpenRoot}
-              className={className}
-            />
-          )}
           <Action
             source={RefreshMinor}
             accessibilityLabel={i18n.translate('refresh')}
