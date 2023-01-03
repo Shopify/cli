@@ -1,7 +1,7 @@
 import * as styles from './ExtensionRow.module.scss'
 import en from './translations/en.json'
 import {useExtensionsInternal} from '../../hooks/useExtensionsInternal.js'
-import React, {useState} from 'react'
+import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {Button} from '@/components/Button'
@@ -23,7 +23,6 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
     development: {status},
   } = extension
 
-  const [isFocus, setFocus] = useState(false)
   const statusClass = status ? styles[status || 'error'] : styles.error
   const {embedded, navigate, show, hide} = useExtensionsInternal()
 
@@ -49,17 +48,7 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
     )
 
   return (
-    <tr
-      className={styles.DevToolRow}
-      onFocus={() => {
-        setFocus(true)
-      }}
-      onBlur={() => {
-        setFocus(false)
-      }}
-      onMouseEnter={() => onHighlight(extension)}
-      onMouseLeave={onClearHighlight}
-    >
+    <tr className={styles.DevToolRow} onMouseEnter={() => onHighlight(extension)} onMouseLeave={onClearHighlight}>
       <td>
         <span className={styles.Title}>{extension.title}</span>
       </td>
