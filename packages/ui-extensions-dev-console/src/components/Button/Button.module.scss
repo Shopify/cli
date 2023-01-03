@@ -9,6 +9,8 @@
   background: var(--dc-color-border);
   border-radius: var(--dc-border-radius);
 
+  cursor: pointer;
+
   &:hover {
     background: var(--dc-color-icon);
   }
