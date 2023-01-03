@@ -2,7 +2,7 @@
   "root": "workspace",
   "sourceRoot": "workspace/",
   "projectType": "library",
-  "implicitDependencies": ["cli-main"],
+  "implicitDependencies": ["cli"],
   "tags": ["scope:workspace"],
   "targets": {
     "lint": {
