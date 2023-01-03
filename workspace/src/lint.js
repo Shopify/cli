@@ -5,7 +5,6 @@ import fg from 'fast-glob'
 import * as url from 'node:url'
 import {promises as fs} from 'node:fs'
 import {createRequire} from 'node:module'
-import {execa} from 'execa'
 
 const require = createRequire(import.meta.url)
 const colors = require('ansi-colors')

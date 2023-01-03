@@ -21,7 +21,7 @@ const workspaceDirectory = path.join(rootDirectory, 'workspace')
 /**
  * LINT 2 - Startup time
  * ----
- * This lint runs all the CLI commands and fails if the startup time for any is above 1s
+ * This lint runs all the CLI commands and fails if the startup time for any is above a threshold.
  */
 console.info(colors.green.bold(`Measuring startup time for all commands`))
 const results = {}
