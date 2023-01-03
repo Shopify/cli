@@ -42,11 +42,11 @@ for (const command of Object.keys(benchmark).sort()) {
   if (baselineBenchmark[command] === undefined) {
     rows.push(['⚪️', `\`${command}\``, 'N/A', `${benchmark[command]} ms`, 'N/A'])
   } else {
-    const diff = (benchmark[command] / baselineBenchmark[command] - 1) * 100
+    const diff = Math.round((benchmark[command] / baselineBenchmark[command] - 1) * 100 * 100) / 100
     let icon = '⚪️'
     if (diff <= 0) {
       icon = '🟢'
-    } else if (diff < 2) {
+    } else if (diff < 10) {
       icon = '🟡'
     } else {
       icon = '🔴'
