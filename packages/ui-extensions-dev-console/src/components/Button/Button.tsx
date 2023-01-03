@@ -5,6 +5,8 @@ export interface ButtonProps extends React.HTMLProps<HTMLButtonElement> {
   type: 'button' | 'submit' | 'reset' | undefined
 }
 
-export function Button({className, ...props}: ButtonProps) {
-  return <button {...props} className={`${className ? className : ''} ${styles.Button}`} />
+export function Button({className, selected, ...props}: ButtonProps) {
+  const classNames = `${className ? `${className} ` : ''}${styles.Button}`
+
+  return <button {...props} className={classNames} aria-pressed={selected} />
 }
