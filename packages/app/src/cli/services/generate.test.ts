@@ -117,7 +117,7 @@ describe('after extension command finishes correctly', () => {
     const got = generate({directory: '/', reset: false, config: mockConfig, type: 'checkout_ui', template: 'unknown'})
 
     // Then
-    await expect(got).rejects.toThrow(/Specified extension template on invalid extension type/)
+    await expect(got).rejects.toThrow(/Invalid template for extension type/)
   })
 })
 
