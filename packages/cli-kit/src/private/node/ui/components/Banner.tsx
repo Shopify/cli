@@ -20,11 +20,11 @@ function typeToColor(type: Props['type']) {
 }
 
 const BoxWithBorder: React.FC<Props> = ({type, marginY, children}) => {
-  const {width} = useLayout()
+  const {twoThirds} = useLayout()
 
   return (
     <Box
-      width={width}
+      width={twoThirds}
       paddingY={1}
       paddingX={2}
       marginY={marginY}
@@ -41,7 +41,7 @@ const BoxWithBorder: React.FC<Props> = ({type, marginY, children}) => {
 }
 
 const BoxWithTopBottomLines: React.FC<Props> = ({type, marginY, children}) => {
-  const {width} = useLayout()
+  const {twoThirds} = useLayout()
 
   return (
     <Box marginY={marginY} flexDirection="column">
@@ -50,14 +50,14 @@ const BoxWithTopBottomLines: React.FC<Props> = ({type, marginY, children}) => {
           <Text color={typeToColor(type)}>{'─'.repeat(2)}</Text>
           <Text>{` ${type.replace(/_/g, ' ')} `}</Text>
           {/* 2 initial dashes + 2 spaces surrounding the type */}
-          <Text color={typeToColor(type)}>{'─'.repeat(width - 2 - type.length - 2)}</Text>
+          <Text color={typeToColor(type)}>{'─'.repeat(twoThirds - 2 - type.length - 2)}</Text>
         </Text>
       </Box>
 
       {children}
 
       <Box marginTop={1}>
-        <Text color={typeToColor(type)}>{'─'.repeat(width)}</Text>
+        <Text color={typeToColor(type)}>{'─'.repeat(twoThirds)}</Text>
       </Box>
     </Box>
   )

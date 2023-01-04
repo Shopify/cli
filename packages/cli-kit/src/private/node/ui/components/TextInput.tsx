@@ -13,8 +13,8 @@ interface Props {
 }
 
 const TextInput: FC<Props> = ({value, placeholder = '', onChange}) => {
-  const {width} = useLayout()
-  const underline = new Array(width - 3).fill('▔')
+  const {oneThird} = useLayout()
+  const underline = new Array(oneThird - 3).fill('▔')
   const [cursorOffset, setCursorOffset] = useState((value || '').length)
 
   // if the updated value is shorter than the last one we need to reset the cursor
@@ -45,10 +45,6 @@ const TextInput: FC<Props> = ({value, placeholder = '', onChange}) => {
       }
     })
     .join('')
-
-  if (value.length > 0 && cursorOffset === value.length) {
-    renderedValue += chalk.inverse(' ')
-  }
 
   useInput((input, key) => {
     if (
@@ -91,7 +87,7 @@ const TextInput: FC<Props> = ({value, placeholder = '', onChange}) => {
   })
 
   return (
-    <Box flexDirection="column" width={width}>
+    <Box flexDirection="column" width={oneThird}>
       <Box>
         <Box marginRight={2}>
           <Text color="cyan">{`>`}</Text>
@@ -99,6 +95,11 @@ const TextInput: FC<Props> = ({value, placeholder = '', onChange}) => {
         <Text color="cyan">
           {placeholder ? (value.length > 0 ? renderedValue : renderedPlaceholder) : renderedValue}
         </Text>
+        {value.length > 0 && cursorOffset === value.length && (
+          <Text color="cyan" inverse>
+            {' '}
+          </Text>
+        )}
       </Box>
       <Box marginLeft={3}>
         <Text color="cyan">{underline}</Text>
