@@ -1,5 +1,8 @@
-.Hidden {
-  visibility: hidden;
+
+.Intro {
+  padding: 0.6rem 1.5rem 1.8rem;
+  font-family: var(--dc-font-pro);
+  border-bottom: 1px solid var(--dc-color-border);
 }
 
 .ExtensionList {
@@ -13,25 +16,22 @@
     border-collapse: collapse;
   }
 
-  hr {
-    color: var(--dc-subdued);
-  }
-
   tr {
     line-height: 3rem;
-    border-bottom: 1px solid var(--dc-dark);
+    border-bottom: 1px solid var(--dc-color-border);
   }
 
   th {
     position: sticky;
     top: 0;
     z-index: 2;
-    padding: 1rem 1.5rem;
-    background: var(--dc-background);
+    padding: 0.8rem 1.5rem;
+    color: var(--dc-color-subdued);
+    font-weight: normal;
   }
 
   svg {
-    fill: var(--dc-subdued);
+    fill: var(--dc-color-white);
   }
 }
 

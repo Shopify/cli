@@ -28,13 +28,15 @@ export function Extensions() {
 
   const ConsoleContent = () => (
     <section className={styles.ExtensionList}>
+      <p className={styles.Intro}>{i18n.translate('intro')}</p>
       <table>
         <thead>
           <tr>
             <th>{i18n.translate('extensionList.name')}</th>
-            <th>{i18n.translate('extensionList.type')}</th>
+            <th>{i18n.translate('extensionList.preview')}</th>
+            <th>{i18n.translate('extensionList.mobile')}</th>
+            <th>{i18n.translate('extensionList.view')}</th>
             <th>{i18n.translate('extensionList.status')}</th>
-            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -46,7 +48,6 @@ export function Extensions() {
                 extension={extension}
                 onHighlight={focus}
                 onClearHighlight={unfocus}
-                onCloseMobileQRCode={() => setActiveMobileQRCodeExtension(undefined)}
                 onShowMobileQRCode={setActiveMobileQRCodeExtension}
               />
             )

@@ -26,11 +26,6 @@ export function useExtensionsInternal() {
       }),
 
     // dispatch events
-    refresh: (extensions: ExtensionPayload[]) =>
-      extensionServer.client.emit(
-        'refresh',
-        extensions.map(({uuid}) => ({uuid})),
-      ),
     focus: (extension: ExtensionPayload) => extensionServer.client.emit('focus', [{uuid: extension.uuid}]),
     unfocus: () => extensionServer.client.emit('unfocus'),
     navigate: (extension: ExtensionPayload) =>
