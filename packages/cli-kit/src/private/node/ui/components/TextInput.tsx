@@ -46,6 +46,10 @@ const TextInput: FC<Props> = ({value, placeholder = '', onChange}) => {
     })
     .join('')
 
+  if (cursorOffset === value.length) {
+    renderedValue += chalk.inverse(' ')
+  }
+
   useInput((input, key) => {
     if (
       key.upArrow ||
@@ -92,14 +96,11 @@ const TextInput: FC<Props> = ({value, placeholder = '', onChange}) => {
         <Box marginRight={2}>
           <Text color="cyan">{`>`}</Text>
         </Box>
-        <Text color="cyan">
-          {placeholder ? (value.length > 0 ? renderedValue : renderedPlaceholder) : renderedValue}
-        </Text>
-        {value.length > 0 && cursorOffset === value.length && (
-          <Text color="cyan" inverse>
-            {' '}
+        <Box flexGrow={1}>
+          <Text color="cyan">
+            {placeholder ? (value.length > 0 ? renderedValue : renderedPlaceholder) : renderedValue}
           </Text>
-        )}
+        </Box>
       </Box>
       <Box marginLeft={3}>
         <Text color="cyan">{underline}</Text>
