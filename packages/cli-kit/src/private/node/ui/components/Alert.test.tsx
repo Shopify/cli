@@ -70,10 +70,10 @@ describe('Alert', async () => {
       │                                                                              │
       │  Reference                                                                   │
       │    • Run \`npm shopify help\`                                                  │
-      │    • Press 'return' to open the really amazing and clean dev docs            │
-      │      (https://shopify.dev)                                                   │
+      │    • Press 'return' to open the really amazing and clean dev docs (          │
+      │      https://shopify.dev )                                                   │
       │                                                                              │
-      │  Link (https://shopify.com)                                                  │
+      │  Link ( https://shopify.com )                                                │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "

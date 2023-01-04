@@ -27,7 +27,7 @@ interface Instance {
 }
 
 const TEST_TERMINAL_WIDTH = 80
-class OutputStream extends EventEmitter {
+export class OutputStream extends EventEmitter {
   columns: number
   private _lastFrame?: string
 

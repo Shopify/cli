@@ -42,10 +42,10 @@ describe('FatalError', async () => {
       │  Unexpected error                                                            │
       │                                                                              │
       │  To investigate the issue, examine this stack trace:                         │
-      │  at _compile (internal/modules/cjs/loader.js:1137)                           │
-      │  at js (internal/modules/cjs/loader.js:1157)                                 │
-      │  at load (internal/modules/cjs/loader.js:985)                                │
-      │  at _load (internal/modules/cjs/loader.js:878)                               │
+      │    at _compile (internal/modules/cjs/loader.js:1137)                         │
+      │    at js (internal/modules/cjs/loader.js:1157)                               │
+      │    at load (internal/modules/cjs/loader.js:985)                              │
+      │    at _load (internal/modules/cjs/loader.js:878)                             │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
@@ -93,17 +93,17 @@ describe('FatalError', async () => {
       │  Unexpected error                                                            │
       │                                                                              │
       │  Next steps                                                                  │
-      │    • Have you created a Shopify Partners organization                        │
-      │      (https://partners.shopify.com/signup)?                                  │
+      │    • Have you created a Shopify Partners organization (                      │
+      │      https://partners.shopify.com/signup )?                                  │
       │    • Have you confirmed your accounts from the emails you received?          │
       │    • Need to connect to a different App or organization? Run the command     │
       │      again with \`--reset\`                                                    │
       │                                                                              │
       │  To investigate the issue, examine this stack trace:                         │
-      │  at _compile (internal/modules/cjs/loader.js:1137)                           │
-      │  at js (internal/modules/cjs/loader.js:1157)                                 │
-      │  at load (internal/modules/cjs/loader.js:985)                                │
-      │  at _load (internal/modules/cjs/loader.js:878)                               │
+      │    at _compile (internal/modules/cjs/loader.js:1137)                         │
+      │    at js (internal/modules/cjs/loader.js:1157)                               │
+      │    at load (internal/modules/cjs/loader.js:985)                              │
+      │    at _load (internal/modules/cjs/loader.js:878)                             │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "

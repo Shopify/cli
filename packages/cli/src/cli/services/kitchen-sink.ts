@@ -6,6 +6,7 @@ import {
   renderInfo,
   renderPrompt,
   renderSuccess,
+  renderTasks,
   renderWarning,
 } from '@shopify/cli-kit/node/ui'
 import {Signal} from '@shopify/cli-kit/src/abort'
@@ -148,6 +149,27 @@ export async function kitchenSink() {
 
   renderFatalError(new error.Abort('No Organization found', undefined, nextSteps))
 
+  await renderPrompt({
+    message: 'Associate your project with the org Castile Ventures?',
+    choices: [
+      {label: 'first', value: 'first', key: 'f'},
+      {label: 'second', value: 'second', key: 's'},
+      {label: 'third', value: 'third'},
+      {label: 'fourth', value: 'fourth'},
+      {label: 'fifth', value: 'fifth', group: 'Automations'},
+      {label: 'sixth', value: 'sixth', group: 'Automations'},
+      {label: 'seventh', value: 'seventh'},
+      {label: 'eighth', value: 'eighth', group: 'Merchant Admin'},
+      {label: 'ninth', value: 'ninth', group: 'Merchant Admin'},
+      {label: 'tenth', value: 'tenth'},
+    ],
+    infoTable: {add: ['new-ext'], remove: ['integrated-demand-ext', 'order-discount']},
+  })
+
+  await renderConfirmation({
+    question: 'Push the following changes to your Partners Dashboard?',
+  })
+
   // renderConcurrent at the end
   let backendPromiseResolve: () => void
 
@@ -182,26 +204,23 @@ export async function kitchenSink() {
     },
   }
 
-  await renderPrompt({
-    message: 'Associate your project with the org Castile Ventures?',
-    choices: [
-      {label: 'first', value: 'first', key: 'f'},
-      {label: 'second', value: 'second', key: 's'},
-      {label: 'third', value: 'third'},
-      {label: 'fourth', value: 'fourth'},
-      {label: 'fifth', value: 'fifth', group: 'Automations'},
-      {label: 'sixth', value: 'sixth', group: 'Automations'},
-      {label: 'seventh', value: 'seventh'},
-      {label: 'eighth', value: 'eighth', group: 'Merchant Admin'},
-      {label: 'ninth', value: 'ninth', group: 'Merchant Admin'},
-      {label: 'tenth', value: 'tenth'},
-    ],
-    infoTable: {add: ['new-ext'], remove: ['integrated-demand-ext', 'order-discount']},
-  })
-
-  await renderConfirmation({
-    question: 'Push the following changes to your Partners Dashboard?',
-  })
-
   await renderConcurrent({processes: [backendProcess, frontendProcess]})
+
+  // renderTasks
+  const tasks = [
+    {
+      title: 'Installing dependencies',
+      task: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+      },
+    },
+    {
+      title: 'Downloading assets',
+      task: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+      },
+    },
+  ]
+
+  await renderTasks(tasks)
 }

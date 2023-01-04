@@ -12,7 +12,7 @@ describe('Link', async () => {
 
     const {output} = renderString(<Link {...link} />)
 
-    expect(output).toMatchInlineSnapshot('"Example [2m(https://example.com)[22m"')
+    expect(output).toMatchInlineSnapshot('"Example [2m( https://example.com )[22m"')
   })
 
   test("it doesn't render a fallback if only url is passed", async () => {
