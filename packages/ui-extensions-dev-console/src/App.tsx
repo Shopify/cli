@@ -5,8 +5,10 @@ import enTranslations from '@shopify/polaris/locales/en.json'
 import {AppProvider} from '@shopify/polaris'
 import {I18nContext, I18nManager} from '@shopify/react-i18n'
 import {ExtensionServerProvider, isValidSurface} from '@shopify/ui-extensions-server-kit'
+import {ToastContainer} from 'react-toastify'
 import Layout from '@/Layout/Layout'
 import Routes from '@/Routes'
+import 'react-toastify/dist/ReactToastify.css'
 
 function getConnectionUrl() {
   if (import.meta.env.VITE_CONNECTION_URL) {
@@ -34,6 +36,7 @@ const i18nManager = new I18nManager({
     console.log(error)
   },
 })
+
 function App() {
   return (
     <div className={styles.Theme}>
@@ -42,6 +45,22 @@ function App() {
           <AppProvider i18n={enTranslations}>
             <Layout>
               <Routes />
+              <ToastContainer
+                position="bottom-center"
+                theme="dark"
+                closeButton={false}
+                pauseOnFocusLoss={false}
+                closeOnClick
+                hideProgressBar
+              />
+              {/* react-toastify requires exactly this class. */}
+              {/* Inlining the style prevents the className from changing */}
+              <style>
+                {`.Toastify__toast-body {
+                  padding-top: 0;
+                  padding-bottom: 0;
+                }`}
+              </style>
             </Layout>
           </AppProvider>
         </I18nContext.Provider>
