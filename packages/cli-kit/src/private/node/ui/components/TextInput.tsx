@@ -10,12 +10,14 @@ interface Props {
   placeholder?: string
   value: string
   onChange: (value: string) => void
+  error?: string
 }
 
-const TextInput: FC<Props> = ({value, placeholder = '', onChange}) => {
+const TextInput: FC<Props> = ({value, placeholder = '', onChange, error}) => {
   const {oneThird} = useLayout()
   const underline = new Array(oneThird - 3).fill('▔')
   const [cursorOffset, setCursorOffset] = useState((value || '').length)
+  const color = error ? 'red' : 'cyan'
 
   // if the updated value is shorter than the last one we need to reset the cursor
   useEffect(() => {
@@ -94,17 +96,22 @@ const TextInput: FC<Props> = ({value, placeholder = '', onChange}) => {
     <Box flexDirection="column" width={oneThird}>
       <Box>
         <Box marginRight={2}>
-          <Text color="cyan">{`>`}</Text>
+          <Text color={color}>{`>`}</Text>
         </Box>
         <Box flexGrow={1}>
-          <Text color="cyan">
+          <Text color={color}>
             {placeholder ? (value.length > 0 ? renderedValue : renderedPlaceholder) : renderedValue}
           </Text>
         </Box>
       </Box>
       <Box marginLeft={3}>
-        <Text color="cyan">{underline}</Text>
+        <Text color={color}>{underline}</Text>
       </Box>
+      {error && (
+        <Box marginLeft={3}>
+          <Text color={color}>{error}</Text>
+        </Box>
+      )}
     </Box>
   )
 }

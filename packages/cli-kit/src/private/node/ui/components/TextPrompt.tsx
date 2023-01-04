@@ -14,19 +14,23 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder}) => {
   const [answer, setAnswer] = useState<string>('')
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
+  const [valid, setValid] = useState(false)
 
   useInput(
     useCallback(
       (input, key) => {
         handleCtrlC(input, key)
 
-        if (key.return && answer.length > 0) {
+        if (key.return) {
           setSubmitted(true)
-          onSubmit(answer)
-          unmountInk()
+
+          if (valid) {
+            onSubmit(answer)
+            unmountInk()
+          }
         }
       },
-      [answer, onSubmit],
+      [answer, onSubmit, valid],
     ),
   )
 
@@ -38,7 +42,7 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder}) => {
         </Box>
         <Text>{message}</Text>
       </Box>
-      {submitted ? (
+      {submitted && valid ? (
         <Box>
           <Box marginRight={2}>
             <Text color="cyan">{figures.tick}</Text>
@@ -47,7 +51,16 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder}) => {
           <Text color="cyan">{answer}</Text>
         </Box>
       ) : (
-        <TextInput value={answer} onChange={setAnswer} placeholder={placeholder} />
+        <TextInput
+          value={answer}
+          onChange={(answer) => {
+            setAnswer(answer)
+            setValid(answer.length > 0)
+            setSubmitted(false)
+          }}
+          placeholder={placeholder}
+          error={submitted && !valid ? 'Please enter a value' : undefined}
+        />
       )}
     </Box>
   )
