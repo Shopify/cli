@@ -8,6 +8,7 @@ import {ClipboardMinor} from '@shopify/polaris-icons'
 import {Button} from '@/components/Button'
 import {ButtonGroup} from '@/components/ButtonGroup'
 import {IconButton} from '@/components/IconButton'
+import {useToast} from '@/hooks/useToast'
 
 export interface ExtensionRowProps {
   extension: ExtensionPayload
@@ -27,6 +28,7 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
 
   const statusClass = status ? styles[status || 'error'] : styles.error
   const {embedded, navigate, show, hide} = useExtensionsInternal()
+  const showToast = useToast()
 
   const handleOpenRoot = (event: React.MouseEvent<HTMLElement>) => {
     if (embedded && window.top) {
@@ -38,8 +40,12 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
   function handleCopyPreviewLink() {
     navigator.clipboard
       .writeText(extension.development.root.url)
-      .then(() => {})
-      .catch(() => {})
+      .then(() => {
+        showToast({content: 'Preview URL copied succesfully'})
+      })
+      .catch(() => {
+        showToast({content: "Couldn't copy preview URL", error: true})
+      })
   }
 
   const previewLink =
