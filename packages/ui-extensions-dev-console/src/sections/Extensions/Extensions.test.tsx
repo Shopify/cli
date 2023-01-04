@@ -13,6 +13,10 @@ vi.mock('./components/QRCodeModal', () => ({
   QRCodeModal: () => null,
 }))
 
+vi.mock('./components/ExtensionRow', () => ({
+  ExtensionRow: () => null,
+}))
+
 describe('Extensions', () => {
   let client: ExtensionServerClient
 
