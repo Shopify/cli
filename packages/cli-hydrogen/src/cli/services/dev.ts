@@ -1,6 +1,7 @@
 import {checkHydrogenVersion} from './dev/check-version.js'
 import {createServer, ViteDevServer} from 'vite'
-import {analytics, error as kitError} from '@shopify/cli-kit'
+import {error as kitError} from '@shopify/cli-kit'
+import {reportEvent} from '@shopify/cli-kit/node/analytics'
 import {Config} from '@oclif/core'
 
 interface DevOptions {
@@ -26,7 +27,7 @@ async function dev({commandConfig, directory, force, host, open}: DevOptions) {
     await server.listen()
     server.printUrls()
     server.config.logger.info('')
-    await analytics.reportEvent({config: commandConfig})
+    await reportEvent({config: commandConfig})
     await closeEvent(server)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
