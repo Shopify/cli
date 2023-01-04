@@ -1,5 +1,6 @@
 import * as styles from './ExtensionRow.module.scss'
 import en from './translations/en.json'
+import {PreviewLinks} from './components/PreviewLinks'
 import {useExtensionsInternal} from '../../hooks/useExtensionsInternal.js'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
@@ -74,7 +75,9 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
       <td>
         <span className={styles.Title}>{extension.title}</span>
       </td>
-      <td className={styles.PreviewLinkCell}>{previewLink}</td>
+      <td>
+        <PreviewLinks extension={extension} />
+      </td>
       <td>
         <Button type="button" onClick={() => onShowMobileQRCode(extension)}>
           View mobile
