@@ -7,8 +7,8 @@ import {useI18n} from '@shopify/react-i18n'
 import copyToClipboard from 'copy-to-clipboard'
 import QRCode from 'qrcode.react'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
+import {toast} from 'react-toastify'
 import {useExtensionsInternal} from '@/sections/Extensions/hooks/useExtensionsInternal'
-import {useToast} from '@/hooks/useToast'
 
 export interface QRCodeModalProps extends Pick<ModalProps, 'open' | 'onClose'> {
   extension?: ExtensionPayload
@@ -35,8 +35,6 @@ export function QRCodeContent(props: Pick<QRCodeModalProps, 'extension'>) {
   const {extension} = props
   const {state} = useExtensionsInternal()
 
-  const showToast = useToast()
-
   const mobileQRCode = useMemo(() => {
     if (!state.app || !extension) {
       return undefined
@@ -51,11 +49,9 @@ export function QRCodeContent(props: Pick<QRCodeModalProps, 'extension'>) {
 
   const onButtonClick = useCallback(() => {
     if (mobileQRCode && copyToClipboard(mobileQRCode)) {
-      showToast({
-        content: i18n.translate('qrcode.copied'),
-      })
+      toast(i18n.translate('qrcode.copied'), {toastId: `copy-qrcode-${mobileQRCode}`})
     }
-  }, [mobileQRCode, showToast, i18n])
+  }, [mobileQRCode])
 
   // We should be checking for development with the code below
   // const isDevelopment = Boolean(import.meta.env.VITE_WEBSOCKET_HOST);
