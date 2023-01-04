@@ -6,7 +6,6 @@ import {mockApp, mockExtension} from '@shopify/ui-extensions-server-kit/testing'
 import {render, withProviders} from '@shopify/ui-extensions-test-utils'
 import {mockI18n} from 'tests/mock-i18n'
 import {DefaultProviders} from 'tests/DefaultProviders'
-import {ToastProvider} from '@/hooks/useToast'
 
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 
@@ -17,7 +16,7 @@ describe('QRCodeModal', () => {
     const app = mockApp()
     const store = 'example.com'
     const extension = mockExtension()
-    const container = render(<QRCodeModal onClose={vi.fn()} open />, withProviders(DefaultProviders, ToastProvider), {
+    const container = render(<QRCodeModal onClose={vi.fn()} open />, withProviders(DefaultProviders), {
       state: {app, store, extensions: [extension]},
     })
 
@@ -30,7 +29,7 @@ describe('QRCodeModal', () => {
     const extension = mockExtension()
     const container = render(
       <QRCodeModal extension={extension} onClose={vi.fn()} open />,
-      withProviders(DefaultProviders, ToastProvider),
+      withProviders(DefaultProviders),
       {state: {app, store, extensions: [extension]}},
     )
 
@@ -49,7 +48,7 @@ describe('QRCodeModal', () => {
 
     const container = render(
       <QRCodeModal extension={extension} onClose={vi.fn()} open />,
-      withProviders(DefaultProviders, ToastProvider),
+      withProviders(DefaultProviders),
       {state: {store, extensions: [extension]}},
     )
 
@@ -64,7 +63,7 @@ describe('QRCodeModal', () => {
     const extension = mockExtension({surface: 'point_of_sale'})
     const container = render(
       <QRCodeModal extension={extension} onClose={vi.fn()} open />,
-      withProviders(DefaultProviders, ToastProvider),
+      withProviders(DefaultProviders),
       {state: {app, store, extensions: [extension]}},
     )
 
