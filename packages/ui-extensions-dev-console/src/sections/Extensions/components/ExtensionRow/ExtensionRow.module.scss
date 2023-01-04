@@ -4,21 +4,12 @@
 
   td {
     padding: 0.8rem 1.5rem;
+    vertical-align: top;
   }
 }
 
 .Title {
   font-weight: var(--dc-font-weight-subdued);
-}
-
-.NotApplicable {
-  font-family: var(--dc-font-compact);
-}
-
-.PreviewLinkCell {
-  display: flex;
-  align-items: center;
-  gap: 2.6rem;
 }
 
 .Status {
