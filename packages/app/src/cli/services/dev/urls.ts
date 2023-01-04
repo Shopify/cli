@@ -101,12 +101,11 @@ export function generatePartnersURLs(baseURL: string, authCallbackPath?: string 
   let redirectUrlWhitelist: string[]
   if (authCallbackPath && authCallbackPath.length > 0) {
     const authCallbackPaths = Array.isArray(authCallbackPath) ? authCallbackPath : [authCallbackPath]
-    redirectUrlWhitelist = authCallbackPaths.reduce<string[]>(
-      (acc, path) => {
-        if (path && path.length > 0) {
-          acc.push(`${baseURL}${path}`)
-        }
-        return acc
+    redirectUrlWhitelist = authCallbackPaths.reduce<string[]>((acc, path) => {
+      if (path && path.length > 0) {
+        acc.push(`${baseURL}${path}`)
+      }
+      return acc
     }, [])
   } else {
     redirectUrlWhitelist = [
