@@ -1,8 +1,10 @@
 import {buildHeaders, debugLogRequest, handlingErrors} from './common.js'
+import fetch from '../http/fetch.js'
 import {AdminSession} from '../session.js'
 import {debug, content, token as outputToken} from '../output.js'
 import {Bug, Abort} from '../error.js'
 import {graphqlClient} from '../http/graphql.js'
+import {AnyJson} from '../json.js'
 import {gql, RequestDocument, Variables} from 'graphql-request'
 
 export async function request<T>(query: RequestDocument, session: AdminSession, variables?: Variables): Promise<T> {
@@ -16,6 +18,72 @@ export async function request<T>(query: RequestDocument, session: AdminSession, 
     const response = await client.request<T>(query, variables)
     return response
   })
+}
+
+export interface RestResponse {
+  // Using `any` to avoid introducing extra DTO layers.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  json: any
+  status: number
+  headers: {[key: string]: string[]}
+}
+
+export async function restRequest(
+  method: string,
+  path: string,
+  session: AdminSession,
+  requestBody?: AnyJson,
+  apiVersion = 'unstable',
+): Promise<RestResponse> {
+  const url = restRequestUrl(session, apiVersion, path)
+  const body = restRequestBody(requestBody)
+
+  const headers = await restRequestHeaders(session)
+  const response = await fetch(url, {
+    headers,
+    method,
+    body,
+  })
+
+  const json = await response.json()
+
+  return {
+    json,
+    status: response.status,
+    headers: response.headers.raw(),
+  }
+}
+
+function restRequestBody(requestBody?: AnyJson) {
+  if (!requestBody) {
+    return
+  }
+  return JSON.stringify(requestBody)
+}
+
+function restRequestUrl(session: AdminSession, apiVersion: string, path: string) {
+  if (isThemeAccessSession(session)) {
+    return `https://theme-kit-access.shopifyapps.com/cli/admin/api/${apiVersion}${path}.json`
+  }
+
+  return `https://${session.storeFqdn}/admin/api/${apiVersion}${path}.json`
+}
+
+async function restRequestHeaders(session: AdminSession) {
+  const store = session.storeFqdn
+  const token = session.token
+  const headers = await buildHeaders(session.token)
+
+  if (isThemeAccessSession(session)) {
+    headers['X-Shopify-Shop'] = store
+    headers['X-Shopify-Access-Token'] = token
+  }
+
+  return headers
+}
+
+function isThemeAccessSession(session: AdminSession) {
+  return session.token.startsWith('shptka_')
 }
 
 async function fetchApiVersion(session: AdminSession): Promise<string> {
