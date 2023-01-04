@@ -4,10 +4,11 @@ import {load as loadApp} from '../../models/app/loader.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {
   loadLocalExtensionsSpecifications,
+  loadLocalFunctionSpecifications,
   loadLocalUIExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
-import {file, output, path, template} from '@shopify/cli-kit'
+import {file, git, output, path, template} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
 import type {ExtensionFlavor} from './extension.js'
 
@@ -17,6 +18,7 @@ beforeEach(() => {
 
 describe('initialize a extension', async () => {
   const allUISpecs = await loadLocalUIExtensionsSpecifications()
+  const allFunctionSpecs = await loadLocalFunctionSpecifications()
   const specifications = await loadLocalExtensionsSpecifications()
 
   it(
@@ -273,6 +275,32 @@ describe('initialize a extension', async () => {
     },
     30 * 1000,
   )
+
+  it(
+    'uses the custom templateURL for functions',
+    async () => {
+      await withTemporaryApp(async (tmpDir) => {
+        // Given
+        vi.spyOn(file, 'move').mockResolvedValue()
+        vi.spyOn(git, 'downloadRepository').mockResolvedValue()
+        const name = 'my-ext-1'
+        const specification = allFunctionSpecs.find((spec) => spec.identifier === 'order_discounts')!
+        specification.templateURL = 'custom/template/url'
+        const extensionFlavor = 'rust'
+
+        // When
+        await createFromTemplate({name, specification, extensionFlavor, appDirectory: tmpDir, specifications})
+
+        // Then
+        expect(git.downloadRepository).toHaveBeenCalledWith({
+          destination: expect.any(String),
+          repoUrl: 'custom/template/url',
+          shallow: true,
+        })
+      })
+    },
+    30 * 1000,
+  )
 })
 
 describe('getRuntimeDependencies', () => {
@@ -333,7 +361,6 @@ async function createFromTemplate({
     name,
     specification,
     app: await loadApp({directory: appDirectory, specifications}),
-    cloneUrl: 'cloneurl',
     extensionFlavor,
     extensionType: specification.identifier,
   })

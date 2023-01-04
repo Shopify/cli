@@ -17,7 +17,7 @@ export interface FunctionSpec<TConfiguration extends FunctionConfigType = Functi
   externalName: string
   helpURL?: string
   gated: boolean
-  templateURL?: string
+  templateURL: string
   supportedFlavors: {name: string; value: string}[]
   configSchema: ZodSchemaType<TConfiguration>
   registrationLimit: number
