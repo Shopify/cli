@@ -11,21 +11,16 @@ import tmp from 'tmp';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const appVersion = JSON.parse(fs.readFileSync(`${__dirname}/../packages/cli-main/package.json`)).version;
+const appVersion = JSON.parse(fs.readFileSync(`${__dirname}/../packages/cli/package.json`)).version;
 const apiKey = '9e1e6889176fd0c795d5c659225e0fae';
 
 (async () => {
   try {
     const packageFolders = glob.sync(`${__dirname}/../packages/*`, {onlyDirectories: true})
 
-    const packageMap = {
-      'cli-main': 'cli'
-    }
-
     // Process each package, and upload to Bugsnag as `@shopify/package-name/dist/file.js`
     for (const sourceDirectory of packageFolders) {
-      const basePackageName = path.basename(sourceDirectory);
-      const packageName = packageMap[basePackageName] ?? basePackageName
+      const packageName = path.basename(sourceDirectory);
 
       console.log(`Preparing @shopify/${packageName}`);
 

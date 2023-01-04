@@ -21,7 +21,7 @@ export async function updateCLIDependencies({
   packageJSON.dependencies['@shopify/app'] = cliKitVersion
 
   if (local) {
-    const cliPath = await packagePath('cli-main')
+    const cliPath = await packagePath('cli')
     const appPath = await packagePath('app')
     const cliKitPath = await packagePath('cli-kit')
     const pluginNgrokPath = await packagePath('plugin-ngrok')

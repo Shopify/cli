@@ -37,7 +37,7 @@
     "@oclif/core": "1.21.0"
   },
   "devDependencies": {
-    "vitest": "^0.23.4",
+    "vitest": "^0.26.3",
     "vite": "^2.9.13"
   },
   "engine-strict": true,

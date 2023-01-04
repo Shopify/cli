@@ -230,7 +230,7 @@ async function updateCLIDependencies(
 
   if (local) {
     const devDependencyOverrides = {
-      '@shopify/cli': `file:${(await path.findUp('packages/cli-main', {type: 'directory'})) as string}`,
+      '@shopify/cli': `file:${(await path.findUp('packages/cli', {type: 'directory'})) as string}`,
       '@shopify/cli-hydrogen': `file:${(await path.findUp('packages/cli-hydrogen', {type: 'directory'})) as string}`,
     }
 
