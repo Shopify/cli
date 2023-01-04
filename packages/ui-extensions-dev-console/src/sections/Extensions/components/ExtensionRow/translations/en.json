@@ -3,5 +3,9 @@
     "success": "Connected",
     "disconnected": "Disconnected",
     "error": "Build Error"
+  },
+  "copy": {
+    "success": "URL copied succesfully",
+    "error": "Couldn't copy URL"
   }
 }

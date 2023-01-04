@@ -5,10 +5,10 @@ import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {ClipboardMinor} from '@shopify/polaris-icons'
+import {toast} from 'react-toastify'
 import {Button} from '@/components/Button'
 import {ButtonGroup} from '@/components/ButtonGroup'
 import {IconButton} from '@/components/IconButton'
-import {useToast} from '@/hooks/useToast'
 
 export interface ExtensionRowProps {
   extension: ExtensionPayload
@@ -28,7 +28,6 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
 
   const statusClass = status ? styles[status || 'error'] : styles.error
   const {embedded, navigate, show, hide} = useExtensionsInternal()
-  const showToast = useToast()
 
   const handleOpenRoot = (event: React.MouseEvent<HTMLElement>) => {
     if (embedded && window.top) {
@@ -41,10 +40,10 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
     navigator.clipboard
       .writeText(extension.development.root.url)
       .then(() => {
-        showToast({content: 'Preview URL copied succesfully'})
+        toast(i18n.translate('copy.success'), {toastId: `copy-url-${extension.uuid}`})
       })
       .catch(() => {
-        showToast({content: "Couldn't copy preview URL", error: true})
+        toast(i18n.translate('copy.error'), {type: 'error', toastId: `copy-url-error-${extension.uuid}`})
       })
   }
 
