@@ -4,11 +4,8 @@ import {useExtensionsInternal} from '../../hooks/useExtensionsInternal.js'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
-import {ClipboardMinor} from '@shopify/polaris-icons'
-import {toast} from 'react-toastify'
 import {Button} from '@/components/Button'
 import {ButtonGroup} from '@/components/ButtonGroup'
-import {IconButton} from '@/components/IconButton'
 
 export interface ExtensionRowProps {
   extension: ExtensionPayload
@@ -27,47 +24,7 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
   } = extension
 
   const statusClass = status ? styles[status || 'error'] : styles.error
-  const {embedded, navigate, show, hide} = useExtensionsInternal()
-
-  const handleOpenRoot = (event: React.MouseEvent<HTMLElement>) => {
-    if (embedded && window.top) {
-      navigate(extension)
-      event.preventDefault()
-    }
-  }
-
-  function handleCopyPreviewLink() {
-    navigator.clipboard
-      .writeText(extension.development.root.url)
-      .then(() => {
-        toast(i18n.translate('copy.success'), {toastId: `copy-url-${extension.uuid}`})
-      })
-      .catch(() => {
-        toast(i18n.translate('copy.error'), {type: 'error', toastId: `copy-url-error-${extension.uuid}`})
-      })
-  }
-
-  const previewLink =
-    extension.surface === 'pos' ? (
-      <span className={styles.NotApplicable}>--</span>
-    ) : (
-      <>
-        <a
-          href={extension.development.root.url}
-          target="_blank"
-          aria-label="Preview this extension"
-          onClick={handleOpenRoot}
-        >
-          {extension.type.replaceAll('_', ' ')}
-        </a>
-        <IconButton
-          type="button"
-          onClick={() => handleCopyPreviewLink()}
-          source={ClipboardMinor}
-          accessibilityLabel={`Copy preview link for ${extension.title}`}
-        />
-      </>
-    )
+  const {show, hide} = useExtensionsInternal()
 
   return (
     <tr className={styles.DevToolRow} onMouseEnter={() => onHighlight(extension)} onMouseLeave={onClearHighlight}>
