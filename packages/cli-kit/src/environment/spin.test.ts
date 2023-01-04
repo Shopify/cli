@@ -1,15 +1,4 @@
-import {
-  show,
-  fqdn,
-  isSpin,
-  instance,
-  workspace,
-  namespace,
-  host,
-  SpinInstanceNotFound,
-  appPort,
-  appHost,
-} from './spin.js'
+import {show, fqdn, isSpin, instance, workspace, namespace, host, appPort, appHost} from './spin.js'
 import {getCachedSpinFqdn, setCachedSpinFqdn} from './spin-cache.js'
 import {captureOutput} from '../system.js'
 import {describe, test, expect, vi, it} from 'vitest'
@@ -104,7 +93,7 @@ describe('show', () => {
     const env = {}
 
     // When
-    await expect(() => show('instance', env)).rejects.toThrowError(SpinInstanceNotFound('instance', errorMessage))
+    await expect(() => show('instance', env)).rejects.toThrowError(errorMessage)
   })
 })
 
