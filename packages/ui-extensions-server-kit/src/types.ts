@@ -52,7 +52,7 @@ export interface ResourceURL {
 
 export type ExtensionPoints =
   | string[]
-  | {target: string; module: string; surface: Surface; main: {url: string}}[]
+  | {target: string; module: string; surface: Surface; root: {url: string}}[]
   | null
 
 export interface ExtensionPayload {
