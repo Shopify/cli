@@ -27,4 +27,44 @@
 
   /* border */
   --dc-border-radius: 0.4rem;
+
+  /* Toast (See: https://fkhadra.github.io/react-toastify/how-to-style) */
+  --toastify-color-light: var(--dc-color-white);
+  --toastify-color-dark: var(--dc-color-black);
+  --toastify-color-info: var(--dc-color-link);
+  --toastify-color-success: var(--dc-color-success);
+  --toastify-color-warning:  var(--dc-color-warning);
+  --toastify-color-error:  var(--dc-color-errror);
+  --toastify-color-transparent: rgba(255, 255, 255, 0.7);
+
+  --toastify-icon-color-info: var(--dc-color-link);
+  --toastify-icon-color-success: var(--dc-color-success);
+  --toastify-icon-color-warning: var(--dc-color-warning);
+  --toastify-icon-color-error: var(--dc-color-error);
+
+  --toastify-toast-width: 32rem;
+  --toastify-toast-background: #fff;
+  --toastify-toast-min-height: 4.2rem;
+  --toastify-toast-max-height: 4.2rem;
+  --toastify-font-family: var(--dc-font-mono);
+  --toastify-z-index: 9999;
+
+  --toastify-text-color-light: var(--dc-color-subdued);
+  --toastify-text-color-dark: var(--dc-color-white);
+
+  /* Used only for colored theme */
+  --toastify-text-color-info: var(--dc-color-white);
+  --toastify-text-color-success: var(--dc-color-white);
+  --toastify-text-color-warning: var(--dc-color-white);
+  --toastify-text-color-error: var(--dc-color-white);
+
+  --toastify-spinner-color: var(--dc-color-icon);
+  --toastify-spinner-color-empty-area: var(--dc-color-white);
+
+   /* Used when no type is provided */
+  --toastify-color-progress-dark: var(--dc-color-link);
+  --toastify-color-progress-info: var(--toastify-color-info);
+  --toastify-color-progress-success: var(--toastify-color-success);
+  --toastify-color-progress-warning: var(--toastify-color-warning);
+  --toastify-color-progress-error: var(--toastify-color-error);
 }
