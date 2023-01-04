@@ -63,7 +63,7 @@ const generateExtensionPrompt = async (
   if (!options.extensionType) {
     if (options.extensionFlavor) {
       const flavor = options.extensionFlavor
-      allExtensions = allExtensions.filter((spec) => spec.supportedFlavors.map((elem) => elem.name).includes(flavor))
+      allExtensions = allExtensions.filter((spec) => spec.supportedFlavors.map((elem) => elem.value).includes(flavor))
     }
 
     questions.push({

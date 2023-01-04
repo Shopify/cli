@@ -1,0 +1,10 @@
+name = "international-business-ext"
+type = "payment_customization"
+api_version = "2023-04"
+
+[build]
+command = "echo 'build the wasm'"
+
+[ui.paths]
+create = "/"
+details = "/"

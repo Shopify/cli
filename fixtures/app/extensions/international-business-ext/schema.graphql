@@ -1,0 +1,3699 @@
+schema {
+  query: Input
+  mutation: MutationRoot
+}
+
+"""
+Exactly one field of input must be provided, and all others omitted.
+"""
+directive @oneOf on INPUT_OBJECT
+
+"""
+Represents a generic custom attribute.
+"""
+type Attribute {
+  """
+  Key or name of the attribute.
+  """
+  key: String!
+
+  """
+  Value of the attribute.
+  """
+  value: String
+}
+
+"""
+Represents information about the buyer that is interacting with the cart.
+"""
+type BuyerIdentity {
+  """
+  The customer associated with the cart.
+  """
+  customer: Customer
+
+  """
+  The email address of the buyer that is interacting with the cart.
+  """
+  email: String
+
+  """
+  The phone number of the buyer that is interacting with the cart.
+  """
+  phone: String
+
+  """
+  The purchasing company associated with the cart.
+  """
+  purchasingCompany: PurchasingCompany
+}
+
+"""
+A cart represents the merchandise that a buyer intends to purchase, and the cost associated with the cart.
+"""
+type Cart {
+  """
+  The attributes associated with the cart. Attributes are represented as key-value pairs.
+  """
+  attribute(
+    """
+    The key of the attribute to retrieve.
+    """
+    key: String
+  ): Attribute
+
+  """
+  Information about the buyer that is interacting with the cart.
+  """
+  buyerIdentity: BuyerIdentity
+
+  """
+  The costs that the buyer will pay at checkout.
+  """
+  cost: CartCost!
+
+  """
+  The delivery groups available for the cart based on the buyer's shipping address.
+  """
+  deliveryGroups: [CartDeliveryGroup!]!
+
+  """
+  A list of lines containing information about the items the customer intends to purchase.
+  """
+  lines: [CartLine!]!
+}
+
+"""
+The cost that the buyer will pay at checkout.
+"""
+type CartCost {
+  """
+  The amount, before taxes and discounts, for the customer to pay.
+  """
+  subtotalAmount: MoneyV2!
+
+  """
+  The total amount for the customer to pay.
+  """
+  totalAmount: MoneyV2!
+
+  """
+  The duty amount for the customer to pay at checkout.
+  """
+  totalDutyAmount: MoneyV2
+
+  """
+  The tax amount for the customer to pay at checkout.
+  """
+  totalTaxAmount: MoneyV2
+}
+
+"""
+Information about the options available for one or more line items to be delivered to a specific address.
+"""
+type CartDeliveryGroup {
+  """
+  A list of cart lines for the delivery group.
+  """
+  cartLines: [CartLine!]!
+
+  """
+  The destination address for the delivery group.
+  """
+  deliveryAddress: MailingAddress
+
+  """
+  The delivery options available for the delivery group.
+  """
+  deliveryOptions: [CartDeliveryOption!]!
+
+  """
+  Unique identifier for the delivery group.
+  """
+  id: ID!
+
+  """
+  Information about the delivery option the buyer has selected.
+  """
+  selectedDeliveryOption: CartDeliveryOption
+}
+
+"""
+Information about a delivery option.
+"""
+type CartDeliveryOption {
+  """
+  The code of the delivery option.
+  """
+  code: String
+
+  """
+  The cost for the delivery option.
+  """
+  cost: MoneyV2!
+
+  """
+  The method for the delivery option.
+  """
+  deliveryMethodType: DeliveryMethod!
+
+  """
+  The description of the delivery option.
+  """
+  description: String
+
+  """
+  The unique identifier of the delivery option.
+  """
+  handle: String!
+
+  """
+  The title of the delivery option.
+  """
+  title: String
+}
+
+"""
+Represents information about the merchandise in the cart.
+"""
+type CartLine {
+  """
+  Retrieve a cart line attribute by key.
+
+  Cart line attributes are also known as line item properties in Liquid.
+  """
+  attribute(
+    """
+    The key of the attribute to retrieve.
+    """
+    key: String
+  ): Attribute
+
+  """
+  The cost of the merchandise line that the buyer will pay at checkout.
+  """
+  cost: CartLineCost!
+
+  """
+  The ID of the cart line.
+  """
+  id: ID!
+
+  """
+  The merchandise that the buyer intends to purchase.
+  """
+  merchandise: Merchandise!
+
+  """
+  The quantity of the merchandise that the customer intends to purchase.
+  """
+  quantity: Int!
+}
+
+"""
+The cost of the merchandise line that the buyer will pay at checkout.
+"""
+type CartLineCost {
+  """
+  The amount of the merchandise line.
+  """
+  amountPerQuantity: MoneyV2!
+
+  """
+  The compare at amount of the merchandise line.
+  """
+  compareAtAmountPerQuantity: MoneyV2
+
+  """
+  The cost of the merchandise line before line-level discounts.
+  """
+  subtotalAmount: MoneyV2!
+
+  """
+  The total cost of the merchandise line.
+  """
+  totalAmount: MoneyV2!
+}
+
+"""
+Represents information about a company which is also a customer of the shop.
+"""
+type Company implements HasMetafields {
+  """
+  The date and time ([ISO 8601 format](http://en.wikipedia.org/wiki/ISO_8601)) at which the company was created in Shopify.
+  """
+  createdAt: DateTime!
+
+  """
+  A unique externally-supplied identifier for the company.
+  """
+  externalId: String
+
+  """
+  The ID of the company.
+  """
+  id: ID!
+
+  """
+  Returns a metafield by namespace and key that belongs to the resource.
+  """
+  metafield(
+    """
+    The key for the metafield.
+    """
+    key: String!
+
+    """
+    The namespace for the metafield.
+    """
+    namespace: String!
+  ): Metafield
+
+  """
+  The name of the company.
+  """
+  name: String!
+
+  """
+  The date and time ([ISO 8601 format](http://en.wikipedia.org/wiki/ISO_8601)) at which the company was last modified.
+  """
+  updatedAt: DateTime!
+}
+
+"""
+A company's main point of contact.
+"""
+type CompanyContact {
+  """
+  The date and time ([ISO 8601 format](http://en.wikipedia.org/wiki/ISO_8601))
+  at which the company contact was created in Shopify.
+  """
+  createdAt: DateTime!
+
+  """
+  The ID of the company.
+  """
+  id: ID!
+
+  """
+  The company contact's locale (language).
+  """
+  locale: String
+
+  """
+  The company contact's job title.
+  """
+  title: String
+
+  """
+  The date and time ([ISO 8601 format](http://en.wikipedia.org/wiki/ISO_8601))
+  at which the company contact was last modified.
+  """
+  updatedAt: DateTime!
+}
+
+"""
+A company's location.
+"""
+type CompanyLocation implements HasMetafields {
+  """
+  The date and time ([ISO 8601 format](http://en.wikipedia.org/wiki/ISO_8601))
+  at which the company location was created in Shopify.
+  """
+  createdAt: DateTime!
+
+  """
+  A unique externally-supplied identifier for the company.
+  """
+  externalId: String
+
+  """
+  The ID of the company.
+  """
+  id: ID!
+
+  """
+  The preferred locale of the company location.
+  """
+  locale: String
+
+  """
+  Returns a metafield by namespace and key that belongs to the resource.
+  """
+  metafield(
+    """
+    The key for the metafield.
+    """
+    key: String!
+
+    """
+    The namespace for the metafield.
+    """
+    namespace: String!
+  ): Metafield
+
+  """
+  The name of the company location.
+  """
+  name: String!
+
+  """
+  The date and time ([ISO 8601 format](http://en.wikipedia.org/wiki/ISO_8601))
+  at which the company location was last modified.
+  """
+  updatedAt: DateTime!
+}
+
+"""
+A country.
+"""
+type Country {
+  """
+  The ISO code of the country.
+  """
+  isoCode: CountryCode!
+}
+
+"""
+The code designating a country/region, which generally follows ISO 3166-1 alpha-2 guidelines.
+If a territory doesn't have a country code value in the `CountryCode` enum, then it might be considered a subdivision
+of another country. For example, the territories associated with Spain are represented by the country code `ES`,
+and the territories associated with the United States of America are represented by the country code `US`.
+"""
+enum CountryCode {
+  """
+  Ascension Island.
+  """
+  AC
+
+  """
+  Andorra.
+  """
+  AD
+
+  """
+  United Arab Emirates.
+  """
+  AE
+
+  """
+  Afghanistan.
+  """
+  AF
+
+  """
+  Antigua & Barbuda.
+  """
+  AG
+
+  """
+  Anguilla.
+  """
+  AI
+
+  """
+  Albania.
+  """
+  AL
+
+  """
+  Armenia.
+  """
+  AM
+
+  """
+  Netherlands Antilles.
+  """
+  AN
+
+  """
+  Angola.
+  """
+  AO
+
+  """
+  Argentina.
+  """
+  AR
+
+  """
+  Austria.
+  """
+  AT
+
+  """
+  Australia.
+  """
+  AU
+
+  """
+  Aruba.
+  """
+  AW
+
+  """
+  Åland Islands.
+  """
+  AX
+
+  """
+  Azerbaijan.
+  """
+  AZ
+
+  """
+  Bosnia & Herzegovina.
+  """
+  BA
+
+  """
+  Barbados.
+  """
+  BB
+
+  """
+  Bangladesh.
+  """
+  BD
+
+  """
+  Belgium.
+  """
+  BE
+
+  """
+  Burkina Faso.
+  """
+  BF
+
+  """
+  Bulgaria.
+  """
+  BG
+
+  """
+  Bahrain.
+  """
+  BH
+
+  """
+  Burundi.
+  """
+  BI
+
+  """
+  Benin.
+  """
+  BJ
+
+  """
+  St. Barthélemy.
+  """
+  BL
+
+  """
+  Bermuda.
+  """
+  BM
+
+  """
+  Brunei.
+  """
+  BN
+
+  """
+  Bolivia.
+  """
+  BO
+
+  """
+  Caribbean Netherlands.
+  """
+  BQ
+
+  """
+  Brazil.
+  """
+  BR
+
+  """
+  Bahamas.
+  """
+  BS
+
+  """
+  Bhutan.
+  """
+  BT
+
+  """
+  Bouvet Island.
+  """
+  BV
+
+  """
+  Botswana.
+  """
+  BW
+
+  """
+  Belarus.
+  """
+  BY
+
+  """
+  Belize.
+  """
+  BZ
+
+  """
+  Canada.
+  """
+  CA
+
+  """
+  Cocos (Keeling) Islands.
+  """
+  CC
+
+  """
+  Congo - Kinshasa.
+  """
+  CD
+
+  """
+  Central African Republic.
+  """
+  CF
+
+  """
+  Congo - Brazzaville.
+  """
+  CG
+
+  """
+  Switzerland.
+  """
+  CH
+
+  """
+  Côte d’Ivoire.
+  """
+  CI
+
+  """
+  Cook Islands.
+  """
+  CK
+
+  """
+  Chile.
+  """
+  CL
+
+  """
+  Cameroon.
+  """
+  CM
+
+  """
+  China.
+  """
+  CN
+
+  """
+  Colombia.
+  """
+  CO
+
+  """
+  Costa Rica.
+  """
+  CR
+
+  """
+  Cuba.
+  """
+  CU
+
+  """
+  Cape Verde.
+  """
+  CV
+
+  """
+  Curaçao.
+  """
+  CW
+
+  """
+  Christmas Island.
+  """
+  CX
+
+  """
+  Cyprus.
+  """
+  CY
+
+  """
+  Czechia.
+  """
+  CZ
+
+  """
+  Germany.
+  """
+  DE
+
+  """
+  Djibouti.
+  """
+  DJ
+
+  """
+  Denmark.
+  """
+  DK
+
+  """
+  Dominica.
+  """
+  DM
+
+  """
+  Dominican Republic.
+  """
+  DO
+
+  """
+  Algeria.
+  """
+  DZ
+
+  """
+  Ecuador.
+  """
+  EC
+
+  """
+  Estonia.
+  """
+  EE
+
+  """
+  Egypt.
+  """
+  EG
+
+  """
+  Western Sahara.
+  """
+  EH
+
+  """
+  Eritrea.
+  """
+  ER
+
+  """
+  Spain.
+  """
+  ES
+
+  """
+  Ethiopia.
+  """
+  ET
+
+  """
+  Finland.
+  """
+  FI
+
+  """
+  Fiji.
+  """
+  FJ
+
+  """
+  Falkland Islands.
+  """
+  FK
+
+  """
+  Faroe Islands.
+  """
+  FO
+
+  """
+  France.
+  """
+  FR
+
+  """
+  Gabon.
+  """
+  GA
+
+  """
+  United Kingdom.
+  """
+  GB
+
+  """
+  Grenada.
+  """
+  GD
+
+  """
+  Georgia.
+  """
+  GE
+
+  """
+  French Guiana.
+  """
+  GF
+
+  """
+  Guernsey.
+  """
+  GG
+
+  """
+  Ghana.
+  """
+  GH
+
+  """
+  Gibraltar.
+  """
+  GI
+
+  """
+  Greenland.
+  """
+  GL
+
+  """
+  Gambia.
+  """
+  GM
+
+  """
+  Guinea.
+  """
+  GN
+
+  """
+  Guadeloupe.
+  """
+  GP
+
+  """
+  Equatorial Guinea.
+  """
+  GQ
+
+  """
+  Greece.
+  """
+  GR
+
+  """
+  South Georgia & South Sandwich Islands.
+  """
+  GS
+
+  """
+  Guatemala.
+  """
+  GT
+
+  """
+  Guinea-Bissau.
+  """
+  GW
+
+  """
+  Guyana.
+  """
+  GY
+
+  """
+  Hong Kong SAR.
+  """
+  HK
+
+  """
+  Heard & McDonald Islands.
+  """
+  HM
+
+  """
+  Honduras.
+  """
+  HN
+
+  """
+  Croatia.
+  """
+  HR
+
+  """
+  Haiti.
+  """
+  HT
+
+  """
+  Hungary.
+  """
+  HU
+
+  """
+  Indonesia.
+  """
+  ID
+
+  """
+  Ireland.
+  """
+  IE
+
+  """
+  Israel.
+  """
+  IL
+
+  """
+  Isle of Man.
+  """
+  IM
+
+  """
+  India.
+  """
+  IN
+
+  """
+  British Indian Ocean Territory.
+  """
+  IO
+
+  """
+  Iraq.
+  """
+  IQ
+
+  """
+  Iran.
+  """
+  IR
+
+  """
+  Iceland.
+  """
+  IS
+
+  """
+  Italy.
+  """
+  IT
+
+  """
+  Jersey.
+  """
+  JE
+
+  """
+  Jamaica.
+  """
+  JM
+
+  """
+  Jordan.
+  """
+  JO
+
+  """
+  Japan.
+  """
+  JP
+
+  """
+  Kenya.
+  """
+  KE
+
+  """
+  Kyrgyzstan.
+  """
+  KG
+
+  """
+  Cambodia.
+  """
+  KH
+
+  """
+  Kiribati.
+  """
+  KI
+
+  """
+  Comoros.
+  """
+  KM
+
+  """
+  St. Kitts & Nevis.
+  """
+  KN
+
+  """
+  North Korea.
+  """
+  KP
+
+  """
+  South Korea.
+  """
+  KR
+
+  """
+  Kuwait.
+  """
+  KW
+
+  """
+  Cayman Islands.
+  """
+  KY
+
+  """
+  Kazakhstan.
+  """
+  KZ
+
+  """
+  Laos.
+  """
+  LA
+
+  """
+  Lebanon.
+  """
+  LB
+
+  """
+  St. Lucia.
+  """
+  LC
+
+  """
+  Liechtenstein.
+  """
+  LI
+
+  """
+  Sri Lanka.
+  """
+  LK
+
+  """
+  Liberia.
+  """
+  LR
+
+  """
+  Lesotho.
+  """
+  LS
+
+  """
+  Lithuania.
+  """
+  LT
+
+  """
+  Luxembourg.
+  """
+  LU
+
+  """
+  Latvia.
+  """
+  LV
+
+  """
+  Libya.
+  """
+  LY
+
+  """
+  Morocco.
+  """
+  MA
+
+  """
+  Monaco.
+  """
+  MC
+
+  """
+  Moldova.
+  """
+  MD
+
+  """
+  Montenegro.
+  """
+  ME
+
+  """
+  St. Martin.
+  """
+  MF
+
+  """
+  Madagascar.
+  """
+  MG
+
+  """
+  North Macedonia.
+  """
+  MK
+
+  """
+  Mali.
+  """
+  ML
+
+  """
+  Myanmar (Burma).
+  """
+  MM
+
+  """
+  Mongolia.
+  """
+  MN
+
+  """
+  Macao SAR.
+  """
+  MO
+
+  """
+  Martinique.
+  """
+  MQ
+
+  """
+  Mauritania.
+  """
+  MR
+
+  """
+  Montserrat.
+  """
+  MS
+
+  """
+  Malta.
+  """
+  MT
+
+  """
+  Mauritius.
+  """
+  MU
+
+  """
+  Maldives.
+  """
+  MV
+
+  """
+  Malawi.
+  """
+  MW
+
+  """
+  Mexico.
+  """
+  MX
+
+  """
+  Malaysia.
+  """
+  MY
+
+  """
+  Mozambique.
+  """
+  MZ
+
+  """
+  Namibia.
+  """
+  NA
+
+  """
+  New Caledonia.
+  """
+  NC
+
+  """
+  Niger.
+  """
+  NE
+
+  """
+  Norfolk Island.
+  """
+  NF
+
+  """
+  Nigeria.
+  """
+  NG
+
+  """
+  Nicaragua.
+  """
+  NI
+
+  """
+  Netherlands.
+  """
+  NL
+
+  """
+  Norway.
+  """
+  NO
+
+  """
+  Nepal.
+  """
+  NP
+
+  """
+  Nauru.
+  """
+  NR
+
+  """
+  Niue.
+  """
+  NU
+
+  """
+  New Zealand.
+  """
+  NZ
+
+  """
+  Oman.
+  """
+  OM
+
+  """
+  Panama.
+  """
+  PA
+
+  """
+  Peru.
+  """
+  PE
+
+  """
+  French Polynesia.
+  """
+  PF
+
+  """
+  Papua New Guinea.
+  """
+  PG
+
+  """
+  Philippines.
+  """
+  PH
+
+  """
+  Pakistan.
+  """
+  PK
+
+  """
+  Poland.
+  """
+  PL
+
+  """
+  St. Pierre & Miquelon.
+  """
+  PM
+
+  """
+  Pitcairn Islands.
+  """
+  PN
+
+  """
+  Palestinian Territories.
+  """
+  PS
+
+  """
+  Portugal.
+  """
+  PT
+
+  """
+  Paraguay.
+  """
+  PY
+
+  """
+  Qatar.
+  """
+  QA
+
+  """
+  Réunion.
+  """
+  RE
+
+  """
+  Romania.
+  """
+  RO
+
+  """
+  Serbia.
+  """
+  RS
+
+  """
+  Russia.
+  """
+  RU
+
+  """
+  Rwanda.
+  """
+  RW
+
+  """
+  Saudi Arabia.
+  """
+  SA
+
+  """
+  Solomon Islands.
+  """
+  SB
+
+  """
+  Seychelles.
+  """
+  SC
+
+  """
+  Sudan.
+  """
+  SD
+
+  """
+  Sweden.
+  """
+  SE
+
+  """
+  Singapore.
+  """
+  SG
+
+  """
+  St. Helena.
+  """
+  SH
+
+  """
+  Slovenia.
+  """
+  SI
+
+  """
+  Svalbard & Jan Mayen.
+  """
+  SJ
+
+  """
+  Slovakia.
+  """
+  SK
+
+  """
+  Sierra Leone.
+  """
+  SL
+
+  """
+  San Marino.
+  """
+  SM
+
+  """
+  Senegal.
+  """
+  SN
+
+  """
+  Somalia.
+  """
+  SO
+
+  """
+  Suriname.
+  """
+  SR
+
+  """
+  South Sudan.
+  """
+  SS
+
+  """
+  São Tomé & Príncipe.
+  """
+  ST
+
+  """
+  El Salvador.
+  """
+  SV
+
+  """
+  Sint Maarten.
+  """
+  SX
+
+  """
+  Syria.
+  """
+  SY
+
+  """
+  Eswatini.
+  """
+  SZ
+
+  """
+  Tristan da Cunha.
+  """
+  TA
+
+  """
+  Turks & Caicos Islands.
+  """
+  TC
+
+  """
+  Chad.
+  """
+  TD
+
+  """
+  French Southern Territories.
+  """
+  TF
+
+  """
+  Togo.
+  """
+  TG
+
+  """
+  Thailand.
+  """
+  TH
+
+  """
+  Tajikistan.
+  """
+  TJ
+
+  """
+  Tokelau.
+  """
+  TK
+
+  """
+  Timor-Leste.
+  """
+  TL
+
+  """
+  Turkmenistan.
+  """
+  TM
+
+  """
+  Tunisia.
+  """
+  TN
+
+  """
+  Tonga.
+  """
+  TO
+
+  """
+  Turkey.
+  """
+  TR
+
+  """
+  Trinidad & Tobago.
+  """
+  TT
+
+  """
+  Tuvalu.
+  """
+  TV
+
+  """
+  Taiwan.
+  """
+  TW
+
+  """
+  Tanzania.
+  """
+  TZ
+
+  """
+  Ukraine.
+  """
+  UA
+
+  """
+  Uganda.
+  """
+  UG
+
+  """
+  U.S. Outlying Islands.
+  """
+  UM
+
+  """
+  United States.
+  """
+  US
+
+  """
+  Uruguay.
+  """
+  UY
+
+  """
+  Uzbekistan.
+  """
+  UZ
+
+  """
+  Vatican City.
+  """
+  VA
+
+  """
+  St. Vincent & Grenadines.
+  """
+  VC
+
+  """
+  Venezuela.
+  """
+  VE
+
+  """
+  British Virgin Islands.
+  """
+  VG
+
+  """
+  Vietnam.
+  """
+  VN
+
+  """
+  Vanuatu.
+  """
+  VU
+
+  """
+  Wallis & Futuna.
+  """
+  WF
+
+  """
+  Samoa.
+  """
+  WS
+
+  """
+  Kosovo.
+  """
+  XK
+
+  """
+  Yemen.
+  """
+  YE
+
+  """
+  Mayotte.
+  """
+  YT
+
+  """
+  South Africa.
+  """
+  ZA
+
+  """
+  Zambia.
+  """
+  ZM
+
+  """
+  Zimbabwe.
+  """
+  ZW
+
+  """
+  Unknown Region.
+  """
+  ZZ
+}
+
+"""
+The three-letter currency codes that represent the world currencies used in
+stores. These include standard ISO 4217 codes, legacy codes,
+and non-standard codes.
+"""
+enum CurrencyCode {
+  """
+  United Arab Emirates Dirham (AED).
+  """
+  AED
+
+  """
+  Afghan Afghani (AFN).
+  """
+  AFN
+
+  """
+  Albanian Lek (ALL).
+  """
+  ALL
+
+  """
+  Armenian Dram (AMD).
+  """
+  AMD
+
+  """
+  Netherlands Antillean Guilder.
+  """
+  ANG
+
+  """
+  Angolan Kwanza (AOA).
+  """
+  AOA
+
+  """
+  Argentine Pesos (ARS).
+  """
+  ARS
+
+  """
+  Australian Dollars (AUD).
+  """
+  AUD
+
+  """
+  Aruban Florin (AWG).
+  """
+  AWG
+
+  """
+  Azerbaijani Manat (AZN).
+  """
+  AZN
+
+  """
+  Bosnia and Herzegovina Convertible Mark (BAM).
+  """
+  BAM
+
+  """
+  Barbadian Dollar (BBD).
+  """
+  BBD
+
+  """
+  Bangladesh Taka (BDT).
+  """
+  BDT
+
+  """
+  Bulgarian Lev (BGN).
+  """
+  BGN
+
+  """
+  Bahraini Dinar (BHD).
+  """
+  BHD
+
+  """
+  Burundian Franc (BIF).
+  """
+  BIF
+
+  """
+  Bermudian Dollar (BMD).
+  """
+  BMD
+
+  """
+  Brunei Dollar (BND).
+  """
+  BND
+
+  """
+  Bolivian Boliviano (BOB).
+  """
+  BOB
+
+  """
+  Brazilian Real (BRL).
+  """
+  BRL
+
+  """
+  Bahamian Dollar (BSD).
+  """
+  BSD
+
+  """
+  Bhutanese Ngultrum (BTN).
+  """
+  BTN
+
+  """
+  Botswana Pula (BWP).
+  """
+  BWP
+
+  """
+  Belarusian Ruble (BYN).
+  """
+  BYN
+
+  """
+  Belarusian Ruble (BYR).
+  """
+  BYR @deprecated(reason: "`BYR` is deprecated. Use `BYN` available from version `2021-01` onwards instead.")
+
+  """
+  Belize Dollar (BZD).
+  """
+  BZD
+
+  """
+  Canadian Dollars (CAD).
+  """
+  CAD
+
+  """
+  Congolese franc (CDF).
+  """
+  CDF
+
+  """
+  Swiss Francs (CHF).
+  """
+  CHF
+
+  """
+  Chilean Peso (CLP).
+  """
+  CLP
+
+  """
+  Chinese Yuan Renminbi (CNY).
+  """
+  CNY
+
+  """
+  Colombian Peso (COP).
+  """
+  COP
+
+  """
+  Costa Rican Colones (CRC).
+  """
+  CRC
+
+  """
+  Cape Verdean escudo (CVE).
+  """
+  CVE
+
+  """
+  Czech Koruny (CZK).
+  """
+  CZK
+
+  """
+  Djiboutian Franc (DJF).
+  """
+  DJF
+
+  """
+  Danish Kroner (DKK).
+  """
+  DKK
+
+  """
+  Dominican Peso (DOP).
+  """
+  DOP
+
+  """
+  Algerian Dinar (DZD).
+  """
+  DZD
+
+  """
+  Egyptian Pound (EGP).
+  """
+  EGP
+
+  """
+  Eritrean Nakfa (ERN).
+  """
+  ERN
+
+  """
+  Ethiopian Birr (ETB).
+  """
+  ETB
+
+  """
+  Euro (EUR).
+  """
+  EUR
+
+  """
+  Fijian Dollars (FJD).
+  """
+  FJD
+
+  """
+  Falkland Islands Pounds (FKP).
+  """
+  FKP
+
+  """
+  United Kingdom Pounds (GBP).
+  """
+  GBP
+
+  """
+  Georgian Lari (GEL).
+  """
+  GEL
+
+  """
+  Ghanaian Cedi (GHS).
+  """
+  GHS
+
+  """
+  Gibraltar Pounds (GIP).
+  """
+  GIP
+
+  """
+  Gambian Dalasi (GMD).
+  """
+  GMD
+
+  """
+  Guinean Franc (GNF).
+  """
+  GNF
+
+  """
+  Guatemalan Quetzal (GTQ).
+  """
+  GTQ
+
+  """
+  Guyanese Dollar (GYD).
+  """
+  GYD
+
+  """
+  Hong Kong Dollars (HKD).
+  """
+  HKD
+
+  """
+  Honduran Lempira (HNL).
+  """
+  HNL
+
+  """
+  Croatian Kuna (HRK).
+  """
+  HRK
+
+  """
+  Haitian Gourde (HTG).
+  """
+  HTG
+
+  """
+  Hungarian Forint (HUF).
+  """
+  HUF
+
+  """
+  Indonesian Rupiah (IDR).
+  """
+  IDR
+
+  """
+  Israeli New Shekel (NIS).
+  """
+  ILS
+
+  """
+  Indian Rupees (INR).
+  """
+  INR
+
+  """
+  Iraqi Dinar (IQD).
+  """
+  IQD
+
+  """
+  Iranian Rial (IRR).
+  """
+  IRR
+
+  """
+  Icelandic Kronur (ISK).
+  """
+  ISK
+
+  """
+  Jersey Pound.
+  """
+  JEP
+
+  """
+  Jamaican Dollars (JMD).
+  """
+  JMD
+
+  """
+  Jordanian Dinar (JOD).
+  """
+  JOD
+
+  """
+  Japanese Yen (JPY).
+  """
+  JPY
+
+  """
+  Kenyan Shilling (KES).
+  """
+  KES
+
+  """
+  Kyrgyzstani Som (KGS).
+  """
+  KGS
+
+  """
+  Cambodian Riel.
+  """
+  KHR
+
+  """
+  Kiribati Dollar (KID).
+  """
+  KID
+
+  """
+  Comorian Franc (KMF).
+  """
+  KMF
+
+  """
+  South Korean Won (KRW).
+  """
+  KRW
+
+  """
+  Kuwaiti Dinar (KWD).
+  """
+  KWD
+
+  """
+  Cayman Dollars (KYD).
+  """
+  KYD
+
+  """
+  Kazakhstani Tenge (KZT).
+  """
+  KZT
+
+  """
+  Laotian Kip (LAK).
+  """
+  LAK
+
+  """
+  Lebanese Pounds (LBP).
+  """
+  LBP
+
+  """
+  Sri Lankan Rupees (LKR).
+  """
+  LKR
+
+  """
+  Liberian Dollar (LRD).
+  """
+  LRD
+
+  """
+  Lesotho Loti (LSL).
+  """
+  LSL
+
+  """
+  Lithuanian Litai (LTL).
+  """
+  LTL
+
+  """
+  Latvian Lati (LVL).
+  """
+  LVL
+
+  """
+  Libyan Dinar (LYD).
+  """
+  LYD
+
+  """
+  Moroccan Dirham.
+  """
+  MAD
+
+  """
+  Moldovan Leu (MDL).
+  """
+  MDL
+
+  """
+  Malagasy Ariary (MGA).
+  """
+  MGA
+
+  """
+  Macedonia Denar (MKD).
+  """
+  MKD
+
+  """
+  Burmese Kyat (MMK).
+  """
+  MMK
+
+  """
+  Mongolian Tugrik.
+  """
+  MNT
+
+  """
+  Macanese Pataca (MOP).
+  """
+  MOP
+
+  """
+  Mauritanian Ouguiya (MRU).
+  """
+  MRU
+
+  """
+  Mauritian Rupee (MUR).
+  """
+  MUR
+
+  """
+  Maldivian Rufiyaa (MVR).
+  """
+  MVR
+
+  """
+  Malawian Kwacha (MWK).
+  """
+  MWK
+
+  """
+  Mexican Pesos (MXN).
+  """
+  MXN
+
+  """
+  Malaysian Ringgits (MYR).
+  """
+  MYR
+
+  """
+  Mozambican Metical.
+  """
+  MZN
+
+  """
+  Namibian Dollar.
+  """
+  NAD
+
+  """
+  Nigerian Naira (NGN).
+  """
+  NGN
+
+  """
+  Nicaraguan Córdoba (NIO).
+  """
+  NIO
+
+  """
+  Norwegian Kroner (NOK).
+  """
+  NOK
+
+  """
+  Nepalese Rupee (NPR).
+  """
+  NPR
+
+  """
+  New Zealand Dollars (NZD).
+  """
+  NZD
+
+  """
+  Omani Rial (OMR).
+  """
+  OMR
+
+  """
+  Panamian Balboa (PAB).
+  """
+  PAB
+
+  """
+  Peruvian Nuevo Sol (PEN).
+  """
+  PEN
+
+  """
+  Papua New Guinean Kina (PGK).
+  """
+  PGK
+
+  """
+  Philippine Peso (PHP).
+  """
+  PHP
+
+  """
+  Pakistani Rupee (PKR).
+  """
+  PKR
+
+  """
+  Polish Zlotych (PLN).
+  """
+  PLN
+
+  """
+  Paraguayan Guarani (PYG).
+  """
+  PYG
+
+  """
+  Qatari Rial (QAR).
+  """
+  QAR
+
+  """
+  Romanian Lei (RON).
+  """
+  RON
+
+  """
+  Serbian dinar (RSD).
+  """
+  RSD
+
+  """
+  Russian Rubles (RUB).
+  """
+  RUB
+
+  """
+  Rwandan Franc (RWF).
+  """
+  RWF
+
+  """
+  Saudi Riyal (SAR).
+  """
+  SAR
+
+  """
+  Solomon Islands Dollar (SBD).
+  """
+  SBD
+
+  """
+  Seychellois Rupee (SCR).
+  """
+  SCR
+
+  """
+  Sudanese Pound (SDG).
+  """
+  SDG
+
+  """
+  Swedish Kronor (SEK).
+  """
+  SEK
+
+  """
+  Singapore Dollars (SGD).
+  """
+  SGD
+
+  """
+  Saint Helena Pounds (SHP).
+  """
+  SHP
+
+  """
+  Sierra Leonean Leone (SLL).
+  """
+  SLL
+
+  """
+  Somali Shilling (SOS).
+  """
+  SOS
+
+  """
+  Surinamese Dollar (SRD).
+  """
+  SRD
+
+  """
+  South Sudanese Pound (SSP).
+  """
+  SSP
+
+  """
+  Sao Tome And Principe Dobra (STD).
+  """
+  STD @deprecated(reason: "`STD` is deprecated. Use `STN` available from version `2022-07` onwards instead.")
+
+  """
+  Sao Tome And Principe Dobra (STN).
+  """
+  STN
+
+  """
+  Syrian Pound (SYP).
+  """
+  SYP
+
+  """
+  Swazi Lilangeni (SZL).
+  """
+  SZL
+
+  """
+  Thai baht (THB).
+  """
+  THB
+
+  """
+  Tajikistani Somoni (TJS).
+  """
+  TJS
+
+  """
+  Turkmenistani Manat (TMT).
+  """
+  TMT
+
+  """
+  Tunisian Dinar (TND).
+  """
+  TND
+
+  """
+  Tongan Pa'anga (TOP).
+  """
+  TOP
+
+  """
+  Turkish Lira (TRY).
+  """
+  TRY
+
+  """
+  Trinidad and Tobago Dollars (TTD).
+  """
+  TTD
+
+  """
+  Taiwan Dollars (TWD).
+  """
+  TWD
+
+  """
+  Tanzanian Shilling (TZS).
+  """
+  TZS
+
+  """
+  Ukrainian Hryvnia (UAH).
+  """
+  UAH
+
+  """
+  Ugandan Shilling (UGX).
+  """
+  UGX
+
+  """
+  United States Dollars (USD).
+  """
+  USD
+
+  """
+  Uruguayan Pesos (UYU).
+  """
+  UYU
+
+  """
+  Uzbekistan som (UZS).
+  """
+  UZS
+
+  """
+  Venezuelan Bolivares (VED).
+  """
+  VED
+
+  """
+  Venezuelan Bolivares (VEF).
+  """
+  VEF @deprecated(reason: "`VEF` is deprecated. Use `VES` available from version `2020-10` onwards instead.")
+
+  """
+  Venezuelan Bolivares (VES).
+  """
+  VES
+
+  """
+  Vietnamese đồng (VND).
+  """
+  VND
+
+  """
+  Vanuatu Vatu (VUV).
+  """
+  VUV
+
+  """
+  Samoan Tala (WST).
+  """
+  WST
+
+  """
+  Central African CFA Franc (XAF).
+  """
+  XAF
+
+  """
+  East Caribbean Dollar (XCD).
+  """
+  XCD
+
+  """
+  West African CFA franc (XOF).
+  """
+  XOF
+
+  """
+  CFP Franc (XPF).
+  """
+  XPF
+
+  """
+  Unrecognized currency.
+  """
+  XXX
+
+  """
+  Yemeni Rial (YER).
+  """
+  YER
+
+  """
+  South African Rand (ZAR).
+  """
+  ZAR
+
+  """
+  Zambian Kwacha (ZMW).
+  """
+  ZMW
+}
+
+"""
+A custom product.
+"""
+type CustomProduct {
+  """
+  Whether the merchandise is a gift card.
+  """
+  isGiftCard: Boolean!
+
+  """
+  Whether the merchandise requires shipping.
+  """
+  requiresShipping: Boolean!
+
+  """
+  The weight of the product variant in the unit system specified with `weight_unit`.
+  """
+  weight: Float
+
+  """
+  Unit of measurement for weight.
+  """
+  weightUnit: WeightUnit!
+}
+
+"""
+Represents a customer with the shop.
+"""
+type Customer implements HasMetafields {
+  """
+  The total amount of money spent by the customer. Converted from the shop's
+  currency to the currency of the cart using a market rate.
+  """
+  amountSpent: MoneyV2!
+
+  """
+  The customer’s name, email or phone number.
+  """
+  displayName: String!
+
+  """
+  The customer’s email address.
+  """
+  email: String
+
+  """
+  Whether the customer has any of the given tags.
+  """
+  hasAnyTag(
+    """
+    The tags to search for.
+    """
+    tags: [String!]! = []
+  ): Boolean!
+
+  """
+  A unique identifier for the customer.
+  """
+  id: ID!
+
+  """
+  Returns a metafield by namespace and key that belongs to the resource.
+  """
+  metafield(
+    """
+    The key for the metafield.
+    """
+    key: String!
+
+    """
+    The namespace for the metafield.
+    """
+    namespace: String!
+  ): Metafield
+
+  """
+  The number of orders made by the customer.
+  """
+  numberOfOrders: Int!
+}
+
+"""
+Represents an [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)-encoded date and time string.
+For example, 3:50 pm on September 7, 2019 in the time zone of UTC (Coordinated Universal Time) is
+represented as `"2019-09-07T15:50:00Z`".
+"""
+scalar DateTime
+
+"""
+A signed decimal number, which supports arbitrary precision and is serialized as a string.
+
+Example values: `"29.99"`, `"29.999"`.
+"""
+scalar Decimal
+
+"""
+List of different delivery method types.
+"""
+enum DeliveryMethod {
+  """
+  Local Delivery.
+  """
+  LOCAL
+
+  """
+  None.
+  """
+  NONE
+
+  """
+  Shipping to a Pickup Point.
+  """
+  PICKUP_POINT
+
+  """
+  Local Pickup.
+  """
+  PICK_UP
+
+  """
+  Retail.
+  """
+  RETAIL
+
+  """
+  Shipping.
+  """
+  SHIPPING
+}
+
+"""
+The result of a payment method function.
+"""
+input FunctionResult {
+  """
+  The ordered list of operations to apply to the list of payment methods.
+  """
+  operations: [Operation!]!
+}
+
+"""
+Represents information about the metafields associated to the specified resource.
+"""
+interface HasMetafields {
+  """
+  Returns a metafield by namespace and key that belongs to the resource.
+  """
+  metafield(
+    """
+    The key for the metafield.
+    """
+    key: String!
+
+    """
+    The namespace for the metafield.
+    """
+    namespace: String!
+  ): Metafield
+}
+
+"""
+Request to hide a payment method.
+"""
+input HideOperation {
+  """
+  The identifier of the payment method to hide out.
+  """
+  paymentMethodId: ID!
+}
+
+"""
+Represents a unique identifier, often used to refetch an object.
+The ID type appears in a JSON response as a String, but it is not intended to be human-readable.
+
+Example value: `"gid://shopify/Product/10079785100"`
+"""
+scalar ID
+
+type Input {
+  """
+  The cart.
+  """
+  cart: Cart!
+
+  """
+  The localization of the function execution context.
+  """
+  localization: Localization!
+
+  """
+  The payment customization that owns the current function.
+  """
+  paymentCustomization: PaymentCustomization!
+
+  """
+  The list of payment methods.
+  """
+  paymentMethods: [PaymentCustomizationPaymentMethod!]!
+
+  """
+  The conversion rate between the shop's currency and the currency of the cart.
+  """
+  presentmentCurrencyRate: Decimal!
+}
+
+"""
+A language.
+"""
+type Language {
+  """
+  The ISO code.
+  """
+  isoCode: LanguageCode!
+}
+
+"""
+ISO 639-1 language codes supported by Shopify.
+"""
+enum LanguageCode {
+  """
+  Afrikaans.
+  """
+  AF
+
+  """
+  Akan.
+  """
+  AK
+
+  """
+  Amharic.
+  """
+  AM
+
+  """
+  Arabic.
+  """
+  AR
+
+  """
+  Assamese.
+  """
+  AS
+
+  """
+  Azerbaijani.
+  """
+  AZ
+
+  """
+  Belarusian.
+  """
+  BE
+
+  """
+  Bulgarian.
+  """
+  BG
+
+  """
+  Bambara.
+  """
+  BM
+
+  """
+  Bangla.
+  """
+  BN
+
+  """
+  Tibetan.
+  """
+  BO
+
+  """
+  Breton.
+  """
+  BR
+
+  """
+  Bosnian.
+  """
+  BS
+
+  """
+  Catalan.
+  """
+  CA
+
+  """
+  Chechen.
+  """
+  CE
+
+  """
+  Czech.
+  """
+  CS
+
+  """
+  Church Slavic.
+  """
+  CU
+
+  """
+  Welsh.
+  """
+  CY
+
+  """
+  Danish.
+  """
+  DA
+
+  """
+  German.
+  """
+  DE
+
+  """
+  Dzongkha.
+  """
+  DZ
+
+  """
+  Ewe.
+  """
+  EE
+
+  """
+  Greek.
+  """
+  EL
+
+  """
+  English.
+  """
+  EN
+
+  """
+  Esperanto.
+  """
+  EO
+
+  """
+  Spanish.
+  """
+  ES
+
+  """
+  Estonian.
+  """
+  ET
+
+  """
+  Basque.
+  """
+  EU
+
+  """
+  Persian.
+  """
+  FA
+
+  """
+  Fulah.
+  """
+  FF
+
+  """
+  Finnish.
+  """
+  FI
+
+  """
+  Faroese.
+  """
+  FO
+
+  """
+  French.
+  """
+  FR
+
+  """
+  Western Frisian.
+  """
+  FY
+
+  """
+  Irish.
+  """
+  GA
+
+  """
+  Scottish Gaelic.
+  """
+  GD
+
+  """
+  Galician.
+  """
+  GL
+
+  """
+  Gujarati.
+  """
+  GU
+
+  """
+  Manx.
+  """
+  GV
+
+  """
+  Hausa.
+  """
+  HA
+
+  """
+  Hebrew.
+  """
+  HE
+
+  """
+  Hindi.
+  """
+  HI
+
+  """
+  Croatian.
+  """
+  HR
+
+  """
+  Hungarian.
+  """
+  HU
+
+  """
+  Armenian.
+  """
+  HY
+
+  """
+  Interlingua.
+  """
+  IA
+
+  """
+  Indonesian.
+  """
+  ID
+
+  """
+  Igbo.
+  """
+  IG
+
+  """
+  Sichuan Yi.
+  """
+  II
+
+  """
+  Icelandic.
+  """
+  IS
+
+  """
+  Italian.
+  """
+  IT
+
+  """
+  Japanese.
+  """
+  JA
+
+  """
+  Javanese.
+  """
+  JV
+
+  """
+  Georgian.
+  """
+  KA
+
+  """
+  Kikuyu.
+  """
+  KI
+
+  """
+  Kazakh.
+  """
+  KK
+
+  """
+  Kalaallisut.
+  """
+  KL
+
+  """
+  Khmer.
+  """
+  KM
+
+  """
+  Kannada.
+  """
+  KN
+
+  """
+  Korean.
+  """
+  KO
+
+  """
+  Kashmiri.
+  """
+  KS
+
+  """
+  Kurdish.
+  """
+  KU
+
+  """
+  Cornish.
+  """
+  KW
+
+  """
+  Kyrgyz.
+  """
+  KY
+
+  """
+  Luxembourgish.
+  """
+  LB
+
+  """
+  Ganda.
+  """
+  LG
+
+  """
+  Lingala.
+  """
+  LN
+
+  """
+  Lao.
+  """
+  LO
+
+  """
+  Lithuanian.
+  """
+  LT
+
+  """
+  Luba-Katanga.
+  """
+  LU
+
+  """
+  Latvian.
+  """
+  LV
+
+  """
+  Malagasy.
+  """
+  MG
+
+  """
+  Māori.
+  """
+  MI
+
+  """
+  Macedonian.
+  """
+  MK
+
+  """
+  Malayalam.
+  """
+  ML
+
+  """
+  Mongolian.
+  """
+  MN
+
+  """
+  Marathi.
+  """
+  MR
+
+  """
+  Malay.
+  """
+  MS
+
+  """
+  Maltese.
+  """
+  MT
+
+  """
+  Burmese.
+  """
+  MY
+
+  """
+  Norwegian (Bokmål).
+  """
+  NB
+
+  """
+  North Ndebele.
+  """
+  ND
+
+  """
+  Nepali.
+  """
+  NE
+
+  """
+  Dutch.
+  """
+  NL
+
+  """
+  Norwegian Nynorsk.
+  """
+  NN
+
+  """
+  Norwegian.
+  """
+  NO
+
+  """
+  Oromo.
+  """
+  OM
+
+  """
+  Odia.
+  """
+  OR
+
+  """
+  Ossetic.
+  """
+  OS
+
+  """
+  Punjabi.
+  """
+  PA
+
+  """
+  Polish.
+  """
+  PL
+
+  """
+  Pashto.
+  """
+  PS
+
+  """
+  Portuguese.
+  """
+  PT
+
+  """
+  Portuguese (Brazil).
+  """
+  PT_BR
+
+  """
+  Portuguese (Portugal).
+  """
+  PT_PT
+
+  """
+  Quechua.
+  """
+  QU
+
+  """
+  Romansh.
+  """
+  RM
+
+  """
+  Rundi.
+  """
+  RN
+
+  """
+  Romanian.
+  """
+  RO
+
+  """
+  Russian.
+  """
+  RU
+
+  """
+  Kinyarwanda.
+  """
+  RW
+
+  """
+  Sindhi.
+  """
+  SD
+
+  """
+  Northern Sami.
+  """
+  SE
+
+  """
+  Sango.
+  """
+  SG
+
+  """
+  Sinhala.
+  """
+  SI
+
+  """
+  Slovak.
+  """
+  SK
+
+  """
+  Slovenian.
+  """
+  SL
+
+  """
+  Shona.
+  """
+  SN
+
+  """
+  Somali.
+  """
+  SO
+
+  """
+  Albanian.
+  """
+  SQ
+
+  """
+  Serbian.
+  """
+  SR
+
+  """
+  Sundanese.
+  """
+  SU
+
+  """
+  Swedish.
+  """
+  SV
+
+  """
+  Swahili.
+  """
+  SW
+
+  """
+  Tamil.
+  """
+  TA
+
+  """
+  Telugu.
+  """
+  TE
+
+  """
+  Tajik.
+  """
+  TG
+
+  """
+  Thai.
+  """
+  TH
+
+  """
+  Tigrinya.
+  """
+  TI
+
+  """
+  Turkmen.
+  """
+  TK
+
+  """
+  Tongan.
+  """
+  TO
+
+  """
+  Turkish.
+  """
+  TR
+
+  """
+  Tatar.
+  """
+  TT
+
+  """
+  Uyghur.
+  """
+  UG
+
+  """
+  Ukrainian.
+  """
+  UK
+
+  """
+  Urdu.
+  """
+  UR
+
+  """
+  Uzbek.
+  """
+  UZ
+
+  """
+  Vietnamese.
+  """
+  VI
+
+  """
+  Volapük.
+  """
+  VO
+
+  """
+  Wolof.
+  """
+  WO
+
+  """
+  Xhosa.
+  """
+  XH
+
+  """
+  Yiddish.
+  """
+  YI
+
+  """
+  Yoruba.
+  """
+  YO
+
+  """
+  Chinese.
+  """
+  ZH
+
+  """
+  Chinese (Simplified).
+  """
+  ZH_CN
+
+  """
+  Chinese (Traditional).
+  """
+  ZH_TW
+
+  """
+  Zulu.
+  """
+  ZU
+}
+
+"""
+Information about the localized experiences configured for the shop.
+"""
+type Localization {
+  """
+  The country of the active localized experience.
+  """
+  country: Country!
+
+  """
+  The language of the active localized experience.
+  """
+  language: Language!
+}
+
+"""
+Represents a mailing address.
+"""
+type MailingAddress {
+  """
+  The first line of the address. Typically the street address or PO Box number.
+  """
+  address1: String
+
+  """
+  The second line of the address. Typically the number of the apartment, suite, or unit.
+  """
+  address2: String
+
+  """
+  The name of the city, district, village, or town.
+  """
+  city: String
+
+  """
+  The name of the customer's company or organization.
+  """
+  company: String
+
+  """
+  The two-letter code for the country of the address. For example, US.
+  """
+  countryCode: CountryCode
+
+  """
+  The first name of the customer.
+  """
+  firstName: String
+
+  """
+  The last name of the customer.
+  """
+  lastName: String
+
+  """
+  The full name of the customer, based on firstName and lastName.
+  """
+  name: String
+
+  """
+  A unique phone number for the customer. Formatted using E.164 standard. For example, +16135551111.
+  """
+  phone: String
+
+  """
+  The two-letter code for the region. For example, ON.
+  """
+  provinceCode: String
+
+  """
+  The zip or postal code of the address.
+  """
+  zip: String
+}
+
+"""
+The merchandise to be purchased at checkout.
+"""
+union Merchandise = CustomProduct | ProductVariant
+
+"""
+[Metafields](https://shopify.dev/apps/metafields)
+enable you to attach additional information to a
+Shopify resource, such as a [Product](https://shopify.dev/api/admin-graphql/latest/objects/product)
+or a [Collection](https://shopify.dev/api/admin-graphql/latest/objects/collection).
+For more information about the Shopify resources that you can attach metafields to, refer to
+[HasMetafields](https://shopify.dev/api/admin/graphql/reference/common-objects/HasMetafields).
+"""
+type Metafield {
+  """
+  The type of data that the metafield stores in the `value` field.
+  Refer to the list of [supported types](https://shopify.dev/apps/metafields/types).
+  """
+  type: String!
+
+  """
+  The data to store in the metafield. The data is always stored as a string, regardless of the metafield's type.
+  """
+  value: String!
+}
+
+"""
+A monetary value with currency.
+"""
+type MoneyV2 {
+  """
+  Decimal money amount.
+  """
+  amount: Decimal!
+
+  """
+  Currency of the money.
+  """
+  currencyCode: CurrencyCode!
+}
+
+"""
+Request to move a payment method to a new index.
+"""
+input MoveOperation {
+  """
+  The index to move the payment method to.
+  """
+  index: Int!
+
+  """
+  The identifier of the payment method to move.
+  """
+  paymentMethodId: ID!
+}
+
+"""
+The root mutation for the API.
+"""
+type MutationRoot {
+  """
+  Handles the function result.
+  """
+  handleResult(
+    """
+    The result of the function.
+    """
+    result: FunctionResult!
+  ): Void!
+}
+
+"""
+An operation to apply to the list of payment methods.
+"""
+input Operation @oneOf {
+  """
+  Request to hide a payment method.
+  """
+  hide: HideOperation
+
+  """
+  Request to move a payment method to a new index.
+  """
+  move: MoveOperation
+
+  """
+  Request to rename a payment method.
+  """
+  rename: RenameOperation
+}
+
+"""
+A customization representing how payment methods will be ordered, hidden, or renamed.
+"""
+type PaymentCustomization implements HasMetafields {
+  """
+  Returns a metafield by namespace and key that belongs to the resource.
+  """
+  metafield(
+    """
+    The key for the metafield.
+    """
+    key: String!
+
+    """
+    The namespace for the metafield.
+    """
+    namespace: String!
+  ): Metafield
+}
+
+type PaymentCustomizationPaymentMethod {
+  """
+  Unique identifier for the payment method.
+  """
+  id: ID!
+  name: String!
+}
+
+"""
+Represents a product.
+"""
+type Product implements HasMetafields {
+  """
+  A unique human-friendly string of the product's title.
+  """
+  handle: String!
+
+  """
+  Whether the product has any of the given tags.
+  """
+  hasAnyTag(
+    """
+    The tags to search for.
+    """
+    tags: [String!]! = []
+  ): Boolean!
+
+  """
+  A globally-unique identifier.
+  """
+  id: ID!
+
+  """
+  Whether the product has any of the given collection.
+  """
+  inAnyCollection(
+    """
+    The collections to search for.
+    """
+    ids: [ID!]! = []
+  ): Boolean!
+
+  """
+  Whether the product is a gift card.
+  """
+  isGiftCard: Boolean!
+
+  """
+  Returns a metafield by namespace and key that belongs to the resource.
+  """
+  metafield(
+    """
+    The key for the metafield.
+    """
+    key: String!
+
+    """
+    The namespace for the metafield.
+    """
+    namespace: String!
+  ): Metafield
+
+  """
+  The product type specified by the merchant.
+  """
+  productType: String
+
+  """
+  The name of the product's vendor.
+  """
+  vendor: String
+}
+
+"""
+Represents a product variant.
+"""
+type ProductVariant implements HasMetafields {
+  """
+  A globally-unique identifier.
+  """
+  id: ID!
+
+  """
+  Returns a metafield by namespace and key that belongs to the resource.
+  """
+  metafield(
+    """
+    The key for the metafield.
+    """
+    key: String!
+
+    """
+    The namespace for the metafield.
+    """
+    namespace: String!
+  ): Metafield
+
+  """
+  The product that this variant belongs to.
+  """
+  product: Product!
+
+  """
+  Whether the merchandise requires shipping.
+  """
+  requiresShipping: Boolean!
+
+  """
+  An identifier for the product variant in the shop. Required in order to connect to a fulfillment service.
+  """
+  sku: String
+
+  """
+  The weight of the product variant in the unit system specified with `weight_unit`.
+  """
+  weight: Float
+
+  """
+  Unit of measurement for weight.
+  """
+  weightUnit: WeightUnit!
+}
+
+"""
+Represents information about the buyer that is interacting with the cart.
+"""
+type PurchasingCompany {
+  """
+  The company associated to the order or draft order.
+  """
+  company: Company!
+
+  """
+  The company contact associated to the order or draft order.
+  """
+  contact: CompanyContact
+
+  """
+  The company location associated to the order or draft order.
+  """
+  location: CompanyLocation!
+}
+
+"""
+Request to rename a payment method.
+"""
+input RenameOperation {
+  """
+  The new name for the payment method.
+  """
+  name: String!
+
+  """
+  The identifier of the payment method to rename.
+  """
+  paymentMethodId: ID!
+}
+
+"""
+A void type that can be used to return a null value from a mutation.
+"""
+scalar Void
+
+"""
+Units of measurement for weight.
+"""
+enum WeightUnit {
+  """
+  Metric system unit of mass.
+  """
+  GRAMS
+
+  """
+  1 kilogram equals 1000 grams.
+  """
+  KILOGRAMS
+
+  """
+  Imperial system unit of mass.
+  """
+  OUNCES
+
+  """
+  1 pound equals 16 ounces.
+  """
+  POUNDS
+}
