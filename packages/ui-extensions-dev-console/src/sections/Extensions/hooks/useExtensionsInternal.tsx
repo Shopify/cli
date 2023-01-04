@@ -28,7 +28,6 @@ export function useExtensionsInternal() {
     // dispatch events
     focus: (extension: ExtensionPayload) => extensionServer.client.emit('focus', [{uuid: extension.uuid}]),
     unfocus: () => extensionServer.client.emit('unfocus'),
-    navigate: (extension: ExtensionPayload) =>
-      extensionServer.client.emit('navigate', {url: extension.development.resource.url}),
+    navigate: (url: string) => extensionServer.client.emit('navigate', url),
   }
 }
