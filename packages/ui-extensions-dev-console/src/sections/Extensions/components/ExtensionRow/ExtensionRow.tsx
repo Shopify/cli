@@ -4,8 +4,10 @@ import {useExtensionsInternal} from '../../hooks/useExtensionsInternal.js'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
+import {ClipboardMinor} from '@shopify/polaris-icons'
 import {Button} from '@/components/Button'
-import {ButtonGroup} from '@/components/ButtonGroup/ButtonGroup'
+import {ButtonGroup} from '@/components/ButtonGroup'
+import {IconButton} from '@/components/IconButton'
 
 export interface ExtensionRowProps {
   extension: ExtensionPayload
@@ -33,18 +35,33 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
     }
   }
 
+  function handleCopyPreviewLink() {
+    navigator.clipboard
+      .writeText(extension.development.root.url)
+      .then(() => {})
+      .catch(() => {})
+  }
+
   const previewLink =
     extension.surface === 'pos' ? (
       <span className={styles.NotApplicable}>--</span>
     ) : (
-      <a
-        href={extension.development.root.url}
-        target="_blank"
-        aria-label="Preview this extension"
-        onClick={handleOpenRoot}
-      >
-        {extension.type.replaceAll('_', ' ')}
-      </a>
+      <>
+        <a
+          href={extension.development.root.url}
+          target="_blank"
+          aria-label="Preview this extension"
+          onClick={handleOpenRoot}
+        >
+          {extension.type.replaceAll('_', ' ')}
+        </a>
+        <IconButton
+          type="button"
+          onClick={() => handleCopyPreviewLink()}
+          source={ClipboardMinor}
+          accessibilityLabel={`Copy preview link for ${extension.title}`}
+        />
+      </>
     )
 
   return (
@@ -52,7 +69,7 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
       <td>
         <span className={styles.Title}>{extension.title}</span>
       </td>
-      <td>{previewLink}</td>
+      <td className={styles.PreviewLinkCell}>{previewLink}</td>
       <td>
         <Button type="button" onClick={() => onShowMobileQRCode(extension)}>
           View mobile

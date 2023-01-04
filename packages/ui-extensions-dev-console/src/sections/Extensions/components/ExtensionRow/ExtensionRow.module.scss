@@ -5,18 +5,6 @@
   td {
     padding: 0.8rem 1.5rem;
   }
-
-  label {
-    vertical-align: middle;
-  }
-
-  &:hover {
-    background: var(--dc-color-border);
-
-    .ActionSet {
-      opacity: 1;
-    }
-  }
 }
 
 .Title {
@@ -27,14 +15,10 @@
   font-family: var(--dc-font-compact);
 }
 
-.ActionSet {
-  vertical-align: middle;
-  opacity: 0;
-}
-
-.ForceVisible.ActionSet,
-.ForceVisible .ActionSet {
-  opacity: 1;
+.PreviewLinkCell {
+  display: flex;
+  align-items: center;
+  gap: 2.6rem;
 }
 
 .Status {
