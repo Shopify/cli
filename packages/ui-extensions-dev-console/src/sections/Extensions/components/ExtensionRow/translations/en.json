@@ -5,7 +5,7 @@
     "error": "Build Error"
   },
   "copy": {
-    "success": "URL copied succesfully",
+    "success": "URL copied",
     "error": "Couldn't copy URL"
   }
 }
