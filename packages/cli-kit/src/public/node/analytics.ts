@@ -1,46 +1,12 @@
-import * as environment from './environment.js'
-import {platformAndArch} from './os.js'
-import {version as rubyVersion} from './public/node/ruby.js'
-import {content, debug, token} from './output.js'
-import constants from './constants.js'
-import * as metadata from './metadata.js'
-import {publishEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
-import {fanoutHooks, getListOfTunnelPlugins} from './plugins.js'
-import {getPackageManager, packageManagerUsedForCreating} from './public/node/node-package-manager.js'
-import BaseCommand from './public/node/base-command.js'
-import {CommandContent} from './public/node/hooks/prerun.js'
-import {hashString} from './string.js'
-import {macAddress} from './environment/local.js'
+import {version as rubyVersion} from './ruby.js'
+import * as environment from '../../environment.js'
+import {content, debug, token} from '../../output.js'
+import constants from '../../constants.js'
+import * as metadata from '../../metadata.js'
+import {publishEvent, MONORAIL_COMMAND_TOPIC} from '../../monorail.js'
+import {fanoutHooks, getListOfTunnelPlugins} from '../../plugins.js'
+import {getEnvironmentData, getSensitiveEnvironmentData} from '../../private/node/analytics.js'
 import {Config, Interfaces} from '@oclif/core'
-
-interface StartOptions {
-  commandContent: CommandContent
-  args: string[]
-  currentTime?: number
-  commandClass?: Interfaces.Command.Class | typeof BaseCommand
-}
-
-export const start = async ({commandContent, args, currentTime = new Date().getTime(), commandClass}: StartOptions) => {
-  let startCommand: string = commandContent.command
-  if (commandClass && Object.prototype.hasOwnProperty.call(commandClass, 'analyticsNameOverride')) {
-    startCommand = (commandClass as typeof BaseCommand).analyticsNameOverride() ?? commandContent.command
-  }
-
-  await metadata.addSensitive(() => ({
-    commandStartOptions: {
-      startTime: currentTime,
-      startCommand,
-      startArgs: args,
-    },
-  }))
-
-  await metadata.addPublic(() => ({
-    cmd_all_launcher: packageManagerUsedForCreating(),
-    cmd_all_alias_used: commandContent.alias,
-    cmd_all_topic: commandContent.topic,
-    cmd_all_plugin: commandClass?.plugin?.name,
-  }))
-}
 
 interface ReportEventOptions {
   config: Interfaces.Config
@@ -53,7 +19,7 @@ interface ReportEventOptions {
  * The payload for an event includes both generic data, and data gathered from installed plug-ins.
  *
  */
-export async function reportEvent(options: ReportEventOptions) {
+export async function reportEvent(options: ReportEventOptions): Promise<void> {
   try {
     const payload = await buildPayload(options)
     if (payload === undefined) {
@@ -100,7 +66,7 @@ export async function getAnalyticsTunnelType(options: Config, tunnelUrl: string)
   return provider ?? 'custom'
 }
 
-const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
+async function buildPayload({config, errorMessage}: ReportEventOptions) {
   const {commandStartOptions, ...sensitiveMetadata} = metadata.getAllSensitive()
   if (commandStartOptions === undefined) {
     debug('Unable to log analytics event - no information on executed command')
@@ -148,41 +114,4 @@ const buildPayload = async ({config, errorMessage}: ReportEventOptions) => {
       }),
     },
   }
-}
-
-export async function getEnvironmentData(config: Interfaces.Config) {
-  const ciPlatform = environment.local.ciPlatform()
-
-  const pluginNames = getPluginNames(config)
-  const shopifyPlugins = pluginNames.filter((plugin) => plugin.startsWith('@shopify/'))
-
-  const {platform, arch} = platformAndArch()
-
-  return {
-    uname: `${platform} ${arch}`,
-    env_ci: ciPlatform.isCI,
-    env_ci_platform: ciPlatform.name,
-    env_plugin_installed_any_custom: pluginNames.length !== shopifyPlugins.length,
-    env_plugin_installed_shopify: JSON.stringify(shopifyPlugins),
-    env_shell: config.shell,
-    env_web_ide: environment.local.cloudEnvironment().editor
-      ? environment.local.cloudEnvironment().platform
-      : undefined,
-    env_device_id: hashString(await macAddress()),
-    env_cloud: environment.local.cloudEnvironment().platform,
-    env_package_manager: await getPackageManager(process.cwd()),
-  }
-}
-
-async function getSensitiveEnvironmentData(config: Interfaces.Config) {
-  return {
-    env_plugin_installed_all: JSON.stringify(getPluginNames(config)),
-  }
-}
-
-function getPluginNames(config: Interfaces.Config) {
-  return config.plugins
-    .map((plugin) => plugin.name)
-    .sort()
-    .filter((plugin) => !plugin.startsWith('@oclif/'))
 }

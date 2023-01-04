@@ -1,4 +1,4 @@
-import {reportEvent} from '../../../analytics.js'
+import {reportEvent} from '../analytics.js'
 import {debug} from '../../../output.js'
 import {Hook} from '@oclif/core'
 

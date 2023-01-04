@@ -1,15 +1,16 @@
-import {hashString} from './string.js'
-import {getAnalyticsTunnelType, reportEvent, start} from './analytics.js'
-import * as environment from './environment.js'
-import {join as joinPath, dirname} from './path.js'
-import * as os from './os.js'
-import * as ruby from './public/node/ruby.js'
-import {mockAndCaptureOutput} from './testing/output.js'
-import {getAppInfo} from './store.js'
-import constants from './constants.js'
-import {publishEvent} from './monorail.js'
-import {inTemporaryDirectory, touch as touchFile, mkdir} from './file.js'
-import {getListOfTunnelPlugins} from './plugins.js'
+import {getAnalyticsTunnelType, reportEvent} from './analytics.js'
+import * as ruby from './ruby.js'
+import {startAnalytics} from '../../private/node/analytics.js'
+import {hashString} from '../../string.js'
+import * as environment from '../../environment.js'
+import {join as joinPath, dirname} from '../../path.js'
+import * as os from '../../os.js'
+import {mockAndCaptureOutput} from '../../testing/output.js'
+import {getAppInfo} from '../../store.js'
+import constants from '../../constants.js'
+import {publishEvent} from '../../monorail.js'
+import {inTemporaryDirectory, touch as touchFile, mkdir} from '../../file.js'
+import {getListOfTunnelPlugins} from '../../plugins.js'
 import {it, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
 describe('event tracking', () => {
@@ -18,15 +19,15 @@ describe('event tracking', () => {
 
   beforeEach(() => {
     vi.setSystemTime(currentDate)
-    vi.mock('./environment.js')
-    vi.mock('./public/node/ruby.js')
-    vi.mock('./os.js')
-    vi.mock('./store.js')
-    vi.mock('./string.js')
+    vi.mock('../../environment.js')
+    vi.mock('./ruby.js')
+    vi.mock('../../os.js')
+    vi.mock('../../store.js')
+    vi.mock('../../string.js')
 
-    vi.mock('./version.js')
-    vi.mock('./monorail.js')
-    vi.mock('./public/node/cli.js')
+    vi.mock('../../version.js')
+    vi.mock('../../monorail.js')
+    vi.mock('./cli.js')
     vi.mocked(environment.local.isShopify).mockResolvedValue(false)
     vi.mocked(environment.local.isDevelopment).mockReturnValue(false)
     vi.mocked(environment.local.analyticsDisabled).mockReturnValue(false)
@@ -37,8 +38,8 @@ describe('event tracking', () => {
     vi.mocked(ruby.version).mockResolvedValue('3.1.1')
     vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
     publishEventMock = vi.mocked(publishEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
-    vi.mock('./plugins.js', async () => {
-      const plugins: any = await vi.importActual('./plugins.js')
+    vi.mock('../../plugins.js', async () => {
+      const plugins: any = await vi.importActual('../../plugins.js')
       return {
         ...plugins,
         getListOfTunnelPlugins: vi.fn(),
@@ -69,7 +70,7 @@ describe('event tracking', () => {
         storeFqdn: 'domain1',
         directory: '/cached',
       })
-      await start({commandContent, args, currentTime: currentDate.getTime() - 100})
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
 
       // When
       const config = {
@@ -119,7 +120,7 @@ describe('event tracking', () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
       const commandContent = {command: 'dev', topic: 'app'}
-      await start({commandContent, args, currentTime: currentDate.getTime() - 100})
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
 
       // When
       const config = {
@@ -158,7 +159,7 @@ describe('event tracking', () => {
       // Given
       vi.mocked(environment.local.analyticsDisabled).mockReturnValueOnce(true)
       const commandContent = {command: 'dev', topic: 'app'}
-      await start({commandContent, args, currentTime: currentDate.getTime() - 100})
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
 
       // When
       const config = {
@@ -180,7 +181,7 @@ describe('event tracking', () => {
         throw new Error('Boom!')
       })
       const outputMock = mockAndCaptureOutput()
-      await start({commandContent, args})
+      await startAnalytics({commandContent, args})
 
       // When
       const config = {
