@@ -11,7 +11,7 @@ import {
 } from '../utilities/app/http-reverse-proxy.js'
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import metadata from '../metadata.js'
-import {UIExtension} from '../models/app/extensions.js'
+import {ExtensionCategory, UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
@@ -39,6 +39,8 @@ export interface DevOptions {
   noTunnel: boolean
   theme?: string
   themeExtensionPort?: number
+  skipRemoteSpecifications: boolean
+  skipExtensionCategories: ExtensionCategory[]
 }
 
 interface DevWebOptions {
@@ -50,7 +52,7 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
-  const {token, devOutput, interactiveMode} = await resolveDevParameters(options)
+  const {token, devOutput} = await resolveDevParameters(options)
   const {storeFqdn, remoteApp, updateURLs: cachedUpdateURLs, tunnelPlugin} = devOutput
 
   const apiKey = remoteApp.apiKey
@@ -58,7 +60,7 @@ async function dev(options: DevOptions) {
     token,
     apiKey,
     config: options.commandConfig,
-    fetchRemote: interactiveMode,
+    skipFetchRemote: options.skipRemoteSpecifications,
   })
   let localApp = await load({directory: options.directory, specifications})
 
@@ -81,7 +83,7 @@ async function dev(options: DevOptions) {
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
   let shouldUpdateURLs = false
   if (frontendConfig || backendConfig) {
-    if (options.update && interactiveMode) {
+    if (options.update) {
       const currentURLs = await getURLs(apiKey, token)
       const newURLs = generatePartnersURLs(exposedUrl, backendConfig?.configuration.authCallbackPath)
       shouldUpdateURLs = await shouldOrPromptUpdateURLs({
@@ -114,7 +116,7 @@ async function dev(options: DevOptions) {
   const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
 
-  if (localApp.extensions.ui.length > 0) {
+  if (localApp.extensions.ui.length > 0 && !options.skipExtensionCategories.includes('ui')) {
     const devExt = await devUIExtensionsTarget({
       app: localApp,
       id: remoteApp.id,
@@ -128,11 +130,11 @@ async function dev(options: DevOptions) {
     proxyTargets.push(devExt)
   }
 
-  outputExtensionsMessages(localApp, storeFqdn, proxyUrl, interactiveMode)
+  outputExtensionsMessages(localApp, storeFqdn, proxyUrl, options.skipExtensionCategories)
 
   const additionalProcesses: output.OutputProcess[] = []
 
-  if (localApp.extensions.theme.length > 0 && interactiveMode) {
+  if (localApp.extensions.theme.length > 0 && !options.skipExtensionCategories.includes('theme')) {
     const adminSession = await session.ensureAuthenticatedAdmin(storeFqdn)
     const storefrontToken = await session.ensureAuthenticatedStorefront()
     const extension = localApp.extensions.theme[0]!
@@ -354,13 +356,10 @@ async function logMetadataForDev(options: {
   }))
 }
 
-async function resolveDevParameters(
-  options: DevOptions,
-): Promise<{interactiveMode: boolean; token: string; devOutput: DevEnvironmentOutput}> {
+async function resolveDevParameters(options: DevOptions): Promise<{token: string; devOutput: DevEnvironmentOutput}> {
   const providedParameters = options.apiKey && options.apiSecret && options.storeFqdn
   if (providedParameters && !options.reset) {
     return {
-      interactiveMode: false,
       token: 'token',
       devOutput: {
         remoteApp: {
@@ -379,7 +378,7 @@ async function resolveDevParameters(
   }
 
   const token = await session.ensureAuthenticatedPartners()
-  return {interactiveMode: true, token, devOutput: await ensureDevEnvironment(options, token)}
+  return {token, devOutput: await ensureDevEnvironment(options, token)}
 }
 
 export default dev

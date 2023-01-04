@@ -105,13 +105,13 @@ describe('fetchExtensionSpecifications', () => {
     )
     expect(api.partners.request).toBeCalled()
   })
-  it.skip('returns local specifications when fetching remote is disabled', async () => {
+  it('returns local specifications when fetching remote is disabled', async () => {
     // When
     const got = await fetchSpecifications({
       token: 'token',
       apiKey: 'apiKey',
       config: new Config({root: ''}),
-      fetchRemote: false,
+      skipFetchRemote: true,
     })
 
     // Then

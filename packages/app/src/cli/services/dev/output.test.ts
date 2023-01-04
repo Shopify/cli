@@ -30,7 +30,20 @@ describe('output', () => {
     `)
   })
 
-  it('logs the correct output extension message when the given app contains a theme-app-extension in interactive mode', async () => {
+  it('logs the correct output extension message when the given app contains a customer-accounts-ui-extension and category is skipped', async () => {
+    const appMock = await mockApp()
+    appMock.extensions.ui.push(await mockCheckOutUIExtension())
+
+    outputExtensionsMessages(appMock, 'shop1010', 'https://f97b-95-91-224-153.eu.ngrok.io', ['ui'])
+
+    expect(outputMock.output()).toMatchInlineSnapshot(`
+      "ui Extensions
+        Skipped in this run
+      "
+    `)
+  })
+
+  it('logs the correct output extension message when the given app contains a theme-app-extension', async () => {
     const appMock = await mockApp()
     appMock.extensions.theme.push(await testThemeExtensions())
 
@@ -43,15 +56,15 @@ describe('output', () => {
     `)
   })
 
-  it('logs the correct output extension message when the given app contains a theme-app-extension in a non interactive mode', async () => {
+  it('logs the correct output extension message when the given app contains a theme-app-extension and category is skipped', async () => {
     const appMock = await mockApp()
     appMock.extensions.theme.push(await testThemeExtensions())
 
-    outputExtensionsMessages(appMock, 'shop1010', 'https://f97b-95-91-224-153.eu.ngrok.io', false)
+    outputExtensionsMessages(appMock, 'shop1010', 'https://f97b-95-91-224-153.eu.ngrok.io', ['theme'])
 
     expect(outputMock.output()).toMatchInlineSnapshot(`
-      "theme extension name (Theme app extension)
-      Theme app extensions not supported in non-interactive mode
+      "theme Extensions
+        Skipped in this run
       "
     `)
   })

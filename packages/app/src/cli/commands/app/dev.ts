@@ -1,6 +1,7 @@
 import {appFlags} from '../../flags.js'
 import dev from '../../services/dev.js'
 import Command from '../../utilities/app-command.js'
+import {ExtensionCategory, EXTENSION_CATEGORIES} from '../../models/app/extensions.js'
 import {Flags} from '@oclif/core'
 import {path, string, cli, metadata} from '@shopify/cli-kit'
 
@@ -86,6 +87,20 @@ export default class Dev extends Command {
       description: 'Local port of the theme app extension development server.',
       env: 'SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT',
     }),
+    'skip-remote-specifications': Flags.boolean({
+      hidden: false,
+      description: 'Use only local extension specification.',
+      env: 'SHOPIFY_FLAG_SKIP_REMOTE_SPECIFICATIONS',
+      default: false,
+    }),
+    'skip-extension-category': Flags.string({
+      hidden: false,
+      description: 'In case there are some extension of this categories, they are skipped from the dev flow execution',
+      env: 'SHOPIFY_FLAG_SKIP_REMOTE_SPECIFICATIONS',
+      multiple: true,
+      options: EXTENSION_CATEGORIES.slice(),
+      default: [],
+    }),
   }
 
   public async run(): Promise<void> {
@@ -115,6 +130,10 @@ export default class Dev extends Command {
       noTunnel: flags['no-tunnel'],
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
+      skipRemoteSpecifications: flags['skip-remote-specifications'],
+      skipExtensionCategories: flags['skip-extension-category'].map(
+        (extensionCategory) => extensionCategory as ExtensionCategory,
+      ),
     })
   }
 }

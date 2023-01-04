@@ -17,7 +17,7 @@ export interface FetchSpecificationsOptions {
   token: string
   apiKey: string
   config: Config
-  fetchRemote?: boolean
+  skipFetchRemote?: boolean
 }
 /**
  * Returns all extension/function specifications the user has access to.
@@ -37,16 +37,16 @@ export async function fetchSpecifications({
   token,
   apiKey,
   config,
-  fetchRemote = true,
+  skipFetchRemote = false,
 }: FetchSpecificationsOptions): Promise<GenericSpecification[]> {
   const ui = await loadUIExtensionSpecifications(config)
   const theme = await loadThemeSpecifications()
   const functions = await loadFunctionSpecifications(config)
   const local = [...ui, ...theme]
 
-  const updatedSpecs = fetchRemote
-    ? mergeLocalAndRemoteSpecs(local, await fetchRemoteExtensionSpecifications(token, apiKey))
-    : local
+  const updatedSpecs = skipFetchRemote
+    ? local
+    : mergeLocalAndRemoteSpecs(local, await fetchRemoteExtensionSpecifications(token, apiKey))
   return [...updatedSpecs, ...functions]
 }
 

@@ -1,6 +1,6 @@
 import {PartnersURLs} from './urls.js'
 import {AppInterface} from '../../models/app/app.js'
-import {FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
+import {ExtensionCategory, FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {output, environment} from '@shopify/cli-kit'
 
@@ -44,14 +44,25 @@ export function outputDevConsoleURL(url: string) {
   output.info(output.content`${heading}\n\n  ${devConsoleURL}\n`)
 }
 
-export function outputExtensionsMessages(app: AppInterface, storeFqdn: string, url: string, interactiveMode = true) {
-  outputUIExtensionsURLs(app.extensions.ui, storeFqdn, url)
+export function outputExtensionsMessages(
+  app: AppInterface,
+  storeFqdn: string,
+  url: string,
+  skipExtensionCategories: ExtensionCategory[] = [],
+) {
+  outputUIExtensionsURLs(app.extensions.ui, storeFqdn, url, skipExtensionCategories)
   outputFunctionsMessage(app.extensions.function)
-  outputThemeExtensionsMessage(app.extensions.theme, interactiveMode)
+  outputThemeExtensionsMessage(app.extensions.theme, skipExtensionCategories)
 }
 
-function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, url: string) {
+function outputUIExtensionsURLs(
+  extensions: UIExtension[],
+  storeFqdn: string,
+  url: string,
+  skipExtensionCategories: ExtensionCategory[],
+) {
   if (extensions.length > 0) {
+    if (outputSkippedCategoryMessage('ui', skipExtensionCategories)) return
     outputDevConsoleURL(url)
   }
 
@@ -70,10 +81,11 @@ One testing option is to use a separate app dedicated to staging.`
   output.info(output.content`${heading}\n${message}\n`)
 }
 
-function outputThemeExtensionsMessage(extensions: ThemeExtension[], interactiveMode: boolean) {
+function outputThemeExtensionsMessage(extensions: ThemeExtension[], skipExtensionCategories: ExtensionCategory[]) {
   if (extensions.length === 0) return
+  if (outputSkippedCategoryMessage('theme', skipExtensionCategories)) return
   for (const extension of extensions) {
-    const message = extension.previewMessage('', '', interactiveMode)
+    const message = extension.previewMessage('', '')
     if (message) output.info(message)
   }
 }
@@ -89,4 +101,15 @@ async function partnersURL(organizationId: string, appId: string): Promise<strin
     `Partners Dashboard`,
     `https://${await environment.fqdn.partners()}/${organizationId}/apps/${appId}/edit`,
   )}`.value
+}
+
+function outputSkippedCategoryMessage(
+  category: ExtensionCategory,
+  skipExtensionCategories: ExtensionCategory[],
+): boolean {
+  if (skipExtensionCategories.includes(category)) {
+    output.info(output.content`${output.token.heading(`${category} Extensions`)}\n  Skipped in this run\n`)
+    return true
+  }
+  return false
 }
