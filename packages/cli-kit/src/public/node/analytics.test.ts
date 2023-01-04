@@ -1,4 +1,4 @@
-import {getAnalyticsTunnelType, reportEvent} from './analytics.js'
+import {reportEvent} from './analytics.js'
 import * as ruby from './ruby.js'
 import {startAnalytics} from '../../private/node/analytics.js'
 import {hashString} from '../../string.js'
@@ -10,7 +10,6 @@ import {getAppInfo} from '../../store.js'
 import constants from '../../constants.js'
 import {publishEvent} from '../../monorail.js'
 import {inTemporaryDirectory, touch as touchFile, mkdir} from '../../file.js'
-import {getListOfTunnelPlugins} from '../../plugins.js'
 import {it, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
 describe('event tracking', () => {
@@ -38,13 +37,6 @@ describe('event tracking', () => {
     vi.mocked(ruby.version).mockResolvedValue('3.1.1')
     vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
     publishEventMock = vi.mocked(publishEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
-    vi.mock('../../plugins.js', async () => {
-      const plugins: any = await vi.importActual('../../plugins.js')
-      return {
-        ...plugins,
-        getListOfTunnelPlugins: vi.fn(),
-      }
-    })
   })
 
   afterEach(() => {
@@ -193,50 +185,5 @@ describe('event tracking', () => {
       // Then
       expect(outputMock.debug()).toMatch('Failed to report usage analytics: Boom!')
     })
-  })
-})
-
-describe('getAnalyticsTunnelType', () => {
-  it('when no tunnelUrl is passed then should return undefined', async () => {
-    // When
-    const got = await getAnalyticsTunnelType({} as any, undefined as any)
-
-    // Then
-    expect(got).toBeUndefined()
-  })
-
-  it('when a localhost tunnelUrl is passed then should return localhost', async () => {
-    // Given
-    const tunnelUrl = 'https://localhost'
-
-    // When
-    const got = await getAnalyticsTunnelType({} as any, tunnelUrl)
-
-    // Then
-    expect(got).toBe('localhost')
-  })
-
-  it('return a provider in case tunnelUrl contains its name', async () => {
-    // Given
-    const tunnelUrl = 'https://www.existing-provider.com'
-    vi.mocked(getListOfTunnelPlugins).mockResolvedValue({plugins: ['existing-provider']})
-
-    // When
-    const got = await getAnalyticsTunnelType({} as any, tunnelUrl)
-
-    // Then
-    expect(got).toBe('existing-provider')
-  })
-
-  it('return a custom in case tunnelUrl is not either localhost or included in the provider plugin list', async () => {
-    // Given
-    const tunnelUrl = 'https://www.custom-provider.com'
-    vi.mocked(getListOfTunnelPlugins).mockResolvedValue({plugins: ['existing-provider']})
-
-    // When
-    const got = await getAnalyticsTunnelType({} as any, tunnelUrl)
-
-    // Then
-    expect(got).toBe('custom')
   })
 })
