@@ -174,7 +174,7 @@ export async function ensureAuthenticatedThemes(
   debug(content`Ensuring that the user is authenticated with the Theme API with the following scopes:
 ${token.json(scopes)}
 `)
-  if (password) return {token: password, storeFqdn: normalizeStoreName(store)}
+  if (password) return {token: password, storeFqdn: await normalizeStoreName(store)}
   return ensureAuthenticatedAdmin(store, scopes, forceRefresh)
 }
 
@@ -190,8 +190,12 @@ export async function ensureAuthenticated(
 ): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
 
-  if (applications.adminApi?.storeFqdn) {
-    applications.adminApi.storeFqdn = normalizeStoreName(applications.adminApi.storeFqdn)
+  const previousStoreFqdn = applications.adminApi?.storeFqdn
+  if (previousStoreFqdn) {
+    const normalizedStoreName = await normalizeStoreName(previousStoreFqdn)
+    if (previousStoreFqdn === applications.adminApi?.storeFqdn) {
+      applications.adminApi.storeFqdn = normalizedStoreName
+    }
   }
 
   const currentSession = (await secureStore.fetch()) || {}

@@ -1,3 +1,4 @@
+import {environment} from './index.js'
 import {unstyled} from './output.js'
 import crypto from 'crypto'
 
@@ -39,15 +40,18 @@ export function capitalize(string: string) {
 }
 
 /**
- * Given a store, returns a valid store fqdn removing protocol and adding .myshopify.com domain
+ * Given a store, returns a valid store fqdn removing protocol and adding the proper domain in case is missing
  * @param store - Original store name provided by the user
  * @returns a valid store fqdn
  */
 export function normalizeStoreName(store: string) {
   const storeFqdn = store.replace(/^https?:\/\//, '').replace(/\/$/, '')
-  return storeFqdn.includes('.myshopify.com') || storeFqdn.includes('spin.dev')
-    ? storeFqdn
-    : `${storeFqdn}.myshopify.com`
+  const addDomain = async (storeFqdn: string) =>
+    environment.service.isSpinEnvironment()
+      ? `${storeFqdn}.shopify.${await environment.spin.fqdn()}`
+      : `${storeFqdn}.myshopify.com`
+  const containDomain = (storeFqdn: string) => storeFqdn.includes('.myshopify.com') || storeFqdn.includes('spin.dev')
+  return containDomain(storeFqdn) ? storeFqdn : addDomain(storeFqdn)
 }
 
 /**

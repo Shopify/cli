@@ -2,33 +2,33 @@ import {hashString, linesToColumns, normalizeStoreName, tryParseInt} from './str
 import {describe, expect, it} from 'vitest'
 
 describe('normalizeStore', () => {
-  it('parses store name with http', () => {
+  it('parses store name with http', async () => {
     // When
-    const got = normalizeStoreName('http://example.myshopify.com')
+    const got = await normalizeStoreName('http://example.myshopify.com')
 
     // Then
     expect(got).toEqual('example.myshopify.com')
   })
 
-  it('parses store name with https', () => {
+  it('parses store name with https', async () => {
     // When
-    const got = normalizeStoreName('https://example.myshopify.com')
+    const got = await normalizeStoreName('https://example.myshopify.com')
 
     // Then
     expect(got).toEqual('example.myshopify.com')
   })
 
-  it('parses store name with https when spin URL', () => {
+  it('parses store name with https when spin URL', async () => {
     // When
-    const got = normalizeStoreName('https://devstore001.shopify.partners-6xat.test.us.spin.dev')
+    const got = await normalizeStoreName('https://devstore001.shopify.partners-6xat.test.us.spin.dev')
 
     // Then
     expect(got).toEqual('devstore001.shopify.partners-6xat.test.us.spin.dev')
   })
 
-  it('parses store name without domain', () => {
+  it('parses store name without domain', async () => {
     // When
-    const got = normalizeStoreName('example')
+    const got = await normalizeStoreName('example')
 
     // Then
     expect(got).toEqual('example.myshopify.com')
