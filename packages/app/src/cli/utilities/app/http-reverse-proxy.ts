@@ -1,5 +1,4 @@
 import {output, abort} from '@shopify/cli-kit'
-import httpProxy from 'http-proxy'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {AbortController} from 'abort-controller'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -39,6 +38,10 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
   proxyTargets: ReverseHTTPProxyTarget[],
   additionalProcesses: output.OutputProcess[],
 ): Promise<void> {
+  // Lazy-importing it because it's CJS and we don't want it
+  // to block the loading of the ESM module graph.
+  const {default: httpProxy} = await import('http-proxy')
+
   const rules: {[key: string]: string} = {}
 
   const processes = await Promise.all(

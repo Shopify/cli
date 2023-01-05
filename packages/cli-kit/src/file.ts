@@ -2,7 +2,6 @@ import {content as outputContent, token, debug} from './output.js'
 import fs from 'fs-extra'
 import {temporaryDirectoryTask} from 'tempy'
 import {sep, join, extname} from 'pathe'
-import prettier from 'prettier'
 import type {Options} from 'prettier'
 
 const DEFAULT_PRETTIER_CONFIG: Options = {
@@ -228,6 +227,8 @@ export async function exists(path: string): Promise<boolean> {
  * Format a string using prettier. Return the formatted content.
  */
 export async function format(content: string, options: {path: string}) {
+  const {default: prettier} = await import('prettier')
+
   const ext = extname(options.path)
   const prettierConfig: Options = {
     ...DEFAULT_PRETTIER_CONFIG,
