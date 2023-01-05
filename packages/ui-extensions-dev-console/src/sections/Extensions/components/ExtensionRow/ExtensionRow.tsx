@@ -1,22 +1,23 @@
 import * as styles from './ExtensionRow.module.scss'
 import en from './translations/en.json'
-// eslint-disable-next-line @shopify/strict-component-boundaries
-import {PreviewLinks} from './components/PreviewLinks'
+
+import {PreviewLinks} from './components'
 import {useExtensionsInternal} from '../../hooks/useExtensionsInternal'
+import {Row} from '..'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {Button} from '@/components/Button'
 import {ButtonGroup} from '@/components/ButtonGroup'
 
-export interface ExtensionRowProps {
+interface Props {
   extension: ExtensionPayload
   onHighlight(extension: ExtensionPayload): void
   onClearHighlight(): void
   onShowMobileQRCode(extension: ExtensionPayload): void
 }
 
-export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMobileQRCode}: ExtensionRowProps) {
+export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMobileQRCode}: Props) {
   const [i18n] = useI18n({
     id: 'ExtensionRow',
     fallback: en,
@@ -29,7 +30,7 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
   const {show, hide} = useExtensionsInternal()
 
   return (
-    <tr className={styles.DevToolRow} onMouseEnter={() => onHighlight(extension)} onMouseLeave={onClearHighlight}>
+    <Row onMouseEnter={() => onHighlight(extension)} onMouseLeave={onClearHighlight}>
       <td>
         <span className={styles.Title}>{extension.title}</span>
       </td>
@@ -38,22 +39,22 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
       </td>
       <td>
         <Button type="button" onClick={() => onShowMobileQRCode(extension)}>
-          View mobile
+          {i18n.translate('viewMobile')}
         </Button>
       </td>
       <td>
         <ButtonGroup>
           <Button type="button" selected={!extension.development.hidden} onClick={() => show([extension])}>
-            Local
+            {i18n.translate('local')}
           </Button>
           <Button type="button" selected={extension.development.hidden} onClick={() => hide([extension])}>
-            Live
+            {i18n.translate('live')}
           </Button>
         </ButtonGroup>
       </td>
       <td>
         <span className={`${styles.Status} ${statusClass}`}>{i18n.translate(`statuses.${status}`)}</span>
       </td>
-    </tr>
+    </Row>
   )
 }

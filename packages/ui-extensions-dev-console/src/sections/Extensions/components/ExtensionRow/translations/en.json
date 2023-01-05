@@ -1,4 +1,7 @@
 {
+  "viewMobile": "View mobile",
+  "local": "Local",
+  "live": "Live",
   "statuses": {
     "success": "Connected",
     "disconnected": "Disconnected",

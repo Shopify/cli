@@ -1,0 +1,20 @@
+.NotApplicable {
+  font-family: var(--dc-font-compact);
+}
+
+.PreviewLinksTitle {
+  font-style: italic;
+}
+
+.PreviewLinks {
+  display: grid;
+  gap: 0.4rem;
+  padding-left: 0.6rem;
+  padding-right: 0.6rem;
+}
+
+.PreviewLink {
+  display: flex;
+  align-items: center;
+  gap: 2.6rem;
+}
