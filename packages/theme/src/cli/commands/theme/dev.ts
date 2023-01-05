@@ -87,8 +87,9 @@ export default class Dev extends ThemeCommand {
   // Tokens are valid for 120m, better to be safe and refresh every 110min
   ThemeRefreshTimeoutInMs = 110 * 60 * 1000
 
-  // Sleep timeout, server could run forever but we need to put a number. 1 Year.
-  HardTimeoutInSeconds = 60 * 60 * 24 * 365
+  // Sleep timeout, server could run forever but we need to put a number. 15 Days.
+  // Once converted to miliseconds, it MUST be less than INT32 max value (2147483647)
+  HardTimeoutInSeconds = 60 * 60 * 24 * 15
 
   /**
    * Executes the theme serve command.
