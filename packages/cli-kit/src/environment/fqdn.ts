@@ -75,7 +75,7 @@ export async function shopify(options: {storeFqdn?: string} = {}): Promise<strin
  * @param store - Original store name provided by the user
  * @returns a valid store fqdn
  */
-export function normalizeStoreName(store: string) {
+export async function normalizeStoreName(store: string) {
   const storeFqdn = store.replace(/^https?:\/\//, '').replace(/\/$/, '')
   const addDomain = async (storeFqdn: string) =>
     isSpinEnvironment() ? `${storeFqdn}.shopify.${await fqdn()}` : `${storeFqdn}.myshopify.com`
