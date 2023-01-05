@@ -1,11 +1,11 @@
 import {CustomAutocomplete} from './autocomplete.js'
 
-import utils from 'inquirer/lib/utils/readline.js'
-import inquirer from 'inquirer'
+import {up} from 'inquirer/lib/utils/readline.js'
+import {Question, Answers} from 'inquirer'
 import {Interface} from 'readline'
 
 export class CustomSelect extends CustomAutocomplete {
-  constructor(questions: inquirer.Question<inquirer.Answers>, rl: Interface, answers: inquirer.Answers) {
+  constructor(questions: Question<Answers>, rl: Interface, answers: Answers) {
     super(questions, rl, answers)
     this.isAutocomplete = false
   }
@@ -19,7 +19,7 @@ export class CustomSelect extends CustomAutocomplete {
       this.selected = this.selected < len - 1 ? this.selected + 1 : 0
       this.ensureSelectedInRange()
       super.render()
-      utils.up(this.rl, 2)
+      up(this.rl, 2)
     } else if (keyName === 'up' || (keyName === 'p' && event.key.ctrl)) {
       len = this.nbChoices
       this.selected = this.selected > 0 ? this.selected - 1 : len - 1
