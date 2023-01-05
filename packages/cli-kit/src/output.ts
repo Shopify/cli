@@ -16,7 +16,6 @@ import {
   RawContentToken,
   SubHeadingContentToken,
 } from './content-tokens.js'
-import {logToFile} from './log.js'
 import {AbortSignal} from 'abort-controller'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'node:stream'
@@ -24,7 +23,7 @@ import type {Change} from 'diff'
 
 export {default as logUpdate} from 'log-update'
 
-export type Logger = (message: string) => void
+export type Logger = Writable | ((message: string) => void)
 
 export class TokenizedString {
   value: string
@@ -258,7 +257,7 @@ export const completed = (content: Message, logger: Logger = consoleLog) => {
 export const debug = (content: Message, logger: Logger = consoleLog) => {
   if (isUnitTest()) collectLog('debug', content)
   const message = colors.gray(stringifyMessage(content))
-  outputWhereAppropriate('debug', logger, message)
+  outputWhereAppropriate('debug', logger, `${new Date().toISOString()}: ${message}`)
 }
 
 /**
@@ -321,9 +320,12 @@ export function consoleWarn(message: string): void {
 
 export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, message: string): void {
   if (shouldOutput(logLevel)) {
-    logger(message)
+    if (logger instanceof Writable) {
+      logger.write(message)
+    } else {
+      logger(message)
+    }
   }
-  logToFile(message, logLevel.toUpperCase())
 }
 
 function withOrWithoutStyle(message: string): string {
@@ -353,7 +355,7 @@ export function getOutputUpdateCLIReminder(
   const versionMessage = `💡 Version ${version} available!`
   if (!packageManager || packageManager === 'unknown') return versionMessage
 
-  const updateCommand = token.packagejsonScript(packageManager, 'shopify', 'upgrade')
+  const updateCommand = token.packagejsonScript(packageManager, 'shopify upgrade')
   return content`${versionMessage} Run ${updateCommand}`.value
 }
 

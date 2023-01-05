@@ -5,19 +5,13 @@ import colors from './public/node/colors.js'
 import {relative} from './path.js'
 import {isTerminalInteractive} from './environment/local.js'
 import {mapper as mapperUI, run as executorUI} from './ui/executor.js'
-import {logToFile} from './log.js'
-import {Listr as OriginalListr, ListrTask, ListrEvent, ListrTaskState, ListrBaseClassOptions} from 'listr2'
+import {Listr as OriginalListr, ListrTask, ListrTaskState, ListrBaseClassOptions} from 'listr2'
 import findProcess from 'find-process'
 
 export function newListr(tasks: ListrTask[], options?: object | ListrBaseClassOptions) {
   const listr = new OriginalListr(tasks, options)
   listr.tasks.forEach((task) => {
     const loggedSubtaskTitles: string[] = []
-    task.subscribe((event: ListrEvent) => {
-      if (event.type === 'TITLE' && typeof event.data === 'string') {
-        logToFile(event.data, 'INFO')
-      }
-    })
     task.renderHook$.subscribe(() => {
       if (task.hasSubtasks()) {
         const activeSubtasks = task.subtasks.filter((subtask) => {
@@ -26,7 +20,6 @@ export function newListr(tasks: ListrTask[], options?: object | ListrBaseClassOp
         activeSubtasks.forEach((subtask) => {
           if (subtask.title && !loggedSubtaskTitles.includes(subtask.title)) {
             loggedSubtaskTitles.push(subtask.title)
-            logToFile(subtask.title, 'INFO')
           }
         })
       }
@@ -37,6 +30,13 @@ export function newListr(tasks: ListrTask[], options?: object | ListrBaseClassOp
 
 export type ListrTasks = ConstructorParameters<typeof OriginalListr>[0]
 export type {ListrTaskWrapper, ListrDefaultRenderer, ListrTask} from 'listr2'
+
+export interface PromptAnswer {
+  name: string
+  value: string
+}
+export type FilterFunction = (answers: PromptAnswer[], input: string) => Promise<PromptAnswer[]>
+
 interface BaseQuestion<TName extends string> {
   name: TName
   message: string
@@ -45,6 +45,7 @@ interface BaseQuestion<TName extends string> {
   default?: string
   result?: (value: string) => string | boolean
   choices?: QuestionChoiceType[]
+  source?: (filter: FilterFunction) => FilterFunction
 }
 
 type TextQuestion<TName extends string> = BaseQuestion<TName> & {
@@ -128,14 +129,8 @@ ${token.json(questions)}
 
     // eslint-disable-next-line no-await-in-loop
     value[question.name as TName] = await executorUI(question)
-
-    logPromptResults(question.message, value[question.name as TName])
   }
   return value
-}
-
-function logPromptResults(questionName: string, answer: string) {
-  logToFile([questionName, answer].join(' '), 'INFO')
 }
 
 export async function nonEmptyDirectoryPrompt(directory: string) {

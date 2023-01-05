@@ -68,12 +68,12 @@ const FatalError: React.FC<FatalErrorProps> = ({error}) => {
         <Box marginTop={1} flexDirection="column">
           <Text>To investigate the issue, examine this stack trace:</Text>
           {stack.items.map((item, index) => (
-            <Box flexDirection="column" key={index}>
+            <Box flexDirection="column" key={index} paddingLeft={2}>
               <Text>
                 at{item.calleeShort && <Text color="yellow">{` ${item.calleeShort}`}</Text>}
                 {item.fileShort && ` (${item.fileShort}:${item.line})`}
               </Text>
-              <Box paddingLeft={1}>
+              <Box paddingLeft={2}>
                 <Text dimColor>{item.sourceLine?.trim()}</Text>
               </Box>
             </Box>

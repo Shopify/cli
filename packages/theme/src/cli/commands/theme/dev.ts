@@ -2,7 +2,7 @@ import {themeFlags} from '../../flags.js'
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
-import {cli, output, session, abort} from '@shopify/cli-kit'
+import {cli, session, abort, system, output} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
 export default class Dev extends ThemeCommand {
@@ -68,6 +68,7 @@ export default class Dev extends ThemeCommand {
       description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
       env: 'SHOPIFY_FLAG_FORCE',
     }),
+    password: themeFlags.password,
   }
 
   static cli2Flags = [
@@ -83,9 +84,16 @@ export default class Dev extends ThemeCommand {
     'force',
   ]
 
-  // Tokens are valid for 120m, better to be safe and refresh every 90min
-  ThemeRefreshTimeoutInMinutes = 90
+  // Tokens are valid for 120m, better to be safe and refresh every 110min
+  ThemeRefreshTimeoutInMs = 110 * 60 * 1000
 
+  // Sleep timeout, server could run forever but we need to put a number. 1 Year.
+  HardTimeoutInSeconds = 60 * 60 * 24 * 365
+
+  /**
+   * Executes the theme serve command.
+   * Every 110 minutes, it will refresh the session token and restart the server.
+   */
   async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
 
@@ -96,21 +104,23 @@ export default class Dev extends ThemeCommand {
 
     let controller: abort.Controller = new abort.Controller()
 
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    const refreshThemeSessionInterval = setInterval(async () => {
-      output.debug('Refreshing theme session...')
+    const refreshThemeSessionInterval = setInterval(() => {
+      output.debug('Refreshing theme session token and restarting theme server...')
       controller.abort()
       controller = new abort.Controller()
-      await this.execute(store, command, controller)
-    }, this.ThemeRefreshTimeoutInMinutes * 60 * 1000)
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      this.execute(store, flags.password, command, controller)
+    }, this.ThemeRefreshTimeoutInMs)
 
-    await this.execute(store, command, controller)
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.execute(store, flags.password, command, controller)
+    await system.sleep(this.HardTimeoutInSeconds)
     clearInterval(refreshThemeSessionInterval)
   }
 
-  async execute(store: string, command: string[], controller: AbortController) {
-    const adminSession = await session.ensureAuthenticatedThemes(store, undefined, [], true)
-    const storefrontToken = await session.ensureAuthenticatedStorefront()
-    await execCLI2(command, {adminSession, storefrontToken, signal: controller.signal as abort.Signal})
+  async execute(store: string, password: string | undefined, command: string[], controller: abort.Controller) {
+    const adminSession = await session.ensureAuthenticatedThemes(store, password, [], true)
+    const storefrontToken = await session.ensureAuthenticatedStorefront([], password)
+    return execCLI2(command, {adminSession, storefrontToken, signal: controller.signal})
   }
 }

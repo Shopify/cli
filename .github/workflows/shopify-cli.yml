@@ -104,6 +104,13 @@ jobs:
       - name: Run and save test coverage
         uses: ./.github/actions/run-and-save-test-coverage
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        with:
+          branch-name: main
+      - name: Run and save benchmark
+        uses: ./.github/actions/run-and-save-benchmark
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        with:
+          branch-name: main
 
   pr-platform-agnostic:
     name: ${{ matrix.target }} with Node ${{ matrix.node }} in ${{ matrix.os }}
@@ -127,6 +134,28 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: ${{ matrix.target }}
         run: pnpm nx run-many --all --skip-nx-cache --target=${{ matrix.target }}
+
+  oclif-manifests:
+    name: Check OCLIF manifests
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: 18.7.0
+      - name: Build
+        run: pnpm build
+      - name: Refresh manifests
+        run: pnpm refresh-manifests
+      - name: Check if there are changes
+        run: 'test -z "$(git status --porcelain "**/oclif.manifest.json" )" || { echo -e "Run pnpm refresh-manifests before pushing new commands or flags. Diff here:\n\n$(git diff)" ; exit 1; }'
 
   pr-platform-dependent:
     name: Testing with Node ${{ matrix.node }} in ${{ matrix.os }}
@@ -156,9 +185,23 @@ jobs:
       - name: Run and save test coverage
         uses: ./.github/actions/run-and-save-test-coverage
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        with:
+          branch-name: "${{ github.head_ref }}"
       - name: Download and publish test coverage
         uses: ./.github/actions/download-and-publish-test-coverage
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        with:
+          base-branch-name: "${{ github.base_ref }}"
+      - name: Run and save benchmark
+        uses: ./.github/actions/run-and-save-benchmark
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        with:
+          branch-name: "${{ github.head_ref }}"
+      - name: Download and publish benchmark
+        uses: ./.github/actions/download-and-publish-benchmark
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        with:
+          base-branch-name: "${{ github.base_ref }}"
 
   manually-triggered:
     name: Testing with Node ${{ inputs.node-version }} in ${{ inputs.os }}

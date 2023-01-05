@@ -1,6 +1,7 @@
 import {isUnitTest} from '../../environment/local.js'
 import {collectLog, consoleLog, Logger, LogLevel, outputWhereAppropriate} from '../../output.js'
-import {ReactElement} from 'react'
+import Prompt, {Props as PromptProps} from '../../private/node/ui/components/Prompt.js'
+import React, {ReactElement} from 'react'
 import {render as inkRender, RenderOptions} from 'ink'
 import {EventEmitter} from 'events'
 
@@ -26,7 +27,7 @@ interface Instance {
 }
 
 const TEST_TERMINAL_WIDTH = 80
-class OutputStream extends EventEmitter {
+export class OutputStream extends EventEmitter {
   columns: number
   private _lastFrame?: string
 
@@ -62,4 +63,21 @@ export const renderString = (element: ReactElement): Instance => {
     output: stdout.lastFrame(),
     unmount: instance.unmount,
   }
+}
+
+export async function prompt<T>(options: Omit<PromptProps<T>, 'onChoose'>) {
+  let onChooseResolve: (choice: T) => void = () => {}
+
+  const onChoosePromise = new Promise<T>((resolve) => {
+    onChooseResolve = resolve
+  })
+
+  const props = {
+    ...options,
+    onChoose: onChooseResolve,
+  }
+
+  await render(<Prompt {...props} />, {exitOnCtrlC: false})
+
+  return onChoosePromise
 }

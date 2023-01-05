@@ -148,7 +148,7 @@ const frameworks: Framework[] = [
  * @param rootDirectory - Directory from which the files required for each framework are searched
  * @returns The name of the framework used or 'unknown' otherwise
  */
-export async function resolveFramework(rootDirectory: string) {
+export async function resolveFramework(rootDirectory: string): Promise<string> {
   const fwConfigFiles: {[key: string]: string | undefined} = {}
 
   const matchedFramework = frameworks.find(

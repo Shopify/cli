@@ -12,6 +12,16 @@ const mockedGetLog = vi.fn(async () => ({}))
 const mockedCommit = vi.fn(async () => ({}))
 const mockedRaw = vi.fn(async () => '')
 const mockedCheckout = vi.fn(async () => ({}))
+const simpleGitProperties = {
+  clone: mockedClone,
+  init: mockedInit,
+  checkIsRepo: mockedCheckIsRepo,
+  getConfig: mockedGetConfig,
+  log: mockedGetLog,
+  commit: mockedCommit,
+  raw: mockedRaw,
+  checkoutLocalBranch: mockedCheckout,
+}
 
 beforeEach(() => {
   vi.mock('./environment/local')
@@ -20,19 +30,10 @@ beforeEach(() => {
   vi.mock('./file.js')
 
   vi.mock('simple-git')
-  vi.mocked<any>(simpleGit).mockReturnValue({
-    clone: mockedClone,
-    init: mockedInit,
-    checkIsRepo: mockedCheckIsRepo,
-    getConfig: mockedGetConfig,
-    log: mockedGetLog,
-    commit: mockedCommit,
-    raw: mockedRaw,
-    checkoutLocalBranch: mockedCheckout,
-  })
+  vi.mocked<any>(simpleGit).mockReturnValue(simpleGitProperties)
 })
 
-describe('downloadRepository()', () => {
+describe('downloadRepository()', async () => {
   it('calls simple-git to clone a repo without branch', async () => {
     // Given
     const repoUrl = 'http://repoUrl'
@@ -57,6 +58,85 @@ describe('downloadRepository()', () => {
 
     // Then
     expect(mockedClone).toHaveBeenCalledWith('http://repoUrl', destination, options)
+  })
+
+  it('fails when the shallow and latestTag properties are passed', async () => {
+    await expect(async () => {
+      // Given
+      const repoUrl = 'http://repoUrl'
+      const destination = 'destination'
+      const shallow = true
+      const latestTag = true
+
+      // When
+      await git.downloadRepository({repoUrl, destination, shallow, latestTag})
+
+      // Then
+    }).rejects.toThrowError(/Git can't clone the latest release with the 'shallow' property/)
+  })
+
+  it('fails when the branch and latestTag properties are passed', async () => {
+    await expect(async () => {
+      // Given
+      const repoUrl = 'http://repoUrl#my-branch'
+      const destination = 'destination'
+      const latestTag = true
+
+      // When
+      await git.downloadRepository({repoUrl, destination, latestTag})
+
+      // Then
+    }).rejects.toThrowError(/Git can't clone the latest release with a 'branch'/)
+  })
+
+  it("fails when the latestTag doesn't exist ", async () => {
+    await expect(async () => {
+      // Given
+      const repoUrl = 'http://repoUrl'
+      const destination = 'destination'
+      const latestTag = true
+      const mockedTags = vi.fn(async () => ({
+        all: [],
+        latest: undefined,
+      }))
+
+      vi.mocked<any>(simpleGit).mockReturnValue({
+        ...simpleGitProperties,
+        tags: mockedTags,
+      })
+
+      // When
+      await git.downloadRepository({repoUrl, destination, latestTag})
+
+      // Then
+    }).rejects.toThrowError(/Couldn't obtain the most recent tag of the repository http:\/\/repoUrl/)
+  })
+
+  it('calls simple-git to clone a repo with branch and checkouts the latest release', async () => {
+    // Given
+    const repoUrl = 'http://repoUrl'
+    const destination = 'destination'
+    const latestTag = true
+    const options: any = {'--recurse-submodules': null}
+    const expectedLatestTag = '1.2.3'
+    const mockedTags = vi.fn(async () => ({
+      all: [],
+      latest: expectedLatestTag,
+    }))
+    const mockCheckout = vi.fn(async () => ({current: 'Mocked'}))
+
+    vi.mocked<any>(simpleGit).mockReturnValue({
+      ...simpleGitProperties,
+      tags: mockedTags,
+      checkout: mockCheckout,
+    })
+
+    // When
+    await git.downloadRepository({repoUrl, destination, latestTag})
+
+    // Then
+    expect(mockedClone).toHaveBeenCalledWith('http://repoUrl', destination, options)
+    expect(mockCheckout).toHaveBeenCalledWith(expectedLatestTag)
   })
 })
 

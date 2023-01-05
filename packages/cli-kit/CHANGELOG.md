@@ -1,5 +1,59 @@
 # @shopify/cli-kit
 
+## 3.30.2
+
+### Patch Changes
+
+- ba91a2da: Fix terminal links adding a zero-width character
+- 23b1cc84: Add timing information to verbose logs
+
+## 3.30.1
+
+### Patch Changes
+
+- 2ac83ce6: Fix error handling on session refresh
+
+## 3.30.0
+
+### Minor Changes
+
+- 737ca469: Remove logs functionality
+
+## 3.29.0
+
+### Minor Changes
+
+- aeca53c6: Upgrade CLI 2.0 and theme-check dependencies
+- b549291a: Update @oclif/core to 1.21.0
+- 06b6b00d: Allow passing a filter function to autocomplete prompts
+
+### Patch Changes
+
+- eaf98706: - Refresh token if possible, fallback to full login when it's not possible
+  - Parallelize access token refreshes
+- d12ece22: Add new single select prompt to the UI library
+- 3b37c679: Enable password flag for theme dev
+
+## 3.28.0
+
+## 3.27.0
+
+### Minor Changes
+
+- 32bbe23d: Remove the version export from the @shopify/cli-kit module and merge its functions into @shopify/cli-kit/node/node-package-manager
+
+## 3.26.0
+
+### Minor Changes
+
+- 0d8ac8c9: Not show a message when we truncate the logs file
+- ab76be51: Add 'wdm' to bundled CLI 2.x Gemfile
+
+### Patch Changes
+
+- a6a3f2b4: Redirect extension output messages to concurrent output UI component
+- ca8141bc: Fix CLI not killing Node processes after quitting `dev` on Windows
+
 ## 3.25.0
 
 ### Patch Changes

@@ -1,4 +1,3 @@
-import {ExtensionTypes, ExternalExtensionTypes} from '../../../../constants.js'
 import {NewExtensionPointSchemaType} from '../../../../models/extensions/schemas.js'
 import {Localization} from '../localization.js'
 
@@ -6,6 +5,7 @@ export interface ExtensionsPayloadInterface {
   app: {
     apiKey: string
   }
+  appId?: string
   store: string
   extensions: UIExtensionPayload[]
 }
@@ -55,8 +55,8 @@ export interface UIExtensionPayload {
   authenticatedRedirectStartUrl?: string
   authenticatedRedirectRedirectUrls?: string[]
   metafields?: {namespace: string; key: string}[] | null
-  type: ExtensionTypes
-  externalType: ExternalExtensionTypes
+  type: string
+  externalType: string
   uuid: string
   version?: string
   surface: string

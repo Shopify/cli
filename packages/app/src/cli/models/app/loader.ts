@@ -1,11 +1,12 @@
-import {UIExtension, ThemeExtension, FunctionExtension, Extension} from './extensions.js'
+import {UIExtension, ThemeExtension, FunctionExtension, Extension, GenericSpecification} from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
-import {ExtensionInstance, specForType} from '../extensions/extensions.js'
-import {TypeSchema} from '../extensions/schemas.js'
-import {FunctionInstance, functionSpecForType} from '../extensions/functions.js'
-import {error, file, path, schema, string, toml, output} from '@shopify/cli-kit'
+import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
+import {ThemeExtensionInstance, ThemeExtensionSpec} from '../extensions/theme.js'
+import {ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
+import {FunctionInstance, FunctionSpec} from '../extensions/functions.js'
+import {error, file, path, schema, string, toml, output, environment} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
   getDependencies,
@@ -42,25 +43,37 @@ export class AppErrors {
   }
 }
 
-export async function load(directory: string, mode: AppLoaderMode = 'strict'): Promise<AppInterface> {
-  const loader = new AppLoader({directory, mode})
+interface AppLoaderConstructorArgs {
+  directory: string
+  mode?: AppLoaderMode
+  specifications: GenericSpecification[]
+}
+
+/**
+ * Load the local app from the given directory and using the provided extensions/functions specifications.
+ * If the App contains extensions not supported by the current specs and mode is strict, it will throw an error.
+ */
+export async function load(options: AppLoaderConstructorArgs): Promise<AppInterface> {
+  const loader = new AppLoader(options)
   return loader.loaded()
 }
 
-interface AppLoaderConstructorArgs {
-  directory: string
-  mode: AppLoaderMode
-}
 class AppLoader {
   private directory: string
   private mode: AppLoaderMode
   private appDirectory = ''
   private configurationPath = ''
   private errors: AppErrors = new AppErrors()
+  private specifications: GenericSpecification[]
 
-  constructor({directory, mode}: AppLoaderConstructorArgs) {
-    this.mode = mode
+  constructor({directory, mode, specifications}: AppLoaderConstructorArgs) {
+    this.mode = mode ?? 'strict'
     this.directory = directory
+    this.specifications = specifications
+  }
+
+  findSpecificationForType(type: string) {
+    return this.specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
   }
 
   async loaded() {
@@ -81,7 +94,7 @@ class AppLoader {
     const name = await loadAppName(this.appDirectory)
     const nodeDependencies = await getDependencies(packageJSONPath)
     const packageManager = await getPackageManager(this.appDirectory)
-    const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs()
+    const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(configuration.webDirectories)
     const usesWorkspaces = await appUsesWorkspaces(this.appDirectory)
 
     const appClass = new App(
@@ -147,15 +160,19 @@ class AppLoader {
     return configurationPath
   }
 
-  async loadWebs(): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
-    const webTomlPaths = await path.glob(path.join(this.appDirectory, `**/${configurationFileNames.web}`))
+  async loadWebs(webDirectories?: string[]): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
+    const defaultWebDirectory = '**'
+    const webConfigGlobs = [...(webDirectories ?? [defaultWebDirectory])].map((webGlob) => {
+      return path.join(this.appDirectory, webGlob, configurationFileNames.web)
+    })
+    const webTomlPaths = await path.glob(webConfigGlobs)
 
     const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
 
     const webTomlsInStandardLocation = await path.glob(
       path.join(this.appDirectory, `web/**/${configurationFileNames.web}`),
     )
-    const usedCustomLayout = webTomlsInStandardLocation.length !== webTomlPaths.length
+    const usedCustomLayout = webDirectories !== undefined || webTomlsInStandardLocation.length !== webTomlPaths.length
 
     return {webs, usedCustomLayout}
   }
@@ -240,13 +257,15 @@ class AppLoader {
       const fileContent = await file.read(configurationPath)
       const obj = toml.decode(fileContent)
       const {type} = TypeSchema.parse(obj)
-      const specification = await specForType(type)
+      const specification = this.findSpecificationForType(type) as UIExtensionSpec | undefined
 
       if (!specification) {
+        const isShopify = await environment.local.isShopify()
+        const shopifolkMessage = '\nYou might need to enable some beta flags on your Organization or App'
         this.abortOrReport(
           output.content`Unknown extension type ${output.token.yellow(type)} in ${output.token.path(
             configurationPath,
-          )}.`,
+          )}. ${isShopify ? shopifolkMessage : ''}`,
           undefined,
           configurationPath,
         )
@@ -277,15 +296,13 @@ class AppLoader {
         }
       }
 
-      // PENDING: load extensionPointSpecs depending on the points defined in the configuartion file and pass it to the constructor
-      const extensionInstance = new ExtensionInstance({
+      const extensionInstance = new UIExtensionInstance({
         configuration,
         configurationPath,
         entryPath: entryPath ?? '',
         directory,
         specification,
         remoteSpecification: undefined,
-        extensionPointSpecs: undefined,
       })
 
       if (configuration.type) {
@@ -314,7 +331,7 @@ class AppLoader {
       const fileContent = await file.read(configurationPath)
       const obj = toml.decode(fileContent)
       const {type} = TypeSchema.parse(obj)
-      const specification = await functionSpecForType(type)
+      const specification = this.findSpecificationForType(type) as FunctionSpec | undefined
       if (!specification) {
         this.abortOrReport(
           output.content`Unknown function type ${output.token.yellow(type)} in ${output.token.path(configurationPath)}`,
@@ -342,32 +359,24 @@ class AppLoader {
 
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
-      const fileContent = await file.read(configurationPath)
-      const obj = toml.decode(fileContent)
-      const {type} = TypeSchema.parse(obj)
-      const specification = await specForType(type)
+      const configuration = await this.parseConfigurationFile(ThemeExtensionSchema, configurationPath)
+      const specification = this.findSpecificationForType('theme') as ThemeExtensionSpec | undefined
 
       if (!specification) {
         this.abortOrReport(
-          output.content`Unknown extension type ${output.token.yellow(type)} in ${output.token.path(
-            configurationPath,
-          )}`,
+          output.content`Unknown theme type ${output.token.yellow('theme')} in ${output.token.path(configurationPath)}`,
           undefined,
           configurationPath,
         )
         return undefined
       }
 
-      const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
-
-      return new ExtensionInstance({
+      return new ThemeExtensionInstance({
         configuration,
         configurationPath,
-        entryPath: '',
         directory,
-        specification,
         remoteSpecification: undefined,
-        extensionPointSpecs: undefined,
+        specification,
       })
     })
 

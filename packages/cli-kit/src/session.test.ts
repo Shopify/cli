@@ -22,6 +22,7 @@ import {
 import {partners} from './api.js'
 
 import {identity} from './environment/fqdn.js'
+import {useDeviceAuth} from './environment/local.js'
 import {authorize} from './session/authorize.js'
 import {vi, describe, expect, it, beforeAll, beforeEach} from 'vitest'
 
@@ -98,6 +99,7 @@ const invalidSession: Session = {
 
 beforeAll(() => {
   vi.mock('./environment/fqdn')
+  vi.mock('./environment/local')
   vi.mock('./session/identity')
   vi.mock('./session/authorize')
   vi.mock('./session/exchange')
@@ -106,11 +108,11 @@ beforeAll(() => {
   vi.mock('./session/validate')
   vi.mock('./api')
   vi.mock('./store')
-  vi.mocked(allDefaultScopes).mockImplementation((scopes) => scopes || [])
 })
 
 beforeEach(() => {
   vi.mocked(identity).mockResolvedValue(fqdn)
+  vi.mocked(useDeviceAuth).mockReturnValue(false)
   vi.mocked(authorize).mockResolvedValue(code)
   vi.mocked(exchangeCodeForAccessToken).mockResolvedValue(validIdentityToken)
   vi.mocked(exchangeAccessForApplicationTokens).mockResolvedValue(appTokens)
@@ -120,6 +122,7 @@ beforeEach(() => {
   // eslint-disable-next-line no-warning-comments
   // TODO: Add tests for ensureUserHasPartnerAccount
   vi.mocked(partners.request).mockResolvedValue(undefined)
+  vi.mocked(allDefaultScopes).mockImplementation((scopes) => scopes || [])
 })
 
 describe('ensureAuthenticated when previous session is invalid', () => {
@@ -281,6 +284,14 @@ describe('ensureAuthenticatedStorefront', () => {
 
     // Then
     expect(got).toEqual('storefront_token')
+  })
+
+  it('returns the password if provided', async () => {
+    // Given/When
+    const got = await ensureAuthenticatedStorefront([], 'theme_access_password')
+
+    // Then
+    expect(got).toEqual('theme_access_password')
   })
 
   it('throws error if there is no storefront token', async () => {

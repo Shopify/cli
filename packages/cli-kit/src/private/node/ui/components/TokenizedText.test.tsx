@@ -36,7 +36,7 @@ describe('TokenizedText', async () => {
     const {output} = renderString(<TokenizedText item={item} />)
 
     expect(unstyled(output!)).toMatchInlineSnapshot(`
-      "Run \`cd verification-app\` Example (https://example.com)! my-app
+      "Run \`cd verification-app\` Example ( https://example.com )! my-app
         • Item 1
         • Item 2
         • Item 3

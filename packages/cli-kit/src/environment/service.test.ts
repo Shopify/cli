@@ -62,10 +62,10 @@ describe('serviceEnvironment', () => {
 describe('isSpinEnvironment', () => {
   it('returns true when running against SPIN instance', () => {
     // Given
-    process.env = {...process.env, SHOPIFY_SERVICE_ENV: 'spin'}
+    const env = {SHOPIFY_SERVICE_ENV: 'spin'}
 
     // When
-    const got = isSpinEnvironment()
+    const got = isSpinEnvironment(env)
 
     // Then
     expect(got).toBe(true)
@@ -73,10 +73,10 @@ describe('isSpinEnvironment', () => {
 
   it('returns true when running inside a SPIN instance', () => {
     // Given
-    process.env = {...process.env, SPIN: '1'}
+    const env = {SPIN: '1'}
 
     // When
-    const got = isSpinEnvironment()
+    const got = isSpinEnvironment(env)
 
     // Then
     expect(got).toBe(true)
@@ -84,10 +84,10 @@ describe('isSpinEnvironment', () => {
 
   it('returns false when not working with spin instances', () => {
     // Given
-    process.env = {...process.env, SHOPIFY_SERVICE_ENV: 'local'}
+    const env = {SHOPIFY_SERVICE_ENV: 'local'}
 
     // When
-    const got = isSpinEnvironment()
+    const got = isSpinEnvironment(env)
 
     // Then
     expect(got).toBe(false)

@@ -2,10 +2,10 @@ import {DELIVERY_METHOD} from '../../services/webhook/trigger-options.js'
 import {WebhookTriggerFlags, optionsPrompt} from '../../prompts/webhook/options-prompt.js'
 import {webhookTriggerService} from '../../services/webhook/trigger.js'
 import {deliveryMethodInstructionsAsString} from '../../prompts/webhook/trigger.js'
-import {Command, Flags} from '@oclif/core'
+import {Flags} from '@oclif/core'
+import Command from '@shopify/cli-kit/node/base-command'
 
 export default class WebhookTrigger extends Command {
-  static hidden = true
   static description = 'Trigger delivery of a sample webhook topic payload to a designated address'
 
   static flags = {

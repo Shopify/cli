@@ -11,6 +11,7 @@ import {
   ExchangeScopes,
   refreshAccessToken,
   InvalidGrantError,
+  InvalidRequestError,
 } from './session/exchange.js'
 
 import {content, token, debug} from './output.js'
@@ -26,6 +27,7 @@ import {partners} from './api.js'
 import {RequestClientError} from './api/common.js'
 import {firstPartyDev, useDeviceAuth} from './environment/local.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
+import {AbortError} from './public/node/error.js'
 import {gql} from 'graphql-request'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')
@@ -115,7 +117,12 @@ ${token.json(scopes)}
  * @param scopes - Optional array of extra scopes to authenticate with.
  * @returns The access token for the Storefront API.
  */
-export async function ensureAuthenticatedStorefront(scopes: string[] = []): Promise<string> {
+export async function ensureAuthenticatedStorefront(
+  scopes: string[] = [],
+  password: string | undefined = undefined,
+): Promise<string> {
+  if (password) return password
+
   debug(content`Ensuring that the user is authenticated with the Storefront API with the following scopes:
 ${token.json(scopes)}
 `)
@@ -210,6 +217,9 @@ ${token.json(applications)}
     } catch (error) {
       if (error instanceof InvalidGrantError) {
         newSession = await executeCompleteFlow(applications, fqdn)
+      } else if (error instanceof InvalidRequestError) {
+        await secureStore.remove()
+        throw new AbortError('\nError validating auth session', "We've cleared the current session, please try again")
       } else {
         throw error
       }

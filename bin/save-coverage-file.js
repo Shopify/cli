@@ -7,7 +7,7 @@ const fs = require("fs");
  * This takes a large combined Jest-format coverage file, and a collection of JSON test reports, and combines them into one master file.
  */
 
-const coveragePackages = ["cli-main", "cli-kit"];
+const coveragePackages = ["cli", "cli-kit", "app"];
 
 const masterCoverageFile = process.cwd() + "/coverage.raw.json";
 const masterReportFile = process.cwd() + "/report.json";

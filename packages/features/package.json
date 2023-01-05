@@ -1,6 +1,6 @@
 {
   "name": "@shopify/features",
-  "version": "0.4.0",
+  "version": "0.6.0",
   "private": true,
   "scripts": {
     "lint": "nx lint",
@@ -31,7 +31,13 @@
     ],
     "rules": {
       "no-console": "off",
-      "import/extensions": ["error", "never", {"ignorePackages": true}]
+      "import/extensions": [
+        "error",
+        "never",
+        {
+          "ignorePackages": true
+        }
+      ]
     }
   }
 }

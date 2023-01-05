@@ -44,6 +44,14 @@
           "cwd": "packages/app"
         }
       },
+      "test:coverage": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["build"],
+        "options": {
+          "command": "pnpm vitest run --reporter json --coverage --outputFile ./coverage/report.json",
+          "cwd": "packages/app"
+        }
+      },
       "test:watch": {
         "executor": "nx:run-commands",
         "dependsOn": ["^build"],
@@ -56,6 +64,13 @@
         "executor": "nx:run-commands",
         "options": {
           "command": "pnpm tsc --noEmit",
+          "cwd": "packages/app"
+        }
+      },
+      "refresh-manifests": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "pnpm oclif manifest",
           "cwd": "packages/app"
         }
       }

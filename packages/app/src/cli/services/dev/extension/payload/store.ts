@@ -21,6 +21,7 @@ export async function getExtensionsPayloadStoreRawPayload(
     app: {
       apiKey: options.apiKey,
     },
+    appId: options.id,
     version: '3',
     root: {
       url: new URL('/extensions', options.url).toString(),
@@ -50,6 +51,7 @@ export class ExtensionsPayloadStore extends EventEmitter {
     const rawPayload = this.getRawPayload()
     return {
       app: rawPayload.app,
+      appId: rawPayload.appId,
       store: rawPayload.store,
       extensions: rawPayload.extensions,
     }
@@ -89,12 +91,19 @@ export class ExtensionsPayloadStore extends EventEmitter {
     this.emitUpdate(extensions.map((extension) => extension.uuid))
   }
 
-  async updateExtension(extension: UIExtension, development?: Partial<UIExtensionPayload['development']>) {
+  async updateExtension(
+    extension: UIExtension,
+    options: ExtensionDevOptions,
+    development?: Partial<UIExtensionPayload['development']>,
+  ) {
     const payloadExtensions = this.rawPayload.extensions
     const index = payloadExtensions.findIndex((extensionPayload) => extensionPayload.uuid === extension.devUUID)
 
     if (index === -1) {
-      output.debug(output.content`Could not updateExtension() for extension with uuid: ${extension.devUUID}`)
+      output.debug(
+        output.content`Could not updateExtension() for extension with uuid: ${extension.devUUID}`,
+        options.stderr,
+      )
       return
     }
 

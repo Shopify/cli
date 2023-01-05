@@ -152,9 +152,7 @@ export async function devConsoleAssetsMiddleware(
 
 export function getLogMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
   return async (request: http.IncomingMessage, response: http.ServerResponse, next: (err?: Error) => unknown) => {
-    output.debug(`UI extensions server received a ${request.method} request to URL ${request.url}`, (message) =>
-      devOptions.stdout.write(message, 'utf8'),
-    )
+    output.debug(`UI extensions server received a ${request.method} request to URL ${request.url}`, devOptions.stdout)
     next()
   }
 }
@@ -172,15 +170,13 @@ export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlew
     }
 
     if (request.headers.accept?.startsWith('text/html')) {
-      const extensionSurface = extension.surface
-
-      if (extensionSurface === 'post_purchase') {
+      if (extension.type === 'checkout_post_purchase') {
         const body = await getHTML({
           data: {
             url: getExtensionUrl(extension, devOptions),
           },
           template: 'index',
-          extensionSurface,
+          extensionSurface: 'post_purchase',
         })
         await http.send(response.event, body)
         return

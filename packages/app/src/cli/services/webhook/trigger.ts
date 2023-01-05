@@ -1,5 +1,5 @@
 import {DELIVERY_METHOD, WebhookTriggerOptions} from './trigger-options.js'
-import {getWebhookSample} from './request-sample.js'
+import {getWebhookSample, UserErrors} from './request-sample.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {output} from '@shopify/cli-kit'
 
@@ -19,7 +19,7 @@ export async function webhookTriggerService(options: WebhookTriggerOptions) {
   )
 
   if (!sample.success) {
-    await output.consoleError(JSON.stringify(sample.userErrors))
+    await output.consoleError(`Request errors:\n${formatErrors(sample.userErrors)}`)
     return
   }
 
@@ -37,5 +37,19 @@ export async function webhookTriggerService(options: WebhookTriggerOptions) {
 
   if (sample.samplePayload === JSON.stringify({})) {
     output.success('Webhook has been enqueued for delivery')
+  }
+}
+function formatErrors(errors: UserErrors[]): string {
+  try {
+    return errors
+      .map((element) =>
+        JSON.parse(element.message)
+          .map((msg: string) => `  · ${msg}`)
+          .join('\n'),
+      )
+      .join('\n')
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (err) {
+    return JSON.stringify(errors)
   }
 }

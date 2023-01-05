@@ -50,7 +50,7 @@ describe('createApp', () => {
     }
 
     // When
-    const got = await createExtension('123', 'checkout_post_purchase', 'my-ext', 'token')
+    const got = await createExtension('123', 'CHECKOUT_POST_PURCHASE', 'my-ext', 'token')
 
     // Then
     expect(got).toEqual(EXTENSION)

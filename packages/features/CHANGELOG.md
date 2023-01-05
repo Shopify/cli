@@ -1,5 +1,17 @@
 # @shopify/features
 
+## 0.6.0
+
+### Minor Changes
+
+- 737ca469: Remove logs functionality
+
+## 0.5.0
+
+### Minor Changes
+
+- 8498d3e0: Add webhook trigger command
+
 ## 0.4.0
 
 ### Minor Changes

@@ -47,8 +47,8 @@ describe('execute', () => {
       headers: emptyJson,
       success: false,
       userErrors: [
-        {message: 'Error 1', fields: ['field1']},
-        {message: 'Error 2', fields: ['field1']},
+        {message: '["Invalid topic pizza/update", "Invalid api_version 1942-13"]', fields: ['field1']},
+        {message: '["Unable to notify example"]', fields: ['field2']},
       ],
     }
     vi.mocked(getWebhookSample).mockResolvedValue(response)
@@ -59,7 +59,31 @@ describe('execute', () => {
     await webhookTriggerService(sampleOptions())
 
     // Then
-    expect(outputSpy).toHaveBeenCalledWith(JSON.stringify(response.userErrors))
+    expect(outputSpy).toHaveBeenCalledWith(
+      `Request errors:\n  · Invalid topic pizza/update\n  · Invalid api_version 1942-13\n  · Unable to notify example`,
+    )
+  })
+
+  it('Safe notification in case of unexpected request errors', async () => {
+    // Given
+    const response = {
+      samplePayload: emptyJson,
+      headers: emptyJson,
+      success: false,
+      userErrors: [
+        {message: 'Something not JSON', fields: ['field1']},
+        {message: 'Another invalid JSON', fields: ['field2']},
+      ],
+    }
+    vi.mocked(getWebhookSample).mockResolvedValue(response)
+
+    const outputSpy = vi.spyOn(output, 'consoleError')
+
+    // When
+    await webhookTriggerService(sampleOptions())
+
+    // Then
+    expect(outputSpy).toHaveBeenCalledWith(`Request errors:\n${JSON.stringify(response.userErrors)}`)
   })
 
   it('notifies about real delivery being sent', async () => {

@@ -11,8 +11,8 @@ import {platformAndArch} from '../../os.js'
 import {AbortSignal} from 'abort-controller'
 import {Writable} from 'node:stream'
 
-const RubyCLIVersion = '2.32.0'
-const ThemeCheckVersion = '1.10.3'
+const RubyCLIVersion = '2.33.0'
+const ThemeCheckVersion = '1.12.1'
 const MinBundlerVersion = '2.3.8'
 const MinRubyVersion = '2.7.5'
 
@@ -39,7 +39,7 @@ interface ExecCLI2Options {
 export async function execCLI2(
   args: string[],
   {adminSession, storefrontToken, token, directory, signal}: ExecCLI2Options = {},
-) {
+): Promise<void> {
   await installCLIDependencies()
   const env = {
     ...process.env,

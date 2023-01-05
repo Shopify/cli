@@ -28,7 +28,7 @@ function setupEnvironmentVariables(options: Pick<RunCLIOptions, 'development'>) 
  * a CLI
  * @param options - Options.
  */
-export async function runCLI(options: RunCLIOptions) {
+export async function runCLI(options: RunCLIOptions): Promise<void> {
   setupEnvironmentVariables(options)
   /**
    * These imports need to be dynamic because if they are static
@@ -51,7 +51,7 @@ export async function runCLI(options: RunCLIOptions) {
 /**
  * A function for create-x CLIs that automatically runs the "init" command.
  */
-export async function runCreateCLI(options: RunCLIOptions) {
+export async function runCreateCLI(options: RunCLIOptions): Promise<void> {
   setupEnvironmentVariables(options)
 
   const {findUpAndReadPackageJson} = await import('./node-package-manager.js')

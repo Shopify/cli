@@ -1,15 +1,14 @@
 import extensionInit, {getRuntimeDependencies} from './extension.js'
-import {
-  blocks,
-  configurationFileNames,
-  ExtensionTypes,
-  uiExtensions,
-  getUIExtensionRendererDependency,
-  UIExtensionTypes,
-} from '../../constants.js'
+import {blocks, configurationFileNames} from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
+import {GenericSpecification} from '../../models/app/extensions.js'
+import {
+  loadLocalExtensionsSpecifications,
+  loadLocalFunctionSpecifications,
+  loadLocalUIExtensionsSpecifications,
+} from '../../models/extensions/specifications.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
-import {file, output, path, template} from '@shopify/cli-kit'
+import {file, git, output, path, template} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
 import type {ExtensionFlavor} from './extension.js'
 
@@ -17,17 +16,27 @@ beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/node-package-manager')
 })
 
-describe('initialize a extension', () => {
+describe('initialize a extension', async () => {
+  const allUISpecs = await loadLocalUIExtensionsSpecifications()
+  const allFunctionSpecs = await loadLocalFunctionSpecifications()
+  const specifications = await loadLocalExtensionsSpecifications()
+
   it(
     'successfully generates the extension when no other extensions exist',
     async () => {
       await withTemporaryApp(async (tmpDir) => {
         vi.spyOn(output, 'info').mockImplementation(() => {})
         const name = 'my-ext-1'
-        const extensionType = 'checkout_post_purchase'
+        const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
         const extensionFlavor = 'vanilla-js'
-        await createFromTemplate({name, extensionType, extensionFlavor, appDirectory: tmpDir})
-        const generatedExtension = (await loadApp(tmpDir)).extensions.ui[0]!
+        await createFromTemplate({
+          name,
+          specification,
+          extensionFlavor,
+          appDirectory: tmpDir,
+          specifications,
+        })
+        const generatedExtension = (await loadApp({directory: tmpDir, specifications})).extensions.ui[0]!
         expect(generatedExtension.configuration.name).toBe(name)
       })
     },
@@ -40,24 +49,26 @@ describe('initialize a extension', () => {
       await withTemporaryApp(async (tmpDir) => {
         const name1 = 'my-ext-1'
         const name2 = 'my-ext-2'
-        const extensionType = 'checkout_post_purchase'
+        const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
         const extensionFlavor = 'vanilla-js'
         await createFromTemplate({
           name: name1,
-          extensionType,
+          specification,
           extensionFlavor,
           appDirectory: tmpDir,
+          specifications,
         })
         await createFromTemplate({
           name: name2,
-          extensionType,
+          specification,
           extensionFlavor,
           appDirectory: tmpDir,
+          specifications,
         })
         const addDependenciesCalls = vi.mocked(addNPMDependenciesIfNeeded).mock.calls
         expect(addDependenciesCalls.length).toEqual(2)
 
-        const loadedApp = await loadApp(tmpDir)
+        const loadedApp = await loadApp({directory: tmpDir, specifications})
         const generatedExtension2 = loadedApp.extensions.ui.sort((lhs, rhs) =>
           lhs.directory < rhs.directory ? -1 : 1,
         )[1]!
@@ -86,12 +97,24 @@ describe('initialize a extension', () => {
     async () => {
       await withTemporaryApp(async (tmpDir: string) => {
         const name = 'my-ext-1'
-        const extensionType = 'checkout_post_purchase'
+        const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
         const extensionFlavor = 'vanilla-js'
-        await createFromTemplate({name, extensionType, extensionFlavor, appDirectory: tmpDir})
-        await expect(createFromTemplate({name, extensionType, extensionFlavor, appDirectory: tmpDir})).rejects.toThrow(
-          `A directory with this name (${name}) already exists.\nChoose a new name for your extension.`,
-        )
+        await createFromTemplate({
+          name,
+          specification,
+          extensionFlavor,
+          appDirectory: tmpDir,
+          specifications,
+        })
+        await expect(
+          createFromTemplate({
+            name,
+            specification,
+            extensionFlavor,
+            appDirectory: tmpDir,
+            specifications,
+          }),
+        ).rejects.toThrow(`A directory with this name (${name}) already exists.\nChoose a new name for your extension.`)
       })
     },
     30 * 1000,
@@ -99,18 +122,19 @@ describe('initialize a extension', () => {
 
   type FileExtension = 'js' | 'jsx' | 'ts' | 'tsx'
 
-  it.each(uiExtensions.types.map((type) => [type]))(
+  it.each(allUISpecs.map((specification) => [specification]))(
     'adds dependencies for "%s" extension when extension flavor is "typescript-react"',
 
-    async (extensionType) => {
+    async (specification) => {
       await withTemporaryApp(async (tmpDir: string) => {
         const addResolutionOrOverrideMock = vi.mocked(addResolutionOrOverride)
 
         await createFromTemplate({
-          extensionType,
+          specification,
           appDirectory: tmpDir,
           name: 'extension-name',
           extensionFlavor: 'typescript-react',
+          specifications,
         })
 
         expect(addResolutionOrOverrideMock).toHaveBeenCalledOnce()
@@ -123,25 +147,26 @@ describe('initialize a extension', () => {
   )
 
   it.each(
-    uiExtensions.types.reduce((accumulator, type) => {
-      accumulator.push([type, 'vanilla-js'])
-      accumulator.push([type, 'react'])
-      accumulator.push([type, 'typescript'])
+    allUISpecs.reduce((accumulator, specification) => {
+      accumulator.push([specification, 'vanilla-js'])
+      accumulator.push([specification, 'react'])
+      accumulator.push([specification, 'typescript'])
 
       return accumulator
-    }, [] as [ExtensionTypes, ExtensionFlavor][]),
+    }, [] as [GenericSpecification, ExtensionFlavor][]),
   )(
     'does not add dependencies for "%s" extension when extension flavor is "%s"',
 
-    async (extensionType, extensionFlavor) => {
+    async (specification, extensionFlavor) => {
       await withTemporaryApp(async (tmpDir: string) => {
         const addResolutionOrOverrideMock = vi.mocked(addResolutionOrOverride)
 
         await createFromTemplate({
-          extensionType,
+          specification,
           extensionFlavor,
           appDirectory: tmpDir,
           name: 'extension-name',
+          specifications,
         })
 
         expect(addResolutionOrOverrideMock).not.toHaveBeenCalled()
@@ -151,22 +176,28 @@ describe('initialize a extension', () => {
   )
 
   it.each(
-    uiExtensions.types.reduce((accumulator, type) => {
-      accumulator.push([type, 'vanilla-js', 'js'])
-      accumulator.push([type, 'react', 'jsx'])
-      accumulator.push([type, 'typescript', 'ts'])
-      accumulator.push([type, 'typescript-react', 'tsx'])
+    allUISpecs.reduce((accumulator, specification) => {
+      accumulator.push([specification, 'vanilla-js', 'js'])
+      accumulator.push([specification, 'react', 'jsx'])
+      accumulator.push([specification, 'typescript', 'ts'])
+      accumulator.push([specification, 'typescript-react', 'tsx'])
 
       return accumulator
-    }, [] as [ExtensionTypes, ExtensionFlavor, FileExtension][]),
+    }, [] as [GenericSpecification, ExtensionFlavor, FileExtension][]),
   )(
     'creates "%s" for "%s" with ".%s" src files',
 
-    async (extensionType, extensionFlavor, fileExtension) => {
+    async (specification, extensionFlavor, fileExtension) => {
       await withTemporaryApp(async (tmpDir: string) => {
         const name = 'extension-name'
 
-        await createFromTemplate({name, extensionType, extensionFlavor, appDirectory: tmpDir})
+        await createFromTemplate({
+          name,
+          specification,
+          extensionFlavor,
+          appDirectory: tmpDir,
+          specifications,
+        })
 
         const srcFiles = await path.glob(path.join(tmpDir, 'extensions', name, 'src', `*`))
 
@@ -181,28 +212,34 @@ describe('initialize a extension', () => {
   )
 
   it.each(
-    uiExtensions.types.reduce((accumulator, type) => {
-      accumulator.push([type, 'vanilla-js', 'js'])
-      accumulator.push([type, 'react', 'jsx'])
-      accumulator.push([type, 'typescript', 'ts'])
-      accumulator.push([type, 'typescript-react', 'tsx'])
+    allUISpecs.reduce((accumulator, specification) => {
+      accumulator.push([specification, 'vanilla-js', 'js'])
+      accumulator.push([specification, 'react', 'jsx'])
+      accumulator.push([specification, 'typescript', 'ts'])
+      accumulator.push([specification, 'typescript-react', 'tsx'])
 
       return accumulator
-    }, [] as [ExtensionTypes, ExtensionFlavor, FileExtension][]),
+    }, [] as [GenericSpecification, ExtensionFlavor, FileExtension][]),
   )(
     'calls recursiveDirectoryCopy with type "%s", flavor "%s", liquidFlavor "%s" and fileExtension "%s"',
 
-    async (extensionType, extensionFlavor, srcFileExtension) => {
+    async (specification, extensionFlavor, srcFileExtension) => {
       await withTemporaryApp(async (tmpDir: string) => {
         vi.spyOn(file, 'move').mockResolvedValue()
 
         const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveDirectoryCopy').mockResolvedValue()
         const name = 'extension-name'
 
-        await createFromTemplate({name, extensionType, extensionFlavor, appDirectory: tmpDir})
+        await createFromTemplate({
+          name,
+          specification,
+          extensionFlavor,
+          appDirectory: tmpDir,
+          specifications,
+        })
 
         expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
-          type: extensionType,
+          type: specification.identifier,
           flavor: extensionFlavor,
           srcFileExtension,
           name,
@@ -211,48 +248,95 @@ describe('initialize a extension', () => {
     },
     30 * 1000,
   )
+
+  it(
+    'uses the custom templatePath when available',
+    async () => {
+      await withTemporaryApp(async (tmpDir) => {
+        // Given
+        vi.spyOn(file, 'move').mockResolvedValue()
+        const name = 'my-ext-1'
+        const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
+        specification.templatePath = 'path/to/custom/template'
+        const extensionFlavor = 'vanilla-js'
+        const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveDirectoryCopy').mockResolvedValue()
+
+        // When
+        await createFromTemplate({name, specification, extensionFlavor, appDirectory: tmpDir, specifications})
+
+        // Then
+        expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith('path/to/custom/template', expect.any(String), {
+          type: specification.identifier,
+          flavor: extensionFlavor,
+          srcFileExtension: 'js',
+          name,
+        })
+      })
+    },
+    30 * 1000,
+  )
+
+  it(
+    'uses the custom templateURL for functions',
+    async () => {
+      await withTemporaryApp(async (tmpDir) => {
+        // Given
+        vi.spyOn(file, 'move').mockResolvedValue()
+        vi.spyOn(git, 'downloadRepository').mockResolvedValue()
+        const name = 'my-ext-1'
+        const specification = allFunctionSpecs.find((spec) => spec.identifier === 'order_discounts')!
+        specification.templateURL = 'custom/template/url'
+        const extensionFlavor = 'rust'
+
+        // When
+        await createFromTemplate({name, specification, extensionFlavor, appDirectory: tmpDir, specifications})
+
+        // Then
+        expect(git.downloadRepository).toHaveBeenCalledWith({
+          destination: expect.any(String),
+          repoUrl: 'custom/template/url',
+          shallow: true,
+        })
+      })
+    },
+    30 * 1000,
+  )
 })
 
 describe('getRuntimeDependencies', () => {
-  test('no not include React for flavored Vanilla UI extensions', () => {
+  test('no not include React for flavored Vanilla UI extensions', async () => {
     // Given
-    // Web Pixel extensions don't need React as a runtime dependency.
-    const extensions: UIExtensionTypes[] = [...uiExtensions.types].filter(
-      (extension) => extension !== 'web_pixel_extension',
-    )
+    const allUISpecs = await loadLocalUIExtensionsSpecifications()
     const extensionFlavor: ExtensionFlavor = 'vanilla-js'
 
     // When/then
-    extensions.forEach((extensionType) => {
-      const got = getRuntimeDependencies({extensionType, extensionFlavor})
+    allUISpecs.forEach((specification) => {
+      const got = getRuntimeDependencies({specification, extensionFlavor})
       expect(got.find((dep) => dep.name === 'react' && dep.version === '^17.0.0')).toBeFalsy()
     })
   })
 
-  test('includes React for flavored React UI extensions', () => {
+  test('includes React for flavored React UI extensions', async () => {
     // Given
-    // Web Pixel extensions don't need React as a runtime dependency.
-    const extensions: UIExtensionTypes[] = [...uiExtensions.types].filter(
-      (extension) => extension !== 'web_pixel_extension',
-    )
+    const allUISpecs = await loadLocalUIExtensionsSpecifications()
     const extensionFlavor: ExtensionFlavor = 'react'
 
     // When/then
-    extensions.forEach((extensionType) => {
-      const got = getRuntimeDependencies({extensionType, extensionFlavor})
+    allUISpecs.forEach((specification) => {
+      const got = getRuntimeDependencies({specification, extensionFlavor})
       expect(got.find((dep) => dep.name === 'react' && dep.version === '^17.0.0')).toBeTruthy()
     })
   })
 
-  test('includes the renderer package for UI extensions', () => {
+  test('includes the renderer package for UI extensions', async () => {
     // Given
-    const extensions: UIExtensionTypes[] = [...uiExtensions.types]
+    const allUISpecs = await loadLocalUIExtensionsSpecifications()
 
     // When/then
-    extensions.forEach((extensionType) => {
-      const reference = getUIExtensionRendererDependency(extensionType)
+    allUISpecs.forEach((specification) => {
+      const reference = specification.dependency
       if (reference) {
-        const got = getRuntimeDependencies({extensionType})
+        const got = getRuntimeDependencies({specification})
         expect(got.find((dep) => dep.name === reference.name && dep.version === reference.version)).toBeTruthy()
       }
     })
@@ -261,17 +345,24 @@ describe('getRuntimeDependencies', () => {
 
 interface CreateFromTemplateOptions {
   name: string
-  extensionType: ExtensionTypes
+  specification: GenericSpecification
   appDirectory: string
   extensionFlavor: ExtensionFlavor
+  specifications: GenericSpecification[]
 }
-async function createFromTemplate({name, extensionType, appDirectory, extensionFlavor}: CreateFromTemplateOptions) {
+async function createFromTemplate({
+  name,
+  specification,
+  appDirectory,
+  extensionFlavor,
+  specifications,
+}: CreateFromTemplateOptions) {
   await extensionInit({
     name,
-    extensionType,
-    app: await loadApp(appDirectory),
-    cloneUrl: 'cloneurl',
+    specification,
+    app: await loadApp({directory: appDirectory, specifications}),
     extensionFlavor,
+    extensionType: specification.identifier,
   })
 }
 async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | void) {

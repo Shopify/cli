@@ -17,7 +17,12 @@ import StackTracey from 'stacktracey'
 import Bugsnag, {Event} from '@bugsnag/js'
 import {realpath} from 'fs/promises'
 
-export function errorHandler(error: Error & {exitCode?: number | undefined}, config?: Interfaces.Config) {
+export function errorHandler(
+  error: (CancelExecution | AbortSilent) & {exitCode?: number | undefined},
+  config?: Interfaces.Config,
+): void
+export function errorHandler(error: Error & {exitCode?: number | undefined}, config?: Interfaces.Config): Promise<void>
+export function errorHandler(error: Error & {exitCode?: number | undefined}, config?: Interfaces.Config): unknown {
   if (error instanceof CancelExecution) {
     if (error.message && error.message !== '') {
       info(`✨  ${error.message}`)
@@ -135,7 +140,7 @@ export function cleanStackFrameFilePath({
  * Register a Bugsnag error listener to clean up stack traces for errors within plugin code.
  *
  */
-export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interfaces.Config) {
+export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interfaces.Config): Promise<void> {
   // Bugsnag have their own plug-ins that use this private field
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bugsnagConfigProjectRoot: string = (Bugsnag as any)?._client?._config?.projectRoot ?? process.cwd()
@@ -162,7 +167,7 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
   })
 }
 
-export async function addBugsnagMetadata(event: Event, config: Interfaces.Config) {
+export async function addBugsnagMetadata(event: Event, config: Interfaces.Config): Promise<void> {
   const publicData = metadata.getAllPublic()
   const {commandStartOptions} = metadata.getAllSensitive()
   const {startCommand} = commandStartOptions ?? {}

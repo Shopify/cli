@@ -2,10 +2,11 @@ import {AbortError, BugError} from './error.js'
 import {Version} from './semver.js'
 import {exec} from '../../system.js'
 import {exists as fileExists, read as readFile, write as writeFile} from '../../file.js'
-import {glob, dirname, join as pathJoin, findUp} from '../../path.js'
-import {latestNpmPackageVersion} from '../../version.js'
-import {content, token, debug} from '../../output.js'
+import {glob, dirname, join as pathJoin, findUp, moduleDirectory} from '../../path.js'
+import {token, content, debug} from '../../output.js'
+import {Bug} from '../../error.js'
 import {AbortController, AbortSignal} from 'abort-controller'
+import latestVersion from 'latest-version'
 import type {Writable} from 'node:stream'
 import type {ExecOptions} from '../../system.js'
 
@@ -45,7 +46,7 @@ export type PackageManager = typeof packageManager[number]
  * @param directory - The path to the directory that should contain a package.json
  * @returns An abort error.
  */
-export const PackageJsonNotFoundError = (directory: string) => {
+export const PackageJsonNotFoundError = (directory: string): AbortError => {
   return new AbortError(`The directory ${directory} doesn't have a package.json.`)
 }
 
@@ -55,7 +56,7 @@ export const PackageJsonNotFoundError = (directory: string) => {
  * @param directory - The directory from which the traverse has been done
  * @returns An abort error.
  */
-export const FindUpAndReadPackageJsonNotFoundError = (directory: string) => {
+export const FindUpAndReadPackageJsonNotFoundError = (directory: string): BugError => {
   return new BugError(content`Couldn't find a a package.json traversing directories from ${token.path(directory)}`)
 }
 
@@ -115,7 +116,9 @@ interface InstallNPMDependenciesRecursivelyOptions {
  * provided by dependency managers.
  * @param options - Options to install dependencies recursively.
  */
-export async function installNPMDependenciesRecursively(options: InstallNPMDependenciesRecursivelyOptions) {
+export async function installNPMDependenciesRecursively(
+  options: InstallNPMDependenciesRecursivelyOptions,
+): Promise<void> {
   const packageJsons = await glob(pathJoin(options.directory, '**/package.json'), {
     ignore: [pathJoin(options.directory, 'node_modules/**/package.json')],
     cwd: options.directory,
@@ -152,7 +155,7 @@ interface InstallNodeModulesOptions {
   signal?: AbortSignal
 }
 
-export async function installNodeModules(options: InstallNodeModulesOptions) {
+export async function installNodeModules(options: InstallNodeModulesOptions): Promise<void> {
   const execOptions: ExecOptions = {
     cwd: options.directory,
     stdin: undefined,
@@ -212,7 +215,7 @@ export async function usesWorkspaces(appDirectory: string): Promise<boolean> {
 export async function checkForNewVersion(dependency: string, currentVersion: string): Promise<string | undefined> {
   debug(content`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
   try {
-    const lastVersion = await latestNpmPackageVersion(dependency)
+    const lastVersion = await getLatestNPMPackageVersion(dependency)
     if (lastVersion && new Version(currentVersion).compare(lastVersion) < 0) {
       return lastVersion
     } else {
@@ -344,7 +347,7 @@ export interface DependencyVersion {
 export async function addNPMDependenciesIfNeeded(
   dependencies: DependencyVersion[],
   options: AddNPMDependenciesIfNeededOptions,
-) {
+): Promise<void> {
   debug(content`Adding the following dependencies if needed:
 ${token.json(dependencies)}
 With options:
@@ -368,7 +371,7 @@ ${token.json(options)}
 export async function addNPMDependencies(
   dependencies: DependencyVersion[],
   options: AddNPMDependenciesIfNeededOptions,
-) {
+): Promise<void> {
   let args: string[]
   const depedenciesWithVersion = dependencies.map((dep) => {
     return dep.version ? `${dep.name}@${dep.version}` : dep.name
@@ -396,7 +399,7 @@ export async function addNPMDependencies(
 export async function addNPMDependenciesWithoutVersionIfNeeded(
   dependencies: string[],
   options: AddNPMDependenciesIfNeededOptions,
-) {
+): Promise<void> {
   await addNPMDependenciesIfNeeded(
     dependencies.map((dependency) => {
       return {name: dependency, version: undefined}
@@ -491,7 +494,7 @@ export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{
   }
 }
 
-export async function addResolutionOrOverride(directory: string, dependencies: {[key: string]: string}) {
+export async function addResolutionOrOverride(directory: string, dependencies: {[key: string]: string}): Promise<void> {
   const packageManager = await getPackageManager(directory)
   const packageJsonPath = pathJoin(directory, 'package.json')
   const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
@@ -508,4 +511,35 @@ export async function addResolutionOrOverride(directory: string, dependencies: {
   }
 
   await writeFile(packageJsonPath, JSON.stringify(packageJsonContent, null, 2))
+}
+
+/**
+ * Returns the latest available version of an NPM package.
+ * @param name - The name of the NPM package.
+ * @returns A promise to get the latest available version of a package.
+ */
+async function getLatestNPMPackageVersion(name: string) {
+  debug(content`Getting the latest version of NPM package: ${token.raw(name)}`)
+  return latestVersion(name)
+}
+
+interface FindPackageVersionUpOptions {
+  fromModuleURL: URL | string
+}
+
+/**
+ * Given a module URL, it traverses the directory hierarchy up until it finds a package.json
+ * and then it returns the version in it.
+ * @param options - Options
+ * @returns The version if it can find the package.json and it exists. An error otherwise.
+ */
+export async function findPackageVersionUp(options: FindPackageVersionUpOptions): Promise<string> {
+  const fromDirectory = moduleDirectory(options.fromModuleURL)
+  const packageJson = await findUpAndReadPackageJson(fromDirectory)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const version = (packageJson.content as any).version
+  if (!version) {
+    throw new Bug(content`The package.json at path ${token.path(packageJson.path)} doesn't contain a version`)
+  }
+  return version
 }

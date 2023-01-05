@@ -3,12 +3,15 @@ ci:
 
 dependencies:
   override:
-    - curl -fsSL https://get.pnpm.io/install.sh | sh -
-    - pnpm install
-
+    # We are making sure the deploys point to the NPM registry to prevent
+    # 404 issues like the one described in this comment:
+    # https://github.com/yarnpkg/yarn/issues/2935#issuecomment-355292633
+    - echo 'registry "https://registry.npmjs.org/"' | tee .npmrc .yarnrc
+    - curl -fsSL https://get.pnpm.io/install.sh | SHELL=`which bash` bash -
+    - bash -i -c "pnpm install"
 deploy:
   override:
-    - npm_config_loglevel=verbose pnpm run changeset publish
-    - ./bin/package.js
+    - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish"
+    - bash -i -c "./bin/package.js"
   post:
-    - pnpm run update-bugsnag
+    - bash -i -c "pnpm run update-bugsnag"

@@ -39,6 +39,11 @@ export interface ExtensionDevOptions {
   app: AppInterface
 
   /**
+   * The ID of the app that contains the extension.
+   */
+  id?: string
+
+  /**
    * The app identifier
    */
   apiKey: string
@@ -90,15 +95,12 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadStoreOptions)
   const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadStoreOptions)
 
-  output.debug(`Setting up the UI extensions HTTP server...`)
+  output.debug(`Setting up the UI extensions HTTP server...`, options.stdout)
   const httpServer = setupHTTPServer({devOptions, payloadStore})
 
-  output.debug(`Setting up the UI extensions Websocket server...`)
-  const websocketConnection = setupWebsocketConnection({
-    httpServer,
-    payloadStore,
-  })
-  output.debug(`Setting up the UI extensions bundler and file watching...`)
+  output.debug(`Setting up the UI extensions Websocket server...`, options.stdout)
+  const websocketConnection = setupWebsocketConnection({...options, httpServer, payloadStore})
+  output.debug(`Setting up the UI extensions bundler and file watching...`, options.stdout)
   const fileWatcher = await setupBundlerAndFileWatcher({devOptions, payloadStore})
 
   options.signal.addEventListener('abort', () => {
