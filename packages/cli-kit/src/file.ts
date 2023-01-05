@@ -1,6 +1,5 @@
 import {content as outputContent, token, debug} from './output.js'
 import fs from 'fs-extra'
-import del from 'del'
 import {temporaryDirectoryTask} from 'tempy'
 import {sep, join, extname} from 'pathe'
 import prettier from 'prettier'
@@ -122,6 +121,7 @@ export function removeSync(path: string) {
 }
 
 export async function rmdir(path: string, {force}: {force?: boolean} = {}): Promise<void> {
+  const {default: del} = await import('del')
   debug(outputContent`Removing directory at ${token.path(path)}...`)
   await del(path, {force})
 }
