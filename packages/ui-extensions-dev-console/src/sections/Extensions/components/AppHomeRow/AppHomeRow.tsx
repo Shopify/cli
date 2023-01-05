@@ -9,9 +9,10 @@ import {Button} from '@/components/Button'
 interface Props {
   url: string
   title: string
+  onShowMobileQRCode(): void
 }
 
-export function AppHomeRow({url, title}: Props) {
+export function AppHomeRow({url, title, onShowMobileQRCode}: Props) {
   const [i18n] = useI18n({
     id: 'AppHomeRow',
     fallback: en,
@@ -26,8 +27,7 @@ export function AppHomeRow({url, title}: Props) {
         <PreviewLink url={url} title={'App home'} />
       </td>
       <td>
-        {/* TODO: Hook this up correctly */}
-        <Button type="button" onClick={() => onShowMobileQRCode(extension)}>
+        <Button type="button" onClick={onShowMobileQRCode}>
           {i18n.translate('viewMobile')}
         </Button>
       </td>

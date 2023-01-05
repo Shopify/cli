@@ -2,9 +2,9 @@ import * as styles from './Extensions.module.scss'
 
 import {AppHomeRow, QRCodeModal} from './components'
 import en from './translations/en.json'
-import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {useI18n} from '@shopify/react-i18n'
 import React, {useState} from 'react'
+import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {ExtensionRow} from '@/sections/Extensions/components/ExtensionRow'
 import {useExtensionsInternal} from '@/sections/Extensions/hooks/useExtensionsInternal'
 
@@ -23,7 +23,11 @@ export function Extensions() {
     },
   } = useExtensionsInternal()
 
-  const [activeMobileQRCodeExtension, setActiveMobileQRCodeExtension] = useState<ExtensionPayload>()
+  const [activeMobileQRCode, setActiveMobileQRCode] = useState<{
+    url: string
+    type: ExtensionPayload['surface'] | 'home'
+    title: string
+  } | null>(null)
 
   const ConsoleContent = () => (
     <section className={styles.ExtensionList}>
@@ -39,7 +43,19 @@ export function Extensions() {
           </tr>
         </thead>
         <tbody>
-          {app ? <AppHomeRow url={app.url} title={app.title} /> : null}
+          {app ? (
+            <AppHomeRow
+              url={app.url}
+              title={app.title}
+              onShowMobileQRCode={() => {
+                setActiveMobileQRCode({
+                  url: app.url,
+                  type: 'home',
+                  title: app.title,
+                })
+              }}
+            />
+          ) : null}
           {extensions.map((extension) => {
             const uuid = extension.uuid
             return (
@@ -48,7 +64,13 @@ export function Extensions() {
                 extension={extension}
                 onHighlight={focus}
                 onClearHighlight={unfocus}
-                onShowMobileQRCode={setActiveMobileQRCodeExtension}
+                onShowMobileQRCode={(extension: ExtensionPayload) =>
+                  setActiveMobileQRCode({
+                    url: extension.development.root.url,
+                    type: extension.surface,
+                    title: extension.title,
+                  })
+                }
               />
             )
           })}
@@ -69,9 +91,11 @@ export function Extensions() {
     <>
       {extensions.length > 0 ? <ConsoleContent /> : <ConsoleEmpty />}
       <QRCodeModal
-        extension={activeMobileQRCodeExtension}
-        open={activeMobileQRCodeExtension !== undefined}
-        onClose={() => setActiveMobileQRCodeExtension(undefined)}
+        url={activeMobileQRCode?.url}
+        type={activeMobileQRCode?.type}
+        title={activeMobileQRCode?.title}
+        open={activeMobileQRCode !== null}
+        onClose={() => setActiveMobileQRCode(null)}
       />
     </>
   )
