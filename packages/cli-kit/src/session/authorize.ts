@@ -7,7 +7,6 @@ import {identity as identityFqdn} from '../environment/fqdn.js'
 import * as output from '../output.js'
 import {keypress, terminateBlockingPortProcessPrompt} from '../ui.js'
 import {checkPort as isPortAvailable} from 'get-port-please'
-import {killPortProcess} from 'kill-port-process'
 
 export const MismatchStateError = new Abort(
   "The state received from the authentication doesn't match the one that initiated the authentication process.",
@@ -58,6 +57,8 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
 }
 
 async function validateRedirectionPortAvailability(port: number) {
+  const {killPortProcess} = await import('kill-port-process')
+
   if (await isPortAvailable(port)) {
     return
   }
