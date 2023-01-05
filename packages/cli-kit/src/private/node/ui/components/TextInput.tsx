@@ -1,7 +1,7 @@
 /* eslint-disable no-nested-ternary */
 import * as React from 'react'
 import {useEffect, useState} from 'react'
-import {Box, Text, useInput} from 'ink'
+import {Text, useInput} from 'ink'
 import chalk from 'chalk'
 import type {FC} from 'react'
 
@@ -89,11 +89,7 @@ const TextInput: FC<Props> = ({value, placeholder = '', onChange, color = 'cyan'
   })
 
   return (
-    <Box flexGrow={1}>
-      <Text color={color}>
-        {placeholder ? (value.length > 0 ? renderedValue : renderedPlaceholder) : renderedValue}
-      </Text>
-    </Box>
+    <Text color={color}>{placeholder ? (value.length > 0 ? renderedValue : renderedPlaceholder) : renderedValue}</Text>
   )
 }
 

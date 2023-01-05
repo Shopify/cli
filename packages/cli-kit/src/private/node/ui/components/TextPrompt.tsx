@@ -63,16 +63,18 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder}) => {
             <Box marginRight={2}>
               <Text color={color}>{`>`}</Text>
             </Box>
-            <TextInput
-              value={answer}
-              onChange={(answer) => {
-                setAnswer(answer)
-                setValid(answer.length > 0)
-                setSubmitted(false)
-              }}
-              placeholder={placeholder}
-              color={color}
-            />
+            <Box flexGrow={1}>
+              <TextInput
+                value={answer}
+                onChange={(answer) => {
+                  setAnswer(answer)
+                  setValid(answer.length > 0)
+                  setSubmitted(false)
+                }}
+                placeholder={placeholder}
+                color={color}
+              />
+            </Box>
           </Box>
           <Box marginLeft={3}>
             <Text color={color}>{underline}</Text>

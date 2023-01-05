@@ -1,6 +1,7 @@
 import {TextInput} from './TextInput.js'
-import React from 'react'
-import {describe, test, expect} from 'vitest'
+import {sendInput, waitForChange, waitForInputsToBeReady} from '../../../../testing/ui.js'
+import React, {useState} from 'react'
+import {describe, test, expect, vi} from 'vitest'
 import {render} from 'ink-testing-library'
 
 const ARROW_LEFT = '\u001B[D'
@@ -15,119 +16,158 @@ describe('TextInput', () => {
     expect(lastFrame()).toMatchInlineSnapshot('"[36m[7m [27m[39m"')
   })
 
-  test('display value with cursor', (t) => {
+  test('displays value with cursor', () => {
     const {lastFrame} = render(<TextInput value="Hello" onChange={() => {}} />)
 
     // inverted space escape sequence after Hello
     expect(lastFrame()).toMatchInlineSnapshot('"[36mHello[7m [27m[39m"')
   })
 
-  test('display placeholder', (t) => {
+  test('displays placeholder', () => {
     const {lastFrame} = render(<TextInput value="" placeholder="Placeholder" onChange={() => {}} />)
 
     // inverted escape sequence around "P", laceholder after that
     expect(lastFrame()).toMatchInlineSnapshot('"[36m[7mP[27m[2mlaceholder[22m[39m"')
   })
 
-  // test('moves the cursor with arrows', async () => {})
+  test('moves the cursor with arrows', async () => {
+    const renderInstance = render(<TextInput value="Hello" onChange={() => {}} />)
 
-  // test('moves the cursor when deleting', async () => {})
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[7m [27m[39m"')
 
-  // test('accept input (controlled)', async (t) => {
-  //   const StatefulTextInput = () => {
-  //     const [value, setValue] = useState('')
+    await waitForInputsToBeReady()
+    await sendInput(renderInstance, ARROW_LEFT)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHell[7mo[27m[39m"')
+    await sendInput(renderInstance, ARROW_LEFT)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHel[7ml[27mo[39m"')
+    await sendInput(renderInstance, ARROW_LEFT)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHe[7ml[27mlo[39m"')
+    await sendInput(renderInstance, ARROW_LEFT)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mH[7me[27mllo[39m"')
+    await sendInput(renderInstance, ARROW_LEFT)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[7mH[27mello[39m"')
+    // cursor can't go before the first character
+    renderInstance.stdin.write(ARROW_LEFT)
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[7mH[27mello[39m"')
 
-  //     return <TextInput value={value} onChange={setValue} />
-  //   }
+    await sendInput(renderInstance, ARROW_RIGHT)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mH[7me[27mllo[39m"')
+    await sendInput(renderInstance, ARROW_RIGHT)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHe[7ml[27mlo[39m"')
+    await sendInput(renderInstance, ARROW_RIGHT)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHel[7ml[27mo[39m"')
+    await sendInput(renderInstance, ARROW_RIGHT)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHell[7mo[27m[39m"')
+    await sendInput(renderInstance, ARROW_RIGHT)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[7m [27m[39m"')
+    // cursor can't go after the last character
+    renderInstance.stdin.write(ARROW_RIGHT)
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[7m [27m[39m"')
+  })
 
-  //   const {stdin, lastFrame} = render(<StatefulTextInput />)
+  test('moves the cursor when deleting', async () => {
+    const StatefulTextInput = () => {
+      const [value, setValue] = useState('Hello')
 
-  //   t.is(lastFrame(), CURSOR)
-  //   await delay(100)
-  //   stdin.write('X')
-  //   await delay(100)
-  //   t.is(lastFrame(), `X${CURSOR}`)
-  // })
+      return <TextInput value={value} onChange={setValue} />
+    }
 
-  // test('onChange', async (t) => {
-  //   const onChange = vi.fn()
+    const renderInstance = render(<StatefulTextInput />)
 
-  //   const {stdin, lastFrame} = render(<TextInput value="" onChange={onChange} />)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[7m [27m[39m"')
 
-  //   t.is(lastFrame(), CURSOR)
+    await waitForInputsToBeReady()
+    await sendInput(renderInstance, DELETE)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHell[7m [27m[39m"')
+    await sendInput(renderInstance, DELETE)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHel[7m [27m[39m"')
+    await sendInput(renderInstance, DELETE)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHe[7m [27m[39m"')
+    await sendInput(renderInstance, DELETE)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mH[7m [27m[39m"')
+    await sendInput(renderInstance, DELETE)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[7m [27m[39m"')
+    // cannot delete after the value has been cleared
+    renderInstance.stdin.write(DELETE)
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[7m [27m[39m"')
+  })
 
-  //   await delay(100)
-  //   stdin.write('X')
-  //   await delay(100)
-  //   stdin.write(ENTER)
-  //   await delay(100)
+  test('accepts input', async () => {
+    const StatefulTextInput = () => {
+      const [value, setValue] = useState('')
 
-  //   t.is(lastFrame(), `X${CURSOR}`)
-  //   t.true(onSubmit.calledWith('X'))
-  //   t.true(onSubmit.calledOnce)
-  // })
+      return <TextInput value={value} onChange={setValue} />
+    }
 
-  // test('delete at the beginning of text', async (t) => {
-  //   const Test = () => {
-  //     const [value, setValue] = useState('')
+    const renderInstance = render(<StatefulTextInput />)
 
-  //     return <TextInput value={value} onChange={setValue} />
-  //   }
+    await waitForInputsToBeReady()
+    await sendInput(renderInstance, 'H')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mH[7m [27m[39m"')
+    await sendInput(renderInstance, 'ello')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[7m [27m[39m"')
+  })
 
-  //   const {stdin, lastFrame} = render(<Test />)
+  test('onChange', async () => {
+    const onChange = vi.fn()
 
-  //   await delay(100)
-  //   stdin.write('T')
-  //   await delay(100)
-  //   stdin.write('e')
-  //   await delay(100)
-  //   stdin.write('s')
-  //   await delay(100)
-  //   stdin.write('t')
-  //   stdin.write(ARROW_LEFT)
-  //   await delay(100)
-  //   stdin.write(ARROW_LEFT)
-  //   await delay(100)
-  //   stdin.write(ARROW_LEFT)
-  //   await delay(100)
-  //   stdin.write(ARROW_LEFT)
-  //   await delay(100)
-  //   stdin.write(DELETE)
-  //   await delay(100)
+    const renderInstance = render(<TextInput value="" onChange={onChange} />)
 
-  //   t.is(lastFrame(), `${chalk.inverse('T')}est`)
-  // })
+    await waitForInputsToBeReady()
+    await sendInput(renderInstance, 'X')
 
-  // test('adjust cursor when text is shorter than last value', async (t) => {
-  //   let resetValue = () => {}
+    expect(onChange).toHaveBeenCalledWith('X')
+  })
 
-  //   const Test = () => {
-  //     const [value, setValue] = useState('')
-  //     resetValue = () => setValue('')
+  test('deletes at the beginning and in the middle of text', async () => {
+    const StatefulTextInput = () => {
+      const [value, setValue] = useState('')
 
-  //     return <TextInput value={value} onChange={setValue} onSubmit={submit} />
-  //   }
+      return <TextInput value={value} onChange={setValue} />
+    }
 
-  //   const {stdin, lastFrame} = render(<Test />)
+    const renderInstance = render(<StatefulTextInput />)
 
-  //   await delay(100)
-  //   stdin.write('A')
-  //   await delay(100)
-  //   stdin.write('B')
-  //   await delay(100)
-  //   t.is(lastFrame(), `AB${chalk.inverse(' ')}`)
-  //   resetValue()
-  //   await delay(100)
-  //   t.is(lastFrame(), chalk.inverse(' '))
-  //   stdin.write('A')
-  //   await delay(100)
-  //   t.is(lastFrame(), `A${chalk.inverse(' ')}`)
-  //   stdin.write('B')
-  //   await delay(100)
-  //   t.is(lastFrame(), `AB${chalk.inverse(' ')}`)
-  // })
+    await waitForInputsToBeReady()
+    await sendInput(renderInstance, 'T')
+    await sendInput(renderInstance, 'e')
+    await sendInput(renderInstance, 's')
+    await sendInput(renderInstance, 't')
+    await sendInput(renderInstance, ARROW_LEFT)
+    await sendInput(renderInstance, DELETE)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mTe[7mt[27m[39m"')
+    await sendInput(renderInstance, ARROW_LEFT)
+    await sendInput(renderInstance, ARROW_LEFT)
+    renderInstance.stdin.write(DELETE)
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[7mT[27met[39m"')
+  })
 
-  // test('validation error', async () => {})
+  test('adjusts cursor when text is shorter than last value', async () => {
+    let resetValue = () => {}
 
-  // test('text wrapping', async () => {})
+    const StatefulTextInput = () => {
+      const [value, setValue] = useState('')
+      resetValue = () => setValue('')
+
+      return <TextInput value={value} onChange={setValue} />
+    }
+
+    const renderInstance = render(<StatefulTextInput />)
+
+    await waitForInputsToBeReady()
+    await sendInput(renderInstance, 'A')
+    await sendInput(renderInstance, 'B')
+
+    await waitForChange(resetValue, renderInstance.lastFrame)
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[7m [27m[39m"')
+    await sendInput(renderInstance, 'A')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mA[7m [27m[39m"')
+    await sendInput(renderInstance, 'B')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mAB[7m [27m[39m"')
+  })
 })
