@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.31.1
+
+### Patch Changes
+
+- db48152c: Fix theme dev not refreshing session automatically
+  - @shopify/cli-kit@3.31.1
+
 ## 3.31.0
 
 ### Patch Changes
