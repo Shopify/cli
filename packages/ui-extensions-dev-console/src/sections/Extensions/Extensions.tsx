@@ -1,7 +1,6 @@
 import * as styles from './Extensions.module.scss'
 
-// eslint-disable-next-line @shopify/strict-component-boundaries
-import {QRCodeModal} from './components/QRCodeModal'
+import {AppHomeRow, QRCodeModal} from './components'
 import en from './translations/en.json'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {useI18n} from '@shopify/react-i18n'
@@ -16,7 +15,7 @@ export function Extensions() {
   })
 
   const {
-    state: {extensions},
+    state: {extensions, app},
     focus,
     unfocus,
     client: {
@@ -40,6 +39,7 @@ export function Extensions() {
           </tr>
         </thead>
         <tbody>
+          {app ? <AppHomeRow url={app.url} title={app.title} /> : null}
           {extensions.map((extension) => {
             const uuid = extension.uuid
             return (
