@@ -1,5 +1,6 @@
 import {TextInput} from './TextInput.js'
 import {handleCtrlC} from '../../ui.js'
+import useLayout from '../hooks/use-layout.js'
 import React, {useCallback, useState} from 'react'
 import {Box, useApp, useInput, Text} from 'ink'
 import {figures} from 'listr2'
@@ -11,10 +12,12 @@ export interface Props {
 }
 
 const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder}) => {
+  const {oneThird} = useLayout()
   const [answer, setAnswer] = useState<string>('')
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
   const [valid, setValid] = useState(false)
+  const underline = new Array(oneThird - 3).fill('▔')
 
   useInput(
     useCallback(
@@ -34,6 +37,10 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder}) => {
     ),
   )
 
+  const shouldShowError = submitted && !valid
+  const color = shouldShowError ? 'red' : 'cyan'
+  const error = shouldShowError ? 'Please enter a value' : undefined
+
   return (
     <Box flexDirection="column" marginBottom={1}>
       <Box>
@@ -51,16 +58,31 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder}) => {
           <Text color="cyan">{answer}</Text>
         </Box>
       ) : (
-        <TextInput
-          value={answer}
-          onChange={(answer) => {
-            setAnswer(answer)
-            setValid(answer.length > 0)
-            setSubmitted(false)
-          }}
-          placeholder={placeholder}
-          error={submitted && !valid ? 'Please enter a value' : undefined}
-        />
+        <Box flexDirection="column" width={oneThird}>
+          <Box>
+            <Box marginRight={2}>
+              <Text color={color}>{`>`}</Text>
+            </Box>
+            <TextInput
+              value={answer}
+              onChange={(answer) => {
+                setAnswer(answer)
+                setValid(answer.length > 0)
+                setSubmitted(false)
+              }}
+              placeholder={placeholder}
+              color={color}
+            />
+          </Box>
+          <Box marginLeft={3}>
+            <Text color={color}>{underline}</Text>
+          </Box>
+          {error && (
+            <Box marginLeft={3}>
+              <Text color={color}>{error}</Text>
+            </Box>
+          )}
+        </Box>
       )}
     </Box>
   )
