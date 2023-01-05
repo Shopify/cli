@@ -1,8 +1,8 @@
 import {Alert} from './Alert.js'
-import {renderString} from '../../ui.js'
 import {unstyled} from '../../../../output.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
+import {render} from 'ink-testing-library'
 
 describe('Alert', async () => {
   test('renders correctly with all the options', async () => {
@@ -53,9 +53,9 @@ describe('Alert', async () => {
       },
     }
 
-    const {output} = renderString(<Alert type="info" {...options} />)
+    const {lastFrame} = render(<Alert type="info" {...options} />)
 
-    expect(unstyled(output!)).toMatchInlineSnapshot(`
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "
       ╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
@@ -85,9 +85,9 @@ describe('Alert', async () => {
       headline: 'Title',
     }
 
-    const {output} = renderString(<Alert type="info" {...options} />)
+    const {lastFrame} = render(<Alert type="info" {...options} />)
 
-    expect(unstyled(output!)).toMatchInlineSnapshot(`
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "
       ╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │

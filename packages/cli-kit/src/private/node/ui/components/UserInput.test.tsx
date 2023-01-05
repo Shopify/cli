@@ -1,12 +1,12 @@
 import {UserInput} from './UserInput.js'
-import {renderString} from '../../ui.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
+import {render} from 'ink-testing-library'
 
 describe('UserInput', async () => {
   test('renders correctly', async () => {
-    const {output} = renderString(<UserInput userInput="my-app" />)
+    const {lastFrame} = render(<UserInput userInput="my-app" />)
 
-    expect(output).toMatchInlineSnapshot('"[36mmy-app[39m"')
+    expect(lastFrame()).toMatchInlineSnapshot('"[36mmy-app[39m"')
   })
 })

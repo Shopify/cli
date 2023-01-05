@@ -65,11 +65,11 @@ describe('TextPrompt', () => {
     await waitForInputsToBeReady()
     await sendInput(renderInstance, 'A'.repeat(77))
     await sendInput(renderInstance, 'B'.repeat(6))
-    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question
-      >  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-         BBBBBB
-         ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+      [36m>[39m  [36mAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA[39m
+         [36mBBBBBB[7m [27m[39m
+         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
     `)
   })
