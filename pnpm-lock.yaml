@@ -50,7 +50,7 @@ importers:
       execa: ^5.1.1
       fast-glob: ^3.2.11
       find-up: ^6.2.0
-      fs-extra: ^10.0.0
+      fs-extra: ^11.1.0
       graphql: ^15.5.1
       graphql-tag: ^2.12.4
       liquidjs: ^9.36.0
@@ -111,7 +111,7 @@ importers:
       execa: 5.1.1
       fast-glob: 3.2.12
       find-up: 6.3.0
-      fs-extra: 10.1.0
+      fs-extra: 11.1.0
       graphql: 15.8.0
       graphql-tag: 2.12.6_graphql@15.8.0
       liquidjs: 9.43.0
@@ -305,7 +305,7 @@ importers:
       '@types/fs-extra': 9.0.13
       '@types/prettier': 2.6.3
       fast-glob: 3.2.11
-      fs-extra: 10.0.0
+      fs-extra: 11.1.0
       graphql: ^16.0.0
       graphql-request: 4.3.0
       prettier: 2.6.1
@@ -322,7 +322,7 @@ importers:
       '@shopify/prettier-config': 1.1.2
       '@types/prettier': 2.6.3
       fast-glob: 3.2.11
-      fs-extra: 10.0.0
+      fs-extra: 11.1.0
       graphql-request: 4.3.0_graphql@16.6.0
       prettier: 2.6.1
       typescript: 4.8.4
@@ -368,7 +368,7 @@ importers:
       find-up: 6.2.0
       find-versions: 5.0.0
       form-data: 4.0.0
-      fs-extra: 10.0.0
+      fs-extra: 11.1.0
       fuzzy: 0.1.3
       get-port-please: 2.5.0
       gradient-string: 2.0.2
@@ -433,7 +433,7 @@ importers:
       find-up: 6.2.0
       find-versions: 5.0.0
       form-data: 4.0.0
-      fs-extra: 10.0.0
+      fs-extra: 11.1.0
       fuzzy: 0.1.3
       get-port-please: 2.5.0
       gradient-string: 2.0.2
@@ -8536,18 +8536,17 @@ packages:
   /fs-constants/1.0.0:
     resolution: {integrity: sha512-y6OAwoSIf7FyjMIv94u+b5rdheZEjzR63GTyZJm5qh4Bi+2YgwLCcI/fPFZkL5PSixOt6ZNKm+w+Hfp/Bciwow==}
 
-  /fs-extra/10.0.0:
-    resolution: {integrity: sha512-C5owb14u9eJwizKGdchcDUQeFtlSHHthBk8pbX9Vc1PFZrLombudjDnNns88aYslCyF6IY5SUw3Roz6xShcEIQ==}
+  /fs-extra/10.1.0:
+    resolution: {integrity: sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==}
     engines: {node: '>=12'}
     dependencies:
       graceful-fs: 4.2.10
       jsonfile: 6.1.0
       universalify: 2.0.0
-    dev: false
 
-  /fs-extra/10.1.0:
-    resolution: {integrity: sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==}
-    engines: {node: '>=12'}
+  /fs-extra/11.1.0:
+    resolution: {integrity: sha512-0rcTq621PD5jM/e0a3EJoGC/1TC5ZBCERW82LQuwfGnCa1V8w7dpYH1yNu+SLb6E5dkeCBzKEyLGlFrnr+dUyw==}
+    engines: {node: '>=14.14'}
     dependencies:
       graceful-fs: 4.2.10
       jsonfile: 6.1.0
