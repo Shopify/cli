@@ -1,0 +1,30 @@
+.Theme {
+  /* Backgrounds */
+  --dc-color-background: #0D0D0D;
+  --dc-color-black: #000;
+
+  /* Foreground */
+  --dc-color-link: #38A5FF;
+  --dc-color-icon: #868686;
+  --dc-color-subdued: #989FA4;
+  --dc-color-white: #ffffff;
+  --dc-color-pressed: #36A3FF;
+  --dc-color-border: #313335;
+
+  /* Status */
+  --dc-color-success: #00a47c;
+  --dc-color-warning: #b98900;
+  --dc-color-error: #d92800;
+
+  /* Font */
+  --dc-font: 'SF Pro Text', monospace;
+  --dc-font-mono: 'SF Mono', monospace;
+  --dc-font-pro: 'SF Pro Text', monospace;
+  --dc-font-compact: "SF Compact Text", monospace;
+  --dc-font-weight-subdued: 300;
+  --dc-font-weight: 500;
+  --dc-font-weight-bold: 700;
+
+  /* border */
+  --dc-border-radius: 0.4rem;
+}

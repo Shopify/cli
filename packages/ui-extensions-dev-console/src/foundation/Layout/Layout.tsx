@@ -9,7 +9,7 @@ interface Props {
   children: React.ReactNode
 }
 
-function Layout({children}: Props) {
+export function Layout({children}: Props) {
   const [i18n] = useI18n({
     id: 'Layout',
     fallback: en,
@@ -29,5 +29,3 @@ function Layout({children}: Props) {
     </div>
   )
 }
-
-export default Layout
