@@ -2,4 +2,4 @@
 '@shopify/theme': patch
 ---
 
-Fix intervals to be less than INT max
+Fix theme dev not refreshing session automatically
