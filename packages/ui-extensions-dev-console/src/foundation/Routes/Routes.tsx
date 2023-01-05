@@ -2,7 +2,7 @@ import React from 'react'
 import {BrowserRouter, Routes as ReactRouterRoutes, Route} from 'react-router-dom'
 import {Extensions} from '@/sections/Extensions'
 
-export default function Routes() {
+export function Routes() {
   return (
     <BrowserRouter>
       <ReactRouterRoutes>
