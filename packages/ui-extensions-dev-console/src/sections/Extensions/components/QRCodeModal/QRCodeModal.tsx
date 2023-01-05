@@ -51,7 +51,7 @@ export function QRCodeContent({url, title, type}: QRCodeContentProps) {
   const appUrl = app?.url
   const qrCodeURL = useMemo(() => {
     if (type === 'pos') {
-      return `com.shopify.pos://pos-ui-extensions?url=${url}`
+      return `com.shopify.pos://pos-ui-extensions?url=${appUrl}`
     }
 
     if (type === 'home') {

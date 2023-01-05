@@ -3,6 +3,7 @@ import {ExtensionRow} from './components/ExtensionRow'
 import {Extensions} from './Extensions.js'
 // eslint-disable-next-line @shopify/strict-component-boundaries
 import {QRCodeModal} from './components/QRCodeModal'
+import {AppHomeRow} from './components/index.js'
 import React from 'react'
 import {ExtensionServerClient} from '@shopify/ui-extensions-server-kit'
 import {mockExtension} from '@shopify/ui-extensions-server-kit/testing'
@@ -28,7 +29,20 @@ describe('Extensions', () => {
     client.connection.close()
   })
 
-  test('renders ExtensionRow', async () => {
+  test('renders AppHomeRow', async () => {
+    const extensions = [mockExtension()]
+
+    const container = render(<Extensions />, withProviders(DefaultProviders), {
+      state: {extensions, store: 'shop1.myshopify.io', app: {url: 'mock.url', title: 'Mock App Title'}},
+    })
+
+    expect(container).toContainReactComponent(AppHomeRow, {
+      url: 'mock.url',
+      title: 'Mock App Title',
+    })
+  })
+
+  test('renders ExtensionRows', async () => {
     const extensions = [mockExtension()]
 
     const container = render(<Extensions />, withProviders(DefaultProviders), {
@@ -88,16 +102,24 @@ describe('Extensions', () => {
     )
   })
 
-  test('Shows and hides a <QRCodeModal/>.  Hidden by default', async () => {
+  test('hides the QRCodeModal by default', async () => {
+    const extension1 = mockExtension({focused: true} as any)
+    const container = render(<Extensions />, withProviders(DefaultProviders), {
+      client,
+      state: {extensions: [extension1], store: 'shop1.myshopify.io'},
+    })
+
+    expect(container).toContainReactComponent(QRCodeModal, {
+      open: false,
+    })
+  })
+
+  test('Shows and hides a <QRCodeModal/> for <ExtensionRow/>', async () => {
     const extension1 = mockExtension({focused: true} as any)
     const extension2 = mockExtension({focused: true} as any)
     const container = render(<Extensions />, withProviders(DefaultProviders), {
       client,
       state: {extensions: [extension1, extension2], store: 'shop1.myshopify.io'},
-    })
-
-    expect(container).toContainReactComponent(QRCodeModal, {
-      open: false,
     })
 
     container.act(() => {
@@ -106,7 +128,40 @@ describe('Extensions', () => {
 
     expect(container).toContainReactComponent(QRCodeModal, {
       open: true,
-      extension: extension1,
+      url: extension1.development.root.url,
+      type: extension1.surface,
+    })
+
+    container.act(() => {
+      container.find(QRCodeModal)?.trigger('onClose')
+    })
+
+    expect(container).toContainReactComponent(QRCodeModal, {
+      open: false,
+    })
+  })
+
+  test('Shows and hides a <QRCodeModal/> for <AppHomeRow/>', async () => {
+    const extension1 = mockExtension({focused: true} as any)
+    const extension2 = mockExtension({focused: true} as any)
+    const container = render(<Extensions />, withProviders(DefaultProviders), {
+      client,
+      state: {
+        extensions: [extension1, extension2],
+        store: 'shop1.myshopify.io',
+        app: {url: 'mock.url', title: 'Mock App Title'},
+      },
+    })
+
+    container.act(() => {
+      container.find(AppHomeRow)?.trigger('onShowMobileQRCode')
+    })
+
+    expect(container).toContainReactComponent(QRCodeModal, {
+      open: true,
+      url: 'mock.url',
+      title: 'Mock App Title',
+      type: 'home',
     })
 
     container.act(() => {
