@@ -1,6 +1,6 @@
-import {partners, shopify, identity, NotProvidedStoreFQDNError} from './fqdn.js'
-import {fqdn as spinFqdn} from './spin.js'
-import {serviceEnvironment} from './service.js'
+import {partners, shopify, identity, NotProvidedStoreFQDNError, normalizeStoreName} from './fqdn.js'
+import {fqdn, fqdn as spinFqdn} from './spin.js'
+import {isSpinEnvironment, serviceEnvironment} from './service.js'
 import {Environment} from '../network/service.js'
 import {expect, describe, test, vi} from 'vitest'
 
@@ -121,5 +121,51 @@ describe('shopify', () => {
 
     // Then
     expect(got).toEqual('identity.spin.com')
+  })
+})
+
+describe('normalizeStore', () => {
+  test('parses store name with http', async () => {
+    // When
+    const got = await normalizeStoreName('http://example.myshopify.com')
+
+    // Then
+    expect(got).toEqual('example.myshopify.com')
+  })
+
+  test('parses store name with https', async () => {
+    // When
+    const got = await normalizeStoreName('https://example.myshopify.com')
+
+    // Then
+    expect(got).toEqual('example.myshopify.com')
+  })
+
+  test('parses store name with https when spin URL', async () => {
+    // When
+    const got = await normalizeStoreName('https://devstore001.shopify.partners-6xat.test.us.spin.dev')
+
+    // Then
+    expect(got).toEqual('devstore001.shopify.partners-6xat.test.us.spin.dev')
+  })
+
+  test('parses store name without domain', async () => {
+    // When
+    const got = await normalizeStoreName('example')
+
+    // Then
+    expect(got).toEqual('example.myshopify.com')
+  })
+
+  test('parses store name without domain in spin', async () => {
+    // Given
+    vi.mocked(isSpinEnvironment).mockReturnValue(true)
+    vi.mocked(fqdn).mockResolvedValue('mydomain.spin.dev')
+
+    // When
+    const got = await normalizeStoreName('example')
+
+    // Then
+    expect(got).toEqual('example.shopify.mydomain.spin.dev')
   })
 })
