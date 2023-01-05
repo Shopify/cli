@@ -108,7 +108,7 @@ jobs:
           branch-name: main
       - name: Run and save benchmark
         uses: ./.github/actions/run-and-save-benchmark
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        if: ${{ matrix.os == 'macos-latest' && matrix.node == '18.7.0' }}
         with:
           branch-name: main
 
@@ -199,7 +199,7 @@ jobs:
           branch-name: "${{ github.head_ref }}"
       - name: Download and publish benchmark
         uses: ./.github/actions/download-and-publish-benchmark
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        if: ${{ matrix.os == 'macos-latest' && matrix.node == '18.7.0' }}
         with:
           base-branch-name: "${{ github.base_ref }}"
 
