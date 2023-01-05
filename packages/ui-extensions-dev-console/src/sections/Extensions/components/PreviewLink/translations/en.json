@@ -1,0 +1,8 @@
+{
+  "copy": {
+    "success": "URL copied",
+    "error": "Couldn't copy URL"
+  },
+  "linkLabel": "Preview {title}",
+  "iconLabel": "Copy preview link for {title} to clipboard"
+}
