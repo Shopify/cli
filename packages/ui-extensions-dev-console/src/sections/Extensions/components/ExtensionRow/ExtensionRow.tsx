@@ -1,7 +1,8 @@
 import * as styles from './ExtensionRow.module.scss'
 import en from './translations/en.json'
+// eslint-disable-next-line @shopify/strict-component-boundaries
 import {PreviewLinks} from './components/PreviewLinks'
-import {useExtensionsInternal} from '../../hooks/useExtensionsInternal.js'
+import {useExtensionsInternal} from '../../hooks/useExtensionsInternal'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
