@@ -48,7 +48,6 @@ export function QRCodeContent({url, title, type}: QRCodeContentProps) {
   } = useExtensionsInternal()
 
   const apiKey = app?.apiKey
-  const appUrl = app?.url
   const qrCodeURL = useMemo(() => {
     if (type === 'point_of_sale') {
       return `com.shopify.pos://pos-ui-extensions?url=${url}`
@@ -59,7 +58,7 @@ export function QRCodeContent({url, title, type}: QRCodeContentProps) {
     }
 
     return `https://${store}/admin/extensions-dev/mobile?url=${url}`
-  }, [store, url, apiKey, appUrl])
+  }, [store, url, apiKey])
 
   const onButtonClick = useCallback(() => {
     if (qrCodeURL && copyToClipboard(qrCodeURL)) {
