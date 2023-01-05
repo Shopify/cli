@@ -154,4 +154,35 @@ describe('extension prompt', async () => {
 
     expect(got).toEqual({...options, ...answers})
   })
+
+  it('when extensionFlavor is passed, only compatible extensions are shown', async () => {
+    // Given
+    const prompt = vi.fn()
+    const answers = {}
+    const options = {
+      name: 'my-product-discount',
+      directory: '/',
+      app: testApp(),
+      reset: false,
+      extensionFlavor: 'rust',
+      extensionSpecifications: [...allFunctionSpecs, ...allUISpecs],
+    }
+
+    // only function types should be shown if flavor is rust
+    const functionTypes = {
+      type: 'select',
+      name: 'extensionType',
+      message: 'Type of extension?',
+      choices: buildChoices(allFunctionSpecs),
+    }
+
+    prompt.mockResolvedValue(answers)
+
+    // When
+    const got = await generateExtensionPrompt(options, prompt)
+
+    // Then
+    expect(prompt).toHaveBeenCalledWith([functionTypes])
+    expect(got).toEqual({...options, ...answers})
+  })
 })
