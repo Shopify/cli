@@ -1,6 +1,7 @@
-import {buildThemeExtensions, buildFunctionExtension, buildUIExtensions} from '../build/extension.js'
+import {buildFunctionExtension, buildUIExtensions} from '../build/extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
+import {bundleThemeExtensions} from '../extensions/bundle.js'
 import {path, file, abort} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
@@ -24,9 +25,13 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
         {
           prefix: 'theme_extensions',
           action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
-            await buildThemeExtensions({
+            await bundleThemeExtensions({
               app: options.app,
-              extensions: options.app.extensions.theme,
+              extensions: options.app.extensions.theme.map((themeExtension) => {
+                const extensionId = options.identifiers.extensions[themeExtension.localIdentifier]!
+                themeExtension.outputBundlePath = path.join(bundleDirectory, extensionId)
+                return themeExtension
+              }),
               stdout,
               stderr,
               signal,
