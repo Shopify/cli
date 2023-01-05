@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli",
-  "version": "3.30.2",
+  "version": "3.31.0",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
   "homepage": "https://github.com/shopify/cli#readme",
@@ -97,16 +97,16 @@
     "@oclif/plugin-commands": "2.2.0",
     "@oclif/plugin-help": "5.1.12",
     "@oclif/plugin-plugins": "2.1.0",
-    "@shopify/cli-kit": "3.30.2",
-    "@shopify/plugin-ngrok": "3.30.2"
+    "@shopify/cli-kit": "3.31.0",
+    "@shopify/plugin-ngrok": "3.31.0"
   },
   "devDependencies": {
     "@vitest/coverage-istanbul": "^0.26.3",
     "vitest": "^0.26.3",
     "vite": "^2.9.13",
-    "@shopify/app": "3.30.2",
-    "@shopify/cli-hydrogen": "3.30.2",
-    "@shopify/theme": "3.30.2"
+    "@shopify/app": "3.31.0",
+    "@shopify/cli-hydrogen": "3.31.0",
+    "@shopify/theme": "3.31.0"
   },
   "engine-strict": true,
   "engines": {

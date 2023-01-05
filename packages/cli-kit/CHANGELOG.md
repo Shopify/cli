@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.31.0
+
+### Patch Changes
+
+- 80c6638c: Add Tasks component that displays a loading bar while async tasks are running
+- dcf53ece: Add support in spin to set the flag store with only the store name
+
 ## 3.30.2
 
 ### Patch Changes
