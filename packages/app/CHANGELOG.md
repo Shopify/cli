@@ -1,5 +1,12 @@
 # @shopify/app
 
+## 3.31.1
+
+### Patch Changes
+
+- 21a15024: Fix loading function specifications
+  - @shopify/cli-kit@3.31.1
+
 ## 3.31.0
 
 ### Minor Changes
