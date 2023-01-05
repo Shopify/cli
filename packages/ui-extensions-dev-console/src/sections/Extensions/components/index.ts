@@ -1,3 +1,4 @@
+export * from './AppHomeRow'
 export * from './ExtensionRow'
 export * from './NotApplicable'
 export * from './PreviewLink'
