@@ -1,5 +1,5 @@
 import {TextPrompt} from './TextPrompt.js'
-import {getLastFrame, sendInput, waitForInputsToBeReady} from '../../../../testing/ui.js'
+import {getLastFrameAfterUnmount, sendInput, waitForInputsToBeReady} from '../../../../testing/ui.js'
 import {unstyled} from '../../../../output.js'
 import {render} from 'ink-testing-library'
 import React from 'react'
@@ -50,7 +50,7 @@ describe('TextPrompt', () => {
     await sendInput(renderInstance, 'A')
     await sendInput(renderInstance, ENTER)
     expect(onSubmit).toHaveBeenCalledWith('A')
-    expect(unstyled(getLastFrame(renderInstance)!)).toMatchInlineSnapshot(`
+    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
       "?  Test question
       ✔  A
       "
@@ -68,7 +68,7 @@ describe('TextPrompt', () => {
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
       "?  Test question
       >  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-         BBBBBB 
+         BBBBBB
          ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
       "
     `)

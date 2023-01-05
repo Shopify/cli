@@ -55,7 +55,9 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder}) => {
             <Text color="cyan">{figures.tick}</Text>
           </Box>
 
-          <Text color="cyan">{answer}</Text>
+          <Box flexGrow={1}>
+            <Text color="cyan">{answer}</Text>
+          </Box>
         </Box>
       ) : (
         <Box flexDirection="column" width={oneThird}>

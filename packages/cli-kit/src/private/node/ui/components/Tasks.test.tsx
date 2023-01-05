@@ -1,5 +1,5 @@
 import Tasks from './Tasks.js'
-import {getLastFrame} from '../../../../testing/ui.js'
+import {getLastFrameAfterUnmount} from '../../../../testing/ui.js'
 import React from 'react'
 import {describe, expect, test} from 'vitest'
 import {render} from 'ink-testing-library'
@@ -24,7 +24,7 @@ describe('Tasks', () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
 
     // Then
-    expect(getLastFrame(renderInstance)).toMatchInlineSnapshot(`
+    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
       "[32m████████████████████████████████████████████████████████████████████████████████[39m
       Complete!"
     `)
@@ -51,7 +51,7 @@ describe('Tasks', () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
 
     // Then
-    expect(getLastFrame(renderInstance)).toMatchInlineSnapshot(`
+    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
       "[31m████████████████████████████████████████████████████████████████████████████████[39m
       task 1"
     `)

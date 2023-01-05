@@ -24,6 +24,6 @@ export async function sendInput(renderInstance: ReturnType<typeof render>, ...in
   await waitForChange(() => inputs.forEach((input) => renderInstance.stdin.write(input)), renderInstance.lastFrame)
 }
 
-export function getLastFrame(renderInstance: ReturnType<typeof render>) {
+export function getLastFrameAfterUnmount(renderInstance: ReturnType<typeof render>) {
   return isTruthy(process.env.CI) ? renderInstance.frames[renderInstance.frames.length - 2] : renderInstance.lastFrame()
 }

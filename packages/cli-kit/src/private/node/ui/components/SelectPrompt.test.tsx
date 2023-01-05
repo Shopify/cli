@@ -1,5 +1,5 @@
 import SelectPrompt from './SelectPrompt.js'
-import {getLastFrame, sendInput, waitForInputsToBeReady} from '../../../../testing/ui.js'
+import {getLastFrameAfterUnmount, sendInput, waitForInputsToBeReady} from '../../../../testing/ui.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {render} from 'ink-testing-library'
@@ -32,7 +32,7 @@ describe('Prompt', async () => {
     await sendInput(renderInstance, ARROW_DOWN)
     await sendInput(renderInstance, ENTER)
 
-    expect(getLastFrame(renderInstance)).toMatchInlineSnapshot(`
+    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
       [36m✔[39m  [36msecond[39m
       "
