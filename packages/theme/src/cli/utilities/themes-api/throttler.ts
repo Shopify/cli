@@ -3,13 +3,13 @@ const MARGIN_TO_RATE_LIMIT = 5
 
 export async function throttle<T>(request: () => T) {
   return new Promise<T>((resolve, _reject) => {
-    const preformRequest = () => {
+    const performRequest = () => {
       throttlingState().requestCounter += 1
       resolve(request())
     }
 
     /**
-     * Performs the {@link preformRequest} taking into account the
+     * Performs the {@link performRequest} taking into account the
      * limit of parallel requests only when the API limit has not
      * been reached.
      *
@@ -18,11 +18,11 @@ export async function throttle<T>(request: () => T) {
      */
     const throttleByHeader = () => {
       if (!isReachingApiLimit()) {
-        throttleByCounter(preformRequest)
+        throttleByCounter(performRequest)
         return
       }
 
-      setTimeout(() => throttleByCounter(preformRequest), 4000)
+      setTimeout(() => throttleByCounter(performRequest), 4000)
     }
 
     /**

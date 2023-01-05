@@ -11,7 +11,11 @@ export async function open(
 ) {
   const theme = await findOrSelectTheme(adminSession, {
     header: 'Select a theme to open',
-    filter: options,
+    filter: {
+      development: options.development,
+      live: options.live,
+      theme: options.theme,
+    },
   })
 
   const previewUrl = themePreviewUrl(theme, adminSession)
