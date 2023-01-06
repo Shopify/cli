@@ -1,0 +1,21 @@
+.Content {
+   padding: 2.4rem 0;
+}
+
+.Instructions {
+   display: grid;
+   gap: 1.2rem;
+   margin: 0.6rem 0;
+   padding-right: 2.4rem;
+}
+
+.UrlContainer {
+   display:flex;
+   padding: 0.6rem 0 0.4rem;
+   align-items: top;
+
+   .CopyButton {
+      width:24px;
+      height:24px;
+   }
+}
