@@ -219,6 +219,12 @@ export function renderTasks(tasks: Task[]) {
   return render(<Tasks tasks={tasks} />)
 }
 
+/**
+ * Renders a text prompt to the console.
+ *
+ * ?  What is your name?
+ * \>  John
+ */
 export function renderTextPrompt(props: Omit<TextPromptProps, 'onSubmit'>) {
   return new Promise((resolve, reject) => {
     render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
