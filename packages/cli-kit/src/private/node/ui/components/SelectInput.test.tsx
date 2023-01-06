@@ -175,12 +175,14 @@ describe('SelectInput', async () => {
   })
 
   test('support groups', async () => {
+    const onChange = vi.fn()
+
     const items = [
       {label: 'first', value: 'first', key: 'f'},
       {label: 'second', value: 'second', key: 's'},
       {label: 'third', value: 'third'},
       {label: 'fourth', value: 'fourth'},
-      {label: 'fifth', value: 'fifth', group: 'Automations'},
+      {label: 'fifth', value: 'fifth', group: 'Automations', key: 'a'},
       {label: 'sixth', value: 'sixth', group: 'Automations'},
       {label: 'seventh', value: 'seventh'},
       {label: 'eighth', value: 'eighth', group: 'Merchant Admin'},
@@ -188,7 +190,7 @@ describe('SelectInput', async () => {
       {label: 'tenth', value: 'tenth'},
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={() => {}} />)
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "[36m>[39m  [36m(f) first[39m
@@ -199,7 +201,7 @@ describe('SelectInput', async () => {
          (6) tenth
 
          [1mAutomations[22m
-         (7) fifth
+         (a) fifth
          (8) sixth
 
          [1mMerchant Admin[22m
@@ -208,5 +210,51 @@ describe('SelectInput', async () => {
 
          [2mnavigate with arrows, enter to select[22m"
     `)
+
+    await waitForInputsToBeReady()
+    await sendInput(renderInstance, 'a')
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "   (f) first
+         (s) second
+         (3) third
+         (4) fourth
+         (5) seventh
+         (6) tenth
+
+         [1mAutomations[22m
+      [36m>[39m  [36m(a) fifth[39m
+         (8) sixth
+
+         [1mMerchant Admin[22m
+         (9) eighth
+         (10) ninth
+
+         [2mnavigate with arrows, enter to select[22m"
+    `)
+    expect(onChange).toHaveBeenCalledWith(items[4]!)
+
+    await sendInput(renderInstance, ARROW_UP)
+    await sendInput(renderInstance, ARROW_UP)
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "   (f) first
+         (s) second
+         (3) third
+         (4) fourth
+      [36m>[39m  [36m(5) seventh[39m
+         (6) tenth
+
+         [1mAutomations[22m
+         (a) fifth
+         (8) sixth
+
+         [1mMerchant Admin[22m
+         (9) eighth
+         (10) ninth
+
+         [2mnavigate with arrows, enter to select[22m"
+    `)
+    expect(onChange).toHaveBeenCalledWith(items[6]!)
   })
 })

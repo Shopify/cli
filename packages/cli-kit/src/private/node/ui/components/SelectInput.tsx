@@ -34,15 +34,15 @@ export default function SelectInput<T>({items, onChange}: React.PropsWithChildre
   const [selectedIndex, setSelectedIndex] = useState(0)
   const keys = useRef(new Set(items.map((item) => item.key)))
   const groupedItems = groupItems(items)
+  const groupedItemsValues = Object.values(groupedItems).flat()
   const groupTitles = Object.keys(groupedItems)
-
   const previousItems = useRef<Item<T>[]>(items)
 
   const changeSelection = useCallback(
     (index: number) => {
-      const item = items[index]!
+      const groupedItem = groupedItemsValues.find((item) => item.index === index)!
       setSelectedIndex(index)
-      onChange(item)
+      onChange(items.find((item) => item.value === groupedItem.value)!)
     },
     [items],
   )
@@ -68,9 +68,9 @@ export default function SelectInput<T>({items, onChange}: React.PropsWithChildre
       if (parsedInput !== 0 && parsedInput <= items.length + 1) {
         changeSelection(parsedInput - 1)
       } else if (keys.current.has(input)) {
-        const index = items.findIndex((item) => item.key === input)
-        if (index !== -1) {
-          changeSelection(index)
+        const groupedItem = groupedItemsValues.find((item) => item.key === input)
+        if (groupedItem !== undefined) {
+          changeSelection(groupedItem.index)
         }
       }
 

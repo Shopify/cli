@@ -156,7 +156,7 @@ export async function kitchenSink() {
       {label: 'second', value: 'second', key: 's'},
       {label: 'third', value: 'third'},
       {label: 'fourth', value: 'fourth'},
-      {label: 'fifth', value: 'fifth', group: 'Automations'},
+      {label: 'fifth', value: 'fifth', group: 'Automations', key: 'a'},
       {label: 'sixth', value: 'sixth', group: 'Automations'},
       {label: 'seventh', value: 'seventh'},
       {label: 'eighth', value: 'eighth', group: 'Merchant Admin'},

@@ -29,8 +29,8 @@ function SelectPrompt<T>({
 
         if (key.return) {
           setSubmitted(true)
-          onSubmit(answer.value)
           unmountInk()
+          onSubmit(answer.value)
         }
       },
       [answer, onSubmit],
