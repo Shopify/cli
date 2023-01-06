@@ -1,7 +1,7 @@
 import {LocalSource, RemoteSource} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {ui} from '@shopify/cli-kit'
-import {renderPrompt} from '@shopify/cli-kit/node/ui'
+import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 
 export async function matchConfirmationPrompt(local: LocalSource, remote: RemoteSource) {
   const choices = [
@@ -63,7 +63,7 @@ export async function deployConfirmationPrompt(summary: SourceSummary): Promise<
     infoTable['missing locally'] = summary.onlyRemote.map((source) => source.title)
   }
 
-  return renderPrompt({
+  return renderSelectPrompt({
     message: 'Make the following changes in Shopify Partners?',
     choices: [
       {label: 'Yes, deploy to push changes', value: true, key: 'y'},
