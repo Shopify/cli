@@ -42,7 +42,7 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder}) => {
   const error = shouldShowError ? 'Please enter a value' : undefined
 
   return (
-    <Box flexDirection="column" marginBottom={1}>
+    <Box flexDirection="column" marginBottom={1} width={oneThird}>
       <Box>
         <Box marginRight={2}>
           <Text>?</Text>
@@ -60,7 +60,7 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder}) => {
           </Box>
         </Box>
       ) : (
-        <Box flexDirection="column" width={oneThird}>
+        <Box flexDirection="column">
           <Box>
             <Box marginRight={2}>
               <Text color={color}>{`>`}</Text>

@@ -58,7 +58,7 @@ describe('TextPrompt', () => {
   })
 
   test('text wrapping', async () => {
-    // test stdout is 80 characters wide but because of the question mark and
+    // component width is 80 characters wide in tests but because of the question mark and
     // spaces before the question, we only have 77 characters to work with
     const renderInstance = render(<TextPrompt onSubmit={() => {}} message="Test question" />)
 
