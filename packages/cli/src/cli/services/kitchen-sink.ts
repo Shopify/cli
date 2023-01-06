@@ -169,7 +169,6 @@ export async function kitchenSink() {
   await renderTextPrompt({
     message: 'App project name (can be changed later)',
     placeholder: 'expansive commerce app',
-    onSubmit: () => {},
   })
 
   // renderConcurrent at the end

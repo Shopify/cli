@@ -1,7 +1,6 @@
 import {isUnitTest} from '../../environment/local.js'
 import {collectLog, consoleLog, Logger, LogLevel, outputWhereAppropriate} from '../../output.js'
-import SelectPrompt, {Props as SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
-import React, {ReactElement} from 'react'
+import {ReactElement} from 'react'
 import {Key, render as inkRender, RenderOptions} from 'ink'
 import {EventEmitter} from 'events'
 
@@ -62,23 +61,6 @@ export const renderString = (element: ReactElement): Instance => {
     output: stdout.lastFrame(),
     unmount: instance.unmount,
   }
-}
-
-export async function selectPrompt<T>(options: Omit<SelectPromptProps<T>, 'onChoose'>) {
-  let onChooseResolve: (choice: T) => void = () => {}
-
-  const onChoosePromise = new Promise<T>((resolve) => {
-    onChooseResolve = resolve
-  })
-
-  const props = {
-    ...options,
-    onChoose: onChooseResolve,
-  }
-
-  await render(<SelectPrompt {...props} />, {exitOnCtrlC: false})
-
-  return onChoosePromise
 }
 
 export function handleCtrlC(input: string, key: Key) {

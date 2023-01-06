@@ -1,23 +1,23 @@
 import SelectInput, {Props as SelectProps, Item as SelectItem, Item} from './SelectInput.js'
 import Table, {Props as TableProps} from './Table.js'
 import {handleCtrlC} from '../../ui.js'
-import React, {useCallback, useState} from 'react'
+import React, {ReactElement, useCallback, useState} from 'react'
 import {Box, Text, useApp, useInput} from 'ink'
 import {figures} from 'listr2'
 
 export interface Props<T> {
   message: string
   choices: SelectProps<T>['items']
-  onChoose: (value: T) => void
+  onSubmit: (value: T) => void
   infoTable?: TableProps['table']
 }
 
-export default function SelectPrompt<T>({
+function SelectPrompt<T>({
   message,
   choices,
   infoTable,
-  onChoose,
-}: React.PropsWithChildren<Props<T>>): JSX.Element | null {
+  onSubmit,
+}: React.PropsWithChildren<Props<T>>): ReactElement | null {
   const [answer, setAnswer] = useState<SelectItem<T>>(choices[0]!)
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
@@ -29,11 +29,11 @@ export default function SelectPrompt<T>({
 
         if (key.return) {
           setSubmitted(true)
-          onChoose(answer.value)
+          onSubmit(answer.value)
           unmountInk()
         }
       },
-      [answer, onChoose],
+      [answer, onSubmit],
     ),
   )
 
@@ -69,3 +69,5 @@ export default function SelectPrompt<T>({
     </Box>
   )
 }
+
+export {SelectPrompt}

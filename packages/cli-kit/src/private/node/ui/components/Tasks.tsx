@@ -54,4 +54,4 @@ const Tasks: React.FC<Props> = ({tasks}) => {
   )
 }
 
-export default Tasks
+export {Tasks}

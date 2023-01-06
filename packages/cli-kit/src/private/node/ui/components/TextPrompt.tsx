@@ -7,7 +7,7 @@ import {figures} from 'listr2'
 
 export interface Props {
   message: string
-  onSubmit: (text: string) => void
+  onSubmit: (value: string) => void
   placeholder?: string
 }
 

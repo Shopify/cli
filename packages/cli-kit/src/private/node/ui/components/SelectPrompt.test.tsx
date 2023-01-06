@@ -1,4 +1,4 @@
-import SelectPrompt from './SelectPrompt.js'
+import {SelectPrompt} from './SelectPrompt.js'
 import {getLastFrameAfterUnmount, sendInput, waitForInputsToBeReady} from '../../../../testing/ui.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
@@ -24,7 +24,7 @@ describe('Prompt', async () => {
         message="Associate your project with the org Castile Ventures?"
         choices={items}
         infoTable={infoTable}
-        onChoose={onEnter}
+        onSubmit={onEnter}
       />,
     )
 
@@ -65,7 +65,7 @@ describe('Prompt', async () => {
         message="Associate your project with the org Castile Ventures?"
         choices={items}
         infoTable={infoTable}
-        onChoose={() => {}}
+        onSubmit={() => {}}
       />,
     )
 

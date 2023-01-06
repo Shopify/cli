@@ -1,4 +1,4 @@
-import Tasks from './Tasks.js'
+import {Tasks} from './Tasks.js'
 import {getLastFrameAfterUnmount} from '../../../../testing/ui.js'
 import React from 'react'
 import {describe, expect, test} from 'vitest'
