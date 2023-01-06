@@ -2,13 +2,11 @@ import * as styles from './ExtensionRow.module.scss'
 import en from './translations/en.json'
 
 import {PreviewLinks} from './components'
-import {useExtensionsInternal} from '../../hooks/useExtensionsInternal'
-import {Row, Status} from '..'
+import {Row, Status, View} from '..'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {Button} from '@/components/Button'
-import {ButtonGroup} from '@/components/ButtonGroup'
 
 interface Props {
   extension: ExtensionPayload
@@ -22,8 +20,6 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
     id: 'ExtensionRow',
     fallback: en,
   })
-
-  const {show, hide} = useExtensionsInternal()
 
   return (
     <Row onMouseEnter={() => onHighlight(extension)} onMouseLeave={onClearHighlight}>
@@ -39,14 +35,7 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
         </Button>
       </td>
       <td>
-        <ButtonGroup>
-          <Button type="button" selected={!extension.development.hidden} onClick={() => show([extension])}>
-            {i18n.translate('local')}
-          </Button>
-          <Button type="button" selected={extension.development.hidden} onClick={() => hide([extension])}>
-            {i18n.translate('live')}
-          </Button>
-        </ButtonGroup>
+        <View extension={extension} />
       </td>
       <td>
         <Status status={extension.development.status} />
