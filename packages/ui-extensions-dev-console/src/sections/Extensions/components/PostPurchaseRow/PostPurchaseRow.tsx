@@ -1,7 +1,6 @@
 import * as styles from './PostPurchaseRow.module.scss'
 import en from './translations/en.json'
 
-import {useExtensionsInternal} from '../../hooks/useExtensionsInternal'
 import {Row, Status, View} from '..'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
@@ -19,8 +18,6 @@ export function PostPurchaseRow({extension, onHighlight, onClearHighlight}: Prop
     id: 'PostPurchaseRow',
     fallback: en,
   })
-
-  const {show, hide} = useExtensionsInternal()
 
   return (
     <Row onMouseEnter={() => onHighlight(extension)} onMouseLeave={onClearHighlight}>
