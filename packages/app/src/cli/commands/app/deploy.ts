@@ -24,6 +24,13 @@ export default class Deploy extends Command {
       env: 'SHOPIFY_FLAG_RESET',
       default: false,
     }),
+    force: Flags.boolean({
+      hidden: false,
+      description: 'Deploy without asking for confirmation.',
+      env: 'SHOPIFY_FLAG_FORCE',
+      char: 'f',
+      default: false,
+    }),
   }
 
   async run(): Promise<void> {
@@ -36,6 +43,6 @@ export default class Deploy extends Command {
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({directory, specifications})
-    await deploy({app, apiKey: flags['api-key'], reset: flags.reset})
+    await deploy({app, apiKey: flags['api-key'], reset: flags.reset, force: flags.force})
   }
 }

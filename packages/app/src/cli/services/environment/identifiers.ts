@@ -12,6 +12,7 @@ export interface EnsureDeploymentIdsPresenceOptions {
   appId: string
   appName: string
   envIdentifiers: Partial<Identifiers>
+  force: boolean
 }
 
 export interface RemoteSource {

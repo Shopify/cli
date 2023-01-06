@@ -26,6 +26,9 @@ interface DeployOptions {
 
   /** If true, ignore any cached appId or extensionId */
   reset: boolean
+
+  /** If true, proceed with deploy without asking for confirmation */
+  force: boolean
 }
 
 export const deploy = async (options: DeployOptions) => {

@@ -218,6 +218,7 @@ export interface DeployEnvironmentOptions {
   app: AppInterface
   apiKey?: string
   reset: boolean
+  force: boolean
 }
 
 interface DeployEnvironmentOutput {
@@ -279,6 +280,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     app: options.app,
     appId: partnersApp.apiKey,
     appName: partnersApp.title,
+    force: options.force,
     token,
     envIdentifiers,
   })

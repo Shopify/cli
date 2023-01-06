@@ -36,12 +36,14 @@ export async function ensureExtensionsIds(
     onlyRemoteExtensions = matchResult.onlyRemote
   }
 
-  const confirmed = await deployConfirmationPrompt({
-    identifiers: validMatches,
-    toCreate: extensionsToCreate,
-    onlyRemote: onlyRemoteExtensions,
-  })
-  if (!confirmed) return err('user-cancelled')
+  if (!options.force) {
+    const confirmed = await deployConfirmationPrompt({
+      identifiers: validMatches,
+      toCreate: extensionsToCreate,
+      onlyRemote: onlyRemoteExtensions,
+    })
+    if (!confirmed) return err('user-cancelled')
+  }
 
   if (extensionsToCreate.length > 0) {
     const newIdentifiers = await createExtensions(extensionsToCreate, options.appId)

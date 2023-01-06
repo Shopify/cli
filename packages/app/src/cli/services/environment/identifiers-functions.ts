@@ -32,12 +32,14 @@ export async function ensureFunctionsIds(
     onlyRemoteFunctions = matchResult.onlyRemote
   }
 
-  const confirmed = await deployConfirmationPrompt({
-    identifiers: validMatches,
-    toCreate: functionsToCreate,
-    onlyRemote: onlyRemoteFunctions,
-  })
-  if (!confirmed) return err('user-cancelled')
+  if (!options.force) {
+    const confirmed = await deployConfirmationPrompt({
+      identifiers: validMatches,
+      toCreate: functionsToCreate,
+      onlyRemote: onlyRemoteFunctions,
+    })
+    if (!confirmed) return err('user-cancelled')
+  }
 
   return ok(validMatches)
 }
