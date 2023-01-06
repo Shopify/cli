@@ -2,7 +2,7 @@ import * as styles from './PostPurchaseRow.module.scss'
 import en from './translations/en.json'
 
 import {useExtensionsInternal} from '../../hooks/useExtensionsInternal'
-import {Row} from '..'
+import {Row, Status} from '..'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
@@ -20,11 +20,7 @@ export function PostPurchaseRow({extension, onHighlight, onClearHighlight}: Prop
     id: 'PostPurchaseRow',
     fallback: en,
   })
-  const {
-    development: {status},
-  } = extension
 
-  const statusClass = status ? styles[status || 'error'] : styles.error
   const {show, hide} = useExtensionsInternal()
 
   return (
@@ -47,7 +43,7 @@ export function PostPurchaseRow({extension, onHighlight, onClearHighlight}: Prop
         </ButtonGroup>
       </td>
       <td>
-        <span className={`${styles.Status} ${statusClass}`}>{i18n.translate(`statuses.${status}`)}</span>
+        <Status status={extension.development.status} />
       </td>
     </Row>
   )

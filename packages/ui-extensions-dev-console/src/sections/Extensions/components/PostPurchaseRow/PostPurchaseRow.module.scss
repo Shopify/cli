@@ -1,22 +1,3 @@
 .Title {
   font-weight: var(--dc-font-weight-subdued);
 }
-
-.Status {
-  font-size: 13px;
-  border-radius: var(--dc-border-radius);
-  padding: 0.25rem 1rem 0.5rem;
-  white-space: nowrap;
-}
-
-.success {
-  background: var(--dc-color-success);
-}
-
-.disconnected {
-  background: var(--dc-color-warning);
-}
-
-.error {
-  background: var(--dc-color-error);
-}
