@@ -1,13 +1,13 @@
 import en from './translations/en.json'
 import * as styles from './QRCodeModal.module.scss'
 import React, {useCallback, useMemo} from 'react'
-import {DuplicateMinor} from '@shopify/polaris-icons'
 import {Button, Modal, ModalProps} from '@shopify/polaris'
 import {useI18n} from '@shopify/react-i18n'
 import copyToClipboard from 'copy-to-clipboard'
 import QRCode from 'qrcode.react'
 import {toast} from 'react-toastify'
 import {Surface} from '@shopify/ui-extensions-server-kit'
+import {ClipboardMinor} from '@shopify/polaris-icons'
 import {useExtensionsInternal} from '@/sections/Extensions/hooks/useExtensionsInternal'
 
 interface Code {
@@ -89,13 +89,19 @@ export function QRCodeContent({url, title, type}: Code) {
 
   return (
     <div className={styles.Wrapper}>
-      <div className={styles.CopyLink}>
-        <Button icon={DuplicateMinor} plain monochrome onClick={onButtonClick}>
-          {i18n.translate('qrcode.copy')}
-        </Button>
-      </div>
-      <QRCode value={qrCodeURL} />
-      <p>{i18n.translate('qrcode.content', {title})}</p>
+      <span>
+        <span className={styles.QRCode}>
+          <QRCode value={qrCodeURL} />
+        </span>
+      </span>
+      <span className={styles.RightColumn}>
+        <p>{i18n.translate('qrcode.content', {title})}</p>
+        <div className={styles.CopyLink}>
+          <Button icon={ClipboardMinor} plain monochrome onClick={onButtonClick}>
+            {i18n.translate('qrcode.copy')}
+          </Button>
+        </div>
+      </span>
     </div>
   )
 }
