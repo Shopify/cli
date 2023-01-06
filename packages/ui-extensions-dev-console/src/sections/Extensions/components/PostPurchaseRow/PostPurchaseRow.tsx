@@ -11,9 +11,10 @@ interface Props {
   extension: ExtensionPayload
   onHighlight(extension: ExtensionPayload): void
   onClearHighlight(): void
+  onOpenPostPurchaseModal(): void
 }
 
-export function PostPurchaseRow({extension, onHighlight, onClearHighlight}: Props) {
+export function PostPurchaseRow({extension, onHighlight, onClearHighlight, onOpenPostPurchaseModal}: Props) {
   const [i18n] = useI18n({
     id: 'PostPurchaseRow',
     fallback: en,
@@ -25,7 +26,9 @@ export function PostPurchaseRow({extension, onHighlight, onClearHighlight}: Prop
         <span className={styles.Title}>{extension.title}</span>
       </td>
       <td>
-        <Button type="button">{i18n.translate('viewPreviewInstructions', {type: extension.type})}</Button>
+        <Button type="button" onClick={() => onOpenPostPurchaseModal()}>
+          {i18n.translate('viewPreviewInstructions', {type: extension.type})}
+        </Button>
       </td>
       <td></td>
       <td>

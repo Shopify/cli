@@ -1,10 +1,10 @@
 import * as styles from './Extensions.module.scss'
 
-import {AppHomeRow, QRCodeModal, ExtensionRow, PostPurchaseRow} from './components'
+import {AppHomeRow, QRCodeModal, ExtensionRow, PostPurchaseRow, PostPurchaseModal} from './components'
 import en from './translations/en.json'
 import {useI18n} from '@shopify/react-i18n'
 import React, {useState} from 'react'
-import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
+import {ExtensionPayload, Surface} from '@shopify/ui-extensions-server-kit'
 import {useExtensionsInternal} from '@/sections/Extensions/hooks/useExtensionsInternal'
 
 export function Extensions() {
@@ -25,11 +25,12 @@ export function Extensions() {
   const [activeMobileQRCode, setActiveMobileQRCode] = useState<
     | {
         url: string
-        type: ExtensionPayload['surface'] | 'home'
+        type: Surface | 'home'
         title: string
       }
     | undefined
   >(undefined)
+  const [postPurchaseUrl, setPostPurchaseUrl] = useState<string | undefined>(undefined)
 
   const ConsoleContent = () => (
     <section className={styles.ExtensionList}>
@@ -66,6 +67,7 @@ export function Extensions() {
                   extension={extension}
                   onHighlight={focus}
                   onClearHighlight={unfocus}
+                  onOpenPostPurchaseModal={() => setPostPurchaseUrl(extension.development.root.url)}
                 />
               )
             }
@@ -103,6 +105,7 @@ export function Extensions() {
     <>
       {extensions.length > 0 ? <ConsoleContent /> : <ConsoleEmpty />}
       <QRCodeModal code={activeMobileQRCode} onClose={() => setActiveMobileQRCode(undefined)} />
+      <PostPurchaseModal onClose={() => setPostPurchaseUrl(undefined)} url={postPurchaseUrl} />
     </>
   )
 }
