@@ -11,7 +11,9 @@ export function IconButton({className, selected, source, accessibilityLabel, ...
 
   return (
     <button {...props} className={classNames} aria-pressed={selected}>
-      <Icon source={source} accessibilityLabel={accessibilityLabel} />
+      <span className={styles.Icon}>
+        <Icon source={source} accessibilityLabel={accessibilityLabel} />
+      </span>
     </button>
   )
 }
