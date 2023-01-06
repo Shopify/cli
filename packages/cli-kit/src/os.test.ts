@@ -1,6 +1,6 @@
 import {platformAndArch} from './os.js'
 import {describe, it, expect, vi} from 'vitest'
-import {arch as osArch} from 'node:os'
+import {arch as osArch} from 'os'
 
 vi.mock('node:os')
 vi.mock('node:process')

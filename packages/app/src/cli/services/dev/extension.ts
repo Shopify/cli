@@ -5,8 +5,8 @@ import {setupHTTPServer} from './extension/server.js'
 import {ExtensionsPayloadStore, getExtensionsPayloadStoreRawPayload} from './extension/payload/store.js'
 import {AppInterface} from '../../models/app/app.js'
 import {UIExtension} from '../../models/app/extensions.js'
-import {output, abort} from '@shopify/cli-kit'
-import {Writable} from 'node:stream'
+import {output} from '@shopify/cli-kit'
+import {Writable} from 'stream'
 
 export interface ExtensionDevOptions {
   /**
@@ -21,7 +21,7 @@ export interface ExtensionDevOptions {
   /**
    * Signal to abort the build process.
    */
-  signal: abort.Signal
+  signal: AbortSignal
 
   /**
    * Overrides the default build directory.

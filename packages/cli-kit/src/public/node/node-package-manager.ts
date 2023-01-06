@@ -5,9 +5,8 @@ import {exists as fileExists, read as readFile, write as writeFile} from '../../
 import {glob, dirname, join as pathJoin, findUp, moduleDirectory} from '../../path.js'
 import {token, content, debug} from '../../output.js'
 import {Bug} from '../../error.js'
-import {AbortController, AbortSignal} from 'abort-controller'
 import latestVersion from 'latest-version'
-import type {Writable} from 'node:stream'
+import type {Writable} from 'stream'
 import type {ExecOptions} from '../../system.js'
 
 /** The name of the Yarn lock file */
@@ -524,7 +523,7 @@ async function getLatestNPMPackageVersion(name: string) {
 }
 
 interface FindPackageVersionUpOptions {
-  fromModuleURL: URL | string
+  fromModuleURL: import('url').URL | string
 }
 
 /**

@@ -3,9 +3,9 @@
 import {setOutput} from '@actions/core'
 import * as path from 'pathe'
 import fg from 'fast-glob'
-import * as url from 'node:url'
-import {promises as fs, existsSync} from 'node:fs'
-import {createRequire} from 'node:module'
+import * as url from 'url'
+import {promises as fs, existsSync} from 'fs'
+import {createRequire} from 'module'
 import {execa} from 'execa'
 
 const require = createRequire(import.meta.url)

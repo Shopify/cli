@@ -1,12 +1,10 @@
 import ConcurrentOutput from './ConcurrentOutput.js'
-import {Signal} from '../../../../abort.js'
 import {unstyled} from '../../../../output.js'
 import {getLastFrameAfterUnmount} from '../../../../testing/ui.js'
 import React from 'react'
 import {describe, expect, test} from 'vitest'
-import {AbortController} from 'abort-controller'
 import {render} from 'ink-testing-library'
-import {Writable} from 'node:stream'
+import {Writable} from 'stream'
 
 describe('ConcurrentOutput', () => {
   test('renders a stream of concurrent outputs from sub-processes', async () => {
@@ -24,7 +22,7 @@ describe('ConcurrentOutput', () => {
 
     const backendProcess = {
       prefix: 'backend',
-      action: async (stdout: Writable, _stderr: Writable, _signal: Signal) => {
+      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
         stdout.write('first backend message')
         stdout.write('second backend message')
         stdout.write('third backend message')
@@ -35,7 +33,7 @@ describe('ConcurrentOutput', () => {
 
     const frontendProcess = {
       prefix: 'frontend',
-      action: async (stdout: Writable, _stderr: Writable, _signal: Signal) => {
+      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
         await backendPromise
 
         stdout.write('first frontend message')

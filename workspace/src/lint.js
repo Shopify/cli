@@ -2,9 +2,9 @@
 
 import * as path from 'pathe'
 import fg from 'fast-glob'
-import * as url from 'node:url'
-import {promises as fs} from 'node:fs'
-import {createRequire} from 'node:module'
+import * as url from 'url'
+import {promises as fs} from 'fs'
+import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)
 const colors = require('ansi-colors')

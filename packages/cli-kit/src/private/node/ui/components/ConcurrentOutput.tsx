@@ -3,8 +3,7 @@ import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import React, {FunctionComponent, useState} from 'react'
 import {Box, Static, Text} from 'ink'
 import stripAnsi from 'strip-ansi'
-import AbortController from 'abort-controller'
-import {Writable} from 'node:stream'
+import {Writable} from 'stream'
 
 export type WritableStream = (process: OutputProcess, index: number) => Writable
 

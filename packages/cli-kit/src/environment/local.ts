@@ -5,7 +5,7 @@ import {exists as fileExists} from '../file.js'
 import {exec} from '../system.js'
 import isInteractive from 'is-interactive'
 import macaddress from 'macaddress'
-import {homedir} from 'node:os'
+import {homedir} from 'os'
 
 /**
  * It returns true if the terminal is interactive.

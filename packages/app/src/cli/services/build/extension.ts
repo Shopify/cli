@@ -1,9 +1,9 @@
 import {AppInterface} from '../../models/app/app.js'
 import {UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {bundleExtension} from '../extensions/bundle.js'
-import {error, system, abort, output} from '@shopify/cli-kit'
+import {error, system, output} from '@shopify/cli-kit'
 import {execThemeCheckCLI} from '@shopify/cli-kit/node/ruby'
-import {Writable} from 'node:stream'
+import {Writable} from 'stream'
 
 export interface ExtensionBuildOptions {
   /**
@@ -18,7 +18,7 @@ export interface ExtensionBuildOptions {
   /**
    * Signal to abort the build process.
    */
-  signal: abort.Signal
+  signal: AbortSignal
 
   /**
    * Overrides the default build directory.
@@ -66,7 +66,7 @@ export async function buildUIExtensions(options: BuildUIExtensionsOptions): Prom
   return options.app.extensions.ui.map((uiExtension) => {
     return {
       prefix: uiExtension.localIdentifier,
-      action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+      action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
         await buildUIExtension(uiExtension, {stdout, stderr, signal, app: options.app})
       },
     }

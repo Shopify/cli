@@ -4,7 +4,7 @@ import {getUIExtensionPayload} from '../payload.js'
 import {UIExtension} from '../../../../models/app/extensions.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 import {output} from '@shopify/cli-kit'
-import {EventEmitter} from 'node:events'
+import {EventEmitter} from 'events'
 
 export interface ExtensionsPayloadStoreOptions extends ExtensionDevOptions {
   websocketURL: string

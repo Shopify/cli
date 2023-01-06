@@ -6,7 +6,7 @@ import {beforeEach, describe, it, expect, vi} from 'vitest'
 import {http, api, file} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {ClientError} from 'graphql-request'
-import {createReadStream} from 'node:fs'
+import {createReadStream} from 'fs'
 
 const defaultConfig: ReqDeployConfig = {
   deploymentToken: '123',

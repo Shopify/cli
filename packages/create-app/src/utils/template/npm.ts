@@ -1,7 +1,7 @@
 import {path, ui, npm, constants} from '@shopify/cli-kit'
 import {PackageManager, installNodeModules} from '@shopify/cli-kit/node/node-package-manager'
 import {Writable} from 'stream'
-import {platform} from 'node:os'
+import {platform} from 'os'
 
 interface UpdateCLIDependenciesOptions {
   directory: string

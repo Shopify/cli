@@ -1,7 +1,7 @@
 import {debug, content} from './output.js'
 import {execa} from 'execa'
-import {platform as processPlatform} from 'node:process'
-import {userInfo as osUserInfo, arch as osArch} from 'node:os'
+import {platform as processPlatform} from 'process'
+import {userInfo as osUserInfo, arch as osArch} from 'os'
 
 const getEnvironmentVariable = () => {
   const {env} = process

@@ -3,7 +3,7 @@ import {file, npm, path, ui} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {installNodeModules, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Writable} from 'stream'
-import {platform} from 'node:os'
+import {platform} from 'os'
 
 beforeEach(async () => {
   vi.mock('node:os')

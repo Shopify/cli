@@ -1,6 +1,5 @@
-import {output, abort} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
-import {AbortController} from 'abort-controller'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {Writable} from 'stream'
 import * as http from 'http'
@@ -21,7 +20,7 @@ export interface ReverseHTTPProxyTarget {
    * to send standard output and error data that gets formatted with the
    * right prefix.
    */
-  action: (stdout: Writable, stderr: Writable, signal: abort.Signal, port: number) => Promise<void> | void
+  action: (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => Promise<void> | void
 }
 
 /**

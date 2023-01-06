@@ -3,6 +3,8 @@ import commondir from 'commondir'
 import {relative, dirname, join, normalize, resolve, basename, extname, isAbsolute, parse} from 'pathe'
 import {findUp as internalFindUp} from 'find-up'
 import {fileURLToPath} from 'url'
+// eslint-disable-next-line node/prefer-global/url
+import type {URL} from 'url'
 import type {Pattern, Options} from 'fast-glob'
 
 export {join, relative, dirname, normalize, resolve, basename, extname, isAbsolute, parse}
@@ -15,7 +17,7 @@ export async function glob(pattern: Pattern | Pattern[], options?: Options): Pro
   }
   return fastGlob(pattern, options)
 }
-export {pathToFileURL} from 'node:url'
+export {pathToFileURL} from 'url'
 
 export async function findUp(
   matcher: OverloadParameters<typeof internalFindUp>[0],

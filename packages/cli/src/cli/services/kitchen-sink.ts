@@ -9,8 +9,7 @@ import {
   renderTextPrompt,
   renderWarning,
 } from '@shopify/cli-kit/node/ui'
-import {Signal} from '@shopify/cli-kit/src/abort'
-import {Writable} from 'node:stream'
+import {Writable} from 'stream'
 
 export async function kitchenSink() {
   renderInfo({
@@ -180,7 +179,7 @@ export async function kitchenSink() {
 
   const backendProcess = {
     prefix: 'backend',
-    action: async (stdout: Writable, _stderr: Writable, _signal: Signal) => {
+    action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
       stdout.write('first backend message')
       await new Promise((resolve) => setTimeout(resolve, 1000))
       stdout.write('second backend message')
@@ -194,7 +193,7 @@ export async function kitchenSink() {
 
   const frontendProcess = {
     prefix: 'frontend',
-    action: async (stdout: Writable, _stderr: Writable, _signal: Signal) => {
+    action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
       await backendPromise
 
       stdout.write('first frontend message')

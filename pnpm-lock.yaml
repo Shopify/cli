@@ -22,7 +22,7 @@ importers:
       '@shopify/eslint-plugin': ^41.3.0
       '@shopify/typescript-configs': ^5.1.0
       '@shopify/web-pixels-extension': 0.1.4
-      '@types/node': ^17.0.38
+      '@types/node': 14.17.0
       '@types/rimraf': ^3.0.2
       '@types/tmp': ^0.2.3
       '@typescript-eslint/eslint-plugin': ^5.27.0
@@ -80,10 +80,10 @@ importers:
       '@nrwl/workspace': 15.3.0_n6qshekvp4yqndkuu5fuozz5ni
       '@octokit/core': 4.1.0
       '@octokit/rest': 19.0.5
-      '@shopify/eslint-plugin': 41.3.1_xnfq2blgbluq7qc2r537s4ewku
+      '@shopify/eslint-plugin': 41.3.1_em2gb7xybgqjsdu6qumqqdiike
       '@shopify/typescript-configs': 5.1.0
       '@shopify/web-pixels-extension': 0.1.4
-      '@types/node': 17.0.45
+      '@types/node': 14.17.0
       '@types/rimraf': 3.0.2
       '@types/tmp': 0.2.3
       '@typescript-eslint/eslint-plugin': 5.45.0_psz44bhp76u27vmulntnlx26h4
@@ -127,7 +127,7 @@ importers:
       shx: 0.3.4
       tempy: 3.0.0
       tmp: 0.2.1
-      ts-node: 10.9.1_ksn4eycaeggbrckn3ykh37hwf4
+      ts-node: 10.9.1_76zcixmkjnbphw74ddtkdwldva
       tslib: 2.4.1
       typescript: 4.8.4
 
@@ -2403,7 +2403,7 @@ packages:
       value-or-promise: 1.0.6
     dev: true
 
-  /@graphql-tools/url-loader/6.10.1_cwm4pqv62do4c2u4idh7l4sbl4:
+  /@graphql-tools/url-loader/6.10.1_uiex7h67ci7ddskfqq7pk5lwym:
     resolution: {integrity: sha512-DSDrbhQIv7fheQ60pfDpGD256ixUQIR6Hhf9Z5bRjVkXOCvO5XrkwoWLiU7iHL81GB1r0Ba31bf+sl+D4nyyfw==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0
@@ -2422,7 +2422,7 @@ packages:
       is-promise: 4.0.0
       isomorphic-ws: 4.0.1_ws@7.4.5
       lodash: 4.17.21
-      meros: 1.1.4_@types+node@17.0.45
+      meros: 1.1.4_@types+node@14.17.0
       subscriptions-transport-ws: 0.9.19_graphql@15.8.0
       sync-fetch: 0.3.0
       tslib: 2.2.0
@@ -3672,7 +3672,7 @@ packages:
       '@shopify/function-enhancers': 2.0.8
     dev: false
 
-  /@shopify/eslint-plugin/41.3.1_xnfq2blgbluq7qc2r537s4ewku:
+  /@shopify/eslint-plugin/41.3.1_em2gb7xybgqjsdu6qumqqdiike:
     resolution: {integrity: sha512-d30Ox8AW1H324rs/eFSx1GFt71vcAu4srSXWPVxkbOqTIhHTjaMBpJXFDTvtjTsLPw9YwJSta8jJnkL+lHkIPA==}
     peerDependencies:
       eslint: ^8.3.0
@@ -3688,7 +3688,7 @@ packages:
       eslint-config-prettier: 8.5.0_eslint@8.28.0
       eslint-module-utils: 2.7.4_vbnhqcxlbs7ynbxw44hu2vq7eq
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.28.0
-      eslint-plugin-graphql: 4.0.0_67ngrnjtrw2ayab5gdxr35256e
+      eslint-plugin-graphql: 4.0.0_epjn35yhk6fzvqlqoih5vk7bkm
       eslint-plugin-import: 2.26.0_vbnhqcxlbs7ynbxw44hu2vq7eq
       eslint-plugin-jest: 25.7.0_brvvscwiof5cmspgfht34o7vqq
       eslint-plugin-jest-formatting: 3.1.0_eslint@8.28.0
@@ -4294,6 +4294,10 @@ packages:
 
   /@types/node/12.20.55:
     resolution: {integrity: sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==}
+    dev: true
+
+  /@types/node/14.17.0:
+    resolution: {integrity: sha512-w8VZUN/f7SSbvVReb9SWp6cJFevxb4/nkG65yLAya//98WgocKm5PLDAtSs5CtJJJM+kHmJjO/6mmYW4MHShZA==}
     dev: true
 
   /@types/node/15.14.9:
@@ -7555,7 +7559,7 @@ packages:
       ignore: 5.2.1
     dev: true
 
-  /eslint-plugin-graphql/4.0.0_67ngrnjtrw2ayab5gdxr35256e:
+  /eslint-plugin-graphql/4.0.0_epjn35yhk6fzvqlqoih5vk7bkm:
     resolution: {integrity: sha512-d5tQm24YkVvCEk29ZR5ScsgXqAGCjKlMS8lx3mS7FS/EKsWbkvXQImpvic03EpMIvNTBW5e+2xnHzXB/VHNZJw==}
     engines: {node: '>=10.0'}
     peerDependencies:
@@ -7563,7 +7567,7 @@ packages:
     dependencies:
       '@babel/runtime': 7.20.6
       graphql: 15.8.0
-      graphql-config: 3.4.1_67ngrnjtrw2ayab5gdxr35256e
+      graphql-config: 3.4.1_epjn35yhk6fzvqlqoih5vk7bkm
       lodash.flatten: 4.4.0
       lodash.without: 4.4.0
     transitivePeerDependencies:
@@ -9002,7 +9006,7 @@ packages:
     resolution: {integrity: sha512-bzh50DW9kTPM00T8y4o8vQg89Di9oLJVLW/KaOGIXJWP/iqCN6WKYkbNOF04vFLJhwcpYUh9ydh/+5vpOqV4YQ==}
     dev: true
 
-  /graphql-config/3.4.1_67ngrnjtrw2ayab5gdxr35256e:
+  /graphql-config/3.4.1_epjn35yhk6fzvqlqoih5vk7bkm:
     resolution: {integrity: sha512-g9WyK4JZl1Ko++FSyE5Ir2g66njfxGzrDDhBOwnkoWf/t3TnnZG6BBkWP+pkqVJ5pqMJGPKHNrbew8jRxStjhw==}
     engines: {node: '>= 10.0.0'}
     peerDependencies:
@@ -9013,7 +9017,7 @@ packages:
       '@graphql-tools/json-file-loader': 6.2.6_graphql@15.8.0
       '@graphql-tools/load': 6.2.8_graphql@15.8.0
       '@graphql-tools/merge': 6.2.14_graphql@15.8.0
-      '@graphql-tools/url-loader': 6.10.1_cwm4pqv62do4c2u4idh7l4sbl4
+      '@graphql-tools/url-loader': 6.10.1_uiex7h67ci7ddskfqq7pk5lwym
       '@graphql-tools/utils': 7.10.0_graphql@15.8.0
       cosmiconfig: 7.0.0
       cosmiconfig-toml-loader: 1.0.0
@@ -10723,7 +10727,7 @@ packages:
     resolution: {integrity: sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==}
     engines: {node: '>= 8'}
 
-  /meros/1.1.4_@types+node@17.0.45:
+  /meros/1.1.4_@types+node@14.17.0:
     resolution: {integrity: sha512-E9ZXfK9iQfG9s73ars9qvvvbSIkJZF5yOo9j4tcwM5tN8mUKfj/EKN5PzOr3ZH0y5wL7dLAHw3RVEfpQV9Q7VQ==}
     engines: {node: '>=12'}
     peerDependencies:
@@ -10732,7 +10736,7 @@ packages:
       '@types/node':
         optional: true
     dependencies:
-      '@types/node': 17.0.45
+      '@types/node': 14.17.0
     dev: true
 
   /methods/1.1.2:
@@ -14187,6 +14191,37 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       tslib: 2.4.1
+    dev: true
+
+  /ts-node/10.9.1_76zcixmkjnbphw74ddtkdwldva:
+    resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
+    hasBin: true
+    peerDependencies:
+      '@swc/core': '>=1.2.50'
+      '@swc/wasm': '>=1.2.50'
+      '@types/node': '*'
+      typescript: '>=2.7'
+    peerDependenciesMeta:
+      '@swc/core':
+        optional: true
+      '@swc/wasm':
+        optional: true
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      '@tsconfig/node10': 1.0.9
+      '@tsconfig/node12': 1.0.11
+      '@tsconfig/node14': 1.0.3
+      '@tsconfig/node16': 1.0.3
+      '@types/node': 14.17.0
+      acorn: 8.8.1
+      acorn-walk: 8.2.0
+      arg: 4.1.3
+      create-require: 1.1.1
+      diff: 4.0.2
+      make-error: 1.3.6
+      typescript: 4.8.4
+      v8-compile-cache-lib: 3.0.1
+      yn: 3.1.1
     dev: true
 
   /ts-node/10.9.1_ksn4eycaeggbrckn3ykh37hwf4:

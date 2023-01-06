@@ -1,6 +1,6 @@
 import deepMerge from 'deepmerge'
 import {Dictionary, ObjectIterator, ValueKeyIteratee} from 'lodash'
-import {createRequire} from 'node:module'
+import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)
 
