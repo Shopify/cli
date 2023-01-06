@@ -151,6 +151,13 @@ beforeEach(() => {
       ui: {prompt: vi.fn()},
     }
   })
+  vi.mock('./prompts', async () => {
+    const prompts: any = await vi.importActual('./prompts')
+    return {
+      ...prompts,
+      deployConfirmationPrompt: async () => true,
+    }
+  })
   vi.mock('../dev/create-extension')
   vi.mock('./id-matching')
   vi.mock('./id-manual-matching')
@@ -267,7 +274,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending manual matche
 })
 
 describe('ensureExtensionsIds: matchmaking returns ok with pending some pending to create', () => {
-  it('Create the pending extensions and suceeds', async () => {
+  it('Create the pending extensions and succeeds', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {},
@@ -296,7 +303,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending some pending 
 })
 
 describe('ensureExtensionsIds: matchmaking returns ok with some pending confirmation', () => {
-  it('confirms the pending ones and suceeds', async () => {
+  it('confirms the pending ones and succeeds', async () => {
     // Given
     vi.mocked(ui.prompt).mockResolvedValueOnce({value: 'yes'})
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
@@ -346,7 +353,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with some pending confirma
 })
 
 describe('ensureExtensionsIds: matchmaking returns ok with nothing pending', () => {
-  it('suceeds and returns all identifiers', async () => {
+  it('succeeds and returns all identifiers', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},

@@ -1,8 +1,7 @@
 import {manualMatchIds} from './id-manual-matching.js'
 import {automaticMatchmaking} from './id-matching.js'
 import {EnsureDeploymentIdsPresenceOptions, MatchingError, RemoteSource} from './identifiers.js'
-import {confirmPartialDeploymentPrompt, matchConfirmationPrompt} from './prompts.js'
-import {displaySourceSummaryTable} from './source-summary-table.js'
+import {matchConfirmationPrompt, deployConfirmationPrompt} from './prompts.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 
@@ -33,16 +32,12 @@ export async function ensureFunctionsIds(
     onlyRemoteFunctions = matchResult.onlyRemote
   }
 
-  await displaySourceSummaryTable({
+  const confirmed = await deployConfirmationPrompt({
     identifiers: validMatches,
     toCreate: functionsToCreate,
     onlyRemote: onlyRemoteFunctions,
   })
-
-  if (onlyRemoteFunctions.length > 0) {
-    const confirmed = await confirmPartialDeploymentPrompt()
-    if (!confirmed) return err('user-cancelled')
-  }
+  if (!confirmed) return err('user-cancelled')
 
   return ok(validMatches)
 }

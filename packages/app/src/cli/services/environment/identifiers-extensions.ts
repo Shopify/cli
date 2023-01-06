@@ -1,8 +1,7 @@
 import {manualMatchIds} from './id-manual-matching.js'
 import {automaticMatchmaking} from './id-matching.js'
 import {EnsureDeploymentIdsPresenceOptions, LocalSource, MatchingError, RemoteSource} from './identifiers.js'
-import {matchConfirmationPrompt, confirmPartialDeploymentPrompt} from './prompts.js'
-import {displaySourceSummaryTable} from './source-summary-table.js'
+import {deployConfirmationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
@@ -37,16 +36,12 @@ export async function ensureExtensionsIds(
     onlyRemoteExtensions = matchResult.onlyRemote
   }
 
-  await displaySourceSummaryTable({
+  const confirmed = await deployConfirmationPrompt({
     identifiers: validMatches,
     toCreate: extensionsToCreate,
     onlyRemote: onlyRemoteExtensions,
   })
-
-  if (onlyRemoteExtensions.length > 0) {
-    const confirmed = await confirmPartialDeploymentPrompt()
-    if (!confirmed) return err('user-cancelled')
-  }
+  if (!confirmed) return err('user-cancelled')
 
   if (extensionsToCreate.length > 0) {
     const newIdentifiers = await createExtensions(extensionsToCreate, options.appId)

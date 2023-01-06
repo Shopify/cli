@@ -131,6 +131,13 @@ beforeEach(() => {
       ui: {prompt: vi.fn()},
     }
   })
+  vi.mock('./prompts', async () => {
+    const prompts: any = await vi.importActual('./prompts')
+    return {
+      ...prompts,
+      deployConfirmationPrompt: async () => true,
+    }
+  })
   vi.mock('./id-matching')
   vi.mock('./id-manual-matching')
 })
@@ -226,7 +233,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending to create
 })
 
 describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmation', () => {
-  it('confirms the pending ones and suceeds', async () => {
+  it('confirms the pending ones and succeeds', async () => {
     // Given
     vi.mocked(ui.prompt).mockResolvedValueOnce({value: 'yes'})
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
@@ -274,7 +281,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmat
 })
 
 describe('ensureFunctionsIds: matchmaking returns ok with nothing pending', () => {
-  it('suceeds and returns all identifiers', async () => {
+  it('succeeds and returns all identifiers', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {FUNCTION_A: 'ID_A', FUNCTION_A_2: 'ID_A_2'},

@@ -1,5 +1,7 @@
 import {LocalSource, RemoteSource} from './identifiers.js'
+import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {ui} from '@shopify/cli-kit'
+import {renderPrompt} from '@shopify/cli-kit/node/ui'
 
 export async function matchConfirmationPrompt(local: LocalSource, remote: RemoteSource) {
   const choices = [
@@ -38,18 +40,35 @@ export async function selectRemoteSourcePrompt(
   return remoteSourcesOfSameType.find((remote) => remote[remoteIdField] === choice.uuid)!
 }
 
-export async function confirmPartialDeploymentPrompt() {
-  const choices = [
-    {name: `Yes, proceed and deploy anyway`, value: 'yes'},
-    {name: `No, cancel deployment`, value: 'no'},
-  ]
-  const choice: {value: string} = await ui.prompt([
-    {
-      type: 'select',
-      name: 'value',
-      message: `Some extensions are MISSING from your local project. Do you want to proceed?`,
-      choices,
-    },
-  ])
-  return choice.value === 'yes'
+interface SourceSummary {
+  identifiers: IdentifiersExtensions
+  toCreate: LocalSource[]
+  onlyRemote: RemoteSource[]
+}
+
+export async function deployConfirmationPrompt(summary: SourceSummary): Promise<boolean> {
+  const infoTable: {[key: string]: string[]} = {}
+
+  if (summary.toCreate.length > 0) {
+    infoTable.add = summary.toCreate.map((source) => source.localIdentifier)
+  }
+
+  const toUpdate = Object.keys(summary.identifiers)
+
+  if (toUpdate.length > 0) {
+    infoTable.update = toUpdate
+  }
+
+  if (summary.onlyRemote.length > 0) {
+    infoTable['missing locally'] = summary.onlyRemote.map((source) => source.title)
+  }
+
+  return renderPrompt({
+    message: 'Make the following changes in Shopify Partners?',
+    choices: [
+      {label: 'Yes, deploy to push changes', value: true, key: 'y'},
+      {label: 'No, cancel', value: false, key: 'n'},
+    ],
+    infoTable,
+  })
 }
