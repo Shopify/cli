@@ -1,6 +1,20 @@
 .Wrapper {
-   margin: 0 auto;
-   max-width: 128px;
+   display: flex;
+   gap: 4.8rem;
+   align-items: center;
+}
+
+.QRCode {
+   display:block;
+   padding: 0.2rem 0.2rem 0 0.2rem;
+   height: 13.4rem;
+   background: var(--dc-color-white);
+   border: 1px solid var(--dc-color-border);
+}
+
+.RightColumn {
+   display:grid;
+   gap: 0.4rem;
 }
 
 .CopyLink {
