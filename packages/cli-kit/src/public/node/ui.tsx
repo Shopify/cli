@@ -183,6 +183,7 @@ export function renderFatalError(error: Fatal) {
  * ?  Associate your project with the org Castile Ventures?
  *
  *      Add:     • new-ext
+ *
  *      Remove:  • integrated-demand-ext
  *               • order-discount
 
@@ -205,37 +206,6 @@ export function renderFatalError(error: Fatal) {
  */
 export async function renderSelectPrompt<T>(options: Omit<SelectPromptProps<T>, 'onChoose'>) {
   return selectPrompt(options)
-}
-
-interface ConfirmationProps {
-  question: string
-  infoTable?: SelectPromptProps<boolean>['infoTable']
-}
-
-/**
- * Renders a confirmation prompt to the console.
- *
- * ?  Push the following changes to your Partners Dashboard?
- * \>  (y) Yes, confirm
- *     (c) Cancel
- *
- * navigate with arrows, enter to select
- */
-export async function renderConfirmation({question, infoTable}: ConfirmationProps) {
-  const choices = [
-    {
-      label: 'Yes, confirm',
-      value: true,
-      key: 'y',
-    },
-    {
-      label: 'Cancel',
-      value: false,
-      key: 'c',
-    },
-  ]
-
-  return selectPrompt({message: question, choices, infoTable})
 }
 
 /**

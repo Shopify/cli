@@ -73,6 +73,7 @@ describe('Prompt', async () => {
       "?  Associate your project with the org Castile Ventures?
 
              Add:     • new-ext
+
              Remove:  • integrated-demand-ext
                       • order-discount
 

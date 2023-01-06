@@ -1,7 +1,6 @@
 import {error} from '@shopify/cli-kit'
 import {
   renderConcurrent,
-  renderConfirmation,
   renderFatalError,
   renderInfo,
   renderSelectPrompt,
@@ -165,10 +164,6 @@ export async function kitchenSink() {
       {label: 'tenth', value: 'tenth'},
     ],
     infoTable: {add: ['new-ext'], remove: ['integrated-demand-ext', 'order-discount']},
-  })
-
-  await renderConfirmation({
-    question: 'Push the following changes to your Partners Dashboard?',
   })
 
   await renderTextPrompt({
