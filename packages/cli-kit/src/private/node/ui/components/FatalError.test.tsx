@@ -1,16 +1,16 @@
 import {FatalError} from './FatalError.js'
-import {renderString} from '../../ui.js'
 import {unstyled} from '../../../../output.js'
 import {Abort, Bug, ExternalError} from '../../../../error.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
+import {render} from 'ink-testing-library'
 
 describe('FatalError', async () => {
   test('renders correctly with a just a message and tryMessage', async () => {
     const error = new Abort('test', 'try this')
-    const {output} = renderString(<FatalError error={error} />)
+    const {lastFrame} = render(<FatalError error={error} />)
 
-    expect(unstyled(output!)).toMatchInlineSnapshot(`
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "
       ╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
@@ -33,9 +33,9 @@ describe('FatalError', async () => {
           at Function.Module._load (internal/modules/cjs/loader.js:878:14)
     `
 
-    const {output} = renderString(<FatalError error={error} />)
+    const {lastFrame} = render(<FatalError error={error} />)
 
-    expect(unstyled(output!)).toMatchInlineSnapshot(`
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "
       ╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
@@ -84,9 +84,9 @@ describe('FatalError', async () => {
       ],
     ]
 
-    const {output} = renderString(<FatalError error={error} />)
+    const {lastFrame} = render(<FatalError error={error} />)
 
-    expect(unstyled(output!)).toMatchInlineSnapshot(`
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "
       ╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
@@ -113,9 +113,9 @@ describe('FatalError', async () => {
   test('renders correctly an external error', async () => {
     const error = new ExternalError('Unexpected error', 'yarn', ['install'])
 
-    const {output} = renderString(<FatalError error={error} />)
+    const {lastFrame} = render(<FatalError error={error} />)
 
-    expect(unstyled(output!)).toMatchInlineSnapshot(`
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "
       ── external error ──────────────────────────────────────────────────────────────
 

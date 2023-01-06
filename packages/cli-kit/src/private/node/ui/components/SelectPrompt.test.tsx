@@ -1,5 +1,5 @@
-import Prompt from './Prompt.js'
-import {sendInput, waitForInputsToBeReady} from '../../../../testing/ui.js'
+import {SelectPrompt} from './SelectPrompt.js'
+import {getLastFrameAfterUnmount, sendInput, waitForInputsToBeReady} from '../../../../testing/ui.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {render} from 'ink-testing-library'
@@ -20,11 +20,11 @@ describe('Prompt', async () => {
     const infoTable = {Add: ['new-ext'], Remove: ['integrated-demand-ext', 'order-discount']}
 
     const renderInstance = render(
-      <Prompt
+      <SelectPrompt
         message="Associate your project with the org Castile Ventures?"
         choices={items}
         infoTable={infoTable}
-        onChoose={onEnter}
+        onSubmit={onEnter}
       />,
     )
 
@@ -32,11 +32,12 @@ describe('Prompt', async () => {
     await sendInput(renderInstance, ARROW_DOWN)
     await sendInput(renderInstance, ENTER)
 
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
       [36m✔[39m  [36msecond[39m
       "
     `)
+
     expect(onEnter).toHaveBeenCalledWith(items[1]!.value)
   })
 
@@ -60,11 +61,11 @@ describe('Prompt', async () => {
     }
 
     const renderInstance = render(
-      <Prompt
+      <SelectPrompt
         message="Associate your project with the org Castile Ventures?"
         choices={items}
         infoTable={infoTable}
-        onChoose={() => {}}
+        onSubmit={() => {}}
       />,
     )
 
@@ -72,6 +73,7 @@ describe('Prompt', async () => {
       "?  Associate your project with the org Castile Ventures?
 
              Add:     • new-ext
+
              Remove:  • integrated-demand-ext
                       • order-discount
 

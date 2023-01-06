@@ -28,9 +28,8 @@ export async function loadLocalUIExtensionsSpecifications(): Promise<UIExtension
 }
 
 export async function loadLocalFunctionSpecifications(): Promise<FunctionSpec[]> {
-  return (await memoizedLoadSpecs('function-specifications')).filter(
-    (spec) => !spec.gated || environment.local.isShopify(),
-  )
+  const isShopifyUser = await environment.local.isShopify()
+  return (await memoizedLoadSpecs('function-specifications')).filter((spec) => !spec.gated || isShopifyUser)
 }
 
 export async function loadThemeSpecifications(): Promise<ThemeExtensionSpec[]> {

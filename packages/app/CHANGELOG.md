@@ -1,5 +1,26 @@
 # @shopify/app
 
+## 3.31.1
+
+### Patch Changes
+
+- 21a15024: Fix loading function specifications
+  - @shopify/cli-kit@3.31.1
+
+## 3.31.0
+
+### Minor Changes
+
+- 49f8f895: Add support for multiple custom OAuth callback paths by setting auth_callback_path to an array in shopify.web.toml
+
+### Patch Changes
+
+- a786f371: Fix bug in functions using a custom template repository
+- b37ace4c: Fix extension generate not accepting some template values
+- Updated dependencies [80c6638c]
+- Updated dependencies [dcf53ece]
+  - @shopify/cli-kit@3.31.0
+
 ## 3.30.2
 
 ### Patch Changes

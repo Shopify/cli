@@ -50,7 +50,7 @@ importers:
       execa: ^5.1.1
       fast-glob: ^3.2.11
       find-up: ^6.2.0
-      fs-extra: ^10.0.0
+      fs-extra: ^11.1.0
       graphql: ^15.5.1
       graphql-tag: ^2.12.4
       liquidjs: ^9.36.0
@@ -111,7 +111,7 @@ importers:
       execa: 5.1.1
       fast-glob: 3.2.12
       find-up: 6.3.0
-      fs-extra: 10.1.0
+      fs-extra: 11.1.0
       graphql: 15.8.0
       graphql-tag: 2.12.6_graphql@15.8.0
       liquidjs: 9.43.0
@@ -135,9 +135,9 @@ importers:
     specifiers:
       '@shopify/admin-ui-extensions': 1.0.1
       '@shopify/admin-ui-extensions-react': 1.0.1
-      '@shopify/app': 3.30.2
+      '@shopify/app': 3.31.1
       '@shopify/checkout-ui-extensions-react': ^0.21.2
-      '@shopify/cli': 3.30.2
+      '@shopify/cli': 3.31.1
       '@shopify/customer-account-ui-extensions-react': ^0.0.8
       '@shopify/post-purchase-ui-extensions': ^0.13.3
       '@shopify/post-purchase-ui-extensions-react': ^0.13.3
@@ -225,7 +225,7 @@ importers:
     specifiers:
       '@luckycatfactory/esbuild-graphql-loader': 3.7.0
       '@oclif/core': 1.21.0
-      '@shopify/cli-kit': 3.30.2
+      '@shopify/cli-kit': 3.31.1
       '@shopify/shopify-cli-extensions': 3.21.0
       '@types/diff': ^5.0.2
       '@types/http-proxy': ^1.17.9
@@ -266,17 +266,46 @@ importers:
       vite: 2.9.12
       vitest: 0.26.3
 
+  packages/cli:
+    specifiers:
+      '@oclif/core': 1.21.0
+      '@oclif/plugin-commands': 2.2.0
+      '@oclif/plugin-help': 5.1.12
+      '@oclif/plugin-plugins': 2.1.0
+      '@shopify/app': 3.31.1
+      '@shopify/cli-hydrogen': 3.31.1
+      '@shopify/cli-kit': 3.31.1
+      '@shopify/plugin-ngrok': 3.31.1
+      '@shopify/theme': 3.31.1
+      '@vitest/coverage-istanbul': ^0.26.3
+      vite: 2.9.12
+      vitest: ^0.26.3
+    dependencies:
+      '@oclif/core': 1.21.0
+      '@oclif/plugin-commands': 2.2.0
+      '@oclif/plugin-help': 5.1.12
+      '@oclif/plugin-plugins': 2.1.0
+      '@shopify/cli-kit': link:../cli-kit
+      '@shopify/plugin-ngrok': link:../plugin-ngrok
+    devDependencies:
+      '@shopify/app': link:../app
+      '@shopify/cli-hydrogen': link:../cli-hydrogen
+      '@shopify/theme': link:../theme
+      '@vitest/coverage-istanbul': 0.26.3
+      vite: 2.9.12
+      vitest: 0.26.3
+
   packages/cli-hydrogen:
     specifiers:
       '@oclif/core': 1.21.0
-      '@shopify/cli-kit': 3.30.2
+      '@shopify/cli-kit': 3.31.1
       '@shopify/hydrogen': 0.26.0
       '@shopify/mini-oxygen': 0.2.0
       '@shopify/prettier-config': 1.1.2
       '@types/fs-extra': 9.0.13
       '@types/prettier': 2.6.3
       fast-glob: 3.2.11
-      fs-extra: 10.0.0
+      fs-extra: 11.1.0
       graphql: ^16.0.0
       graphql-request: 4.3.0
       prettier: 2.6.1
@@ -293,7 +322,7 @@ importers:
       '@shopify/prettier-config': 1.1.2
       '@types/prettier': 2.6.3
       fast-glob: 3.2.11
-      fs-extra: 10.0.0
+      fs-extra: 11.1.0
       graphql-request: 4.3.0_graphql@16.6.0
       prettier: 2.6.1
       typescript: 4.8.4
@@ -316,7 +345,7 @@ importers:
       '@types/diff': ^5.0.2
       '@types/fs-extra': 9.0.13
       '@types/gradient-string': ^1.1.2
-      '@types/inquirer': ^8.2.1
+      '@types/inquirer': ^9.0.3
       '@types/lodash': 4.14.191
       '@types/react': 16.14.0
       '@types/semver': ^7.3.9
@@ -339,7 +368,7 @@ importers:
       find-up: 6.2.0
       find-versions: 5.0.0
       form-data: 4.0.0
-      fs-extra: 10.0.0
+      fs-extra: 11.1.0
       fuzzy: 0.1.3
       get-port-please: 2.5.0
       gradient-string: 2.0.2
@@ -348,13 +377,13 @@ importers:
       h3: 0.7.21
       ink: 3.2.0
       ink-testing-library: ^2.1.0
-      inquirer: 8.2.4
-      inquirer-autocomplete-prompt: 2.0.0
+      inquirer: 9.1.4
+      inquirer-autocomplete-prompt: 3.0.0
       is-interactive: 2.0.0
       js-yaml: 4.1.0
       keytar: 7.9.0
       kill-port-process: 3.1.0
-      latest-version: 6.0.0
+      latest-version: 7.0.0
       liquidjs: 9.36.0
       listr2: 4.0.5
       lodash: 4.17.21
@@ -404,7 +433,7 @@ importers:
       find-up: 6.2.0
       find-versions: 5.0.0
       form-data: 4.0.0
-      fs-extra: 10.0.0
+      fs-extra: 11.1.0
       fuzzy: 0.1.3
       get-port-please: 2.5.0
       gradient-string: 2.0.2
@@ -412,13 +441,13 @@ importers:
       graphql-request: 4.3.0_graphql@16.4.0
       h3: 0.7.21
       ink: 3.2.0_hw3ykagcixqw57etxpo4kpffqq
-      inquirer: 8.2.4
-      inquirer-autocomplete-prompt: 2.0.0_inquirer@8.2.4
+      inquirer: 9.1.4
+      inquirer-autocomplete-prompt: 3.0.0_inquirer@9.1.4
       is-interactive: 2.0.0
       js-yaml: 4.1.0
       keytar: 7.9.0
       kill-port-process: 3.1.0
-      latest-version: 6.0.0
+      latest-version: 7.0.0
       liquidjs: 9.36.0
       listr2: 4.0.5
       lodash: 4.17.21
@@ -448,7 +477,7 @@ importers:
       '@types/diff': 5.0.2
       '@types/fs-extra': 9.0.13
       '@types/gradient-string': 1.1.2
-      '@types/inquirer': 8.2.5
+      '@types/inquirer': 9.0.3
       '@types/lodash': 4.14.191
       '@types/react': 16.14.0
       '@types/semver': 7.3.13
@@ -458,39 +487,10 @@ importers:
       vite: 2.9.12
       vitest: 0.26.3
 
-  packages/cli:
-    specifiers:
-      '@oclif/core': 1.21.0
-      '@oclif/plugin-commands': 2.2.0
-      '@oclif/plugin-help': 5.1.12
-      '@oclif/plugin-plugins': 2.1.0
-      '@shopify/app': 3.30.2
-      '@shopify/cli-hydrogen': 3.30.2
-      '@shopify/cli-kit': 3.30.2
-      '@shopify/plugin-ngrok': 3.30.2
-      '@shopify/theme': 3.30.2
-      '@vitest/coverage-istanbul': ^0.26.3
-      vite: 2.9.12
-      vitest: ^0.26.3
-    dependencies:
-      '@oclif/core': 1.21.0
-      '@oclif/plugin-commands': 2.2.0
-      '@oclif/plugin-help': 5.1.12
-      '@oclif/plugin-plugins': 2.1.0
-      '@shopify/cli-kit': link:../cli-kit
-      '@shopify/plugin-ngrok': link:../plugin-ngrok
-    devDependencies:
-      '@shopify/app': link:../app
-      '@shopify/cli-hydrogen': link:../cli-hydrogen
-      '@shopify/theme': link:../theme
-      '@vitest/coverage-istanbul': 0.26.3
-      vite: 2.9.12
-      vitest: 0.26.3
-
   packages/create-app:
     specifiers:
       '@oclif/core': 1.21.0
-      '@shopify/cli-kit': 3.30.2
+      '@shopify/cli-kit': 3.31.1
       vite: 2.9.12
       vitest: ^0.26.3
     dependencies:
@@ -503,7 +503,7 @@ importers:
   packages/create-hydrogen:
     specifiers:
       '@oclif/core': 1.21.0
-      '@shopify/cli-kit': 3.30.2
+      '@shopify/cli-kit': 3.31.1
       '@types/download': 8.0.0
       download: 8.0.0
       vite: 2.9.12
@@ -548,7 +548,7 @@ importers:
   packages/plugin-ngrok:
     specifiers:
       '@oclif/core': 1.21.0
-      '@shopify/cli-kit': 3.30.2
+      '@shopify/cli-kit': 3.31.1
       '@shopify/ngrok': 4.3.2
       vite: 2.9.12
       vitest: ^0.26.3
@@ -563,7 +563,7 @@ importers:
   packages/theme:
     specifiers:
       '@oclif/core': 1.21.0
-      '@shopify/cli-kit': 3.30.2
+      '@shopify/cli-kit': 3.31.1
       vite: 2.9.12
       vitest: ^0.26.3
     dependencies:
@@ -3442,6 +3442,21 @@ packages:
       typescript: 4.8.4
     dev: true
 
+  /@pnpm/network.ca-file/1.0.2:
+    resolution: {integrity: sha512-YcPQ8a0jwYU9bTdJDpXjMi7Brhkr1mXsXrUJvjqM2mQDgkRiz8jFaQGOdaLxgjtUfQgZhKy/O3cG/YwmgKaxLA==}
+    engines: {node: '>=12.22.0'}
+    dependencies:
+      graceful-fs: 4.2.10
+    dev: false
+
+  /@pnpm/npm-conf/1.0.5:
+    resolution: {integrity: sha512-hD8ml183638O3R6/Txrh0L8VzGOrFXgRtRDG4qQC4tONdZ5Z1M+tlUUDUvrjYdmK6G+JTBTeaCLMna11cXzi8A==}
+    engines: {node: '>=12'}
+    dependencies:
+      '@pnpm/network.ca-file': 1.0.2
+      config-chain: 1.1.13
+    dev: false
+
   /@polka/url/1.0.0-next.21:
     resolution: {integrity: sha512-a5Sab1C4/icpTZVzZc5Ghpz88yQtGOyNqYXcZgOssB2uuAr+wF/MvN6bgtW32q7HHrvBki+BsZ0OuNv6EV3K9g==}
     dev: false
@@ -4035,11 +4050,23 @@ packages:
     resolution: {integrity: sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw==}
     engines: {node: '>=10'}
 
+  /@sindresorhus/is/5.3.0:
+    resolution: {integrity: sha512-CX6t4SYQ37lzxicAqsBtxA3OseeoVrh9cSJ5PFYam0GksYlupRfy1A+Q4aYD3zvcfECLc0zO2u+ZnR2UYKvCrw==}
+    engines: {node: '>=14.16'}
+    dev: false
+
   /@szmarczak/http-timer/4.0.6:
     resolution: {integrity: sha512-4BAffykYOgO+5nzBWYwE3W90sBgLJoUPRWWcL8wlyiM8IB8ipJz3UMJ9KXQd1RKQXpKp8Tutn80HZtWsu2u76w==}
     engines: {node: '>=10'}
     dependencies:
       defer-to-connect: 2.0.1
+
+  /@szmarczak/http-timer/5.0.1:
+    resolution: {integrity: sha512-+PmQX0PiAYPMeVYe237LJAYvOMYW1j2rH5YROyS3b4CTVJum34HfRvKvAzozHAQG0TnHNdUfY9nCeUyRAs//cw==}
+    engines: {node: '>=14.16'}
+    dependencies:
+      defer-to-connect: 2.0.1
+    dev: false
 
   /@teppeis/multimaps/2.0.0:
     resolution: {integrity: sha512-TL1adzq1HdxUf9WYduLcQ/DNGYiz71U31QRgbnr0Ef1cPyOUOsBojxHVWpFeOSUucB6Lrs0LxFRA14ntgtkc9w==}
@@ -4186,10 +4213,11 @@ packages:
       '@types/node': 18.11.10
     dev: true
 
-  /@types/inquirer/8.2.5:
-    resolution: {integrity: sha512-QXlzybid60YtAwfgG3cpykptRYUx2KomzNutMlWsQC64J/WG/gQSl+P4w7A21sGN0VIxRVava4rgnT7FQmFCdg==}
+  /@types/inquirer/9.0.3:
+    resolution: {integrity: sha512-CzNkWqQftcmk2jaCWdBTf9Sm7xSw4rkI1zpU/Udw3HX5//adEZUIm9STtoRP1qgWj0CWQtJ9UTvqmO2NNjhMJw==}
     dependencies:
       '@types/through': 0.0.30
+      rxjs: 7.5.7
     dev: true
 
   /@types/is-ci/3.0.0:
@@ -5485,6 +5513,23 @@ packages:
     resolution: {integrity: sha512-2/kNscPhpcxrOigMZzbiWF7dz8ilhb/nIHU3EyZiXWXpeq/au8qJ8VhdftMkty3n7Gj6HIGalQG8oiBNB3AJgA==}
     engines: {node: '>=10.6.0'}
 
+  /cacheable-lookup/7.0.0:
+    resolution: {integrity: sha512-+qJyx4xiKra8mZrcwhjMRMUhD5NR1R8esPkzIYxX96JiecFoxAXFuz/GpR3+ev4PE1WamHip78wV0vcmPQtp8w==}
+    engines: {node: '>=14.16'}
+    dev: false
+
+  /cacheable-request/10.2.4:
+    resolution: {integrity: sha512-IWIea8ei1Ht4dBqvlvh7Gs7EYlMyBhlJybLDUB9sadEqHqftmdNieMLIR5ia3vs8gbjj9t8hXLBpUVg3vcQNbg==}
+    engines: {node: '>=14.16'}
+    dependencies:
+      get-stream: 6.0.1
+      http-cache-semantics: 4.1.0
+      keyv: 4.5.2
+      mimic-response: 4.0.0
+      normalize-url: 8.0.0
+      responselike: 3.0.0
+    dev: false
+
   /cacheable-request/2.1.4:
     resolution: {integrity: sha512-vag0O2LKZ/najSoUwDbVlnlCFvhBE/7mGTY2B5FgCBDcRD+oVV1HYTOwM6JZfMg/hIcM6IwnTZ1uQQL5/X3xIQ==}
     dependencies:
@@ -5773,6 +5818,7 @@ packages:
   /cli-width/3.0.0:
     resolution: {integrity: sha512-FxqpkPPwu1HjuN93Omfm4h8uIanXofW0RxVEW3k5RKx+mJJYSthzNhp32Kzxxy3YAEZ/Dc/EWN1vZRY0+kOhbw==}
     engines: {node: '>= 10'}
+    dev: true
 
   /cli-width/4.0.0:
     resolution: {integrity: sha512-ZksGS2xpa/bYkNzN3BAw1wEjsLV/ZKOf/CCrJ/QOBsxx6fOARIkwTutxp1XIOIohi6HKmOFjMoK/XaqDVUpEEw==}
@@ -6084,6 +6130,13 @@ packages:
       onetime: 5.1.2
       pkg-up: 3.1.0
       semver: 7.3.8
+    dev: false
+
+  /config-chain/1.1.13:
+    resolution: {integrity: sha512-qj+f8APARXHrM0hraqXYb2/bOVSV4PvJQlNZ/DVj0QrmNM2q2euizkeuVckQ57J+W0mRH6Hvi+k50M4Jul2VRQ==}
+    dependencies:
+      ini: 1.3.8
+      proto-list: 1.2.4
     dev: false
 
   /confusing-browser-globals/1.0.11:
@@ -8256,6 +8309,7 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       escape-string-regexp: 1.0.5
+    dev: true
 
   /figures/5.0.0:
     resolution: {integrity: sha512-ej8ksPF4x6e5wvK9yevct0UCXh8TTFlWGVLlgjZuoBH1HwjIfKE/IdL5mq89sFA7zELi1VhKpmtDnrs7zWyeyg==}
@@ -8485,6 +8539,11 @@ packages:
       is-callable: 1.2.7
     dev: true
 
+  /form-data-encoder/2.1.4:
+    resolution: {integrity: sha512-yDYSgNMraqvnxiEXO4hi88+YZxaHC6QKzb5N84iRCTDeRO7ZALpir/lVmf/uXUhnwUr2O4HU8s/n6x+yNjQkHw==}
+    engines: {node: '>= 14.17'}
+    dev: false
+
   /form-data/3.0.1:
     resolution: {integrity: sha512-RHkBKtLWUVwd7SqRIvCZMEvAMoGUp0XU+seQiZejj0COz3RI3hWP4sCv3gZWWLjJTd7rGwcsF5eKZGii0r/hbg==}
     engines: {node: '>= 6'}
@@ -8536,18 +8595,17 @@ packages:
   /fs-constants/1.0.0:
     resolution: {integrity: sha512-y6OAwoSIf7FyjMIv94u+b5rdheZEjzR63GTyZJm5qh4Bi+2YgwLCcI/fPFZkL5PSixOt6ZNKm+w+Hfp/Bciwow==}
 
-  /fs-extra/10.0.0:
-    resolution: {integrity: sha512-C5owb14u9eJwizKGdchcDUQeFtlSHHthBk8pbX9Vc1PFZrLombudjDnNns88aYslCyF6IY5SUw3Roz6xShcEIQ==}
+  /fs-extra/10.1.0:
+    resolution: {integrity: sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==}
     engines: {node: '>=12'}
     dependencies:
       graceful-fs: 4.2.10
       jsonfile: 6.1.0
       universalify: 2.0.0
-    dev: false
 
-  /fs-extra/10.1.0:
-    resolution: {integrity: sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==}
-    engines: {node: '>=12'}
+  /fs-extra/11.1.0:
+    resolution: {integrity: sha512-0rcTq621PD5jM/e0a3EJoGC/1TC5ZBCERW82LQuwfGnCa1V8w7dpYH1yNu+SLb6E5dkeCBzKEyLGlFrnr+dUyw==}
+    engines: {node: '>=14.14'}
     dependencies:
       graceful-fs: 4.2.10
       jsonfile: 6.1.0
@@ -8886,6 +8944,23 @@ packages:
       lowercase-keys: 2.0.0
       p-cancelable: 2.1.1
       responselike: 2.0.1
+
+  /got/12.5.3:
+    resolution: {integrity: sha512-8wKnb9MGU8IPGRIo+/ukTy9XLJBwDiCpIf5TVzQ9Cpol50eMTpBq2GAuDsuDIz7hTYmZgMgC1e9ydr6kSDWs3w==}
+    engines: {node: '>=14.16'}
+    dependencies:
+      '@sindresorhus/is': 5.3.0
+      '@szmarczak/http-timer': 5.0.1
+      cacheable-lookup: 7.0.0
+      cacheable-request: 10.2.4
+      decompress-response: 6.0.0
+      form-data-encoder: 2.1.4
+      get-stream: 6.0.1
+      http2-wrapper: 2.2.0
+      lowercase-keys: 3.0.0
+      p-cancelable: 3.0.0
+      responselike: 3.0.0
+    dev: false
 
   /got/8.3.2:
     resolution: {integrity: sha512-qjUJ5U/hawxosMryILofZCkm3C84PLJS/0grRIpjAwu+Lkxxj5cxeCU25BG0/3mDSpXKTyZr8oh8wIgLaH0QCw==}
@@ -9226,6 +9301,14 @@ packages:
       quick-lru: 5.1.1
       resolve-alpn: 1.2.1
 
+  /http2-wrapper/2.2.0:
+    resolution: {integrity: sha512-kZB0wxMo0sh1PehyjJUWRFEd99KC5TLjZ2cULC4f9iqJBAmKQQXEICjxl5iPJRwP40dpeHFqqhm7tYCvODpqpQ==}
+    engines: {node: '>=10.19.0'}
+    dependencies:
+      quick-lru: 5.1.1
+      resolve-alpn: 1.2.1
+    dev: false
+
   /https-proxy-agent/5.0.1:
     resolution: {integrity: sha512-dFcAjpTQFgoLMzC2VwU+C/CbS7uRL0lWmxDITmqm7C+7F0Odmj6s9l6alZc6AELXhrnggM2CeWSXHGOdX2YtwA==}
     engines: {node: '>= 6'}
@@ -9396,15 +9479,15 @@ packages:
       - utf-8-validate
     dev: false
 
-  /inquirer-autocomplete-prompt/2.0.0_inquirer@8.2.4:
-    resolution: {integrity: sha512-c2LljLP3ewVJe4AUZzKdA6oWjqhpy5pfsisHAjh7mP3WUQ/O02x5OLMMqcLOYuRHx6i2hlVSIhUv0xYGyFxFYA==}
+  /inquirer-autocomplete-prompt/3.0.0_inquirer@9.1.4:
+    resolution: {integrity: sha512-nsPWllBQB3qhvpVgV1UIJN4xo3yz7Qv8y1+zrNVpJUNPxtUZ7btCum/4UCAs5apPCe/FVhKH1V6Wx0cAwkreyg==}
     engines: {node: '>=12'}
     peerDependencies:
-      inquirer: ^8.0.0
+      inquirer: ^9.1.0
     dependencies:
-      ansi-escapes: 4.3.2
-      figures: 3.2.0
-      inquirer: 8.2.4
+      ansi-escapes: 6.0.0
+      figures: 5.0.0
+      inquirer: 9.1.4
       picocolors: 1.0.0
       run-async: 2.4.1
       rxjs: 7.5.7
@@ -9429,6 +9512,7 @@ packages:
       strip-ansi: 6.0.1
       through: 2.3.8
       wrap-ansi: 7.0.0
+    dev: true
 
   /inquirer/9.1.4:
     resolution: {integrity: sha512-9hiJxE5gkK/cM2d1mTEnuurGTAoHebbkX0BYl3h7iEg7FYfuNIom+nDfBCSWtvSnoSrWCeBxqqBZu26xdlJlXA==}
@@ -9611,6 +9695,7 @@ packages:
   /is-interactive/1.0.0:
     resolution: {integrity: sha512-2HvIEKRoqS62guEC+qBjpvRubdX910WCMuJTZ+I9yvqKU2/12eSL549HMwtabb4oupdj2sMP50k+XJfB/8JE6w==}
     engines: {node: '>=8'}
+    dev: true
 
   /is-interactive/2.0.0:
     resolution: {integrity: sha512-qP1vozQRI+BMOPcjFzrjXuQvdak2pHNUMZoeG2eRbiSqyvbEf/wQtEOTOX1guk6E3t36RkaqiSt8A/6YElNxLQ==}
@@ -9756,6 +9841,7 @@ packages:
   /is-unicode-supported/0.1.0:
     resolution: {integrity: sha512-knxG2q4UC3u8stRGyAVJCOdxFmv5DZiRcdlIaAQXAbSfJya+OhopNotLQrstBhququ4ZpuKbDc/8S6mgXgPFPw==}
     engines: {node: '>=10'}
+    dev: true
 
   /is-unicode-supported/1.3.0:
     resolution: {integrity: sha512-43r2mRvz+8JRIKnWJ+3j8JtjRKZ6GmjzfaE/qiBJnikNnYv/6bagRJ1kUhNk8R5EX/GkobD+r+sfxCPJsiKBLQ==}
@@ -10183,11 +10269,11 @@ packages:
       language-subtag-registry: 0.3.22
     dev: true
 
-  /latest-version/6.0.0:
-    resolution: {integrity: sha512-zfTuGx4PwpoSJ1mABs58AkM6qMzu49LZ7LT5JHprKvpGpQ+cYtfSibi3tLLrH4z7UylYU42rfBdwN8YgqbTljA==}
-    engines: {node: '>=12.20'}
+  /latest-version/7.0.0:
+    resolution: {integrity: sha512-KvNT4XqAMzdcL6ka6Tl3i2lYeFDgXNCuIX+xNx6ZMVR1dFq+idXd9FLKNMOIx0t9mJ9/HudyX4oZWXZQ0UJHeg==}
+    engines: {node: '>=14.16'}
     dependencies:
-      package-json: 7.0.0
+      package-json: 8.1.0
     dev: false
 
   /lazystream/1.0.1:
@@ -10384,6 +10470,7 @@ packages:
     dependencies:
       chalk: 4.1.2
       is-unicode-supported: 0.1.0
+    dev: true
 
   /log-symbols/5.1.0:
     resolution: {integrity: sha512-l0x2DvrW294C9uDCoQe1VSU4gf529FkSZ6leBl4TiqZH/e+0R7hSfHQBNut2mNygDgHwvYHfFLn6Oxb3VWj2rA==}
@@ -10436,6 +10523,11 @@ packages:
   /lowercase-keys/2.0.0:
     resolution: {integrity: sha512-tqNXrS78oMOE73NMxK4EMLQsQowWf8jKooH9g7xPavRT706R6bkQJ6DY2Te7QukaZsulxa30wQ7bk0pm4XiHmA==}
     engines: {node: '>=8'}
+
+  /lowercase-keys/3.0.0:
+    resolution: {integrity: sha512-ozCC6gdQ+glXOQsveKD0YsDy8DSQFjDTz4zyzEHNV5+JP5D62LmfDZ6o1cycFx9ouG940M5dE8C8CTewdj2YWQ==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    dev: false
 
   /lru-cache/4.1.5:
     resolution: {integrity: sha512-sWZlbEP2OsHNkXrMl5GYk/jKk70MBng6UU4YI/qGDYbgf6YbP4EvmqISbXCoJiRKs+1bSpFHVgQxvJ17F2li5g==}
@@ -10718,6 +10810,11 @@ packages:
   /mimic-response/3.1.0:
     resolution: {integrity: sha512-z0yWI+4FDrrweS8Zmt4Ej5HdJmky15+L2e6Wgn3+iK5fWzb6T3fhNFq2+MeTRb064c6Wr4N/wv0DzQTjNzHNGQ==}
     engines: {node: '>=10'}
+
+  /mimic-response/4.0.0:
+    resolution: {integrity: sha512-e5ISH9xMYU0DzrT+jl8q2ze9D6eWBto+I8CNpe+VI+K2J/F/k3PdkdTdz4wvGVH4NTpo+NRYTVIuMQEMMcsLqg==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    dev: false
 
   /min-indent/1.0.1:
     resolution: {integrity: sha512-I9jwMn07Sy/IwOj3zVkVik2JTvgpaykDZEigL6Rx6N9LbMywwUSMtxET+7lVoDLLd3O3IXwJwvuuns8UB/HeAg==}
@@ -11161,6 +11258,11 @@ packages:
     resolution: {integrity: sha512-DlL+XwOy3NxAQ8xuC0okPgK46iuVNAK01YN7RueYBqqFeGsBjV9XmCAzAdgt+667bCl5kPh9EqKKDwnaPG1I7A==}
     engines: {node: '>=10'}
 
+  /normalize-url/8.0.0:
+    resolution: {integrity: sha512-uVFpKhj5MheNBJRTiMZ9pE/7hD1QTeEvugSJW/OmLzAp78PB5O6adfMNTvmfKhXBkvCzC+rqifWcVYpGFwTjnw==}
+    engines: {node: '>=14.16'}
+    dev: false
+
   /npm-bundled/1.1.2:
     resolution: {integrity: sha512-x5DHup0SuyQcmL3s7Rx/YQ8sbw/Hzg0rj48eN0dV7hf5cmQq5PXIeioroH3raV1QC1yh3uTYuMThvEQF3iKgGQ==}
     dependencies:
@@ -11520,6 +11622,7 @@ packages:
       log-symbols: 4.1.0
       strip-ansi: 6.0.1
       wcwidth: 1.0.1
+    dev: true
 
   /ora/6.1.2:
     resolution: {integrity: sha512-EJQ3NiP5Xo94wJXIzAyOtSb0QEIAUu7m8t6UZ9krbz0vAJqr92JpcK/lEXg91q6B9pEGqrykkd2EQplnifDSBw==}
@@ -11552,6 +11655,11 @@ packages:
   /p-cancelable/2.1.1:
     resolution: {integrity: sha512-BZOr3nRQHOntUjTrH8+Lh54smKHoHyur8We1V8DSMVrl5A2malOOwuJRnKRDjSnkoeBh4at6BwEnb5I7Jl31wg==}
     engines: {node: '>=8'}
+
+  /p-cancelable/3.0.0:
+    resolution: {integrity: sha512-mlVgR3PGuzlo0MmTdk4cXqXWlwQDLnONTAg6sm62XkMJEiRxN3GL3SffkYvqwonbkJBcrI7Uvv5Zh9yjvn2iUw==}
+    engines: {node: '>=12.20'}
+    dev: false
 
   /p-event/2.3.1:
     resolution: {integrity: sha512-NQCqOFhbpVTMX4qMe8PF8lbGtzZ+LCiN7pcNrb/413Na7+TRoe1xkKUzuWa/YEJdGQ0FvKtj35EEbDoVPO2kbA==}
@@ -11669,13 +11777,13 @@ packages:
     resolution: {integrity: sha512-R4nPAVTAU0B9D35/Gk3uJf/7XYbQcyohSKdvAxIRSNghFl4e71hVoGnBNQz9cWaXxO2I10KTC+3jMdvvoKw6dQ==}
     engines: {node: '>=6'}
 
-  /package-json/7.0.0:
-    resolution: {integrity: sha512-CHJqc94AA8YfSLHGQT3DbvSIuE12NLFekpM4n7LRrAd3dOJtA911+4xe9q6nC3/jcKraq7nNS9VxgtT0KC+diA==}
-    engines: {node: '>=12'}
+  /package-json/8.1.0:
+    resolution: {integrity: sha512-hySwcV8RAWeAfPsXb9/HGSPn8lwDnv6fabH+obUZKX169QknRkRhPxd1yMubpKDskLFATkl3jHpNtVtDPFA0Wg==}
+    engines: {node: '>=14.16'}
     dependencies:
-      got: 11.8.5
-      registry-auth-token: 4.2.2
-      registry-url: 5.1.0
+      got: 12.5.3
+      registry-auth-token: 5.0.1
+      registry-url: 6.0.1
       semver: 7.3.8
     dev: false
 
@@ -12214,6 +12322,10 @@ packages:
     resolution: {integrity: sha512-IJUkICM5dP5znhCckHSv30Q4b5/JA5enCtkRHYaOVOAocnH/1BQEYTC5NMfT3AVl/iXKdr3aqQbQn9DxyWknwA==}
     dev: true
 
+  /proto-list/1.2.4:
+    resolution: {integrity: sha512-vtK/94akxsTMhe0/cbfpR+syPuszcuwhqVjJq26CuNDgFGj682oRBXOP5MJpv2r7JtE8MsiepGIqvvOTBwn2vA==}
+    dev: false
+
   /proxy-addr/2.0.7:
     resolution: {integrity: sha512-llQsMLSUDUPT44jdrU/O37qlnifitDP+ZwrmmZcoSKyLKvtZxpyV0n2/bD/N4tBAAZ/gJEdZU7KMraoK1+XYAg==}
     engines: {node: '>= 0.10'}
@@ -12701,11 +12813,11 @@ packages:
       safe-buffer: 5.2.1
     dev: false
 
-  /registry-auth-token/4.2.2:
-    resolution: {integrity: sha512-PC5ZysNb42zpFME6D/XlIgtNGdTl8bBOCw90xQLVMpzuuubJKYDWFAEuUNc+Cn8Z8724tg2SDhDRrkVEsqfDMg==}
-    engines: {node: '>=6.0.0'}
+  /registry-auth-token/5.0.1:
+    resolution: {integrity: sha512-UfxVOj8seK1yaIOiieV4FIP01vfBDLsY0H9sQzi9EbbUdJiuuBjJgLa1DpImXMNPnVkBD4eVxTEXcrZA6kfpJA==}
+    engines: {node: '>=14'}
     dependencies:
-      rc: 1.2.8
+      '@pnpm/npm-conf': 1.0.5
     dev: false
 
   /registry-url/3.1.0:
@@ -12715,9 +12827,9 @@ packages:
       rc: 1.2.8
     dev: false
 
-  /registry-url/5.1.0:
-    resolution: {integrity: sha512-8acYXXTI0AkQv6RAOjE3vOaIXZkT9wo4LOFbBKYQEEnnMNBpKqdUrI6S4NT0KPIo/WVvJ5tE/X5LF/TQUf0ekw==}
-    engines: {node: '>=8'}
+  /registry-url/6.0.1:
+    resolution: {integrity: sha512-+crtS5QjFRqFCoQmvGduwYWEBng99ZvmFvF+cUJkGYF1L1BfU8C6Zp9T7f5vPAwyLkUExpvK+ANVZmGU49qi4Q==}
+    engines: {node: '>=12'}
     dependencies:
       rc: 1.2.8
     dev: false
@@ -12816,6 +12928,13 @@ packages:
     resolution: {integrity: sha512-4gl03wn3hj1HP3yzgdI7d3lCkF95F21Pz4BPGvKHinyQzALR5CapwC8yIi0Rh58DEMQ/SguC03wFj2k0M/mHhw==}
     dependencies:
       lowercase-keys: 2.0.0
+
+  /responselike/3.0.0:
+    resolution: {integrity: sha512-40yHxbNcl2+rzXvZuVkrYohathsSJlMTXKryG5y8uciHv1+xDLHQpgjG64JUO9nrEq2jGLH6IZ8BcZyw3wrweg==}
+    engines: {node: '>=14.16'}
+    dependencies:
+      lowercase-keys: 3.0.0
+    dev: false
 
   /restore-cursor/3.1.0:
     resolution: {integrity: sha512-l+sSefzHpj5qimhFSE5a8nufZYAM3sBSVMAPtYkmC+4EH2anSGaEMXSD0izRQbu9nfyQ9y5JrVmp7E8oZrUjvA==}
@@ -14660,7 +14779,7 @@ packages:
       globrex: 0.1.2
       recrawl-sync: 2.2.3
       tsconfig-paths: 4.1.1
-      vite: 2.9.12_sass@1.56.1
+      vite: 2.9.12
     transitivePeerDependencies:
       - supports-color
     dev: true

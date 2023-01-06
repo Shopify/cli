@@ -2,7 +2,7 @@ import colors from '../../public/node/colors.js'
 import {escapeRegExp} from '../../string.js'
 import AutocompletePrompt from 'inquirer-autocomplete-prompt'
 import DistinctChoice from 'inquirer/lib/objects/choices'
-import inquirer from 'inquirer'
+import {Question, Answers} from 'inquirer'
 
 import Paginator from 'inquirer/lib/utils/paginator.js'
 import {Interface} from 'readline'
@@ -10,7 +10,7 @@ import {Interface} from 'readline'
 export class CustomAutocomplete extends AutocompletePrompt {
   protected isAutocomplete: boolean
 
-  constructor(questions: inquirer.Question<inquirer.Answers>, rl: Interface, answers: inquirer.Answers) {
+  constructor(questions: Question<Answers>, rl: Interface, answers: Answers) {
     super(questions, rl, answers)
     this.isAutocomplete = true
     this.paginator = new Paginator(this.screen, {

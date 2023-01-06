@@ -1,12 +1,12 @@
 import colors from '../../public/node/colors.js'
 import Input from 'inquirer/lib/prompts/input.js'
-import inquirer from 'inquirer'
+import {Question, Answers} from 'inquirer'
 import readline, {Interface} from 'readline'
 
 export class CustomInput extends Input {
   protected isPassword: boolean
 
-  constructor(questions: inquirer.Question<inquirer.Answers>, rl: Interface, answers: inquirer.Answers) {
+  constructor(questions: Question<Answers>, rl: Interface, answers: Answers) {
     super(questions, rl, answers)
     this.isPassword = false
   }

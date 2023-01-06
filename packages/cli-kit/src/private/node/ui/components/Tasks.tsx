@@ -16,8 +16,8 @@ export interface Props {
 }
 
 const Tasks: React.FC<Props> = ({tasks}) => {
-  const {width} = useLayout()
-  const loadingBar = new Array(width).fill(loadingBarChar).join('')
+  const {twoThirds} = useLayout()
+  const loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
   const [currentTask, setCurrentTask] = useState<Task>(tasks[0]!)
   const [state, setState] = useState<'success' | 'failure' | 'loading'>('loading')
 
@@ -54,4 +54,4 @@ const Tasks: React.FC<Props> = ({tasks}) => {
   )
 }
 
-export default Tasks
+export {Tasks}

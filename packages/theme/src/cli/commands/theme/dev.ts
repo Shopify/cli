@@ -2,7 +2,7 @@ import {themeFlags} from '../../flags.js'
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
-import {cli, session, abort, system, output} from '@shopify/cli-kit'
+import {cli, session, abort, output} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
 export default class Dev extends ThemeCommand {
@@ -87,9 +87,6 @@ export default class Dev extends ThemeCommand {
   // Tokens are valid for 120m, better to be safe and refresh every 110min
   ThemeRefreshTimeoutInMs = 110 * 60 * 1000
 
-  // Sleep timeout, server could run forever but we need to put a number. 1 Year.
-  HardTimeoutInSeconds = 60 * 60 * 24 * 365
-
   /**
    * Executes the theme serve command.
    * Every 110 minutes, it will refresh the session token and restart the server.
@@ -104,7 +101,7 @@ export default class Dev extends ThemeCommand {
 
     let controller: abort.Controller = new abort.Controller()
 
-    const refreshThemeSessionInterval = setInterval(() => {
+    setInterval(() => {
       output.debug('Refreshing theme session token and restarting theme server...')
       controller.abort()
       controller = new abort.Controller()
@@ -114,8 +111,6 @@ export default class Dev extends ThemeCommand {
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.execute(store, flags.password, command, controller)
-    await system.sleep(this.HardTimeoutInSeconds)
-    clearInterval(refreshThemeSessionInterval)
   }
 
   async execute(store: string, password: string | undefined, command: string[], controller: abort.Controller) {
