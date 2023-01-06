@@ -15,6 +15,7 @@ import {
   ensureDeployEnvironment,
   ensureThemeExtensionDevEnvironment,
   ensureGenerateEnvironment,
+  DeployEnvironmentOptions,
 } from './environment.js'
 import {createExtension} from './dev/create-extension.js'
 import {OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -24,6 +25,7 @@ import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
+import {App} from '../models/app/app.js'
 import {store, api, outputMocker} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result.js'
@@ -159,6 +161,14 @@ const FETCH_RESPONSE = {
   organization: ORG1,
   apps: [APP1, APP2],
   stores: [STORE1, STORE2],
+}
+
+const options = (app: App): DeployEnvironmentOptions => {
+  return {
+    app,
+    reset: false,
+    force: false,
+  }
 }
 
 beforeEach(async () => {
@@ -351,7 +361,7 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
     // When
-    const got = await ensureDeployEnvironment({app, reset: false})
+    const got = await ensureDeployEnvironment({app, reset: false, force: false})
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
@@ -378,7 +388,7 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(reuseDevConfigPrompt).mockResolvedValueOnce(true)
 
     // When
-    const got = await ensureDeployEnvironment({app, reset: false})
+    const got = await ensureDeployEnvironment(options(app))
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
@@ -401,7 +411,7 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     // When
-    const got = await ensureDeployEnvironment({app, reset: false})
+    const got = await ensureDeployEnvironment(options(app))
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')
@@ -424,9 +434,7 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(undefined)
 
     // When
-    await expect(ensureDeployEnvironment({app, reset: false})).rejects.toThrow(
-      /Couldn't find the app with API key key1/,
-    )
+    await expect(ensureDeployEnvironment(options(app))).rejects.toThrow(/Couldn't find the app with API key key1/)
   })
 
   test('prompts the user to create or select an app if reset is true', async () => {
@@ -443,8 +451,11 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
+    const opts = options(app)
+    opts.reset = true
+
     // When
-    const got = await ensureDeployEnvironment({app, reset: true})
+    const got = await ensureDeployEnvironment(opts)
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')

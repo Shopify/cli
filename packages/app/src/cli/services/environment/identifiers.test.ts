@@ -127,6 +127,7 @@ const options = (uiExtensions: UIExtension[], functionExtensions: FunctionExtens
     appId: 'appId',
     appName: 'appName',
     envIdentifiers: {extensions: identifiers},
+    force: false,
   }
 }
 
