@@ -1,7 +1,38 @@
 import {content as outputContent, token, debug} from './output.js'
-import fs from 'fs-extra'
+import {
+  copy as fsCopy,
+  ensureFile as fsEnsureFile,
+  ensureFileSync as fsEnsureFileSync,
+  remove as fsRemove,
+  removeSync as fsRemoveSync,
+  move as fsMove,
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+} from 'fs-extra/esm'
+
 import {temporaryDirectoryTask} from 'tempy'
 import {sep, join, extname} from 'pathe'
+import {
+  mkdirSync as fsMkdirSync,
+  readFileSync as fsReadFileSync,
+  writeFileSync as fsWriteFileSync,
+  appendFileSync as fsAppendFileSync,
+  statSync as fsStatSync,
+  createReadStream as fsCreateReadStream,
+  constants as fsConstants,
+} from 'node:fs'
+import {
+  mkdir as fsMkdir,
+  writeFile as fsWriteFile,
+  readFile as fsReadFile,
+  realpath as fsRealPath,
+  appendFile as fsAppendFile,
+  mkdtemp as fsMkdtemp,
+  stat as fsStat,
+  lstat as fsLstat,
+  chmod as fsChmod,
+  access as fsAccess,
+} from 'node:fs/promises'
 import type {Options} from 'prettier'
 
 const DEFAULT_PRETTIER_CONFIG: Options = {
@@ -30,10 +61,22 @@ export async function inTemporaryDirectory<T>(callback: (tmpDir: string) => T | 
  * @param path - Path to the file to read.
  * @returns A promise that resolves with the content of the file.
  */
-export async function read(path: string, options: object = {encoding: 'utf-8'}): Promise<string> {
+
+export type ReadOptions =
+  | undefined
+  | {flag?: string | undefined}
+  | {
+      encoding: BufferEncoding | string
+      flag?: string | undefined
+    }
+export async function read(path: string, options?: ReadOptions): Promise<string>
+export async function read(path: string, options?: ReadOptions): Promise<Buffer>
+
+export async function read(path: string, options: ReadOptions = {encoding: 'utf8'}): Promise<string | Buffer> {
   debug(outputContent`Reading the content of file at ${token.path(path)}...`)
-  const content = await fs.readFile(path, options)
-  return content
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  return fsReadFile(path, options)
 }
 
 /**
@@ -42,12 +85,12 @@ export async function read(path: string, options: object = {encoding: 'utf-8'}):
  * @param path - Path whose real path will be returned.
  */
 export async function realpath(path: string): Promise<string> {
-  return fs.promises.realpath(path)
+  return fsRealPath(path)
 }
 
 export function readSync(path: string, options: object = {encoding: 'utf-8'}): string {
   debug(outputContent`Sync-reading the content of file at ${token.path(path)}...`)
-  const content = fs.readFileSync(path, options)
+  const content = fsReadFileSync(path, options)
   return content.toString()
 }
 
@@ -58,12 +101,12 @@ export function readSync(path: string, options: object = {encoding: 'utf-8'}): s
  */
 export async function copy(from: string, to: string): Promise<void> {
   debug(outputContent`Copying file from ${token.path(from)} to ${token.path(to)}...`)
-  await fs.copy(from, to)
+  await fsCopy(from, to)
 }
 
 export async function touch(path: string): Promise<void> {
   debug(outputContent`Creating an empty file at ${token.path(path)}...`)
-  await fs.ensureFile(path)
+  await fsEnsureFile(path)
 }
 
 export async function appendFile(path: string, content: string): Promise<void> {
@@ -73,50 +116,50 @@ export async function appendFile(path: string, content: string): Promise<void> {
       .map((line) => `  ${line}`)
       .join('\n')}
   `)
-  await fs.appendFile(path, content)
+  await fsAppendFile(path, content)
 }
 
 export function touchSync(path: string) {
   debug(outputContent`Creating an empty file at ${token.path(path)}...`)
-  fs.ensureFileSync(path)
+  fsEnsureFileSync(path)
 }
 
 export async function write(path: string, data: string): Promise<void> {
   debug(outputContent`Writing some content to file at ${token.path(path)}...`)
-  await fs.writeFile(path, data)
+  await fsWriteFile(path, data, {encoding: 'utf8'})
 }
 
 export function writeSync(path: string, data: string): void {
   debug(outputContent`File-writing some content to file at ${token.path(path)}...`)
-  fs.writeFileSync(path, data)
+  fsWriteFileSync(path, data)
 }
 
 export async function append(path: string, data: string): Promise<void> {
-  await fs.appendFile(path, data)
+  await fsAppendFile(path, data)
 }
 
 export function appendSync(path: string, data: string): void {
-  fs.appendFileSync(path, data)
+  fsAppendFileSync(path, data)
 }
 
 export async function mkdir(path: string): Promise<void> {
   debug(outputContent`Creating directory at ${token.path(path)}...`)
-  await fs.mkdirp(path)
+  await fsMkdir(path, {recursive: true})
 }
 
 export function mkdirSync(path: string): void {
   debug(outputContent`Sync-creating directory at ${token.path(path)}...`)
-  fs.mkdirpSync(path)
+  fsMkdirSync(path, {recursive: true})
 }
 
 export async function remove(path: string): Promise<void> {
   debug(outputContent`Removing file at ${token.path(path)}...`)
-  await fs.remove(path)
+  await fsRemove(path)
 }
 
 export function removeSync(path: string) {
   debug(outputContent`Sync-removing file at ${token.path(path)}...`)
-  fs.removeSync(path)
+  fsRemoveSync(path)
 }
 
 export async function rmdir(path: string, {force}: {force?: boolean} = {}): Promise<void> {
@@ -127,27 +170,27 @@ export async function rmdir(path: string, {force}: {force?: boolean} = {}): Prom
 
 export async function mkTmpDir(): Promise<string> {
   debug(outputContent`Creating a temporary directory...`)
-  const directory = await fs.mkdtemp('tmp-')
+  const directory = await fsMkdtemp('tmp-')
   return directory
 }
 
 export async function isDirectory(path: string): Promise<boolean> {
   debug(outputContent`Checking if ${token.path(path)} is a directory...`)
-  return (await fs.promises.lstat(path)).isDirectory()
+  return (await fsLstat(path)).isDirectory()
 }
 
 export async function size(path: string): Promise<number> {
   debug(outputContent`Getting the size of file file at ${token.path(path)}...`)
-  return (await fs.stat(path)).size
+  return (await fsStat(path)).size
 }
 
 export function sizeSync(path: string): number {
   debug(outputContent`Sync-getting the size of file file at ${token.path(path)}...`)
-  return fs.statSync(path).size
+  return fsStatSync(path).size
 }
 
 export function createReadStream(path: string) {
-  return fs.createReadStream(path)
+  return fsCreateReadStream(path)
 }
 
 /**
@@ -157,7 +200,7 @@ export function createReadStream(path: string) {
  */
 export async function lastUpdated(path: string): Promise<Date> {
   debug(outputContent`Getting last updated timestamp for file at ${token.path(path)}...`)
-  return (await fs.stat(path)).ctime
+  return (await fsStat(path)).ctime
 }
 
 /**
@@ -182,7 +225,7 @@ export async function lastUpdatedTimestamp(path: string): Promise<number | undef
  * @param options - Moving options.
  */
 export async function move(src: string, dest: string, options: {overwrite?: boolean} = {}): Promise<void> {
-  await fs.move(src, dest, options)
+  await fsMove(src, dest, options)
 }
 
 /**
@@ -191,7 +234,7 @@ export async function move(src: string, dest: string, options: {overwrite?: bool
  * @param mode - Permissions to set to the file or directory.
  */
 export async function chmod(path: string, mode: number | string): Promise<void> {
-  await fs.promises.chmod(path, mode)
+  await fsChmod(path, mode)
 }
 
 /**
@@ -200,7 +243,7 @@ export async function chmod(path: string, mode: number | string): Promise<void> 
  */
 export async function hasExecutablePermissions(path: string): Promise<boolean> {
   try {
-    await fs.promises.access(path, fs.constants.X_OK)
+    await fsAccess(path, fsConstants.X_OK)
     return true
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
@@ -215,7 +258,7 @@ export async function hasExecutablePermissions(path: string): Promise<boolean> {
  */
 export async function exists(path: string): Promise<boolean> {
   try {
-    await fs.promises.access(path)
+    await fsAccess(path)
     return true
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
