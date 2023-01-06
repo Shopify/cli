@@ -39,14 +39,14 @@ function App() {
   return (
     <ExtensionServerProvider options={extensionServerOptions}>
       <I18nContext.Provider value={i18nManager}>
-        <AppProvider i18n={enTranslations}>
-          <Theme>
+        <Theme>
+          <AppProvider i18n={enTranslations}>
             <Layout>
               <Routes />
               <Toast />
             </Layout>
-          </Theme>
-        </AppProvider>
+          </AppProvider>
+        </Theme>
       </I18nContext.Provider>
     </ExtensionServerProvider>
   )
