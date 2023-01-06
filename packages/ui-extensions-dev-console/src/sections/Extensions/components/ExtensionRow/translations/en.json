@@ -2,11 +2,6 @@
   "viewMobile": "View mobile",
   "local": "Local",
   "live": "Live",
-  "statuses": {
-    "success": "Connected",
-    "disconnected": "Disconnected",
-    "error": "Build Error"
-  },
   "copy": {
     "success": "URL copied",
     "error": "Couldn't copy URL"

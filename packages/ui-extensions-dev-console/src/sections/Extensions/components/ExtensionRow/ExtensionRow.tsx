@@ -3,7 +3,7 @@ import en from './translations/en.json'
 
 import {PreviewLinks} from './components'
 import {useExtensionsInternal} from '../../hooks/useExtensionsInternal'
-import {Row} from '..'
+import {Row, Status} from '..'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
@@ -22,11 +22,7 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
     id: 'ExtensionRow',
     fallback: en,
   })
-  const {
-    development: {status},
-  } = extension
 
-  const statusClass = status ? styles[status || 'error'] : styles.error
   const {show, hide} = useExtensionsInternal()
 
   return (
@@ -53,7 +49,7 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
         </ButtonGroup>
       </td>
       <td>
-        <span className={`${styles.Status} ${statusClass}`}>{i18n.translate(`statuses.${status}`)}</span>
+        <Status status={extension.development.status} />
       </td>
     </Row>
   )
