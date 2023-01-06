@@ -5,9 +5,9 @@ import {Fatal} from '../../error.js'
 import {alert} from '../../private/node/ui/alert.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
-import Prompt, {Props as PromptProps} from '../../private/node/ui/components/Prompt.js'
+import {Props as PromptProps} from '../../private/node/ui/components/Prompt.js'
 import React from 'react'
-import {AbortController, AbortSignal} from 'abort-controller'
+import {AbortController} from 'abort-controller'
 import {RenderOptions} from 'ink'
 
 interface RenderConcurrentOptions {
@@ -234,15 +234,4 @@ export async function renderConfirmation({question, infoTable}: ConfirmationProp
   ]
 
   return prompt({message: question, choices, infoTable})
-}
-
-interface RenderInteractiveListOptions {
-  question: string
-  // TODO: add types for any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fetch: (value: string, signal: AbortSignal) => Promise<any[]>
-}
-
-export function renderInteractiveList(options: RenderInteractiveListOptions) {
-  render(<InteractiveList {...options} />)
 }

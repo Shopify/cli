@@ -1,4 +1,5 @@
 import {searchService} from '../services/search.js'
+import {searchPrompt} from '../prompts/search.js'
 import Command from '@shopify/cli-kit/node/base-command'
 
 export default class Search extends Command {
@@ -13,9 +14,11 @@ export default class Search extends Command {
   ]
 
   async run(): Promise<void> {
+    console.log('From the command')
     const {
       args: {query},
     } = await this.parse(Search)
-    await searchService(query)
+    const options = await searchPrompt({query})
+    await searchService(options.query)
   }
 }
