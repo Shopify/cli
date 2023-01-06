@@ -1,6 +1,5 @@
 import {debug, content} from './output.js'
 import {execa} from 'execa'
-import {platform as processPlatform} from 'process'
 import {userInfo as osUserInfo, arch as osArch} from 'os'
 
 const getEnvironmentVariable = () => {
@@ -25,7 +24,7 @@ const makeUsernameFromId = (userId: string) => `no-username-${userId}`
 // This code has been vendored from https://github.com/sindresorhus/username
 // because adding it as a transtive dependency causes conflicts with other
 // packages that haven't been yet migrated to the latest version.
-export const username = async (platform: typeof processPlatform = processPlatform): Promise<string | null> => {
+export const username = async (platform: typeof process.platform = process.platform): Promise<string | null> => {
   debug(content`Obtaining user name...`)
   const environmentVariable = getEnvironmentVariable()
   if (environmentVariable) {
@@ -65,7 +64,7 @@ export const username = async (platform: typeof processPlatform = processPlatfor
  * @returns Returns the current platform and architecture.
  */
 export const platformAndArch = (
-  platform: typeof processPlatform = processPlatform,
+  platform: typeof process.platform = process.platform,
 ): {platform: string; arch: string} => {
   let arch = osArch()
   if (arch === 'x64') {
