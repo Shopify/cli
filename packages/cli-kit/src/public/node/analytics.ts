@@ -8,7 +8,7 @@ import {fanoutHooks} from '../../plugins.js'
 import {getEnvironmentData, getSensitiveEnvironmentData} from '../../private/node/analytics.js'
 import {Interfaces} from '@oclif/core'
 
-interface ReportEventOptions {
+interface ReportAnalyticsEventOptions {
   config: Interfaces.Config
   errorMessage?: string
 }
@@ -19,7 +19,7 @@ interface ReportEventOptions {
  * The payload for an event includes both generic data, and data gathered from installed plug-ins.
  *
  */
-export async function reportEvent(options: ReportEventOptions): Promise<void> {
+export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions): Promise<void> {
   try {
     const payload = await buildPayload(options)
     if (payload === undefined) {
@@ -44,7 +44,7 @@ export async function reportEvent(options: ReportEventOptions): Promise<void> {
   }
 }
 
-async function buildPayload({config, errorMessage}: ReportEventOptions) {
+async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions) {
   const {commandStartOptions, ...sensitiveMetadata} = metadata.getAllSensitive()
   if (commandStartOptions === undefined) {
     debug('Unable to log analytics event - no information on executed command')

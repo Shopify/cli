@@ -18,7 +18,7 @@ import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {output, system, session, abort, string, environment} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
-import {reportEvent} from '@shopify/cli-kit/node/analytics'
+import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -158,7 +158,7 @@ async function dev(options: DevOptions) {
 
   await logMetadataForDev({devOptions: options, tunnelUrl: frontendUrl, shouldUpdateURLs, storeFqdn})
 
-  await reportEvent({config: options.commandConfig})
+  await reportAnalyticsEvent({config: options.commandConfig})
 
   if (proxyTargets.length === 0) {
     await renderConcurrent({processes: additionalProcesses})

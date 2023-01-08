@@ -1,4 +1,4 @@
-import {reportEvent} from './analytics.js'
+import {reportAnalyticsEvent} from './analytics.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
 import {
   AbortSilent,
@@ -45,7 +45,7 @@ export function errorHandler(error: Error & {exitCode?: number | undefined}, con
 const reportError = async (error: unknown, config?: Interfaces.Config): Promise<void> => {
   if (config !== undefined) {
     // Log an analytics event when there's an error
-    await reportEvent({config, errorMessage: error instanceof Error ? error.message : undefined})
+    await reportAnalyticsEvent({config, errorMessage: error instanceof Error ? error.message : undefined})
   }
   await sendErrorToBugsnag(error)
 }

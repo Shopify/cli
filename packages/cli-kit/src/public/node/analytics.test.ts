@@ -1,4 +1,4 @@
-import {reportEvent} from './analytics.js'
+import {reportAnalyticsEvent} from './analytics.js'
 import * as ruby from './ruby.js'
 import {startAnalytics} from '../../private/node/analytics.js'
 import {hashString} from '../../string.js'
@@ -76,7 +76,7 @@ describe('event tracking', () => {
           },
         ],
       } as any
-      await reportEvent({config})
+      await reportAnalyticsEvent({config})
       // Then
       const version = await constants.versions.cliKit()
       const expectedPayloadPublic = {
@@ -119,7 +119,7 @@ describe('event tracking', () => {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
         plugins: [],
       } as any
-      await reportEvent({config, errorMessage: 'Permission denied'})
+      await reportAnalyticsEvent({config, errorMessage: 'Permission denied'})
 
       // Then
       const version = await constants.versions.cliKit()
@@ -158,7 +158,7 @@ describe('event tracking', () => {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
         plugins: [],
       } as any
-      await reportEvent({config})
+      await reportAnalyticsEvent({config})
 
       // Then
       expect(publishEvent).not.toHaveBeenCalled()
@@ -180,7 +180,7 @@ describe('event tracking', () => {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
         plugins: [],
       } as any
-      await reportEvent({config})
+      await reportAnalyticsEvent({config})
 
       // Then
       expect(outputMock.debug()).toMatch('Failed to report usage analytics: Boom!')
