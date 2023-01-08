@@ -15,8 +15,10 @@ import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
-import {analytics, output, system, session, abort, string, environment} from '@shopify/cli-kit'
+import {getAnalyticsTunnelType} from '../utilities/analytics.js'
+import {output, system, session, abort, string, environment} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
+import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -156,7 +158,7 @@ async function dev(options: DevOptions) {
 
   await logMetadataForDev({devOptions: options, tunnelUrl: frontendUrl, shouldUpdateURLs, storeFqdn})
 
-  await analytics.reportEvent({config: options.commandConfig})
+  await reportAnalyticsEvent({config: options.commandConfig})
 
   if (proxyTargets.length === 0) {
     await renderConcurrent({processes: additionalProcesses})
@@ -330,7 +332,7 @@ async function logMetadataForDev(options: {
   shouldUpdateURLs: boolean
   storeFqdn: string
 }) {
-  const tunnelType = await analytics.getAnalyticsTunnelType(options.devOptions.commandConfig, options.tunnelUrl)
+  const tunnelType = await getAnalyticsTunnelType(options.devOptions.commandConfig, options.tunnelUrl)
   await metadata.addPublic(() => ({
     cmd_dev_tunnel_type: tunnelType,
     cmd_dev_tunnel_custom_hash: tunnelType === 'custom' ? string.hashString(options.tunnelUrl) : undefined,
