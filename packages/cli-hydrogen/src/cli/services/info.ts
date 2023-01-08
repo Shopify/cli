@@ -2,7 +2,8 @@ import {HydrogenApp} from '../models/hydrogen.js'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import {HydrogenConfig} from '@shopify/hydrogen/config'
-import {output, string, os} from '@shopify/cli-kit'
+import {output, string} from '@shopify/cli-kit'
+import {platformAndArch} from '@shopify/cli-kit/node/os'
 
 interface InfoOptions {
   showPrivateData: boolean
@@ -135,7 +136,7 @@ class AppInfo {
 
   systemInfoSection(): [string, string] {
     const title = 'Tooling and System'
-    const {platform, arch} = os.platformAndArch()
+    const {platform, arch} = platformAndArch()
     const lines: string[][] = [
       ...this.dependencyCheck(['@shopify/hydrogen', '@shopify/cli-hydrogen', '@shopify/cli']),
       ['Package manager', this.app.packageManager],

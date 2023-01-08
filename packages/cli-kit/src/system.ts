@@ -1,5 +1,5 @@
 import {shouldDisplayColors, debug} from './output.js'
-import {platformAndArch} from './os.js'
+import {platformAndArch} from './public/node/os.js'
 import {Abort, ExternalError} from './error.js'
 import {renderConcurrent} from './public/node/ui.js'
 import {AbortSignal} from './public/node/abort.js'

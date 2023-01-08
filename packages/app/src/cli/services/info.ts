@@ -2,7 +2,8 @@ import {outputEnv} from './app/env/show.js'
 import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
 import {configurationFileNames} from '../constants.js'
-import {os, output, path, store, string} from '@shopify/cli-kit'
+import {output, path, store, string} from '@shopify/cli-kit'
+import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 
 export type Format = 'json' | 'text'
@@ -216,7 +217,7 @@ class AppInfo {
 
   async systemInfoSection(): Promise<[string, string]> {
     const title = 'Tooling and System'
-    const {platform, arch} = os.platformAndArch()
+    const {platform, arch} = platformAndArch()
     const versionUpgradeMessage = await this.versionUpgradeMessage()
     const cliVersionInfo = [this.currentCliVersion(), versionUpgradeMessage].join(' ').trim()
     const lines: string[][] = [

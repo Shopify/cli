@@ -2,7 +2,7 @@ import {ApplicationToken, Session} from './schema.js'
 import {store, fetch, remove, identifier} from './store.js'
 import {getSession, removeSession, setSession} from '../store.js'
 import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../secure-store.js'
-import {platformAndArch} from '../os.js'
+import {platformAndArch} from '../public/node/os.js'
 import {describe, expect, vi, it, beforeEach} from 'vitest'
 
 const findCredentials = vi.fn()

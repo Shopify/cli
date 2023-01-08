@@ -8,7 +8,7 @@ import {glob, join} from '../../path.js'
 import constants from '../../constants.js'
 import {AdminSession} from '../../session.js'
 import {content, token} from '../../output.js'
-import {platformAndArch} from '../../os.js'
+import {platformAndArch} from './os.js'
 import {Writable} from 'stream'
 
 const RubyCLIVersion = '2.33.1'

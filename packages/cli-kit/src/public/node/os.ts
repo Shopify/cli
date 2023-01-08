@@ -1,4 +1,4 @@
-import {debug, content} from './output.js'
+import {debug, content} from '../../output.js'
 import {execa} from 'execa'
 import {arch as processArch, platform as processPlatform} from 'process'
 import {userInfo as osUserInfo} from 'os'

@@ -1,4 +1,5 @@
-import {file, npm, os, path} from '.'
+import {file, npm, path} from '.'
+import * as os from './public/node/os'
 import {updateAppData} from './npm.js'
 import {inTemporaryDirectory} from './file.js'
 import {describe, it, expect, vi} from 'vitest'
