@@ -1,11 +1,11 @@
 import {file, npm, path} from '.'
-import * as os from './public/node/os'
+import * as os from './public/node/os.js'
 import {updateAppData} from './npm.js'
 import {inTemporaryDirectory} from './file.js'
 import {describe, it, expect, vi} from 'vitest'
 
-vi.mock('node:os')
-vi.mock('node:process')
+vi.mock('os')
+vi.mock('process')
 
 describe('readPackageJSON()', () => {
   async function mockPackageJSON(callback: (tmpDir: string) => Promise<void>) {

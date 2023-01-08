@@ -1,6 +1,5 @@
 import {debug, content} from '../../output.js'
 import {execa} from 'execa'
-import {arch as processArch, platform as processPlatform} from 'process'
 import {userInfo as osUserInfo} from 'os'
 
 // This code has been vendored from https://github.com/sindresorhus/username
@@ -10,7 +9,7 @@ import {userInfo as osUserInfo} from 'os'
  * @param platform - The platform to get the username for. Defaults to the current platform.
  * @returns The username of the current user.
  */
-export async function username(platform: typeof processPlatform = processPlatform): Promise<string | null> {
+export async function username(platform: typeof process.platform = process.platform): Promise<string | null> {
   debug(content`Obtaining user name...`)
   const environmentVariable = getEnvironmentVariable()
   if (environmentVariable) {
@@ -45,25 +44,28 @@ export async function username(platform: typeof processPlatform = processPlatfor
   }
 }
 
-type PlatformArch = Exclude<typeof processArch, 'x64' | 'ia32'> | 'amd64' | '386'
-type PlatformStrings = Exclude<typeof processPlatform, 'win32'> | 'windows'
+type PlatformArch = Exclude<typeof process.arch, 'x64' | 'ia32'> | 'amd64' | '386'
+type PlatformStrings = Exclude<typeof process.platform, 'win32'> | 'windows'
 /**
  * Returns the platform and architecture.
  * @returns Returns the current platform and architecture.
  */
-export function platformAndArch(platform: typeof processPlatform = processPlatform): {
+export function platformAndArch(
+  platform: typeof process.platform = process.platform,
+  arch: typeof process.arch = process.arch,
+): {
   platform: PlatformStrings
   arch: PlatformArch
 } {
-  let arch = processArch
+  let archString = arch
   if (arch === 'x64') {
-    arch = 'amd64'
+    archString = 'amd64'
   }
   if (arch === 'ia32') {
-    arch = '386'
+    archString = '386'
   }
   const platformString = (platform.match(/^win.+/) ? 'windows' : platform) as PlatformStrings
-  return {platform: platformString, arch}
+  return {platform: platformString, arch: archString}
 }
 
 function getEnvironmentVariable() {

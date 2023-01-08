@@ -6,7 +6,7 @@ import {Writable} from 'stream'
 import {platform} from 'os'
 
 beforeEach(async () => {
-  vi.mock('node:os')
+  vi.mock('os')
   vi.mock('@shopify/cli-kit/node/node-package-manager')
   vi.mock('@shopify/cli-kit', async () => {
     const module: any = await vi.importActual('@shopify/cli-kit')

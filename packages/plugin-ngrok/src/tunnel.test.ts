@@ -1,6 +1,7 @@
 import {authenticate, hookStart} from './tunnel.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {ui, os, error} from '@shopify/cli-kit'
+import {ui, error} from '@shopify/cli-kit'
+import {platformAndArch} from '@shopify/cli-kit/node/os'
 import ngrok from '@shopify/ngrok'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 
@@ -23,12 +24,16 @@ beforeEach(async () => {
         prompt: vi.fn(),
       },
       environment: vi.fn(),
-      os: {
-        platformAndArch: vi.fn(),
-      },
       error: {
         Abort: vi.fn(),
       },
+    }
+  })
+  vi.mock('@shopify/cli-kit/node/os', async () => {
+    const os: any = await vi.importActual('@shopify/cli-kit/node/os')
+    return {
+      ...os,
+      platformAndArch: vi.fn(),
     }
   })
 })
@@ -76,7 +81,7 @@ describe('start', () => {
   it('outputs an error if the ngrok tunnel fails to start because of another tunnel is already running in a non windows platform', async () => {
     // Given
     vi.mocked(ngrok.connect).mockRejectedValue(new Error('error message contains code err_ngrok_108'))
-    vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arch'})
+    vi.mocked(platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arch'})
 
     // When
     const got = await hookStart(port)
@@ -94,7 +99,7 @@ describe('start', () => {
   it('outputs an error if the ngrok tunnel fails to start because of another tunnel is already running in windows platform', async () => {
     // Given
     vi.mocked(ngrok.connect).mockRejectedValue(new Error('error message contains code err_ngrok_108'))
-    vi.mocked(os.platformAndArch).mockReturnValue({platform: 'windows', arch: 'arch'})
+    vi.mocked(platformAndArch).mockReturnValue({platform: 'windows', arch: 'arch'})
 
     // When
     const got = await hookStart(port)

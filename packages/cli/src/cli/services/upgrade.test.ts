@@ -1,7 +1,8 @@
 import {upgrade} from './upgrade.js'
 import * as upgradeService from './upgrade.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {file, os, outputMocker, path, system} from '@shopify/cli-kit'
+import {file, outputMocker, path, system} from '@shopify/cli-kit'
+import {platformAndArch} from '@shopify/cli-kit/node/os'
 import * as nodePackageManager from '@shopify/cli-kit/node/node-package-manager'
 
 const oldCliVersion = '3.0.0'
@@ -19,17 +20,20 @@ beforeEach(async () => {
         ...module.output,
         getOutputUpdateCLIReminder: vi.fn(),
       },
-      os: {
-        ...module.os,
-        platformAndArch: vi.fn(),
-      },
       system: {
         ...module.system,
         exec: vi.fn(),
       },
     }
   })
-  vi.mocked(os.platformAndArch).mockReturnValue({platform: 'win32', arch: 'amd64'})
+  vi.mock('@shopify/cli-kit/node/os', async () => {
+    const os: any = await vi.importActual('@shopify/cli-kit/node/os')
+    return {
+      ...os,
+      platformAndArch: vi.fn(),
+    }
+  })
+  vi.mocked(platformAndArch).mockReturnValue({platform: 'windows', arch: 'amd64'})
 })
 afterEach(() => {
   outputMocker.mockAndCaptureOutput().clear()
