@@ -1,8 +1,9 @@
 import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, UIExtension} from '../app/extensions.js'
 import {blocks, defualtExtensionFlavors} from '../../constants.js'
-import {id, path, api, output, environment, string} from '@shopify/cli-kit'
+import {path, api, output, environment, string} from '@shopify/cli-kit'
 import {ok, Result} from '@shopify/cli-kit/node/result'
+import {randomUUID} from 'crypto'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -112,7 +113,7 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
     this.specification = options.specification
     this.remoteSpecification = options.remoteSpecification
     this.outputBundlePath = path.join(options.directory, 'dist/main.js')
-    this.devUUID = `dev-${id.generateRandomUUID()}`
+    this.devUUID = `dev-${randomUUID()}`
     this.localIdentifier = path.basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
   }
