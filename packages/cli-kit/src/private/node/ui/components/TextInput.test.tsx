@@ -170,4 +170,10 @@ describe('TextInput', () => {
     await sendInput(renderInstance, 'B')
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mAB[7m [27m[39m"')
   })
+
+  test("masking the input if it's a password", async () => {
+    const renderInstance = render(<TextInput onChange={() => {}} value="ABC" password />)
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m***[7m [27m[39m"')
+  })
 })

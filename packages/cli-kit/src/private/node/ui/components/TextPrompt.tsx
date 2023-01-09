@@ -9,9 +9,10 @@ export interface Props {
   message: string
   onSubmit: (value: string) => void
   placeholder?: string
+  password?: boolean
 }
 
-const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder}) => {
+const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder, password = false}) => {
   const {oneThird} = useLayout()
   const [answer, setAnswer] = useState<string>('')
   const {exit: unmountInk} = useApp()
@@ -56,7 +57,7 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder}) => {
           </Box>
 
           <Box flexGrow={1}>
-            <Text color="cyan">{answer}</Text>
+            <Text color="cyan">{password ? '*'.repeat(answer.length) : answer}</Text>
           </Box>
         </Box>
       ) : (
@@ -75,6 +76,7 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder}) => {
                 }}
                 placeholder={placeholder}
                 color={color}
+                password={password}
               />
             </Box>
           </Box>

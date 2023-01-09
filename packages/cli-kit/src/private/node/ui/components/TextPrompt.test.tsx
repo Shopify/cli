@@ -73,4 +73,24 @@ describe('TextPrompt', () => {
       "
     `)
   })
+
+  test("masking the input if it's a password", async () => {
+    const renderInstance = render(<TextPrompt onSubmit={() => {}} message="Test question" password />)
+
+    await waitForInputsToBeReady()
+    await sendInput(renderInstance, 'ABC')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "?  Test question
+      [36m>[39m  [36m***[7m [27m[39m
+         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+      "
+    `)
+
+    await sendInput(renderInstance, ENTER)
+    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
+      "?  Test question
+      ✔  ***
+      "
+    `)
+  })
 })
