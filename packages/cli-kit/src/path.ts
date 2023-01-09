@@ -13,7 +13,7 @@ export async function glob(pattern: Pattern | Pattern[], options?: Options): Pro
   if (options?.dot == null) {
     overridenOptions = {...options, dot: true}
   }
-  return fastGlob(pattern, options)
+  return fastGlob(pattern, overridenOptions)
 }
 export {pathToFileURL} from 'node:url'
 
