@@ -22,6 +22,7 @@ import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
 
 export interface DevOptions {

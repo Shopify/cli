@@ -3,6 +3,7 @@ import {UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/e
 import {bundleExtension} from '../extensions/bundle.js'
 import {error, system, output} from '@shopify/cli-kit'
 import {execThemeCheckCLI} from '@shopify/cli-kit/node/ruby'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
 
 export interface ExtensionBuildOptions {

@@ -1,6 +1,7 @@
 import {buildThemeExtensions, ThemeExtensionBuildOptions} from '../build/extension.js'
 import {environment, file, path} from '@shopify/cli-kit'
 import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
 import type {StdinOptions} from 'esbuild'

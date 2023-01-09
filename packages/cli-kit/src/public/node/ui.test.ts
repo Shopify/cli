@@ -1,4 +1,5 @@
 import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
+import {AbortSignal} from './abort.js'
 import {Abort, Bug, Fatal} from '../../error.js'
 import * as outputMocker from '../../testing/output.js'
 import {afterEach, describe, expect, test} from 'vitest'

@@ -2,6 +2,7 @@ import {bundleExtension} from './bundle.js'
 import {testApp, testUIExtension} from '../../models/app/app.test-data.js'
 import {describe, expect, test, vi} from 'vitest'
 import {build as esBuild, BuildOptions, WatchMode} from 'esbuild'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 
 vi.mock('esbuild', async () => {
   const esbuild: any = await vi.importActual('esbuild')

@@ -4,6 +4,7 @@ import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {cli, session, output} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 
 export default class Dev extends ThemeCommand {
   static description =

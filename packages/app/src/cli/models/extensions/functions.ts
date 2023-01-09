@@ -2,6 +2,7 @@ import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
 import {blocks, defaultFunctionsFlavors} from '../../constants.js'
 import {schema, path, error, system, string, environment} from '@shopify/cli-kit'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
 
 // Base config type that all config schemas must extend

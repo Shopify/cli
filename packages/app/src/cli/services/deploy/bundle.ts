@@ -5,6 +5,7 @@ import {bundleThemeExtensions} from '../extensions/bundle.js'
 import {path, file} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
 
 interface BundleOptions {

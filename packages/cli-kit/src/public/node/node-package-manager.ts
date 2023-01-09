@@ -1,5 +1,6 @@
 import {AbortError, BugError} from './error.js'
 import {Version} from './semver.js'
+import {AbortController, AbortSignal} from './abort.js'
 import {exec} from '../../system.js'
 import {exists as fileExists, read as readFile, write as writeFile} from '../../file.js'
 import {glob, dirname, join as pathJoin, findUp, moduleDirectory} from '../../path.js'

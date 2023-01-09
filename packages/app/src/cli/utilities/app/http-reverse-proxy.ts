@@ -1,6 +1,7 @@
 import {output} from '@shopify/cli-kit'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
 import * as http from 'http'
 

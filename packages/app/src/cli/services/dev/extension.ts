@@ -6,6 +6,7 @@ import {ExtensionsPayloadStore, getExtensionsPayloadStoreRawPayload} from './ext
 import {AppInterface} from '../../models/app/app.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {output} from '@shopify/cli-kit'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
 
 export interface ExtensionDevOptions {

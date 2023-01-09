@@ -17,6 +17,7 @@ import {
   SubHeadingContentToken,
 } from './content-tokens.js'
 import stripAnsi from 'strip-ansi'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
 import type {Change} from 'diff'
 

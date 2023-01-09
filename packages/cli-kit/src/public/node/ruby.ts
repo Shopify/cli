@@ -1,4 +1,5 @@
 import {coerceSemverVersion} from './semver.js'
+import {AbortSignal} from './abort.js'
 import * as file from '../../file.js'
 import * as ui from '../../ui.js'
 import * as system from '../../system.js'
