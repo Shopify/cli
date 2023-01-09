@@ -37,33 +37,31 @@ export async function getLocalization(
         lastUpdated: 0,
       } as Localization)
 
-  const compilingTranslations = []
-
-  for (const path of localeFiles) {
-    const [locale, ...fileNameSegments] = (path.split('/').pop() as string).split('.')
-
-    if (locale) {
-      if (fileNameSegments[0] === 'default') {
-        localization.defaultLocale = locale
-      }
-
-      compilingTranslations.push(compileLocalizationFiles(locale, path, localization, extension, options))
-    }
-  }
-
   let status: ExtensionAssetBuildStatus = 'success'
 
-  await Promise.all(compilingTranslations)
-    .then(async () => {
-      localization.lastUpdated = Date.now()
-      output.info(
-        `Parsed locales for extension ${extension.configuration.name} at ${extension.directory}`,
-        options.stdout,
-      )
-    })
-    .catch(() => {
-      status = 'error'
-    })
+  try {
+    await Promise.all(
+      localeFiles.map(async (localeFile) => {
+        const [locale, ...fileNameSegments] = (localeFile.split('/').pop() as string).split('.')
+
+        if (locale) {
+          if (fileNameSegments[0] === 'default') {
+            localization.defaultLocale = locale
+          }
+
+          return compileLocalizationFiles(locale, localeFile, localization, extension, options)
+        }
+      }),
+    )
+    localization.lastUpdated = Date.now()
+    output.info(
+      `Parsed locales for extension ${extension.configuration.name} at ${extension.directory}`,
+      options.stdout,
+    )
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-catch-all/no-catch-all
+  } catch (error: any) {
+    status = 'error'
+  }
 
   return {
     localization,
@@ -78,12 +76,14 @@ async function compileLocalizationFiles(
   extension: UIExtension,
   options: GetUIExtensionPayloadOptions,
 ): Promise<void> {
+  let localeContent: string | undefined
   try {
-    localization.translations[locale] = JSON.parse(await file.read(path))
+    localeContent = await file.read(path)
+    localization.translations[locale] = JSON.parse(localeContent)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     const message = `Error parsing ${locale} locale for ${extension.configuration.name} at ${path}: ${error.message}`
-    await output.warn(message, options.stderr)
-    throw new Error(message)
+    output.warn(message, options.stderr)
+    throw new error.ExtendableError(message)
   }
 }
