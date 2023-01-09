@@ -11,7 +11,7 @@ import {content, token} from '../../output.js'
 import {platformAndArch} from '../../os.js'
 import {Writable} from 'stream'
 
-const RubyCLIVersion = '2.33.0'
+const RubyCLIVersion = '2.33.1'
 const ThemeCheckVersion = '1.12.1'
 const MinBundlerVersion = '2.3.8'
 const MinRubyVersion = '2.7.5'
