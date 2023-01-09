@@ -4,6 +4,7 @@ import {api, environment, output, plugins, store} from '@shopify/cli-kit'
 import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {isValidURL} from '@shopify/cli-kit/common/url'
 
 export interface PartnersURLs {
   applicationUrl: string
@@ -171,6 +172,19 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
     await store.setAppInfo({directory: options.appDirectory, updateURLs: newUpdateURLs})
   }
   return shouldUpdate
+}
+
+export function validatePartnersURLs(urls: PartnersURLs): void {
+  if (!isValidURL(urls.applicationUrl))
+    throw new AbortError(`Invalid application URL: ${urls.applicationUrl}`, 'Valid format: "https://example.com"')
+
+  urls.redirectUrlWhitelist.forEach((url) => {
+    if (!isValidURL(url))
+      throw new AbortError(
+        `Invalid redirection URLs: ${urls.redirectUrlWhitelist}`,
+        'Valid format: "https://example.com/callback1,https://example.com/callback2"',
+      )
+  })
 }
 
 function mapRunTunnelPluginError(tunnelPluginError: plugins.TunnelPluginError) {
