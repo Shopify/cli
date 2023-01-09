@@ -1,6 +1,6 @@
 // https://eslint.org/docs/developer-guide/working-with-rules
 const path = require('pathe')
-const file = require('node:fs')
+const file = require('fs')
 const execa = require('execa')
 
 const errors = ['Abort', 'AbortSilent', 'Bug', 'BugSilent']

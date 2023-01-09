@@ -20,7 +20,7 @@ import {
   statSync as fsStatSync,
   createReadStream as fsCreateReadStream,
   constants as fsConstants,
-} from 'node:fs'
+} from 'fs'
 import {
   mkdir as fsMkdir,
   writeFile as fsWriteFile,
@@ -32,7 +32,7 @@ import {
   lstat as fsLstat,
   chmod as fsChmod,
   access as fsAccess,
-} from 'node:fs/promises'
+} from 'fs/promises'
 import type {Options} from 'prettier'
 
 const DEFAULT_PRETTIER_CONFIG: Options = {

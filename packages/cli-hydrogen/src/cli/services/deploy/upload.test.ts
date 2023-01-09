@@ -25,7 +25,7 @@ const defaultConfig: ReqDeployConfig = {
 beforeEach(() => {
   vi.mock('@shopify/cli-kit')
   vi.mock('@shopify/cli-kit/node/archiver')
-  vi.mock('node:fs')
+  vi.mock('fs')
 })
 
 describe('createDeploymentStep()', () => {
