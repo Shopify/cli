@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import fs from 'fs';
-import fsPromise from 'node:fs/promises'
+import fsPromise from 'fs/promises'
 import path from 'node:path';
 import { fileURLToPath } from 'url';
 import { node } from "@bugsnag/source-maps";
