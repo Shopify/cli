@@ -1,9 +1,9 @@
 import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
+import {AbortSignal} from './abort.js'
 import {Abort, Bug, Fatal} from '../../error.js'
 import * as outputMocker from '../../testing/output.js'
-import {Signal} from '../../abort.js'
 import {afterEach, describe, expect, test} from 'vitest'
-import {Writable} from 'node:stream'
+import {Writable} from 'stream'
 
 afterEach(() => {
   outputMocker.mockAndCaptureOutput().clear()
@@ -78,10 +78,10 @@ describe('renderInfo', async () => {
       │                                                                              │
       │  Reference                                                                   │
       │    • Run \`npm shopify help\`                                                  │
-      │    • Press 'return' to open the really amazing and clean dev docs            │
-      │      (https://shopify.dev)                                                   │
+      │    • Press 'return' to open the really amazing and clean dev docs (          │
+      │      https://shopify.dev )                                                   │
       │                                                                              │
-      │  Link (https://shopify.com)                                                  │
+      │  Link ( https://shopify.com )                                                │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
@@ -202,10 +202,10 @@ describe('renderFatalError', async () => {
       │  Unexpected error                                                            │
       │                                                                              │
       │  To investigate the issue, examine this stack trace:                         │
-      │  at _compile (internal/modules/cjs/loader.js:1137)                           │
-      │  at js (internal/modules/cjs/loader.js:1157)                                 │
-      │  at load (internal/modules/cjs/loader.js:985)                                │
-      │  at _load (internal/modules/cjs/loader.js:878)                               │
+      │    at _compile (internal/modules/cjs/loader.js:1137)                         │
+      │    at js (internal/modules/cjs/loader.js:1157)                               │
+      │    at load (internal/modules/cjs/loader.js:985)                              │
+      │    at _load (internal/modules/cjs/loader.js:878)                             │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
@@ -250,8 +250,8 @@ describe('renderFatalError', async () => {
       │  No Organization found                                                       │
       │                                                                              │
       │  Next steps                                                                  │
-      │    • Have you created a Shopify Partners organization                        │
-      │      (https://partners.shopify.com/signup)?                                  │
+      │    • Have you created a Shopify Partners organization (                      │
+      │      https://partners.shopify.com/signup )?                                  │
       │    • Have you confirmed your accounts from the emails you received?          │
       │    • Need to connect to a different App or organization? Run the command     │
       │      again with \`--reset\`                                                    │
@@ -270,7 +270,7 @@ describe('renderConcurrent', async () => {
     // When
     const throwingProcess = {
       prefix: 'backend',
-      action: async (_stdout: Writable, _stderr: Writable, _signal: Signal) => {
+      action: async (_stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
         throw new Error('example error')
       },
     }

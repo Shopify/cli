@@ -21,7 +21,7 @@ import {
 } from './session.js'
 import {partners} from './api.js'
 
-import {identity} from './environment/fqdn.js'
+import * as fqdnModule from './environment/fqdn.js'
 import {useDeviceAuth} from './environment/local.js'
 import {authorize} from './session/authorize.js'
 import {vi, describe, expect, it, beforeAll, beforeEach} from 'vitest'
@@ -98,7 +98,6 @@ const invalidSession: Session = {
 }
 
 beforeAll(() => {
-  vi.mock('./environment/fqdn')
   vi.mock('./environment/local')
   vi.mock('./session/identity')
   vi.mock('./session/authorize')
@@ -111,7 +110,7 @@ beforeAll(() => {
 })
 
 beforeEach(() => {
-  vi.mocked(identity).mockResolvedValue(fqdn)
+  vi.spyOn(fqdnModule, 'identity').mockResolvedValue(fqdn)
   vi.mocked(useDeviceAuth).mockReturnValue(false)
   vi.mocked(authorize).mockResolvedValue(code)
   vi.mocked(exchangeCodeForAccessToken).mockResolvedValue(validIdentityToken)

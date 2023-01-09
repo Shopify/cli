@@ -571,7 +571,7 @@ describe('generatePartnersURLs', () => {
     })
   })
 
-  it('Returns just the override value when set', () => {
+  it('Returns just the override value when set as a string', () => {
     const applicationUrl = 'http://my-base-url'
     const overridePath = '/my/custom/path'
 
@@ -580,6 +580,18 @@ describe('generatePartnersURLs', () => {
     expect(got).toMatchObject({
       applicationUrl,
       redirectUrlWhitelist: [`${applicationUrl}${overridePath}`],
+    })
+  })
+
+  it('Returns just the override values when set as an array', () => {
+    const applicationUrl = 'http://my-base-url'
+    const overridePath = ['/my/custom/path1', '/my/custom/path2']
+
+    const got = generatePartnersURLs(applicationUrl, overridePath)
+
+    expect(got).toMatchObject({
+      applicationUrl,
+      redirectUrlWhitelist: [`${applicationUrl}${overridePath[0]}`, `${applicationUrl}${overridePath[1]}`],
     })
   })
 })

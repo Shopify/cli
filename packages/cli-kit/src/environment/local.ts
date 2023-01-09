@@ -5,7 +5,7 @@ import {exists as fileExists} from '../file.js'
 import {exec} from '../system.js'
 import isInteractive from 'is-interactive'
 import macaddress from 'macaddress'
-import {homedir} from 'node:os'
+import {homedir} from 'os'
 
 /**
  * It returns true if the terminal is interactive.
@@ -89,6 +89,10 @@ export function useDeviceAuth(env = process.env): boolean {
 
 export function useFunctionMatching(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.functionMatching])
+}
+
+export function useThemeBundling(env = process.env): boolean {
+  return isTruthy(env[constants.environmentVariables.themeBundling])
 }
 
 // https://www.gitpod.io/docs/environment-variables#default-environment-variables

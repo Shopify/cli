@@ -1,28 +1,28 @@
 {
   "name": "@shopify/theme",
-  "version": "3.30.0",
+  "version": "3.31.1",
   "private": false,
   "description": "Utilities for building and publishing themes",
   "homepage": "https://github.com/shopify/cli#readme",
   "bugs": {
     "url": "https://github.com/Shopify/cli/issues"
   },
-  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli/edit/main/packages/theme"
+  },
   "license": "MIT",
+  "type": "module",
   "files": [
     "/dist",
     "/oclif.manifest.json"
   ],
-  "publishConfig": {
-    "access": "public",
-    "@shopify:registry": "https://registry.npmjs.org"
-  },
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "build": "nx build",
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "test": "nx run theme:test",
     "test:watch": "nx test:watch",
     "type-check": "nx type-check"
@@ -33,14 +33,14 @@
     ]
   },
   "dependencies": {
-    "@shopify/cli-kit": "3.30.0",
-    "@oclif/core": "1.21.0"
+    "@oclif/core": "1.21.0",
+    "@shopify/cli-kit": "3.31.1"
   },
   "devDependencies": {
-    "vitest": "^0.23.4",
-    "vite": "^2.9.13"
+    "@types/node": "14.17.0",
+    "vite": "^2.9.13",
+    "vitest": "^0.26.3"
   },
-  "engine-strict": true,
   "engines": {
     "node": ">=14.17.0"
   },
@@ -49,11 +49,12 @@
     "linux",
     "win32"
   ],
+  "publishConfig": {
+    "@shopify:registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "engine-strict": true,
   "oclif": {
     "commands": "dist/cli/commands"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Shopify/cli/edit/main/packages/theme"
   }
 }

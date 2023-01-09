@@ -1,16 +1,12 @@
 import {OutputProcess} from '../../../../output.js'
-import {isTruthy} from '../../../../environment/utilities.js'
-import React, {FunctionComponent, useEffect, useState} from 'react'
-import {Box, Static, Text, useApp} from 'ink'
+import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
+import {AbortController} from '../../../../public/node/abort.js'
+import React, {FunctionComponent, useState} from 'react'
+import {Box, Static, Text} from 'ink'
 import stripAnsi from 'strip-ansi'
-import AbortController from 'abort-controller'
-import {Writable} from 'node:stream'
+import {Writable} from 'stream'
 
 export type WritableStream = (process: OutputProcess, index: number) => Writable
-export type RunProcesses = (
-  writableStream: WritableStream,
-  unmountInk: (error?: Error | undefined) => void,
-) => Promise<void>
 
 interface Props {
   processes: OutputProcess[]
@@ -61,7 +57,6 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const concurrentColors = ['yellow', 'cyan', 'magenta', 'green', 'blue']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
-  const {exit: unmountInk} = useApp()
 
   function lineColor(index: number) {
     const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
@@ -87,8 +82,8 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
     })
   }
 
-  const runProcesses = async () => {
-    await Promise.all(
+  const runProcesses = () => {
+    return Promise.all(
       processes.map(async (process, index) => {
         const stdout = writableStream(process, index)
         const stderr = writableStream(process, index)
@@ -96,18 +91,9 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
         await process.action(stdout, stderr, abortController.signal)
       }),
     )
-
-    // This is a workaround needed because Ink behaves differently in CI when
-    // unmounting. See https://github.com/vadimdemedes/ink/pull/266
-    if (!isTruthy(process.env.CI)) unmountInk()
   }
 
-  useEffect(() => {
-    runProcesses().catch((error) => {
-      abortController.abort()
-      unmountInk(error)
-    })
-  }, [])
+  useAsyncAndUnmount(runProcesses, {onRejected: () => abortController.abort()})
 
   return (
     <Static items={processOutput}>

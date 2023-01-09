@@ -1,8 +1,7 @@
 import {isUnitTest} from '../../environment/local.js'
 import {collectLog, consoleLog, Logger, LogLevel, outputWhereAppropriate} from '../../output.js'
-import Prompt, {Props as PromptProps} from '../../private/node/ui/components/Prompt.js'
-import React, {ReactElement} from 'react'
-import {render as inkRender, RenderOptions} from 'ink'
+import {ReactElement} from 'react'
+import {Key, render as inkRender, RenderOptions} from 'ink'
 import {EventEmitter} from 'events'
 
 export function renderOnce(element: JSX.Element, logLevel: LogLevel = 'info', logger: Logger = consoleLog) {
@@ -26,8 +25,7 @@ interface Instance {
   unmount: () => void
 }
 
-const TEST_TERMINAL_WIDTH = 80
-class OutputStream extends EventEmitter {
+export class OutputStream extends EventEmitter {
   columns: number
   private _lastFrame?: string
 
@@ -46,8 +44,8 @@ class OutputStream extends EventEmitter {
 }
 
 export const renderString = (element: ReactElement): Instance => {
-  const stdout = new OutputStream({columns: isUnitTest() ? TEST_TERMINAL_WIDTH : process.stdout.columns})
-  const stderr = new OutputStream({columns: isUnitTest() ? TEST_TERMINAL_WIDTH : process.stderr.columns})
+  const stdout = new OutputStream({columns: process.stdout.columns})
+  const stderr = new OutputStream({columns: process.stderr.columns})
 
   const instance = inkRender(element, {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,19 +63,9 @@ export const renderString = (element: ReactElement): Instance => {
   }
 }
 
-export async function prompt<T>(options: Omit<PromptProps<T>, 'onChoose'>) {
-  let onChooseResolve: (choice: T) => void = () => {}
-
-  const onChoosePromise = new Promise<T>((resolve) => {
-    onChooseResolve = resolve
-  })
-
-  const props = {
-    ...options,
-    onChoose: onChooseResolve,
+export function handleCtrlC(input: string, key: Key) {
+  if (input === 'c' && key.ctrl) {
+    // Exceptions thrown in hooks aren't caught by our errorHandler.
+    process.exit(1)
   }
-
-  await render(<Prompt {...props} />, {exitOnCtrlC: false})
-
-  return onChoosePromise
 }

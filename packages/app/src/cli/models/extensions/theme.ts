@@ -35,6 +35,7 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
   configuration: TConfiguration
   configurationPath: string
   specification: ThemeExtensionSpec
+  outputBundlePath: string
 
   private remoteSpecification?: api.graphql.RemoteSpecification
 
@@ -68,6 +69,7 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
     directory: string
     remoteSpecification?: api.graphql.RemoteSpecification
     specification: ThemeExtensionSpec
+    outputBundlePath: string
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
@@ -76,6 +78,7 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
     this.specification = options.specification
     this.localIdentifier = path.basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
+    this.outputBundlePath = options.outputBundlePath
   }
 
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {

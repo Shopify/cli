@@ -1,6 +1,4 @@
 export {default as constants} from './constants.js'
-export * as abort from './abort.js'
-export * as analytics from './analytics.js'
 export * as api from './api.js'
 export * as cli from './cli.js'
 export * as environment from './environment.js'

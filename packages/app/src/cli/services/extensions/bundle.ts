@@ -1,6 +1,8 @@
-import {abort} from '@shopify/cli-kit'
+import {buildThemeExtensions, ThemeExtensionBuildOptions} from '../build/extension.js'
+import {environment, file, path} from '@shopify/cli-kit'
 import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
-import {Writable} from 'node:stream'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {Writable} from 'stream'
 import {createRequire} from 'module'
 import type {StdinOptions} from 'esbuild'
 
@@ -24,7 +26,7 @@ export interface BundleOptions {
   /**
    * This signal allows the caller to stop the watching process.
    */
-  watchSignal?: abort.Signal
+  watchSignal?: AbortSignal
 
   /**
    * Context:
@@ -53,6 +55,31 @@ export async function bundleExtension(options: BundleOptions) {
     })
   }
   onResult(result, options)
+}
+
+export async function bundleThemeExtensions(options: ThemeExtensionBuildOptions): Promise<void> {
+  if (options.extensions.length === 0) return
+
+  await buildThemeExtensions(options)
+
+  if (environment.local.useThemeBundling()) {
+    await Promise.all(
+      options.extensions.map(async (extension) => {
+        options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
+        const files = await path.glob(path.join(extension.directory, '/**/*'))
+
+        await Promise.all(
+          files.map(function (filepath) {
+            if (!(filepath.includes('.gitkeep') || filepath.includes('.toml'))) {
+              const relativePath = path.relative(extension.directory, filepath)
+              const outputFile = path.join(extension.outputBundlePath, relativePath)
+              return file.copy(filepath, outputFile)
+            }
+          }),
+        )
+      }),
+    )
+  }
 }
 
 function onResult(result: Awaited<ReturnType<typeof esBuild>> | null, options: BundleOptions) {

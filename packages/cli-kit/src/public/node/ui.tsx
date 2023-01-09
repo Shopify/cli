@@ -1,14 +1,16 @@
 import ConcurrentOutput from '../../private/node/ui/components/ConcurrentOutput.js'
 import {consoleError, OutputProcess} from '../../output.js'
-import {prompt, render, renderOnce} from '../../private/node/ui.js'
+import {render, renderOnce} from '../../private/node/ui.js'
 import {Fatal} from '../../error.js'
 import {alert} from '../../private/node/ui/alert.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
-import Prompt, {Props as PromptProps} from '../../private/node/ui/components/Prompt.js'
+import {SelectPrompt, Props as SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
+import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
+import {TextPrompt, Props as TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
 import React from 'react'
-import {AbortController} from 'abort-controller'
 import {RenderOptions} from 'ink'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 
 interface RenderConcurrentOptions {
   processes: OutputProcess[]
@@ -181,6 +183,7 @@ export function renderFatalError(error: Fatal) {
  * ?  Associate your project with the org Castile Ventures?
  *
  *      Add:     • new-ext
+ *
  *      Remove:  • integrated-demand-ext
  *               • order-discount
 
@@ -201,37 +204,31 @@ export function renderFatalError(error: Fatal) {
 
  *     navigate with arrows, enter to select
  */
-export async function renderPrompt<T>(options: Omit<PromptProps<T>, 'onChoose'>) {
-  return prompt(options)
-}
-
-interface ConfirmationProps {
-  question: string
-  infoTable?: PromptProps<boolean>['infoTable']
+export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit'>) {
+  return new Promise((resolve, reject) => {
+    render(<SelectPrompt {...props} onSubmit={(value: T) => resolve(value)} />, {
+      exitOnCtrlC: false,
+    }).catch(reject)
+  })
 }
 
 /**
- * Renders a confirmation prompt to the console.
- *
- * ?  Push the following changes to your Partners Dashboard?
- * \>  (y) Yes, confirm
- *     (c) Cancel
- *
- * navigate with arrows, enter to select
+ * Runs async tasks and displays their progress to the console.
  */
-export async function renderConfirmation({question, infoTable}: ConfirmationProps) {
-  const choices = [
-    {
-      label: 'Yes, confirm',
-      value: true,
-      key: 'y',
-    },
-    {
-      label: 'Cancel',
-      value: false,
-      key: 'c',
-    },
-  ]
+export function renderTasks(tasks: Task[]) {
+  return render(<Tasks tasks={tasks} />)
+}
 
-  return prompt({message: question, choices, infoTable})
+/**
+ * Renders a text prompt to the console.
+ *
+ * ?  What is your name?
+ * \>  John
+ */
+export function renderTextPrompt(props: Omit<TextPromptProps, 'onSubmit'>) {
+  return new Promise((resolve, reject) => {
+    render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
+      exitOnCtrlC: false,
+    }).catch(reject)
+  })
 }

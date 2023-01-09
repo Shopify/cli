@@ -51,8 +51,8 @@ describe('when there are locale files', () => {
   it('returns defaultLocale using the locale marked as .default', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       await file.mkdir(path.join(tmpDir, 'locales'))
-      await file.write(path.join(tmpDir, 'locales', 'en.json'), '{"lorem": "ipsum}')
-      await file.write(path.join(tmpDir, 'locales', 'de.default.json'), '{"lorem": "ipsum}')
+      await file.write(path.join(tmpDir, 'locales', 'en.json'), '{"lorem": "ipsum"}')
+      await file.write(path.join(tmpDir, 'locales', 'de.default.json'), '{"lorem": "ipsum"}')
 
       const result = await testGetLocalization(tmpDir)
 
@@ -100,8 +100,7 @@ describe('when there are locale files', () => {
       await file.write(path.join(tmpDir, 'locales', 'es.json'), '{"greeting": "Hola!"}')
 
       const result = await testGetLocalization(tmpDir)
-
-      expect(Date.now).toBeCalledTimes(4)
+      expect(Date.now).toBeCalledTimes(1)
       expect(result.localization!.lastUpdated).equals(timestamp)
     })
   })

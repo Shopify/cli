@@ -11,7 +11,7 @@ import {
   DependencyVersion,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {fileURLToPath} from 'url'
-import stream from 'node:stream'
+import stream from 'stream'
 
 async function getTemplatePath(name: string): Promise<string> {
   const templatePath = await path.findUp(`templates/${name}`, {
@@ -38,7 +38,7 @@ interface ExtensionDirectory {
   extensionDirectory: string
 }
 
-export type ExtensionFlavor = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react'
+export type ExtensionFlavor = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react' | string
 
 type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionSpec> & ExtensionDirectory
 type UIExtensionInitOptions = ExtensionInitOptions<UIExtensionSpec> & ExtensionDirectory
@@ -147,7 +147,7 @@ function getSrcFileExtension(extensionFlavor: ExtensionFlavor): SrcFileExtension
     'typescript-react': 'tsx',
   }
 
-  return flavorToSrcFileExtension[extensionFlavor]
+  return flavorToSrcFileExtension[extensionFlavor] ?? 'js'
 }
 
 export function getRuntimeDependencies({
@@ -185,7 +185,7 @@ async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, 
 }
 
 async function functionExtensionInit(options: FunctionExtensionInitOptions) {
-  const url = options.cloneUrl || blocks.functions.defaultUrl
+  const url = options.cloneUrl || options.specification.templateURL
   const spec = options.specification
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')

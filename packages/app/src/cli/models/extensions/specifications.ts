@@ -7,7 +7,7 @@ import {
   loadFunctionSpecificationsFromPlugins,
 } from '../../public/plugins/extension.js'
 import {os, path, environment} from '@shopify/cli-kit'
-import {memoize} from 'lodash-es'
+import {memoize} from '@shopify/cli-kit/common/function'
 import {Config} from '@oclif/core'
 import {fileURLToPath} from 'url'
 
@@ -24,15 +24,16 @@ export async function loadFunctionSpecifications(config: Config): Promise<Functi
 }
 
 export async function loadLocalUIExtensionsSpecifications(): Promise<UIExtensionSpec[]> {
-  return memLoadSpecs('ui-specifications')
+  return memoizedLoadSpecs('ui-specifications')
 }
 
 export async function loadLocalFunctionSpecifications(): Promise<FunctionSpec[]> {
-  return (await memLoadSpecs('function-specifications')).filter((spec) => !spec.gated || environment.local.isShopify())
+  const isShopifyUser = await environment.local.isShopify()
+  return (await memoizedLoadSpecs('function-specifications')).filter((spec) => !spec.gated || isShopifyUser)
 }
 
 export async function loadThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
-  return memLoadSpecs('theme-specifications')
+  return memoizedLoadSpecs('theme-specifications')
 }
 
 /**
@@ -55,7 +56,7 @@ export async function loadLocalExtensionsSpecifications(): Promise<GenericSpecif
   return [...ui, ...functions, ...theme]
 }
 
-const memLoadSpecs = memoize(loadSpecifications)
+const memoizedLoadSpecs = memoize(loadSpecifications)
 
 async function loadSpecifications(directoryName: string) {
   /**

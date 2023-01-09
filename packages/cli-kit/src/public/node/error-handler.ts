@@ -1,3 +1,5 @@
+import {reportAnalyticsEvent} from './analytics.js'
+import {getEnvironmentData} from '../../private/node/analytics.js'
 import {
   AbortSilent,
   CancelExecution,
@@ -7,7 +9,6 @@ import {
   cleanSingleStackTracePath,
 } from '../../error.js'
 import {debug, info} from '../../output.js'
-import {getEnvironmentData, reportEvent} from '../../analytics.js'
 import * as path from '../../path.js'
 import * as metadata from '../../metadata.js'
 import {fanoutHooks} from '../../plugins.js'
@@ -44,7 +45,7 @@ export function errorHandler(error: Error & {exitCode?: number | undefined}, con
 const reportError = async (error: unknown, config?: Interfaces.Config): Promise<void> => {
   if (config !== undefined) {
     // Log an analytics event when there's an error
-    await reportEvent({config, errorMessage: error instanceof Error ? error.message : undefined})
+    await reportAnalyticsEvent({config, errorMessage: error instanceof Error ? error.message : undefined})
   }
   await sendErrorToBugsnag(error)
 }

@@ -1,10 +1,17 @@
-import {exchangeAccessForApplicationTokens, exchangeCodeForAccessToken} from './exchange.js'
+import {
+  exchangeAccessForApplicationTokens,
+  exchangeCodeForAccessToken,
+  InvalidGrantError,
+  InvalidRequestError,
+  refreshAccessToken,
+} from './exchange.js'
 import {applicationId, clientId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {shopifyFetch} from '../http.js'
 import {identity} from '../environment/fqdn.js'
 import {describe, it, expect, vi, afterAll, beforeEach} from 'vitest'
 import {Response} from 'node-fetch'
+import {AbortError} from '@shopify/cli-kit/node/error.js'
 
 const currentDate = new Date(2022, 1, 1, 10)
 const expiredDate = new Date(2022, 1, 1, 11)
@@ -138,5 +145,46 @@ describe('exchange identity token for application tokens', () => {
       },
     }
     expect(got).toEqual(expected)
+  })
+})
+
+describe('refresh access tokens', () => {
+  it('throws a InvalidGrantError when Identity returns invalid_grant', async () => {
+    // Given
+    const error = {error: 'invalid_grant'}
+    const response = new Response(JSON.stringify(error), {status: 400})
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+
+    // When
+    const got = () => refreshAccessToken(identityToken)
+
+    // Then
+    return expect(got).rejects.toThrowError(InvalidGrantError)
+  })
+
+  it('throws a InvalidRequestError when Identity returns invalid_request', async () => {
+    // Given
+    const error = {error: 'invalid_request'}
+    const response = new Response(JSON.stringify(error), {status: 400})
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+
+    // When
+    const got = () => refreshAccessToken(identityToken)
+
+    // Then
+    return expect(got).rejects.toThrowError(InvalidRequestError)
+  })
+
+  it('throws an AbortError when Identity returns another error', async () => {
+    // Given
+    const error = {error: 'another'}
+    const response = new Response(JSON.stringify(error), {status: 400})
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+
+    // When
+    const got = () => refreshAccessToken(identityToken)
+
+    // Then
+    return expect(got).rejects.toThrowError(AbortError)
   })
 })

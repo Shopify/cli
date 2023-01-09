@@ -1,26 +1,23 @@
 import {OverloadParameters} from './typing/overloaded-parameters.js'
 import commondir from 'commondir'
 import {relative, dirname, join, normalize, resolve, basename, extname, isAbsolute, parse} from 'pathe'
-import {findUp as internalFindUp, Match as FindUpMatch} from 'find-up'
-import fastGlob from 'fast-glob'
+import {findUp as internalFindUp} from 'find-up'
 import {fileURLToPath} from 'url'
+// eslint-disable-next-line node/prefer-global/url
+import type {URL} from 'url'
+import type {Pattern, Options} from 'fast-glob'
 
 export {join, relative, dirname, normalize, resolve, basename, extname, isAbsolute, parse}
 
-type FastGlobOptions = Parameters<typeof fastGlob>
-type FastGlobOutput = ReturnType<typeof fastGlob>
-
-export async function glob(...args: FastGlobOptions): FastGlobOutput {
-  // eslint-disable-next-line prefer-const
-  let [pattern, options] = args
+export async function glob(pattern: Pattern | Pattern[], options?: Options): Promise<string[]> {
+  const {default: fastGlob} = await import('fast-glob')
+  let overridenOptions = options
   if (options?.dot == null) {
-    options = {...options, dot: true}
+    overridenOptions = {...options, dot: true}
   }
-  return fastGlob(pattern, options)
+  return fastGlob(pattern, overridenOptions)
 }
-export {pathToFileURL} from 'node:url'
-
-type FindUpMatcher = (directory: string) => FindUpMatch | Promise<FindUpMatch>
+export {pathToFileURL} from 'url'
 
 export async function findUp(
   matcher: OverloadParameters<typeof internalFindUp>[0],

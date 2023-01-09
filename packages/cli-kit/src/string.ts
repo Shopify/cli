@@ -39,18 +39,6 @@ export function capitalize(string: string) {
 }
 
 /**
- * Given a store, returns a valid store fqdn removing protocol and adding .myshopify.com domain
- * @param store - Original store name provided by the user
- * @returns a valid store fqdn
- */
-export function normalizeStoreName(store: string) {
-  const storeFqdn = store.replace(/^https?:\/\//, '').replace(/\/$/, '')
-  return storeFqdn.includes('.myshopify.com') || storeFqdn.includes('spin.dev')
-    ? storeFqdn
-    : `${storeFqdn}.myshopify.com`
-}
-
-/**
  * Try to convert a string to an int, falling back to undefined if unable to
  */
 export function tryParseInt(maybeInt: string | undefined) {

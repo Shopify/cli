@@ -149,7 +149,7 @@ async function init(options: InitOptions) {
   })
 
   renderSuccess({
-    headline: `${hyphenizedName} is ready for you to build!`,
+    headline: [{userInput: hyphenizedName}, 'is ready for you to build!'],
     nextSteps: [
       ['Run', {command: `cd ${hyphenizedName}`}],
       ['For extensions, run', {command: output.formatPackageManagerCommand(packageManager, 'generate extension')}],

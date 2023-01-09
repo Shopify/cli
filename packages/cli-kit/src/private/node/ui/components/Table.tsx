@@ -1,7 +1,7 @@
 import {List} from './List.js'
+import {capitalize} from '../../../../string.js'
 import {Box, Text} from 'ink'
 import React from 'react'
-import {capitalize} from 'lodash-es'
 
 export interface Props {
   table: {
@@ -16,7 +16,7 @@ const Table: React.FC<Props> = ({table}) => {
   return (
     <Box flexDirection="column" paddingY={1}>
       {headers.map((header, index) => (
-        <Box key={index}>
+        <Box key={index} marginBottom={index === headers.length - 1 ? 0 : 1}>
           <Box width={headerColumnWidth + 1}>
             <Text>{capitalize(header)}:</Text>
           </Box>

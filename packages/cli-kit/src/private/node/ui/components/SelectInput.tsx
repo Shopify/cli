@@ -1,11 +1,12 @@
-import {isTruthy} from '../../../../environment/utilities.js'
+import {isEqual} from '../../../../public/common/lang.js'
+import {groupBy} from '../../../../public/common/collection.js'
+import {mapValues} from '../../../../public/common/object.js'
 import React, {useState, useEffect, useRef, useCallback} from 'react'
-import {Box, Key, Text, useApp, useInput} from 'ink'
-import {groupBy, isEqual, mapValues} from 'lodash-es'
+import {Box, Key, useInput, Text} from 'ink'
 
 export interface Props<T> {
   items: Item<T>[]
-  onSelect: (value: T) => void
+  onChange: (item: Item<T>) => void
 }
 
 export interface Item<T> {
@@ -27,16 +28,24 @@ function groupItems<T>(items: Item<T>[]) {
   )
 }
 
-export default function SelectInput<T>({items, onSelect}: React.PropsWithChildren<Props<T>>): JSX.Element | null {
+export default function SelectInput<T>({items, onChange}: React.PropsWithChildren<Props<T>>): JSX.Element | null {
   const [inputStack, setInputStack] = useState<string | null>(null)
   const [inputTimeout, setInputTimeout] = useState<NodeJS.Timeout | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const keys = useRef(new Set(items.map((item) => item.key)))
-  const {exit: unmountInk} = useApp()
   const groupedItems = groupItems(items)
+  const groupedItemsValues = Object.values(groupedItems).flat()
   const groupTitles = Object.keys(groupedItems)
-
   const previousItems = useRef<Item<T>[]>(items)
+
+  const changeSelection = useCallback(
+    (index: number) => {
+      const groupedItem = groupedItemsValues.find((item) => item.index === index)!
+      setSelectedIndex(index)
+      onChange(items.find((item) => item.value === groupedItem.value)!)
+    },
+    [items],
+  )
 
   // reset index when items change
   useEffect(() => {
@@ -46,7 +55,7 @@ export default function SelectInput<T>({items, onSelect}: React.PropsWithChildre
         items.map((item) => item.value),
       )
     ) {
-      setSelectedIndex(0)
+      changeSelection(0)
     }
 
     previousItems.current = items
@@ -54,37 +63,26 @@ export default function SelectInput<T>({items, onSelect}: React.PropsWithChildre
 
   const handleInput = useCallback(
     (input: string, key: Key) => {
-      if (input === 'c' && key.ctrl) {
-        // Exceptions being throw in these hooks aren't being caught by our errorHandler.
-        // See also how we handle exceptions in CouncurrentOutput for reference.
-        process.exit(1)
-      }
-
       const parsedInput = parseInt(input, 10)
 
       if (parsedInput !== 0 && parsedInput <= items.length + 1) {
-        setSelectedIndex(parsedInput - 1)
+        changeSelection(parsedInput - 1)
       } else if (keys.current.has(input)) {
-        const index = items.findIndex((item) => item.key === input)
-        if (index !== -1) {
-          setSelectedIndex(index)
+        const groupedItem = groupedItemsValues.find((item) => item.key === input)
+        if (groupedItem !== undefined) {
+          changeSelection(groupedItem.index)
         }
       }
 
       if (key.upArrow) {
         const lastIndex = items.length - 1
 
-        setSelectedIndex(selectedIndex === 0 ? lastIndex : selectedIndex - 1)
+        changeSelection(selectedIndex === 0 ? lastIndex : selectedIndex - 1)
       } else if (key.downArrow) {
-        setSelectedIndex(selectedIndex === items.length - 1 ? 0 : selectedIndex + 1)
-      } else if (key.return) {
-        onSelect(items[selectedIndex]!.value)
-        // This is a workaround needed because Ink behaves differently in CI when
-        // unmounting. See https://github.com/vadimdemedes/ink/pull/266
-        if (!isTruthy(process.env.CI)) unmountInk()
+        changeSelection(selectedIndex === items.length - 1 ? 0 : selectedIndex + 1)
       }
     },
-    [selectedIndex, items, onSelect],
+    [selectedIndex, items],
   )
 
   useInput((input, key) => {

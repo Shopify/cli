@@ -2,10 +2,10 @@ import {shouldDisplayColors, debug} from './output.js'
 import {platformAndArch} from './os.js'
 import {Abort, ExternalError} from './error.js'
 import {renderConcurrent} from './public/node/ui.js'
+import {AbortSignal} from './public/node/abort.js'
 import {execa, ExecaChildProcess} from 'execa'
-import {AbortSignal} from 'abort-controller'
 import treeKill from 'tree-kill'
-import type {Writable, Readable} from 'node:stream'
+import type {Writable, Readable} from 'stream'
 
 export interface ExecOptions {
   cwd?: string

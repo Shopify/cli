@@ -1,8 +1,8 @@
 import {TokenizedText} from './TokenizedText.js'
-import {renderString} from '../../ui.js'
 import {unstyled} from '../../../../output.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
+import {render} from 'ink-testing-library'
 
 describe('TokenizedText', async () => {
   test('renders arrays of items separated by spaces', async () => {
@@ -33,10 +33,10 @@ describe('TokenizedText', async () => {
       },
     ]
 
-    const {output} = renderString(<TokenizedText item={item} />)
+    const {lastFrame} = render(<TokenizedText item={item} />)
 
-    expect(unstyled(output!)).toMatchInlineSnapshot(`
-      "Run \`cd verification-app\` Example (https://example.com)! my-app
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      "Run \`cd verification-app\` Example ( https://example.com )! my-app
         • Item 1
         • Item 2
         • Item 3

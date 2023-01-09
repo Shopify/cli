@@ -1,16 +1,23 @@
 {
   "name": "@shopify/create-app",
-  "version": "3.30.0",
+  "version": "3.31.1",
   "private": false,
   "description": "A CLI tool to create a new Shopify app.",
-  "type": "module",
   "keywords": [
     "shopify",
     "shopify-cli",
     "shopify-partners",
     "shopify-apps"
   ],
+  "bugs": {
+    "url": "https://github.com/Shopify/cli/issues/new/choose"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli/edit/main/packages/create-app"
+  },
   "license": "MIT",
+  "type": "module",
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -26,16 +33,12 @@
     "/dist",
     "/oclif.manifest.json"
   ],
-  "publishConfig": {
-    "access": "public",
-    "@shopify:registry": "https://registry.npmjs.org"
-  },
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "build": "nx build",
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "test": "nx run create-app:test",
     "test:watch": "nx test:watch",
     "type-check": "nx type-check"
@@ -46,14 +49,14 @@
     ]
   },
   "dependencies": {
-    "@shopify/cli-kit": "3.30.0",
-    "@oclif/core": "1.21.0"
+    "@oclif/core": "1.21.0",
+    "@shopify/cli-kit": "3.31.1"
   },
   "devDependencies": {
-    "vitest": "^0.23.4",
-    "vite": "^2.9.13"
+    "@types/node": "14.17.0",
+    "vite": "^2.9.13",
+    "vitest": "^0.26.3"
   },
-  "engine-strict": true,
   "engines": {
     "node": ">=14.17.0"
   },
@@ -62,6 +65,11 @@
     "linux",
     "win32"
   ],
+  "publishConfig": {
+    "@shopify:registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "engine-strict": true,
   "oclif": {
     "bin": "create-app",
     "commands": "./dist/commands",
@@ -72,12 +80,5 @@
       "prerun": "@shopify/cli-kit/node/hooks/prerun",
       "postrun": "@shopify/cli-kit/node/hooks/postrun"
     }
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Shopify/cli/edit/main/packages/create-app"
-  },
-  "bugs": {
-    "url": "https://github.com/Shopify/cli/issues/new/choose"
   }
 }

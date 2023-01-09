@@ -2,7 +2,7 @@ import {applicationId} from './session/identity.js'
 import {Abort, Bug} from './error.js'
 import {validateSession} from './session/validate.js'
 import {allDefaultScopes, apiScopes} from './session/scopes.js'
-import {identity as identityFqdn, partners as partnersFqdn} from './environment/fqdn.js'
+import {identity as identityFqdn, normalizeStoreName, partners as partnersFqdn} from './environment/fqdn.js'
 import {open} from './system.js'
 import {
   exchangeAccessForApplicationTokens,
@@ -11,6 +11,7 @@ import {
   ExchangeScopes,
   refreshAccessToken,
   InvalidGrantError,
+  InvalidRequestError,
 } from './session/exchange.js'
 
 import {content, token, debug} from './output.js'
@@ -20,12 +21,12 @@ import {authorize} from './session/authorize.js'
 import {IdentityToken, Session} from './session/schema.js'
 import * as secureStore from './session/store.js'
 import constants from './constants.js'
-import {normalizeStoreName} from './string.js'
 import * as output from './output.js'
 import {partners} from './api.js'
 import {RequestClientError} from './api/common.js'
 import {firstPartyDev, useDeviceAuth} from './environment/local.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
+import {AbortError} from './public/node/error.js'
 import {gql} from 'graphql-request'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')
@@ -172,7 +173,7 @@ export async function ensureAuthenticatedThemes(
   debug(content`Ensuring that the user is authenticated with the Theme API with the following scopes:
 ${token.json(scopes)}
 `)
-  if (password) return {token: password, storeFqdn: normalizeStoreName(store)}
+  if (password) return {token: password, storeFqdn: await normalizeStoreName(store)}
   return ensureAuthenticatedAdmin(store, scopes, forceRefresh)
 }
 
@@ -188,8 +189,12 @@ export async function ensureAuthenticated(
 ): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
 
-  if (applications.adminApi?.storeFqdn) {
-    applications.adminApi.storeFqdn = normalizeStoreName(applications.adminApi.storeFqdn)
+  const previousStoreFqdn = applications.adminApi?.storeFqdn
+  if (previousStoreFqdn) {
+    const normalizedStoreName = await normalizeStoreName(previousStoreFqdn)
+    if (previousStoreFqdn === applications.adminApi?.storeFqdn) {
+      applications.adminApi.storeFqdn = normalizedStoreName
+    }
   }
 
   const currentSession = (await secureStore.fetch()) || {}
@@ -215,6 +220,9 @@ ${token.json(applications)}
     } catch (error) {
       if (error instanceof InvalidGrantError) {
         newSession = await executeCompleteFlow(applications, fqdn)
+      } else if (error instanceof InvalidRequestError) {
+        await secureStore.remove()
+        throw new AbortError('\nError validating auth session', "We've cleared the current session, please try again")
       } else {
         throw error
       }

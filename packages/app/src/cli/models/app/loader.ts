@@ -377,6 +377,7 @@ class AppLoader {
         directory,
         remoteSpecification: undefined,
         specification,
+        outputBundlePath: directory,
       })
     })
 

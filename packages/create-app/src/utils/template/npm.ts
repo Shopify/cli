@@ -1,7 +1,7 @@
 import {path, ui, npm, constants} from '@shopify/cli-kit'
 import {PackageManager, installNodeModules} from '@shopify/cli-kit/node/node-package-manager'
 import {Writable} from 'stream'
-import {platform} from 'node:os'
+import {platform} from 'os'
 
 interface UpdateCLIDependenciesOptions {
   directory: string
@@ -21,7 +21,7 @@ export async function updateCLIDependencies({
   packageJSON.dependencies['@shopify/app'] = cliKitVersion
 
   if (local) {
-    const cliPath = await packagePath('cli-main')
+    const cliPath = await packagePath('cli')
     const appPath = await packagePath('app')
     const cliKitPath = await packagePath('cli-kit')
     const pluginNgrokPath = await packagePath('plugin-ngrok')
