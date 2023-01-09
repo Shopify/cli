@@ -2,7 +2,7 @@ import {HydrogenApp} from '../models/hydrogen.js'
 import {genericConfigurationFileNames} from '../constants.js'
 import {ui, vscode, npm, file, path, error, environment} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
-import stream from 'node:stream'
+import stream from 'stream'
 
 interface AddESlintOptions {
   app: HydrogenApp

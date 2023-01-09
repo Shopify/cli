@@ -2,7 +2,7 @@ import {bundleExtension} from './bundle.js'
 import {testApp, testUIExtension} from '../../models/app/app.test-data.js'
 import {describe, expect, test, vi} from 'vitest'
 import {build as esBuild, BuildOptions, WatchMode} from 'esbuild'
-import {abort} from '@shopify/cli-kit'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 
 vi.mock('esbuild', async () => {
   const esbuild: any = await vi.importActual('esbuild')
@@ -122,7 +122,7 @@ describe('bundleExtension()', () => {
       warnings: [],
       stop: esbuildStop,
     })
-    const abortController = new abort.Controller()
+    const abortController = new AbortController()
 
     // When
     await bundleExtension({

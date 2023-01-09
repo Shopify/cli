@@ -1,4 +1,4 @@
-import {createRequire} from 'node:module'
+import {createRequire} from 'module'
 import type {DebouncedFunc, DebounceSettings} from 'lodash'
 
 const require = createRequire(import.meta.url)

@@ -2,8 +2,9 @@ import {themeFlags} from '../../flags.js'
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
-import {cli, session, abort, output} from '@shopify/cli-kit'
+import {cli, session, output} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 
 export default class Dev extends ThemeCommand {
   static description =
@@ -99,12 +100,12 @@ export default class Dev extends ThemeCommand {
 
     const store = await getThemeStore(flags)
 
-    let controller: abort.Controller = new abort.Controller()
+    let controller = new AbortController()
 
     setInterval(() => {
       output.debug('Refreshing theme session token and restarting theme server...')
       controller.abort()
-      controller = new abort.Controller()
+      controller = new AbortController()
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.execute(store, flags.password, command, controller)
     }, this.ThemeRefreshTimeoutInMs)
@@ -113,7 +114,7 @@ export default class Dev extends ThemeCommand {
     this.execute(store, flags.password, command, controller)
   }
 
-  async execute(store: string, password: string | undefined, command: string[], controller: abort.Controller) {
+  async execute(store: string, password: string | undefined, command: string[], controller: AbortController) {
     const adminSession = await session.ensureAuthenticatedThemes(store, password, [], true)
     const storefrontToken = await session.ensureAuthenticatedStorefront([], password)
     return execCLI2(command, {adminSession, storefrontToken, signal: controller.signal})

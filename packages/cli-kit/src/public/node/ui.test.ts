@@ -1,9 +1,9 @@
 import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
+import {AbortSignal} from './abort.js'
 import {Abort, Bug, Fatal} from '../../error.js'
 import * as outputMocker from '../../testing/output.js'
-import {Signal} from '../../abort.js'
 import {afterEach, describe, expect, test} from 'vitest'
-import {Writable} from 'node:stream'
+import {Writable} from 'stream'
 
 afterEach(() => {
   outputMocker.mockAndCaptureOutput().clear()
@@ -270,7 +270,7 @@ describe('renderConcurrent', async () => {
     // When
     const throwingProcess = {
       prefix: 'backend',
-      action: async (_stdout: Writable, _stderr: Writable, _signal: Signal) => {
+      action: async (_stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
         throw new Error('example error')
       },
     }

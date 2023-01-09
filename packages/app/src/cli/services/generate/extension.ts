@@ -11,7 +11,7 @@ import {
   DependencyVersion,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {fileURLToPath} from 'url'
-import stream from 'node:stream'
+import stream from 'stream'
 
 async function getTemplatePath(name: string): Promise<string> {
   const templatePath = await path.findUp(`templates/${name}`, {

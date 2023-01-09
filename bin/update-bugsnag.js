@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-import fs from 'node:fs';
+import fs from 'fs';
 import fsPromise from 'node:fs/promises'
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath } from 'url';
 import { node } from "@bugsnag/source-maps";
 import reportBuild from 'bugsnag-build-reporter';
 import glob from 'fast-glob';

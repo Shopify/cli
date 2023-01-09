@@ -4,7 +4,7 @@ process.removeAllListeners('warning');
 // ES Modules
 import {findUp} from "find-up"
 import {createHash} from 'node:crypto'
-import {createRequire} from 'node:module'
+import {createRequire} from 'module'
 import {fileURLToPath} from "node:url"
 import path from "pathe"
 import fetch from 'node-fetch'
