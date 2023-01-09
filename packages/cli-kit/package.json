@@ -126,6 +126,7 @@
     "log-update": "4.0.0",
     "macaddress": "0.5.3",
     "md5-file": "5.0.0",
+    "node-abort-controller": "^3.0.1",
     "node-fetch": "3.2.4",
     "open": "8.4.0",
     "pathe": "0.2.0",

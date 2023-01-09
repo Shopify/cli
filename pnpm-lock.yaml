@@ -397,6 +397,7 @@ importers:
       log-update: 4.0.0
       macaddress: 0.5.3
       md5-file: 5.0.0
+      node-abort-controller: ^3.0.1
       node-fetch: 3.2.4
       node-stream-zip: ^1.15.0
       open: 8.4.0
@@ -461,6 +462,7 @@ importers:
       log-update: 4.0.0
       macaddress: 0.5.3
       md5-file: 5.0.0
+      node-abort-controller: 3.0.1
       node-fetch: 3.2.4
       open: 8.4.0
       pathe: 0.2.0
@@ -11125,6 +11127,10 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       semver: 7.3.8
+    dev: false
+
+  /node-abort-controller/3.0.1:
+    resolution: {integrity: sha512-/ujIVxthRs+7q6hsdjHMaj8hRG9NuWmwrz+JdRwZ14jdFoKSkm+vDsCbF9PLpnSqjaWQJuTmVtcWHNLr+vrOFw==}
     dev: false
 
   /node-addon-api/3.2.1:
