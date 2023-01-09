@@ -41,8 +41,8 @@ export function QRCodeContent(props: Pick<QRCodeModalProps, 'extension'>) {
     if (!state.app || !extension) {
       return undefined
     }
-
-    if (extension.surface === 'pos') {
+    console.log('surface:', extension)
+    if (extension.surface === 'point_of_sale') {
       return `com.shopify.pos://pos-ui-extensions?url=${extension.development.root.url}`
     } else {
       return `https://${state.store}/admin/extensions-dev/mobile?url=${extension.development.root.url}`
