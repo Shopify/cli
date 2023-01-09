@@ -2,7 +2,7 @@ import * as presets from './presets.js'
 import {presetsFilename} from './presets.js'
 import {inTemporaryDirectory, mkdir, write as fileWrite} from '../../file.js'
 import {join as pathJoin} from '../../path.js'
-import {encode as tomlEncode} from '../../toml.js'
+import {encodeToml as tomlEncode} from './toml.js'
 import {describe, expect, test} from 'vitest'
 
 const preset1 = {
