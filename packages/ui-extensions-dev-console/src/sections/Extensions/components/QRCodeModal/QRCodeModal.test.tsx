@@ -10,7 +10,7 @@ import {Modal} from '@shopify/polaris'
 
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 
-const i18n = mockI18n(en)
+mockI18n(en)
 
 describe('QRCodeModal', () => {
   const defaultProps = {
