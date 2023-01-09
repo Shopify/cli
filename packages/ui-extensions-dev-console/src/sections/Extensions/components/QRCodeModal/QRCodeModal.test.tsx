@@ -61,7 +61,7 @@ describe('QRCodeModal', () => {
   test('renders QRCode with pos deep-link url when surface is POS', async () => {
     const app = mockApp()
     const store = 'example.com'
-    const extension = mockExtension({surface: 'pos'})
+    const extension = mockExtension({surface: 'point_of_sale'})
     const container = render(
       <QRCodeModal extension={extension} onClose={vi.fn()} open />,
       withProviders(DefaultProviders, ToastProvider),
