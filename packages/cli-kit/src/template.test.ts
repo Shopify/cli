@@ -1,6 +1,6 @@
 import {join} from './path.js'
 import {write, mkdir, read, inTemporaryDirectory} from './file.js'
-import {createTemplateRenderer, recursiveDirectoryCopy} from './public/node/template.js'
+import {renderTemplate, recursiveDirectoryCopy} from './public/node/template.js'
 import {describe, expect, it} from 'vitest'
 
 describe('create', () => {
@@ -9,7 +9,7 @@ describe('create', () => {
     const templateContent = '{{variable}}'
 
     // When
-    const got = await createTemplateRenderer(templateContent)({variable: 'test'})
+    const got = await renderTemplate(templateContent, {variable: 'test'})
 
     // Then
     expect(got).toEqual('test')
