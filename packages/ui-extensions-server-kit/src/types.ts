@@ -98,6 +98,7 @@ export interface App {
   id: string
   apiKey: string
   url: string
+  mobileUrl: string
   applicationUrl: string
   handle?: string | null
   title: string

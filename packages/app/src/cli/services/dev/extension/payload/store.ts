@@ -2,7 +2,7 @@ import {UIExtensionPayload, ExtensionsEndpointPayload} from './models.js'
 import {ExtensionDevOptions} from '../../extension.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {UIExtension} from '../../../../models/app/extensions.js'
-import {buildAppURL} from '../../../../utilities/app/app-url.js'
+import {buildAppURLForMobile, buildAppURLForWeb} from '../../../../utilities/app/app-url.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 import {output} from '@shopify/cli-kit'
 import {EventEmitter} from 'node:events'
@@ -20,9 +20,10 @@ export async function getExtensionsPayloadStoreRawPayload(
 ): Promise<ExtensionsEndpointPayload> {
   return {
     app: {
-      apiKey: options.apiKey,
-      url: buildAppURL(options.storeFqdn, options.url),
       title: options.app.name,
+      apiKey: options.apiKey,
+      url: buildAppURLForWeb(options.storeFqdn, options.url),
+      mobileUrl: buildAppURLForMobile(options.storeFqdn, options.apiKey),
     },
     appId: options.id,
     version: '3',
