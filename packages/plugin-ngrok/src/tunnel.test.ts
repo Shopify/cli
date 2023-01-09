@@ -30,9 +30,7 @@ beforeEach(async () => {
     }
   })
   vi.mock('@shopify/cli-kit/node/os', async () => {
-    const os: any = await vi.importActual('@shopify/cli-kit/node/os')
     return {
-      ...os,
       platformAndArch: vi.fn(),
     }
   })
