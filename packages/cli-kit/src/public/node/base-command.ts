@@ -1,6 +1,6 @@
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
 import {loadPresetsFromDirectory} from './presets.js'
-import {JsonMap} from '../../json.js'
+import {JsonMap} from '../../private/common/json.js'
 import {isDevelopment} from '../../environment/local.js'
 import {Abort} from '../../error.js'
 import {addPublic} from '../../metadata.js'
