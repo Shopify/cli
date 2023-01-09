@@ -230,6 +230,7 @@ importers:
       '@types/diff': ^5.0.2
       '@types/http-proxy': ^1.17.9
       '@types/lodash-es': ^4.17.6
+      '@types/node': 14.17.0
       '@types/serve-static': ^1.15.0
       '@types/ws': ^8.5.3
       abort-controller: 3.0.0
@@ -259,6 +260,7 @@ importers:
       '@types/diff': 5.0.2
       '@types/http-proxy': 1.17.9
       '@types/lodash-es': 4.17.6
+      '@types/node': 14.17.0
       '@types/serve-static': 1.15.0
       '@types/ws': 8.5.3
       graphql: 16.6.0
@@ -277,6 +279,7 @@ importers:
       '@shopify/cli-kit': 3.31.1
       '@shopify/plugin-ngrok': 3.31.1
       '@shopify/theme': 3.31.1
+      '@types/node': 14.17.0
       '@vitest/coverage-istanbul': ^0.26.3
       vite: 2.9.12
       vitest: ^0.26.3
@@ -291,6 +294,7 @@ importers:
       '@shopify/app': link:../app
       '@shopify/cli-hydrogen': link:../cli-hydrogen
       '@shopify/theme': link:../theme
+      '@types/node': 14.17.0
       '@vitest/coverage-istanbul': 0.26.3
       vite: 2.9.12
       vitest: 0.26.3
@@ -303,6 +307,7 @@ importers:
       '@shopify/mini-oxygen': 0.2.0
       '@shopify/prettier-config': 1.1.2
       '@types/fs-extra': 9.0.13
+      '@types/node': 14.17.0
       '@types/prettier': 2.6.3
       fast-glob: 3.2.11
       fs-extra: 11.1.0
@@ -329,6 +334,7 @@ importers:
       vite: 2.9.12
     devDependencies:
       '@types/fs-extra': 9.0.13
+      '@types/node': 14.17.0
       graphql: 16.6.0
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
@@ -347,6 +353,7 @@ importers:
       '@types/gradient-string': ^1.1.2
       '@types/inquirer': ^9.0.3
       '@types/lodash': 4.14.191
+      '@types/node': 14.17.0
       '@types/react': 16.14.0
       '@types/semver': ^7.3.9
       '@vitest/coverage-istanbul': ^0.26.3
@@ -479,6 +486,7 @@ importers:
       '@types/gradient-string': 1.1.2
       '@types/inquirer': 9.0.3
       '@types/lodash': 4.14.191
+      '@types/node': 14.17.0
       '@types/react': 16.14.0
       '@types/semver': 7.3.13
       '@vitest/coverage-istanbul': 0.26.3
@@ -491,12 +499,14 @@ importers:
     specifiers:
       '@oclif/core': 1.21.0
       '@shopify/cli-kit': 3.31.1
+      '@types/node': 14.17.0
       vite: 2.9.12
       vitest: ^0.26.3
     dependencies:
       '@oclif/core': 1.21.0
       '@shopify/cli-kit': link:../cli-kit
     devDependencies:
+      '@types/node': 14.17.0
       vite: 2.9.12
       vitest: 0.26.3
 
@@ -505,6 +515,7 @@ importers:
       '@oclif/core': 1.21.0
       '@shopify/cli-kit': 3.31.1
       '@types/download': 8.0.0
+      '@types/node': 14.17.0
       download: 8.0.0
       vite: 2.9.12
       vitest: ^0.26.3
@@ -514,6 +525,7 @@ importers:
       download: 8.0.0
     devDependencies:
       '@types/download': 8.0.0
+      '@types/node': 14.17.0
       vite: 2.9.12
       vitest: 0.26.3
 
@@ -524,6 +536,7 @@ importers:
       '@cucumber/pretty-formatter': 1.0.0
       '@types/cucumber': ^7.0.0
       '@types/fs-extra': ^9.0.13
+      '@types/node': 14.17.0
       '@types/rimraf': ^3.0.2
       ansi-colors: ^4.1.1
       execa: ^5.1.1
@@ -537,6 +550,7 @@ importers:
       '@cucumber/pretty-formatter': 1.0.0_hydn4najtrvg6qst6ilzadj5xa
       '@types/cucumber': 7.0.0
       '@types/fs-extra': 9.0.13
+      '@types/node': 14.17.0
       '@types/rimraf': 3.0.2
       ansi-colors: 4.1.3
       execa: 5.1.1
@@ -550,6 +564,7 @@ importers:
       '@oclif/core': 1.21.0
       '@shopify/cli-kit': 3.31.1
       '@shopify/ngrok': 4.3.2
+      '@types/node': 14.17.0
       vite: 2.9.12
       vitest: ^0.26.3
     dependencies:
@@ -557,6 +572,7 @@ importers:
       '@shopify/cli-kit': link:../cli-kit
       '@shopify/ngrok': 4.3.2
     devDependencies:
+      '@types/node': 14.17.0
       vite: 2.9.12
       vitest: 0.26.3
 
@@ -564,12 +580,14 @@ importers:
     specifiers:
       '@oclif/core': 1.21.0
       '@shopify/cli-kit': 3.31.1
+      '@types/node': 14.17.0
       vite: 2.9.12
       vitest: ^0.26.3
     dependencies:
       '@oclif/core': 1.21.0
       '@shopify/cli-kit': link:../cli-kit
     devDependencies:
+      '@types/node': 14.17.0
       vite: 2.9.12
       vitest: 0.26.3
 
@@ -4374,7 +4392,7 @@ packages:
     resolution: {integrity: sha512-F3OznnSLAUxFrCEu/L5PY8+ny8DtcFRjx7fZZ9bycvXRi3KPTRS9HOitGZwvPg0juRhXFWIeKX58cnX5YqLohQ==}
     dependencies:
       '@types/glob': 8.0.0
-      '@types/node': 17.0.45
+      '@types/node': 18.11.10
     dev: true
 
   /@types/semver/6.2.3:
@@ -14814,7 +14832,7 @@ packages:
       globrex: 0.1.2
       recrawl-sync: 2.2.3
       tsconfig-paths: 4.1.1
-      vite: 2.9.12
+      vite: 2.9.12_sass@1.56.1
     transitivePeerDependencies:
       - supports-color
     dev: true

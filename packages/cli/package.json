@@ -3,25 +3,29 @@
   "version": "3.31.1",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
-  "homepage": "https://github.com/shopify/cli#readme",
-  "bugs": {
-    "url": "https://github.com/Shopify/cli/issues"
-  },
-  "type": "module",
-  "main": "src/index.js",
-  "module": "src/index.js",
   "keywords": [
     "shopify",
     "shopify-cli",
     "shopify-partners"
   ],
+  "homepage": "https://github.com/shopify/cli#readme",
+  "bugs": {
+    "url": "https://github.com/Shopify/cli/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli/edit/main/packages/cli"
+  },
   "license": "MIT",
+  "type": "module",
   "exports": {
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     }
   },
+  "main": "src/index.js",
+  "module": "src/index.js",
   "bin": {
     "shopify": "./bin/run.js"
   },
@@ -31,19 +35,15 @@
     "/dist",
     "/oclif.manifest.json"
   ],
-  "publishConfig": {
-    "access": "public",
-    "@shopify:registry": "https://registry.npmjs.org"
-  },
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "build": "nx build",
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "test": "nx run cli:test",
-    "test:watch": "nx test:watch",
     "test:coverage": "nx test:coverage",
+    "test:watch": "nx test:watch",
     "type-check": "nx type-check"
   },
   "eslintConfig": {
@@ -57,6 +57,14 @@
         ],
         "parser": "espree",
         "rules": {
+          "@typescript-eslint/naming-convention": "off",
+          "@typescript-eslint/no-floating-promises": "off",
+          "@typescript-eslint/no-misused-promises": "off",
+          "@typescript-eslint/no-unnecessary-type-assertion": "off",
+          "@typescript-eslint/switch-exhaustiveness-check": "off",
+          "import/first": "off",
+          "import/no-unresolved": "off",
+          "node/shebang": "off",
           "rulesdir/specific-imports-in-bootstrap-code": [
             "error",
             {
@@ -64,15 +72,7 @@
                 "../dist/index.js"
               ]
             }
-          ],
-          "@typescript-eslint/switch-exhaustiveness-check": "off",
-          "@typescript-eslint/naming-convention": "off",
-          "@typescript-eslint/no-misused-promises": "off",
-          "@typescript-eslint/no-floating-promises": "off",
-          "@typescript-eslint/no-unnecessary-type-assertion": "off",
-          "node/shebang": "off",
-          "import/first": "off",
-          "import/no-unresolved": "off"
+          ]
         }
       },
       {
@@ -101,14 +101,14 @@
     "@shopify/plugin-ngrok": "3.31.1"
   },
   "devDependencies": {
-    "@vitest/coverage-istanbul": "^0.26.3",
-    "vitest": "^0.26.3",
-    "vite": "^2.9.13",
     "@shopify/app": "3.31.1",
     "@shopify/cli-hydrogen": "3.31.1",
-    "@shopify/theme": "3.31.1"
+    "@shopify/theme": "3.31.1",
+    "@types/node": "14.17.0",
+    "@vitest/coverage-istanbul": "^0.26.3",
+    "vite": "^2.9.13",
+    "vitest": "^0.26.3"
   },
-  "engine-strict": true,
   "engines": {
     "node": ">=14.17.0"
   },
@@ -117,6 +117,11 @@
     "linux",
     "win32"
   ],
+  "publishConfig": {
+    "@shopify:registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "engine-strict": true,
   "oclif": {
     "bin": "shopify",
     "commands": "dist/cli/commands",
@@ -155,9 +160,5 @@
       "prerun": "@shopify/cli-kit/node/hooks/prerun",
       "postrun": "@shopify/cli-kit/node/hooks/postrun"
     }
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Shopify/cli/edit/main/packages/cli"
   }
 }

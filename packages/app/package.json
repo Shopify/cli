@@ -2,34 +2,34 @@
   "name": "@shopify/app",
   "version": "3.31.1",
   "description": "Utilities for loading, building, and publishing apps.",
-  "license": "MIT",
   "homepage": "https://github.com/shopify/cli#readme",
   "bugs": {
     "url": "https://github.com/Shopify/cli/issues"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli/edit/main/packages/app"
+  },
+  "license": "MIT",
   "type": "module",
-  "files": [
-    "/dist",
-    "/assets",
-    "/templates",
-    "/oclif.manifest.json"
-  ],
   "exports": {
     "./node/plugins/*": {
       "import": "./dist/cli/public/plugins/*.js",
       "require": "./dist/cli/public/plugins/*.d.ts"
     }
   },
-  "publishConfig": {
-    "access": "public",
-    "@shopify:registry": "https://registry.npmjs.org"
-  },
+  "files": [
+    "/dist",
+    "/assets",
+    "/templates",
+    "/oclif.manifest.json"
+  ],
   "scripts": {
-    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "build": "nx build",
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "test": "nx run app:test",
     "test:coverage": "nx test:coverage",
     "test:watch": "nx test:watch",
@@ -40,37 +40,10 @@
       "../../.eslintrc.cjs"
     ]
   },
-  "engine-strict": true,
-  "engines": {
-    "node": ">=14.17.0"
-  },
-  "os": [
-    "darwin",
-    "linux",
-    "win32"
-  ],
-  "oclif": {
-    "commands": "dist/cli/commands",
-    "hooks": {
-      "public_command_metadata": "./dist/cli/hooks/public_metadata",
-      "sensitive_command_metadata": "./dist/cli/hooks/sensitive_metadata"
-    }
-  },
-  "devDependencies": {
-    "@types/diff": "^5.0.2",
-    "@types/http-proxy": "^1.17.9",
-    "@types/serve-static": "^1.15.0",
-    "@types/ws": "^8.5.3",
-    "@types/lodash-es": "^4.17.6",
-    "vitest": "^0.26.3",
-    "vite": "^2.9.13",
-    "graphql-tag": "^2.11.0",
-    "graphql": "^16.0.0"
-  },
   "dependencies": {
     "@luckycatfactory/esbuild-graphql-loader": "3.7.0",
-    "@shopify/cli-kit": "3.31.1",
     "@oclif/core": "1.21.0",
+    "@shopify/cli-kit": "3.31.1",
     "@shopify/shopify-cli-extensions": "3.21.0",
     "abort-controller": "3.0.0",
     "chokidar": "3.5.3",
@@ -80,8 +53,36 @@
     "serve-static": "1.15.0",
     "ws": "8.8.1"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Shopify/cli/edit/main/packages/app"
+  "devDependencies": {
+    "@types/diff": "^5.0.2",
+    "@types/http-proxy": "^1.17.9",
+    "@types/lodash-es": "^4.17.6",
+    "@types/node": "14.17.0",
+    "@types/serve-static": "^1.15.0",
+    "@types/ws": "^8.5.3",
+    "graphql": "^16.0.0",
+    "graphql-tag": "^2.11.0",
+    "vite": "^2.9.13",
+    "vitest": "^0.26.3"
+  },
+  "engines": {
+    "node": ">=14.17.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "publishConfig": {
+    "@shopify:registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "engine-strict": true,
+  "oclif": {
+    "commands": "dist/cli/commands",
+    "hooks": {
+      "public_command_metadata": "./dist/cli/hooks/public_metadata",
+      "sensitive_command_metadata": "./dist/cli/hooks/sensitive_metadata"
+    }
   }
 }
