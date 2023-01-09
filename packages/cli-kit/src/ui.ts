@@ -4,7 +4,7 @@ import {info, completed, content, token, logUpdate, Message, Logger, stringifyMe
 import colors from './public/node/colors.js'
 import {relative} from './path.js'
 import {isTerminalInteractive} from './environment/local.js'
-import {mapper as mapperUI, run as executorUI} from './ui/executor.js'
+import {run as executorUI} from './ui/executor.js'
 import {Listr as OriginalListr, ListrTask, ListrTaskState, ListrBaseClassOptions} from 'listr2'
 import findProcess from 'find-process'
 
@@ -119,16 +119,14 @@ ${token.json(questions)}
     `)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mappedQuestions: any[] = questions.map(mapperUI)
   const value = {} as TAnswers
-  for (const question of mappedQuestions) {
+  for (const question of questions) {
     if (question.preface) {
       info(question.preface)
     }
 
     // eslint-disable-next-line no-await-in-loop
-    value[question.name as TName] = await executorUI(question)
+    value[question.name] = (await executorUI(question)) as TAnswers[TName]
   }
   return value
 }

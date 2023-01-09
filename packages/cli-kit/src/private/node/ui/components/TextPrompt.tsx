@@ -8,13 +8,14 @@ import {figures} from 'listr2'
 export interface Props {
   message: string
   onSubmit: (value: string) => void
+  defaultValue?: string
   placeholder?: string
   password?: boolean
 }
 
-const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder, password = false}) => {
+const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder, defaultValue = '', password = false}) => {
   const {oneThird} = useLayout()
-  const [answer, setAnswer] = useState<string>('')
+  const [answer, setAnswer] = useState<string>(defaultValue)
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
   const [valid, setValid] = useState(false)

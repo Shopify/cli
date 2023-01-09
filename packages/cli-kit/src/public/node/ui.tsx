@@ -205,7 +205,7 @@ export function renderFatalError(error: Fatal) {
  *     navigate with arrows, enter to select
  */
 export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit'>) {
-  return new Promise((resolve, reject) => {
+  return new Promise<T>((resolve, reject) => {
     render(<SelectPrompt {...props} onSubmit={(value: T) => resolve(value)} />, {
       exitOnCtrlC: false,
     }).catch(reject)
@@ -226,7 +226,7 @@ export function renderTasks(tasks: Task[]) {
  * \>  John
  */
 export function renderTextPrompt(props: Omit<TextPromptProps, 'onSubmit'>) {
-  return new Promise((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
       exitOnCtrlC: false,
     }).catch(reject)

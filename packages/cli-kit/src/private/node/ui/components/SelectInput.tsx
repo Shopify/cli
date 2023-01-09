@@ -110,15 +110,11 @@ export default function SelectInput<T>({items, onChange}: React.PropsWithChildre
   return (
     <Box flexDirection="column">
       {groupTitles.map((title) => {
-        const hasTitle = title !== 'undefined'
-
         return (
-          <Box key={title} flexDirection="column" marginTop={hasTitle ? 1 : 0}>
-            {hasTitle && (
-              <Box marginLeft={3}>
-                <Text bold>{title}</Text>
-              </Box>
-            )}
+          <Box key={title} flexDirection="column" marginTop={1}>
+            <Box marginLeft={3}>
+              <Text bold>{title === 'undefined' ? 'Other' : title}</Text>
+            </Box>
             {groupedItems[title]!.map((item) => {
               const isSelected = item.index === selectedIndex
 

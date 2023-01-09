@@ -1,51 +1,63 @@
-import {CustomInput} from './inquirer/input.js'
 import {CustomAutocomplete} from './inquirer/autocomplete.js'
 import {CustomSelect} from './inquirer/select.js'
 import {CustomPassword} from './inquirer/password.js'
 import {PromptAnswer, Question, QuestionChoiceType} from '../ui.js'
 import inquirer, {Answers, QuestionCollection} from 'inquirer'
 import fuzzy from 'fuzzy'
+import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
-export async function run<
-  TName extends string & keyof TAnswers,
-  TAnswers extends {[key in TName]: string} = {[key in TName]: string},
->(question: unknown): Promise<TAnswers> {
-  const questionName = (question as Question).name
-  return (await inquirer.prompt(question as QuestionCollection<Answers>, {...(question as Question).choices}))[
-    questionName
-  ]
-}
+export async function run(question: Question): Promise<string> {
+  const questionName = question.name
+  let mappedQuestion
 
-export function mapper(question: Question): unknown {
   switch (question.type) {
     case 'input':
-      inquirer.registerPrompt('custom-input', CustomInput)
-      return {
+      mappedQuestion = {
         ...question,
-        type: 'custom-input',
+        defaultValue: question.default,
       }
+
+      return renderTextPrompt(mappedQuestion)
     case 'password':
       inquirer.registerPrompt('custom-password', CustomPassword)
-      return {
+      mappedQuestion = {
         ...question,
         type: 'custom-password',
       }
+
+      return (
+        await inquirer.prompt(mappedQuestion as QuestionCollection<Answers>, {
+          ...(mappedQuestion as Question).choices,
+        })
+      )[questionName]
     case 'select':
       inquirer.registerPrompt('custom-select', CustomSelect)
-      return {
+      mappedQuestion = {
         ...question,
         type: 'custom-select',
         source: getAutocompleteFilterType(),
         choices: question.choices ? groupAndMapChoices(question.choices) : undefined,
       }
+
+      return (
+        await inquirer.prompt(mappedQuestion as QuestionCollection<Answers>, {
+          ...mappedQuestion.choices,
+        })
+      )[questionName]
     case 'autocomplete': {
       inquirer.registerPrompt('autocomplete', CustomAutocomplete)
       const filterType = getAutocompleteFilterType()
-      return {
+      mappedQuestion = {
         ...question,
         type: 'autocomplete',
         source: question.source ? question.source(filterType) : filterType,
       }
+
+      return (
+        await inquirer.prompt(mappedQuestion as QuestionCollection<Answers>, {
+          ...mappedQuestion.choices,
+        })
+      )[questionName]
     }
   }
 }
