@@ -25,9 +25,6 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
       websocketURL: 'wss://mock-websocket-url.com',
       extensions: [{}, {}, {}],
       storeFqdn: 'mock-store-fqdn.shopify.com',
-      app: {
-        name: 'mock-app-name',
-      },
     } as unknown as ExtensionsPayloadStoreOptions
 
     // When
