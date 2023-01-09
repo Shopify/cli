@@ -5,6 +5,7 @@ export interface ExtensionsPayloadInterface {
   app: {
     apiKey: string
     url: string
+    mobileUrl: string
     title: string
   }
   appId?: string

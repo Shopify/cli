@@ -23,11 +23,14 @@ export function Extensions() {
     },
   } = useExtensionsInternal()
 
-  const [activeMobileQRCode, setActiveMobileQRCode] = useState<{
-    url: string
-    type: ExtensionPayload['surface'] | 'home'
-    title: string
-  } | null>(null)
+  const [activeMobileQRCode, setActiveMobileQRCode] = useState<
+    | {
+        url: string
+        type: ExtensionPayload['surface'] | 'home'
+        title: string
+      }
+    | undefined
+  >(undefined)
 
   const ConsoleContent = () => (
     <section className={styles.ExtensionList}>
@@ -90,13 +93,7 @@ export function Extensions() {
   return (
     <>
       {extensions.length > 0 ? <ConsoleContent /> : <ConsoleEmpty />}
-      <QRCodeModal
-        url={activeMobileQRCode?.url}
-        type={activeMobileQRCode?.type}
-        title={activeMobileQRCode?.title}
-        open={activeMobileQRCode !== null}
-        onClose={() => setActiveMobileQRCode(null)}
-      />
+      <QRCodeModal code={activeMobileQRCode} onClose={() => setActiveMobileQRCode(undefined)} />
     </>
   )
 }

@@ -110,7 +110,7 @@ describe('Extensions', () => {
     })
 
     expect(container).toContainReactComponent(QRCodeModal, {
-      open: false,
+      code: undefined,
     })
   })
 
@@ -127,9 +127,11 @@ describe('Extensions', () => {
     })
 
     expect(container).toContainReactComponent(QRCodeModal, {
-      open: true,
-      url: extension1.development.root.url,
-      type: extension1.surface,
+      code: {
+        url: extension1.development.root.url,
+        type: extension1.surface,
+        title: extension1.title,
+      },
     })
 
     container.act(() => {
@@ -137,7 +139,7 @@ describe('Extensions', () => {
     })
 
     expect(container).toContainReactComponent(QRCodeModal, {
-      open: false,
+      code: undefined,
     })
   })
 
@@ -158,10 +160,11 @@ describe('Extensions', () => {
     })
 
     expect(container).toContainReactComponent(QRCodeModal, {
-      open: true,
-      url: 'mock.url',
-      title: 'Mock App Title',
-      type: 'home',
+      code: {
+        url: 'mock.url',
+        title: 'Mock App Title',
+        type: 'home',
+      },
     })
 
     container.act(() => {
@@ -169,7 +172,7 @@ describe('Extensions', () => {
     })
 
     expect(container).toContainReactComponent(QRCodeModal, {
-      open: false,
+      code: undefined,
     })
   })
 })

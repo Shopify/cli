@@ -7,37 +7,20 @@ import {useI18n} from '@shopify/react-i18n'
 import copyToClipboard from 'copy-to-clipboard'
 import QRCode from 'qrcode.react'
 import {toast} from 'react-toastify'
-import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
+import {Surface} from '@shopify/ui-extensions-server-kit'
 import {useExtensionsInternal} from '@/sections/Extensions/hooks/useExtensionsInternal'
 
-export interface QRCodeModalProps extends Pick<ModalProps, 'open' | 'onClose'> {
-  url?: string
-  title?: string
-  type?: ExtensionPayload['surface'] | 'home'
-}
-
-export function QRCodeModal({url, title, type, ...modalProps}: QRCodeModalProps) {
-  const [i18n] = useI18n({
-    id: 'QRCodeModal',
-    fallback: en,
-  })
-
-  const content = url && title && type ? <QRCodeContent type={type} title={title} url={url} /> : null
-
-  return (
-    <Modal title={i18n.translate('title', {title})} {...modalProps} titleHidden sectioned small noScroll>
-      {content}
-    </Modal>
-  )
-}
-
-export interface QRCodeContentProps {
+interface Code {
   url: string
   title: string
-  type: ExtensionPayload['surface'] | 'home'
+  type: Surface | 'home'
 }
 
-export function QRCodeContent({url, title, type}: QRCodeContentProps) {
+export interface QRCodeModalProps extends Pick<ModalProps, 'onClose'> {
+  code?: Code
+}
+
+export function QRCodeModal({code, onClose}: QRCodeModalProps) {
   const [i18n] = useI18n({
     id: 'QRCodeModal',
     fallback: en,
@@ -47,24 +30,62 @@ export function QRCodeContent({url, title, type}: QRCodeContentProps) {
     state: {store, app},
   } = useExtensionsInternal()
 
-  const apiKey = app?.apiKey
+  return (
+    <Modal
+      title={i18n.translate('title', {title: code?.title})}
+      open={Boolean(code)}
+      onClose={onClose}
+      titleHidden
+      sectioned
+      small
+      noScroll
+    >
+      {code && store && app ? <QRCodeContent {...code} /> : null}
+    </Modal>
+  )
+}
+
+export function QRCodeContent({url, title, type}: Code) {
+  const [i18n] = useI18n({
+    id: 'QRCodeModal',
+    fallback: en,
+  })
+
+  const {
+    state: {store, app},
+  } = useExtensionsInternal()
+
   const qrCodeURL = useMemo(() => {
+    // The Websocket hasn't loaded data yet.
+    // Shouldn't happen since you can't open modal without data,
+    // but just in case.
+    if (!app) {
+      return null
+    }
+
+    // View a POS extension in POS app
     if (type === 'point_of_sale') {
       return `com.shopify.pos://pos-ui-extensions?url=${url}`
     }
 
+    // View app home (iframe) in mobile app
     if (type === 'home') {
-      return `https://${store}/admin/apps/${apiKey}`
+      return app.mobileUrl
     }
 
+    // View a UI extension in mobile app
     return `https://${store}/admin/extensions-dev/mobile?url=${url}`
-  }, [store, url, apiKey])
+  }, [url, app, app?.mobileUrl])
 
   const onButtonClick = useCallback(() => {
     if (qrCodeURL && copyToClipboard(qrCodeURL)) {
       toast(i18n.translate('qrcode.copied'), {toastId: `copy-qrcode-${qrCodeURL}`})
     }
   }, [qrCodeURL])
+
+  if (!qrCodeURL) {
+    return null
+  }
 
   return (
     <div className={styles.Wrapper}>
