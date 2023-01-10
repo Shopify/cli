@@ -10,6 +10,7 @@ import {api} from '@shopify/cli-kit'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {FlattenedRemoteSpecification} from '@shopify/cli-kit/src/api/graphql/extension_specifications.js'
 import {Config} from '@oclif/core'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 type ExtensionSpec = UIExtensionSpec | ThemeExtensionSpec
 
@@ -38,7 +39,7 @@ export async function fetchSpecifications({
   config,
 }: FetchSpecificationsOptions): Promise<GenericSpecification[]> {
   const query = api.graphql.ExtensionSpecificationsQuery
-  const result: api.graphql.ExtensionSpecificationsQuerySchema = await api.partners.partnersRequest(query, token, {
+  const result: api.graphql.ExtensionSpecificationsQuerySchema = await partnersRequest(query, token, {
     api_key: apiKey,
   })
 

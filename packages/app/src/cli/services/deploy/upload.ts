@@ -5,6 +5,7 @@ import {api, error, session, http, output, file} from '@shopify/cli-kit'
 
 import fs from 'fs'
 import {randomUUID} from 'crypto'
+import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 interface DeployThemeExtensionOptions {
   /** The application API key */
@@ -37,11 +38,7 @@ export async function uploadThemeExtensions(
         registrationId: themeId,
       }
       const mutation = api.graphql.ExtensionUpdateDraftMutation
-      const result: api.graphql.ExtensionUpdateSchema = await api.partners.partnersRequest(
-        mutation,
-        token,
-        themeExtensionInput,
-      )
+      const result: api.graphql.ExtensionUpdateSchema = await partnersRequest(mutation, token, themeExtensionInput)
       if (result.extensionUpdateDraft?.userErrors?.length > 0) {
         const errors = result.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
         throw new error.Abort(errors)
@@ -99,11 +96,7 @@ export async function uploadUIExtensionsBundle(
   }
 
   const mutation = api.graphql.CreateDeployment
-  const result: api.graphql.CreateDeploymentSchema = await api.partners.partnersRequest(
-    mutation,
-    options.token,
-    variables,
-  )
+  const result: api.graphql.CreateDeploymentSchema = await partnersRequest(mutation, options.token, variables)
 
   if (result.deploymentCreate?.userErrors?.length > 0) {
     const errors = result.deploymentCreate.userErrors.map((error) => error.message).join(', ')
@@ -133,11 +126,7 @@ export async function getUIExtensionUploadURL(apiKey: string, deploymentUUID: st
     bundleFormat: 1,
   }
 
-  const result: api.graphql.GenerateSignedUploadUrlSchema = await api.partners.partnersRequest(
-    mutation,
-    token,
-    variables,
-  )
+  const result: api.graphql.GenerateSignedUploadUrlSchema = await partnersRequest(mutation, token, variables)
   if (result.deploymentGenerateSignedUploadUrl?.userErrors?.length > 0) {
     const errors = result.deploymentGenerateSignedUploadUrl.userErrors.map((error) => error.message).join(', ')
     throw new error.Abort(errors)
@@ -231,7 +220,7 @@ async function uploadFunctionExtension(
     moduleUploadUrl: url,
   }
 
-  const res: api.graphql.AppFunctionSetMutationSchema = await api.partners.functionProxyRequest(
+  const res: api.graphql.AppFunctionSetMutationSchema = await functionProxyRequest(
     options.apiKey,
     query,
     options.token,
@@ -286,7 +275,7 @@ async function getFunctionExtensionUploadURL(
   options: GetFunctionExtensionUploadURLOptions,
 ): Promise<GetFunctionExtensionUploadURLOutput> {
   const query = api.graphql.UploadUrlGenerateMutation
-  const res: api.graphql.UploadUrlGenerateMutationSchema = await api.partners.functionProxyRequest(
+  const res: api.graphql.UploadUrlGenerateMutationSchema = await functionProxyRequest(
     options.apiKey,
     query,
     options.token,

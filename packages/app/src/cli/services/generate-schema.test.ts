@@ -4,27 +4,23 @@ import * as identifiers from '../models/app/identifiers.js'
 import {testApp, testFunctionExtension} from '../models/app/app.test-data.js'
 import {api, environment, error} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, MockedFunction, vi} from 'vitest'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 describe('generateSchemaService', () => {
   const token = 'token'
-  const request = api.partners.partnersRequest as MockedFunction<typeof api.partners.partnersRequest>
+  const request = partnersRequest as MockedFunction<typeof partnersRequest>
   const isTerminalInteractive = environment.local.isTerminalInteractive as MockedFunction<
     typeof environment.local.isTerminalInteractive
   >
 
   beforeEach(() => {
+    vi.mock('@shopify/cli-kit/node/api/partners')
     vi.mock('@shopify/cli-kit', async () => {
       const cliKit: any = await vi.importActual('@shopify/cli-kit')
       return {
         ...cliKit,
         session: {
           ensureAuthenticatedPartners: () => 'token',
-        },
-        api: {
-          partners: {
-            request: vi.fn(),
-          },
-          graphql: cliKit.api.graphql,
         },
         environment: {
           ...cliKit.environment,

@@ -3,22 +3,18 @@ import {Identifiers} from '../../models/app/identifiers.js'
 import {FunctionExtension} from '../../models/app/extensions.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {error, path, file, api, http} from '@shopify/cli-kit'
+import {functionProxyRequest} from '@shopify/cli-kit/node/api/partners'
 
 afterEach(() => {
   vi.restoreAllMocks()
 })
 
 beforeEach(() => {
+  vi.mock('@shopify/cli-kit/node/api/partners')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
       ...cliKit,
-      api: {
-        ...cliKit.api,
-        partners: {
-          functionProxyRequest: vi.fn(),
-        },
-      },
       http: {
         fetch: vi.fn(),
       },
@@ -76,13 +72,13 @@ describe('uploadFunctionExtensions', () => {
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
       const uploadURLError = new Error('upload error')
-      vi.mocked(api.partners.functionProxyRequest).mockRejectedValueOnce(uploadURLError)
+      vi.mocked(functionProxyRequest).mockRejectedValueOnce(uploadURLError)
 
       // When
       await expect(uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrow(uploadURLError)
 
       // Then
-      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(
         1,
         identifiers.app,
         api.graphql.UploadUrlGenerateMutation,
@@ -107,14 +103,14 @@ describe('uploadFunctionExtensions', () => {
         },
       }
       const uploadError = new Error('error')
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
       vi.mocked(http.fetch).mockRejectedValue(uploadError)
 
       // When
       await expect(uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrow(uploadError)
 
       // Then
-      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(
         1,
         identifiers.app,
         api.graphql.UploadUrlGenerateMutation,
@@ -138,7 +134,7 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       }
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
 
       const fetch = vi.fn().mockResolvedValueOnce({
         status: 400,
@@ -158,7 +154,7 @@ describe('uploadFunctionExtensions', () => {
       )
 
       // Then
-      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(
         1,
         identifiers.app,
         api.graphql.UploadUrlGenerateMutation,
@@ -182,7 +178,7 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       }
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
 
       const fetch = vi.fn().mockResolvedValueOnce({
         status: 401,
@@ -202,7 +198,7 @@ describe('uploadFunctionExtensions', () => {
       )
 
       // Then
-      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(
         1,
         identifiers.app,
         api.graphql.UploadUrlGenerateMutation,
@@ -226,7 +222,7 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       }
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
 
       const fetch = vi.fn().mockResolvedValueOnce({
         status: 500,
@@ -244,7 +240,7 @@ describe('uploadFunctionExtensions', () => {
       )
 
       // Then
-      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(
         1,
         identifiers.app,
         api.graphql.UploadUrlGenerateMutation,
@@ -268,7 +264,7 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       }
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
 
       const fetch = vi.fn().mockResolvedValueOnce({
         status: 399,
@@ -286,7 +282,7 @@ describe('uploadFunctionExtensions', () => {
       )
 
       // Then
-      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(
         1,
         identifiers.app,
         api.graphql.UploadUrlGenerateMutation,
@@ -311,14 +307,14 @@ describe('uploadFunctionExtensions', () => {
         },
       }
       const uploadError = new Error('error')
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
       vi.mocked(http.fetch).mockRejectedValue(uploadError)
 
       // When
       await expect(uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrow(uploadError)
 
       // Then
-      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(
         1,
         identifiers.app,
         api.graphql.UploadUrlGenerateMutation,
@@ -343,9 +339,9 @@ describe('uploadFunctionExtensions', () => {
         },
       }
       const updateAppFunctionError = new Error('error')
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
       vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      vi.mocked(api.partners.functionProxyRequest).mockRejectedValueOnce(updateAppFunctionError)
+      vi.mocked(functionProxyRequest).mockRejectedValueOnce(updateAppFunctionError)
 
       // When
       await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
@@ -353,7 +349,7 @@ describe('uploadFunctionExtensions', () => {
       )
 
       // Then
-      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(
         1,
         identifiers.app,
         api.graphql.UploadUrlGenerateMutation,
@@ -364,7 +360,7 @@ describe('uploadFunctionExtensions', () => {
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
       })
-      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(
         2,
         identifiers.app,
         api.graphql.AppFunctionSetMutation,
@@ -414,9 +410,9 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       }
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
       vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
 
       // When
       await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
@@ -424,7 +420,7 @@ describe('uploadFunctionExtensions', () => {
       )
 
       // Then
-      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(
         1,
         identifiers.app,
         api.graphql.UploadUrlGenerateMutation,
@@ -435,7 +431,7 @@ describe('uploadFunctionExtensions', () => {
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
       })
-      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(
         2,
         identifiers.app,
         api.graphql.AppFunctionSetMutation,
@@ -483,16 +479,16 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       }
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
       vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
 
       // When
       const got = await uploadFunctionExtensions([extension], {token, identifiers})
 
       // Then
       expect(got.extensions[extension.localIdentifier]).toEqual(createdID)
-      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(
         1,
         identifiers.app,
         api.graphql.UploadUrlGenerateMutation,
@@ -503,7 +499,7 @@ describe('uploadFunctionExtensions', () => {
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
       })
-      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(
         2,
         identifiers.app,
         api.graphql.AppFunctionSetMutation,
@@ -551,15 +547,15 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       }
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
       vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
 
       // When
       await uploadFunctionExtensions([extension], {token, identifiers})
 
       // Then
-      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(
         2,
         identifiers.app,
         api.graphql.AppFunctionSetMutation,
@@ -604,15 +600,15 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       }
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
       vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
 
       // When
       await uploadFunctionExtensions([extension], {token, identifiers})
 
       // Then
-      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(
         2,
         identifiers.app,
         api.graphql.AppFunctionSetMutation,
@@ -662,16 +658,16 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       }
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
       vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      vi.mocked(api.partners.functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
 
       // When
       const got = await uploadFunctionExtensions([extension], {token, identifiers})
 
       // Then
       expect(got.extensions[extension.localIdentifier]).toEqual(updatedID)
-      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(
         1,
         identifiers.app,
         api.graphql.UploadUrlGenerateMutation,
@@ -682,7 +678,7 @@ describe('uploadFunctionExtensions', () => {
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
       })
-      expect(api.partners.functionProxyRequest).toHaveBeenNthCalledWith(
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(
         2,
         identifiers.app,
         api.graphql.AppFunctionSetMutation,

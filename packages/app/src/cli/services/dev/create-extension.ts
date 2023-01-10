@@ -1,4 +1,5 @@
 import {api, error} from '@shopify/cli-kit'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export interface ExtensionRegistration {
   id: string
@@ -29,7 +30,7 @@ export async function createExtension(
     config: JSON.stringify({}),
     context: null,
   }
-  const result: api.graphql.ExtensionCreateSchema = await api.partners.partnersRequest(query, token, variables)
+  const result: api.graphql.ExtensionCreateSchema = await partnersRequest(query, token, variables)
 
   if (result.extensionCreate.userErrors?.length > 0) {
     const errors = result.extensionCreate.userErrors.map((error) => error.message).join(', ')

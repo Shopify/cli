@@ -6,9 +6,10 @@ import {
 } from './graphql/create_deployment.js'
 import {UnrecoverableError, WebPageNotAvailable, TooManyRequestsError} from './error.js'
 import {UploadDeploymentQuery} from './graphql/upload_deployment.js'
-import {api, http, file} from '@shopify/cli-kit'
+import {http, file} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {ClientError} from 'graphql-request'
+import {uploadDeploymentFile, oxygenRequest} from '@shopify/cli-kit/node/api/oxygen'
 
 export const createDeployment = async (config: ReqDeployConfig): Promise<CreateDeploymentResponse> => {
   const variables = {
@@ -22,7 +23,7 @@ export const createDeployment = async (config: ReqDeployConfig): Promise<CreateD
   }
 
   try {
-    const response: CreateDeploymentQuerySchema = await api.oxygen.oxygenRequest(
+    const response: CreateDeploymentQuerySchema = await oxygenRequest(
       config.oxygenAddress,
       CreateDeploymentQuery,
       config.deploymentToken,
@@ -62,7 +63,7 @@ export const uploadDeployment = async (config: ReqDeployConfig, deploymentID: st
     formData.append('map', JSON.stringify({'0': ['variables.file']}))
     formData.append('0', file.createReadStream(distZipPath), {filename: distZipPath})
 
-    const response = await api.oxygen.uploadDeploymentFile(config.oxygenAddress, config.deploymentToken, formData)
+    const response = await uploadDeploymentFile(config.oxygenAddress, config.deploymentToken, formData)
     if (!response.ok) {
       if (response.status === 429) {
         throw TooManyRequestsError()

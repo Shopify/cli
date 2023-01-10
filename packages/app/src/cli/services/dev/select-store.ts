@@ -2,6 +2,7 @@ import {fetchAllDevStores} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {error, output, api, system, ui, environment} from '@shopify/cli-kit'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 const CreateStoreLink = async (orgId: string) => {
   const url = `https://${await environment.fqdn.partners()}/${orgId}/stores/new?store_type=dev_store`
@@ -123,7 +124,7 @@ export async function convertStoreToTest(store: OrganizationStore, orgId: string
       shopId: store.shopId,
     },
   }
-  const result: api.graphql.ConvertDevToTestStoreSchema = await api.partners.partnersRequest(query, token, variables)
+  const result: api.graphql.ConvertDevToTestStoreSchema = await partnersRequest(query, token, variables)
   if (!result.convertDevToTestStore.convertedToTestStore) {
     const errors = result.convertDevToTestStore.userErrors.map((error) => error.message).join(', ')
     throw new error.Bug(

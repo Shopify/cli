@@ -1,11 +1,14 @@
 import {getWebhookSample} from './request-sample.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {api, session} from '@shopify/cli-kit'
+import {session} from '@shopify/cli-kit'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners.js'
+import {ciPlatform} from '@shopify/cli-kit/src/environment/local.js'
 
 const samplePayload = '{ "sampleField": "SampleValue" }'
 const sampleHeaders = '{ "header": "Header Value" }'
 
 beforeEach(async () => {
+  vi.mock('@shopify/cli-kit/node/api/partners')
   vi.mock('@shopify/cli-kit')
 })
 
@@ -45,9 +48,8 @@ describe('getWebhookSample', () => {
         ],
       },
     }
-    vi.mocked(api.partners.partnersRequest).mockResolvedValue(graphQLResult)
+    vi.mocked(partnersRequest).mockResolvedValue(graphQLResult)
 
-    const requestSpy = vi.spyOn(api.partners, 'request')
     const sessionSpy = vi.spyOn(session, 'ensureAuthenticatedPartners')
 
     // When
@@ -61,7 +63,7 @@ describe('getWebhookSample', () => {
 
     // Then
     expect(sessionSpy).toHaveBeenCalledOnce()
-    expect(requestSpy).toHaveBeenCalledWith(expect.any(String), 'A_TOKEN', requestValues)
+    expect(partnersRequest).toHaveBeenCalledWith(expect.any(String), 'A_TOKEN', requestValues)
     expect(got.samplePayload).toEqual(samplePayload)
     expect(got.headers).toEqual(sampleHeaders)
     expect(got.success).toEqual(graphQLResult.sendSampleWebhook.success)
