@@ -27,9 +27,6 @@ interface ExecCLI2Options {
   directory?: string
   // A signal to stop the process execution.
   signal?: AbortSignal
-  // The environment variables to expose to the process.
-  // When not provided it defaults to the current process' environment.
-  env?: NodeJS.ProcessEnv
 }
 /**
  * Execute CLI 2.0 commands.
@@ -41,12 +38,12 @@ interface ExecCLI2Options {
  */
 export async function execCLI2(args: string[], options: ExecCLI2Options = {}): Promise<void> {
   await installCLIDependencies()
-  const env = {
+  const env: NodeJS.ProcessEnv = {
     ...process.env,
     SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: options.storefrontToken,
     SHOPIFY_CLI_ADMIN_AUTH_TOKEN: options.adminSession?.token,
     SHOPIFY_SHOP: options.adminSession?.storeFqdn,
-    SHOPIFY_CLI_AUTH_TOKEN: token,
+    SHOPIFY_CLI_AUTH_TOKEN: options.token,
     SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
     // Bundler uses this Gemfile to understand which gems are available in the
     // environment. We use this to specify our own Gemfile for CLI2, which exists
@@ -58,7 +55,7 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
     await system.exec(bundleExecutable(), ['exec', 'shopify'].concat(args), {
       stdio: 'inherit',
       cwd: options.directory ?? process.cwd(),
-      env: options.env,
+      env,
       signal: options.signal,
     })
   } catch (error) {
