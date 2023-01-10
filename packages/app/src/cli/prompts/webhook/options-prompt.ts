@@ -13,7 +13,7 @@ import {
   isAddressAllowedForDeliveryMethod,
 } from '../../services/webhook/trigger-options.js'
 import {requestApiVersions} from '../../services/webhook/request-api-versions.js'
-import {error, output} from '@shopify/cli-kit'
+import {error} from '@shopify/cli-kit'
 
 /**
  * Flags collected from the command line parameters
@@ -57,11 +57,14 @@ export async function optionsPrompt(flags: WebhookTriggerFlags): Promise<Webhook
     if (availableVersions.includes(passedApiVersion)) {
       options.apiVersion = passedApiVersion
     } else {
-      await output.consoleError(
-        `Api Version ${passedApiVersion} does not exist. Allowed values: ${availableVersions.join(', ')}`,
+      throw new error.Abort(
+        `Api Version '${passedApiVersion}' does not exist`,
+        `Allowed values: ${availableVersions.join(', ')}`,
+        ['Try again with a valid api-version value'],
       )
-      options.apiVersion = await apiVersionPrompt(availableVersions)
     }
+  } else {
+    options.apiVersion = await apiVersionPrompt(availableVersions)
   }
 
   const methodPassed = flagPassed(flags.deliveryMethod)
@@ -71,6 +74,7 @@ export async function optionsPrompt(flags: WebhookTriggerFlags): Promise<Webhook
     throw new error.Abort(
       'Invalid Delivery Method passed',
       `${DELIVERY_METHOD.HTTP}, ${DELIVERY_METHOD.PUBSUB}, and ${DELIVERY_METHOD.EVENTBRIDGE} are allowed`,
+      ['Try again with a valid delivery method'],
     )
   }
 
@@ -80,8 +84,8 @@ export async function optionsPrompt(flags: WebhookTriggerFlags): Promise<Webhook
       options.deliveryMethod = inferMethodFromAddress(options.address)
     } else {
       throw new error.Abort(
-        "Can't deliver your webhook payload to this address. Run 'shopify webhook trigger --address=<VALUE>' with a valid URL",
-        undefined,
+        "Can't deliver your webhook payload to this address",
+        "Run 'shopify webhook trigger --address=<VALUE>' with a valid URL",
         deliveryMethodInstructions(flags.deliveryMethod as string),
       )
     }
