@@ -2,6 +2,7 @@ import {PartnersURLs} from './urls.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
 import {OrganizationApp} from '../../models/organization.js'
+import {buildAppURLForWeb} from '../../utilities/app/app-url.js'
 import {output, environment} from '@shopify/cli-kit'
 
 export async function outputUpdateURLsResult(
@@ -33,7 +34,7 @@ export function outputUpdatedURLFirstTime(url: string, dashboardURL: string) {
 export function outputAppURL(storeFqdn: string, url: string) {
   const title = url.includes('localhost') ? 'App URL' : 'Shareable app URL'
   const heading = output.token.heading(title)
-  const appURL = buildAppURL(storeFqdn, url)
+  const appURL = buildAppURLForWeb(storeFqdn, url)
   output.info(output.content`\n\n${heading}\n\n  ${appURL}\n`)
 }
 
@@ -76,12 +77,6 @@ function outputThemeExtensionsMessage(extensions: ThemeExtension[]) {
     const message = extension.previewMessage('', '')
     if (message) output.info(message)
   }
-}
-
-function buildAppURL(storeFqdn: string, publicURL: string) {
-  const hostUrl = `${storeFqdn}/admin`
-  const hostParam = Buffer.from(hostUrl).toString('base64').replace(/[=]/g, '')
-  return `${publicURL}?shop=${storeFqdn}&host=${hostParam}`
 }
 
 async function partnersURL(organizationId: string, appId: string): Promise<string> {
