@@ -16,7 +16,7 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-import {decodeToml} from '@shopify/cli-kit/node/toml.js'
+import {decodeToml} from '@shopify/cli-kit/node/toml'
 
 const defaultExtensionDirectory = 'extensions/*'
 
