@@ -8,31 +8,28 @@ import React, {useEffect, useState} from 'react'
  */
 const FullScreen: React.FC = ({children}): JSX.Element => {
   const {stdout} = useStdout()
-
-  if (!stdout) {
-    throw new Error('Could not find stdout')
-  }
+  const standardOutput = stdout!
 
   const [size, setSize] = useState({
-    columns: stdout.columns,
-    rows: stdout.rows,
+    columns: standardOutput.columns,
+    rows: standardOutput.rows,
   })
 
   useEffect(() => {
     function onResize() {
       setSize({
-        columns: stdout!.columns,
-        rows: stdout!.rows,
+        columns: standardOutput.columns,
+        rows: standardOutput.rows,
       })
     }
 
-    stdout.on('resize', onResize)
+    standardOutput.on('resize', onResize)
     // switch to an alternate buffer
-    stdout.write('\u001B[?1049h')
+    standardOutput.write('\u001B[?1049h')
     return () => {
-      stdout.off('resize', onResize)
+      standardOutput.off('resize', onResize)
       // switch back to the main buffer
-      stdout.write('\u001B[?1049l')
+      standardOutput.write('\u001B[?1049l')
     }
   }, [])
 
