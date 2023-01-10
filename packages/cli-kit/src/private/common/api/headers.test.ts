@@ -6,7 +6,7 @@ import {randomUUID} from 'crypto'
 
 beforeEach(() => {
   vi.mock('crypto')
-  vi.mock('../environment/local', async () => {
+  vi.mock('../../../environment/local', async () => {
     return {
       isVerbose: vi.fn(),
       firstPartyDev: vi.fn(),
