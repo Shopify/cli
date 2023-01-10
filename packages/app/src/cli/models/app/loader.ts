@@ -6,7 +6,7 @@ import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
 import {ThemeExtensionInstance, ThemeExtensionSpec} from '../extensions/theme.js'
 import {ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
 import {FunctionInstance, FunctionSpec} from '../extensions/functions.js'
-import {error, file, path, schema, string, toml, output, environment} from '@shopify/cli-kit'
+import {error, file, path, schema, toml, output, environment} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
   getDependencies,
@@ -17,6 +17,7 @@ import {
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {camelize} from '@shopify/cli-kit/common/string'
+import {hashString} from '@shopify/cli-kit/node/crypto'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -483,8 +484,8 @@ async function logMetadataForLoadedApp(
       app_extensions_ui_any: extensionUICount > 0,
       app_extensions_ui_count: extensionUICount,
       app_extensions_ui_custom_layout: loadingStrategy.usedCustomLayoutForUIExtensions,
-      app_name_hash: string.hashString(app.name),
-      app_path_hash: string.hashString(app.directory),
+      app_name_hash: hashString(app.name),
+      app_path_hash: hashString(app.directory),
       app_scopes: JSON.stringify(
         app.configuration.scopes
           .split(',')

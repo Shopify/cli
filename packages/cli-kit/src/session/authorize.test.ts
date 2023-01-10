@@ -1,7 +1,7 @@
 import {authorize, MismatchStateError} from './authorize.js'
 import {listenRedirect} from './redirect-listener.js'
 import {clientId} from './identity.js'
-import {generateRandomChallengePair, randomHex} from '../string.js'
+import {randomHex, base64URLEncode} from '../public/node/crypto.js'
 import {open} from '../system.js'
 import {identity} from '../environment/fqdn.js'
 import {terminateBlockingPortProcessPrompt} from '../ui.js'
@@ -13,7 +13,7 @@ import {describe, it, expect, vi} from 'vitest'
 
 vi.mock('../system')
 vi.mock('./redirect-listener')
-vi.mock('../string')
+vi.mock('../public/node/crypto.js')
 vi.mock('../environment/fqdn')
 vi.mock('./identity')
 vi.mock('../ui')
@@ -32,10 +32,11 @@ describe('authorize', () => {
     }
     vi.mocked(checkPort).mockResolvedValue(port)
     vi.mocked(randomHex).mockReturnValue('hex')
-    vi.mocked(generateRandomChallengePair).mockReturnValue(challenge)
+    vi.mocked(base64URLEncode).mockReturnValueOnce('verifier')
+    vi.mocked(base64URLEncode).mockReturnValueOnce('challenge')
     vi.mocked(listenRedirect).mockResolvedValue({code: 'code', state: 'state'})
     vi.mocked(identity).mockResolvedValue('fqdn.com')
-    vi.mocked(clientId).mockResolvedValue('clientId')
+    vi.mocked(clientId).mockReturnValue('clientId')
 
     // When
     const got = await authorize(['scope1', 'scope2'], 'state')
@@ -54,10 +55,6 @@ describe('authorize', () => {
     vi.mocked(checkPort).mockResolvedValue(port)
     vi.mocked(randomHex).mockReturnValue('hex')
     vi.mocked(listenRedirect).mockResolvedValue({code: 'code', state: 'bad'})
-    vi.mocked(generateRandomChallengePair).mockReturnValue({
-      codeChallenge: 'challenge',
-      codeVerifier: 'verifier',
-    })
 
     // When
     const auth = () => authorize(['scope1', 'scope2'], 'state')
@@ -86,10 +83,11 @@ describe('authorize', () => {
       codeVerifier: 'verifier',
     }
     vi.mocked(randomHex).mockReturnValue('hex')
-    vi.mocked(generateRandomChallengePair).mockReturnValue(challenge)
+    vi.mocked(base64URLEncode).mockReturnValueOnce('verifier')
+    vi.mocked(base64URLEncode).mockReturnValueOnce('challenge')
     vi.mocked(listenRedirect).mockResolvedValue({code: 'code', state: 'state'})
     vi.mocked(identity).mockResolvedValue('fqdn.com')
-    vi.mocked(clientId).mockResolvedValue('clientId')
+    vi.mocked(clientId).mockReturnValue('clientId')
     vi.mocked(checkPort).mockResolvedValue(false)
     vi.mocked(terminateBlockingPortProcessPrompt).mockResolvedValue(true)
 

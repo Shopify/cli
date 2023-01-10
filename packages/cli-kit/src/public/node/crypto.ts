@@ -5,17 +5,11 @@ export function randomHex(size: number): string {
   return crypto.randomBytes(size).toString('hex')
 }
 
-export function generateRandomChallengePair() {
-  const codeVerifier = base64URLEncode(crypto.randomBytes(32))
-  const codeChallenge = base64URLEncode(sha256(codeVerifier))
-  return {codeVerifier, codeChallenge}
-}
-
-function base64URLEncode(str: Buffer) {
+export function base64URLEncode(str: Buffer): string {
   return str.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/[=]/g, '')
 }
 
-function sha256(str: string) {
+export function sha256(str: string): Buffer {
   return crypto.createHash('sha256').update(str).digest()
 }
 
@@ -23,4 +17,6 @@ export function hashString(str: string): string {
   return crypto.createHash('sha1').update(str).digest('hex')
 }
 
-// randomUUID()
+export function randomBytes(size: number): Buffer {
+  return crypto.randomBytes(size)
+}

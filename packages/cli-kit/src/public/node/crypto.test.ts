@@ -1,4 +1,4 @@
-import {hashString} from './string.js'
+import {hashString} from './crypto.js'
 import {describe, expect, it} from 'vitest'
 
 describe('hashString', () => {

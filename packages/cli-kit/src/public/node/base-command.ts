@@ -5,7 +5,7 @@ import {isDevelopment} from '../../environment/local.js'
 import {Abort} from '../../error.js'
 import {addPublic} from '../../metadata.js'
 import {content, info, token} from '../../output.js'
-import {hashString} from '../../string.js'
+import {hashString} from '../../public/node/crypto.js'
 import {isTruthy} from '../../environment/utilities.js'
 import {Command, Interfaces} from '@oclif/core'
 
