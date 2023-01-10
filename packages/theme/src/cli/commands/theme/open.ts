@@ -1,9 +1,11 @@
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
+import {findOrSelectTheme} from '../../utilities/theme-selector.js'
+import {editorLink, previewLink} from '../../utilities/theme-links.js'
 import {Flags} from '@oclif/core'
-import {cli, session} from '@shopify/cli-kit'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {cli, session, system} from '@shopify/cli-kit'
+import * as uix from '@shopify/cli-kit/node/ui'
 
 export default class Open extends ThemeCommand {
   static description = 'Opens the preview of your remote theme.'
@@ -34,15 +36,43 @@ export default class Open extends ThemeCommand {
     store: themeFlags.store,
   }
 
-  static cli2Flags = ['development', 'editor', 'live', 'theme']
-
   async run(): Promise<void> {
     const {flags} = await this.parse(Open)
-    const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Open.cli2Flags})
-    const command = ['theme', 'open', ...flagsToPass]
-
+    const {development, live, theme: identifier} = flags
     const store = await getThemeStore(flags)
+
     const adminSession = await session.ensureAuthenticatedThemes(store, flags.password)
-    await execCLI2(command, {adminSession})
+
+    const theme = await findOrSelectTheme(adminSession, {
+      header: 'Select a theme to open',
+      filter: {
+        live,
+        development,
+        identifier,
+      },
+    })
+
+    const preview = previewLink(theme, adminSession)
+    const editor = editorLink(theme, adminSession)
+
+    if (flags.editor) {
+      await system.open(editor)
+    } else {
+      await system.open(preview)
+    }
+
+    uix.renderInfo({
+      headline: {
+        userInput: theme.name,
+      },
+      body: {
+        list: {
+          items: [
+            {link: {label: 'Preview your theme', url: preview}},
+            {link: {label: 'Customize your theme at the theme', url: editor}},
+          ],
+        },
+      },
+    })
   }
 }
