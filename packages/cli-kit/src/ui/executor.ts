@@ -1,9 +1,8 @@
 import {CustomAutocomplete} from './inquirer/autocomplete.js'
-import {CustomSelect} from './inquirer/select.js'
 import {PromptAnswer, Question, QuestionChoiceType} from '../ui.js'
 import inquirer, {Answers, QuestionCollection} from 'inquirer'
 import fuzzy from 'fuzzy'
-import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 export async function run(question: Question): Promise<string> {
   const questionName = question.name
@@ -25,19 +24,18 @@ export async function run(question: Question): Promise<string> {
 
       return renderTextPrompt(mappedQuestion)
     case 'select':
-      inquirer.registerPrompt('custom-select', CustomSelect)
       mappedQuestion = {
         ...question,
-        type: 'custom-select',
-        source: getAutocompleteFilterType(),
-        choices: question.choices ? groupAndMapChoices(question.choices) : undefined,
+        choices: question.choices.map((choice) => {
+          return {
+            label: choice.name,
+            value: choice.value,
+            group: choice.group?.name,
+          }
+        }),
       }
 
-      return (
-        await inquirer.prompt(mappedQuestion as QuestionCollection<Answers>, {
-          ...mappedQuestion.choices,
-        })
-      )[questionName]
+      return renderSelectPrompt(mappedQuestion)
     case 'autocomplete': {
       inquirer.registerPrompt('autocomplete', CustomAutocomplete)
       const filterType = getAutocompleteFilterType()
