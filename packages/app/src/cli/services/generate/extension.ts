@@ -74,7 +74,7 @@ async function uiExtensionInit({
 }: UIExtensionInitOptions) {
   const tasks = [
     {
-      title: 'Install additional dependencies',
+      title: 'Installing additional dependencies',
       task: async () => {
         await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor)
         const requiredDependencies = getRuntimeDependencies({specification, extensionFlavor})
@@ -86,7 +86,7 @@ async function uiExtensionInit({
       },
     },
     {
-      title: `Generate ${specification.externalName} extension`,
+      title: `Generating ${specification.externalName} extension`,
       task: async () => {
         const templateDirectory =
           specification.templatePath ??
