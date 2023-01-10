@@ -585,6 +585,7 @@ importers:
       '@types/qrcode.react': ^1.0.2
       '@types/react': 16.14.0
       '@types/react-dom': ^16.9.11
+      '@types/react-transition-group': ^4.4.5
       '@vitejs/plugin-react': ^1.3.2
       '@vitejs/plugin-react-refresh': ^1.3.1
       copy-to-clipboard: ^3.3.1
@@ -593,6 +594,7 @@ importers:
       react-dom: ^17.0.2
       react-router-dom: ^6.4.3
       react-toastify: ^9.1.1
+      react-transition-group: ^4.4.5
       sass: ^1.42.1
       ts-node: ^10.2.1
       typescript: 4.8.4
@@ -604,6 +606,7 @@ importers:
       '@shopify/polaris-icons': 4.23.0
       '@shopify/react-i18n': 6.4.0_sfoxds7t5ydpegc3knd667wn6m
       '@shopify/ui-extensions-server-kit': link:../ui-extensions-server-kit
+      '@types/react-transition-group': 4.4.5
       '@vitejs/plugin-react': 1.3.2
       copy-to-clipboard: 3.3.3
       qrcode.react: 1.0.1_react@17.0.2
@@ -611,6 +614,7 @@ importers:
       react-dom: 17.0.2_react@17.0.2
       react-router-dom: 6.4.4_sfoxds7t5ydpegc3knd667wn6m
       react-toastify: 9.1.1_sfoxds7t5ydpegc3knd667wn6m
+      react-transition-group: 4.4.5_sfoxds7t5ydpegc3knd667wn6m
     devDependencies:
       '@shopify/react-testing': 3.3.10_sfoxds7t5ydpegc3knd667wn6m
       '@shopify/ui-extensions-test-utils': link:../ui-extensions-test-utils
@@ -14797,7 +14801,7 @@ packages:
       globrex: 0.1.2
       recrawl-sync: 2.2.3
       tsconfig-paths: 4.1.1
-      vite: 2.9.12
+      vite: 2.9.12_sass@1.56.1
     transitivePeerDependencies:
       - supports-color
     dev: true

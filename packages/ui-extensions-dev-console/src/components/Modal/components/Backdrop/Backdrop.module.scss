@@ -1,0 +1,14 @@
+.Backdrop {
+  position: fixed;
+  z-index: 10;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: block;
+  // TODO
+  background-color: rgba(0, 0, 0, 0.5);
+  animation: var(--p-keyframes-fade-in) 200ms 1 forwards;
+  opacity: 0;
+  will-change: opacity;
+}

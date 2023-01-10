@@ -8,6 +8,7 @@ import {Layout} from '@/foundation/Layout'
 import {Routes} from '@/foundation/Routes'
 import {Toast} from '@/foundation/Toast'
 import {Theme} from '@/foundation/Theme'
+import {ModalContainer} from '@/foundation/ModalContainer'
 
 function getConnectionUrl() {
   if (import.meta.env.VITE_CONNECTION_URL) {
@@ -45,6 +46,7 @@ function App() {
               <Routes />
               <Toast />
             </Layout>
+            <ModalContainer />
           </AppProvider>
         </Theme>
       </I18nContext.Provider>

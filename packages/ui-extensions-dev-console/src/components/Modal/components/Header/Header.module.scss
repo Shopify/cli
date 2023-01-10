@@ -1,0 +1,15 @@
+.Header {
+  display: flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+  padding: 0.4rem 0.4rem;
+  border-bottom: 1px solid var(--dc-border);
+}
+
+.Title {
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  flex: 1;
+  align-self: center;
+}

@@ -1,7 +1,6 @@
 import en from './translations/en.json'
 import * as styles from './QRCodeModal.module.scss'
 import React, {useCallback, useMemo} from 'react'
-import {Button, Modal, ModalProps} from '@shopify/polaris'
 import {useI18n} from '@shopify/react-i18n'
 import copyToClipboard from 'copy-to-clipboard'
 import QRCode from 'qrcode.react'
@@ -9,6 +8,8 @@ import {toast} from 'react-toastify'
 import {Surface} from '@shopify/ui-extensions-server-kit'
 import {ClipboardMinor} from '@shopify/polaris-icons'
 import {useExtensionsInternal} from '@/sections/Extensions/hooks/useExtensionsInternal'
+import {Modal, ModalProps} from '@/components/Modal'
+import {Button} from '@/components/Button'
 
 interface Code {
   url: string
@@ -31,15 +32,7 @@ export function QRCodeModal({code, onClose}: QRCodeModalProps) {
   } = useExtensionsInternal()
 
   return (
-    <Modal
-      title={i18n.translate('title', {title: code?.title})}
-      open={Boolean(code)}
-      onClose={onClose}
-      titleHidden
-      sectioned
-      small
-      noScroll
-    >
+    <Modal title={i18n.translate('title', {title: code?.title})} open={Boolean(code)} onClose={onClose}>
       {code && store && app ? <QRCodeContent {...code} /> : null}
     </Modal>
   )
