@@ -4,7 +4,7 @@ import React from 'react'
 
 export interface IconProps {
   /** The SVG contents to display in the icon (icons should fit in a 20 × 20 pixel viewBox) */
-  source: React.FunctionComponent<React.SVGProps<SVGSVGElement>> | string
+  source: React.FunctionComponent<React.SVGProps<SVGSVGElement>>
 
   /** Descriptive text to be read to screenreaders */
   accessibilityLabel: string
@@ -14,9 +14,11 @@ export function Icon({source, accessibilityLabel}: IconProps) {
   const SourceComponent = source
 
   return (
-    <span className={styles.Icon}>
+    <>
       <VisuallyHidden>{accessibilityLabel}</VisuallyHidden>
-      <SourceComponent className={styles.Svg} focusable="false" aria-hidden="true" />
-    </span>
+      <span className={styles.Icon}>
+        <SourceComponent className={styles.Svg} focusable="false" aria-hidden="true" />
+      </span>
+    </>
   )
 }

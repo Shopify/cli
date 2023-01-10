@@ -1,11 +1,10 @@
 import * as styles from './Extensions.module.scss'
 
-import {AppHomeRow, QRCodeModal} from './components'
+import {AppHomeRow, QRCodeModal, ExtensionRow, PostPurchaseRow, PostPurchaseModal} from './components'
 import en from './translations/en.json'
 import {useI18n} from '@shopify/react-i18n'
 import React, {useState} from 'react'
-import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
-import {ExtensionRow} from '@/sections/Extensions/components/ExtensionRow'
+import {ExtensionPayload, Surface} from '@shopify/ui-extensions-server-kit'
 import {useExtensionsInternal} from '@/sections/Extensions/hooks/useExtensionsInternal'
 
 export function Extensions() {
@@ -26,11 +25,12 @@ export function Extensions() {
   const [activeMobileQRCode, setActiveMobileQRCode] = useState<
     | {
         url: string
-        type: ExtensionPayload['surface'] | 'home'
+        type: Surface | 'home'
         title: string
       }
     | undefined
   >(undefined)
+  const [postPurchaseUrl, setPostPurchaseUrl] = useState<string | undefined>(undefined)
 
   const ConsoleContent = () => (
     <section className={styles.ExtensionList}>
@@ -60,10 +60,21 @@ export function Extensions() {
             />
           ) : null}
           {extensions.map((extension) => {
-            const uuid = extension.uuid
+            if (extension.type === 'checkout_post_purchase') {
+              return (
+                <PostPurchaseRow
+                  key={extension.uuid}
+                  extension={extension}
+                  onHighlight={focus}
+                  onClearHighlight={unfocus}
+                  onOpenPostPurchaseModal={() => setPostPurchaseUrl(extension.development.root.url)}
+                />
+              )
+            }
+
             return (
               <ExtensionRow
-                key={uuid}
+                key={extension.uuid}
                 extension={extension}
                 onHighlight={focus}
                 onClearHighlight={unfocus}
@@ -94,6 +105,7 @@ export function Extensions() {
     <>
       {extensions.length > 0 ? <ConsoleContent /> : <ConsoleEmpty />}
       <QRCodeModal code={activeMobileQRCode} onClose={() => setActiveMobileQRCode(undefined)} />
+      <PostPurchaseModal onClose={() => setPostPurchaseUrl(undefined)} url={postPurchaseUrl} />
     </>
   )
 }

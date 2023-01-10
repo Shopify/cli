@@ -1,7 +1,6 @@
-import * as styles from './ExtensionRow.module.scss'
+import * as styles from './PostPurchaseRow.module.scss'
 import en from './translations/en.json'
 
-import {PreviewLinks} from './components'
 import {Row, Status, View} from '..'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
@@ -12,12 +11,12 @@ interface Props {
   extension: ExtensionPayload
   onHighlight(extension: ExtensionPayload): void
   onClearHighlight(): void
-  onShowMobileQRCode(extension: ExtensionPayload): void
+  onOpenPostPurchaseModal(): void
 }
 
-export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMobileQRCode}: Props) {
+export function PostPurchaseRow({extension, onHighlight, onClearHighlight, onOpenPostPurchaseModal}: Props) {
   const [i18n] = useI18n({
-    id: 'ExtensionRow',
+    id: 'PostPurchaseRow',
     fallback: en,
   })
 
@@ -27,13 +26,11 @@ export function ExtensionRow({extension, onHighlight, onClearHighlight, onShowMo
         <span className={styles.Title}>{extension.title}</span>
       </td>
       <td>
-        <PreviewLinks extension={extension} />
-      </td>
-      <td>
-        <Button type="button" onClick={() => onShowMobileQRCode(extension)}>
-          {i18n.translate('viewMobile')}
+        <Button type="button" onClick={() => onOpenPostPurchaseModal()}>
+          {i18n.translate('viewPreviewInstructions', {type: extension.type})}
         </Button>
       </td>
+      <td></td>
       <td>
         <View extension={extension} />
       </td>
