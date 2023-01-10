@@ -215,8 +215,15 @@ export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmi
 /**
  * Runs async tasks and displays their progress to the console.
  */
-export function renderTasks(tasks: Task[]) {
-  return render(<Tasks tasks={tasks} />)
+export async function renderTasks(tasks: Task[], options: {silent?: boolean} = {silent: false}) {
+  if (options.silent) {
+    for (const task of tasks) {
+      // eslint-disable-next-line no-await-in-loop
+      await task.task()
+    }
+  } else {
+    return render(<Tasks tasks={tasks} />)
+  }
 }
 
 /**

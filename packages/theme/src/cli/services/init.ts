@@ -1,4 +1,5 @@
-import {git, ui} from '@shopify/cli-kit'
+import {git} from '@shopify/cli-kit'
+import {renderTasks} from '@shopify/cli-kit/node/ui'
 
 export async function cloneRepo(repoUrl: string, destination: string) {
   await downloadRepository(repoUrl, destination)
@@ -9,21 +10,16 @@ export async function cloneRepoAndCheckoutLatestTag(repoUrl: string, destination
 }
 
 async function downloadRepository(repoUrl: string, destination: string, latestTag?: boolean) {
-  await ui
-    .newListr([
-      {
-        title: `Cloning ${repoUrl} into ${destination}`,
-        task: async () => {
-          await git.downloadRepository({
-            repoUrl,
-            destination,
-            latestTag,
-          })
-          return {
-            successMessage: `Cloned into ${destination}`,
-          }
-        },
+  await renderTasks([
+    {
+      title: `Cloning ${repoUrl} into ${destination}`,
+      task: async () => {
+        await git.downloadRepository({
+          repoUrl,
+          destination,
+          latestTag,
+        })
       },
-    ])
-    .run()
+    },
+  ])
 }

@@ -1,7 +1,8 @@
 import {fetchAllDevStores} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
-import {error, output, api, system, ui, environment} from '@shopify/cli-kit'
+import {error, output, api, system, environment} from '@shopify/cli-kit'
+import {renderTasks} from '@shopify/cli-kit/node/ui'
 
 const CreateStoreLink = async (orgId: string) => {
   const url = `https://${await environment.fqdn.partners()}/${orgId}/stores/new?store_type=dev_store`
@@ -55,27 +56,24 @@ async function waitForCreatedStore(orgId: string, token: string): Promise<Organi
   const retries = 10
   const secondsToWait = 3
   let data = [] as OrganizationStore[]
-  const list = ui.newListr(
-    [
-      {
-        title: 'Fetching organization data',
-        task: async () => {
-          for (let i = 0; i < retries; i++) {
-            // eslint-disable-next-line no-await-in-loop
-            const stores = await fetchAllDevStores(orgId, token)
-            if (stores.length > 0) {
-              data = stores
-              return
-            }
-            // eslint-disable-next-line no-await-in-loop
-            await system.sleep(secondsToWait)
+  const tasks = [
+    {
+      title: 'Fetching organization data',
+      task: async () => {
+        for (let i = 0; i < retries; i++) {
+          // eslint-disable-next-line no-await-in-loop
+          const stores = await fetchAllDevStores(orgId, token)
+          if (stores.length > 0) {
+            data = stores
+            return
           }
-        },
+          // eslint-disable-next-line no-await-in-loop
+          await system.sleep(secondsToWait)
+        }
       },
-    ],
-    {rendererSilent: environment.local.isUnitTest()},
-  )
-  await list.run()
+    },
+  ]
+  await renderTasks(tasks, {silent: environment.local.isUnitTest()})
 
   return data
 }

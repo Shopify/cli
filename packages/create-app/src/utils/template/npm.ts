@@ -1,6 +1,5 @@
 import {path, ui, npm, constants} from '@shopify/cli-kit'
 import {PackageManager, installNodeModules} from '@shopify/cli-kit/node/node-package-manager'
-import {Writable} from 'stream'
 import {platform} from 'node:os'
 
 interface UpdateCLIDependenciesOptions {
@@ -61,15 +60,12 @@ async function packagePath(packageName: string): Promise<string> {
 export async function getDeepInstallNPMTasks({
   from,
   packageManager,
-  didInstallEverything,
 }: {
   from: string
   packageManager: PackageManager
-  didInstallEverything(): void
 }): Promise<ui.ListrTask[]> {
   const root = path.normalize(from)
   const packageJSONFiles = await path.glob([path.join(root, '**/package.json')])
-  let foldersInstalled = 0
 
   return packageJSONFiles.map((filePath) => {
     const folderPath = filePath.replace('package.json', '')
@@ -77,13 +73,7 @@ export async function getDeepInstallNPMTasks({
 
     return {
       title: `Installing dependencies in ${titlePath}`,
-      task: async (_, task) => {
-        const output = new Writable({
-          write(chunk, _, next) {
-            task.output = chunk.toString()
-            next()
-          },
-        })
+      task: async () => {
         /**
          * Installation of dependencies using Yarn on Windows might lead
          * to "EPERM: operation not permitted, unlink" errors when Yarn tries
@@ -94,15 +84,7 @@ export async function getDeepInstallNPMTasks({
          * Reported issue: https://github.com/yarnpkg/yarn/issues/7212
          */
         const args = platform() === 'win32' && packageManager === 'yarn' ? ['--network-concurrency', '1'] : []
-        await installNodeModules({directory: folderPath, packageManager, stdout: output, stderr: output, args})
-
-        task.title = `Installed dependencies in ${titlePath}`
-
-        foldersInstalled++
-
-        if (foldersInstalled === packageJSONFiles.length) {
-          didInstallEverything()
-        }
+        await installNodeModules({directory: folderPath, packageManager, args})
       },
     }
   })

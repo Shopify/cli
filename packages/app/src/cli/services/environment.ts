@@ -19,8 +19,9 @@ import {Organization, OrganizationApp, OrganizationStore} from '../models/organi
 import metadata from '../metadata.js'
 import {ThemeExtension} from '../models/app/extensions.js'
 import {loadAppName} from '../models/app/loader.js'
-import {error as kitError, output, session, store, ui, environment, error, string} from '@shopify/cli-kit'
+import {error as kitError, output, session, store, environment, error, string} from '@shopify/cli-kit'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {renderTasks} from '@shopify/cli-kit/node/ui'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -351,22 +352,19 @@ export async function fetchAppAndIdentifiers(
 
 async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
   let data = {} as FetchResponse
-  const list = ui.newListr(
-    [
-      {
-        title: 'Fetching organization data',
-        task: async () => {
-          const organizationAndApps = await fetchOrgAndApps(orgId, token)
-          const stores = await fetchAllDevStores(orgId, token)
-          data = {...organizationAndApps, stores} as FetchResponse
-          // We need ALL stores so we can validate the selected one.
-          // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.
-        },
+  const tasks = [
+    {
+      title: 'Fetching organization data',
+      task: async () => {
+        const organizationAndApps = await fetchOrgAndApps(orgId, token)
+        const stores = await fetchAllDevStores(orgId, token)
+        data = {...organizationAndApps, stores} as FetchResponse
+        // We need ALL stores so we can validate the selected one.
+        // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.
       },
-    ],
-    {rendererSilent: environment.local.isUnitTest()},
-  )
-  await list.run()
+    },
+  ]
+  await renderTasks(tasks, {silent: environment.local.isUnitTest()})
   return data
 }
 

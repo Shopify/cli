@@ -4,14 +4,14 @@ import {FunctionSpec} from '../../models/extensions/functions.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
-import {error, file, git, path, string, template, ui, environment} from '@shopify/cli-kit'
+import {error, file, git, path, string, template, environment} from '@shopify/cli-kit'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
   DependencyVersion,
 } from '@shopify/cli-kit/node/node-package-manager'
+import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {fileURLToPath} from 'url'
-import stream from 'node:stream'
 
 async function getTemplatePath(name: string): Promise<string> {
   const templatePath = await path.findUp(`templates/${name}`, {
@@ -72,70 +72,49 @@ async function uiExtensionInit({
   extensionFlavor,
   extensionDirectory,
 }: UIExtensionInitOptions) {
-  const list = ui.newListr(
-    [
-      {
-        title: 'Install additional dependencies',
-        task: async (_, task) => {
-          task.title = 'Installing additional dependencies...'
-          await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor)
-          const requiredDependencies = getRuntimeDependencies({specification, extensionFlavor})
-          await addNPMDependenciesIfNeeded(requiredDependencies, {
-            packageManager: app.packageManager,
-            type: 'prod',
-            directory: app.directory,
-            stderr: new stream.Writable({
-              write(chunk, encoding, next) {
-                task.output = chunk.toString()
-                next()
-              },
-            }),
-            stdout: new stream.Writable({
-              write(chunk, encoding, next) {
-                task.output = chunk.toString()
-                next()
-              },
-            }),
-          })
-          task.title = 'Dependencies installed'
-        },
+  const tasks = [
+    {
+      title: 'Install additional dependencies',
+      task: async () => {
+        await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor)
+        const requiredDependencies = getRuntimeDependencies({specification, extensionFlavor})
+        await addNPMDependenciesIfNeeded(requiredDependencies, {
+          packageManager: app.packageManager,
+          type: 'prod',
+          directory: app.directory,
+        })
       },
-      {
-        title: `Generate ${specification.externalName} extension`,
-        task: async (_, task) => {
-          task.title = `Generating ${specification.externalName} extension...`
+    },
+    {
+      title: `Generate ${specification.externalName} extension`,
+      task: async () => {
+        const templateDirectory =
+          specification.templatePath ??
+          (await path.findUp(`templates/ui-extensions/projects/${specification.externalIdentifier}`, {
+            type: 'directory',
+            cwd: path.moduleDirectory(import.meta.url),
+          }))
 
-          const templateDirectory =
-            specification.templatePath ??
-            (await path.findUp(`templates/ui-extensions/projects/${specification.externalIdentifier}`, {
-              type: 'directory',
-              cwd: path.moduleDirectory(import.meta.url),
-            }))
+        if (!templateDirectory) {
+          throw new error.Bug(`Couldn't find the template for ${specification.externalIdentifier}`)
+        }
 
-          if (!templateDirectory) {
-            throw new error.Bug(`Couldn't find the template for ${specification.externalIdentifier}`)
-          }
+        const srcFileExtension = getSrcFileExtension(extensionFlavor ?? 'vanilla-js')
+        await template.recursiveDirectoryCopy(templateDirectory, extensionDirectory, {
+          srcFileExtension,
+          flavor: extensionFlavor ?? '',
+          type: specification.identifier,
+          name,
+        })
 
-          const srcFileExtension = getSrcFileExtension(extensionFlavor ?? 'vanilla-js')
-          await template.recursiveDirectoryCopy(templateDirectory, extensionDirectory, {
-            srcFileExtension,
-            flavor: extensionFlavor ?? '',
-            type: specification.identifier,
-            name,
-          })
-
-          if (extensionFlavor) {
-            await changeIndexFileExtension(extensionDirectory, srcFileExtension)
-            await removeUnwantedTemplateFilesPerFlavor(extensionDirectory, extensionFlavor)
-          }
-
-          task.title = `${specification.externalName} extension generated`
-        },
+        if (extensionFlavor) {
+          await changeIndexFileExtension(extensionDirectory, srcFileExtension)
+          await removeUnwantedTemplateFilesPerFlavor(extensionDirectory, extensionFlavor)
+        }
       },
-    ],
-    {rendererSilent: environment.local.isUnitTest()},
-  )
-  await list.run()
+    },
+  ]
+  await renderTasks(tasks, {silent: environment.local.isUnitTest()})
 }
 
 type SrcFileExtension = 'ts' | 'tsx' | 'js' | 'jsx'
@@ -190,27 +169,26 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
   await file.inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
 
-    await ui.task({
-      title: `Generating ${spec.externalName} extension...`,
-      task: async () => {
-        await file.mkdir(templateDownloadDir)
-        await git.downloadRepository({
-          repoUrl: url,
-          destination: templateDownloadDir,
-          shallow: true,
-        })
-        const templatePath = spec.templatePath(options.extensionFlavor ?? blocks.functions.defaultLanguage)
-        const origin = path.join(templateDownloadDir, templatePath)
-        await template.recursiveDirectoryCopy(origin, options.extensionDirectory, options)
-        const configYamlPath = path.join(options.extensionDirectory, 'script.config.yml')
-        if (await file.exists(configYamlPath)) {
-          await file.remove(configYamlPath)
-        }
-        return {
-          successMessage: `${spec.externalName} extension generated`,
-        }
+    await renderTasks([
+      {
+        title: `Generating ${spec.externalName} extension...`,
+        task: async () => {
+          await file.mkdir(templateDownloadDir)
+          await git.downloadRepository({
+            repoUrl: url,
+            destination: templateDownloadDir,
+            shallow: true,
+          })
+          const templatePath = spec.templatePath(options.extensionFlavor ?? blocks.functions.defaultLanguage)
+          const origin = path.join(templateDownloadDir, templatePath)
+          await template.recursiveDirectoryCopy(origin, options.extensionDirectory, options)
+          const configYamlPath = path.join(options.extensionDirectory, 'script.config.yml')
+          if (await file.exists(configYamlPath)) {
+            await file.remove(configYamlPath)
+          }
+        },
       },
-    })
+    ])
   })
 }
 

@@ -5,26 +5,11 @@ import colors from './public/node/colors.js'
 import {relative} from './path.js'
 import {isTerminalInteractive} from './environment/local.js'
 import {run as executorUI} from './ui/executor.js'
-import {Listr as OriginalListr, ListrTask, ListrTaskState, ListrBaseClassOptions} from 'listr2'
+import {Listr as OriginalListr, ListrTask, ListrBaseClassOptions} from 'listr2'
 import findProcess from 'find-process'
 
 export function newListr(tasks: ListrTask[], options?: object | ListrBaseClassOptions) {
   const listr = new OriginalListr(tasks, options)
-  listr.tasks.forEach((task) => {
-    const loggedSubtaskTitles: string[] = []
-    task.renderHook$.subscribe(() => {
-      if (task.hasSubtasks()) {
-        const activeSubtasks = task.subtasks.filter((subtask) => {
-          return [ListrTaskState.PENDING, ListrTaskState.COMPLETED].includes(subtask.state as ListrTaskState)
-        })
-        activeSubtasks.forEach((subtask) => {
-          if (subtask.title && !loggedSubtaskTitles.includes(subtask.title)) {
-            loggedSubtaskTitles.push(subtask.title)
-          }
-        })
-      }
-    })
-  })
   return listr
 }
 
