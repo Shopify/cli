@@ -1,6 +1,5 @@
 import {CustomAutocomplete} from './inquirer/autocomplete.js'
 import {CustomSelect} from './inquirer/select.js'
-import {CustomPassword} from './inquirer/password.js'
 import {PromptAnswer, Question, QuestionChoiceType} from '../ui.js'
 import inquirer, {Answers, QuestionCollection} from 'inquirer'
 import fuzzy from 'fuzzy'
@@ -19,17 +18,12 @@ export async function run(question: Question): Promise<string> {
 
       return renderTextPrompt(mappedQuestion)
     case 'password':
-      inquirer.registerPrompt('custom-password', CustomPassword)
       mappedQuestion = {
         ...question,
-        type: 'custom-password',
+        password: true,
       }
 
-      return (
-        await inquirer.prompt(mappedQuestion as QuestionCollection<Answers>, {
-          ...(mappedQuestion as Question).choices,
-        })
-      )[questionName]
+      return renderTextPrompt(mappedQuestion)
     case 'select':
       inquirer.registerPrompt('custom-select', CustomSelect)
       mappedQuestion = {
