@@ -4,13 +4,6 @@ import {graphqlRequest} from '../../../private/common/api/graphql.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 
 vi.mock('../../../private/common/api/graphql')
-vi.mock('./common.js', async () => {
-  const module: any = await vi.importActual('./common.js')
-  return {
-    ...module,
-    buildHeaders: vi.fn(),
-  }
-})
 vi.mock('../../../environment/fqdn.js')
 
 const mockedResult = 'OK'
