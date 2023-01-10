@@ -31,7 +31,6 @@ export function groupBy<T>(
  * @param callback - The function called per iteration.
  * @returns Returns the array of grouped elements.
  */
-
 export function partition<T>(collection: List<T> | null | undefined, callback: ValueIteratee<T>): [T[], T[]] {
   const lodashPartition = require('lodash/partition')
   return lodashPartition(collection, callback)

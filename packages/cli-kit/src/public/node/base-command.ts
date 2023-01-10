@@ -170,7 +170,6 @@ ${Object.entries(changes)
  * If we parse using this configuration, the only specified flags will be those
  * the user actually passed on the command line.
  */
-
 function noDefaultsOptions<TFlags extends Interfaces.FlagOutput, TGlobalFlags extends Interfaces.FlagOutput>(
   options: Interfaces.Input<TFlags, TGlobalFlags> | undefined,
 ): Interfaces.Input<TFlags, TGlobalFlags> | undefined {
