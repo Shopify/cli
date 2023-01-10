@@ -7,6 +7,7 @@ import {http, api, file} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {ClientError} from 'graphql-request'
 import {createReadStream} from 'fs'
+import {oxygenRequest, uploadDeploymentFile} from '@shopify/cli-kit/node/api/oxygen'
 
 const defaultConfig: ReqDeployConfig = {
   deploymentToken: '123',
@@ -23,6 +24,7 @@ const defaultConfig: ReqDeployConfig = {
 }
 
 beforeEach(() => {
+  vi.mock('@shopify/cli-kit/node/api/oxygen')
   vi.mock('@shopify/cli-kit')
   vi.mock('@shopify/cli-kit/node/archiver')
   vi.mock('fs')
@@ -40,7 +42,7 @@ describe('createDeploymentStep()', () => {
 
     const mockedResponse = vi.fn().mockResolvedValue(deploymentResponse)
     const mockedRequest = vi.fn().mockResolvedValue(mockedResponse)
-    vi.mocked(api.oxygen.oxygenRequest).mockImplementation(mockedRequest)
+    vi.mocked(oxygenRequest).mockImplementation(mockedRequest)
     const cfg = {
       ...defaultConfig,
       commitRef: 'ref/branch',
@@ -72,7 +74,7 @@ describe('createDeploymentStep()', () => {
   describe('failure', () => {
     it('throws a rate limit error if we are getting ratelimited', async () => {
       const graphQLError = new ClientError({status: 429}, {query: ''})
-      vi.mocked(api.oxygen.oxygenRequest).mockRejectedValueOnce(graphQLError)
+      vi.mocked(oxygenRequest).mockRejectedValueOnce(graphQLError)
 
       await expect(() => {
         return createDeployment(defaultConfig)
@@ -81,7 +83,7 @@ describe('createDeploymentStep()', () => {
 
     it('throws if we are getting a non-200 status code', async () => {
       const graphQLError = new ClientError({status: 500}, {query: ''})
-      vi.mocked(api.oxygen.oxygenRequest).mockRejectedValueOnce(graphQLError)
+      vi.mocked(oxygenRequest).mockRejectedValueOnce(graphQLError)
 
       await expect(() => {
         return createDeployment(defaultConfig)
@@ -100,7 +102,7 @@ describe('createDeploymentStep()', () => {
           },
         },
       }
-      vi.mocked(api.oxygen.oxygenRequest).mockResolvedValue(oxygenResponse)
+      vi.mocked(oxygenRequest).mockResolvedValue(oxygenResponse)
 
       await expect(() => {
         return createDeployment(defaultConfig)
@@ -120,7 +122,7 @@ describe('createDeploymentStep()', () => {
           },
         },
       }
-      vi.mocked(api.oxygen.oxygenRequest).mockResolvedValue(oxygenResponse)
+      vi.mocked(oxygenRequest).mockResolvedValue(oxygenResponse)
 
       await expect(() => {
         return createDeployment(defaultConfig)
@@ -153,7 +155,7 @@ describe('uploadDeploymentStep()', async () => {
       const mockedUploadDeployment = vi
         .fn()
         .mockResolvedValue({json: vi.fn().mockResolvedValue(oxygenResponse), status: 200})
-      vi.mocked<any>(api.oxygen.uploadDeploymentFile).mockImplementation(mockedUploadDeployment)
+      vi.mocked<any>(uploadDeploymentFile).mockImplementation(mockedUploadDeployment)
       const tmpDir = 'tmp/dir'
       vi.mocked<any>(file.inTemporaryDirectory).mockImplementation(async (runner: (tmpDir: string) => Promise<void>) =>
         runner(tmpDir),
@@ -167,7 +169,7 @@ describe('uploadDeploymentStep()', async () => {
       expect(result).toBe(previewURL)
       expect(mockedFormDataAppend).toHaveBeenCalledTimes(3)
       expect(mockedZip).toHaveBeenCalledWith(`unit/test/dist`, `${tmpDir}/dist.zip`)
-      expect(api.oxygen.uploadDeploymentFile).toHaveBeenCalledWith('oxygen.address', '123', formData)
+      expect(uploadDeploymentFile).toHaveBeenCalledWith('oxygen.address', '123', formData)
     })
   })
 
@@ -192,7 +194,7 @@ describe('uploadDeploymentStep()', async () => {
       const mockedUploadDeployment = vi
         .fn()
         .mockResolvedValue({json: vi.fn().mockResolvedValue(oxygenResponse), status: 500})
-      vi.mocked<any>(api.oxygen.uploadDeploymentFile).mockImplementation(mockedUploadDeployment)
+      vi.mocked<any>(uploadDeploymentFile).mockImplementation(mockedUploadDeployment)
       const tmpDir = 'tmp/dir'
       vi.mocked<any>(file.inTemporaryDirectory).mockImplementation(async (runner: (tmpDir: string) => Promise<void>) =>
         runner(tmpDir),
@@ -221,7 +223,7 @@ describe('uploadDeploymentStep()', async () => {
       const mockedUploadDeployment = vi
         .fn()
         .mockResolvedValue({json: vi.fn().mockResolvedValue(oxygenResponse), status: 200})
-      vi.mocked<any>(api.oxygen.uploadDeploymentFile).mockImplementation(mockedUploadDeployment)
+      vi.mocked<any>(uploadDeploymentFile).mockImplementation(mockedUploadDeployment)
 
       await expect(() => {
         return uploadDeployment({...defaultConfig, path: 'unit/test'}, '123')
@@ -232,7 +234,7 @@ describe('uploadDeploymentStep()', async () => {
       const mockedUploadDeployment = vi
         .fn()
         .mockResolvedValue({json: vi.fn().mockResolvedValue('Too Many Requests'), status: 429})
-      vi.mocked<any>(api.oxygen.uploadDeploymentFile).mockImplementation(mockedUploadDeployment)
+      vi.mocked<any>(uploadDeploymentFile).mockImplementation(mockedUploadDeployment)
 
       await expect(() => {
         return uploadDeployment({...defaultConfig, path: 'unit/test'}, '123')
@@ -257,7 +259,7 @@ describe('uploadDeploymentStep()', async () => {
       const mockedUploadDeployment = vi
         .fn()
         .mockResolvedValue({json: vi.fn().mockResolvedValue(oxygenResponse), status: 200})
-      vi.mocked<any>(api.oxygen.uploadDeploymentFile).mockImplementation(mockedUploadDeployment)
+      vi.mocked<any>(uploadDeploymentFile).mockImplementation(mockedUploadDeployment)
 
       await expect(() => {
         return uploadDeployment({...defaultConfig, path: 'unit/test'}, '123')
