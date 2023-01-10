@@ -10,7 +10,7 @@ import {
   addResolutionOrOverride,
   DependencyVersion,
 } from '@shopify/cli-kit/node/node-package-manager'
-import {recursiveDirectoryCopy} from '@shopify/cli-kit/node/template.js'
+import {recursiveDirectoryCopy} from '@shopify/cli-kit/node/template'
 import {fileURLToPath} from 'url'
 import stream from 'stream'
 
