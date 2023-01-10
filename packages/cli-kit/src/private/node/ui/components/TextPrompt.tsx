@@ -41,7 +41,7 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder, defaultVal
 
   const shouldShowError = submitted && !valid
   const color = shouldShowError ? 'red' : 'cyan'
-  const error = shouldShowError ? 'Please enter a value' : undefined
+  const error = shouldShowError ? 'Type an answer to the prompt.' : undefined
 
   return (
     <Box flexDirection="column" marginBottom={1} width={oneThird}>
