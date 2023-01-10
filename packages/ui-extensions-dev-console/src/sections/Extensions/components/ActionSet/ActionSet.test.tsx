@@ -84,8 +84,8 @@ describe('ActionSet', () => {
     )
   })
 
-  test('web url does not render if surface is pos', async () => {
-    const extension = mockExtension({surface: 'pos'})
+  test('web url does not render if surface is point_of_sale', async () => {
+    const extension = mockExtension({surface: 'point_of_sale'})
     const container = render(<ActionSet extension={extension} />, withProviders(DefaultProviders, TableWrapper), {
       client,
     })
