@@ -178,35 +178,36 @@ describe('SelectInput', async () => {
     const onChange = vi.fn()
 
     const items = [
-      {label: 'first', value: 'first', key: 'f'},
-      {label: 'second', value: 'second', key: 's'},
-      {label: 'third', value: 'third'},
-      {label: 'fourth', value: 'fourth'},
-      {label: 'fifth', value: 'fifth', group: 'Automations', key: 'a'},
-      {label: 'sixth', value: 'sixth', group: 'Automations'},
+      {label: 'first', value: 'first', group: 'Automations', key: 'f'},
+      {label: 'second', value: 'second', group: 'Automations', key: 's'},
+      {label: 'third', value: 'third', group: 'Merchant Admin'},
+      {label: 'fourth', value: 'fourth', group: 'Merchant Admin'},
+      {label: 'fifth', value: 'fifth', key: 'a'},
+      {label: 'sixth', value: 'sixth'},
       {label: 'seventh', value: 'seventh'},
-      {label: 'eighth', value: 'eighth', group: 'Merchant Admin'},
-      {label: 'ninth', value: 'ninth', group: 'Merchant Admin'},
+      {label: 'eighth', value: 'eighth'},
+      {label: 'ninth', value: 'ninth'},
       {label: 'tenth', value: 'tenth'},
     ]
 
     const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "[36m>[39m  [36m(f) first[39m
+      "   [1mAutomations[22m
+      [36m>[39m  [36m(f) first[39m
          (s) second
-         (3) third
-         (4) fourth
-         (5) seventh
-         (6) tenth
-
-         [1mAutomations[22m
-         (a) fifth
-         (8) sixth
 
          [1mMerchant Admin[22m
-         (9) eighth
-         (10) ninth
+         (3) third
+         (4) fourth
+
+         [1mOther[22m
+         (a) fifth
+         (6) sixth
+         (7) seventh
+         (8) eighth
+         (9) ninth
+         (10) tenth
 
          [2mnavigate with arrows, enter to select[22m"
     `)
@@ -215,43 +216,45 @@ describe('SelectInput', async () => {
     await sendInput(renderInstance, 'a')
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "   (f) first
+      "   [1mAutomations[22m
+         (f) first
          (s) second
-         (3) third
-         (4) fourth
-         (5) seventh
-         (6) tenth
-
-         [1mAutomations[22m
-      [36m>[39m  [36m(a) fifth[39m
-         (8) sixth
 
          [1mMerchant Admin[22m
-         (9) eighth
-         (10) ninth
+         (3) third
+         (4) fourth
+
+         [1mOther[22m
+      [36m>[39m  [36m(a) fifth[39m
+         (6) sixth
+         (7) seventh
+         (8) eighth
+         (9) ninth
+         (10) tenth
 
          [2mnavigate with arrows, enter to select[22m"
     `)
     expect(onChange).toHaveBeenCalledWith(items[4]!)
 
-    await sendInput(renderInstance, ARROW_UP)
-    await sendInput(renderInstance, ARROW_UP)
+    await sendInput(renderInstance, ARROW_DOWN)
+    await sendInput(renderInstance, ARROW_DOWN)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "   (f) first
+      "   [1mAutomations[22m
+         (f) first
          (s) second
-         (3) third
-         (4) fourth
-      [36m>[39m  [36m(5) seventh[39m
-         (6) tenth
-
-         [1mAutomations[22m
-         (a) fifth
-         (8) sixth
 
          [1mMerchant Admin[22m
-         (9) eighth
-         (10) ninth
+         (3) third
+         (4) fourth
+
+         [1mOther[22m
+         (a) fifth
+         (6) sixth
+      [36m>[39m  [36m(7) seventh[39m
+         (8) eighth
+         (9) ninth
+         (10) tenth
 
          [2mnavigate with arrows, enter to select[22m"
     `)

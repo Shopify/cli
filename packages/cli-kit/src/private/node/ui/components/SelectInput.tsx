@@ -45,11 +45,12 @@ interface SelectItemsGroupProps<T> {
   title: string | undefined
   items: ItemWithIndex<T>[]
   selectedIndex: number
+  hasMarginTop: boolean
 }
 
-function SelectItemsGroup<T>({title, items, selectedIndex}: SelectItemsGroupProps<T>): JSX.Element {
+function SelectItemsGroup<T>({title, items, selectedIndex, hasMarginTop}: SelectItemsGroupProps<T>): JSX.Element {
   return (
-    <Box key={title} flexDirection="column" marginTop={1}>
+    <Box key={title} flexDirection="column" marginTop={hasMarginTop ? 1 : 0}>
       {title && (
         <Box marginLeft={3}>
           <Text bold>{title}</Text>
@@ -154,12 +155,13 @@ export default function SelectInput<T>({items, onChange}: React.PropsWithChildre
 
   return (
     <Box flexDirection="column">
-      {groupTitles.map((title) => (
+      {groupTitles.map((title, index) => (
         <SelectItemsGroup
           title={title}
           selectedIndex={selectedIndex}
           items={groupedItems[title]!}
           key={title}
+          hasMarginTop={index !== 0}
         ></SelectItemsGroup>
       ))}
 
@@ -168,6 +170,7 @@ export default function SelectInput<T>({items, onChange}: React.PropsWithChildre
           title={ungroupedItemsTitle}
           selectedIndex={selectedIndex}
           items={ungroupedItems}
+          hasMarginTop={groupTitles.length > 0}
         ></SelectItemsGroup>
       )}
 

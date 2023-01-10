@@ -43,15 +43,15 @@ describe('Prompt', async () => {
 
   test('supports an info table', async () => {
     const items = [
-      {label: 'first', value: 'first', key: 'f'},
-      {label: 'second', value: 'second', key: 's'},
-      {label: 'third', value: 'third'},
-      {label: 'fourth', value: 'fourth'},
-      {label: 'fifth', value: 'fifth', group: 'Automations'},
-      {label: 'sixth', value: 'sixth', group: 'Automations'},
+      {label: 'first', value: 'first', group: 'Automations', key: 'f'},
+      {label: 'second', value: 'second', group: 'Automations', key: 's'},
+      {label: 'third', value: 'third', group: 'Merchant Admin'},
+      {label: 'fourth', value: 'fourth', group: 'Merchant Admin'},
+      {label: 'fifth', value: 'fifth', key: 'a'},
+      {label: 'sixth', value: 'sixth'},
       {label: 'seventh', value: 'seventh'},
-      {label: 'eighth', value: 'eighth', group: 'Merchant Admin'},
-      {label: 'ninth', value: 'ninth', group: 'Merchant Admin'},
+      {label: 'eighth', value: 'eighth'},
+      {label: 'ninth', value: 'ninth'},
       {label: 'tenth', value: 'tenth'},
     ]
 
@@ -77,20 +77,21 @@ describe('Prompt', async () => {
              Remove:  • integrated-demand-ext
                       • order-discount
 
+         [1mAutomations[22m
       [36m>[39m  [36m(f) first[39m
          (s) second
-         (3) third
-         (4) fourth
-         (5) seventh
-         (6) tenth
-
-         [1mAutomations[22m
-         (7) fifth
-         (8) sixth
 
          [1mMerchant Admin[22m
-         (9) eighth
-         (10) ninth
+         (3) third
+         (4) fourth
+
+         [1mOther[22m
+         (a) fifth
+         (6) sixth
+         (7) seventh
+         (8) eighth
+         (9) ninth
+         (10) tenth
 
          [2mnavigate with arrows, enter to select[22m
       "
