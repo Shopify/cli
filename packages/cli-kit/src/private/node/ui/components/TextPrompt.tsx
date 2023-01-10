@@ -18,7 +18,7 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder, defaultVal
   const [answer, setAnswer] = useState<string>(defaultValue)
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
-  const [valid, setValid] = useState(false)
+  const [valid, setValid] = useState(answer.length > 0)
   const underline = new Array(oneThird - 3).fill('▔')
 
   useInput(
