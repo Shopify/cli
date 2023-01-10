@@ -1,4 +1,5 @@
 import {takeRandomFromArray} from './array.js'
+import {unstyled} from '../../output.js'
 
 const SAFE_RANDOM_BUSINESS_ADJECTIVES = [
   'commercial',
@@ -113,3 +114,87 @@ export function getRandomName(family: RandomNameFamily = 'business'): string {
   }
   return `${takeRandomFromArray(mapping[family].adjectives)}-${takeRandomFromArray(mapping[family].nouns)}`
 }
+
+/**
+ * Given a string, it returns it with the first letter capitalized
+ */
+export function capitalize(str: string): string {
+  return str.substring(0, 1).toUpperCase() + str.substring(1)
+}
+
+/**
+ * Try to convert a string to an int, falling back to undefined if unable to
+ */
+export function tryParseInt(maybeInt: string | undefined): number | undefined {
+  let asInt: number | undefined
+  if (maybeInt !== undefined) {
+    asInt = parseInt(maybeInt, 10)
+    if (isNaN(asInt)) {
+      asInt = undefined
+    }
+  }
+  return asInt
+}
+
+/**
+ * Given a series of rows inside an array, where each row is an array of strings (representing columns)
+ * Parse it into a single string with the columns aligned
+ */
+export function linesToColumns(lines: string[][]): string {
+  const widths: number[] = []
+  for (let i = 0; lines[0] && i < lines[0].length; i++) {
+    const columnRows = lines.map((line) => line[i]!)
+    widths.push(Math.max(...columnRows.map((row) => unstyled(row).length)))
+  }
+  const paddedLines = lines
+    .map((line) => {
+      return line
+        .map((col, index) => {
+          return `${col}${' '.repeat(widths[index]! - unstyled(col).length)}`
+        })
+        .join('   ')
+        .trimEnd()
+    })
+    .join('\n')
+  return paddedLines
+}
+
+/**
+ * Given a string, it transforms it to a slug (lowercase, hyphenated, no special chars, trimmed...)
+ */
+export function slugify(str: string): string {
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+/**
+ * Given a string, it returns it with the special regex characters escaped
+ * More info: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
+ */
+export function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/**
+ * Transform a string to camelCase
+ */
+export {camelCase as camelize} from 'change-case'
+
+/**
+ * Transform a string to param-case
+ */
+export {paramCase as hyphenize} from 'change-case'
+
+/**
+ * Transform a string to snake_case
+ */
+export {snakeCase as underscore} from 'change-case'
+
+/**
+ * Transform a string to CONSTANT_CASE
+ */
+export {constantCase as constantize} from 'change-case'

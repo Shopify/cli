@@ -19,8 +19,9 @@ import {Organization, OrganizationApp, OrganizationStore} from '../models/organi
 import metadata from '../metadata.js'
 import {ThemeExtension} from '../models/app/extensions.js'
 import {loadAppName} from '../models/app/loader.js'
-import {error as kitError, output, session, store, ui, environment, error, string} from '@shopify/cli-kit'
+import {error as kitError, output, session, store, ui, environment, error} from '@shopify/cli-kit'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {tryParseInt} from '@shopify/cli-kit/common/string'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -489,14 +490,14 @@ function showDevValues(org: string, appName: string) {
 
 async function logMetadataForLoadedDevEnvironment(env: DevEnvironmentOutput) {
   await metadata.addPublic(() => ({
-    partner_id: string.tryParseInt(env.remoteApp.organizationId),
+    partner_id: tryParseInt(env.remoteApp.organizationId),
     api_key: env.remoteApp.apiKey,
   }))
 }
 
 async function logMetadataForLoadedDeployEnvironment(env: DeployEnvironmentOutput) {
   await metadata.addPublic(() => ({
-    partner_id: string.tryParseInt(env.partnersOrganizationId),
+    partner_id: tryParseInt(env.partnersOrganizationId),
     api_key: env.identifiers.app,
   }))
 }

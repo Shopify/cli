@@ -16,6 +16,7 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
+import {camelize} from '@shopify/cli-kit/common/string'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -216,7 +217,7 @@ class AppLoader {
     }
     // Convert snake_case keys to camelCase before returning
     return {
-      ...Object.fromEntries(Object.entries(configuration).map((kv) => [string.camelize(kv[0]), kv[1]])),
+      ...Object.fromEntries(Object.entries(configuration).map((kv) => [camelize(kv[0]), kv[1]])),
     }
   }
 

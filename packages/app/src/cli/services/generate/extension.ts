@@ -4,12 +4,13 @@ import {FunctionSpec} from '../../models/extensions/functions.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
-import {error, file, git, path, string, template, ui, environment} from '@shopify/cli-kit'
+import {error, file, git, path, template, ui, environment} from '@shopify/cli-kit'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
   DependencyVersion,
 } from '@shopify/cli-kit/node/node-package-manager'
+import {hyphenize} from '@shopify/cli-kit/common/string'
 import {fileURLToPath} from 'url'
 import stream from 'stream'
 
@@ -215,7 +216,7 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
 }
 
 async function ensureExtensionDirectoryExists({name, app}: {name: string; app: AppInterface}): Promise<string> {
-  const hyphenizedName = string.hyphenize(name)
+  const hyphenizedName = hyphenize(name)
   const extensionDirectory = path.join(app.directory, blocks.extensions.directoryName, hyphenizedName)
   if (await file.exists(extensionDirectory)) {
     throw new error.Abort(

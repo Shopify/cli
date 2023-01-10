@@ -1,4 +1,4 @@
-import {string, path, error, file, output, ui, npm, environment, template, git, constants} from '@shopify/cli-kit'
+import {path, error, file, output, ui, npm, environment, template, git, constants} from '@shopify/cli-kit'
 import {username} from '@shopify/cli-kit/node/os'
 import {
   findPackageVersionUp,
@@ -9,6 +9,7 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 
 import {parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
+import {hyphenize} from '@shopify/cli-kit/common/string'
 import {Writable} from 'stream'
 
 interface InitOptions {
@@ -35,7 +36,7 @@ async function init(options: InitOptions) {
   const cliHydrogenPackageVersion = options.cliHydrogenPackageVersion ?? hydrogenVersion
   const hydrogenPackageVersion = options.hydrogenVersion
   const packageManager = inferPackageManager(options.packageManager)
-  const hyphenizedName = string.hyphenize(options.name)
+  const hyphenizedName = hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
 
   await ui.nonEmptyDirectoryPrompt(outputDirectory)

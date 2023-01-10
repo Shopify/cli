@@ -1,10 +1,11 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
 import cleanup from '../utils/template/cleanup.js'
 
-import {string, path, file, ui, template, npm, git, environment, error, output} from '@shopify/cli-kit'
+import {path, file, ui, template, npm, git, environment, error, output} from '@shopify/cli-kit'
 import {packageManager, PackageManager, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
+import {hyphenize} from '@shopify/cli-kit/common/string'
 
 interface InitOptions {
   name: string
@@ -16,7 +17,7 @@ interface InitOptions {
 
 async function init(options: InitOptions) {
   const packageManager: PackageManager = inferPackageManager(options.packageManager)
-  const hyphenizedName = string.hyphenize(options.name)
+  const hyphenizedName = hyphenize(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
   const githubRepo = parseGitHubRepositoryReference(options.template)
 

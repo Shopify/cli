@@ -1,8 +1,9 @@
 import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, UIExtension} from '../app/extensions.js'
 import {blocks, defualtExtensionFlavors} from '../../constants.js'
-import {path, api, output, environment, string} from '@shopify/cli-kit'
+import {path, api, output, environment} from '@shopify/cli-kit'
 import {ok, Result} from '@shopify/cli-kit/node/result'
+import {constantize} from '@shopify/cli-kit/common/string'
 import {randomUUID} from 'crypto'
 
 /**
@@ -115,7 +116,7 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
     this.outputBundlePath = path.join(options.directory, 'dist/main.js')
     this.devUUID = `dev-${randomUUID()}`
     this.localIdentifier = path.basename(options.directory)
-    this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
+    this.idEnvironmentVariableName = `SHOPIFY_${constantize(path.basename(this.directory))}_ID`
   }
 
   deployConfig(): Promise<{[key: string]: unknown}> {
