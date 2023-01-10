@@ -4,7 +4,7 @@ import {blocks, defualtExtensionFlavors} from '../../constants.js'
 import {path, api, output, environment} from '@shopify/cli-kit'
 import {ok, Result} from '@shopify/cli-kit/node/result'
 import {constantize} from '@shopify/cli-kit/common/string'
-import {randomUUID} from 'crypto'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.

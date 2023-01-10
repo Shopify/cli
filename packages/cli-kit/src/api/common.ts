@@ -3,7 +3,7 @@ import constants from '../constants.js'
 import {stringifyMessage, content, token as outputToken, token, debug} from '../output.js'
 import {Abort, ExtendableError} from '../error.js'
 import {ClientError, RequestDocument, Variables} from 'graphql-request'
-import {randomUUID} from 'crypto'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 export class RequestClientError extends ExtendableError {
   statusCode: number
