@@ -12,6 +12,8 @@ dependencies:
 deploy:
   interval: 24h
   override:
+    - |-
+      bash -i -c 'echo -e "---\n'"'@shopify/cli'"': patch\n---" > .changeset/force-nightly-build.md'
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset version --snapshot nightly"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish --tag nightly"
   post:
