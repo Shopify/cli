@@ -7,7 +7,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 const onNotify = vi.fn()
 beforeEach(() => {
-  vi.mock('node:process')
+  vi.mock('process')
   vi.mock('@bugsnag/js', () => {
     return {
       default: {

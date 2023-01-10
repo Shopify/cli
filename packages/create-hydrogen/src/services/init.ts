@@ -1,4 +1,5 @@
-import {string, path, error, file, output, os, ui, npm, environment, git, constants} from '@shopify/cli-kit'
+import {string, path, error, file, output, ui, npm, environment, git, constants} from '@shopify/cli-kit'
+import {username} from '@shopify/cli-kit/node/os'
 import {
   findPackageVersionUp,
   installNodeModules,
@@ -31,7 +32,7 @@ Help us make Hydrogen better by reporting this error so we can improve this mess
 
 async function init(options: InitOptions) {
   const hydrogenVersion = await findPackageVersionUp({fromModuleURL: import.meta.url})
-  const user = (await os.username()) ?? ''
+  const user = (await username()) ?? ''
   const cliPackageVersion = options.shopifyCliVersion ?? (await constants.versions.cliKit())
   const cliHydrogenPackageVersion = options.cliHydrogenPackageVersion ?? hydrogenVersion
   const hydrogenPackageVersion = options.hydrogenVersion
