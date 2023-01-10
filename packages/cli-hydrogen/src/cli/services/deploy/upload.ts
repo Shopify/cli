@@ -22,7 +22,7 @@ export const createDeployment = async (config: ReqDeployConfig): Promise<CreateD
   }
 
   try {
-    const response: CreateDeploymentQuerySchema = await api.oxygen.request(
+    const response: CreateDeploymentQuerySchema = await api.oxygen.oxygenRequest(
       config.oxygenAddress,
       CreateDeploymentQuery,
       config.deploymentToken,

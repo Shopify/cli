@@ -40,7 +40,7 @@ describe('createDeploymentStep()', () => {
 
     const mockedResponse = vi.fn().mockResolvedValue(deploymentResponse)
     const mockedRequest = vi.fn().mockResolvedValue(mockedResponse)
-    vi.mocked(api.oxygen.request).mockImplementation(mockedRequest)
+    vi.mocked(api.oxygen.oxygenRequest).mockImplementation(mockedRequest)
     const cfg = {
       ...defaultConfig,
       commitRef: 'ref/branch',
@@ -72,7 +72,7 @@ describe('createDeploymentStep()', () => {
   describe('failure', () => {
     it('throws a rate limit error if we are getting ratelimited', async () => {
       const graphQLError = new ClientError({status: 429}, {query: ''})
-      vi.mocked(api.oxygen.request).mockRejectedValueOnce(graphQLError)
+      vi.mocked(api.oxygen.oxygenRequest).mockRejectedValueOnce(graphQLError)
 
       await expect(() => {
         return createDeployment(defaultConfig)
@@ -81,7 +81,7 @@ describe('createDeploymentStep()', () => {
 
     it('throws if we are getting a non-200 status code', async () => {
       const graphQLError = new ClientError({status: 500}, {query: ''})
-      vi.mocked(api.oxygen.request).mockRejectedValueOnce(graphQLError)
+      vi.mocked(api.oxygen.oxygenRequest).mockRejectedValueOnce(graphQLError)
 
       await expect(() => {
         return createDeployment(defaultConfig)
@@ -100,7 +100,7 @@ describe('createDeploymentStep()', () => {
           },
         },
       }
-      vi.mocked(api.oxygen.request).mockResolvedValue(oxygenResponse)
+      vi.mocked(api.oxygen.oxygenRequest).mockResolvedValue(oxygenResponse)
 
       await expect(() => {
         return createDeployment(defaultConfig)
@@ -120,7 +120,7 @@ describe('createDeploymentStep()', () => {
           },
         },
       }
-      vi.mocked(api.oxygen.request).mockResolvedValue(oxygenResponse)
+      vi.mocked(api.oxygen.oxygenRequest).mockResolvedValue(oxygenResponse)
 
       await expect(() => {
         return createDeployment(defaultConfig)

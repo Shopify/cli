@@ -120,7 +120,7 @@ beforeEach(() => {
   vi.mocked(exchangeCustomPartnerToken).mockResolvedValue(partnersToken)
   // eslint-disable-next-line no-warning-comments
   // TODO: Add tests for ensureUserHasPartnerAccount
-  vi.mocked(partners.request).mockResolvedValue(undefined)
+  vi.mocked(partners.partnersRequest).mockResolvedValue(undefined)
   vi.mocked(allDefaultScopes).mockImplementation((scopes) => scopes || [])
 })
 

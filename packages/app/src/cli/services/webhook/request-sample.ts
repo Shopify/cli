@@ -58,7 +58,7 @@ export async function getWebhookSample(
     shared_secret: sharedSecret,
   }
 
-  const {sendSampleWebhook: result}: SamplePayloadSchema = await api.partners.request(
+  const {sendSampleWebhook: result}: SamplePayloadSchema = await api.partners.partnersRequest(
     sendSampleWebhookMutation,
     token,
     variables,

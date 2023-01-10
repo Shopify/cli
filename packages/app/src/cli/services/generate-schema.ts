@@ -33,7 +33,11 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
     version,
     type,
   }
-  const response: api.graphql.ApiSchemaDefinitionQuerySchema = await api.partners.request(query, token, variables)
+  const response: api.graphql.ApiSchemaDefinitionQuerySchema = await api.partners.partnersRequest(
+    query,
+    token,
+    variables,
+  )
 
   if (!response.definition) {
     throw new error.Abort(

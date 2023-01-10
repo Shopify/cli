@@ -32,7 +32,7 @@ describe('oxygen-api', () => {
   test('calls the graphql client once', async () => {
     vi.mocked(client.request).mockResolvedValue(mockedResult)
 
-    await oxygenApi.request(oxygenAddress, 'query', mockedToken, {some: 'variables'})
+    await oxygenApi.oxygenRequest(oxygenAddress, 'query', mockedToken, {some: 'variables'})
 
     expect(client.request).toHaveBeenCalledOnce()
   })
@@ -42,7 +42,7 @@ describe('oxygen-api', () => {
     vi.mocked(client.request).mockResolvedValue(mockedResult)
     vi.mocked(client.request).mockResolvedValue(headers)
 
-    await oxygenApi.request(oxygenAddress, 'query', mockedToken, {variables: 'variables'})
+    await oxygenApi.oxygenRequest(oxygenAddress, 'query', mockedToken, {variables: 'variables'})
 
     expect(client.request).toHaveBeenLastCalledWith('query', {variables: 'variables'})
   })
@@ -50,7 +50,7 @@ describe('oxygen-api', () => {
   test('buildHeaders is called with the deployment token', async () => {
     vi.mocked(client.request).mockResolvedValue(mockedResult)
 
-    await oxygenApi.request(oxygenAddress, 'query', mockedToken, {})
+    await oxygenApi.oxygenRequest(oxygenAddress, 'query', mockedToken, {})
 
     expect(buildHeaders).toHaveBeenCalledWith(mockedToken)
   })

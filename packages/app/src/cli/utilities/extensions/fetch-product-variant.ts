@@ -8,7 +8,7 @@ import {api, error, session} from '@shopify/cli-kit'
 export async function fetchProductVariant(store: string) {
   const adminSession = await session.ensureAuthenticatedAdmin(store)
   const query = api.graphql.FindProductVariantQuery
-  const result: api.graphql.FindProductVariantSchema = await api.admin.request(query, adminSession)
+  const result: api.graphql.FindProductVariantSchema = await api.admin.adminRequest(query, adminSession)
   const products = result.products.edges
   if (products.length === 0)
     throw new error.Abort(

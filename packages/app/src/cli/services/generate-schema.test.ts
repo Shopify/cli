@@ -7,7 +7,7 @@ import {beforeEach, describe, expect, it, MockedFunction, vi} from 'vitest'
 
 describe('generateSchemaService', () => {
   const token = 'token'
-  const request = api.partners.request as MockedFunction<typeof api.partners.request>
+  const request = api.partners.partnersRequest as MockedFunction<typeof api.partners.partnersRequest>
   const isTerminalInteractive = environment.local.isTerminalInteractive as MockedFunction<
     typeof environment.local.isTerminalInteractive
   >

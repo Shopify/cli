@@ -38,7 +38,7 @@ export async function fetchSpecifications({
   config,
 }: FetchSpecificationsOptions): Promise<GenericSpecification[]> {
   const query = api.graphql.ExtensionSpecificationsQuery
-  const result: api.graphql.ExtensionSpecificationsQuerySchema = await api.partners.request(query, token, {
+  const result: api.graphql.ExtensionSpecificationsQuerySchema = await api.partners.partnersRequest(query, token, {
     api_key: apiKey,
   })
 

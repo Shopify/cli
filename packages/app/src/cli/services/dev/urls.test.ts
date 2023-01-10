@@ -126,7 +126,7 @@ describe('generateURL', () => {
 describe('updateURLs', () => {
   it('sends a request to update the URLs', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValueOnce({appUpdate: {userErrors: []}})
+    vi.mocked(api.partners.partnersRequest).mockResolvedValueOnce({appUpdate: {userErrors: []}})
     const urls = {
       applicationUrl: 'https://example.com',
       redirectUrlWhitelist: [
@@ -144,12 +144,12 @@ describe('updateURLs', () => {
     await updateURLs(urls, 'apiKey', 'token')
 
     // Then
-    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.UpdateURLsQuery, 'token', expectedVariables)
+    expect(api.partners.partnersRequest).toHaveBeenCalledWith(api.graphql.UpdateURLsQuery, 'token', expectedVariables)
   })
 
   it('throws an error if requests has a user error', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValueOnce({appUpdate: {userErrors: [{message: 'Boom!'}]}})
+    vi.mocked(api.partners.partnersRequest).mockResolvedValueOnce({appUpdate: {userErrors: [{message: 'Boom!'}]}})
     const urls = {
       applicationUrl: 'https://example.com',
       redirectUrlWhitelist: [],
@@ -166,7 +166,7 @@ describe('updateURLs', () => {
 describe('getURLs', () => {
   it('sends a request to get the URLs', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValueOnce({
+    vi.mocked(api.partners.partnersRequest).mockResolvedValueOnce({
       app: {applicationUrl: 'https://example.com', redirectUrlWhitelist: []},
     })
     const expectedVariables = {apiKey: 'apiKey'}
@@ -175,7 +175,7 @@ describe('getURLs', () => {
     await getURLs('apiKey', 'token')
 
     // Then
-    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.GetURLsQuery, 'token', expectedVariables)
+    expect(api.partners.partnersRequest).toHaveBeenCalledWith(api.graphql.GetURLsQuery, 'token', expectedVariables)
   })
 })
 

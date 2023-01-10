@@ -247,7 +247,7 @@ ${token.json(applications)}
 
 export async function hasPartnerAccount(partnersToken: string): Promise<boolean> {
   try {
-    await partners.request(
+    await partners.partnersRequest(
       gql`
         {
           organizations(first: 1) {

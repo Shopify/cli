@@ -1,25 +1,17 @@
-import {buildHeaders, debugLogRequest} from './common.js'
-import {graphqlClient} from '../http/graphql.js'
-import {shopifyFetch} from '../http.js'
+import {shopifyFetch} from '../../../http.js'
+import {graphqlRequest} from '../../../private/common/api/graphql.js'
+import {buildHeaders} from '../../../private/common/api/headers.js'
 import {Variables, RequestDocument} from 'graphql-request'
 import FormData from 'form-data'
 import {Response} from 'node-fetch'
 
-export async function request<T>(
+export async function oxygenRequest<T>(
   oxygenAddress: string,
   query: RequestDocument,
   token: string,
   variables?: Variables,
 ): Promise<T> {
-  const headers = await buildHeaders(token)
-  debugLogRequest('Oxygen', query, variables, headers)
-  const client = await graphqlClient({
-    headers,
-    url: getOxygenAddress(oxygenAddress),
-  })
-
-  const response = await client.request<T>(query, variables)
-  return response
+  return graphqlRequest(query, 'Oxygen', getOxygenAddress(oxygenAddress), token, variables)
 }
 
 export async function uploadDeploymentFile(oxygenAddress: string, token: string, data: FormData): Promise<Response> {

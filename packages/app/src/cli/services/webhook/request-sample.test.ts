@@ -45,7 +45,7 @@ describe('getWebhookSample', () => {
         ],
       },
     }
-    vi.mocked(api.partners.request).mockResolvedValue(graphQLResult)
+    vi.mocked(api.partners.partnersRequest).mockResolvedValue(graphQLResult)
 
     const requestSpy = vi.spyOn(api.partners, 'request')
     const sessionSpy = vi.spyOn(session, 'ensureAuthenticatedPartners')

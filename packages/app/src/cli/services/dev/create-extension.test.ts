@@ -37,7 +37,7 @@ beforeEach(() => {
 describe('createApp', () => {
   it('sends request to create extension and returns it', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValueOnce({
+    vi.mocked(api.partners.partnersRequest).mockResolvedValueOnce({
       extensionCreate: {extensionRegistration: EXTENSION, userErrors: null},
     })
 
@@ -54,6 +54,6 @@ describe('createApp', () => {
 
     // Then
     expect(got).toEqual(EXTENSION)
-    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.ExtensionCreateQuery, 'token', variables)
+    expect(api.partners.partnersRequest).toHaveBeenCalledWith(api.graphql.ExtensionCreateQuery, 'token', variables)
   })
 })

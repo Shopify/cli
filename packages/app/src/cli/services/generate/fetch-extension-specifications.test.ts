@@ -20,7 +20,7 @@ vi.mock('@shopify/cli-kit', async () => {
 describe('fetchExtensionSpecifications', () => {
   it('returns the filtered and mapped results including theme and functions', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValue({extensionSpecifications: testRemoteSpecifications})
+    vi.mocked(api.partners.partnersRequest).mockResolvedValue({extensionSpecifications: testRemoteSpecifications})
 
     // When
     const got = await fetchSpecifications({token: 'token', apiKey: 'apiKey', config: new Config({root: ''})})

@@ -1,25 +1,16 @@
 import * as admin from './admin.js'
-import {buildHeaders} from './common.js'
-import {AdminSession} from '../session.js'
-import {graphqlClient} from '../http/graphql.js'
-import {test, vi, expect, describe, beforeEach} from 'vitest'
-import {GraphQLClient} from 'graphql-request'
+import {AdminSession} from '../../../session.js'
+import {buildHeaders} from '../../../private/common/api/headers.js'
+import {graphqlRequest} from '../../../private/common/api/graphql.js'
+import {test, vi, expect, describe} from 'vitest'
 
-vi.mock('../http/graphql.js')
-vi.mock('./common.js', async () => {
+vi.mock('../../../private/common/api/graphql.js')
+vi.mock('../../../private/common/api/headers.js', async () => {
   const module: any = await vi.importActual('./common.js')
   return {
     ...module,
     buildHeaders: vi.fn(),
   }
-})
-
-let client: GraphQLClient
-beforeEach(() => {
-  client = {
-    request: vi.fn(),
-  } as any
-  vi.mocked(graphqlClient).mockResolvedValue(client)
 })
 
 const mockedResult = {
@@ -45,34 +36,34 @@ const Session: AdminSession = {token, storeFqdn: 'store'}
 describe('admin-api', () => {
   test('calls the graphql client twice: get api version and then execute the request', async () => {
     // Given
-    vi.mocked(client.request).mockResolvedValue(mockedResult)
+    vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
 
     // When
-    await admin.request('query', Session, {})
+    await admin.adminRequest('query', Session, {})
 
     // Then
-    expect(client.request).toHaveBeenCalledTimes(2)
+    expect(graphqlRequest).toHaveBeenCalledTimes(2)
   })
 
   test('request is called with correct parameters', async () => {
     // Given
     const headers = {'custom-header': token}
-    vi.mocked(client.request).mockResolvedValue(mockedResult)
+    vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
     vi.mocked(buildHeaders).mockResolvedValue(headers)
 
     // When
-    await admin.request('query', Session, {variables: 'variables'})
+    await admin.adminRequest('query', Session, {variables: 'variables'})
 
     // Then
-    expect(client.request).toHaveBeenLastCalledWith('query', {variables: 'variables'})
+    expect(graphqlRequest).toHaveBeenLastCalledWith('query', {variables: 'variables'})
   })
 
   test('buildHeaders is called with user token', async () => {
     // Given
-    vi.mocked(client.request).mockResolvedValue(mockedResult)
+    vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
 
     // When
-    await admin.request('query', Session, {})
+    await admin.adminRequest('query', Session, {})
 
     // Then
     expect(buildHeaders).toHaveBeenCalledWith(token)

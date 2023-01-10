@@ -1,6 +1,6 @@
-import {buildHeaders, sanitizedHeadersOutput} from './common.js'
-import {firstPartyDev} from '../environment/local.js'
-import constants from '../constants.js'
+import {buildHeaders, sanitizedHeadersOutput} from './headers.js'
+import {firstPartyDev} from '../../../environment/local.js'
+import constants from '../../../constants.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 import {randomUUID} from 'crypto'
 

@@ -87,7 +87,7 @@ describe('selectStore', async () => {
   it('prompts user to convert store to non-transferable if selection is invalid', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
-    vi.mocked(api.partners.request).mockResolvedValueOnce({convertDevToTestStore: {convertedToTestStore: true}})
+    vi.mocked(api.partners.partnersRequest).mockResolvedValueOnce({convertDevToTestStore: {convertedToTestStore: true}})
 
     // When
     const got = await selectStore([STORE1, STORE2], ORG1, 'token')
@@ -108,7 +108,7 @@ describe('selectStore', async () => {
 
     // Then
     expect(got).toEqual(STORE2)
-    expect(api.partners.request).not.toHaveBeenCalledWith({
+    expect(api.partners.partnersRequest).not.toHaveBeenCalledWith({
       input: {
         organizationID: parseInt(ORG1.id, 10),
         shopId: STORE2.shopId,

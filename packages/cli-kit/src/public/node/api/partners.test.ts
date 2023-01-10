@@ -35,7 +35,7 @@ describe('partners-api', () => {
     vi.mocked(partners).mockResolvedValue(partnersFQDN)
 
     // When
-    await partnersApi.request('query', mockedToken, {some: 'variables'})
+    await partnersApi.partnersRequest('query', mockedToken, {some: 'variables'})
 
     // Then
     expect(client.request).toHaveBeenCalledOnce()
@@ -49,7 +49,7 @@ describe('partners-api', () => {
     vi.mocked(partners).mockResolvedValue(partnersFQDN)
 
     // When
-    await partnersApi.request('query', mockedToken, {variables: 'variables'})
+    await partnersApi.partnersRequest('query', mockedToken, {variables: 'variables'})
 
     // Then
     expect(client.request).toHaveBeenLastCalledWith('query', {variables: 'variables'})
@@ -61,7 +61,7 @@ describe('partners-api', () => {
     vi.mocked(partners).mockResolvedValue(partnersFQDN)
 
     // When
-    await partnersApi.request('query', mockedToken, {})
+    await partnersApi.partnersRequest('query', mockedToken, {})
 
     // Then
     expect(buildHeaders).toHaveBeenCalledWith(mockedToken)

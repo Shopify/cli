@@ -47,7 +47,7 @@ export async function createApp(org: Organization, appName: string, token: strin
   }
 
   const query = api.graphql.CreateAppQuery
-  const result: api.graphql.CreateAppQuerySchema = await api.partners.request(query, token, variables)
+  const result: api.graphql.CreateAppQuerySchema = await api.partners.partnersRequest(query, token, variables)
   if (result.appCreate.userErrors.length > 0) {
     const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
     throw new error.Abort(errors)

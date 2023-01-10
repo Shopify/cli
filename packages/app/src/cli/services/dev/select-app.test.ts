@@ -69,7 +69,7 @@ describe('createApp', () => {
     // Given
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
     vi.mocked(appTypePrompt).mockResolvedValue('custom')
-    vi.mocked(api.partners.request).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
+    vi.mocked(api.partners.partnersRequest).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
     const variables = {
       org: 2,
       title: 'app-name',
@@ -83,14 +83,16 @@ describe('createApp', () => {
 
     // Then
     expect(got).toEqual(APP1)
-    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.CreateAppQuery, 'token', variables)
+    expect(api.partners.partnersRequest).toHaveBeenCalledWith(api.graphql.CreateAppQuery, 'token', variables)
   })
 
   it('throws error if requests has a user error', async () => {
     // Given
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
     vi.mocked(appTypePrompt).mockResolvedValue('custom')
-    vi.mocked(api.partners.request).mockResolvedValueOnce({appCreate: {app: {}, userErrors: [{message: 'some-error'}]}})
+    vi.mocked(api.partners.partnersRequest).mockResolvedValueOnce({
+      appCreate: {app: {}, userErrors: [{message: 'some-error'}]},
+    })
 
     // When
     const got = createApp(ORG2, LOCAL_APP.name, 'token')
@@ -105,7 +107,7 @@ describe('selectOrCreateApp', () => {
     // Given
     vi.mocked(selectAppPrompt).mockResolvedValueOnce(APP1)
     vi.mocked(createAsNewAppPrompt).mockResolvedValue(false)
-    vi.mocked(api.partners.request).mockResolvedValueOnce({app: APP1})
+    vi.mocked(api.partners.partnersRequest).mockResolvedValueOnce({app: APP1})
 
     // When
     const got = await selectOrCreateApp(LOCAL_APP.name, APP_LIST, ORG1, 'token')
@@ -119,7 +121,7 @@ describe('selectOrCreateApp', () => {
     // Given
     vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
-    vi.mocked(api.partners.request).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
+    vi.mocked(api.partners.partnersRequest).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
     const variables = {
       org: 1,
       title: 'app-name',
@@ -135,6 +137,6 @@ describe('selectOrCreateApp', () => {
     expect(got).toEqual(APP1)
     expect(appTypePrompt).not.toBeCalled()
     expect(appNamePrompt).toHaveBeenCalledWith(LOCAL_APP.name)
-    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.CreateAppQuery, 'token', variables)
+    expect(api.partners.partnersRequest).toHaveBeenCalledWith(api.graphql.CreateAppQuery, 'token', variables)
   })
 })

@@ -123,7 +123,7 @@ export async function convertStoreToTest(store: OrganizationStore, orgId: string
       shopId: store.shopId,
     },
   }
-  const result: api.graphql.ConvertDevToTestStoreSchema = await api.partners.request(query, token, variables)
+  const result: api.graphql.ConvertDevToTestStoreSchema = await api.partners.partnersRequest(query, token, variables)
   if (!result.convertDevToTestStore.convertedToTestStore) {
     const errors = result.convertDevToTestStore.userErrors.map((error) => error.message).join(', ')
     throw new error.Bug(
