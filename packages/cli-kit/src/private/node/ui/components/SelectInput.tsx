@@ -1,5 +1,5 @@
 import {isEqual} from '../../../../public/common/lang.js'
-import {groupBy} from '../../../../public/common/collection.js'
+import {groupBy, partition} from '../../../../public/common/collection.js'
 import {mapValues} from '../../../../public/common/object.js'
 import React, {useState, useEffect, useRef, useCallback} from 'react'
 import {Box, Key, useInput, Text} from 'ink'
@@ -16,15 +16,58 @@ export interface Item<T> {
   group?: string
 }
 
-function groupItems<T>(items: Item<T>[]) {
+interface ItemWithIndex<T> extends Item<T> {
+  index: number
+}
+
+function groupItems<T>(items: Item<T>[]): [{[key: string]: ItemWithIndex<T>[]}, ItemWithIndex<T>[]] {
   let index = 0
 
-  return mapValues(groupBy(items, 'group'), (groupItems) =>
+  const [withGroup, withoutGroup] = partition(items, 'group')
+
+  const withGroupMapped = mapValues(groupBy(withGroup, 'group'), (groupItems) =>
     groupItems.map((groupItem) => {
       const item = {...groupItem, key: groupItem.key ?? (index + 1).toString(), index}
       index += 1
       return item
     }),
+  )
+  const withoutGroupMapped = withoutGroup.map((item) => {
+    const newItem = {...item, key: item.key ?? (index + 1).toString(), index}
+    index += 1
+    return newItem
+  })
+
+  return [withGroupMapped, withoutGroupMapped]
+}
+
+interface SelectItemsGroupProps<T> {
+  title: string | undefined
+  items: ItemWithIndex<T>[]
+  selectedIndex: number
+}
+
+function SelectItemsGroup<T>({title, items, selectedIndex}: SelectItemsGroupProps<T>): JSX.Element {
+  return (
+    <Box key={title} flexDirection="column" marginTop={1}>
+      {title && (
+        <Box marginLeft={3}>
+          <Text bold>{title}</Text>
+        </Box>
+      )}
+
+      {items.map((item) => {
+        const isSelected = item.index === selectedIndex
+
+        return (
+          <Box key={item.key}>
+            <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
+
+            <Text color={isSelected ? 'cyan' : undefined}>{`(${item.key}) ${item.label}`}</Text>
+          </Box>
+        )
+      })}
+    </Box>
   )
 }
 
@@ -33,8 +76,8 @@ export default function SelectInput<T>({items, onChange}: React.PropsWithChildre
   const [inputTimeout, setInputTimeout] = useState<NodeJS.Timeout | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const keys = useRef(new Set(items.map((item) => item.key)))
-  const groupedItems = groupItems(items)
-  const groupedItemsValues = Object.values(groupedItems).flat()
+  const [groupedItems, ungroupedItems] = groupItems(items)
+  const groupedItemsValues = [...Object.values(groupedItems).flat(), ...ungroupedItems]
   const groupTitles = Object.keys(groupedItems)
   const previousItems = useRef<Item<T>[]>(items)
 
@@ -107,28 +150,26 @@ export default function SelectInput<T>({items, onChange}: React.PropsWithChildre
     }
   })
 
+  const ungroupedItemsTitle = groupTitles.length > 0 ? 'Other' : undefined
+
   return (
     <Box flexDirection="column">
-      {groupTitles.map((title) => {
-        return (
-          <Box key={title} flexDirection="column" marginTop={1}>
-            <Box marginLeft={3}>
-              <Text bold>{title === 'undefined' ? 'Other' : title}</Text>
-            </Box>
-            {groupedItems[title]!.map((item) => {
-              const isSelected = item.index === selectedIndex
+      {groupTitles.map((title) => (
+        <SelectItemsGroup
+          title={title}
+          selectedIndex={selectedIndex}
+          items={groupedItems[title]!}
+          key={title}
+        ></SelectItemsGroup>
+      ))}
 
-              return (
-                <Box key={item.key}>
-                  <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
-
-                  <Text color={isSelected ? 'cyan' : undefined}>{`(${item.key}) ${item.label}`}</Text>
-                </Box>
-              )
-            })}
-          </Box>
-        )
-      })}
+      {ungroupedItems.length > 0 && (
+        <SelectItemsGroup
+          title={ungroupedItemsTitle}
+          selectedIndex={selectedIndex}
+          items={ungroupedItems}
+        ></SelectItemsGroup>
+      )}
 
       <Box marginTop={1} marginLeft={3}>
         <Text dimColor>navigate with arrows, enter to select</Text>
