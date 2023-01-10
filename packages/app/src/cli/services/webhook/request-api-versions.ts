@@ -1,19 +1,28 @@
 import {api, session} from '@shopify/cli-kit'
 
-export interface ApiVersionsSchema {
-  apiVersions: string[]
+export interface PublicApiVersionsSchema {
+  publicApiVersions: string[]
 }
 
 const getApiVersionsQuery = `
   query getApiVersions {
-    apiVersions
+    publicApiVersions
   }
 `
 
 export async function requestApiVersions() {
   const token = await session.ensureAuthenticatedPartners()
 
-  const {apiVersions: result}: ApiVersionsSchema = await api.partners.request(getApiVersionsQuery, token)
+  const {publicApiVersions: result}: PublicApiVersionsSchema = await api.partners.request(getApiVersionsQuery, token)
+
+  const unstableIdx = result.indexOf('unstable')
+  if (unstableIdx === -1) {
+    result.sort().reverse()
+  } else {
+    result.splice(unstableIdx, 1)
+    result.sort().reverse()
+    result.push('unstable')
+  }
 
   return result
 }

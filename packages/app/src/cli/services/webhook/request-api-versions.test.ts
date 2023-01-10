@@ -15,10 +15,10 @@ describe('requestApiVersions', () => {
     vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue('A_TOKEN')
   })
 
-  it('calls partners to request data', async () => {
+  it('calls partners to request data and returns ordered array', async () => {
     // Given
     const graphQLResult = {
-      apiVersions: ['version1', 'version2'],
+      publicApiVersions: ['2022', 'unstable', '2023'],
     }
     vi.mocked(api.partners.request).mockResolvedValue(graphQLResult)
 
@@ -31,6 +31,6 @@ describe('requestApiVersions', () => {
     // Then
     expect(sessionSpy).toHaveBeenCalledOnce()
     expect(requestSpy).toHaveBeenCalledWith(expect.any(String), 'A_TOKEN')
-    expect(got).toEqual(['version1', 'version2'])
+    expect(got).toEqual(['2023', '2022', 'unstable'])
   })
 })
