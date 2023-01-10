@@ -11,14 +11,34 @@ export interface Props {
   defaultValue?: string
   placeholder?: string
   password?: boolean
+  validate?: (value: string) => string | undefined
 }
 
-const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder, defaultValue = '', password = false}) => {
+const TextPrompt: React.FC<Props> = ({
+  message,
+  onSubmit,
+  placeholder,
+  validate,
+  defaultValue = '',
+  password = false,
+}) => {
+  const validateAnswer = (value: string): string | undefined => {
+    if (validate) {
+      return validate(value)
+    }
+
+    if (value.length === 0) return 'Type an answer to the prompt.'
+
+    return undefined
+  }
   const {oneThird} = useLayout()
   const [answer, setAnswer] = useState<string>(defaultValue)
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
-  const [valid, setValid] = useState(answer.length > 0)
+  const [error, setError] = useState(validateAnswer(answer))
+  const valid = !error
+  const shouldShowError = submitted && !valid
+  const color = shouldShowError ? 'red' : 'cyan'
   const underline = new Array(oneThird - 3).fill('▔')
 
   useInput(
@@ -38,10 +58,6 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder, defaultVal
       [answer, onSubmit, valid],
     ),
   )
-
-  const shouldShowError = submitted && !valid
-  const color = shouldShowError ? 'red' : 'cyan'
-  const error = shouldShowError ? 'Type an answer to the prompt.' : undefined
 
   return (
     <Box flexDirection="column" marginBottom={1} width={oneThird}>
@@ -72,7 +88,7 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder, defaultVal
                 value={answer}
                 onChange={(answer) => {
                   setAnswer(answer)
-                  setValid(answer.length > 0)
+                  setError(validateAnswer(answer))
                   setSubmitted(false)
                 }}
                 placeholder={placeholder}
@@ -84,7 +100,7 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder, defaultVal
           <Box marginLeft={3}>
             <Text color={color}>{underline}</Text>
           </Box>
-          {error && (
+          {shouldShowError && (
             <Box marginLeft={3}>
               <Text color={color}>{error}</Text>
             </Box>

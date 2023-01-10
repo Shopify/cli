@@ -19,7 +19,7 @@ describe('TextPrompt', () => {
     `)
   })
 
-  test('validation error', async () => {
+  test('default validation error', async () => {
     const renderInstance = render(<TextPrompt onSubmit={() => {}} message="Test question" />)
 
     await waitForInputsToBeReady()
@@ -38,6 +38,28 @@ describe('TextPrompt', () => {
       "?  Test question
       [36m>[39m  [36mA[7m [27m[39m
          [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+      "
+    `)
+  })
+
+  test('custom validation error', async () => {
+    const renderInstance = render(
+      <TextPrompt
+        onSubmit={() => {}}
+        message="Test question"
+        validate={(value) => (value.includes('shopify') ? "App Name can't include the word shopify" : undefined)}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+    await sendInput(renderInstance, 'this-test-includes-shopify')
+    await sendInput(renderInstance, ENTER)
+    // testing with styles because the color changes to red
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "?  Test question
+      [31m>[39m  [31mthis-test-includes-shopify[7m [27m[39m
+         [31m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+         [31mApp Name can't include the word shopify[39m
       "
     `)
   })

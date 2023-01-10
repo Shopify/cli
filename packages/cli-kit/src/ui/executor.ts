@@ -13,6 +13,12 @@ export async function run(question: Question): Promise<string> {
       mappedQuestion = {
         ...question,
         defaultValue: question.default,
+        validate: question.validate
+          ? (value: string) => {
+              const error = question.validate!(value)
+              return typeof error === 'string' ? error : undefined
+            }
+          : undefined,
       }
 
       return renderTextPrompt(mappedQuestion)
@@ -20,6 +26,12 @@ export async function run(question: Question): Promise<string> {
       mappedQuestion = {
         ...question,
         password: true,
+        validate: question.validate
+          ? (value: string) => {
+              const error = question.validate!(value)
+              return typeof error === 'string' ? error : undefined
+            }
+          : undefined,
       }
 
       return renderTextPrompt(mappedQuestion)
