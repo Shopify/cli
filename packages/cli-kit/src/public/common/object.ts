@@ -21,10 +21,6 @@ export function deepMergeObjects<T1, T2>(
   return deepMerge(lhs, rhs, {arrayMerge: arrayMergeStrategy})
 }
 
-function unionArrayStrategy(destinationArray: unknown[], sourceArray: unknown[]): unknown[] {
-  return Array.from(new Set([...destinationArray, ...sourceArray]))
-}
-
 /**
  * Creates an object composed of the `object` properties `predicate` returns
  * truthy for. The predicate is invoked with two arguments: (value, key).
@@ -57,4 +53,8 @@ export function mapValues<T extends object, TResult>(
 ): {[P in keyof T]: TResult} {
   const lodashMapValues = require('lodash/mapValues.js')
   return lodashMapValues(obj, callback)
+}
+
+function unionArrayStrategy(destinationArray: unknown[], sourceArray: unknown[]): unknown[] {
+  return Array.from(new Set([...destinationArray, ...sourceArray]))
 }

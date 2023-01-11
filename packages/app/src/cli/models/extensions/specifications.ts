@@ -5,7 +5,7 @@ import {GenericSpecification} from '../app/extensions.js'
 import {
   loadUIExtensionSpecificiationsFromPlugins,
   loadFunctionSpecificationsFromPlugins,
-} from '../../public/plugins/extension.js'
+} from '../../private/plugins/extension.js'
 import {path, environment} from '@shopify/cli-kit'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {memoize} from '@shopify/cli-kit/common/function'
