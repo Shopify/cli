@@ -6,6 +6,7 @@ import {ClientError, gql} from 'graphql-request'
 
 /**
  * Executes a GraphQL query against the Admin API.
+ *
  * @param query - GraphQL query to execute.
  * @param session - Shopify admin session including token and Store FQDN.
  * @param variables - GraphQL variables to pass to the query.
@@ -18,6 +19,12 @@ export async function adminRequest<T>(query: string, session: AdminSession, vari
   return graphqlRequest(query, api, url, session.token, variables)
 }
 
+/**
+ * GraphQL query to retrieve the latest supported API version.
+ *
+ * @param session - Shopify admin session including token and Store FQDN.
+ * @returns - The latest supported API version.
+ */
 async function fetchApiVersion(session: AdminSession): Promise<string> {
   const url = adminUrl(session.storeFqdn, 'unstable')
   const query = apiVersionQuery()
@@ -44,6 +51,13 @@ async function fetchApiVersion(session: AdminSession): Promise<string> {
   }
 }
 
+/**
+ * Returns the Admin API URL for the given store and version.
+ *
+ * @param store - Store FQDN.
+ * @param version - API version.
+ * @returns - Admin API URL.
+ */
 function adminUrl(store: string, version: string | undefined): string {
   const realVersion = version || 'unstable'
   return `https://${store}/admin/api/${realVersion}/graphql.json`
@@ -53,6 +67,11 @@ interface ApiVersionResponse {
   publicApiVersions: {handle: string; supported: boolean}[]
 }
 
+/**
+ * GraphQL query string to retrieve the latest supported API version.
+ *
+ * @returns - A query string.
+ */
 function apiVersionQuery(): string {
   return gql`
     query {

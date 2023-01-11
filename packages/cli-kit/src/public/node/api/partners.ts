@@ -4,8 +4,9 @@ import {ScriptServiceProxyQuery} from '../../../api/graphql/index.js'
 
 /**
  * Executes a GraphQL query against the Partners API.
+ *
  * @param query - GraphQL query to execute.
- * @param token - Partners token
+ * @param token - Partners token.
  * @param variables - GraphQL variables to pass to the query.
  * @returns The response of the query of generic type <T>.
  */
@@ -27,7 +28,7 @@ interface ProxyResponse {
  *
  * @param apiKey - APIKey of the app where the query will be executed.
  * @param query - GraphQL query to execute.
- * @param token - Partners token
+ * @param token - Partners token.
  * @param variables - GraphQL variables to pass to the query.
  * @returns The response of the query.
  */

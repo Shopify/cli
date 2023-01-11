@@ -6,6 +6,7 @@ import {Response} from 'node-fetch'
 
 /**
  * Executes a GraphQL query against the Oxygen API.
+ *
  * @param oxygenAddress - Oxygen address to query.
  * @param query - GraphQL query to execute.
  * @param token - Shopify access token.
@@ -23,6 +24,7 @@ export async function oxygenRequest<T>(
 
 /**
  * Uploads a deployment file to the Oxygen API.
+ *
  * @param oxygenAddress - Oxygen address to upload to.
  * @param token - Shopify access token.
  * @param data - FormData to upload.
