@@ -4,6 +4,11 @@ import {Abort} from '../../../error.js'
 import {httpsAgent} from '../../../http.js'
 import {ClientError, GraphQLClient, RequestDocument, Variables} from 'graphql-request'
 
+export interface GraphQLVariables {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any
+}
+
 export function graphqlRequest<T>(
   query: RequestDocument,
   api: string,

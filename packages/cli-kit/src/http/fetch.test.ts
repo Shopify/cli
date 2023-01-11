@@ -1,11 +1,11 @@
 import fetch from './fetch.js'
-import {buildHeaders} from '../private/common/api/headers.js'
+import {buildHeaders} from '../private/node/api/headers.js'
 import {describe, test, expect, vi} from 'vitest'
 import nodeFetch, {Response} from 'node-fetch'
 import type {RequestInit, RequestInfo} from 'node-fetch'
 
 vi.mock('node-fetch')
-vi.mock('../private/common/api/headers.js')
+vi.mock('../private/node/api/headers.js')
 
 describe('fetch', () => {
   test('delegates the fetch to node-fetch', async () => {

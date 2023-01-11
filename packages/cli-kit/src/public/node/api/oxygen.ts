@@ -1,5 +1,5 @@
 import {shopifyFetch} from '../../../http.js'
-import {graphqlRequest} from '../../../private/node/api/graphql.js'
+import {graphqlRequest, GraphQLVariables} from '../../../private/node/api/graphql.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'
 import FormData from 'form-data'
 import {Response} from 'node-fetch'
@@ -16,7 +16,7 @@ export async function oxygenRequest<T>(
   oxygenAddress: string,
   query: string,
   token: string,
-  variables?: {[key: string]: unknown},
+  variables?: GraphQLVariables,
 ): Promise<T> {
   return graphqlRequest(query, 'Oxygen', getOxygenAddress(oxygenAddress), token, variables)
 }

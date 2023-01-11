@@ -1,6 +1,6 @@
 import {httpsAgent} from '../http.js'
 import {content, debug} from '../output.js'
-import {buildHeaders, sanitizedHeadersOutput} from '../private/common/api/headers.js'
+import {buildHeaders, sanitizedHeadersOutput} from '../private/node/api/headers.js'
 import nodeFetch from 'node-fetch'
 import {performance} from 'perf_hooks'
 import type {RequestInfo, RequestInit} from 'node-fetch'

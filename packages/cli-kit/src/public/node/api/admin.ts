@@ -1,7 +1,7 @@
 import {AdminSession} from '../../../session.js'
 import {content, token as outputToken} from '../../../output.js'
 import {Bug, Abort} from '../../../error.js'
-import {graphqlRequest} from '../../../private/node/api/graphql.js'
+import {graphqlRequest, GraphQLVariables} from '../../../private/node/api/graphql.js'
 import {ClientError, gql} from 'graphql-request'
 
 /**
@@ -11,11 +11,7 @@ import {ClientError, gql} from 'graphql-request'
  * @param variables - GraphQL variables to pass to the query.
  * @returns The response of the query of generic type <T>.
  */
-export async function adminRequest<T>(
-  query: string,
-  session: AdminSession,
-  variables?: {[key: string]: unknown},
-): Promise<T> {
+export async function adminRequest<T>(query: string, session: AdminSession, variables?: GraphQLVariables): Promise<T> {
   const api = 'Admin'
   const version = await fetchApiVersion(session)
   const url = adminUrl(session.storeFqdn, version)

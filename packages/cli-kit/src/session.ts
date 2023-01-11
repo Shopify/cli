@@ -26,7 +26,7 @@ import {firstPartyDev, useDeviceAuth} from './environment/local.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {AbortError} from './public/node/error.js'
 import {partnersRequest} from './public/node/api/partners.js'
-import {RequestClientError} from './private/common/api/headers.js'
+import {RequestClientError} from './private/node/api/headers.js'
 import {gql} from 'graphql-request'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')

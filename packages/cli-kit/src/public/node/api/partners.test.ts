@@ -3,7 +3,7 @@ import {partners} from '../../../environment/fqdn.js'
 import {graphqlRequest} from '../../../private/node/api/graphql.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 
-vi.mock('../../../private/common/api/graphql')
+vi.mock('../../../private/node/api/graphql')
 vi.mock('../../../environment/fqdn.js')
 
 const mockedResult = 'OK'

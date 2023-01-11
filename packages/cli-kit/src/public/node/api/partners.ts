@@ -1,5 +1,5 @@
 import {partners as partnersFqdn} from '../../../environment/fqdn.js'
-import {graphqlRequest} from '../../../private/node/api/graphql.js'
+import {graphqlRequest, GraphQLVariables} from '../../../private/node/api/graphql.js'
 import {ScriptServiceProxyQuery} from '../../../api/graphql/index.js'
 
 /**
@@ -9,11 +9,7 @@ import {ScriptServiceProxyQuery} from '../../../api/graphql/index.js'
  * @param variables - GraphQL variables to pass to the query.
  * @returns The response of the query of generic type <T>.
  */
-export async function partnersRequest<T>(
-  query: string,
-  token: string,
-  variables?: {[key: string]: unknown},
-): Promise<T> {
+export async function partnersRequest<T>(query: string, token: string, variables?: GraphQLVariables): Promise<T> {
   const api = 'Partners'
   const fqdn = await partnersFqdn()
   const url = `https://${fqdn}/api/cli/graphql`

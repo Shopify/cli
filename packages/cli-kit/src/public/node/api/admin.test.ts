@@ -3,7 +3,7 @@ import {AdminSession} from '../../../session.js'
 import {graphqlRequest} from '../../../private/node/api/graphql.js'
 import {test, vi, expect, describe} from 'vitest'
 
-vi.mock('../../../private/common/api/graphql.js')
+vi.mock('../../../private/node/api/graphql.js')
 
 const mockedResult = {
   publicApiVersions: [

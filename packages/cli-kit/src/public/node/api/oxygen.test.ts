@@ -5,8 +5,8 @@ import {graphqlRequest} from '../../../private/node/api/graphql.js'
 import {test, vi, describe, beforeEach, expect} from 'vitest'
 import {Response} from 'node-fetch'
 
-vi.mock('../../../private/common/api/graphql.js')
-vi.mock('../../../private/common/api/headers.js')
+vi.mock('../../../private/node/api/graphql.js')
+vi.mock('../../../private/node/api/headers.js')
 vi.mock('../../../http.js')
 
 const mockedResult = 'OK'
