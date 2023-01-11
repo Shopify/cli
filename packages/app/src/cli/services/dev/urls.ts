@@ -5,6 +5,7 @@ import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/erro
 import {Config} from '@oclif/core'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isValidURL} from '@shopify/cli-kit/common/url'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export interface PartnersURLs {
   applicationUrl: string
@@ -125,7 +126,7 @@ export function generatePartnersURLs(baseURL: string, authCallbackPath?: string 
 export async function updateURLs(urls: PartnersURLs, apiKey: string, token: string): Promise<void> {
   const variables: api.graphql.UpdateURLsQueryVariables = {apiKey, ...urls}
   const query = api.graphql.UpdateURLsQuery
-  const result: api.graphql.UpdateURLsQuerySchema = await api.partners.request(query, token, variables)
+  const result: api.graphql.UpdateURLsQuerySchema = await partnersRequest(query, token, variables)
   if (result.appUpdate.userErrors.length > 0) {
     const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
     throw new AbortError(errors)
@@ -135,7 +136,7 @@ export async function updateURLs(urls: PartnersURLs, apiKey: string, token: stri
 export async function getURLs(apiKey: string, token: string): Promise<PartnersURLs> {
   const variables: api.graphql.GetURLsQueryVariables = {apiKey}
   const query = api.graphql.GetURLsQuery
-  const result: api.graphql.GetURLsQuerySchema = await api.partners.request(query, token, variables)
+  const result: api.graphql.GetURLsQuerySchema = await partnersRequest(query, token, variables)
   return {applicationUrl: result.app.applicationUrl, redirectUrlWhitelist: result.app.redirectUrlWhitelist}
 }
 

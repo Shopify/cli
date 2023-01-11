@@ -10,6 +10,7 @@ import {Organization, OrganizationApp, OrganizationStore} from '../../models/org
 import {describe, expect, it, test, vi} from 'vitest'
 import {api, outputMocker} from '@shopify/cli-kit'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
 const ORG2: Organization = {id: '2', businessName: 'org2', appsNext: false}
@@ -64,82 +65,71 @@ const FETCH_STORE_RESPONSE_VALUE = {
   },
 }
 
-vi.mock('@shopify/cli-kit', async () => {
-  const cliKit: any = await vi.importActual('@shopify/cli-kit')
-  return {
-    ...cliKit,
-    api: {
-      partners: {
-        request: vi.fn(),
-      },
-      graphql: cliKit.api.graphql,
-    },
-  }
-})
+vi.mock('@shopify/cli-kit/node/api/partners')
 
 describe('fetchOrganizations', async () => {
   it('returns fetched organizations', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValue({organizations: {nodes: [ORG1, ORG2]}})
+    vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: [ORG1, ORG2]}})
 
     // When
     const got = await fetchOrganizations('token')
 
     // Then
     expect(got).toEqual([ORG1, ORG2])
-    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.AllOrganizationsQuery, 'token')
+    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.AllOrganizationsQuery, 'token')
   })
 
   it('throws if there are no organizations', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValue({organizations: {nodes: []}})
+    vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: []}})
 
     // When
     const got = fetchOrganizations('token')
 
     // Then
     await expect(got).rejects.toThrow(NoOrgError())
-    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.AllOrganizationsQuery, 'token')
+    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.AllOrganizationsQuery, 'token')
   })
 })
 
 describe('fetchApp', async () => {
   it('returns fetched apps', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
+    vi.mocked(partnersRequest).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
 
     // When
     const got = await fetchOrgAndApps(ORG1.id, 'token')
 
     // Then
     expect(got).toEqual({organization: ORG1, apps: [APP1, APP2], stores: []})
-    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.FindOrganizationQuery, 'token', {id: ORG1.id})
+    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.FindOrganizationQuery, 'token', {id: ORG1.id})
   })
 
   it('throws if there are no organizations', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValue({organizations: {nodes: []}})
+    vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: []}})
 
     // When
     const got = () => fetchOrgAndApps(ORG1.id, 'token')
 
     // Then
     await expect(got).rejects.toThrowError(NoOrgError())
-    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.FindOrganizationQuery, 'token', {id: ORG1.id})
+    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.FindOrganizationQuery, 'token', {id: ORG1.id})
   })
 })
 
 describe('fetchAllDevStores', async () => {
   it('returns fetched stores', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
+    vi.mocked(partnersRequest).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
 
     // When
     const got = await fetchAllDevStores(ORG1.id, 'token')
 
     // Then
     expect(got).toEqual([STORE1])
-    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.AllDevStoresByOrganizationQuery, 'token', {
+    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.AllDevStoresByOrganizationQuery, 'token', {
       id: ORG1.id,
     })
   })
@@ -148,14 +138,14 @@ describe('fetchAllDevStores', async () => {
 describe('fetchStoreByDomain', async () => {
   it('returns fetched store and organization', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValue(FETCH_STORE_RESPONSE_VALUE)
+    vi.mocked(partnersRequest).mockResolvedValue(FETCH_STORE_RESPONSE_VALUE)
 
     // When
     const got = await fetchStoreByDomain(ORG1.id, 'token', 'domain1')
 
     // Then
     expect(got).toEqual({organization: ORG1, store: STORE1})
-    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.FindStoreByDomainQuery, 'token', {
+    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.FindStoreByDomainQuery, 'token', {
       id: ORG1.id,
       shopDomain: STORE1.shopDomain,
     })
@@ -177,7 +167,7 @@ describe('fetchAppExtensionRegistrations', () => {
         ],
       },
     }
-    vi.mocked(api.partners.request).mockResolvedValue(response)
+    vi.mocked(partnersRequest).mockResolvedValue(response)
 
     // When
     const got = await fetchAppExtensionRegistrations({
@@ -187,7 +177,7 @@ describe('fetchAppExtensionRegistrations', () => {
 
     // Then
     expect(got).toEqual(response)
-    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.AllAppExtensionRegistrationsQuery, 'token', {
+    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.AllAppExtensionRegistrationsQuery, 'token', {
       apiKey: 'api-key',
     })
   })

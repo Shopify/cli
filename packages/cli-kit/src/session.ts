@@ -22,11 +22,11 @@ import {IdentityToken, Session} from './session/schema.js'
 import * as secureStore from './session/store.js'
 import constants from './constants.js'
 import * as output from './output.js'
-import {partners} from './api.js'
-import {RequestClientError} from './api/common.js'
 import {firstPartyDev, useDeviceAuth} from './environment/local.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {AbortError} from './public/node/error.js'
+import {partnersRequest} from './public/node/api/partners.js'
+import {RequestClientError} from './private/node/api/headers.js'
 import {gql} from 'graphql-request'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')
@@ -247,7 +247,7 @@ ${token.json(applications)}
 
 export async function hasPartnerAccount(partnersToken: string): Promise<boolean> {
   try {
-    await partners.request(
+    await partnersRequest(
       gql`
         {
           organizations(first: 1) {
