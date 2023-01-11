@@ -5,7 +5,9 @@ import * as port from 'get-port-please'
 
 /**
  * Returns an available port in the current environment.
+ *
  * @returns A promise that resolves with an availabe port.
+ * @example
  */
 export async function getAvailableTCPPort(): Promise<number> {
   debug(content`Getting a random port...`)
@@ -14,6 +16,13 @@ export async function getAvailableTCPPort(): Promise<number> {
   return randomPort
 }
 
+/**
+ * Given a function, it runs it and retries in case of failiure up to the provided number of times.
+ *
+ * @param execute - The function to execute.
+ * @param maxTries - The maximum retries.
+ * @param waitTimeInSeconds - The time to wait between retries.
+ */
 async function retryOnError<T>(execute: () => T, maxTries = 5, waitTimeInSeconds = 1) {
   let retryCount = 1
   while (true) {

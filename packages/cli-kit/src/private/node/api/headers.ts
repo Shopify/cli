@@ -1,7 +1,7 @@
 import constants from '../../../constants.js'
 import {firstPartyDev} from '../../../environment/local.js'
 import {ExtendableError} from '../../../error.js'
-import {randomUUID} from 'crypto'
+import {randomUUID} from '../../../public/node/crypto.js'
 
 export class RequestClientError extends ExtendableError {
   statusCode: number

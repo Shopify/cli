@@ -1,11 +1,11 @@
 import {buildHeaders, sanitizedHeadersOutput} from './headers.js'
 import {firstPartyDev} from '../../../environment/local.js'
 import constants from '../../../constants.js'
+import {randomUUID} from '../../../public/node/crypto.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
-import {randomUUID} from 'crypto'
 
 beforeEach(() => {
-  vi.mock('crypto')
+  vi.mock('../public/node/crypto.js')
   vi.mock('../../../environment/local', async () => {
     return {
       isVerbose: vi.fn(),

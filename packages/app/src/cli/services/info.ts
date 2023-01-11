@@ -2,9 +2,10 @@ import {outputEnv} from './app/env/show.js'
 import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
 import {configurationFileNames} from '../constants.js'
-import {output, path, store, string} from '@shopify/cli-kit'
+import {output, path, store} from '@shopify/cli-kit'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
+import {linesToColumns} from '@shopify/cli-kit/common/string'
 
 export type Format = 'json' | 'text'
 interface InfoOptions {
@@ -89,7 +90,7 @@ class AppInfo {
       ['API key', apiKey],
       ['Update URLs', updateURLs],
     ]
-    return [title, `${string.linesToColumns(lines)}\n\n${postscript}`]
+    return [title, `${linesToColumns(lines)}\n\n${postscript}`]
   }
 
   projectSettingsSection(): [string, string] {
@@ -98,7 +99,7 @@ class AppInfo {
       ['Name', this.app.name],
       ['Root location', this.app.directory],
     ]
-    return [title, string.linesToColumns(lines)]
+    return [title, linesToColumns(lines)]
   }
 
   async appComponentsSection(): Promise<[string, string]> {
@@ -156,7 +157,7 @@ class AppInfo {
     let errorContent = `\n${errors.map(this.formattedError).join('\n')}`
     if (errorContent.trim() === '') errorContent = ''
 
-    return `${subtitle}\n${string.linesToColumns([toplevel, ...sublevels])}${errorContent}`
+    return `${subtitle}\n${linesToColumns([toplevel, ...sublevels])}${errorContent}`
   }
 
   uiExtensionSubSection(extension: UIExtension): string {
@@ -169,7 +170,7 @@ class AppInfo {
       details.push(['     metafields', `${config.metafields.length}`])
     }
 
-    return `\n${string.linesToColumns(details)}`
+    return `\n${linesToColumns(details)}`
   }
 
   functionExtensionSubSection(extension: FunctionExtension): string {
@@ -179,7 +180,7 @@ class AppInfo {
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
 
-    return `\n${string.linesToColumns(details)}`
+    return `\n${linesToColumns(details)}`
   }
 
   themeExtensionSubSection(extension: ThemeExtension): string {
@@ -189,7 +190,7 @@ class AppInfo {
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
 
-    return `\n${string.linesToColumns(details)}`
+    return `\n${linesToColumns(details)}`
   }
 
   invalidExtensionSubSection(extension: UIExtension | FunctionExtension | ThemeExtension): string {
@@ -200,7 +201,7 @@ class AppInfo {
       ['     config file', path.relative(extension.directory, extension.configurationPath)],
     ]
     const formattedError = this.formattedError(error)
-    return `\n${string.linesToColumns(details)}\n${formattedError}`
+    return `\n${linesToColumns(details)}\n${formattedError}`
   }
 
   formattedError(str: output.Message): string {
@@ -212,7 +213,7 @@ class AppInfo {
   accessScopesSection(): [string, string] {
     const title = 'Access Scopes in Root TOML File'
     const lines = this.app.configuration.scopes.split(',').map((scope) => [scope])
-    return [title, string.linesToColumns(lines)]
+    return [title, linesToColumns(lines)]
   }
 
   async systemInfoSection(): Promise<[string, string]> {
@@ -227,7 +228,7 @@ class AppInfo {
       ['Shell', process.env.SHELL || 'unknown'],
       ['Node version', process.version],
     ]
-    return [title, `${string.linesToColumns(lines)}`]
+    return [title, `${linesToColumns(lines)}`]
   }
 
   currentCliVersion(): string {

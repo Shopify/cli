@@ -1,4 +1,4 @@
-import {getRandomName} from './string.js'
+import {getRandomName, linesToColumns, tryParseInt} from './string.js'
 import {describe, expect, test} from 'vitest'
 
 describe('getRandomName', () => {
@@ -8,5 +8,38 @@ describe('getRandomName', () => {
 
     // Then
     expect(got.length).not.toBe(0)
+  })
+})
+
+describe('tryParseInt', () => {
+  test('converts a string to an int', () => {
+    expect(tryParseInt('  999 ')).toEqual(999)
+  })
+  test('ignores unspecified strings', () => {
+    expect(tryParseInt(undefined)).toEqual(undefined)
+  })
+  test('ignores bad strings', () => {
+    expect(tryParseInt('not this')).toEqual(undefined)
+  })
+})
+
+describe('linesToColumns', () => {
+  test('converts a set of lines to columns', () => {
+    // Given
+    const lines = [
+      ['one', 'two', 'three'],
+      ['four', 'five', 'six'],
+    ]
+
+    // When
+    const got = linesToColumns(lines)
+
+    // Then
+    expect(got).toEqual(
+      `
+one    two    three
+four   five   six
+`.trim(),
+    )
   })
 })

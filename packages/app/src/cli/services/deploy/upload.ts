@@ -4,8 +4,8 @@ import {FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {api, error, session, http, output, file} from '@shopify/cli-kit'
 
 import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import fs from 'fs'
-import {randomUUID} from 'crypto'
 
 interface DeployThemeExtensionOptions {
   /** The application API key */
