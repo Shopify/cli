@@ -1,5 +1,4 @@
 import {Text} from 'ink'
-import chalk from 'chalk'
 import React from 'react'
 
 interface Props {
@@ -7,10 +6,10 @@ interface Props {
 }
 
 /**
- * `Subdued` displays some text that represents a sub-process
+ * `Subdued` displays some text with subdued colors
  */
 const Subdued: React.FC<Props> = ({subdued}: React.PropsWithChildren<Props>): JSX.Element => {
-  return <Text>{chalk.dim(subdued)}</Text>
+  return <Text dimColor>{subdued}</Text>
 }
 
 export {Subdued}
