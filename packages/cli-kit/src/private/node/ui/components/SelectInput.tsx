@@ -3,10 +3,13 @@ import {groupBy, partition} from '../../../../public/common/collection.js'
 import {mapValues} from '../../../../public/common/object.js'
 import React, {useState, useEffect, useRef, useCallback} from 'react'
 import {Box, Key, useInput, Text} from 'ink'
+import {debounce} from '@shopify/cli-kit/common/function'
 
 export interface Props<T> {
   items: Item<T>[]
   onChange: (item: Item<T>) => void
+  enableShortcuts?: boolean
+  focus?: boolean
 }
 
 export interface Item<T> {
@@ -46,9 +49,16 @@ interface SelectItemsGroupProps<T> {
   items: ItemWithIndex<T>[]
   selectedIndex: number
   hasMarginTop: boolean
+  enableShortcuts: boolean
 }
 
-function SelectItemsGroup<T>({title, items, selectedIndex, hasMarginTop}: SelectItemsGroupProps<T>): JSX.Element {
+function SelectItemsGroup<T>({
+  title,
+  items,
+  selectedIndex,
+  hasMarginTop,
+  enableShortcuts,
+}: SelectItemsGroupProps<T>): JSX.Element {
   return (
     <Box key={title} flexDirection="column" marginTop={hasMarginTop ? 1 : 0}>
       {title && (
@@ -64,7 +74,9 @@ function SelectItemsGroup<T>({title, items, selectedIndex, hasMarginTop}: Select
           <Box key={item.key}>
             <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
 
-            <Text color={isSelected ? 'cyan' : undefined}>{`(${item.key}) ${item.label}`}</Text>
+            <Text color={isSelected ? 'cyan' : undefined}>
+              {enableShortcuts ? `(${item.key}) ${item.label}` : item.label}
+            </Text>
           </Box>
         )
       })}
@@ -72,9 +84,13 @@ function SelectItemsGroup<T>({title, items, selectedIndex, hasMarginTop}: Select
   )
 }
 
-export default function SelectInput<T>({items, onChange}: React.PropsWithChildren<Props<T>>): JSX.Element | null {
+export default function SelectInput<T>({
+  items,
+  onChange,
+  enableShortcuts = true,
+  focus = true,
+}: React.PropsWithChildren<Props<T>>): JSX.Element | null {
   const [inputStack, setInputStack] = useState<string | null>(null)
-  const [inputTimeout, setInputTimeout] = useState<NodeJS.Timeout | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const keys = useRef(new Set(items.map((item) => item.key)))
   const [groupedItems, ungroupedItems] = groupItems(items)
@@ -105,19 +121,8 @@ export default function SelectInput<T>({items, onChange}: React.PropsWithChildre
     previousItems.current = items
   }, [items])
 
-  const handleInput = useCallback(
-    (input: string, key: Key) => {
-      const parsedInput = parseInt(input, 10)
-
-      if (parsedInput !== 0 && parsedInput <= items.length + 1) {
-        changeSelection(parsedInput - 1)
-      } else if (keys.current.has(input)) {
-        const groupedItem = groupedItemsValues.find((item) => item.key === input)
-        if (groupedItem !== undefined) {
-          changeSelection(groupedItem.index)
-        }
-      }
-
+  const handleArrows = useCallback(
+    (key: Key) => {
       if (key.upArrow) {
         const lastIndex = items.length - 1
 
@@ -129,27 +134,40 @@ export default function SelectInput<T>({items, onChange}: React.PropsWithChildre
     [selectedIndex, items],
   )
 
-  useInput((input, key) => {
-    if (input.length > 0 && Object.values(key).every((value) => value === false)) {
-      const newInputStack = inputStack === null ? input : inputStack + input
+  const handleShortcuts = useCallback(
+    (input: string) => {
+      const parsedInput = parseInt(input, 10)
 
-      setInputStack(newInputStack)
-
-      if (inputTimeout !== null) {
-        clearTimeout(inputTimeout)
+      if (parsedInput !== 0 && parsedInput <= items.length + 1) {
+        changeSelection(parsedInput - 1)
+      } else if (keys.current.has(input)) {
+        const groupedItem = groupedItemsValues.find((item) => item.key === input)
+        if (groupedItem !== undefined) {
+          changeSelection(groupedItem.index)
+        }
       }
+    },
+    [items],
+  )
 
-      setInputTimeout(
-        setTimeout(() => {
-          handleInput(newInputStack, key)
+  useInput(
+    (input, key) => {
+      // check that no key is being pressed
+      if (enableShortcuts && input.length > 0 && Object.values(key).every((value) => value === false)) {
+        const newInputStack = inputStack === null ? input : inputStack + input
+
+        setInputStack(newInputStack)
+
+        debounce(() => {
+          handleShortcuts(newInputStack)
           setInputStack(null)
-          setInputTimeout(null)
-        }, 300),
-      )
-    } else {
-      handleInput(input, key)
-    }
-  })
+        }, 300)()
+      } else {
+        handleArrows(key)
+      }
+    },
+    {isActive: focus},
+  )
 
   const ungroupedItemsTitle = groupTitles.length > 0 ? 'Other' : undefined
 
@@ -162,6 +180,7 @@ export default function SelectInput<T>({items, onChange}: React.PropsWithChildre
           items={groupedItems[title]!}
           key={title}
           hasMarginTop={index !== 0}
+          enableShortcuts={enableShortcuts}
         ></SelectItemsGroup>
       ))}
 
@@ -171,6 +190,7 @@ export default function SelectInput<T>({items, onChange}: React.PropsWithChildre
           selectedIndex={selectedIndex}
           items={ungroupedItems}
           hasMarginTop={groupTitles.length > 0}
+          enableShortcuts={enableShortcuts}
         ></SelectItemsGroup>
       )}
 

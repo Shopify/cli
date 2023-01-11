@@ -11,9 +11,17 @@ interface Props {
   onChange: (value: string) => void
   color?: string
   password?: boolean
+  focus?: boolean
 }
 
-const TextInput: FC<Props> = ({value: originalValue, placeholder = '', onChange, color = 'cyan', password = false}) => {
+const TextInput: FC<Props> = ({
+  value: originalValue,
+  placeholder = '',
+  onChange,
+  color = 'cyan',
+  password = false,
+  focus = true,
+}) => {
   const [cursorOffset, setCursorOffset] = useState((originalValue || '').length)
 
   // if the updated value is shorter than the last one we need to reset the cursor
@@ -50,45 +58,49 @@ const TextInput: FC<Props> = ({value: originalValue, placeholder = '', onChange,
     renderedValue += chalk.inverse(' ')
   }
 
-  useInput((input, key) => {
-    if (
-      key.upArrow ||
-      key.downArrow ||
-      (key.ctrl && input === 'c') ||
-      key.tab ||
-      (key.shift && key.tab) ||
-      key.return
-    ) {
-      return
-    }
-
-    let nextCursorOffset = cursorOffset
-    let nextValue = originalValue
-
-    if (key.leftArrow) {
-      if (cursorOffset > 0) {
-        nextCursorOffset--
+  useInput(
+    (input, key) => {
+      if (
+        key.upArrow ||
+        key.downArrow ||
+        (key.ctrl && input === 'c') ||
+        key.tab ||
+        (key.shift && key.tab) ||
+        key.return
+      ) {
+        return
       }
-    } else if (key.rightArrow) {
-      if (cursorOffset < originalValue.length) {
-        nextCursorOffset++
-      }
-    } else if (key.backspace || key.delete) {
-      if (cursorOffset > 0) {
-        nextValue = originalValue.slice(0, cursorOffset - 1) + originalValue.slice(cursorOffset, originalValue.length)
-        nextCursorOffset--
-      }
-    } else {
-      nextValue = originalValue.slice(0, cursorOffset) + input + originalValue.slice(cursorOffset, originalValue.length)
-      nextCursorOffset += input.length
-    }
 
-    setCursorOffset(nextCursorOffset)
+      let nextCursorOffset = cursorOffset
+      let nextValue = originalValue
 
-    if (nextValue !== originalValue) {
-      onChange(nextValue)
-    }
-  })
+      if (key.leftArrow) {
+        if (cursorOffset > 0) {
+          nextCursorOffset--
+        }
+      } else if (key.rightArrow) {
+        if (cursorOffset < originalValue.length) {
+          nextCursorOffset++
+        }
+      } else if (key.backspace || key.delete) {
+        if (cursorOffset > 0) {
+          nextValue = originalValue.slice(0, cursorOffset - 1) + originalValue.slice(cursorOffset, originalValue.length)
+          nextCursorOffset--
+        }
+      } else {
+        nextValue =
+          originalValue.slice(0, cursorOffset) + input + originalValue.slice(cursorOffset, originalValue.length)
+        nextCursorOffset += input.length
+      }
+
+      setCursorOffset(nextCursorOffset)
+
+      if (nextValue !== originalValue) {
+        onChange(nextValue)
+      }
+    },
+    {isActive: focus},
+  )
 
   return (
     <Text color={color}>{placeholder ? (value.length > 0 ? renderedValue : renderedPlaceholder) : renderedValue}</Text>

@@ -172,6 +172,27 @@ export async function kitchenSink() {
     password: true,
   })
 
+  const database = [
+    {label: 'first', value: 'first'},
+    {label: 'second', value: 'second'},
+    {label: 'third', value: 'third'},
+    {label: 'fourth', value: 'fourth'},
+    {label: 'fifth', value: 'fifth'},
+    {label: 'sixth', value: 'sixth'},
+  ]
+
+  await renderSelectPrompt({
+    message: 'Select a template',
+    choices: [
+      {label: 'first', value: 'first'},
+      {label: 'second', value: 'second'},
+      {label: 'third', value: 'third'},
+    ],
+    search(term: string) {
+      return Promise.resolve(database.filter((item) => item.label.includes(term)))
+    },
+  })
+
   // renderConcurrent at the end
   let backendPromiseResolve: () => void
 
