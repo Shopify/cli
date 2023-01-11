@@ -1,21 +1,18 @@
-// eslint-disable-next-line @shopify/strict-component-boundaries
-import {ExtensionRow} from './components/ExtensionRow'
 import {Extensions} from './Extensions.js'
-// eslint-disable-next-line @shopify/strict-component-boundaries
-import {QRCodeModal} from './components/QRCodeModal'
-import {AppHomeRow} from './components/index.js'
+
+import {AppHomeRow, QRCodeModal, ExtensionRow} from './components'
 import React from 'react'
 import {ExtensionServerClient} from '@shopify/ui-extensions-server-kit'
 import {mockExtension} from '@shopify/ui-extensions-server-kit/testing'
 import {render, withProviders} from '@shopify/ui-extensions-test-utils'
 import {DefaultProviders} from 'tests/DefaultProviders'
 
-vi.mock('./components/QRCodeModal', () => ({
+vi.mock('./components', () => ({
+  AppHomeRow: () => null,
   QRCodeModal: () => null,
-}))
-
-vi.mock('./components/ExtensionRow', () => ({
   ExtensionRow: () => null,
+  PostPurchaseRow: () => null,
+  PostPurchaseModal: () => null,
 }))
 
 describe('Extensions', () => {

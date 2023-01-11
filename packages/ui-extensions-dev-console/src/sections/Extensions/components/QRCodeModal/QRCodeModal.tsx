@@ -27,13 +27,9 @@ export function QRCodeModal({code, onClose}: QRCodeModalProps) {
     fallback: en,
   })
 
-  const {
-    state: {store, app},
-  } = useExtensionsInternal()
-
   return (
     <Modal title={i18n.translate('title', {title: code?.title})} open={Boolean(code)} onClose={onClose}>
-      {code && store && app ? <QRCodeContent {...code} /> : null}
+      {code ? <QRCodeContent {...code} /> : null}
     </Modal>
   )
 }
