@@ -14,9 +14,8 @@ env:
 
 jobs:
   benchmark:
-    name: Benchmark ${{ matrix.node }} in ${{ matrix.os }}
+    name: benchmark with ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'push' }}
     timeout-minutes: 30
     strategy:
       matrix:
