@@ -1,7 +1,8 @@
 import {HydrogenApp} from '../models/hydrogen.js'
 import {genericConfigurationFileNames} from '../constants.js'
-import {ui, vscode, npm, file, path, error, environment} from '@shopify/cli-kit'
+import {ui, npm, file, path, error, environment} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
+import {addRecommendedExtensions, isVSCode} from '@shopify/cli-kit/node/vscode'
 import stream from 'stream'
 
 interface AddESlintOptions {
@@ -84,9 +85,9 @@ export async function addESLint({app, force, install}: AddESlintOptions) {
       },
       {
         title: 'Adding editor plugin recommendations',
-        skip: async () => !(await vscode.isVSCode(app.directory)),
+        skip: async () => !(await isVSCode(app.directory)),
         task: async (_, task) => {
-          await vscode.addRecommendedExtensions(app.directory, ['dbaeumer.vscode-eslint'])
+          await addRecommendedExtensions(app.directory, ['dbaeumer.vscode-eslint'])
           task.title = 'Editor plugin recommendations added'
         },
       },

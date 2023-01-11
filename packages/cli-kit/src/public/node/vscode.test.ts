@@ -1,6 +1,6 @@
-import {join} from './path.js'
-import {inTemporaryDirectory, mkdir} from './file.js'
 import {isVSCode} from './vscode.js'
+import {join} from '../../path.js'
+import {inTemporaryDirectory, mkdir} from '../../file.js'
 import {describe, expect, it} from 'vitest'
 
 describe('isVSCode', () => {

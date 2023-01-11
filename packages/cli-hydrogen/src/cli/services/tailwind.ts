@@ -1,6 +1,7 @@
 import {HydrogenApp} from '../models/hydrogen.js'
-import {ui, vscode, system, path, file, error} from '@shopify/cli-kit'
+import {ui, system, path, file, error} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
+import {addRecommendedExtensions} from '@shopify/cli-kit/node/vscode'
 import stream from 'stream'
 
 interface AddTailwindOptions {
@@ -117,7 +118,7 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
     {
       title: 'Adding editor plugin recommendations',
       task: async (_, task) => {
-        await vscode.addRecommendedExtensions(directory, ['csstools.postcss', 'bradlc.vscode-tailwindcss'])
+        await addRecommendedExtensions(directory, ['csstools.postcss', 'bradlc.vscode-tailwindcss'])
         task.title = 'Editor plugin recommendations added'
       },
     },
