@@ -34,4 +34,9 @@ jobs:
         run: pnpm nx run-many --all --skip-nx-cache --target=build --exclude=features
       - name: Benchmark
         working-directory: workspace
+        id: benchmark
         run: pnpm nx run benchmark
+      - uses: marocchino/sticky-pull-request-comment@v2.3.1
+        with:
+          header: Benchmark
+          message: ${{ steps.benchmark.outputs.report }}
