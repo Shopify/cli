@@ -4,7 +4,6 @@ import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../model
 import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {api} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 const LOCAL_APP: AppInterface = testApp({
