@@ -71,11 +71,14 @@ async function report(currentBenchmark, baselineBenchmark) {
     if (baselineBenchmark[command] === undefined) {
       rows.push(['⚪️', `\`${command}\``, 'N/A', `${currentBenchmark[command]} ms`, 'N/A'])
     } else {
+      function round(number) {
+        return Math.round(number * 100) / 100
+      }
       const currentAverageTime = currentBenchmark[command].reduce((a, b) => a + b, 0) / currentBenchmark[command].length
       const baselineAverageTime =
         baselineBenchmark[command].reduce((a, b) => a + b, 0) / baselineBenchmark[command].length
 
-      const diff = Math.round((currentAverageTime / baselineAverageTime - 1) * 100 * 100) / 100
+      const diff = round((currentAverageTime / baselineAverageTime - 1) * 100)
       let icon = '⚪️'
       if (diff < 8) {
         icon = '🟢'
@@ -84,7 +87,13 @@ async function report(currentBenchmark, baselineBenchmark) {
       } else {
         icon = '🔴'
       }
-      rows.push([icon, `\`${command}\``, `${baselineAverageTime} ms`, `${currentAverageTime} ms`, `${diff} %`])
+      rows.push([
+        icon,
+        `\`${command}\``,
+        `${round(baselineAverageTime)} ms`,
+        `${round(currentAverageTime)} ms`,
+        `${diff} %`,
+      ])
     }
   }
   const markdownTable = `| Status | Command | Baseline (avg) | Current (avg) | Diff |
