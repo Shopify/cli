@@ -11,6 +11,7 @@ env:
   SHOPIFY_CONFIG: debug
   YARN_VERSION: "1.22.19"
   PNPM_VERSION: "7.18.1"
+  RUBY_VERSION: "3.1.2"
 
 jobs:
   benchmark:
