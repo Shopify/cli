@@ -41,7 +41,7 @@ describe('Prompt', async () => {
     expect(onEnter).toHaveBeenCalledWith(items[1]!.value)
   })
 
-  test('supports an info table', async () => {
+  test('renders groups', async () => {
     const items = [
       {label: 'first', value: 'first', group: 'Automations', key: 'f'},
       {label: 'second', value: 'second', group: 'Automations', key: 's'},
@@ -53,6 +53,46 @@ describe('Prompt', async () => {
       {label: 'eighth', value: 'eighth'},
       {label: 'ninth', value: 'ninth'},
       {label: 'tenth', value: 'tenth'},
+    ]
+
+    const renderInstance = render(
+      <SelectPrompt
+        message="Associate your project with the org Castile Ventures?"
+        choices={items}
+        onSubmit={() => {}}
+      />,
+    )
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "?  Associate your project with the org Castile Ventures?
+
+         [1mAutomations[22m
+      [36m>[39m  [36m(f) first[39m
+         (s) second
+
+         [1mMerchant Admin[22m
+         (3) third
+         (4) fourth
+
+         [1mOther[22m
+         (a) fifth
+         (6) sixth
+         (7) seventh
+         (8) eighth
+         (9) ninth
+         (10) tenth
+
+         [2mnavigate with arrows, enter to select[22m
+      "
+    `)
+  })
+
+  test('supports an info table', async () => {
+    const items = [
+      {label: 'first', value: 'first'},
+      {label: 'second', value: 'second'},
+      {label: 'third', value: 'third'},
+      {label: 'fourth', value: 'fourth'},
     ]
 
     const infoTable = {
@@ -77,21 +117,10 @@ describe('Prompt', async () => {
              Remove:  • integrated-demand-ext
                       • order-discount
 
-         [1mAutomations[22m
-      [36m>[39m  [36m(f) first[39m
-         (s) second
-
-         [1mMerchant Admin[22m
+      [36m>[39m  [36m(1) first[39m
+         (2) second
          (3) third
          (4) fourth
-
-         [1mOther[22m
-         (a) fifth
-         (6) sixth
-         (7) seventh
-         (8) eighth
-         (9) ninth
-         (10) tenth
 
          [2mnavigate with arrows, enter to select[22m
       "
