@@ -1,11 +1,11 @@
 import en from './translations/en.json'
 import * as styles from './PostPurchaseModal.module.scss'
 import React from 'react'
-import {Modal, ModalProps} from '@shopify/polaris'
 import {useI18n} from '@shopify/react-i18n'
 import {ClipboardMinor} from '@shopify/polaris-icons'
 import {toast} from 'react-toastify'
 import {IconButton} from '@/components/IconButton'
+import {Modal, ModalProps} from '@/components/Modal'
 
 interface Props extends Pick<ModalProps, 'onClose'> {
   url?: string
@@ -34,31 +34,29 @@ export function PostPurchaseModal({url, onClose}: Props) {
 
   return (
     <Modal title={i18n.translate('title')} open={typeof url === 'string'} onClose={onClose}>
-      <div className={styles.Content}>
-        <ol className={styles.Instructions}>
-          <li>
-            {i18n.translate('point1.intro')}{' '}
-            <a href="https://github.com/Shopify/post-purchase-devtools/releases" target="_blank">
-              {i18n.translate('point1.linkText')}
-            </a>
-          </li>
-          <li>
-            {i18n.translate('point2')}
-            <span className={styles.UrlContainer}>
-              <span className={styles.Url}>{url}</span>{' '}
-              <span className={styles.CopyButton}>
-                <IconButton
-                  type="button"
-                  onClick={() => handleCopyPreviewLink()}
-                  source={ClipboardMinor}
-                  accessibilityLabel={i18n.translate('copy.label')}
-                />
-              </span>
+      <ol className={styles.Instructions}>
+        <li>
+          {i18n.translate('point1.intro')}{' '}
+          <a href="https://github.com/Shopify/post-purchase-devtools/releases" target="_blank">
+            {i18n.translate('point1.linkText')}
+          </a>
+        </li>
+        <li>
+          {i18n.translate('point2')}
+          <span className={styles.UrlContainer}>
+            <span className={styles.Url}>{url}</span>{' '}
+            <span className={styles.CopyButton}>
+              <IconButton
+                type="button"
+                onClick={() => handleCopyPreviewLink()}
+                source={ClipboardMinor}
+                accessibilityLabel={i18n.translate('copy.label')}
+              />
             </span>
-          </li>
-          <li>{i18n.translate('point3')}</li>
-        </ol>
-      </div>
+          </span>
+        </li>
+        <li>{i18n.translate('point3')}</li>
+      </ol>
     </Modal>
   )
 }
