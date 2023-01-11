@@ -5,7 +5,7 @@ import {string, path, file, ui, npm, git, environment, error, output} from '@sho
 import {packageManager, PackageManager, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
-import {recursiveDirectoryCopy} from '@shopify/cli-kit/node/template'
+import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 
 interface InitOptions {
   name: string
@@ -56,7 +56,7 @@ async function init(options: InitOptions) {
               title: 'Parse liquid',
               task: async (_, task) => {
                 task.title = 'Parsing liquid'
-                await recursiveDirectoryCopy(templatePathDir, templateScaffoldDir, {
+                await recursiveLiquidTemplateCopy(templatePathDir, templateScaffoldDir, {
                   dependency_manager: packageManager,
                   app_name: options.name,
                 })

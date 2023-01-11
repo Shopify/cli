@@ -1,6 +1,6 @@
 import {join} from './path.js'
 import {write, mkdir, read, inTemporaryDirectory} from './file.js'
-import {renderTemplate, recursiveDirectoryCopy} from './public/node/template.js'
+import {renderLiquidTemplate, recursiveLiquidTemplateCopy} from './public/node/liquid.js'
 import {describe, expect, it} from 'vitest'
 
 describe('create', () => {
@@ -9,7 +9,7 @@ describe('create', () => {
     const templateContent = '{{variable}}'
 
     // When
-    const got = await renderTemplate(templateContent, {variable: 'test'})
+    const got = await renderLiquidTemplate(templateContent, {variable: 'test'})
 
     // Then
     expect(got).toEqual('test')
@@ -35,7 +35,7 @@ describe('recursiveDirectoryCopy', () => {
       await write(packageJsonPath, JSON.stringify(packageJson))
 
       // When
-      await recursiveDirectoryCopy(from, to, {variable: 'test'})
+      await recursiveLiquidTemplateCopy(from, to, {variable: 'test'})
 
       // Then
       const outReadmePath = join(to, 'first.md')

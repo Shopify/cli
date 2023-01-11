@@ -9,7 +9,7 @@ import {Liquid} from 'liquidjs'
  * @param data - Data to feed the template engine.
  * @returns Rendered template.
  */
-export function renderTemplate(templateContent: string, data: object): Promise<string> {
+export function renderLiquidTemplate(templateContent: string, data: object): Promise<string> {
   const engine = new Liquid()
   return engine.render(engine.parse(templateContent), data)
 }
@@ -23,7 +23,7 @@ export function renderTemplate(templateContent: string, data: object): Promise<s
  * @param to - Output directory.
  * @param data - Data to feed the template engine.
  */
-export async function recursiveDirectoryCopy(from: string, to: string, data: object): Promise<void> {
+export async function recursiveLiquidTemplateCopy(from: string, to: string, data: object): Promise<void> {
   debug(content`Copying template from directory ${token.path(from)} to ${token.path(to)}`)
   const templateFiles: string[] = await glob(join(from, '**/*'), {dot: true})
 
@@ -33,13 +33,13 @@ export async function recursiveDirectoryCopy(from: string, to: string, data: obj
     .map((components) => components.join('/'))
   await Promise.all(
     sortedTemplateFiles.map(async (templateItemPath) => {
-      const outputPath = await renderTemplate(join(to, relative(from, templateItemPath)), data)
+      const outputPath = await renderLiquidTemplate(join(to, relative(from, templateItemPath)), data)
       if (await isDirectory(templateItemPath)) {
         await mkdir(outputPath)
       } else if (templateItemPath.endsWith('.liquid')) {
         await mkdir(dirname(outputPath))
         const content = await read(templateItemPath)
-        const contentOutput = await renderTemplate(content, data)
+        const contentOutput = await renderLiquidTemplate(content, data)
         const isExecutable = await hasExecutablePermissions(templateItemPath)
         const outputPathWithoutLiquid = outputPath.replace('.liquid', '')
         await copy(templateItemPath, outputPathWithoutLiquid)

@@ -10,7 +10,7 @@ import {
   addResolutionOrOverride,
   DependencyVersion,
 } from '@shopify/cli-kit/node/node-package-manager'
-import {recursiveDirectoryCopy} from '@shopify/cli-kit/node/template'
+import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {fileURLToPath} from 'url'
 import stream from 'stream'
 
@@ -63,7 +63,7 @@ async function extensionInit(options: ExtensionInitOptions): Promise<string> {
 
 async function themeExtensionInit({name, app, specification, extensionDirectory}: ThemeExtensionInitOptions) {
   const templatePath = await getTemplatePath('theme-extension')
-  await recursiveDirectoryCopy(templatePath, extensionDirectory, {name, type: specification.identifier})
+  await recursiveLiquidTemplateCopy(templatePath, extensionDirectory, {name, type: specification.identifier})
 }
 
 async function uiExtensionInit({
@@ -118,7 +118,7 @@ async function uiExtensionInit({
           }
 
           const srcFileExtension = getSrcFileExtension(extensionFlavor ?? 'vanilla-js')
-          await recursiveDirectoryCopy(templateDirectory, extensionDirectory, {
+          await recursiveLiquidTemplateCopy(templateDirectory, extensionDirectory, {
             srcFileExtension,
             flavor: extensionFlavor ?? '',
             type: specification.identifier,
@@ -202,7 +202,7 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
         })
         const templatePath = spec.templatePath(options.extensionFlavor ?? blocks.functions.defaultLanguage)
         const origin = path.join(templateDownloadDir, templatePath)
-        await recursiveDirectoryCopy(origin, options.extensionDirectory, options)
+        await recursiveLiquidTemplateCopy(origin, options.extensionDirectory, options)
         const configYamlPath = path.join(options.extensionDirectory, 'script.config.yml')
         if (await file.exists(configYamlPath)) {
           await file.remove(configYamlPath)
