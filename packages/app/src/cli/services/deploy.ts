@@ -16,6 +16,7 @@ import {validateExtensions} from '../validators/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {path, output, file, environment} from '@shopify/cli-kit'
 import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
+import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -30,8 +31,7 @@ interface DeployOptions {
 
 export const deploy = async (options: DeployOptions) => {
   if (!options.app.hasExtensions()) {
-    output.newline()
-    output.info(`No extensions to deploy to Shopify Partners yet.`)
+    renderInfo({headline: 'No extensions to deploy to Shopify Partners yet.'})
     return
   }
 
@@ -96,12 +96,6 @@ export const deploy = async (options: DeployOptions) => {
       identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
       app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
 
-      if (validationErrors.length > 0) {
-        output.completed('Deployed to Shopify, but fixes are needed')
-      } else {
-        output.success('Deployed to Shopify')
-      }
-
       const registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
 
       await outputCompletionMessage({
@@ -139,44 +133,69 @@ async function outputCompletionMessage({
   registrations: AllAppExtensionRegistrationsQuerySchema
   validationErrors: UploadExtensionValidationError[]
 }) {
-  output.newline()
-  output.info('  Summary:')
+  let headline: string
+
+  if (validationErrors.length > 0) {
+    headline = 'Deployed to Shopify, but fixes are needed'
+  } else {
+    headline = 'Deployed to Shopify'
+  }
+
   const outputDeployedButNotLiveMessage = (extension: Extension) => {
-    output.info(output.content`    • ${extension.localIdentifier} is deployed to Shopify but not yet live`)
+    const result = [`${extension.localIdentifier} is deployed to Shopify but not yet live`]
     const uuid = identifiers.extensions[extension.localIdentifier]
     const validationError = validationErrors.find((error) => error.uuid === uuid)
 
     if (validationError) {
-      const title = output.token.errorText('Validation errors found in your extension toml file')
-      output.info(output.content`       - ${title} `)
+      result.push('\n- Validation errors found in your extension toml file')
       validationError.errors.forEach((err) => {
-        output.info(output.content`       └ ${output.token.italic(err.message)}`)
+        result.push(`\n  └ ${err.message}`)
       })
     }
-  }
-  const outputDeployedAndLivedMessage = (extension: Extension) => {
-    output.info(output.content`    · ${extension.localIdentifier} is live`)
-  }
-  app.extensions.ui.forEach(outputDeployedButNotLiveMessage)
-  app.extensions.theme.forEach(outputDeployedButNotLiveMessage)
-  app.extensions.function.forEach(outputDeployedAndLivedMessage)
 
-  output.newline()
+    return result
+  }
+
+  const outputDeployedAndLivedMessage = (extension: Extension) => {
+    return `${extension.localIdentifier} is live`
+  }
+
   const outputNextStep = async (extension: Extension) => {
     const extensionId =
       registrations.app.extensionRegistrations.find((registration) => {
         return registration.uuid === identifiers.extensions[extension.localIdentifier]
       })?.id ?? ''
-    return output.content`    · Publish ${output.token.link(
-      extension.localIdentifier,
-      await extension.publishURL({orgId: partnersOrganizationId, appId: partnersApp.id, extensionId}),
-    )}`
+    return [
+      'Publish',
+      {
+        link: {
+          url: await extension.publishURL({orgId: partnersOrganizationId, appId: partnersApp.id, extensionId}),
+          label: extension.localIdentifier,
+        },
+      },
+    ]
   }
+
+  let nextSteps
+
   if (app.extensions.ui.length !== 0 || app.extensions.function.length !== 0) {
-    const lines = await Promise.all([...app.extensions.ui, ...app.extensions.theme].map(outputNextStep))
-    if (lines.length > 0) {
-      output.info('  Next steps in Shopify Partners:')
-      lines.forEach((line) => output.info(line))
-    }
+    nextSteps = await Promise.all([...app.extensions.ui, ...app.extensions.theme].map(outputNextStep))
   }
+
+  renderSuccess({
+    headline,
+    body: [
+      {bold: 'Summary'},
+      {
+        list: {
+          items: [
+            ...app.extensions.ui.map(outputDeployedButNotLiveMessage),
+            ...app.extensions.theme.map(outputDeployedButNotLiveMessage),
+            ...app.extensions.function.map(outputDeployedAndLivedMessage),
+          ],
+        },
+      },
+    ],
+    nextSteps,
+  })
 }
