@@ -10,7 +10,7 @@ import {
   addResolutionOrOverride,
   DependencyVersion,
 } from '@shopify/cli-kit/node/node-package-manager'
-import {hyphenize} from '@shopify/cli-kit/common/string'
+import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {fileURLToPath} from 'url'
 import stream from 'stream'
@@ -217,7 +217,7 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
 }
 
 async function ensureExtensionDirectoryExists({name, app}: {name: string; app: AppInterface}): Promise<string> {
-  const hyphenizedName = hyphenize(name)
+  const hyphenizedName = hyphenate(name)
   const extensionDirectory = path.join(app.directory, blocks.extensions.directoryName, hyphenizedName)
   if (await file.exists(extensionDirectory)) {
     throw new error.Abort(

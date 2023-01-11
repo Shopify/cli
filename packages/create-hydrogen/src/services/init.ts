@@ -9,7 +9,7 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 
 import {parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
-import {hyphenize} from '@shopify/cli-kit/common/string'
+import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 
 import {Writable} from 'stream'
@@ -38,7 +38,7 @@ async function init(options: InitOptions) {
   const cliHydrogenPackageVersion = options.cliHydrogenPackageVersion ?? hydrogenVersion
   const hydrogenPackageVersion = options.hydrogenVersion
   const packageManager = inferPackageManager(options.packageManager)
-  const hyphenizedName = hyphenize(options.name)
+  const hyphenizedName = hyphenate(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
 
   await ui.nonEmptyDirectoryPrompt(outputDirectory)

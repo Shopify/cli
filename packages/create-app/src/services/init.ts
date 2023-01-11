@@ -5,7 +5,7 @@ import {path, file, ui, npm, git, environment, error, output} from '@shopify/cli
 import {packageManager, PackageManager, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
-import {hyphenize} from '@shopify/cli-kit/common/string'
+import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 
 interface InitOptions {
@@ -18,7 +18,7 @@ interface InitOptions {
 
 async function init(options: InitOptions) {
   const packageManager: PackageManager = inferPackageManager(options.packageManager)
-  const hyphenizedName = hyphenize(options.name)
+  const hyphenizedName = hyphenate(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
   const githubRepo = parseGitHubRepositoryReference(options.template)
 

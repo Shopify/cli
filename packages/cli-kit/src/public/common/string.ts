@@ -203,7 +203,7 @@ export {camelCase as camelize} from 'change-case'
 /**
  * Transform a string to param-case.
  */
-export {paramCase as hyphenize} from 'change-case'
+export {paramCase as hyphenate} from 'change-case'
 
 /**
  * Transform a string to snake_case.
