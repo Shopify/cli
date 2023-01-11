@@ -7,8 +7,13 @@ import {
   NoOrgError,
 } from './fetch.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
+import {AllOrganizationsQuery} from '../../api/graphql/all_orgs.js'
+import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
+import {AllDevStoresByOrganizationQuery} from '../../api/graphql/all_dev_stores_by_org.js'
+import {FindStoreByDomainQuery} from '../../api/graphql/find_store_by_domain.js'
+import {AllAppExtensionRegistrationsQuery} from '../../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, it, test, vi} from 'vitest'
-import {api, outputMocker} from '@shopify/cli-kit'
+import {outputMocker} from '@shopify/cli-kit'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
@@ -77,7 +82,7 @@ describe('fetchOrganizations', async () => {
 
     // Then
     expect(got).toEqual([ORG1, ORG2])
-    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.AllOrganizationsQuery, 'token')
+    expect(partnersRequest).toHaveBeenCalledWith(AllOrganizationsQuery, 'token')
   })
 
   it('throws if there are no organizations', async () => {
@@ -89,7 +94,7 @@ describe('fetchOrganizations', async () => {
 
     // Then
     await expect(got).rejects.toThrow(NoOrgError())
-    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.AllOrganizationsQuery, 'token')
+    expect(partnersRequest).toHaveBeenCalledWith(AllOrganizationsQuery, 'token')
   })
 })
 
@@ -103,7 +108,7 @@ describe('fetchApp', async () => {
 
     // Then
     expect(got).toEqual({organization: ORG1, apps: [APP1, APP2], stores: []})
-    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.FindOrganizationQuery, 'token', {id: ORG1.id})
+    expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id})
   })
 
   it('throws if there are no organizations', async () => {
@@ -115,7 +120,7 @@ describe('fetchApp', async () => {
 
     // Then
     await expect(got).rejects.toThrowError(NoOrgError())
-    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.FindOrganizationQuery, 'token', {id: ORG1.id})
+    expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id})
   })
 })
 
@@ -129,7 +134,7 @@ describe('fetchAllDevStores', async () => {
 
     // Then
     expect(got).toEqual([STORE1])
-    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.AllDevStoresByOrganizationQuery, 'token', {
+    expect(partnersRequest).toHaveBeenCalledWith(AllDevStoresByOrganizationQuery, 'token', {
       id: ORG1.id,
     })
   })
@@ -145,7 +150,7 @@ describe('fetchStoreByDomain', async () => {
 
     // Then
     expect(got).toEqual({organization: ORG1, store: STORE1})
-    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.FindStoreByDomainQuery, 'token', {
+    expect(partnersRequest).toHaveBeenCalledWith(FindStoreByDomainQuery, 'token', {
       id: ORG1.id,
       shopDomain: STORE1.shopDomain,
     })
@@ -177,7 +182,7 @@ describe('fetchAppExtensionRegistrations', () => {
 
     // Then
     expect(got).toEqual(response)
-    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.AllAppExtensionRegistrationsQuery, 'token', {
+    expect(partnersRequest).toHaveBeenCalledWith(AllAppExtensionRegistrationsQuery, 'token', {
       apiKey: 'api-key',
     })
   })

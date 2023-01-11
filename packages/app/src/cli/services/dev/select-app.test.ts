@@ -3,8 +3,8 @@ import {AppInterface, WebType} from '../../models/app/app.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../models/organization.js'
 import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {testApp} from '../../models/app/app.test-data.js'
+import {CreateAppQuery} from '../../api/graphql/create_app.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {api} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 const LOCAL_APP: AppInterface = testApp({
@@ -79,7 +79,7 @@ describe('createApp', () => {
 
     // Then
     expect(got).toEqual(APP1)
-    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.CreateAppQuery, 'token', variables)
+    expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables)
   })
 
   it('throws error if requests has a user error', async () => {
@@ -133,6 +133,6 @@ describe('selectOrCreateApp', () => {
     expect(got).toEqual(APP1)
     expect(appTypePrompt).not.toBeCalled()
     expect(appNamePrompt).toHaveBeenCalledWith(LOCAL_APP.name)
-    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.CreateAppQuery, 'token', variables)
+    expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables)
   })
 })

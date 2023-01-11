@@ -238,6 +238,7 @@ importers:
       diff: 5.1.0
       esbuild: 0.15.7
       graphql: ^16.0.0
+      graphql-request: 4.3.0
       graphql-tag: ^2.11.0
       http-proxy: 1.18.1
       serve-static: 1.15.0
@@ -253,6 +254,7 @@ importers:
       chokidar: 3.5.3
       diff: 5.1.0
       esbuild: 0.15.7
+      graphql-request: 4.3.0_graphql@16.6.0
       http-proxy: 1.18.1
       serve-static: 1.15.0
       ws: 8.8.1
