@@ -7,12 +7,21 @@ import * as url from 'url'
 import {promises as fs, existsSync} from 'fs'
 import {createRequire} from 'module'
 import {execa} from 'execa'
+import {osMetadata} from './os-metadata.js'
 
 const require = createRequire(import.meta.url)
 const rootDirectory = path.join(url.fileURLToPath(new URL('.', import.meta.url)), '../..')
 
 const baselineBenchmarkPath = path.join(path.join(rootDirectory, 'baseline-benchmark.json'))
 const benchmarkPath = path.join(rootDirectory, 'benchmark.json')
+
+function getOSMarkdownReport(osMetadata) {
+  return `- Architecture: ${osMetadata.arch}
+- Memory: ${osMetadata.memory}
+- CPUS:
+${osMetadata.cpus.map((cpu) => `  - ${cpu.model}, speed: ${cpu.speed}`).join('\n')}
+`
+}
 
 if (!existsSync(baselineBenchmarkPath)) {
   setOutput(
@@ -34,8 +43,20 @@ if (!existsSync(benchmarkPath)) {
   process.exit(0)
 }
 
-const baselineBenchmark = JSON.parse(await fs.readFile(baselineBenchmarkPath, 'utf8'))
-const benchmark = JSON.parse(await fs.readFile(benchmarkPath, 'utf8'))
+let baselineBenchmark = JSON.parse(await fs.readFile(baselineBenchmarkPath, 'utf8'))
+if (!baselineBenchmark.commands) {
+  baselineBenchmark = {
+    commands: baselineBenchmark,
+    os: osMetadata(),
+  }
+}
+let benchmark = JSON.parse(await fs.readFile(benchmarkPath, 'utf8'))
+if (!benchmark.commands) {
+  benchmark = {
+    commands: benchmark,
+    os: osMetadata(),
+  }
+}
 
 const rows = []
 for (const command of Object.keys(benchmark).sort()) {
@@ -59,10 +80,17 @@ const markdownTable = `| Status | Command | Baseline | Current | Diff |
 | ------- | -------- | ------- | ----- | ---- |
 ${rows.map((row) => `| ${row.join(' | ')} |`).join('\n')}
 `
+const environment
 setOutput(
   'report',
   `## Benchmark report
 The following table contains a summary of the startup time for all commands.
 ${markdownTable}
+
+## OSs
+### Baseline
+${getOSMarkdownReport(baselineBenchmark.os)}
+### Current
+${getOSMarkdownReport(benchmark.os)}
 `,
 )

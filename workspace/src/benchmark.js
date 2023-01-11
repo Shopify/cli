@@ -6,6 +6,7 @@ import * as url from 'url'
 import {promises as fs} from 'fs'
 import {createRequire} from 'module'
 import {execa} from 'execa'
+import {osMetadata} from './os-metadata.js'
 
 if (process.argv.length !== 3) {
   console.error('Usage: node benchmark.js output.json')
@@ -24,7 +25,10 @@ const workspaceDirectory = path.join(rootDirectory, 'workspace')
  * This lint runs all the CLI commands and fails if the startup time for any is above a threshold.
  */
 console.info(colors.green.bold(`Measuring startup time for all commands`))
-const results = {}
+const results = {
+  commands: {},
+  os: osMetadata(),
+}
 for (const pluginName of ['app', 'theme']) {
   const oclifManifestPath = path.join(rootDirectory, 'packages', pluginName, 'oclif.manifest.json')
   const oclifManifest = JSON.parse(await fs.readFile(oclifManifestPath))
@@ -41,7 +45,7 @@ for (const pluginName of ['app', 'theme']) {
     ).timestamp
     const diff = endTimestamp - startTimestamp
     console.log(`Startup time for 'shopify ${command.join(' ')}': ${diff} ms`)
-    results[command.join(' ')] = diff
+    results.commands[command.join(' ')] = diff
   }
 }
 
