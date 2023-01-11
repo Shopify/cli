@@ -31,6 +31,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
     questions.push({
       type: 'input',
       name: 'name',
+      preface: '\nWelcome. Let’s get started by naming your app. You can change it later.\n',
       message: "Your app's name?",
       default: defaults.name,
       validate: (value) => {
