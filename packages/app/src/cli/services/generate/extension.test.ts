@@ -222,13 +222,13 @@ describe('initialize a extension', async () => {
       return accumulator
     }, [] as [GenericSpecification, ExtensionFlavor, FileExtension][]),
   )(
-    'calls recursiveDirectoryCopy with type "%s", flavor "%s", liquidFlavor "%s" and fileExtension "%s"',
+    'calls recursiveLiquidTemplateCopy with type "%s", flavor "%s", liquidFlavor "%s" and fileExtension "%s"',
 
     async (specification, extensionFlavor, srcFileExtension) => {
       await withTemporaryApp(async (tmpDir: string) => {
         vi.spyOn(file, 'move').mockResolvedValue()
 
-        const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveDirectoryCopy').mockResolvedValue()
+        const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockResolvedValue()
         const name = 'extension-name'
 
         await createFromTemplate({
@@ -260,7 +260,7 @@ describe('initialize a extension', async () => {
         const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
         specification.templatePath = 'path/to/custom/template'
         const extensionFlavor = 'vanilla-js'
-        const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveDirectoryCopy').mockResolvedValue()
+        const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockResolvedValue()
 
         // When
         await createFromTemplate({name, specification, extensionFlavor, appDirectory: tmpDir, specifications})

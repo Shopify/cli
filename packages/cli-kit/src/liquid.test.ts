@@ -16,7 +16,7 @@ describe('create', () => {
   })
 })
 
-describe('recursiveDirectoryCopy', () => {
+describe('recursiveLiquidTemplateCopy', () => {
   it('copies the template and only runs liquid on the files with the .liquid extension', async () => {
     // Given
     await inTemporaryDirectory(async (tmpDir) => {
