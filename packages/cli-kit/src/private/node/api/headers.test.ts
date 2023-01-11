@@ -5,7 +5,7 @@ import {randomUUID} from '../../../public/node/crypto.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 
 beforeEach(() => {
-  vi.mock('../public/node/crypto.js')
+  vi.mock('../../../public/node/crypto.js')
   vi.mock('../../../environment/local', async () => {
     return {
       isVerbose: vi.fn(),
