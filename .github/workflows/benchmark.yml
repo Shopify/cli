@@ -12,10 +12,11 @@ env:
   YARN_VERSION: "1.22.19"
   PNPM_VERSION: "7.18.1"
   RUBY_VERSION: "3.1.2"
+  BUNDLER_VERSION: "2.3.18"
 
 jobs:
   benchmark:
-    name: benchmark with ${{ matrix.node }} in ${{ matrix.os }}
+    name: benchmark with Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
