@@ -78,7 +78,7 @@ describe('createApp', () => {
 
     // Then
     expect(got).toEqual(APP1)
-    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.CreateAppQuery, 'token', variables)
+    expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables)
   })
 
   it('throws error if requests has a user error', async () => {
@@ -132,6 +132,6 @@ describe('selectOrCreateApp', () => {
     expect(got).toEqual(APP1)
     expect(appTypePrompt).not.toBeCalled()
     expect(appNamePrompt).toHaveBeenCalledWith(LOCAL_APP.name)
-    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.CreateAppQuery, 'token', variables)
+    expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables)
   })
 })

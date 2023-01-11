@@ -1,8 +1,13 @@
 import {uploadFunctionExtensions} from './upload.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {FunctionExtension} from '../../models/app/extensions.js'
+import {
+  UploadUrlGenerateMutation,
+  UploadUrlGenerateMutationSchema,
+} from '../../api/graphql/functions/upload_url_generate.js'
+import {AppFunctionSetMutation, AppFunctionSetMutationSchema} from '../../api/graphql/functions/app_function_set.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {error, path, file, api, http} from '@shopify/cli-kit'
+import {error, path, file, http} from '@shopify/cli-kit'
 import {functionProxyRequest} from '@shopify/cli-kit/node/api/partners'
 
 afterEach(() => {
@@ -78,12 +83,7 @@ describe('uploadFunctionExtensions', () => {
       await expect(uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrow(uploadURLError)
 
       // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(
-        1,
-        identifiers.app,
-        api.graphql.UploadUrlGenerateMutation,
-        token,
-      )
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
     })
   })
 
@@ -93,7 +93,7 @@ describe('uploadFunctionExtensions', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
             headers: {},
@@ -110,12 +110,7 @@ describe('uploadFunctionExtensions', () => {
       await expect(uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrow(uploadError)
 
       // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(
-        1,
-        identifiers.app,
-        api.graphql.UploadUrlGenerateMutation,
-        token,
-      )
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
     })
   })
 
@@ -125,7 +120,7 @@ describe('uploadFunctionExtensions', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
             headers: {},
@@ -154,12 +149,7 @@ describe('uploadFunctionExtensions', () => {
       )
 
       // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(
-        1,
-        identifiers.app,
-        api.graphql.UploadUrlGenerateMutation,
-        token,
-      )
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
     })
   })
 
@@ -169,7 +159,7 @@ describe('uploadFunctionExtensions', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
             headers: {},
@@ -198,12 +188,7 @@ describe('uploadFunctionExtensions', () => {
       )
 
       // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(
-        1,
-        identifiers.app,
-        api.graphql.UploadUrlGenerateMutation,
-        token,
-      )
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
     })
   })
 
@@ -213,7 +198,7 @@ describe('uploadFunctionExtensions', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
             headers: {},
@@ -240,12 +225,7 @@ describe('uploadFunctionExtensions', () => {
       )
 
       // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(
-        1,
-        identifiers.app,
-        api.graphql.UploadUrlGenerateMutation,
-        token,
-      )
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
     })
   })
 
@@ -255,7 +235,7 @@ describe('uploadFunctionExtensions', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
             headers: {},
@@ -282,12 +262,7 @@ describe('uploadFunctionExtensions', () => {
       )
 
       // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(
-        1,
-        identifiers.app,
-        api.graphql.UploadUrlGenerateMutation,
-        token,
-      )
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
     })
   })
 
@@ -297,7 +272,7 @@ describe('uploadFunctionExtensions', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
             headers: {},
@@ -314,12 +289,7 @@ describe('uploadFunctionExtensions', () => {
       await expect(uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrow(uploadError)
 
       // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(
-        1,
-        identifiers.app,
-        api.graphql.UploadUrlGenerateMutation,
-        token,
-      )
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
     })
   })
 
@@ -329,7 +299,7 @@ describe('uploadFunctionExtensions', () => {
       const uploadUrl = `test://test.com/moduleId.wasm`
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
             headers: {},
@@ -349,36 +319,25 @@ describe('uploadFunctionExtensions', () => {
       )
 
       // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(
-        1,
-        identifiers.app,
-        api.graphql.UploadUrlGenerateMutation,
-        token,
-      )
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
         body: Buffer.from(''),
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
       })
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(
-        2,
-        identifiers.app,
-        api.graphql.AppFunctionSetMutation,
-        token,
-        {
-          id: undefined,
-          title: extension.configuration.name,
-          description: extension.configuration.description,
-          apiType: 'order_discounts',
-          apiVersion: extension.configuration.apiVersion,
-          appBridge: {
-            detailsPath: (extension.configuration.ui?.paths ?? {}).details,
-            createPath: (extension.configuration.ui?.paths ?? {}).create,
-          },
-          enableCreationUi: true,
-          moduleUploadUrl: uploadUrl,
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(2, identifiers.app, AppFunctionSetMutation, token, {
+        id: undefined,
+        title: extension.configuration.name,
+        description: extension.configuration.description,
+        apiType: 'order_discounts',
+        apiVersion: extension.configuration.apiVersion,
+        appBridge: {
+          detailsPath: (extension.configuration.ui?.paths ?? {}).details,
+          createPath: (extension.configuration.ui?.paths ?? {}).create,
         },
-      )
+        enableCreationUi: true,
+        moduleUploadUrl: uploadUrl,
+      })
     })
   })
 
@@ -388,7 +347,7 @@ describe('uploadFunctionExtensions', () => {
       const uploadUrl = `test://test.com/moduleId.wasm`
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
             headers: {},
@@ -397,7 +356,7 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       }
-      const functionSetMutationResponse: api.graphql.AppFunctionSetMutationSchema = {
+      const functionSetMutationResponse: AppFunctionSetMutationSchema = {
         data: {
           functionSet: {
             userErrors: [
@@ -420,36 +379,25 @@ describe('uploadFunctionExtensions', () => {
       )
 
       // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(
-        1,
-        identifiers.app,
-        api.graphql.UploadUrlGenerateMutation,
-        token,
-      )
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
         body: Buffer.from(''),
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
       })
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(
-        2,
-        identifiers.app,
-        api.graphql.AppFunctionSetMutation,
-        token,
-        {
-          id: undefined,
-          title: extension.configuration.name,
-          description: extension.configuration.description,
-          apiType: 'order_discounts',
-          apiVersion: extension.configuration.apiVersion,
-          appBridge: {
-            detailsPath: (extension.configuration.ui?.paths ?? {}).details,
-            createPath: (extension.configuration.ui?.paths ?? {}).create,
-          },
-          enableCreationUi: true,
-          moduleUploadUrl: uploadUrl,
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(2, identifiers.app, AppFunctionSetMutation, token, {
+        id: undefined,
+        title: extension.configuration.name,
+        description: extension.configuration.description,
+        apiType: 'order_discounts',
+        apiVersion: extension.configuration.apiVersion,
+        appBridge: {
+          detailsPath: (extension.configuration.ui?.paths ?? {}).details,
+          createPath: (extension.configuration.ui?.paths ?? {}).create,
         },
-      )
+        enableCreationUi: true,
+        moduleUploadUrl: uploadUrl,
+      })
     })
   })
 
@@ -460,7 +408,7 @@ describe('uploadFunctionExtensions', () => {
       const createdID = 'ulid'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
             headers: {},
@@ -469,7 +417,7 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       }
-      const functionSetMutationResponse: api.graphql.AppFunctionSetMutationSchema = {
+      const functionSetMutationResponse: AppFunctionSetMutationSchema = {
         data: {
           functionSet: {
             userErrors: [],
@@ -488,36 +436,25 @@ describe('uploadFunctionExtensions', () => {
 
       // Then
       expect(got.extensions[extension.localIdentifier]).toEqual(createdID)
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(
-        1,
-        identifiers.app,
-        api.graphql.UploadUrlGenerateMutation,
-        token,
-      )
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
         body: Buffer.from(''),
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
       })
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(
-        2,
-        identifiers.app,
-        api.graphql.AppFunctionSetMutation,
-        token,
-        {
-          id: undefined,
-          title: extension.configuration.name,
-          description: extension.configuration.description,
-          apiType: 'order_discounts',
-          apiVersion: extension.configuration.apiVersion,
-          appBridge: {
-            detailsPath: (extension.configuration.ui?.paths ?? {}).details,
-            createPath: (extension.configuration.ui?.paths ?? {}).create,
-          },
-          enableCreationUi: true,
-          moduleUploadUrl: uploadUrl,
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(2, identifiers.app, AppFunctionSetMutation, token, {
+        id: undefined,
+        title: extension.configuration.name,
+        description: extension.configuration.description,
+        apiType: 'order_discounts',
+        apiVersion: extension.configuration.apiVersion,
+        appBridge: {
+          detailsPath: (extension.configuration.ui?.paths ?? {}).details,
+          createPath: (extension.configuration.ui?.paths ?? {}).create,
         },
-      )
+        enableCreationUi: true,
+        moduleUploadUrl: uploadUrl,
+      })
     })
   })
 
@@ -528,7 +465,7 @@ describe('uploadFunctionExtensions', () => {
       const uploadUrl = `test://test.com/moduleId.wasm`
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
             headers: {},
@@ -537,7 +474,7 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       }
-      const functionSetMutationResponse: api.graphql.AppFunctionSetMutationSchema = {
+      const functionSetMutationResponse: AppFunctionSetMutationSchema = {
         data: {
           functionSet: {
             userErrors: [],
@@ -555,22 +492,16 @@ describe('uploadFunctionExtensions', () => {
       await uploadFunctionExtensions([extension], {token, identifiers})
 
       // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(
-        2,
-        identifiers.app,
-        api.graphql.AppFunctionSetMutation,
-        token,
-        {
-          id: undefined,
-          title: extension.configuration.name,
-          description: extension.configuration.description,
-          apiType: 'order_discounts',
-          apiVersion: extension.configuration.apiVersion,
-          appBridge: undefined,
-          enableCreationUi: true,
-          moduleUploadUrl: uploadUrl,
-        },
-      )
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(2, identifiers.app, AppFunctionSetMutation, token, {
+        id: undefined,
+        title: extension.configuration.name,
+        description: extension.configuration.description,
+        apiType: 'order_discounts',
+        apiVersion: extension.configuration.apiVersion,
+        appBridge: undefined,
+        enableCreationUi: true,
+        moduleUploadUrl: uploadUrl,
+      })
     })
   })
 
@@ -581,7 +512,7 @@ describe('uploadFunctionExtensions', () => {
       const uploadUrl = `test://test.com/moduleId.wasm`
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
             headers: {},
@@ -590,7 +521,7 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       }
-      const functionSetMutationResponse: api.graphql.AppFunctionSetMutationSchema = {
+      const functionSetMutationResponse: AppFunctionSetMutationSchema = {
         data: {
           functionSet: {
             userErrors: [],
@@ -608,25 +539,19 @@ describe('uploadFunctionExtensions', () => {
       await uploadFunctionExtensions([extension], {token, identifiers})
 
       // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(
-        2,
-        identifiers.app,
-        api.graphql.AppFunctionSetMutation,
-        token,
-        {
-          id: undefined,
-          title: extension.configuration.name,
-          description: extension.configuration.description,
-          apiType: 'order_discounts',
-          apiVersion: extension.configuration.apiVersion,
-          appBridge: {
-            detailsPath: (extension.configuration.ui?.paths ?? {}).details,
-            createPath: (extension.configuration.ui?.paths ?? {}).create,
-          },
-          enableCreationUi: false,
-          moduleUploadUrl: uploadUrl,
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(2, identifiers.app, AppFunctionSetMutation, token, {
+        id: undefined,
+        title: extension.configuration.name,
+        description: extension.configuration.description,
+        apiType: 'order_discounts',
+        apiVersion: extension.configuration.apiVersion,
+        appBridge: {
+          detailsPath: (extension.configuration.ui?.paths ?? {}).details,
+          createPath: (extension.configuration.ui?.paths ?? {}).create,
         },
-      )
+        enableCreationUi: false,
+        moduleUploadUrl: uploadUrl,
+      })
     })
   })
 
@@ -639,7 +564,7 @@ describe('uploadFunctionExtensions', () => {
       const updatedID = 'ulid'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
       await file.write(extension.buildWasmPath(), '')
-      const uploadURLResponse: api.graphql.UploadUrlGenerateMutationSchema = {
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
             headers: {},
@@ -648,7 +573,7 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       }
-      const functionSetMutationResponse: api.graphql.AppFunctionSetMutationSchema = {
+      const functionSetMutationResponse: AppFunctionSetMutationSchema = {
         data: {
           functionSet: {
             userErrors: [],
@@ -667,37 +592,26 @@ describe('uploadFunctionExtensions', () => {
 
       // Then
       expect(got.extensions[extension.localIdentifier]).toEqual(updatedID)
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(
-        1,
-        identifiers.app,
-        api.graphql.UploadUrlGenerateMutation,
-        token,
-      )
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
       expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
         body: Buffer.from(''),
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
       })
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(
-        2,
-        identifiers.app,
-        api.graphql.AppFunctionSetMutation,
-        token,
-        {
-          id: undefined,
-          legacyUuid: existingID,
-          title: extension.configuration.name,
-          description: extension.configuration.description,
-          apiType: 'order_discounts',
-          apiVersion: extension.configuration.apiVersion,
-          appBridge: {
-            detailsPath: (extension.configuration.ui?.paths ?? {}).details,
-            createPath: (extension.configuration.ui?.paths ?? {}).create,
-          },
-          enableCreationUi: true,
-          moduleUploadUrl: uploadUrl,
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(2, identifiers.app, AppFunctionSetMutation, token, {
+        id: undefined,
+        legacyUuid: existingID,
+        title: extension.configuration.name,
+        description: extension.configuration.description,
+        apiType: 'order_discounts',
+        apiVersion: extension.configuration.apiVersion,
+        appBridge: {
+          detailsPath: (extension.configuration.ui?.paths ?? {}).details,
+          createPath: (extension.configuration.ui?.paths ?? {}).create,
         },
-      )
+        enableCreationUi: true,
+        moduleUploadUrl: uploadUrl,
+      })
     })
   })
 })

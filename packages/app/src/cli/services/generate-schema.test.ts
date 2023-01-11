@@ -2,7 +2,7 @@ import {generateSchemaService} from './generate-schema.js'
 import * as localEnvironment from './environment.js'
 import * as identifiers from '../models/app/identifiers.js'
 import {testApp, testFunctionExtension} from '../models/app/app.test-data.js'
-import {api, environment, error} from '@shopify/cli-kit'
+import {environment, error} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, MockedFunction, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
@@ -116,7 +116,7 @@ describe('generateSchemaService', () => {
       await generateSchemaService({app, extension, apiKey})
 
       // Then
-      expect(request).toHaveBeenCalledWith(api.graphql.ApiSchemaDefinitionQuery, token, {
+      expect(request).toHaveBeenCalledWith(ApiSchemaDefinitionQuery, token, {
         apiKey,
         version,
         type,
@@ -136,7 +136,7 @@ describe('generateSchemaService', () => {
       await generateSchemaService({app, extension})
 
       // Then
-      expect(request).toHaveBeenCalledWith(api.graphql.ApiSchemaDefinitionQuery, token, {
+      expect(request).toHaveBeenCalledWith(ApiSchemaDefinitionQuery, token, {
         apiKey: identifiersApiKey,
         version,
         type,
@@ -157,7 +157,7 @@ describe('generateSchemaService', () => {
       await generateSchemaService({app, extension})
 
       // Then
-      expect(request).toHaveBeenCalledWith(api.graphql.ApiSchemaDefinitionQuery, token, {
+      expect(request).toHaveBeenCalledWith(ApiSchemaDefinitionQuery, token, {
         apiKey: promptApiKey,
         version,
         type,

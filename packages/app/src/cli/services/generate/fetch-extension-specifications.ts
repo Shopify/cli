@@ -6,9 +6,12 @@ import {
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
-import {api} from '@shopify/cli-kit'
+import {
+  ExtensionSpecificationsQuery,
+  ExtensionSpecificationsQuerySchema,
+  FlattenedRemoteSpecification,
+} from '../../api/graphql/extension_specifications.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-import {FlattenedRemoteSpecification} from '@shopify/cli-kit/src/api/graphql/extension_specifications.js'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
@@ -38,8 +41,7 @@ export async function fetchSpecifications({
   apiKey,
   config,
 }: FetchSpecificationsOptions): Promise<GenericSpecification[]> {
-  const query = api.graphql.ExtensionSpecificationsQuery
-  const result: api.graphql.ExtensionSpecificationsQuerySchema = await partnersRequest(query, token, {
+  const result: ExtensionSpecificationsQuerySchema = await partnersRequest(ExtensionSpecificationsQuery, token, {
     api_key: apiKey,
   })
 

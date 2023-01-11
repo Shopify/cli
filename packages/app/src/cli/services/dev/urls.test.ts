@@ -10,7 +10,7 @@ import {
 } from './urls.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {api, environment, error, outputMocker, plugins, store, ui} from '@shopify/cli-kit'
+import {environment, error, outputMocker, plugins, store, ui} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
@@ -140,7 +140,7 @@ describe('updateURLs', () => {
     await updateURLs(urls, 'apiKey', 'token')
 
     // Then
-    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.UpdateURLsQuery, 'token', expectedVariables)
+    expect(partnersRequest).toHaveBeenCalledWith(UpdateURLsQuery, 'token', expectedVariables)
   })
 
   it('throws an error if requests has a user error', async () => {
@@ -171,7 +171,7 @@ describe('getURLs', () => {
     await getURLs('apiKey', 'token')
 
     // Then
-    expect(partnersRequest).toHaveBeenCalledWith(api.graphql.GetURLsQuery, 'token', expectedVariables)
+    expect(partnersRequest).toHaveBeenCalledWith(GetURLsQuery, 'token', expectedVariables)
   })
 })
 

@@ -1,7 +1,32 @@
 import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
-import {api, error, session, http, output, file} from '@shopify/cli-kit'
+import {
+  UploadUrlGenerateMutation,
+  UploadUrlGenerateMutationSchema,
+} from '../../api/graphql/functions/upload_url_generate.js'
+import {
+  ExtensionUpdateDraftInput,
+  ExtensionUpdateDraftMutation,
+  ExtensionUpdateSchema,
+} from '../../api/graphql/update_draft.js'
+import {
+  CreateDeployment,
+  CreateDeploymentSchema,
+  CreateDeploymentVariables,
+  ExtensionSettings,
+} from '../../api/graphql/create_deployment.js'
+import {
+  GenerateSignedUploadUrl,
+  GenerateSignedUploadUrlSchema,
+  GenerateSignedUploadUrlVariables,
+} from '../../api/graphql/generate_signed_upload_url.js'
+import {
+  AppFunctionSetMutation,
+  AppFunctionSetMutationSchema,
+  AppFunctionSetVariables,
+} from '../../api/graphql/functions/app_function_set.js'
+import {error, session, http, output, file} from '@shopify/cli-kit'
 
 import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -31,14 +56,14 @@ export async function uploadThemeExtensions(
     themeExtensions.map(async (themeExtension) => {
       const themeExtensionConfig = await generateThemeExtensionConfig(themeExtension)
       const themeId = identifiers.extensionIds[themeExtension.localIdentifier]!
-      const themeExtensionInput: api.graphql.ExtensionUpdateDraftInput = {
+      const themeExtensionInput: ExtensionUpdateDraftInput = {
         apiKey,
         config: JSON.stringify(themeExtensionConfig),
         context: undefined,
         registrationId: themeId,
       }
-      const mutation = api.graphql.ExtensionUpdateDraftMutation
-      const result: api.graphql.ExtensionUpdateSchema = await partnersRequest(mutation, token, themeExtensionInput)
+      const mutation = ExtensionUpdateDraftMutation
+      const result: ExtensionUpdateSchema = await partnersRequest(mutation, token, themeExtensionInput)
       if (result.extensionUpdateDraft?.userErrors?.length > 0) {
         const errors = result.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
         throw new error.Abort(errors)
@@ -58,7 +83,7 @@ interface UploadUIExtensionsBundleOptions {
   token: string
 
   /** Extensions extra data */
-  extensions: api.graphql.ExtensionSettings[]
+  extensions: ExtensionSettings[]
 }
 
 export interface UploadExtensionValidationError {
@@ -88,15 +113,15 @@ export async function uploadUIExtensionsBundle(
     headers: formData.getHeaders(),
   })
 
-  const variables: api.graphql.CreateDeploymentVariables = {
+  const variables: CreateDeploymentVariables = {
     apiKey: options.apiKey,
     uuid: deploymentUUID,
     bundleUrl: signedURL,
     extensions: options.extensions,
   }
 
-  const mutation = api.graphql.CreateDeployment
-  const result: api.graphql.CreateDeploymentSchema = await partnersRequest(mutation, options.token, variables)
+  const mutation = CreateDeployment
+  const result: CreateDeploymentSchema = await partnersRequest(mutation, options.token, variables)
 
   if (result.deploymentCreate?.userErrors?.length > 0) {
     const errors = result.deploymentCreate.userErrors.map((error) => error.message).join(', ')
@@ -118,15 +143,15 @@ export async function uploadUIExtensionsBundle(
  * @param deploymentUUID - The unique identifier of the deployment.
  */
 export async function getUIExtensionUploadURL(apiKey: string, deploymentUUID: string) {
-  const mutation = api.graphql.GenerateSignedUploadUrl
+  const mutation = GenerateSignedUploadUrl
   const token = await session.ensureAuthenticatedPartners()
-  const variables: api.graphql.GenerateSignedUploadUrlVariables = {
+  const variables: GenerateSignedUploadUrlVariables = {
     apiKey,
     deploymentUuid: deploymentUUID,
     bundleFormat: 1,
   }
 
-  const result: api.graphql.GenerateSignedUploadUrlSchema = await partnersRequest(mutation, token, variables)
+  const result: GenerateSignedUploadUrlSchema = await partnersRequest(mutation, token, variables)
   if (result.deploymentGenerateSignedUploadUrl?.userErrors?.length > 0) {
     const errors = result.deploymentGenerateSignedUploadUrl.userErrors.map((error) => error.message).join(', ')
     throw new error.Abort(errors)
@@ -201,8 +226,8 @@ async function uploadFunctionExtension(
     inputQuery = await file.read(extension.inputQueryPath())
   }
 
-  const query = api.graphql.AppFunctionSetMutation
-  const variables: api.graphql.AppFunctionSetVariables = {
+  const query = AppFunctionSetMutation
+  const variables: AppFunctionSetVariables = {
     // NOTE: This is a shim to support CLI projects that currently use the UUID instead of the ULID
     ...(options.identifier?.includes('-') ? {legacyUuid: options.identifier} : {id: options.identifier}),
     title: extension.configuration.name,
@@ -220,12 +245,7 @@ async function uploadFunctionExtension(
     moduleUploadUrl: url,
   }
 
-  const res: api.graphql.AppFunctionSetMutationSchema = await functionProxyRequest(
-    options.apiKey,
-    query,
-    options.token,
-    variables,
-  )
+  const res: AppFunctionSetMutationSchema = await functionProxyRequest(options.apiKey, query, options.token, variables)
   const userErrors = res.data.functionSet.userErrors ?? []
   if (userErrors.length !== 0) {
     const errorMessage = output.content`The deployment of functions failed with the following errors:
@@ -274,10 +294,9 @@ interface GetFunctionExtensionUploadURLOutput {
 async function getFunctionExtensionUploadURL(
   options: GetFunctionExtensionUploadURLOptions,
 ): Promise<GetFunctionExtensionUploadURLOutput> {
-  const query = api.graphql.UploadUrlGenerateMutation
-  const res: api.graphql.UploadUrlGenerateMutationSchema = await functionProxyRequest(
+  const res: UploadUrlGenerateMutationSchema = await functionProxyRequest(
     options.apiKey,
-    query,
+    UploadUrlGenerateMutation,
     options.token,
   )
   return res.data.uploadUrlGenerate

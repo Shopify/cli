@@ -24,7 +24,7 @@ import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
-import {store, api, outputMocker} from '@shopify/cli-kit'
+import {store, outputMocker} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result.js'
 
@@ -77,13 +77,13 @@ const APP2: OrganizationApp = {
   grantedScopes: [],
 }
 
-const ORG1: api.graphql.AllOrganizationsQuerySchemaOrganization = {
+const ORG1: AllOrganizationsQuerySchemaOrganization = {
   id: '1',
   businessName: 'org1',
   appsNext: true,
   website: '',
 }
-const ORG2: api.graphql.AllOrganizationsQuerySchemaOrganization = {
+const ORG2: AllOrganizationsQuerySchemaOrganization = {
   id: '2',
   businessName: 'org2',
   appsNext: false,

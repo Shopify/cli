@@ -1,5 +1,5 @@
 import {Organization, OrganizationApp, MinimalOrganizationApp, OrganizationStore} from '../../models/organization.js'
-import {api, error} from '@shopify/cli-kit'
+import {error} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export const NoOrgError = (organizationId?: string) => {
@@ -47,9 +47,9 @@ export async function fetchAppExtensionRegistrations({
 }: {
   token: string
   apiKey: string
-}): Promise<api.graphql.AllAppExtensionRegistrationsQuerySchema> {
-  const query = api.graphql.AllAppExtensionRegistrationsQuery
-  const result: api.graphql.AllAppExtensionRegistrationsQuerySchema = await partnersRequest(query, token, {
+}): Promise<AllAppExtensionRegistrationsQuerySchema> {
+  const query = AllAppExtensionRegistrationsQuery
+  const result: AllAppExtensionRegistrationsQuerySchema = await partnersRequest(query, token, {
     apiKey,
   })
   return result
@@ -62,8 +62,8 @@ export async function fetchAppExtensionRegistrations({
  * @returns List of organizations
  */
 export async function fetchOrganizations(token: string) {
-  const query = api.graphql.AllOrganizationsQuery
-  const result: api.graphql.AllOrganizationsQuerySchema = await partnersRequest(query, token)
+  const query = AllOrganizationsQuery
+  const result: AllOrganizationsQuerySchema = await partnersRequest(query, token)
   const organizations = result.organizations.nodes
   if (organizations.length === 0) throw NoOrgError()
   return organizations
@@ -76,10 +76,10 @@ export async function fetchOrganizations(token: string) {
  * @returns Current organization details and list of apps and stores
  */
 export async function fetchOrgAndApps(orgId: string, token: string, title?: string): Promise<FetchResponse> {
-  const query = api.graphql.FindOrganizationQuery
+  const query = FindOrganizationQuery
   const params: {id: string; title?: string} = {id: orgId}
   if (title) params.title = title
-  const result: api.graphql.FindOrganizationQuerySchema = await partnersRequest(query, token, params)
+  const result: FindOrganizationQuerySchema = await partnersRequest(query, token, params)
   const org = result.organizations.nodes[0]
   if (!org) throw NoOrgError(orgId)
   const parsedOrg = {id: org.id, businessName: org.businessName, appsNext: org.appsNext}
@@ -87,21 +87,21 @@ export async function fetchOrgAndApps(orgId: string, token: string, title?: stri
 }
 
 export async function fetchAppFromApiKey(apiKey: string, token: string): Promise<OrganizationApp | undefined> {
-  const res: api.graphql.FindAppQuerySchema = await partnersRequest(api.graphql.FindAppQuery, token, {
+  const res: FindAppQuerySchema = await partnersRequest(FindAppQuery, token, {
     apiKey,
   })
   return res.app
 }
 
 export async function fetchOrgFromId(id: string, token: string): Promise<Organization | undefined> {
-  const query = api.graphql.FindOrganizationBasicQuery
-  const res: api.graphql.FindOrganizationBasicQuerySchema = await partnersRequest(query, token, {id})
+  const query = FindOrganizationBasicQuery
+  const res: FindOrganizationBasicQuerySchema = await partnersRequest(query, token, {id})
   return res.organizations.nodes[0]
 }
 
 export async function fetchAllDevStores(orgId: string, token: string): Promise<OrganizationStore[]> {
-  const query = api.graphql.AllDevStoresByOrganizationQuery
-  const result: api.graphql.AllDevStoresByOrganizationSchema = await partnersRequest(query, token, {
+  const query = AllDevStoresByOrganizationQuery
+  const result: AllDevStoresByOrganizationSchema = await partnersRequest(query, token, {
     id: orgId,
   })
   return result.organizations.nodes[0]!.stores.nodes
@@ -123,8 +123,8 @@ export async function fetchStoreByDomain(
   token: string,
   shopDomain: string,
 ): Promise<FetchStoreByDomainOutput | undefined> {
-  const query = api.graphql.FindStoreByDomainQuery
-  const result: api.graphql.FindStoreByDomainSchema = await partnersRequest(query, token, {
+  const query = FindStoreByDomainQuery
+  const result: FindStoreByDomainSchema = await partnersRequest(query, token, {
     id: orgId,
     shopDomain,
   })

@@ -1,7 +1,7 @@
 import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {Organization, OrganizationApp, MinimalOrganizationApp} from '../../models/organization.js'
 import {fetchAppFromApiKey} from '../dev/fetch.js'
-import {api, error, output} from '@shopify/cli-kit'
+import {error, output} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 /**
@@ -39,7 +39,7 @@ export async function createApp(org: Organization, appName: string, token: strin
   const name = await appNamePrompt(appName)
 
   const type = org.appsNext ? 'undecided' : await appTypePrompt()
-  const variables: api.graphql.CreateAppQueryVariables = {
+  const variables: CreateAppQueryVariables = {
     org: parseInt(org.id, 10),
     title: `${name}`,
     appUrl: 'https://example.com',
@@ -47,8 +47,8 @@ export async function createApp(org: Organization, appName: string, token: strin
     type,
   }
 
-  const query = api.graphql.CreateAppQuery
-  const result: api.graphql.CreateAppQuerySchema = await partnersRequest(query, token, variables)
+  const query = CreateAppQuery
+  const result: CreateAppQuerySchema = await partnersRequest(query, token, variables)
   if (result.appCreate.userErrors.length > 0) {
     const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
     throw new error.Abort(errors)
