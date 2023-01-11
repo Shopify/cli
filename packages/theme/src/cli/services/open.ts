@@ -22,9 +22,12 @@ export async function open(
   const editorUrl = themeEditorUrl(theme, adminSession)
 
   renderInfo({
-    headline: {
-      userInput: theme.name,
-    },
+    headline: [
+      `Preview information for theme ${theme.name}`,
+      {
+        subdued: `(#${theme.id})`,
+      },
+    ],
     body: {
       list: {
         items: [
