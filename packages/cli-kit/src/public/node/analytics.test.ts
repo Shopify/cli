@@ -2,7 +2,7 @@ import {reportAnalyticsEvent} from './analytics.js'
 import * as ruby from './ruby.js'
 import * as os from './os.js'
 import {startAnalytics} from '../../private/node/analytics.js'
-import {hashString} from '../../string.js'
+import {hashString} from '../../public/node/crypto.js'
 import * as environment from '../../environment.js'
 import {join as joinPath, dirname} from '../../path.js'
 import {mockAndCaptureOutput} from '../../testing/output.js'
@@ -22,7 +22,7 @@ describe('event tracking', () => {
     vi.mock('./ruby.js')
     vi.mock('./os.js')
     vi.mock('../../store.js')
-    vi.mock('../../string.js')
+    vi.mock('../../public/node/crypto.js')
 
     vi.mock('../../version.js')
     vi.mock('../../monorail.js')

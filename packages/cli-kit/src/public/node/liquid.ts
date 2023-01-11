@@ -5,6 +5,7 @@ import {Liquid} from 'liquidjs'
 
 /**
  * Renders a template using the Liquid template engine.
+ *
  * @param templateContent - Template content.
  * @param data - Data to feed the template engine.
  * @returns Rendered template.
@@ -19,6 +20,7 @@ export function renderLiquidTemplate(templateContent: string, data: object): Pro
  * and replaces variables in directory and file names, and files' content
  * using the Liquid template engine.
  * Files indicate that they are liquid template by using the .liquid extension.
+ *
  * @param from - Directory that contains the template.
  * @param to - Output directory.
  * @param data - Data to feed the template engine.

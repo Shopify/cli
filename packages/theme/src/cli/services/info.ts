@@ -1,7 +1,8 @@
-import {output, string, store as conf} from '@shopify/cli-kit'
+import {output, store as conf} from '@shopify/cli-kit'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {version as rubyVersion} from '@shopify/cli-kit/node/ruby'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
+import {linesToColumns} from '@shopify/cli-kit/common/string'
 
 export async function themeInfo(config: {cliVersion: string}): Promise<output.Message> {
   const sections: [string, string][] = [await themeConfigSection(), await systemInfoSection(config)]
@@ -13,7 +14,7 @@ async function themeConfigSection(): Promise<[string, string]> {
   const title = 'Theme Configuration'
   const store = (await conf.getThemeStore()) || 'Not configured'
   const lines: string[][] = [['Store', store]]
-  return [title, `${string.linesToColumns(lines)}`]
+  return [title, `${linesToColumns(lines)}`]
 }
 
 async function systemInfoSection(config: {cliVersion: string}): Promise<[string, string]> {
@@ -27,7 +28,7 @@ async function systemInfoSection(config: {cliVersion: string}): Promise<[string,
     ['Node version', process.version],
     ['Ruby version', ruby],
   ]
-  return [title, `${string.linesToColumns(lines)}`]
+  return [title, `${linesToColumns(lines)}`]
 }
 
 async function cliVersionInfo(config: {cliVersion: string}): Promise<string> {

@@ -16,13 +16,14 @@ import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant
 import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
-import {output, system, session, string, environment} from '@shopify/cli-kit'
+import {output, system, session, environment} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {hashString} from '@shopify/cli-kit/node/crypto'
 import {Writable} from 'stream'
 
 export interface DevOptions {
@@ -336,9 +337,9 @@ async function logMetadataForDev(options: {
   const tunnelType = await getAnalyticsTunnelType(options.devOptions.commandConfig, options.tunnelUrl)
   await metadata.addPublic(() => ({
     cmd_dev_tunnel_type: tunnelType,
-    cmd_dev_tunnel_custom_hash: tunnelType === 'custom' ? string.hashString(options.tunnelUrl) : undefined,
+    cmd_dev_tunnel_custom_hash: tunnelType === 'custom' ? hashString(options.tunnelUrl) : undefined,
     cmd_dev_urls_updated: options.shouldUpdateURLs,
-    store_fqdn_hash: string.hashString(options.storeFqdn),
+    store_fqdn_hash: hashString(options.storeFqdn),
     cmd_app_dependency_installation_skipped: options.devOptions.skipDependenciesInstallation,
     cmd_app_reset_used: options.devOptions.reset,
   }))

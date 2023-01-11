@@ -1,6 +1,6 @@
 import {listenRedirect} from './redirect-listener.js'
 import {clientId} from './identity.js'
-import {generateRandomChallengePair, randomHex} from '../string.js'
+import {base64URLEncode, randomBytes, randomHex, sha256} from '../public/node/crypto.js'
 import {open} from '../system.js'
 import {Abort, CancelExecution} from '../error.js'
 import {identity as identityFqdn} from '../environment/fqdn.js'
@@ -22,7 +22,7 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
   const host = '127.0.0.1'
   const redirectUri = `http://${host}:${port}`
   const fqdn = await identityFqdn()
-  const identityClientId = await clientId()
+  const identityClientId = clientId()
 
   await validateRedirectionPortAvailability(port)
 
@@ -54,6 +54,12 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
   }
 
   return {code: result.code, codeVerifier}
+}
+
+export function generateRandomChallengePair() {
+  const codeVerifier = base64URLEncode(randomBytes(32))
+  const codeChallenge = base64URLEncode(sha256(codeVerifier))
+  return {codeVerifier, codeChallenge}
 }
 
 async function validateRedirectionPortAvailability(port: number) {
