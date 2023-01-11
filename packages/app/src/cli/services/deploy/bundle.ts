@@ -2,10 +2,11 @@ import {buildFunctionExtension, buildUIExtensions} from '../build/extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {bundleThemeExtensions} from '../extensions/bundle.js'
-import {path, file, abort} from '@shopify/cli-kit'
+import {path, file} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
-import {Writable} from 'node:stream'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {Writable} from 'stream'
 
 interface BundleOptions {
   app: AppInterface
@@ -24,7 +25,7 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
       processes: [
         {
           prefix: 'theme_extensions',
-          action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+          action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
             await bundleThemeExtensions({
               app: options.app,
               extensions: options.app.extensions.theme.map((themeExtension) => {
@@ -58,7 +59,7 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
         ...options.app.extensions.function.map((functionExtension) => {
           return {
             prefix: functionExtension.localIdentifier,
-            action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+            action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
               await buildFunctionExtension(functionExtension, {stdout, stderr, signal, app: options.app})
             },
           }

@@ -2,24 +2,13 @@ import {addESLint} from './eslint.js'
 import {genericConfigurationFileNames} from '../constants.js'
 import {HydrogenApp} from '../models/hydrogen.js'
 import {describe, vi, it, expect, beforeEach} from 'vitest'
-import {file, vscode, path} from '@shopify/cli-kit'
+import {file, path} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
+import {addRecommendedExtensions, isVSCode} from '@shopify/cli-kit/node/vscode.js'
 
 beforeEach(async () => {
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      dependency: {
-        addNPMDependenciesWithoutVersionIfNeeded: vi.fn(),
-      },
-      vscode: {
-        isVSCode: vi.fn(),
-        addRecommendedExtensions: vi.fn(),
-      },
-    }
-  })
   vi.mock('@shopify/cli-kit/node/node-package-manager')
+  vi.mock('@shopify/cli-kit/node/vscode.js')
 })
 
 describe('addEslint', () => {
@@ -109,7 +98,7 @@ describe('addEslint', () => {
   it('adds vscode recommendations', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
-      vi.mocked(vscode.isVSCode).mockResolvedValue(true)
+      vi.mocked(isVSCode).mockResolvedValue(true)
       const app = await createMockApp({
         directory: tmpDir,
       })
@@ -118,7 +107,7 @@ describe('addEslint', () => {
       await addESLint({app, ...defaultOptions})
 
       // Then
-      await expect(vscode.addRecommendedExtensions).toHaveBeenCalledWith(tmpDir, ['dbaeumer.vscode-eslint'])
+      await expect(addRecommendedExtensions).toHaveBeenCalledWith(tmpDir, ['dbaeumer.vscode-eslint'])
     })
   })
 

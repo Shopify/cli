@@ -2,12 +2,12 @@ import {errorHandler, cleanStackFrameFilePath, addBugsnagMetadata, sendErrorToBu
 import * as environment from '../../environment.js'
 import * as error from '../../error.js'
 import * as outputMocker from '../../testing/output.js'
-import {hashString} from '../../string.js'
+import {hashString} from '../../public/node/crypto.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 const onNotify = vi.fn()
 beforeEach(() => {
-  vi.mock('node:process')
+  vi.mock('process')
   vi.mock('@bugsnag/js', () => {
     return {
       default: {
@@ -21,7 +21,7 @@ beforeEach(() => {
   })
   vi.mock('./cli.js')
   vi.mock('../../environment.js')
-  vi.mock('../../string.js')
+  vi.mock('../../public/node/crypto.js')
   vi.mocked(environment.local.ciPlatform).mockReturnValue({isCI: true, name: 'vitest'})
   vi.mocked(environment.local.macAddress).mockResolvedValue('macAddress')
   vi.mocked(environment.local.cloudEnvironment).mockReturnValue({platform: 'spin', editor: false})

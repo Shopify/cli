@@ -1,6 +1,6 @@
 import deepMerge from 'deepmerge'
 import {Dictionary, ObjectIterator, ValueKeyIteratee} from 'lodash'
-import {createRequire} from 'node:module'
+import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)
 
@@ -19,10 +19,6 @@ export function deepMergeObjects<T1, T2>(
   arrayMergeStrategy: (destinationArray: unknown[], sourceArray: unknown[]) => unknown[] = unionArrayStrategy,
 ): T1 & T2 {
   return deepMerge(lhs, rhs, {arrayMerge: arrayMergeStrategy})
-}
-
-function unionArrayStrategy(destinationArray: unknown[], sourceArray: unknown[]): unknown[] {
-  return Array.from(new Set([...destinationArray, ...sourceArray]))
 }
 
 /**
@@ -57,4 +53,8 @@ export function mapValues<T extends object, TResult>(
 ): {[P in keyof T]: TResult} {
   const lodashMapValues = require('lodash/mapValues.js')
   return lodashMapValues(obj, callback)
+}
+
+function unionArrayStrategy(destinationArray: unknown[], sourceArray: unknown[]): unknown[] {
+  return Array.from(new Set([...destinationArray, ...sourceArray]))
 }

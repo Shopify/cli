@@ -5,8 +5,9 @@ import {GenericSpecification} from '../app/extensions.js'
 import {
   loadUIExtensionSpecificiationsFromPlugins,
   loadFunctionSpecificationsFromPlugins,
-} from '../../public/plugins/extension.js'
-import {os, path, environment} from '@shopify/cli-kit'
+} from '../../private/plugins/extension.js'
+import {path, environment} from '@shopify/cli-kit'
+import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {memoize} from '@shopify/cli-kit/common/function'
 import {Config} from '@oclif/core'
 import {fileURLToPath} from 'url'
@@ -68,7 +69,7 @@ async function loadSpecifications(directoryName: string) {
   let files = await path.glob(url, {ignore: ['**.d.ts', '**.test.ts']})
 
   // From Node 18, all windows paths must start with file://
-  const {platform} = os.platformAndArch()
+  const {platform} = platformAndArch()
   if (platform === 'windows') {
     files = files.map((file) => `file://${file}`)
   }

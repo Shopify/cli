@@ -46,18 +46,21 @@ export class RedirectListener {
       const requestUrl = request.url
       if (requestUrl?.includes('favicon')) {
         const faviconFile = await getFavicon()
-        response.setHeader('Content-Type', 'image/svg+xml').write(faviconFile)
+        response.setHeader('Content-Type', 'image/svg+xml')
+        response.write(faviconFile)
         response.end()
         return {}
       } else if (requestUrl === '/style.css') {
         const stylesheetFile = await getStylesheet()
-        response.setHeader('Content-Type', 'text/css').write(stylesheetFile)
+        response.setHeader('Content-Type', 'text/css')
+        response.write(stylesheetFile)
         response.end()
         return {}
       }
 
       const respond = async (contents: string, error?: Error, state?: string, code?: string) => {
-        response.setHeader('Content-Type', 'text/html').write(contents)
+        response.setHeader('Content-Type', 'text/html')
+        response.write(contents)
         response.end()
         callback(error, state, code)
         return {}

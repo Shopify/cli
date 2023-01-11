@@ -1,12 +1,13 @@
 import {Web, WebConfigurationCommands} from '../models/app/app.js'
-import {system, abort} from '@shopify/cli-kit'
-import {Writable} from 'node:stream'
+import {system} from '@shopify/cli-kit'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {Writable} from 'stream'
 
 interface WebOptions {
   web: Web
   stdout: Writable
   stderr: Writable
-  signal: abort.Signal
+  signal: AbortSignal
   env?: {[variable: string]: string}
 }
 

@@ -1,7 +1,8 @@
 import {buildThemeExtensions, ThemeExtensionBuildOptions} from '../build/extension.js'
-import {abort, environment, file, path} from '@shopify/cli-kit'
+import {environment, file, path} from '@shopify/cli-kit'
 import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
-import {Writable} from 'node:stream'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {Writable} from 'stream'
 import {createRequire} from 'module'
 import type {StdinOptions} from 'esbuild'
 
@@ -25,7 +26,7 @@ export interface BundleOptions {
   /**
    * This signal allows the caller to stop the watching process.
    */
-  watchSignal?: abort.Signal
+  watchSignal?: AbortSignal
 
   /**
    * Context:

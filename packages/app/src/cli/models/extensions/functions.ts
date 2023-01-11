@@ -1,7 +1,9 @@
 import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
 import {blocks, defaultFunctionsFlavors} from '../../constants.js'
-import {schema, path, error, system, abort, string, environment} from '@shopify/cli-kit'
+import {schema, path, error, system, environment} from '@shopify/cli-kit'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {constantize} from '@shopify/cli-kit/common/string'
 import {Writable} from 'stream'
 
 // Base config type that all config schemas must extend
@@ -55,7 +57,7 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
     this.specification = options.specification
     this.directory = options.directory
     this.localIdentifier = path.basename(options.directory)
-    this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
+    this.idEnvironmentVariableName = `SHOPIFY_${constantize(path.basename(this.directory))}_ID`
   }
 
   get graphQLType() {
@@ -87,7 +89,7 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
     return path.join(this.directory, relativePath)
   }
 
-  async build(stdout: Writable, stderr: Writable, signal: abort.Signal) {
+  async build(stdout: Writable, stderr: Writable, signal: AbortSignal) {
     const buildCommand = this.configuration.build.command
     if (!buildCommand || buildCommand.trim() === '') {
       stderr.write(`The function extension ${this.localIdentifier} doesn't have a build command or it's empty`)

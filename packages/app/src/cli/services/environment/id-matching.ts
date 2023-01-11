@@ -1,10 +1,10 @@
 import {MatchingError, RemoteSource} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {string} from '@shopify/cli-kit'
 import {groupBy, partition} from '@shopify/cli-kit/common/collection'
 import {uniqBy, difference} from '@shopify/cli-kit/common/array'
 import {pickBy} from '@shopify/cli-kit/common/object'
+import {slugify} from '@shopify/cli-kit/common/string'
 import type {LocalSource} from './identifiers'
 
 export interface MatchResult {
@@ -18,7 +18,7 @@ export interface MatchResult {
  * Filter function to match a local and a remote source by type and name
  */
 const sameTypeAndName = (local: LocalSource, remote: RemoteSource) => {
-  return remote.type === local.graphQLType && string.slugify(remote.title) === string.slugify(local.configuration.name)
+  return remote.type === local.graphQLType && slugify(remote.title) === slugify(local.configuration.name)
 }
 
 /**

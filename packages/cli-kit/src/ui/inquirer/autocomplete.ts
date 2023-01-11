@@ -1,5 +1,5 @@
 import colors from '../../public/node/colors.js'
-import {escapeRegExp} from '../../string.js'
+import {escapeRegExp} from '../../public/common/string.js'
 import AutocompletePrompt from 'inquirer-autocomplete-prompt'
 import DistinctChoice from 'inquirer/lib/objects/choices'
 import {Question, Answers} from 'inquirer'

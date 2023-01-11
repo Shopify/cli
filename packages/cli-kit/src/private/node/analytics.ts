@@ -1,10 +1,10 @@
+import {hashString} from '../../public/node/crypto.js'
 import {getPackageManager, packageManagerUsedForCreating} from '../../public/node/node-package-manager.js'
 import BaseCommand from '../../public/node/base-command.js'
 import {CommandContent} from '../../public/node/hooks/prerun.js'
 import * as metadata from '../../metadata.js'
 import {macAddress} from '../../environment/local.js'
-import {platformAndArch} from '../../os.js'
-import {hashString} from '../../string.js'
+import {platformAndArch} from '../../public/node/os.js'
 import * as environment from '../../environment.js'
 import {Interfaces} from '@oclif/core'
 

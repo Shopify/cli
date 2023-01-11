@@ -1,0 +1,20 @@
+ci:
+  require: []
+
+dependencies:
+  override:
+    # We are making sure the deploys point to the NPM registry to prevent
+    # 404 issues like the one described in this comment:
+    # https://github.com/yarnpkg/yarn/issues/2935#issuecomment-355292633
+    - echo 'registry "https://registry.npmjs.org/"' | tee .npmrc .yarnrc
+    - curl -fsSL https://get.pnpm.io/install.sh | SHELL=`which bash` bash -
+    - bash -i -c "pnpm install"
+deploy:
+  interval: 24h
+  override:
+    - |-
+      bash -i -c 'echo -e "---\n'"'@shopify/cli'"': patch\n---" > .changeset/force-nightly-build.md'
+    - bash -i -c "npm_config_loglevel=verbose pnpm changeset version --snapshot nightly"
+    - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish --tag nightly"
+  post:
+    - bash -i -c "pnpm run update-bugsnag"

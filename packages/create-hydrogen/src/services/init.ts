@@ -1,4 +1,5 @@
-import {string, path, error, file, output, os, ui, npm, environment, template, git, constants} from '@shopify/cli-kit'
+import {path, error, file, output, ui, npm, environment, git, constants} from '@shopify/cli-kit'
+import {username} from '@shopify/cli-kit/node/os'
 import {
   findPackageVersionUp,
   installNodeModules,
@@ -8,6 +9,9 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 
 import {parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
+import {hyphenate} from '@shopify/cli-kit/common/string'
+import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
+
 import {Writable} from 'stream'
 
 interface InitOptions {
@@ -29,12 +33,12 @@ Help us make Hydrogen better by reporting this error so we can improve this mess
 
 async function init(options: InitOptions) {
   const hydrogenVersion = await findPackageVersionUp({fromModuleURL: import.meta.url})
-  const user = (await os.username()) ?? ''
+  const user = (await username()) ?? ''
   const cliPackageVersion = options.shopifyCliVersion ?? (await constants.versions.cliKit())
   const cliHydrogenPackageVersion = options.cliHydrogenPackageVersion ?? hydrogenVersion
   const hydrogenPackageVersion = options.hydrogenVersion
   const packageManager = inferPackageManager(options.packageManager)
-  const hyphenizedName = string.hyphenize(options.name)
+  const hyphenizedName = hyphenate(options.name)
   const outputDirectory = path.join(options.directory, hyphenizedName)
 
   await ui.nonEmptyDirectoryPrompt(outputDirectory)
@@ -86,7 +90,7 @@ async function init(options: InitOptions) {
                     author: user,
                     dependency_manager: options.packageManager,
                   }
-                  await template.recursiveDirectoryCopy(templatePath, templateScaffoldDir, templateData)
+                  await recursiveLiquidTemplateCopy(templatePath, templateScaffoldDir, templateData)
 
                   task.title = 'Template files parsed'
                 },

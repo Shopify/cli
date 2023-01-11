@@ -1,4 +1,5 @@
-import {ui, string, output} from '@shopify/cli-kit'
+import {ui, output} from '@shopify/cli-kit'
+import {hyphenate} from '@shopify/cli-kit/common/string'
 import {parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
 
 const TEMPLATE_BASE = 'https://github.com/Shopify/hydrogen/templates/'
@@ -97,7 +98,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<
 const checkIfShopifyTemplateName = (templateName: string, language: string): string | boolean => {
   if (!templateName) return false
 
-  const normalized = string.hyphenize(templateName).toLocaleLowerCase()
+  const normalized = hyphenate(templateName).toLocaleLowerCase()
   const endsWithLang = normalized.endsWith('-ts') || normalized.endsWith('-js')
   const withExtension = endsWithLang ? normalized : `${normalized}-${language}`
   return TEMPLATE_NAMES.includes(normalized) ? withExtension : false
@@ -110,7 +111,7 @@ const checkIfShopifyTemplateName = (templateName: string, language: string): str
  * @returns True if the template name is in the old format, false otherwise.
  */
 const warnIfDeprecatedTemplateNameFormat = (templateName: string): void => {
-  const normalized = string.hyphenize(templateName).toLocaleLowerCase()
+  const normalized = hyphenate(templateName).toLocaleLowerCase()
   const endsWithLang = normalized.endsWith('-ts') || normalized.endsWith('-js')
   if (endsWithLang) {
     const template = normalized.slice(0, -3)

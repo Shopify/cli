@@ -16,9 +16,9 @@ import {
   RawContentToken,
   SubHeadingContentToken,
 } from './content-tokens.js'
-import {AbortSignal} from 'abort-controller'
 import stripAnsi from 'strip-ansi'
-import {Writable} from 'node:stream'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {Writable} from 'stream'
 import type {Change} from 'diff'
 
 export {default as logUpdate} from 'log-update'
