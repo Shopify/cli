@@ -1,16 +1,16 @@
 .Theme {
   /* Backgrounds */
-  --dc-color-background: #0D0D0D;
+  --dc-color-background: #0d0d0d;
   --dc-color-black: #000;
 
   /* Foreground */
-  --dc-color-link: #38A5FF;
+  --dc-color-link: #38a5ff;
   --dc-color-icon: #868686;
-  --dc-color-subdued: #989FA4;
+  --dc-color-subdued: #989fa4;
   --dc-color-white: #ffffff;
-  --dc-color-pressed: #36A3FF;
+  --dc-color-pressed: #36a3ff;
   --dc-color-border: #313335;
-  --dc-color-popover: #1D1D1D;
+  --dc-color-popover: #1d1d1d;
 
   /* Status */
   --dc-color-success: #00a47c;
@@ -21,7 +21,7 @@
   --dc-font: 'SF Pro Text', monospace;
   --dc-font-mono: 'SF Mono', monospace;
   --dc-font-pro: 'SF Pro Text', monospace;
-  --dc-font-compact: "SF Compact Text", monospace;
+  --dc-font-compact: 'SF Compact Text', monospace;
   --dc-font-weight-subdued: 300;
   --dc-font-weight: 500;
   --dc-font-weight-bold: 700;
@@ -35,8 +35,8 @@
   --toastify-color-dark: var(--dc-color-black);
   --toastify-color-info: var(--dc-color-link);
   --toastify-color-success: var(--dc-color-success);
-  --toastify-color-warning:  var(--dc-color-warning);
-  --toastify-color-error:  var(--dc-color-errror);
+  --toastify-color-warning: var(--dc-color-warning);
+  --toastify-color-error: var(--dc-color-errror);
   --toastify-color-transparent: rgba(255, 255, 255, 0.7);
 
   --toastify-icon-color-info: var(--dc-color-link);
@@ -63,7 +63,7 @@
   --toastify-spinner-color: var(--dc-color-icon);
   --toastify-spinner-color-empty-area: var(--dc-color-white);
 
-   /* Used when no type is provided */
+  /* Used when no type is provided */
   --toastify-color-progress-dark: var(--dc-color-link);
   --toastify-color-progress-info: var(--toastify-color-info);
   --toastify-color-progress-success: var(--toastify-color-success);

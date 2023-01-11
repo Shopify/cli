@@ -12,7 +12,6 @@
     "test:watch": "nx test:watch"
   },
   "dependencies": {
-    "@shopify/polaris": "^6.6.0",
     "@shopify/polaris-icons": "^4.6.2",
     "@shopify/react-i18n": "^6.1.0",
     "@shopify/ui-extensions-server-kit": "4.0.0",
