@@ -12,10 +12,8 @@ export function Backdrop({onClick, setClosing}: Props) {
   }
 
   const handleMouseUp = () => {
-    if (setClosing) {
-      setClosing(false)
-      onClick()
-    }
+    setClosing(false)
+    onClick()
   }
 
   return (

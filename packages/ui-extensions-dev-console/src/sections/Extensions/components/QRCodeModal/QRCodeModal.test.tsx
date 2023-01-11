@@ -6,9 +6,11 @@ import {mockApp, mockExtension} from '@shopify/ui-extensions-server-kit/testing'
 import {render, withProviders} from '@shopify/ui-extensions-test-utils'
 import {mockI18n} from 'tests/mock-i18n'
 import {DefaultProviders} from 'tests/DefaultProviders'
-import {Modal} from '@shopify/polaris'
+import {Modal} from '@/components/Modal'
 
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
+
+vi.mock('@/components/Modal', () => ({Modal: (props: any) => props.children}))
 
 mockI18n(en)
 
