@@ -12,7 +12,7 @@ import {content, token} from '../../output.js'
 import {Writable} from 'stream'
 
 const RubyCLIVersion = '2.33.1'
-const ThemeCheckVersion = '1.12.1'
+const ThemeCheckVersion = '1.14.0'
 const MinBundlerVersion = '2.3.8'
 const MinRubyVersion = '2.7.5'
 
