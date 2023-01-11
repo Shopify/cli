@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -e
+
+printf "\033[0;32mNote that p is an alias for pnpm activated by shadowenv in the CLI repository\n\033[0m"
+pnpm $@
