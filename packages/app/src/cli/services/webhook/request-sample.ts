@@ -1,4 +1,4 @@
-import {api, session} from '@shopify/cli-kit'
+import {session} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export interface SamplePayloadSchema {

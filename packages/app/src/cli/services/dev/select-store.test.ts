@@ -3,7 +3,7 @@ import {fetchAllDevStores} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {api, environment} from '@shopify/cli-kit'
+import {environment} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}

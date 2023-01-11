@@ -6,7 +6,7 @@ import {testApp, testRemoteSpecifications, testThemeExtensions} from '../models/
 import {ensureGenerateEnvironment} from '../services/environment.js'
 import {Extension} from '../models/app/extensions.js'
 import {describe, expect, it, vi, beforeAll, afterEach} from 'vitest'
-import {path, outputMocker, api} from '@shopify/cli-kit'
+import {path, outputMocker} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 

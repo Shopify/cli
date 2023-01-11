@@ -3,11 +3,11 @@ import {createDeployment, healthCheck, uploadDeployment} from './upload.js'
 import {TooManyRequestsError, UnrecoverableError} from './error.js'
 import {CreateDeploymentQuery} from './graphql/create_deployment.js'
 import {beforeEach, describe, it, expect, vi} from 'vitest'
-import {http, api, file} from '@shopify/cli-kit'
+import {http, file} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {ClientError} from 'graphql-request'
-import {createReadStream} from 'fs'
 import {oxygenRequest, uploadDeploymentFile} from '@shopify/cli-kit/node/api/oxygen'
+import {createReadStream} from 'fs'
 
 const defaultConfig: ReqDeployConfig = {
   deploymentToken: '123',
