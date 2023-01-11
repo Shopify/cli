@@ -24,6 +24,7 @@ import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
+import {AllOrganizationsQuerySchemaOrganization} from '../api/graphql/all_orgs.js'
 import {store, outputMocker} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result.js'
@@ -44,12 +45,6 @@ beforeEach(() => {
       ...cliKit,
       session: {
         ensureAuthenticatedPartners: () => 'token',
-      },
-      api: {
-        partners: {
-          request: vi.fn(),
-        },
-        graphql: cliKit.api.graphql,
       },
       store: {
         getAppInfo: vi.fn(),

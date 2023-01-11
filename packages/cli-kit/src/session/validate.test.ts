@@ -1,7 +1,7 @@
-import {applicationId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {validateSession} from './validate.js'
 import {validateIdentityToken} from './identity-token-validation.js'
+import {applicationId} from './identity.js'
 import {OAuthApplications} from '../session.js'
 import {expect, describe, it, vi, afterAll, beforeEach} from 'vitest'
 
@@ -68,10 +68,10 @@ const defaultApps: OAuthApplications = {
 }
 
 beforeEach(() => {
+  vi.mock('./identity-token-validation')
   vi.mock('./identity')
   vi.mocked(applicationId).mockImplementation((id: any) => id)
   vi.setSystemTime(currentDate)
-  vi.mock('../api')
   vi.mocked(validateIdentityToken).mockResolvedValue(true)
 })
 

@@ -9,6 +9,8 @@ import {
   validatePartnersURLs,
 } from './urls.js'
 import {testApp} from '../../models/app/app.test-data.js'
+import {UpdateURLsQuery} from '../../api/graphql/update_urls.js'
+import {GetURLsQuery} from '../../api/graphql/get_urls.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {environment, error, outputMocker, plugins, store, ui} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'

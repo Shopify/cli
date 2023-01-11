@@ -7,6 +7,11 @@ import {
   NoOrgError,
 } from './fetch.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
+import {AllOrganizationsQuery} from '../../api/graphql/all_orgs.js'
+import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
+import {AllDevStoresByOrganizationQuery} from '../../api/graphql/all_dev_stores_by_org.js'
+import {FindStoreByDomainQuery} from '../../api/graphql/find_store_by_domain.js'
+import {AllAppExtensionRegistrationsQuery} from '../../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, it, test, vi} from 'vitest'
 import {outputMocker} from '@shopify/cli-kit'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'

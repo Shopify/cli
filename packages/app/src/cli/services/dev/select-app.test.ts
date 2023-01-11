@@ -3,6 +3,7 @@ import {AppInterface, WebType} from '../../models/app/app.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../models/organization.js'
 import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {testApp} from '../../models/app/app.test-data.js'
+import {CreateAppQuery} from '../../api/graphql/create_app.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 

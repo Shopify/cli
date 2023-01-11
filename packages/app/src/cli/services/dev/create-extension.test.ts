@@ -1,4 +1,5 @@
 import {createExtension} from './create-extension.js'
+import {ExtensionCreateQuery} from '../../api/graphql/extension_create.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
