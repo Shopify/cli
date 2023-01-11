@@ -1,5 +1,6 @@
 import {error} from '@shopify/cli-kit'
 import {
+  renderAutocompletePrompt,
   renderConcurrent,
   renderFatalError,
   renderInfo,
@@ -181,7 +182,7 @@ export async function kitchenSink() {
     {label: 'sixth', value: 'sixth'},
   ]
 
-  await renderSelectPrompt({
+  await renderAutocompletePrompt({
     message: 'Select a template',
     choices: [
       {label: 'first', value: 'first'},

@@ -57,6 +57,17 @@ function SelectPrompt<T>({
     ),
   )
 
+  const debounceSearch = useCallback(
+    debounce((term) => {
+      search!(term)
+        .then((result) => {
+          setSearchResults(result.slice(0, 14))
+        })
+        .catch(() => {})
+    }, 300),
+    [],
+  )
+
   return (
     <Box flexDirection="column" marginBottom={1} ref={measuredRef}>
       <Box>
@@ -65,26 +76,23 @@ function SelectPrompt<T>({
         </Box>
         <Text>{message}</Text>
         {isAutocomplete && !submitted && (
-          <Box marginLeft={2}>
-            <TextInput
-              value={searchTerm}
-              onChange={(term) => {
-                setSearchTerm(term)
+          <Box>
+            <Text>: </Text>
+            <Box>
+              <TextInput
+                value={searchTerm}
+                onChange={(term) => {
+                  setSearchTerm(term)
 
-                if (term.length > 0) {
-                  debounce(() => {
-                    search!(term)
-                      .then((result) => {
-                        setSearchResults(result.slice(0, 14))
-                      })
-                      .catch(() => {})
-                  }, 300)()
-                } else {
-                  setSearchResults(choices)
-                }
-              }}
-              placeholder="Type to search..."
-            />
+                  if (term.length > 0) {
+                    debounceSearch(term)
+                  } else {
+                    setSearchResults(choices)
+                  }
+                }}
+                placeholder="Type to search..."
+              />
+            </Box>
           </Box>
         )}
       </Box>

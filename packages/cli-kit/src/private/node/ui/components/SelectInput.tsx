@@ -150,6 +150,14 @@ export default function SelectInput<T>({
     [items],
   )
 
+  const debounceHandleShortcuts = useCallback(
+    debounce((newInputStack) => {
+      handleShortcuts(newInputStack)
+      setInputStack(null)
+    }, 300),
+    [setInputStack],
+  )
+
   useInput(
     (input, key) => {
       // check that no key is being pressed
@@ -158,10 +166,7 @@ export default function SelectInput<T>({
 
         setInputStack(newInputStack)
 
-        debounce(() => {
-          handleShortcuts(newInputStack)
-          setInputStack(null)
-        }, 300)()
+        debounceHandleShortcuts(newInputStack)
       } else {
         handleArrows(key)
       }

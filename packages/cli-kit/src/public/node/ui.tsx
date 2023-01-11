@@ -204,9 +204,35 @@ export function renderFatalError(error: Fatal) {
 
  *     navigate with arrows, enter to select
  */
-export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit'>) {
+export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit' | 'search'>) {
   return new Promise<T>((resolve, reject) => {
     render(<SelectPrompt {...props} onSubmit={(value: T) => resolve(value)} />, {
+      exitOnCtrlC: false,
+    }).catch(reject)
+  })
+}
+
+/**
+ * Renders an autocomplete prompt to the console.
+ *
+ * ?  Select a template  Type to search...
+
+ * \>  first
+ *     second
+ *     third
+
+ *  navigate with arrows, enter to select
+ */
+export function renderAutocompletePrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit'>) {
+  const newProps = {
+    search(term: string) {
+      return Promise.resolve(props.choices.filter((item) => item.label.toLowerCase().includes(term.toLowerCase())))
+    },
+    ...props,
+  }
+
+  return new Promise<T>((resolve, reject) => {
+    render(<SelectPrompt {...newProps} onSubmit={(value: T) => resolve(value)} />, {
       exitOnCtrlC: false,
     }).catch(reject)
   })
