@@ -88,6 +88,7 @@
     "@oclif/core": "1.21.0",
     "@types/archiver": "5.3.1",
     "abort-controller": "3.0.0",
+    "ansi-escapes": "6.0.0",
     "archiver": "5.3.1",
     "chalk": "5.1.0",
     "change-case": "4.1.2",
