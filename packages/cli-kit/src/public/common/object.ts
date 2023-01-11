@@ -1,4 +1,4 @@
-import {unionArrayStrategy} from '../../private/common/object.js'
+import {unionArrayStrategy} from '../../private/common/array.js'
 import deepMerge from 'deepmerge'
 import {Dictionary, ObjectIterator, ValueKeyIteratee} from 'lodash'
 import {createRequire} from 'module'
@@ -44,14 +44,14 @@ export function pickBy<T, S extends T>(
  * enumerable property of object through iteratee. The iteratee function is
  * invoked with three arguments: (value, key, object).
  *
- * @param object - The object to iterate over.
+ * @param source - The object to iterate over.
  * @param callback -  The function invoked per iteration.
  * @returns Returns the new mapped object.
  */
 export function mapValues<T extends object, TResult>(
-  object: T | null | undefined,
+  source: T | null | undefined,
   callback: ObjectIterator<T, TResult>,
 ): {[P in keyof T]: TResult} {
   const lodashMapValues = require('lodash/mapValues.js')
-  return lodashMapValues(object, callback)
+  return lodashMapValues(source, callback)
 }
