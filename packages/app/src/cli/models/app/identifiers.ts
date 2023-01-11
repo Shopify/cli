@@ -1,7 +1,8 @@
 import {Extension} from './extensions.js'
 import {dotEnvFileNames} from '../../constants.js'
-import {path, string} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 import {writeDotEnv} from '@shopify/cli-kit/node/dot-env'
+import {constantize} from '@shopify/cli-kit/common/string'
 import type {AppInterface} from './app'
 
 export interface IdentifiersExtensions {
@@ -52,7 +53,7 @@ export async function updateAppIdentifiers(
     updatedVariables[app.idEnvironmentVariableName] = identifiers.app
   }
   Object.keys(identifiers.extensions).forEach((identifier) => {
-    const envVariable = `SHOPIFY_${string.constantize(identifier)}_ID`
+    const envVariable = `SHOPIFY_${constantize(identifier)}_ID`
     if (!systemEnvironment[envVariable]) {
       updatedVariables[envVariable] = identifiers.extensions[identifier]!
     }

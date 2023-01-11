@@ -6,7 +6,7 @@ import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
 import {ThemeExtensionInstance, ThemeExtensionSpec} from '../extensions/theme.js'
 import {ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
 import {FunctionInstance, FunctionSpec} from '../extensions/functions.js'
-import {error, file, path, schema, string, output, environment} from '@shopify/cli-kit'
+import {error, file, path, schema, output, environment} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
   getDependencies,
@@ -16,6 +16,8 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
+import {camelize} from '@shopify/cli-kit/common/string'
+import {hashString} from '@shopify/cli-kit/node/crypto'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
 
 const defaultExtensionDirectory = 'extensions/*'
@@ -217,7 +219,7 @@ class AppLoader {
     }
     // Convert snake_case keys to camelCase before returning
     return {
-      ...Object.fromEntries(Object.entries(configuration).map((kv) => [string.camelize(kv[0]), kv[1]])),
+      ...Object.fromEntries(Object.entries(configuration).map((kv) => [camelize(kv[0]), kv[1]])),
     }
   }
 
@@ -483,8 +485,8 @@ async function logMetadataForLoadedApp(
       app_extensions_ui_any: extensionUICount > 0,
       app_extensions_ui_count: extensionUICount,
       app_extensions_ui_custom_layout: loadingStrategy.usedCustomLayoutForUIExtensions,
-      app_name_hash: string.hashString(app.name),
-      app_path_hash: string.hashString(app.directory),
+      app_name_hash: hashString(app.name),
+      app_path_hash: hashString(app.directory),
       app_scopes: JSON.stringify(
         app.configuration.scopes
           .split(',')
