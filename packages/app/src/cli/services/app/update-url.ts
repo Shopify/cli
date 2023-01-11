@@ -1,7 +1,8 @@
 import {selectApp} from './select-app.js'
 import {getURLs, PartnersURLs, updateURLs, validatePartnersURLs} from '../dev/urls.js'
 import {allowedRedirectionURLsPrompt, appUrlPrompt} from '../../prompts/update-url.js'
-import {output, session} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export interface UpdateURLOptions {
   apiKey?: string
@@ -10,7 +11,7 @@ export interface UpdateURLOptions {
 }
 
 export default async function updateURL(options: UpdateURLOptions): Promise<void> {
-  const token = await session.ensureAuthenticatedPartners()
+  const token = await ensureAuthenticatedPartners()
   const apiKey = options.apiKey || (await selectApp()).apiKey
   const newURLs = await getNewURLs(token, apiKey, {appURL: options.appURL, redirectURLs: options.redirectURLs})
   await updateURLs(newURLs, apiKey, token)

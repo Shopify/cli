@@ -2,8 +2,9 @@ import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
-import {cli, session} from '@shopify/cli-kit'
+import {cli} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
 export default class Open extends ThemeCommand {
   static description = 'Opens the preview of your remote theme.'
@@ -42,7 +43,7 @@ export default class Open extends ThemeCommand {
     const command = ['theme', 'open', ...flagsToPass]
 
     const store = await getThemeStore(flags)
-    const adminSession = await session.ensureAuthenticatedThemes(store, flags.password)
+    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
     await execCLI2(command, {adminSession})
   }
 }

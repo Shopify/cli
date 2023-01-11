@@ -4,22 +4,15 @@ import {selectApp} from '../select-app.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {testApp} from '../../../models/app/app.test-data.js'
-import {path, session, output, file} from '@shopify/cli-kit'
+import {path, output, file} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 beforeEach(async () => {
   vi.mock('../../dev/fetch.js')
   vi.mock('../select-app.js')
   vi.mock('../../../prompts/dev.js')
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      session: {
-        ensureAuthenticatedPartners: vi.fn(),
-      },
-    }
-  })
+  vi.mock('@shopify/cli-kit/node/session')
   vi.mock('@shopify/cli-kit/node/node-package-manager')
   vi.restoreAllMocks()
 })
@@ -56,7 +49,7 @@ describe('env pull', () => {
         apps: [organizationApp],
       })
       vi.mocked(selectApp).mockResolvedValue(organizationApp)
-      vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
+      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue(token)
 
       // When
       const filePath = path.resolve(tmpDir, '.env')
@@ -107,7 +100,7 @@ describe('env pull', () => {
         apps: [organizationApp],
       })
       vi.mocked(selectApp).mockResolvedValue(organizationApp)
-      vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
+      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue(token)
 
       const filePath = path.resolve(tmpDir, '.env')
 
@@ -171,7 +164,7 @@ describe('env pull', () => {
         apps: [organizationApp],
       })
       vi.mocked(selectApp).mockResolvedValue(organizationApp)
-      vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
+      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue(token)
 
       const filePath = path.resolve(tmpDir, '.env')
 

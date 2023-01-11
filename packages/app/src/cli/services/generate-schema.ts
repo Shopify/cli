@@ -7,8 +7,9 @@ import {
   ApiSchemaDefinitionQuerySchema,
   ApiSchemaDefinitionQueryVariables,
 } from '../api/graphql/functions/api_schema_definition.js'
-import {session, output, error, environment} from '@shopify/cli-kit'
+import {output, error, environment} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 interface GenerateSchemaOptions {
   app: AppInterface
@@ -18,7 +19,7 @@ interface GenerateSchemaOptions {
 
 export async function generateSchemaService(options: GenerateSchemaOptions) {
   const {extension, app} = options
-  const token = await session.ensureAuthenticatedPartners()
+  const token = await ensureAuthenticatedPartners()
   const {apiVersion: version, type} = extension.configuration
   let apiKey = options.apiKey || getAppIdentifiers({app}).app
 

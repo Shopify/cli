@@ -1,6 +1,7 @@
 import Logout from './logout.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {session, outputMocker} from '@shopify/cli-kit'
+import {outputMocker} from '@shopify/cli-kit'
+import {logout} from '@shopify/cli-kit/node/session'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {
@@ -24,7 +25,7 @@ describe('logs out', () => {
     await Logout.run()
 
     // Then
-    expect(session.logout).toHaveBeenCalledOnce()
+    expect(logout).toHaveBeenCalledOnce()
     expect(outputMock.success()).toMatchInlineSnapshot('"Logged out from Shopify"')
   })
 })

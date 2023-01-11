@@ -4,8 +4,9 @@ import {selectApp} from '../select-app.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {testApp} from '../../../models/app/app.test-data.js'
-import {path, session, output, store, file} from '@shopify/cli-kit'
+import {path, output, store, file} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 beforeEach(async () => {
   vi.mock('../../dev/fetch.js')
@@ -62,7 +63,7 @@ describe('env show', () => {
       apps: [organizationApp],
     })
     vi.mocked(selectApp).mockResolvedValue(organizationApp)
-    vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
+    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue(token)
 
     // When
     const result = await showEnv(app)
