@@ -8,6 +8,10 @@ import {FatalError} from '../../private/node/ui/components/FatalError.js'
 import {SelectPrompt, Props as SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, Props as TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
+import {
+  AutocompletePrompt,
+  Props as AutocompletePromptProps,
+} from '../../private/node/ui/components/AutocompletePrompt.js'
 import React from 'react'
 import {RenderOptions} from 'ink'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -204,7 +208,7 @@ export function renderFatalError(error: Fatal) {
 
  *     navigate with arrows, enter to select
  */
-export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit' | 'search'>) {
+export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit'>) {
   return new Promise<T>((resolve, reject) => {
     render(<SelectPrompt {...props} onSubmit={(value: T) => resolve(value)} />, {
       exitOnCtrlC: false,
@@ -223,7 +227,7 @@ export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmi
 
  *  navigate with arrows, enter to select
  */
-export function renderAutocompletePrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit'>) {
+export function renderAutocompletePrompt<T>(props: Omit<AutocompletePromptProps<T>, 'onSubmit'>) {
   const newProps = {
     search(term: string) {
       return Promise.resolve(props.choices.filter((item) => item.label.toLowerCase().includes(term.toLowerCase())))
@@ -232,7 +236,7 @@ export function renderAutocompletePrompt<T>(props: Omit<SelectPromptProps<T>, 'o
   }
 
   return new Promise<T>((resolve, reject) => {
-    render(<SelectPrompt {...newProps} onSubmit={(value: T) => resolve(value)} />, {
+    render(<AutocompletePrompt {...newProps} onSubmit={(value: T) => resolve(value)} />, {
       exitOnCtrlC: false,
     }).catch(reject)
   })

@@ -199,9 +199,11 @@ export default function SelectInput<T>({
         ></SelectItemsGroup>
       )}
 
-      <Box marginTop={1} marginLeft={3}>
-        <Text dimColor>navigate with arrows, enter to select</Text>
-      </Box>
+      {items.length > 0 && (
+        <Box marginTop={1} marginLeft={3}>
+          <Text dimColor>navigate with arrows, enter to select</Text>
+        </Box>
+      )}
     </Box>
   )
 }

@@ -163,6 +163,7 @@ module.exports = {
     ],
     'tsdoc/syntax': 'error',
     'jsdoc/require-returns-description': 'error',
+    'promise/catch-or-return': ['error', {allowFinally: true}],
   },
   overrides: [
     {
