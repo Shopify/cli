@@ -712,11 +712,15 @@ importers:
       execa: ^6.0.0
       fast-glob: ^3.2.11
       pathe: ^0.2.0
+      simple-git: 3.5.0
+      tempy: 3.0.0
     devDependencies:
       '@actions/core': 1.10.0
       execa: 6.1.0
       fast-glob: 3.2.12
       pathe: 0.2.0
+      simple-git: 3.5.0
+      tempy: 3.0.0
 
 packages:
 
@@ -2593,11 +2597,9 @@ packages:
       debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
-    dev: false
 
   /@kwsites/promise-deferred/1.1.1:
     resolution: {integrity: sha512-GaHYm+c0O9MjZRu0ongGBRbinu8gVAMd2UZjji6jVmqKtZluZnptXGWhz1E8j8D2HJ3f/yMxKAUC0b+57wncIw==}
-    dev: false
 
   /@luckycatfactory/esbuild-graphql-loader/3.7.0_kch4gnksbukf3l4unj7iuquebq:
     resolution: {integrity: sha512-5IMQvIa2bCMASsdAsY+5xeLWCWULE6HBw5TeA7lsdfBUTs1qFuXbdvxnZhxLxiF8x7biokjCWKzb2WWNa1wthQ==}
@@ -13314,7 +13316,6 @@ packages:
       debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
-    dev: false
 
   /simple-update-notifier/1.1.0:
     resolution: {integrity: sha512-VpsrsJSUcJEseSbMHkrsrAVSdvVS5I96Qo1QAQ4FxQ9wXFcB+pjj7FB7/us9+GcgfW4ziHtYMc1J0PLczb55mg==}

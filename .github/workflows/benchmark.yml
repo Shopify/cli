@@ -14,14 +14,14 @@ env:
 
 jobs:
   benchmark:
-    name: Node ${{ matrix.node }} in ${{ matrix.os }}
+    name: Benchmark ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     if: ${{ github.event_name == 'push' }}
     timeout-minutes: 30
     strategy:
       matrix:
-        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['14.20.0', '16.17.0', '18.7.0']
+        os: ['ubuntu-latest']
+        node: ['18.7.0']
     steps:
       - uses: actions/checkout@v2
         name: Checkout [main]
@@ -32,5 +32,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Build
+        run: pnpm nx run-many --all --skip-nx-cache --target=build --exclude=features
+      - name: Benchmark
         working-directory: workspace
-        run: pnpm run benchmark
+        run: pnpm nx run benchmark
