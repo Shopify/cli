@@ -25,7 +25,7 @@ export function ActionSet(props: ActionSetProps) {
   const {extension, className, onShowMobileQRCode} = props
   const {embedded, hide, navigate, refresh, show, state} = useExtensionsInternal()
   const hidden = extension.development.hidden
-  const hideWebUrl = extension.surface === 'pos'
+  const hideWebUrl = extension.surface === 'point_of_sale'
 
   const handleShowHide = useCallback(() => {
     if (hidden) {
