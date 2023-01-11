@@ -1,7 +1,6 @@
 import * as styles from './Layout.module.scss'
 import en from './translations/en.json'
 import React from 'react'
-import '@shopify/polaris/dist/styles.css'
 import {ToolsMajor} from '@shopify/polaris-icons'
 import {useI18n} from '@shopify/react-i18n'
 

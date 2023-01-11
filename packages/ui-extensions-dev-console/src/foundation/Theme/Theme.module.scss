@@ -10,6 +10,7 @@
   --dc-color-white: #ffffff;
   --dc-color-pressed: #36A3FF;
   --dc-color-border: #313335;
+  --dc-color-popover: #1D1D1D;
 
   /* Status */
   --dc-color-success: #00a47c;
@@ -27,6 +28,7 @@
 
   /* border */
   --dc-border-radius: 0.4rem;
+  --dc-border-radius-2: 0.8rem;
 
   /* Toast (See: https://fkhadra.github.io/react-toastify/how-to-style) */
   --toastify-color-light: var(--dc-color-white);

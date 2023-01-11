@@ -1,0 +1,16 @@
+.Header {
+  display: flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+  padding: 2rem 2rem 1.8rem 2rem;
+  border-bottom: 1px solid var(--dc-color-border);
+}
+
+.Title {
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  flex: 1;
+  align-self: center;
+  font-size: 1.6rem;
+}
