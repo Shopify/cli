@@ -1,20 +1,38 @@
 import {shopifyFetch} from '../../../http.js'
-import {graphqlRequest} from '../../../private/common/api/graphql.js'
-import {buildHeaders} from '../../../private/common/api/headers.js'
-import {Variables, RequestDocument} from 'graphql-request'
+import {graphqlRequest} from '../../../private/node/api/graphql.js'
+import {buildHeaders} from '../../../private/node/api/headers.js'
 import FormData from 'form-data'
 import {Response} from 'node-fetch'
 
+/**
+ * Executes a GraphQL query against the Oxygen API.
+ * @param oxygenAddress - Oxygen address to query.
+ * @param query - GraphQL query to execute.
+ * @param token - Shopify access token.
+ * @param variables - GraphQL variables to pass to the query.
+ * @returns The response of the query of generic type <T>.
+ */
 export async function oxygenRequest<T>(
   oxygenAddress: string,
-  query: RequestDocument,
+  query: string,
   token: string,
-  variables?: Variables,
+  variables?: {[key: string]: unknown},
 ): Promise<T> {
   return graphqlRequest(query, 'Oxygen', getOxygenAddress(oxygenAddress), token, variables)
 }
 
-export async function uploadDeploymentFile(oxygenAddress: string, token: string, data: FormData): Promise<Response> {
+/**
+ * Uploads a deployment file to the Oxygen API.
+ * @param oxygenAddress - Oxygen address to upload to.
+ * @param token - Shopify access token.
+ * @param data - FormData to upload.
+ * @returns The response of the query.
+ */
+export async function uploadOxygenDeploymentFile(
+  oxygenAddress: string,
+  token: string,
+  data: FormData,
+): Promise<Response> {
   const headers = await buildHeaders(token)
   delete headers['Content-Type']
 

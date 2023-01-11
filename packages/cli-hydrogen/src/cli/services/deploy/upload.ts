@@ -9,7 +9,7 @@ import {UploadDeploymentQuery} from './graphql/upload_deployment.js'
 import {http, file} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {ClientError} from 'graphql-request'
-import {uploadDeploymentFile, oxygenRequest} from '@shopify/cli-kit/node/api/oxygen'
+import {uploadOxygenDeploymentFile, oxygenRequest} from '@shopify/cli-kit/node/api/oxygen'
 
 export const createDeployment = async (config: ReqDeployConfig): Promise<CreateDeploymentResponse> => {
   const variables = {
@@ -63,7 +63,7 @@ export const uploadDeployment = async (config: ReqDeployConfig, deploymentID: st
     formData.append('map', JSON.stringify({'0': ['variables.file']}))
     formData.append('0', file.createReadStream(distZipPath), {filename: distZipPath})
 
-    const response = await uploadDeploymentFile(config.oxygenAddress, config.deploymentToken, formData)
+    const response = await uploadOxygenDeploymentFile(config.oxygenAddress, config.deploymentToken, formData)
     if (!response.ok) {
       if (response.status === 429) {
         throw TooManyRequestsError()

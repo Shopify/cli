@@ -1,7 +1,7 @@
 import * as oxygenApi from './oxygen.js'
 import {shopifyFetch, formData} from '../../../http.js'
-import {buildHeaders} from '../../../private/common/api/headers.js'
-import {graphqlRequest} from '../../../private/common/api/graphql.js'
+import {buildHeaders} from '../../../private/node/api/headers.js'
+import {graphqlRequest} from '../../../private/node/api/graphql.js'
 import {test, vi, describe, beforeEach, expect} from 'vitest'
 import {Response} from 'node-fetch'
 
@@ -62,7 +62,7 @@ describe('uploadDeploymentFile', () => {
     const response = new Response(JSON.stringify(responseBody), {status: 200})
     vi.mocked(shopifyFetch).mockResolvedValue(response)
 
-    const gotResponse = await oxygenApi.uploadDeploymentFile(oxygenAddress, mockedToken, mockedFormData as any)
+    const gotResponse = await oxygenApi.uploadOxygenDeploymentFile(oxygenAddress, mockedToken, mockedFormData as any)
     expect(shopifyFetch).toBeCalledWith(`https://${oxygenAddress}/api/graphql/deploy/v1`, {
       method: 'POST',
       body: mockedFormData,

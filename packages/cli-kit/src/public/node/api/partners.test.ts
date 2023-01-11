@@ -1,6 +1,6 @@
 import * as partnersApi from './partners.js'
 import {partners} from '../../../environment/fqdn.js'
-import {graphqlRequest} from '../../../private/common/api/graphql.js'
+import {graphqlRequest} from '../../../private/node/api/graphql.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 
 vi.mock('../../../private/common/api/graphql')

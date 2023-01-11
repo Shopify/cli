@@ -1,6 +1,6 @@
 import * as admin from './admin.js'
 import {AdminSession} from '../../../session.js'
-import {graphqlRequest} from '../../../private/common/api/graphql.js'
+import {graphqlRequest} from '../../../private/node/api/graphql.js'
 import {test, vi, expect, describe} from 'vitest'
 
 vi.mock('../../../private/common/api/graphql.js')

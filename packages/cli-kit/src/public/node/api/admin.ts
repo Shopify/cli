@@ -1,13 +1,20 @@
 import {AdminSession} from '../../../session.js'
 import {content, token as outputToken} from '../../../output.js'
 import {Bug, Abort} from '../../../error.js'
-import {graphqlRequest} from '../../../private/common/api/graphql.js'
-import {ClientError, gql, RequestDocument, Variables} from 'graphql-request'
+import {graphqlRequest} from '../../../private/node/api/graphql.js'
+import {ClientError, gql} from 'graphql-request'
 
+/**
+ * Executes a GraphQL query against the Admin API.
+ * @param query - GraphQL query to execute.
+ * @param session - Shopify admin session including token and Store FQDN.
+ * @param variables - GraphQL variables to pass to the query.
+ * @returns The response of the query of generic type <T>.
+ */
 export async function adminRequest<T>(
-  query: RequestDocument,
+  query: string,
   session: AdminSession,
-  variables?: Variables,
+  variables?: {[key: string]: unknown},
 ): Promise<T> {
   const api = 'Admin'
   const version = await fetchApiVersion(session)
