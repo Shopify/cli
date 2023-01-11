@@ -609,6 +609,7 @@ importers:
       react-dom: ^17.0.2
       react-router-dom: ^6.4.3
       react-toastify: ^9.1.1
+      react-transition-group: ^4.4.5
       sass: ^1.42.1
       ts-node: ^10.2.1
       typescript: 4.8.4
@@ -627,6 +628,7 @@ importers:
       react-dom: 17.0.2_react@17.0.2
       react-router-dom: 6.4.4_sfoxds7t5ydpegc3knd667wn6m
       react-toastify: 9.1.1_sfoxds7t5ydpegc3knd667wn6m
+      react-transition-group: 4.4.5_sfoxds7t5ydpegc3knd667wn6m
     devDependencies:
       '@shopify/react-testing': 3.3.10_sfoxds7t5ydpegc3knd667wn6m
       '@shopify/ui-extensions-test-utils': link:../ui-extensions-test-utils
