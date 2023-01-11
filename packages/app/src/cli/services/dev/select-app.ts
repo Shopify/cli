@@ -1,6 +1,7 @@
 import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {Organization, OrganizationApp, MinimalOrganizationApp} from '../../models/organization.js'
 import {fetchAppFromApiKey} from '../dev/fetch.js'
+import {CreateAppQuery, CreateAppQuerySchema, CreateAppQueryVariables} from '../../api/graphql/create_app.js'
 import {error, output} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 

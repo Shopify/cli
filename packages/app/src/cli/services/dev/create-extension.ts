@@ -1,3 +1,8 @@
+import {
+  ExtensionCreateQuery,
+  ExtensionCreateSchema,
+  ExtensionCreateVariables,
+} from '../../api/graphql/extension_create.js'
 import {error} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 

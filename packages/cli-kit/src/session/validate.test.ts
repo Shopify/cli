@@ -1,8 +1,8 @@
 import {applicationId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {validateSession} from './validate.js'
+import {validateIdentityToken} from './identity-token-validation.js'
 import {OAuthApplications} from '../session.js'
-import {identity} from '../api.js'
 import {expect, describe, it, vi, afterAll, beforeEach} from 'vitest'
 
 const pastDate = new Date(2022, 1, 1, 9)
@@ -72,7 +72,7 @@ beforeEach(() => {
   vi.mocked(applicationId).mockImplementation((id: any) => id)
   vi.setSystemTime(currentDate)
   vi.mock('../api')
-  vi.mocked(identity.validateIdentityToken).mockResolvedValue(true)
+  vi.mocked(validateIdentityToken).mockResolvedValue(true)
 })
 
 afterAll(() => {
@@ -112,7 +112,7 @@ describe('validateSession', () => {
       identity: validIdentity,
       applications: validApplications,
     }
-    vi.mocked(identity.validateIdentityToken).mockResolvedValueOnce(false)
+    vi.mocked(validateIdentityToken).mockResolvedValueOnce(false)
 
     // When
     const got = await validateSession(requestedScopes, defaultApps, session)

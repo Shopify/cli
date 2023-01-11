@@ -2,6 +2,11 @@ import {fetchOrganizationAndFetchOrCreateApp} from './environment.js'
 import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension} from '../models/app/extensions.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
+import {
+  ApiSchemaDefinitionQuery,
+  ApiSchemaDefinitionQuerySchema,
+  ApiSchemaDefinitionQueryVariables,
+} from '../api/graphql/functions/api_schema_definition.js'
 import {session, output, error, environment} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 

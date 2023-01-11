@@ -1,6 +1,11 @@
 import {fetchAllDevStores} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
+import {
+  ConvertDevToTestStoreQuery,
+  ConvertDevToTestStoreSchema,
+  ConvertDevToTestStoreVariables,
+} from '../../api/graphql/convert_dev_to_test_store.js'
 import {error, output, system, ui, environment} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 

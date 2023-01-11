@@ -1,6 +1,7 @@
 import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, UIExtension} from '../app/extensions.js'
 import {blocks, defualtExtensionFlavors} from '../../constants.js'
+import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {path, output, environment} from '@shopify/cli-kit'
 import {ok, Result} from '@shopify/cli-kit/node/result'
 import {constantize} from '@shopify/cli-kit/common/string'

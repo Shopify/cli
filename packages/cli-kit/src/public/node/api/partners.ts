@@ -1,6 +1,6 @@
 import {partners as partnersFqdn} from '../../../environment/fqdn.js'
 import {graphqlRequest, GraphQLVariables} from '../../../private/node/api/graphql.js'
-import {ScriptServiceProxyQuery} from '../../../api/graphql/index.js'
+import {gql} from 'graphql-request'
 
 /**
  * Executes a GraphQL query against the Partners API.
@@ -47,4 +47,14 @@ export async function functionProxyRequest<T>(
   const res: ProxyResponse = await partnersRequest(proxyQuery, token, proxyVariables)
   const json = JSON.parse(res.scriptServiceProxy)
   return json as T
+}
+
+const ScriptServiceProxyQuery = gql`
+  query ProxyRequest($api_key: String, $query: String!, $variables: String) {
+    scriptServiceProxy(apiKey: $api_key, query: $query, variables: $variables)
+  }
+`
+
+interface ScriptServiceProxyQuerySchema {
+  scriptServiceProxy: unknown
 }

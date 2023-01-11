@@ -1,6 +1,19 @@
 import {Organization, OrganizationApp, MinimalOrganizationApp, OrganizationStore} from '../../models/organization.js'
-import {error} from '@shopify/cli-kit'
+import {
+  AllAppExtensionRegistrationsQuery,
+  AllAppExtensionRegistrationsQuerySchema,
+} from '../../api/graphql/all_app_extension_registrations.js'
+import {AllOrganizationsQuery, AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
+import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
+import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
+import {FindOrganizationBasicQuery, FindOrganizationBasicQuerySchema} from '../../api/graphql/find_org_basic.js'
+import {
+  AllDevStoresByOrganizationQuery,
+  AllDevStoresByOrganizationSchema,
+} from '../../api/graphql/all_dev_stores_by_org.js'
+import {FindStoreByDomainQuery, FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {error} from '@shopify/cli-kit'
 
 export const NoOrgError = (organizationId?: string) => {
   const nextSteps = [
