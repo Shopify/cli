@@ -11,17 +11,18 @@ env:
   SHOPIFY_CONFIG: debug
   YARN_VERSION: "1.22.19"
   PNPM_VERSION: "7.18.1"
+  RUBY_VERSION: "3.1.2"
+  BUNDLER_VERSION: "2.3.18"
 
 jobs:
   benchmark:
-    name: Node ${{ matrix.node }} in ${{ matrix.os }}
+    name: benchmark with Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'push' }}
     timeout-minutes: 30
     strategy:
       matrix:
-        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['14.20.0', '16.17.0', '18.7.0']
+        os: ['ubuntu-latest']
+        node: ['18.7.0']
     steps:
       - uses: actions/checkout@v2
         name: Checkout [main]
@@ -32,5 +33,12 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Build
+        run: pnpm nx run-many --all --skip-nx-cache --target=build --exclude=features
+      - name: Benchmark
         working-directory: workspace
-        run: pnpm run benchmark
+        id: benchmark
+        run: pnpm nx run benchmark
+      - uses: marocchino/sticky-pull-request-comment@v2.3.1
+        with:
+          header: Benchmark
+          message: ${{ steps.benchmark.outputs.report }}
