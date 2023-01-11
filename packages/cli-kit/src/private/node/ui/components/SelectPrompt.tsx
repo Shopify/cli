@@ -46,7 +46,7 @@ function SelectPrompt<T>({
         <Text>{message}</Text>
       </Box>
       {infoTable && !submitted && (
-        <Box marginLeft={7}>
+        <Box marginLeft={7} marginTop={1}>
           <Table table={infoTable} />
         </Box>
       )}
@@ -59,12 +59,14 @@ function SelectPrompt<T>({
           <Text color="cyan">{answer.label}</Text>
         </Box>
       ) : (
-        <SelectInput
-          items={choices}
-          onChange={(item: Item<T>) => {
-            setAnswer(item)
-          }}
-        />
+        <Box marginTop={1}>
+          <SelectInput
+            items={choices}
+            onChange={(item: Item<T>) => {
+              setAnswer(item)
+            }}
+          />
+        </Box>
       )}
     </Box>
   )

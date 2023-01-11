@@ -14,7 +14,7 @@ const Table: React.FC<Props> = ({table}) => {
   const headerColumnWidth = Math.max(...headers.map((header) => header.length))
 
   return (
-    <Box flexDirection="column" paddingY={1}>
+    <Box flexDirection="column">
       {headers.map((header, index) => (
         <Box key={index} marginBottom={index === headers.length - 1 ? 0 : 1}>
           <Box width={headerColumnWidth + 1}>
