@@ -1,4 +1,4 @@
-import {path, error, file, output, ui, npm, environment, template, git, constants} from '@shopify/cli-kit'
+import {path, error, file, output, ui, npm, environment, git, constants} from '@shopify/cli-kit'
 import {username} from '@shopify/cli-kit/node/os'
 import {
   findPackageVersionUp,
@@ -10,6 +10,8 @@ import {
 
 import {parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
 import {hyphenize} from '@shopify/cli-kit/common/string'
+import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
+
 import {Writable} from 'stream'
 
 interface InitOptions {
@@ -88,7 +90,7 @@ async function init(options: InitOptions) {
                     author: user,
                     dependency_manager: options.packageManager,
                   }
-                  await template.recursiveDirectoryCopy(templatePath, templateScaffoldDir, templateData)
+                  await recursiveLiquidTemplateCopy(templatePath, templateScaffoldDir, templateData)
 
                   task.title = 'Template files parsed'
                 },
