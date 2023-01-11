@@ -1,6 +1,6 @@
+import './Reset.module.scss'
 import * as styles from './Theme.module.scss'
 import React from 'react'
-import '@shopify/polaris/dist/styles.css'
 
 interface Props {
   children: React.ReactNode
