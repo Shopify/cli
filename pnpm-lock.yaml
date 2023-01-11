@@ -136,7 +136,7 @@ importers:
       '@shopify/admin-ui-extensions': 1.0.1
       '@shopify/admin-ui-extensions-react': 1.0.1
       '@shopify/app': 3.32.1
-      '@shopify/checkout-ui-extensions-react': ^0.21.2
+      '@shopify/checkout-ui-extensions-react': ^0.22.0
       '@shopify/cli': 3.32.1
       '@shopify/customer-account-ui-extensions-react': ^0.0.8
       '@shopify/post-purchase-ui-extensions': ^0.13.3
@@ -148,7 +148,7 @@ importers:
       '@shopify/admin-ui-extensions': 1.0.1
       '@shopify/admin-ui-extensions-react': 1.0.1_react@17.0.2
       '@shopify/app': link:../../packages/app
-      '@shopify/checkout-ui-extensions-react': 0.21.2_react@17.0.2
+      '@shopify/checkout-ui-extensions-react': 0.22.0_react@17.0.2
       '@shopify/cli': link:../../packages/cli
       '@shopify/customer-account-ui-extensions-react': 0.0.8_react@17.0.2
       '@shopify/post-purchase-ui-extensions': 0.13.3
@@ -3640,14 +3640,14 @@ packages:
       react: 17.0.2
     dev: false
 
-  /@shopify/checkout-ui-extensions-react/0.21.2_react@17.0.2:
-    resolution: {integrity: sha512-fYC1WZBpgzhWXfVurA+Ih+6uQ+roXnhVzc1TJqPZTtGRcyD51BxI+iaXB7WIgRlKzLvDMoXWnr91mM1kbG9qEg==}
+  /@shopify/checkout-ui-extensions-react/0.22.0_react@17.0.2:
+    resolution: {integrity: sha512-CQhi2SerTXvmRkicy+xaLqkd2ZO6uyD634aiabDsWsy67+OzF82u0GQMahOUpDvkfw4p+zEAO8CkeEKjlVzqXg==}
     peerDependencies:
       react: '>=17.0.0 <18.0.0'
     dependencies:
       '@remote-ui/async-subscription': 2.1.13
       '@remote-ui/react': 4.5.13_react@17.0.2
-      '@shopify/checkout-ui-extensions': 0.21.1
+      '@shopify/checkout-ui-extensions': 0.22.0
       '@types/react': 16.14.0
       react: 17.0.2
     dev: false
@@ -3659,8 +3659,8 @@ packages:
       '@remote-ui/core': 2.1.16
     dev: false
 
-  /@shopify/checkout-ui-extensions/0.21.1:
-    resolution: {integrity: sha512-Py6xOwKBaaISXhDvSlvYfkeRGn8Gtbap0//BnxHplIkPxjEyZEY7pc57a5tSYH61RHlCxF7/USAeu74PuxrTiA==}
+  /@shopify/checkout-ui-extensions/0.22.0:
+    resolution: {integrity: sha512-E2zp88WSnCM+Z6FfzKNa4VF5hfl4zC469rx5dNaAx/oyccPC9Ol0WGgcUeFRgSRHe9FyPo25p35Mw4lFcmWCuA==}
     dependencies:
       '@remote-ui/async-subscription': 2.1.13
       '@remote-ui/core': 2.1.16

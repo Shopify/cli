@@ -6,7 +6,7 @@ import {getExtensionPointTargetSurface} from '../../../services/dev/extension/ut
 import {file, output, path, schema} from '@shopify/cli-kit'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 
-const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.21.2'}
+const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.22.0'}
 
 const UIExtensionSchema = BaseUIExtensionSchema.extend({
   settings: schema.define
