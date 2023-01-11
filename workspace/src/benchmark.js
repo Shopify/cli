@@ -103,7 +103,7 @@ ${markdownTable}
 await temporaryDirectoryTask(async (tmpDir) => {
   const baselineDirectory = await cloneCLIRepository(tmpDir)
   const currentDirectory = path.join(url.fileURLToPath(new URL('.', import.meta.url)), '../..')
-  const baselineBenchmark = await benchmark(baselineDirectory, {}, 5, {name: 'baseline'})
-  const currentBenchmark = await benchmark(currentDirectory, {}, 5, {name: 'current'})
+  const baselineBenchmark = await benchmark(baselineDirectory, {}, 3, {name: 'baseline'})
+  const currentBenchmark = await benchmark(currentDirectory, {}, 3, {name: 'current'})
   await report(currentBenchmark, baselineBenchmark)
 })
