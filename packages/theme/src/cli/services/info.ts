@@ -1,4 +1,5 @@
-import {os, output, string, store as conf} from '@shopify/cli-kit'
+import {output, string, store as conf} from '@shopify/cli-kit'
+import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {version as rubyVersion} from '@shopify/cli-kit/node/ruby'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -17,7 +18,7 @@ async function themeConfigSection(): Promise<[string, string]> {
 
 async function systemInfoSection(config: {cliVersion: string}): Promise<[string, string]> {
   const title = 'Tooling and System'
-  const {platform, arch} = os.platformAndArch()
+  const {platform, arch} = platformAndArch()
   const ruby = (await rubyVersion()) || 'Not installed'
   const lines: string[][] = [
     ['Shopify CLI', await cliVersionInfo(config)],

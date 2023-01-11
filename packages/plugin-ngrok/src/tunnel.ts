@@ -1,5 +1,6 @@
 import {TUNNEL_PROVIDER} from './provider.js'
-import {os, output, ui, error as cliKitError} from '@shopify/cli-kit'
+import {output, ui, error as cliKitError} from '@shopify/cli-kit'
+import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {startTunnel, TunnelError, TunnelErrorType} from '@shopify/cli-kit/node/plugins/tunnel'
 import ngrok from '@shopify/ngrok'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
@@ -66,7 +67,7 @@ async function tokenPrompt(showExplanation = true): Promise<string> {
 
 function buildTryMessage(errorType: TunnelErrorType): string | undefined {
   if (errorType === 'tunnel-already-running') {
-    const {platform} = os.platformAndArch()
+    const {platform} = platformAndArch()
     const tryMessage = 'Kill all the ngrok processes with '
     if (platform === 'windows') {
       return tryMessage.concat(output.content`${output.token.genericShellCommand('taskkill /f /im ngrok.exe')}`.value)

@@ -1,6 +1,6 @@
 import {join} from './path.js'
 import * as file from './file.js'
-import * as os from './os.js'
+import * as os from './public/node/os.js'
 import {debug, token, content} from './output.js'
 
 interface JSON {

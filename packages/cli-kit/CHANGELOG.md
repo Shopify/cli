@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.32.0
+
+### Patch Changes
+
+- a8489366: Bumped CLI2 to 2.33.1.
+- 00de42e8: Add Text Prompt component
+
 ## 3.31.1
 
 ## 3.31.0

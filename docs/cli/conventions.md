@@ -26,7 +26,7 @@ Modules must not perform any side effect when they are imported. For example, do
 ```ts
 // some-module.ts
 
-import { fs } from "node:fs"
+import { fs } from "fs"
 
 const content = fs.readSync("./package.json")
 ```

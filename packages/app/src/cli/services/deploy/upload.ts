@@ -1,9 +1,10 @@
 import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
-import {api, error, session, http, id, output, file} from '@shopify/cli-kit'
+import {api, error, session, http, output, file} from '@shopify/cli-kit'
 
 import fs from 'fs'
+import {randomUUID} from 'crypto'
 
 interface DeployThemeExtensionOptions {
   /** The application API key */
@@ -74,7 +75,7 @@ export interface UploadExtensionValidationError {
 export async function uploadUIExtensionsBundle(
   options: UploadUIExtensionsBundleOptions,
 ): Promise<UploadExtensionValidationError[]> {
-  const deploymentUUID = id.generateRandomUUID()
+  const deploymentUUID = randomUUID()
   const signedURL = await getUIExtensionUploadURL(options.apiKey, deploymentUUID)
 
   const formData = http.formData()

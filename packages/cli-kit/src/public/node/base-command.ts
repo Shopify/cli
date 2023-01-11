@@ -1,6 +1,6 @@
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
 import {loadPresetsFromDirectory} from './presets.js'
-import {JsonMap} from '../../json.js'
+import {JsonMap} from '../../private/common/json.js'
 import {isDevelopment} from '../../environment/local.js'
 import {Abort} from '../../error.js'
 import {addPublic} from '../../metadata.js'
@@ -170,7 +170,6 @@ ${Object.entries(changes)
  * If we parse using this configuration, the only specified flags will be those
  * the user actually passed on the command line.
  */
-
 function noDefaultsOptions<TFlags extends Interfaces.FlagOutput, TGlobalFlags extends Interfaces.FlagOutput>(
   options: Interfaces.Input<TFlags, TGlobalFlags> | undefined,
 ): Interfaces.Input<TFlags, TGlobalFlags> | undefined {

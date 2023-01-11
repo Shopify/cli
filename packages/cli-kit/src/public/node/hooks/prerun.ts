@@ -1,4 +1,4 @@
-import {start} from '../../../analytics.js'
+import {startAnalytics} from '../../../private/node/analytics.js'
 import {debug} from '../../../output.js'
 import Command from '../../../public/node/base-command.js'
 import {Hook} from '@oclif/core'
@@ -17,7 +17,7 @@ export const hook: Hook.Prerun = async (options) => {
   })
   const args = options.argv
   debug(`Running command ${commandContent.command}`)
-  await start({commandContent, args, commandClass: options.Command as unknown as typeof Command})
+  await startAnalytics({commandContent, args, commandClass: options.Command as unknown as typeof Command})
 }
 
 export function parseCommandContent(cmdInfo: {id: string; aliases: string[]; pluginAlias?: string}): CommandContent {

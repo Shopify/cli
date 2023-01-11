@@ -1,4 +1,4 @@
-import {Box} from 'ink'
+import {Box, useStdout} from 'ink'
 import React, {useEffect, useState} from 'react'
 
 /**
@@ -7,26 +7,29 @@ import React, {useEffect, useState} from 'react'
  * - You want to respond to the resize event of the terminal. Whenever the user resizes their terminal window the output's height and width will be recalculated and re-rendered properly.
  */
 const FullScreen: React.FC = ({children}): JSX.Element => {
+  const {stdout} = useStdout()
+  const standardOutput = stdout!
+
   const [size, setSize] = useState({
-    columns: process.stdout.columns,
-    rows: process.stdout.rows,
+    columns: standardOutput.columns,
+    rows: standardOutput.rows,
   })
 
   useEffect(() => {
     function onResize() {
       setSize({
-        columns: process.stdout.columns,
-        rows: process.stdout.rows,
+        columns: standardOutput.columns,
+        rows: standardOutput.rows,
       })
     }
 
-    process.stdout.on('resize', onResize)
+    standardOutput.on('resize', onResize)
     // switch to an alternate buffer
-    process.stdout.write('\u001B[?1049h')
+    standardOutput.write('\u001B[?1049h')
     return () => {
-      process.stdout.off('resize', onResize)
+      standardOutput.off('resize', onResize)
       // switch back to the main buffer
-      process.stdout.write('\u001B[?1049l')
+      standardOutput.write('\u001B[?1049l')
     }
   }, [])
 

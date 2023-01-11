@@ -22,7 +22,7 @@ importers:
       '@shopify/eslint-plugin': ^41.3.0
       '@shopify/typescript-configs': ^5.1.0
       '@shopify/web-pixels-extension': 0.1.4
-      '@types/node': ^17.0.38
+      '@types/node': 14.17.0
       '@types/rimraf': ^3.0.2
       '@types/tmp': ^0.2.3
       '@typescript-eslint/eslint-plugin': ^5.27.0
@@ -80,10 +80,10 @@ importers:
       '@nrwl/workspace': 15.3.0_n6qshekvp4yqndkuu5fuozz5ni
       '@octokit/core': 4.1.0
       '@octokit/rest': 19.0.5
-      '@shopify/eslint-plugin': 41.3.1_xnfq2blgbluq7qc2r537s4ewku
+      '@shopify/eslint-plugin': 41.3.1_em2gb7xybgqjsdu6qumqqdiike
       '@shopify/typescript-configs': 5.1.0
       '@shopify/web-pixels-extension': 0.1.4
-      '@types/node': 17.0.45
+      '@types/node': 14.17.0
       '@types/rimraf': 3.0.2
       '@types/tmp': 0.2.3
       '@typescript-eslint/eslint-plugin': 5.45.0_psz44bhp76u27vmulntnlx26h4
@@ -127,7 +127,7 @@ importers:
       shx: 0.3.4
       tempy: 3.0.0
       tmp: 0.2.1
-      ts-node: 10.9.1_ksn4eycaeggbrckn3ykh37hwf4
+      ts-node: 10.9.1_76zcixmkjnbphw74ddtkdwldva
       tslib: 2.4.1
       typescript: 4.8.4
 
@@ -135,9 +135,9 @@ importers:
     specifiers:
       '@shopify/admin-ui-extensions': 1.0.1
       '@shopify/admin-ui-extensions-react': 1.0.1
-      '@shopify/app': 3.31.1
+      '@shopify/app': 3.32.0
       '@shopify/checkout-ui-extensions-react': ^0.21.2
-      '@shopify/cli': 3.31.1
+      '@shopify/cli': 3.32.0
       '@shopify/customer-account-ui-extensions-react': ^0.0.8
       '@shopify/post-purchase-ui-extensions': ^0.13.3
       '@shopify/post-purchase-ui-extensions-react': ^0.13.3
@@ -225,11 +225,12 @@ importers:
     specifiers:
       '@luckycatfactory/esbuild-graphql-loader': 3.7.0
       '@oclif/core': 1.21.0
-      '@shopify/cli-kit': 3.31.1
+      '@shopify/cli-kit': 3.32.0
       '@shopify/shopify-cli-extensions': 3.21.0
       '@types/diff': ^5.0.2
       '@types/http-proxy': ^1.17.9
       '@types/lodash-es': ^4.17.6
+      '@types/node': 14.17.0
       '@types/serve-static': ^1.15.0
       '@types/ws': ^8.5.3
       abort-controller: 3.0.0
@@ -259,6 +260,7 @@ importers:
       '@types/diff': 5.0.2
       '@types/http-proxy': 1.17.9
       '@types/lodash-es': 4.17.6
+      '@types/node': 14.17.0
       '@types/serve-static': 1.15.0
       '@types/ws': 8.5.3
       graphql: 16.6.0
@@ -272,11 +274,12 @@ importers:
       '@oclif/plugin-commands': 2.2.0
       '@oclif/plugin-help': 5.1.12
       '@oclif/plugin-plugins': 2.1.0
-      '@shopify/app': 3.31.1
-      '@shopify/cli-hydrogen': 3.31.1
-      '@shopify/cli-kit': 3.31.1
-      '@shopify/plugin-ngrok': 3.31.1
-      '@shopify/theme': 3.31.1
+      '@shopify/app': 3.32.0
+      '@shopify/cli-hydrogen': 3.32.0
+      '@shopify/cli-kit': 3.32.0
+      '@shopify/plugin-ngrok': 3.32.0
+      '@shopify/theme': 3.32.0
+      '@types/node': 14.17.0
       '@vitest/coverage-istanbul': ^0.26.3
       vite: 2.9.12
       vitest: ^0.26.3
@@ -291,6 +294,7 @@ importers:
       '@shopify/app': link:../app
       '@shopify/cli-hydrogen': link:../cli-hydrogen
       '@shopify/theme': link:../theme
+      '@types/node': 14.17.0
       '@vitest/coverage-istanbul': 0.26.3
       vite: 2.9.12
       vitest: 0.26.3
@@ -298,11 +302,12 @@ importers:
   packages/cli-hydrogen:
     specifiers:
       '@oclif/core': 1.21.0
-      '@shopify/cli-kit': 3.31.1
+      '@shopify/cli-kit': 3.32.0
       '@shopify/hydrogen': 0.26.0
       '@shopify/mini-oxygen': 0.2.0
       '@shopify/prettier-config': 1.1.2
       '@types/fs-extra': 9.0.13
+      '@types/node': 14.17.0
       '@types/prettier': 2.6.3
       fast-glob: 3.2.11
       fs-extra: 11.1.0
@@ -329,6 +334,7 @@ importers:
       vite: 2.9.12
     devDependencies:
       '@types/fs-extra': 9.0.13
+      '@types/node': 14.17.0
       graphql: 16.6.0
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
@@ -347,10 +353,12 @@ importers:
       '@types/gradient-string': ^1.1.2
       '@types/inquirer': ^9.0.3
       '@types/lodash': 4.14.191
+      '@types/node': 14.17.0
       '@types/react': 16.14.0
       '@types/semver': ^7.3.9
       '@vitest/coverage-istanbul': ^0.26.3
       abort-controller: 3.0.0
+      ansi-escapes: 6.0.0
       archiver: 5.3.1
       chalk: 5.1.0
       change-case: 4.1.2
@@ -390,6 +398,7 @@ importers:
       log-update: 4.0.0
       macaddress: 0.5.3
       md5-file: 5.0.0
+      node-abort-controller: 3.0.1
       node-fetch: 3.2.4
       node-stream-zip: ^1.15.0
       open: 8.4.0
@@ -416,6 +425,7 @@ importers:
       '@oclif/core': 1.21.0
       '@types/archiver': 5.3.1
       abort-controller: 3.0.0
+      ansi-escapes: 6.0.0
       archiver: 5.3.1
       chalk: 5.1.0
       change-case: 4.1.2
@@ -454,6 +464,7 @@ importers:
       log-update: 4.0.0
       macaddress: 0.5.3
       md5-file: 5.0.0
+      node-abort-controller: 3.0.1
       node-fetch: 3.2.4
       open: 8.4.0
       pathe: 0.2.0
@@ -479,6 +490,7 @@ importers:
       '@types/gradient-string': 1.1.2
       '@types/inquirer': 9.0.3
       '@types/lodash': 4.14.191
+      '@types/node': 14.17.0
       '@types/react': 16.14.0
       '@types/semver': 7.3.13
       '@vitest/coverage-istanbul': 0.26.3
@@ -490,21 +502,24 @@ importers:
   packages/create-app:
     specifiers:
       '@oclif/core': 1.21.0
-      '@shopify/cli-kit': 3.31.1
+      '@shopify/cli-kit': 3.32.0
+      '@types/node': 14.17.0
       vite: 2.9.12
       vitest: ^0.26.3
     dependencies:
       '@oclif/core': 1.21.0
       '@shopify/cli-kit': link:../cli-kit
     devDependencies:
+      '@types/node': 14.17.0
       vite: 2.9.12
       vitest: 0.26.3
 
   packages/create-hydrogen:
     specifiers:
       '@oclif/core': 1.21.0
-      '@shopify/cli-kit': 3.31.1
+      '@shopify/cli-kit': 3.32.0
       '@types/download': 8.0.0
+      '@types/node': 14.17.0
       download: 8.0.0
       vite: 2.9.12
       vitest: ^0.26.3
@@ -514,6 +529,7 @@ importers:
       download: 8.0.0
     devDependencies:
       '@types/download': 8.0.0
+      '@types/node': 14.17.0
       vite: 2.9.12
       vitest: 0.26.3
 
@@ -524,6 +540,7 @@ importers:
       '@cucumber/pretty-formatter': 1.0.0
       '@types/cucumber': ^7.0.0
       '@types/fs-extra': ^9.0.13
+      '@types/node': 14.17.0
       '@types/rimraf': ^3.0.2
       ansi-colors: ^4.1.1
       execa: ^5.1.1
@@ -537,6 +554,7 @@ importers:
       '@cucumber/pretty-formatter': 1.0.0_hydn4najtrvg6qst6ilzadj5xa
       '@types/cucumber': 7.0.0
       '@types/fs-extra': 9.0.13
+      '@types/node': 14.17.0
       '@types/rimraf': 3.0.2
       ansi-colors: 4.1.3
       execa: 5.1.1
@@ -548,8 +566,9 @@ importers:
   packages/plugin-ngrok:
     specifiers:
       '@oclif/core': 1.21.0
-      '@shopify/cli-kit': 3.31.1
+      '@shopify/cli-kit': 3.32.0
       '@shopify/ngrok': 4.3.2
+      '@types/node': 14.17.0
       vite: 2.9.12
       vitest: ^0.26.3
     dependencies:
@@ -557,19 +576,22 @@ importers:
       '@shopify/cli-kit': link:../cli-kit
       '@shopify/ngrok': 4.3.2
     devDependencies:
+      '@types/node': 14.17.0
       vite: 2.9.12
       vitest: 0.26.3
 
   packages/theme:
     specifiers:
       '@oclif/core': 1.21.0
-      '@shopify/cli-kit': 3.31.1
+      '@shopify/cli-kit': 3.32.0
+      '@types/node': 14.17.0
       vite: 2.9.12
       vitest: ^0.26.3
     dependencies:
       '@oclif/core': 1.21.0
       '@shopify/cli-kit': link:../cli-kit
     devDependencies:
+      '@types/node': 14.17.0
       vite: 2.9.12
       vitest: 0.26.3
 
@@ -2403,7 +2425,7 @@ packages:
       value-or-promise: 1.0.6
     dev: true
 
-  /@graphql-tools/url-loader/6.10.1_cwm4pqv62do4c2u4idh7l4sbl4:
+  /@graphql-tools/url-loader/6.10.1_uiex7h67ci7ddskfqq7pk5lwym:
     resolution: {integrity: sha512-DSDrbhQIv7fheQ60pfDpGD256ixUQIR6Hhf9Z5bRjVkXOCvO5XrkwoWLiU7iHL81GB1r0Ba31bf+sl+D4nyyfw==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0
@@ -2422,7 +2444,7 @@ packages:
       is-promise: 4.0.0
       isomorphic-ws: 4.0.1_ws@7.4.5
       lodash: 4.17.21
-      meros: 1.1.4_@types+node@17.0.45
+      meros: 1.1.4_@types+node@14.17.0
       subscriptions-transport-ws: 0.9.19_graphql@15.8.0
       sync-fetch: 0.3.0
       tslib: 2.2.0
@@ -3672,7 +3694,7 @@ packages:
       '@shopify/function-enhancers': 2.0.8
     dev: false
 
-  /@shopify/eslint-plugin/41.3.1_xnfq2blgbluq7qc2r537s4ewku:
+  /@shopify/eslint-plugin/41.3.1_em2gb7xybgqjsdu6qumqqdiike:
     resolution: {integrity: sha512-d30Ox8AW1H324rs/eFSx1GFt71vcAu4srSXWPVxkbOqTIhHTjaMBpJXFDTvtjTsLPw9YwJSta8jJnkL+lHkIPA==}
     peerDependencies:
       eslint: ^8.3.0
@@ -3688,7 +3710,7 @@ packages:
       eslint-config-prettier: 8.5.0_eslint@8.28.0
       eslint-module-utils: 2.7.4_vbnhqcxlbs7ynbxw44hu2vq7eq
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.28.0
-      eslint-plugin-graphql: 4.0.0_67ngrnjtrw2ayab5gdxr35256e
+      eslint-plugin-graphql: 4.0.0_epjn35yhk6fzvqlqoih5vk7bkm
       eslint-plugin-import: 2.26.0_vbnhqcxlbs7ynbxw44hu2vq7eq
       eslint-plugin-jest: 25.7.0_brvvscwiof5cmspgfht34o7vqq
       eslint-plugin-jest-formatting: 3.1.0_eslint@8.28.0
@@ -4296,6 +4318,10 @@ packages:
     resolution: {integrity: sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==}
     dev: true
 
+  /@types/node/14.17.0:
+    resolution: {integrity: sha512-w8VZUN/f7SSbvVReb9SWp6cJFevxb4/nkG65yLAya//98WgocKm5PLDAtSs5CtJJJM+kHmJjO/6mmYW4MHShZA==}
+    dev: true
+
   /@types/node/15.14.9:
     resolution: {integrity: sha512-qjd88DrCxupx/kJD5yQgZdcYKZKSIGBVDIBE1/LTGcNm3d2Np/jxojkdePDdfnBHJc5W7vSMpbJ1aB7p/Py69A==}
     dev: true
@@ -4370,7 +4396,7 @@ packages:
     resolution: {integrity: sha512-F3OznnSLAUxFrCEu/L5PY8+ny8DtcFRjx7fZZ9bycvXRi3KPTRS9HOitGZwvPg0juRhXFWIeKX58cnX5YqLohQ==}
     dependencies:
       '@types/glob': 8.0.0
-      '@types/node': 17.0.45
+      '@types/node': 18.11.10
     dev: true
 
   /@types/semver/6.2.3:
@@ -7555,7 +7581,7 @@ packages:
       ignore: 5.2.1
     dev: true
 
-  /eslint-plugin-graphql/4.0.0_67ngrnjtrw2ayab5gdxr35256e:
+  /eslint-plugin-graphql/4.0.0_epjn35yhk6fzvqlqoih5vk7bkm:
     resolution: {integrity: sha512-d5tQm24YkVvCEk29ZR5ScsgXqAGCjKlMS8lx3mS7FS/EKsWbkvXQImpvic03EpMIvNTBW5e+2xnHzXB/VHNZJw==}
     engines: {node: '>=10.0'}
     peerDependencies:
@@ -7563,7 +7589,7 @@ packages:
     dependencies:
       '@babel/runtime': 7.20.6
       graphql: 15.8.0
-      graphql-config: 3.4.1_67ngrnjtrw2ayab5gdxr35256e
+      graphql-config: 3.4.1_epjn35yhk6fzvqlqoih5vk7bkm
       lodash.flatten: 4.4.0
       lodash.without: 4.4.0
     transitivePeerDependencies:
@@ -9002,7 +9028,7 @@ packages:
     resolution: {integrity: sha512-bzh50DW9kTPM00T8y4o8vQg89Di9oLJVLW/KaOGIXJWP/iqCN6WKYkbNOF04vFLJhwcpYUh9ydh/+5vpOqV4YQ==}
     dev: true
 
-  /graphql-config/3.4.1_67ngrnjtrw2ayab5gdxr35256e:
+  /graphql-config/3.4.1_epjn35yhk6fzvqlqoih5vk7bkm:
     resolution: {integrity: sha512-g9WyK4JZl1Ko++FSyE5Ir2g66njfxGzrDDhBOwnkoWf/t3TnnZG6BBkWP+pkqVJ5pqMJGPKHNrbew8jRxStjhw==}
     engines: {node: '>= 10.0.0'}
     peerDependencies:
@@ -9013,7 +9039,7 @@ packages:
       '@graphql-tools/json-file-loader': 6.2.6_graphql@15.8.0
       '@graphql-tools/load': 6.2.8_graphql@15.8.0
       '@graphql-tools/merge': 6.2.14_graphql@15.8.0
-      '@graphql-tools/url-loader': 6.10.1_cwm4pqv62do4c2u4idh7l4sbl4
+      '@graphql-tools/url-loader': 6.10.1_uiex7h67ci7ddskfqq7pk5lwym
       '@graphql-tools/utils': 7.10.0_graphql@15.8.0
       cosmiconfig: 7.0.0
       cosmiconfig-toml-loader: 1.0.0
@@ -10723,7 +10749,7 @@ packages:
     resolution: {integrity: sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==}
     engines: {node: '>= 8'}
 
-  /meros/1.1.4_@types+node@17.0.45:
+  /meros/1.1.4_@types+node@14.17.0:
     resolution: {integrity: sha512-E9ZXfK9iQfG9s73ars9qvvvbSIkJZF5yOo9j4tcwM5tN8mUKfj/EKN5PzOr3ZH0y5wL7dLAHw3RVEfpQV9Q7VQ==}
     engines: {node: '>=12'}
     peerDependencies:
@@ -10732,7 +10758,7 @@ packages:
       '@types/node':
         optional: true
     dependencies:
-      '@types/node': 17.0.45
+      '@types/node': 14.17.0
     dev: true
 
   /methods/1.1.2:
@@ -11103,6 +11129,10 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       semver: 7.3.8
+    dev: false
+
+  /node-abort-controller/3.0.1:
+    resolution: {integrity: sha512-/ujIVxthRs+7q6hsdjHMaj8hRG9NuWmwrz+JdRwZ14jdFoKSkm+vDsCbF9PLpnSqjaWQJuTmVtcWHNLr+vrOFw==}
     dev: false
 
   /node-addon-api/3.2.1:
@@ -14189,6 +14219,37 @@ packages:
       tslib: 2.4.1
     dev: true
 
+  /ts-node/10.9.1_76zcixmkjnbphw74ddtkdwldva:
+    resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
+    hasBin: true
+    peerDependencies:
+      '@swc/core': '>=1.2.50'
+      '@swc/wasm': '>=1.2.50'
+      '@types/node': '*'
+      typescript: '>=2.7'
+    peerDependenciesMeta:
+      '@swc/core':
+        optional: true
+      '@swc/wasm':
+        optional: true
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      '@tsconfig/node10': 1.0.9
+      '@tsconfig/node12': 1.0.11
+      '@tsconfig/node14': 1.0.3
+      '@tsconfig/node16': 1.0.3
+      '@types/node': 14.17.0
+      acorn: 8.8.1
+      acorn-walk: 8.2.0
+      arg: 4.1.3
+      create-require: 1.1.1
+      diff: 4.0.2
+      make-error: 1.3.6
+      typescript: 4.8.4
+      v8-compile-cache-lib: 3.0.1
+      yn: 3.1.1
+    dev: true
+
   /ts-node/10.9.1_ksn4eycaeggbrckn3ykh37hwf4:
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
     hasBin: true
@@ -14779,7 +14840,7 @@ packages:
       globrex: 0.1.2
       recrawl-sync: 2.2.3
       tsconfig-paths: 4.1.1
-      vite: 2.9.12
+      vite: 2.9.12_sass@1.56.1
     transitivePeerDependencies:
       - supports-color
     dev: true

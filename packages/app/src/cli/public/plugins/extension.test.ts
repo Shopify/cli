@@ -1,4 +1,7 @@
-import {loadUIExtensionSpecificiationsFromPlugins, loadFunctionSpecificationsFromPlugins} from './extension.js'
+import {
+  loadUIExtensionSpecificiationsFromPlugins,
+  loadFunctionSpecificationsFromPlugins,
+} from '../../private/plugins/extension.js'
 import {Config} from '@oclif/core'
 import {describe, test, vi, expect} from 'vitest'
 

@@ -9,8 +9,8 @@ import {SelectPrompt, Props as SelectPromptProps} from '../../private/node/ui/co
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, Props as TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
 import React from 'react'
-import {AbortController} from 'abort-controller'
 import {RenderOptions} from 'ink'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 
 interface RenderConcurrentOptions {
   processes: OutputProcess[]

@@ -15,12 +15,15 @@ import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
-import {analytics, output, system, session, abort, string, environment} from '@shopify/cli-kit'
+import {getAnalyticsTunnelType} from '../utilities/analytics.js'
+import {output, system, session, string, environment} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
+import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
-import {Writable} from 'node:stream'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {Writable} from 'stream'
 
 export interface DevOptions {
   directory: string
@@ -156,7 +159,7 @@ async function dev(options: DevOptions) {
 
   await logMetadataForDev({devOptions: options, tunnelUrl: frontendUrl, shouldUpdateURLs, storeFqdn})
 
-  await analytics.reportEvent({config: options.commandConfig})
+  await reportAnalyticsEvent({config: options.commandConfig})
 
   if (proxyTargets.length === 0) {
     await renderConcurrent({processes: additionalProcesses})
@@ -177,7 +180,7 @@ async function devFrontendNonProxyTarget(
   const devFrontend = await devFrontendProxyTarget(options)
   return {
     prefix: devFrontend.logPrefix,
-    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
       await devFrontend.action(stdout, stderr, signal, port)
     },
   }
@@ -191,7 +194,7 @@ function devThemeExtensionTarget(
 ): output.OutputProcess {
   return {
     prefix: 'extensions',
-    action: async (_stdout: Writable, _stderr: Writable, _signal: abort.Signal) => {
+    action: async (_stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
       await execCLI2(['extension', 'serve', ...args], {adminSession, storefrontToken, token})
     },
   }
@@ -203,7 +206,7 @@ async function devFrontendProxyTarget(options: DevFrontendTargetOptions): Promis
 
   return {
     logPrefix: options.web.configuration.type,
-    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal, port: number) => {
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
       await system.exec(cmd!, args, {
         cwd: options.web.directory,
         stdout,
@@ -251,7 +254,7 @@ async function devBackendTarget(web: Web, options: DevWebOptions): Promise<outpu
 
   return {
     prefix: web.configuration.type,
-    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
       await system.exec(cmd!, args, {
         cwd: web.directory,
         stdout,
@@ -291,7 +294,7 @@ async function devUIExtensionsTarget({
   return {
     logPrefix: 'extensions',
     pathPrefix: '/extensions',
-    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal, port: number) => {
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
       await devUIExtensions({
         app,
         id,
@@ -330,7 +333,7 @@ async function logMetadataForDev(options: {
   shouldUpdateURLs: boolean
   storeFqdn: string
 }) {
-  const tunnelType = await analytics.getAnalyticsTunnelType(options.devOptions.commandConfig, options.tunnelUrl)
+  const tunnelType = await getAnalyticsTunnelType(options.devOptions.commandConfig, options.tunnelUrl)
   await metadata.addPublic(() => ({
     cmd_dev_tunnel_type: tunnelType,
     cmd_dev_tunnel_custom_hash: tunnelType === 'custom' ? string.hashString(options.tunnelUrl) : undefined,

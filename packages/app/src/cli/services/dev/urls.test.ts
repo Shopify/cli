@@ -5,6 +5,8 @@ import {
   shouldOrPromptUpdateURLs,
   generateFrontendURL,
   generatePartnersURLs,
+  PartnersURLs,
+  validatePartnersURLs,
 } from './urls.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
@@ -591,5 +593,37 @@ describe('generatePartnersURLs', () => {
       applicationUrl,
       redirectUrlWhitelist: [`${applicationUrl}${overridePath[0]}`, `${applicationUrl}${overridePath[1]}`],
     })
+  })
+})
+
+describe('validatePartnersURLs', () => {
+  it('does not throw any error when the URLs are valid', () => {
+    // Given
+    const applicationUrl = 'http://example.com'
+    const redirectUrlWhitelist = ['http://example.com/callback1', 'http://example.com/callback2']
+    const urls: PartnersURLs = {applicationUrl, redirectUrlWhitelist}
+
+    // When/Then
+    validatePartnersURLs(urls)
+  })
+
+  it('it raises an error when the application URL is not valid', () => {
+    // Given
+    const applicationUrl = 'wrong'
+    const redirectUrlWhitelist = ['http://example.com/callback1', 'http://example.com/callback2']
+    const urls: PartnersURLs = {applicationUrl, redirectUrlWhitelist}
+
+    // When/Then
+    expect(() => validatePartnersURLs(urls)).toThrow(/Invalid application URL/)
+  })
+
+  it('it raises an error when the redirection URLs are not valid', () => {
+    // Given
+    const applicationUrl = 'http://example.com'
+    const redirectUrlWhitelist = ['http://example.com/callback1', 'wrong']
+    const urls: PartnersURLs = {applicationUrl, redirectUrlWhitelist}
+
+    // When/Then
+    expect(() => validatePartnersURLs(urls)).toThrow(/Invalid redirection URLs/)
   })
 })
