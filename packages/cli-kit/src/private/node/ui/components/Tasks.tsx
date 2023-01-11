@@ -2,34 +2,40 @@ import {TextAnimation} from './TextAnimation.js'
 import useLayout from '../hooks/use-layout.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {Box, Text} from 'ink'
-import React, {useState} from 'react'
+import React, {useRef, useState} from 'react'
 
 const loadingBarChar = '█'
 
-export interface Task {
+export interface Task<TContext = unknown> {
   title: string
-  task: () => Promise<void>
+  task: (ctx: TContext) => Promise<void>
 }
 
-export interface Props {
-  tasks: Task[]
+export interface Props<TContext> {
+  tasks: Task<TContext>[]
+  silent?: boolean
 }
 
-const Tasks: React.FC<Props> = ({tasks}) => {
+function Tasks<TContext>({tasks, silent = false}: React.PropsWithChildren<Props<TContext>>) {
   const {twoThirds} = useLayout()
   const loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
-  const [currentTask, setCurrentTask] = useState<Task>(tasks[0]!)
+  const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
   const [state, setState] = useState<'success' | 'failure' | 'loading'>('loading')
+  const ctx = useRef<TContext>({} as TContext)
 
   const runTasks = async () => {
     for (const task of tasks) {
       setCurrentTask(task)
       // eslint-disable-next-line no-await-in-loop
-      await task.task()
+      await task.task(ctx.current)
     }
   }
 
   useAsyncAndUnmount(runTasks, {onFulfilled: () => setState('success'), onRejected: () => setState('failure')})
+
+  if (silent) {
+    return null
+  }
 
   return (
     <Box flexDirection="column">

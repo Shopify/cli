@@ -1,22 +1,23 @@
 /* eslint-disable require-atomic-updates */
-import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle.js'
 import {
-  uploadThemeExtensions,
-  uploadFunctionExtensions,
-  uploadUIExtensionsBundle,
   UploadExtensionValidationError,
+  uploadFunctionExtensions,
+  uploadThemeExtensions,
+  uploadUIExtensionsBundle,
 } from './deploy/upload.js'
 
 import {ensureDeployEnvironment} from './environment.js'
+import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
 import {Extension} from '../models/app/extensions.js'
-import {validateExtensions} from '../validators/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
-import {path, output, file, environment} from '@shopify/cli-kit'
+import {validateExtensions} from '../validators/extensions.js'
+import {output, file, environment, path} from '@shopify/cli-kit'
 import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
-import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
+import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -27,6 +28,11 @@ interface DeployOptions {
 
   /** If true, ignore any cached appId or extensionId */
   reset: boolean
+}
+
+interface TasksContext {
+  bundlePath?: string
+  bundle?: boolean
 }
 
 export const deploy = async (options: DeployOptions) => {
@@ -65,6 +71,9 @@ export const deploy = async (options: DeployOptions) => {
     extensions.push(...themeExtensions)
   }
 
+  let registrations: AllAppExtensionRegistrationsQuerySchema
+  let validationErrors: UploadExtensionValidationError[] = []
+
   await file.inTemporaryDirectory(async (tmpDir) => {
     try {
       const bundlePath = path.join(tmpDir, `bundle.zip`)
@@ -72,31 +81,41 @@ export const deploy = async (options: DeployOptions) => {
       const bundle = app.extensions.ui.length !== 0
       await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers, bundle})
 
-      output.newline()
-      output.info(`Running validation…`)
+      const tasks: Task<TasksContext>[] = [
+        {
+          title: 'Running validation',
+          task: async () => {
+            await validateExtensions(app)
+          },
+        },
+        {
+          title: 'Pushing your code to Shopify',
+          task: async () => {
+            if (bundle) {
+              /**
+               * The bundles only support UI extensions for now so we only need bundle and upload
+               * the bundle if the app has UI extensions.
+               */
+              validationErrors = await uploadUIExtensionsBundle({
+                apiKey,
+                bundlePath,
+                extensions,
+                token,
+              })
+            }
 
-      await validateExtensions(app)
+            if (!environment.local.useThemeBundling()) {
+              await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
+            }
 
-      output.newline()
-      output.info(`Pushing your code to Shopify…`)
-      output.newline()
+            identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
+            app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
+            registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
+          },
+        },
+      ]
 
-      let validationErrors: UploadExtensionValidationError[] = []
-      if (bundle) {
-        /**
-         * The bundles only support UI extensions for now so we only need bundle and upload
-         * the bundle if the app has UI extensions.
-         */
-        validationErrors = await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
-      }
-
-      if (!environment.local.useThemeBundling()) {
-        await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
-      }
-      identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
-      app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
-
-      const registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
+      await renderTasks(tasks)
 
       await outputCompletionMessage({
         app,
@@ -106,6 +125,7 @@ export const deploy = async (options: DeployOptions) => {
         registrations,
         validationErrors,
       })
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       /**
@@ -136,9 +156,9 @@ async function outputCompletionMessage({
   let headline: string
 
   if (validationErrors.length > 0) {
-    headline = 'Deployed to Shopify, but fixes are needed'
+    headline = 'Deployed to Shopify, but fixes are needed.'
   } else {
-    headline = 'Deployed to Shopify'
+    headline = 'Deployed to Shopify!'
   }
 
   const outputDeployedButNotLiveMessage = (extension: Extension) => {
