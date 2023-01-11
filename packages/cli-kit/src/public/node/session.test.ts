@@ -1,15 +1,3 @@
-import {applicationId} from './session/identity.js'
-import {validateSession} from './session/validate.js'
-import {allDefaultScopes} from './session/scopes.js'
-import {store as secureStore, fetch as secureFetch} from './session/store.js'
-import {ApplicationToken, IdentityToken, Session} from './session/schema.js'
-import {
-  exchangeAccessForApplicationTokens,
-  exchangeCodeForAccessToken,
-  exchangeCustomPartnerToken,
-  refreshAccessToken,
-  InvalidGrantError,
-} from './session/exchange.js'
 import {
   ensureAuthenticated,
   ensureAuthenticatedAdmin,
@@ -19,11 +7,23 @@ import {
   OAuthApplications,
   OAuthSession,
 } from './session.js'
+import {partnersRequest} from './api/partners.js'
+import {allDefaultScopes} from '../../private/node/session/scopes.js'
+import {store as secureStore, fetch as secureFetch} from '../../private/node/session/store.js'
+import {
+  exchangeAccessForApplicationTokens,
+  exchangeCodeForAccessToken,
+  exchangeCustomPartnerToken,
+  refreshAccessToken,
+  InvalidGrantError,
+} from '../../private/node/session/exchange.js'
 
-import * as fqdnModule from './environment/fqdn.js'
-import {useDeviceAuth} from './environment/local.js'
-import {authorize} from './session/authorize.js'
-import {partnersRequest} from './public/node/api/partners.js'
+import {authorize} from '../../private/node/session/authorize.js'
+import * as fqdnModule from '../../environment/fqdn.js'
+import {useDeviceAuth} from '../../environment/local.js'
+import {ApplicationToken, IdentityToken, Session} from '../../private/node/session/schema.js'
+import {validateSession} from '../../private/node/session/validate.js'
+import {applicationId} from '../../private/node/session/identity.js'
 import {vi, describe, expect, it, beforeAll, beforeEach} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)
@@ -98,14 +98,14 @@ const invalidSession: Session = {
 }
 
 beforeAll(() => {
-  vi.mock('./environment/local')
-  vi.mock('./session/identity')
-  vi.mock('./session/authorize')
-  vi.mock('./session/exchange')
-  vi.mock('./session/scopes')
-  vi.mock('./session/store')
-  vi.mock('./session/validate')
-  vi.mock('./public/node/api/partners')
+  vi.mock('../../environment/local')
+  vi.mock('../../private/node/session/identity')
+  vi.mock('../../private/node/session/authorize')
+  vi.mock('../../private/node/session/exchange')
+  vi.mock('../../private/node/session/scopes')
+  vi.mock('../../private/node/session/store')
+  vi.mock('../../private/node/session/validate')
+  vi.mock('./api/partners.js')
   vi.mock('./store')
 })
 

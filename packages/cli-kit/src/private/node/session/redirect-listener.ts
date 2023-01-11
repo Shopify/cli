@@ -10,8 +10,8 @@ import {
   MissingCodeString,
   MissingStateString,
 } from './post-auth.js'
-import {Abort, Bug} from '../error.js'
-import {content, info, token} from '../output.js'
+import {Abort, Bug} from '../../../error.js'
+import {content, info, token} from '../../../output.js'
 import {createApp, IncomingMessage, ServerResponse} from 'h3'
 import url from 'url'
 import {createServer, Server} from 'http'

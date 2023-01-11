@@ -1,6 +1,6 @@
-import {identity} from '../environment/fqdn.js'
-import {debug} from '../output.js'
-import {shopifyFetch} from '../http.js'
+import {identity} from '../../../environment/fqdn.js'
+import {debug} from '../../../output.js'
+import {shopifyFetch} from '../../../http.js'
 
 export async function validateIdentityToken(token: string) {
   try {

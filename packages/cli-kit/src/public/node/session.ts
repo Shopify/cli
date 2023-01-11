@@ -1,32 +1,35 @@
-import {applicationId} from './session/identity.js'
-import {Abort, Bug} from './error.js'
-import {validateSession} from './session/validate.js'
-import {allDefaultScopes, apiScopes} from './session/scopes.js'
-import {identity as identityFqdn, normalizeStoreName, partners as partnersFqdn} from './environment/fqdn.js'
-import {open} from './system.js'
+import {partnersRequest} from './api/partners.js'
+import {AbortError} from './error.js'
+import {validateSession} from '../../private/node/session/validate.js'
+import {allDefaultScopes, apiScopes} from '../../private/node/session/scopes.js'
+
+import {keypress} from '../../ui.js'
+
+import {IdentityToken, Session} from '../../private/node/session/schema.js'
+import * as secureStore from '../../private/node/session/store.js'
 import {
-  exchangeAccessForApplicationTokens,
+  pollForDeviceAuthorization,
+  requestDeviceAuthorization,
+} from '../../private/node/session/device-authorization.js'
+import {RequestClientError} from '../../private/node/api/headers.js'
+import {authorize} from '../../private/node/session/authorize.js'
+import {
   exchangeCodeForAccessToken,
   exchangeCustomPartnerToken,
   ExchangeScopes,
   refreshAccessToken,
   InvalidGrantError,
   InvalidRequestError,
-} from './session/exchange.js'
-
-import {content, token, debug} from './output.js'
-import {keypress} from './ui.js'
-
-import {authorize} from './session/authorize.js'
-import {IdentityToken, Session} from './session/schema.js'
-import * as secureStore from './session/store.js'
-import constants from './constants.js'
-import * as output from './output.js'
-import {firstPartyDev, useDeviceAuth} from './environment/local.js'
-import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
-import {AbortError} from './public/node/error.js'
-import {partnersRequest} from './public/node/api/partners.js'
-import {RequestClientError} from './private/node/api/headers.js'
+  exchangeAccessForApplicationTokens,
+} from '../../private/node/session/exchange.js'
+import {firstPartyDev, useDeviceAuth} from '../../environment/local.js'
+import * as output from '../../output.js'
+import constants from '../../constants.js'
+import {content, token, debug} from '../../output.js'
+import {identity as identityFqdn, normalizeStoreName, partners as partnersFqdn} from '../../environment/fqdn.js'
+import {Abort, Bug} from '../../error.js'
+import {open} from '../../system.js'
+import {applicationId} from '../../private/node/session/identity.js'
 import {gql} from 'graphql-request'
 
 const NoSessionError = new Bug('No session found after ensuring authenticated')
@@ -43,9 +46,9 @@ type AdminAPIScope = 'graphql' | 'themes' | 'collaborator' | string
  * It represents the options to authenticate against the Shopify Admin API.
  */
 interface AdminAPIOAuthOptions {
-  /** Store to request permissions for */
+  /** Store to request permissions for. */
   storeFqdn: string
-  /** List of scopes to request permissions for */
+  /** List of scopes to request permissions for. */
   scopes: AdminAPIScope[]
 }
 
@@ -54,7 +57,7 @@ interface AdminAPIOAuthOptions {
  */
 type PartnersAPIScope = 'cli' | string
 interface PartnersAPIOAuthOptions {
-  /** List of scopes to request permissions for */
+  /** List of scopes to request permissions for. */
   scopes: PartnersAPIScope[]
 }
 
@@ -63,7 +66,7 @@ interface PartnersAPIOAuthOptions {
  */
 type StorefrontRendererScope = 'devtools' | string
 interface StorefrontRendererAPIOAuthOptions {
-  /** List of scopes to request permissions for */
+  /** List of scopes to request permissions for. */
   scopes: StorefrontRendererScope[]
 }
 
@@ -92,8 +95,10 @@ export interface OAuthSession {
 /**
  * Ensure that we have a valid session to access the Partners API.
  * If SHOPIFY_CLI_PARTNERS_TOKEN exists, that token will be used to obtain a valid Partners Token
- * If SHOPIFY_CLI_PARTNERS_TOKEN exists, scopes will be ignored
+ * If SHOPIFY_CLI_PARTNERS_TOKEN exists, scopes will be ignored.
+ *
  * @param scopes - Optional array of extra scopes to authenticate with.
+ * @param env - Optional environment variables to use.
  * @returns The access token for the Partners API.
  */
 export async function ensureAuthenticatedPartners(scopes: string[] = [], env = process.env): Promise<string> {
@@ -113,7 +118,9 @@ ${token.json(scopes)}
 
 /**
  * Ensure that we have a valid session to access the Storefront API.
+ *
  * @param scopes - Optional array of extra scopes to authenticate with.
+ * @param password - Optional password to use.
  * @returns The access token for the Storefront API.
  */
 export async function ensureAuthenticatedStorefront(
@@ -134,9 +141,11 @@ ${token.json(scopes)}
 
 /**
  * Ensure that we have a valid Admin session for the given store.
- * @param store - Store fqdn to request auth for
+ *
+ * @param store - Store fqdn to request auth for.
  * @param scopes - Optional array of extra scopes to authenticate with.
- * @returns The access token for the Admin API
+ * @param forceRefresh - Optional flag to force a refresh of the token.
+ * @returns The access token for the Admin API.
  */
 export async function ensureAuthenticatedAdmin(
   store: string,
@@ -159,10 +168,12 @@ ${token.json(scopes)}
  * Ensure that we have a valid session to access the Theme API.
  * If a password is provided, that token will be used against Theme Access API.
  * Otherwise, it will ensure that the user is authenticated with the Admin API.
- * @param store - Store fqdn to request auth for
- * @param password - Password generated from Theme Access app
+ *
+ * @param store - Store fqdn to request auth for.
+ * @param password - Password generated from Theme Access app.
  * @param scopes - Optional array of extra scopes to authenticate with.
- * @returns The access token and store
+ * @param forceRefresh - Optional flag to force a refresh of the token.
+ * @returns The access token and store.
  */
 export async function ensureAuthenticatedThemes(
   store: string,
@@ -179,7 +190,10 @@ ${token.json(scopes)}
 
 /**
  * This method ensures that we have a valid session to authenticate against the given applications using the provided scopes.
+ *
  * @param applications - An object containing the applications we need to be authenticated with.
+ * @param env - Optional environment variables to use.
+ * @param forceRefresh - Optional flag to force a refresh of the token.
  * @returns An instance with the access tokens organized by application.
  */
 export async function ensureAuthenticated(
@@ -245,7 +259,22 @@ ${token.json(applications)}
   return tokens
 }
 
-export async function hasPartnerAccount(partnersToken: string): Promise<boolean> {
+/**
+ * Logout from Shopify.
+ *
+ * @returns A promise that resolves when the logout is complete.
+ */
+export function logout(): Promise<void> {
+  return secureStore.remove()
+}
+
+/**
+ * Validate if the current token is valid for partners API.
+ *
+ * @param partnersToken - Partners token.
+ * @returns A promise that resolves to true if the token is valid for partners API.
+ */
+async function hasPartnerAccount(partnersToken: string): Promise<boolean> {
   try {
     await partnersRequest(
       gql`
@@ -274,9 +303,10 @@ export async function hasPartnerAccount(partnersToken: string): Promise<boolean>
  * If the user creates an account from the Identity website, the created
  * account won't get a Partner organization created. We need to detect that
  * and take the user to create a partner organization.
- * @param partnersToken - Partners token
+ *
+ * @param partnersToken - Partners token.
  */
-export async function ensureUserHasPartnerAccount(partnersToken: string) {
+async function ensureUserHasPartnerAccount(partnersToken: string) {
   debug(content`Verifying that the user has a Partner organization`)
   if (!(await hasPartnerAccount(partnersToken))) {
     output.info(`\nA Shopify Partners organization is needed to proceed.`)
@@ -295,6 +325,12 @@ export async function ensureUserHasPartnerAccount(partnersToken: string) {
   }
 }
 
+/**
+ * Execute the full authentication flow.
+ *
+ * @param applications - An object containing the applications we need to be authenticated with.
+ * @param identityFqdn - The identity FQDN.
+ */
 async function executeCompleteFlow(applications: OAuthApplications, identityFqdn: string): Promise<Session> {
   const scopes = getFlattenScopes(applications)
   const exchangeScopes = getExchangeScopes(applications)
@@ -339,6 +375,13 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
   return session
 }
 
+/**
+ * Refresh the tokens for a given session.
+ *
+ * @param token - Identity token.
+ * @param applications - An object containing the applications we need to be authenticated with.
+ * @param fqdn - The identity FQDN.
+ */
 async function refreshTokens(token: IdentityToken, applications: OAuthApplications, fqdn: string): Promise<Session> {
   // Refresh Identity Token
   const identityToken = await refreshAccessToken(token)
@@ -358,6 +401,13 @@ async function refreshTokens(token: IdentityToken, applications: OAuthApplicatio
   }
 }
 
+/**
+ * Get the application tokens for a given session.
+ *
+ * @param applications - An object containing the applications we need the tokens for.
+ * @param session - The current session.
+ * @param fqdn - The identity FQDN.
+ */
 async function tokensFor(applications: OAuthApplications, session: Session, fqdn: string): Promise<OAuthSession> {
   const fqdnSession = session[fqdn]
   if (!fqdnSession) {
@@ -386,6 +436,12 @@ async function tokensFor(applications: OAuthApplications, session: Session, fqdn
 }
 
 // Scope Helpers
+/**
+ * Get a flattened array of scopes for the given applications.
+ *
+ * @param apps - An object containing the applications we need the scopes for.
+ * @returns A flattened array of scopes.
+ */
 function getFlattenScopes(apps: OAuthApplications): string[] {
   const admin = apps.adminApi?.scopes || []
   const partner = apps.partnersApi?.scopes || []
@@ -394,6 +450,12 @@ function getFlattenScopes(apps: OAuthApplications): string[] {
   return allDefaultScopes(requestedScopes)
 }
 
+/**
+ * Get the scopes for the given applications.
+ *
+ * @param apps - An object containing the applications we need the scopes for.
+ * @returns An object containing the scopes for each application.
+ */
 function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
   const adminScope = apps.adminApi?.scopes || []
   const partnerScope = apps.partnersApi?.scopes || []
@@ -403,8 +465,4 @@ function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
     partners: apiScopes('partners', partnerScope),
     storefront: apiScopes('storefront-renderer', storefrontScopes),
   }
-}
-
-export function logout() {
-  return secureStore.remove()
 }

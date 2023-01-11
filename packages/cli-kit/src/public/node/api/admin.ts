@@ -1,4 +1,4 @@
-import {AdminSession} from '../../../session.js'
+import {AdminSession} from '../session.js'
 import {content, token as outputToken} from '../../../output.js'
 import {Bug, Abort} from '../../../error.js'
 import {graphqlRequest, GraphQLVariables} from '../../../private/node/api/graphql.js'
