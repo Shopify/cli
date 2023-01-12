@@ -6,13 +6,14 @@
   width: 2.4rem;
   height: 2.4rem;
 
-  background: var(--dc-color-border);
+  background-color: var(--dc-color-grey-700);
   border-radius: 50%;
 
   cursor: pointer;
 
-  &:hover {
-    background: var(--dc-color-icon);
+  &:hover,
+  &:focus {
+    background-color: var(--dc-color-grey-600);
   }
 
   .Icon {

@@ -6,17 +6,18 @@
   font-family: var(--dc-font-pro);
   line-height: 1.2rem;
 
-  background: var(--dc-color-border);
+  background: var(--dc-color-grey-700);
   border-radius: var(--dc-border-radius);
 
   cursor: pointer;
 
-  &:hover {
-    background: var(--dc-color-icon);
+  &:hover,
+  &:focus {
+    background: var(--dc-color-grey-600);
   }
 
   &[aria-pressed=true] {
-    background-color: var(--dc-color-pressed);
+    background-color: var(--dc-color-blue-500);
   }
 }
 
