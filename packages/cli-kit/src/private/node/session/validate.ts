@@ -4,7 +4,7 @@ import {validateIdentityToken} from './identity-token-validation.js'
 import constants from '../../../constants.js'
 import {debug} from '../../../output.js'
 import {firstPartyDev} from '../../../environment/local.js'
-import {OAuthApplications} from '../../../public/node/session.js'
+import {OAuthApplications} from '../session.js'
 
 type ValidationResult = 'needs_refresh' | 'needs_full_auth' | 'ok'
 
