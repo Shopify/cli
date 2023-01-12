@@ -24,6 +24,9 @@ describe('TokenizedText', async () => {
         userInput: 'my-app',
       },
       {
+        subdued: '(my-text)',
+      },
+      {
         list: {
           items: ['Item 1', 'Item 2', 'Item 3'],
         },
@@ -36,7 +39,7 @@ describe('TokenizedText', async () => {
     const {lastFrame} = render(<TokenizedText item={item} />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
-      "Run \`cd verification-app\` Example ( https://example.com )! my-app
+      "Run \`cd verification-app\` Example ( https://example.com )! my-app (my-text)
         • Item 1
         • Item 2
         • Item 3

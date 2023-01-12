@@ -7,6 +7,18 @@
       {
         "type": "node",
         "request": "launch",
+        "name": "shopify theme {command}",
+        "cwd": "${workspaceFolder}",
+        "runtimeExecutable": "pnpm",
+        "runtimeArgs": [
+          "shopify",
+          "theme",
+          "${input:command}",
+        ],
+      },
+      {
+        "type": "node",
+        "request": "launch",
         "name": "shopify app build",
         "cwd": "${workspaceFolder}",
         "runtimeExecutable": "pnpm",
@@ -73,6 +85,11 @@
         "type": "promptString",
         "description": "App Directory: ",
         "default": ".",
+      },
+      {
+        "id": "command",
+        "type": "promptString",
+        "description": "Command: ",
       },
       {
         "id": "extensionName",

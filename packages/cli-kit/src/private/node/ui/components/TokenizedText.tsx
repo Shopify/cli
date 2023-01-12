@@ -3,6 +3,7 @@ import {Link} from './Link.js'
 import {List} from './List.js'
 import {UserInput} from './UserInput.js'
 import {FilePath} from './FilePath.js'
+import {Subdued} from './Subdued.js'
 import {Box, Text} from 'ink'
 import React from 'react'
 
@@ -25,6 +26,10 @@ interface UserInputToken {
   userInput: string
 }
 
+interface SubduedToken {
+  subdued: string
+}
+
 interface FilePathToken {
   filePath: string
 }
@@ -36,7 +41,7 @@ interface ListToken {
   }
 }
 
-type Token = string | CommandToken | LinkToken | CharToken | UserInputToken | FilePathToken | ListToken
+type Token = string | CommandToken | LinkToken | CharToken | UserInputToken | SubduedToken | FilePathToken | ListToken
 export type TokenItem = Token | Token[]
 
 type DisplayType = 'block' | 'inline'
@@ -85,6 +90,8 @@ const TokenizedText: React.FC<Props> = ({item}) => {
     return <Text>{item.char[0]}</Text>
   } else if ('userInput' in item) {
     return <UserInput userInput={item.userInput} />
+  } else if ('subdued' in item) {
+    return <Subdued subdued={item.subdued} />
   } else if ('filePath' in item) {
     return <FilePath filePath={item.filePath} />
   } else if ('list' in item) {
