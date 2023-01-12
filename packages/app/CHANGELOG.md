@@ -1,5 +1,20 @@
 # @shopify/app
 
+## 3.33.0
+
+### Minor Changes
+
+- d7b582cb1: Add the @shopify/ngrok plugin to the @shopify/app package
+- 9eb807bf7: Add confirmation summary when deploying your app to Shopify. This will show new extensions, updated extensions and extensions which are missing locally. You can pass `--force` to the deploy command to skip this prompt.
+
+### Patch Changes
+
+- Updated dependencies [eee1293ef]
+- Updated dependencies [5e7474fab]
+- Updated dependencies [9eb807bf7]
+  - @shopify/cli-kit@3.33.0
+  - @shopify/plugin-ngrok@3.33.0
+
 ## 3.32.1
 
 ### Patch Changes

@@ -1,10 +1,10 @@
 import {OrganizationApp} from '../../models/organization.js'
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {fetchAppFromApiKey, fetchOrganizations, fetchOrgAndApps} from '../dev/fetch.js'
-import {session} from '@shopify/cli-kit'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export async function selectApp(): Promise<OrganizationApp> {
-  const token = await session.ensureAuthenticatedPartners()
+  const token = await ensureAuthenticatedPartners()
   const orgs = await fetchOrganizations(token)
   const org = await selectOrganizationPrompt(orgs)
   const {apps} = await fetchOrgAndApps(org.id, token)

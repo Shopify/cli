@@ -9,6 +9,7 @@ import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 const REGISTRATION_A: RemoteSource = {
   uuid: 'UUID_A',
@@ -144,13 +145,8 @@ const options = (uiExtensions: UIExtension[], identifiers: any = {}) => {
 }
 
 beforeEach(() => {
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      session: {ensureAuthenticatedPartners: async () => 'token'},
-    }
-  })
+  vi.mock('@shopify/cli-kit/node/session')
+  vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
   vi.mock('./prompts', async () => {
     const prompts: any = await vi.importActual('./prompts')
     return {

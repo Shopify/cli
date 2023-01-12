@@ -1,5 +1,17 @@
 # @shopify/cli-kit
 
+## 3.33.0
+
+### Minor Changes
+
+- 9eb807bf7: Add confirmation summary when deploying your app to Shopify. This will show new extensions, updated extensions and extensions which are missing locally. You can pass `--force` to the deploy command to skip this prompt.
+
+### Patch Changes
+
+- eee1293ef: - Introduce REST Admin API client on `@shopify/cli-kit`
+  - Improve the DX of the `shopify theme open` command, by adopting the CLI UI kit
+- 5e7474fab: CLI2 version pumped to 2.34.0
+
 ## 3.32.1
 
 ### Patch Changes

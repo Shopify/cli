@@ -171,9 +171,6 @@ module.exports = {
       excludedFiles: [
         '*.test.ts',
         // TODO: Document all the public modules
-        '**/public/common/array.ts',
-        '**/public/common/object.ts',
-        '**/public/common/url.ts',
         '**/public/node/abort.ts',
         '**/public/node/analytics.ts',
         '**/public/node/base-command.ts',

@@ -1,5 +1,5 @@
 import * as admin from './admin.js'
-import {AdminSession} from '../../../session.js'
+import {AdminSession} from '../session.js'
 import {graphqlRequest} from '../../../private/node/api/graphql.js'
 import fetch from '../../../http/fetch.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'

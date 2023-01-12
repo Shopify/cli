@@ -26,10 +26,11 @@ import {
   AppFunctionSetMutationSchema,
   AppFunctionSetVariables,
 } from '../../api/graphql/functions/app_function_set.js'
-import {error, session, http, output, file} from '@shopify/cli-kit'
+import {error, http, output, file} from '@shopify/cli-kit'
 
 import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import fs from 'fs'
 
 interface DeployThemeExtensionOptions {
@@ -144,7 +145,7 @@ export async function uploadUIExtensionsBundle(
  */
 export async function getUIExtensionUploadURL(apiKey: string, deploymentUUID: string) {
   const mutation = GenerateSignedUploadUrl
-  const token = await session.ensureAuthenticatedPartners()
+  const token = await ensureAuthenticatedPartners()
   const variables: GenerateSignedUploadUrlVariables = {
     apiKey,
     deploymentUuid: deploymentUUID,

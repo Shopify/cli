@@ -1,10 +1,9 @@
 import {fetchThemes} from '../themes-api.js'
 import {Theme} from '../../models/theme.js'
-import {error, session} from '@shopify/cli-kit'
+import {error} from '@shopify/cli-kit'
+import {AdminSession} from '@shopify/cli-kit/node/session.js'
 
 const ALLOWED_ROLES = ['live', 'unpublished', 'development']
-
-type AdminSession = session.AdminSession
 
 export async function fetchStoreThemes(session: AdminSession) {
   const store = session.storeFqdn
