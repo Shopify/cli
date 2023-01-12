@@ -8,7 +8,7 @@ import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
 export default class Share extends ThemeCommand {
   static description =
-    'Creates a shareable, unpublished, and new theme on your theme library with a randomized name. Works like an alias to {{command:theme push -u -t=RANDOMIZED_NAME}}'
+    'Creates a shareable, unpublished, and new theme on your theme library with a randomized name. Works like an alias to {{command:theme push -u -t=RANDOMIZED_NAME}}.'
 
   static flags = {
     ...cli.globalFlags,

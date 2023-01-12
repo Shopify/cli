@@ -8,7 +8,7 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {path, error, cli, output} from '@shopify/cli-kit'
 
 export default class GenerateSchema extends Command {
-  static description = 'Generates a GraphQL schema for a function'
+  static description = 'Generates a GraphQL schema for a function.'
 
   static flags = {
     ...cli.globalFlags,

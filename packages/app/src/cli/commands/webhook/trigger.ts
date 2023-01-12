@@ -6,7 +6,7 @@ import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
 
 export default class WebhookTrigger extends Command {
-  static description = 'Trigger delivery of a sample webhook topic payload to a designated address'
+  static description = 'Trigger delivery of a sample webhook topic payload to a designated address.'
 
   static flags = {
     help: Flags.help({

@@ -7,7 +7,7 @@ import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
 export default class Delete extends ThemeCommand {
-  static description = "Delete remote themes from the connected store. This command can't be undone"
+  static description = "Delete remote themes from the connected store. This command can't be undone."
 
   // Accept any number of args without naming them
   static strict = false

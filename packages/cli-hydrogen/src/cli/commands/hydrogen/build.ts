@@ -10,7 +10,7 @@ const PLATFORM_ENTRIES = {
 }
 
 export default class Build extends Command {
-  static description = 'Builds a Hydrogen storefront for production'
+  static description = 'Builds a Hydrogen storefront for production.'
   static flags = {
     ...cli.globalFlags,
     path: hydrogenFlags.path,

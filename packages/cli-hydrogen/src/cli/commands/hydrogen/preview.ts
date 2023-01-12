@@ -5,7 +5,7 @@ import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
 
 export default class Preview extends Command {
-  static description = 'Run a Hydrogen storefront locally in a worker environment'
+  static description = 'Run a Hydrogen storefront locally in a worker environment.'
   static flags = {
     ...cli.globalFlags,
     path: hydrogenFlags.path,

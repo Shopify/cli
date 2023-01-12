@@ -6,7 +6,7 @@ import {path, cli} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 
 export default class AppGenerateExtension extends Command {
-  static description = 'Scaffold an Extension'
+  static description = 'Scaffold an Extension.'
   static examples = ['<%= config.bin %> <%= command.id %>']
 
   static flags = {

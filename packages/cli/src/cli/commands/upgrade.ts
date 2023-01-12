@@ -4,7 +4,7 @@ import {constants, path} from '@shopify/cli-kit'
 import Command from '@shopify/cli-kit/node/base-command'
 
 export default class Upgrade extends Command {
-  static description = 'Upgrade the Shopify CLI'
+  static description = 'Upgrade the Shopify CLI.'
 
   static flags = {
     path: Flags.string({

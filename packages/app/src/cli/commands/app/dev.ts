@@ -5,7 +5,7 @@ import {Flags} from '@oclif/core'
 import {path, environment, cli, metadata} from '@shopify/cli-kit'
 
 export default class Dev extends Command {
-  static description = 'Run the app'
+  static description = 'Run the app.'
 
   static flags = {
     ...cli.globalFlags,

@@ -5,7 +5,7 @@ import {cli} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 
 export default class Check extends ThemeCommand {
-  static description = 'Validate the theme'
+  static description = 'Validate the theme.'
 
   static flags = {
     ...cli.globalFlags,
