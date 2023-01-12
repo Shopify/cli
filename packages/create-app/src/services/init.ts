@@ -110,9 +110,7 @@ async function init(options: InitOptions) {
       },
     ])
 
-    await renderTasks(tasks, {
-      silent: environment.local.isUnitTest(),
-    })
+    await renderTasks(tasks)
 
     await file.move(templateScaffoldDir, outputDirectory)
   })

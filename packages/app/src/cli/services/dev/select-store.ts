@@ -79,7 +79,7 @@ async function waitForCreatedStore(orgId: string, token: string): Promise<Organi
       },
     },
   ]
-  await renderTasks(tasks, {silent: environment.local.isUnitTest()})
+  await renderTasks(tasks)
 
   return data
 }

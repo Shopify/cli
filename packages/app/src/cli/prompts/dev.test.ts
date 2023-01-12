@@ -12,6 +12,7 @@ import {
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {ui, outputMocker} from '@shopify/cli-kit'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {
@@ -23,6 +24,7 @@ beforeEach(() => {
       },
     }
   })
+  vi.mock('@shopify/cli-kit/node/ui')
 })
 
 const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
@@ -100,25 +102,21 @@ describe('selectApp', () => {
   it('returns app if user selects one', async () => {
     // Given
     const apps: OrganizationApp[] = [APP1, APP2]
-    vi.mocked(ui.prompt).mockResolvedValue({apiKey: 'key2'})
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('key2')
 
     // When
     const got = await selectAppPrompt(apps, ORG1.id, 'token')
 
     // Then
-    expect(got).toEqual({apiKey: APP2.apiKey})
-    expect(ui.prompt).toHaveBeenCalledWith([
-      {
-        type: 'autocomplete',
-        name: 'apiKey',
-        message: 'Which existing app is this for?',
-        choices: [
-          {name: 'app1', value: 'key1'},
-          {name: 'app2', value: 'key2'},
-        ],
-        source: expect.any(Function),
-      },
-    ])
+    expect(got).toEqual(APP2.apiKey)
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
+      message: 'Which existing app is this for?',
+      choices: [
+        {label: 'app1', value: 'key1'},
+        {label: 'app2', value: 'key2'},
+      ],
+      search: expect.any(Function),
+    })
   })
 })
 

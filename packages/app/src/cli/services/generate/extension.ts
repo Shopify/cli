@@ -4,7 +4,7 @@ import {FunctionSpec} from '../../models/extensions/functions.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
-import {error, file, git, path, environment} from '@shopify/cli-kit'
+import {error, file, git, path} from '@shopify/cli-kit'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
@@ -116,7 +116,7 @@ async function uiExtensionInit({
       },
     },
   ]
-  await renderTasks(tasks, {silent: environment.local.isUnitTest()})
+  await renderTasks(tasks)
 }
 
 type SrcFileExtension = 'ts' | 'tsx' | 'js' | 'jsx'

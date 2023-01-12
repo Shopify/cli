@@ -367,7 +367,7 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<Fet
       },
     },
   ]
-  await renderTasks(tasks, {silent: environment.local.isUnitTest()})
+  await renderTasks(tasks)
   return data
 }
 

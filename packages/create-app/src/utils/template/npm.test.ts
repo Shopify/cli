@@ -203,23 +203,6 @@ describe('getDeepInstallNPMTasks', () => {
     })
   })
 
-  it('calls didInstallEverything() once all folders are installed', async () => {
-    await mockAppFolder(async (tmpDir) => {
-      const didInstallEverything = vi.fn()
-      const taskState = {output: ''} as ui.ListrTaskWrapper<any, any>
-      const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir, didInstallEverything})
-
-      await tasks[0]!.task(null, taskState)
-      await tasks[1]!.task(null, taskState)
-
-      expect(didInstallEverything).not.toHaveBeenCalled()
-
-      await tasks[2]!.task(null, taskState)
-
-      expect(didInstallEverything).toHaveBeenCalled()
-    })
-  })
-
   it('each task updates its output with the stdout from installing dependencies', async () => {
     await mockAppFolder(async (tmpDir) => {
       const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir})

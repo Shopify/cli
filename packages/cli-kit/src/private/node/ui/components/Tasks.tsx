@@ -1,6 +1,8 @@
 import {TextAnimation} from './TextAnimation.js'
 import useLayout from '../hooks/use-layout.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
+
+// import {environment} from '@shopify/cli-kit'
 import {Box, Text} from 'ink'
 import React, {useRef, useState} from 'react'
 
@@ -16,7 +18,7 @@ export interface Props<TContext> {
   silent?: boolean
 }
 
-function Tasks<TContext>({tasks, silent = false}: React.PropsWithChildren<Props<TContext>>) {
+function Tasks<TContext>({tasks, silent = true}: React.PropsWithChildren<Props<TContext>>) {
   const {twoThirds} = useLayout()
   const loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
