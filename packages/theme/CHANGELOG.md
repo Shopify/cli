@@ -1,5 +1,16 @@
 # @shopify/theme
 
+## 3.33.0
+
+### Patch Changes
+
+- eee1293ef: - Introduce REST Admin API client on `@shopify/cli-kit`
+  - Improve the DX of the `shopify theme open` command, by adopting the CLI UI kit
+- Updated dependencies [eee1293ef]
+- Updated dependencies [5e7474fab]
+- Updated dependencies [9eb807bf7]
+  - @shopify/cli-kit@3.33.0
+
 ## 3.32.1
 
 ### Patch Changes

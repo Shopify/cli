@@ -87,10 +87,6 @@ export function useDeviceAuth(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.deviceAuth]) || isCloudEnvironment(env)
 }
 
-export function useFunctionMatching(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.functionMatching])
-}
-
 export function useThemeBundling(env = process.env): boolean {
   return isTruthy(env[constants.environmentVariables.themeBundling])
 }

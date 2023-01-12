@@ -2,12 +2,12 @@ import {automaticMatchmaking} from './id-matching.js'
 import {manualMatchIds} from './id-manual-matching.js'
 import {ensureFunctionsIds} from './identifiers-functions.js'
 import {RemoteSource} from './identifiers.js'
+import {deployConfirmationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
-import {ui} from '@shopify/cli-kit'
 
 const REGISTRATION_A: RemoteSource = {
   uuid: 'UUID_A',
@@ -119,6 +119,7 @@ const options = (functionExtensions: FunctionExtension[], identifiers: any = {})
     appId: 'appId',
     appName: 'appName',
     envIdentifiers: {extensions: identifiers},
+    force: false,
   }
 }
 
@@ -128,46 +129,38 @@ beforeEach(() => {
     return {
       ...cliKit,
       session: {ensureAuthenticatedPartners: async () => 'token'},
-      ui: {prompt: vi.fn()},
+    }
+  })
+  vi.mock('./prompts', async () => {
+    const prompts: any = await vi.importActual('./prompts')
+    return {
+      ...prompts,
+      matchConfirmationPrompt: vi.fn(),
+      deployConfirmationPrompt: vi.fn(),
     }
   })
   vi.mock('./id-matching')
   vi.mock('./id-manual-matching')
 })
 
-describe('ensureFunctionsIds: matchmaking returns invalid', () => {
-  it('throw an invalid environment error', async () => {
-    // Given
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce(err('invalid-environment'))
-
-    // When
-    const got = await ensureFunctionsIds(options([FUNCTION_A, FUNCTION_B]), [REGISTRATION_A, REGISTRATION_B])
-
-    // Then
-    expect(got).toEqual(err('invalid-environment'))
-  })
-})
-
 describe('ensureFunctionsIds: matchmaking returns ok with pending manual matches', () => {
   it('will call manualMatch and merge automatic and manual matches and create missing extensions', async () => {
     // Given
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
-      ok({
-        identifiers: {},
-        toCreate: [],
-        toConfirm: [],
-        toManualMatch: {
-          local: [FUNCTION_A, FUNCTION_A_2, FUNCTION_B],
-          remote: [REGISTRATION_A, REGISTRATION_A_2],
-        },
-      }),
-    )
-
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [FUNCTION_A, FUNCTION_A_2, FUNCTION_B],
+        remote: [REGISTRATION_A, REGISTRATION_A_2],
+      },
+    })
     vi.mocked(manualMatchIds).mockResolvedValueOnce({
-      result: 'ok',
       identifiers: {FUNCTION_A: 'ID_A', FUNCTION_A_2: 'ID_A_2'},
       toCreate: [FUNCTION_B],
+      onlyRemote: [],
     })
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
     const got = await ensureFunctionsIds(options([FUNCTION_A, FUNCTION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
@@ -187,26 +180,34 @@ describe('ensureFunctionsIds: matchmaking returns ok with pending manual matches
 })
 
 describe('ensureFunctionsIds: matchmaking returns ok with pending manual matches and manual match fails', () => {
-  it('throws an error for missing remote extension matches', async () => {
+  it('requires confirmation before proceeding with deploy', async () => {
     // Given
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
-      ok({
-        identifiers: {},
-        toCreate: [],
-        toConfirm: [],
-        toManualMatch: {
-          local: [FUNCTION_A],
-          remote: [REGISTRATION_A, REGISTRATION_A_2],
-        },
-      }),
-    )
-    vi.mocked(manualMatchIds).mockResolvedValueOnce({result: 'pending-remote'})
+    vi.mocked(matchConfirmationPrompt).mockResolvedValueOnce(true)
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [FUNCTION_A],
+        remote: [REGISTRATION_A, REGISTRATION_A_2],
+      },
+    })
+    vi.mocked(manualMatchIds).mockResolvedValueOnce({
+      identifiers: {FUNCTION_A: 'ID_A'},
+      toCreate: [],
+      onlyRemote: [REGISTRATION_A_2],
+    })
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
-    const got = await ensureFunctionsIds(options([FUNCTION_A, FUNCTION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
+    const got = await ensureFunctionsIds(options([FUNCTION_A]), [REGISTRATION_A, REGISTRATION_A_2])
 
     // Then
-    expect(got).toEqual(err('pending-remote'))
+    expect(got).toEqual(
+      ok({
+        FUNCTION_A: 'ID_A',
+      }),
+    )
     expect(manualMatchIds).toBeCalledWith({local: [FUNCTION_A], remote: [REGISTRATION_A, REGISTRATION_A_2]}, 'id')
   })
 })
@@ -214,17 +215,16 @@ describe('ensureFunctionsIds: matchmaking returns ok with pending manual matches
 describe('ensureFunctionsIds: matchmaking returns ok with some pending to create', () => {
   it('Returns an empty object as functions will be automatically created when deployed', async () => {
     // Given
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
-      ok({
-        identifiers: {},
-        toConfirm: [],
-        toCreate: [FUNCTION_A, FUNCTION_A_2],
-        toManualMatch: {
-          local: [],
-          remote: [],
-        },
-      }),
-    )
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {},
+      toConfirm: [],
+      toCreate: [FUNCTION_A, FUNCTION_A_2],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
     const got = await ensureFunctionsIds(options([FUNCTION_A, FUNCTION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
@@ -235,20 +235,19 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending to create
 })
 
 describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmation', () => {
-  it('confirms the pending ones and suceeds', async () => {
+  it('confirms the pending ones and succeeds', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValueOnce({value: 'yes'})
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
-      ok({
-        identifiers: {},
-        toConfirm: [{local: FUNCTION_B, remote: REGISTRATION_B}],
-        toCreate: [],
-        toManualMatch: {
-          local: [],
-          remote: [],
-        },
-      }),
-    )
+    vi.mocked(matchConfirmationPrompt).mockResolvedValueOnce(true)
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {},
+      toConfirm: [{local: FUNCTION_B, remote: REGISTRATION_B}],
+      toCreate: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
     const got = await ensureFunctionsIds(options([FUNCTION_B]), [REGISTRATION_B])
@@ -265,18 +264,17 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmat
 describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmation', () => {
   it('do not confirms the pending ones and fails', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValueOnce({value: 'no'})
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
-      ok({
-        identifiers: {},
-        toConfirm: [{local: FUNCTION_B, remote: REGISTRATION_B}],
-        toCreate: [],
-        toManualMatch: {
-          local: [],
-          remote: [],
-        },
-      }),
-    )
+    vi.mocked(matchConfirmationPrompt).mockResolvedValueOnce(false)
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {},
+      toConfirm: [{local: FUNCTION_B, remote: REGISTRATION_B}],
+      toCreate: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
     const got = await ensureFunctionsIds(options([FUNCTION_B]), [REGISTRATION_B])
@@ -287,19 +285,18 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmat
 })
 
 describe('ensureFunctionsIds: matchmaking returns ok with nothing pending', () => {
-  it('suceeds and returns all identifiers', async () => {
+  it('succeeds and returns all identifiers', async () => {
     // Given
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
-      ok({
-        identifiers: {FUNCTION_A: 'ID_A', FUNCTION_A_2: 'ID_A_2'},
-        toCreate: [],
-        toConfirm: [],
-        toManualMatch: {
-          local: [],
-          remote: [],
-        },
-      }),
-    )
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {FUNCTION_A: 'ID_A', FUNCTION_A_2: 'ID_A_2'},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
     const got = await ensureFunctionsIds(options([FUNCTION_A, FUNCTION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
@@ -311,5 +308,56 @@ describe('ensureFunctionsIds: matchmaking returns ok with nothing pending', () =
         FUNCTION_A_2: 'ID_A_2',
       }),
     )
+  })
+})
+
+describe('ensureFunctionsIds: asks user to confirm deploy', () => {
+  it('shows confirmation prompt', async () => {
+    // Given
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {FUNCTION_A: 'ID_A', FUNCTION_A_2: 'ID_A_2'},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
+
+    // When
+    await ensureFunctionsIds(options([FUNCTION_A, FUNCTION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
+
+    // Then
+    expect(deployConfirmationPrompt).toBeCalledWith({
+      identifiers: {
+        FUNCTION_A: 'ID_A',
+        FUNCTION_A_2: 'ID_A_2',
+      },
+      onlyRemote: [],
+      toCreate: [],
+    })
+  })
+
+  it('skips confirmation prompt if --force is passed', async () => {
+    // Given
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {FUNCTION_A: 'ID_A', FUNCTION_A_2: 'ID_A_2'},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+
+    const opts = options([FUNCTION_A, FUNCTION_A_2])
+    opts.force = true
+
+    // When
+    await ensureFunctionsIds(opts, [REGISTRATION_A, REGISTRATION_A_2])
+
+    // Then
+    expect(deployConfirmationPrompt).not.toBeCalled()
   })
 })

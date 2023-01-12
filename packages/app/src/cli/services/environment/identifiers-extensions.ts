@@ -1,7 +1,7 @@
 import {manualMatchIds} from './id-manual-matching.js'
 import {automaticMatchmaking} from './id-matching.js'
 import {EnsureDeploymentIdsPresenceOptions, LocalSource, MatchingError, RemoteSource} from './identifiers.js'
-import {matchConfirmationPrompt} from './prompts.js'
+import {deployConfirmationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
@@ -14,9 +14,7 @@ export async function ensureExtensionsIds(
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
   const localExtensions = [...options.app.extensions.ui, ...options.app.extensions.theme]
 
-  const matchExtensionsResult = await automaticMatchmaking(localExtensions, remoteExtensions, validIdentifiers, 'uuid')
-  if (matchExtensionsResult.isErr()) return err(matchExtensionsResult.error)
-  const matchExtensions = matchExtensionsResult.value
+  const matchExtensions = await automaticMatchmaking(localExtensions, remoteExtensions, validIdentifiers, 'uuid')
 
   let validMatches = matchExtensions.identifiers
   const validMatchesById: {[key: string]: string} = {}
@@ -29,12 +27,22 @@ export async function ensureExtensionsIds(
   }
 
   const extensionsToCreate = matchExtensions.toCreate ?? []
+  let onlyRemoteExtensions = matchExtensions.toManualMatch.remote ?? []
 
   if (matchExtensions.toManualMatch.local.length > 0) {
     const matchResult = await manualMatchIds(matchExtensions.toManualMatch, 'uuid')
-    if (matchResult.result === 'pending-remote') return err('pending-remote')
     validMatches = {...validMatches, ...matchResult.identifiers}
     extensionsToCreate.push(...matchResult.toCreate)
+    onlyRemoteExtensions = matchResult.onlyRemote
+  }
+
+  if (!options.force) {
+    const confirmed = await deployConfirmationPrompt({
+      identifiers: validMatches,
+      toCreate: extensionsToCreate,
+      onlyRemote: onlyRemoteExtensions,
+    })
+    if (!confirmed) return err('user-cancelled')
   }
 
   if (extensionsToCreate.length > 0) {
