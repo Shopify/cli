@@ -3,8 +3,9 @@
  *
  * @param url - URL to be checked.
  * @returns True if the URL is valid, false otherwise.
+ * @throws An error if URL's constructor throws an error other than `TypeError`.
  */
-export const isValidURL = (url: string): boolean => {
+export function isValidURL(url: string): boolean {
   try {
     return Boolean(new URL(url))
   } catch (error: unknown) {
