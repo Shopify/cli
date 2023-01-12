@@ -36,20 +36,23 @@ describe('topicPrompt', () => {
 describe('apiVersionPrompt', () => {
   it('asks the user to enter an api_version', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValue({apiVersion: '2022-01'})
+    vi.mocked(ui.prompt).mockResolvedValue({apiVersion: '2022-10'})
 
     // When
-    const got = await apiVersionPrompt()
+    const got = await apiVersionPrompt(['2023-01', '2022-10', 'unstable'])
 
     // Then
-    expect(got).toEqual('2022-01')
+    expect(got).toEqual('2022-10')
     expect(ui.prompt).toHaveBeenCalledWith([
       {
-        type: 'input',
+        type: 'select',
         name: 'apiVersion',
         message: 'Webhook ApiVersion',
-        default: '2022-10',
-        validate: expect.any(Function),
+        choices: [
+          {name: '2023-01', value: '2023-01'},
+          {name: '2022-10', value: '2022-10'},
+          {name: 'unstable', value: 'unstable'},
+        ],
       },
     ])
   })
