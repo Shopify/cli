@@ -1,5 +1,5 @@
 import SelectInput, {Props as SelectProps, Item as SelectItem, Item} from './SelectInput.js'
-import Table, {Props as TableProps} from './Table.js'
+import InfoTable, {Props as InfoTableProps} from './Prompts/InfoTable.js'
 import {TextInput} from './TextInput.js'
 import {handleCtrlC} from '../../ui.js'
 import React, {ReactElement, useCallback, useRef, useState} from 'react'
@@ -13,7 +13,7 @@ export interface Props<T> {
   message: string
   choices: SelectProps<T>['items']
   onSubmit: (value: T) => void
-  infoTable?: TableProps['table']
+  infoTable?: InfoTableProps['table']
   search?: (term: string) => Promise<SelectItem<T>[]>
 }
 
@@ -136,7 +136,7 @@ function AutocompletePrompt<T>({
 
       {infoTable && promptState !== PromptState.Submitted && (
         <Box marginLeft={7} marginTop={1}>
-          <Table table={infoTable} />
+          <InfoTable table={infoTable} />
         </Box>
       )}
 

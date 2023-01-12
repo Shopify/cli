@@ -1,5 +1,5 @@
-import {List} from './List.js'
-import {capitalize} from '../../../../public/common/string.js'
+import {List} from '../List.js'
+import {capitalize} from '../../../../../public/common/string.js'
 import {Box, Text} from 'ink'
 import React from 'react'
 
@@ -9,7 +9,7 @@ export interface Props {
   }
 }
 
-const Table: React.FC<Props> = ({table}) => {
+const InfoTable: React.FC<Props> = ({table}) => {
   const headers = Object.keys(table)
   const headerColumnWidth = Math.max(...headers.map((header) => header.length))
 
@@ -29,4 +29,4 @@ const Table: React.FC<Props> = ({table}) => {
   )
 }
 
-export default Table
+export default InfoTable

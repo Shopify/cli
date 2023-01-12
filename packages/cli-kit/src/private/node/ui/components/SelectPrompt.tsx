@@ -1,5 +1,5 @@
 import SelectInput, {Props as SelectProps, Item as SelectItem, Item} from './SelectInput.js'
-import Table, {Props as TableProps} from './Table.js'
+import InfoTable, {Props as InfoTableProps} from './Prompts/InfoTable.js'
 import {handleCtrlC} from '../../ui.js'
 import React, {ReactElement, useCallback, useState} from 'react'
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
@@ -10,7 +10,7 @@ export interface Props<T> {
   message: string
   choices: SelectProps<T>['items']
   onSubmit: (value: T) => void
-  infoTable?: TableProps['table']
+  infoTable?: InfoTableProps['table']
 }
 
 function SelectPrompt<T>({
@@ -60,7 +60,7 @@ function SelectPrompt<T>({
       </Box>
       {infoTable && !submitted && (
         <Box marginLeft={7} marginTop={1}>
-          <Table table={infoTable} />
+          <InfoTable table={infoTable} />
         </Box>
       )}
       {submitted ? (
