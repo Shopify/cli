@@ -2,18 +2,19 @@
 import React from 'react';
 
 import {
+  extend,
   render,
   Text,
   useExtensionApi,
 } from '@shopify/admin-ui-extensions-react'
 
-render('Admin::CheckoutEditor::RenderSettings', () => <App />);
+extend('Admin::CheckoutEditor::RenderSettings', render(() => <App />));
 
 function App() {
   const {extensionPoint} = useExtensionApi();
   return (
     <Text>
-      `Welcome to the ${extensionPoint} extension`
+      {`Welcome to the ${extensionPoint} extension`}
     </Text>
   );
 }
