@@ -7,6 +7,7 @@ import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
 import {figures} from 'listr2'
 import {debounce} from '@shopify/cli-kit/common/function'
 import ansiEscapes from 'ansi-escapes'
+import chalk from 'chalk'
 
 export interface Props<T> {
   message: string
@@ -24,32 +25,35 @@ enum PromptState {
 
 function AutocompletePrompt<T>({
   message,
-  choices,
+  choices: initialChoices,
   infoTable,
   onSubmit,
   search,
 }: React.PropsWithChildren<Props<T>>): ReactElement | null {
-  const [answer, setAnswer] = useState<SelectItem<T>>(choices[0]!)
+  const [answer, setAnswer] = useState<SelectItem<T> | undefined>(initialChoices[0])
   const {exit: unmountInk} = useApp()
   const [promptState, setPromptState] = useState<PromptState>(PromptState.Idle)
   const [searchTerm, setSearchTerm] = useState('')
-  const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(choices)
+  const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(initialChoices)
   const {stdout} = useStdout()
   const [height, setHeight] = useState(0)
 
-  const measuredRef = useCallback((node) => {
-    if (node !== null) {
-      const {height} = measureElement(node)
-      setHeight(height)
-    }
-  }, [])
+  const measuredRef = useCallback(
+    (node) => {
+      if (node !== null) {
+        const {height} = measureElement(node)
+        setHeight(height)
+      }
+    },
+    [searchResults, promptState],
+  )
 
   useInput(
     useCallback(
       (input, key) => {
         handleCtrlC(input, key)
 
-        if (key.return) {
+        if (key.return && promptState === PromptState.Idle && answer) {
           if (stdout && height >= stdout.rows) {
             stdout.write(ansiEscapes.clearTerminal)
           }
@@ -58,7 +62,7 @@ function AutocompletePrompt<T>({
           onSubmit(answer.value)
         }
       },
-      [answer, onSubmit, height],
+      [answer, onSubmit, height, promptState],
     ),
   )
 
@@ -71,7 +75,21 @@ function AutocompletePrompt<T>({
       }, 100)
       search!(term)
         .then((result) => {
-          setSearchResults(result.slice(0, 14))
+          const regex = new RegExp(term, 'i')
+          const items = result.map((item) => {
+            const match = item.label.match(regex)
+            if (match) {
+              const [matched] = match
+              const [before, after] = item.label.split(matched!)
+              return {
+                ...item,
+                label: `${before}${chalk.bold(matched)}${after}`,
+              }
+            }
+            return item
+          })
+
+          setSearchResults(items)
         })
         .catch(() => {})
         .finally(() => {
@@ -102,7 +120,8 @@ function AutocompletePrompt<T>({
                     debounceSearch(term)
                   } else {
                     debounceSearch.cancel()
-                    setSearchResults(choices)
+                    setPromptState(PromptState.Idle)
+                    setSearchResults(initialChoices)
                   }
                 }}
                 placeholder="Type to search..."
@@ -123,7 +142,7 @@ function AutocompletePrompt<T>({
             <Text color="cyan">{figures.tick}</Text>
           </Box>
 
-          <Text color="cyan">{answer.label}</Text>
+          <Text color="cyan">{answer!.label}</Text>
         </Box>
       )}
 
@@ -133,22 +152,17 @@ function AutocompletePrompt<T>({
         </Box>
       )}
 
-      {promptState === PromptState.Idle &&
-        (searchResults.length > 0 ? (
-          <Box marginTop={1}>
-            <SelectInput
-              items={searchResults}
-              onChange={(item: Item<T>) => {
-                setAnswer(item)
-              }}
-              enableShortcuts={false}
-            />
-          </Box>
-        ) : (
-          <Box marginTop={1} marginLeft={3}>
-            <Text dimColor>No results found.</Text>
-          </Box>
-        ))}
+      {promptState === PromptState.Idle && (
+        <Box marginTop={1}>
+          <SelectInput
+            items={searchResults.slice(0, 14)}
+            onChange={(item: Item<T> | undefined) => {
+              setAnswer(item)
+            }}
+            enableShortcuts={false}
+          />
+        </Box>
+      )}
     </Box>
   )
 }

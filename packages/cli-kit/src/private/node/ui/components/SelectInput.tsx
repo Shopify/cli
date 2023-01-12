@@ -7,7 +7,7 @@ import {debounce} from '@shopify/cli-kit/common/function'
 
 export interface Props<T> {
   items: Item<T>[]
-  onChange: (item: Item<T>) => void
+  onChange: (item: Item<T> | undefined) => void
   enableShortcuts?: boolean
   focus?: boolean
 }
@@ -102,14 +102,17 @@ export default function SelectInput<T>({
     (index: number) => {
       const groupedItem = groupedItemsValues.find((item) => item.index === index)!
       setSelectedIndex(index)
-      onChange(items.find((item) => item.value === groupedItem.value)!)
+      onChange(items.find((item) => item.value === groupedItem.value))
     },
     [items],
   )
 
-  // reset index when items change
   useEffect(() => {
-    if (
+    if (items.length === 0) {
+      // reset selection when items are empty
+      onChange(undefined)
+    } else if (
+      // reset index when items change
       !isEqual(
         previousItems.current.map((item) => item.value),
         items.map((item) => item.value),
@@ -199,11 +202,9 @@ export default function SelectInput<T>({
         ></SelectItemsGroup>
       )}
 
-      {items.length > 0 && (
-        <Box marginTop={1} marginLeft={3}>
-          <Text dimColor>navigate with arrows, enter to select</Text>
-        </Box>
-      )}
+      <Box marginTop={items.length > 0 ? 1 : 0} marginLeft={3}>
+        <Text dimColor>{items.length > 0 ? 'navigate with arrows, enter to select' : 'No results found.'}</Text>
+      </Box>
     </Box>
   )
 }

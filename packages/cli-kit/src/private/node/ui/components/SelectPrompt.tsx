@@ -19,7 +19,7 @@ function SelectPrompt<T>({
   infoTable,
   onSubmit,
 }: React.PropsWithChildren<Props<T>>): ReactElement | null {
-  const [answer, setAnswer] = useState<SelectItem<T>>(choices[0]!)
+  const [answer, setAnswer] = useState<SelectItem<T> | undefined>(choices[0])
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
   const {stdout} = useStdout()
@@ -37,7 +37,7 @@ function SelectPrompt<T>({
       (input, key) => {
         handleCtrlC(input, key)
 
-        if (key.return) {
+        if (key.return && answer) {
           if (stdout && height >= stdout.rows) {
             stdout.write(ansiEscapes.clearTerminal)
           }
@@ -69,13 +69,13 @@ function SelectPrompt<T>({
             <Text color="cyan">{figures.tick}</Text>
           </Box>
 
-          <Text color="cyan">{answer.label}</Text>
+          <Text color="cyan">{answer!.label}</Text>
         </Box>
       ) : (
         <Box marginTop={1}>
           <SelectInput
             items={choices}
-            onChange={(item: Item<T>) => {
+            onChange={(item: Item<T> | undefined) => {
               setAnswer(item)
             }}
           />
