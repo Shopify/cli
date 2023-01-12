@@ -1,5 +1,5 @@
 import {TextPrompt} from './TextPrompt.js'
-import {getLastFrameAfterUnmount, sendInput, waitForInputsToBeReady} from '../../../../testing/ui.js'
+import {getLastFrameAfterUnmount, sendInputAndWaitForChange, waitForInputsToBeReady} from '../../../../testing/ui.js'
 import {unstyled} from '../../../../output.js'
 import {render} from 'ink-testing-library'
 import React from 'react'
@@ -23,7 +23,7 @@ describe('TextPrompt', () => {
     const renderInstance = render(<TextPrompt onSubmit={() => {}} message="Test question" />)
 
     await waitForInputsToBeReady()
-    await sendInput(renderInstance, ENTER)
+    await sendInputAndWaitForChange(renderInstance, ENTER)
     // testing with styles because the color changes to red
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question
@@ -32,7 +32,7 @@ describe('TextPrompt', () => {
          [31mType an answer to the prompt.[39m
       "
     `)
-    await sendInput(renderInstance, 'A')
+    await sendInputAndWaitForChange(renderInstance, 'A')
     // color changes back to valid color
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question
@@ -52,8 +52,8 @@ describe('TextPrompt', () => {
     )
 
     await waitForInputsToBeReady()
-    await sendInput(renderInstance, 'this-test-includes-shopify')
-    await sendInput(renderInstance, ENTER)
+    await sendInputAndWaitForChange(renderInstance, 'this-test-includes-shopify')
+    await sendInputAndWaitForChange(renderInstance, ENTER)
     // testing with styles because the color changes to red
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question
@@ -69,8 +69,8 @@ describe('TextPrompt', () => {
     const renderInstance = render(<TextPrompt onSubmit={onSubmit} message="Test question" />)
 
     await waitForInputsToBeReady()
-    await sendInput(renderInstance, 'A')
-    await sendInput(renderInstance, ENTER)
+    await sendInputAndWaitForChange(renderInstance, 'A')
+    await sendInputAndWaitForChange(renderInstance, ENTER)
     expect(onSubmit).toHaveBeenCalledWith('A')
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
       "?  Test question
@@ -85,8 +85,8 @@ describe('TextPrompt', () => {
     const renderInstance = render(<TextPrompt onSubmit={() => {}} message="Test question" />)
 
     await waitForInputsToBeReady()
-    await sendInput(renderInstance, 'A'.repeat(77))
-    await sendInput(renderInstance, 'B'.repeat(6))
+    await sendInputAndWaitForChange(renderInstance, 'A'.repeat(77))
+    await sendInputAndWaitForChange(renderInstance, 'B'.repeat(6))
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question
       [36m>[39m  [36mAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA[39m
@@ -100,7 +100,7 @@ describe('TextPrompt', () => {
     const renderInstance = render(<TextPrompt onSubmit={() => {}} message="Test question" password />)
 
     await waitForInputsToBeReady()
-    await sendInput(renderInstance, 'ABC')
+    await sendInputAndWaitForChange(renderInstance, 'ABC')
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question
       [36m>[39m  [36m***[7m [27m[39m
@@ -108,7 +108,7 @@ describe('TextPrompt', () => {
       "
     `)
 
-    await sendInput(renderInstance, ENTER)
+    await sendInputAndWaitForChange(renderInstance, ENTER)
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
       "?  Test question
       ✔  ***

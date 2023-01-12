@@ -1,5 +1,10 @@
 import {TextInput} from './TextInput.js'
-import {sendInput, waitForChange, waitForInputsToBeReady} from '../../../../testing/ui.js'
+import {
+  sendInputAndWait,
+  sendInputAndWaitForChange,
+  waitForChange,
+  waitForInputsToBeReady,
+} from '../../../../testing/ui.js'
 import React, {useState} from 'react'
 import {describe, test, expect, vi} from 'vitest'
 import {render} from 'ink-testing-library'
@@ -36,34 +41,32 @@ describe('TextInput', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[7m [27m[39m"')
 
     await waitForInputsToBeReady()
-    await sendInput(renderInstance, ARROW_LEFT)
+    await sendInputAndWaitForChange(renderInstance, ARROW_LEFT)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHell[7mo[27m[39m"')
-    await sendInput(renderInstance, ARROW_LEFT)
+    await sendInputAndWaitForChange(renderInstance, ARROW_LEFT)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHel[7ml[27mo[39m"')
-    await sendInput(renderInstance, ARROW_LEFT)
+    await sendInputAndWaitForChange(renderInstance, ARROW_LEFT)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHe[7ml[27mlo[39m"')
-    await sendInput(renderInstance, ARROW_LEFT)
+    await sendInputAndWaitForChange(renderInstance, ARROW_LEFT)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mH[7me[27mllo[39m"')
-    await sendInput(renderInstance, ARROW_LEFT)
+    await sendInputAndWaitForChange(renderInstance, ARROW_LEFT)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[7mH[27mello[39m"')
     // cursor can't go before the first character
-    renderInstance.stdin.write(ARROW_LEFT)
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await sendInputAndWait(renderInstance, 100, ARROW_LEFT)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[7mH[27mello[39m"')
 
-    await sendInput(renderInstance, ARROW_RIGHT)
+    await sendInputAndWaitForChange(renderInstance, ARROW_RIGHT)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mH[7me[27mllo[39m"')
-    await sendInput(renderInstance, ARROW_RIGHT)
+    await sendInputAndWaitForChange(renderInstance, ARROW_RIGHT)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHe[7ml[27mlo[39m"')
-    await sendInput(renderInstance, ARROW_RIGHT)
+    await sendInputAndWaitForChange(renderInstance, ARROW_RIGHT)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHel[7ml[27mo[39m"')
-    await sendInput(renderInstance, ARROW_RIGHT)
+    await sendInputAndWaitForChange(renderInstance, ARROW_RIGHT)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHell[7mo[27m[39m"')
-    await sendInput(renderInstance, ARROW_RIGHT)
+    await sendInputAndWaitForChange(renderInstance, ARROW_RIGHT)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[7m [27m[39m"')
     // cursor can't go after the last character
-    renderInstance.stdin.write(ARROW_RIGHT)
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await sendInputAndWait(renderInstance, 100, ARROW_RIGHT)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[7m [27m[39m"')
   })
 
@@ -79,19 +82,18 @@ describe('TextInput', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[7m [27m[39m"')
 
     await waitForInputsToBeReady()
-    await sendInput(renderInstance, DELETE)
+    await sendInputAndWaitForChange(renderInstance, DELETE)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHell[7m [27m[39m"')
-    await sendInput(renderInstance, DELETE)
+    await sendInputAndWaitForChange(renderInstance, DELETE)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHel[7m [27m[39m"')
-    await sendInput(renderInstance, DELETE)
+    await sendInputAndWaitForChange(renderInstance, DELETE)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHe[7m [27m[39m"')
-    await sendInput(renderInstance, DELETE)
+    await sendInputAndWaitForChange(renderInstance, DELETE)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mH[7m [27m[39m"')
-    await sendInput(renderInstance, DELETE)
+    await sendInputAndWaitForChange(renderInstance, DELETE)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[7m [27m[39m"')
     // cannot delete after the value has been cleared
-    renderInstance.stdin.write(DELETE)
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await sendInputAndWait(renderInstance, 100, DELETE)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[7m [27m[39m"')
   })
 
@@ -105,9 +107,9 @@ describe('TextInput', () => {
     const renderInstance = render(<StatefulTextInput />)
 
     await waitForInputsToBeReady()
-    await sendInput(renderInstance, 'H')
+    await sendInputAndWaitForChange(renderInstance, 'H')
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mH[7m [27m[39m"')
-    await sendInput(renderInstance, 'ello')
+    await sendInputAndWaitForChange(renderInstance, 'ello')
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[7m [27m[39m"')
   })
 
@@ -117,7 +119,7 @@ describe('TextInput', () => {
     const renderInstance = render(<TextInput value="" onChange={onChange} />)
 
     await waitForInputsToBeReady()
-    await sendInput(renderInstance, 'X')
+    await sendInputAndWaitForChange(renderInstance, 'X')
 
     expect(onChange).toHaveBeenCalledWith('X')
   })
@@ -132,17 +134,16 @@ describe('TextInput', () => {
     const renderInstance = render(<StatefulTextInput />)
 
     await waitForInputsToBeReady()
-    await sendInput(renderInstance, 'T')
-    await sendInput(renderInstance, 'e')
-    await sendInput(renderInstance, 's')
-    await sendInput(renderInstance, 't')
-    await sendInput(renderInstance, ARROW_LEFT)
-    await sendInput(renderInstance, DELETE)
+    await sendInputAndWaitForChange(renderInstance, 'T')
+    await sendInputAndWaitForChange(renderInstance, 'e')
+    await sendInputAndWaitForChange(renderInstance, 's')
+    await sendInputAndWaitForChange(renderInstance, 't')
+    await sendInputAndWaitForChange(renderInstance, ARROW_LEFT)
+    await sendInputAndWaitForChange(renderInstance, DELETE)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mTe[7mt[27m[39m"')
-    await sendInput(renderInstance, ARROW_LEFT)
-    await sendInput(renderInstance, ARROW_LEFT)
-    renderInstance.stdin.write(DELETE)
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await sendInputAndWaitForChange(renderInstance, ARROW_LEFT)
+    await sendInputAndWaitForChange(renderInstance, ARROW_LEFT)
+    await sendInputAndWait(renderInstance, 100, DELETE)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[7mT[27met[39m"')
   })
 
@@ -159,15 +160,15 @@ describe('TextInput', () => {
     const renderInstance = render(<StatefulTextInput />)
 
     await waitForInputsToBeReady()
-    await sendInput(renderInstance, 'A')
-    await sendInput(renderInstance, 'B')
+    await sendInputAndWaitForChange(renderInstance, 'A')
+    await sendInputAndWaitForChange(renderInstance, 'B')
 
     await waitForChange(resetValue, renderInstance.lastFrame)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[7m [27m[39m"')
-    await sendInput(renderInstance, 'A')
+    await sendInputAndWaitForChange(renderInstance, 'A')
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mA[7m [27m[39m"')
-    await sendInput(renderInstance, 'B')
+    await sendInputAndWaitForChange(renderInstance, 'B')
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mAB[7m [27m[39m"')
   })
 

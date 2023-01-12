@@ -10,6 +10,7 @@ export interface Props<T> {
   onChange: (item: Item<T> | undefined) => void
   enableShortcuts?: boolean
   focus?: boolean
+  emptyMessage?: string
 }
 
 export interface Item<T> {
@@ -89,8 +90,9 @@ export default function SelectInput<T>({
   onChange,
   enableShortcuts = true,
   focus = true,
+  emptyMessage = 'No items to select.',
 }: React.PropsWithChildren<Props<T>>): JSX.Element | null {
-  const [inputStack, setInputStack] = useState<string | null>(null)
+  const inputStack = useRef<string | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const keys = useRef(new Set(items.map((item) => item.key)))
   const [groupedItems, ungroupedItems] = groupItems(items)
@@ -156,19 +158,18 @@ export default function SelectInput<T>({
   const debounceHandleShortcuts = useCallback(
     debounce((newInputStack) => {
       handleShortcuts(newInputStack)
-      setInputStack(null)
+      inputStack.current = null
     }, 300),
-    [setInputStack],
+    [],
   )
 
   useInput(
     (input, key) => {
       // check that no key is being pressed
       if (enableShortcuts && input.length > 0 && Object.values(key).every((value) => value === false)) {
-        const newInputStack = inputStack === null ? input : inputStack + input
+        const newInputStack = inputStack.current === null ? input : inputStack.current + input
 
-        setInputStack(newInputStack)
-
+        inputStack.current = newInputStack
         debounceHandleShortcuts(newInputStack)
       } else {
         handleArrows(key)
@@ -203,7 +204,7 @@ export default function SelectInput<T>({
       )}
 
       <Box marginTop={items.length > 0 ? 1 : 0} marginLeft={3}>
-        <Text dimColor>{items.length > 0 ? 'navigate with arrows, enter to select' : 'No results found.'}</Text>
+        <Text dimColor>{items.length > 0 ? 'navigate with arrows, enter to select' : emptyMessage}</Text>
       </Box>
     </Box>
   )

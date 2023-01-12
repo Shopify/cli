@@ -1,5 +1,5 @@
 import SelectInput from './SelectInput.js'
-import {waitForInputsToBeReady, sendInput} from '../../../../testing/ui.js'
+import {sendInputAndWait, sendInputAndWaitForChange, waitForInputsToBeReady} from '../../../../testing/ui.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {render} from 'ink-testing-library'
@@ -29,7 +29,7 @@ describe('SelectInput', async () => {
     const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
 
     await waitForInputsToBeReady()
-    await sendInput(renderInstance, ARROW_UP)
+    await sendInputAndWaitForChange(renderInstance, ARROW_UP)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   (1) First
@@ -62,7 +62,7 @@ describe('SelectInput', async () => {
     const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
 
     await waitForInputsToBeReady()
-    await sendInput(renderInstance, ARROW_DOWN)
+    await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   (1) First
@@ -95,7 +95,7 @@ describe('SelectInput', async () => {
     const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
 
     await waitForInputsToBeReady()
-    await sendInput(renderInstance, '1', '0')
+    await sendInputAndWaitForChange(renderInstance, '1', '0')
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   (1) First
@@ -128,7 +128,7 @@ describe('SelectInput', async () => {
     const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
 
     await waitForInputsToBeReady()
-    await sendInput(renderInstance, 't')
+    await sendInputAndWaitForChange(renderInstance, 't')
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   (1) First
@@ -160,9 +160,9 @@ describe('SelectInput', async () => {
     const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
 
     await waitForInputsToBeReady()
-    await sendInput(renderInstance, ARROW_DOWN)
-    await sendInput(renderInstance, ARROW_DOWN)
-    await sendInput(renderInstance, ARROW_DOWN)
+    await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
+    await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
+    await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "[36m>[39m  [36m(1) First[39m
@@ -213,7 +213,7 @@ describe('SelectInput', async () => {
     `)
 
     await waitForInputsToBeReady()
-    await sendInput(renderInstance, 'a')
+    await sendInputAndWaitForChange(renderInstance, 'a')
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   [1mAutomations[22m
@@ -236,8 +236,8 @@ describe('SelectInput', async () => {
     `)
     expect(onChange).toHaveBeenCalledWith(items[4]!)
 
-    await sendInput(renderInstance, ARROW_DOWN)
-    await sendInput(renderInstance, ARROW_DOWN)
+    await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
+    await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   [1mAutomations[22m
@@ -259,5 +259,38 @@ describe('SelectInput', async () => {
          [2mnavigate with arrows, enter to select[22m"
     `)
     expect(onChange).toHaveBeenCalledWith(items[6]!)
+  })
+
+  test('allows disabling shortcuts', async () => {
+    const onChange = vi.fn()
+    const items = [
+      {
+        label: 'First',
+        value: 'first',
+      },
+      {
+        label: 'Second',
+        value: 'second',
+      },
+      {
+        label: 'Third',
+        value: 'third',
+      },
+    ]
+
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} enableShortcuts={false} />)
+
+    await waitForInputsToBeReady()
+    // input doesn't change on shortcut pressed
+    await sendInputAndWait(renderInstance, 100, '2')
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "[36m>[39m  [36mFirst[39m
+         Second
+         Third
+
+         [2mnavigate with arrows, enter to select[22m"
+    `)
+    expect(onChange).not.toHaveBeenCalled()
   })
 })

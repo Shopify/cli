@@ -170,6 +170,7 @@ function AutocompletePrompt<T>({
               setAnswer(item)
             }}
             enableShortcuts={false}
+            emptyMessage="No results found."
           />
         </Box>
       )}

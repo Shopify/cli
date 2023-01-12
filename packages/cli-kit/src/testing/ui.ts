@@ -20,8 +20,17 @@ export function waitForChange(func: () => void, getChangingValue: () => string |
   })
 }
 
-export async function sendInput(renderInstance: ReturnType<typeof render>, ...inputs: string[]) {
+export async function sendInputAndWaitForChange(renderInstance: ReturnType<typeof render>, ...inputs: string[]) {
   await waitForChange(() => inputs.forEach((input) => renderInstance.stdin.write(input)), renderInstance.lastFrame)
+}
+
+export async function sendInputAndWait(
+  renderInstance: ReturnType<typeof render>,
+  waitTime: number,
+  ...inputs: string[]
+) {
+  inputs.forEach((input) => renderInstance.stdin.write(input))
+  await new Promise((resolve) => setTimeout(resolve, waitTime))
 }
 
 export function getLastFrameAfterUnmount(renderInstance: ReturnType<typeof render>) {

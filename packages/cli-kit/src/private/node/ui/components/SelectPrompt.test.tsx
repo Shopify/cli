@@ -1,5 +1,10 @@
 import {SelectPrompt} from './SelectPrompt.js'
-import {getLastFrameAfterUnmount, sendInput, waitForInputsToBeReady} from '../../../../testing/ui.js'
+import {
+  getLastFrameAfterUnmount,
+  sendInputAndWait,
+  sendInputAndWaitForChange,
+  waitForInputsToBeReady,
+} from '../../../../testing/ui.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {render} from 'ink-testing-library'
@@ -7,7 +12,7 @@ import {render} from 'ink-testing-library'
 const ARROW_DOWN = '\u001B[B'
 const ENTER = '\r'
 
-describe('Prompt', async () => {
+describe('SelectPrompt', async () => {
   test('choose an answer', async () => {
     const onEnter = vi.fn()
 
@@ -29,8 +34,8 @@ describe('Prompt', async () => {
     )
 
     await waitForInputsToBeReady()
-    await sendInput(renderInstance, ARROW_DOWN)
-    await sendInput(renderInstance, ENTER)
+    await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
+    await sendInputAndWaitForChange(renderInstance, ENTER)
 
     expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
@@ -125,5 +130,33 @@ describe('Prompt', async () => {
          [2mnavigate with arrows, enter to select[22m
       "
     `)
+  })
+
+  test("it doesn't submit if there are no choices", async () => {
+    const onEnter = vi.fn()
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const items: any[] = []
+
+    const renderInstance = render(
+      <SelectPrompt
+        message="Associate your project with the org Castile Ventures?"
+        choices={items}
+        onSubmit={onEnter}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+    // prompt doesn't change when enter is pressed
+    await sendInputAndWait(renderInstance, 100, ENTER)
+
+    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
+      "?  Associate your project with the org Castile Ventures?
+
+         [2mNo items to select.[22m
+      "
+    `)
+
+    expect(onEnter).not.toHaveBeenCalled()
   })
 })
