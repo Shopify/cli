@@ -1,20 +1,20 @@
 import {ensureAuthenticated, OAuthApplications, OAuthSession} from './session.js'
-import {allDefaultScopes} from '../../private/node/session/scopes.js'
-import {store as secureStore, fetch as secureFetch} from '../../private/node/session/store.js'
 import {
   exchangeAccessForApplicationTokens,
   exchangeCodeForAccessToken,
   exchangeCustomPartnerToken,
   refreshAccessToken,
   InvalidGrantError,
-} from '../../private/node/session/exchange.js'
+} from './session/exchange.js'
+import {authorize} from './session/authorize.js'
+import {allDefaultScopes} from './session/scopes.js'
+import {store as secureStore, fetch as secureFetch} from './session/store.js'
 
-import {authorize} from '../../private/node/session/authorize.js'
+import {ApplicationToken, IdentityToken, Session} from './session/schema.js'
+import {validateSession} from './session/validate.js'
+import {applicationId} from './session/identity.js'
 import * as fqdnModule from '../../environment/fqdn.js'
 import {useDeviceAuth} from '../../environment/local.js'
-import {ApplicationToken, IdentityToken, Session} from '../../private/node/session/schema.js'
-import {validateSession} from '../../private/node/session/validate.js'
-import {applicationId} from '../../private/node/session/identity.js'
 import {vi, describe, expect, it, beforeAll, beforeEach} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners.js'
 
