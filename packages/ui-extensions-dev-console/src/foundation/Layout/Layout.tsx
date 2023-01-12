@@ -18,7 +18,7 @@ export function Layout({children}: Props) {
     <div className={styles.OuterContainer}>
       <div className={styles.DevTool}>
         <header className={styles.Header}>
-          <section className={styles.HeaderLeft}>
+          <section className={styles.HeaderContent}>
             <ToolsMajor />
             <h1>&nbsp;{i18n.translate('title')}</h1>
           </section>

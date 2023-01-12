@@ -4,13 +4,16 @@
 
 .PreviewLinksTitle {
   font-style: italic;
+  display: block;
+  padding-bottom: 1.8rem;
 }
 
 .PreviewLinks {
-  display: grid;
-  gap: 0.4rem;
-  padding-left: 0.6rem;
-  padding-right: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding-left: 0.8rem;
+  padding-right: 0.8rem;
 }
 
 .PreviewLink {
