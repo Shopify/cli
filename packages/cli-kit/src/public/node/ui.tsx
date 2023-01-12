@@ -12,6 +12,7 @@ import {
   AutocompletePrompt,
   Props as AutocompletePromptProps,
 } from '../../private/node/ui/components/AutocompletePrompt.js'
+import {isUnitTest} from '../../environment/local.js'
 import React from 'react'
 import {RenderOptions} from 'ink'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -245,8 +246,8 @@ export function renderAutocompletePrompt<T>(props: Omit<AutocompletePromptProps<
 /**
  * Runs async tasks and displays their progress to the console.
  */
-export async function renderTasks<TContext>(tasks: Task<TContext>[], options: {silent?: boolean} = {silent: false}) {
-  return render(<Tasks tasks={tasks} silent={options.silent} />)
+export async function renderTasks<TContext>(tasks: Task<TContext>[]) {
+  return render(<Tasks tasks={tasks} silent={isUnitTest()} />)
 }
 
 /**

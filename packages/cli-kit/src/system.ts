@@ -1,7 +1,6 @@
 import {shouldDisplayColors, debug} from './output.js'
 import {platformAndArch} from './public/node/os.js'
 import {Abort, ExternalError} from './error.js'
-import {renderConcurrent} from './public/node/ui.js'
 import {AbortSignal} from './public/node/abort.js'
 import {execa, ExecaChildProcess} from 'execa'
 import treeKill from 'tree-kill'
@@ -96,32 +95,6 @@ interface ConcurrentExecCommand {
   executable: string
   args: string[]
   cwd: string
-}
-
-/**
- * Runs commands concurrently and combines the standard output and error data
- * into a single stream. See {@link renderConcurrent} for more information about
- * the output format.
- *
- * If one of the processes fails, it aborts the running ones and exits with that error.
- * @param commands - Commands to execute.
- */
-export const concurrentExec = async (commands: ConcurrentExecCommand[]): Promise<void> => {
-  await renderConcurrent({
-    processes: commands.map((command) => {
-      return {
-        prefix: command.prefix,
-        action: async (stdout, stderr, signal) => {
-          await exec(command.executable, command.args, {
-            stdout,
-            stderr,
-            cwd: command.cwd,
-            signal,
-          })
-        },
-      }
-    }),
-  })
 }
 
 /**

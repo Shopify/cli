@@ -18,7 +18,7 @@ export interface Props<TContext> {
   silent?: boolean
 }
 
-function Tasks<TContext>({tasks, silent = true}: React.PropsWithChildren<Props<TContext>>) {
+function Tasks<TContext>({tasks, silent = false}: React.PropsWithChildren<Props<TContext>>) {
   const {twoThirds} = useLayout()
   const loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
