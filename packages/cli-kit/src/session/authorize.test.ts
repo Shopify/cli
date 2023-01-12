@@ -2,7 +2,7 @@ import {authorize, MismatchStateError} from './authorize.js'
 import {listenRedirect} from './redirect-listener.js'
 import {clientId} from './identity.js'
 import {randomHex, base64URLEncode} from '../public/node/crypto.js'
-import {open} from '../public/node/system.js'
+import {openURL} from '../public/node/system.js'
 import {identity} from '../environment/fqdn.js'
 import {terminateBlockingPortProcessPrompt} from '../ui.js'
 import {CancelExecution} from '../error.js'
@@ -45,7 +45,7 @@ describe('authorize', () => {
     const url =
       'http://fqdn.com/oauth/authorize?client_id=clientId&scope=scope1+scope2&redirect_uri=http%3A%2F%2F127.0.0.1%3A3456&state=state&response_type=code&code_challenge_method=S256&code_challenge=challenge'
 
-    expect(open).toHaveBeenCalledWith(url)
+    expect(openURL).toHaveBeenCalledWith(url)
     expect(listenRedirect).toHaveBeenCalledWith(host, port, url)
     expect(got).toEqual({code: 'code', codeVerifier: challenge.codeVerifier})
   })
@@ -98,7 +98,7 @@ describe('authorize', () => {
     const url =
       'http://fqdn.com/oauth/authorize?client_id=clientId&scope=scope1+scope2&redirect_uri=http%3A%2F%2F127.0.0.1%3A3456&state=state&response_type=code&code_challenge_method=S256&code_challenge=challenge'
 
-    expect(open).toHaveBeenCalledWith(url)
+    expect(openURL).toHaveBeenCalledWith(url)
     expect(listenRedirect).toHaveBeenCalledWith(host, port, url)
     expect(got).toEqual({code: 'code', codeVerifier: challenge.codeVerifier})
     expect(killPortProcess).toHaveBeenCalledOnce()

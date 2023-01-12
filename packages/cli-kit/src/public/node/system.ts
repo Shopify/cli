@@ -21,7 +21,7 @@ export interface ExecOptions {
  *
  * @param url - URL to open.
  */
-export async function open(url: string): Promise<void> {
+export async function openURL(url: string): Promise<void> {
   const externalOpen = await import('open')
   await externalOpen.default(url)
 }

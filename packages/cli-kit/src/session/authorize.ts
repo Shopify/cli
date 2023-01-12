@@ -1,7 +1,7 @@
 import {listenRedirect} from './redirect-listener.js'
 import {clientId} from './identity.js'
 import {base64URLEncode, randomBytes, randomHex, sha256} from '../public/node/crypto.js'
-import {open} from '../public/node/system.js'
+import {openURL} from '../public/node/system.js'
 import {Abort, CancelExecution} from '../error.js'
 import {identity as identityFqdn} from '../environment/fqdn.js'
 import * as output from '../output.js'
@@ -45,7 +45,7 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
   await keypress()
 
   url = `${url}?${new URLSearchParams(params).toString()}`
-  await open(url)
+  await openURL(url)
 
   const result = await listenRedirect(host, port, url)
 
