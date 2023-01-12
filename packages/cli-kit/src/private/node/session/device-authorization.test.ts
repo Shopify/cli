@@ -4,17 +4,17 @@ import {
   requestDeviceAuthorization,
 } from './device-authorization.js'
 import {clientId} from './identity.js'
-import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {IdentityToken} from './schema.js'
-import {identity} from '../environment/fqdn.js'
-import {shopifyFetch} from '../http.js'
-import {err, ok} from '../public/node/result.js'
+import {exchangeDeviceCodeForAccessToken} from './exchange.js'
+import {identity} from '../../../environment/fqdn.js'
+import {shopifyFetch} from '../../../http.js'
+import {err, ok} from '../../../public/node/result.js'
 import {describe, expect, it, vi} from 'vitest'
 import {Response} from 'node-fetch'
 
-vi.mock('../environment/fqdn')
+vi.mock('../../../environment/fqdn')
 vi.mock('./identity')
-vi.mock('../http')
+vi.mock('../../../http')
 vi.mock('./exchange.js')
 
 describe('requestDeviceAuthorization', () => {

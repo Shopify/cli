@@ -1,6 +1,6 @@
-import {findUp, moduleDirectory} from '../path.js'
-import {read} from '../file.js'
-import {Bug} from '../error.js'
+import {findUp, moduleDirectory} from '../../../path.js'
+import {read} from '../../../file.js'
+import {Bug} from '../../../error.js'
 
 const HTMLFileNames = [
   'empty-url.html',

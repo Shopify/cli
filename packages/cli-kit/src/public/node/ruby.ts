@@ -7,7 +7,7 @@ import * as system from '../../system.js'
 import {Abort, AbortSilent} from '../../error.js'
 import {glob, join} from '../../path.js'
 import constants from '../../constants.js'
-import {AdminSession} from '../../session.js'
+import {AdminSession} from '../../public/node/session.js'
 import {content, token} from '../../output.js'
 import {Writable} from 'stream'
 

@@ -19,9 +19,10 @@ import {Organization, OrganizationApp, OrganizationStore} from '../models/organi
 import metadata from '../metadata.js'
 import {ThemeExtension} from '../models/app/extensions.js'
 import {loadAppName} from '../models/app/loader.js'
-import {error as kitError, output, session, store, ui, environment, error} from '@shopify/cli-kit'
+import {error as kitError, output, store, ui, environment, error} from '@shopify/cli-kit'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -272,7 +273,7 @@ export async function ensureThemeExtensionDevEnvironment(
 }
 
 export async function ensureDeployEnvironment(options: DeployEnvironmentOptions): Promise<DeployEnvironmentOutput> {
-  const token = await session.ensureAuthenticatedPartners()
+  const token = await ensureAuthenticatedPartners()
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
 
   let identifiers: Identifiers = envIdentifiers as Identifiers

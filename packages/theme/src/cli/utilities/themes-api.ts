@@ -3,10 +3,9 @@ import {apiCallLimit, retryAfter} from './themes-api/headers.js'
 import {retry} from './themes-api/retry.js'
 import {storeAdminUrl} from './theme-urls.js'
 import {Theme} from '../models/theme.js'
-import {error, session} from '@shopify/cli-kit'
+import {error} from '@shopify/cli-kit'
 import {restRequest, RestResponse} from '@shopify/cli-kit/node/api/admin'
-
-type AdminSession = session.AdminSession
+import {AdminSession} from '@shopify/cli-kit/node/session.js'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role'>>
 

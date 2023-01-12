@@ -16,7 +16,7 @@ import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant
 import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
-import {output, system, session, environment} from '@shopify/cli-kit'
+import {output, system, environment} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -24,6 +24,12 @@ import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
+import {
+  AdminSession,
+  ensureAuthenticatedAdmin,
+  ensureAuthenticatedPartners,
+  ensureAuthenticatedStorefront,
+} from '@shopify/cli-kit/node/session'
 import {Writable} from 'stream'
 
 export interface DevOptions {
@@ -53,7 +59,7 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
-  const token = await session.ensureAuthenticatedPartners()
+  const token = await ensureAuthenticatedPartners()
   const {storeFqdn, remoteApp, updateURLs: cachedUpdateURLs, tunnelPlugin} = await ensureDevEnvironment(options, token)
 
   const apiKey = remoteApp.apiKey
@@ -129,8 +135,8 @@ async function dev(options: DevOptions) {
   const additionalProcesses: output.OutputProcess[] = []
 
   if (localApp.extensions.theme.length > 0) {
-    const adminSession = await session.ensureAuthenticatedAdmin(storeFqdn)
-    const storefrontToken = await session.ensureAuthenticatedStorefront()
+    const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
+    const storefrontToken = await ensureAuthenticatedStorefront()
     const extension = localApp.extensions.theme[0]!
     const args = await themeExtensionArgs(extension, apiKey, token, options)
     const devExt = await devThemeExtensionTarget(args, adminSession, storefrontToken, token)
@@ -189,7 +195,7 @@ async function devFrontendNonProxyTarget(
 
 function devThemeExtensionTarget(
   args: string[],
-  adminSession: session.AdminSession,
+  adminSession: AdminSession,
   storefrontToken: string,
   token: string,
 ): output.OutputProcess {

@@ -5,6 +5,7 @@ import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {environment} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
 const STORE1: OrganizationStore = {
@@ -38,13 +39,12 @@ beforeEach(() => {
   vi.mock('../../prompts/dev')
   vi.mock('./fetch')
   vi.mock('@shopify/cli-kit/node/api/partners')
+  vi.mock('@shopify/cli-kit/node/session')
+  vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
       ...cliKit,
-      session: {
-        ensureAuthenticatedPartners: async () => 'token',
-      },
       http: {
         fetch: vi.fn(),
       },

@@ -1,22 +1,22 @@
 import {authorize, MismatchStateError} from './authorize.js'
-import {listenRedirect} from './redirect-listener.js'
 import {clientId} from './identity.js'
-import {randomHex, base64URLEncode} from '../public/node/crypto.js'
-import {open} from '../system.js'
-import {identity} from '../environment/fqdn.js'
-import {terminateBlockingPortProcessPrompt} from '../ui.js'
-import {CancelExecution} from '../error.js'
+import {listenRedirect} from './redirect-listener.js'
+import {randomHex, base64URLEncode} from '../../../public/node/crypto.js'
+import {open} from '../../../system.js'
+import {identity} from '../../../environment/fqdn.js'
+import {terminateBlockingPortProcessPrompt} from '../../../ui.js'
+import {CancelExecution} from '../../../error.js'
 import {checkPort} from 'get-port-please'
 import {killPortProcess} from 'kill-port-process'
 
 import {describe, it, expect, vi} from 'vitest'
 
-vi.mock('../system')
+vi.mock('../../../system')
 vi.mock('./redirect-listener')
-vi.mock('../public/node/crypto.js')
-vi.mock('../environment/fqdn')
+vi.mock('../../../public/node/crypto.js')
+vi.mock('../../../environment/fqdn')
 vi.mock('./identity')
-vi.mock('../ui')
+vi.mock('../../../ui')
 vi.mock('get-port-please')
 vi.mock('kill-port-process')
 

@@ -1,5 +1,5 @@
 import {buildHeaders} from './headers.js'
-import {AdminSession} from '../../../session.js'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 
 export function restRequestBody<T>(requestBody?: T) {
   if (!requestBody) {

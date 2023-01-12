@@ -6,6 +6,7 @@ import {testApp} from '../../models/app/app.test-data.js'
 import {CreateAppQuery} from '../../api/graphql/create_app.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 const LOCAL_APP: AppInterface = testApp({
   directory: '',
@@ -49,15 +50,8 @@ const APP_LIST: MinimalOrganizationApp[] = [
 beforeEach(() => {
   vi.mock('../../prompts/dev')
   vi.mock('@shopify/cli-kit/node/api/partners')
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      session: {
-        ensureAuthenticatedPartners: async () => 'token',
-      },
-    }
-  })
+  vi.mock('@shopify/cli-kit/node/session')
+  vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 })
 
 describe('createApp', () => {

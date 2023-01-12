@@ -6,9 +6,10 @@ import {GenericSpecification} from '../models/app/extensions.js'
 import generateExtensionPrompt from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
 import generateExtensionService, {ExtensionFlavor} from '../services/generate/extension.js'
-import {environment, error, output, path, session} from '@shopify/cli-kit'
+import {environment, error, output, path} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager.js'
 import {Config} from '@oclif/core'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export interface GenerateOptions {
   directory: string
@@ -22,7 +23,7 @@ export interface GenerateOptions {
 }
 
 async function generate(options: GenerateOptions) {
-  const token = await session.ensureAuthenticatedPartners()
+  const token = await ensureAuthenticatedPartners()
   const apiKey = await ensureGenerateEnvironment({...options, token})
   let specifications = await fetchSpecifications({token, apiKey, config: options.config})
   const app: AppInterface = await loadApp({directory: options.directory, specifications})
