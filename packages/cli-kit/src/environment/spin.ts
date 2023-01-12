@@ -1,7 +1,7 @@
 import {isTruthy} from './utilities.js'
 import {getCachedSpinFqdn, setCachedSpinFqdn} from './spin-cache.js'
 import constants from '../constants.js'
-import {captureOutput} from '../system.js'
+import {captureOutput} from '../public/node/system.js'
 import {Abort} from '../error.js'
 import {content, token} from '../output.js'
 import {exists, readSync} from '../file.js'

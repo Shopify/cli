@@ -1,7 +1,7 @@
 import {listenRedirect} from './redirect-listener.js'
 import {clientId} from './identity.js'
 import {base64URLEncode, randomBytes, randomHex, sha256} from '../public/node/crypto.js'
-import {open} from '../system.js'
+import {open} from '../public/node/system.js'
 import {Abort, CancelExecution} from '../error.js'
 import {identity as identityFqdn} from '../environment/fqdn.js'
 import * as output from '../output.js'

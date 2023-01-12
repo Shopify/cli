@@ -9,11 +9,11 @@ import {
   macAddress,
 } from './local.js'
 import {exists as fileExists} from '../file.js'
-import {exec} from '../system.js'
+import {exec} from '../public/node/system.js'
 import {expect, it, describe, vi, test} from 'vitest'
 
 vi.mock('../file')
-vi.mock('../system')
+vi.mock('../public/node/system.js')
 
 describe('isUnitTest', () => {
   it('returns true when SHOPIFY_UNIT_TEST is truthy', () => {

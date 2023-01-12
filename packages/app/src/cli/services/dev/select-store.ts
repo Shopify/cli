@@ -6,8 +6,9 @@ import {
   ConvertDevToTestStoreSchema,
   ConvertDevToTestStoreVariables,
 } from '../../api/graphql/convert_dev_to_test_store.js'
-import {error, output, system, ui, environment} from '@shopify/cli-kit'
+import {error, output, ui, environment} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {sleep} from '@shopify/cli-kit/node/system'
 
 const CreateStoreLink = async (orgId: string) => {
   const url = `https://${await environment.fqdn.partners()}/${orgId}/stores/new?store_type=dev_store`
@@ -39,7 +40,7 @@ export async function selectStore(
   }
 
   output.info(`\n${await CreateStoreLink(org.id)}`)
-  await system.sleep(5)
+  await sleep(5)
 
   const reload = await reloadStoreListPrompt(org)
   if (!reload) {
@@ -74,7 +75,7 @@ async function waitForCreatedStore(orgId: string, token: string): Promise<Organi
               return
             }
             // eslint-disable-next-line no-await-in-loop
-            await system.sleep(secondsToWait)
+            await sleep(secondsToWait)
           }
         },
       },

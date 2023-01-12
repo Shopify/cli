@@ -3,7 +3,7 @@ import {Abort, Bug} from './error.js'
 import {validateSession} from './session/validate.js'
 import {allDefaultScopes, apiScopes} from './session/scopes.js'
 import {identity as identityFqdn, normalizeStoreName, partners as partnersFqdn} from './environment/fqdn.js'
-import {open} from './system.js'
+import {open} from './public/node/system.js'
 import {
   exchangeAccessForApplicationTokens,
   exchangeCodeForAccessToken,

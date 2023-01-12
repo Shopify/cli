@@ -1,9 +1,10 @@
 import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
 import {blocks, defaultFunctionsFlavors} from '../../constants.js'
-import {schema, path, error, system, environment} from '@shopify/cli-kit'
+import {schema, path, error, environment} from '@shopify/cli-kit'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {constantize} from '@shopify/cli-kit/common/string'
+import {exec} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 
 // Base config type that all config schemas must extend
@@ -105,7 +106,7 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
     }
     const buildCommandComponents = buildCommand.split(' ')
     stdout.write(`Building function ${this.localIdentifier}...`)
-    await system.exec(buildCommandComponents[0]!, buildCommandComponents.slice(1), {
+    await exec(buildCommandComponents[0]!, buildCommandComponents.slice(1), {
       stdout,
       stderr,
       cwd: this.directory,

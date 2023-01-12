@@ -1,5 +1,6 @@
-import {path, error, system, file, output} from '@shopify/cli-kit'
+import {path, error, file, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
+import {exec} from '@shopify/cli-kit/node/system'
 import {fileURLToPath} from 'url'
 
 interface PreviewOptions {
@@ -27,14 +28,14 @@ export async function previewInNode({directory, port}: PreviewOptions) {
       )} to create one.`,
     )
 
-    await system.exec('yarn', ['shopify', 'hydrogen', 'build', '--target=node'], {
+    await exec('yarn', ['shopify', 'hydrogen', 'build', '--target=node'], {
       cwd: directory,
       stdout: process.stdout,
       stderr: process.stderr,
     })
   }
 
-  await system.exec('node', ['--enable-source-maps', buildOutputPath], {
+  await exec('node', ['--enable-source-maps', buildOutputPath], {
     env: {PORT: `${port}`},
     cwd: directory,
     stdout: process.stdout,
@@ -74,7 +75,7 @@ export async function previewInWorker({directory, port, envPath}: PreviewOptions
 
   const executable = await oxygenPreviewExecutable()
 
-  await system.exec(executable, [], {
+  await exec(executable, [], {
     env: {NODE_OPTIONS: '--experimental-vm-modules'},
     cwd: directory,
     stdout: process.stdout,
