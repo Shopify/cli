@@ -21,6 +21,7 @@ enum PromptState {
   Idle = 'idle',
   Loading = 'loading',
   Submitted = 'submitted',
+  Error = 'error',
 }
 
 function AutocompletePrompt<T>({
@@ -90,11 +91,13 @@ function AutocompletePrompt<T>({
           })
 
           setSearchResults(items)
+          setPromptState(PromptState.Idle)
         })
-        .catch(() => {})
+        .catch(() => {
+          setPromptState(PromptState.Error)
+        })
         .finally(() => {
           clearTimeout(setLoadingWhenSlow.current!)
-          setPromptState(PromptState.Idle)
         })
     }, 300),
     [],
@@ -130,6 +133,7 @@ function AutocompletePrompt<T>({
           </Box>
         )}
       </Box>
+
       {infoTable && promptState !== PromptState.Submitted && (
         <Box marginLeft={7} marginTop={1}>
           <Table table={infoTable} />
@@ -149,6 +153,12 @@ function AutocompletePrompt<T>({
       {promptState === PromptState.Loading && (
         <Box marginTop={1} marginLeft={3}>
           <Text dimColor>Loading...</Text>
+        </Box>
+      )}
+
+      {promptState === PromptState.Error && (
+        <Box marginTop={1} marginLeft={3}>
+          <Text color="red">There has been an error while searching. Please try again later.</Text>
         </Box>
       )}
 
