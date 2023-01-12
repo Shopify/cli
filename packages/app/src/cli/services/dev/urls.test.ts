@@ -9,28 +9,26 @@ import {
   validatePartnersURLs,
 } from './urls.js'
 import {testApp} from '../../models/app/app.test-data.js'
+import {UpdateURLsQuery} from '../../api/graphql/update_urls.js'
+import {GetURLsQuery} from '../../api/graphql/get_urls.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {api, environment, error, outputMocker, plugins, store, ui} from '@shopify/cli-kit'
+import {environment, error, outputMocker, plugins, store, ui} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/tcp')
   vi.mocked(getAvailableTCPPort).mockResolvedValue(3042)
+  vi.mock('@shopify/cli-kit/node/api/partners')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
       ...cliKit,
       session: {
         ensureAuthenticatedPartners: async () => 'token',
-      },
-      api: {
-        partners: {
-          request: vi.fn(),
-        },
-        graphql: cliKit.api.graphql,
       },
       plugins: {
         lookupTunnelPlugin: vi.fn(),
@@ -126,7 +124,7 @@ describe('generateURL', () => {
 describe('updateURLs', () => {
   it('sends a request to update the URLs', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValueOnce({appUpdate: {userErrors: []}})
+    vi.mocked(partnersRequest).mockResolvedValueOnce({appUpdate: {userErrors: []}})
     const urls = {
       applicationUrl: 'https://example.com',
       redirectUrlWhitelist: [
@@ -144,12 +142,12 @@ describe('updateURLs', () => {
     await updateURLs(urls, 'apiKey', 'token')
 
     // Then
-    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.UpdateURLsQuery, 'token', expectedVariables)
+    expect(partnersRequest).toHaveBeenCalledWith(UpdateURLsQuery, 'token', expectedVariables)
   })
 
   it('throws an error if requests has a user error', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValueOnce({appUpdate: {userErrors: [{message: 'Boom!'}]}})
+    vi.mocked(partnersRequest).mockResolvedValueOnce({appUpdate: {userErrors: [{message: 'Boom!'}]}})
     const urls = {
       applicationUrl: 'https://example.com',
       redirectUrlWhitelist: [],
@@ -166,7 +164,7 @@ describe('updateURLs', () => {
 describe('getURLs', () => {
   it('sends a request to get the URLs', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValueOnce({
+    vi.mocked(partnersRequest).mockResolvedValueOnce({
       app: {applicationUrl: 'https://example.com', redirectUrlWhitelist: []},
     })
     const expectedVariables = {apiKey: 'apiKey'}
@@ -175,7 +173,7 @@ describe('getURLs', () => {
     await getURLs('apiKey', 'token')
 
     // Then
-    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.GetURLsQuery, 'token', expectedVariables)
+    expect(partnersRequest).toHaveBeenCalledWith(GetURLsQuery, 'token', expectedVariables)
   })
 })
 

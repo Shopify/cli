@@ -3,7 +3,8 @@ import {fetchAllDevStores} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {api, environment} from '@shopify/cli-kit'
+import {environment} from '@shopify/cli-kit'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
 const STORE1: OrganizationStore = {
@@ -36,6 +37,7 @@ const STORE3: OrganizationStore = {
 beforeEach(() => {
   vi.mock('../../prompts/dev')
   vi.mock('./fetch')
+  vi.mock('@shopify/cli-kit/node/api/partners')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
@@ -45,12 +47,6 @@ beforeEach(() => {
       },
       http: {
         fetch: vi.fn(),
-      },
-      api: {
-        partners: {
-          request: vi.fn(),
-        },
-        graphql: cliKit.api.graphql,
       },
       system: {
         sleep: vi.fn(),
@@ -87,7 +83,7 @@ describe('selectStore', async () => {
   it('prompts user to convert store to non-transferable if selection is invalid', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
-    vi.mocked(api.partners.request).mockResolvedValueOnce({convertDevToTestStore: {convertedToTestStore: true}})
+    vi.mocked(partnersRequest).mockResolvedValueOnce({convertDevToTestStore: {convertedToTestStore: true}})
 
     // When
     const got = await selectStore([STORE1, STORE2], ORG1, 'token')
@@ -108,7 +104,7 @@ describe('selectStore', async () => {
 
     // Then
     expect(got).toEqual(STORE2)
-    expect(api.partners.request).not.toHaveBeenCalledWith({
+    expect(partnersRequest).not.toHaveBeenCalledWith({
       input: {
         organizationID: parseInt(ORG1.id, 10),
         shopId: STORE2.shopId,

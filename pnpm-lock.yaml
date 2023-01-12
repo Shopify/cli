@@ -135,9 +135,9 @@ importers:
     specifiers:
       '@shopify/admin-ui-extensions': 1.0.1
       '@shopify/admin-ui-extensions-react': 1.0.1
-      '@shopify/app': 3.32.0
-      '@shopify/checkout-ui-extensions-react': ^0.21.2
-      '@shopify/cli': 3.32.0
+      '@shopify/app': 3.32.1
+      '@shopify/checkout-ui-extensions-react': ^0.22.0
+      '@shopify/cli': 3.32.1
       '@shopify/customer-account-ui-extensions-react': ^0.0.8
       '@shopify/post-purchase-ui-extensions': ^0.13.3
       '@shopify/post-purchase-ui-extensions-react': ^0.13.3
@@ -148,7 +148,7 @@ importers:
       '@shopify/admin-ui-extensions': 1.0.1
       '@shopify/admin-ui-extensions-react': 1.0.1_react@17.0.2
       '@shopify/app': link:../../packages/app
-      '@shopify/checkout-ui-extensions-react': 0.21.2_react@17.0.2
+      '@shopify/checkout-ui-extensions-react': 0.22.0_react@17.0.2
       '@shopify/cli': link:../../packages/cli
       '@shopify/customer-account-ui-extensions-react': 0.0.8_react@17.0.2
       '@shopify/post-purchase-ui-extensions': 0.13.3
@@ -225,7 +225,7 @@ importers:
     specifiers:
       '@luckycatfactory/esbuild-graphql-loader': 3.7.0
       '@oclif/core': 1.21.0
-      '@shopify/cli-kit': 3.32.0
+      '@shopify/cli-kit': 3.32.1
       '@shopify/shopify-cli-extensions': 3.21.0
       '@types/diff': ^5.0.2
       '@types/http-proxy': ^1.17.9
@@ -238,6 +238,7 @@ importers:
       diff: 5.1.0
       esbuild: 0.15.7
       graphql: ^16.0.0
+      graphql-request: 4.3.0
       graphql-tag: ^2.11.0
       http-proxy: 1.18.1
       serve-static: 1.15.0
@@ -253,6 +254,7 @@ importers:
       chokidar: 3.5.3
       diff: 5.1.0
       esbuild: 0.15.7
+      graphql-request: 4.3.0_graphql@16.6.0
       http-proxy: 1.18.1
       serve-static: 1.15.0
       ws: 8.8.1
@@ -274,11 +276,11 @@ importers:
       '@oclif/plugin-commands': 2.2.0
       '@oclif/plugin-help': 5.1.12
       '@oclif/plugin-plugins': 2.1.0
-      '@shopify/app': 3.32.0
-      '@shopify/cli-hydrogen': 3.32.0
-      '@shopify/cli-kit': 3.32.0
-      '@shopify/plugin-ngrok': 3.32.0
-      '@shopify/theme': 3.32.0
+      '@shopify/app': 3.32.1
+      '@shopify/cli-hydrogen': 3.32.1
+      '@shopify/cli-kit': 3.32.1
+      '@shopify/plugin-ngrok': 3.32.1
+      '@shopify/theme': 3.32.1
       '@types/node': 14.17.0
       '@vitest/coverage-istanbul': ^0.26.3
       vite: 2.9.12
@@ -302,7 +304,7 @@ importers:
   packages/cli-hydrogen:
     specifiers:
       '@oclif/core': 1.21.0
-      '@shopify/cli-kit': 3.32.0
+      '@shopify/cli-kit': 3.32.1
       '@shopify/hydrogen': 0.26.0
       '@shopify/mini-oxygen': 0.2.0
       '@shopify/prettier-config': 1.1.2
@@ -397,7 +399,6 @@ importers:
       lodash: 4.17.21
       log-update: 4.0.0
       macaddress: 0.5.3
-      md5-file: 5.0.0
       node-abort-controller: 3.0.1
       node-fetch: 3.2.4
       node-stream-zip: ^1.15.0
@@ -463,7 +464,6 @@ importers:
       lodash: 4.17.21
       log-update: 4.0.0
       macaddress: 0.5.3
-      md5-file: 5.0.0
       node-abort-controller: 3.0.1
       node-fetch: 3.2.4
       open: 8.4.0
@@ -502,7 +502,7 @@ importers:
   packages/create-app:
     specifiers:
       '@oclif/core': 1.21.0
-      '@shopify/cli-kit': 3.32.0
+      '@shopify/cli-kit': 3.32.1
       '@types/node': 14.17.0
       vite: 2.9.12
       vitest: ^0.26.3
@@ -517,7 +517,7 @@ importers:
   packages/create-hydrogen:
     specifiers:
       '@oclif/core': 1.21.0
-      '@shopify/cli-kit': 3.32.0
+      '@shopify/cli-kit': 3.32.1
       '@types/download': 8.0.0
       '@types/node': 14.17.0
       download: 8.0.0
@@ -566,7 +566,7 @@ importers:
   packages/plugin-ngrok:
     specifiers:
       '@oclif/core': 1.21.0
-      '@shopify/cli-kit': 3.32.0
+      '@shopify/cli-kit': 3.32.1
       '@shopify/ngrok': 4.3.2
       '@types/node': 14.17.0
       vite: 2.9.12
@@ -583,7 +583,7 @@ importers:
   packages/theme:
     specifiers:
       '@oclif/core': 1.21.0
-      '@shopify/cli-kit': 3.32.0
+      '@shopify/cli-kit': 3.32.1
       '@types/node': 14.17.0
       vite: 2.9.12
       vitest: ^0.26.3
@@ -712,11 +712,15 @@ importers:
       execa: ^6.0.0
       fast-glob: ^3.2.11
       pathe: ^0.2.0
+      simple-git: 3.5.0
+      tempy: 3.0.0
     devDependencies:
       '@actions/core': 1.10.0
       execa: 6.1.0
       fast-glob: 3.2.12
       pathe: 0.2.0
+      simple-git: 3.5.0
+      tempy: 3.0.0
 
 packages:
 
@@ -2593,11 +2597,9 @@ packages:
       debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
-    dev: false
 
   /@kwsites/promise-deferred/1.1.1:
     resolution: {integrity: sha512-GaHYm+c0O9MjZRu0ongGBRbinu8gVAMd2UZjji6jVmqKtZluZnptXGWhz1E8j8D2HJ3f/yMxKAUC0b+57wncIw==}
-    dev: false
 
   /@luckycatfactory/esbuild-graphql-loader/3.7.0_kch4gnksbukf3l4unj7iuquebq:
     resolution: {integrity: sha512-5IMQvIa2bCMASsdAsY+5xeLWCWULE6HBw5TeA7lsdfBUTs1qFuXbdvxnZhxLxiF8x7biokjCWKzb2WWNa1wthQ==}
@@ -3636,14 +3638,14 @@ packages:
       react: 17.0.2
     dev: false
 
-  /@shopify/checkout-ui-extensions-react/0.21.2_react@17.0.2:
-    resolution: {integrity: sha512-fYC1WZBpgzhWXfVurA+Ih+6uQ+roXnhVzc1TJqPZTtGRcyD51BxI+iaXB7WIgRlKzLvDMoXWnr91mM1kbG9qEg==}
+  /@shopify/checkout-ui-extensions-react/0.22.0_react@17.0.2:
+    resolution: {integrity: sha512-CQhi2SerTXvmRkicy+xaLqkd2ZO6uyD634aiabDsWsy67+OzF82u0GQMahOUpDvkfw4p+zEAO8CkeEKjlVzqXg==}
     peerDependencies:
       react: '>=17.0.0 <18.0.0'
     dependencies:
       '@remote-ui/async-subscription': 2.1.13
       '@remote-ui/react': 4.5.13_react@17.0.2
-      '@shopify/checkout-ui-extensions': 0.21.1
+      '@shopify/checkout-ui-extensions': 0.22.0
       '@types/react': 16.14.0
       react: 17.0.2
     dev: false
@@ -3655,8 +3657,8 @@ packages:
       '@remote-ui/core': 2.1.16
     dev: false
 
-  /@shopify/checkout-ui-extensions/0.21.1:
-    resolution: {integrity: sha512-Py6xOwKBaaISXhDvSlvYfkeRGn8Gtbap0//BnxHplIkPxjEyZEY7pc57a5tSYH61RHlCxF7/USAeu74PuxrTiA==}
+  /@shopify/checkout-ui-extensions/0.22.0:
+    resolution: {integrity: sha512-E2zp88WSnCM+Z6FfzKNa4VF5hfl4zC469rx5dNaAx/oyccPC9Ol0WGgcUeFRgSRHe9FyPo25p35Mw4lFcmWCuA==}
     dependencies:
       '@remote-ui/async-subscription': 2.1.13
       '@remote-ui/core': 2.1.16
@@ -10673,12 +10675,6 @@ packages:
       remove-accents: 0.4.2
     dev: false
 
-  /md5-file/5.0.0:
-    resolution: {integrity: sha512-xbEFXCYVWrSx/gEKS1VPlg84h/4L20znVIulKw6kMfmBUAZNAnF00eczz9ICMl+/hjQGo5KSXRxbL/47X3rmMw==}
-    engines: {node: '>=10.13.0'}
-    hasBin: true
-    dev: false
-
   /media-typer/0.3.0:
     resolution: {integrity: sha1-hxDXrwqmJvj/+hzgAWhUUmMlV0g=}
     engines: {node: '>= 0.6'}
@@ -13314,7 +13310,6 @@ packages:
       debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
-    dev: false
 
   /simple-update-notifier/1.1.0:
     resolution: {integrity: sha512-VpsrsJSUcJEseSbMHkrsrAVSdvVS5I96Qo1QAQ4FxQ9wXFcB+pjj7FB7/us9+GcgfW4ziHtYMc1J0PLczb55mg==}

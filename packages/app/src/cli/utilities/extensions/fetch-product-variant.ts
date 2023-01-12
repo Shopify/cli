@@ -1,4 +1,6 @@
-import {api, error, session} from '@shopify/cli-kit'
+import {FindProductVariantQuery, FindProductVariantSchema} from '../../api/graphql/get_variant_id.js'
+import {error, session} from '@shopify/cli-kit'
+import {adminRequest} from '@shopify/cli-kit/node/api/admin'
 
 /**
  * Retrieve the first variant of the first product of the given store
@@ -7,8 +9,7 @@ import {api, error, session} from '@shopify/cli-kit'
  */
 export async function fetchProductVariant(store: string) {
   const adminSession = await session.ensureAuthenticatedAdmin(store)
-  const query = api.graphql.FindProductVariantQuery
-  const result: api.graphql.FindProductVariantSchema = await api.admin.request(query, adminSession)
+  const result: FindProductVariantSchema = await adminRequest(FindProductVariantQuery, adminSession)
   const products = result.products.edges
   if (products.length === 0)
     throw new error.Abort(

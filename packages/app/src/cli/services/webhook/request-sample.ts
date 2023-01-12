@@ -1,4 +1,5 @@
-import {api, session} from '@shopify/cli-kit'
+import {session} from '@shopify/cli-kit'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export interface SamplePayloadSchema {
   sendSampleWebhook: {
@@ -58,7 +59,7 @@ export async function getWebhookSample(
     shared_secret: sharedSecret,
   }
 
-  const {sendSampleWebhook: result}: SamplePayloadSchema = await api.partners.request(
+  const {sendSampleWebhook: result}: SamplePayloadSchema = await partnersRequest(
     sendSampleWebhookMutation,
     token,
     variables,

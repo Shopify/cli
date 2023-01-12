@@ -1,26 +1,15 @@
 import {fetchSpecifications} from './fetch-extension-specifications.js'
 import {testRemoteSpecifications} from '../../models/app/app.test-data.js'
 import {describe, expect, it, vi} from 'vitest'
-import {api} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
-vi.mock('@shopify/cli-kit', async () => {
-  const cliKit: any = await vi.importActual('@shopify/cli-kit')
-  return {
-    ...cliKit,
-    api: {
-      partners: {
-        request: vi.fn(),
-      },
-      graphql: cliKit.api.graphql,
-    },
-  }
-})
+vi.mock('@shopify/cli-kit/node/api/partners')
 
 describe('fetchExtensionSpecifications', () => {
   it('returns the filtered and mapped results including theme and functions', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValue({extensionSpecifications: testRemoteSpecifications})
+    vi.mocked(partnersRequest).mockResolvedValue({extensionSpecifications: testRemoteSpecifications})
 
     // When
     const got = await fetchSpecifications({token: 'token', apiKey: 'apiKey', config: new Config({root: ''})})

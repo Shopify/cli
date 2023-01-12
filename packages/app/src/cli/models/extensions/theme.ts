@@ -1,7 +1,8 @@
 import {ThemeExtensionSchema, ZodSchemaType} from './schemas.js'
 import {loadThemeSpecifications} from './specifications.js'
 import {GenericSpecification, ThemeExtension} from '../app/extensions.js'
-import {path, schema, api, output, environment} from '@shopify/cli-kit'
+import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
+import {path, schema, output, environment} from '@shopify/cli-kit'
 import {constantize} from '@shopify/cli-kit/common/string'
 
 // Base config type for a theme extension.
@@ -38,7 +39,7 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
   specification: ThemeExtensionSpec
   outputBundlePath: string
 
-  private remoteSpecification?: api.graphql.RemoteSpecification
+  private remoteSpecification?: RemoteSpecification
 
   get graphQLType() {
     return this.specification.graphQLType.toUpperCase()
@@ -68,7 +69,7 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
     configuration: TConfiguration
     configurationPath: string
     directory: string
-    remoteSpecification?: api.graphql.RemoteSpecification
+    remoteSpecification?: RemoteSpecification
     specification: ThemeExtensionSpec
     outputBundlePath: string
   }) {

@@ -204,8 +204,8 @@ export function renderFatalError(error: Fatal) {
 
  *     navigate with arrows, enter to select
  */
-export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit'>) {
-  return new Promise<T>((resolve, reject) => {
+export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit'>): Promise<T> {
+  return new Promise((resolve, reject) => {
     render(<SelectPrompt {...props} onSubmit={(value: T) => resolve(value)} />, {
       exitOnCtrlC: false,
     }).catch(reject)

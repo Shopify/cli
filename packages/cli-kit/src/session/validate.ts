@@ -1,8 +1,8 @@
 import {applicationId} from './identity.js'
 import {ApplicationToken, IdentityToken} from './schema.js'
+import {validateIdentityToken} from './identity-token-validation.js'
 import constants from '../constants.js'
 import {OAuthApplications} from '../session.js'
-import {identity} from '../api.js'
 import {debug} from '../output.js'
 import {firstPartyDev} from '../environment/local.js'
 
@@ -34,7 +34,7 @@ export async function validateSession(
 ): Promise<ValidationResult> {
   if (!session) return 'needs_full_auth'
   const scopesAreValid = validateScopes(scopes, session.identity)
-  const identityIsValid = await identity.validateIdentityToken(session.identity.accessToken)
+  const identityIsValid = await validateIdentityToken(session.identity.accessToken)
   if (!scopesAreValid) return 'needs_full_auth'
   let tokensAreExpired = isTokenExpired(session.identity)
 
