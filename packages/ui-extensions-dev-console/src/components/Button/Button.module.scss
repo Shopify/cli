@@ -2,9 +2,10 @@
   all: unset;
 
   padding: 0.3rem 0.8rem;
-  line-height: 2rem;
 
+  line-height: 2rem;
   font-family: var(--dc-font-pro);
+  font-weight: var(--dc-font-weight-500);
 
   background: var(--dc-color-grey-700);
   border-radius: var(--dc-border-radius);
