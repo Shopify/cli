@@ -78,10 +78,12 @@ export async function exec(command: string, args: string[], options?: ExecOption
 }
 
 /**
+ * Runs a command asynchronously.
  *
- * @param command
- * @param args
- * @param options
+ * @param command - Command to be executed.
+ * @param args - Arguments to pass to the command.
+ * @param options - Optional settings for how to run the command.
+ * @returns A promise for a result with stdout and stderr properties.
  */
 function buildExec(command: string, args: string[], options?: ExecOptions): ExecaChildProcess<string> {
   const env = options?.env ?? process.env

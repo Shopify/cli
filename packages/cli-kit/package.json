@@ -73,7 +73,7 @@
                 "../../environment/utilities.js",
                 "../../constants.js",
                 "../../path.js",
-                "../../system.js"
+                "./system.js"
               ],
               "static": []
             }
