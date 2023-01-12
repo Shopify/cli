@@ -52,7 +52,8 @@
     "graphql-request": "4.3.0",
     "http-proxy": "1.18.1",
     "serve-static": "1.15.0",
-    "ws": "8.8.1"
+    "ws": "8.8.1",
+    "@shopify/plugin-ngrok": "3.32.1"
   },
   "devDependencies": {
     "@types/diff": "^5.0.2",
@@ -84,6 +85,9 @@
     "hooks": {
       "public_command_metadata": "./dist/cli/hooks/public_metadata",
       "sensitive_command_metadata": "./dist/cli/hooks/sensitive_metadata"
-    }
+    },
+    "plugins": [
+      "@shopify/plugin-ngrok"
+    ]
   }
 }

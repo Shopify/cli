@@ -97,8 +97,7 @@
     "@oclif/plugin-commands": "2.2.0",
     "@oclif/plugin-help": "5.1.12",
     "@oclif/plugin-plugins": "2.1.0",
-    "@shopify/cli-kit": "3.32.1",
-    "@shopify/plugin-ngrok": "3.32.1"
+    "@shopify/cli-kit": "3.32.1"
   },
   "devDependencies": {
     "@shopify/app": "3.32.1",
@@ -130,7 +129,6 @@
       "@shopify/theme",
       "@shopify/cli-hydrogen",
       "@oclif/plugin-help",
-      "@shopify/plugin-ngrok",
       "@oclif/plugin-plugins",
       "@oclif/plugin-commands"
     ],
