@@ -2,7 +2,7 @@ import {validateSession} from './validate.js'
 import {validateIdentityToken} from './identity-token-validation.js'
 import {applicationId} from './identity.js'
 import {IdentityToken} from './schema.js'
-import {OAuthApplications} from '../../../public/node/session.js'
+import {OAuthApplications} from '../session.js'
 import {expect, describe, it, vi, afterAll, beforeEach} from 'vitest'
 
 const pastDate = new Date(2022, 1, 1, 9)
