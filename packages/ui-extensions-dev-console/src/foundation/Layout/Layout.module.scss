@@ -1,11 +1,10 @@
 .OuterContainer {
   height: 100vh;
-  background: var(--dc-color-background);
+  background: var(--dc-color-grey-900);
   overflow: hidden;
 }
 
 .DevTool {
-  position: relative;
   display: flex;
   gap: 1.3rem;
   flex-direction: column;
@@ -18,7 +17,12 @@
   overflow: hidden;
 
   a {
-    color: var(--dc-color-link);
+    color: var(--dc-color-blue-400);
+  }
+
+  a:hover,
+  a:focus {
+    color: var(--dc-color-blue-500);
   }
 
   h1 {
@@ -41,7 +45,7 @@
   display: flex;
   justify-content: space-between;
   padding: 1.5rem 1.5rem 1rem;
-  background: var(--dc-color-black);
+  background: var(--dc-color-grey-800);
 
   svg {
     fill: var(--dc-color-white);
@@ -52,3 +56,4 @@
     height: auto;
   }
 }
+

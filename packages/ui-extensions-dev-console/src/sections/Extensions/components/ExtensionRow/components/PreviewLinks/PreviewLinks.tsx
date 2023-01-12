@@ -11,7 +11,7 @@ export interface Props {
 
 export function PreviewLinks({extension}: Props) {
   const [i18n] = useI18n({
-    id: 'PreviewLink',
+    id: 'PreviewLinks',
     fallback: en,
   })
 
@@ -31,7 +31,7 @@ export function PreviewLinks({extension}: Props) {
 
             const {root, target} = extensionPoint
 
-            return <PreviewLink url={root.url} title={target} />
+            return <PreviewLink url={root.url} title={target} key={target} />
           })}
         </span>
       </>

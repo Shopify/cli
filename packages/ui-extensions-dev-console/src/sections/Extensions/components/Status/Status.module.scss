@@ -1,22 +1,28 @@
-.Title {
-  font-weight: var(--dc-font-weight-subdued);
+.Status {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  white-space: nowrap;
+  color: var(--dc-color-grey-400)
 }
 
-.Status {
-  font-size: 13px;
-  border-radius: var(--dc-border-radius);
-  padding: 0.25rem 1rem 0.5rem;
-  white-space: nowrap;
+.success,
+.disconnected,
+.error {
+  display: inline-block;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
 }
 
 .success {
-  background: var(--dc-color-success);
+  background: var(--dc-color-green);
 }
 
 .disconnected {
-  background: var(--dc-color-warning);
+  background: var(--dc-color-red);
 }
 
 .error {
-  background: var(--dc-color-error);
+  background: var(--dc-color-red);
 }
