@@ -1,7 +1,8 @@
 .Header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   flex-shrink: 0;
+  height: 6.2rem;
   padding: 2rem 2rem 1.8rem 2rem;
   border-bottom: 1px solid var(--dc-color-grey-600);
 }

@@ -1,6 +1,8 @@
 
 .Intro {
-  padding: 0.6rem 1.5rem 1.8rem;
+  height: 5.6rem;
+  padding: 2.2rem 1.8rem 1.5rem;
+  line-height: 1.6rem;
   font-family: var(--dc-font-pro);
   color: 1px solid var(--dc-color-grey-100);
 }
@@ -15,18 +17,6 @@
     width: 100%;
     border-collapse: collapse;
     border-top: 1px solid var(--dc-color-grey-600);
-  }
-
-  tr {
-    line-height: 3rem;
-  }
-
-  th {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    padding: 0.8rem 1.5rem;
-    font-weight: normal;
   }
 
   svg {

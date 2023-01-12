@@ -1,15 +1,18 @@
 .Instructions {
    display: grid;
-   gap: 1.2rem;
-   margin: 0.6rem 0;
-   padding-right: 2rem;
-   padding-left: 2rem;
+   gap: 2.6rem;
+   margin: 0;
+   padding: 0 2rem;
+   line-height: 1.5rem;
 }
 
 .UrlContainer {
-   display:flex;
-   padding: 0.6rem 0 0.4rem;
+   display: flex;
+   gap: 0.4rem;
+   color: var(--dc-color-grey-400);
+   padding: 1.2rem 0 0;
    align-items: top;
+   line-height: 2.4rem;
 
    .CopyButton {
       width:24px;

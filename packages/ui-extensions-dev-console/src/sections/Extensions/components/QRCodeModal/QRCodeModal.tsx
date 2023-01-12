@@ -78,10 +78,11 @@ export function QRCodeContent({url, title, type}: Code) {
 
   return (
     <div className={styles.Wrapper}>
-      <span>
+      <span className={styles.LeftColumn}>
         <span className={styles.QRCode}>
-          <QRCode value={qrCodeURL} />
+          <QRCode value={qrCodeURL} size={170} />
         </span>
+        Scan with your phone camera to see your work.
       </span>
       <span className={styles.RightColumn}>
         <p>{i18n.translate('qrcode.content', {title})}</p>

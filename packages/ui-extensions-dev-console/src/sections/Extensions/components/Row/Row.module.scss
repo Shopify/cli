@@ -1,8 +1,14 @@
 .Row {
   border-bottom: 1px solid var(--dc-color-grey-600);
 
+  th {
+    padding: 1.2rem 1.8rem;
+    line-height: 1.6rem;
+    font-weight: normal;
+  }
+
   td {
-    padding: 0.8rem 1.5rem;
+    padding: 1.6rem 1.8rem 1.5rem;
     vertical-align: top;
   }
 }
