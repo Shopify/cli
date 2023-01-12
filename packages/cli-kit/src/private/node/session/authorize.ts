@@ -1,4 +1,3 @@
-// import {listenRedirect} from './redirect-listener.js'
 import {clientId} from './identity.js'
 import {listenRedirect} from './redirect-listener.js'
 import {base64URLEncode, randomBytes, randomHex, sha256} from '../../../public/node/crypto.js'
