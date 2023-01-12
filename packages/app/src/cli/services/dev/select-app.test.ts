@@ -101,7 +101,7 @@ describe('createApp', () => {
 describe('selectOrCreateApp', () => {
   it('prompts user to select', async () => {
     // Given
-    vi.mocked(selectAppPrompt).mockResolvedValueOnce(APP1)
+    vi.mocked(selectAppPrompt).mockResolvedValueOnce(APP1.apiKey)
     vi.mocked(createAsNewAppPrompt).mockResolvedValue(false)
     vi.mocked(partnersRequest).mockResolvedValueOnce({app: APP1})
 
