@@ -2,6 +2,8 @@ import {AdminSession} from '../session.js'
 import {content, token as outputToken} from '../../../output.js'
 import {Bug, Abort} from '../../../error.js'
 import {graphqlRequest, GraphQLVariables} from '../../../private/node/api/graphql.js'
+import {restRequestBody, restRequestHeaders, restRequestUrl} from '../../../private/node/api/rest.js'
+import fetch from '../../../http/fetch.js'
 import {ClientError, gql} from 'graphql-request'
 
 /**
@@ -81,4 +83,62 @@ function apiVersionQuery(): string {
       }
     }
   `
+}
+
+/**
+ * Executes a REST request against the Admin API.
+ *
+ * @param method - Request's HTTP method.
+ * @param path - Path of the REST resource.
+ * @param session - Shopify Admin session including token and Store FQDN.
+ * @param requestBody - Request body of including REST resource specific parameters.
+ * @param apiVersion - Admin API version.
+ * @returns - The {@link RestResponse}.
+ */
+export async function restRequest<T>(
+  method: string,
+  path: string,
+  session: AdminSession,
+  requestBody?: T,
+  apiVersion = 'unstable',
+): Promise<RestResponse> {
+  const url = restRequestUrl(session, apiVersion, path)
+  const body = restRequestBody<T>(requestBody)
+
+  const headers = await restRequestHeaders(session)
+  const response = await fetch(url, {
+    headers,
+    method,
+    body,
+  })
+
+  const json = await response.json().catch(() => ({}))
+
+  return {
+    json,
+    status: response.status,
+    headers: response.headers.raw(),
+  }
+}
+
+/**
+ * Respose of a REST request.
+ */
+export interface RestResponse {
+  /**
+   * REST JSON respose.
+   */
+  // Using `any` to avoid introducing extra DTO layers.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  json: any
+
+  /**
+   * HTTP response status.
+   */
+  status: number
+
+  /**
+   * HTTP response headers.
+   */
+  headers: {[key: string]: string[]}
 }

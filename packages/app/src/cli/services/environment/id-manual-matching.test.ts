@@ -115,8 +115,8 @@ beforeEach(() => {
   })
 })
 
-describe('manualMatch: when all extensions are matched', () => {
-  it('suceeds and returns IDs', async () => {
+describe('manualMatch: when all sources are matched', () => {
+  it('returns IDs', async () => {
     // Given
     vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'UUID_A'})
     vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'UUID_A_2'})
@@ -129,16 +129,16 @@ describe('manualMatch: when all extensions are matched', () => {
 
     // Then
     const expected: ManualMatchResult = {
-      result: 'ok',
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
       toCreate: [],
+      onlyRemote: [],
     }
     expect(got).toEqual(expected)
   })
 })
 
-describe('manualMatch: when there are more local extensions', () => {
-  it('suceeds and returns IDs and some extensions pending creation', async () => {
+describe('manualMatch: when there are more local sources', () => {
+  it('returns IDs and some sources pending creation', async () => {
     // Given
     vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'UUID_A'})
 
@@ -147,16 +147,16 @@ describe('manualMatch: when there are more local extensions', () => {
 
     // Then
     const expected: ManualMatchResult = {
-      result: 'ok',
       identifiers: {EXTENSION_A: 'UUID_A'},
       toCreate: [EXTENSION_A_2],
+      onlyRemote: [],
     }
     expect(got).toEqual(expected)
   })
 })
 
-describe('manualMatch: when there are more local extensions and user selects to create', () => {
-  it('suceeds and returns IDs and some extensions pending creation', async () => {
+describe('manualMatch: when there are more local sources and user selects to create', () => {
+  it('returns IDs and some sources pending creation', async () => {
     // Given
     vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'UUID_A'})
     vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'create'})
@@ -173,16 +173,16 @@ describe('manualMatch: when there are more local extensions and user selects to 
 
     // Then
     const expected: ManualMatchResult = {
-      result: 'ok',
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_B: 'UUID_A_2'},
       toCreate: [EXTENSION_A_2],
+      onlyRemote: [],
     }
     expect(got).toEqual(expected)
   })
 })
 
-describe('manualMatch: when not all remote extensions are matched', () => {
-  it('returns a pending-remote error', async () => {
+describe('manualMatch: when not all remote sources are matched', () => {
+  it('returns matched IDs and only remote sources', async () => {
     // Given
     vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'create'})
     vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'create'})
@@ -198,7 +198,11 @@ describe('manualMatch: when not all remote extensions are matched', () => {
     )
 
     // Then
-    const expected: ManualMatchResult = {result: 'pending-remote'}
+    const expected: ManualMatchResult = {
+      identifiers: {},
+      toCreate: [EXTENSION_A, EXTENSION_A_2, EXTENSION_B],
+      onlyRemote: [REGISTRATION_A, REGISTRATION_A_2],
+    }
     expect(got).toEqual(expected)
   })
 })

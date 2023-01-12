@@ -2,13 +2,11 @@ import {selectRemoteSourcePrompt} from './prompts.js'
 import {LocalSource, RemoteSource} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 
-export type ManualMatchResult =
-  | {
-      result: 'ok'
-      identifiers: IdentifiersExtensions
-      toCreate: LocalSource[]
-    }
-  | {result: 'pending-remote'}
+export interface ManualMatchResult {
+  identifiers: IdentifiersExtensions
+  toCreate: LocalSource[]
+  onlyRemote: RemoteSource[]
+}
 
 /**
  * Prompt the user to manually match each of the local sources to a remote source.
@@ -47,9 +45,9 @@ export async function manualMatchIds(
     pendingLocal = pendingLocal.filter((local) => local.localIdentifier !== currentLocal.localIdentifier)
   }
 
-  if (pendingRemote.length > 0) {
-    return {result: 'pending-remote'}
-  } else {
-    return {result: 'ok', identifiers, toCreate: pendingLocal}
+  return {
+    identifiers,
+    toCreate: pendingLocal,
+    onlyRemote: pendingRemote,
   }
 }

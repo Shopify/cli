@@ -11,6 +11,7 @@ dependencies:
     - bash -i -c "pnpm install"
 deploy:
   interval: 24h
+  max_commits: null
   override:
     - |-
       bash -i -c 'echo -e "---\n'"'@shopify/cli'"': patch\n---" > .changeset/force-nightly-build.md'
