@@ -1,5 +1,4 @@
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export interface SamplePayloadSchema {
   sendSampleWebhook: {
@@ -35,6 +34,7 @@ const sendSampleWebhookMutation = `
  * In all the other cases, core creates a job that sends the request to Captain-Hook. Captain-Hook will be in
  * charge of delivering the webhook payload to the requested destination.
  *
+ * @param token - Partners session token
  * @param topic - A webhook topic (eg: orders/create)
  * @param apiVersion - Api version for the topic
  * @param deliveryMethod - one of DELIVERY_METHOD
@@ -43,14 +43,13 @@ const sendSampleWebhookMutation = `
  * @returns Empty if a remote delivery was requested, payload data if a local delivery was requested
  */
 export async function getWebhookSample(
+  token: string,
   topic: string,
   apiVersion: string,
   deliveryMethod: string,
   address: string,
   sharedSecret: string,
 ) {
-  const token = await ensureAuthenticatedPartners()
-
   const variables = {
     topic,
     api_version: apiVersion,

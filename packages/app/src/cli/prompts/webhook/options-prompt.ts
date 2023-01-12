@@ -12,7 +12,6 @@ import {
   deliveryMethodForAddress,
   isAddressAllowedForDeliveryMethod,
 } from '../../services/webhook/trigger-options.js'
-import {requestApiVersions} from '../../services/webhook/request-api-versions.js'
 import {error} from '@shopify/cli-kit'
 
 /**
@@ -37,9 +36,13 @@ export interface WebhookTriggerFlags {
  *   needing ngrok
  *
  * @param flags - Flags collected from the command-line arguments
+ * @param availableVersions - Available API Versions
  * @returns flags/prompts transformed into WebhookTriggerOptions to pass to the service
  */
-export async function optionsPrompt(flags: WebhookTriggerFlags): Promise<WebhookTriggerOptions> {
+export async function optionsPrompt(
+  flags: WebhookTriggerFlags,
+  availableVersions: string[],
+): Promise<WebhookTriggerOptions> {
   const options: WebhookTriggerOptions = {
     topic: '',
     apiVersion: '',
@@ -47,8 +50,6 @@ export async function optionsPrompt(flags: WebhookTriggerFlags): Promise<Webhook
     deliveryMethod: '',
     address: '',
   }
-
-  const availableVersions = await requestApiVersions()
 
   const apiVersionPassed = flagPassed(flags.apiVersion)
 

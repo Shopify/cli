@@ -1,7 +1,6 @@
 import {getWebhookSample} from './request-sample.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners.js'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 const samplePayload = '{ "sampleField": "SampleValue" }'
 const sampleHeaders = '{ "header": "Header Value" }'
@@ -16,11 +15,9 @@ afterEach(async () => {
   vi.clearAllMocks()
 })
 
-describe('getWebhookSample', () => {
-  beforeEach(async () => {
-    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('A_TOKEN')
-  })
+const aToken = 'A_TOKEN'
 
+describe('getWebhookSample', () => {
   it('calls partners to request data', async () => {
     // Given
     const inputValues = {
@@ -52,6 +49,7 @@ describe('getWebhookSample', () => {
 
     // When
     const got = await getWebhookSample(
+      aToken,
       inputValues.topic,
       inputValues.apiVersion,
       inputValues.value,
@@ -60,7 +58,6 @@ describe('getWebhookSample', () => {
     )
 
     // Then
-    expect(ensureAuthenticatedPartners).toHaveBeenCalledOnce()
     expect(partnersRequest).toHaveBeenCalledWith(expect.any(String), 'A_TOKEN', requestValues)
     expect(got.samplePayload).toEqual(samplePayload)
     expect(got.headers).toEqual(sampleHeaders)

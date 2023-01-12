@@ -1,4 +1,4 @@
-import {api, session} from '@shopify/cli-kit'
+import {api} from '@shopify/cli-kit'
 
 export interface PublicApiVersionsSchema {
   publicApiVersions: string[]
@@ -10,9 +10,12 @@ const getApiVersionsQuery = `
   }
 `
 
-export async function requestApiVersions() {
-  const token = await session.ensureAuthenticatedPartners()
-
+/**
+ * Requests available api-versions in order to validate flags or present a list of options
+ *
+ * @param token - Partners session token
+ */
+export async function requestApiVersions(token: string) {
   const {publicApiVersions: result}: PublicApiVersionsSchema = await api.partners.request(getApiVersionsQuery, token)
 
   const unstableIdx = result.indexOf('unstable')
