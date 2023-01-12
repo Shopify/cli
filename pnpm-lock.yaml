@@ -226,6 +226,7 @@ importers:
       '@luckycatfactory/esbuild-graphql-loader': 3.7.0
       '@oclif/core': 1.21.0
       '@shopify/cli-kit': 3.32.1
+      '@shopify/plugin-ngrok': 3.32.1
       '@shopify/shopify-cli-extensions': 3.21.0
       '@types/diff': ^5.0.2
       '@types/http-proxy': ^1.17.9
@@ -249,6 +250,7 @@ importers:
       '@luckycatfactory/esbuild-graphql-loader': 3.7.0_t5hz6ir3hkf4yglirnvrkce4ii
       '@oclif/core': 1.21.0
       '@shopify/cli-kit': link:../cli-kit
+      '@shopify/plugin-ngrok': link:../plugin-ngrok
       '@shopify/shopify-cli-extensions': 3.21.0_graphql-tag@2.12.6
       abort-controller: 3.0.0
       chokidar: 3.5.3
@@ -279,7 +281,6 @@ importers:
       '@shopify/app': 3.32.1
       '@shopify/cli-hydrogen': 3.32.1
       '@shopify/cli-kit': 3.32.1
-      '@shopify/plugin-ngrok': 3.32.1
       '@shopify/theme': 3.32.1
       '@types/node': 14.17.0
       '@vitest/coverage-istanbul': ^0.26.3
@@ -291,7 +292,6 @@ importers:
       '@oclif/plugin-help': 5.1.12
       '@oclif/plugin-plugins': 2.1.0
       '@shopify/cli-kit': link:../cli-kit
-      '@shopify/plugin-ngrok': link:../plugin-ngrok
     devDependencies:
       '@shopify/app': link:../app
       '@shopify/cli-hydrogen': link:../cli-hydrogen
