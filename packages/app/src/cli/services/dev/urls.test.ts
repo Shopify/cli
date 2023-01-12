@@ -18,7 +18,7 @@ import {err, ok} from '@shopify/cli-kit/node/result'
 import {AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session.js'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/tcp')

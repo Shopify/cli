@@ -29,7 +29,7 @@ import {open} from '../../system.js'
 import {Abort, Bug} from '../../error.js'
 import {gql} from 'graphql-request'
 
-import {AdminSession} from '@shopify/cli-kit/node/session.js'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 
 /**
  * A scope supported by the Shopify Admin API.

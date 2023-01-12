@@ -6,7 +6,7 @@ import {testApp} from '../../models/app/app.test-data.js'
 import {CreateAppQuery} from '../../api/graphql/create_app.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session.js'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 const LOCAL_APP: AppInterface = testApp({
   directory: '',
