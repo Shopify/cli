@@ -7,6 +7,7 @@ import {renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
+import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
 
 interface InitOptions {
   name: string
@@ -33,7 +34,7 @@ async function init(options: InitOptions) {
     const repoUrl = githubRepo.branch ? `${githubRepo.baseURL}#${githubRepo.branch}` : githubRepo.baseURL
 
     await file.mkdir(templateDownloadDir)
-    let tasks = [
+    const tasks: Task<unknown>[] = [
       {
         title: `Downloading template from ${repoUrl}`,
         task: async () => {
@@ -42,11 +43,12 @@ async function init(options: InitOptions) {
             destination: templateDownloadDir,
             shallow: true,
           })
+          const bar = 2
         },
       },
     ]
 
-    tasks = tasks.concat([
+    tasks.push(
       {
         title: 'Parsing liquid',
         task: async () => {
@@ -73,7 +75,7 @@ async function init(options: InitOptions) {
           }
         },
       },
-    ])
+    )
 
     if (await environment.local.isShopify()) {
       tasks.push({
@@ -86,14 +88,15 @@ async function init(options: InitOptions) {
       })
     }
 
-    tasks = tasks.concat([
+    tasks.push(
       {
-        title: `Installing dependencies with ${packageManager}`,
-        task: async () => {
-          await getDeepInstallNPMTasks({
-            from: templateScaffoldDir,
-            packageManager,
-          })
+        title: 'Installing dependencies',
+        task: async (ctx) => {
+          const promises = await getDeepInstallNPMTasks({from: templateScaffoldDir, packageManager})
+          for (const promise of promises) {
+            // eslint-disable-next-line no-await-in-loop
+            await promise
+          }
         },
       },
       {
@@ -108,7 +111,7 @@ async function init(options: InitOptions) {
           await git.initializeRepository(templateScaffoldDir)
         },
       },
-    ])
+    )
 
     await renderTasks(tasks)
 

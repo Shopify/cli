@@ -1,4 +1,4 @@
-import {path, ui, npm, constants} from '@shopify/cli-kit'
+import {path, npm, constants} from '@shopify/cli-kit'
 import {PackageManager, installNodeModules} from '@shopify/cli-kit/node/node-package-manager'
 import {platform} from 'os'
 
@@ -63,29 +63,31 @@ export async function getDeepInstallNPMTasks({
 }: {
   from: string
   packageManager: PackageManager
-}): Promise<ui.ListrTask[]> {
+}): Promise<Promise<void>[]> {
   const root = path.normalize(from)
   const packageJSONFiles = await path.glob([path.join(root, '**/package.json')])
 
   return packageJSONFiles.map((filePath) => {
     const folderPath = filePath.replace('package.json', '')
-    const titlePath = folderPath.replace(root, '')
 
-    return {
-      title: `Installing dependencies in ${titlePath}`,
-      task: async () => {
-        /**
-         * Installation of dependencies using Yarn on Windows might lead
-         * to "EPERM: operation not permitted, unlink" errors when Yarn tries
-         * to access the cache. By limiting the network concurrency we mitigate the
-         * error:
-         *
-         * Failing scenario: https://github.com/Shopify/cli/runs/7913938724
-         * Reported issue: https://github.com/yarnpkg/yarn/issues/7212
-         */
-        const args = platform() === 'win32' && packageManager === 'yarn' ? ['--network-concurrency', '1'] : []
-        await installNodeModules({directory: folderPath, packageManager, args})
-      },
-    }
+    return new Promise((resolve, reject) => {
+      /**
+       * Installation of dependencies using Yarn on Windows might lead
+       * to "EPERM: operation not permitted, unlink" errors when Yarn tries
+       * to access the cache. By limiting the network concurrency we mitigate the
+       * error:
+       *
+       * Failing scenario: https://github.com/Shopify/cli/runs/7913938724
+       * Reported issue: https://github.com/yarnpkg/yarn/issues/7212
+       */
+      const args = platform() === 'win32' && packageManager === 'yarn' ? ['--network-concurrency', '1'] : []
+      installNodeModules({directory: folderPath, packageManager, args})
+        .then(() => {
+          resolve()
+        })
+        .catch(() => {
+          reject()
+        })
+    })
   })
 }
