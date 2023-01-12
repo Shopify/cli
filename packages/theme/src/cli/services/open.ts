@@ -1,7 +1,8 @@
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themeEditorUrl, themePreviewUrl} from '../utilities/theme-urls.js'
-import {session, system} from '@shopify/cli-kit'
+import {session} from '@shopify/cli-kit'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {open as openURL} from '@shopify/cli-kit/node/system'
 
 type AdminSession = session.AdminSession
 
@@ -39,8 +40,8 @@ export async function open(
   })
 
   if (options.editor) {
-    await system.open(editorUrl)
+    await openURL(editorUrl)
   } else {
-    await system.open(previewUrl)
+    await openURL(previewUrl)
   }
 }
