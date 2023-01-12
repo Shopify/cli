@@ -176,7 +176,6 @@ module.exports = {
         '**/public/node/abort.ts',
         '**/public/node/analytics.ts',
         '**/public/node/base-command.ts',
-        '**/public/node/checksum.ts',
         '**/public/node/cli.ts',
         '**/public/node/dot-env.ts',
         '**/public/node/error-handler.ts',

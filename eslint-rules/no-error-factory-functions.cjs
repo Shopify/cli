@@ -54,7 +54,6 @@ const shitlist = {
   'packages/cli-kit/src/git.ts': 1665628286000,
   'packages/app/src/cli/services/deploy.ts': 1665628286000,
   'packages/app/src/cli/services/dev/fetch.ts': 1668421747000,
-  'packages/cli-kit/src/node/checksum.ts': 1665628286000,
   'packages/cli-kit/src/node/dot-env.ts': 1665628286000,
   'packages/app/src/cli/services/dev/select-store.ts': 1668421747000,
   'packages/cli-kit/src/node/node-package-manager.ts': 1665628286000,
