@@ -24,11 +24,6 @@
     color: var(--dc-color-blue-500);
   }
 
-  h1 {
-    font-weight: 700;
-    font-family: var(--dc-font-mono);
-  }
-
   main {
     display: flex;
     flex: 1;
@@ -54,6 +49,11 @@
   .HeaderContent {
     display: flex;
     align-items: center;
+    gap: 1.3rem;
+  }
+
+  h1 {
+    font-weight: var(--dc-font-weight-700);
   }
 }
 
