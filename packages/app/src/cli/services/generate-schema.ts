@@ -2,7 +2,13 @@ import {fetchOrganizationAndFetchOrCreateApp} from './environment.js'
 import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension} from '../models/app/extensions.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
-import {session, output, api, error, environment} from '@shopify/cli-kit'
+import {
+  ApiSchemaDefinitionQuery,
+  ApiSchemaDefinitionQuerySchema,
+  ApiSchemaDefinitionQueryVariables,
+} from '../api/graphql/functions/api_schema_definition.js'
+import {session, output, error, environment} from '@shopify/cli-kit'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 interface GenerateSchemaOptions {
   app: AppInterface
@@ -27,13 +33,13 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
     apiKey = (await fetchOrganizationAndFetchOrCreateApp(app, token)).partnersApp.apiKey
   }
 
-  const query = api.graphql.ApiSchemaDefinitionQuery
-  const variables: api.graphql.ApiSchemaDefinitionQueryVariables = {
+  const query = ApiSchemaDefinitionQuery
+  const variables: ApiSchemaDefinitionQueryVariables = {
     apiKey,
     version,
     type,
   }
-  const response: api.graphql.ApiSchemaDefinitionQuerySchema = await api.partners.request(query, token, variables)
+  const response: ApiSchemaDefinitionQuerySchema = await partnersRequest(query, token, variables)
 
   if (!response.definition) {
     throw new error.Abort(

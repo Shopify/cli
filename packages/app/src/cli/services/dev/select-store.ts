@@ -1,7 +1,13 @@
 import {fetchAllDevStores} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
-import {error, output, api, system, environment} from '@shopify/cli-kit'
+import {
+  ConvertDevToTestStoreQuery,
+  ConvertDevToTestStoreSchema,
+  ConvertDevToTestStoreVariables,
+} from '../../api/graphql/convert_dev_to_test_store.js'
+import {error, output, system, environment} from '@shopify/cli-kit'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 
 const CreateStoreLink = async (orgId: string) => {
@@ -114,14 +120,14 @@ export async function convertToTestStoreIfNeeded(
  * @param token - Token to access partners API
  */
 export async function convertStoreToTest(store: OrganizationStore, orgId: string, token: string) {
-  const query = api.graphql.ConvertDevToTestStoreQuery
-  const variables: api.graphql.ConvertDevToTestStoreVariables = {
+  const query = ConvertDevToTestStoreQuery
+  const variables: ConvertDevToTestStoreVariables = {
     input: {
       organizationID: parseInt(orgId, 10),
       shopId: store.shopId,
     },
   }
-  const result: api.graphql.ConvertDevToTestStoreSchema = await api.partners.request(query, token, variables)
+  const result: ConvertDevToTestStoreSchema = await partnersRequest(query, token, variables)
   if (!result.convertDevToTestStore.convertedToTestStore) {
     const errors = result.convertDevToTestStore.userErrors.map((error) => error.message).join(', ')
     throw new error.Bug(

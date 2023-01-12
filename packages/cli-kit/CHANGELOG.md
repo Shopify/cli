@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.32.1
+
+### Patch Changes
+
+- 39315c3d0: Bump theme-check to version 1.14.0
+
 ## 3.32.0
 
 ### Patch Changes

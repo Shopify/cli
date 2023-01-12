@@ -208,8 +208,8 @@ export function renderFatalError(error: Fatal) {
 
  *     navigate with arrows, enter to select
  */
-export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit'>) {
-  return new Promise<T>((resolve, reject) => {
+export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit'>): Promise<T> {
+  return new Promise((resolve, reject) => {
     render(<SelectPrompt {...props} onSubmit={(value: T) => resolve(value)} />, {
       exitOnCtrlC: false,
     }).catch(reject)
@@ -227,7 +227,7 @@ export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmi
 
  *  navigate with arrows, enter to select
  */
-export function renderAutocompletePrompt<T>(props: Omit<AutocompletePromptProps<T>, 'onSubmit'>) {
+export function renderAutocompletePrompt<T>(props: Omit<AutocompletePromptProps<T>, 'onSubmit'>): Promise<T> {
   const newProps = {
     search(term: string) {
       return Promise.resolve(props.choices.filter((item) => item.label.toLowerCase().includes(term.toLowerCase())))
@@ -235,7 +235,7 @@ export function renderAutocompletePrompt<T>(props: Omit<AutocompletePromptProps<
     ...props,
   }
 
-  return new Promise<T>((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     render(<AutocompletePrompt {...newProps} onSubmit={(value: T) => resolve(value)} />, {
       exitOnCtrlC: false,
     }).catch(reject)
@@ -255,8 +255,8 @@ export async function renderTasks<TContext>(tasks: Task<TContext>[], options: {s
  * ?  What is your name?
  * \>  John
  */
-export function renderTextPrompt(props: Omit<TextPromptProps, 'onSubmit'>) {
-  return new Promise<string>((resolve, reject) => {
+export function renderTextPrompt(props: Omit<TextPromptProps, 'onSubmit'>): Promise<string> {
+  return new Promise((resolve, reject) => {
     render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
       exitOnCtrlC: false,
     }).catch(reject)

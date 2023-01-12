@@ -2,29 +2,26 @@ import {generateSchemaService} from './generate-schema.js'
 import * as localEnvironment from './environment.js'
 import * as identifiers from '../models/app/identifiers.js'
 import {testApp, testFunctionExtension} from '../models/app/app.test-data.js'
-import {api, environment, error} from '@shopify/cli-kit'
+import {ApiSchemaDefinitionQuery} from '../api/graphql/functions/api_schema_definition.js'
+import {environment, error} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, MockedFunction, vi} from 'vitest'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 describe('generateSchemaService', () => {
   const token = 'token'
-  const request = api.partners.request as MockedFunction<typeof api.partners.request>
+  const request = partnersRequest as MockedFunction<typeof partnersRequest>
   const isTerminalInteractive = environment.local.isTerminalInteractive as MockedFunction<
     typeof environment.local.isTerminalInteractive
   >
 
   beforeEach(() => {
+    vi.mock('@shopify/cli-kit/node/api/partners')
     vi.mock('@shopify/cli-kit', async () => {
       const cliKit: any = await vi.importActual('@shopify/cli-kit')
       return {
         ...cliKit,
         session: {
           ensureAuthenticatedPartners: () => 'token',
-        },
-        api: {
-          partners: {
-            request: vi.fn(),
-          },
-          graphql: cliKit.api.graphql,
         },
         environment: {
           ...cliKit.environment,
@@ -120,7 +117,7 @@ describe('generateSchemaService', () => {
       await generateSchemaService({app, extension, apiKey})
 
       // Then
-      expect(request).toHaveBeenCalledWith(api.graphql.ApiSchemaDefinitionQuery, token, {
+      expect(request).toHaveBeenCalledWith(ApiSchemaDefinitionQuery, token, {
         apiKey,
         version,
         type,
@@ -140,7 +137,7 @@ describe('generateSchemaService', () => {
       await generateSchemaService({app, extension})
 
       // Then
-      expect(request).toHaveBeenCalledWith(api.graphql.ApiSchemaDefinitionQuery, token, {
+      expect(request).toHaveBeenCalledWith(ApiSchemaDefinitionQuery, token, {
         apiKey: identifiersApiKey,
         version,
         type,
@@ -161,7 +158,7 @@ describe('generateSchemaService', () => {
       await generateSchemaService({app, extension})
 
       // Then
-      expect(request).toHaveBeenCalledWith(api.graphql.ApiSchemaDefinitionQuery, token, {
+      expect(request).toHaveBeenCalledWith(ApiSchemaDefinitionQuery, token, {
         apiKey: promptApiKey,
         version,
         type,

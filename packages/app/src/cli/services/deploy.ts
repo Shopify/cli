@@ -14,8 +14,8 @@ import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
 import {Extension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {validateExtensions} from '../validators/extensions.js'
-import {output, file, environment, path} from '@shopify/cli-kit'
-import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
+import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
+import {path, output, file, environment} from '@shopify/cli-kit'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
 
@@ -28,6 +28,9 @@ interface DeployOptions {
 
   /** If true, ignore any cached appId or extensionId */
   reset: boolean
+
+  /** If true, proceed with deploy without asking for confirmation */
+  force: boolean
 }
 
 interface TasksContext {
