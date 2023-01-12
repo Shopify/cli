@@ -12,13 +12,11 @@ beforeEach(async () => {
   vi.mock('../../dev/fetch.js')
   vi.mock('../select-app.js')
   vi.mock('../../../prompts/dev.js')
+  vi.mock('@shopify/cli-kit/node/session')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
       ...cliKit,
-      session: {
-        ensureAuthenticatedPartners: vi.fn(),
-      },
       store: {
         cliKitStore: () => ({
           getAppInfo: (): store.CachedAppInfo | undefined => undefined,

@@ -4,16 +4,7 @@ import {outputMocker} from '@shopify/cli-kit'
 import {logout} from '@shopify/cli-kit/node/session'
 
 beforeEach(() => {
-  vi.mock('@shopify/cli-kit', async () => {
-    const module: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...module,
-      session: {
-        ...module.session,
-        logout: vi.fn(),
-      },
-    }
-  })
+  vi.mock('@shopify/cli-kit/node/session')
 })
 
 describe('logs out', () => {

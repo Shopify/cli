@@ -6,6 +6,7 @@ import {ApiSchemaDefinitionQuery} from '../api/graphql/functions/api_schema_defi
 import {environment, error} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, MockedFunction, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 describe('generateSchemaService', () => {
   const token = 'token'
@@ -16,13 +17,12 @@ describe('generateSchemaService', () => {
 
   beforeEach(() => {
     vi.mock('@shopify/cli-kit/node/api/partners')
+    vi.mock('@shopify/cli-kit/node/session')
+    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
     vi.mock('@shopify/cli-kit', async () => {
       const cliKit: any = await vi.importActual('@shopify/cli-kit')
       return {
         ...cliKit,
-        session: {
-          ensureAuthenticatedPartners: () => 'token',
-        },
         environment: {
           ...cliKit.environment,
           local: {

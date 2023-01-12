@@ -18,18 +18,18 @@ import {err, ok} from '@shopify/cli-kit/node/result'
 import {AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session.js'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/tcp')
   vi.mocked(getAvailableTCPPort).mockResolvedValue(3042)
   vi.mock('@shopify/cli-kit/node/api/partners')
+  vi.mock('@shopify/cli-kit/node/session')
+  vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
       ...cliKit,
-      session: {
-        ensureAuthenticatedPartners: async () => 'token',
-      },
       plugins: {
         lookupTunnelPlugin: vi.fn(),
         runTunnelPlugin: vi.fn(),

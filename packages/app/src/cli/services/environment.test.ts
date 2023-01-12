@@ -28,6 +28,7 @@ import {AllOrganizationsQuerySchemaOrganization} from '../api/graphql/all_orgs.j
 import {store, outputMocker} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result.js'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 beforeEach(() => {
   vi.mock('./dev/fetch')
@@ -39,13 +40,12 @@ beforeEach(() => {
   vi.mock('../models/app/identifiers')
   vi.mock('./environment/identifiers')
   vi.mock('../models/app/loader.js')
+  vi.mock('@shopify/cli-kit/node/session')
+  vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
       ...cliKit,
-      session: {
-        ensureAuthenticatedPartners: () => 'token',
-      },
       store: {
         getAppInfo: vi.fn(),
         setAppInfo: vi.fn(),
