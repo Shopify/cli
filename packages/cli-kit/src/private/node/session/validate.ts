@@ -1,10 +1,10 @@
 import {applicationId} from './identity.js'
 import {ApplicationToken, IdentityToken} from './schema.js'
 import {validateIdentityToken} from './identity-token-validation.js'
-import constants from '../constants.js'
+import constants from '../../../constants.js'
+import {debug} from '../../../output.js'
+import {firstPartyDev} from '../../../environment/local.js'
 import {OAuthApplications} from '../session.js'
-import {debug} from '../output.js'
-import {firstPartyDev} from '../environment/local.js'
 
 type ValidationResult = 'needs_refresh' | 'needs_full_auth' | 'ok'
 

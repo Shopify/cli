@@ -1,10 +1,8 @@
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themeEditorUrl, themePreviewUrl} from '../utilities/theme-urls.js'
-import {session} from '@shopify/cli-kit'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {openURL} from '@shopify/cli-kit/node/system'
-
-type AdminSession = session.AdminSession
+import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 
 export async function open(
   adminSession: AdminSession,

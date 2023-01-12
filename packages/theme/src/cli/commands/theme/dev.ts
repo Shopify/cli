@@ -2,9 +2,10 @@ import {themeFlags} from '../../flags.js'
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
-import {cli, session, output} from '@shopify/cli-kit'
+import {cli, output} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {AbortController} from '@shopify/cli-kit/node/abort'
+import {ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
 export default class Dev extends ThemeCommand {
   static description =
@@ -115,8 +116,8 @@ export default class Dev extends ThemeCommand {
   }
 
   async execute(store: string, password: string | undefined, command: string[], controller: AbortController) {
-    const adminSession = await session.ensureAuthenticatedThemes(store, password, [], true)
-    const storefrontToken = await session.ensureAuthenticatedStorefront([], password)
+    const adminSession = await ensureAuthenticatedThemes(store, password, [], true)
+    const storefrontToken = await ensureAuthenticatedStorefront([], password)
     return execCLI2(command, {adminSession, storefrontToken, signal: controller.signal})
   }
 }

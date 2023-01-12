@@ -3,8 +3,8 @@ import {selectApp} from './select-app.js'
 import {getURLs, updateURLs} from '../dev/urls.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {allowedRedirectionURLsPrompt, appUrlPrompt} from '../../prompts/update-url.js'
-import {session} from '@shopify/cli-kit'
 import {describe, it, vi, beforeEach, expect} from 'vitest'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 const APP1: OrganizationApp = {
   id: '1',
@@ -19,16 +19,8 @@ beforeEach(async () => {
   vi.mock('./select-app.js')
   vi.mock('../dev/urls.js')
   vi.mock('../../prompts/update-url.js')
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      session: {
-        ensureAuthenticatedPartners: vi.fn(),
-      },
-    }
-  })
-  vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue('token')
+  vi.mock('@shopify/cli-kit/node/session')
+  vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 })
 
 describe('update-url', () => {

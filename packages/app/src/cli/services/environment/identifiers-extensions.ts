@@ -5,7 +5,8 @@ import {deployConfirmationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {output, session} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export async function ensureExtensionsIds(
   options: EnsureDeploymentIdsPresenceOptions,
@@ -66,7 +67,7 @@ export async function ensureExtensionsIds(
 }
 
 async function createExtensions(extensions: LocalSource[], appId: string) {
-  const token = await session.ensureAuthenticatedPartners()
+  const token = await ensureAuthenticatedPartners()
   const result: {[localIdentifier: string]: RemoteSource} = {}
   for (const extension of extensions) {
     // Create one at a time to avoid API rate limiting issues.

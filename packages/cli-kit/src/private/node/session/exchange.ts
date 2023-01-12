@@ -1,12 +1,12 @@
 import {ApplicationToken, IdentityToken} from './schema.js'
 import {applicationId, clientId as getIdentityClientId} from './identity.js'
 import {CodeAuthResult} from './authorize.js'
-import {API} from '../network/api.js'
-import {identity as identityFqdn} from '../environment/fqdn.js'
-import {shopifyFetch} from '../http.js'
-import {err, ok, Result} from '../public/node/result.js'
-import {AbortError} from '../public/node/error.js'
-import {ExtendableError} from '../error.js'
+import {API} from '../../../network/api.js'
+import {identity as identityFqdn} from '../../../environment/fqdn.js'
+import {shopifyFetch} from '../../../http.js'
+import {err, ok, Result} from '../../../public/node/result.js'
+import {AbortError} from '../../../public/node/error.js'
+import {ExtendableError} from '../../../error.js'
 
 export class InvalidGrantError extends ExtendableError {}
 export class InvalidRequestError extends ExtendableError {}

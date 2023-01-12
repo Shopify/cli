@@ -1,5 +1,5 @@
-import {session} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export interface SamplePayloadSchema {
   sendSampleWebhook: {
@@ -49,7 +49,7 @@ export async function getWebhookSample(
   address: string,
   sharedSecret: string,
 ) {
-  const token = await session.ensureAuthenticatedPartners()
+  const token = await ensureAuthenticatedPartners()
 
   const variables = {
     topic,

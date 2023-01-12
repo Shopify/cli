@@ -1,11 +1,11 @@
-import {listenRedirect} from './redirect-listener.js'
 import {clientId} from './identity.js'
-import {base64URLEncode, randomBytes, randomHex, sha256} from '../public/node/crypto.js'
-import {openURL} from '../public/node/system.js'
-import {Abort, CancelExecution} from '../error.js'
-import {identity as identityFqdn} from '../environment/fqdn.js'
-import * as output from '../output.js'
-import {keypress, terminateBlockingPortProcessPrompt} from '../ui.js'
+import {listenRedirect} from './redirect-listener.js'
+import {base64URLEncode, randomBytes, randomHex, sha256} from '../../../public/node/crypto.js'
+import {openURL} from '../../../public/node/system.js'
+import {Abort, CancelExecution} from '../../../error.js'
+import {identity as identityFqdn} from '../../../environment/fqdn.js'
+import * as output from '../../../output.js'
+import {keypress, terminateBlockingPortProcessPrompt} from '../../../ui.js'
 import {checkPort as isPortAvailable} from 'get-port-please'
 
 export const MismatchStateError = new Abort(
@@ -56,7 +56,7 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
   return {code: result.code, codeVerifier}
 }
 
-export function generateRandomChallengePair() {
+function generateRandomChallengePair() {
   const codeVerifier = base64URLEncode(randomBytes(32))
   const codeChallenge = base64URLEncode(sha256(codeVerifier))
   return {codeVerifier, codeChallenge}
