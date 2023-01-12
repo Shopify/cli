@@ -7,8 +7,6 @@ const sampleHeaders = '{ "header": "Header Value" }'
 
 beforeEach(async () => {
   vi.mock('@shopify/cli-kit/node/api/partners')
-  vi.mock('@shopify/cli-kit')
-  vi.mock('@shopify/cli-kit/node/session')
 })
 
 afterEach(async () => {

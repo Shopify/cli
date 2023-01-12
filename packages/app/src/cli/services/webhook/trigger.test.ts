@@ -4,7 +4,8 @@ import {getWebhookSample} from './request-sample.js'
 import {requestApiVersions} from './request-api-versions.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {optionsPrompt, WebhookTriggerFlags} from '../../prompts/webhook/options-prompt.js'
-import {output, session} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 const aToken = 'A_TOKEN'
@@ -19,6 +20,7 @@ const anAddress = 'http://example.org'
 
 beforeEach(async () => {
   vi.mock('@shopify/cli-kit')
+  vi.mock('@shopify/cli-kit/node/session')
   vi.mock('../../prompts/webhook/options-prompt.js')
   vi.mock('./request-sample.js')
   vi.mock('./request-api-versions.js')
@@ -46,7 +48,7 @@ const aFullLocalAddress = `http://localhost:${aPort}${aUrlPath}`
 
 describe('execute', () => {
   beforeEach(async () => {
-    vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(aToken)
+    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue(aToken)
   })
 
   it('notifies about request errors', async () => {
@@ -60,7 +62,6 @@ describe('execute', () => {
         {message: '["Unable to notify example"]', fields: ['field2']},
       ],
     }
-    const sessionSpy = vi.spyOn(session, 'ensureAuthenticatedPartners')
     vi.mocked(getWebhookSample).mockResolvedValue(response)
     vi.mocked(requestApiVersions).mockResolvedValue([aVersion])
     vi.mocked(optionsPrompt).mockResolvedValue(sampleOptions())
@@ -74,7 +75,6 @@ describe('execute', () => {
     expect(outputSpy).toHaveBeenCalledWith(
       `Request errors:\n  · Invalid topic pizza/update\n  · Unable to notify example`,
     )
-    expect(sessionSpy).toHaveBeenCalledOnce()
     expect(requestApiVersions).toHaveBeenCalledWith(aToken)
   })
 

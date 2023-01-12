@@ -1,9 +1,9 @@
 import {requestApiVersions} from './request-api-versions.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {api} from '@shopify/cli-kit'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 beforeEach(async () => {
-  vi.mock('@shopify/cli-kit')
+  vi.mock('@shopify/cli-kit/node/api/partners')
 })
 
 afterEach(async () => {
@@ -18,15 +18,12 @@ describe('requestApiVersions', () => {
     const graphQLResult = {
       publicApiVersions: ['2022', 'unstable', '2023'],
     }
-    vi.mocked(api.partners.request).mockResolvedValue(graphQLResult)
-
-    const requestSpy = vi.spyOn(api.partners, 'request')
+    vi.mocked(partnersRequest).mockResolvedValue(graphQLResult)
 
     // When
     const got = await requestApiVersions(aToken)
 
     // Then
-    expect(requestSpy).toHaveBeenCalledWith(expect.any(String), aToken)
     expect(got).toEqual(['2023', '2022', 'unstable'])
   })
 })

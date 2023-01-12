@@ -3,7 +3,8 @@ import {getWebhookSample, UserErrors} from './request-sample.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {requestApiVersions} from './request-api-versions.js'
 import {optionsPrompt, WebhookTriggerFlags} from '../../prompts/webhook/options-prompt.js'
-import {output, session} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 /**
  * Orchestrates the command request by requesting the sample and sending it to localhost if required.
@@ -12,7 +13,7 @@ import {output, session} from '@shopify/cli-kit'
  * @param flags - Passed flags
  */
 export async function webhookTriggerService(flags: WebhookTriggerFlags) {
-  const token = await session.ensureAuthenticatedPartners()
+  const token = await ensureAuthenticatedPartners()
 
   const availableVersions = await requestApiVersions(token)
 
