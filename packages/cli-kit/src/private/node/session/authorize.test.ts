@@ -11,7 +11,7 @@ import {killPortProcess} from 'kill-port-process'
 
 import {describe, it, expect, vi} from 'vitest'
 
-vi.mock('../public/node/system.js')
+vi.mock('../../../public/node/system.js')
 vi.mock('./redirect-listener')
 vi.mock('../../../public/node/crypto.js')
 vi.mock('../../../environment/fqdn')
