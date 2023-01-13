@@ -1,13 +1,14 @@
 import {previewInWorker, previewInNode} from '../../services/preview.js'
 import {hydrogenFlags} from '../../flags.js'
-import {path, cli} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
 
 export default class Preview extends Command {
   static description = 'Run a Hydrogen storefront locally in a worker environment.'
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     path: hydrogenFlags.path,
     port: Flags.string({
       char: 'p',

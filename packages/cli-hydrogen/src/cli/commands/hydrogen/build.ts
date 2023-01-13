@@ -1,7 +1,8 @@
 import {build} from '../../services/build.js'
 import {hydrogenFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
-import {path, cli} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {path} from '@shopify/cli-kit'
 import Command from '@shopify/cli-kit/node/base-command'
 
 const PLATFORM_ENTRIES = {
@@ -12,7 +13,7 @@ const PLATFORM_ENTRIES = {
 export default class Build extends Command {
   static description = 'Builds a Hydrogen storefront for production.'
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     path: hydrogenFlags.path,
     base: Flags.string({
       description: ' the public path when served in production',

@@ -1,13 +1,13 @@
 import Command from '../../utilities/app-command.js'
 import updateURL, {UpdateURLOptions} from '../../services/app/update-url.js'
 import {Flags} from '@oclif/core'
-import {cli} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class UpdateURL extends Command {
   static description = 'Update your app and redirect URLs in the Partners Dashboard.'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     'api-key': Flags.string({
       hidden: false,
       description: 'The API key of your app.',

@@ -4,13 +4,14 @@ import {load as loadApp} from '../../../models/app/loader.js'
 import {showEnv} from '../../../services/app/env/show.js'
 import Command from '../../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../../models/extensions/specifications.js'
-import {output, path, cli} from '@shopify/cli-kit'
+import {output, path} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class EnvShow extends Command {
   static description = 'Display app and extensions environment variables.'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...appFlags,
   }
 

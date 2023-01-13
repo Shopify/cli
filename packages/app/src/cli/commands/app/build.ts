@@ -5,13 +5,14 @@ import build from '../../services/build.js'
 import Command from '../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../models/extensions/specifications.js'
 import {Flags} from '@oclif/core'
-import {path, cli, metadata} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {path, metadata} from '@shopify/cli-kit'
 
 export default class Build extends Command {
   static description = 'Build the app.'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...appFlags,
     'skip-dependencies-installation': Flags.boolean({
       hidden: false,

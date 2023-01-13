@@ -5,13 +5,14 @@ import {load as loadApp} from '../../models/app/loader.js'
 import Command from '../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../models/extensions/specifications.js'
 import {Flags} from '@oclif/core'
-import {output, path, cli} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {output, path} from '@shopify/cli-kit'
 
 export default class AppInfo extends Command {
   static description = 'Print basic information about your app and extensions.'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...appFlags,
     json: Flags.boolean({
       hidden: false,
