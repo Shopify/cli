@@ -112,11 +112,13 @@ export async function automaticMatchmaking(
   identifiers: IdentifiersExtensions,
   remoteIdField: 'id' | 'uuid',
 ): Promise<MatchResult> {
-  const localUUIDs = Object.values(identifiers)
+  const localSourcesIds = localSources.map((source) => source.localIdentifier)
+  const ids = pickBy(identifiers, (_, id) => localSourcesIds.includes(id))
+  const localUUIDs = Object.values(ids)
   const existsRemotely = (local: LocalSource) => {
     return Boolean(
       remoteSources.find(
-        (remote) => remote[remoteIdField] === identifiers[local.localIdentifier] && remote.type === local.graphQLType,
+        (remote) => remote[remoteIdField] === ids[local.localIdentifier] && remote.type === local.graphQLType,
       ),
     )
   }
@@ -137,7 +139,7 @@ export async function automaticMatchmaking(
   const {toConfirm, toCreate, pending} = matchByUniqueType(matchResult.local, matchResult.remote)
 
   return {
-    identifiers: {...identifiers, ...matchedByNameAndType},
+    identifiers: {...ids, ...matchedByNameAndType},
     toConfirm,
     toCreate,
     toManualMatch: pending,
