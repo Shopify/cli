@@ -60,6 +60,24 @@ describe('renderInfo', async () => {
         label: 'Link',
         url: 'https://shopify.com',
       },
+      customSections: [
+        {
+          title: 'Custom section',
+          body: {
+            list: {
+              items: ['Item 1', 'Item 2', 'Item 3'],
+            },
+          },
+        },
+        {
+          title: 'Custom section 2',
+          body: {
+            list: {
+              items: ['Item 1', 'Item 2', 'Item 3'],
+            },
+          },
+        },
+      ],
     })
 
     // Then
@@ -82,6 +100,16 @@ describe('renderInfo', async () => {
       │      https://shopify.dev )                                                   │
       │                                                                              │
       │  Link ( https://shopify.com )                                                │
+      │                                                                              │
+      │  Custom section                                                              │
+      │    • Item 1                                                                  │
+      │    • Item 2                                                                  │
+      │    • Item 3                                                                  │
+      │                                                                              │
+      │  Custom section 2                                                            │
+      │    • Item 1                                                                  │
+      │    • Item 2                                                                  │
+      │    • Item 3                                                                  │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "

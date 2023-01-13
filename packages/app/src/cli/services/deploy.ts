@@ -18,6 +18,7 @@ import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_ex
 import {path, output, file, environment} from '@shopify/cli-kit'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
+import {CustomSection} from '@shopify/cli-kit/src/private/node/ui/components/Alert.js'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -199,17 +200,10 @@ async function outputCompletionMessage({
     ]
   }
 
-  let nextSteps
-
-  if (app.extensions.ui.length !== 0 || app.extensions.function.length !== 0) {
-    nextSteps = await Promise.all([...app.extensions.ui, ...app.extensions.theme].map(outputNextStep))
-  }
-
-  renderSuccess({
-    headline,
-    body: [
-      {bold: 'Summary'},
-      {
+  const customSections: CustomSection[] = [
+    {
+      title: 'Summary',
+      body: {
         list: {
           items: [
             ...app.extensions.ui.map(outputDeployedButNotLiveMessage),
@@ -218,7 +212,22 @@ async function outputCompletionMessage({
           ],
         },
       },
-    ],
-    nextSteps,
+    },
+  ]
+
+  if (app.extensions.ui.length !== 0 || app.extensions.function.length !== 0) {
+    customSections.push({
+      title: 'Next steps',
+      body: {
+        list: {
+          items: await Promise.all([...app.extensions.ui, ...app.extensions.theme].map(outputNextStep)),
+        },
+      },
+    })
+  }
+
+  renderSuccess({
+    headline,
+    customSections,
   })
 }

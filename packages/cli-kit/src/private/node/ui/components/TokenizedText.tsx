@@ -36,6 +36,7 @@ interface FilePathToken {
 
 interface ListToken {
   list: {
+    title?: string
     items: TokenItem[]
     ordered?: boolean
   }
@@ -129,7 +130,7 @@ const TokenizedText: React.FC<Props> = ({item}) => {
               </Text>
             )
           } else {
-            return <List key={groupIndex} items={(items[0]!.value as ListToken).list.items} />
+            return <List key={groupIndex} {...(items[0]!.value as ListToken).list} />
           }
         })}
       </Box>

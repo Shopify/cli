@@ -1,16 +1,22 @@
 import AppGenerateExtension from '../generate/extension.js'
-import {output} from '@shopify/cli-kit'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 class AppScaffoldExtension extends AppGenerateExtension {
   static description = 'Scaffold an Extension'
   static hidden = true
   public async run(): Promise<void> {
-    output.warn(
-      output.content`The command ${output.token.genericShellCommand(
-        `scaffold`,
-      )} has been deprecated in favor of ${output.token.genericShellCommand(`generate`)} and will be eventually deleted.
-You might need to update the ${output.token.genericShellCommand(`scaffold`)} script in the project's package.json.\n`,
-    )
+    renderWarning({
+      headline: [
+        'The command',
+        {command: 'scaffold'},
+        'has been deprecated in favor of',
+        {command: 'generate'},
+        'and will be eventually deleted.',
+        'You might need to update the',
+        {command: 'scaffold'},
+        "script in the project's package.json.",
+      ],
+    })
     await super.run()
   }
 }
