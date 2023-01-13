@@ -7,7 +7,7 @@ export interface IconProps {
   source: React.FunctionComponent<React.SVGProps<SVGSVGElement>>
 
   /** Descriptive text to be read to screenreaders */
-  accessibilityLabel: string
+  accessibilityLabel?: string
 }
 
 export function Icon({source, accessibilityLabel}: IconProps) {
