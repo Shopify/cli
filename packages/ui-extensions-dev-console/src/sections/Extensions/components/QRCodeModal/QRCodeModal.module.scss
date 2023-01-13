@@ -23,8 +23,18 @@
 .RightColumn {
    display:grid;
    gap: 0.4rem;
+   margin-bottom: 3.9rem;
 }
 
-.CopyLink {
-   text-align: left;
- }
+.UrlCta {
+   display: flex;
+   gap: 0.4rem;
+   align-items: center;
+}
+
+.Url {
+   font-size: 1.1rem;
+   line-height: 1.6rem;
+   word-break: break-all;
+   color: var(--dc-color-grey-400);
+}

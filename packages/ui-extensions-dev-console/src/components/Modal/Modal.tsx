@@ -15,9 +15,11 @@ export interface ModalProps {
   children: React.ReactNode
   /** Callback when the modal is closed */
   onClose(): void
+  /** Width of the Modal, default: 'large' */
+  width?: 'small' | 'large'
 }
 
-export function Modal({children, title, open, onClose}: ModalProps) {
+export function Modal({children, title, open, onClose, width = 'large'}: ModalProps) {
   const [closing, setClosing] = useState(false)
 
   let dialog: React.ReactNode
@@ -25,7 +27,7 @@ export function Modal({children, title, open, onClose}: ModalProps) {
 
   if (open) {
     dialog = (
-      <Dialog labelledBy={'modal-header'} onClose={onClose} setClosing={setClosing} in={open}>
+      <Dialog labelledBy={'modal-header'} onClose={onClose} setClosing={setClosing} in={open} width={width}>
         <Header id={'modal-header'} closing={closing} onClose={onClose}>
           {title}
         </Header>

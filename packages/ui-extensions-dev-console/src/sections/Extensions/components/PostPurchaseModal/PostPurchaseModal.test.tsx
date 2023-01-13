@@ -28,7 +28,7 @@ describe('<PostPurchaseModal/>', () => {
   test('renders a <Modal/> open when url is a string', () => {
     const container = render(<PostPurchaseModal {...defaultProps} />, withProviders(DefaultProviders))
 
-    expect(container).toContainReactComponent(Modal, {open: true})
+    expect(container).toContainReactComponent(Modal, {open: true, width: 'large'})
   })
 
   test('renders a link to the browser extension when url is a string', () => {

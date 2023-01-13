@@ -1,5 +1,8 @@
 {
   "title": "View your work on mobile",
+  "url": {
+    "intro": "Copy URL to share"
+  },
   "qrcode": {
     "copy": "Copy link",
     "copied": "Link copied",

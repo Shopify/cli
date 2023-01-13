@@ -36,6 +36,18 @@ describe('QRCodeModal', () => {
     ).toContainReactComponent(Modal, {open: false})
   })
 
+  test('Renders <Modal/> open if code is undefined', async () => {
+    const app = mockApp()
+    const store = 'example.com'
+    const extension = mockExtension()
+
+    expect(
+      render(<QRCodeModal {...defaultProps} />, withProviders(DefaultProviders), {
+        state: {app, store, extensions: [extension]},
+      }),
+    ).toContainReactComponent(Modal, {open: true, width: 'small'})
+  })
+
   test('renders QRCode for pos', async () => {
     const app = mockApp()
     const store = 'example.com'
