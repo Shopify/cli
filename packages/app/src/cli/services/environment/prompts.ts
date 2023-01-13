@@ -64,6 +64,10 @@ export async function deployConfirmationPrompt(summary: SourceSummary): Promise<
     infoTable['missing locally'] = summary.onlyRemote.map((source) => source.title)
   }
 
+  if (Object.keys(infoTable).length === 0) {
+    return new Promise((resolve) => resolve(true))
+  }
+
   return renderSelectPrompt({
     message: summary.question,
     choices: [
