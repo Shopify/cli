@@ -14,4 +14,8 @@
   flex: 1;
   align-self: center;
   font-size: 1.6rem;
+
+  h2 {
+    font-weight: var(--dc-font-weight-600);
+  }
 }

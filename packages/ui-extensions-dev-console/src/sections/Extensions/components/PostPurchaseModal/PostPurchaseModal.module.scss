@@ -17,14 +17,21 @@
 
 .UrlContainer {
    display: flex;
-   gap: 0.4rem;
+   align-items: center;
    color: var(--dc-color-grey-400);
-   padding: 1.2rem 0 0;
+   margin-top: 0.8rem;
+   border-radius: var(--dc-border-radius);
    align-items: top;
    line-height: 2.4rem;
+   background-color: var(--dc-color-grey-900);
+   line-height: 1.6rem;
+}
 
-   .CopyButton {
-      width:24px;
-      height:24px;
-   }
+.Url {
+   border-right: 1px solid var(--dc-color-grey-600);
+   padding: 0.8rem 1.2rem
+}
+
+.CopyButton {
+   padding: 0.8rem 1.2rem;
 }

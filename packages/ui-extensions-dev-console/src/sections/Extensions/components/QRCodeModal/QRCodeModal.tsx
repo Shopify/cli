@@ -82,11 +82,11 @@ export function QRCodeContent({url, title, type}: Code) {
         <span className={styles.QRCode}>
           <QRCode value={qrCodeURL} size={170} />
         </span>
-        Scan with your phone camera to see your work.
       </span>
       <span className={styles.RightColumn}>
+        {i18n.translate('right.one')}
         <span className={styles.UrlCta}>
-          {i18n.translate('url.intro')}{' '}
+          {i18n.translate('right.two')}{' '}
           <IconButton
             type="button"
             source={ClipboardMinor}
@@ -94,7 +94,6 @@ export function QRCodeContent({url, title, type}: Code) {
             onClick={onButtonClick}
           />
         </span>
-        <span className={styles.Url}>{url}</span>
       </span>
     </div>
   )

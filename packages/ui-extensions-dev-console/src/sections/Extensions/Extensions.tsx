@@ -17,6 +17,7 @@ export function Extensions() {
     state: {extensions, app},
     focus,
     unfocus,
+    embedded,
     client: {
       options: {surface},
     },
@@ -34,7 +35,7 @@ export function Extensions() {
 
   const ConsoleContent = () => (
     <section className={styles.ExtensionList}>
-      <p className={styles.Intro}>{i18n.translate('intro')}</p>
+      {embedded ? null : <p className={styles.Intro}>{i18n.translate('intro')}</p>}
       <table>
         <thead>
           <Row>
