@@ -3,7 +3,7 @@ import {themeInfo} from '../../services/info.js'
 import {cli, output} from '@shopify/cli-kit'
 
 export default class ThemeInfo extends ThemeCommand {
-  static description = 'Print basic information about your theme environment'
+  static description = 'Print basic information about your theme environment.'
 
   static flags = {
     ...cli.globalFlags,

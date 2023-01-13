@@ -8,7 +8,7 @@ import {Flags} from '@oclif/core'
 import {path, cli, metadata} from '@shopify/cli-kit'
 
 export default class Build extends Command {
-  static description = 'Build the app'
+  static description = 'Build the app.'
 
   static flags = {
     ...cli.globalFlags,

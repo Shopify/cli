@@ -7,7 +7,7 @@ import {loadExtensionsSpecifications} from '../../../models/extensions/specifica
 import {output, path, cli} from '@shopify/cli-kit'
 
 export default class EnvShow extends Command {
-  static description = 'Display app and extensions environment variables'
+  static description = 'Display app and extensions environment variables.'
 
   static flags = {
     ...cli.globalFlags,

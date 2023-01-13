@@ -4,7 +4,7 @@ import {Flags} from '@oclif/core'
 import {cli} from '@shopify/cli-kit'
 
 export default class UpdateURL extends Command {
-  static description = 'Update your app and redirect URLs in the Partners Dashboard'
+  static description = 'Update your app and redirect URLs in the Partners Dashboard.'
 
   static flags = {
     ...cli.globalFlags,

@@ -8,7 +8,7 @@ import {Flags} from '@oclif/core'
 import {output, path, cli} from '@shopify/cli-kit'
 
 export default class EnvPull extends Command {
-  static description = 'Pull app and extensions environment variables'
+  static description = 'Pull app and extensions environment variables.'
 
   static flags = {
     ...cli.globalFlags,
