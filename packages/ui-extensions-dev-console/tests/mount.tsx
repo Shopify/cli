@@ -1,7 +1,5 @@
 import React, {useMemo} from 'react'
 import {createMount} from '@shopify/react-testing'
-import enTranslations from '@shopify/polaris/locales/en.json'
-import {AppProvider} from '@shopify/polaris'
 import {I18nContext, I18nManager} from '@shopify/react-i18n'
 import {DevServerContext, DevServerContextValue} from '@shopify/ui-extensions-server-kit'
 import {mockApp, mockExtensions} from '@shopify/ui-extensions-server-kit/testing'
@@ -43,9 +41,7 @@ export const mount = createMount<MountOptions, Context>({
 
     return (
       <I18nContext.Provider value={i18nManager}>
-        <AppProvider i18n={enTranslations}>
-          <DevServerContext.Provider value={context.console}>{element}</DevServerContext.Provider>
-        </AppProvider>
+        <DevServerContext.Provider value={context.console}>{element}</DevServerContext.Provider>
       </I18nContext.Provider>
     )
   },

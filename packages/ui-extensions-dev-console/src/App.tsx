@@ -1,13 +1,11 @@
 import React from 'react'
-import '@shopify/polaris/dist/styles.css'
-import enTranslations from '@shopify/polaris/locales/en.json'
-import {AppProvider} from '@shopify/polaris'
 import {I18nContext, I18nManager} from '@shopify/react-i18n'
 import {ExtensionServerProvider, isValidSurface} from '@shopify/ui-extensions-server-kit'
 import {Layout} from '@/foundation/Layout'
 import {Routes} from '@/foundation/Routes'
 import {Toast} from '@/foundation/Toast'
 import {Theme} from '@/foundation/Theme'
+import {ModalContainer} from '@/foundation/ModalContainer'
 
 function getConnectionUrl() {
   if (import.meta.env.VITE_CONNECTION_URL) {
@@ -40,12 +38,11 @@ function App() {
     <ExtensionServerProvider options={extensionServerOptions}>
       <I18nContext.Provider value={i18nManager}>
         <Theme>
-          <AppProvider i18n={enTranslations}>
-            <Layout>
-              <Routes />
-              <Toast />
-            </Layout>
-          </AppProvider>
+          <Layout>
+            <Routes />
+            <Toast />
+            <ModalContainer />
+          </Layout>
         </Theme>
       </I18nContext.Provider>
     </ExtensionServerProvider>
