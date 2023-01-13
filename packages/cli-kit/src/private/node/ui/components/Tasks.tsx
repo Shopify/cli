@@ -10,7 +10,7 @@ const loadingBarChar = '█'
 
 export interface Task<TContext = unknown> {
   title: string
-  task: (ctx: TContext) => Promise<void>
+  task: (ctx: TContext) => Promise<void | Task<TContext>[]>
 }
 
 export interface Props<TContext> {
@@ -29,7 +29,14 @@ function Tasks<TContext>({tasks, silent = false}: React.PropsWithChildren<Props<
     for (const task of tasks) {
       setCurrentTask(task)
       // eslint-disable-next-line no-await-in-loop
-      await task.task(ctx.current)
+      const result = await task.task(ctx.current)
+      if (Array.isArray(result) && result.length > 0 && result.every((el) => 'task' in el)) {
+        for (const subTask of result) {
+          setCurrentTask(subTask)
+          // eslint-disable-next-line no-await-in-loop
+          await subTask.task(ctx.current)
+        }
+      }
     }
   }
 

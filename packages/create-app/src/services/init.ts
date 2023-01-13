@@ -91,12 +91,9 @@ async function init(options: InitOptions) {
     tasks.push(
       {
         title: 'Installing dependencies',
-        task: async (ctx) => {
-          const promises = await getDeepInstallNPMTasks({from: templateScaffoldDir, packageManager})
-          for (const promise of promises) {
-            // eslint-disable-next-line no-await-in-loop
-            await promise
-          }
+        task: async () => {
+          const subtasks = await getDeepInstallNPMTasks({from: templateScaffoldDir, packageManager})
+          return subtasks
         },
       },
       {

@@ -1,5 +1,5 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from './npm.js'
-import {file, npm, path, ui} from '@shopify/cli-kit'
+import {file, npm, path} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {installNodeModules, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {platform} from 'os'
@@ -162,7 +162,7 @@ describe('getDeepInstallNPMTasks', () => {
 
         const tasks = await getDeepInstallNPMTasks({...defaultArgs, packageManager: 'yarn', from: tmpDir})
 
-        await Promise.all(tasks.map(({task}) => task(null, {} as ui.ListrTaskWrapper<any, any>)))
+        await Promise.all(tasks.map(({task}) => task({})))
 
         expect(installNodeModules).toHaveBeenCalledWith({
           directory: `${path.normalize(tmpDir)}/`,

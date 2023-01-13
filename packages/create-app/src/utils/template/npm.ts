@@ -1,5 +1,6 @@
 import {path, npm, constants} from '@shopify/cli-kit'
 import {PackageManager, installNodeModules} from '@shopify/cli-kit/node/node-package-manager'
+import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
 import {platform} from 'os'
 
 interface UpdateCLIDependenciesOptions {
@@ -63,31 +64,29 @@ export async function getDeepInstallNPMTasks({
 }: {
   from: string
   packageManager: PackageManager
-}): Promise<Promise<void>[]> {
+}): Promise<Task[]> {
   const root = path.normalize(from)
   const packageJSONFiles = await path.glob([path.join(root, '**/package.json')])
 
   return packageJSONFiles.map((filePath) => {
     const folderPath = filePath.replace('package.json', '')
+    const titlePath = folderPath.replace(root, '')
 
-    return new Promise((resolve, reject) => {
-      /**
-       * Installation of dependencies using Yarn on Windows might lead
-       * to "EPERM: operation not permitted, unlink" errors when Yarn tries
-       * to access the cache. By limiting the network concurrency we mitigate the
-       * error:
-       *
-       * Failing scenario: https://github.com/Shopify/cli/runs/7913938724
-       * Reported issue: https://github.com/yarnpkg/yarn/issues/7212
-       */
-      const args = platform() === 'win32' && packageManager === 'yarn' ? ['--network-concurrency', '1'] : []
-      installNodeModules({directory: folderPath, packageManager, args})
-        .then(() => {
-          resolve()
-        })
-        .catch(() => {
-          reject()
-        })
-    })
+    /**
+     * Installation of dependencies using Yarn on Windows might lead
+     * to "EPERM: operation not permitted, unlink" errors when Yarn tries
+     * to access the cache. By limiting the network concurrency we mitigate the
+     * error:
+     *
+     * Failing scenario: https://github.com/Shopify/cli/runs/7913938724
+     * Reported issue: https://github.com/yarnpkg/yarn/issues/7212
+     */
+    const args = platform() === 'win32' && packageManager === 'yarn' ? ['--network-concurrency', '1'] : []
+    return {
+      title: `Installing dependencies in ${titlePath}`,
+      task: async () => {
+        await installNodeModules({directory: folderPath, packageManager, args})
+      },
+    }
   })
 }
