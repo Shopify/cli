@@ -17,17 +17,19 @@ describe('topicPrompt', () => {
     vi.mocked(ui.prompt).mockResolvedValue({topic: 'orders/create'})
 
     // When
-    const got = await topicPrompt()
+    const got = await topicPrompt(['orders/create', 'anything/else'])
 
     // Then
     expect(got).toEqual('orders/create')
     expect(ui.prompt).toHaveBeenCalledWith([
       {
-        type: 'input',
+        type: 'select',
         name: 'topic',
         message: 'Webhook Topic',
-        default: '',
-        validate: expect.any(Function),
+        choices: [
+          {name: 'orders/create', value: 'orders/create'},
+          {name: 'anything/else', value: 'anything/else'},
+        ],
       },
     ])
   })
