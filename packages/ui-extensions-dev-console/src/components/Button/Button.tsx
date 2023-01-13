@@ -13,7 +13,7 @@ export interface ButtonProps extends React.HTMLProps<HTMLButtonElement> {
 
 export function Button({className, selected, icon, children, ...props}: ButtonProps) {
   const iconMarkup = icon ? (
-    <span>
+    <span className={styles.Icon}>
       <Icon source={icon.source} />
     </span>
   ) : null

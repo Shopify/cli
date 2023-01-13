@@ -1,4 +1,4 @@
 {
-  "local": "Local",
-  "live": "Live"
+  "hidden": "Hidden",
+  "showing": "Showing"
 }

@@ -18,6 +18,11 @@
     padding-right: 1rem;
   }
 
+  .Icon {
+    position: relative;
+    top: 0.1rem;
+  }
+
   &:hover,
   &:focus {
     background: var(--dc-color-grey-600);

@@ -4,7 +4,7 @@ import {useExtensionsInternal} from '../../hooks/useExtensionsInternal'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
-import {ViewMinor} from '@shopify/polaris-icons'
+import {HideMinor, ViewMinor} from '@shopify/polaris-icons'
 import {Button} from '@/components'
 
 interface Props {
@@ -20,12 +20,12 @@ export function View({extension}: Props) {
   const {show, hide} = useExtensionsInternal()
 
   return extension.development.hidden ? (
-    <Button type="button" onClick={() => show([extension])} icon={{source: ViewMinor, position: 'left'}}>
-      {i18n.translate('live')}
+    <Button type="button" onClick={() => show([extension])} icon={{source: HideMinor, position: 'left'}}>
+      {i18n.translate('hidden')}
     </Button>
   ) : (
     <Button type="button" onClick={() => hide([extension])} icon={{source: ViewMinor, position: 'left'}}>
-      {i18n.translate('local')}
+      {i18n.translate('showing')}
     </Button>
   )
 }

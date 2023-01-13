@@ -1,8 +1,6 @@
 .Wrapper {
    display: flex;
-   gap: 4rem;
-   align-items: center;
-   padding-bottom: 0.6rem;
+   gap: 2.4rem;
 }
 
 .LeftColumn {
@@ -21,14 +19,16 @@
 }
 
 .RightColumn {
-   display:grid;
-   gap: 0.4rem;
-   margin-bottom: 3.9rem;
+   font-size: 1.2rem;
+   line-height: 1.8rem;
+   display: flex;
+   flex-direction: column;
+   gap: 0.8rem;
 }
 
 .UrlCta {
    display: flex;
-   gap: 0.4rem;
+   gap: 0.8rem;
    align-items: center;
 }
 

@@ -13,7 +13,6 @@ export function Toast() {
         pauseOnFocusLoss={false}
         closeOnClick
         hideProgressBar
-        autoClose={100000}
       />
       {/* react-toastify requires exactly this class. */}
       {/* Inlining the style prevents the className from changing */}
