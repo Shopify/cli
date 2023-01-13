@@ -22,6 +22,8 @@ export function waitForChange(func: () => void, getChangingValue: () => string |
 
 export async function sendInputAndWaitForChange(renderInstance: ReturnType<typeof render>, ...inputs: string[]) {
   await waitForChange(() => inputs.forEach((input) => renderInstance.stdin.write(input)), renderInstance.lastFrame)
+  // wait for another tick so we give time to react to update caches
+  await new Promise((resolve) => setTimeout(resolve, 0))
 }
 
 export async function sendInputAndWait(

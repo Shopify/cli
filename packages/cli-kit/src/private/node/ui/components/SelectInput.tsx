@@ -128,12 +128,12 @@ export default function SelectInput<T>({
 
   const handleArrows = useCallback(
     (key: Key) => {
-      if (key.upArrow) {
-        const lastIndex = items.length - 1
+      const lastIndex = items.length - 1
 
+      if (key.upArrow) {
         changeSelection(selectedIndex === 0 ? lastIndex : selectedIndex - 1)
       } else if (key.downArrow) {
-        changeSelection(selectedIndex === items.length - 1 ? 0 : selectedIndex + 1)
+        changeSelection(selectedIndex === lastIndex ? 0 : selectedIndex + 1)
       }
     },
     [selectedIndex, items],
@@ -165,13 +165,15 @@ export default function SelectInput<T>({
 
   useInput(
     (input, key) => {
-      // check that no key is being pressed
+      // check that no special modifier (shift, control, etc.) is being pressed
       if (enableShortcuts && input.length > 0 && Object.values(key).every((value) => value === false)) {
         const newInputStack = inputStack.current === null ? input : inputStack.current + input
 
         inputStack.current = newInputStack
         debounceHandleShortcuts(newInputStack)
       } else {
+        debounceHandleShortcuts.cancel()
+        inputStack.current = null
         handleArrows(key)
       }
     },
