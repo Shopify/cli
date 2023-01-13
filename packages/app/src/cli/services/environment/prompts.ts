@@ -41,6 +41,7 @@ export async function selectRemoteSourcePrompt(
 }
 
 interface SourceSummary {
+  question: string
   identifiers: IdentifiersExtensions
   toCreate: LocalSource[]
   onlyRemote: RemoteSource[]
@@ -64,7 +65,7 @@ export async function deployConfirmationPrompt(summary: SourceSummary): Promise<
   }
 
   return renderSelectPrompt({
-    message: 'Make the following changes in Shopify Partners?',
+    message: summary.question,
     choices: [
       {label: 'Yes, deploy to push changes', value: true, key: 'y'},
       {label: 'No, cancel', value: false, key: 'n'},

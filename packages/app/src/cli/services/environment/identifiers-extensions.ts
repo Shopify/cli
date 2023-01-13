@@ -39,6 +39,7 @@ export async function ensureExtensionsIds(
 
   if (!options.force) {
     const confirmed = await deployConfirmationPrompt({
+      question: 'Make the following changes to your extensions in Shopify Partners?',
       identifiers: validMatches,
       toCreate: extensionsToCreate,
       onlyRemote: onlyRemoteExtensions,
