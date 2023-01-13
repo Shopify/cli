@@ -5,6 +5,7 @@ import {content, token} from '../../../output.js'
 import {exists, readSync} from '../../../file.js'
 import {getCachedSpinFqdn, setCachedSpinFqdn} from '../../../private/node/environment/spin-cache.js'
 import {Abort} from '../../../error.js'
+import {Environment, serviceEnvironment} from '../../../private/node/environment/service.js'
 
 const SpinInstanceNotFoundMessages = (spinInstance: string | undefined, error: string) => {
   const errorMessage = content`${token.genericShellCommand(
@@ -85,4 +86,14 @@ export function isSpin(env = process.env): boolean {
  */
 export function instance(env = process.env): string | undefined {
   return env[constants.environmentVariables.spinInstance]
+}
+
+/**
+ * Returns true if the CLI is running in a Spin environment.
+ *
+ * @param env - Environment variables.
+ * @returns True if the CLI is running in a Spin environment.
+ */
+export function isSpinEnvironment(env = process.env): boolean {
+  return serviceEnvironment(env) === Environment.Spin
 }

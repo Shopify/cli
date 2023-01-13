@@ -115,7 +115,7 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
   }
 
   async publishURL(options: {orgId: string; appId: string}) {
-    const partnersFqdn = await environment.fqdn.partners()
+    const partnersFqdn = await environment.fqdn.partnersFqdn()
     return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions`
   }
 }

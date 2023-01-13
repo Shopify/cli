@@ -95,7 +95,7 @@ beforeAll(() => {
 })
 
 beforeEach(() => {
-  vi.spyOn(fqdnModule, 'identity').mockResolvedValue(fqdn)
+  vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue(fqdn)
   vi.mocked(useDeviceAuth).mockReturnValue(false)
   vi.mocked(authorize).mockResolvedValue(code)
   vi.mocked(exchangeCodeForAccessToken).mockResolvedValue(validIdentityToken)

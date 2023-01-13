@@ -87,6 +87,6 @@ function buildAppURL(storeFqdn: string, publicURL: string) {
 async function partnersURL(organizationId: string, appId: string): Promise<string> {
   return output.content`${output.token.link(
     `Partners Dashboard`,
-    `https://${await environment.fqdn.partners()}/${organizationId}/apps/${appId}/edit`,
+    `https://${await environment.fqdn.partnersFqdn()}/${organizationId}/apps/${appId}/edit`,
   )}`.value
 }

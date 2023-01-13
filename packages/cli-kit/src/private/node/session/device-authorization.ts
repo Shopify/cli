@@ -1,7 +1,7 @@
 import {clientId} from './identity.js'
 import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {IdentityToken} from './schema.js'
-import {identity as identityFqdn} from '../../../environment/fqdn.js'
+import {identityFqdn as identityFqdn} from '../../../environment/fqdn.js'
 import {shopifyFetch} from '../../../http.js'
 import {content, debug, info, token} from '../../../output.js'
 import {Bug} from '../../../error.js'

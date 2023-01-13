@@ -1,4 +1,4 @@
-import {serviceEnvironment} from './environment/service.js'
+import {Environment, serviceEnvironment} from './private/node/environment/service.js'
 import https from 'https'
 
 export {default as fetch} from './http/fetch.js'
@@ -41,5 +41,5 @@ export async function httpsAgent() {
  * unauthorized requests should be rejected or not.
  */
 export async function shouldRejectUnauthorizedRequests(): Promise<boolean> {
-  return (await serviceEnvironment()) !== 'spin'
+  return (await serviceEnvironment()) !== Environment.Spin
 }

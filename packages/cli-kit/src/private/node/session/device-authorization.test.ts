@@ -6,7 +6,7 @@ import {
 import {clientId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {exchangeDeviceCodeForAccessToken} from './exchange.js'
-import {identity} from '../../../environment/fqdn.js'
+import {identityFqdn} from '../../../environment/fqdn.js'
 import {shopifyFetch} from '../../../http.js'
 import {err, ok} from '../../../public/node/result.js'
 import {describe, expect, it, vi} from 'vitest'
@@ -40,7 +40,7 @@ describe('requestDeviceAuthorization', () => {
     // Given
     const response = new Response(JSON.stringify(data))
     vi.mocked(shopifyFetch).mockResolvedValue(response)
-    vi.mocked(identity).mockResolvedValue('fqdn.com')
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
     vi.mocked(clientId).mockResolvedValue('clientId')
 
     // When

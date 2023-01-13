@@ -8,7 +8,7 @@ import {
 import {applicationId, clientId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {shopifyFetch} from '../../../http.js'
-import {identity} from '../../../environment/fqdn.js'
+import {identityFqdn} from '../../../environment/fqdn.js'
 import {describe, it, expect, vi, afterAll, beforeEach} from 'vitest'
 import {Response} from 'node-fetch'
 import {AbortError} from '@shopify/cli-kit/node/error.js'
@@ -37,7 +37,7 @@ beforeEach(() => {
   vi.mocked(clientId).mockReturnValue('clientId')
   vi.setSystemTime(currentDate)
   vi.mocked(applicationId).mockImplementation((api) => api)
-  vi.mocked(identity).mockResolvedValue('fqdn.com')
+  vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
 })
 
 afterAll(() => {

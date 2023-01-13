@@ -84,7 +84,7 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
   }
 
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
-    const partnersFqdn = await environment.fqdn.partners()
+    const partnersFqdn = await environment.fqdn.partnersFqdn()
     const parnersPath = this.specification.partnersWebIdentifier
     return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }

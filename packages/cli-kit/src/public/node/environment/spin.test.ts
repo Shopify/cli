@@ -1,4 +1,4 @@
-import {show, isSpin, spinFqdn, instance} from './spin.js'
+import {show, isSpin, spinFqdn, instance, isSpinEnvironment} from './spin.js'
 import {getCachedSpinFqdn, setCachedSpinFqdn} from '../../../private/node/environment/spin-cache.js'
 import {captureOutput} from '../system.js'
 import {describe, test, expect, vi, it} from 'vitest'
@@ -132,5 +132,40 @@ describe('instance', () => {
 
     // Then
     expect(got).toBeUndefined()
+  })
+})
+
+describe('isSpinEnvironment', () => {
+  it('returns true when running against SPIN instance', () => {
+    // Given
+    const env = {SHOPIFY_SERVICE_ENV: 'spin'}
+
+    // When
+    const got = isSpinEnvironment(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  it('returns true when running inside a SPIN instance', () => {
+    // Given
+    const env = {SPIN: '1'}
+
+    // When
+    const got = isSpinEnvironment(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  it('returns false when not working with spin instances', () => {
+    // Given
+    const env = {SHOPIFY_SERVICE_ENV: 'local'}
+
+    // When
+    const got = isSpinEnvironment(env)
+
+    // Then
+    expect(got).toBe(false)
   })
 })

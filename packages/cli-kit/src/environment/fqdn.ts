@@ -1,6 +1,6 @@
-import {isSpinEnvironment, serviceEnvironment} from './service.js'
-import {spinFqdn} from '../public/node/environment/spin.js'
+import {isSpinEnvironment, spinFqdn} from '../public/node/environment/spin.js'
 import {Abort} from '../error.js'
+import {serviceEnvironment} from '../private/node/environment/service.js'
 
 export const CouldntObtainPartnersSpinFQDNError = new Abort(
   "Couldn't obtain the Spin FQDN for Partners when the CLI is not running from a Spin environment.",
@@ -19,7 +19,7 @@ export const NotProvidedStoreFQDNError = new Abort(
  * It returns the Partners' API service we should interact with.
  * @returns Fully-qualified domain of the partners service we should interact with.
  */
-export async function partners(): Promise<string> {
+export async function partnersFqdn(): Promise<string> {
   const environment = serviceEnvironment()
   const productionFqdn = 'partners.shopify.com'
   switch (environment) {
@@ -36,7 +36,7 @@ export async function partners(): Promise<string> {
  * It returns the Identity service we should interact with.
  * @returns Fully-qualified domain of the Identity service we should interact with.
  */
-export async function identity(): Promise<string> {
+export async function identityFqdn(): Promise<string> {
   const environment = serviceEnvironment()
   const productionFqdn = 'accounts.shopify.com'
   switch (environment) {
@@ -46,27 +46,6 @@ export async function identity(): Promise<string> {
       return `identity.${await spinFqdn()}`
     default:
       return productionFqdn
-  }
-}
-
-/**
- * It returns the Shopify service we should interact with.
- * Note the same fqdn is sued for the Admin and the Storefront Renderer APIs.
- * @returns Fully-qualified domain of the Shopify service we should interact with.
- */
-export async function shopify(options: {storeFqdn?: string} = {}): Promise<string> {
-  const environment = serviceEnvironment()
-  switch (environment) {
-    case 'local':
-      return 'shopify.myshopify.io'
-    case 'spin':
-      return `identity.${await spinFqdn()}`
-    default:
-      if (options.storeFqdn) {
-        return options.storeFqdn
-      } else {
-        throw NotProvidedStoreFQDNError
-      }
   }
 }
 

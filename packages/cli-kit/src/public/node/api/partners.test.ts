@@ -1,5 +1,5 @@
 import * as partnersApi from './partners.js'
-import {partners} from '../../../environment/fqdn.js'
+import {partnersFqdn} from '../../../environment/fqdn.js'
 import {graphqlRequest} from '../../../private/node/api/graphql.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 
@@ -19,7 +19,7 @@ describe('partners-api', () => {
   test('request is called with correct parameters', async () => {
     // Given
     vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
-    vi.mocked(partners).mockResolvedValue(partnersFQDN)
+    vi.mocked(partnersFqdn).mockResolvedValue(partnersFQDN)
 
     // When
     await partnersApi.partnersRequest('query', mockedToken, {variables: 'variables'})

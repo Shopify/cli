@@ -398,7 +398,7 @@ async function fetchDevDataFromOptions(
     const orgWithStore = await fetchStoreByDomain(orgId, token, options.storeFqdn)
     if (!orgWithStore) throw new error.Bug(`Could not find Organization for id ${orgId}.`)
     if (!orgWithStore.store) {
-      const partners = await environment.fqdn.partners()
+      const partners = await environment.fqdn.partnersFqdn()
       const org = orgWithStore.organization
       throw new error.Bug(
         `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid development store.`,
