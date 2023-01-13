@@ -401,6 +401,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
 
     // Then
     expect(deployConfirmationPrompt).toBeCalledWith({
+      question: 'Make the following changes to your extensions in Shopify Partners?',
       identifiers: {
         EXTENSION_A: 'UUID_A',
         EXTENSION_A_2: 'UUID_A_2',
