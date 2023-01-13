@@ -18,11 +18,17 @@ export interface Props<TContext> {
   silent?: boolean
 }
 
+enum TasksState {
+  Loading = 'loading',
+  Success = 'success',
+  Failure = 'failure',
+}
+
 function Tasks<TContext>({tasks, silent = false}: React.PropsWithChildren<Props<TContext>>) {
   const {twoThirds} = useLayout()
   const loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
-  const [state, setState] = useState<'success' | 'failure' | 'loading'>('loading')
+  const [state, setState] = useState<TasksState>(TasksState.Loading)
   const ctx = useRef<TContext>({} as TContext)
 
   const runTasks = async () => {
@@ -40,33 +46,21 @@ function Tasks<TContext>({tasks, silent = false}: React.PropsWithChildren<Props<
     }
   }
 
-  useAsyncAndUnmount(runTasks, {onFulfilled: () => setState('success'), onRejected: () => setState('failure')})
+  useAsyncAndUnmount(runTasks, {
+    onFulfilled: () => setState(TasksState.Success),
+    onRejected: () => setState(TasksState.Failure),
+  })
 
   if (silent) {
     return null
   }
 
-  return (
+  return state === TasksState.Loading ? (
     <Box flexDirection="column">
-      <Box>
-        {state === 'loading' ? (
-          <TextAnimation text={loadingBar} />
-        ) : (
-          <Text color={state === 'success' ? 'green' : 'red'}>{loadingBar}</Text>
-        )}
-      </Box>
-      <Text>
-        {state === 'success' ? (
-          <Text>Complete!</Text>
-        ) : (
-          <Text>
-            {currentTask.title}
-            {state === 'loading' && ' ...'}
-          </Text>
-        )}
-      </Text>
+      <TextAnimation text={loadingBar} />
+      <Text>{currentTask.title} ...</Text>
     </Box>
-  )
+  ) : null
 }
 
 export {Tasks}
