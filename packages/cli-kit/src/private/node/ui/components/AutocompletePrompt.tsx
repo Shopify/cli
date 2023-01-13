@@ -69,6 +69,11 @@ function AutocompletePrompt<T>({
 
   const setLoadingWhenSlow = useRef<NodeJS.Timeout>()
 
+  // we want to set it each time so that searchTermRef always tracks searchTerm,
+  // this is NOT the same as writing useRef(searchTerm)
+  const searchTermRef = useRef('')
+  searchTermRef.current = searchTerm
+
   const debounceSearch = useCallback(
     debounce((term) => {
       setLoadingWhenSlow.current = setTimeout(() => {
@@ -76,21 +81,24 @@ function AutocompletePrompt<T>({
       }, 100)
       search!(term)
         .then((result) => {
-          const regex = new RegExp(term, 'i')
-          const items = result.map((item) => {
-            const match = item.label.match(regex)
-            if (match) {
-              const [matched] = match
-              const [before, after] = item.label.split(matched!)
+          // while we were waiting for the promise to resolve, the user
+          // has emptied the search term, so we want to show the default
+          // choices instead
+          if (searchTermRef.current.length === 0) {
+            setSearchResults(initialChoices)
+          } else {
+            const regex = new RegExp(term, 'i')
+            const items = result.map((item) => {
               return {
                 ...item,
-                label: `${before}${chalk.bold(matched)}${after}`,
+                label: item.label.replace(regex, (match) => {
+                  return chalk.bold(match)
+                }),
               }
-            }
-            return item
-          })
+            })
+            setSearchResults(items)
+          }
 
-          setSearchResults(items)
           setPromptState(PromptState.Idle)
         })
         .catch(() => {
