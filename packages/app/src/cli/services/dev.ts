@@ -25,6 +25,7 @@ import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {exec} from '@shopify/cli-kit/node/system'
+import {spinFqdn} from '@shopify/cli-kit/node/environment/spin'
 import {
   AdminSession,
   ensureAuthenticatedAdmin,
@@ -244,7 +245,7 @@ async function getDevEnvironmentVariables(options: DevWebOptions) {
     SCOPES: options.scopes,
     NODE_ENV: `development`,
     ...(environment.service.isSpinEnvironment() && {
-      SHOP_CUSTOM_DOMAIN: `shopify.${await environment.spin.fqdn()}`,
+      SHOP_CUSTOM_DOMAIN: `shopify.${await spinFqdn()}`,
     }),
   }
 }

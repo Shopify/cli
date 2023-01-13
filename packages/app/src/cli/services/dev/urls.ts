@@ -8,6 +8,7 @@ import {Config} from '@oclif/core'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isValidURL} from '@shopify/cli-kit/common/url'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {isSpin, spinFqdn} from '@shopify/cli-kit/node/environment/spin'
 
 export interface PartnersURLs {
   applicationUrl: string
@@ -64,8 +65,8 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 
-  if (environment.spin.isSpin() && !options.tunnelUrl) {
-    frontendUrl = `https://cli.${await environment.spin.fqdn()}`
+  if (isSpin() && !options.tunnelUrl) {
+    frontendUrl = `https://cli.${await spinFqdn()}`
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 

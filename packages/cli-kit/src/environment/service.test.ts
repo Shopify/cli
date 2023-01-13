@@ -1,5 +1,4 @@
-import {isSpinEnvironment, serviceEnvironment} from './service.js'
-import {Environment} from '../network/service.js'
+import {Environment, isSpinEnvironment, serviceEnvironment} from './service.js'
 import {expect, it, describe} from 'vitest'
 
 describe('serviceEnvironment', () => {

@@ -19,6 +19,7 @@ import {AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {isSpin, spinFqdn} from '@shopify/cli-kit/node/environment/spin'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/tcp')
@@ -26,6 +27,7 @@ beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/api/partners')
   vi.mock('@shopify/cli-kit/node/session')
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+  vi.mock('@shopify/cli-kit/node/environment/spin')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
@@ -44,10 +46,6 @@ beforeEach(() => {
         local: {
           codespaceURL: vi.fn(),
           gitpodURL: vi.fn(),
-        },
-        spin: {
-          isSpin: vi.fn(),
-          fqdn: vi.fn(),
         },
       },
     }
@@ -512,8 +510,8 @@ describe('generateFrontendURL', () => {
 
   it('Returns a spin url if we are in a spin environment', async () => {
     // Given
-    vi.mocked(environment.spin.isSpin).mockReturnValue(true)
-    vi.mocked(environment.spin.fqdn).mockResolvedValue('spin.domain.dev')
+    vi.mocked(isSpin).mockReturnValue(true)
+    vi.mocked(spinFqdn).mockResolvedValue('spin.domain.dev')
     const options = {
       app: testApp({hasUIExtensions: () => false}),
       tunnel: false,
@@ -536,7 +534,7 @@ describe('generateFrontendURL', () => {
 
   it('Returns a custom tunnel url if we are in a spin environment but a custom tunnel option is active', async () => {
     // Given
-    vi.mocked(environment.spin.isSpin).mockReturnValue(true)
+    vi.mocked(isSpin).mockReturnValue(true)
     const options = {
       app: testApp({hasUIExtensions: () => false}),
       tunnel: true,
