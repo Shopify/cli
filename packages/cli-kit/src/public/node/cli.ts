@@ -71,7 +71,7 @@ export async function runCreateCLI(options: RunCLIOptions): Promise<void> {
 }
 
 export async function useLocalCLIIfDetected(filepath: string): Promise<boolean> {
-  const {isTruthy} = await import('../../environment/utilities.js')
+  const {isTruthy} = await import('../../private/node/environment/utilities.js')
   const constants = await import('../../constants.js')
   const {join} = await import('../../path.js')
   const {exec} = await import('./system.js')

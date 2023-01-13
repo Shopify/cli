@@ -1,5 +1,5 @@
-import {isTruthy, isSet} from './utilities.js'
 import {isSpin} from './spin.js'
+import {isTruthy, isSet} from '../private/node/environment/utilities.js'
 import constants from '../constants.js'
 import {exists as fileExists} from '../file.js'
 import {exec} from '../public/node/system.js'

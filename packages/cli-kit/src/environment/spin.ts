@@ -1,5 +1,5 @@
-import {isTruthy} from './utilities.js'
 import {getCachedSpinFqdn, setCachedSpinFqdn} from './spin-cache.js'
+import {isTruthy} from '../private/node/environment/utilities.js'
 import constants from '../constants.js'
 import {captureOutput} from '../public/node/system.js'
 import {content, token} from '../output.js'
