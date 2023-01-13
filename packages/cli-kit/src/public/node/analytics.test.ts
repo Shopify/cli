@@ -7,9 +7,9 @@ import * as environment from '../../environment.js'
 import {join as joinPath, dirname} from '../../path.js'
 import {mockAndCaptureOutput} from '../../testing/output.js'
 import {getAppInfo} from '../../store.js'
-import constants from '../../constants.js'
 import {publishEvent} from '../../monorail.js'
 import {inTemporaryDirectory, touch as touchFile, mkdir} from '../../file.js'
+import {CLI_KIT_VERSION} from '../common/version.js'
 import {it, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
 describe('event tracking', () => {
@@ -56,7 +56,7 @@ describe('event tracking', () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
       const commandContent = {command: 'dev', topic: 'app', alias: 'alias'}
-      vi.mocked(getAppInfo).mockResolvedValueOnce({
+      vi.mocked(getAppInfo).mockReturnValueOnce({
         appId: 'key1',
         orgId: '1',
         storeFqdn: 'domain1',
@@ -78,7 +78,7 @@ describe('event tracking', () => {
       } as any
       await reportAnalyticsEvent({config})
       // Then
-      const version = await constants.versions.cliKit()
+      const version = CLI_KIT_VERSION
       const expectedPayloadPublic = {
         command: commandContent.command,
         cmd_all_alias_used: commandContent.alias,
@@ -122,7 +122,7 @@ describe('event tracking', () => {
       await reportAnalyticsEvent({config, errorMessage: 'Permission denied'})
 
       // Then
-      const version = await constants.versions.cliKit()
+      const version = CLI_KIT_VERSION
       const expectedPayloadPublic = {
         command: commandContent.command,
         time_start: 1643709599900,

@@ -42,6 +42,7 @@
     "/assets"
   ],
   "scripts": {
+    "preinstall": "bin/preinstall.sh",
     "build": "nx build",
     "clean": "nx clean",
     "lint": "nx lint",

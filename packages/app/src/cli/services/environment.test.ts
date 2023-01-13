@@ -192,7 +192,7 @@ describe('ensureGenerateEnvironment', () => {
     // Given
     const input = {directory: '/app', reset: false, token: 'token'}
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(store.getAppInfo).mockResolvedValue(CACHED1)
+    vi.mocked(store.getAppInfo).mockReturnValue(CACHED1)
 
     // When
     const got = await ensureGenerateEnvironment(input)
@@ -205,7 +205,7 @@ describe('ensureGenerateEnvironment', () => {
     const input = {directory: '/app', reset: true, token: 'token'}
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(loadAppName).mockResolvedValueOnce('my-app')
-    vi.mocked(store.getAppInfo).mockResolvedValue(undefined)
+    vi.mocked(store.getAppInfo).mockReturnValue(undefined)
 
     // When
     const got = await ensureGenerateEnvironment(input)
@@ -225,7 +225,7 @@ describe('ensureGenerateEnvironment', () => {
 describe('ensureDevEnvironment', () => {
   it('returns selected data and updates internal state, without cached state', async () => {
     // Given
-    vi.mocked(store.getAppInfo).mockResolvedValue(undefined)
+    vi.mocked(store.getAppInfo).mockReturnValue(undefined)
 
     // When
     const got = await ensureDevEnvironment(INPUT, 'token')
@@ -258,7 +258,7 @@ describe('ensureDevEnvironment', () => {
   it('returns selected data and updates internal state, with cached state', async () => {
     // Given
     const outputMock = outputMocker.mockAndCaptureOutput()
-    vi.mocked(store.getAppInfo).mockResolvedValue(CACHED1)
+    vi.mocked(store.getAppInfo).mockReturnValue(CACHED1)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
@@ -291,7 +291,7 @@ describe('ensureDevEnvironment', () => {
 
   it('returns selected data and updates internal state, with inputs from flags', async () => {
     // Given
-    vi.mocked(store.getAppInfo).mockResolvedValue(undefined)
+    vi.mocked(store.getAppInfo).mockReturnValue(undefined)
     vi.mocked(convertToTestStoreIfNeeded).mockResolvedValueOnce()
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
@@ -321,7 +321,7 @@ describe('ensureDevEnvironment', () => {
 
   it('throws if the store input is not valid', async () => {
     // Given
-    vi.mocked(store.getAppInfo).mockResolvedValue(undefined)
+    vi.mocked(store.getAppInfo).mockReturnValue(undefined)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: undefined})
 
@@ -377,7 +377,7 @@ describe('ensureDeployEnvironment', () => {
       extensionIds: {},
     }
     vi.mocked(getAppIdentifiers).mockResolvedValue({app: undefined})
-    vi.mocked(store.getAppInfo).mockResolvedValueOnce(CACHED1)
+    vi.mocked(store.getAppInfo).mockReturnValueOnce(CACHED1)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(reuseDevConfigPrompt).mockResolvedValueOnce(true)

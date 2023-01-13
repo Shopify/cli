@@ -28,7 +28,7 @@ export default class Share extends ThemeCommand {
     const directory = flags.path ? path.resolve(flags.path) : process.cwd()
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Share.cli2Flags})
 
-    const store = await getThemeStore(flags)
+    const store = getThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
     await execCLI2(['theme', 'share', directory, ...flagsToPass], {adminSession})

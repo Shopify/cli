@@ -12,7 +12,8 @@ import {debug, info} from '../../output.js'
 import * as path from '../../path.js'
 import * as metadata from '../../metadata.js'
 import {fanoutHooks} from '../../plugins.js'
-import constants, {bugsnagApiKey} from '../../constants.js'
+import {bugsnagApiKey} from '../../constants.js'
+import {CLI_KIT_VERSION} from '../common/version.js'
 import {settings, Interfaces} from '@oclif/core'
 import StackTracey from 'stacktracey'
 import Bugsnag, {Event} from '@bugsnag/js'
@@ -95,7 +96,7 @@ export async function sendErrorToBugsnag(
   reportableError.stack = `Error: ${reportableError.message}\n${formattedStacktrace}`
 
   if (report) {
-    await initializeBugsnag()
+    initializeBugsnag()
     await new Promise((resolve, reject) => {
       Bugsnag.notify(reportableError, undefined, (error, event) => {
         if (error) {
@@ -152,7 +153,7 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
       return {name: plugin.name, pluginPath: path.normalize(followSymlinks)}
     }),
   )
-  await initializeBugsnag()
+  initializeBugsnag()
   Bugsnag.addOnError(async (event) => {
     event.errors.forEach((error) => {
       error.stacktrace.forEach((stackFrame) => {
@@ -217,7 +218,7 @@ export async function addBugsnagMetadata(event: Event, config: Interfaces.Config
   })
 }
 
-async function initializeBugsnag() {
+function initializeBugsnag() {
   if (Bugsnag.isStarted()) {
     return
   }
@@ -225,7 +226,7 @@ async function initializeBugsnag() {
     appType: 'node',
     apiKey: bugsnagApiKey,
     logger: null,
-    appVersion: await constants.versions.cliKit(),
+    appVersion: CLI_KIT_VERSION,
     autoTrackSessions: false,
     autoDetectErrors: false,
   })

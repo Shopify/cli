@@ -5,14 +5,14 @@ import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {linesToColumns} from '@shopify/cli-kit/common/string'
 
 export async function themeInfo(config: {cliVersion: string}): Promise<output.Message> {
-  const sections: [string, string][] = [await themeConfigSection(), await systemInfoSection(config)]
+  const sections: [string, string][] = [themeConfigSection(), await systemInfoSection(config)]
   const message = sections.map((sectionContents) => output.section(...sectionContents)).join('\n\n')
   return message
 }
 
-async function themeConfigSection(): Promise<[string, string]> {
+function themeConfigSection(): [string, string] {
   const title = 'Theme Configuration'
-  const store = (await conf.getThemeStore()) || 'Not configured'
+  const store = conf.getThemeStore() || 'Not configured'
   const lines: string[][] = [['Store', store]]
   return [title, `${linesToColumns(lines)}`]
 }

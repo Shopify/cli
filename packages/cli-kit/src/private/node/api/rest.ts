@@ -16,10 +16,10 @@ export function restRequestUrl(session: AdminSession, apiVersion: string, path: 
   return `https://${session.storeFqdn}/admin/api/${apiVersion}${path}.json`
 }
 
-export async function restRequestHeaders(session: AdminSession) {
+export function restRequestHeaders(session: AdminSession) {
   const store = session.storeFqdn
   const token = session.token
-  const headers = await buildHeaders(session.token)
+  const headers = buildHeaders(session.token)
 
   if (isThemeAccessSession(session)) {
     headers['X-Shopify-Shop'] = store

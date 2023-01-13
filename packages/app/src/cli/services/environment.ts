@@ -69,7 +69,7 @@ export async function ensureGenerateEnvironment(options: {
     }
     return app.apiKey
   }
-  const cachedInfo = await getAppDevCachedInfo({reset: options.reset, directory: options.directory})
+  const cachedInfo = getAppDevCachedInfo({reset: options.reset, directory: options.directory})
 
   if (cachedInfo === undefined && !options.reset) {
     const explanation =
@@ -93,7 +93,7 @@ export async function ensureGenerateEnvironment(options: {
     const {organization, apps} = await fetchOrgAndApps(orgId, options.token)
     const localAppName = await loadAppName(options.directory)
     const selectedApp = await selectOrCreateApp(localAppName, apps, organization, options.token)
-    await store.setAppInfo({
+    store.setAppInfo({
       appId: selectedApp.apiKey,
       title: selectedApp.title,
       directory: options.directory,
@@ -121,7 +121,7 @@ export async function ensureDevEnvironment(
   options: DevEnvironmentOptions,
   token: string,
 ): Promise<DevEnvironmentOutput> {
-  const cachedInfo = await getAppDevCachedInfo({
+  const cachedInfo = getAppDevCachedInfo({
     reset: options.reset,
     directory: options.directory,
   })
@@ -137,7 +137,7 @@ export async function ensureDevEnvironment(
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
   if (selectedApp && selectedStore) {
-    await store.setAppInfo({
+    store.setAppInfo({
       appId: selectedApp.apiKey,
       directory: options.directory,
       storeFqdn: selectedStore.shopDomain,
@@ -162,7 +162,7 @@ export async function ensureDevEnvironment(
     }
   }
 
-  await store.setAppInfo({
+  store.setAppInfo({
     appId: selectedApp.apiKey,
     title: selectedApp.title,
     directory: options.directory,
@@ -184,7 +184,7 @@ export async function ensureDevEnvironment(
     }
   }
 
-  await store.setAppInfo({
+  store.setAppInfo({
     appId: selectedApp.apiKey,
     directory: options.directory,
     storeFqdn: selectedStore?.shopDomain,
@@ -240,7 +240,7 @@ interface DeployEnvironmentOutput {
  * undefined if there is no cached value or the user doesn't want to use it.
  */
 export async function fetchDevAppAndPrompt(app: AppInterface, token: string): Promise<OrganizationApp | undefined> {
-  const devAppId = (await store.getAppInfo(app.directory))?.appId
+  const devAppId = store.getAppInfo(app.directory)?.appId
   if (!devAppId) return undefined
 
   const partnersResponse = await fetchAppFromApiKey(devAppId, token)
@@ -417,14 +417,8 @@ async function fetchDevDataFromOptions(
  * @param reset - Whether to reset the cache or not
  * @param directory - The directory containing the app.
  */
-async function getAppDevCachedInfo({
-  reset,
-  directory,
-}: {
-  reset: boolean
-  directory: string
-}): Promise<store.CachedAppInfo | undefined> {
-  if (reset) await store.clearAppInfo(directory)
+function getAppDevCachedInfo({reset, directory}: {reset: boolean; directory: string}): store.CachedAppInfo | undefined {
+  if (reset) store.clearAppInfo(directory)
   return store.getAppInfo(directory)
 }
 

@@ -100,7 +100,7 @@ export default class Push extends ThemeCommand {
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Push.cli2Flags})
     const command = ['theme', 'push', flags.path, ...flagsToPass]
 
-    const store = await getThemeStore(flags)
+    const store = getThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
     await execCLI2(command, {adminSession})
   }

@@ -52,7 +52,7 @@ class AppInfo {
 
   async output(): Promise<string> {
     const sections: [string, string][] = [
-      await this.devConfigsSection(),
+      this.devConfigsSection(),
       this.projectSettingsSection(),
       await this.appComponentsSection(),
       this.accessScopesSection(),
@@ -61,7 +61,7 @@ class AppInfo {
     return sections.map((sectionContents: [string, string]) => output.section(...sectionContents)).join('\n\n')
   }
 
-  async devConfigsSection(): Promise<[string, string]> {
+  devConfigsSection(): [string, string] {
     const title = 'Configs for Dev'
 
     let appName = NOT_CONFIGURED_TEXT
@@ -72,7 +72,7 @@ class AppInfo {
       this.app.packageManager,
       'dev',
     )}`.value
-    const cachedAppInfo = await store.getAppInfo(this.app.directory)
+    const cachedAppInfo = store.getAppInfo(this.app.directory)
     if (cachedAppInfo) {
       if (cachedAppInfo.title) appName = cachedAppInfo.title
       if (cachedAppInfo.storeFqdn) storeDescription = cachedAppInfo.storeFqdn
