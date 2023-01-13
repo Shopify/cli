@@ -1,7 +1,6 @@
 import {path, error, file, output, ui, npm, environment, git} from '@shopify/cli-kit'
 import {username} from '@shopify/cli-kit/node/os'
 import {
-  findPackageVersionUp,
   installNodeModules,
   packageManager,
   PackageManager,
@@ -19,7 +18,6 @@ interface InitOptions {
   directory: string
   packageManager?: string
   shopifyCliVersion?: string
-  cliHydrogenPackageVersion?: string
   hydrogenVersion?: string
   local: boolean
 }
@@ -31,10 +29,8 @@ Help us make Hydrogen better by reporting this error so we can improve this mess
 `
 
 async function init(options: InitOptions) {
-  const hydrogenVersion = await findPackageVersionUp({fromModuleURL: import.meta.url})
   const user = (await username()) ?? ''
-  const cliPackageVersion = options.shopifyCliVersion ?? CLI_KIT_VERSION
-  const cliHydrogenPackageVersion = options.cliHydrogenPackageVersion ?? hydrogenVersion
+  const cliVersion = options.shopifyCliVersion ?? CLI_KIT_VERSION
   const hydrogenPackageVersion = options.hydrogenVersion
   const packageManager = inferPackageManager(options.packageManager)
   const hyphenizedName = hyphenate(options.name)
@@ -84,7 +80,7 @@ async function init(options: InitOptions) {
                 task: async (_, task) => {
                   const templateData = {
                     name: hyphenizedName,
-                    shopify_cli_version: cliPackageVersion,
+                    shopify_cli_version: cliVersion,
                     hydrogen_version: hydrogenPackageVersion,
                     author: user,
                     dependency_manager: options.packageManager,
@@ -98,14 +94,13 @@ async function init(options: InitOptions) {
                 title: 'Updating package.json',
                 task: async (_, task) => {
                   const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
-                  const cliVersion = CLI_KIT_VERSION
                   await npm.updateAppData(packageJSON, hyphenizedName)
                   await updateCLIDependencies(packageJSON, options.local, {
                     dependencies: {
                       '@shopify/hydrogen': hydrogenPackageVersion,
                     },
                     devDependencies: {
-                      '@shopify/cli-hydrogen': cliHydrogenPackageVersion,
+                      '@shopify/cli-hydrogen': cliVersion,
                       '@shopify/cli': cliVersion,
                     },
                   })
