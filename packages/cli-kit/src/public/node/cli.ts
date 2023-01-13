@@ -74,7 +74,7 @@ export async function useLocalCLIIfDetected(filepath: string): Promise<boolean> 
   const {isTruthy} = await import('../../environment/utilities.js')
   const constants = await import('../../constants.js')
   const {join} = await import('../../path.js')
-  const {exec} = await import('../../system.js')
+  const {exec} = await import('./system.js')
 
   // Temporary flag while we test out this feature and ensure it won't break anything!
   if (!isTruthy(process.env[constants.default.environmentVariables.enableCliRedirect])) return false
@@ -114,7 +114,7 @@ interface PackageJSON {
 }
 
 export async function localCliPackage(): Promise<CliPackageInfo | undefined> {
-  const {captureOutput} = await import('../../system.js')
+  const {captureOutput} = await import('./system.js')
 
   let npmListOutput = ''
   let localShopifyCLI: PackageJSON = {}

@@ -1,9 +1,10 @@
 import {upgrade} from './upgrade.js'
 import * as upgradeService from './upgrade.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {file, outputMocker, path, system} from '@shopify/cli-kit'
+import {file, outputMocker, path} from '@shopify/cli-kit'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import * as nodePackageManager from '@shopify/cli-kit/node/node-package-manager'
+import {exec} from '@shopify/cli-kit/node/system'
 
 const oldCliVersion = '3.0.0'
 // just needs to be higher than oldCliVersion for these tests
@@ -20,10 +21,6 @@ beforeEach(async () => {
         ...module.output,
         getOutputUpdateCLIReminder: vi.fn(),
       },
-      system: {
-        ...module.system,
-        exec: vi.fn(),
-      },
     }
   })
   vi.mock('@shopify/cli-kit/node/os', async () => {
@@ -31,6 +28,7 @@ beforeEach(async () => {
       platformAndArch: vi.fn(),
     }
   })
+  vi.mock('@shopify/cli-kit/node/system')
   vi.mocked(platformAndArch).mockReturnValue({platform: 'windows', arch: 'amd64'})
 })
 afterEach(() => {
@@ -69,7 +67,7 @@ describe('upgrade global CLI', () => {
       await upgrade(tmpDir, oldCliVersion)
 
       // Then
-      expect(vi.mocked(system.exec)).toHaveBeenCalledWith(
+      expect(vi.mocked(exec)).toHaveBeenCalledWith(
         'npm',
         ['install', '-g', '@shopify/cli@latest', '@shopify/theme@latest'],
         {stdio: 'inherit'},
@@ -96,7 +94,7 @@ describe('upgrade global CLI', () => {
         await upgrade(tmpDir, oldCliVersion)
 
         // Then
-        expect(vi.mocked(system.exec)).toHaveBeenCalledWith('brew', ['upgrade', homebrewPackageName], {
+        expect(vi.mocked(exec)).toHaveBeenCalledWith('brew', ['upgrade', homebrewPackageName], {
           stdio: 'inherit',
         })
         expect(outputMock.info()).toMatchInlineSnapshot(`

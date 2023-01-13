@@ -1,15 +1,12 @@
 import {previewInWorker} from './preview.js'
 import {describe, it, expect, vi, afterEach} from 'vitest'
-import {path, file, system} from '@shopify/cli-kit'
+import {path, file} from '@shopify/cli-kit'
+import {exec} from '@shopify/cli-kit/node/system'
 
 vi.mock('@shopify/cli-kit', async () => {
   const cliKit: any = await vi.importActual('@shopify/cli-kit')
   return {
     ...cliKit,
-    system: {
-      ...cliKit.system,
-      exec: vi.fn(),
-    },
     path: {
       ...cliKit.path,
       findUp: vi.fn(),
@@ -22,6 +19,7 @@ vi.mock('@shopify/cli-kit', async () => {
 })
 
 vi.mock('@shopify/mini-oxygen')
+vi.mock('@shopify/cli-kit/node/system')
 
 describe('hydrogen preview', () => {
   afterEach(() => {
@@ -124,7 +122,7 @@ describe('hydrogen preview', () => {
         await previewInWorker({directory: tmpDir, port: 4000, envPath: undefined})
 
         // Then
-        expect(system.exec).toHaveBeenCalledWith(
+        expect(exec).toHaveBeenCalledWith(
           pathToExecutable,
           expect.arrayContaining([]),
           expect.objectContaining({cwd: tmpDir}),

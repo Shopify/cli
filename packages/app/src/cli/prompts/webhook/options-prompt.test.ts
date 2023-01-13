@@ -14,6 +14,7 @@ afterEach(async () => {
 
 const aTopic = 'A_TOPIC'
 const aVersion = 'A_VERSION'
+const unknownVersion = 'UNKNOWN_VERSION'
 const aSecret = 'A_SECRET'
 const aPort = '1234'
 const aUrlPath = '/a/url/path'
@@ -23,22 +24,31 @@ const aLocalAddress = `http://localhost:${aPort}${aUrlPath}`
 describe('optionsPrompt', () => {
   beforeEach(async () => {
     vi.mock('./trigger.js')
+    vi.mock('../../services/webhook/request-api-versions.js')
   })
 
   describe('without params', () => {
     beforeEach(async () => {
       vi.mocked(topicPrompt).mockResolvedValue(aTopic)
-      vi.mocked(apiVersionPrompt).mockResolvedValue(aVersion)
       vi.mocked(sharedSecretPrompt).mockResolvedValue(aSecret)
+    })
+
+    it('fails when unknown version passed', async () => {
+      // Given
+      vi.mocked(apiVersionPrompt).mockResolvedValue(unknownVersion)
+
+      // Then when
+      await expect(optionsPrompt({}, [aVersion])).rejects.toThrow(error.Abort)
     })
 
     it('collects HTTP localhost params', async () => {
       // Given
+      vi.mocked(apiVersionPrompt).mockResolvedValue(aVersion)
       vi.mocked(deliveryMethodPrompt).mockResolvedValue('http')
       vi.mocked(addressPrompt).mockResolvedValue(aLocalAddress)
 
       // When
-      const options = await optionsPrompt({})
+      const options = await optionsPrompt({}, [aVersion])
 
       // Then
       const expected: WebhookTriggerOptions = {
@@ -55,11 +65,12 @@ describe('optionsPrompt', () => {
 
     it('collects HTTP remote delivery params', async () => {
       // Given
+      vi.mocked(apiVersionPrompt).mockResolvedValue(aVersion)
       vi.mocked(deliveryMethodPrompt).mockResolvedValue('http')
       vi.mocked(addressPrompt).mockResolvedValue(anAddress)
 
       // When
-      const options = await optionsPrompt({})
+      const options = await optionsPrompt({}, [aVersion])
 
       // Then
       const expected: WebhookTriggerOptions = {
@@ -90,6 +101,17 @@ describe('optionsPrompt', () => {
       vi.mocked(deliveryMethodPrompt)
       vi.mocked(addressPrompt)
     })
+
+    it('fails when unknown version', async () => {
+      // Given
+      const flags: WebhookTriggerFlags = {
+        apiVersion: unknownVersion,
+      }
+
+      // Then when
+      await expect(optionsPrompt(flags, [aVersion])).rejects.toThrow(error.Abort)
+    })
+
     describe('all params', () => {
       it('collects localhost delivery method required params', async () => {
         // Given
@@ -102,7 +124,7 @@ describe('optionsPrompt', () => {
         }
 
         // When
-        const options = await optionsPrompt(flags)
+        const options = await optionsPrompt(flags, [aVersion])
 
         // Then
         const expected: WebhookTriggerOptions = {
@@ -127,7 +149,7 @@ describe('optionsPrompt', () => {
         }
 
         // When
-        const options = await optionsPrompt(flags)
+        const options = await optionsPrompt(flags, [aVersion])
 
         // Then
         const expected: WebhookTriggerOptions = {
@@ -152,7 +174,7 @@ describe('optionsPrompt', () => {
         }
 
         // Then when
-        await expect(optionsPrompt(flags)).rejects.toThrow(error.Abort)
+        await expect(optionsPrompt(flags, [aVersion])).rejects.toThrow(error.Abort)
       })
 
       it('fails when delivery method is not valid', async () => {
@@ -166,7 +188,7 @@ describe('optionsPrompt', () => {
         }
 
         // Then when
-        await expect(optionsPrompt(flags)).rejects.toThrow(error.Abort)
+        await expect(optionsPrompt(flags, [aVersion])).rejects.toThrow(error.Abort)
       })
     })
 
@@ -181,7 +203,7 @@ describe('optionsPrompt', () => {
         }
 
         // When
-        const options = await optionsPrompt(flags)
+        const options = await optionsPrompt(flags, [aVersion])
 
         // Then
         const expected: WebhookTriggerOptions = {
@@ -208,7 +230,7 @@ describe('optionsPrompt', () => {
         vi.mocked(addressPrompt).mockResolvedValue(aLocalAddress)
 
         // When
-        const options = await optionsPrompt(flags)
+        const options = await optionsPrompt(flags, [aVersion])
 
         // Then
         const expected: WebhookTriggerOptions = {

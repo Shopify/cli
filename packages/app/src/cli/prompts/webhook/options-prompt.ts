@@ -36,15 +36,36 @@ export interface WebhookTriggerFlags {
  *   needing ngrok
  *
  * @param flags - Flags collected from the command-line arguments
+ * @param availableVersions - Available API Versions
  * @returns flags/prompts transformed into WebhookTriggerOptions to pass to the service
  */
-export async function optionsPrompt(flags: WebhookTriggerFlags): Promise<WebhookTriggerOptions> {
+export async function optionsPrompt(
+  flags: WebhookTriggerFlags,
+  availableVersions: string[],
+): Promise<WebhookTriggerOptions> {
   const options: WebhookTriggerOptions = {
     topic: '',
     apiVersion: '',
     sharedSecret: '',
     deliveryMethod: '',
     address: '',
+  }
+
+  const apiVersionPassed = flagPassed(flags.apiVersion)
+
+  if (apiVersionPassed) {
+    const passedApiVersion = (flags.apiVersion as string).trim()
+    if (availableVersions.includes(passedApiVersion)) {
+      options.apiVersion = passedApiVersion
+    } else {
+      throw new error.Abort(
+        `Api Version '${passedApiVersion}' does not exist`,
+        `Allowed values: ${availableVersions.join(', ')}`,
+        ['Try again with a valid api-version value'],
+      )
+    }
+  } else {
+    options.apiVersion = await apiVersionPrompt(availableVersions)
   }
 
   const methodPassed = flagPassed(flags.deliveryMethod)
@@ -54,6 +75,7 @@ export async function optionsPrompt(flags: WebhookTriggerFlags): Promise<Webhook
     throw new error.Abort(
       'Invalid Delivery Method passed',
       `${DELIVERY_METHOD.HTTP}, ${DELIVERY_METHOD.PUBSUB}, and ${DELIVERY_METHOD.EVENTBRIDGE} are allowed`,
+      ['Try again with a valid delivery method'],
     )
   }
 
@@ -63,8 +85,8 @@ export async function optionsPrompt(flags: WebhookTriggerFlags): Promise<Webhook
       options.deliveryMethod = inferMethodFromAddress(options.address)
     } else {
       throw new error.Abort(
-        "Can't deliver your webhook payload to this address. Run 'shopify webhook trigger --address=<VALUE>' with a valid URL",
-        undefined,
+        "Can't deliver your webhook payload to this address",
+        "Run 'shopify webhook trigger --address=<VALUE>' with a valid URL",
         deliveryMethodInstructions(flags.deliveryMethod as string),
       )
     }
@@ -76,7 +98,6 @@ export async function optionsPrompt(flags: WebhookTriggerFlags): Promise<Webhook
   }
 
   options.topic = await useFlagOrPrompt(flags.topic, topicPrompt)
-  options.apiVersion = await useFlagOrPrompt(flags.apiVersion, apiVersionPrompt)
   options.sharedSecret = await useFlagOrPrompt(flags.sharedSecret, sharedSecretPrompt)
 
   if (!methodPassed && !addressPassed) {

@@ -13,7 +13,7 @@ import {
   addResolutionOrOverride,
   findPackageVersionUp,
 } from './node-package-manager.js'
-import {exec} from '../../system.js'
+import {exec} from './system.js'
 import {join as pathJoin, normalize as pathNormalize, pathToFileURL} from '../../path.js'
 import {inTemporaryDirectory, mkdir, touch, write, write as writeFile} from '../../file.js'
 import {Abort} from '../../error.js'
@@ -21,7 +21,7 @@ import {describe, it, expect, vi, test} from 'vitest'
 import latestVersion from 'latest-version'
 
 vi.mock('../../version.js')
-vi.mock('../../system.js')
+vi.mock('./system.js')
 vi.mock('latest-version')
 
 const mockedExec = vi.mocked(exec)

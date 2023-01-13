@@ -2,10 +2,10 @@ import {open} from './open.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {Theme} from '../models/theme.js'
 import {test, describe, expect, vi} from 'vitest'
-import {system} from '@shopify/cli-kit'
+import {openURL} from '@shopify/cli-kit/node/system'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 
-vi.mock('@shopify/cli-kit')
+vi.mock('@shopify/cli-kit/node/system')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../utilities/theme-selector.js')
 
@@ -35,7 +35,7 @@ describe('open', () => {
     await open(session, options)
 
     // Then
-    expect(system.open).toBeCalledWith('https://my-shop.myshopify.com?preview_theme_id=1')
+    expect(openURL).toBeCalledWith('https://my-shop.myshopify.com?preview_theme_id=1')
   })
 
   test('opens the editor URL with `editor` flag', async () => {
@@ -46,7 +46,7 @@ describe('open', () => {
     await open(session, {...options, editor: true})
 
     // Then
-    expect(system.open).toBeCalledWith('https://my-shop.myshopify.com/admin/themes/1/editor')
+    expect(openURL).toBeCalledWith('https://my-shop.myshopify.com/admin/themes/1/editor')
   })
 
   test('renders the theme links', async () => {

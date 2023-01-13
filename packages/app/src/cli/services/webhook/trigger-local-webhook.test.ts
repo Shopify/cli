@@ -1,5 +1,4 @@
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
-
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {http} from '@shopify/cli-kit'
 

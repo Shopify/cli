@@ -16,7 +16,7 @@ import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant
 import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
-import {output, system, environment} from '@shopify/cli-kit'
+import {output, environment} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -24,6 +24,7 @@ import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
+import {exec} from '@shopify/cli-kit/node/system'
 import {
   AdminSession,
   ensureAuthenticatedAdmin,
@@ -214,7 +215,7 @@ async function devFrontendProxyTarget(options: DevFrontendTargetOptions): Promis
   return {
     logPrefix: options.web.configuration.type,
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
-      await system.exec(cmd!, args, {
+      await exec(cmd!, args, {
         cwd: options.web.directory,
         stdout,
         stderr,
@@ -262,7 +263,7 @@ async function devBackendTarget(web: Web, options: DevWebOptions): Promise<outpu
   return {
     prefix: web.configuration.type,
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-      await system.exec(cmd!, args, {
+      await exec(cmd!, args, {
         cwd: web.directory,
         stdout,
         stderr,
