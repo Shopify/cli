@@ -5,8 +5,6 @@ export default class Version extends Command {
   static description = 'Shopify CLI version'
 
   async run(): Promise<void> {
-    await versionService({
-      currentVersion: this.config.version,
-    })
+    await versionService()
   }
 }
