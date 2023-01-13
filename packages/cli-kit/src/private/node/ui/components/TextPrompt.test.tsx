@@ -9,7 +9,7 @@ const ENTER = '\r'
 
 describe('TextPrompt', () => {
   test('default state', () => {
-    const {lastFrame} = render(<TextPrompt onSubmit={() => {}} message="Test question" placeholder="Placeholder" />)
+    const {lastFrame} = render(<TextPrompt onSubmit={() => {}} message="Test question" defaultValue="Placeholder" />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "?  Test question
@@ -70,6 +70,20 @@ describe('TextPrompt', () => {
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, 'A')
+    await sendInputAndWaitForChange(renderInstance, ENTER)
+    expect(onSubmit).toHaveBeenCalledWith('A')
+    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
+      "?  Test question
+      ✔  A
+      "
+    `)
+  })
+
+  test.only('submitting the default value', async () => {
+    const onSubmit = vi.fn()
+    const renderInstance = render(<TextPrompt onSubmit={onSubmit} message="Test question" defaultValue="A" />)
+
+    await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, ENTER)
     expect(onSubmit).toHaveBeenCalledWith('A')
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`

@@ -6,18 +6,20 @@ import chalk from 'chalk'
 import type {FC} from 'react'
 
 interface Props {
-  placeholder?: string
+  defaultValue?: string
   value: string
   onChange: (value: string) => void
   color?: string
   password?: boolean
   focus?: boolean
+  placeholder?: string
 }
 
 const TextInput: FC<Props> = ({
   value: originalValue,
-  placeholder = '',
+  defaultValue = '',
   onChange,
+  placeholder = '',
   color = 'cyan',
   password = false,
   focus = true,
@@ -39,8 +41,17 @@ const TextInput: FC<Props> = ({
 
   const value = password ? '*'.repeat(originalValue.length) : originalValue
   let renderedValue
+
+  const renderPlaceholder = (value: string) => {
+    return chalk.inverse(value[0]) + chalk.dim(value.slice(1))
+  }
+
   const renderedPlaceholder =
-    placeholder.length > 0 ? chalk.inverse(placeholder[0]) + chalk.dim(placeholder.slice(1)) : undefined
+    defaultValue.length > 0
+      ? renderPlaceholder(defaultValue)
+      : placeholder.length > 0
+      ? renderPlaceholder(placeholder)
+      : chalk.inverse(' ')
 
   // render cursor
   renderedValue = value
@@ -102,9 +113,7 @@ const TextInput: FC<Props> = ({
     {isActive: focus},
   )
 
-  return (
-    <Text color={color}>{placeholder ? (value.length > 0 ? renderedValue : renderedPlaceholder) : renderedValue}</Text>
-  )
+  return <Text color={color}>{value.length > 0 ? renderedValue : renderedPlaceholder}</Text>
 }
 
 export {TextInput}

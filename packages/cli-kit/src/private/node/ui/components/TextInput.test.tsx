@@ -116,7 +116,21 @@ describe('TextInput', () => {
   test('onChange', async () => {
     const onChange = vi.fn()
 
-    const renderInstance = render(<TextInput value="" onChange={onChange} />)
+    const StatefulTextInput = () => {
+      const [value, setValue] = useState('')
+
+      return (
+        <TextInput
+          value={value}
+          onChange={(value) => {
+            setValue(value)
+            onChange(value)
+          }}
+        />
+      )
+    }
+
+    const renderInstance = render(<StatefulTextInput />)
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, 'X')

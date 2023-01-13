@@ -9,19 +9,11 @@ export interface Props {
   message: string
   onSubmit: (value: string) => void
   defaultValue?: string
-  placeholder?: string
   password?: boolean
   validate?: (value: string) => string | undefined
 }
 
-const TextPrompt: React.FC<Props> = ({
-  message,
-  onSubmit,
-  placeholder,
-  validate,
-  defaultValue = '',
-  password = false,
-}) => {
+const TextPrompt: React.FC<Props> = ({message, onSubmit, validate, defaultValue = '', password = false}) => {
   const validateAnswer = (value: string): string | undefined => {
     if (validate) {
       return validate(value)
@@ -32,12 +24,12 @@ const TextPrompt: React.FC<Props> = ({
     return undefined
   }
   const {oneThird} = useLayout()
-  const [answer, setAnswer] = useState<string>(defaultValue)
+  const [answer, setAnswer] = useState<string>('')
+  const answerOrDefault = answer.length > 0 ? answer : defaultValue
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
-  const [error, setError] = useState(validateAnswer(answer))
-  const valid = !error
-  const shouldShowError = submitted && !valid
+  const [error, setError] = useState<string | undefined>(undefined)
+  const shouldShowError = submitted && error
   const color = shouldShowError ? 'red' : 'cyan'
   const underline = new Array(oneThird - 3).fill('▔')
 
@@ -48,14 +40,16 @@ const TextPrompt: React.FC<Props> = ({
 
         if (key.return) {
           setSubmitted(true)
+          const error = validateAnswer(answerOrDefault)
+          setError(error)
 
-          if (valid) {
-            onSubmit(answer)
+          if (!error) {
+            onSubmit(answerOrDefault)
             unmountInk()
           }
         }
       },
-      [answer, onSubmit, valid],
+      [answerOrDefault, onSubmit],
     ),
   )
 
@@ -67,14 +61,14 @@ const TextPrompt: React.FC<Props> = ({
         </Box>
         <Text>{message}</Text>
       </Box>
-      {submitted && valid ? (
+      {submitted && !error ? (
         <Box>
           <Box marginRight={2}>
             <Text color="cyan">{figures.tick}</Text>
           </Box>
 
           <Box flexGrow={1}>
-            <Text color="cyan">{password ? '*'.repeat(answer.length) : answer}</Text>
+            <Text color="cyan">{password ? '*'.repeat(answer.length) : answerOrDefault}</Text>
           </Box>
         </Box>
       ) : (
@@ -88,10 +82,9 @@ const TextPrompt: React.FC<Props> = ({
                 value={answer}
                 onChange={(answer) => {
                   setAnswer(answer)
-                  setError(validateAnswer(answer))
                   setSubmitted(false)
                 }}
-                placeholder={placeholder}
+                defaultValue={defaultValue}
                 color={color}
                 password={password}
               />
