@@ -12,7 +12,7 @@ describe('TextPrompt', () => {
     const {lastFrame} = render(<TextPrompt onSubmit={() => {}} message="Test question" defaultValue="Placeholder" />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
-      "?  Test question
+      "?  Test question:
       >  Placeholder
          ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
       "
@@ -128,5 +128,11 @@ describe('TextPrompt', () => {
       ✔  ***
       "
     `)
+  })
+
+  test("doesn't append a colon to the message if it ends with a question mark", async () => {
+    const {lastFrame} = render(<TextPrompt onSubmit={() => {}} message="Test question?" />)
+
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot()
   })
 })

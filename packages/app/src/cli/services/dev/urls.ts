@@ -8,6 +8,7 @@ import {Config} from '@oclif/core'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isValidURL} from '@shopify/cli-kit/common/url'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 export interface PartnersURLs {
   applicationUrl: string
@@ -96,7 +97,7 @@ export async function generateURL(config: Config, frontendPort: number): Promise
   // and will need to use "getListOfTunnelPlugins" to find the available tunnel plugins
   const provider = 'ngrok'
   return (await plugins.runTunnelPlugin(config, frontendPort, provider))
-    .doOnOk(() => output.success('The tunnel is running and you can now view your app'))
+    .doOnOk(() => renderSuccess({headline: 'The tunnel is running and you can now view your app'}))
     .mapError(mapRunTunnelPluginError)
     .valueOrAbort()
 }

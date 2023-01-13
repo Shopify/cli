@@ -50,13 +50,15 @@ function SelectPrompt<T>({
     ),
   )
 
+  const messageWithPunctuation = message.endsWith('?') ? message : `${message}:`
+
   return (
     <Box flexDirection="column" marginBottom={1} ref={measuredRef}>
       <Box>
         <Box marginRight={2}>
           <Text>?</Text>
         </Box>
-        <Text>{message}</Text>
+        <Text>{messageWithPunctuation}</Text>
       </Box>
       {infoTable && !submitted && (
         <Box marginLeft={7} marginTop={1}>

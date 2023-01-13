@@ -5,6 +5,7 @@ import {
   sendInputAndWaitForChange,
   waitForInputsToBeReady,
 } from '../../../../testing/ui.js'
+import {unstyled} from '../../../../output.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {render} from 'ink-testing-library'
@@ -158,5 +159,11 @@ describe('SelectPrompt', async () => {
     `)
 
     expect(onEnter).not.toHaveBeenCalled()
+  })
+
+  test("doesn't append a colon to the message if it ends with a question mark", async () => {
+    const {lastFrame} = render(<SelectPrompt choices={[]} onSubmit={() => {}} message="Test question?" />)
+
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot()
   })
 })

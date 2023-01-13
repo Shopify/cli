@@ -35,7 +35,7 @@ const Alert: React.FC<AlertProps> = ({
   orderedNextSteps = false,
 }) => {
   return (
-    <Banner type={type} marginY={1}>
+    <Banner type={type}>
       <Box>
         <TokenizedText item={headline} />
       </Box>

@@ -53,13 +53,15 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, validate, defaultValue 
     ),
   )
 
+  const messageWithPunctuation = message.endsWith('?') ? message : `${message}:`
+
   return (
     <Box flexDirection="column" marginBottom={1} width={oneThird}>
       <Box>
         <Box marginRight={2}>
           <Text>?</Text>
         </Box>
-        <Text>{message}</Text>
+        <Text>{messageWithPunctuation}</Text>
       </Box>
       {submitted && !error ? (
         <Box>
