@@ -28,7 +28,7 @@ export function QRCodeModal({code, onClose}: QRCodeModalProps) {
   })
 
   return (
-    <Modal title={i18n.translate('title', {title: code?.title})} open={Boolean(code)} onClose={onClose}>
+    <Modal title={i18n.translate('title', {title: code?.title})} open={Boolean(code)} onClose={onClose} width="small">
       {code ? <QRCodeContent {...code} /> : null}
     </Modal>
   )
@@ -85,15 +85,16 @@ export function QRCodeContent({url, title, type}: Code) {
         Scan with your phone camera to see your work.
       </span>
       <span className={styles.RightColumn}>
-        <p>{i18n.translate('qrcode.content', {title})}</p>
-        <div className={styles.CopyLink}>
+        <span className={styles.UrlCta}>
+          {i18n.translate('url.intro')}{' '}
           <IconButton
             type="button"
             source={ClipboardMinor}
             accessibilityLabel={i18n.translate('qrcode.copy')}
             onClick={onButtonClick}
           />
-        </div>
+        </span>
+        <span className={styles.Url}>{url}</span>
       </span>
     </div>
   )

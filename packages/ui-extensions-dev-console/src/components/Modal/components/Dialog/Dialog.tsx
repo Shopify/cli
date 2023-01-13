@@ -15,9 +15,10 @@ export interface DialogProps {
   onClose(): void
   setClosing: Dispatch<SetStateAction<boolean>>
   in: boolean
+  width: 'small' | 'large'
 }
 
-export function Dialog({labelledBy, children, onClose, setClosing, ...cssTransitionProps}: DialogProps) {
+export function Dialog({labelledBy, children, onClose, setClosing, width, ...cssTransitionProps}: DialogProps) {
   const containerNode = useRef<HTMLDivElement>(null)
 
   const ensureFocusInsideModal = useCallback(() => {
@@ -62,7 +63,7 @@ export function Dialog({labelledBy, children, onClose, setClosing, ...cssTransit
     >
       <div className={styles.Container} ref={containerNode}>
         <div role="dialog" aria-modal aria-labelledby={labelledBy} tabIndex={-1} className={styles.Dialog}>
-          <div className={styles.Modal}>{children}</div>
+          <div className={classNames(styles.Modal, styles[`Width-${width}`])}>{children}</div>
         </div>
       </div>
     </CSSTransition>
