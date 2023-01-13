@@ -2,12 +2,13 @@ import {hydrogenFlags} from '../../../flags.js'
 import {addESLint} from '../../../services/eslint.js'
 import {load as loadApp, HydrogenApp} from '../../../models/hydrogen.js'
 import {Flags} from '@oclif/core'
-import {cli, path} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {path} from '@shopify/cli-kit'
 import Command from '@shopify/cli-kit/node/base-command'
 
 export default class AddESLint extends Command {
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...hydrogenFlags,
     force: Flags.boolean({
       hidden: false,

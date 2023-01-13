@@ -1,14 +1,15 @@
 import initPrompt from '../prompts/init.js'
 import initService from '../services/init.js'
-import {path, cli} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
 
 export default class Init extends Command {
   static aliases = ['create-hydrogen']
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     name: Flags.string({
       description: 'The name of the Hydrogen app.',
       char: 'n',

@@ -1,12 +1,13 @@
 import ThemeCommand from '../../utilities/theme-command.js'
 import {themeInfo} from '../../services/info.js'
-import {cli, output} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class ThemeInfo extends ThemeCommand {
   static description = 'Print basic information about your theme environment'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
   }
 
   public async run(): Promise<void> {

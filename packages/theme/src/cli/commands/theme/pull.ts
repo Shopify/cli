@@ -2,7 +2,8 @@ import {themeFlags} from '../../flags.js'
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
-import {cli, path} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {path} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
@@ -10,7 +11,7 @@ export default class Pull extends ThemeCommand {
   static description = 'Download your remote theme files locally.'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...themeFlags,
     theme: Flags.string({
       char: 't',

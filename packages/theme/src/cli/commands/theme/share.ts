@@ -1,9 +1,10 @@
 import {themeFlags} from '../../flags.js'
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {cli, path} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {Flags} from '@oclif/core'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
 export default class Share extends ThemeCommand {
@@ -11,7 +12,7 @@ export default class Share extends ThemeCommand {
     'Creates a shareable, unpublished, and new theme on your theme library with a randomized name. Works like an alias to {{command:theme push -u -t=RANDOMIZED_NAME}}'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...themeFlags,
     force: Flags.boolean({
       hidden: true,

@@ -4,14 +4,15 @@ import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import {loadExtensionsSpecifications} from '../../../models/extensions/specifications.js'
 import {Flags} from '@oclif/core'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
-import {path, error, cli, output} from '@shopify/cli-kit'
+import {path, error, output} from '@shopify/cli-kit'
 
 export default class GenerateSchema extends Command {
   static description = 'Generates a GraphQL schema for a function'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...appFlags,
     'api-key': Flags.string({
       name: 'API key',
