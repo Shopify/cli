@@ -1,4 +1,4 @@
-import {error, output, path, system} from '@shopify/cli-kit'
+import {error, output, path} from '@shopify/cli-kit'
 import {
   addNPMDependencies,
   findUpAndReadPackageJson,
@@ -7,6 +7,7 @@ import {
   getPackageManager,
   PackageJson,
 } from '@shopify/cli-kit/node/node-package-manager'
+import {exec} from '@shopify/cli-kit/node/system'
 
 type HomebrewPackageName = 'shopify-cli' | 'shopify-cli@3'
 
@@ -89,7 +90,7 @@ async function upgradeGlobalViaHomebrew(homebrewPackage: HomebrewPackageName): P
       'brew upgrade',
     )}...`,
   )
-  await system.exec('brew', ['upgrade', homebrewPackage], {stdio: 'inherit'})
+  await exec('brew', ['upgrade', homebrewPackage], {stdio: 'inherit'})
 }
 
 async function upgradeGlobalViaNpm(): Promise<void> {
@@ -103,7 +104,7 @@ async function upgradeGlobalViaNpm(): Promise<void> {
   output.info(
     output.content`Attempting to upgrade via ${output.token.genericShellCommand([command, ...args].join(' '))}...`,
   )
-  await system.exec(command, args, {stdio: 'inherit'})
+  await exec(command, args, {stdio: 'inherit'})
 }
 
 function outputWontInstallMessage(currentVersion: string): void {

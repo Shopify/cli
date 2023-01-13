@@ -1,7 +1,8 @@
 import {HydrogenApp} from '../models/hydrogen.js'
-import {ui, system, path, file, error} from '@shopify/cli-kit'
+import {ui, path, file, error} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions} from '@shopify/cli-kit/node/vscode'
+import {exec} from '@shopify/cli-kit/node/system'
 import stream from 'stream'
 
 interface AddTailwindOptions {
@@ -85,7 +86,7 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
           }
         }
 
-        await system.exec(app.packageManager, ['tailwindcss', 'init', tailwindConfigurationPath], {
+        await exec(app.packageManager, ['tailwindcss', 'init', tailwindConfigurationPath], {
           cwd: directory,
         })
 

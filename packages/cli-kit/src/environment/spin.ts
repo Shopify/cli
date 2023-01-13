@@ -1,12 +1,12 @@
 import {isTruthy} from './utilities.js'
 import {getCachedSpinFqdn, setCachedSpinFqdn} from './spin-cache.js'
 import constants from '../constants.js'
-import {captureOutput} from '../system.js'
-import {Abort} from '../error.js'
+import {captureOutput} from '../public/node/system.js'
 import {content, token} from '../output.js'
 import {exists, readSync} from '../file.js'
+import {Abort} from '../error.js'
 
-export const SpinInstanceNotFound = (spinInstance: string | undefined, error: string) => {
+export const SpinInstanceNotFoundMessages = (spinInstance: string | undefined, error: string) => {
   const errorMessage = content`${token.genericShellCommand(
     `spin`,
   )} yielded the following error trying to obtain the fully qualified domain name of the Spin instance:
@@ -16,7 +16,7 @@ ${error}
   if (spinInstance) {
     nextSteps = `Make sure ${spinInstance} is the instance name and not a fully qualified domain name`
   }
-  return new Abort(errorMessage, nextSteps)
+  return {errorMessage, nextSteps}
 }
 
 const spinFqdnFilePath = '/etc/spin/machine/fqdn'
@@ -56,7 +56,8 @@ export async function show(spinInstance: string | undefined, env = process.env):
   const output = await captureOutput('spin', args, {env})
   const json = JSON.parse(output)
   if (json.error) {
-    throw SpinInstanceNotFound(spinInstance, json.error)
+    const {errorMessage, nextSteps} = SpinInstanceNotFoundMessages(spinInstance, json.error)
+    throw new Abort(errorMessage, nextSteps)
   } else {
     return json
   }

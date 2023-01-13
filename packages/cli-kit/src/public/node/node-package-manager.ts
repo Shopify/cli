@@ -1,14 +1,14 @@
 import {AbortError, BugError} from './error.js'
 import {Version} from './semver.js'
 import {AbortController, AbortSignal} from './abort.js'
-import {exec} from '../../system.js'
+import {exec} from './system.js'
 import {exists as fileExists, read as readFile, write as writeFile} from '../../file.js'
 import {glob, dirname, join as pathJoin, findUp, moduleDirectory} from '../../path.js'
 import {token, content, debug} from '../../output.js'
 import {Bug} from '../../error.js'
 import latestVersion from 'latest-version'
 import type {Writable} from 'stream'
-import type {ExecOptions} from '../../system.js'
+import type {ExecOptions} from './system.js'
 
 /** The name of the Yarn lock file */
 export const yarnLockfile = 'yarn.lock'

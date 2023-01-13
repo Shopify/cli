@@ -1,9 +1,9 @@
 import {coerceSemverVersion} from './semver.js'
 import {AbortSignal} from './abort.js'
 import {platformAndArch} from './os.js'
+import {captureOutput, exec} from './system.js'
 import * as file from '../../file.js'
 import * as ui from '../../ui.js'
-import * as system from '../../system.js'
 import {Abort, AbortSilent} from '../../error.js'
 import {glob, join} from '../../path.js'
 import constants from '../../constants.js'
@@ -52,7 +52,7 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
   }
 
   try {
-    await system.exec(bundleExecutable(), ['exec', 'shopify'].concat(args), {
+    await exec(bundleExecutable(), ['exec', 'shopify'].concat(args), {
       stdio: 'inherit',
       cwd: options.directory ?? process.cwd(),
       env,
@@ -103,7 +103,7 @@ export async function execThemeCheckCLI(options: ExecThemeCheckCLIOptions): Prom
         }
       },
     })
-    await system.exec(bundleExecutable(), ['exec', 'theme-check'].concat([directory, ...(options.args || [])]), {
+    await exec(bundleExecutable(), ['exec', 'theme-check'].concat([directory, ...(options.args || [])]), {
       stdout: options.stdout,
       stderr: customStderr,
       cwd: themeCheckDirectory(),
@@ -188,7 +188,7 @@ async function validateRubyEnv() {
 async function validateRuby() {
   let version
   try {
-    const stdout = await system.captureOutput(rubyExecutable(), ['-v'])
+    const stdout = await captureOutput(rubyExecutable(), ['-v'])
     version = coerceSemverVersion(stdout)
   } catch {
     throw new Abort(
@@ -216,7 +216,7 @@ async function validateRuby() {
 async function validateBundler() {
   let version
   try {
-    const stdout = await system.captureOutput(bundleExecutable(), ['-v'])
+    const stdout = await captureOutput(bundleExecutable(), ['-v'])
     version = coerceSemverVersion(stdout)
   } catch {
     throw new Abort(
@@ -278,27 +278,27 @@ async function createThemeCheckGemfile(): Promise<void> {
  * It runs bundle install for the dev-managed copy of the Ruby CLI.
  */
 async function bundleInstallLocalShopifyCLI(): Promise<void> {
-  await system.exec(bundleExecutable(), ['install'], {cwd: shopifyCLIDirectory()})
+  await exec(bundleExecutable(), ['install'], {cwd: shopifyCLIDirectory()})
 }
 
 /**
  * It runs bundle install for the CLI-managed copy of the Ruby CLI.
  */
 async function bundleInstallShopifyCLI() {
-  await system.exec(bundleExecutable(), ['config', 'set', '--local', 'path', shopifyCLIDirectory()], {
+  await exec(bundleExecutable(), ['config', 'set', '--local', 'path', shopifyCLIDirectory()], {
     cwd: shopifyCLIDirectory(),
   })
-  await system.exec(bundleExecutable(), ['install'], {cwd: shopifyCLIDirectory()})
+  await exec(bundleExecutable(), ['install'], {cwd: shopifyCLIDirectory()})
 }
 
 /**
  * It runs bundle install for the CLI-managed copy of theme-check.
  */
 async function bundleInstallThemeCheck() {
-  await system.exec(bundleExecutable(), ['config', 'set', '--local', 'path', themeCheckDirectory()], {
+  await exec(bundleExecutable(), ['config', 'set', '--local', 'path', themeCheckDirectory()], {
     cwd: themeCheckDirectory(),
   })
-  await system.exec(bundleExecutable(), ['install'], {cwd: themeCheckDirectory()})
+  await exec(bundleExecutable(), ['install'], {cwd: themeCheckDirectory()})
 }
 
 /**
@@ -327,8 +327,7 @@ function themeCheckDirectory(): string {
  */
 export async function version(): Promise<string | undefined> {
   const parseOutput = (version: string) => version.match(/ruby (\d+\.\d+\.\d+)/)?.[1]
-  return system
-    .captureOutput(rubyExecutable(), ['-v'])
+  return captureOutput(rubyExecutable(), ['-v'])
     .then(parseOutput)
     .catch(() => undefined)
 }

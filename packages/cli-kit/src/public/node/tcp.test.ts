@@ -1,6 +1,6 @@
 import {getAvailableTCPPort} from './tcp.js'
+import * as system from './system.js'
 import {Abort} from '../../error.js'
-import * as System from '../../system.js'
 import * as port from 'get-port-please'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -15,7 +15,7 @@ describe('getAvailableTCPPort', () => {
     // Given
     vi.mocked(port.getRandomPort).mockRejectedValueOnce(new Error(errorMessage))
     vi.mocked(port.getRandomPort).mockResolvedValue(5)
-    const debugError = vi.spyOn(System, 'sleep')
+    const debugError = vi.spyOn(system, 'sleep')
 
     // When
     const got = await getAvailableTCPPort()

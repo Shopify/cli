@@ -1,18 +1,10 @@
 import {buildFunctionExtension} from './extension.js'
 import {FunctionExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {system} from '@shopify/cli-kit'
+import {exec} from '@shopify/cli-kit/node/system.js'
 
 beforeEach(() => {
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      system: {
-        exec: vi.fn(),
-      },
-    }
-  })
+  vi.mock('@shopify/cli-kit/node/system.js')
 })
 
 describe('buildFunctionExtension', () => {
@@ -68,7 +60,7 @@ describe('buildFunctionExtension', () => {
       }),
     ).resolves.toBeUndefined()
 
-    expect(system.exec).toHaveBeenCalledWith('./scripts/build.sh', ['argument'], {
+    expect(exec).toHaveBeenCalledWith('./scripts/build.sh', ['argument'], {
       stdout,
       stderr,
       cwd: extension.directory,
