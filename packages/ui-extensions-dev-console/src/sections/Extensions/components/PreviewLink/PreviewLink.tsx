@@ -18,11 +18,14 @@ export function PreviewLink({url, title}: Props) {
     fallback: en,
   })
 
-  const {embedded, navigate} = useExtensionsInternal()
+  const {embedded} = useExtensionsInternal()
 
   const handleOpenRoot = (event: React.MouseEvent<HTMLElement>) => {
     if (embedded && window.top) {
-      navigate(url)
+      // TODO: Is this a secure way to do this?
+      // Get thumbs up from some peoples
+      window.parent.location = url
+
       event.preventDefault()
     }
   }
