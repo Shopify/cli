@@ -58,7 +58,7 @@ beforeEach(() => {
           isUnitTest: vi.fn(() => true),
         },
         fqdn: {
-          partners: vi.fn(),
+          partnersFqdn: vi.fn(),
         },
       },
     }
