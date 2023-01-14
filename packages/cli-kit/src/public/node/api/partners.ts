@@ -1,4 +1,4 @@
-import {partnersFqdn as partnersFqdn} from '../../../environment/fqdn.js'
+import {partnersFqdn} from '../environment/fqdn.js'
 import {graphqlRequest, GraphQLVariables} from '../../../private/node/api/graphql.js'
 import {gql} from 'graphql-request'
 

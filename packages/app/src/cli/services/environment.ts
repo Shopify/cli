@@ -23,6 +23,7 @@ import {error as kitError, output, store, ui, environment, error} from '@shopify
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -398,7 +399,7 @@ async function fetchDevDataFromOptions(
     const orgWithStore = await fetchStoreByDomain(orgId, token, options.storeFqdn)
     if (!orgWithStore) throw new error.Bug(`Could not find Organization for id ${orgId}.`)
     if (!orgWithStore.store) {
-      const partners = await environment.fqdn.partnersFqdn()
+      const partners = await partnersFqdn()
       const org = orgWithStore.organization
       throw new error.Bug(
         `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid development store.`,

@@ -1,10 +1,11 @@
 import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
 import {blocks, defaultFunctionsFlavors} from '../../constants.js'
-import {schema, path, error, environment} from '@shopify/cli-kit'
+import {schema, path, error} from '@shopify/cli-kit'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {exec} from '@shopify/cli-kit/node/system'
+import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 import {Writable} from 'stream'
 
 // Base config type that all config schemas must extend
@@ -115,8 +116,8 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
   }
 
   async publishURL(options: {orgId: string; appId: string}) {
-    const partnersFqdn = await environment.fqdn.partnersFqdn()
-    return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions`
+    const fqdn = await partnersFqdn()
+    return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions`
   }
 }
 

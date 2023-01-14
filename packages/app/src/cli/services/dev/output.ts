@@ -2,7 +2,8 @@ import {PartnersURLs} from './urls.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {output, environment} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
+import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 
 export async function outputUpdateURLsResult(
   updated: boolean,
@@ -87,6 +88,6 @@ function buildAppURL(storeFqdn: string, publicURL: string) {
 async function partnersURL(organizationId: string, appId: string): Promise<string> {
   return output.content`${output.token.link(
     `Partners Dashboard`,
-    `https://${await environment.fqdn.partnersFqdn()}/${organizationId}/apps/${appId}/edit`,
+    `https://${await partnersFqdn()}/${organizationId}/apps/${appId}/edit`,
   )}`.value
 }

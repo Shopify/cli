@@ -2,7 +2,8 @@ import {appFlags} from '../../flags.js'
 import dev from '../../services/dev.js'
 import Command from '../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
-import {path, environment, cli, metadata} from '@shopify/cli-kit'
+import {path, cli, metadata} from '@shopify/cli-kit'
+import {normalizeStoreName} from '@shopify/cli-kit/node/environment/fqdn'
 
 export default class Dev extends Command {
   static description = 'Run the app'
@@ -20,7 +21,7 @@ export default class Dev extends Command {
       char: 's',
       description: 'Development store URL. Must be an existing development store.',
       env: 'SHOPIFY_FLAG_STORE',
-      parse: (input, _) => Promise.resolve(environment.fqdn.normalizeStoreName(input)),
+      parse: (input, _) => Promise.resolve(normalizeStoreName(input)),
     }),
     reset: Flags.boolean({
       hidden: false,

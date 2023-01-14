@@ -1,4 +1,4 @@
-import {identityFqdn} from '../../../environment/fqdn.js'
+import {identityFqdn} from '../../../public/node/environment/fqdn.js'
 import {debug} from '../../../output.js'
 import {shopifyFetch} from '../../../http.js'
 

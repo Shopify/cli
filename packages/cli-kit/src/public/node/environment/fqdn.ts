@@ -1,6 +1,6 @@
-import {isSpinEnvironment, spinFqdn} from '../public/node/environment/spin.js'
-import {Abort} from '../error.js'
-import {serviceEnvironment} from '../private/node/environment/service.js'
+import {isSpinEnvironment, spinFqdn} from './spin.js'
+import {Abort} from '../../../error.js'
+import {serviceEnvironment} from '../../../private/node/environment/service.js'
 
 export const CouldntObtainPartnersSpinFQDNError = new Abort(
   "Couldn't obtain the Spin FQDN for Partners when the CLI is not running from a Spin environment.",
@@ -17,6 +17,7 @@ export const NotProvidedStoreFQDNError = new Abort(
 
 /**
  * It returns the Partners' API service we should interact with.
+ *
  * @returns Fully-qualified domain of the partners service we should interact with.
  */
 export async function partnersFqdn(): Promise<string> {
@@ -34,6 +35,7 @@ export async function partnersFqdn(): Promise<string> {
 
 /**
  * It returns the Identity service we should interact with.
+ *
  * @returns Fully-qualified domain of the Identity service we should interact with.
  */
 export async function identityFqdn(): Promise<string> {
@@ -50,11 +52,14 @@ export async function identityFqdn(): Promise<string> {
 }
 
 /**
- * Given a store, returns a valid store fqdn removing protocol and adding the proper domain in case is missing
- * @param store - Original store name provided by the user
- * @returns a valid store fqdn
+ * Normalize the store name to be used in the CLI.
+ * It will add the .myshopify.com domain if it's not present.
+ * It will add the spin domain if it's not present and we're in a Spin environment.
+ *
+ * @param store - Store name.
+ * @returns Normalized store name.
  */
-export async function normalizeStoreName(store: string) {
+export async function normalizeStoreName(store: string): Promise<string> {
   const storeFqdn = store.replace(/^https?:\/\//, '').replace(/\/$/, '')
   const addDomain = async (storeFqdn: string) =>
     isSpinEnvironment() ? `${storeFqdn}.shopify.${await spinFqdn()}` : `${storeFqdn}.myshopify.com`

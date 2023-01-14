@@ -1,10 +1,10 @@
 import {partnersFqdn, identityFqdn, normalizeStoreName} from './fqdn.js'
-import {spinFqdn, isSpinEnvironment} from '../public/node/environment/spin.js'
-import {Environment, serviceEnvironment} from '../private/node/environment/service.js'
+import {spinFqdn, isSpinEnvironment} from '../environment/spin.js'
+import {Environment, serviceEnvironment} from '../../../private/node/environment/service.js'
 import {expect, describe, test, vi} from 'vitest'
 
-vi.mock('../public/node/environment/spin.js')
-vi.mock('../private/node/environment/service.js')
+vi.mock('../environment/spin.js')
+vi.mock('../../../private/node/environment/service.js')
 
 describe('partners', () => {
   test('returns the local fqdn when the environment is local', async () => {
