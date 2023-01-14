@@ -2,8 +2,9 @@ import {DeployConfig, ReqDeployConfig} from './deploy/types.js'
 import {createDeployment, healthCheck, uploadDeployment} from './deploy/upload.js'
 import {buildTaskList} from './build.js'
 import {validateProject, fillDeployConfig} from './deploy/config.js'
-import {environment, ui} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
 import {sleep} from '@shopify/cli-kit/node/system'
+import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
 
 interface TaskContext {
   config: ReqDeployConfig
@@ -12,7 +13,6 @@ interface TaskContext {
   previewURL: string
 }
 
-const isUnitTest = isUnitTest()
 const backoffPolicy = [5, 10, 15, 30, 60]
 
 export async function deployToOxygen(_config: DeployConfig) {
@@ -81,7 +81,7 @@ export async function deployToOxygen(_config: DeployConfig) {
             "The deployment uploaded but hasn't become reachable within 2 minutes. Check the preview URL to see if deployment succeeded. If it didn't, then try again later."
           return
         }
-        if (retryCount && !isUnitTest) await sleep(backoffPolicy[retryCount - 1]!)
+        if (retryCount && !isUnitTest()) await sleep(backoffPolicy[retryCount - 1]!)
 
         await healthCheck(ctx.previewURL)
         task.title = '✅ Deployed successfully'
@@ -95,7 +95,7 @@ export async function deployToOxygen(_config: DeployConfig) {
   const list = ui.newListr(tasks, {
     concurrent: false,
     rendererOptions: {collapse: false},
-    rendererSilent: isUnitTest,
+    rendererSilent: isUnitTest(),
   })
 
   return list.run()
@@ -118,5 +118,5 @@ async function shouldRetryOxygenCall(
       }
     }
   }
-  if (retryCount && !isUnitTest) await sleep(backoffPolicy[retryCount - 1]!)
+  if (retryCount && !isUnitTest()) await sleep(backoffPolicy[retryCount - 1]!)
 }

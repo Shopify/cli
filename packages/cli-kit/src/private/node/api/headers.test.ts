@@ -1,18 +1,13 @@
 import {buildHeaders, sanitizedHeadersOutput} from './headers.js'
-import {firstPartyDev} from '../../../environment/local.js'
 import constants from '../../../constants.js'
 import {randomUUID} from '../../../public/node/crypto.js'
+import {firstPartyDev, isUnitTest} from '../../../public/node/environment/local.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 
 beforeEach(() => {
   vi.mock('../../../public/node/crypto.js')
-  vi.mock('../../../environment/local', async () => {
-    return {
-      isVerbose: vi.fn(),
-      firstPartyDev: vi.fn(),
-      isUnitTest: vi.fn(() => true),
-    }
-  })
+  vi.mock('../../../public/node/environment/local.js')
+  vi.mocked(isUnitTest).mockReturnValue(true)
   vi.mock('../version')
 })
 

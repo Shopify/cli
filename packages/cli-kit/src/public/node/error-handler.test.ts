@@ -1,5 +1,5 @@
 import {errorHandler, cleanStackFrameFilePath, addBugsnagMetadata, sendErrorToBugsnag} from './error-handler.js'
-import {ciPlatform, cloudEnvironment, macAddress} from './environment/local.js'
+import {ciPlatform, cloudEnvironment, isUnitTest, macAddress} from './environment/local.js'
 import * as error from '../../error.js'
 import * as outputMocker from '../../testing/output.js'
 import {hashString} from '../../public/node/crypto.js'
@@ -26,6 +26,7 @@ beforeEach(() => {
   vi.mocked(macAddress).mockResolvedValue('macAddress')
   vi.mocked(cloudEnvironment).mockReturnValue({platform: 'spin', editor: false})
   vi.mocked(hashString).mockReturnValue('hashed-macaddress')
+  vi.mocked(isUnitTest).mockReturnValue(true)
 })
 
 afterEach(() => {

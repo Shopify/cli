@@ -1,6 +1,7 @@
 import {checkLockfileStatus} from './build/check-lockfile.js'
 import {build as viteBuild} from 'vite'
-import {ui, environment, error as kitError} from '@shopify/cli-kit'
+import {ui, error as kitError} from '@shopify/cli-kit'
+import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
 
 type Target = 'node' | 'client' | 'worker'
 

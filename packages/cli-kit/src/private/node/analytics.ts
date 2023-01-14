@@ -5,7 +5,7 @@ import {CommandContent} from '../../public/node/hooks/prerun.js'
 import * as metadata from '../../metadata.js'
 import {platformAndArch} from '../../public/node/os.js'
 import {Interfaces} from '@oclif/core'
-import {ciPlatform, cloudEnvironment, macAddress} from '@shopify/cli-kit/node/environment/local.js'
+import {ciPlatform, cloudEnvironment, macAddress} from '@shopify/cli-kit/node/environment/local'
 
 interface StartOptions {
   commandContent: CommandContent

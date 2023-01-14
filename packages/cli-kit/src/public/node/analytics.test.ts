@@ -7,6 +7,7 @@ import {
   cloudEnvironment,
   isDevelopment,
   isShopify,
+  isUnitTest,
   macAddress,
 } from './environment/local.js'
 import {startAnalytics} from '../../private/node/analytics.js'
@@ -40,6 +41,7 @@ describe('event tracking', () => {
     vi.mocked(ciPlatform).mockReturnValue({isCI: true, name: 'vitest'})
     vi.mocked(macAddress).mockResolvedValue('macAddress')
     vi.mocked(hashString).mockReturnValue('hashed-macaddress')
+    vi.mocked(isUnitTest).mockReturnValue(true)
     vi.mocked(cloudEnvironment).mockReturnValue({platform: 'spin', editor: false})
     vi.mocked(ruby.version).mockResolvedValue('3.1.1')
     vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})

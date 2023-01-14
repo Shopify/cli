@@ -20,7 +20,7 @@ import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isSpin, spinFqdn} from '@shopify/cli-kit/node/environment/spin'
-import {codespaceURL, gitpodURL} from '@shopify/cli-kit/node/environment/local'
+import {codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/node/environment/local'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/tcp')
@@ -30,6 +30,7 @@ beforeEach(() => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
   vi.mock('@shopify/cli-kit/node/environment/spin')
   vi.mock('@shopify/cli-kit/node/environment/local')
+  vi.mocked(isUnitTest).mockReturnValue(true)
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {

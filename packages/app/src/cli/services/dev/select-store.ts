@@ -11,7 +11,7 @@ import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {isSpinEnvironment} from '@shopify/cli-kit/node/environment/spin'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
-import {firstPartyDev, isUnitTest} from '@shopify/cli-kit/node/environment/local.js'
+import {firstPartyDev, isUnitTest} from '@shopify/cli-kit/node/environment/local'
 
 const CreateStoreLink = async (orgId: string) => {
   const url = `https://${await partnersFqdn()}/${orgId}/stores/new?store_type=dev_store`
