@@ -7,9 +7,10 @@ import {
   ApiSchemaDefinitionQuerySchema,
   ApiSchemaDefinitionQueryVariables,
 } from '../api/graphql/functions/api_schema_definition.js'
-import {output, error, environment} from '@shopify/cli-kit'
+import {output, error} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {isTerminalInteractive} from '@shopify/cli-kit/node/environment/local'
 
 interface GenerateSchemaOptions {
   app: AppInterface
@@ -24,7 +25,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
   let apiKey = options.apiKey || getAppIdentifiers({app}).app
 
   if (!apiKey) {
-    if (!environment.local.isTerminalInteractive()) {
+    if (!isTerminalInteractive()) {
       throw new error.Abort(
         output.content`No API key was provided.`,
         output.content`Provide an API key with the --api-key flag.`,

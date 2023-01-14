@@ -12,7 +12,7 @@ interface TaskContext {
   previewURL: string
 }
 
-const isUnitTest = environment.local.isUnitTest()
+const isUnitTest = isUnitTest()
 const backoffPolicy = [5, 10, 15, 30, 60]
 
 export async function deployToOxygen(_config: DeployConfig) {

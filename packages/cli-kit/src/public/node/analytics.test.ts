@@ -1,9 +1,16 @@
 import {reportAnalyticsEvent} from './analytics.js'
 import * as ruby from './ruby.js'
 import * as os from './os.js'
+import {
+  analyticsDisabled,
+  ciPlatform,
+  cloudEnvironment,
+  isDevelopment,
+  isShopify,
+  macAddress,
+} from './environment/local.js'
 import {startAnalytics} from '../../private/node/analytics.js'
 import {hashString} from '../../public/node/crypto.js'
-import * as environment from '../../environment.js'
 import {join as joinPath, dirname} from '../../path.js'
 import {mockAndCaptureOutput} from '../../testing/output.js'
 import {getAppInfo} from '../../store.js'
@@ -18,7 +25,7 @@ describe('event tracking', () => {
 
   beforeEach(() => {
     vi.setSystemTime(currentDate)
-    vi.mock('../../environment.js')
+    vi.mock('./environment/local.js')
     vi.mock('./ruby.js')
     vi.mock('./os.js')
     vi.mock('../../store.js')
@@ -27,13 +34,13 @@ describe('event tracking', () => {
     vi.mock('../../version.js')
     vi.mock('../../monorail.js')
     vi.mock('./cli.js')
-    vi.mocked(environment.local.isShopify).mockResolvedValue(false)
-    vi.mocked(environment.local.isDevelopment).mockReturnValue(false)
-    vi.mocked(environment.local.analyticsDisabled).mockReturnValue(false)
-    vi.mocked(environment.local.ciPlatform).mockReturnValue({isCI: true, name: 'vitest'})
-    vi.mocked(environment.local.macAddress).mockResolvedValue('macAddress')
+    vi.mocked(isShopify).mockResolvedValue(false)
+    vi.mocked(isDevelopment).mockReturnValue(false)
+    vi.mocked(analyticsDisabled).mockReturnValue(false)
+    vi.mocked(ciPlatform).mockReturnValue({isCI: true, name: 'vitest'})
+    vi.mocked(macAddress).mockResolvedValue('macAddress')
     vi.mocked(hashString).mockReturnValue('hashed-macaddress')
-    vi.mocked(environment.local.cloudEnvironment).mockReturnValue({platform: 'spin', editor: false})
+    vi.mocked(cloudEnvironment).mockReturnValue({platform: 'spin', editor: false})
     vi.mocked(ruby.version).mockResolvedValue('3.1.1')
     vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
     publishEventMock = vi.mocked(publishEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
@@ -149,7 +156,7 @@ describe('event tracking', () => {
   it('does nothing when analytics are disabled', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
-      vi.mocked(environment.local.analyticsDisabled).mockReturnValueOnce(true)
+      vi.mocked(analyticsDisabled).mockReturnValueOnce(true)
       const commandContent = {command: 'dev', topic: 'app'}
       await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
 

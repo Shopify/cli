@@ -21,7 +21,7 @@ import {keypress} from '../../ui.js'
 
 import constants from '../../constants.js'
 import * as output from '../../output.js'
-import {firstPartyDev, useDeviceAuth} from '../../environment/local.js'
+import {firstPartyDev, useDeviceAuth} from '../../public/node/environment/local.js'
 import {AbortError} from '../../public/node/error.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {normalizeStoreName, partnersFqdn, identityFqdn} from '../../public/node/environment/fqdn.js'

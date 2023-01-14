@@ -2,13 +2,14 @@ import {updateURLsPrompt} from '../../prompts/dev.js'
 import {AppInterface} from '../../models/app/app.js'
 import {UpdateURLsQuery, UpdateURLsQuerySchema, UpdateURLsQueryVariables} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery, GetURLsQuerySchema, GetURLsQueryVariables} from '../../api/graphql/get_urls.js'
-import {environment, output, plugins, store} from '@shopify/cli-kit'
+import {output, plugins, store} from '@shopify/cli-kit'
 import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isValidURL} from '@shopify/cli-kit/common/url'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {isSpin, spinFqdn} from '@shopify/cli-kit/node/environment/spin'
+import {codespaceURL, gitpodURL} from '@shopify/cli-kit/node/environment/local.js'
 
 export interface PartnersURLs {
   applicationUrl: string
@@ -54,13 +55,13 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
 
   const needsTunnel = (hasExtensions || options.tunnel || options.cachedTunnelPlugin) && !options.noTunnel
 
-  if (environment.local.codespaceURL()) {
-    frontendUrl = `https://${environment.local.codespaceURL()}-${frontendPort}.githubpreview.dev`
+  if (codespaceURL()) {
+    frontendUrl = `https://${codespaceURL()}-${frontendPort}.githubpreview.dev`
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 
-  if (environment.local.gitpodURL()) {
-    const defaultUrl = environment.local.gitpodURL()?.replace('https://', '')
+  if (gitpodURL()) {
+    const defaultUrl = gitpodURL()?.replace('https://', '')
     frontendUrl = `https://${frontendPort}-${defaultUrl}`
     return {frontendUrl, frontendPort, usingLocalhost}
   }

@@ -36,7 +36,7 @@ export async function runCLI(options: RunCLIOptions): Promise<void> {
    * and therefore it has no effect.
    */
   const {errorHandler} = await import('./error-handler.js')
-  const {isDevelopment} = await import('../../environment/local.js')
+  const {isDevelopment} = await import('./environment/local.js')
   const {run, settings, flush} = await import('@oclif/core')
 
   if (isDevelopment()) {

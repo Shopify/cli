@@ -15,7 +15,8 @@ import {Extension} from '../models/app/extensions.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {path, output, file, environment} from '@shopify/cli-kit'
+import {path, output, file} from '@shopify/cli-kit'
+import {useThemeBundling} from '@shopify/cli-kit/node/environment/local.js'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -55,7 +56,7 @@ export const deploy = async (options: DeployOptions) => {
       }
     }),
   )
-  if (environment.local.useThemeBundling()) {
+  if (useThemeBundling()) {
     const themeExtensions = await Promise.all(
       options.app.extensions.theme.map(async (extension) => {
         return {
@@ -93,7 +94,7 @@ export const deploy = async (options: DeployOptions) => {
         validationErrors = await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
       }
 
-      if (!environment.local.useThemeBundling()) {
+      if (!useThemeBundling()) {
         await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
       }
       identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})

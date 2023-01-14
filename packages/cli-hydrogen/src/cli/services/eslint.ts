@@ -92,7 +92,7 @@ export async function addESLint({app, force, install}: AddESlintOptions) {
         },
       },
     ],
-    {rendererSilent: environment.local.isUnitTest()},
+    {rendererSilent: isUnitTest()},
   )
   await list.run()
 }

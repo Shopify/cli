@@ -5,23 +5,13 @@ import {
   loadLocalUIExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
-import {environment} from '@shopify/cli-kit'
+import {isShopify, isUnitTest} from '@shopify/cli-kit/node/environment/local'
 
-vi.mock('@shopify/cli-kit', async () => {
-  const cliKit: any = await vi.importActual('@shopify/cli-kit')
-  return {
-    ...cliKit,
-    environment: {
-      local: {
-        isShopify: vi.fn(),
-        isUnitTest: vi.fn(() => true),
-      },
-    },
-  }
-})
+vi.mock('@shopify/cli-kit/node/environment/local')
 
 beforeEach(() => {
-  vi.mocked(environment.local.isShopify).mockResolvedValue(true)
+  vi.mocked(isShopify).mockResolvedValue(true)
+  vi.mocked(isUnitTest).mockResolvedValue(true)
 })
 
 describe('extension prompt', async () => {

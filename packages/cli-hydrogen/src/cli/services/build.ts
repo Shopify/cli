@@ -54,7 +54,7 @@ export async function build(options: DevOptions) {
 
   const tasks = await buildTaskList(options)
 
-  const list = ui.newListr(tasks, {rendererSilent: environment.local.isUnitTest()})
+  const list = ui.newListr(tasks, {rendererSilent: isUnitTest()})
 
   await list.run()
 }

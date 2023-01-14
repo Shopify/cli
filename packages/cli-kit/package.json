@@ -68,7 +68,8 @@
               "dynamic": [
                 "./node-package-manager.js",
                 "./error-handler.js",
-                "../../environment/local.js",
+                "../../public/node/environment/local.js",
+                "./environment/local.js",
                 "@oclif/core",
                 "../../private/node/environment/utilities.js",
                 "../../constants.js",
