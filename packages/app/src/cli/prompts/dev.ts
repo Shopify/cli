@@ -29,7 +29,7 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
     search: async (term) => {
       const result = await fetchOrgAndApps(orgId, token, term)
 
-      return result.apps.slice(0, 14).map(toAnswer)
+      return result.apps.slice(0, 24).map(toAnswer)
     },
   })
 }

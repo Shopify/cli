@@ -173,7 +173,7 @@ function AutocompletePrompt<T>({
       {promptState === PromptState.Idle && (
         <Box marginTop={1}>
           <SelectInput
-            items={searchResults.slice(0, 14)}
+            items={searchResults.slice(0, 24)}
             onChange={(item: Item<T> | undefined) => {
               setAnswer(item)
             }}
