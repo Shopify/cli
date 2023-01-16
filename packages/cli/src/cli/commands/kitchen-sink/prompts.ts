@@ -1,4 +1,4 @@
-import {kitchenSink} from '../services/kitchen-sink.js'
+import {prompts} from '../../services/kitchen-sink/prompts.js'
 import Command from '@shopify/cli-kit/node/base-command'
 
 /**
@@ -6,11 +6,11 @@ import Command from '@shopify/cli-kit/node/base-command'
  * It's useful to test how they behave under different terminal sizes
  * and to help update the documentation when they change.
  */
-export default class KitchenSink extends Command {
-  static description = 'View all the available UI kit components'
+export default class KitchenSinkPrompts extends Command {
+  static description = 'View the UI kit components prompts'
   static hidden = true
 
   async run(): Promise<void> {
-    await kitchenSink()
+    await prompts()
   }
 }
