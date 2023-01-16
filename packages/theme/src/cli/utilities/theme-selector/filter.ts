@@ -1,3 +1,4 @@
+import {ALLOWED_ROLES} from './fetch.js'
 import {Theme} from '../../models/theme.js'
 import {error} from '@shopify/cli-kit'
 
@@ -28,7 +29,7 @@ function filterByTheme(store: string, themes: Theme[], filter: Filter) {
     const error = `The ${store} store doesn't have a theme with the "${identifier}" ID or name`
 
     return find(themes, (theme) => {
-      return [`${theme.id}`, theme.name].includes(identifier)
+      return `${theme.id}` === identifier || new RegExp(identifier, 'i').test(theme.name)
     }).orThrow(error)
   })
 }
@@ -57,17 +58,17 @@ export interface FilterProps {
   theme?: ThemeIdentifier
   development?: boolean
   live?: boolean
+  unpublished?: boolean
 }
 
 export class Filter {
   constructor(public queryProps: FilterProps) {}
 
   get role() {
-    if (this.queryProps.live) {
-      return 'live'
-    }
-    if (this.queryProps.development) {
-      return 'development'
+    for (const role of ALLOWED_ROLES) {
+      if (this.queryProps[role]) {
+        return role
+      }
     }
   }
 

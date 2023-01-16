@@ -58,10 +58,24 @@ describe('filterThemes', () => {
     expect(filtered[0]!.name).toBe('theme 7')
   })
 
-  test('filters by theme (name)', async () => {
+  test('filters by theme (exact name)', async () => {
     // Given
     const filter = new Filter({
       theme: 'theme 7',
+    })
+
+    // When
+    const filtered = filterThemes(store, themes, filter)
+
+    // Then
+    expect(filtered).toHaveLength(1)
+    expect(filtered[0]!.name).toBe('theme 7')
+  })
+
+  test('filters by theme (partial name with different case)', async () => {
+    // Given
+    const filter = new Filter({
+      theme: 'eMe 7',
     })
 
     // When
