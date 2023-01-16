@@ -71,7 +71,7 @@
     "nx": "^15.3.0",
     "oclif": "^3.4.2",
     "octokit-plugin-create-pull-request": "^3.12.2",
-    "pathe": "0.2.0",
+    "pathe": "1.0.0",
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^2.6.1",
     "rimraf": "^3.0.2",

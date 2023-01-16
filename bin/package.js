@@ -6,7 +6,7 @@ import {findUp} from "find-up"
 import {createHash} from 'node:crypto'
 import {createRequire} from 'module'
 import {fileURLToPath} from "node:url"
-import path from "pathe"
+import * as path from "pathe"
 import fetch from 'node-fetch'
 import glob from 'fast-glob';
 import {Liquid} from 'liquidjs'
