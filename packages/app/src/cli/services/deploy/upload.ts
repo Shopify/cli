@@ -224,7 +224,7 @@ async function uploadFunctionExtension(
 
   let inputQuery: string | undefined
   if (await file.fileExists(extension.inputQueryPath())) {
-    inputQuery = await file.read(extension.inputQueryPath())
+    inputQuery = await file.readFile(extension.inputQueryPath())
   }
 
   const query = AppFunctionSetMutation
@@ -266,7 +266,7 @@ async function uploadWasmBlob(extension: FunctionExtension, apiKey: string, toke
   const {url, headers, maxSize} = await getFunctionExtensionUploadURL({apiKey, token})
   headers['Content-Type'] = 'application/wasm'
 
-  const functionContent = await file.read(extension.buildWasmPath(), {})
+  const functionContent = await file.readFile(extension.buildWasmPath(), {})
   const res = await http.fetch(url, {body: functionContent, headers, method: 'PUT'})
   const resBody = res.body?.read()?.toString() || ''
 

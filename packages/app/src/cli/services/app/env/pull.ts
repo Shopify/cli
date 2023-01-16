@@ -22,7 +22,7 @@ export async function updateEnvFile(app: AppInterface, envFile: PullEnvOptions['
   }
 
   if (await file.fileExists(envFile)) {
-    const envFileContent = await file.read(envFile)
+    const envFileContent = await file.readFile(envFile)
     const updatedEnvFileContent = patchEnvFile(envFileContent, updatedValues)
 
     if (updatedEnvFileContent === envFileContent) {

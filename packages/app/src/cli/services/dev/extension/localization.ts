@@ -78,7 +78,7 @@ async function compileLocalizationFiles(
 ): Promise<void> {
   let localeContent: string | undefined
   try {
-    localeContent = await file.read(path)
+    localeContent = await file.readFile(path)
     localization.translations[locale] = JSON.parse(localeContent)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {

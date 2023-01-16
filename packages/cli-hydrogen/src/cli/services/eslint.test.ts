@@ -28,7 +28,9 @@ describe('addEslint', () => {
       await addESLint({app, ...defaultOptions})
 
       // Then
-      await expect(file.read(path.join(tmpDir, genericConfigurationFileNames.eslint))).resolves.toMatchInlineSnapshot(
+      await expect(
+        file.readFile(path.join(tmpDir, genericConfigurationFileNames.eslint)),
+      ).resolves.toMatchInlineSnapshot(
         `
         "module.exports = {
           extends: ['plugin:hydrogen/recommended'],
@@ -51,7 +53,9 @@ describe('addEslint', () => {
       await addESLint({app, ...defaultOptions})
 
       // Then
-      await expect(file.read(path.join(tmpDir, genericConfigurationFileNames.eslint))).resolves.toMatchInlineSnapshot(
+      await expect(
+        file.readFile(path.join(tmpDir, genericConfigurationFileNames.eslint)),
+      ).resolves.toMatchInlineSnapshot(
         `
         "module.exports = {
           extends: ['plugin:hydrogen/recommended', 'plugin:hydrogen/typescript'],

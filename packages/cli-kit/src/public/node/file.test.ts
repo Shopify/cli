@@ -3,19 +3,18 @@ import {
   mkdir,
   fileHasExecutablePermissions,
   writeFile,
-  read,
+  readFile,
   inTemporaryDirectory,
   fileExists,
   moveFile,
   chmod,
-  append,
   removeFile,
-  stripUp,
+  stripUpPath,
   fileContentPrettyFormat,
   touchFile,
   appendFile,
 } from './file.js'
-import {join} from './path.js'
+import {join} from '../../path.js'
 import {describe, expect, it, test} from 'vitest'
 
 describe('inTemporaryDirectory', () => {
@@ -48,7 +47,7 @@ describe('copy', () => {
       await copyFile(from, to)
 
       // Then
-      const got = await read(to)
+      const got = await readFile(to)
       expect(got).toEqual(content)
     })
   })
@@ -69,8 +68,8 @@ describe('copy', () => {
       await copyFile(from, to)
 
       // Then
-      await expect(read(join(to, 'file'))).resolves.toEqual(content)
-      await expect(read(join(to, 'child', '.dotfile'))).resolves.toEqual(content)
+      await expect(readFile(join(to, 'file'))).resolves.toEqual(content)
+      await expect(readFile(join(to, 'child', '.dotfile'))).resolves.toEqual(content)
     })
   })
 })
@@ -88,7 +87,7 @@ describe('move', () => {
       await moveFile(from, to)
 
       // Then
-      const got = await read(to)
+      const got = await readFile(to)
       expect(got).toEqual(content)
     })
   })
@@ -120,24 +119,6 @@ describe('exists', () => {
 
       // Then
       expect(got).toEqual(false)
-    })
-  })
-})
-
-describe('append', () => {
-  it('appends content to an existing file', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const content = 'test'
-      const filePath = join(tmpDir, 'from')
-      await writeFile(filePath, content)
-
-      // When
-      await append(filePath, '-appended')
-
-      // Then
-      const got = await read(filePath)
-      expect(got).toEqual(`${content}-appended`)
     })
   })
 })
@@ -182,9 +163,9 @@ describe('stripUp', () => {
     const filePath = 'a/b/c/d/e'
 
     // When
-    const newFilePath1 = stripUp(filePath, 1)
-    const newFilePath2 = stripUp(filePath, 2)
-    const newFilePath3 = stripUp(filePath, 3)
+    const newFilePath1 = stripUpPath(filePath, 1)
+    const newFilePath2 = stripUpPath(filePath, 2)
+    const newFilePath3 = stripUpPath(filePath, 3)
 
     // Then
     await expect(newFilePath1).toEqual('b/c/d/e')
@@ -251,7 +232,7 @@ describe('appendFile', () => {
       const content = 'test-content'
       await touchFile(filePath)
       await appendFile(filePath, content)
-      await expect(read(filePath)).resolves.toContain(content)
+      await expect(readFile(filePath)).resolves.toContain(content)
     })
   })
 })

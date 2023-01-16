@@ -53,7 +53,7 @@ export async function fileServerMiddleware(
     return sendError(response, {statusCode: 404, statusMessage: `Not Found: ${filePath}`})
   }
 
-  const fileContent = await file.read(filePath)
+  const fileContent = await file.readFile(filePath)
   const extensionToContent = {
     '.ico': 'image/x-icon',
     '.html': 'text/html',

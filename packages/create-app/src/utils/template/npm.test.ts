@@ -56,7 +56,7 @@ describe('updateCLIDependencies', () => {
 
       const dependencyOveride = mockPackageJSON.overrides[dependency]!
       const dependencyPath = path.join(dependencyOveride.replace('file:', ''), 'package.json')
-      const dependencyJSON = JSON.parse(await file.read(dependencyPath))
+      const dependencyJSON = JSON.parse(await file.readFile(dependencyPath))
 
       expect(dependencyJSON.name).toBe(dependency)
     },
@@ -72,7 +72,7 @@ describe('updateCLIDependencies', () => {
 
       const dependencyResolution = mockPackageJSON.resolutions[dependency]!
       const dependencyPath = path.join(dependencyResolution.replace('file:', ''), 'package.json')
-      const dependencyJSON = JSON.parse(await file.read(dependencyPath))
+      const dependencyJSON = JSON.parse(await file.readFile(dependencyPath))
 
       expect(dependencyJSON.name).toBe(dependency)
     },
@@ -86,7 +86,7 @@ describe('updateCLIDependencies', () => {
 
     const dependencyResolution = mockPackageJSON.dependencies[dependency]!
     const dependencyPath = path.join(dependencyResolution.replace('file:', ''), 'package.json')
-    const dependencyJSON = JSON.parse(await file.read(dependencyPath))
+    const dependencyJSON = JSON.parse(await file.readFile(dependencyPath))
 
     expect(dependencyJSON.name).toBe(dependency)
   })

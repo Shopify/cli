@@ -103,7 +103,7 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
       title: 'Importing Tailwind CSS in index.css',
       task: async (_ctx, task) => {
         const indexCSSPath = path.join(directory, 'src', 'index.css')
-        const indexCSS = await file.read(indexCSSPath)
+        const indexCSS = await file.readFile(indexCSSPath)
 
         if (tailwindImportsExist(indexCSS)) {
           task.skip('Imports already exist in index.css')
@@ -128,7 +128,7 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
 }
 
 async function replace(find: string | RegExp, replace: string, filepath: string) {
-  const original = await file.read(filepath)
+  const original = await file.readFile(filepath)
   const modified = original.replace(find, replace)
   await file.writeFile(filepath, modified)
 }

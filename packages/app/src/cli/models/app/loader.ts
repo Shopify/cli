@@ -201,7 +201,7 @@ class AppLoader {
         filepath,
       )
     }
-    const configurationContent = await file.read(filepath)
+    const configurationContent = await file.readFile(filepath)
     let configuration: object
     try {
       configuration = decode(configurationContent)
@@ -258,7 +258,7 @@ class AppLoader {
 
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
-      const fileContent = await file.read(configurationPath)
+      const fileContent = await file.readFile(configurationPath)
       const obj = decodeToml(fileContent)
       const {type} = TypeSchema.parse(obj)
       const specification = this.findSpecificationForType(type) as UIExtensionSpec | undefined
@@ -332,7 +332,7 @@ class AppLoader {
 
     const allFunctions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
-      const fileContent = await file.read(configurationPath)
+      const fileContent = await file.readFile(configurationPath)
       const obj = decodeToml(fileContent)
       const {type} = TypeSchema.parse(obj)
       const specification = this.findSpecificationForType(type) as FunctionSpec | undefined

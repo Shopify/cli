@@ -178,7 +178,7 @@ export async function getDependencyVersion(dependency: string, directory: string
     if (!reactPackageJsonPath) {
       return 'not_found'
     }
-    cwd = await file.realpath(path.dirname(reactPackageJsonPath))
+    cwd = await file.fileRealPath(path.dirname(reactPackageJsonPath))
   }
 
   // Split the dependency name to avoid using "/" in windows
@@ -191,7 +191,7 @@ export async function getDependencyVersion(dependency: string, directory: string
     allowSymlinks: true,
   })
   if (!packagePath) return 'not_found'
-  packagePath = await file.realpath(packagePath)
+  packagePath = await file.fileRealPath(packagePath)
 
   // Load the package.json and extract the version
   const packageContent = await readAndParsePackageJson(packagePath)

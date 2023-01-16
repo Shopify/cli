@@ -18,7 +18,7 @@ export class TemplateNotFoundError extends error.Bug {
 
 export async function getHTML(options: GetHTMLOptions): Promise<string> {
   const templatePath = await getTemplatePath(options)
-  const templateContent = await file.read(templatePath)
+  const templateContent = await file.readFile(templatePath)
   return renderLiquidTemplate(templateContent, options.data)
 }
 

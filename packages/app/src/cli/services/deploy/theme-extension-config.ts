@@ -15,7 +15,7 @@ export async function themeExtensionConfig(themeExtension: ThemeExtension): Prom
       const relativePath = path.relative(themeExtension.directory, filepath)
       const dirname = path.dirname(relativePath)
       const encoding = dirname === 'assets' ? 'binary' : 'utf8'
-      const fileContents = await file.read(filepath, {encoding})
+      const fileContents = await file.readFile(filepath, {encoding})
       files[relativePath] = Buffer.from(fileContents, encoding).toString('base64')
     }),
   )

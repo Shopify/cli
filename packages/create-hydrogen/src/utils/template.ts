@@ -9,6 +9,6 @@ export async function downloadTemplate({templateUrl, into}: {templateUrl: string
   await download(latestRelease.tarball_url, into, {
     extract: true,
     filter: ({path}) => path.includes(subDirectory),
-    map: (value) => ({...value, path: file.stripUp(value.path, 3)}),
+    map: (value) => ({...value, path: file.stripUpPath(value.path, 3)}),
   })
 }
