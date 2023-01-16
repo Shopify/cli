@@ -1,5 +1,5 @@
 import {SessionSchema} from './schema.js'
-import constants from '../../../constants.js'
+import constants from '../constants.js'
 import {platformAndArch} from '../../../public/node/os.js'
 import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../../../secure-store.js'
 import {content, debug} from '../../../output.js'

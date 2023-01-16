@@ -2,7 +2,7 @@ import {normalizeStoreFqdn} from './environment/fqdn.js'
 import * as secureStore from '../../private/node/session/store.js'
 
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
-import constants from '../../constants.js'
+import constants from '../../private/node/constants.js'
 import {content, token, debug} from '../../output.js'
 import {Bug} from '../../error.js'
 import {ensureAuthenticated} from '../../private/node/session.js'

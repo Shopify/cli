@@ -1,4 +1,4 @@
-import constants from './constants.js'
+import constants from './private/node/constants.js'
 import {content as outputContent, debug} from './output.js'
 import {Abort} from './error.js'
 

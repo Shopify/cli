@@ -1,5 +1,5 @@
 import {isSpin} from '../../../public/node/environment/spin.js'
-import constants from '../../../constants.js'
+import constants from '../constants.js'
 
 /**
  * Enum that represents the environment to use for a given service.
