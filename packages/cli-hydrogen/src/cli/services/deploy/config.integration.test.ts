@@ -2,6 +2,7 @@ import {validateProject, fillDeployConfig} from './config.js'
 import {gitInit} from '../../prompts/git-init.js'
 import {describe, it, expect, vi} from 'vitest'
 import {error, git} from '@shopify/cli-kit'
+import {fileExists, inTemporaryDirectory, touchFile} from '@shopify/cli-kit/node/file'
 
 const isWin = process.platform === 'win32'
 
@@ -15,7 +16,7 @@ const defaultConfig = {
 describe('validateProject() & initializeGit()', () => {
   describe('User refuses to initialize new repository', () => {
     it.skipIf(isWin)('silent abort since outside git directory', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         vi.mock('../../prompts/git-init.js')
         vi.mocked(gitInit).mockResolvedValue(false)
 
@@ -29,12 +30,12 @@ describe('validateProject() & initializeGit()', () => {
     it.skipIf(isWin)(
       'initializes new git repository',
       async () => {
-        await file.inTemporaryDirectory(async (tmpDir) => {
-          await file.touchFile(`${tmpDir}/integration.txt`)
+        await inTemporaryDirectory(async (tmpDir) => {
+          await touchFile(`${tmpDir}/integration.txt`)
 
           await validateProject({...defaultConfig, path: tmpDir})
 
-          await expect(file.fileExists(`${tmpDir}/.gitignore`)).resolves.toBeTruthy()
+          await expect(fileExists(`${tmpDir}/.gitignore`)).resolves.toBeTruthy()
           await expect(git.getLatestCommit(tmpDir)).resolves.toBeDefined()
         })
       },
@@ -47,7 +48,7 @@ describe('getDeployConfig()', () => {
   it.skipIf(isWin)(
     'extract basic information from git',
     async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         await validateProject({...defaultConfig, path: tmpDir})
 
         const config = await fillDeployConfig({...defaultConfig, path: tmpDir})

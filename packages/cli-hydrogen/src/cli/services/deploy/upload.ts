@@ -10,6 +10,7 @@ import {http} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {ClientError} from 'graphql-request'
 import {uploadOxygenDeploymentFile, oxygenRequest} from '@shopify/cli-kit/node/api/oxygen'
+import {inTemporaryDirectory, createFileReadStream} from '@shopify/cli-kit/node/file'
 
 export const createDeployment = async (config: ReqDeployConfig): Promise<CreateDeploymentResponse> => {
   const variables = {
@@ -53,7 +54,7 @@ export const createDeployment = async (config: ReqDeployConfig): Promise<CreateD
 export const uploadDeployment = async (config: ReqDeployConfig, deploymentID: string): Promise<string> => {
   let deploymentData: UploadDeploymentResponse | undefined
 
-  await file.inTemporaryDirectory(async (tmpDir) => {
+  await inTemporaryDirectory(async (tmpDir) => {
     const distPath = config.pathToBuild ? config.pathToBuild : `${config.path}/dist`
     const distZipPath = `${tmpDir}/dist.zip`
     await zip(distPath, distZipPath)
@@ -61,7 +62,7 @@ export const uploadDeployment = async (config: ReqDeployConfig, deploymentID: st
     const formData = http.formData()
     formData.append('operations', buildOperationsString(deploymentID))
     formData.append('map', JSON.stringify({'0': ['variables.file']}))
-    formData.append('0', file.createFileReadStream(distZipPath), {filename: distZipPath})
+    formData.append('0', createFileReadStream(distZipPath), {filename: distZipPath})
 
     const response = await uploadOxygenDeploymentFile(config.oxygenAddress, config.deploymentToken, formData)
     if (!response.ok) {

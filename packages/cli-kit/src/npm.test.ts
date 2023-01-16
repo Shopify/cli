@@ -1,7 +1,8 @@
-import {file, npm, path} from '.'
+import {npm, path} from '.'
 import * as os from './public/node/os.js'
 import {updateAppData} from './npm.js'
 import {inTemporaryDirectory} from './public/node/file.js'
+import * as file from './public/node/file.js'
 import {describe, it, expect, vi} from 'vitest'
 
 vi.mock('os')

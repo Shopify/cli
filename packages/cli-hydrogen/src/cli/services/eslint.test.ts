@@ -5,6 +5,7 @@ import {describe, vi, it, expect, beforeEach} from 'vitest'
 import {path} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions, isVSCode} from '@shopify/cli-kit/node/vscode.js'
+import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/file'
 
 beforeEach(async () => {
   vi.mock('@shopify/cli-kit/node/node-package-manager')
@@ -18,7 +19,7 @@ describe('addEslint', () => {
   }
 
   it('adds a eslintrc file with recommended config if none exists', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const app = await createMockApp({
         directory: tmpDir,
@@ -28,9 +29,7 @@ describe('addEslint', () => {
       await addESLint({app, ...defaultOptions})
 
       // Then
-      await expect(
-        file.readFile(path.join(tmpDir, genericConfigurationFileNames.eslint)),
-      ).resolves.toMatchInlineSnapshot(
+      await expect(readFile(path.join(tmpDir, genericConfigurationFileNames.eslint))).resolves.toMatchInlineSnapshot(
         `
         "module.exports = {
           extends: ['plugin:hydrogen/recommended'],
@@ -42,7 +41,7 @@ describe('addEslint', () => {
   })
 
   it('adds a eslintrc file with typescript config for typescript projects', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const app = await createMockApp({
         directory: tmpDir,
@@ -53,9 +52,7 @@ describe('addEslint', () => {
       await addESLint({app, ...defaultOptions})
 
       // Then
-      await expect(
-        file.readFile(path.join(tmpDir, genericConfigurationFileNames.eslint)),
-      ).resolves.toMatchInlineSnapshot(
+      await expect(readFile(path.join(tmpDir, genericConfigurationFileNames.eslint))).resolves.toMatchInlineSnapshot(
         `
         "module.exports = {
           extends: ['plugin:hydrogen/recommended', 'plugin:hydrogen/typescript'],
@@ -67,7 +64,7 @@ describe('addEslint', () => {
   })
 
   it('adds eslint and prettier dependencies when install is true', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const app = await createMockApp({
         directory: tmpDir,
@@ -85,7 +82,7 @@ describe('addEslint', () => {
   })
 
   it('does not add eslint and prettier dependencies when install is false', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const app = await createMockApp({
         directory: tmpDir,
@@ -100,7 +97,7 @@ describe('addEslint', () => {
   })
 
   it('adds vscode recommendations', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       vi.mocked(isVSCode).mockResolvedValue(true)
       const app = await createMockApp({
@@ -116,9 +113,9 @@ describe('addEslint', () => {
   })
 
   it('throws error when eslintrc already exists', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      await file.writeFile(path.join(tmpDir, genericConfigurationFileNames.eslint), '')
+      await writeFile(path.join(tmpDir, genericConfigurationFileNames.eslint), '')
       const app = await createMockApp({
         directory: tmpDir,
       })
@@ -146,7 +143,7 @@ async function createMockApp(mockHydrogenApp: Partial<HydrogenApp> = {}) {
     ...mockHydrogenApp,
   } as const
 
-  await file.writeFile(path.join(app.directory, 'package.json'), JSON.stringify({scripts: {}}, null, 2))
+  await writeFile(path.join(app.directory, 'package.json'), JSON.stringify({scripts: {}}, null, 2))
 
   return app
 }

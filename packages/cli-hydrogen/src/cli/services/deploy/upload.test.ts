@@ -7,6 +7,7 @@ import {http} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {ClientError} from 'graphql-request'
 import {oxygenRequest, uploadOxygenDeploymentFile} from '@shopify/cli-kit/node/api/oxygen'
+import {inTemporaryDirectory} from '@shopify/cli-kit/node/file'
 import {createReadStream} from 'fs'
 
 const defaultConfig: ReqDeployConfig = {
@@ -27,6 +28,7 @@ beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/api/oxygen')
   vi.mock('@shopify/cli-kit')
   vi.mock('@shopify/cli-kit/node/archiver')
+  vi.mock('@shopify/cli-kit/node/file')
   vi.mock('fs')
 })
 
@@ -157,7 +159,7 @@ describe('uploadDeploymentStep()', async () => {
         .mockResolvedValue({json: vi.fn().mockResolvedValue(oxygenResponse), status: 200})
       vi.mocked<any>(uploadOxygenDeploymentFile).mockImplementation(mockedUploadDeployment)
       const tmpDir = 'tmp/dir'
-      vi.mocked<any>(file.inTemporaryDirectory).mockImplementation(async (runner: (tmpDir: string) => Promise<void>) =>
+      vi.mocked<any>(inTemporaryDirectory).mockImplementation(async (runner: (tmpDir: string) => Promise<void>) =>
         runner(tmpDir),
       )
 
@@ -178,7 +180,7 @@ describe('uploadDeploymentStep()', async () => {
       vi.mocked(createReadStream)
       vi.mocked<any>(zip).mockImplementation(vi.fn())
       vi.mocked<any>(http.formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()})
-      vi.mocked<any>(file.inTemporaryDirectory).mockImplementation(async (runner: (tmpDir: string) => Promise<void>) =>
+      vi.mocked<any>(inTemporaryDirectory).mockImplementation(async (runner: (tmpDir: string) => Promise<void>) =>
         runner('tmp/dir'),
       )
     })
@@ -196,7 +198,7 @@ describe('uploadDeploymentStep()', async () => {
         .mockResolvedValue({json: vi.fn().mockResolvedValue(oxygenResponse), status: 500})
       vi.mocked<any>(uploadOxygenDeploymentFile).mockImplementation(mockedUploadDeployment)
       const tmpDir = 'tmp/dir'
-      vi.mocked<any>(file.inTemporaryDirectory).mockImplementation(async (runner: (tmpDir: string) => Promise<void>) =>
+      vi.mocked<any>(inTemporaryDirectory).mockImplementation(async (runner: (tmpDir: string) => Promise<void>) =>
         runner(tmpDir),
       )
 

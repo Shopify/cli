@@ -5,6 +5,7 @@ import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {output, path, schema} from '@shopify/cli-kit'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
+import {fileExists} from '@shopify/cli-kit/node/file'
 
 const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.22.0'}
 
@@ -73,9 +74,9 @@ async function validateUIExtensionPointConfig(
 
   for await (const {module, target} of extensionPoints) {
     const fullPath = path.join(directory, module)
-    const fileExists = await file.fileExists(fullPath)
+    const exists = await fileExists(fullPath)
 
-    if (!fileExists) {
+    if (!exists) {
       const notFoundPath = output.token.path(path.join(directory, module))
 
       errors.push(

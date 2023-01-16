@@ -15,6 +15,7 @@ import {UIExtensionPayload} from '../payload/models.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
 import {http, path} from '@shopify/cli-kit'
 import {describe, expect, it, vi} from 'vitest'
+import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/file'
 
 function getMockRequest({context = {}, headers = {}}) {
   const request = {
@@ -92,10 +93,10 @@ describe('redirectToDevConsoleMiddleware()', () => {
 
 describe('fileServerMiddleware()', async () => {
   it.skip('returns 404 if file does not exist', async () => {
-    await file.inTemporaryDirectory(async (tmpDir: string) => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
       vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
 
-      await file.mkdir(path.join(tmpDir, 'foo'))
+      await mkdir(path.join(tmpDir, 'foo'))
 
       const filePath = path.join(tmpDir, 'foo', 'missing.file')
       const response = getMockResponse()
@@ -112,10 +113,10 @@ describe('fileServerMiddleware()', async () => {
   })
 
   it('returns an index.html for folder paths', async () => {
-    await file.inTemporaryDirectory(async (tmpDir: string) => {
-      await file.mkdir(path.join(tmpDir, 'foo'))
-      await file.touchFile(path.join(tmpDir, 'foo', 'index.html'))
-      await file.writeFile(path.join(tmpDir, 'foo', 'index.html'), '<html></html>')
+    await inTemporaryDirectory(async (tmpDir: string) => {
+      await mkdir(path.join(tmpDir, 'foo'))
+      await touchFile(path.join(tmpDir, 'foo', 'index.html'))
+      await writeFile(path.join(tmpDir, 'foo', 'index.html'), '<html></html>')
 
       const response = getMockResponse()
 
@@ -143,13 +144,13 @@ describe('fileServerMiddleware()', async () => {
     ['.pdf', 'application/pdf'],
     ['.doc', 'application/msword'],
   ])('returns %s with ContentType: %s string', async (extension, contentType) => {
-    await file.inTemporaryDirectory(async (tmpDir: string) => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
       const fileName = `bar.${extension}`
       const fileContent = `Content for ${fileName}`
 
-      await file.mkdir(path.join(tmpDir, 'foo'))
-      await file.touchFile(path.join(tmpDir, 'foo', fileName))
-      await file.writeFile(path.join(tmpDir, 'foo', fileName), fileContent)
+      await mkdir(path.join(tmpDir, 'foo'))
+      await touchFile(path.join(tmpDir, 'foo', fileName))
+      await writeFile(path.join(tmpDir, 'foo', fileName), fileContent)
 
       const response = getMockResponse()
 
@@ -164,10 +165,10 @@ describe('fileServerMiddleware()', async () => {
   })
 
   it('sets Content-Type to text/plain if it does not understand the file extension', async () => {
-    await file.inTemporaryDirectory(async (tmpDir: string) => {
-      await file.mkdir(path.join(tmpDir, 'foo'))
-      await file.touchFile(path.join(tmpDir, 'foo', 'bar.foo'))
-      await file.writeFile(path.join(tmpDir, 'foo', 'bar.foo'), 'Content for bar.foo')
+    await inTemporaryDirectory(async (tmpDir: string) => {
+      await mkdir(path.join(tmpDir, 'foo'))
+      await touchFile(path.join(tmpDir, 'foo', 'bar.foo'))
+      await writeFile(path.join(tmpDir, 'foo', 'bar.foo'), 'Content for bar.foo')
 
       const response = getMockResponse()
 
@@ -184,7 +185,7 @@ describe('fileServerMiddleware()', async () => {
 
 describe('getExtensionAssetMiddleware()', () => {
   it('returns a 404 if the extensionID is not found', async () => {
-    await file.inTemporaryDirectory(async (tmpDir: string) => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
       vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
 
       const options = {
@@ -222,7 +223,7 @@ describe('getExtensionAssetMiddleware()', () => {
   })
 
   it('returns the file for that asset path', async () => {
-    await file.inTemporaryDirectory(async (tmpDir: string) => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
       const response = getMockResponse()
       const devUUID = '123abc'
       const fileName = 'main.js'
@@ -239,9 +240,9 @@ describe('getExtensionAssetMiddleware()', () => {
         payloadStore: {},
       } as unknown as GetExtensionsMiddlewareOptions
 
-      await file.mkdir(path.join(tmpDir, devUUID))
-      await file.touchFile(outputBundlePath)
-      await file.writeFile(outputBundlePath, `content from ${fileName}`)
+      await mkdir(path.join(tmpDir, devUUID))
+      await touchFile(outputBundlePath)
+      await writeFile(outputBundlePath, `content from ${fileName}`)
 
       await getExtensionAssetMiddleware(options)(
         getMockRequest({

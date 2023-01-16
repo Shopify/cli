@@ -44,7 +44,7 @@ async function init(options: InitOptions) {
 
   await ui.nonEmptyDirectoryPrompt(outputDirectory)
 
-  await file.inTemporaryDirectory(async (tmpDir) => {
+  await inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
     const templateScaffoldDir = path.join(tmpDir, 'app')
 

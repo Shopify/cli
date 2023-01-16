@@ -3,6 +3,7 @@ import {path} from '@shopify/cli-kit'
 import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {useThemeBundling} from '@shopify/cli-kit/node/environment/local'
+import {copyFile} from '@shopify/cli-kit/node/file'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
 import type {StdinOptions} from 'esbuild'
@@ -74,7 +75,7 @@ export async function bundleThemeExtensions(options: ThemeExtensionBuildOptions)
             if (!(filepath.includes('.gitkeep') || filepath.includes('.toml'))) {
               const relativePath = path.relative(extension.directory, filepath)
               const outputFile = path.join(extension.outputBundlePath, relativePath)
-              return file.copyFile(filepath, outputFile)
+              return copyFile(filepath, outputFile)
             }
           }),
         )

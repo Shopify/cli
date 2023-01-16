@@ -6,6 +6,7 @@ import {ExtensionDevOptions} from '../extension.js'
 import {UIExtension} from '../../../models/app/extensions.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {NewExtensionPointSchemaType} from '../../../models/extensions/schemas.js'
+import {fileLastUpdatedTimestamp} from '@shopify/cli-kit/node/file'
 
 export type GetUIExtensionPayloadOptions = ExtensionDevOptions & {
   currentDevelopmentPayload?: Partial<UIExtensionPayload['development']>
@@ -25,7 +26,7 @@ export async function getUIExtensionPayload(
       main: {
         name: 'main',
         url: `${url}/assets/main.js`,
-        lastUpdated: (await file.fileLastUpdatedTimestamp(extension.outputBundlePath)) ?? 0,
+        lastUpdated: (await fileLastUpdatedTimestamp(extension.outputBundlePath)) ?? 0,
       },
     },
     capabilities: {

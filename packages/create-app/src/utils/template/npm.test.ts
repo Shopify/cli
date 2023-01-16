@@ -120,7 +120,7 @@ describe('updateCLIDependencies', () => {
 
 describe('getDeepInstallNPMTasks', () => {
   async function mockAppFolder(callback: (tmpDir: string) => Promise<void>) {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       await file.mkdir(path.join(tmpDir, 'web'))
       await file.mkdir(path.join(tmpDir, 'web', 'frontend'))
       await Promise.all([

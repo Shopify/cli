@@ -1,18 +1,19 @@
 import {loadLocalesConfig} from './locales-configuration.js'
 import {describe, expect, it} from 'vitest'
 import {path} from '@shopify/cli-kit'
+import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/file'
 
 describe('loadLocalesConfig', () => {
   it('Works if all locales are correct', async () => {
-    await file.inTemporaryDirectory(async (tmpDir: string) => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = path.join(tmpDir, 'locales')
       const enDefault = path.join(localesPath, 'en.default.json')
       const es = path.join(localesPath, 'es.json')
 
-      await file.mkdir(localesPath)
-      await file.writeFile(enDefault, JSON.stringify({hello: 'Hello'}))
-      await file.writeFile(es, JSON.stringify({hello: 'Hola'}))
+      await mkdir(localesPath)
+      await writeFile(enDefault, JSON.stringify({hello: 'Hello'}))
+      await writeFile(es, JSON.stringify({hello: 'Hola'}))
 
       // When
       const got = await loadLocalesConfig(tmpDir, 'checkout_ui')
@@ -24,15 +25,15 @@ describe('loadLocalesConfig', () => {
   })
 
   it('Throws if one locale is empty', async () => {
-    await file.inTemporaryDirectory(async (tmpDir: string) => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = path.join(tmpDir, 'locales')
       const enDefault = path.join(localesPath, 'en.default.json')
       const es = path.join(localesPath, 'es.json')
 
-      await file.mkdir(localesPath)
-      await file.writeFile(enDefault, JSON.stringify({hello: 'Hello'}))
-      await file.writeFile(es, '')
+      await mkdir(localesPath)
+      await writeFile(enDefault, JSON.stringify({hello: 'Hello'}))
+      await writeFile(es, '')
 
       // When
       const got = loadLocalesConfig(tmpDir, 'checkout_ui')
@@ -41,16 +42,16 @@ describe('loadLocalesConfig', () => {
   })
 
   it('Throws if one locale is too big', async () => {
-    await file.inTemporaryDirectory(async (tmpDir: string) => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = path.join(tmpDir, 'locales')
       const enDefault = path.join(localesPath, 'en.default.json')
       const es = path.join(localesPath, 'es.json')
 
-      await file.mkdir(localesPath)
-      await file.writeFile(enDefault, JSON.stringify({hello: 'Hello'}))
+      await mkdir(localesPath)
+      await writeFile(enDefault, JSON.stringify({hello: 'Hello'}))
       const bigArray = new Array(5000).fill('a')
-      await file.writeFile(es, JSON.stringify(bigArray))
+      await writeFile(es, JSON.stringify(bigArray))
 
       // When
       const got = loadLocalesConfig(tmpDir, 'checkout_ui')
@@ -59,15 +60,15 @@ describe('loadLocalesConfig', () => {
   })
 
   it('Throws if there are no defaults', async () => {
-    await file.inTemporaryDirectory(async (tmpDir: string) => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = path.join(tmpDir, 'locales')
       const en = path.join(localesPath, 'en.json')
       const es = path.join(localesPath, 'es.json')
 
-      await file.mkdir(localesPath)
-      await file.writeFile(en, JSON.stringify({hello: 'Hello'}))
-      await file.writeFile(es, JSON.stringify({hello: 'Hola'}))
+      await mkdir(localesPath)
+      await writeFile(en, JSON.stringify({hello: 'Hello'}))
+      await writeFile(es, JSON.stringify({hello: 'Hola'}))
 
       // When
       const got = loadLocalesConfig(tmpDir, 'checkout_ui')
@@ -76,15 +77,15 @@ describe('loadLocalesConfig', () => {
   })
 
   it('Throws if there are multiple defaults', async () => {
-    await file.inTemporaryDirectory(async (tmpDir: string) => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = path.join(tmpDir, 'locales')
       const en = path.join(localesPath, 'en.default.json')
       const es = path.join(localesPath, 'es.default.json')
 
-      await file.mkdir(localesPath)
-      await file.writeFile(en, JSON.stringify({hello: 'Hello'}))
-      await file.writeFile(es, JSON.stringify({hello: 'Hola'}))
+      await mkdir(localesPath)
+      await writeFile(en, JSON.stringify({hello: 'Hello'}))
+      await writeFile(es, JSON.stringify({hello: 'Hola'}))
 
       // When
       const got = loadLocalesConfig(tmpDir, 'checkout_ui')
@@ -93,17 +94,17 @@ describe('loadLocalesConfig', () => {
   })
 
   it('Throws if bundle is too big', async () => {
-    await file.inTemporaryDirectory(async (tmpDir: string) => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = path.join(tmpDir, 'locales')
       const en = path.join(localesPath, 'en.default.json')
       const es = path.join(localesPath, 'es.json')
 
-      await file.mkdir(localesPath)
+      await mkdir(localesPath)
       const bigArray = JSON.stringify(new Array(3000).fill('a'))
 
-      await file.writeFile(en, JSON.stringify(bigArray))
-      await file.writeFile(es, JSON.stringify(bigArray))
+      await writeFile(en, JSON.stringify(bigArray))
+      await writeFile(es, JSON.stringify(bigArray))
 
       // When
       const got = loadLocalesConfig(tmpDir, 'checkout_ui')

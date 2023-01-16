@@ -25,7 +25,7 @@ async function init(options: InitOptions) {
 
   await ensureAppDirectoryIsAvailable(outputDirectory, hyphenizedName)
 
-  await file.inTemporaryDirectory(async (tmpDir) => {
+  await inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
     const templatePathDir = githubRepo.filePath
       ? path.join(templateDownloadDir, githubRepo.filePath)

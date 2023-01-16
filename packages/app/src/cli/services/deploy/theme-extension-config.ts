@@ -1,5 +1,6 @@
 import {ThemeExtension} from '../../models/app/extensions.js'
 import {path} from '@shopify/cli-kit'
+import {readFile} from '@shopify/cli-kit/node/file'
 
 export interface ThemeExtensionConfig {
   theme_extension: {
@@ -15,7 +16,7 @@ export async function themeExtensionConfig(themeExtension: ThemeExtension): Prom
       const relativePath = path.relative(themeExtension.directory, filepath)
       const dirname = path.dirname(relativePath)
       const encoding = dirname === 'assets' ? 'binary' : 'utf8'
-      const fileContents = await file.readFile(filepath, {encoding})
+      const fileContents = await readFile(filepath, {encoding})
       files[relativePath] = Buffer.from(fileContents, encoding).toString('base64')
     }),
   )

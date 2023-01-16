@@ -3,10 +3,11 @@ import {testApp, testUIExtension} from './app.test-data.js'
 import {describe, expect, test} from 'vitest'
 import {path} from '@shopify/cli-kit'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
+import {fileExists, inTemporaryDirectory} from '@shopify/cli-kit/node/file'
 
 describe('updateAppIdentifiers', () => {
   test("persists the ids that are not environment variables in the system and it's deploy", async () => {
-    await file.inTemporaryDirectory(async (tmpDir: string) => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const uiExtension = await testUIExtension()
       const app = testApp({
@@ -40,7 +41,7 @@ describe('updateAppIdentifiers', () => {
   })
 
   test("doesn't persist the ids that come from the system's environment and it's deploy", async () => {
-    await file.inTemporaryDirectory(async (tmpDir: string) => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const uiExtension = await testUIExtension()
       const app = testApp({
@@ -69,7 +70,7 @@ describe('updateAppIdentifiers', () => {
 
       // Then
       const dotEnvFilePath = path.join(tmpDir, '.env')
-      if (await file.fileExists(dotEnvFilePath)) {
+      if (await fileExists(dotEnvFilePath)) {
         const dotEnvFile = await readAndParseDotEnv(dotEnvFilePath)
         expect(dotEnvFile.variables.SHOPIFY_API_KEY).toBeUndefined()
         expect(dotEnvFile.variables.SHOPIFY_MY_EXTENSION_ID).toBeUndefined()
@@ -80,7 +81,7 @@ describe('updateAppIdentifiers', () => {
 
 describe('getAppIdentifiers', () => {
   test('returns the right identifiers when variables are defined in the .env file', async () => {
-    await file.inTemporaryDirectory(async (tmpDir: string) => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const uiExtension = await testUIExtension({
         directory: '/tmp/project/extensions/my-extension',
@@ -112,7 +113,7 @@ describe('getAppIdentifiers', () => {
   })
 
   test('returns the right identifiers when variables are defined in the system environment', async () => {
-    await file.inTemporaryDirectory(async (tmpDir: string) => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const uiExtension = await testUIExtension({
         directory: '/tmp/project/extensions/my-extension',

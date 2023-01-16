@@ -5,6 +5,7 @@ import {outputMocker, path} from '@shopify/cli-kit'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import * as nodePackageManager from '@shopify/cli-kit/node/node-package-manager'
 import {exec} from '@shopify/cli-kit/node/system'
+import {inTemporaryDirectory, touchFile, writeFile} from '@shopify/cli-kit/node/file'
 
 const oldCliVersion = '3.0.0'
 // just needs to be higher than oldCliVersion for these tests
@@ -42,7 +43,7 @@ describe('upgrade global CLI', () => {
   })
 
   it('does not upgrade globally if the latest version is found', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const outputMock = outputMocker.mockAndCaptureOutput()
       vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(undefined)
@@ -58,7 +59,7 @@ describe('upgrade global CLI', () => {
   })
 
   it('upgrades globally using npm if the latest version is not found', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const outputMock = outputMocker.mockAndCaptureOutput()
       vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(currentCliVersion)
@@ -84,7 +85,7 @@ describe('upgrade global CLI', () => {
   const homebrewPackageNames = ['shopify-cli', 'shopify-cli@3']
   homebrewPackageNames.forEach((homebrewPackageName: string) => {
     it('upgrades globally using Homebrew if the latest version is not found and the CLI was installed via Homebrew', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const outputMock = outputMocker.mockAndCaptureOutput()
         vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(currentCliVersion)
@@ -114,14 +115,14 @@ describe('upgrade local CLI', () => {
   })
 
   it('does not upgrade locally if the latest version is found', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       await Promise.all([
-        file.writeFile(
+        writeFile(
           path.join(tmpDir, 'package.json'),
           JSON.stringify({dependencies: {'@shopify/cli': currentCliVersion, '@shopify/app': currentCliVersion}}),
         ),
-        file.touchFile(path.join(tmpDir, 'shopify.app.toml')),
+        touchFile(path.join(tmpDir, 'shopify.app.toml')),
       ])
       const outputMock = outputMocker.mockAndCaptureOutput()
       vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(undefined)
@@ -137,14 +138,14 @@ describe('upgrade local CLI', () => {
   })
 
   it('upgrades locally if the latest version is not found', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       await Promise.all([
-        file.writeFile(
+        writeFile(
           path.join(tmpDir, 'package.json'),
           JSON.stringify({dependencies: {'@shopify/cli': oldCliVersion, '@shopify/app': oldCliVersion}}),
         ),
-        file.touchFile(path.join(tmpDir, 'shopify.app.toml')),
+        touchFile(path.join(tmpDir, 'shopify.app.toml')),
       ])
       const outputMock = outputMocker.mockAndCaptureOutput()
       vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(currentCliVersion)

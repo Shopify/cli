@@ -2,6 +2,7 @@ import {ExtensionAssetBuildStatus} from './payload/models.js'
 import {GetUIExtensionPayloadOptions} from './payload.js'
 import {UIExtension} from '../../../models/app/extensions.js'
 import {path, output} from '@shopify/cli-kit'
+import {readFile} from '@shopify/cli-kit/node/file'
 
 export type Locale = string
 
@@ -78,7 +79,7 @@ async function compileLocalizationFiles(
 ): Promise<void> {
   let localeContent: string | undefined
   try {
-    localeContent = await file.readFile(path)
+    localeContent = await readFile(path)
     localization.translations[locale] = JSON.parse(localeContent)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {

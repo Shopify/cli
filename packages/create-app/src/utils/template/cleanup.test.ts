@@ -29,7 +29,7 @@ describe('cleanup', () => {
   }
 
   it('cleans up template files in web directory', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       await mockProjectFolder(tmpDir)
 
       // When
@@ -45,7 +45,7 @@ describe('cleanup', () => {
   })
 
   it('keeps non-template files', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       await mockProjectFolder(tmpDir)
 
       // When

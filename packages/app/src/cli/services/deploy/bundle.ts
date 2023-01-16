@@ -6,6 +6,7 @@ import {path} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {inTemporaryDirectory, mkdirSync, touchFile} from '@shopify/cli-kit/node/file'
 import {Writable} from 'stream'
 
 interface BundleOptions {
@@ -16,10 +17,10 @@ interface BundleOptions {
 }
 
 export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions) {
-  await file.inTemporaryDirectory(async (tmpDir) => {
+  await inTemporaryDirectory(async (tmpDir) => {
     const bundleDirectory = path.join(tmpDir, 'bundle')
-    await file.mkdir(bundleDirectory)
-    await file.touchFile(path.join(bundleDirectory, '.shopify'))
+    await mkdirSync(bundleDirectory)
+    await touchFile(path.join(bundleDirectory, '.shopify'))
 
     await renderConcurrent({
       processes: [

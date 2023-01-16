@@ -3,6 +3,7 @@ import {AppInterface} from '../../../models/app/app.js'
 import {output} from '@shopify/cli-kit'
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {diffLines} from 'diff'
+import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/file'
 
 interface PullEnvOptions {
   envFile: string
@@ -21,14 +22,14 @@ export async function updateEnvFile(app: AppInterface, envFile: PullEnvOptions['
     SCOPES: app.configuration.scopes,
   }
 
-  if (await file.fileExists(envFile)) {
-    const envFileContent = await file.readFile(envFile)
+  if (await fileExists(envFile)) {
+    const envFileContent = await readFile(envFile)
     const updatedEnvFileContent = patchEnvFile(envFileContent, updatedValues)
 
     if (updatedEnvFileContent === envFileContent) {
       return output.content`No changes to ${output.token.path(envFile)}`
     } else {
-      await file.writeFile(envFile, updatedEnvFileContent)
+      await writeFile(envFile, updatedEnvFileContent)
 
       const diff = diffLines(envFileContent ?? '', updatedEnvFileContent)
       return output.content`Updated ${output.token.path(envFile)} to be:
@@ -43,7 +44,7 @@ ${output.token.linesDiff(diff)}
   } else {
     const newEnvFileContent = patchEnvFile(null, updatedValues)
 
-    await file.writeFile(envFile, newEnvFileContent)
+    await writeFile(envFile, newEnvFileContent)
 
     return output.content`Created ${output.token.path(envFile)}:
 
