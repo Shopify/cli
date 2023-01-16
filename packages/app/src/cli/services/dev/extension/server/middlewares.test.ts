@@ -13,7 +13,7 @@ import * as templates from '../templates.js'
 import * as payload from '../payload.js'
 import {UIExtensionPayload} from '../payload/models.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
-import {http, file, path} from '@shopify/cli-kit'
+import {http, path} from '@shopify/cli-kit'
 import {describe, expect, it, vi} from 'vitest'
 
 function getMockRequest({context = {}, headers = {}}) {

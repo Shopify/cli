@@ -1,5 +1,5 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from './npm.js'
-import {file, npm, path, ui} from '@shopify/cli-kit'
+import {npm, path, ui} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {installNodeModules, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Writable} from 'stream'

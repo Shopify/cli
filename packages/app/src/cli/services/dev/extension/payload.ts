@@ -6,7 +6,6 @@ import {ExtensionDevOptions} from '../extension.js'
 import {UIExtension} from '../../../models/app/extensions.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {NewExtensionPointSchemaType} from '../../../models/extensions/schemas.js'
-import {file} from '@shopify/cli-kit'
 
 export type GetUIExtensionPayloadOptions = ExtensionDevOptions & {
   currentDevelopmentPayload?: Partial<UIExtensionPayload['development']>

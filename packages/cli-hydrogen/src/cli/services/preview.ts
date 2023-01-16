@@ -1,4 +1,4 @@
-import {path, error, file, output} from '@shopify/cli-kit'
+import {path, error, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {exec} from '@shopify/cli-kit/node/system'
 import {fileURLToPath} from 'url'

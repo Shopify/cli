@@ -4,7 +4,7 @@ import {selectApp} from '../select-app.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {testApp} from '../../../models/app/app.test-data.js'
-import {path, output, file} from '@shopify/cli-kit'
+import {path, output} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
@@ -21,7 +21,7 @@ describe('env pull', () => {
   it('creates a new environment file when there is no .env', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
-      vi.spyOn(file, 'write')
+      vi.spyOn(file, 'writeFile')
 
       const app = mockApp()
       const token = 'token'
@@ -106,7 +106,7 @@ describe('env pull', () => {
 
       await file.writeFile(filePath, 'SHOPIFY_API_KEY=ABC\nSHOPIFY_API_SECRET=XYZ\nSCOPES=my-scope')
 
-      vi.spyOn(file, 'write')
+      vi.spyOn(file, 'writeFile')
 
       // When
       const result = await pullEnv(app, {envFile: filePath})
@@ -170,7 +170,7 @@ describe('env pull', () => {
 
       await file.writeFile(filePath, 'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=my-scope')
 
-      vi.spyOn(file, 'write')
+      vi.spyOn(file, 'writeFile')
       // When
       const result = await pullEnv(app, {envFile: filePath})
 

@@ -1,4 +1,4 @@
-import {fileExists, writeFile, read} from '../../file.js'
+import {fileExists, writeFile, readFile} from './file.js'
 import {findUp, join} from '../../path.js'
 import {content, token, debug} from '../../output.js'
 
@@ -34,7 +34,7 @@ ${token.json(recommendations)}
   if (await isVSCode(directory)) {
     let originalExtensionsJson = {recommendations: []}
     if (await fileExists(extensionsPath)) {
-      const originalExtensionsFile = await read(extensionsPath)
+      const originalExtensionsFile = await readFile(extensionsPath)
       originalExtensionsJson = JSON.parse(originalExtensionsFile)
     }
     const newExtensionsJson = {

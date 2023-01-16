@@ -4,7 +4,7 @@ import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js'
 import {describe, it, expect, beforeEach, afterEach, beforeAll} from 'vitest'
-import {file, path} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 import {yarnLockfile, pnpmLockfile, PackageJson, pnpmWorkspaceFile} from '@shopify/cli-kit/node/node-package-manager'
 
 describe('load', () => {

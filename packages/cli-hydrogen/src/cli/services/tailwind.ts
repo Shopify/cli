@@ -1,5 +1,5 @@
 import {HydrogenApp} from '../models/hydrogen.js'
-import {ui, path, file, error} from '@shopify/cli-kit'
+import {ui, path, error} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions} from '@shopify/cli-kit/node/vscode'
 import {exec} from '@shopify/cli-kit/node/system'

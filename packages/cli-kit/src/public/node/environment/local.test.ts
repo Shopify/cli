@@ -8,11 +8,11 @@ import {
   cloudEnvironment,
   macAddress,
 } from './local.js'
-import {fileExists} from '../../../file.js'
+import {fileExists} from '../file.js'
 import {exec} from '../system.js'
 import {expect, it, describe, vi, test} from 'vitest'
 
-vi.mock('../../../file.js')
+vi.mock('../file.js')
 vi.mock('../system.js')
 
 describe('isUnitTest', () => {

@@ -2,7 +2,7 @@ import {getExtensionPointRedirectUrl, getExtensionUrl, getRedirectUrl, sendError
 import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {getHTML} from '../templates.js'
-import {file, http, output, path} from '@shopify/cli-kit'
+import {http, output, path} from '@shopify/cli-kit'
 
 export function corsMiddleware(
   request: http.IncomingMessage,

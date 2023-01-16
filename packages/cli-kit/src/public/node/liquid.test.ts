@@ -1,6 +1,6 @@
-import {join} from './path.js'
-import {writeFile, mkdir, read, inTemporaryDirectory} from './file.js'
-import {renderLiquidTemplate, recursiveLiquidTemplateCopy} from './public/node/liquid.js'
+import {writeFile, mkdir, readFile, inTemporaryDirectory} from './file.js'
+import {renderLiquidTemplate, recursiveLiquidTemplateCopy} from './liquid.js'
+import {join} from '../../path.js'
 import {describe, expect, it} from 'vitest'
 
 describe('create', () => {
@@ -40,8 +40,8 @@ describe('recursiveLiquidTemplateCopy', () => {
       // Then
       const outReadmePath = join(to, 'first.md')
       const outPackageJsonPath = join(to, 'packages/package.json')
-      await expect(read(outReadmePath)).resolves.toEqual('# test')
-      const outPackageJson = await read(outPackageJsonPath)
+      await expect(readFile(outReadmePath)).resolves.toEqual('# test')
+      const outPackageJson = await readFile(outPackageJsonPath)
       expect(JSON.parse(outPackageJson)).toEqual(packageJson)
     })
   })

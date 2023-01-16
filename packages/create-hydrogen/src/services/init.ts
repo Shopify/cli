@@ -1,4 +1,4 @@
-import {path, error, file, output, ui, npm, git, constants} from '@shopify/cli-kit'
+import {path, error, output, ui, npm, git, constants} from '@shopify/cli-kit'
 import {username} from '@shopify/cli-kit/node/os'
 import {
   findPackageVersionUp,

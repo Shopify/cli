@@ -1,6 +1,7 @@
 import {Extension, FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {AppErrors} from './loader.js'
-import {path, schema, file} from '@shopify/cli-kit'
+import {path, schema} from '@shopify/cli-kit'
+import file from '@shopify/cli-kit/node/file'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 

@@ -1,4 +1,4 @@
-import {path, file, error} from '@shopify/cli-kit'
+import {path, error} from '@shopify/cli-kit'
 import {renderLiquidTemplate} from '@shopify/cli-kit/node/liquid'
 
 export interface GetHTMLOptions {

@@ -1,7 +1,7 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
 import cleanup from '../utils/template/cleanup.js'
 
-import {path, file, ui, npm, git, error, output} from '@shopify/cli-kit'
+import {path, ui, npm, git, error, output} from '@shopify/cli-kit'
 import {packageManager, PackageManager, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'

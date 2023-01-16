@@ -5,7 +5,7 @@ import {genericConfigurationFileNames} from '../constants.js'
 // @ts-ignore
 import {loadConfig} from '../utilities/load-config.js'
 import {describe, vi, it, expect} from 'vitest'
-import {file, path} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 import {pnpmLockfile, yarnLockfile} from '@shopify/cli-kit/node/node-package-manager'
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */

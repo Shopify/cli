@@ -1,5 +1,5 @@
+import {mkdir, readFile, copyFile, chmod, isDirectory, writeFile, fileHasExecutablePermissions} from './file.js'
 import {glob, join, dirname, relative} from '../../path.js'
-import {mkdir, read, copyFile, chmod, isDirectory, writeFile, fileHasExecutablePermissions} from '../../file.js'
 import {content, token, debug} from '../../output.js'
 import {Liquid} from 'liquidjs'
 
@@ -40,7 +40,7 @@ export async function recursiveLiquidTemplateCopy(from: string, to: string, data
         await mkdir(outputPath)
       } else if (templateItemPath.endsWith('.liquid')) {
         await mkdir(dirname(outputPath))
-        const content = await read(templateItemPath)
+        const content = await readFile(templateItemPath)
         const contentOutput = await renderLiquidTemplate(content, data)
         const isExecutable = await fileHasExecutablePermissions(templateItemPath)
         const outputPathWithoutLiquid = outputPath.replace('.liquid', '')

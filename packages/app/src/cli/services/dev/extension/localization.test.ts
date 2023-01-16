@@ -1,7 +1,7 @@
 import {getLocalization, Localization} from './localization.js'
 import {testUIExtension} from '../../../models/app/app.test-data.js'
 import {ExtensionDevOptions} from '../extension.js'
-import {file, path, output} from '@shopify/cli-kit'
+import {path, output} from '@shopify/cli-kit'
 import {describe, expect, it, vi} from 'vitest'
 
 async function testGetLocalization(tmpDir: string, currentLocalization?: Localization) {

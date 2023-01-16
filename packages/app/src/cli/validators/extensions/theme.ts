@@ -1,5 +1,5 @@
 import {ThemeExtension} from '../../models/app/extensions.js'
-import {error, file, output, path} from '@shopify/cli-kit'
+import {error, output, path} from '@shopify/cli-kit'
 
 interface FilenameValidation {
   validator: RegExp

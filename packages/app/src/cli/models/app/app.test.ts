@@ -1,7 +1,7 @@
 import {getUIExtensionRendererVersion} from './app.js'
 import {testApp, testUIExtension} from './app.test-data.js'
 import {describe, expect, test} from 'vitest'
-import {file, path} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 
 const DEFAULT_APP = testApp()
 

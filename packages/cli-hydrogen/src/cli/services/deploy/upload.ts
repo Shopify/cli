@@ -6,7 +6,7 @@ import {
 } from './graphql/create_deployment.js'
 import {UnrecoverableError, WebPageNotAvailable, TooManyRequestsError} from './error.js'
 import {UploadDeploymentQuery} from './graphql/upload_deployment.js'
-import {http, file} from '@shopify/cli-kit'
+import {http} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {ClientError} from 'graphql-request'
 import {uploadOxygenDeploymentFile, oxygenRequest} from '@shopify/cli-kit/node/api/oxygen'

@@ -26,7 +26,7 @@ import {
   AppFunctionSetMutationSchema,
   AppFunctionSetVariables,
 } from '../../api/graphql/functions/app_function_set.js'
-import {error, http, output, file} from '@shopify/cli-kit'
+import {error, http, output} from '@shopify/cli-kit'
 
 import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'

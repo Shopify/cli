@@ -1,7 +1,7 @@
 import {Abort} from './error.js'
 import {hasGit, isTerminalInteractive} from './public/node/environment/local.js'
 import {content, token, debug} from './output.js'
-import {appendFileSync} from './file.js'
+import {appendFileSync} from './public/node/file.js'
 import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
 
 export const factory = git

@@ -15,7 +15,7 @@ import {Extension} from '../models/app/extensions.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {path, output, file} from '@shopify/cli-kit'
+import {path, output} from '@shopify/cli-kit'
 import {useThemeBundling} from '@shopify/cli-kit/node/environment/local'
 
 interface DeployOptions {

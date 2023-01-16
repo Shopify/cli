@@ -1,4 +1,3 @@
-import {file} from '@shopify/cli-kit'
 import download from 'download'
 import {getLatestGitHubRelease, parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
 

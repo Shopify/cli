@@ -1,6 +1,6 @@
 import {loadLocalesConfig} from './locales-configuration.js'
 import {describe, expect, it} from 'vitest'
-import {file, path} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 
 describe('loadLocalesConfig', () => {
   it('Works if all locales are correct', async () => {

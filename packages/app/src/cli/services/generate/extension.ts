@@ -4,7 +4,7 @@ import {FunctionSpec} from '../../models/extensions/functions.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
-import {error, file, git, path, ui} from '@shopify/cli-kit'
+import {error, git, path, ui} from '@shopify/cli-kit'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,

@@ -1,6 +1,6 @@
 import {generateRandomNameForSubdirectory} from './fs.js'
+import {inTemporaryDirectory, writeFile} from './file.js'
 import {takeRandomFromArray} from '../common/array.js'
-import {inTemporaryDirectory, writeFile} from '../../file.js'
 import {join} from '../../path.js'
 import {describe, expect, test, vi} from 'vitest'
 

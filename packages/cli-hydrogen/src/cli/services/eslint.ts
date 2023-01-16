@@ -1,6 +1,6 @@
 import {HydrogenApp} from '../models/hydrogen.js'
 import {genericConfigurationFileNames} from '../constants.js'
-import {ui, npm, file, path, error} from '@shopify/cli-kit'
+import {ui, npm, path, error} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions, isVSCode} from '@shopify/cli-kit/node/vscode'
 import {isUnitTest} from '@shopify/cli-kit/node/environment/local'

@@ -1,7 +1,7 @@
 import {updateAppIdentifiers, getAppIdentifiers} from './identifiers.js'
 import {testApp, testUIExtension} from './app.test-data.js'
 import {describe, expect, test} from 'vitest'
-import {file, path} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 
 describe('updateAppIdentifiers', () => {

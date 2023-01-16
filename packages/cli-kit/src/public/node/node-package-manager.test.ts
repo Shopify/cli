@@ -14,8 +14,8 @@ import {
   findPackageVersionUp,
 } from './node-package-manager.js'
 import {exec} from './system.js'
+import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './file.js'
 import {join as pathJoin, normalize as pathNormalize, pathToFileURL} from '../../path.js'
-import {inTemporaryDirectory, mkdir, touchFile, writeFile, writeFile} from '../../file.js'
 import {Abort} from '../../error.js'
 import {describe, it, expect, vi, test} from 'vitest'
 import latestVersion from 'latest-version'

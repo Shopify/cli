@@ -2,7 +2,7 @@ import {addESLint} from './eslint.js'
 import {genericConfigurationFileNames} from '../constants.js'
 import {HydrogenApp} from '../models/hydrogen.js'
 import {describe, vi, it, expect, beforeEach} from 'vitest'
-import {file, path} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions, isVSCode} from '@shopify/cli-kit/node/vscode.js'
 

@@ -1,6 +1,6 @@
 import {checkLockfileStatus} from './check-lockfile.js'
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
-import {file, path, git, outputMocker} from '@shopify/cli-kit'
+import {path, git, outputMocker} from '@shopify/cli-kit'
 
 vi.mock('@shopify/cli-kit', async () => {
   const cliKit: any = await vi.importActual('@shopify/cli-kit')

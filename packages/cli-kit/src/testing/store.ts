@@ -1,5 +1,5 @@
 import {CLIKitStore} from '../store.js'
-import {removeFile} from '../file.js'
+import {removeFile} from '../public/node/file.js'
 import uniqueString from 'unique-string'
 
 /**

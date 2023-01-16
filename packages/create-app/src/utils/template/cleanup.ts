@@ -1,4 +1,4 @@
-import {file, path} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 
 export default async function cleanup(webOutputDirectory: string) {
   const gitPaths = await path.glob(

@@ -4,7 +4,7 @@ import {ExtensionDevOptions} from '../extension.js'
 import {testApp, testUIExtension} from '../../../models/app/app.test-data.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
-import {file, path} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 
 vi.mock('../../../models/app/app.js')
 

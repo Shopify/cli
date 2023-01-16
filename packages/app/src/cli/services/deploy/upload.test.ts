@@ -7,7 +7,7 @@ import {
 } from '../../api/graphql/functions/upload_url_generate.js'
 import {AppFunctionSetMutation, AppFunctionSetMutationSchema} from '../../api/graphql/functions/app_function_set.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {error, path, file, http} from '@shopify/cli-kit'
+import {error, path, http} from '@shopify/cli-kit'
 import {functionProxyRequest} from '@shopify/cli-kit/node/api/partners'
 
 afterEach(() => {

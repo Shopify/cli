@@ -1,5 +1,5 @@
 import cleanup from './cleanup.js'
-import {file, path} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 import {describe, expect, it} from 'vitest'
 
 describe('cleanup', () => {

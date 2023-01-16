@@ -1,5 +1,5 @@
 import {buildThemeExtensions, ThemeExtensionBuildOptions} from '../build/extension.js'
-import {file, path} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {useThemeBundling} from '@shopify/cli-kit/node/environment/local'

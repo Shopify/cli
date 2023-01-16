@@ -1,5 +1,5 @@
 import {loadConfig} from '../utilities/load-config.js'
-import {path, error as kitError, file} from '@shopify/cli-kit'
+import {path, error as kitError} from '@shopify/cli-kit'
 import {
   getDependencies,
   getPackageName,
