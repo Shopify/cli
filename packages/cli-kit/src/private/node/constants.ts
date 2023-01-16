@@ -31,7 +31,7 @@ export const environmentVariables = {
   spin: 'SPIN',
 }
 
-export const paths = {
+export const pathConstants = {
   executables: {
     dev: '/opt/dev/bin/dev',
   },
@@ -52,11 +52,11 @@ export const paths = {
   },
 }
 
-export const keychain = {
+export const keychainConstants = {
   service: 'shopify-cli',
 }
 
-export const session = {
+export const sessionConstants = {
   expirationTimeMarginInMinutes: 4,
 }
 

@@ -1,7 +1,7 @@
 import {applicationId} from './identity.js'
 import {ApplicationToken, IdentityToken} from './schema.js'
 import {validateIdentityToken} from './identity-token-validation.js'
-import {session} from '../constants.js'
+import {sessionConstants} from '../constants.js'
 import {debug} from '../../../output.js'
 import {firstPartyDev} from '../../../public/node/environment/local.js'
 import {OAuthApplications} from '../session.js'
@@ -74,5 +74,5 @@ function isTokenExpired(token: ApplicationToken): boolean {
 }
 
 function expireThreshold(): Date {
-  return new Date(Date.now() + session.expirationTimeMarginInMinutes * 60 * 1000)
+  return new Date(Date.now() + sessionConstants.expirationTimeMarginInMinutes * 60 * 1000)
 }

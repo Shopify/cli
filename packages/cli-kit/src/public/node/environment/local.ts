@@ -1,5 +1,5 @@
 import {isTruthy, isSet} from '../../../private/node/environment/utilities.js'
-import {environmentVariables, paths} from '../../../private/node/constants.js'
+import {environmentVariables, pathConstants} from '../../../private/node/constants.js'
 import {exists as fileExists} from '../../../file.js'
 import {exec} from '../system.js'
 import {isSpin} from '../environment/spin.js'
@@ -56,7 +56,7 @@ export async function isShopify(env = process.env): Promise<boolean> {
   if (Object.prototype.hasOwnProperty.call(env, environmentVariables.runAsUser)) {
     return !isTruthy(env[environmentVariables.runAsUser])
   }
-  const devInstalled = await fileExists(paths.executables.dev)
+  const devInstalled = await fileExists(pathConstants.executables.dev)
   return devInstalled || isSpin(env)
 }
 
