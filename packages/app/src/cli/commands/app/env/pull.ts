@@ -5,13 +5,14 @@ import {pullEnv} from '../../../services/app/env/pull.js'
 import Command from '../../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../../models/extensions/specifications.js'
 import {Flags} from '@oclif/core'
-import {output, path, cli} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {output, path} from '@shopify/cli-kit'
 
 export default class EnvPull extends Command {
-  static description = 'Pull app and extensions environment variables'
+  static description = 'Pull app and extensions environment variables.'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...appFlags,
     'env-file': Flags.string({
       hidden: false,

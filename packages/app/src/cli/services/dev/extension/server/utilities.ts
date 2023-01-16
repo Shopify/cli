@@ -40,6 +40,7 @@ export function getExtensionPointRedirectUrl(
     case 'admin':
       rawUrl.pathname = 'admin/extensions-dev'
       rawUrl.searchParams.append('url', getExtensionUrl(extension, options))
+      rawUrl.searchParams.append('target', requestedTarget)
       break
     default:
       return undefined

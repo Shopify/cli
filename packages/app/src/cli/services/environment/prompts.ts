@@ -41,6 +41,7 @@ export async function selectRemoteSourcePrompt(
 }
 
 interface SourceSummary {
+  question: string
   identifiers: IdentifiersExtensions
   toCreate: LocalSource[]
   onlyRemote: RemoteSource[]
@@ -63,8 +64,12 @@ export async function deployConfirmationPrompt(summary: SourceSummary): Promise<
     infoTable['missing locally'] = summary.onlyRemote.map((source) => source.title)
   }
 
+  if (Object.keys(infoTable).length === 0) {
+    return new Promise((resolve) => resolve(true))
+  }
+
   return renderSelectPrompt({
-    message: 'Make the following changes in Shopify Partners?',
+    message: summary.question,
     choices: [
       {label: 'Yes, deploy to push changes', value: true, key: 'y'},
       {label: 'No, cancel', value: false, key: 'n'},

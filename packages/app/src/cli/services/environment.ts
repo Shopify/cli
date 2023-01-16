@@ -19,12 +19,13 @@ import {Organization, OrganizationApp, OrganizationStore} from '../models/organi
 import metadata from '../metadata.js'
 import {ThemeExtension} from '../models/app/extensions.js'
 import {loadAppName} from '../models/app/loader.js'
-import {error as kitError, output, store, environment, error} from '@shopify/cli-kit'
+import {error as kitError, output, store, error} from '@shopify/cli-kit'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {TokenItem} from '@shopify/cli-kit/src/private/node/ui/components/TokenizedText.js'
+import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -397,7 +398,7 @@ async function fetchDevDataFromOptions(
     const orgWithStore = await fetchStoreByDomain(orgId, token, options.storeFqdn)
     if (!orgWithStore) throw new error.Bug(`Could not find Organization for id ${orgId}.`)
     if (!orgWithStore.store) {
-      const partners = await environment.fqdn.partners()
+      const partners = await partnersFqdn()
       const org = orgWithStore.organization
       throw new error.Bug(
         `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid development store.`,

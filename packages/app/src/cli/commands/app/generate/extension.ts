@@ -2,15 +2,16 @@ import {appFlags} from '../../../flags.js'
 import metadata from '../../../metadata.js'
 import Command from '../../../utilities/app-command.js'
 import generate from '../../../services/generate.js'
-import {path, cli} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class AppGenerateExtension extends Command {
-  static description = 'Scaffold an Extension'
+  static description = 'Scaffold an Extension.'
   static examples = ['<%= config.bin %> <%= command.id %>']
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...appFlags,
     type: Flags.string({
       char: 't',

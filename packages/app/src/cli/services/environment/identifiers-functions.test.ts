@@ -326,6 +326,7 @@ describe('ensureFunctionsIds: asks user to confirm deploy', () => {
 
     // Then
     expect(deployConfirmationPrompt).toBeCalledWith({
+      question: 'Make the following changes to your functions in Shopify Partners?',
       identifiers: {
         FUNCTION_A: 'ID_A',
         FUNCTION_A_2: 'ID_A_2',

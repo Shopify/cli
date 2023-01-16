@@ -3,7 +3,7 @@ import {output} from '@shopify/cli-kit'
 import {logout} from '@shopify/cli-kit/node/session'
 
 export default class Logout extends Command {
-  static description = 'Logout from Shopify'
+  static description = 'Logout from Shopify.'
 
   async run(): Promise<void> {
     await logout()

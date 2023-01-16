@@ -13,7 +13,7 @@ import {store as secureStore, fetch as secureFetch} from './session/store.js'
 import {ApplicationToken, IdentityToken, Session} from './session/schema.js'
 import {validateSession} from './session/validate.js'
 import {applicationId} from './session/identity.js'
-import * as fqdnModule from '../../environment/fqdn.js'
+import * as fqdnModule from '../../public/node/environment/fqdn.js'
 import {useDeviceAuth} from '../../environment/local.js'
 import {vi, describe, expect, it, beforeAll, beforeEach} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners.js'
@@ -95,7 +95,7 @@ beforeAll(() => {
 })
 
 beforeEach(() => {
-  vi.spyOn(fqdnModule, 'identity').mockResolvedValue(fqdn)
+  vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue(fqdn)
   vi.mocked(useDeviceAuth).mockReturnValue(false)
   vi.mocked(authorize).mockResolvedValue(code)
   vi.mocked(exchangeCodeForAccessToken).mockResolvedValue(validIdentityToken)

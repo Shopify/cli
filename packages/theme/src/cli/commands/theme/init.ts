@@ -2,7 +2,8 @@ import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {cloneRepoAndCheckoutLatestTag, cloneRepo} from '../../services/init.js'
 import {Flags} from '@oclif/core'
-import {cli, path, ui} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {path, ui} from '@shopify/cli-kit'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 
 export default class Init extends ThemeCommand {
@@ -17,7 +18,7 @@ export default class Init extends ThemeCommand {
   ]
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     path: themeFlags.path,
     'clone-url': Flags.string({
       char: 'u',

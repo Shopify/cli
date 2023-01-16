@@ -3,6 +3,7 @@ import {stringifyMessage, content, token as outputToken, token, debug} from '../
 import {Abort} from '../../../error.js'
 import {httpsAgent} from '../../../http.js'
 import {ClientError, GraphQLClient, RequestDocument, Variables} from 'graphql-request'
+import {performance} from 'perf_hooks'
 
 export interface GraphQLVariables {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
