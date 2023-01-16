@@ -353,7 +353,6 @@ importers:
       '@types/diff': ^5.0.2
       '@types/fs-extra': 9.0.13
       '@types/gradient-string': ^1.1.2
-      '@types/inquirer': ^9.0.3
       '@types/lodash': 4.14.191
       '@types/node': 14.17.0
       '@types/react': 16.14.0
@@ -387,8 +386,6 @@ importers:
       h3: 0.7.21
       ink: 3.2.0
       ink-testing-library: ^2.1.0
-      inquirer: 9.1.4
-      inquirer-autocomplete-prompt: 3.0.0
       is-interactive: 2.0.0
       js-yaml: 4.1.0
       keytar: 7.9.0
@@ -452,8 +449,6 @@ importers:
       graphql-request: 4.3.0_graphql@16.4.0
       h3: 0.7.21
       ink: 3.2.0_hw3ykagcixqw57etxpo4kpffqq
-      inquirer: 9.1.4
-      inquirer-autocomplete-prompt: 3.0.0_inquirer@9.1.4
       is-interactive: 2.0.0
       js-yaml: 4.1.0
       keytar: 7.9.0
@@ -488,7 +483,6 @@ importers:
       '@types/diff': 5.0.2
       '@types/fs-extra': 9.0.13
       '@types/gradient-string': 1.1.2
-      '@types/inquirer': 9.0.3
       '@types/lodash': 4.14.191
       '@types/node': 14.17.0
       '@types/react': 16.14.0
@@ -4237,13 +4231,6 @@ packages:
       '@types/node': 18.11.10
     dev: true
 
-  /@types/inquirer/9.0.3:
-    resolution: {integrity: sha512-CzNkWqQftcmk2jaCWdBTf9Sm7xSw4rkI1zpU/Udw3HX5//adEZUIm9STtoRP1qgWj0CWQtJ9UTvqmO2NNjhMJw==}
-    dependencies:
-      '@types/through': 0.0.30
-      rxjs: 7.5.7
-    dev: true
-
   /@types/is-ci/3.0.0:
     resolution: {integrity: sha512-Q0Op0hdWbYd1iahB+IFNQcWXFq4O0Q5MwQP7uN0souuQ4rPg1vEYcnIOfr1gY+M+6rc8FGoRaBO1mOOvL29sEQ==}
     dependencies:
@@ -4428,12 +4415,6 @@ packages:
     dependencies:
       '@types/superagent': 4.1.16
     dev: false
-
-  /@types/through/0.0.30:
-    resolution: {integrity: sha512-FvnCJljyxhPM3gkRgWmxmDZyAQSiBQQWLI0A0VFL0K7W1oRUrPJSqNO0NvTnLkBcotdlp3lKvaT0JrnyRDkzOg==}
-    dependencies:
-      '@types/node': 18.11.10
-    dev: true
 
   /@types/tinycolor2/1.4.3:
     resolution: {integrity: sha512-Kf1w9NE5HEgGxCRyIcRXR/ZYtDv0V8FVPtYHwLxl0O+maGX0erE77pQlD0gpP+/KByMZ87mOA79SjifhSB3PjQ==}
@@ -9505,20 +9486,6 @@ packages:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
-    dev: false
-
-  /inquirer-autocomplete-prompt/3.0.0_inquirer@9.1.4:
-    resolution: {integrity: sha512-nsPWllBQB3qhvpVgV1UIJN4xo3yz7Qv8y1+zrNVpJUNPxtUZ7btCum/4UCAs5apPCe/FVhKH1V6Wx0cAwkreyg==}
-    engines: {node: '>=12'}
-    peerDependencies:
-      inquirer: ^9.1.0
-    dependencies:
-      ansi-escapes: 6.0.0
-      figures: 5.0.0
-      inquirer: 9.1.4
-      picocolors: 1.0.0
-      run-async: 2.4.1
-      rxjs: 7.5.7
     dev: false
 
   /inquirer/8.2.4:
