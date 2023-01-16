@@ -223,7 +223,7 @@ async function uploadFunctionExtension(
   const url = await uploadWasmBlob(extension, options.apiKey, options.token)
 
   let inputQuery: string | undefined
-  if (await file.exists(extension.inputQueryPath())) {
+  if (await file.fileExists(extension.inputQueryPath())) {
     inputQuery = await file.read(extension.inputQueryPath())
   }
 

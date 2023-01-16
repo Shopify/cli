@@ -99,12 +99,12 @@ export function readSync(path: string, options: object = {encoding: 'utf-8'}): s
  * @param from - Path to the directory or file to be copied.
  * @param to - Destination path.
  */
-export async function copy(from: string, to: string): Promise<void> {
+export async function copyFile(from: string, to: string): Promise<void> {
   debug(outputContent`Copying file from ${token.path(from)} to ${token.path(to)}...`)
   await fsCopy(from, to)
 }
 
-export async function touch(path: string): Promise<void> {
+export async function touchFile(path: string): Promise<void> {
   debug(outputContent`Creating an empty file at ${token.path(path)}...`)
   await fsEnsureFile(path)
 }
@@ -119,26 +119,22 @@ export async function appendFile(path: string, content: string): Promise<void> {
   await fsAppendFile(path, content)
 }
 
-export function touchSync(path: string) {
+export function touchFileSync(path: string) {
   debug(outputContent`Creating an empty file at ${token.path(path)}...`)
   fsEnsureFileSync(path)
 }
 
-export async function write(path: string, data: string): Promise<void> {
+export async function writeFile(path: string, data: string): Promise<void> {
   debug(outputContent`Writing some content to file at ${token.path(path)}...`)
   await fsWriteFile(path, data, {encoding: 'utf8'})
 }
 
-export function writeSync(path: string, data: string): void {
+export function writeFileSync(path: string, data: string): void {
   debug(outputContent`File-writing some content to file at ${token.path(path)}...`)
   fsWriteFileSync(path, data)
 }
 
-export async function append(path: string, data: string): Promise<void> {
-  await fsAppendFile(path, data)
-}
-
-export function appendSync(path: string, data: string): void {
+export function appendFileSync(path: string, data: string): void {
   fsAppendFileSync(path, data)
 }
 
@@ -152,12 +148,12 @@ export function mkdirSync(path: string): void {
   fsMkdirSync(path, {recursive: true})
 }
 
-export async function remove(path: string): Promise<void> {
+export async function removeFile(path: string): Promise<void> {
   debug(outputContent`Removing file at ${token.path(path)}...`)
   await fsRemove(path)
 }
 
-export function removeSync(path: string) {
+export function removeFileSync(path: string) {
   debug(outputContent`Sync-removing file at ${token.path(path)}...`)
   fsRemoveSync(path)
 }
@@ -179,17 +175,17 @@ export async function isDirectory(path: string): Promise<boolean> {
   return (await fsLstat(path)).isDirectory()
 }
 
-export async function size(path: string): Promise<number> {
+export async function fileSize(path: string): Promise<number> {
   debug(outputContent`Getting the size of file file at ${token.path(path)}...`)
   return (await fsStat(path)).size
 }
 
-export function sizeSync(path: string): number {
+export function fileSizeSync(path: string): number {
   debug(outputContent`Sync-getting the size of file file at ${token.path(path)}...`)
   return fsStatSync(path).size
 }
 
-export function createReadStream(path: string) {
+export function createFileReadStream(path: string) {
   return fsCreateReadStream(path)
 }
 
@@ -198,7 +194,7 @@ export function createReadStream(path: string) {
  * @param path - Path to the directory or file.
  * @returns A unix timestamp.
  */
-export async function lastUpdated(path: string): Promise<Date> {
+export async function fileLastUpdated(path: string): Promise<Date> {
   debug(outputContent`Getting last updated timestamp for file at ${token.path(path)}...`)
   return (await fsStat(path)).ctime
 }
@@ -208,9 +204,9 @@ export async function lastUpdated(path: string): Promise<Date> {
  * @param path - Path to the directory or file.
  * @returns A unix timestamp.
  */
-export async function lastUpdatedTimestamp(path: string): Promise<number | undefined> {
+export async function fileLastUpdatedTimestamp(path: string): Promise<number | undefined> {
   try {
-    const lastUpdatedDateTime = await lastUpdated(path)
+    const lastUpdatedDateTime = await fileLastUpdated(path)
     return lastUpdatedDateTime.getTime()
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
@@ -224,7 +220,7 @@ export async function lastUpdatedTimestamp(path: string): Promise<number | undef
  * @param dest - Path to be moved to.
  * @param options - Moving options.
  */
-export async function move(src: string, dest: string, options: {overwrite?: boolean} = {}): Promise<void> {
+export async function moveFile(src: string, dest: string, options: {overwrite?: boolean} = {}): Promise<void> {
   await fsMove(src, dest, options)
 }
 
@@ -241,7 +237,7 @@ export async function chmod(path: string, mode: number | string): Promise<void> 
  * Checks if a file has executable permissions.
  * @param path - Path to the file whose permissions will be checked.
  */
-export async function hasExecutablePermissions(path: string): Promise<boolean> {
+export async function fileHasExecutablePermissions(path: string): Promise<boolean> {
   try {
     await fsAccess(path, fsConstants.X_OK)
     return true
@@ -256,7 +252,7 @@ export async function hasExecutablePermissions(path: string): Promise<boolean> {
  * @param path - Path to the directory or file.
  * @returns True if it exists.
  */
-export async function exists(path: string): Promise<boolean> {
+export async function fileExists(path: string): Promise<boolean> {
   try {
     await fsAccess(path)
     return true
@@ -269,7 +265,7 @@ export async function exists(path: string): Promise<boolean> {
 /**
  * Format a string using prettier. Return the formatted content.
  */
-export async function format(content: string, options: {path: string}) {
+export async function fileContentPrettyFormat(content: string, options: {path: string}) {
   const {default: prettier} = await import('prettier')
 
   const ext = extname(options.path)

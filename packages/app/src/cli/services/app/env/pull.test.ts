@@ -56,7 +56,7 @@ describe('env pull', () => {
       const result = await pullEnv(app, {envFile: filePath})
 
       // Then
-      expect(file.write).toHaveBeenCalledWith(
+      expect(file.writeFile).toHaveBeenCalledWith(
         filePath,
         'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=my-scope',
       )
@@ -104,7 +104,7 @@ describe('env pull', () => {
 
       const filePath = path.resolve(tmpDir, '.env')
 
-      await file.write(filePath, 'SHOPIFY_API_KEY=ABC\nSHOPIFY_API_SECRET=XYZ\nSCOPES=my-scope')
+      await file.writeFile(filePath, 'SHOPIFY_API_KEY=ABC\nSHOPIFY_API_SECRET=XYZ\nSCOPES=my-scope')
 
       vi.spyOn(file, 'write')
 
@@ -112,7 +112,7 @@ describe('env pull', () => {
       const result = await pullEnv(app, {envFile: filePath})
 
       // Then
-      expect(file.write).toHaveBeenCalledWith(
+      expect(file.writeFile).toHaveBeenCalledWith(
         filePath,
         'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=my-scope',
       )
@@ -168,14 +168,14 @@ describe('env pull', () => {
 
       const filePath = path.resolve(tmpDir, '.env')
 
-      await file.write(filePath, 'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=my-scope')
+      await file.writeFile(filePath, 'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=my-scope')
 
       vi.spyOn(file, 'write')
       // When
       const result = await pullEnv(app, {envFile: filePath})
 
       // Then
-      expect(file.write).not.toHaveBeenCalled()
+      expect(file.writeFile).not.toHaveBeenCalled()
       expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
       "No changes to ${filePath}"
       `)

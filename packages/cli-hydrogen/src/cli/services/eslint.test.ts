@@ -114,7 +114,7 @@ describe('addEslint', () => {
   it('throws error when eslintrc already exists', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
-      await file.write(path.join(tmpDir, genericConfigurationFileNames.eslint), '')
+      await file.writeFile(path.join(tmpDir, genericConfigurationFileNames.eslint), '')
       const app = await createMockApp({
         directory: tmpDir,
       })
@@ -142,7 +142,7 @@ async function createMockApp(mockHydrogenApp: Partial<HydrogenApp> = {}) {
     ...mockHydrogenApp,
   } as const
 
-  await file.write(path.join(app.directory, 'package.json'), JSON.stringify({scripts: {}}, null, 2))
+  await file.writeFile(path.join(app.directory, 'package.json'), JSON.stringify({scripts: {}}, null, 2))
 
   return app
 }

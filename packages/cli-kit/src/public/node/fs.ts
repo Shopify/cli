@@ -1,4 +1,4 @@
-import {exists as fileExists} from '../../file.js'
+import {fileExists} from '../../file.js'
 import {join as joinPath} from '../../path.js'
 import {getRandomName} from '../common/string.js'
 import type {RandomNameFamily} from '../common/string.js'

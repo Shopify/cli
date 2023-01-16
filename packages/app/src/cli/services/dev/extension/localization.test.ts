@@ -51,8 +51,8 @@ describe('when there are locale files', () => {
   it('returns defaultLocale using the locale marked as .default', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       await file.mkdir(path.join(tmpDir, 'locales'))
-      await file.write(path.join(tmpDir, 'locales', 'en.json'), '{"lorem": "ipsum"}')
-      await file.write(path.join(tmpDir, 'locales', 'de.default.json'), '{"lorem": "ipsum"}')
+      await file.writeFile(path.join(tmpDir, 'locales', 'en.json'), '{"lorem": "ipsum"}')
+      await file.writeFile(path.join(tmpDir, 'locales', 'de.default.json'), '{"lorem": "ipsum"}')
 
       const result = await testGetLocalization(tmpDir)
 
@@ -63,8 +63,8 @@ describe('when there are locale files', () => {
   it("returns 'en' for defaultLocale when no locale is marked as .default", async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       await file.mkdir(path.join(tmpDir, 'locales'))
-      await file.write(path.join(tmpDir, 'locales', 'en.json'), '{"lorem": "ipsum}')
-      await file.write(path.join(tmpDir, 'locales', 'de.json'), '{"lorem": "ipsum}')
+      await file.writeFile(path.join(tmpDir, 'locales', 'en.json'), '{"lorem": "ipsum}')
+      await file.writeFile(path.join(tmpDir, 'locales', 'de.json'), '{"lorem": "ipsum}')
 
       const result = await testGetLocalization(tmpDir)
 
@@ -75,8 +75,8 @@ describe('when there are locale files', () => {
   it('returns the contents of every locale file as translations', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       await file.mkdir(path.join(tmpDir, 'locales'))
-      await file.write(path.join(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
-      await file.write(path.join(tmpDir, 'locales', 'fr.json'), '{"greeting": "Bonjour!"}')
+      await file.writeFile(path.join(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
+      await file.writeFile(path.join(tmpDir, 'locales', 'fr.json'), '{"greeting": "Bonjour!"}')
 
       const result = await testGetLocalization(tmpDir)
 
@@ -95,9 +95,9 @@ describe('when there are locale files', () => {
 
     await file.inTemporaryDirectory(async (tmpDir) => {
       await file.mkdir(path.join(tmpDir, 'locales'))
-      await file.write(path.join(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
-      await file.write(path.join(tmpDir, 'locales', 'fr.json'), '{"greeting": "Bonjour!"}')
-      await file.write(path.join(tmpDir, 'locales', 'es.json'), '{"greeting": "Hola!"}')
+      await file.writeFile(path.join(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
+      await file.writeFile(path.join(tmpDir, 'locales', 'fr.json'), '{"greeting": "Bonjour!"}')
+      await file.writeFile(path.join(tmpDir, 'locales', 'es.json'), '{"greeting": "Hola!"}')
 
       const result = await testGetLocalization(tmpDir)
       expect(Date.now).toBeCalledTimes(1)
@@ -112,10 +112,10 @@ describe('when there are locale files', () => {
 
     await file.inTemporaryDirectory(async (tmpDir) => {
       await file.mkdir(path.join(tmpDir, 'locales'))
-      await file.write(path.join(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
+      await file.writeFile(path.join(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
       const {localization: lastSuccesfulLocalization} = await testGetLocalization(tmpDir)
 
-      await file.write(path.join(tmpDir, 'locales', 'es.json'), '{"greeting: "Hola!"}')
+      await file.writeFile(path.join(tmpDir, 'locales', 'es.json'), '{"greeting: "Hola!"}')
 
       const result = await testGetLocalization(tmpDir, lastSuccesfulLocalization)
 
@@ -125,8 +125,8 @@ describe('when there are locale files', () => {
   it("returns 'success' as the status when there are no JSON errors", async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       await file.mkdir(path.join(tmpDir, 'locales'))
-      await file.write(path.join(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
-      await file.write(path.join(tmpDir, 'locales', 'fr.json'), '{"greeting": "Bonjour!"}')
+      await file.writeFile(path.join(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
+      await file.writeFile(path.join(tmpDir, 'locales', 'fr.json'), '{"greeting": "Bonjour!"}')
 
       const result = await testGetLocalization(tmpDir)
 
@@ -138,8 +138,8 @@ describe('when there are locale files', () => {
       vi.spyOn(output, 'info')
 
       await file.mkdir(path.join(tmpDir, 'locales'))
-      await file.write(path.join(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
-      await file.write(path.join(tmpDir, 'locales', 'fr.json'), '{"greeting": "Bonjour!"}')
+      await file.writeFile(path.join(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
+      await file.writeFile(path.join(tmpDir, 'locales', 'fr.json'), '{"greeting": "Bonjour!"}')
 
       const result = await testGetLocalization(tmpDir)
 
@@ -152,7 +152,7 @@ describe('when there are locale files', () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       const invalidJson = '{invalid_json: "Hi!"'
       await file.mkdir(path.join(tmpDir, 'locales'))
-      await file.write(path.join(tmpDir, 'locales', 'en.json'), invalidJson)
+      await file.writeFile(path.join(tmpDir, 'locales', 'en.json'), invalidJson)
 
       const result = await testGetLocalization(tmpDir)
 

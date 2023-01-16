@@ -1,6 +1,6 @@
 import {generateRandomNameForSubdirectory} from './fs.js'
 import {takeRandomFromArray} from '../common/array.js'
-import {inTemporaryDirectory, write} from '../../file.js'
+import {inTemporaryDirectory, writeFile} from '../../file.js'
 import {join} from '../../path.js'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -17,7 +17,7 @@ describe('makeDirectoryWithRandomName', () => {
 
       const content = 'test'
       const filePath = join(tmpDir, 'taken-directory-app')
-      await write(filePath, content)
+      await writeFile(filePath, content)
 
       // When
       const got = await generateRandomNameForSubdirectory({suffix: 'app', directory: tmpDir})

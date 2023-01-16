@@ -67,7 +67,7 @@ describe('env show', () => {
     const result = await showEnv(app)
 
     // Then
-    expect(file.write).not.toHaveBeenCalled()
+    expect(file.writeFile).not.toHaveBeenCalled()
     expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
     "
         SHOPIFY_API_KEY=api-key

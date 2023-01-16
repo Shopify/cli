@@ -13,7 +13,7 @@ describe('getUIExtensionPayload', () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const outputBundlePath = path.join(tmpDir, 'main.js')
-      await file.touch(outputBundlePath)
+      await file.touchFile(outputBundlePath)
       const signal: any = vi.fn()
       const stdout: any = vi.fn()
       const stderr: any = vi.fn()

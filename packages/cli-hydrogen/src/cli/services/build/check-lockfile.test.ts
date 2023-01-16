@@ -32,7 +32,7 @@ describe('checkLockfileStatus()', () => {
   describe('when a lockfile present', () => {
     it('returns "ok"', async () => {
       await file.inTemporaryDirectory(async (tmpDir) => {
-        await file.write(path.join(tmpDir, 'yarn.lock'), '')
+        await file.writeFile(path.join(tmpDir, 'yarn.lock'), '')
 
         expect(await checkLockfileStatus(tmpDir)).toBe('ok')
       })
@@ -40,7 +40,7 @@ describe('checkLockfileStatus()', () => {
 
     it('does not call displayLockfileWarning', async () => {
       await file.inTemporaryDirectory(async (tmpDir) => {
-        await file.write(path.join(tmpDir, 'yarn.lock'), '')
+        await file.writeFile(path.join(tmpDir, 'yarn.lock'), '')
         const outputMock = outputMocker.mockAndCaptureOutput()
 
         await checkLockfileStatus(tmpDir)
@@ -56,7 +56,7 @@ describe('checkLockfileStatus()', () => {
 
       it('returns "ignored"', async () => {
         await file.inTemporaryDirectory(async (tmpDir) => {
-          await file.write(path.join(tmpDir, 'yarn.lock'), '')
+          await file.writeFile(path.join(tmpDir, 'yarn.lock'), '')
 
           expect(await checkLockfileStatus(tmpDir)).toBe('ignored')
         })
@@ -64,7 +64,7 @@ describe('checkLockfileStatus()', () => {
 
       it('renders a warning', async () => {
         await file.inTemporaryDirectory(async (tmpDir) => {
-          await file.write(path.join(tmpDir, 'yarn.lock'), '')
+          await file.writeFile(path.join(tmpDir, 'yarn.lock'), '')
           const outputMock = outputMocker.mockAndCaptureOutput()
 
           await checkLockfileStatus(tmpDir)
@@ -94,8 +94,8 @@ describe('checkLockfileStatus()', () => {
   describe('when there are multiple lockfiles', () => {
     it('returns "multiple"', async () => {
       await file.inTemporaryDirectory(async (tmpDir) => {
-        await file.write(path.join(tmpDir, 'yarn.lock'), '')
-        await file.write(path.join(tmpDir, 'package-lock.json'), '')
+        await file.writeFile(path.join(tmpDir, 'yarn.lock'), '')
+        await file.writeFile(path.join(tmpDir, 'package-lock.json'), '')
 
         expect(await checkLockfileStatus(tmpDir)).toBe('multiple')
       })
@@ -103,8 +103,8 @@ describe('checkLockfileStatus()', () => {
 
     it('renders a warning', async () => {
       await file.inTemporaryDirectory(async (tmpDir) => {
-        await file.write(path.join(tmpDir, 'yarn.lock'), '')
-        await file.write(path.join(tmpDir, 'package-lock.json'), '')
+        await file.writeFile(path.join(tmpDir, 'yarn.lock'), '')
+        await file.writeFile(path.join(tmpDir, 'package-lock.json'), '')
 
         const outputMock = outputMocker.mockAndCaptureOutput()
 

@@ -1,5 +1,5 @@
 import {join} from './path.js'
-import {write, mkdir, read, inTemporaryDirectory} from './file.js'
+import {writeFile, mkdir, read, inTemporaryDirectory} from './file.js'
 import {renderLiquidTemplate, recursiveLiquidTemplateCopy} from './public/node/liquid.js'
 import {describe, expect, it} from 'vitest'
 
@@ -31,8 +31,8 @@ describe('recursiveLiquidTemplateCopy', () => {
       const readmePath = join(from, 'first.md.liquid')
       const packageJsonPath = join(fromPackages, 'package.json')
       const packageJson = {name: 'package'}
-      await write(readmePath, '# {{variable}}')
-      await write(packageJsonPath, JSON.stringify(packageJson))
+      await writeFile(readmePath, '# {{variable}}')
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
 
       // When
       await recursiveLiquidTemplateCopy(from, to, {variable: 'test'})

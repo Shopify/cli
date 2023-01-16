@@ -96,5 +96,5 @@ function createPackageJson(tmpDir: string, type: string, version: string) {
   const packagePath = path.join(tmpDir, 'node_modules', '@shopify', type, 'package.json')
   const packageJson = {name: 'name', version}
   const dirPath = path.join(tmpDir, 'node_modules', '@shopify', type)
-  return file.mkdir(dirPath).then(() => file.write(packagePath, JSON.stringify(packageJson)))
+  return file.mkdir(dirPath).then(() => file.writeFile(packagePath, JSON.stringify(packageJson)))
 }

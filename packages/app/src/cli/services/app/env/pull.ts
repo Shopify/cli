@@ -21,14 +21,14 @@ export async function updateEnvFile(app: AppInterface, envFile: PullEnvOptions['
     SCOPES: app.configuration.scopes,
   }
 
-  if (await file.exists(envFile)) {
+  if (await file.fileExists(envFile)) {
     const envFileContent = await file.read(envFile)
     const updatedEnvFileContent = patchEnvFile(envFileContent, updatedValues)
 
     if (updatedEnvFileContent === envFileContent) {
       return output.content`No changes to ${output.token.path(envFile)}`
     } else {
-      await file.write(envFile, updatedEnvFileContent)
+      await file.writeFile(envFile, updatedEnvFileContent)
 
       const diff = diffLines(envFileContent ?? '', updatedEnvFileContent)
       return output.content`Updated ${output.token.path(envFile)} to be:
@@ -43,7 +43,7 @@ ${output.token.linesDiff(diff)}
   } else {
     const newEnvFileContent = patchEnvFile(null, updatedValues)
 
-    await file.write(envFile, newEnvFileContent)
+    await file.writeFile(envFile, newEnvFileContent)
 
     return output.content`Created ${output.token.path(envFile)}:
 

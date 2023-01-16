@@ -19,7 +19,7 @@ interface EnvConfig {
 export async function previewInNode({directory, port}: PreviewOptions) {
   const buildOutputPath = await path.resolve(directory, 'dist/node')
 
-  if (!(await file.exists(buildOutputPath))) {
+  if (!(await file.fileExists(buildOutputPath))) {
     output.info(
       output.content`Couldn’t find a Node.js server build for this project. Running ${output.token.packagejsonScript(
         'yarn',
@@ -56,11 +56,11 @@ export async function previewInWorker({directory, port, envPath}: PreviewOptions
     ...(envPath && (await parseEnvPath(envPath))),
   }
 
-  await file.write(path.resolve(directory, 'mini-oxygen.config.json'), JSON.stringify(config, null, 2))
+  await file.writeFile(path.resolve(directory, 'mini-oxygen.config.json'), JSON.stringify(config, null, 2))
 
   function cleanUp(options: {exit: boolean}) {
     if (options.exit) {
-      file.removeSync(path.resolve(directory, 'mini-oxygen.config.json'))
+      file.removeFileSync(path.resolve(directory, 'mini-oxygen.config.json'))
     }
   }
 

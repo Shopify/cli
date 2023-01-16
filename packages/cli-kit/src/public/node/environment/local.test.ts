@@ -8,7 +8,7 @@ import {
   cloudEnvironment,
   macAddress,
 } from './local.js'
-import {exists as fileExists} from '../../../file.js'
+import {fileExists} from '../../../file.js'
 import {exec} from '../system.js'
 import {expect, it, describe, vi, test} from 'vitest'
 

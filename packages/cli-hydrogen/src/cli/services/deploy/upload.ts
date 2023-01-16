@@ -61,7 +61,7 @@ export const uploadDeployment = async (config: ReqDeployConfig, deploymentID: st
     const formData = http.formData()
     formData.append('operations', buildOperationsString(deploymentID))
     formData.append('map', JSON.stringify({'0': ['variables.file']}))
-    formData.append('0', file.createReadStream(distZipPath), {filename: distZipPath})
+    formData.append('0', file.createFileReadStream(distZipPath), {filename: distZipPath})
 
     const response = await uploadOxygenDeploymentFile(config.oxygenAddress, config.deploymentToken, formData)
     if (!response.ok) {

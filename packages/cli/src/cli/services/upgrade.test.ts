@@ -117,11 +117,11 @@ describe('upgrade local CLI', () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       await Promise.all([
-        file.write(
+        file.writeFile(
           path.join(tmpDir, 'package.json'),
           JSON.stringify({dependencies: {'@shopify/cli': currentCliVersion, '@shopify/app': currentCliVersion}}),
         ),
-        file.touch(path.join(tmpDir, 'shopify.app.toml')),
+        file.touchFile(path.join(tmpDir, 'shopify.app.toml')),
       ])
       const outputMock = outputMocker.mockAndCaptureOutput()
       vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(undefined)
@@ -140,11 +140,11 @@ describe('upgrade local CLI', () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       await Promise.all([
-        file.write(
+        file.writeFile(
           path.join(tmpDir, 'package.json'),
           JSON.stringify({dependencies: {'@shopify/cli': oldCliVersion, '@shopify/app': oldCliVersion}}),
         ),
-        file.touch(path.join(tmpDir, 'shopify.app.toml')),
+        file.touchFile(path.join(tmpDir, 'shopify.app.toml')),
       ])
       const outputMock = outputMocker.mockAndCaptureOutput()
       vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(currentCliVersion)

@@ -1,18 +1,18 @@
 import {
-  copy,
+  copyFile,
   mkdir,
-  hasExecutablePermissions,
-  write,
+  fileHasExecutablePermissions,
+  writeFile,
   read,
   inTemporaryDirectory,
-  exists,
-  move,
+  fileExists,
+  moveFile,
   chmod,
   append,
-  remove,
+  removeFile,
   stripUp,
-  format,
-  touch,
+  fileContentPrettyFormat,
+  touchFile,
   appendFile,
 } from './file.js'
 import {join} from './path.js'
@@ -27,12 +27,12 @@ describe('inTemporaryDirectory', () => {
       gotTmpDir = tmpDir
       const filePath = join(tmpDir, 'test-file')
       const content = 'test-content'
-      await write(filePath, content)
-      await expect(exists(filePath)).resolves.toBe(true)
+      await writeFile(filePath, content)
+      await expect(fileExists(filePath)).resolves.toBe(true)
     })
 
     // Then
-    await expect(exists(gotTmpDir)).resolves.toBe(false)
+    await expect(fileExists(gotTmpDir)).resolves.toBe(false)
   })
 })
 describe('copy', () => {
@@ -42,10 +42,10 @@ describe('copy', () => {
       const content = 'test'
       const from = join(tmpDir, 'from')
       const to = join(tmpDir, 'to')
-      await write(from, content)
+      await writeFile(from, content)
 
       // When
-      await copy(from, to)
+      await copyFile(from, to)
 
       // Then
       const got = await read(to)
@@ -62,11 +62,11 @@ describe('copy', () => {
       const to = join(tmpDir, 'to')
       await mkdir(from)
       await mkdir(fromChild)
-      await write(join(from, 'file'), content)
-      await write(join(fromChild, '.dotfile'), content)
+      await writeFile(join(from, 'file'), content)
+      await writeFile(join(fromChild, '.dotfile'), content)
 
       // When
-      await copy(from, to)
+      await copyFile(from, to)
 
       // Then
       await expect(read(join(to, 'file'))).resolves.toEqual(content)
@@ -82,10 +82,10 @@ describe('move', () => {
       const content = 'test'
       const from = join(tmpDir, 'from')
       const to = join(tmpDir, 'to')
-      await write(from, content)
+      await writeFile(from, content)
 
       // When
-      await move(from, to)
+      await moveFile(from, to)
 
       // Then
       const got = await read(to)
@@ -100,10 +100,10 @@ describe('exists', () => {
       // Given
       const content = 'test'
       const filePath = join(tmpDir, 'from')
-      await write(filePath, content)
+      await writeFile(filePath, content)
 
       // When
-      const got = await exists(filePath)
+      const got = await fileExists(filePath)
 
       // Then
       expect(got).toEqual(true)
@@ -116,7 +116,7 @@ describe('exists', () => {
       const filePath = join(tmpDir, 'from')
 
       // When
-      const got = await exists(filePath)
+      const got = await fileExists(filePath)
 
       // Then
       expect(got).toEqual(false)
@@ -130,7 +130,7 @@ describe('append', () => {
       // Given
       const content = 'test'
       const filePath = join(tmpDir, 'from')
-      await write(filePath, content)
+      await writeFile(filePath, content)
 
       // When
       await append(filePath, '-appended')
@@ -148,13 +148,13 @@ describe('chmod', () => {
       // Given
       const content = 'test'
       const filePath = join(tmpDir, 'from')
-      await write(filePath, content)
+      await writeFile(filePath, content)
 
       // When
       await chmod(filePath, '777')
 
       // Then
-      await expect(hasExecutablePermissions(filePath)).resolves.toEqual(true)
+      await expect(fileHasExecutablePermissions(filePath)).resolves.toEqual(true)
     })
   })
 })
@@ -165,13 +165,13 @@ describe('remove', () => {
       // Given
       const content = 'test'
       const filePath = join(tmpDir, 'from')
-      await write(filePath, content)
+      await writeFile(filePath, content)
 
       // When
-      await remove(filePath)
+      await removeFile(filePath)
 
       // Then
-      await expect(exists(filePath)).resolves.toEqual(false)
+      await expect(fileExists(filePath)).resolves.toEqual(false)
     })
   })
 })
@@ -199,7 +199,7 @@ describe('format', () => {
     const unformatedContent = 'const foo = "bar"'
 
     // When
-    const formattedContent = await format(unformatedContent, {path: 'someFile.js'})
+    const formattedContent = await fileContentPrettyFormat(unformatedContent, {path: 'someFile.js'})
 
     // Then
     await expect(formattedContent).toEqual(`const foo = 'bar';\n`)
@@ -210,7 +210,7 @@ describe('format', () => {
     const unformatedContent = 'const array: string[] = ["bar", "baz",]'
 
     // When
-    const formattedContent = await format(unformatedContent, {path: 'someFile.ts'})
+    const formattedContent = await fileContentPrettyFormat(unformatedContent, {path: 'someFile.ts'})
 
     // Then
     await expect(formattedContent).toEqual("const array: string[] = ['bar', 'baz'];\n")
@@ -221,7 +221,7 @@ describe('format', () => {
     const unformatedContent = 'body { color: red; }'
 
     // When
-    const formattedContent = await format(unformatedContent, {path: 'someFile.css'})
+    const formattedContent = await fileContentPrettyFormat(unformatedContent, {path: 'someFile.css'})
 
     // Then
     await expect(formattedContent).toEqual(
@@ -237,7 +237,7 @@ describe('format', () => {
     const unformatedContent = `<div      >much extra space</div>`
 
     // When
-    const formattedContent = await format(unformatedContent, {path: 'someFile.html'})
+    const formattedContent = await fileContentPrettyFormat(unformatedContent, {path: 'someFile.html'})
 
     // Then
     await expect(formattedContent).toEqual('<div>much extra space</div>\n')
@@ -249,7 +249,7 @@ describe('appendFile', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const filePath = join(tmpDir, 'test-file')
       const content = 'test-content'
-      await touch(filePath)
+      await touchFile(filePath)
       await appendFile(filePath, content)
       await expect(read(filePath)).resolves.toContain(content)
     })

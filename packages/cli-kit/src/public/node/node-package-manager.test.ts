@@ -15,7 +15,7 @@ import {
 } from './node-package-manager.js'
 import {exec} from './system.js'
 import {join as pathJoin, normalize as pathNormalize, pathToFileURL} from '../../path.js'
-import {inTemporaryDirectory, mkdir, touch, write, write as writeFile} from '../../file.js'
+import {inTemporaryDirectory, mkdir, touchFile, writeFile, writeFile} from '../../file.js'
 import {Abort} from '../../error.js'
 import {describe, it, expect, vi, test} from 'vitest'
 import latestVersion from 'latest-version'
@@ -538,7 +538,7 @@ describe('findUpAndReadPackageJson', () => {
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       await mkdir(subDirectory)
       const packageJson = {version}
-      await write(packageJsonPath, JSON.stringify(packageJson))
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
 
       // When
       const got = await findUpAndReadPackageJson(subDirectory)
@@ -584,8 +584,8 @@ describe('addResolutionOrOverride', () => {
       const reactType = {'@types/react': '17.0.30'}
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {}
-      await write(packageJsonPath, JSON.stringify(packageJson))
-      await touch(pathJoin(tmpDir, 'yarn.lock'))
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+      await touchFile(pathJoin(tmpDir, 'yarn.lock'))
 
       // When
       await addResolutionOrOverride(tmpDir, reactType)
@@ -604,8 +604,8 @@ describe('addResolutionOrOverride', () => {
       const reactType = {'@types/react': '17.0.30'}
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {}
-      await write(packageJsonPath, JSON.stringify(packageJson))
-      await touch(pathJoin(tmpDir, 'pnpm-lock.yaml'))
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+      await touchFile(pathJoin(tmpDir, 'pnpm-lock.yaml'))
 
       // When
       await addResolutionOrOverride(tmpDir, reactType)
@@ -624,8 +624,8 @@ describe('addResolutionOrOverride', () => {
       const reactType = {'@types/react': '17.0.30'}
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {}
-      await write(packageJsonPath, JSON.stringify(packageJson))
-      await touch(pathJoin(tmpDir, 'pnpm-workspace.yaml'))
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+      await touchFile(pathJoin(tmpDir, 'pnpm-workspace.yaml'))
 
       // When
       await addResolutionOrOverride(tmpDir, reactType)
@@ -644,8 +644,8 @@ describe('addResolutionOrOverride', () => {
       const reactType = {'@types/react': '17.0.30'}
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {resolutions: {'@types/react': '17.0.50'}}
-      await write(packageJsonPath, JSON.stringify(packageJson))
-      await touch(pathJoin(tmpDir, 'yarn.lock'))
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+      await touchFile(pathJoin(tmpDir, 'yarn.lock'))
 
       // When
       await addResolutionOrOverride(tmpDir, reactType)
@@ -664,8 +664,8 @@ describe('addResolutionOrOverride', () => {
       const reactType = {'@types/react': '17.0.30'}
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       const packageJson = {resolutions: {'@types/node': '^17.0.38'}}
-      await write(packageJsonPath, JSON.stringify(packageJson))
-      await touch(pathJoin(tmpDir, 'yarn.lock'))
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+      await touchFile(pathJoin(tmpDir, 'yarn.lock'))
 
       // When
       await addResolutionOrOverride(tmpDir, reactType)
@@ -688,7 +688,7 @@ describe('findPackageVersionUp', () => {
       const packageJsonPath = pathJoin(tmpDir, 'package.json')
       await mkdir(subDirectory)
       const packageJson = {version}
-      await write(packageJsonPath, JSON.stringify(packageJson))
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
 
       // When
       const got = await findPackageVersionUp({fromModuleURL: pathToFileURL(pathJoin(subDirectory, 'file.js'))})

@@ -148,7 +148,7 @@ async function init(options: InitOptions) {
     })
     await list.run()
 
-    await file.move(templateScaffoldDir, outputDirectory)
+    await file.moveFile(templateScaffoldDir, outputDirectory)
   })
 
   renderSuccess({
@@ -177,7 +177,7 @@ function inferPackageManager(optionsPackageManager: string | undefined): Package
 }
 
 async function ensureAppDirectoryIsAvailable(directory: string, name: string): Promise<void> {
-  const exists = await file.exists(directory)
+  const exists = await file.fileExists(directory)
   if (exists)
     throw new error.Abort(`\nA directory with this name (${name}) already exists.\nChoose a new name for your app.`)
 }

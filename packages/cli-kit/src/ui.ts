@@ -1,5 +1,5 @@
 import {CancelExecution, Abort, AbortSilent} from './error.js'
-import {remove, exists} from './file.js'
+import {removeFile, fileExists} from './file.js'
 import {info, completed, content, token, logUpdate, Message, Logger, stringifyMessage, debug} from './output.js'
 import colors from './public/node/colors.js'
 import {relative} from './path.js'
@@ -134,7 +134,7 @@ ${token.json(questions)}
 }
 
 export async function nonEmptyDirectoryPrompt(directory: string) {
-  if (await exists(directory)) {
+  if (await fileExists(directory)) {
     const options = [
       {name: 'No, don’t delete the files', value: 'abort'},
       {name: 'Yes, delete the files', value: 'overwrite'},
@@ -155,7 +155,7 @@ export async function nonEmptyDirectoryPrompt(directory: string) {
       throw new CancelExecution()
     }
 
-    await remove(directory)
+    await removeFile(directory)
   }
 }
 

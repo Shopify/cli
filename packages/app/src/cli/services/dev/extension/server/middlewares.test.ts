@@ -114,8 +114,8 @@ describe('fileServerMiddleware()', async () => {
   it('returns an index.html for folder paths', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       await file.mkdir(path.join(tmpDir, 'foo'))
-      await file.touch(path.join(tmpDir, 'foo', 'index.html'))
-      await file.write(path.join(tmpDir, 'foo', 'index.html'), '<html></html>')
+      await file.touchFile(path.join(tmpDir, 'foo', 'index.html'))
+      await file.writeFile(path.join(tmpDir, 'foo', 'index.html'), '<html></html>')
 
       const response = getMockResponse()
 
@@ -148,8 +148,8 @@ describe('fileServerMiddleware()', async () => {
       const fileContent = `Content for ${fileName}`
 
       await file.mkdir(path.join(tmpDir, 'foo'))
-      await file.touch(path.join(tmpDir, 'foo', fileName))
-      await file.write(path.join(tmpDir, 'foo', fileName), fileContent)
+      await file.touchFile(path.join(tmpDir, 'foo', fileName))
+      await file.writeFile(path.join(tmpDir, 'foo', fileName), fileContent)
 
       const response = getMockResponse()
 
@@ -166,8 +166,8 @@ describe('fileServerMiddleware()', async () => {
   it('sets Content-Type to text/plain if it does not understand the file extension', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       await file.mkdir(path.join(tmpDir, 'foo'))
-      await file.touch(path.join(tmpDir, 'foo', 'bar.foo'))
-      await file.write(path.join(tmpDir, 'foo', 'bar.foo'), 'Content for bar.foo')
+      await file.touchFile(path.join(tmpDir, 'foo', 'bar.foo'))
+      await file.writeFile(path.join(tmpDir, 'foo', 'bar.foo'), 'Content for bar.foo')
 
       const response = getMockResponse()
 
@@ -240,8 +240,8 @@ describe('getExtensionAssetMiddleware()', () => {
       } as unknown as GetExtensionsMiddlewareOptions
 
       await file.mkdir(path.join(tmpDir, devUUID))
-      await file.touch(outputBundlePath)
-      await file.write(outputBundlePath, `content from ${fileName}`)
+      await file.touchFile(outputBundlePath)
+      await file.writeFile(outputBundlePath, `content from ${fileName}`)
 
       await getExtensionAssetMiddleware(options)(
         getMockRequest({

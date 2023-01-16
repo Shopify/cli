@@ -30,7 +30,7 @@ export async function readPackageJSON(directory: string): Promise<PackageJSON> {
 export async function writePackageJSON(directory: string, packageJSON: JSON): Promise<void> {
   debug(content`JSON-encoding and writing content to package.json at ${token.path(directory)}...`)
   const packagePath = join(directory, 'package.json')
-  await file.write(packagePath, JSON.stringify(packageJSON, null, 2))
+  await file.writeFile(packagePath, JSON.stringify(packageJSON, null, 2))
 }
 
 export async function updateAppData(packageJSON: JSON, name: string): Promise<void> {

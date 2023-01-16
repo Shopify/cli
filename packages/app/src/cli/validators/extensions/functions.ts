@@ -25,7 +25,7 @@ export async function validateFunctionsWasmPresence(extensions: FunctionExtensio
     await Promise.all(
       extensions.map(async (extension) => {
         const wasmPath = extension.buildWasmPath()
-        return (await file.exists(wasmPath))
+        return (await file.fileExists(wasmPath))
           ? undefined
           : {
               id: extension.localIdentifier,

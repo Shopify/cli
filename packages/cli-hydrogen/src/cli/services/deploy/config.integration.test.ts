@@ -30,11 +30,11 @@ describe('validateProject() & initializeGit()', () => {
       'initializes new git repository',
       async () => {
         await file.inTemporaryDirectory(async (tmpDir) => {
-          await file.touch(`${tmpDir}/integration.txt`)
+          await file.touchFile(`${tmpDir}/integration.txt`)
 
           await validateProject({...defaultConfig, path: tmpDir})
 
-          await expect(file.exists(`${tmpDir}/.gitignore`)).resolves.toBeTruthy()
+          await expect(file.fileExists(`${tmpDir}/.gitignore`)).resolves.toBeTruthy()
           await expect(git.getLatestCommit(tmpDir)).resolves.toBeDefined()
         })
       },

@@ -1,4 +1,4 @@
-import {exists, write, read} from '../../file.js'
+import {fileExists, writeFile, read} from '../../file.js'
 import {findUp, join} from '../../path.js'
 import {content, token, debug} from '../../output.js'
 
@@ -16,7 +16,7 @@ export async function isVSCode(root = process.cwd()): Promise<boolean> {
     return false
   }
 
-  return exists(config)
+  return fileExists(config)
 }
 
 /**
@@ -33,7 +33,7 @@ ${token.json(recommendations)}
 
   if (await isVSCode(directory)) {
     let originalExtensionsJson = {recommendations: []}
-    if (await exists(extensionsPath)) {
+    if (await fileExists(extensionsPath)) {
       const originalExtensionsFile = await read(extensionsPath)
       originalExtensionsJson = JSON.parse(originalExtensionsFile)
     }
@@ -41,6 +41,6 @@ ${token.json(recommendations)}
       ...originalExtensionsJson,
       recommendations: [...originalExtensionsJson.recommendations, ...recommendations],
     }
-    await write(extensionsPath, JSON.stringify(newExtensionsJson, null, 2))
+    await writeFile(extensionsPath, JSON.stringify(newExtensionsJson, null, 2))
   }
 }

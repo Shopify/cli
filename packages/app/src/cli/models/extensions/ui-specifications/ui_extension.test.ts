@@ -44,7 +44,7 @@ describe('ui_extension', async () => {
       await file.inTemporaryDirectory(async (tmpDir) => {
         // Given
         await file.mkdir(path.join(tmpDir, 'src'))
-        await file.touch(path.join(tmpDir, 'src', 'ExtensionPointA.js'))
+        await file.touchFile(path.join(tmpDir, 'src', 'ExtensionPointA.js'))
 
         const uiExtension = await getTestUIExtension({
           directory: tmpDir,
@@ -97,7 +97,7 @@ Please check the configuration in ${tomlPath}`),
       await file.inTemporaryDirectory(async (tmpDir) => {
         // Given
         await file.mkdir(path.join(tmpDir, 'src'))
-        await file.touch(path.join(tmpDir, 'src', 'ExtensionPointA.js'))
+        await file.touchFile(path.join(tmpDir, 'src', 'ExtensionPointA.js'))
 
         const uiExtension = await getTestUIExtension({
           directory: tmpDir,

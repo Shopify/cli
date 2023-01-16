@@ -74,7 +74,7 @@ export async function bundleThemeExtensions(options: ThemeExtensionBuildOptions)
             if (!(filepath.includes('.gitkeep') || filepath.includes('.toml'))) {
               const relativePath = path.relative(extension.directory, filepath)
               const outputFile = path.join(extension.outputBundlePath, relativePath)
-              return file.copy(filepath, outputFile)
+              return file.copyFile(filepath, outputFile)
             }
           }),
         )

@@ -54,20 +54,20 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
       task: async (_, task) => {
         const postCSSConfiguration = path.join(directory, 'postcss.config.js')
 
-        if (await file.exists(postCSSConfiguration)) {
+        if (await file.fileExists(postCSSConfiguration)) {
           if (force) {
-            await file.remove(postCSSConfiguration)
+            await file.removeFile(postCSSConfiguration)
           } else {
             throw new error.Abort('PostCSS config already exists.\nUse --force to override existing config.')
           }
         }
 
-        const postCSSConfig = await file.format(
+        const postCSSConfig = await file.fileContentPrettyFormat(
           ['module.exports = {', 'plugins: {', 'tailwindcss: {},', 'autoprefixer: {},', '},', ' };'].join('\n'),
           {path: 'postcss.config.js'},
         )
 
-        await file.write(postCSSConfiguration, postCSSConfig)
+        await file.writeFile(postCSSConfiguration, postCSSConfig)
 
         task.title = 'PostCSS configuration added'
       },
@@ -78,9 +78,9 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
       task: async (_, task) => {
         const tailwindConfigurationPath = path.join(directory, 'tailwind.config.js')
 
-        if (await file.exists(tailwindConfigurationPath)) {
+        if (await file.fileExists(tailwindConfigurationPath)) {
           if (force) {
-            await file.remove(tailwindConfigurationPath)
+            await file.removeFile(tailwindConfigurationPath)
           } else {
             throw new error.Abort('Tailwind config already exists.\nUse --force to override existing config.')
           }
@@ -110,7 +110,7 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
         } else {
           const newIndexCSS = tailwindImports.join('\n') + indexCSS
 
-          await file.write(indexCSSPath, newIndexCSS)
+          await file.writeFile(indexCSSPath, newIndexCSS)
         }
 
         task.title = 'Tailwind imports added'
@@ -130,5 +130,5 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
 async function replace(find: string | RegExp, replace: string, filepath: string) {
   const original = await file.read(filepath)
   const modified = original.replace(find, replace)
-  await file.write(filepath, modified)
+  await file.writeFile(filepath, modified)
 }

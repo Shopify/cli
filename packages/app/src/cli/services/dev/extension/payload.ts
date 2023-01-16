@@ -26,7 +26,7 @@ export async function getUIExtensionPayload(
       main: {
         name: 'main',
         url: `${url}/assets/main.js`,
-        lastUpdated: (await file.lastUpdatedTimestamp(extension.outputBundlePath)) ?? 0,
+        lastUpdated: (await file.fileLastUpdatedTimestamp(extension.outputBundlePath)) ?? 0,
       },
     },
     capabilities: {

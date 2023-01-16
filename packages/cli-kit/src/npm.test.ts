@@ -11,7 +11,7 @@ describe('readPackageJSON()', () => {
   async function mockPackageJSON(callback: (tmpDir: string) => Promise<void>) {
     await inTemporaryDirectory(async (tmpDir) => {
       const packageJSON = {name: 'mock name'}
-      await file.write(path.join(tmpDir, 'package.json'), JSON.stringify(packageJSON))
+      await file.writeFile(path.join(tmpDir, 'package.json'), JSON.stringify(packageJSON))
 
       return callback(tmpDir)
     })
@@ -37,7 +37,7 @@ describe('writePackageJSON()', () => {
       const filePath = path.join(tmpDir, 'package.json')
       const content = '{\n  "name": "mock name"\n}'
 
-      expect(file.write).toHaveBeenCalledWith(filePath, content)
+      expect(file.writeFile).toHaveBeenCalledWith(filePath, content)
     })
   })
 })

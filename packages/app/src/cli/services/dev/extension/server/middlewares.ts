@@ -47,7 +47,7 @@ export async function fileServerMiddleware(
     filePath += filePath.endsWith('/') ? `index.html` : '/index.html'
   }
 
-  const fileExists = await file.exists(filePath)
+  const fileExists = await file.fileExists(filePath)
 
   if (!fileExists) {
     return sendError(response, {statusCode: 404, statusMessage: `Not Found: ${filePath}`})

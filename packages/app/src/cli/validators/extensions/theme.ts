@@ -51,7 +51,7 @@ async function validateThemeExtension(extension: ThemeExtension): Promise<void> 
       const relativePath = path.relative(extension.directory, filepath)
       const dirname = path.dirname(relativePath)
       validateFile(relativePath, dirname)
-      const filesize = await file.size(filepath)
+      const filesize = await file.fileSize(filepath)
       extensionBytes.push(filesize)
       if (['blocks', 'snippets'].includes(dirname)) liquidBytes.push(filesize)
     }),

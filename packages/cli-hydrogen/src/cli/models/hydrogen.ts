@@ -58,20 +58,20 @@ class HydrogenAppLoader {
   }
 
   async loaded() {
-    if (!(await file.exists(this.directory))) {
+    if (!(await file.fileExists(this.directory))) {
       throw new kitError.Abort(`Couldn't find directory ${this.directory}`)
     }
 
     const {configuration} = await this.loadConfig()
 
     const yarnLockPath = path.join(this.directory, yarnLockfile)
-    const yarnLockExists = await file.exists(yarnLockPath)
+    const yarnLockExists = await file.fileExists(yarnLockPath)
     const pnpmLockPath = path.join(this.directory, pnpmLockfile)
-    const pnpmLockExists = await file.exists(pnpmLockPath)
+    const pnpmLockExists = await file.fileExists(pnpmLockPath)
     const packageJSONPath = path.join(this.directory, 'package.json')
     const name = await getPackageName(packageJSONPath)
     const nodeDependencies = await getDependencies(packageJSONPath)
-    const tsConfigExists = await file.exists(path.join(this.directory, 'tsconfig.json'))
+    const tsConfigExists = await file.fileExists(path.join(this.directory, 'tsconfig.json'))
     const language = tsConfigExists && nodeDependencies.typescript ? 'TypeScript' : 'JavaScript'
 
     let packageManager: PackageManager

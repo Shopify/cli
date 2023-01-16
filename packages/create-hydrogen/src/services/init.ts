@@ -68,7 +68,7 @@ async function init(options: InitOptions) {
           destination: templateDownloadDir,
           shallow: true,
         })
-        if (!(await file.exists(path.join(templatePath, 'package.json')))) {
+        if (!(await file.fileExists(path.join(templatePath, 'package.json')))) {
           throw new error.Abort(`The template ${templatePath} was not found.`, suggestHydrogenSupport())
         }
         return {successMessage: `Downloaded template from ${repoUrl}`}
@@ -175,7 +175,7 @@ async function init(options: InitOptions) {
 
     await list.run()
 
-    await file.move(templateScaffoldDir, outputDirectory)
+    await file.moveFile(templateScaffoldDir, outputDirectory)
   })
 
   output.info(output.content`
@@ -261,8 +261,8 @@ async function installDependencies(directory: string, packageManager: PackageMan
 async function writeToNpmrc(directory: string, content: string) {
   const npmrcPath = path.join(directory, '.npmrc')
   const npmrcContent = `${content}\n`
-  if (!(await file.exists(npmrcPath))) {
-    await file.touch(npmrcPath)
+  if (!(await file.fileExists(npmrcPath))) {
+    await file.touchFile(npmrcPath)
   }
   await file.appendFile(npmrcPath, npmrcContent)
 }

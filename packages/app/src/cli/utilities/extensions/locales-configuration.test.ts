@@ -11,8 +11,8 @@ describe('loadLocalesConfig', () => {
       const es = path.join(localesPath, 'es.json')
 
       await file.mkdir(localesPath)
-      await file.write(enDefault, JSON.stringify({hello: 'Hello'}))
-      await file.write(es, JSON.stringify({hello: 'Hola'}))
+      await file.writeFile(enDefault, JSON.stringify({hello: 'Hello'}))
+      await file.writeFile(es, JSON.stringify({hello: 'Hola'}))
 
       // When
       const got = await loadLocalesConfig(tmpDir, 'checkout_ui')
@@ -31,8 +31,8 @@ describe('loadLocalesConfig', () => {
       const es = path.join(localesPath, 'es.json')
 
       await file.mkdir(localesPath)
-      await file.write(enDefault, JSON.stringify({hello: 'Hello'}))
-      await file.write(es, '')
+      await file.writeFile(enDefault, JSON.stringify({hello: 'Hello'}))
+      await file.writeFile(es, '')
 
       // When
       const got = loadLocalesConfig(tmpDir, 'checkout_ui')
@@ -48,9 +48,9 @@ describe('loadLocalesConfig', () => {
       const es = path.join(localesPath, 'es.json')
 
       await file.mkdir(localesPath)
-      await file.write(enDefault, JSON.stringify({hello: 'Hello'}))
+      await file.writeFile(enDefault, JSON.stringify({hello: 'Hello'}))
       const bigArray = new Array(5000).fill('a')
-      await file.write(es, JSON.stringify(bigArray))
+      await file.writeFile(es, JSON.stringify(bigArray))
 
       // When
       const got = loadLocalesConfig(tmpDir, 'checkout_ui')
@@ -66,8 +66,8 @@ describe('loadLocalesConfig', () => {
       const es = path.join(localesPath, 'es.json')
 
       await file.mkdir(localesPath)
-      await file.write(en, JSON.stringify({hello: 'Hello'}))
-      await file.write(es, JSON.stringify({hello: 'Hola'}))
+      await file.writeFile(en, JSON.stringify({hello: 'Hello'}))
+      await file.writeFile(es, JSON.stringify({hello: 'Hola'}))
 
       // When
       const got = loadLocalesConfig(tmpDir, 'checkout_ui')
@@ -83,8 +83,8 @@ describe('loadLocalesConfig', () => {
       const es = path.join(localesPath, 'es.default.json')
 
       await file.mkdir(localesPath)
-      await file.write(en, JSON.stringify({hello: 'Hello'}))
-      await file.write(es, JSON.stringify({hello: 'Hola'}))
+      await file.writeFile(en, JSON.stringify({hello: 'Hello'}))
+      await file.writeFile(es, JSON.stringify({hello: 'Hola'}))
 
       // When
       const got = loadLocalesConfig(tmpDir, 'checkout_ui')
@@ -102,8 +102,8 @@ describe('loadLocalesConfig', () => {
       await file.mkdir(localesPath)
       const bigArray = JSON.stringify(new Array(3000).fill('a'))
 
-      await file.write(en, JSON.stringify(bigArray))
-      await file.write(es, JSON.stringify(bigArray))
+      await file.writeFile(en, JSON.stringify(bigArray))
+      await file.writeFile(es, JSON.stringify(bigArray))
 
       // When
       const got = loadLocalesConfig(tmpDir, 'checkout_ui')

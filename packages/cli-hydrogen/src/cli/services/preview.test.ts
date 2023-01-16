@@ -43,14 +43,14 @@ describe('hydrogen preview', () => {
           autoReload: true,
         }
         const pathToExecutable = path.join(tmpDir, 'mini-oxygen.js')
-        await file.write(pathToExecutable, '// some executable file')
+        await file.writeFile(pathToExecutable, '// some executable file')
         vi.mocked(path.findUp).mockResolvedValue(pathToExecutable)
 
         // When
         await previewInWorker({directory: tmpDir, port, envPath})
 
         // Then
-        expect(file.write).toHaveBeenCalledWith(
+        expect(file.writeFile).toHaveBeenCalledWith(
           path.join(tmpDir, `mini-oxygen.config.json`),
           JSON.stringify(expectedConfig, null, 2),
         )
@@ -61,9 +61,9 @@ describe('hydrogen preview', () => {
       await file.inTemporaryDirectory(async (tmpDir) => {
         const tmpEnv = path.join(tmpDir, '.env')
 
-        vi.mocked(file.write).mockRestore()
+        vi.mocked(file.writeFile).mockRestore()
         // create a .env file in tmpDir
-        await file.write(tmpEnv, `FOO="BAR"\nBAZ="BAX"\nAPI_KEY='SUPER_SECRET'\nPORT:8000`)
+        await file.writeFile(tmpEnv, `FOO="BAR"\nBAZ="BAX"\nAPI_KEY='SUPER_SECRET'\nPORT:8000`)
 
         // Given
         const port = 5000
@@ -84,14 +84,14 @@ describe('hydrogen preview', () => {
           },
         }
         const pathToExecutable = path.join(tmpDir, 'mini-oxygen.js')
-        await file.write(pathToExecutable, '// some executable file')
+        await file.writeFile(pathToExecutable, '// some executable file')
         vi.mocked(path.findUp).mockResolvedValue(pathToExecutable)
 
         // When
         await previewInWorker({directory: tmpDir, port, envPath: tmpEnv})
 
         // Then
-        expect(file.write).toHaveBeenCalledWith(
+        expect(file.writeFile).toHaveBeenCalledWith(
           path.join(tmpDir, `mini-oxygen.config.json`),
           JSON.stringify(expectedConfig, null, 2),
         )
@@ -115,7 +115,7 @@ describe('hydrogen preview', () => {
       await file.inTemporaryDirectory(async (tmpDir) => {
         // Given
         const pathToExecutable = path.join(tmpDir, 'mini-oxygen.js')
-        await file.write(pathToExecutable, '// some executable file')
+        await file.writeFile(pathToExecutable, '// some executable file')
         vi.mocked(path.findUp).mockResolvedValue(pathToExecutable)
 
         // When

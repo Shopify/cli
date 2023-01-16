@@ -1,5 +1,5 @@
 import {CLIKitStore} from '../store.js'
-import {remove} from '../file.js'
+import {removeFile} from '../file.js'
 import uniqueString from 'unique-string'
 
 /**
@@ -17,9 +17,9 @@ export async function temporaryTestStore<T>(callback: (store: CLIKitStore) => Pr
     return result
   } finally {
     if (localConf) {
-      await remove(localConf.path)
+      await removeFile(localConf.path)
       const configFolder = localConf.path.replace(/\/config.json$/, '')
-      await remove(configFolder)
+      await removeFile(configFolder)
     }
   }
 }

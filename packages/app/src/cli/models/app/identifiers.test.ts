@@ -69,7 +69,7 @@ describe('updateAppIdentifiers', () => {
 
       // Then
       const dotEnvFilePath = path.join(tmpDir, '.env')
-      if (await file.exists(dotEnvFilePath)) {
+      if (await file.fileExists(dotEnvFilePath)) {
         const dotEnvFile = await readAndParseDotEnv(dotEnvFilePath)
         expect(dotEnvFile.variables.SHOPIFY_API_KEY).toBeUndefined()
         expect(dotEnvFile.variables.SHOPIFY_MY_EXTENSION_ID).toBeUndefined()

@@ -17,7 +17,7 @@ import {mockAndCaptureOutput} from '../../testing/output.js'
 import {getAppInfo} from '../../store.js'
 import constants from '../../constants.js'
 import {publishEvent} from '../../monorail.js'
-import {inTemporaryDirectory, touch as touchFile, mkdir} from '../../file.js'
+import {inTemporaryDirectory, touchFile, mkdir} from '../../file.js'
 import {it, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
 describe('event tracking', () => {

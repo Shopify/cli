@@ -46,9 +46,9 @@ export async function addESLint({app, force, install}: AddESlintOptions) {
         task: async (_, task) => {
           const eslintConfigPath = path.join(app.directory, genericConfigurationFileNames.eslint)
 
-          if (await file.exists(eslintConfigPath)) {
+          if (await file.fileExists(eslintConfigPath)) {
             if (force) {
-              await file.remove(eslintConfigPath)
+              await file.removeFile(eslintConfigPath)
             } else {
               throw new error.Abort('ESLint config already exists.', 'Use --force to override existing config.')
             }
@@ -60,12 +60,12 @@ export async function addESLint({app, force, install}: AddESlintOptions) {
             extended.push(`'plugin:hydrogen/typescript'`)
           }
 
-          const eslintConfig = await file.format(
+          const eslintConfig = await file.fileContentPrettyFormat(
             ['module.exports = {', 'extends: [', `${extended.join(',')}`, ' ],', ' };'].join('\n'),
             {path: genericConfigurationFileNames.eslint},
           )
 
-          await file.write(eslintConfigPath, eslintConfig)
+          await file.writeFile(eslintConfigPath, eslintConfig)
 
           task.title = 'ESLint configuration added'
         },

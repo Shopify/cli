@@ -73,7 +73,7 @@ async function validateUIExtensionPointConfig(
 
   for await (const {module, target} of extensionPoints) {
     const fullPath = path.join(directory, module)
-    const fileExists = await file.exists(fullPath)
+    const fileExists = await file.fileExists(fullPath)
 
     if (!fileExists) {
       const notFoundPath = output.token.path(path.join(directory, module))

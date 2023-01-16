@@ -64,7 +64,7 @@ type LockFileStatus = 'missing' | 'multiple' | 'ignored' | 'ok'
 export async function checkLockfileStatus(directory: string): Promise<LockFileStatus> {
   const availableLockfiles = await lockfiles.reduce(async (acc, lockFileName) => {
     const lockfilePath = path.resolve(directory, lockFileName)
-    if (await file.exists(lockfilePath)) {
+    if (await file.fileExists(lockfilePath)) {
       return (await acc).concat(lockFileName)
     } else {
       return acc

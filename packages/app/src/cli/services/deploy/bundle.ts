@@ -19,7 +19,7 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
   await file.inTemporaryDirectory(async (tmpDir) => {
     const bundleDirectory = path.join(tmpDir, 'bundle')
     await file.mkdir(bundleDirectory)
-    await file.touch(path.join(bundleDirectory, '.shopify'))
+    await file.touchFile(path.join(bundleDirectory, '.shopify'))
 
     await renderConcurrent({
       processes: [

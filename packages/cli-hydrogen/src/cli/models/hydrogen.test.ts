@@ -33,7 +33,7 @@ describe('load', () => {
     packageJSON: PackageJSONContents = {},
   ) => {
     const packageJsonPath = path.join(directory, 'package.json')
-    await file.write(
+    await file.writeFile(
       packageJsonPath,
       JSON.stringify({name: 'hydrogen-app', dependencies: {}, devDependencies: {}, ...packageJSON}, null, 2),
     )
@@ -57,7 +57,7 @@ describe('load', () => {
           break
       }
 
-      await file.write(appConfigurationPath, configContent)
+      await file.writeFile(appConfigurationPath, configContent)
     }
   }
 
@@ -96,7 +96,7 @@ describe('load', () => {
       // Given
       await createHydrogenProject(tmpDir)
       const yarnLockPath = path.join(tmpDir, yarnLockfile)
-      await file.write(yarnLockPath, '')
+      await file.writeFile(yarnLockPath, '')
 
       // When
       const app = await load(tmpDir)
@@ -111,7 +111,7 @@ describe('load', () => {
       // Given
       await createHydrogenProject(tmpDir)
       const pnpmLockPath = path.join(tmpDir, pnpmLockfile)
-      await file.write(pnpmLockPath, '')
+      await file.writeFile(pnpmLockPath, '')
 
       // When
       const app = await load(tmpDir)
@@ -190,7 +190,7 @@ describe('load', () => {
         },
       )
       const tsconfigPath = path.join(tmpDir, genericConfigurationFileNames.typescript.config)
-      await file.write(tsconfigPath, '')
+      await file.writeFile(tsconfigPath, '')
 
       // When
       const app = await load(tmpDir)

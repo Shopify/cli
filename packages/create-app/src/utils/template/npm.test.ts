@@ -124,9 +124,9 @@ describe('getDeepInstallNPMTasks', () => {
       await file.mkdir(path.join(tmpDir, 'web'))
       await file.mkdir(path.join(tmpDir, 'web', 'frontend'))
       await Promise.all([
-        file.write(path.join(tmpDir, 'package.json'), '{}'),
-        file.write(path.join(tmpDir, 'web', 'package.json'), '{}'),
-        file.write(path.join(tmpDir, 'web', 'frontend', 'package.json'), '{}'),
+        file.writeFile(path.join(tmpDir, 'package.json'), '{}'),
+        file.writeFile(path.join(tmpDir, 'web', 'package.json'), '{}'),
+        file.writeFile(path.join(tmpDir, 'web', 'frontend', 'package.json'), '{}'),
       ])
 
       return callback(tmpDir)
