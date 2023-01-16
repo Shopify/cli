@@ -1,6 +1,6 @@
 import {Flags} from '@oclif/core'
 import {path} from '@shopify/cli-kit'
-import {normalizeStoreName} from '@shopify/cli-kit/node/environment/fqdn'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 
 /**
  * An object that contains the flags that
@@ -25,6 +25,6 @@ export const themeFlags = {
       'Store URL. It can be the store prefix (johns-apparel)' +
       ' or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).',
     env: 'SHOPIFY_FLAG_STORE',
-    parse: (input, _) => Promise.resolve(normalizeStoreName(input)),
+    parse: (input, _) => Promise.resolve(normalizeStoreFqdn(input)),
   }),
 }

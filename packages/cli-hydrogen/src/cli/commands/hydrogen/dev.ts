@@ -1,13 +1,14 @@
 import devService from '../../services/dev.js'
 import {hydrogenFlags} from '../../flags.js'
-import {path, cli} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
 
 export default class Dev extends Command {
-  static description = 'Run a Hydrogen storefront locally for development'
+  static description = 'Run a Hydrogen storefront locally for development.'
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     path: hydrogenFlags.path,
     force: Flags.boolean({
       description: 'force dependency pre-bundling.',

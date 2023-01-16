@@ -9,6 +9,7 @@ export const AppFunctionSetMutation = gql`
     $apiType: String!
     $apiVersion: String!
     $inputQuery: String
+    $inputQueryVariables: InputQueryVariablesInput
     $appBridge: AppBridgeInput
     $enableCreationUi: Boolean
     $moduleUploadUrl: String!
@@ -21,6 +22,7 @@ export const AppFunctionSetMutation = gql`
       apiType: $apiType
       apiVersion: $apiVersion
       inputQuery: $inputQuery
+      inputQueryVariables: $inputQueryVariables
       appBridge: $appBridge
       enableCreationUi: $enableCreationUi
       moduleUploadUrl: $moduleUploadUrl
@@ -60,6 +62,12 @@ export interface AppFunctionSetVariables {
   apiType: string
   apiVersion?: string
   inputQuery?: string
+  inputQueryVariables?: {
+    singleJsonMetafield: {
+      namespace: string
+      key: string
+    }
+  }
   appBridge?: {
     createPath?: string
     detailsPath?: string

@@ -1,16 +1,17 @@
 import {hydrogenFlags} from '../../flags.js'
 import {deployToOxygen} from '../../services/deploy.js'
-import {output, cli, path} from '@shopify/cli-kit'
+import {output, path} from '@shopify/cli-kit'
 import Command from '@shopify/cli-kit/node/base-command'
 import {Flags} from '@oclif/core'
 import {isShopify} from '@shopify/cli-kit/node/environment/local'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class Deploy extends Command {
   static description = 'Deploy your Hydrogen app to Oxygen hosting'
   static hidden = true
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...hydrogenFlags,
     deploymentToken: Flags.string({
       required: true,

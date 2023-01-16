@@ -63,6 +63,16 @@ export const BaseFunctionConfigurationSchema = schema.define.object({
     })
     .optional(),
   apiVersion: schema.define.string(),
+  input: schema.define
+    .object({
+      variables: schema.define
+        .object({
+          namespace: schema.define.string(),
+          key: schema.define.string(),
+        })
+        .optional(),
+    })
+    .optional(),
 })
 
 export type NewExtensionPointSchemaType = schema.define.infer<typeof NewExtensionPointSchema>

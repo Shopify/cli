@@ -76,7 +76,9 @@
                 "../../path.js",
                 "./system.js"
               ],
-              "static": []
+              "static": [
+                "@oclif/core"
+              ]
             }
           ]
         }

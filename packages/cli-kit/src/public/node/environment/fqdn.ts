@@ -59,7 +59,7 @@ export async function identityFqdn(): Promise<string> {
  * @param store - Store name.
  * @returns Normalized store name.
  */
-export async function normalizeStoreName(store: string): Promise<string> {
+export async function normalizeStoreFqdn(store: string): Promise<string> {
   const storeFqdn = store.replace(/^https?:\/\//, '').replace(/\/$/, '')
   const addDomain = async (storeFqdn: string) =>
     isSpinEnvironment() ? `${storeFqdn}.shopify.${await spinFqdn()}` : `${storeFqdn}.myshopify.com`

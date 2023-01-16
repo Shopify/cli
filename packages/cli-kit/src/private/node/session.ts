@@ -24,7 +24,7 @@ import * as output from '../../output.js'
 import {firstPartyDev, useDeviceAuth} from '../../public/node/environment/local.js'
 import {AbortError} from '../../public/node/error.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
-import {normalizeStoreName, partnersFqdn, identityFqdn} from '../../public/node/environment/fqdn.js'
+import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/environment/fqdn.js'
 import {openURL} from '../../public/node/system.js'
 import {Abort, Bug} from '../../error.js'
 import {gql} from 'graphql-request'
@@ -99,7 +99,7 @@ export async function ensureAuthenticated(
 
   const previousStoreFqdn = applications.adminApi?.storeFqdn
   if (previousStoreFqdn) {
-    const normalizedStoreName = await normalizeStoreName(previousStoreFqdn)
+    const normalizedStoreName = await normalizeStoreFqdn(previousStoreFqdn)
     if (previousStoreFqdn === applications.adminApi?.storeFqdn) {
       applications.adminApi.storeFqdn = normalizedStoreName
     }

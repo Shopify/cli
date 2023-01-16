@@ -1,3 +1,5 @@
+import {Flags} from '@oclif/core'
+
 /**
  * IMPORTANT NOTE: Imports in this module are dynamic to ensure that "setupEnvironmentVariables" can dynamically
  * set the DEBUG environment variable before the 'debug' package sets up its configuration when modules
@@ -131,6 +133,23 @@ export async function localCliPackage(): Promise<CliPackageInfo | undefined> {
     ...localShopifyCLI.dependencies,
   }
   return dependenciesList['@shopify/cli']
+}
+
+/**
+ * An object that contains the flags that
+ * are shared across all the commands.
+ */
+export const globalFlags = {
+  preset: Flags.string({
+    hidden: true,
+    description: 'The preset to apply to the current command.',
+    env: 'SHOPIFY_FLAG_PRESET',
+  }),
+  verbose: Flags.boolean({
+    hidden: false,
+    description: 'Increase the verbosity of the logs.',
+    env: 'SHOPIFY_FLAG_VERBOSE',
+  }),
 }
 
 export default runCLI
