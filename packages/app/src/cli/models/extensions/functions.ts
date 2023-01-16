@@ -1,11 +1,12 @@
 import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
-import {blocks, defaultFunctionsFlavors} from '../../constants.js'
-import {schema} from '@shopify/cli-kit/node/schema'
+import {blocks, defaultFunctionsFlavors, withJavascriptFunctionsFlavors} from '../../constants.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {exec} from '@shopify/cli-kit/node/system'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {areJavaScriptFunctionsEnabled} from '@shopify/cli-kit/node/environment/local'
+import {schema} from '@shopify/cli-kit/node/schema'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
@@ -156,7 +157,7 @@ export function createFunctionSpecification<TConfiguration extends FunctionConfi
     templateURL: 'https://github.com/Shopify/function-examples',
     externalIdentifier: spec.identifier,
     externalName: spec.identifier,
-    supportedFlavors: defaultFunctionsFlavors,
+    supportedFlavors: areJavaScriptFunctionsEnabled() ? withJavascriptFunctionsFlavors : defaultFunctionsFlavors,
     configSchema: BaseFunctionConfigurationSchema,
     gated: false,
     registrationLimit: spec.registrationLimit ?? blocks.functions.defaultRegistrationLimit,

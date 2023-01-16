@@ -39,6 +39,13 @@ export const defaultFunctionsFlavors = [
   {name: 'Rust', value: 'rust'},
 ]
 
+export const withJavascriptFunctionsFlavors = [
+  {name: 'Javascript', value: 'vanilla-js'},
+  {name: 'Typescript', value: 'typescript'},
+  {name: 'Rust', value: 'rust'},
+  {name: 'Wasm', value: 'wasm'},
+]
+
 export const defualtExtensionFlavors = [
   {name: 'TypeScript', value: 'typescript'},
   {name: 'JavaScript', value: 'vanilla-js'},
