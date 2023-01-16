@@ -6,7 +6,7 @@ export async function topicPrompt(availableTopics: string[]): Promise<string> {
 
   const input = await ui.prompt([
     {
-      type: 'select',
+      type: 'autocomplete',
       name: 'topic',
       message: 'Webhook Topic',
       choices,

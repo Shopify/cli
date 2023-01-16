@@ -11,6 +11,7 @@ afterEach(async () => {
 })
 
 const aToken = 'A_TOKEN'
+const aVersion = 'SOME_VERSION'
 
 describe('requestTopics', () => {
   it('calls partners to request topics data and returns array', async () => {
@@ -21,7 +22,7 @@ describe('requestTopics', () => {
     vi.mocked(partnersRequest).mockResolvedValue(graphQLResult)
 
     // When
-    const got = await requestTopics(aToken)
+    const got = await requestTopics(aToken, aVersion)
 
     // Then
     expect(got).toEqual(['orders/create', 'shop/redact'])

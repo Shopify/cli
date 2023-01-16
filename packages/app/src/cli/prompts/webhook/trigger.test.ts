@@ -23,7 +23,7 @@ describe('topicPrompt', () => {
     expect(got).toEqual('orders/create')
     expect(ui.prompt).toHaveBeenCalledWith([
       {
-        type: 'select',
+        type: 'autocomplete',
         name: 'topic',
         message: 'Webhook Topic',
         choices: [
