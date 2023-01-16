@@ -74,6 +74,24 @@ export async function kitchenSink() {
         },
       },
     ],
+    customSections: [
+      {
+        title: 'Custom section',
+        body: {
+          list: {
+            items: ['Item 1', 'Item 2', 'Item 3'],
+          },
+        },
+      },
+      {
+        title: 'Custom section 2',
+        body: {
+          list: {
+            items: ['Item 1', 'Item 2', 'Item 3'],
+          },
+        },
+      },
+    ],
   })
 
   renderSuccess({
