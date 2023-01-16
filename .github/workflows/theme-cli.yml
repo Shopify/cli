@@ -1,0 +1,74 @@
+name: theme-cli
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+defaults:
+  run:
+    working-directory: ./packages/theme-cli
+
+concurrency:
+  group: shopify-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: test with Ruby ${{ matrix.version }} in ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        version:
+          - 3.1.0
+          - 3.0.2
+          - 2.7.5
+        os:
+          - macos-11
+          - ubuntu-20.04
+          - ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout [main]
+        with:
+          fetch-depth: 0
+
+      - name: Set up Ruby ${{ matrix.version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.version }}
+          bundler-cache: true
+
+      - name: Install Dependencies
+        run: bundle install
+
+      - name: Run Tests
+        run: bundle exec rake test
+  rubocop:
+    name: lint with Ruby ${{ matrix.version }} in ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        version:
+          - 3.1.0
+        os:
+          - macos-latest
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout [main]
+        with:
+          fetch-depth: 0
+
+      - name: Set up Ruby ${{ matrix.version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.version }}
+          bundler-cache: true
+
+      - name: Install Dependencies
+        run: bundle install
+
+      - name: Rubocop
+        run: bundle exec rake rubocop
