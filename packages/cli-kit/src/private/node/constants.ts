@@ -8,57 +8,56 @@ const cacheFolder = () => {
   return envPaths(identifier).cache
 }
 
-const constants = {
-  environmentVariables: {
-    alwaysLogAnalytics: 'SHOPIFY_CLI_ALWAYS_LOG_ANALYTICS',
-    deviceAuth: 'SHOPIFY_CLI_DEVICE_AUTH',
-    enableCliRedirect: 'SHOPIFY_CLI_ENABLE_CLI_REDIRECT',
-    env: 'SHOPIFY_CLI_ENV',
-    firstPartyDev: 'SHOPIFY_CLI_1P_DEV',
-    noAnalytics: 'SHOPIFY_CLI_NO_ANALYTICS',
-    partnersToken: 'SHOPIFY_CLI_PARTNERS_TOKEN',
-    runAsUser: 'SHOPIFY_RUN_AS_USER',
-    serviceEnv: 'SHOPIFY_SERVICE_ENV',
-    skipCliRedirect: 'SHOPIFY_CLI_SKIP_CLI_REDIRECT',
-    spinInstance: 'SPIN_INSTANCE',
-    themeToken: 'SHOPIFY_CLI_THEME_TOKEN',
-    unitTest: 'SHOPIFY_UNIT_TEST',
-    verbose: 'SHOPIFY_FLAG_VERBOSE',
-    themeBundling: 'SHOPIFY_THEME_BUNDLING',
-    // Variables to detect if the CLI is running in a cloud environment
-    codespaceName: 'CODESPACE_NAME',
-    codespaces: 'CODESPACES',
-    gitpod: 'GITPOD_WORKSPACE_URL',
-    spin: 'SPIN',
+export const environmentVariables = {
+  alwaysLogAnalytics: 'SHOPIFY_CLI_ALWAYS_LOG_ANALYTICS',
+  deviceAuth: 'SHOPIFY_CLI_DEVICE_AUTH',
+  enableCliRedirect: 'SHOPIFY_CLI_ENABLE_CLI_REDIRECT',
+  env: 'SHOPIFY_CLI_ENV',
+  firstPartyDev: 'SHOPIFY_CLI_1P_DEV',
+  noAnalytics: 'SHOPIFY_CLI_NO_ANALYTICS',
+  partnersToken: 'SHOPIFY_CLI_PARTNERS_TOKEN',
+  runAsUser: 'SHOPIFY_RUN_AS_USER',
+  serviceEnv: 'SHOPIFY_SERVICE_ENV',
+  skipCliRedirect: 'SHOPIFY_CLI_SKIP_CLI_REDIRECT',
+  spinInstance: 'SPIN_INSTANCE',
+  themeToken: 'SHOPIFY_CLI_THEME_TOKEN',
+  unitTest: 'SHOPIFY_UNIT_TEST',
+  verbose: 'SHOPIFY_FLAG_VERBOSE',
+  themeBundling: 'SHOPIFY_THEME_BUNDLING',
+  // Variables to detect if the CLI is running in a cloud environment
+  codespaceName: 'CODESPACE_NAME',
+  codespaces: 'CODESPACES',
+  gitpod: 'GITPOD_WORKSPACE_URL',
+  spin: 'SPIN',
+}
+
+export const paths = {
+  executables: {
+    dev: '/opt/dev/bin/dev',
   },
-  paths: {
-    executables: {
-      dev: '/opt/dev/bin/dev',
-    },
-    directories: {
-      cache: {
+  directories: {
+    cache: {
+      path: () => {
+        return cacheFolder()
+      },
+      vendor: {
         path: () => {
-          return cacheFolder()
+          return pathJoin(cacheFolder(), 'vendor')
         },
-        vendor: {
-          path: () => {
-            return pathJoin(cacheFolder(), 'vendor')
-          },
-          binaries: () => {
-            return pathJoin(cacheFolder(), 'vendor', 'binaries')
-          },
+        binaries: () => {
+          return pathJoin(cacheFolder(), 'vendor', 'binaries')
         },
       },
     },
   },
-  keychain: {
-    service: 'shopify-cli',
-  },
-  session: {
-    expirationTimeMarginInMinutes: 4,
-  },
+}
+
+export const keychain = {
+  service: 'shopify-cli',
+}
+
+export const session = {
+  expirationTimeMarginInMinutes: 4,
 }
 
 export const bugsnagApiKey = '9e1e6889176fd0c795d5c659225e0fae'
-
-export default constants

@@ -10,16 +10,14 @@ import {
   InvalidGrantError,
   InvalidRequestError,
 } from './session/exchange.js'
-
 import {authorize} from './session/authorize.js'
 import {IdentityToken, Session} from './session/schema.js'
 import * as secureStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {RequestClientError} from './api/headers.js'
-import constants from './constants.js'
+import {environmentVariables} from './constants.js'
 import {content, token, debug} from '../../output.js'
 import {keypress} from '../../ui.js'
-
 import * as output from '../../output.js'
 import {firstPartyDev, useDeviceAuth} from '../../public/node/environment/local.js'
 import {AbortError} from '../../public/node/error.js'
@@ -28,7 +26,6 @@ import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/
 import {openURL} from '../../public/node/system.js'
 import {Abort, Bug} from '../../error.js'
 import {gql} from 'graphql-request'
-
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
 /**
@@ -142,7 +139,7 @@ ${token.json(applications)}
   const tokens = await tokensFor(applications, completeSession, fqdn)
 
   // Overwrite partners token if using a custom CLI Token
-  const envToken = env[constants.environmentVariables.partnersToken]
+  const envToken = env[environmentVariables.partnersToken]
   if (envToken && applications.partnersApi) {
     tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
   }

@@ -1,6 +1,6 @@
-import constants from './private/node/constants.js'
 import {content as outputContent, debug} from './output.js'
 import {Abort} from './error.js'
+import {keychain} from './private/node/constants.js'
 
 /**
  * Fetches secured content from the system's keychain.
@@ -11,7 +11,7 @@ export async function fetch(identifier: string): Promise<string | null> {
   debug(outputContent`Reading ${identifier} from the secure store...`)
   try {
     const keytar = await import('keytar')
-    const content = await keytar.getPassword(constants.keychain.service, identifier)
+    const content = await keytar.getPassword(keychain.service, identifier)
     return content
   } catch (error) {
     throw createAbort(error, 'Unable to read from the secure store')
@@ -28,7 +28,7 @@ export async function store(identifier: string, content: string): Promise<void> 
   debug(outputContent`Updating ${identifier} in the secure store with new content...`)
   try {
     const keytar = await import('keytar')
-    await keytar.default.setPassword(constants.keychain.service, identifier, content)
+    await keytar.default.setPassword(keychain.service, identifier, content)
   } catch (error) {
     throw createAbort(error, 'Unable to update the secure store')
   }
@@ -43,7 +43,7 @@ export async function remove(identifier: string): Promise<boolean> {
   debug(outputContent`Removing ${identifier} from the secure store...`)
   try {
     const keytar = await import('keytar')
-    const result = await keytar.default.deletePassword(constants.keychain.service, identifier)
+    const result = await keytar.default.deletePassword(keychain.service, identifier)
     return result
   } catch (error) {
     throw createAbort(error, 'Unable to remove from the secure store')
