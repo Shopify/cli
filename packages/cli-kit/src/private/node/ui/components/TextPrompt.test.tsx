@@ -87,7 +87,7 @@ describe('TextPrompt', () => {
     await sendInputAndWaitForChange(renderInstance, ENTER)
     expect(onSubmit).toHaveBeenCalledWith('A')
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
-      "?  Test question
+      "?  Test question:
       ✔  A
       "
     `)

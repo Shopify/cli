@@ -74,8 +74,7 @@ describe('Alert', async () => {
     const {lastFrame} = render(<Alert type="info" {...options} />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
-      "
-      ╭─ info ───────────────────────────────────────────────────────────────────────╮
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  my-app initialized and ready to build.                                      │
       │                                                                              │
@@ -116,8 +115,7 @@ describe('Alert', async () => {
     const {lastFrame} = render(<Alert type="info" {...options} />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
-      "
-      ╭─ info ───────────────────────────────────────────────────────────────────────╮
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Title                                                                       │
       │                                                                              │

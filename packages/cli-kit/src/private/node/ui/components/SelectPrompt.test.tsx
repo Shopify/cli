@@ -164,6 +164,11 @@ describe('SelectPrompt', async () => {
   test("doesn't append a colon to the message if it ends with a question mark", async () => {
     const {lastFrame} = render(<SelectPrompt choices={[]} onSubmit={() => {}} message="Test question?" />)
 
-    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot()
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      "?  Test question?
+
+         No items to select.
+      "
+    `)
   })
 })

@@ -70,8 +70,7 @@ describe('checkLockfileStatus()', () => {
           await checkLockfileStatus(tmpDir)
 
           expect(outputMock.warn()).toMatchInlineSnapshot(`
-            "
-            ╭─ warning ────────────────────────────────────────────────────────────────────╮
+            "╭─ warning ────────────────────────────────────────────────────────────────────╮
             │                                                                              │
             │  Lockfile ignored by Git                                                     │
             │                                                                              │
@@ -111,8 +110,7 @@ describe('checkLockfileStatus()', () => {
         await checkLockfileStatus(tmpDir)
 
         expect(outputMock.warn()).toMatchInlineSnapshot(`
-          "
-          ╭─ warning ────────────────────────────────────────────────────────────────────╮
+          "╭─ warning ────────────────────────────────────────────────────────────────────╮
           │                                                                              │
           │  Multiple lockfiles found                                                    │
           │                                                                              │
@@ -148,8 +146,7 @@ describe('checkLockfileStatus()', () => {
         await checkLockfileStatus(tmpDir)
 
         expect(outputMock.warn()).toMatchInlineSnapshot(`
-          "
-          ╭─ warning ────────────────────────────────────────────────────────────────────╮
+          "╭─ warning ────────────────────────────────────────────────────────────────────╮
           │                                                                              │
           │  No lockfile found                                                           │
           │                                                                              │

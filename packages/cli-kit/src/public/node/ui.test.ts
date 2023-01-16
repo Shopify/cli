@@ -82,8 +82,7 @@ describe('renderInfo', async () => {
 
     // Then
     expect(mockOutput.info()).toMatchInlineSnapshot(`
-      "
-      ╭─ info ───────────────────────────────────────────────────────────────────────╮
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Title                                                                       │
       │                                                                              │
@@ -129,8 +128,7 @@ describe('renderSuccess', async () => {
 
     // Then
     expect(mockOutput.info()).toMatchInlineSnapshot(`
-      "
-      ╭─ success ────────────────────────────────────────────────────────────────────╮
+      "╭─ success ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Title                                                                       │
       │                                                                              │
@@ -158,8 +156,7 @@ describe('renderWarning', async () => {
 
     // Then
     expect(mockOutput.warn()).toMatchInlineSnapshot(`
-      "
-      ╭─ warning ────────────────────────────────────────────────────────────────────╮
+      "╭─ warning ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Title                                                                       │
       │                                                                              │
@@ -195,8 +192,7 @@ describe('renderFatalError', async () => {
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "
-      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Couldn't connect to the Shopify Partner Dashboard.                          │
       │                                                                              │
@@ -224,8 +220,7 @@ describe('renderFatalError', async () => {
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "
-      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Unexpected error                                                            │
       │                                                                              │
@@ -272,8 +267,7 @@ describe('renderFatalError', async () => {
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "
-      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  No Organization found                                                       │
       │                                                                              │
@@ -312,8 +306,7 @@ describe('renderConcurrent', async () => {
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "
-      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  example error                                                               │
       │                                                                              │
