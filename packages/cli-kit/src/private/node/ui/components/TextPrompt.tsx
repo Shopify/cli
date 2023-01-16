@@ -14,6 +14,10 @@ export interface Props {
 }
 
 const TextPrompt: React.FC<Props> = ({message, onSubmit, validate, defaultValue = '', password = false}) => {
+  if (password && defaultValue) {
+    throw new Error("Can't use defaultValue with password")
+  }
+
   const validateAnswer = (value: string): string | undefined => {
     if (validate) {
       return validate(value)

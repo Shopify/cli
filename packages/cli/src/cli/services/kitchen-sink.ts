@@ -170,7 +170,6 @@ export async function kitchenSink() {
   await renderTextPrompt({
     message: 'App project name (can be changed later)',
     defaultValue: 'expansive commerce app',
-    password: true,
   })
 
   const database = [
