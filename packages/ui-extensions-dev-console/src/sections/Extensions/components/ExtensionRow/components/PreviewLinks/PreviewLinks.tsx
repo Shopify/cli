@@ -37,12 +37,18 @@ export function PreviewLinks({extension}: Props) {
 
             const {root, target} = extensionPoint
 
-            return <PreviewLink url={root.url} title={target} key={target} />
+            return <PreviewLink rootUrl={root.url} title={target} key={target} />
           })}
         </span>
       </>
     )
   }
 
-  return <PreviewLink url={extension.development.root.url} title={extension.type.replaceAll('_', ' ')} />
+  return (
+    <PreviewLink
+      rootUrl={extension.development.root.url}
+      resourceUrl={extension.development.resource.url}
+      title={extension.type.replaceAll('_', ' ')}
+    />
+  )
 }

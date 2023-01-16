@@ -9,10 +9,15 @@ import {DefaultProviders} from 'tests/DefaultProviders'
 
 vi.mock('./components', () => ({
   AppHomeRow: () => null,
-  QRCodeModal: () => null,
   ExtensionRow: () => null,
+  NotApplicable: () => null,
   PostPurchaseRow: () => null,
+  PreviewLink: () => null,
+  QRCodeModal: () => null,
   PostPurchaseModal: () => null,
+  Row: () => null,
+  Status: () => null,
+  View: () => null,
 }))
 
 describe('Extensions', () => {
