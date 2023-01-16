@@ -12,13 +12,15 @@ import {testApp} from '../../models/app/app.test-data.js'
 import {UpdateURLsQuery} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery} from '../../api/graphql/get_urls.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {environment, error, outputMocker, plugins, store, ui} from '@shopify/cli-kit'
+import {error, outputMocker, plugins, store, ui} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {isSpin, spinFqdn} from '@shopify/cli-kit/node/environment/spin'
+import {codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/node/environment/local'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/tcp')
@@ -26,6 +28,9 @@ beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/api/partners')
   vi.mock('@shopify/cli-kit/node/session')
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+  vi.mock('@shopify/cli-kit/node/environment/spin')
+  vi.mock('@shopify/cli-kit/node/environment/local')
+  vi.mocked(isUnitTest).mockReturnValue(true)
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
@@ -39,16 +44,6 @@ beforeEach(() => {
       },
       store: {
         setAppInfo: vi.fn(),
-      },
-      environment: {
-        local: {
-          codespaceURL: vi.fn(),
-          gitpodURL: vi.fn(),
-        },
-        spin: {
-          isSpin: vi.fn(),
-          fqdn: vi.fn(),
-        },
       },
     }
   })
@@ -470,7 +465,7 @@ describe('generateFrontendURL', () => {
 
   it('Returns a gitpod url if we are in a gitpod environment', async () => {
     // Given
-    vi.mocked(environment.local.gitpodURL).mockReturnValue('https://gitpod.url.fqdn.com')
+    vi.mocked(gitpodURL).mockReturnValue('https://gitpod.url.fqdn.com')
     const options = {
       app: testApp({hasUIExtensions: () => false}),
       tunnel: false,
@@ -489,7 +484,7 @@ describe('generateFrontendURL', () => {
 
   it('Returns a codespace url if we are in a codespace environment', async () => {
     // Given
-    vi.mocked(environment.local.codespaceURL).mockReturnValue('codespace.url.fqdn.com')
+    vi.mocked(codespaceURL).mockReturnValue('codespace.url.fqdn.com')
     const options = {
       app: testApp({hasUIExtensions: () => false}),
       tunnel: false,
@@ -512,8 +507,8 @@ describe('generateFrontendURL', () => {
 
   it('Returns a spin url if we are in a spin environment', async () => {
     // Given
-    vi.mocked(environment.spin.isSpin).mockReturnValue(true)
-    vi.mocked(environment.spin.fqdn).mockResolvedValue('spin.domain.dev')
+    vi.mocked(isSpin).mockReturnValue(true)
+    vi.mocked(spinFqdn).mockResolvedValue('spin.domain.dev')
     const options = {
       app: testApp({hasUIExtensions: () => false}),
       tunnel: false,
@@ -536,7 +531,7 @@ describe('generateFrontendURL', () => {
 
   it('Returns a custom tunnel url if we are in a spin environment but a custom tunnel option is active', async () => {
     // Given
-    vi.mocked(environment.spin.isSpin).mockReturnValue(true)
+    vi.mocked(isSpin).mockReturnValue(true)
     const options = {
       app: testApp({hasUIExtensions: () => false}),
       tunnel: true,

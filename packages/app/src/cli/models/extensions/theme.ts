@@ -2,8 +2,9 @@ import {ThemeExtensionSchema, ZodSchemaType} from './schemas.js'
 import {loadThemeSpecifications} from './specifications.js'
 import {GenericSpecification, ThemeExtension} from '../app/extensions.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import {path, schema, output, environment} from '@shopify/cli-kit'
+import {path, schema, output} from '@shopify/cli-kit'
 import {constantize} from '@shopify/cli-kit/common/string'
+import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 
 // Base config type for a theme extension.
 export type ThemeConfigContents = schema.define.infer<typeof ThemeExtensionSchema>
@@ -84,9 +85,9 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
   }
 
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
-    const partnersFqdn = await environment.fqdn.partners()
+    const fqdn = await partnersFqdn()
     const parnersPath = this.specification.partnersWebIdentifier
-    return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
+    return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }
 
   previewMessage() {

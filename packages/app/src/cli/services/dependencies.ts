@@ -1,6 +1,7 @@
 import {AppInterface} from '../models/app/app.js'
-import {ui, environment} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
 import {installNPMDependenciesRecursively} from '@shopify/cli-kit/node/node-package-manager'
+import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
 
 /**
  * Given an app, it installs its NPM dependencies by traversing
@@ -24,7 +25,7 @@ export async function installAppDependencies(app: AppInterface) {
         },
       },
     ],
-    {rendererSilent: environment.local.isUnitTest()},
+    {rendererSilent: isUnitTest()},
   )
   await list.run()
   await app.updateDependencies()

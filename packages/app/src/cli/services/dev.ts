@@ -16,7 +16,7 @@ import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant
 import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
-import {output, environment} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -25,6 +25,7 @@ import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {exec} from '@shopify/cli-kit/node/system'
+import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/environment/spin'
 import {
   AdminSession,
   ensureAuthenticatedAdmin,
@@ -243,8 +244,8 @@ async function getDevEnvironmentVariables(options: DevWebOptions) {
     HOST: options.hostname,
     SCOPES: options.scopes,
     NODE_ENV: `development`,
-    ...(environment.service.isSpinEnvironment() && {
-      SHOP_CUSTOM_DOMAIN: `shopify.${await environment.spin.fqdn()}`,
+    ...(isSpinEnvironment() && {
+      SHOP_CUSTOM_DOMAIN: `shopify.${await spinFqdn()}`,
     }),
   }
 }

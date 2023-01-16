@@ -2,7 +2,7 @@ import {themeFlags} from '../../flags.js'
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
-import {cli} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
@@ -11,7 +11,7 @@ export default class Push extends ThemeCommand {
     'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...themeFlags,
     theme: Flags.string({
       char: 't',

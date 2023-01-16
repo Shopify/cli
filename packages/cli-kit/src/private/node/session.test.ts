@@ -13,10 +13,10 @@ import {store as secureStore, fetch as secureFetch} from './session/store.js'
 import {ApplicationToken, IdentityToken, Session} from './session/schema.js'
 import {validateSession} from './session/validate.js'
 import {applicationId} from './session/identity.js'
-import * as fqdnModule from '../../environment/fqdn.js'
-import {useDeviceAuth} from '../../environment/local.js'
+import * as fqdnModule from '../../public/node/environment/fqdn.js'
+import {useDeviceAuth} from '../../public/node/environment/local.js'
+import {partnersRequest} from '../../public/node/api/partners.js'
 import {vi, describe, expect, it, beforeAll, beforeEach} from 'vitest'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners.js'
 
 const futureDate = new Date(2022, 1, 1, 11)
 
@@ -83,7 +83,7 @@ const invalidSession: Session = {
 }
 
 beforeAll(() => {
-  vi.mock('../../environment/local')
+  vi.mock('../../public/node/environment/local.js')
   vi.mock('./session/identity')
   vi.mock('./session/authorize')
   vi.mock('./session/exchange')
@@ -95,7 +95,7 @@ beforeAll(() => {
 })
 
 beforeEach(() => {
-  vi.spyOn(fqdnModule, 'identity').mockResolvedValue(fqdn)
+  vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue(fqdn)
   vi.mocked(useDeviceAuth).mockReturnValue(false)
   vi.mocked(authorize).mockResolvedValue(code)
   vi.mocked(exchangeCodeForAccessToken).mockResolvedValue(validIdentityToken)

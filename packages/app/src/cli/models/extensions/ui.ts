@@ -2,10 +2,11 @@ import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema} from './schema
 import {ExtensionCategory, GenericSpecification, UIExtension} from '../app/extensions.js'
 import {blocks, defualtExtensionFlavors} from '../../constants.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import {path, output, environment} from '@shopify/cli-kit'
+import {path, output} from '@shopify/cli-kit'
 import {ok, Result} from '@shopify/cli-kit/node/result'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -135,9 +136,9 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
   }
 
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
-    const partnersFqdn = await environment.fqdn.partners()
+    const fqdn = await partnersFqdn()
     const parnersPath = this.specification.partnersWebIdentifier
-    return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
+    return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }
 
   previewMessage(url: string, storeFqdn: string) {

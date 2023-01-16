@@ -3,10 +3,9 @@ import {getPackageManager, packageManagerUsedForCreating} from '../../public/nod
 import BaseCommand from '../../public/node/base-command.js'
 import {CommandContent} from '../../public/node/hooks/prerun.js'
 import * as metadata from '../../metadata.js'
-import {macAddress} from '../../environment/local.js'
 import {platformAndArch} from '../../public/node/os.js'
-import * as environment from '../../environment.js'
 import {Interfaces} from '@oclif/core'
+import {ciPlatform, cloudEnvironment, macAddress} from '@shopify/cli-kit/node/environment/local'
 
 interface StartOptions {
   commandContent: CommandContent
@@ -56,7 +55,7 @@ interface EnvironmentData {
 }
 
 export async function getEnvironmentData(config: Interfaces.Config): Promise<EnvironmentData> {
-  const ciPlatform = environment.local.ciPlatform()
+  const ciplatform = ciPlatform()
 
   const pluginNames = getPluginNames(config)
   const shopifyPlugins = pluginNames.filter((plugin) => plugin.startsWith('@shopify/'))
@@ -65,16 +64,14 @@ export async function getEnvironmentData(config: Interfaces.Config): Promise<Env
 
   return {
     uname: `${platform} ${arch}`,
-    env_ci: ciPlatform.isCI,
-    env_ci_platform: ciPlatform.name,
+    env_ci: ciplatform.isCI,
+    env_ci_platform: ciplatform.name,
     env_plugin_installed_any_custom: pluginNames.length !== shopifyPlugins.length,
     env_plugin_installed_shopify: JSON.stringify(shopifyPlugins),
     env_shell: config.shell,
-    env_web_ide: environment.local.cloudEnvironment().editor
-      ? environment.local.cloudEnvironment().platform
-      : undefined,
+    env_web_ide: cloudEnvironment().editor ? cloudEnvironment().platform : undefined,
     env_device_id: hashString(await macAddress()),
-    env_cloud: environment.local.cloudEnvironment().platform,
+    env_cloud: cloudEnvironment().platform,
     env_package_manager: await getPackageManager(process.cwd()),
   }
 }

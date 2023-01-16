@@ -1,6 +1,7 @@
 import {checkLockfileStatus} from './build/check-lockfile.js'
 import {build as viteBuild} from 'vite'
-import {ui, environment, error as kitError} from '@shopify/cli-kit'
+import {ui, error as kitError} from '@shopify/cli-kit'
+import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
 
 type Target = 'node' | 'client' | 'worker'
 
@@ -54,7 +55,7 @@ export async function build(options: DevOptions) {
 
   const tasks = await buildTaskList(options)
 
-  const list = ui.newListr(tasks, {rendererSilent: environment.local.isUnitTest()})
+  const list = ui.newListr(tasks, {rendererSilent: isUnitTest()})
 
   await list.run()
 }

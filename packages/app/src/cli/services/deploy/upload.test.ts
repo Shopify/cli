@@ -52,6 +52,12 @@ describe('uploadFunctionExtensions', () => {
         },
         configurationUi: false,
         apiVersion: '2022-07',
+        input: {
+          variables: {
+            namespace: 'namespace',
+            key: 'key',
+          },
+        },
       },
       configurationPath: '/function/shopify.function.extension.toml',
       buildWasmPath: () => '/function/dist/index.wasm',
@@ -335,6 +341,12 @@ describe('uploadFunctionExtensions', () => {
           detailsPath: (extension.configuration.ui?.paths ?? {}).details,
           createPath: (extension.configuration.ui?.paths ?? {}).create,
         },
+        inputQueryVariables: {
+          singleJsonMetafield: {
+            namespace: 'namespace',
+            key: 'key',
+          },
+        },
         enableCreationUi: true,
         moduleUploadUrl: uploadUrl,
       })
@@ -395,6 +407,12 @@ describe('uploadFunctionExtensions', () => {
           detailsPath: (extension.configuration.ui?.paths ?? {}).details,
           createPath: (extension.configuration.ui?.paths ?? {}).create,
         },
+        inputQueryVariables: {
+          singleJsonMetafield: {
+            namespace: 'namespace',
+            key: 'key',
+          },
+        },
         enableCreationUi: true,
         moduleUploadUrl: uploadUrl,
       })
@@ -452,6 +470,12 @@ describe('uploadFunctionExtensions', () => {
           detailsPath: (extension.configuration.ui?.paths ?? {}).details,
           createPath: (extension.configuration.ui?.paths ?? {}).create,
         },
+        inputQueryVariables: {
+          singleJsonMetafield: {
+            namespace: 'namespace',
+            key: 'key',
+          },
+        },
         enableCreationUi: true,
         moduleUploadUrl: uploadUrl,
       })
@@ -500,6 +524,63 @@ describe('uploadFunctionExtensions', () => {
         apiVersion: extension.configuration.apiVersion,
         appBridge: undefined,
         enableCreationUi: true,
+        inputQueryVariables: {
+          singleJsonMetafield: {
+            namespace: 'namespace',
+            key: 'key',
+          },
+        },
+        moduleUploadUrl: uploadUrl,
+      })
+    })
+  })
+
+  test('inputQueryVariables is set to undefined when there is no configuration.inputs', async () => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
+      extension.configuration.input = undefined
+
+      const uploadUrl = `test://test.com/moduleId.wasm`
+      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      await file.write(extension.buildWasmPath(), '')
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
+        data: {
+          uploadUrlGenerate: {
+            headers: {},
+            maxSize: '200',
+            url: uploadUrl,
+          },
+        },
+      }
+      const functionSetMutationResponse: AppFunctionSetMutationSchema = {
+        data: {
+          functionSet: {
+            userErrors: [],
+            function: {
+              id: 'uuid',
+            },
+          },
+        },
+      }
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
+
+      // When
+      await uploadFunctionExtensions([extension], {token, identifiers})
+
+      // Then
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(2, identifiers.app, AppFunctionSetMutation, token, {
+        id: undefined,
+        title: extension.configuration.name,
+        description: extension.configuration.description,
+        apiType: 'order_discounts',
+        apiVersion: extension.configuration.apiVersion,
+        appBridge: {
+          detailsPath: (extension.configuration.ui?.paths ?? {}).details,
+          createPath: (extension.configuration.ui?.paths ?? {}).create,
+        },
+        enableCreationUi: true,
+        inputQueryVariables: undefined,
         moduleUploadUrl: uploadUrl,
       })
     })
@@ -548,6 +629,12 @@ describe('uploadFunctionExtensions', () => {
         appBridge: {
           detailsPath: (extension.configuration.ui?.paths ?? {}).details,
           createPath: (extension.configuration.ui?.paths ?? {}).create,
+        },
+        inputQueryVariables: {
+          singleJsonMetafield: {
+            namespace: 'namespace',
+            key: 'key',
+          },
         },
         enableCreationUi: false,
         moduleUploadUrl: uploadUrl,
@@ -608,6 +695,12 @@ describe('uploadFunctionExtensions', () => {
         appBridge: {
           detailsPath: (extension.configuration.ui?.paths ?? {}).details,
           createPath: (extension.configuration.ui?.paths ?? {}).create,
+        },
+        inputQueryVariables: {
+          singleJsonMetafield: {
+            namespace: 'namespace',
+            key: 'key',
+          },
         },
         enableCreationUi: true,
         moduleUploadUrl: uploadUrl,

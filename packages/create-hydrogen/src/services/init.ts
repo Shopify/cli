@@ -1,4 +1,4 @@
-import {path, error, file, output, ui, npm, environment, git} from '@shopify/cli-kit'
+import {path, error, file, output, ui, npm, git} from '@shopify/cli-kit'
 import {username} from '@shopify/cli-kit/node/os'
 import {
   installNodeModules,
@@ -10,6 +10,7 @@ import {parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {isShopify, isUnitTest} from '@shopify/cli-kit/node/environment/local'
 import {Writable} from 'stream'
 
 interface InitOptions {
@@ -118,7 +119,7 @@ async function init(options: InitOptions) {
       },
     ])
 
-    if (await environment.local.isShopify()) {
+    if (await isShopify()) {
       tasks.push({
         title: "[Shopifolks-only] Configuring the project's NPM registry",
         task: async (_, task) => {
@@ -163,7 +164,7 @@ async function init(options: InitOptions) {
     const list = ui.newListr(tasks, {
       concurrent: false,
       rendererOptions: {collapse: false},
-      rendererSilent: environment.local.isUnitTest(),
+      rendererSilent: isUnitTest(),
     })
 
     await list.run()

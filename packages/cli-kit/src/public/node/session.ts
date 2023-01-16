@@ -1,9 +1,9 @@
+import {normalizeStoreFqdn} from './environment/fqdn.js'
 import * as secureStore from '../../private/node/session/store.js'
 
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
 import constants from '../../constants.js'
 import {content, token, debug} from '../../output.js'
-import {normalizeStoreName} from '../../environment/fqdn.js'
 import {Bug} from '../../error.js'
 import {ensureAuthenticated} from '../../private/node/session.js'
 
@@ -107,7 +107,7 @@ export async function ensureAuthenticatedThemes(
   debug(content`Ensuring that the user is authenticated with the Theme API with the following scopes:
 ${token.json(scopes)}
 `)
-  if (password) return {token: password, storeFqdn: await normalizeStoreName(store)}
+  if (password) return {token: password, storeFqdn: await normalizeStoreFqdn(store)}
   return ensureAuthenticatedAdmin(store, scopes, forceRefresh)
 }
 

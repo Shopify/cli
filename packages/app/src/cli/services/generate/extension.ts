@@ -4,7 +4,7 @@ import {FunctionSpec} from '../../models/extensions/functions.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
-import {error, file, git, path, ui, environment} from '@shopify/cli-kit'
+import {error, file, git, path, ui} from '@shopify/cli-kit'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
@@ -12,6 +12,7 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
+import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
 import {fileURLToPath} from 'url'
 import stream from 'stream'
 
@@ -135,7 +136,7 @@ async function uiExtensionInit({
         },
       },
     ],
-    {rendererSilent: environment.local.isUnitTest()},
+    {rendererSilent: isUnitTest()},
   )
   await list.run()
 }

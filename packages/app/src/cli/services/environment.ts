@@ -19,10 +19,12 @@ import {Organization, OrganizationApp, OrganizationStore} from '../models/organi
 import metadata from '../metadata.js'
 import {ThemeExtension} from '../models/app/extensions.js'
 import {loadAppName} from '../models/app/loader.js'
-import {error as kitError, output, store, ui, environment, error} from '@shopify/cli-kit'
+import {error as kitError, output, store, ui, error} from '@shopify/cli-kit'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
+import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -368,7 +370,7 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<Fet
         },
       },
     ],
-    {rendererSilent: environment.local.isUnitTest()},
+    {rendererSilent: isUnitTest()},
   )
   await list.run()
   return data
@@ -398,7 +400,7 @@ async function fetchDevDataFromOptions(
     const orgWithStore = await fetchStoreByDomain(orgId, token, options.storeFqdn)
     if (!orgWithStore) throw new error.Bug(`Could not find Organization for id ${orgId}.`)
     if (!orgWithStore.store) {
-      const partners = await environment.fqdn.partners()
+      const partners = await partnersFqdn()
       const org = orgWithStore.organization
       throw new error.Bug(
         `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid development store.`,

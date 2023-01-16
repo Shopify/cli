@@ -3,9 +3,10 @@ import {fetchAllDevStores} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {environment} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {isSpinEnvironment} from '@shopify/cli-kit/node/environment/spin'
+import {firstPartyDev} from '@shopify/cli-kit/node/environment/local'
 
 const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
 const STORE1: OrganizationStore = {
@@ -38,28 +39,19 @@ const STORE3: OrganizationStore = {
 beforeEach(() => {
   vi.mock('../../prompts/dev')
   vi.mock('./fetch')
+  vi.mock('@shopify/cli-kit/node/environment/local')
   vi.mock('@shopify/cli-kit/node/system')
   vi.mock('@shopify/cli-kit/node/api/partners')
   vi.mock('@shopify/cli-kit/node/session')
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+  vi.mock('@shopify/cli-kit/node/environment/spin')
+  vi.mocked(isSpinEnvironment).mockReturnValue(false)
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
     return {
       ...cliKit,
       http: {
         fetch: vi.fn(),
-      },
-      environment: {
-        service: {
-          isSpinEnvironment: vi.fn(),
-        },
-        local: {
-          firstPartyDev: vi.fn(),
-          isUnitTest: vi.fn(() => true),
-        },
-        fqdn: {
-          partners: vi.fn(),
-        },
       },
     }
   })
@@ -94,8 +86,8 @@ describe('selectStore', async () => {
   it('not prompts user to convert store to non-transferable if selection is invalid inside spin instance and first party', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
-    vi.mocked(environment.service.isSpinEnvironment).mockReturnValue(true)
-    vi.mocked(environment.local.firstPartyDev).mockReturnValue(true)
+    vi.mocked(isSpinEnvironment).mockReturnValue(true)
+    vi.mocked(firstPartyDev).mockReturnValue(true)
 
     // When
     const got = await selectStore([STORE1, STORE2], ORG1, 'token')

@@ -2,17 +2,19 @@ import {themeFlags} from '../../flags.js'
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
-import {cli, output} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {output} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {sleep} from '@shopify/cli-kit/node/system'
 
 export default class Dev extends ThemeCommand {
   static description =
     'Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time.'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     path: themeFlags.path,
     host: Flags.string({
       description: 'Set which network interface the web server listens on. The default value is 127.0.0.1.',
@@ -116,6 +118,7 @@ export default class Dev extends ThemeCommand {
   }
 
   async execute(store: string, password: string | undefined, command: string[], controller: AbortController) {
+    await sleep(3)
     const adminSession = await ensureAuthenticatedThemes(store, password, [], true)
     const storefrontToken = await ensureAuthenticatedStorefront([], password)
     return execCLI2(command, {adminSession, storefrontToken, signal: controller.signal})

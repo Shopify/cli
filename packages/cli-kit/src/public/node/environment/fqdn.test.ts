@@ -1,11 +1,10 @@
-import {partners, shopify, identity, NotProvidedStoreFQDNError, normalizeStoreName} from './fqdn.js'
-import {fqdn, fqdn as spinFqdn} from './spin.js'
-import {isSpinEnvironment, serviceEnvironment} from './service.js'
-import {Environment} from '../network/service.js'
+import {partnersFqdn, identityFqdn, normalizeStoreFqdn} from './fqdn.js'
+import {spinFqdn, isSpinEnvironment} from '../environment/spin.js'
+import {Environment, serviceEnvironment} from '../../../private/node/environment/service.js'
 import {expect, describe, test, vi} from 'vitest'
 
-vi.mock('./spin')
-vi.mock('./service')
+vi.mock('../environment/spin.js')
+vi.mock('../../../private/node/environment/service.js')
 
 describe('partners', () => {
   test('returns the local fqdn when the environment is local', async () => {
@@ -13,7 +12,7 @@ describe('partners', () => {
     vi.mocked(serviceEnvironment).mockReturnValue(Environment.Local)
 
     // When
-    const got = await partners()
+    const got = await partnersFqdn()
 
     // Then
     expect(got).toEqual('partners.myshopify.io')
@@ -24,7 +23,7 @@ describe('partners', () => {
     vi.mocked(serviceEnvironment).mockReturnValue(Environment.Production)
 
     // When
-    const got = await partners()
+    const got = await partnersFqdn()
 
     // Then
     expect(got).toEqual('partners.shopify.com')
@@ -36,7 +35,7 @@ describe('partners', () => {
     vi.mocked(spinFqdn).mockResolvedValue('spin.com')
 
     // When
-    const got = await partners()
+    const got = await partnersFqdn()
 
     // Then
     expect(got).toEqual('partners.spin.com')
@@ -49,7 +48,7 @@ describe('identity', () => {
     vi.mocked(serviceEnvironment).mockReturnValue(Environment.Local)
 
     // When
-    const got = await identity()
+    const got = await identityFqdn()
 
     // Then
     expect(got).toEqual('identity.myshopify.io')
@@ -60,7 +59,7 @@ describe('identity', () => {
     vi.mocked(serviceEnvironment).mockReturnValue(Environment.Production)
 
     // When
-    const got = await identity()
+    const got = await identityFqdn()
 
     // Then
     expect(got).toEqual('accounts.shopify.com')
@@ -72,52 +71,7 @@ describe('identity', () => {
     vi.mocked(spinFqdn).mockResolvedValue('spin.com')
 
     // When
-    const got = await identity()
-
-    // Then
-    expect(got).toEqual('identity.spin.com')
-  })
-})
-
-describe('shopify', () => {
-  test('returns the local fqdn when the environment is local', async () => {
-    // Given
-    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Local)
-
-    // When
-    const got = await shopify({storeFqdn: 'myshop.shopify.com'})
-
-    // Then
-    expect(got).toEqual('shopify.myshopify.io')
-  })
-
-  test('returns the store fqdn when the environment is production', async () => {
-    // Given
-    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Production)
-    const storeFqdn = 'myshop.shopify.com'
-
-    // When
-    const got = await shopify({storeFqdn})
-
-    // Then
-    expect(got).toEqual(storeFqdn)
-  })
-
-  test("throws an error when the environment is production and the store fqdn hasn't been provided", async () => {
-    // Given
-    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Production)
-
-    // When/Then
-    await expect(shopify({})).rejects.toThrow(NotProvidedStoreFQDNError)
-  })
-
-  test("returns the spin fqdn if the environment is spin and it's running in a Spin environment", async () => {
-    // Given
-    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Spin)
-    vi.mocked(spinFqdn).mockResolvedValue('spin.com')
-
-    // When
-    const got = await shopify({})
+    const got = await identityFqdn()
 
     // Then
     expect(got).toEqual('identity.spin.com')
@@ -127,7 +81,7 @@ describe('shopify', () => {
 describe('normalizeStore', () => {
   test('parses store name with http', async () => {
     // When
-    const got = await normalizeStoreName('http://example.myshopify.com')
+    const got = await normalizeStoreFqdn('http://example.myshopify.com')
 
     // Then
     expect(got).toEqual('example.myshopify.com')
@@ -135,7 +89,7 @@ describe('normalizeStore', () => {
 
   test('parses store name with https', async () => {
     // When
-    const got = await normalizeStoreName('https://example.myshopify.com')
+    const got = await normalizeStoreFqdn('https://example.myshopify.com')
 
     // Then
     expect(got).toEqual('example.myshopify.com')
@@ -143,7 +97,7 @@ describe('normalizeStore', () => {
 
   test('parses store name with https when spin URL', async () => {
     // When
-    const got = await normalizeStoreName('https://devstore001.shopify.partners-6xat.test.us.spin.dev')
+    const got = await normalizeStoreFqdn('https://devstore001.shopify.partners-6xat.test.us.spin.dev')
 
     // Then
     expect(got).toEqual('devstore001.shopify.partners-6xat.test.us.spin.dev')
@@ -151,7 +105,7 @@ describe('normalizeStore', () => {
 
   test('parses store name without domain', async () => {
     // When
-    const got = await normalizeStoreName('example')
+    const got = await normalizeStoreFqdn('example')
 
     // Then
     expect(got).toEqual('example.myshopify.com')
@@ -160,10 +114,10 @@ describe('normalizeStore', () => {
   test('parses store name without domain in spin', async () => {
     // Given
     vi.mocked(isSpinEnvironment).mockReturnValue(true)
-    vi.mocked(fqdn).mockResolvedValue('mydomain.spin.dev')
+    vi.mocked(spinFqdn).mockResolvedValue('mydomain.spin.dev')
 
     // When
-    const got = await normalizeStoreName('example')
+    const got = await normalizeStoreFqdn('example')
 
     // Then
     expect(got).toEqual('example.shopify.mydomain.spin.dev')

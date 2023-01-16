@@ -1,5 +1,5 @@
 import {CLI_KIT_VERSION} from '../../../public/common/version.js'
-import {firstPartyDev} from '../../../environment/local.js'
+import {firstPartyDev} from '../../../public/node/environment/local.js'
 import {ExtendableError} from '../../../error.js'
 import {randomUUID} from '../../../public/node/crypto.js'
 

@@ -1,5 +1,5 @@
 import {version as rubyVersion} from './ruby.js'
-import * as environment from '../../environment.js'
+import {alwaysLogAnalytics, analyticsDisabled, isShopify} from './environment/local.js'
 import {content, debug, token} from '../../output.js'
 import * as metadata from '../../metadata.js'
 import {publishEvent, MONORAIL_COMMAND_TOPIC} from '../../monorail.js'
@@ -26,7 +26,7 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
       // Nothing to log
       return
     }
-    if (!environment.local.alwaysLogAnalytics() && environment.local.analyticsDisabled()) {
+    if (!alwaysLogAnalytics() && analyticsDisabled()) {
       debug(content`Skipping command analytics, payload: ${token.json(payload)}`)
       return
     }
@@ -73,7 +73,7 @@ async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions)
       cli_version: CLI_KIT_VERSION,
       ruby_version: (await rubyVersion()) || '',
       node_version: process.version.replace('v', ''),
-      is_employee: await environment.local.isShopify(),
+      is_employee: await isShopify(),
       ...environmentData,
       ...appPublic,
       ...metadata.getAllPublic(),

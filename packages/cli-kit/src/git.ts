@@ -1,5 +1,5 @@
 import {Abort} from './error.js'
-import {hasGit, isTerminalInteractive} from './environment/local.js'
+import {hasGit, isTerminalInteractive} from './public/node/environment/local.js'
 import {content, token, debug} from './output.js'
 import {appendSync} from './file.js'
 import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
