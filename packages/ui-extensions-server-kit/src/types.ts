@@ -37,25 +37,25 @@ declare global {
       unfocus: void
       navigate: {url: string}
     }
-  }
 
-  // API responses
-  namespace API {
-    interface BaseResponse {
-      app: App
-      root: ResourceURL
-      socket: ResourceURL
-      devConsole: ResourceURL
-      store: string
-      version: string
-    }
+    // API responses
+    namespace API {
+      interface BaseResponse {
+        app: App
+        root: ResourceURL
+        socket: ResourceURL
+        devConsole: ResourceURL
+        store: string
+        version: string
+      }
 
-    interface ExtensionsResponse extends BaseResponse {
-      extensions: ExtensionPayload[]
-    }
+      interface ExtensionsResponse extends BaseResponse {
+        extensions: ExtensionPayload[]
+      }
 
-    interface ExtensionResponse extends BaseResponse {
-      extension: ExtensionPayload
+      interface ExtensionResponse extends BaseResponse {
+        extension: ExtensionPayload
+      }
     }
   }
 }
