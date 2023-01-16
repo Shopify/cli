@@ -8,42 +8,46 @@ import {toast} from 'react-toastify'
 import {IconButton} from '@/components/IconButton'
 
 interface Props {
-  url: string
+  rootUrl: string
+  resourceUrl?: string
   title: string
 }
 
-export function PreviewLink({url, title}: Props) {
+export function PreviewLink({rootUrl, resourceUrl, title}: Props) {
   const [i18n] = useI18n({
     id: 'PreviewLink',
     fallback: en,
   })
 
-  const {embedded} = useExtensionsInternal()
+  const {embedded, navigate} = useExtensionsInternal()
+  const isEmbedded = embedded && window.top
 
   const handleOpenRoot = (event: React.MouseEvent<HTMLElement>) => {
-    if (embedded && window.top) {
-      // TODO: Is this a secure way to do this?
-      // Get thumbs up from some peoples
-      window.parent.location = url
-
+    if (isEmbedded && resourceUrl) {
+      navigate(resourceUrl)
       event.preventDefault()
     }
   }
 
   function handleCopyPreviewLink() {
     navigator.clipboard
-      .writeText(url)
+      .writeText(rootUrl)
       .then(() => {
-        toast(i18n.translate('copy.success'), {toastId: `copy-${url}`})
+        toast(i18n.translate('copy.success'), {toastId: `copy-${rootUrl}`})
       })
       .catch(() => {
-        toast(i18n.translate('copy.error'), {type: 'error', toastId: `copy-${url}-error`})
+        toast(i18n.translate('copy.error'), {type: 'error', toastId: `copy-${rootUrl}-error`})
       })
   }
 
   return (
     <span className={styles.PreviewLink}>
-      <a href={url} target="_blank" aria-label={i18n.translate('linkLabel', {title})} onClick={handleOpenRoot}>
+      <a
+        href={rootUrl}
+        target={isEmbedded ? '_top' : '_blank'}
+        aria-label={i18n.translate('linkLabel', {title})}
+        onClick={handleOpenRoot}
+      >
         {title}
       </a>
       <IconButton
