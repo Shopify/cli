@@ -5,10 +5,11 @@ import * as file from '../../file.js'
 import * as ui from '../../ui.js'
 import * as system from '../../system.js'
 import {Abort, AbortSilent} from '../../error.js'
-import {glob, join} from '../../path.js'
+import {glob, join, moduleDirectory} from '../../path.js'
 import constants from '../../constants.js'
 import {AdminSession} from '../../public/node/session.js'
 import {content, token} from '../../output.js'
+import {isDevelopment} from '../../environment/local.js'
 import {Writable} from 'stream'
 
 const RubyCLIVersion = '2.34.0'
@@ -157,7 +158,7 @@ async function installCLIDependencies() {
       {
         title: 'Installing theme dependencies',
         task: async () => {
-          const usingLocalCLI2 = Boolean(process.env.SHOPIFY_CLI_2_0_DIRECTORY)
+          const usingLocalCLI2 = isDevelopment()
           await validateRubyEnv()
           if (usingLocalCLI2) {
             await bundleInstallLocalShopifyCLI()
@@ -307,10 +308,9 @@ async function bundleInstallThemeCheck() {
  * @returns The absolute path to the directory.
  */
 function shopifyCLIDirectory(): string {
-  return (
-    process.env.SHOPIFY_CLI_2_0_DIRECTORY ??
-    join(constants.paths.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
-  )
+  return isDevelopment()
+    ? join(moduleDirectory(import.meta.url), '..', '..', '..', '..', 'theme-cli')
+    : join(constants.paths.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
 }
 
 /**
