@@ -5,7 +5,7 @@ import {captureOutput, exec} from './system.js'
 import * as file from '../../file.js'
 import * as ui from '../../ui.js'
 import {Abort, AbortSilent} from '../../error.js'
-import {glob, join} from '../../path.js'
+import {findUp, glob, join, moduleDirectory} from '../../path.js'
 import constants from '../../constants.js'
 import {AdminSession} from '../../public/node/session.js'
 import {content, token} from '../../output.js'
@@ -48,7 +48,7 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
     // Bundler uses this Gemfile to understand which gems are available in the
     // environment. We use this to specify our own Gemfile for CLI2, which exists
     // outside the user's project directory.
-    BUNDLE_GEMFILE: join(shopifyCLIDirectory(), 'Gemfile'),
+    BUNDLE_GEMFILE: join(await shopifyCLIDirectory(), 'Gemfile'),
   }
 
   try {
@@ -149,7 +149,8 @@ async function installThemeCheckCLIDependencies(stdout: Writable) {
  * or if we are installing a new version of RubyCLI.
  */
 async function installCLIDependencies() {
-  const exists = await file.exists(shopifyCLIDirectory())
+  const {isDevelopment} = await import('./environment/local.js')
+  const exists = await file.exists(await shopifyCLIDirectory())
   const renderer = exists ? 'silent' : 'default'
 
   const list = ui.newListr(
@@ -157,7 +158,7 @@ async function installCLIDependencies() {
       {
         title: 'Installing theme dependencies',
         task: async () => {
-          const usingLocalCLI2 = Boolean(process.env.SHOPIFY_CLI_2_0_DIRECTORY)
+          const usingLocalCLI2 = isDevelopment()
           await validateRubyEnv()
           if (usingLocalCLI2) {
             await bundleInstallLocalShopifyCLI()
@@ -242,7 +243,7 @@ async function validateBundler() {
  * It creates the directory where the Ruby CLI will be downloaded along its dependencies.
  */
 async function createShopifyCLIWorkingDirectory(): Promise<void> {
-  return file.mkdir(shopifyCLIDirectory())
+  return file.mkdir(await shopifyCLIDirectory())
 }
 
 /**
@@ -256,7 +257,7 @@ async function createThemeCheckCLIWorkingDirectory(): Promise<void> {
  * It creates the Gemfile to install The Ruby CLI and the dependencies.
  */
 async function createShopifyCLIGemfile(): Promise<void> {
-  const gemPath = join(shopifyCLIDirectory(), 'Gemfile')
+  const gemPath = join(await shopifyCLIDirectory(), 'Gemfile')
   const gemFileContent = ["source 'https://rubygems.org'", `gem 'shopify-cli', '${RubyCLIVersion}'`]
   const {platform} = platformAndArch()
   if (platform === 'windows') {
@@ -278,17 +279,18 @@ async function createThemeCheckGemfile(): Promise<void> {
  * It runs bundle install for the dev-managed copy of the Ruby CLI.
  */
 async function bundleInstallLocalShopifyCLI(): Promise<void> {
-  await exec(bundleExecutable(), ['install'], {cwd: shopifyCLIDirectory()})
+  await exec(bundleExecutable(), ['install'], {cwd: await shopifyCLIDirectory()})
 }
 
 /**
  * It runs bundle install for the CLI-managed copy of the Ruby CLI.
  */
 async function bundleInstallShopifyCLI() {
-  await exec(bundleExecutable(), ['config', 'set', '--local', 'path', shopifyCLIDirectory()], {
-    cwd: shopifyCLIDirectory(),
+  const cliDirectory = await shopifyCLIDirectory()
+  await exec(bundleExecutable(), ['config', 'set', '--local', 'path', cliDirectory], {
+    cwd: cliDirectory,
   })
-  await exec(bundleExecutable(), ['install'], {cwd: shopifyCLIDirectory()})
+  await exec(bundleExecutable(), ['install'], {cwd: cliDirectory})
 }
 
 /**
@@ -306,11 +308,14 @@ async function bundleInstallThemeCheck() {
  *
  * @returns The absolute path to the directory.
  */
-function shopifyCLIDirectory(): string {
-  return (
-    process.env.SHOPIFY_CLI_2_0_DIRECTORY ??
-    join(constants.paths.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
-  )
+async function shopifyCLIDirectory(): Promise<string> {
+  const {isDevelopment} = await import('./environment/local.js')
+  return isDevelopment()
+    ? ((await findUp('packages/theme-cli/', {
+        type: 'directory',
+        cwd: moduleDirectory(import.meta.url),
+      })) as string)
+    : join(constants.paths.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
 }
 
 /**

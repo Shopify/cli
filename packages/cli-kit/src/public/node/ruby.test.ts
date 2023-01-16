@@ -49,14 +49,24 @@ describe('execCLI', () => {
   })
 
   it('throws an exception when creating CLI working directory', async () => {
+    // Setup
+    const originalEnv = process.env
+
+    // Given
     const rubyVersion = '2.7.5'
     const bundlerVersion = '2.4.0'
+    process.env = {...originalEnv, SHOPIFY_CLI_ENV: 'production'}
     vi.mocked(file.exists).mockResolvedValue(true)
     vi.mocked(captureOutput).mockResolvedValueOnce(rubyVersion)
     vi.mocked(captureOutput).mockResolvedValueOnce(bundlerVersion)
     vi.mocked(file.mkdir).mockRejectedValue({message: 'Error'})
 
+    // When
     await expect(() => execCLI2(['args'])).rejects.toThrowError('Error')
+
+    // Teardown
+    // eslint-disable-next-line require-atomic-updates
+    process.env = originalEnv
   })
 
   it('passes token to the CLI2', async () => {
@@ -66,7 +76,7 @@ describe('execCLI', () => {
     // Given
     const execSpy = vi.spyOn(system, 'exec')
 
-    process.env = {...originalEnv, SHOPIFY_CLI_2_0_DIRECTORY: './CLI2'}
+    process.env = {...originalEnv, SHOPIFY_CLI_ENV: 'development'}
 
     vi.mocked(file.exists).mockResolvedValue(true)
     vi.mocked(captureOutput).mockResolvedValueOnce('2.7.5')
@@ -89,7 +99,7 @@ describe('execCLI', () => {
         SHOPIFY_CLI_STORE: undefined,
         SHOPIFY_CLI_AUTH_TOKEN: 'token_0000_1111_2222_3333',
         SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
-        BUNDLE_GEMFILE: 'CLI2/Gemfile',
+        BUNDLE_GEMFILE: expect.stringMatching(/.*\/packages\/theme-cli/),
       },
     })
 
