@@ -184,9 +184,20 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
             destination: templateDownloadDir,
             shallow: true,
           })
-          const templatePath = spec.templatePath(options.extensionFlavor ?? blocks.functions.defaultLanguage)
+          // vanilla-js and typescript functions share the same template
+          const templateFlavor = options.extensionFlavor === 'vanilla-js' ? 'typescript' : options.extensionFlavor
+          const templatePath = spec.templatePath(templateFlavor ?? blocks.functions.defaultLanguage)
           const origin = joinPath(templateDownloadDir, templatePath)
-          await recursiveLiquidTemplateCopy(origin, options.extensionDirectory, options)
+          await recursiveLiquidTemplateCopy(origin, options.extensionDirectory, {
+            flavor: options.extensionFlavor ?? '',
+            ...options,
+          })
+
+          const srcFileExtension = getSrcFileExtension(options.extensionFlavor ?? 'vanilla-js')
+          if (options.extensionFlavor) {
+            await changeIndexFileExtension(options.extensionDirectory, srcFileExtension)
+          }
+
           const configYamlPath = joinPath(options.extensionDirectory, 'script.config.yml')
           if (await fileExists(configYamlPath)) {
             await removeFile(configYamlPath)
