@@ -3,36 +3,21 @@ import * as localEnvironment from './environment.js'
 import * as identifiers from '../models/app/identifiers.js'
 import {testApp, testFunctionExtension} from '../models/app/app.test-data.js'
 import {ApiSchemaDefinitionQuery} from '../api/graphql/functions/api_schema_definition.js'
-import {environment, error} from '@shopify/cli-kit'
+import {error} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, MockedFunction, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {isTerminalInteractive} from '@shopify/cli-kit/node/environment/local'
 
 describe('generateSchemaService', () => {
   const token = 'token'
   const request = partnersRequest as MockedFunction<typeof partnersRequest>
-  const isTerminalInteractive = environment.local.isTerminalInteractive as MockedFunction<
-    typeof environment.local.isTerminalInteractive
-  >
 
   beforeEach(() => {
     vi.mock('@shopify/cli-kit/node/api/partners')
     vi.mock('@shopify/cli-kit/node/session')
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-    vi.mock('@shopify/cli-kit', async () => {
-      const cliKit: any = await vi.importActual('@shopify/cli-kit')
-      return {
-        ...cliKit,
-        environment: {
-          ...cliKit.environment,
-          local: {
-            ...cliKit.environment.local,
-            isTerminalInteractive: vi.fn(),
-          },
-        },
-      }
-    })
-
+    vi.mock('@shopify/cli-kit/node/environment/local')
     request.mockImplementation(() => Promise.resolve({definition: 'schema'}))
   })
 
@@ -101,7 +86,7 @@ describe('generateSchemaService', () => {
         },
         orgId: '1',
       })
-      isTerminalInteractive.mockReturnValue(true)
+      vi.mocked(isTerminalInteractive).mockReturnValue(true)
     })
 
     it('uses options API key if provided', async () => {
@@ -170,7 +155,7 @@ describe('generateSchemaService', () => {
       const app = testApp()
       const extension = await testFunctionExtension()
       getAppIdentifiers.mockReturnValue({app: undefined})
-      isTerminalInteractive.mockReturnValue(false)
+      vi.mocked(isTerminalInteractive).mockReturnValue(false)
 
       // When
       const result = generateSchemaService({app, extension})

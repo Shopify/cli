@@ -14,9 +14,9 @@ import {ApplicationToken, IdentityToken, Session} from './session/schema.js'
 import {validateSession} from './session/validate.js'
 import {applicationId} from './session/identity.js'
 import * as fqdnModule from '../../public/node/environment/fqdn.js'
-import {useDeviceAuth} from '../../environment/local.js'
+import {useDeviceAuth} from '../../public/node/environment/local.js'
+import {partnersRequest} from '../../public/node/api/partners.js'
 import {vi, describe, expect, it, beforeAll, beforeEach} from 'vitest'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners.js'
 
 const futureDate = new Date(2022, 1, 1, 11)
 
@@ -83,7 +83,7 @@ const invalidSession: Session = {
 }
 
 beforeAll(() => {
-  vi.mock('../../environment/local')
+  vi.mock('../../public/node/environment/local.js')
   vi.mock('./session/identity')
   vi.mock('./session/authorize')
   vi.mock('./session/exchange')

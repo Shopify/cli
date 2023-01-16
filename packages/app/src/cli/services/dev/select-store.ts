@@ -6,11 +6,12 @@ import {
   ConvertDevToTestStoreSchema,
   ConvertDevToTestStoreVariables,
 } from '../../api/graphql/convert_dev_to_test_store.js'
-import {error, output, ui, environment} from '@shopify/cli-kit'
+import {error, output, ui} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {isSpinEnvironment} from '@shopify/cli-kit/node/environment/spin'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
+import {firstPartyDev, isUnitTest} from '@shopify/cli-kit/node/environment/local'
 
 const CreateStoreLink = async (orgId: string) => {
   const url = `https://${await partnersFqdn()}/${orgId}/stores/new?store_type=dev_store`
@@ -82,7 +83,7 @@ async function waitForCreatedStore(orgId: string, token: string): Promise<Organi
         },
       },
     ],
-    {rendererSilent: environment.local.isUnitTest()},
+    {rendererSilent: isUnitTest()},
   )
   await list.run()
 
@@ -107,7 +108,7 @@ export async function convertToTestStoreIfNeeded(
   /**
    * Is not possible to convert stores to dev ones in spin environmets. Should be created directly as development.
    */
-  if (isSpinEnvironment() && environment.local.firstPartyDev()) return
+  if (isSpinEnvironment() && firstPartyDev()) return
   if (!store.transferDisabled && !store.convertableToPartnerTest) {
     throw new error.Abort(
       `The store you specified (${store.shopDomain}) is not a dev store`,

@@ -1,12 +1,13 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
 import cleanup from '../utils/template/cleanup.js'
 
-import {path, file, ui, npm, git, environment, error, output} from '@shopify/cli-kit'
+import {path, file, ui, npm, git, error, output} from '@shopify/cli-kit'
 import {packageManager, PackageManager, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
+import {isShopify, isUnitTest} from '@shopify/cli-kit/node/environment/local'
 
 interface InitOptions {
   name: string
@@ -91,7 +92,7 @@ async function init(options: InitOptions) {
       },
     ])
 
-    if (await environment.local.isShopify()) {
+    if (await isShopify()) {
       tasks.push({
         title: "[Shopifolks-only] Configure the project's NPM registry",
         task: async (_, task) => {
@@ -143,7 +144,7 @@ async function init(options: InitOptions) {
     const list = ui.newListr(tasks, {
       concurrent: false,
       rendererOptions: {collapse: false},
-      rendererSilent: environment.local.isUnitTest(),
+      rendererSilent: isUnitTest(),
     })
     await list.run()
 

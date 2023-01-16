@@ -19,11 +19,12 @@ import {Organization, OrganizationApp, OrganizationStore} from '../models/organi
 import metadata from '../metadata.js'
 import {ThemeExtension} from '../models/app/extensions.js'
 import {loadAppName} from '../models/app/loader.js'
-import {error as kitError, output, store, ui, environment, error} from '@shopify/cli-kit'
+import {error as kitError, output, store, ui, error} from '@shopify/cli-kit'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
+import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -369,7 +370,7 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<Fet
         },
       },
     ],
-    {rendererSilent: environment.local.isUnitTest()},
+    {rendererSilent: isUnitTest()},
   )
   await list.run()
   return data
