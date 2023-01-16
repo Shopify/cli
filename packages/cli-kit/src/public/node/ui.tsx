@@ -1,3 +1,4 @@
+import {isUnitTest} from './environment/local.js'
 import ConcurrentOutput from '../../private/node/ui/components/ConcurrentOutput.js'
 import {consoleError, OutputProcess} from '../../output.js'
 import {render, renderOnce} from '../../private/node/ui.js'
@@ -12,7 +13,6 @@ import {
   AutocompletePrompt,
   Props as AutocompletePromptProps,
 } from '../../private/node/ui/components/AutocompletePrompt.js'
-import {isUnitTest} from '../../environment/local.js'
 import React from 'react'
 import {RenderOptions} from 'ink'
 import {AbortController} from '@shopify/cli-kit/node/abort'
