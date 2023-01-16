@@ -4,6 +4,7 @@ import {ui, npm, path, error} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions, isVSCode} from '@shopify/cli-kit/node/vscode'
 import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
+import {writeFile, fileExists, removeFile, fileContentPrettyFormat} from '@shopify/cli-kit/node/file'
 import stream from 'stream'
 
 interface AddESlintOptions {
@@ -46,9 +47,9 @@ export async function addESLint({app, force, install}: AddESlintOptions) {
         task: async (_, task) => {
           const eslintConfigPath = path.join(app.directory, genericConfigurationFileNames.eslint)
 
-          if (await file.fileExists(eslintConfigPath)) {
+          if (await fileExists(eslintConfigPath)) {
             if (force) {
-              await file.removeFile(eslintConfigPath)
+              await removeFile(eslintConfigPath)
             } else {
               throw new error.Abort('ESLint config already exists.', 'Use --force to override existing config.')
             }
@@ -60,12 +61,12 @@ export async function addESLint({app, force, install}: AddESlintOptions) {
             extended.push(`'plugin:hydrogen/typescript'`)
           }
 
-          const eslintConfig = await file.fileContentPrettyFormat(
+          const eslintConfig = await fileContentPrettyFormat(
             ['module.exports = {', 'extends: [', `${extended.join(',')}`, ' ],', ' };'].join('\n'),
             {path: genericConfigurationFileNames.eslint},
           )
 
-          await file.writeFile(eslintConfigPath, eslintConfig)
+          await writeFile(eslintConfigPath, eslintConfig)
 
           task.title = 'ESLint configuration added'
         },

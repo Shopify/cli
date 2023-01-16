@@ -117,7 +117,7 @@ describe('checkLockfileStatus()', () => {
           │                                                                              │
           │  Multiple lockfiles found                                                    │
           │                                                                              │
-          │  Your project contains more than one lock This can cause version        │
+          │  Your project contains more than one lockfile. This can cause version        │
           │  conflicts when installing and deploying your app. The following lockfiles   │
           │  were detected:                                                              │
           │                                                                              │
@@ -159,7 +159,7 @@ describe('checkLockfileStatus()', () => {
           │  new lockfile and commit it to your repository.                              │
           │                                                                              │
           │  Next steps                                                                  │
-          │    • Generate a lock Run \`npm|yarn|pnpm install\`                        │
+          │    • Generate a lockfile. Run \`npm|yarn|pnpm install\`                        │
           │    • Commit the new file to your repository                                  │
           │                                                                              │
           ╰──────────────────────────────────────────────────────────────────────────────╯

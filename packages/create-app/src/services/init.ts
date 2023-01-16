@@ -8,6 +8,7 @@ import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {isShopify, isUnitTest} from '@shopify/cli-kit/node/environment/local'
+import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile} from '@shopify/cli-kit/node/file'
 
 interface InitOptions {
   name: string
@@ -33,7 +34,7 @@ async function init(options: InitOptions) {
     const templateScaffoldDir = path.join(tmpDir, 'app')
     const repoUrl = githubRepo.branch ? `${githubRepo.baseURL}#${githubRepo.branch}` : githubRepo.baseURL
 
-    await file.mkdir(templateDownloadDir)
+    await mkdir(templateDownloadDir)
     let tasks: ui.ListrTasks = []
 
     await ui.task({
@@ -80,7 +81,7 @@ async function init(options: InitOptions) {
                 // Ensure that the installation of dependencies doesn't fail when using
                 // pnpm due to missing peerDependencies.
                 if (packageManager === 'pnpm') {
-                  await file.append(path.join(templateScaffoldDir, '.npmrc'), `auto-install-peers=true\n`)
+                  await appendFile(path.join(templateScaffoldDir, '.npmrc'), `auto-install-peers=true\n`)
                 }
 
                 task.title = 'Updated package.json'
@@ -99,7 +100,7 @@ async function init(options: InitOptions) {
           task.title = "[Shopifolks-only] Configuring the project's NPM registry"
           const npmrcPath = path.join(templateScaffoldDir, '.npmrc')
           const npmrcContent = `@shopify:registry=https://registry.npmjs.org\n`
-          await file.append(npmrcPath, npmrcContent)
+          await appendFile(npmrcPath, npmrcContent)
           task.title = "[Shopifolks-only] Project's NPM registry configured."
         },
       })
@@ -148,7 +149,7 @@ async function init(options: InitOptions) {
     })
     await list.run()
 
-    await file.moveFile(templateScaffoldDir, outputDirectory)
+    await moveFile(templateScaffoldDir, outputDirectory)
   })
 
   renderSuccess({
@@ -177,7 +178,7 @@ function inferPackageManager(optionsPackageManager: string | undefined): Package
 }
 
 async function ensureAppDirectoryIsAvailable(directory: string, name: string): Promise<void> {
-  const exists = await file.fileExists(directory)
+  const exists = await fileExists(directory)
   if (exists)
     throw new error.Abort(`\nA directory with this name (${name}) already exists.\nChoose a new name for your app.`)
 }

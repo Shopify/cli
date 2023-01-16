@@ -1,4 +1,5 @@
 import {path, error} from '@shopify/cli-kit'
+import {readFile} from '@shopify/cli-kit/node/file'
 import {fileURLToPath} from 'url'
 
 export async function cliVersion(): Promise<string> {
@@ -15,6 +16,6 @@ export async function cliVersion(): Promise<string> {
   if (!cliPackageJsonpath) {
     throw new error.Bug("Couldn't determine the version of the CLI")
   }
-  const packageJson = JSON.parse(await file.readFile(cliPackageJsonpath))
+  const packageJson = JSON.parse(await readFile(cliPackageJsonpath))
   return packageJson.version
 }

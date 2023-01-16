@@ -1,4 +1,5 @@
 import {path} from '@shopify/cli-kit'
+import {rmdir} from '@shopify/cli-kit/node/file'
 
 export default async function cleanup(webOutputDirectory: string) {
   const gitPaths = await path.glob(
@@ -18,5 +19,5 @@ export default async function cleanup(webOutputDirectory: string) {
     },
   )
 
-  return Promise.all(gitPaths.map((path) => file.rmdir(path, {force: true}))).then(() => {})
+  return Promise.all(gitPaths.map((path) => rmdir(path, {force: true}))).then(() => {})
 }

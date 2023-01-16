@@ -3,6 +3,7 @@ import {ui, path, error} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions} from '@shopify/cli-kit/node/vscode'
 import {exec} from '@shopify/cli-kit/node/system'
+import {writeFile, fileExists, removeFile, fileContentPrettyFormat, readFile} from '@shopify/cli-kit/node/file'
 import stream from 'stream'
 
 interface AddTailwindOptions {
@@ -54,20 +55,20 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
       task: async (_, task) => {
         const postCSSConfiguration = path.join(directory, 'postcss.config.js')
 
-        if (await file.fileExists(postCSSConfiguration)) {
+        if (await fileExists(postCSSConfiguration)) {
           if (force) {
-            await file.removeFile(postCSSConfiguration)
+            await removeFile(postCSSConfiguration)
           } else {
             throw new error.Abort('PostCSS config already exists.\nUse --force to override existing config.')
           }
         }
 
-        const postCSSConfig = await file.fileContentPrettyFormat(
+        const postCSSConfig = await fileContentPrettyFormat(
           ['module.exports = {', 'plugins: {', 'tailwindcss: {},', 'autoprefixer: {},', '},', ' };'].join('\n'),
           {path: 'postcss.config.js'},
         )
 
-        await file.writeFile(postCSSConfiguration, postCSSConfig)
+        await writeFile(postCSSConfiguration, postCSSConfig)
 
         task.title = 'PostCSS configuration added'
       },
@@ -78,9 +79,9 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
       task: async (_, task) => {
         const tailwindConfigurationPath = path.join(directory, 'tailwind.config.js')
 
-        if (await file.fileExists(tailwindConfigurationPath)) {
+        if (await fileExists(tailwindConfigurationPath)) {
           if (force) {
-            await file.removeFile(tailwindConfigurationPath)
+            await removeFile(tailwindConfigurationPath)
           } else {
             throw new error.Abort('Tailwind config already exists.\nUse --force to override existing config.')
           }
@@ -103,14 +104,14 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
       title: 'Importing Tailwind CSS in index.css',
       task: async (_ctx, task) => {
         const indexCSSPath = path.join(directory, 'src', 'index.css')
-        const indexCSS = await file.readFile(indexCSSPath)
+        const indexCSS = await readFile(indexCSSPath)
 
         if (tailwindImportsExist(indexCSS)) {
           task.skip('Imports already exist in index.css')
         } else {
           const newIndexCSS = tailwindImports.join('\n') + indexCSS
 
-          await file.writeFile(indexCSSPath, newIndexCSS)
+          await writeFile(indexCSSPath, newIndexCSS)
         }
 
         task.title = 'Tailwind imports added'
@@ -128,7 +129,7 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
 }
 
 async function replace(find: string | RegExp, replace: string, filepath: string) {
-  const original = await file.readFile(filepath)
+  const original = await readFile(filepath)
   const modified = original.replace(find, replace)
-  await file.writeFile(filepath, modified)
+  await writeFile(filepath, modified)
 }

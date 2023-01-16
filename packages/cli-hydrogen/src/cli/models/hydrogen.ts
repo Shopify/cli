@@ -8,6 +8,7 @@ import {
   yarnLockfile,
 } from '@shopify/cli-kit/node/node-package-manager'
 
+import {fileExists} from '@shopify/cli-kit/node/file'
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-ignore
 import type {HydrogenConfig} from '@shopify/hydrogen/config'
@@ -58,20 +59,20 @@ class HydrogenAppLoader {
   }
 
   async loaded() {
-    if (!(await file.fileExists(this.directory))) {
+    if (!(await fileExists(this.directory))) {
       throw new kitError.Abort(`Couldn't find directory ${this.directory}`)
     }
 
     const {configuration} = await this.loadConfig()
 
     const yarnLockPath = path.join(this.directory, yarnLockfile)
-    const yarnLockExists = await file.fileExists(yarnLockPath)
+    const yarnLockExists = await fileExists(yarnLockPath)
     const pnpmLockPath = path.join(this.directory, pnpmLockfile)
-    const pnpmLockExists = await file.fileExists(pnpmLockPath)
+    const pnpmLockExists = await fileExists(pnpmLockPath)
     const packageJSONPath = path.join(this.directory, 'package.json')
     const name = await getPackageName(packageJSONPath)
     const nodeDependencies = await getDependencies(packageJSONPath)
-    const tsConfigExists = await file.fileExists(path.join(this.directory, 'tsconfig.json'))
+    const tsConfigExists = await fileExists(path.join(this.directory, 'tsconfig.json'))
     const language = tsConfigExists && nodeDependencies.typescript ? 'TypeScript' : 'JavaScript'
 
     let packageManager: PackageManager

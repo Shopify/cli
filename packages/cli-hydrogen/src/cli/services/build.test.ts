@@ -5,7 +5,7 @@ import {build as viteBuild} from 'vite'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/file'
 
 vi.mock('vite')
-vi.mock('./build/check-lockjs', () => {
+vi.mock('./build/check-lockfile.js', () => {
   return {
     checkLockfileStatus: vi.fn(),
   }
