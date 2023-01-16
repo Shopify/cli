@@ -3,14 +3,14 @@ import ThemeCommand from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
 import {open} from '../../services/open.js'
 import {Flags} from '@oclif/core'
-import {cli} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
 export default class Open extends ThemeCommand {
   static description = 'Opens the preview of your remote theme.'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     password: themeFlags.password,
     development: Flags.boolean({
       char: 'd',

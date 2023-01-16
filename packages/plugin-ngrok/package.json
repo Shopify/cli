@@ -65,7 +65,7 @@
     },
     "topics": {
       "ngrok": {
-        "description": "Manage ngrok tunnels"
+        "description": "Manage ngrok tunnels."
       }
     }
   }

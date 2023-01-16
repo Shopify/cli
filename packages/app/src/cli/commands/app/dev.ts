@@ -2,14 +2,15 @@ import {appFlags} from '../../flags.js'
 import dev from '../../services/dev.js'
 import Command from '../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
-import {path, cli, metadata} from '@shopify/cli-kit'
+import {path, metadata} from '@shopify/cli-kit'
 import {normalizeStoreName} from '@shopify/cli-kit/node/environment/fqdn'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class Dev extends Command {
-  static description = 'Run the app'
+  static description = 'Run the app.'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...appFlags,
     'api-key': Flags.string({
       hidden: false,

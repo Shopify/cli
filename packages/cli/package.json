@@ -136,19 +136,19 @@
     "topicSeparator": " ",
     "topics": {
       "hydrogen": {
-        "description": "Build Hydrogen storefronts"
+        "description": "Build Hydrogen storefronts."
       },
       "theme": {
-        "description": "Build Liquid themes"
+        "description": "Build Liquid themes."
       },
       "app": {
-        "description": "Build Shopify apps"
+        "description": "Build Shopify apps."
       },
       "app env": {
-        "description": "Pull or display app and extensions environment variables"
+        "description": "Pull or display app and extensions environment variables."
       },
       "auth": {
-        "description": "Auth operations"
+        "description": "Auth operations."
       }
     },
     "additionalHelpFlags": [

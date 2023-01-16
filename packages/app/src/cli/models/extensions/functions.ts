@@ -63,7 +63,7 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
   }
 
   get graphQLType() {
-    return this.specification.identifier
+    return this.specification.identifier.toUpperCase()
   }
 
   get identifier() {

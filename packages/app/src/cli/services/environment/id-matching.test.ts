@@ -1,6 +1,6 @@
 import {automaticMatchmaking} from './id-matching.js'
 import {ExtensionRegistration} from '../dev/create-extension.js'
-import {UIExtension} from '../../models/app/extensions.js'
+import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -227,6 +227,37 @@ const EXTENSION_D: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
+}
+
+const FUNCTION_A: FunctionExtension = {
+  idEnvironmentVariableName: 'FUNCTION_A_ID',
+  localIdentifier: 'FUNCTION_A',
+  configurationPath: '/function/shopify.function.extension.toml',
+  directory: '/function',
+  type: 'product_discounts',
+  graphQLType: 'PRODUCT_DISCOUNTS',
+  configuration: {
+    name: 'FUNCTION A',
+    type: 'product_discounts',
+    description: 'Function',
+    build: {
+      command: 'make build',
+      path: 'dist/index.wasm',
+    },
+    configurationUi: false,
+    apiVersion: '2022-07',
+  },
+  buildWasmPath: () => '/function/dist/index.wasm',
+  inputQueryPath: () => '/function/input.graphql',
+  externalType: 'function',
+  publishURL: (_) => Promise.resolve(''),
+}
+
+const REGISTRATION_FUNCTION_A = {
+  uuid: 'FUNCTION_UUID_A',
+  id: 'FUNCTION_A',
+  title: 'FUNCTION A',
+  type: 'PRODUCT_DISCOUNTS',
 }
 
 describe('automaticMatchmaking: some local, no remote ones', () => {
@@ -594,6 +625,52 @@ describe('automaticMatchmaking: automatic matches with different names', () => {
         {local: EXTENSION_A, remote: registrationNewA},
         {local: EXTENSION_B, remote: registrationNewB},
       ],
+      toCreate: [],
+      toManualMatch: {local: [], remote: []},
+    }
+    expect(got).toEqual(expected)
+  })
+})
+
+describe('automaticMatchmaking: if identifiers contains something else', () => {
+  it('is ignored', async () => {
+    // When
+    const got = await automaticMatchmaking([], [], {FUNCTION_A: 'FUNCTION_A'}, 'uuid')
+
+    // Then
+    const expected = {
+      identifiers: {},
+      toConfirm: [],
+      toCreate: [],
+      toManualMatch: {local: [], remote: []},
+    }
+    expect(got).toEqual(expected)
+  })
+})
+
+describe('automaticMatchmaking: functions', () => {
+  it('creates all local functions', async () => {
+    // When
+    const got = await automaticMatchmaking([FUNCTION_A], [], {}, 'id')
+
+    // Then
+    const expected = {
+      identifiers: {},
+      toConfirm: [],
+      toCreate: [FUNCTION_A],
+      toManualMatch: {local: [], remote: []},
+    }
+    expect(got).toEqual(expected)
+  })
+
+  it('updates existing function', async () => {
+    // When
+    const got = await automaticMatchmaking([FUNCTION_A], [REGISTRATION_FUNCTION_A], {}, 'id')
+
+    // Then
+    const expected = {
+      identifiers: {FUNCTION_A: 'FUNCTION_A'},
+      toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
     }

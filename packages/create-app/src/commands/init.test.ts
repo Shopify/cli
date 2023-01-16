@@ -1,9 +1,10 @@
-import Init, {InvalidGithubRepository, UnsupportedTemplateAlias} from './init.js'
-import initPrompt from '../prompts/init.js'
+import Init from './init.js'
+import initPrompt, {templateURLMap} from '../prompts/init.js'
 import initService from '../services/init.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {errorHandler} from '@shopify/cli-kit/node/error-handler'
 import {Config} from '@oclif/core'
+import {error, output} from '@shopify/cli-kit'
 
 beforeEach(() => {
   vi.mock('../prompts/init')
@@ -42,13 +43,20 @@ describe('create app command', () => {
   })
 
   it('throw an error when using a non supported template alias name', async () => {
+    // Given
     vi.mocked(errorHandler).mockImplementation(async () => {})
 
     // When
     await Init.run(['--template', 'java'])
 
+    // Then
     const anyConfig = expect.any(Config)
-    expect(errorHandler).toHaveBeenCalledWith(UnsupportedTemplateAlias(), anyConfig)
+    const expectedError = new error.Abort(
+      output.content`Only ${Object.keys(templateURLMap)
+        .map((alias) => output.content`${output.token.yellow(alias)}`.value)
+        .join(', ')} template aliases are supported`,
+    )
+    expect(errorHandler).toHaveBeenCalledWith(expectedError, anyConfig)
   })
 
   it('throw an error when using a non github url repo', async () => {
@@ -57,6 +65,10 @@ describe('create app command', () => {
 
     // Then
     const anyConfig = expect.any(Config)
-    expect(errorHandler).toHaveBeenCalledWith(InvalidGithubRepository(), anyConfig)
+    const expectedError = new error.Abort(
+      'Only GitHub repository references are supported, ' +
+        'e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]',
+    )
+    expect(errorHandler).toHaveBeenCalledWith(expectedError, anyConfig)
   })
 })
