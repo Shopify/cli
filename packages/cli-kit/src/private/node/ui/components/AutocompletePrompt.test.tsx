@@ -1,8 +1,10 @@
 import {AutocompletePrompt} from './AutocompletePrompt.js'
+import {Item} from './SelectInput.js'
 import {
   getLastFrameAfterUnmount,
   sendInputAndWait,
   sendInputAndWaitForChange,
+  sendInputAndWaitForContent,
   waitForInputsToBeReady,
 } from '../../../../testing/ui.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -135,8 +137,7 @@ describe('AutocompletePrompt', async () => {
 
   test("doesn't submit if there are no choices", async () => {
     const onEnter = vi.fn()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const searchPromise = Promise.resolve([] as any)
+    const searchPromise = Promise.resolve([] as Item<string>[])
     const search = () => {
       return searchPromise
     }
@@ -158,8 +159,7 @@ describe('AutocompletePrompt', async () => {
     )
 
     await waitForInputsToBeReady()
-    // there is a debounce of 300ms before the search is triggered
-    await sendInputAndWait(renderInstance, 400, 'a')
+    await sendInputAndWaitForContent(renderInstance, 'No results found', 'a')
     // prompt doesn't change when enter is pressed
     await sendInputAndWait(renderInstance, 100, ENTER)
 
@@ -175,10 +175,8 @@ describe('AutocompletePrompt', async () => {
 
   test('has a loading state', async () => {
     const onEnter = vi.fn()
-    // promise that resolves with empty array after 2s
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const searchPromise = new Promise<any[]>((resolve) => {
-      setTimeout(() => resolve([]), 2000)
+    const searchPromise = new Promise<Item<string>[]>((resolve) => {
+      setTimeout(() => resolve([{label: 'a', value: 'b'}]), 2000)
     })
 
     const search = () => {
@@ -202,8 +200,7 @@ describe('AutocompletePrompt', async () => {
     )
 
     await waitForInputsToBeReady()
-    // there is a debounce of 100ms before showing the loading state + 300ms for the search
-    await sendInputAndWait(renderInstance, 500, 'a')
+    await sendInputAndWaitForContent(renderInstance, 'Loading...', 'a')
     // prompt doesn't change when enter is pressed
     await sendInputAndWait(renderInstance, 100, ENTER)
 
@@ -279,9 +276,7 @@ describe('AutocompletePrompt', async () => {
     )
 
     await waitForInputsToBeReady()
-
-    // there is a debounce of 300ms before the search is triggered
-    await sendInputAndWait(renderInstance, 400, 'i')
+    await sendInputAndWaitForContent(renderInstance, 'There has been an error', 'i')
 
     expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?: [36mi[7m [27m[39m
