@@ -7,6 +7,7 @@ import {output} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {sleep} from '@shopify/cli-kit/node/system'
 
 export default class Dev extends ThemeCommand {
   static description =
@@ -117,6 +118,7 @@ export default class Dev extends ThemeCommand {
   }
 
   async execute(store: string, password: string | undefined, command: string[], controller: AbortController) {
+    await sleep(3)
     const adminSession = await ensureAuthenticatedThemes(store, password, [], true)
     const storefrontToken = await ensureAuthenticatedStorefront([], password)
     return execCLI2(command, {adminSession, storefrontToken, signal: controller.signal})
