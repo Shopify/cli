@@ -79,7 +79,7 @@ describe('TextPrompt', () => {
     `)
   })
 
-  test.only('submitting the default value', async () => {
+  test('submitting the default value', async () => {
     const onSubmit = vi.fn()
     const renderInstance = render(<TextPrompt onSubmit={onSubmit} message="Test question" defaultValue="A" />)
 
