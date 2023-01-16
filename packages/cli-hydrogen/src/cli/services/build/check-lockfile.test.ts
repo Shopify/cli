@@ -1,6 +1,7 @@
 import {checkLockfileStatus} from './check-lockfile.js'
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
-import {file, path, git, outputMocker} from '@shopify/cli-kit'
+import {file, path, outputMocker} from '@shopify/cli-kit'
+import {factory} from '@shopify/cli-kit/node/git'
 
 vi.mock('@shopify/cli-kit', async () => {
   const cliKit: any = await vi.importActual('@shopify/cli-kit')
@@ -20,7 +21,7 @@ describe('checkLockfileStatus()', () => {
   }
 
   beforeEach(() => {
-    vi.mocked(git.factory).mockReturnValue(gitFactoryMock as any)
+    vi.mocked(factory).mockReturnValue(gitFactoryMock as any)
     vi.mocked(checkIgnoreMock).mockResolvedValue([])
   })
 
