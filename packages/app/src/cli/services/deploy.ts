@@ -102,6 +102,8 @@ export const deploy = async (options: DeployOptions) => {
         output.success('Deployed to Shopify')
       }
 
+      output.completed(`You can view the current deployment state here: ${'https://partners.shopify.com/'}`)
+
       const registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
 
       await outputCompletionMessage({
