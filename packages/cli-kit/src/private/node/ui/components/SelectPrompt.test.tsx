@@ -134,7 +134,7 @@ describe('SelectPrompt', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const items: any[] = []
 
-    const {lastFrame} = render(
+    const renderInstance = render(
       <SelectPrompt
         message="Associate your project with the org Castile Ventures?"
         choices={items}
@@ -142,7 +142,9 @@ describe('SelectPrompt', async () => {
       />,
     )
 
-    expect(unstyled(lastFrame()!)).toContain('ERROR  SelectPrompt requires at least one choice')
+    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toContain(
+      'ERROR  SelectPrompt requires at least one choice',
+    )
   })
 
   test("doesn't append a colon to the message if it ends with a question mark", async () => {

@@ -133,17 +133,17 @@ describe('TextPrompt', () => {
   test("doesn't append a colon to the message if it ends with a question mark", async () => {
     const {lastFrame} = render(<TextPrompt onSubmit={() => {}} message="Test question?" />)
 
-    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+    expect(lastFrame()!).toMatchInlineSnapshot(`
       "?  Test question?
-      >   
-         ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+      [36m>[39m  [36m[7m [27m[39m
+         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
     `)
   })
 
   test("doesn't allow to pass defaultValue and password at the same time", async () => {
-    const {lastFrame} = render(<TextPrompt onSubmit={() => {}} message="Test question" password defaultValue="A" />)
+    const renderInstance = render(<TextPrompt onSubmit={() => {}} message="Test question" password defaultValue="A" />)
 
-    expect(unstyled(lastFrame()!)).toContain("ERROR  Can't use defaultValue with password")
+    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toContain("ERROR  Can't use defaultValue with password")
   })
 })
