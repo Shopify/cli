@@ -1,10 +1,5 @@
 import {SelectPrompt} from './SelectPrompt.js'
-import {
-  getLastFrameAfterUnmount,
-  sendInputAndWait,
-  sendInputAndWaitForChange,
-  waitForInputsToBeReady,
-} from '../../../../testing/ui.js'
+import {getLastFrameAfterUnmount, sendInputAndWaitForChange, waitForInputsToBeReady} from '../../../../testing/ui.js'
 import {unstyled} from '../../../../output.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
@@ -139,7 +134,7 @@ describe('SelectPrompt', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const items: any[] = []
 
-    const renderInstance = render(
+    const {lastFrame} = render(
       <SelectPrompt
         message="Associate your project with the org Castile Ventures?"
         choices={items}
@@ -147,27 +142,20 @@ describe('SelectPrompt', async () => {
       />,
     )
 
-    await waitForInputsToBeReady()
-    // prompt doesn't change when enter is pressed
-    await sendInputAndWait(renderInstance, 100, ENTER)
-
-    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
-      "?  Associate your project with the org Castile Ventures?
-
-         [2mNo items to select.[22m
-      "
-    `)
-
-    expect(onEnter).not.toHaveBeenCalled()
+    expect(unstyled(lastFrame()!)).toContain('ERROR  SelectPrompt requires at least one choice')
   })
 
   test("doesn't append a colon to the message if it ends with a question mark", async () => {
-    const {lastFrame} = render(<SelectPrompt choices={[]} onSubmit={() => {}} message="Test question?" />)
+    const {lastFrame} = render(
+      <SelectPrompt choices={[{label: 'a', value: 'a'}]} onSubmit={() => {}} message="Test question?" />,
+    )
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "?  Test question?
 
-         No items to select.
+      >  (1) a
+
+         navigate with arrows, enter to select
       "
     `)
   })

@@ -57,7 +57,7 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, validate, defaultValue 
     ),
   )
 
-  const messageWithPunctuation = message.endsWith('?') ? message : `${message}:`
+  const messageWithPunctuation = message.endsWith('?') || message.endsWith(':') ? message : `${message}:`
 
   return (
     <Box flexDirection="column" marginBottom={1} width={oneThird}>

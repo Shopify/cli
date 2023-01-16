@@ -135,4 +135,10 @@ describe('TextPrompt', () => {
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot()
   })
+
+  test("doesn't allow to pass defaultValue and password at the same time", async () => {
+    const {lastFrame} = render(<TextPrompt onSubmit={() => {}} message="Test question" password defaultValue="A" />)
+
+    expect(unstyled(lastFrame()!)).toContain("ERROR  Can't use defaultValue with password")
+  })
 })

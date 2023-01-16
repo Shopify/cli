@@ -19,6 +19,10 @@ function SelectPrompt<T>({
   infoTable,
   onSubmit,
 }: React.PropsWithChildren<Props<T>>): ReactElement | null {
+  if (choices.length === 0) {
+    throw new Error('SelectPrompt requires at least one choice')
+  }
+
   const [answer, setAnswer] = useState<SelectItem<T> | undefined>(choices[0])
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
@@ -50,7 +54,7 @@ function SelectPrompt<T>({
     ),
   )
 
-  const messageWithPunctuation = message.endsWith('?') ? message : `${message}:`
+  const messageWithPunctuation = message.endsWith('?') || message.endsWith(':') ? message : `${message}:`
 
   return (
     <Box flexDirection="column" marginBottom={1} ref={measuredRef}>
