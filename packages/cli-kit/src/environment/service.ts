@@ -1,6 +1,15 @@
-import {isSpin} from './spin.js'
+import {isSpin} from '../public/node/environment/spin.js'
 import constants from '../constants.js'
-import {Environment} from '../network/service.js'
+
+/**
+ * Enum that represents the environment to use for a given service.
+ * @readonly
+ */
+export enum Environment {
+  Local = 'local',
+  Production = 'production',
+  Spin = 'spin',
+}
 
 export function serviceEnvironment(env = process.env): Environment {
   const value = env[constants.environmentVariables.serviceEnv]

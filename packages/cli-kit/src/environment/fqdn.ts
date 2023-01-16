@@ -1,5 +1,5 @@
-import {fqdn, fqdn as spinFqdn} from './spin.js'
 import {isSpinEnvironment, serviceEnvironment} from './service.js'
+import {spinFqdn} from '../public/node/environment/spin.js'
 import {Abort} from '../error.js'
 
 export const CouldntObtainPartnersSpinFQDNError = new Abort(
@@ -78,7 +78,7 @@ export async function shopify(options: {storeFqdn?: string} = {}): Promise<strin
 export async function normalizeStoreName(store: string) {
   const storeFqdn = store.replace(/^https?:\/\//, '').replace(/\/$/, '')
   const addDomain = async (storeFqdn: string) =>
-    isSpinEnvironment() ? `${storeFqdn}.shopify.${await fqdn()}` : `${storeFqdn}.myshopify.com`
+    isSpinEnvironment() ? `${storeFqdn}.shopify.${await spinFqdn()}` : `${storeFqdn}.myshopify.com`
   const containDomain = (storeFqdn: string) => storeFqdn.includes('.myshopify.com') || storeFqdn.includes('spin.dev')
   return containDomain(storeFqdn) ? storeFqdn : addDomain(storeFqdn)
 }

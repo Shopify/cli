@@ -1,10 +1,9 @@
 import {partners, shopify, identity, NotProvidedStoreFQDNError, normalizeStoreName} from './fqdn.js'
-import {fqdn, fqdn as spinFqdn} from './spin.js'
-import {isSpinEnvironment, serviceEnvironment} from './service.js'
-import {Environment} from '../network/service.js'
+import {Environment, isSpinEnvironment, serviceEnvironment} from './service.js'
+import {spinFqdn} from '../public/node/environment/spin.js'
 import {expect, describe, test, vi} from 'vitest'
 
-vi.mock('./spin')
+vi.mock('../public/node/environment/spin.js')
 vi.mock('./service')
 
 describe('partners', () => {
@@ -160,7 +159,7 @@ describe('normalizeStore', () => {
   test('parses store name without domain in spin', async () => {
     // Given
     vi.mocked(isSpinEnvironment).mockReturnValue(true)
-    vi.mocked(fqdn).mockResolvedValue('mydomain.spin.dev')
+    vi.mocked(spinFqdn).mockResolvedValue('mydomain.spin.dev')
 
     // When
     const got = await normalizeStoreName('example')

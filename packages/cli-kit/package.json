@@ -70,7 +70,7 @@
                 "./error-handler.js",
                 "../../environment/local.js",
                 "@oclif/core",
-                "../../environment/utilities.js",
+                "../../private/node/environment/utilities.js",
                 "../../constants.js",
                 "../../path.js",
                 "./system.js"
