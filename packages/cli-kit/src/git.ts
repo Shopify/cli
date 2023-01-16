@@ -6,38 +6,6 @@ import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine,
 
 export const factory = git
 
-export const GitNotPresentError = () => {
-  // eslint-disable-next-line rulesdir/no-error-factory-functions
-  return new Abort(
-    `Git is necessary in the environment to continue`,
-    content`Install ${token.link('git', 'https://git-scm.com/book/en/v2/Getting-Started-Installing-Git')}`,
-  )
-}
-
-export const OutsideGitDirectoryError = (directory: string) => {
-  // eslint-disable-next-line rulesdir/no-error-factory-functions
-  return new Abort(`${token.path(directory)} is not a Git directory`)
-}
-
-export const NoCommitError = () => {
-  // eslint-disable-next-line rulesdir/no-error-factory-functions
-  return new Abort(
-    'Must have at least one commit to run command',
-    content`Run ${token.genericShellCommand("git commit -m 'Initial commit'")} to create your first commit.`,
-  )
-}
-
-export const DetachedHeadError = () => {
-  // eslint-disable-next-line rulesdir/no-error-factory-functions
-  return new Abort(
-    "Git HEAD can't be detached to run command",
-    content`Run ${token.genericShellCommand('git checkout [branchName]')} to reattach HEAD or see git ${token.link(
-      'documentation',
-      'https://git-scm.com/book/en/v2/Git-Internals-Git-References',
-    )} for more details`,
-  )
-}
-
 export async function initializeRepository(directory: string, initialBranch = 'main') {
   debug(content`Initializing git repository at ${token.path(directory)}...`)
   await ensurePresentOrAbort()
@@ -136,7 +104,12 @@ export async function getLatestCommit(directory?: string): Promise<DefaultLogFie
   const logs = await git({baseDir: directory}).log({
     maxCount: 1,
   })
-  if (!logs.latest) throw NoCommitError()
+  if (!logs.latest) {
+    throw new Abort(
+      'Must have at least one commit to run command',
+      content`Run ${token.genericShellCommand("git commit -m 'Initial commit'")} to create your first commit.`,
+    )
+  }
   return logs.latest
 }
 
@@ -156,7 +129,15 @@ export async function commit(message: string, options?: {directory?: string; aut
 
 export async function getHeadSymbolicRef(directory?: string): Promise<string> {
   const ref = await git({baseDir: directory}).raw('symbolic-ref', '-q', 'HEAD')
-  if (!ref) throw DetachedHeadError()
+  if (!ref) {
+    throw new Abort(
+      "Git HEAD can't be detached to run command",
+      content`Run ${token.genericShellCommand('git checkout [branchName]')} to reattach HEAD or see git ${token.link(
+        'documentation',
+        'https://git-scm.com/book/en/v2/Git-Internals-Git-References',
+      )} for more details`,
+    )
+  }
   return ref.trim()
 }
 
@@ -166,16 +147,20 @@ export async function getHeadSymbolicRef(directory?: string): Promise<string> {
  */
 export async function ensurePresentOrAbort() {
   if (!(await hasGit())) {
-    throw GitNotPresentError()
+    throw new Abort(
+      `Git is necessary in the environment to continue`,
+      content`Install ${token.link('git', 'https://git-scm.com/book/en/v2/Getting-Started-Installing-Git')}`,
+    )
   }
 }
 
+export class OutsideGitDirectoryError extends Abort {}
 /**
  * If command run from outside a .git directory tree
  * it throws an abort error.
  */
 export async function ensureInsideGitDirectory(directory?: string) {
   if (!(await git({baseDir: directory}).checkIsRepo())) {
-    throw OutsideGitDirectoryError(directory || process.cwd())
+    throw new OutsideGitDirectoryError(`${token.path(directory || process.cwd())} is not a Git directory`)
   }
 }

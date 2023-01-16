@@ -186,7 +186,7 @@ describe('getLatestCommit()', () => {
   it('throws if no latest commit is found', async () => {
     mockedGetLog.mockResolvedValue({latest: null, all: [], total: 0})
 
-    await expect(() => git.getLatestCommit()).rejects.toThrowError(git.NoCommitError())
+    await expect(() => git.getLatestCommit()).rejects.toThrowError(/Must have at least one commit to run command/)
   })
   it('passes the directory option to simple git', async () => {
     // Given
@@ -247,7 +247,7 @@ describe('getHeadSymbolicRef()', () => {
   it('throws if HEAD is detached', async () => {
     mockedRaw.mockResolvedValue('')
 
-    await expect(() => git.getHeadSymbolicRef()).rejects.toThrowError(git.DetachedHeadError())
+    await expect(() => git.getHeadSymbolicRef()).rejects.toThrowError(/Git HEAD can't be detached to run command/)
   })
   it('passes the directory option to simple git', async () => {
     const directory = '/test/directory'
@@ -265,7 +265,9 @@ describe('ensurePresentOrAbort()', () => {
     vi.mocked(hasGit).mockResolvedValue(false)
 
     // Then
-    await expect(() => git.ensurePresentOrAbort()).rejects.toThrowError(git.GitNotPresentError())
+    await expect(() => git.ensurePresentOrAbort()).rejects.toThrowError(
+      /Git is necessary in the environment to continue/,
+    )
   })
 
   it("doesn't throw an error if Git is present", async () => {
@@ -283,7 +285,7 @@ describe('ensureInsideGitDirectory()', () => {
     mockedCheckIsRepo.mockResolvedValue(false)
 
     // Then
-    await expect(() => git.ensureInsideGitDirectory()).rejects.toThrowError(git.OutsideGitDirectoryError(process.cwd()))
+    await expect(() => git.ensureInsideGitDirectory()).rejects.toThrowError(/is not a Git directory/)
   })
 
   it("doesn't throw an error if inside a git directory", async () => {

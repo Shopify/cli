@@ -17,8 +17,11 @@ export const validateProject = async (config: DeployConfig) => {
   try {
     await git.ensureInsideGitDirectory(config.path)
   } catch (err: unknown) {
-    if ((err as error.Abort)?.message !== git.OutsideGitDirectoryError(config.path).message) throw error
-    await initializeGit(config)
+    if (err instanceof git.OutsideGitDirectoryError) {
+      await initializeGit(config)
+    } else {
+      throw err
+    }
   }
 }
 
