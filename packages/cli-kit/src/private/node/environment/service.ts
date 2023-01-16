@@ -1,8 +1,9 @@
-import {isSpin} from '../public/node/environment/spin.js'
-import constants from '../constants.js'
+import {isSpin} from '../../../public/node/environment/spin.js'
+import constants from '../../../constants.js'
 
 /**
  * Enum that represents the environment to use for a given service.
+ *
  * @readonly
  */
 export enum Environment {
@@ -11,6 +12,12 @@ export enum Environment {
   Spin = 'spin',
 }
 
+/**
+ * Returns the environment to use for a given service.
+ *
+ * @param env - Environment variables.
+ * @returns The environment to use for a given service.
+ */
 export function serviceEnvironment(env = process.env): Environment {
   const value = env[constants.environmentVariables.serviceEnv]
   if (value === 'local') {
@@ -20,8 +27,4 @@ export function serviceEnvironment(env = process.env): Environment {
   } else {
     return Environment.Production
   }
-}
-
-export function isSpinEnvironment(env = process.env): boolean {
-  return serviceEnvironment(env) === Environment.Spin
 }
