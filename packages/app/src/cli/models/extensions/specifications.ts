@@ -6,10 +6,11 @@ import {
   loadUIExtensionSpecificiationsFromPlugins,
   loadFunctionSpecificationsFromPlugins,
 } from '../../private/plugins/extension.js'
-import {path, environment} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {memoize} from '@shopify/cli-kit/common/function'
 import {Config} from '@oclif/core'
+import {isShopify} from '@shopify/cli-kit/node/environment/local'
 import {fileURLToPath} from 'url'
 
 export async function loadUIExtensionSpecifications(config: Config): Promise<UIExtensionSpec[]> {
@@ -29,7 +30,7 @@ export async function loadLocalUIExtensionsSpecifications(): Promise<UIExtension
 }
 
 export async function loadLocalFunctionSpecifications(): Promise<FunctionSpec[]> {
-  const isShopifyUser = await environment.local.isShopify()
+  const isShopifyUser = await isShopify()
   return (await memoizedLoadSpecs('function-specifications')).filter((spec) => !spec.gated || isShopifyUser)
 }
 

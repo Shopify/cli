@@ -1,6 +1,6 @@
 import * as git from './git.js'
-import {hasGit} from './environment/local.js'
 import {appendSync} from './file.js'
+import {hasGit} from './public/node/environment/local.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import simpleGit from 'simple-git'
 
@@ -24,7 +24,7 @@ const simpleGitProperties = {
 }
 
 beforeEach(() => {
-  vi.mock('./environment/local')
+  vi.mock('./public/node/environment/local.js')
   vi.mocked(hasGit).mockResolvedValue(true)
 
   vi.mock('./file.js')

@@ -1,4 +1,4 @@
-import path from 'pathe'
+import * as path from 'pathe'
 
 export const directories = {
   root: path.join(__dirname, '../../..'),

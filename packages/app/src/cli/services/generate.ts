@@ -6,10 +6,11 @@ import {GenericSpecification} from '../models/app/extensions.js'
 import generateExtensionPrompt from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
 import generateExtensionService, {ExtensionFlavor} from '../services/generate/extension.js'
-import {environment, error, output, path} from '@shopify/cli-kit'
+import {error, output, path} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager.js'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {isShopify} from '@shopify/cli-kit/node/environment/local'
 
 export interface GenerateOptions {
   directory: string
@@ -33,8 +34,8 @@ async function generate(options: GenerateOptions) {
   const allExternalTypes = specifications.map((spec) => spec.externalIdentifier)
 
   if (options.type && !specification) {
-    const isShopify = await environment.local.isShopify()
-    const tryMsg = isShopify ? 'You might need to enable some beta flags on your Organization or App' : undefined
+    const isShopifolk = await isShopify()
+    const tryMsg = isShopifolk ? 'You might need to enable some beta flags on your Organization or App' : undefined
     throw new error.Abort(
       `Unknown extension type: ${options.type}.\nThe following extension types are supported: ${allExternalTypes.join(
         ', ',
@@ -95,7 +96,7 @@ async function generate(options: GenerateOptions) {
 
   const formattedSuccessfulMessage = formatSuccessfulRunMessage(
     selectedSpecification,
-    path.relative(app.directory, extensionDirectory),
+    extensionDirectory,
     app.packageManager,
   )
   output.info(formattedSuccessfulMessage)

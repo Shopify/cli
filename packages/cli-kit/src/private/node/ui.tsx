@@ -1,5 +1,5 @@
-import {isUnitTest} from '../../environment/local.js'
 import {collectLog, consoleLog, Logger, LogLevel, outputWhereAppropriate} from '../../output.js'
+import {isUnitTest} from '../../public/node/environment/local.js'
 import {ReactElement} from 'react'
 import {Key, render as inkRender, RenderOptions} from 'ink'
 import {EventEmitter} from 'events'

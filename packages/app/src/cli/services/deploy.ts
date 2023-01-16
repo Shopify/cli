@@ -15,7 +15,8 @@ import {Extension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {path, output, file, environment} from '@shopify/cli-kit'
+import {path, output, file} from '@shopify/cli-kit'
+import {useThemeBundling} from '@shopify/cli-kit/node/environment/local'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
 import {CustomSection} from '@shopify/cli-kit/src/private/node/ui/components/Alert.js'
@@ -62,7 +63,7 @@ export const deploy = async (options: DeployOptions) => {
       }
     }),
   )
-  if (environment.local.useThemeBundling()) {
+  if (useThemeBundling()) {
     const themeExtensions = await Promise.all(
       options.app.extensions.theme.map(async (extension) => {
         return {
@@ -108,7 +109,7 @@ export const deploy = async (options: DeployOptions) => {
               })
             }
 
-            if (!environment.local.useThemeBundling()) {
+            if (!useThemeBundling()) {
               await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
             }
 
