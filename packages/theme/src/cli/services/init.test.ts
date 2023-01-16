@@ -21,7 +21,7 @@ describe('cloneRepoAndCheckoutLatestTag()', async () => {
     const repoUrl = 'https://github.com/Shopify/dawn.git'
     const destination = 'destination'
     const latestTag = true
-    const downloadRepositorySpy = vi.spyOn(git, 'downloadRepository')
+    const downloadRepositorySpy = vi.spyOn(git, 'downloadGitRepository')
 
     // When
     await cloneRepoAndCheckoutLatestTag(repoUrl, destination)
@@ -36,7 +36,7 @@ describe('cloneRepo()', async () => {
     // Given
     const repoUrl = 'https://github.com/Shopify/dawn.git'
     const destination = 'destination'
-    const downloadRepositorySpy = vi.spyOn(git, 'downloadRepository')
+    const downloadRepositorySpy = vi.spyOn(git, 'downloadGitRepository')
 
     // When
     await cloneRepo(repoUrl, destination)

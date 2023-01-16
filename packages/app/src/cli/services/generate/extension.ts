@@ -197,7 +197,7 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
       title: `Generating ${spec.externalName} extension...`,
       task: async () => {
         await file.mkdir(templateDownloadDir)
-        await git.downloadRepository({
+        await git.downloadGitRepository({
           repoUrl: url,
           destination: templateDownloadDir,
           shallow: true,

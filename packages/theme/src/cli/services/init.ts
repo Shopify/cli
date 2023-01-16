@@ -14,7 +14,7 @@ async function downloadRepository(repoUrl: string, destination: string, latestTa
       {
         title: `Cloning ${repoUrl} into ${destination}`,
         task: async () => {
-          await git.downloadRepository({
+          await git.downloadGitRepository({
             repoUrl,
             destination,
             latestTag,

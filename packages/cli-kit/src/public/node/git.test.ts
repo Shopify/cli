@@ -1,6 +1,6 @@
 import * as git from './git.js'
-import {appendSync} from './file.js'
-import {hasGit} from './public/node/environment/local.js'
+import {hasGit} from './environment/local.js'
+import {appendSync} from '../../file.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import simpleGit from 'simple-git'
 
@@ -24,10 +24,10 @@ const simpleGitProperties = {
 }
 
 beforeEach(() => {
-  vi.mock('./public/node/environment/local.js')
+  vi.mock('./environment/local.js')
   vi.mocked(hasGit).mockResolvedValue(true)
 
-  vi.mock('./file.js')
+  vi.mock('../../file.js')
 
   vi.mock('simple-git')
   vi.mocked<any>(simpleGit).mockReturnValue(simpleGitProperties)
@@ -41,7 +41,7 @@ describe('downloadRepository()', async () => {
     const options: any = {'--recurse-submodules': null}
 
     // When
-    await git.downloadRepository({repoUrl, destination})
+    await git.downloadGitRepository({repoUrl, destination})
 
     // Then
     expect(mockedClone).toHaveBeenCalledWith(repoUrl, destination, options)
@@ -54,7 +54,7 @@ describe('downloadRepository()', async () => {
     const options: any = {'--recurse-submodules': null, '--branch': 'my-branch'}
 
     // When
-    await git.downloadRepository({repoUrl, destination})
+    await git.downloadGitRepository({repoUrl, destination})
 
     // Then
     expect(mockedClone).toHaveBeenCalledWith('http://repoUrl', destination, options)
@@ -69,7 +69,7 @@ describe('downloadRepository()', async () => {
       const latestTag = true
 
       // When
-      await git.downloadRepository({repoUrl, destination, shallow, latestTag})
+      await git.downloadGitRepository({repoUrl, destination, shallow, latestTag})
 
       // Then
     }).rejects.toThrowError(/Git can't clone the latest release with the 'shallow' property/)
@@ -83,7 +83,7 @@ describe('downloadRepository()', async () => {
       const latestTag = true
 
       // When
-      await git.downloadRepository({repoUrl, destination, latestTag})
+      await git.downloadGitRepository({repoUrl, destination, latestTag})
 
       // Then
     }).rejects.toThrowError(/Git can't clone the latest release with a 'branch'/)
@@ -106,7 +106,7 @@ describe('downloadRepository()', async () => {
       })
 
       // When
-      await git.downloadRepository({repoUrl, destination, latestTag})
+      await git.downloadGitRepository({repoUrl, destination, latestTag})
 
       // Then
     }).rejects.toThrowError(/Couldn't obtain the most recent tag of the repository http:\/\/repoUrl/)
@@ -132,7 +132,7 @@ describe('downloadRepository()', async () => {
     })
 
     // When
-    await git.downloadRepository({repoUrl, destination, latestTag})
+    await git.downloadGitRepository({repoUrl, destination, latestTag})
 
     // Then
     expect(mockedClone).toHaveBeenCalledWith('http://repoUrl', destination, options)
@@ -146,7 +146,7 @@ describe('initializeRepository()', () => {
     const directory = '/tmp/git-repo'
 
     // When
-    await git.initializeRepository(directory, 'my-branch')
+    await git.initializeGitRepository(directory, 'my-branch')
 
     // Then
     expect(simpleGit).toHaveBeenCalledOnce()
@@ -181,12 +181,12 @@ describe('getLatestCommit()', () => {
 
     mockedGetLog.mockResolvedValue({latest: latestCommit, all: [latestCommit], total: 1})
 
-    await expect(git.getLatestCommit()).resolves.toBe(latestCommit)
+    await expect(git.getLatestGitCommit()).resolves.toBe(latestCommit)
   })
   it('throws if no latest commit is found', async () => {
     mockedGetLog.mockResolvedValue({latest: null, all: [], total: 0})
 
-    await expect(() => git.getLatestCommit()).rejects.toThrowError(/Must have at least one commit to run command/)
+    await expect(() => git.getLatestGitCommit()).rejects.toThrowError(/Must have at least one commit to run command/)
   })
   it('passes the directory option to simple git', async () => {
     // Given
@@ -195,7 +195,7 @@ describe('getLatestCommit()', () => {
     mockedGetLog.mockResolvedValue({latest: latestCommit, all: [latestCommit], total: 1})
 
     // When
-    await git.getLatestCommit(directory)
+    await git.getLatestGitCommit(directory)
 
     // Then
     expect(simpleGit).toHaveBeenCalledWith({baseDir: directory})
@@ -206,7 +206,7 @@ describe('addAll()', () => {
   it('builds valid raw command', async () => {
     const directory = '/test/directory'
 
-    await git.addAll(directory)
+    await git.addAllToGitFromDirectory(directory)
 
     expect(mockedRaw).toHaveBeenCalledOnce()
     expect(mockedRaw).toHaveBeenCalledWith('add', '--all')
@@ -219,7 +219,7 @@ describe('commit()', () => {
     mockedCommit.mockResolvedValue({commit: 'sha'})
     const commitMsg = 'my msg'
 
-    const commitSha = await git.commit(commitMsg)
+    const commitSha = await git.createGitCommit(commitMsg)
 
     expect(mockedCommit).toHaveBeenCalledOnce()
     expect(mockedCommit).toHaveBeenCalledWith(commitMsg, undefined)
@@ -230,7 +230,7 @@ describe('commit()', () => {
     const directory = '/some/path'
     mockedCommit.mockResolvedValue({commit: 'sha'})
 
-    await git.commit('msg', {author, directory})
+    await git.createGitCommit('msg', {author, directory})
 
     expect(simpleGit).toHaveBeenCalledWith({baseDir: directory})
     expect(mockedCommit).toHaveBeenCalledWith('msg', {'--author': author})
@@ -265,7 +265,7 @@ describe('ensurePresentOrAbort()', () => {
     vi.mocked(hasGit).mockResolvedValue(false)
 
     // Then
-    await expect(() => git.ensurePresentOrAbort()).rejects.toThrowError(
+    await expect(() => git.ensureGitIsPresentOrAbort()).rejects.toThrowError(
       /Git is necessary in the environment to continue/,
     )
   })
@@ -275,7 +275,7 @@ describe('ensurePresentOrAbort()', () => {
     vi.mocked(hasGit).mockResolvedValue(true)
 
     // Then
-    await expect(git.ensurePresentOrAbort()).resolves.toBeUndefined()
+    await expect(git.ensureGitIsPresentOrAbort()).resolves.toBeUndefined()
   })
 })
 

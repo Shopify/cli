@@ -39,7 +39,7 @@ async function init(options: InitOptions) {
     await ui.task({
       title: `Downloading template from ${repoUrl}`,
       task: async () => {
-        await git.downloadRepository({
+        await git.downloadGitRepository({
           repoUrl,
           destination: templateDownloadDir,
           shallow: true,
@@ -135,7 +135,7 @@ async function init(options: InitOptions) {
       {
         title: 'Initializing a Git repository...',
         task: async (_, task) => {
-          await git.initializeRepository(templateScaffoldDir)
+          await git.initializeGitRepository(templateScaffoldDir)
           task.title = 'Git repository initialized'
         },
       },

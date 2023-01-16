@@ -35,7 +35,7 @@ describe('validateProject() & initializeGit()', () => {
           await validateProject({...defaultConfig, path: tmpDir})
 
           await expect(file.exists(`${tmpDir}/.gitignore`)).resolves.toBeTruthy()
-          await expect(git.getLatestCommit(tmpDir)).resolves.toBeDefined()
+          await expect(git.getLatestGitCommit(tmpDir)).resolves.toBeDefined()
         })
       },
       10 * 1000,
