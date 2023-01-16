@@ -6,7 +6,7 @@ import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {Box, Text} from 'ink'
 import React, {useRef, useState} from 'react'
 
-const loadingBarChar = '▅'
+const loadingBarChar = '▀'
 
 export interface Task<TContext = unknown> {
   title: string
