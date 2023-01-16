@@ -39,5 +39,4 @@
   "testing.automaticallyOpenPeekView": "never",
   "javascript.preferences.importModuleSpecifierEnding": "js",
   "typescript.preferences.importModuleSpecifierEnding": "js",
-  "eslint.lintTask.enable": true,
 }
