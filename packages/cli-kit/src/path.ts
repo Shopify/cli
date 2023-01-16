@@ -37,9 +37,11 @@ export async function findUp(
  * @param path - Path to relativize
  * @returns Relativized path.
  */
-export function relativize(path: string): string {
-  const result = commondir([path, process.cwd()])
-  const relativePath = relative(process.cwd(), path)
+export function relativize(path: string, cwd: string = process.cwd()): string {
+  const result = commondir([path, cwd])
+  const relativePath = relative(cwd, path)
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const relativeComponents = relativePath.split('/').filter((component) => component === '..').length
   if (result === '/' || relativePath === '' || relativeComponents > 2) {
     return path

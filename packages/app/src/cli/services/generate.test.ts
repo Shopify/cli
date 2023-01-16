@@ -49,7 +49,7 @@ describe('after extension command finishes correctly', () => {
     // Then
     expect(outputInfo.completed()).toMatchInlineSnapshot('"Your Checkout UI extension was added to your project!"')
     expect(outputInfo.info()).toMatchInlineSnapshot(
-      '"\n  To find your extension, remember to cd extensions/name\n  To preview your project, run yarn dev\n"',
+      '"\n  To find your extension, remember to cd /extensions/name\n  To preview your project, run yarn dev\n"',
     )
   })
 
@@ -65,7 +65,7 @@ describe('after extension command finishes correctly', () => {
       '"Your Theme App Extension extension was added to your project!"',
     )
     expect(outputInfo.info()).toMatchInlineSnapshot(
-      '"\n  To find your extension, remember to cd extensions/name\n  To preview your project, run yarn dev\n"',
+      '"\n  To find your extension, remember to cd /extensions/name\n  To preview your project, run yarn dev\n"',
     )
   })
 

@@ -96,7 +96,7 @@ async function generate(options: GenerateOptions) {
 
   const formattedSuccessfulMessage = formatSuccessfulRunMessage(
     selectedSpecification,
-    path.relative(app.directory, extensionDirectory),
+    extensionDirectory,
     app.packageManager,
   )
   output.info(formattedSuccessfulMessage)

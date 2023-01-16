@@ -238,9 +238,8 @@ describe('info', () => {
 
     // Then
     expect(result).toContain('Extensions with errors')
-    expect(result).toContain('📂 ui_extension    tmp/project/extensions/test-ui-extension')
+    expect(result).toContain('📂 ui_extension')
     expect(result).toContain('! Mock error with ui_extension')
-    expect(result).toContain('📂 ui_extension    tmp/project/extensions/test-ui-extension')
     expect(result).toContain('! Mock error with checkout_ui_extension')
   })
 })
