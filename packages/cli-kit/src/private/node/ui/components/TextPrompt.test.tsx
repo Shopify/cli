@@ -26,7 +26,7 @@ describe('TextPrompt', () => {
     await sendInputAndWaitForChange(renderInstance, ENTER)
     // testing with styles because the color changes to red
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "?  Test question
+      "?  Test question:
       [31m>[39m  [31m[7m [27m[39m
          [31m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
          [31mType an answer to the prompt.[39m
@@ -35,7 +35,7 @@ describe('TextPrompt', () => {
     await sendInputAndWaitForChange(renderInstance, 'A')
     // color changes back to valid color
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "?  Test question
+      "?  Test question:
       [36m>[39m  [36mA[7m [27m[39m
          [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
@@ -56,7 +56,7 @@ describe('TextPrompt', () => {
     await sendInputAndWaitForChange(renderInstance, ENTER)
     // testing with styles because the color changes to red
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "?  Test question
+      "?  Test question:
       [31m>[39m  [31mthis-test-includes-shopify[7m [27m[39m
          [31m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
          [31mApp Name can't include the word shopify[39m
@@ -73,7 +73,7 @@ describe('TextPrompt', () => {
     await sendInputAndWaitForChange(renderInstance, ENTER)
     expect(onSubmit).toHaveBeenCalledWith('A')
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
-      "?  Test question
+      "?  Test question:
       ✔  A
       "
     `)
@@ -102,7 +102,7 @@ describe('TextPrompt', () => {
     await sendInputAndWaitForChange(renderInstance, 'A'.repeat(77))
     await sendInputAndWaitForChange(renderInstance, 'B'.repeat(6))
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "?  Test question
+      "?  Test question:
       [36m>[39m  [36mAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA[39m
          [36mBBBBBB[7m [27m[39m
          [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
@@ -116,7 +116,7 @@ describe('TextPrompt', () => {
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, 'ABC')
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "?  Test question
+      "?  Test question:
       [36m>[39m  [36m***[7m [27m[39m
          [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
@@ -124,7 +124,7 @@ describe('TextPrompt', () => {
 
     await sendInputAndWaitForChange(renderInstance, ENTER)
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
-      "?  Test question
+      "?  Test question:
       ✔  ***
       "
     `)
@@ -133,7 +133,12 @@ describe('TextPrompt', () => {
   test("doesn't append a colon to the message if it ends with a question mark", async () => {
     const {lastFrame} = render(<TextPrompt onSubmit={() => {}} message="Test question?" />)
 
-    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot()
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      "?  Test question?
+      >   
+         ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+      "
+    `)
   })
 
   test("doesn't allow to pass defaultValue and password at the same time", async () => {
