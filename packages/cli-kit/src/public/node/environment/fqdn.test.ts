@@ -1,4 +1,4 @@
-import {partnersFqdn, identityFqdn, normalizeStoreName} from './fqdn.js'
+import {partnersFqdn, identityFqdn, normalizeStoreFqdn} from './fqdn.js'
 import {spinFqdn, isSpinEnvironment} from '../environment/spin.js'
 import {Environment, serviceEnvironment} from '../../../private/node/environment/service.js'
 import {expect, describe, test, vi} from 'vitest'
@@ -81,7 +81,7 @@ describe('identity', () => {
 describe('normalizeStore', () => {
   test('parses store name with http', async () => {
     // When
-    const got = await normalizeStoreName('http://example.myshopify.com')
+    const got = await normalizeStoreFqdn('http://example.myshopify.com')
 
     // Then
     expect(got).toEqual('example.myshopify.com')
@@ -89,7 +89,7 @@ describe('normalizeStore', () => {
 
   test('parses store name with https', async () => {
     // When
-    const got = await normalizeStoreName('https://example.myshopify.com')
+    const got = await normalizeStoreFqdn('https://example.myshopify.com')
 
     // Then
     expect(got).toEqual('example.myshopify.com')
@@ -97,7 +97,7 @@ describe('normalizeStore', () => {
 
   test('parses store name with https when spin URL', async () => {
     // When
-    const got = await normalizeStoreName('https://devstore001.shopify.partners-6xat.test.us.spin.dev')
+    const got = await normalizeStoreFqdn('https://devstore001.shopify.partners-6xat.test.us.spin.dev')
 
     // Then
     expect(got).toEqual('devstore001.shopify.partners-6xat.test.us.spin.dev')
@@ -105,7 +105,7 @@ describe('normalizeStore', () => {
 
   test('parses store name without domain', async () => {
     // When
-    const got = await normalizeStoreName('example')
+    const got = await normalizeStoreFqdn('example')
 
     // Then
     expect(got).toEqual('example.myshopify.com')
@@ -117,7 +117,7 @@ describe('normalizeStore', () => {
     vi.mocked(spinFqdn).mockResolvedValue('mydomain.spin.dev')
 
     // When
-    const got = await normalizeStoreName('example')
+    const got = await normalizeStoreFqdn('example')
 
     // Then
     expect(got).toEqual('example.shopify.mydomain.spin.dev')

@@ -3,7 +3,7 @@ import dev from '../../services/dev.js'
 import Command from '../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
 import {path, metadata} from '@shopify/cli-kit'
-import {normalizeStoreName} from '@shopify/cli-kit/node/environment/fqdn'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class Dev extends Command {
@@ -22,7 +22,7 @@ export default class Dev extends Command {
       char: 's',
       description: 'Development store URL. Must be an existing development store.',
       env: 'SHOPIFY_FLAG_STORE',
-      parse: (input, _) => Promise.resolve(normalizeStoreName(input)),
+      parse: (input, _) => Promise.resolve(normalizeStoreFqdn(input)),
     }),
     reset: Flags.boolean({
       hidden: false,
