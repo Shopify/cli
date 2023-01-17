@@ -82,8 +82,7 @@ export function renderDeprecatedArgsWarning(argv: string[]) {
       'Positional arguments are deprecated. Use the',
       {command: '--theme'},
       'flag:',
-      {command: `shopify delete delete --theme ${ids}`},
-      '.',
+      {command: `shopify theme delete --theme ${ids}`},
     ],
   })
 }

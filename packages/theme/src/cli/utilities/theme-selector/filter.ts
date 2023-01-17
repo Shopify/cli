@@ -27,7 +27,7 @@ function filterByTheme(store: string, themes: Theme[], filter: Filter) {
     const error = `The ${store} store doesn't have a theme with the "${identifier}" ID or name`
 
     return filterArray(themes, (theme) => {
-      return `${theme.id}` === identifier || new RegExp(identifier, 'i').test(theme.name)
+      return `${theme.id}` === identifier || theme.name.toLowerCase().includes(identifier.toLowerCase())
     }).orThrow(error)
   })
 }

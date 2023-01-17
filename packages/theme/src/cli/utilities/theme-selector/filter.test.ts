@@ -27,7 +27,7 @@ describe('filterThemes', () => {
 
     // Then
     expect(filtered).toHaveLength(1)
-    expect(filtered[0]!.name).toBe('theme 3')
+    expect(filtered[0]!.name).toBe('theme (3)')
   })
 
   test('filters the development theme', async () => {
@@ -55,14 +55,14 @@ describe('filterThemes', () => {
 
     // Then
     expect(filtered).toHaveLength(2)
-    expect(filtered[0]!.name).toBe('theme 7')
-    expect(filtered[1]!.name).toBe('theme 8')
+    expect(filtered[0]!.name).toBe('theme (7)')
+    expect(filtered[1]!.name).toBe('theme (8)')
   })
 
   test('filters by theme (exact name)', async () => {
     // Given
     const filter = new Filter({
-      theme: 'theme 7',
+      theme: 'theme (7)',
     })
 
     // When
@@ -70,13 +70,13 @@ describe('filterThemes', () => {
 
     // Then
     expect(filtered).toHaveLength(1)
-    expect(filtered[0]!.name).toBe('theme 7')
+    expect(filtered[0]!.name).toBe('theme (7)')
   })
 
   test('filters by theme (partial name with different case)', async () => {
     // Given
     const filter = new Filter({
-      theme: 'eMe 7',
+      theme: 'eMe (7',
     })
 
     // When
@@ -84,7 +84,7 @@ describe('filterThemes', () => {
 
     // Then
     expect(filtered).toHaveLength(1)
-    expect(filtered[0]!.name).toBe('theme 7')
+    expect(filtered[0]!.name).toBe('theme (7)')
   })
 
   test('filters by theme (ID)', async () => {
@@ -98,13 +98,13 @@ describe('filterThemes', () => {
 
     // Then
     expect(filtered).toHaveLength(1)
-    expect(filtered[0]!.name).toBe('theme 5')
+    expect(filtered[0]!.name).toBe('theme (5)')
   })
 
   test('filters by themes', async () => {
     // Given
     const filter = new Filter({
-      themes: ['theme 3', '5'],
+      themes: ['theme (3)', '5'],
     })
 
     // When
@@ -112,8 +112,8 @@ describe('filterThemes', () => {
 
     // Then
     expect(filtered).toHaveLength(2)
-    expect(filtered[0]!.name).toBe('theme 3')
-    expect(filtered[1]!.name).toBe('theme 5')
+    expect(filtered[0]!.name).toBe('theme (3)')
+    expect(filtered[1]!.name).toBe('theme (5)')
   })
 })
 
@@ -193,5 +193,5 @@ describe('Filter#any', () => {
 })
 
 function theme(id: number, role: string) {
-  return {id, role, name: `theme ${id}`} as Theme
+  return {id, role, name: `theme (${id})`} as Theme
 }

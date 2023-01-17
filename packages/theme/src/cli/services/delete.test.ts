@@ -149,8 +149,7 @@ describe('renderDeprecatedArgsWarning', () => {
         'Positional arguments are deprecated. Use the',
         {command: '--theme'},
         'flag:',
-        {command: 'shopify delete delete --theme 1 2'},
-        '.',
+        {command: 'shopify theme delete --theme 1 2'},
       ],
     })
   })
