@@ -14,6 +14,7 @@ import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
 import {Extension} from '../models/app/extensions.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
+import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {path, output, file, environment} from '@shopify/cli-kit'
 import {AllAppExtensionRegistrationsQuerySchema} from '@shopify/cli-kit/src/api/graphql'
 
@@ -101,9 +102,6 @@ export const deploy = async (options: DeployOptions) => {
       } else {
         output.success('Deployed to Shopify')
       }
-
-      output.completed(`You can view the current deployment state here: ${'https://partners.shopify.com/'}`)
-
       const registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
 
       await outputCompletionMessage({
@@ -141,10 +139,19 @@ async function outputCompletionMessage({
   registrations: AllAppExtensionRegistrationsQuerySchema
   validationErrors: UploadExtensionValidationError[]
 }) {
-  output.newline()
-  output.info('  Summary:')
   const outputDeployedButNotLiveMessage = (extension: Extension) => {
-    output.info(output.content`    • ${extension.localIdentifier} is deployed to Shopify but not yet live`)
+    renderSuccess({
+      headline: 'Deployment successful.',
+      body: 'Your extensions have been uploaded to your Shopify Partners Dashboard.',
+      nextSteps: [
+        {
+          link: {
+            label: 'See your deployment and set it live',
+            url: 'https://partners.shopify.com/1797046/apps/4523695/deployments',
+          },
+        },
+      ],
+    })
     const uuid = identifiers.extensions[extension.localIdentifier]
     const validationError = validationErrors.find((error) => error.uuid === uuid)
 
