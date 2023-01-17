@@ -135,7 +135,7 @@ export function capitalize(str: string): string {
  * @param plural - Supplier used when the list of items has more than one item.
  * @param singular - Supplier used when the list of items has a single item.
  * @param none - Supplier used when the list has no items.
- * @returns String supplied by the {@link plural}, {@link singular}, or {@link none} functions.
+ * @returns The {@link TokenItem} supplied by the {@link plural}, {@link singular}, or {@link none} functions.
  */
 export function pluralize<T>(
   items: T[],
