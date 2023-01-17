@@ -7,7 +7,7 @@ import {
 } from './exchange.js'
 import {applicationId, clientId} from './identity.js'
 import {IdentityToken} from './schema.js'
-import {shopifyFetch} from '../../../http.js'
+import {shopifyFetch} from '../../../public/node/http.js'
 import {identityFqdn} from '../../../public/node/environment/fqdn.js'
 import {describe, it, expect, vi, afterAll, beforeEach} from 'vitest'
 import {Response} from 'node-fetch'
@@ -31,7 +31,7 @@ const identityToken: IdentityToken = {
 }
 
 beforeEach(() => {
-  vi.mock('../../../http')
+  vi.mock('../../../public/node/http.js')
   vi.mock('../../../public/node/environment/fqdn.js')
   vi.mock('./identity')
   vi.mocked(clientId).mockReturnValue('clientId')

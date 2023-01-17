@@ -4,11 +4,11 @@ import {
   GithubRelease,
   parseGitHubRepositoryReference,
 } from './github.js'
-import {fetch} from '../../http.js'
+import {fetch} from './http.js'
 import {Response} from 'node-fetch'
 import {describe, expect, it, vi} from 'vitest'
 
-vi.mock('../../http.js')
+vi.mock('./http.js')
 
 describe('getLatestGitHubRelease', () => {
   it('delegates to fetch', async () => {

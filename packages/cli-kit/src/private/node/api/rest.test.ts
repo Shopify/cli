@@ -1,5 +1,5 @@
 import {buildHeaders} from './headers.js'
-import {fetch} from './rest.js'
+import {fetch} from '../../../public/node/http.js'
 import {describe, test, expect, vi} from 'vitest'
 import nodeFetch, {Response} from 'node-fetch'
 import type {RequestInit, RequestInfo} from 'node-fetch'

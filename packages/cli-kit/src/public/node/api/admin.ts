@@ -2,7 +2,8 @@ import {AdminSession} from '../session.js'
 import {content, token as outputToken} from '../../../output.js'
 import {Bug, Abort} from '../../../error.js'
 import {graphqlRequest, GraphQLVariables} from '../../../private/node/api/graphql.js'
-import {fetch, restRequestBody, restRequestHeaders, restRequestUrl} from '../../../private/node/api/rest.js'
+import {restRequestBody, restRequestHeaders, restRequestUrl} from '../../../private/node/api/rest.js'
+import {fetch} from '../http.js'
 import {ClientError, gql} from 'graphql-request'
 
 /**

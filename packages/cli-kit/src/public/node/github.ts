@@ -1,5 +1,5 @@
 import {err, ok, Result} from './result.js'
-import {fetch} from '../../http.js'
+import {fetch} from './http.js'
 import {content, debug} from '../../output.js'
 
 class GitHubClientError extends Error {
