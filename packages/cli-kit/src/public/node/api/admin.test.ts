@@ -1,13 +1,13 @@
 import * as admin from './admin.js'
 import {AdminSession} from '../session.js'
 import {graphqlRequest} from '../../../private/node/api/graphql.js'
-import fetch from '../../../http/fetch.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'
+import {fetch} from '../../../private/node/api/rest.js'
 import {test, vi, expect, describe} from 'vitest'
 
 vi.mock('../../../private/node/api/graphql.js')
 vi.mock('../../../private/node/api/headers.js')
-vi.mock('../../../http/fetch.js')
+vi.mock('../../../private/node/api/rest.js')
 
 const mockedResult = {
   publicApiVersions: [
