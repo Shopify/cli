@@ -2,7 +2,7 @@ import {build} from './build.js'
 import {checkLockfileStatus} from './build/check-lockfile.js'
 import {describe, it, expect, vi} from 'vitest'
 import {build as viteBuild} from 'vite'
-import {file} from '@shopify/cli-kit'
+import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
 vi.mock('vite')
 vi.mock('./build/check-lockfile.js', () => {
@@ -13,7 +13,7 @@ vi.mock('./build/check-lockfile.js', () => {
 
 describe('build', () => {
   it('runs vite build with logLevel as "silent" by default', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const options = {
         directory: tmpDir,
@@ -29,7 +29,7 @@ describe('build', () => {
   })
 
   it('runs vite build with logLevel as "info" when verbose flag is passed', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const options = {
         verbose: true,

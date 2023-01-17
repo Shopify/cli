@@ -1,5 +1,5 @@
+import {mkdir, readFile, copyFile, chmod, isDirectory, writeFile, fileHasExecutablePermissions} from './fs.js'
 import {glob, join, dirname, relative} from '../../path.js'
-import {mkdir, read, copy, chmod, isDirectory, write, hasExecutablePermissions} from '../../file.js'
 import {content, token, debug} from '../../output.js'
 import {Liquid} from 'liquidjs'
 
@@ -40,17 +40,17 @@ export async function recursiveLiquidTemplateCopy(from: string, to: string, data
         await mkdir(outputPath)
       } else if (templateItemPath.endsWith('.liquid')) {
         await mkdir(dirname(outputPath))
-        const content = await read(templateItemPath)
+        const content = await readFile(templateItemPath)
         const contentOutput = await renderLiquidTemplate(content, data)
-        const isExecutable = await hasExecutablePermissions(templateItemPath)
+        const isExecutable = await fileHasExecutablePermissions(templateItemPath)
         const outputPathWithoutLiquid = outputPath.replace('.liquid', '')
-        await copy(templateItemPath, outputPathWithoutLiquid)
-        await write(outputPathWithoutLiquid, contentOutput)
+        await copyFile(templateItemPath, outputPathWithoutLiquid)
+        await writeFile(outputPathWithoutLiquid, contentOutput)
         if (isExecutable) {
           await chmod(outputPathWithoutLiquid, 0o755)
         }
       } else {
-        await copy(templateItemPath, outputPath)
+        await copyFile(templateItemPath, outputPath)
       }
     }),
   )

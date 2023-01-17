@@ -8,9 +8,10 @@ import {
   loadLocalUIExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
-import {file, git, output, path} from '@shopify/cli-kit'
+import {git, output, path} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
 import * as template from '@shopify/cli-kit/node/liquid'
+import * as file from '@shopify/cli-kit/node/fs'
 import type {ExtensionFlavor} from './extension.js'
 
 beforeEach(() => {
@@ -226,7 +227,7 @@ describe('initialize a extension', async () => {
 
     async (specification, extensionFlavor, srcFileExtension) => {
       await withTemporaryApp(async (tmpDir: string) => {
-        vi.spyOn(file, 'move').mockResolvedValue()
+        vi.spyOn(file, 'moveFile').mockResolvedValue()
 
         const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockResolvedValue()
         const name = 'extension-name'
@@ -255,7 +256,7 @@ describe('initialize a extension', async () => {
     async () => {
       await withTemporaryApp(async (tmpDir) => {
         // Given
-        vi.spyOn(file, 'move').mockResolvedValue()
+        vi.spyOn(file, 'moveFile').mockResolvedValue()
         const name = 'my-ext-1'
         const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
         specification.templatePath = 'path/to/custom/template'
@@ -282,7 +283,7 @@ describe('initialize a extension', async () => {
     async () => {
       await withTemporaryApp(async (tmpDir) => {
         // Given
-        vi.spyOn(file, 'move').mockResolvedValue()
+        vi.spyOn(file, 'moveFile').mockResolvedValue()
         vi.spyOn(git, 'downloadRepository').mockResolvedValue()
         const name = 'my-ext-1'
         const specification = allFunctionSpecs.find((spec) => spec.identifier === 'order_discounts')!
@@ -382,10 +383,10 @@ async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | vo
     build = "./build.sh"
     dev = "./test.sh"
     `
-    await file.write(appConfigurationPath, appConfiguration)
+    await file.writeFile(appConfigurationPath, appConfiguration)
     await file.mkdir(path.dirname(webConfigurationPath))
-    await file.write(webConfigurationPath, webConfiguration)
-    await file.write(path.join(tmpDir, 'package.json'), JSON.stringify({dependencies: {}, devDependencies: {}}))
+    await file.writeFile(webConfigurationPath, webConfiguration)
+    await file.writeFile(path.join(tmpDir, 'package.json'), JSON.stringify({dependencies: {}, devDependencies: {}}))
     return callback(tmpDir)
   })
 }

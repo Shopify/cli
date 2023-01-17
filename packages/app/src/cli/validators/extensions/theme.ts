@@ -1,5 +1,6 @@
 import {ThemeExtension} from '../../models/app/extensions.js'
-import {error, file, output, path} from '@shopify/cli-kit'
+import {error, output, path} from '@shopify/cli-kit'
+import {fileSize} from '@shopify/cli-kit/node/fs'
 
 interface FilenameValidation {
   validator: RegExp
@@ -51,7 +52,7 @@ async function validateThemeExtension(extension: ThemeExtension): Promise<void> 
       const relativePath = path.relative(extension.directory, filepath)
       const dirname = path.dirname(relativePath)
       validateFile(relativePath, dirname)
-      const filesize = await file.size(filepath)
+      const filesize = await fileSize(filepath)
       extensionBytes.push(filesize)
       if (['blocks', 'snippets'].includes(dirname)) liquidBytes.push(filesize)
     }),

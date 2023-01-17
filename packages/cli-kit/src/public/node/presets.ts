@@ -1,5 +1,5 @@
 import {decodeToml} from './toml.js'
-import {exists as fileExists, read as fileRead} from '../../file.js'
+import {fileExists, readFile} from './fs.js'
 import {JsonMap} from '../../private/common/json.js'
 import {findUp, join as pathJoin} from '../../path.js'
 
@@ -22,7 +22,7 @@ export async function loadPresetsFromDirectory(dir: string, opts?: {findUp: bool
     }
   }
   if (presetsFilePath) {
-    return decodeToml(await fileRead(presetsFilePath)) as Presets
+    return decodeToml(await readFile(presetsFilePath)) as Presets
   } else {
     return {} as Presets
   }

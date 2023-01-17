@@ -6,7 +6,8 @@ import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
 import {ThemeExtensionInstance, ThemeExtensionSpec} from '../extensions/theme.js'
 import {ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
 import {FunctionInstance, FunctionSpec} from '../extensions/functions.js'
-import {error, file, path, schema, output} from '@shopify/cli-kit'
+import {error, path, schema, output} from '@shopify/cli-kit'
+import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
   getDependencies,
@@ -132,14 +133,14 @@ class AppLoader {
   async loadDotEnv(): Promise<DotEnvFile | undefined> {
     let dotEnvFile: DotEnvFile | undefined
     const dotEnvPath = path.join(this.appDirectory, dotEnvFileNames.production)
-    if (await file.exists(dotEnvPath)) {
+    if (await fileExists(dotEnvPath)) {
       dotEnvFile = await readAndParseDotEnv(dotEnvPath)
     }
     return dotEnvFile
   }
 
   async findAppDirectory() {
-    if (!(await file.exists(this.directory))) {
+    if (!(await fileExists(this.directory))) {
       throw new error.Abort(output.content`Couldn't find directory ${output.token.path(this.directory)}`)
     }
     return path.dirname(await this.getConfigurationPath())
@@ -194,14 +195,14 @@ class AppLoader {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     decode: (input: any) => any = decodeToml,
   ): Promise<unknown> {
-    if (!(await file.exists(filepath))) {
+    if (!(await fileExists(filepath))) {
       return this.abortOrReport(
         output.content`Couldn't find the configuration file at ${output.token.path(filepath)}`,
         '',
         filepath,
       )
     }
-    const configurationContent = await file.read(filepath)
+    const configurationContent = await readFile(filepath)
     let configuration: object
     try {
       configuration = decode(configurationContent)
@@ -258,7 +259,7 @@ class AppLoader {
 
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
-      const fileContent = await file.read(configurationPath)
+      const fileContent = await readFile(configurationPath)
       const obj = decodeToml(fileContent)
       const {type} = TypeSchema.parse(obj)
       const specification = this.findSpecificationForType(type) as UIExtensionSpec | undefined
@@ -286,7 +287,7 @@ class AppLoader {
               .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
               .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
               .map((relativePath) => path.join(directory, relativePath))
-              .map(async (sourcePath) => ((await file.exists(sourcePath)) ? sourcePath : undefined)),
+              .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
           )
         ).find((sourcePath) => sourcePath !== undefined)
         if (!entryPath) {
@@ -332,7 +333,7 @@ class AppLoader {
 
     const allFunctions = configPaths.map(async (configurationPath) => {
       const directory = path.dirname(configurationPath)
-      const fileContent = await file.read(configurationPath)
+      const fileContent = await readFile(configurationPath)
       const obj = decodeToml(fileContent)
       const {type} = TypeSchema.parse(obj)
       const specification = this.findSpecificationForType(type) as FunctionSpec | undefined
@@ -423,11 +424,11 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'f
   const rubyConfigFile = path.join(directory, 'Gemfile')
   const phpConfigFile = path.join(directory, 'composer.json')
 
-  if (await file.exists(nodeConfigFile)) {
+  if (await fileExists(nodeConfigFile)) {
     return 'node'
-  } else if (await file.exists(rubyConfigFile)) {
+  } else if (await fileExists(rubyConfigFile)) {
     return 'ruby'
-  } else if (await file.exists(phpConfigFile)) {
+  } else if (await fileExists(phpConfigFile)) {
     return 'php'
   }
   return undefined

@@ -2,7 +2,8 @@ import {getExtensionPointRedirectUrl, getExtensionUrl, getRedirectUrl, sendError
 import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {getHTML} from '../templates.js'
-import {file, http, output, path} from '@shopify/cli-kit'
+import {http, output, path} from '@shopify/cli-kit'
+import {fileExists, isDirectory, readFile} from '@shopify/cli-kit/node/fs'
 
 export function corsMiddleware(
   request: http.IncomingMessage,
@@ -43,17 +44,17 @@ export async function fileServerMiddleware(
 ) {
   let {filePath} = options
 
-  if (await file.isDirectory(filePath)) {
+  if (await isDirectory(filePath)) {
     filePath += filePath.endsWith('/') ? `index.html` : '/index.html'
   }
 
-  const fileExists = await file.exists(filePath)
+  const exists = await fileExists(filePath)
 
-  if (!fileExists) {
+  if (!exists) {
     return sendError(response, {statusCode: 404, statusMessage: `Not Found: ${filePath}`})
   }
 
-  const fileContent = await file.read(filePath)
+  const fileContent = await readFile(filePath)
   const extensionToContent = {
     '.ico': 'image/x-icon',
     '.html': 'text/html',
