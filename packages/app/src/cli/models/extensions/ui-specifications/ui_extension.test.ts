@@ -5,7 +5,7 @@ import {loadLocalExtensionsSpecifications} from '../specifications.js'
 import {describe, expect, test, vi} from 'vitest'
 import {path} from '@shopify/cli-kit'
 import {err, ok} from '@shopify/cli-kit/node/result'
-import {inTemporaryDirectory, mkdir, touchFile} from '@shopify/cli-kit/node/file'
+import {inTemporaryDirectory, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
 
 describe('ui_extension', async () => {
   interface GetUIExtensionProps {

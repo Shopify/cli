@@ -2,7 +2,7 @@ import {build} from './build.js'
 import {checkLockfileStatus} from './build/check-lockfile.js'
 import {describe, it, expect, vi} from 'vitest'
 import {build as viteBuild} from 'vite'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/file'
+import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
 vi.mock('vite')
 vi.mock('./build/check-lockfile.js', () => {

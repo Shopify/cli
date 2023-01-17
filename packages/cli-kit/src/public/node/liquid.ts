@@ -1,4 +1,4 @@
-import {mkdir, readFile, copyFile, chmod, isDirectory, writeFile, fileHasExecutablePermissions} from './file.js'
+import {mkdir, readFile, copyFile, chmod, isDirectory, writeFile, fileHasExecutablePermissions} from './fs.js'
 import {glob, join, dirname, relative} from '../../path.js'
 import {content, token, debug} from '../../output.js'
 import {Liquid} from 'liquidjs'

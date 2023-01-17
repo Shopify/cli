@@ -1,5 +1,5 @@
 import {zip} from './archiver.js'
-import {fileExists, inTemporaryDirectory, mkdir, touchFile} from './file.js'
+import {fileExists, inTemporaryDirectory, mkdir, touchFile} from './fs.js'
 import {join as joinPath, dirname} from '../../path.js'
 import {describe, expect, test} from 'vitest'
 import StreamZip from 'node-stream-zip'

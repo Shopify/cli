@@ -8,7 +8,7 @@ import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {isShopify, isUnitTest} from '@shopify/cli-kit/node/environment/local'
-import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile} from '@shopify/cli-kit/node/file'
+import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile} from '@shopify/cli-kit/node/fs'
 
 interface InitOptions {
   name: string

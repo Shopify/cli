@@ -31,7 +31,7 @@ import {error, http, output} from '@shopify/cli-kit'
 import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {fileExists, readFile, readSync} from '@shopify/cli-kit/node/file'
+import {fileExists, readFile, readSync} from '@shopify/cli-kit/node/fs'
 
 interface DeployThemeExtensionOptions {
   /** The application API key */

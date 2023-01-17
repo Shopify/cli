@@ -6,7 +6,7 @@ import {path} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {inTemporaryDirectory, mkdirSync, touchFile} from '@shopify/cli-kit/node/file'
+import {inTemporaryDirectory, mkdirSync, touchFile} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 interface BundleOptions {

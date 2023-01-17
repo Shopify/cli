@@ -7,7 +7,7 @@ import {loadConfig} from '../utilities/load-config.js'
 import {describe, vi, it, expect} from 'vitest'
 import {path} from '@shopify/cli-kit'
 import {pnpmLockfile, yarnLockfile} from '@shopify/cli-kit/node/node-package-manager'
-import {inTemporaryDirectory, rmdir, writeFile} from '@shopify/cli-kit/node/file'
+import {inTemporaryDirectory, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-ignore

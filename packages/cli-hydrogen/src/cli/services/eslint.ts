@@ -4,7 +4,7 @@ import {ui, npm, path, error} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions, isVSCode} from '@shopify/cli-kit/node/vscode'
 import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
-import {writeFile, fileExists, removeFile, fileContentPrettyFormat} from '@shopify/cli-kit/node/file'
+import {writeFile, fileExists, removeFile, fileContentPrettyFormat} from '@shopify/cli-kit/node/fs'
 import stream from 'stream'
 
 interface AddESlintOptions {

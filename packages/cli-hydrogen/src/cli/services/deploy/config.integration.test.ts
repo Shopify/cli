@@ -2,7 +2,7 @@ import {validateProject, fillDeployConfig} from './config.js'
 import {gitInit} from '../../prompts/git-init.js'
 import {describe, it, expect, vi} from 'vitest'
 import {error, git} from '@shopify/cli-kit'
-import {fileExists, inTemporaryDirectory, touchFile} from '@shopify/cli-kit/node/file'
+import {fileExists, inTemporaryDirectory, touchFile} from '@shopify/cli-kit/node/fs'
 
 const isWin = process.platform === 'win32'
 

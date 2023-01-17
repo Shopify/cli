@@ -1,5 +1,5 @@
 import {isVSCode} from './vscode.js'
-import {inTemporaryDirectory, mkdir} from './file.js'
+import {inTemporaryDirectory, mkdir} from './fs.js'
 import {join} from '../../path.js'
 import {describe, expect, it} from 'vitest'
 

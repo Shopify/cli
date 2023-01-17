@@ -3,7 +3,7 @@ import {AppInterface} from '../../../models/app/app.js'
 import {output} from '@shopify/cli-kit'
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {diffLines} from 'diff'
-import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/file'
+import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 
 interface PullEnvOptions {
   envFile: string

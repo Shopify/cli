@@ -2,9 +2,9 @@ import {previewInWorker} from './preview.js'
 import {describe, it, expect, vi, afterEach} from 'vitest'
 import {path} from '@shopify/cli-kit'
 import {exec} from '@shopify/cli-kit/node/system'
-import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/file'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 
-vi.mock('@shopify/cli-kit/node/file')
+vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit', async () => {
   const cliKit: any = await vi.importActual('@shopify/cli-kit')
   return {

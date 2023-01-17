@@ -5,7 +5,7 @@ import {testApp, testUIExtension} from '../../../models/app/app.test-data.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
 import {path} from '@shopify/cli-kit'
-import {inTemporaryDirectory, touchFile} from '@shopify/cli-kit/node/file'
+import {inTemporaryDirectory, touchFile} from '@shopify/cli-kit/node/fs'
 
 vi.mock('../../../models/app/app.js')
 

@@ -3,7 +3,7 @@ import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {getHTML} from '../templates.js'
 import {http, output, path} from '@shopify/cli-kit'
-import {fileExists, isDirectory, readFile} from '@shopify/cli-kit/node/file'
+import {fileExists, isDirectory, readFile} from '@shopify/cli-kit/node/fs'
 
 export function corsMiddleware(
   request: http.IncomingMessage,

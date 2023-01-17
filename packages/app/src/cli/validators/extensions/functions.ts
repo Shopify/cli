@@ -1,6 +1,6 @@
 import {FunctionExtension} from '../../models/app/extensions.js'
 import {output, error} from '@shopify/cli-kit'
-import {fileExists} from '@shopify/cli-kit/node/file'
+import {fileExists} from '@shopify/cli-kit/node/fs'
 
 const extensionLine = (extension: {id: string; path: string}): string => {
   return output.stringifyMessage(

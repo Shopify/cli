@@ -1,4 +1,4 @@
-import {writeFile, mkdir, readFile, inTemporaryDirectory} from './file.js'
+import {writeFile, mkdir, readFile, inTemporaryDirectory} from './fs.js'
 import {renderLiquidTemplate, recursiveLiquidTemplateCopy} from './liquid.js'
 import {join} from '../../path.js'
 import {describe, expect, it} from 'vitest'

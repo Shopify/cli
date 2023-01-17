@@ -1,5 +1,5 @@
 import {CancelExecution, Abort, AbortSilent} from './error.js'
-import {removeFile, fileExists} from './public/node/file.js'
+import {removeFile, fileExists} from './public/node/fs.js'
 import {info, completed, content, token, logUpdate, Message, Logger, stringifyMessage, debug} from './output.js'
 import colors from './public/node/colors.js'
 import {relative} from './path.js'

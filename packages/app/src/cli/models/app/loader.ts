@@ -7,7 +7,7 @@ import {ThemeExtensionInstance, ThemeExtensionSpec} from '../extensions/theme.js
 import {ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
 import {FunctionInstance, FunctionSpec} from '../extensions/functions.js'
 import {error, path, schema, output} from '@shopify/cli-kit'
-import {fileExists, readFile} from '@shopify/cli-kit/node/file'
+import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
   getDependencies,

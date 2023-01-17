@@ -13,7 +13,7 @@ import {
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
-import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile} from '@shopify/cli-kit/node/file'
+import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {fileURLToPath} from 'url'
 import stream from 'stream'
 

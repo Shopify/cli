@@ -17,7 +17,7 @@ import {OrganizationApp} from '../models/organization.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {path, output} from '@shopify/cli-kit'
 import {useThemeBundling} from '@shopify/cli-kit/node/environment/local'
-import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/file'
+import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 
 interface DeployOptions {
   /** The app to be built and uploaded */

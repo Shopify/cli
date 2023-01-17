@@ -5,7 +5,7 @@ import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {output, path, schema} from '@shopify/cli-kit'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {fileExists} from '@shopify/cli-kit/node/file'
+import {fileExists} from '@shopify/cli-kit/node/fs'
 
 const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.22.0'}
 

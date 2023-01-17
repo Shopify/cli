@@ -3,7 +3,7 @@ import {testUIExtension} from '../../../models/app/app.test-data.js'
 import {ExtensionDevOptions} from '../extension.js'
 import {path, output} from '@shopify/cli-kit'
 import {describe, expect, it, vi} from 'vitest'
-import {mkdir, writeFile, inTemporaryDirectory} from '@shopify/cli-kit/node/file'
+import {mkdir, writeFile, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
 async function testGetLocalization(tmpDir: string, currentLocalization?: Localization) {
   const mockOptions = {} as unknown as ExtensionDevOptions

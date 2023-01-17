@@ -1,6 +1,6 @@
 import download from 'download'
 import {getLatestGitHubRelease, parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
-import {stripUpPath} from '@shopify/cli-kit/node/file'
+import {stripUpPath} from '@shopify/cli-kit/node/fs'
 
 export async function downloadTemplate({templateUrl, into}: {templateUrl: string; into: string}) {
   const {name, user, subDirectory} = parseGitHubRepositoryURL(templateUrl).valueOrAbort()

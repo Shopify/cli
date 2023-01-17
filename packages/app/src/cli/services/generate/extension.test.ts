@@ -11,7 +11,7 @@ import {describe, it, expect, vi, test, beforeEach} from 'vitest'
 import {git, output, path} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
 import * as template from '@shopify/cli-kit/node/liquid'
-import * as file from '@shopify/cli-kit/node/file'
+import * as file from '@shopify/cli-kit/node/fs'
 import type {ExtensionFlavor} from './extension.js'
 
 beforeEach(() => {

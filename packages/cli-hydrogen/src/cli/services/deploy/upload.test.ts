@@ -7,7 +7,7 @@ import {http} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {ClientError} from 'graphql-request'
 import {oxygenRequest, uploadOxygenDeploymentFile} from '@shopify/cli-kit/node/api/oxygen'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/file'
+import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {createReadStream} from 'fs'
 
 const defaultConfig: ReqDeployConfig = {
@@ -28,7 +28,7 @@ beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/api/oxygen')
   vi.mock('@shopify/cli-kit')
   vi.mock('@shopify/cli-kit/node/archiver')
-  vi.mock('@shopify/cli-kit/node/file')
+  vi.mock('@shopify/cli-kit/node/fs')
   vi.mock('fs')
 })
 

@@ -1,5 +1,5 @@
 import {decodeToml} from './toml.js'
-import {fileExists, readFile} from './file.js'
+import {fileExists, readFile} from './fs.js'
 import {JsonMap} from '../../private/common/json.js'
 import {findUp, join as pathJoin} from '../../path.js'
 

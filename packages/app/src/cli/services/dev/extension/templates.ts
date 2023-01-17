@@ -1,5 +1,5 @@
 import {path, error} from '@shopify/cli-kit'
-import {readFile} from '@shopify/cli-kit/node/file'
+import {readFile} from '@shopify/cli-kit/node/fs'
 import {renderLiquidTemplate} from '@shopify/cli-kit/node/liquid'
 
 export interface GetHTMLOptions {

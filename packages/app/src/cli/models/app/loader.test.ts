@@ -6,7 +6,7 @@ import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js
 import {describe, it, expect, beforeEach, afterEach, beforeAll} from 'vitest'
 import {path} from '@shopify/cli-kit'
 import {yarnLockfile, pnpmLockfile, PackageJson, pnpmWorkspaceFile} from '@shopify/cli-kit/node/node-package-manager'
-import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/file'
+import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 
 describe('load', () => {
   type BlockType = 'ui' | 'function' | 'theme'

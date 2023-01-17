@@ -10,7 +10,7 @@ import {http} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {ClientError} from 'graphql-request'
 import {uploadOxygenDeploymentFile, oxygenRequest} from '@shopify/cli-kit/node/api/oxygen'
-import {inTemporaryDirectory, createFileReadStream} from '@shopify/cli-kit/node/file'
+import {inTemporaryDirectory, createFileReadStream} from '@shopify/cli-kit/node/fs'
 
 export const createDeployment = async (config: ReqDeployConfig): Promise<CreateDeploymentResponse> => {
   const variables = {

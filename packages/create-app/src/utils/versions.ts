@@ -1,5 +1,5 @@
 import {path, error} from '@shopify/cli-kit'
-import {readFile} from '@shopify/cli-kit/node/file'
+import {readFile} from '@shopify/cli-kit/node/fs'
 import {fileURLToPath} from 'url'
 
 export async function cliVersion(): Promise<string> {

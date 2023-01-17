@@ -1,4 +1,4 @@
-import {fileExists, readSync} from '../file.js'
+import {fileExists, readSync} from '../fs.js'
 import {isTruthy} from '../../../private/node/environment/utilities.js'
 import constants from '../../../constants.js'
 import {captureOutput} from '../system.js'

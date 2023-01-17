@@ -1,5 +1,5 @@
 import {resolveFramework} from './framework.js'
-import {inTemporaryDirectory, writeFile} from './file.js'
+import {inTemporaryDirectory, writeFile} from './fs.js'
 import {join as pathJoin} from '../../path.js'
 import {describe, expect, it} from 'vitest'
 

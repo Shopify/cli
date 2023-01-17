@@ -5,7 +5,7 @@ import {outputMocker, path} from '@shopify/cli-kit'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import * as nodePackageManager from '@shopify/cli-kit/node/node-package-manager'
 import {exec} from '@shopify/cli-kit/node/system'
-import {inTemporaryDirectory, touchFile, writeFile} from '@shopify/cli-kit/node/file'
+import {inTemporaryDirectory, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 
 const oldCliVersion = '3.0.0'
 // just needs to be higher than oldCliVersion for these tests

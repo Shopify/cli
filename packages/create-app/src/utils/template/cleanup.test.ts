@@ -1,7 +1,7 @@
 import cleanup from './cleanup.js'
 import {path} from '@shopify/cli-kit'
 import {describe, expect, it} from 'vitest'
-import {inTemporaryDirectory, mkdir, writeFile, fileExists} from '@shopify/cli-kit/node/file'
+import {inTemporaryDirectory, mkdir, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
 
 describe('cleanup', () => {
   async function mockProjectFolder(tmpDir: string) {

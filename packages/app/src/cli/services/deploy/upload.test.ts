@@ -9,7 +9,7 @@ import {AppFunctionSetMutation, AppFunctionSetMutationSchema} from '../../api/gr
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {error, path, http} from '@shopify/cli-kit'
 import {functionProxyRequest} from '@shopify/cli-kit/node/api/partners'
-import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/file'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 
 afterEach(() => {
   vi.restoreAllMocks()

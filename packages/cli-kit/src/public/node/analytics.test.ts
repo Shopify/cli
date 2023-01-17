@@ -10,7 +10,7 @@ import {
   isUnitTest,
   macAddress,
 } from './environment/local.js'
-import {inTemporaryDirectory, touchFile, mkdir} from './file.js'
+import {inTemporaryDirectory, touchFile, mkdir} from './fs.js'
 import {startAnalytics} from '../../private/node/analytics.js'
 import {hashString} from '../../public/node/crypto.js'
 import {join as joinPath, dirname} from '../../path.js'

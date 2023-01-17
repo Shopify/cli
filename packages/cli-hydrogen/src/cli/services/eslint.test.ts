@@ -5,7 +5,7 @@ import {describe, vi, it, expect, beforeEach} from 'vitest'
 import {path} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions, isVSCode} from '@shopify/cli-kit/node/vscode.js'
-import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/file'
+import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 
 beforeEach(async () => {
   vi.mock('@shopify/cli-kit/node/node-package-manager')

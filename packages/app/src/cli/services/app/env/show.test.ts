@@ -7,7 +7,7 @@ import {testApp} from '../../../models/app/app.test-data.js'
 import {path, output, store} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import * as file from '@shopify/cli-kit/node/file'
+import * as file from '@shopify/cli-kit/node/fs'
 
 beforeEach(async () => {
   vi.mock('../../dev/fetch.js')

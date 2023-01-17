@@ -8,7 +8,7 @@ import {
   yarnLockfile,
 } from '@shopify/cli-kit/node/node-package-manager'
 
-import {fileExists} from '@shopify/cli-kit/node/file'
+import {fileExists} from '@shopify/cli-kit/node/fs'
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-ignore
 import type {HydrogenConfig} from '@shopify/hydrogen/config'

@@ -3,7 +3,7 @@ import {testApp, testUIExtension} from './app.test-data.js'
 import {describe, expect, test} from 'vitest'
 import {path} from '@shopify/cli-kit'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
-import {fileExists, inTemporaryDirectory} from '@shopify/cli-kit/node/file'
+import {fileExists, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
 describe('updateAppIdentifiers', () => {
   test("persists the ids that are not environment variables in the system and it's deploy", async () => {

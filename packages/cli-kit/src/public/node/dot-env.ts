@@ -1,5 +1,5 @@
 import {AbortError} from './error.js'
-import {fileExists, readFile, writeFile} from './file.js'
+import {fileExists, readFile, writeFile} from './fs.js'
 import {debug, content as outputContent, token} from '../../output.js'
 import {parse, stringify} from 'envfile'
 

@@ -1,5 +1,5 @@
 import {DotEnvNotFoundError, patchEnvFile, readAndParseDotEnv, writeDotEnv} from './dot-env.js'
-import {inTemporaryDirectory, writeFile, readFile} from './file.js'
+import {inTemporaryDirectory, writeFile, readFile} from './fs.js'
 import {join as pathJoin} from '../../path.js'
 import {describe, expect, test} from 'vitest'
 

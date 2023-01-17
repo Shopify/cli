@@ -3,7 +3,7 @@ import {ui, path, error} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions} from '@shopify/cli-kit/node/vscode'
 import {exec} from '@shopify/cli-kit/node/system'
-import {writeFile, fileExists, removeFile, fileContentPrettyFormat, readFile} from '@shopify/cli-kit/node/file'
+import {writeFile, fileExists, removeFile, fileContentPrettyFormat, readFile} from '@shopify/cli-kit/node/fs'
 import stream from 'stream'
 
 interface AddTailwindOptions {

@@ -1,5 +1,5 @@
 import {join} from './path.js'
-import * as file from './public/node/file.js'
+import * as file from './public/node/fs.js'
 import * as os from './public/node/os.js'
 import {debug, token, content} from './output.js'
 
