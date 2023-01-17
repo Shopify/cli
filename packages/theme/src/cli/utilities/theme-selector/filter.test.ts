@@ -117,6 +117,81 @@ describe('filterThemes', () => {
   })
 })
 
+describe('Filter#any', () => {
+  const filterProps = {
+    themes: undefined,
+    theme: undefined,
+    development: false,
+    live: false,
+  }
+
+  test('returns true when development filter is specified', async () => {
+    // Given
+    const filter = new Filter({...filterProps, development: true})
+
+    // When
+    const result = filter.any()
+
+    // Then
+    expect(result).toBeTruthy()
+  })
+
+  test('returns true when live filter is specified', async () => {
+    // Given
+    const filter = new Filter({...filterProps, live: true})
+
+    // When
+    const result = filter.any()
+
+    // Then
+    expect(result).toBeTruthy()
+  })
+
+  test('returns true when theme filter is specified', async () => {
+    // Given
+    const filter = new Filter({...filterProps, theme: '1'})
+
+    // When
+    const result = filter.any()
+
+    // Then
+    expect(result).toBeTruthy()
+  })
+
+  test('returns true when themes filter is specified', async () => {
+    // Given
+    const filter = new Filter({...filterProps, themes: ['1']})
+
+    // When
+    const result = filter.any()
+
+    // Then
+    expect(result).toBeTruthy()
+  })
+
+  test('returns false when themes filter is empty', async () => {
+    // Given
+    const filter = new Filter({...filterProps, themes: []})
+
+    // When
+    const result = filter.any()
+
+    // Then
+    expect(result).toBeFalsy()
+  })
+
+  test('returns false when no filter is specified', async () => {
+    // Given
+    const filter = new Filter(filterProps)
+
+    // When
+    const result = filter.any()
+
+    // Then
+    expect(result).toBeFalsy()
+  })
+})
+
 function theme(id: number, role: string) {
   return {id, role, name: `theme ${id}`} as Theme
 }

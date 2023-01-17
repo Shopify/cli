@@ -80,6 +80,12 @@ export class Filter {
   }
 
   any() {
-    return Object.values(this.queryProps).some(Boolean)
+    return Object.values(this.queryProps).some((val) => {
+      if (val?.length !== undefined) {
+        return val.length > 0
+      }
+
+      return Boolean(val)
+    })
   }
 }
