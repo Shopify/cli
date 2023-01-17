@@ -6,7 +6,7 @@ import {captureOutput, exec} from './system.js'
 import * as file from '../../file.js'
 import {Abort, AbortSilent} from '../../error.js'
 import {glob, join} from '../../path.js'
-import constants from '../../constants.js'
+import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
 import {content, token} from '../../output.js'
 import {Writable} from 'stream'
@@ -298,7 +298,7 @@ async function bundleInstallThemeCheck() {
 function shopifyCLIDirectory(): string {
   return (
     process.env.SHOPIFY_CLI_2_0_DIRECTORY ??
-    join(constants.paths.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
+    join(pathConstants.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
   )
 }
 
@@ -308,7 +308,7 @@ function shopifyCLIDirectory(): string {
  * @returns The absolute path to the theme-check directory.
  */
 function themeCheckDirectory(): string {
-  return join(constants.paths.directories.cache.vendor.path(), 'theme-check', ThemeCheckVersion)
+  return join(pathConstants.directories.cache.vendor.path(), 'theme-check', ThemeCheckVersion)
 }
 
 /**

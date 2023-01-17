@@ -72,7 +72,7 @@
                 "./environment/local.js",
                 "@oclif/core",
                 "../../private/node/environment/utilities.js",
-                "../../constants.js",
+                "../../private/node/constants.js",
                 "../../path.js",
                 "./system.js"
               ],

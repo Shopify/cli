@@ -7,17 +7,7 @@ import {platform} from 'os'
 beforeEach(async () => {
   vi.mock('os')
   vi.mock('@shopify/cli-kit/node/node-package-manager')
-  vi.mock('@shopify/cli-kit', async () => {
-    const module: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...module,
-      constants: {
-        versions: {
-          cliKit: () => '1.2.3',
-        },
-      },
-    }
-  })
+  vi.mock('@shopify/cli-kit/common/version', () => ({CLI_KIT_VERSION: '1.2.3'}))
 })
 
 describe('updateCLIDependencies', () => {

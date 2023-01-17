@@ -1,13 +1,7 @@
 #!/usr/bin/env node
+import {readFileSync, writeFile, writeFileSync} from 'fs';
 
-import path from 'path';
-import {execSync} from 'child_process';
-import {fileURLToPath} from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT_PATH = path.resolve(__dirname, '..');
-
-console.log('🔁 Checking out latest commits and setting up environment');
-execSync(`git checkout main`, {stdio: 'inherit', cwd: ROOT_PATH});
-execSync(`git pull --tags`, {stdio: 'inherit', cwd: ROOT_PATH});
-execSync(`/opt/dev/bin/dev up`, {stdio: 'inherit', cwd: ROOT_PATH});
+// Update the cli-kit version in version.ts
+const cliKitVersion = JSON.parse(readFileSync('packages/cli-kit/package.json')).version
+const content = `export const CLI_KIT_VERSION = '${cliKitVersion}'\n`
+writeFileSync('packages/cli-kit/src/public/common/version.ts', content)

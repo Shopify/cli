@@ -1,17 +1,15 @@
-import {path, error, file, output, ui, npm, git, constants} from '@shopify/cli-kit'
+import {path, error, file, output, ui, npm, git} from '@shopify/cli-kit'
 import {username} from '@shopify/cli-kit/node/os'
 import {
-  findPackageVersionUp,
   installNodeModules,
   packageManager,
   PackageManager,
   packageManagerUsedForCreating,
 } from '@shopify/cli-kit/node/node-package-manager'
-
 import {parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
-
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {isShopify, isUnitTest} from '@shopify/cli-kit/node/environment/local'
 import {Writable} from 'stream'
 
@@ -21,7 +19,6 @@ interface InitOptions {
   directory: string
   packageManager?: string
   shopifyCliVersion?: string
-  cliHydrogenPackageVersion?: string
   hydrogenVersion?: string
   local: boolean
 }
@@ -33,10 +30,8 @@ Help us make Hydrogen better by reporting this error so we can improve this mess
 `
 
 async function init(options: InitOptions) {
-  const hydrogenVersion = await findPackageVersionUp({fromModuleURL: import.meta.url})
   const user = (await username()) ?? ''
-  const cliPackageVersion = options.shopifyCliVersion ?? (await constants.versions.cliKit())
-  const cliHydrogenPackageVersion = options.cliHydrogenPackageVersion ?? hydrogenVersion
+  const cliVersion = options.shopifyCliVersion ?? CLI_KIT_VERSION
   const hydrogenPackageVersion = options.hydrogenVersion
   const packageManager = inferPackageManager(options.packageManager)
   const hyphenizedName = hyphenate(options.name)
@@ -86,7 +81,7 @@ async function init(options: InitOptions) {
                 task: async (_, task) => {
                   const templateData = {
                     name: hyphenizedName,
-                    shopify_cli_version: cliPackageVersion,
+                    shopify_cli_version: cliVersion,
                     hydrogen_version: hydrogenPackageVersion,
                     author: user,
                     dependency_manager: options.packageManager,
@@ -100,14 +95,13 @@ async function init(options: InitOptions) {
                 title: 'Updating package.json',
                 task: async (_, task) => {
                   const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
-                  const cliVersion = await constants.versions.cliKit()
                   await npm.updateAppData(packageJSON, hyphenizedName)
                   await updateCLIDependencies(packageJSON, options.local, {
                     dependencies: {
                       '@shopify/hydrogen': hydrogenPackageVersion,
                     },
                     devDependencies: {
-                      '@shopify/cli-hydrogen': cliHydrogenPackageVersion,
+                      '@shopify/cli-hydrogen': cliVersion,
                       '@shopify/cli': cliVersion,
                     },
                   })

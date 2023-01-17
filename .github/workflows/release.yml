@@ -32,6 +32,8 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
+      - name: Call prerelease script
+        run: pnpm prerelease
       - name: Create Release Pull Request
         uses: changesets/action@v1
         with:

@@ -107,7 +107,7 @@ export async function restRequest<T>(
   const url = restRequestUrl(session, apiVersion, path, searchParams)
   const body = restRequestBody<T>(requestBody)
 
-  const headers = await restRequestHeaders(session)
+  const headers = restRequestHeaders(session)
   const response = await fetch(url, {
     headers,
     method,
