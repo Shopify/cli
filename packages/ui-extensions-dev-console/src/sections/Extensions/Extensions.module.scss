@@ -1,8 +1,10 @@
 
 .Intro {
-  padding: 0.6rem 1.5rem 1.8rem;
-  font-family: var(--dc-font-pro);
-  border-bottom: 1px solid var(--dc-color-border);
+  height: 5.6rem;
+  padding: 2.2rem 1.8rem 1.5rem;
+  line-height: 1.6rem;
+  color: 1px solid var(--dc-color-grey-100);
+  border-bottom: 1px solid var(--dc-color-grey-600);
 }
 
 .ExtensionList {
@@ -14,20 +16,6 @@
     text-align: left;
     width: 100%;
     border-collapse: collapse;
-  }
-
-  tr {
-    line-height: 3rem;
-    border-bottom: 1px solid var(--dc-color-border);
-  }
-
-  th {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    padding: 0.8rem 1.5rem;
-    color: var(--dc-color-subdued);
-    font-weight: normal;
   }
 
   svg {

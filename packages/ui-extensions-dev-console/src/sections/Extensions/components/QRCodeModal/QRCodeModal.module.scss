@@ -1,23 +1,40 @@
 .Wrapper {
    display: flex;
-   gap: 4.8rem;
-   align-items: center;
+   gap: 2.4rem;
+}
+
+.LeftColumn {
+   width: 17.5rem;
+   display: flex;
+   flex-direction: column;
+   gap: 1.2rem;
+   line-height: 1.4rem;
+   font-size: 1.2rem;
 }
 
 .QRCode {
    display:block;
    padding: 0.2rem 0.2rem 0 0.2rem;
-   height: 13.4rem;
    background: var(--dc-color-white);
-   border: 1px solid var(--dc-color-border);
 }
 
 .RightColumn {
-   display:grid;
-   gap: 0.4rem;
+   font-size: 1.2rem;
+   line-height: 1.8rem;
+   display: flex;
+   flex-direction: column;
+   gap: 0.8rem;
 }
 
-.CopyLink {
-   font-family: var(--dc-font);
-   text-align: left;
- }
+.UrlCta {
+   display: flex;
+   gap: 0.8rem;
+   align-items: center;
+}
+
+.Url {
+   font-size: 1.1rem;
+   line-height: 1.6rem;
+   word-break: break-all;
+   color: var(--dc-color-grey-400);
+}

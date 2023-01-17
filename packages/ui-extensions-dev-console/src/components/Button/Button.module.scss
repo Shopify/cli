@@ -1,22 +1,35 @@
 .Button {
   all: unset;
 
-  padding: 0.6rem 0.8rem;
+  padding: 0.3rem 0.8rem;
 
-  font-family: var(--dc-font-pro);
-  line-height: 1.2rem;
+  display:flex;
+  gap: 0.6rem;
 
-  background: var(--dc-color-border);
+  line-height: 2rem;
+  font-weight: var(--dc-font-weight-500);
+
+  background: var(--dc-color-grey-700);
   border-radius: var(--dc-border-radius);
 
   cursor: pointer;
 
-  &:hover {
-    background: var(--dc-color-icon);
+  &.WithIcon {
+    padding-right: 1rem;
+  }
+
+  .Icon {
+    position: relative;
+    top: 0.1rem;
+  }
+
+  &:hover,
+  &:focus {
+    background: var(--dc-color-grey-600);
   }
 
   &[aria-pressed=true] {
-    background-color: var(--dc-color-pressed);
+    background-color: var(--dc-color-blue-500);
   }
 }
 

@@ -1,5 +1,9 @@
 {
   "title": "View your work on mobile",
+  "right": {
+    "one": "Scan with your phone camera to see your work",
+    "two": "Or copy the URL to share:"
+  },
   "qrcode": {
     "copy": "Copy link",
     "copied": "Link copied",

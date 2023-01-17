@@ -1,6 +1,6 @@
 import * as styles from './Extensions.module.scss'
 
-import {AppHomeRow, QRCodeModal, ExtensionRow, PostPurchaseRow, PostPurchaseModal} from './components'
+import {AppHomeRow, QRCodeModal, ExtensionRow, PostPurchaseRow, PostPurchaseModal, Row} from './components'
 import en from './translations/en.json'
 import {useI18n} from '@shopify/react-i18n'
 import React, {useState} from 'react'
@@ -17,6 +17,7 @@ export function Extensions() {
     state: {extensions, app},
     focus,
     unfocus,
+    embedded,
     client: {
       options: {surface},
     },
@@ -34,16 +35,16 @@ export function Extensions() {
 
   const ConsoleContent = () => (
     <section className={styles.ExtensionList}>
-      <p className={styles.Intro}>{i18n.translate('intro')}</p>
+      {embedded ? null : <p className={styles.Intro}>{i18n.translate('intro')}</p>}
       <table>
         <thead>
-          <tr>
+          <Row>
             <th>{i18n.translate('extensionList.name')}</th>
             <th>{i18n.translate('extensionList.preview')}</th>
             <th>{i18n.translate('extensionList.mobile')}</th>
             <th>{i18n.translate('extensionList.view')}</th>
             <th>{i18n.translate('extensionList.status')}</th>
-          </tr>
+          </Row>
         </thead>
         <tbody>
           {app ? (

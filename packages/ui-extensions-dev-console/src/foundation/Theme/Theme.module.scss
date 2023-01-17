@@ -1,72 +1,34 @@
 .Theme {
-  /* Backgrounds */
-  --dc-color-background: #0d0d0d;
-  --dc-color-black: #000;
+  /* Grey/Black */
+  --dc-color-grey-900: rgb(13, 13, 13);
+  --dc-color-grey-800: rgb(25, 25, 25);
+  --dc-color-grey-700: rgb(36, 36, 36);
+  --dc-color-grey-600: rgb(49, 51, 53);
+  --dc-color-grey-500: rgb(120, 125, 129);
+  --dc-color-grey-400: rgb(157, 161, 164);
+  --dc-color-grey-100: rgb(235, 235, 235);
 
-  /* Foreground */
-  --dc-color-link: #38a5ff;
-  --dc-color-icon: #868686;
-  --dc-color-subdued: #989fa4;
-  --dc-color-white: #ffffff;
-  --dc-color-pressed: #36a3ff;
-  --dc-color-border: #313335;
-  --dc-color-popover: #1d1d1d;
+  /* Blue */
+  --dc-color-blue-500: #36A3FF;
+  --dc-color-blue-400: rgb(91, 206, 255);
 
-  /* Status */
-  --dc-color-success: #00a47c;
-  --dc-color-warning: #b98900;
-  --dc-color-error: #d92800;
+  /* White */
+  --dc-color-white: rgb(255, 255, 255);
+
+  /* Green */
+  --dc-color-green: rgb(0, 244, 185);
+
+  /* Red */
+  --dc-color-red: rgb(255, 87, 77);
 
   /* Font */
-  --dc-font: 'SF Pro Text', monospace;
-  --dc-font-mono: 'SF Mono', monospace;
-  --dc-font-pro: 'SF Pro Text', monospace;
-  --dc-font-compact: 'SF Compact Text', monospace;
-  --dc-font-weight-subdued: 300;
-  --dc-font-weight: 500;
-  --dc-font-weight-bold: 700;
+  --dc-font-weight-400: 200;
+  --dc-font-weight-400: 400;
+  --dc-font-weight-500: 600;
+  --dc-font-weight-600: 600;
+  --dc-font-weight-700: 700;
 
   /* border */
   --dc-border-radius: 0.4rem;
   --dc-border-radius-2: 0.8rem;
-
-  /* Toast (See: https://fkhadra.github.io/react-toastify/how-to-style) */
-  --toastify-color-light: var(--dc-color-white);
-  --toastify-color-dark: var(--dc-color-black);
-  --toastify-color-info: var(--dc-color-link);
-  --toastify-color-success: var(--dc-color-success);
-  --toastify-color-warning: var(--dc-color-warning);
-  --toastify-color-error: var(--dc-color-errror);
-  --toastify-color-transparent: rgba(255, 255, 255, 0.7);
-
-  --toastify-icon-color-info: var(--dc-color-link);
-  --toastify-icon-color-success: var(--dc-color-success);
-  --toastify-icon-color-warning: var(--dc-color-warning);
-  --toastify-icon-color-error: var(--dc-color-error);
-
-  --toastify-toast-width: 32rem;
-  --toastify-toast-background: #fff;
-  --toastify-toast-min-height: 4.2rem;
-  --toastify-toast-max-height: 4.2rem;
-  --toastify-font-family: var(--dc-font-mono);
-  --toastify-z-index: 9999;
-
-  --toastify-text-color-light: var(--dc-color-subdued);
-  --toastify-text-color-dark: var(--dc-color-white);
-
-  /* Used only for colored theme */
-  --toastify-text-color-info: var(--dc-color-white);
-  --toastify-text-color-success: var(--dc-color-white);
-  --toastify-text-color-warning: var(--dc-color-white);
-  --toastify-text-color-error: var(--dc-color-white);
-
-  --toastify-spinner-color: var(--dc-color-icon);
-  --toastify-spinner-color-empty-area: var(--dc-color-white);
-
-  /* Used when no type is provided */
-  --toastify-color-progress-dark: var(--dc-color-link);
-  --toastify-color-progress-info: var(--toastify-color-info);
-  --toastify-color-progress-success: var(--toastify-color-success);
-  --toastify-color-progress-warning: var(--toastify-color-warning);
-  --toastify-color-progress-error: var(--toastify-color-error);
 }

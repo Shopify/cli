@@ -33,7 +33,7 @@ export function PostPurchaseModal({url, onClose}: Props) {
   }
 
   return (
-    <Modal title={i18n.translate('title')} open={typeof url === 'string'} onClose={onClose}>
+    <Modal title={i18n.translate('title')} open={typeof url === 'string'} onClose={onClose} width="large">
       <ol className={styles.Instructions}>
         <li>
           {i18n.translate('point1.intro')}{' '}

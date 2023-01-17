@@ -24,7 +24,7 @@ export function AppHomeRow({url, title, onShowMobileQRCode}: Props) {
         <span className={styles.Title}>{title}</span>
       </td>
       <td>
-        <PreviewLink url={url} title={'App home'} />
+        <PreviewLink rootUrl={url} title={'App home'} />
       </td>
       <td>
         <Button type="button" onClick={onShowMobileQRCode}>

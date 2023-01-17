@@ -4,6 +4,7 @@ import {NotApplicable, PreviewLink} from '../../..'
 import React from 'react'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {useI18n} from '@shopify/react-i18n'
+import {classNames} from '@/utilities/css'
 
 export interface Props {
   extension: ExtensionPayload
@@ -11,7 +12,7 @@ export interface Props {
 
 export function PreviewLinks({extension}: Props) {
   const [i18n] = useI18n({
-    id: 'PreviewLink',
+    id: 'PreviewLinks',
     fallback: en,
   })
 
@@ -20,10 +21,15 @@ export function PreviewLinks({extension}: Props) {
   }
 
   if (extension.type === 'ui_extension') {
+    const hasMultiple = extension.extensionPoints && extension.extensionPoints.length > 1
+    const titleMarkup = hasMultiple ? (
+      <span className={styles.PreviewLinksTitle}>{i18n.translate('previewLinksTitle')}:</span>
+    ) : null
+
     return (
       <>
-        <span className={styles.PreviewLinksTitle}>{i18n.translate('previewLinksTitle')}:</span>
-        <span className={styles.PreviewLinks}>
+        {titleMarkup}
+        <span className={classNames(hasMultiple && styles.PreviewLinks)}>
           {extension.extensionPoints?.map((extensionPoint) => {
             if (typeof extensionPoint === 'string') {
               return null
@@ -31,12 +37,18 @@ export function PreviewLinks({extension}: Props) {
 
             const {root, target} = extensionPoint
 
-            return <PreviewLink url={root.url} title={target} />
+            return <PreviewLink rootUrl={root.url} title={target} key={target} />
           })}
         </span>
       </>
     )
   }
 
-  return <PreviewLink url={extension.development.root.url} title={extension.type.replaceAll('_', ' ')} />
+  return (
+    <PreviewLink
+      rootUrl={extension.development.root.url}
+      resourceUrl={extension.development.resource.url}
+      title={extension.type.replaceAll('_', ' ')}
+    />
+  )
 }

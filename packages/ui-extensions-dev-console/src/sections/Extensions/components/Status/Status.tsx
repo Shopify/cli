@@ -17,5 +17,10 @@ export function Status({status}: Props) {
 
   const statusClass = status ? styles[status || 'error'] : styles.error
 
-  return <span className={`${styles.Status} ${statusClass}`}>{i18n.translate(`${status}`)}</span>
+  return (
+    <span className={styles.Status}>
+      <span className={statusClass}></span>
+      {i18n.translate(`${status}`)}
+    </span>
+  )
 }

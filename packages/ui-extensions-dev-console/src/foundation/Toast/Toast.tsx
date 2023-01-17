@@ -18,8 +18,8 @@ export function Toast() {
       {/* Inlining the style prevents the className from changing */}
       <style>
         {`.Toastify__toast-body {
-          padding-top: 0;
-          padding-bottom: 0;
+          padding: 0 16px;
+          margin: 0;
         }`}
       </style>
     </div>
