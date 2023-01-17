@@ -1,30 +1,28 @@
 import en from './translations/en.json'
 
-import {useExtensionsInternal} from '../../hooks/useExtensionsInternal'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
-import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {HideMinor, ViewMinor} from '@shopify/polaris-icons'
-import {Button} from '@/components'
+import {Button} from '@/components/Button'
 
 interface Props {
-  extension: ExtensionPayload
+  hidden: boolean
+  show(): void
+  hide(): void
 }
 
-export function View({extension}: Props) {
+export function View({show, hide, hidden}: Props) {
   const [i18n] = useI18n({
     id: 'View',
     fallback: en,
   })
 
-  const {show, hide} = useExtensionsInternal()
-
-  return extension.development.hidden ? (
-    <Button type="button" onClick={() => show([extension])} icon={{source: HideMinor, position: 'left'}}>
+  return hidden ? (
+    <Button type="button" onClick={show} icon={{source: HideMinor, position: 'left'}}>
       {i18n.translate('hidden')}
     </Button>
   ) : (
-    <Button type="button" onClick={() => hide([extension])} icon={{source: ViewMinor, position: 'left'}}>
+    <Button type="button" onClick={hide} icon={{source: ViewMinor, position: 'left'}}>
       {i18n.translate('showing')}
     </Button>
   )
