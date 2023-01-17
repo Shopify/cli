@@ -1,7 +1,7 @@
 import {hasGit, isTerminalInteractive} from './environment/local.js'
+import {appendFileSync} from './fs.js'
 import {Abort} from '../../error.js'
 import {content, token, debug} from '../../output.js'
-import {appendSync} from '../../file.js'
 import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
 
 export const gitFactory = git
@@ -40,7 +40,7 @@ export function createGitIgnore(directory: string, template: GitIgnoreTemplate):
     fileContent += `${lines.join('\n')}\n\n`
   }
 
-  appendSync(filePath, fileContent)
+  appendFileSync(filePath, fileContent)
 }
 
 /**
