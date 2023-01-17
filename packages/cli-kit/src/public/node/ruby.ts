@@ -2,7 +2,7 @@ import {coerceSemverVersion} from './semver.js'
 import {AbortSignal} from './abort.js'
 import {platformAndArch} from './os.js'
 import {captureOutput, exec} from './system.js'
-import * as file from '../../file.js'
+import * as file from './fs.js'
 import * as ui from '../../ui.js'
 import {Abort, AbortSilent} from '../../error.js'
 import {glob, join} from '../../path.js'
@@ -121,7 +121,7 @@ export async function execThemeCheckCLI(options: ExecThemeCheckCLIOptions): Prom
  * @param stdout - The Writable stream on which to write the standard output.
  */
 async function installThemeCheckCLIDependencies(stdout: Writable) {
-  const exists = await file.exists(themeCheckDirectory())
+  const exists = await file.fileExists(themeCheckDirectory())
 
   if (!exists) stdout.write('Installing theme dependencies...')
   const list = ui.newListr(
@@ -149,7 +149,7 @@ async function installThemeCheckCLIDependencies(stdout: Writable) {
  * or if we are installing a new version of RubyCLI.
  */
 async function installCLIDependencies() {
-  const exists = await file.exists(shopifyCLIDirectory())
+  const exists = await file.fileExists(shopifyCLIDirectory())
   const renderer = exists ? 'silent' : 'default'
 
   const list = ui.newListr(
@@ -263,7 +263,7 @@ async function createShopifyCLIGemfile(): Promise<void> {
     // 'wdm' is required by 'listen', see https://github.com/Shopify/cli/issues/780
     gemFileContent.push("gem 'wdm', '>= 0.1.0'")
   }
-  await file.write(gemPath, gemFileContent.join('\n'))
+  await file.writeFile(gemPath, gemFileContent.join('\n'))
 }
 
 /**
@@ -271,7 +271,7 @@ async function createShopifyCLIGemfile(): Promise<void> {
  */
 async function createThemeCheckGemfile(): Promise<void> {
   const gemPath = join(themeCheckDirectory(), 'Gemfile')
-  await file.write(gemPath, `source 'https://rubygems.org'\ngem 'theme-check', '${ThemeCheckVersion}'`)
+  await file.writeFile(gemPath, `source 'https://rubygems.org'\ngem 'theme-check', '${ThemeCheckVersion}'`)
 }
 
 /**

@@ -1,7 +1,7 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
 import cleanup from '../utils/template/cleanup.js'
 
-import {path, file, ui, npm, error, output} from '@shopify/cli-kit'
+import {path, ui, npm, error, output} from '@shopify/cli-kit'
 import {packageManager, PackageManager, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
@@ -9,6 +9,7 @@ import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {isShopify, isUnitTest} from '@shopify/cli-kit/node/environment/local'
 import {downloadGitRepository, initializeGitRepository} from '@shopify/cli-kit/node/git'
+import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile} from '@shopify/cli-kit/node/fs'
 
 interface InitOptions {
   name: string
@@ -26,7 +27,7 @@ async function init(options: InitOptions) {
 
   await ensureAppDirectoryIsAvailable(outputDirectory, hyphenizedName)
 
-  await file.inTemporaryDirectory(async (tmpDir) => {
+  await inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
     const templatePathDir = githubRepo.filePath
       ? path.join(templateDownloadDir, githubRepo.filePath)
@@ -34,7 +35,7 @@ async function init(options: InitOptions) {
     const templateScaffoldDir = path.join(tmpDir, 'app')
     const repoUrl = githubRepo.branch ? `${githubRepo.baseURL}#${githubRepo.branch}` : githubRepo.baseURL
 
-    await file.mkdir(templateDownloadDir)
+    await mkdir(templateDownloadDir)
     let tasks: ui.ListrTasks = []
 
     await ui.task({
@@ -81,7 +82,7 @@ async function init(options: InitOptions) {
                 // Ensure that the installation of dependencies doesn't fail when using
                 // pnpm due to missing peerDependencies.
                 if (packageManager === 'pnpm') {
-                  await file.append(path.join(templateScaffoldDir, '.npmrc'), `auto-install-peers=true\n`)
+                  await appendFile(path.join(templateScaffoldDir, '.npmrc'), `auto-install-peers=true\n`)
                 }
 
                 task.title = 'Updated package.json'
@@ -100,7 +101,7 @@ async function init(options: InitOptions) {
           task.title = "[Shopifolks-only] Configuring the project's NPM registry"
           const npmrcPath = path.join(templateScaffoldDir, '.npmrc')
           const npmrcContent = `@shopify:registry=https://registry.npmjs.org\n`
-          await file.append(npmrcPath, npmrcContent)
+          await appendFile(npmrcPath, npmrcContent)
           task.title = "[Shopifolks-only] Project's NPM registry configured."
         },
       })
@@ -149,7 +150,7 @@ async function init(options: InitOptions) {
     })
     await list.run()
 
-    await file.move(templateScaffoldDir, outputDirectory)
+    await moveFile(templateScaffoldDir, outputDirectory)
   })
 
   renderSuccess({
@@ -178,7 +179,7 @@ function inferPackageManager(optionsPackageManager: string | undefined): Package
 }
 
 async function ensureAppDirectoryIsAvailable(directory: string, name: string): Promise<void> {
-  const exists = await file.exists(directory)
+  const exists = await fileExists(directory)
   if (exists)
     throw new error.Abort(`\nA directory with this name (${name}) already exists.\nChoose a new name for your app.`)
 }

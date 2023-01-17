@@ -1,4 +1,4 @@
-import {path, error, file, output, ui, npm} from '@shopify/cli-kit'
+import {path, error, output, ui, npm} from '@shopify/cli-kit'
 import {username} from '@shopify/cli-kit/node/os'
 import {
   installNodeModules,
@@ -17,6 +17,7 @@ import {
   downloadGitRepository,
   initializeGitRepository,
 } from '@shopify/cli-kit/node/git'
+import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile, rmdir, touchFile} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 interface InitOptions {
@@ -45,12 +46,12 @@ async function init(options: InitOptions) {
 
   await ui.nonEmptyDirectoryPrompt(outputDirectory)
 
-  await file.inTemporaryDirectory(async (tmpDir) => {
+  await inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
     const templateScaffoldDir = path.join(tmpDir, 'app')
 
-    await file.mkdir(templateDownloadDir)
-    await file.mkdir(templateScaffoldDir)
+    await mkdir(templateDownloadDir)
+    await mkdir(templateScaffoldDir)
 
     let tasks: ui.ListrTasks = []
 
@@ -69,7 +70,7 @@ async function init(options: InitOptions) {
           destination: templateDownloadDir,
           shallow: true,
         })
-        if (!(await file.exists(path.join(templatePath, 'package.json')))) {
+        if (!(await fileExists(path.join(templatePath, 'package.json')))) {
           throw new error.Abort(`The template ${templatePath} was not found.`, suggestHydrogenSupport())
         }
         return {successMessage: `Downloaded template from ${repoUrl}`}
@@ -175,7 +176,7 @@ async function init(options: InitOptions) {
 
     await list.run()
 
-    await file.move(templateScaffoldDir, outputDirectory)
+    await moveFile(templateScaffoldDir, outputDirectory)
   })
 
   output.info(output.content`
@@ -261,10 +262,10 @@ async function installDependencies(directory: string, packageManager: PackageMan
 async function writeToNpmrc(directory: string, content: string) {
   const npmrcPath = path.join(directory, '.npmrc')
   const npmrcContent = `${content}\n`
-  if (!(await file.exists(npmrcPath))) {
-    await file.touch(npmrcPath)
+  if (!(await fileExists(npmrcPath))) {
+    await touchFile(npmrcPath)
   }
-  await file.appendFile(npmrcPath, npmrcContent)
+  await appendFile(npmrcPath, npmrcContent)
 }
 
 async function cleanup(webOutputDirectory: string) {
@@ -283,5 +284,5 @@ async function cleanup(webOutputDirectory: string) {
     },
   )
 
-  return Promise.all(gitPaths.map((path) => file.rmdir(path, {force: true}))).then(() => {})
+  return Promise.all(gitPaths.map((path) => rmdir(path, {force: true}))).then(() => {})
 }

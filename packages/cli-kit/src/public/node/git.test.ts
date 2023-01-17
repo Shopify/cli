@@ -1,6 +1,6 @@
 import * as git from './git.js'
+import {appendFileSync} from './fs.js'
 import {hasGit} from './environment/local.js'
-import {appendSync} from '../../file.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import simpleGit from 'simple-git'
 
@@ -26,9 +26,7 @@ const simpleGitProperties = {
 beforeEach(() => {
   vi.mock('./environment/local.js')
   vi.mocked(hasGit).mockResolvedValue(true)
-
-  vi.mock('../../file.js')
-
+  vi.mock('./fs.js')
   vi.mock('simple-git')
   vi.mocked<any>(simpleGit).mockReturnValue(simpleGitProperties)
 })
@@ -161,7 +159,7 @@ describe('initializeRepository()', () => {
 describe('createGitIgnore()', () => {
   it('writes to a file in the provided directory', async () => {
     const mockedAppendSync = vi.fn()
-    vi.mocked(appendSync).mockImplementation(mockedAppendSync)
+    vi.mocked(appendFileSync).mockImplementation(mockedAppendSync)
     const directory = '/unit/test'
     const template = {
       section: ['first', 'second'],

@@ -7,8 +7,9 @@ import {
 } from '../../api/graphql/functions/upload_url_generate.js'
 import {AppFunctionSetMutation, AppFunctionSetMutationSchema} from '../../api/graphql/functions/app_function_set.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {error, path, file, http} from '@shopify/cli-kit'
+import {error, path, http} from '@shopify/cli-kit'
 import {functionProxyRequest} from '@shopify/cli-kit/node/api/partners'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -78,10 +79,10 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('throws an error if the request to return the url errors', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath(), '')
+      await writeFile(extension.buildWasmPath(), '')
       const uploadURLError = new Error('upload error')
       vi.mocked(functionProxyRequest).mockRejectedValueOnce(uploadURLError)
 
@@ -94,11 +95,11 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('errors if the upload of the wasm errors', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath(), '')
+      await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -121,11 +122,11 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('prints relevant error if the wasm upload returns 400 from file size too large', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath(), '')
+      await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -160,11 +161,11 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('prints relevant error and bugsnags if the wasm upload returns any other error', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath(), '')
+      await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -199,11 +200,11 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('prints general error when status code is 5xx', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath(), '')
+      await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -236,11 +237,11 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('prints general error when status code is 3xx', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath(), '')
+      await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -273,11 +274,11 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('errors if the compilation request errors', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath(), '')
+      await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -300,11 +301,11 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('errors if the update of the function errors', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = `test://test.com/moduleId.wasm`
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath(), '')
+      await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -354,11 +355,11 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('throws if the response from updating the app function contains errors', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = `test://test.com/moduleId.wasm`
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath(), '')
+      await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -420,12 +421,12 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('creates and uploads the function', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = `test://test.com/moduleId.wasm`
       const createdID = 'ulid'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath(), '')
+      await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -483,12 +484,12 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('appBridge is set to undefined when there is no configuration.ui.paths', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       extension.configuration.ui!.paths = undefined
 
       const uploadUrl = `test://test.com/moduleId.wasm`
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath(), '')
+      await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -536,12 +537,12 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('inputQueryVariables is set to undefined when there is no configuration.inputs', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       extension.configuration.input = undefined
 
       const uploadUrl = `test://test.com/moduleId.wasm`
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath(), '')
+      await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -587,12 +588,12 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('enableCreationUi is set to false when configuration.ui.enable_create is false', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       extension.configuration.ui!.enable_create = false
 
       const uploadUrl = `test://test.com/moduleId.wasm`
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath(), '')
+      await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -643,14 +644,14 @@ describe('uploadFunctionExtensions', () => {
   })
 
   test('UUID identifier detected and ULID Function ID returned', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const existingID = 'uuid-with-hyphens'
       identifiers.extensions[extension.localIdentifier] = existingID
       const uploadUrl = `test://test.com/moduleId.wasm`
       const updatedID = 'ulid'
       extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
-      await file.write(extension.buildWasmPath(), '')
+      await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {

@@ -2,10 +2,11 @@ import {buildFunctionExtension, buildUIExtensions} from '../build/extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {bundleThemeExtensions} from '../extensions/bundle.js'
-import {path, file} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {inTemporaryDirectory, mkdirSync, touchFile} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 interface BundleOptions {
@@ -16,10 +17,10 @@ interface BundleOptions {
 }
 
 export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions) {
-  await file.inTemporaryDirectory(async (tmpDir) => {
+  await inTemporaryDirectory(async (tmpDir) => {
     const bundleDirectory = path.join(tmpDir, 'bundle')
-    await file.mkdir(bundleDirectory)
-    await file.touch(path.join(bundleDirectory, '.shopify'))
+    await mkdirSync(bundleDirectory)
+    await touchFile(path.join(bundleDirectory, '.shopify'))
 
     await renderConcurrent({
       processes: [

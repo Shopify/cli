@@ -1,6 +1,7 @@
-import {file, path} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {lockfiles} from '@shopify/cli-kit/node/node-package-manager'
+import {fileExists} from '@shopify/cli-kit/node/fs'
 import {gitFactory} from '@shopify/cli-kit/node/git'
 import type {Lockfile} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -65,7 +66,7 @@ type LockFileStatus = 'missing' | 'multiple' | 'ignored' | 'ok'
 export async function checkLockfileStatus(directory: string): Promise<LockFileStatus> {
   const availableLockfiles = await lockfiles.reduce(async (acc, lockFileName) => {
     const lockfilePath = path.resolve(directory, lockFileName)
-    if (await file.exists(lockfilePath)) {
+    if (await fileExists(lockfilePath)) {
       return (await acc).concat(lockFileName)
     } else {
       return acc
