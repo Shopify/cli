@@ -1,0 +1,14 @@
+{
+  "name": "theme-cli",
+  "root": "packages/theme-cli",
+  "sourceRoot": "packages/theme-cli/src",
+  "projectType": "library",
+  "targets": {
+    "test": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "test:nx"
+      }
+    }
+  }
+}

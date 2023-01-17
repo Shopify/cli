@@ -3,6 +3,7 @@
     "root": "packages/cli-kit",
     "sourceRoot": "packages/cli-kit/src",
     "projectType": "library",
+    "implicitDependencies": ["theme-cli"],
     "tags": ["scope:foundation"],
     "targets": {
       "clean": {

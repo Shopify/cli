@@ -13,7 +13,8 @@
     "@shopify/fixtures-app",
     "@shopify/theme",
     "@shopify/ui-extensions-dev-console-app",
-    "@shopify/plugin-ngrok"
+    "@shopify/plugin-ngrok",
+    "@shopify/theme-cli"
   ]],
   "access": "public",
   "baseBranch": "main",

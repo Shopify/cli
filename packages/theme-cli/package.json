@@ -1,0 +1,11 @@
+{
+  "name": "@shopify/theme-cli",
+  "version": "3.34.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "yarn --cwd ../.. nx run theme-cli:test",
+    "test:nx": "bundle install; bundle exec rake test",
+    "lint": "bundle install; bundle exec rake rubocop ."
+  }
+}
