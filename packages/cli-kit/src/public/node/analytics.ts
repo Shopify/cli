@@ -1,11 +1,11 @@
 import {version as rubyVersion} from './ruby.js'
 import {alwaysLogAnalytics, analyticsDisabled, isShopify} from './environment/local.js'
 import {content, debug, token} from '../../output.js'
-import constants from '../../constants.js'
 import * as metadata from '../../metadata.js'
 import {publishEvent, MONORAIL_COMMAND_TOPIC} from '../../monorail.js'
 import {fanoutHooks} from '../../plugins.js'
 import {getEnvironmentData, getSensitiveEnvironmentData} from '../../private/node/analytics.js'
+import {CLI_KIT_VERSION} from '../common/version.js'
 import {Interfaces} from '@oclif/core'
 
 interface ReportAnalyticsEventOptions {
@@ -70,7 +70,7 @@ async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions)
       time_end: currentTime,
       total_time: currentTime - startTime,
       success: errorMessage === undefined,
-      cli_version: await constants.versions.cliKit(),
+      cli_version: CLI_KIT_VERSION,
       ruby_version: (await rubyVersion()) || '',
       node_version: process.version.replace('v', ''),
       is_employee: await isShopify(),

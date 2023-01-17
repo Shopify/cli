@@ -2,7 +2,7 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import path from 'pathe'
+import * as path from 'pathe'
 import {defineConfig} from 'vite'
 
 export default function config(packagePath: string) {

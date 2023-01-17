@@ -4,7 +4,7 @@ import {writeFile} from '../lib/fs'
 import {Given, After, setDefaultTimeout} from '@cucumber/cucumber'
 import tempy from 'tempy'
 import rimraf from 'rimraf'
-import path from 'pathe'
+import * as path from 'pathe'
 
 // In the case of debug we want to disable
 // the timeouts to be able to sleep the

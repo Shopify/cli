@@ -92,6 +92,7 @@ function apiVersionQuery(): string {
  * @param path - Path of the REST resource.
  * @param session - Shopify Admin session including token and Store FQDN.
  * @param requestBody - Request body of including REST resource specific parameters.
+ * @param searchParams - Search params, appended to the URL.
  * @param apiVersion - Admin API version.
  * @returns - The {@link RestResponse}.
  */
@@ -100,12 +101,13 @@ export async function restRequest<T>(
   path: string,
   session: AdminSession,
   requestBody?: T,
+  searchParams: {[name: string]: string} = {},
   apiVersion = 'unstable',
 ): Promise<RestResponse> {
-  const url = restRequestUrl(session, apiVersion, path)
+  const url = restRequestUrl(session, apiVersion, path, searchParams)
   const body = restRequestBody<T>(requestBody)
 
-  const headers = await restRequestHeaders(session)
+  const headers = restRequestHeaders(session)
   const response = await fetch(url, {
     headers,
     method,

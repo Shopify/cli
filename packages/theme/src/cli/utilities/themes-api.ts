@@ -10,7 +10,7 @@ import {AdminSession} from '@shopify/cli-kit/node/session.js'
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role'>>
 
 export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
-  const response = await request('GET', '/themes', session)
+  const response = await request('GET', '/themes', session, undefined, {fields: 'id,name,role'})
   return buildThemes(response)
 }
 
@@ -29,8 +29,14 @@ export async function deleteTheme(id: number, session: AdminSession): Promise<Th
   return buildTheme(response.json.theme)
 }
 
-async function request<T>(method: string, path: string, session: AdminSession, params?: T): Promise<RestResponse> {
-  const response = await throttler.throttle(() => restRequest(method, path, session, params))
+async function request<T>(
+  method: string,
+  path: string,
+  session: AdminSession,
+  params?: T,
+  searchParams: {[name: string]: string} = {},
+): Promise<RestResponse> {
+  const response = await throttler.throttle(() => restRequest(method, path, session, params, searchParams))
 
   const status = response.status
   const callLimit = apiCallLimit(response)
@@ -46,7 +52,7 @@ async function request<T>(method: string, path: string, session: AdminSession, p
       return response
     case status === 429:
       // Retry following the "retry-after" header
-      return retry(() => request(method, path, session), retryAfter(response))
+      return retry(() => request(method, path, session, params, searchParams), retryAfter(response))
     case status === 403:
       return handleForbiddenError(session)
     case status === 401:
@@ -77,17 +83,7 @@ function buildTheme(themeJson: any): Theme | undefined {
     return undefined
   }
 
-  return new Theme(
-    themeJson.id,
-    themeJson.name,
-    themeJson.created_at,
-    themeJson.updated_at,
-    themeJson.role,
-    themeJson.theme_store_id,
-    themeJson.previewable,
-    themeJson.processing,
-    themeJson.admin_graphql_api_id,
-  )
+  return new Theme(themeJson.id, themeJson.name, themeJson.role)
 }
 
 function handleForbiddenError(session: AdminSession): never {

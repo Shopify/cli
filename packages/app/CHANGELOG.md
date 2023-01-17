@@ -1,5 +1,16 @@
 # @shopify/app
 
+## 3.34.0
+
+### Minor Changes
+
+- 39d6bcae8: Update to app_function_set: Adds new feature Input Query Variables - adds optional inqut query varialbes, updates schema + tests
+
+### Patch Changes
+
+- @shopify/cli-kit@3.34.0
+- @shopify/plugin-ngrok@3.34.0
+
 ## 3.33.0
 
 ### Minor Changes

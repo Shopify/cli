@@ -1,7 +1,7 @@
 import {executables} from '../lib/constants'
 import {exec} from '../lib/system'
 import {When, Then} from '@cucumber/cucumber'
-import path from 'pathe'
+import * as path from 'pathe'
 import fs from 'fs-extra'
 import {strict as assert} from 'assert'
 

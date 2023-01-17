@@ -1,5 +1,5 @@
 import {SessionSchema} from './schema.js'
-import constants from '../../../constants.js'
+import {keychainConstants} from '../constants.js'
 import {platformAndArch} from '../../../public/node/os.js'
 import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../../../secure-store.js'
 import {content, debug} from '../../../output.js'
@@ -21,7 +21,7 @@ export async function store(session: Session) {
   if (await secureStoreAvailable()) {
     await secureStore(identifier, jsonSession)
   } else {
-    await setSession(jsonSession)
+    setSession(jsonSession)
   }
 }
 
@@ -38,7 +38,7 @@ export async function fetch(): Promise<Session | undefined> {
   if (await secureStoreAvailable()) {
     content = await secureFetch(identifier)
   } else {
-    content = await getSession()
+    content = getSession()
   }
 
   if (!content) {
@@ -61,10 +61,10 @@ export async function remove() {
   if (await secureStoreAvailable()) {
     await secureRemove(identifier)
   } else {
-    await removeSession()
+    removeSession()
   }
 
-  await clearAllAppInfo()
+  clearAllAppInfo()
 }
 
 /**
@@ -80,7 +80,7 @@ async function secureStoreAvailable(): Promise<boolean> {
       return false
     }
     const keytar = await import('keytar')
-    await keytar.default.findCredentials(constants.keychain.service)
+    await keytar.default.findCredentials(keychainConstants.service)
     debug(content`Secure store is available`)
     return true
     // eslint-disable-next-line no-catch-all/no-catch-all

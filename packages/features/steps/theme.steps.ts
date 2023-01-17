@@ -1,7 +1,7 @@
 import {executables} from '../lib/constants'
 import {exec} from '../lib/system'
 import {Then} from '@cucumber/cucumber'
-import path from 'pathe'
+import * as path from 'pathe'
 import fs from 'fs'
 import {strict as assert} from 'assert'
 

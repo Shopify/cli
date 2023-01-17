@@ -1,15 +1,5 @@
 export class Theme {
-  constructor(
-    public id: number,
-    public name: string,
-    public createdAt: string,
-    public updatedAt: string,
-    private _role: string,
-    public themeStoreId: number | null,
-    public previewable: boolean,
-    public processing: boolean,
-    public adminGraphqlApiId: string,
-  ) {}
+  constructor(public id: number, public name: string, private _role: string) {}
 
   get role(): string {
     if (this._role === 'main') {

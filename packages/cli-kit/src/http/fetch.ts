@@ -31,7 +31,7 @@ export async function shopifyFetch(url: RequestInfo, init?: RequestInit): Respon
   const options: RequestInit = {
     ...(init ?? {}),
     headers: {
-      ...(await buildHeaders()),
+      ...buildHeaders(),
       ...(init?.headers ?? {}),
     },
   }

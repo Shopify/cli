@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.34.0
+
+### Patch Changes
+
+- 8fa3e7094: Add extra timeout when restarting theme dev
+  - @shopify/cli-kit@3.34.0
+
 ## 3.33.0
 
 ### Patch Changes
