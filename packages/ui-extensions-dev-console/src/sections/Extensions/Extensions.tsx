@@ -1,6 +1,6 @@
 import * as styles from './Extensions.module.scss'
 
-import {AppHomeRow, ExtensionRow, PostPurchaseRow, Row} from './components'
+import {ExtensionRow, PostPurchaseRow, AppHomeRow, Row} from './components'
 import en from './translations/en.json'
 import {useExtensions} from './hooks/useExtensions'
 import {useExtensionServerOptions} from './hooks/useExtensionServerOptions'
@@ -20,7 +20,7 @@ export function Extensions() {
   if (!extensionIds.length) {
     return (
       <div className={styles.Empty}>
-        {surface ? i18n.translate('errors.noExtensions') : i18n.translate('errors.noExtensionsForSurface', {surface})}
+        {surface ? i18n.translate('errors.noExtensionsForSurface', {surface}) : i18n.translate('errors.noExtensions')}
       </div>
     )
   }

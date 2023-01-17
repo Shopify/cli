@@ -15,23 +15,24 @@ mockI18n(en)
 
 describe('<PostPurchaseModal/>', () => {
   const defaultProps = {
+    open: true,
     onClose: vi.fn(),
     url: 'mock.url.com',
   }
 
-  test('renders a <Modal/> closed when url is undefined', () => {
-    const container = render(<PostPurchaseModal {...defaultProps} url={undefined} />, withProviders(DefaultProviders))
+  test('renders a <Modal/>, closed when open is false', () => {
+    const container = render(<PostPurchaseModal {...defaultProps} open={false} />, withProviders(DefaultProviders))
 
-    expect(container).toContainReactComponent(Modal, {open: false})
+    expect(container).toContainReactComponent(Modal, {open: false, width: 'large'})
   })
 
-  test('renders a <Modal/> open when url is a string', () => {
+  test('renders a <Modal/>, open when open is true', () => {
     const container = render(<PostPurchaseModal {...defaultProps} />, withProviders(DefaultProviders))
 
     expect(container).toContainReactComponent(Modal, {open: true, width: 'large'})
   })
 
-  test('renders a link to the browser extension when url is a string', () => {
+  test('renders a link to the browser extension', () => {
     const container = render(<PostPurchaseModal {...defaultProps} />, withProviders(DefaultProviders))
 
     expect(container).toContainReactComponent('a', {
@@ -40,7 +41,7 @@ describe('<PostPurchaseModal/>', () => {
     })
   })
 
-  test('renders the URL for the extension when url is a string', () => {
+  test('renders the URL for the extension', () => {
     const container = render(<PostPurchaseModal {...defaultProps} />, withProviders(DefaultProviders))
 
     expect(container).toContainReactText(defaultProps.url)
