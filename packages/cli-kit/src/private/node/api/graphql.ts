@@ -18,7 +18,7 @@ export function graphqlRequest<T>(
   handleErrors = true,
 ): Promise<T> {
   const action = async () => {
-    const headers = await buildHeaders(token)
+    const headers = buildHeaders(token)
     debugLogRequest(api, query, variables, headers)
     const clientOptions = {agent: await httpsAgent(), headers}
     const client = new GraphQLClient(url, clientOptions)

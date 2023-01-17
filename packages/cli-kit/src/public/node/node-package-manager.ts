@@ -2,10 +2,9 @@ import {AbortError, BugError} from './error.js'
 import {Version} from './semver.js'
 import {AbortController, AbortSignal} from './abort.js'
 import {exec} from './system.js'
-import {exists as fileExists, read as readFile, write as writeFile} from '../../file.js'
-import {glob, dirname, join as pathJoin, findUp, moduleDirectory} from '../../path.js'
+import {fileExists, readFile, writeFile} from './fs.js'
+import {glob, dirname, join as pathJoin, findUp} from '../../path.js'
 import {token, content, debug} from '../../output.js'
-import {Bug} from '../../error.js'
 import latestVersion from 'latest-version'
 import type {Writable} from 'stream'
 import type {ExecOptions} from './system.js'
@@ -521,25 +520,4 @@ export async function addResolutionOrOverride(directory: string, dependencies: {
 async function getLatestNPMPackageVersion(name: string) {
   debug(content`Getting the latest version of NPM package: ${token.raw(name)}`)
   return latestVersion(name)
-}
-
-interface FindPackageVersionUpOptions {
-  fromModuleURL: import('url').URL | string
-}
-
-/**
- * Given a module URL, it traverses the directory hierarchy up until it finds a package.json
- * and then it returns the version in it.
- * @param options - Options
- * @returns The version if it can find the package.json and it exists. An error otherwise.
- */
-export async function findPackageVersionUp(options: FindPackageVersionUpOptions): Promise<string> {
-  const fromDirectory = moduleDirectory(options.fromModuleURL)
-  const packageJson = await findUpAndReadPackageJson(fromDirectory)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const version = (packageJson.content as any).version
-  if (!version) {
-    throw new Bug(content`The package.json at path ${token.path(packageJson.path)} doesn't contain a version`)
-  }
-  return version
 }

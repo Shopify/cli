@@ -1,4 +1,5 @@
-import {path, file, error} from '@shopify/cli-kit'
+import {path, error} from '@shopify/cli-kit'
+import {readFile} from '@shopify/cli-kit/node/fs'
 import {renderLiquidTemplate} from '@shopify/cli-kit/node/liquid'
 
 export interface GetHTMLOptions {
@@ -18,7 +19,7 @@ export class TemplateNotFoundError extends error.Bug {
 
 export async function getHTML(options: GetHTMLOptions): Promise<string> {
   const templatePath = await getTemplatePath(options)
-  const templateContent = await file.read(templatePath)
+  const templateContent = await readFile(templatePath)
   return renderLiquidTemplate(templateContent, options.data)
 }
 

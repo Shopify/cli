@@ -1,8 +1,8 @@
 import {themeFlags} from '../flags.js'
 import {store as conf, error, output} from '@shopify/cli-kit'
 
-export async function getThemeStore(flags: {store: string | undefined}): Promise<string> {
-  const store = flags.store || (await conf.getThemeStore())
+export function getThemeStore(flags: {store: string | undefined}): string {
+  const store = flags.store || conf.getThemeStore()
   if (!store) {
     throw new error.Abort(
       'A store is required',
@@ -13,6 +13,6 @@ export async function getThemeStore(flags: {store: string | undefined}): Promise
       } environment variable.`,
     )
   }
-  await conf.setThemeStore(store)
+  conf.setThemeStore(store)
   return store
 }

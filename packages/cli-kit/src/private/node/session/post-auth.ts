@@ -1,5 +1,5 @@
 import {findUp, moduleDirectory} from '../../../path.js'
-import {read} from '../../../file.js'
+import {readFile} from '../../../public/node/fs.js'
 import {Bug} from '../../../error.js'
 
 const HTMLFileNames = [
@@ -31,37 +31,37 @@ const getFilePath = async (fileName: string): Promise<string> => {
 
 export const getEmptyUrlHTML = async (): Promise<string> => {
   const filePath = await getFilePath(HTMLFileNames[0])
-  return read(filePath)
+  return readFile(filePath)
 }
 
 export const getAuthErrorHTML = async (): Promise<string> => {
   const filePath = await getFilePath(HTMLFileNames[1])
-  return read(filePath)
+  return readFile(filePath)
 }
 
 export const getMissingCodeHTML = async (): Promise<string> => {
   const filePath = await getFilePath(HTMLFileNames[2])
-  return read(filePath)
+  return readFile(filePath)
 }
 
 export const getMissingStateHTML = async (): Promise<string> => {
   const filePath = await getFilePath(HTMLFileNames[3])
-  return read(filePath)
+  return readFile(filePath)
 }
 
 export const getSuccessHTML = async (): Promise<string> => {
   const filePath = await getFilePath(HTMLFileNames[4])
-  return read(filePath)
+  return readFile(filePath)
 }
 
 export const getStylesheet = async (): Promise<string> => {
   const filePath = await getFilePath(StylesheetFilename)
-  return read(filePath)
+  return readFile(filePath)
 }
 
 export const getFavicon = async (): Promise<string> => {
   const filePath = await getFilePath(FaviconFileName)
-  return read(filePath)
+  return readFile(filePath)
 }
 
 export const EmptyUrlString = 'We received the authentication redirect but the URL is empty.'

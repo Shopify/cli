@@ -95,13 +95,13 @@ export function formatPackageManagerCommand(
   ...scriptArgs: string[]
 ): string {
   switch (packageManager) {
+    case 'pnpm':
     case 'yarn': {
-      const pieces = ['yarn', scriptName, ...scriptArgs]
+      const pieces = [packageManager, scriptName, ...scriptArgs]
       return pieces.join(' ')
     }
-    case 'pnpm':
     case 'npm': {
-      const pieces = [packageManager, 'run', scriptName]
+      const pieces = ['npm', 'run', scriptName]
       if (scriptArgs.length > 0) {
         pieces.push('--')
         pieces.push(...scriptArgs)

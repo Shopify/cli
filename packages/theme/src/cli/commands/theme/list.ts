@@ -1,7 +1,9 @@
 import {getThemeStore} from '../../utilities/theme-store.js'
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {list} from '../../services/list.js'
+import {ALLOWED_ROLES} from '../../utilities/theme-selector/fetch.js'
+import {Flags} from '@oclif/core'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
@@ -12,12 +14,26 @@ export default class List extends ThemeCommand {
     ...globalFlags,
     password: themeFlags.password,
     store: themeFlags.store,
+    role: Flags.enum({
+      description: 'Only list themes with the given role.',
+      options: ALLOWED_ROLES,
+      env: 'SHOPIFY_FLAG_ROLE',
+    }),
+    name: Flags.string({
+      description: 'Only list themes that contain the given name.',
+      env: 'SHOPIFY_FLAG_NAME',
+    }),
+    id: Flags.integer({
+      description: 'Only list theme with the given ID.',
+      env: 'SHOPIFY_FLAG_ID',
+    }),
   }
 
   async run(): Promise<void> {
     const {flags} = await this.parse(List)
-    const store = await getThemeStore(flags)
+    const store = getThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
-    await execCLI2(['theme', 'list'], {adminSession})
+
+    await list(adminSession, flags)
   }
 }

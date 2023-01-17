@@ -1,8 +1,8 @@
+import {fileExists, readSync} from '../fs.js'
 import {isTruthy} from '../../../private/node/environment/utilities.js'
-import constants from '../../../constants.js'
+import {environmentVariables} from '../../../private/node/constants.js'
 import {captureOutput} from '../system.js'
 import {content, token} from '../../../output.js'
-import {exists, readSync} from '../../../file.js'
 import {getCachedSpinFqdn, setCachedSpinFqdn} from '../../../private/node/environment/spin-cache.js'
 import {Abort} from '../../../error.js'
 import {Environment, serviceEnvironment} from '../../../private/node/environment/service.js'
@@ -35,7 +35,7 @@ export async function spinFqdn(env = process.env): Promise<string> {
   let spinFqdn = getCachedSpinFqdn()
   if (spinFqdn) return spinFqdn
 
-  if (await exists(spinFqdnFilePath)) {
+  if (await fileExists(spinFqdnFilePath)) {
     spinFqdn = await readSync(spinFqdnFilePath).toString()
   } else {
     const spinInstance = await instance(env)
@@ -75,7 +75,7 @@ export async function show(spinInstance: string | undefined, env = process.env):
  * @returns True if the CLI is running in a Spin environment.
  */
 export function isSpin(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.spin])
+  return isTruthy(env[environmentVariables.spin])
 }
 
 /**
@@ -85,7 +85,7 @@ export function isSpin(env = process.env): boolean {
  * @returns The value of the SPIN_INSTANCE environment variable.
  */
 export function instance(env = process.env): string | undefined {
-  return env[constants.environmentVariables.spinInstance]
+  return env[environmentVariables.spinInstance]
 }
 
 /**

@@ -1,8 +1,9 @@
 import {Extension, FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {AppErrors} from './loader.js'
-import {path, schema, file} from '@shopify/cli-kit'
+import {path, schema} from '@shopify/cli-kit'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
+import {fileRealPath} from '@shopify/cli-kit/node/fs'
 
 export const AppConfigurationSchema = schema.define.object({
   scopes: schema.define.string().default(''),
@@ -178,7 +179,7 @@ export async function getDependencyVersion(dependency: string, directory: string
     if (!reactPackageJsonPath) {
       return 'not_found'
     }
-    cwd = await file.realpath(path.dirname(reactPackageJsonPath))
+    cwd = await fileRealPath(path.dirname(reactPackageJsonPath))
   }
 
   // Split the dependency name to avoid using "/" in windows
@@ -191,7 +192,7 @@ export async function getDependencyVersion(dependency: string, directory: string
     allowSymlinks: true,
   })
   if (!packagePath) return 'not_found'
-  packagePath = await file.realpath(packagePath)
+  packagePath = await fileRealPath(packagePath)
 
   // Load the package.json and extract the version
   const packageContent = await readAndParsePackageJson(packagePath)

@@ -1,18 +1,17 @@
-import {path, error, file, output, ui, npm, git, constants} from '@shopify/cli-kit'
+import {path, error, output, ui, npm, git} from '@shopify/cli-kit'
 import {username} from '@shopify/cli-kit/node/os'
 import {
-  findPackageVersionUp,
   installNodeModules,
   packageManager,
   PackageManager,
   packageManagerUsedForCreating,
 } from '@shopify/cli-kit/node/node-package-manager'
-
 import {parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
-
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {isShopify, isUnitTest} from '@shopify/cli-kit/node/environment/local'
+import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile, rmdir, touchFile} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 interface InitOptions {
@@ -21,7 +20,6 @@ interface InitOptions {
   directory: string
   packageManager?: string
   shopifyCliVersion?: string
-  cliHydrogenPackageVersion?: string
   hydrogenVersion?: string
   local: boolean
 }
@@ -33,10 +31,8 @@ Help us make Hydrogen better by reporting this error so we can improve this mess
 `
 
 async function init(options: InitOptions) {
-  const hydrogenVersion = await findPackageVersionUp({fromModuleURL: import.meta.url})
   const user = (await username()) ?? ''
-  const cliPackageVersion = options.shopifyCliVersion ?? (await constants.versions.cliKit())
-  const cliHydrogenPackageVersion = options.cliHydrogenPackageVersion ?? hydrogenVersion
+  const cliVersion = options.shopifyCliVersion ?? CLI_KIT_VERSION
   const hydrogenPackageVersion = options.hydrogenVersion
   const packageManager = inferPackageManager(options.packageManager)
   const hyphenizedName = hyphenate(options.name)
@@ -44,12 +40,12 @@ async function init(options: InitOptions) {
 
   await ui.nonEmptyDirectoryPrompt(outputDirectory)
 
-  await file.inTemporaryDirectory(async (tmpDir) => {
+  await inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = path.join(tmpDir, 'download')
     const templateScaffoldDir = path.join(tmpDir, 'app')
 
-    await file.mkdir(templateDownloadDir)
-    await file.mkdir(templateScaffoldDir)
+    await mkdir(templateDownloadDir)
+    await mkdir(templateScaffoldDir)
 
     let tasks: ui.ListrTasks = []
 
@@ -68,7 +64,7 @@ async function init(options: InitOptions) {
           destination: templateDownloadDir,
           shallow: true,
         })
-        if (!(await file.exists(path.join(templatePath, 'package.json')))) {
+        if (!(await fileExists(path.join(templatePath, 'package.json')))) {
           throw new error.Abort(`The template ${templatePath} was not found.`, suggestHydrogenSupport())
         }
         return {successMessage: `Downloaded template from ${repoUrl}`}
@@ -86,7 +82,7 @@ async function init(options: InitOptions) {
                 task: async (_, task) => {
                   const templateData = {
                     name: hyphenizedName,
-                    shopify_cli_version: cliPackageVersion,
+                    shopify_cli_version: cliVersion,
                     hydrogen_version: hydrogenPackageVersion,
                     author: user,
                     dependency_manager: options.packageManager,
@@ -100,14 +96,13 @@ async function init(options: InitOptions) {
                 title: 'Updating package.json',
                 task: async (_, task) => {
                   const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
-                  const cliVersion = await constants.versions.cliKit()
                   await npm.updateAppData(packageJSON, hyphenizedName)
                   await updateCLIDependencies(packageJSON, options.local, {
                     dependencies: {
                       '@shopify/hydrogen': hydrogenPackageVersion,
                     },
                     devDependencies: {
-                      '@shopify/cli-hydrogen': cliHydrogenPackageVersion,
+                      '@shopify/cli-hydrogen': cliVersion,
                       '@shopify/cli': cliVersion,
                     },
                   })
@@ -175,7 +170,7 @@ async function init(options: InitOptions) {
 
     await list.run()
 
-    await file.move(templateScaffoldDir, outputDirectory)
+    await moveFile(templateScaffoldDir, outputDirectory)
   })
 
   output.info(output.content`
@@ -261,10 +256,10 @@ async function installDependencies(directory: string, packageManager: PackageMan
 async function writeToNpmrc(directory: string, content: string) {
   const npmrcPath = path.join(directory, '.npmrc')
   const npmrcContent = `${content}\n`
-  if (!(await file.exists(npmrcPath))) {
-    await file.touch(npmrcPath)
+  if (!(await fileExists(npmrcPath))) {
+    await touchFile(npmrcPath)
   }
-  await file.appendFile(npmrcPath, npmrcContent)
+  await appendFile(npmrcPath, npmrcContent)
 }
 
 async function cleanup(webOutputDirectory: string) {
@@ -283,5 +278,5 @@ async function cleanup(webOutputDirectory: string) {
     },
   )
 
-  return Promise.all(gitPaths.map((path) => file.rmdir(path, {force: true}))).then(() => {})
+  return Promise.all(gitPaths.map((path) => rmdir(path, {force: true}))).then(() => {})
 }

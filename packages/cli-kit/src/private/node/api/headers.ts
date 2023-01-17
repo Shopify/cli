@@ -1,4 +1,4 @@
-import constants from '../../../constants.js'
+import {CLI_KIT_VERSION} from '../../../public/common/version.js'
 import {firstPartyDev} from '../../../public/node/environment/local.js'
 import {ExtendableError} from '../../../error.js'
 import {randomUUID} from '../../../public/node/crypto.js'
@@ -33,8 +33,8 @@ export function sanitizedHeadersOutput(headers: {[key: string]: string}): string
     .join('\n')
 }
 
-export async function buildHeaders(token?: string): Promise<{[key: string]: string}> {
-  const userAgent = `Shopify CLI; v=${await constants.versions.cliKit()}`
+export function buildHeaders(token?: string): {[key: string]: string} {
+  const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
 
   const headers: {[header: string]: string} = {
     'User-Agent': userAgent,

@@ -4,9 +4,10 @@ import {selectApp} from '../select-app.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {testApp} from '../../../models/app/app.test-data.js'
-import {path, output, store, file} from '@shopify/cli-kit'
+import {path, output, store} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import * as file from '@shopify/cli-kit/node/fs'
 
 beforeEach(async () => {
   vi.mock('../../dev/fetch.js')
@@ -31,7 +32,7 @@ beforeEach(async () => {
 describe('env show', () => {
   it('outputs the new environment', async () => {
     // Given
-    vi.spyOn(file, 'write')
+    vi.spyOn(file, 'writeFile')
 
     const app = mockApp()
     const token = 'token'
@@ -67,7 +68,7 @@ describe('env show', () => {
     const result = await showEnv(app)
 
     // Then
-    expect(file.write).not.toHaveBeenCalled()
+    expect(file.writeFile).not.toHaveBeenCalled()
     expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
     "
         SHOPIFY_API_KEY=api-key
