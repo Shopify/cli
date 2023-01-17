@@ -2,12 +2,11 @@ import * as admin from './admin.js'
 import {AdminSession} from '../session.js'
 import {graphqlRequest} from '../../../private/node/api/graphql.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'
-import {fetch} from '../../../private/node/api/rest.js'
+import * as rest from '../../../private/node/api/rest.js'
 import {test, vi, expect, describe} from 'vitest'
 
 vi.mock('../../../private/node/api/graphql.js')
 vi.mock('../../../private/node/api/headers.js')
-vi.mock('../../../private/node/api/rest.js')
 
 const mockedResult = {
   publicApiVersions: [
@@ -66,7 +65,7 @@ describe('admin-rest-api', () => {
     const status = 200
     const headers = {'x-request-id': 123}
 
-    vi.mocked(fetch).mockResolvedValue({
+    vi.spyOn(rest, 'fetch').mockResolvedValue({
       json,
       status,
       headers: {raw: () => headers},
@@ -88,7 +87,7 @@ describe('admin-rest-api', () => {
     const headers = {'X-Shopify-Access-Token': `Bearer ${token}`, 'Content-Type': 'application/json'}
 
     vi.mocked(buildHeaders).mockResolvedValue(headers)
-    vi.mocked(fetch).mockResolvedValue({
+    const spyFetch = vi.spyOn(rest, 'fetch').mockResolvedValue({
       json,
       status,
       headers: {raw: () => ({})},
@@ -98,7 +97,7 @@ describe('admin-rest-api', () => {
     await admin.restRequest('GET', '/themes', Session)
 
     // Then
-    expect(fetch).toHaveBeenLastCalledWith('https://store/admin/api/unstable/themes.json', {
+    expect(spyFetch).toHaveBeenLastCalledWith('https://store/admin/api/unstable/themes.json', {
       headers,
       method: 'GET',
     })
@@ -115,7 +114,7 @@ describe('admin-rest-api', () => {
     const headers = {'X-Shopify-Access-Token': `Bearer ${token}`, 'Content-Type': 'application/json'}
 
     vi.mocked(buildHeaders).mockResolvedValue(headers)
-    vi.mocked(fetch).mockResolvedValue({
+    const spyFetch = vi.spyOn(rest, 'fetch').mockResolvedValue({
       json: () => Promise.resolve({result: true}),
       status,
       headers: {raw: () => ({})},
@@ -125,7 +124,7 @@ describe('admin-rest-api', () => {
     await admin.restRequest('GET', '/themes', themeAccessSession)
 
     // Then
-    expect(fetch).toHaveBeenLastCalledWith(
+    expect(spyFetch).toHaveBeenLastCalledWith(
       'https://theme-kit-access.shopifyapps.com/cli/admin/api/unstable/themes.json',
       {
         headers: {
