@@ -7,9 +7,9 @@ import {
   packageManagerUsedForCreating,
 } from '@shopify/cli-kit/node/node-package-manager'
 
-const currentVersion = '2.2.2'
 beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/node-package-manager')
+  vi.mock('@shopify/cli-kit/common/version', () => ({CLI_KIT_VERSION: '2.2.2'}))
   vi.mock('@shopify/cli-kit', async () => {
     const module: any = await vi.importActual('@shopify/cli-kit')
     return {
@@ -40,7 +40,7 @@ describe('check CLI version', () => {
 
       // When
       await expect(async () => {
-        await versionService({currentVersion})
+        await versionService()
       }).rejects.toThrowError(new error.CancelExecution())
 
       // Then
@@ -56,11 +56,11 @@ describe('check CLI version', () => {
   it('display only current version when no newer version exists', async () => {
     // Given
     const outputMock = outputMocker.mockAndCaptureOutput()
-    vi.mocked(checkForNewVersion).mockResolvedValue(currentVersion)
+    vi.mocked(checkForNewVersion).mockResolvedValue('2.2.2')
 
     // When
     await expect(async () => {
-      await versionService({currentVersion})
+      await versionService()
     }).rejects.toThrowError(new error.CancelExecution())
 
     // Then
@@ -78,7 +78,7 @@ describe('check CLI version', () => {
 
     // When
     await expect(async () => {
-      await versionService({currentVersion})
+      await versionService()
     }).rejects.toThrowError(new error.CancelExecution())
 
     // Then

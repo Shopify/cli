@@ -31,7 +31,7 @@ export default class List extends ThemeCommand {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(List)
-    const store = await getThemeStore(flags)
+    const store = getThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
     await list(adminSession, flags)

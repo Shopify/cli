@@ -37,7 +37,7 @@ export default class Open extends ThemeCommand {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Open)
-    const store = await getThemeStore(flags)
+    const store = getThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
     await open(adminSession, flags)

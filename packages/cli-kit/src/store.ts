@@ -1,5 +1,5 @@
 import {content, token, debug} from './output.js'
-import constants from './constants.js'
+import {CLI_KIT_VERSION} from './public/common/version.js'
 import Conf, {Schema} from 'conf'
 
 const migrations = {}
@@ -42,25 +42,24 @@ const schema = {
 
 let _instance: CLIKitStore | undefined
 
-export async function cliKitStore() {
+export function cliKitStore() {
   if (!_instance) {
-    // eslint-disable-next-line require-atomic-updates
     _instance = new CLIKitStore({
       schema,
       migrations,
       projectName: 'shopify-cli-kit',
-      projectVersion: await constants.versions.cliKit(),
+      projectVersion: CLI_KIT_VERSION,
     })
   }
   return _instance
 }
 
-export async function getAppInfo(directory: string): Promise<CachedAppInfo | undefined> {
-  const store = await cliKitStore()
+export function getAppInfo(directory: string): CachedAppInfo | undefined {
+  const store = cliKitStore()
   return store.getAppInfo(directory)
 }
 
-export async function setAppInfo(options: {
+export function setAppInfo(options: {
   directory: string
   appId?: string
   title?: string
@@ -68,43 +67,43 @@ export async function setAppInfo(options: {
   orgId?: string
   updateURLs?: boolean
   tunnelPlugin?: string
-}): Promise<void> {
-  const store = await cliKitStore()
+}): void {
+  const store = cliKitStore()
   store.setAppInfo(options)
 }
 
-export async function clearAppInfo(directory: string): Promise<void> {
-  const store = await cliKitStore()
+export function clearAppInfo(directory: string): void {
+  const store = cliKitStore()
   store.clearAppInfo(directory)
 }
 
-export async function getThemeStore(): Promise<string | undefined> {
-  const store = await cliKitStore()
+export function getThemeStore(): string | undefined {
+  const store = cliKitStore()
   return store.getThemeStore()
 }
 
-export async function setThemeStore(themeStore: string): Promise<void> {
-  const store = await cliKitStore()
+export function setThemeStore(themeStore: string): void {
+  const store = cliKitStore()
   store.setThemeStore(themeStore)
 }
 
-export async function getSession(): Promise<string | undefined> {
-  const store = await cliKitStore()
+export function getSession(): string | undefined {
+  const store = cliKitStore()
   return store.getSession()
 }
 
-export async function setSession(session: string): Promise<void> {
-  const store = await cliKitStore()
+export function setSession(session: string): void {
+  const store = cliKitStore()
   store.setSession(session)
 }
 
-export async function removeSession(): Promise<void> {
-  const store = await cliKitStore()
+export function removeSession(): void {
+  const store = cliKitStore()
   store.removeSession()
 }
 
-export async function clearAllAppInfo(): Promise<void> {
-  const store = await cliKitStore()
+export function clearAllAppInfo(): void {
+  const store = cliKitStore()
   store.clearAllAppInfo()
 }
 

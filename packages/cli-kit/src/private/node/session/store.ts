@@ -21,7 +21,7 @@ export async function store(session: Session) {
   if (await secureStoreAvailable()) {
     await secureStore(identifier, jsonSession)
   } else {
-    await setSession(jsonSession)
+    setSession(jsonSession)
   }
 }
 
@@ -38,7 +38,7 @@ export async function fetch(): Promise<Session | undefined> {
   if (await secureStoreAvailable()) {
     content = await secureFetch(identifier)
   } else {
-    content = await getSession()
+    content = getSession()
   }
 
   if (!content) {
@@ -61,7 +61,7 @@ export async function remove() {
   if (await secureStoreAvailable()) {
     await secureRemove(identifier)
   } else {
-    await removeSession()
+    removeSession()
   }
 
   await clearAllAppInfo()

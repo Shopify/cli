@@ -53,7 +53,7 @@ describe('info', () => {
       storeFqdn: 'my-app.example.com',
       updateURLs: true,
     }
-    vi.mocked(store.getAppInfo).mockResolvedValue(cachedAppInfo)
+    vi.mocked(store.getAppInfo).mockReturnValue(cachedAppInfo)
     const app = mockApp()
 
     // When

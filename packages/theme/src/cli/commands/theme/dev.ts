@@ -101,7 +101,7 @@ export default class Dev extends ThemeCommand {
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Dev.cli2Flags})
     const command = ['theme', 'serve', flags.path, ...flagsToPass]
 
-    const store = await getThemeStore(flags)
+    const store = getThemeStore(flags)
 
     let controller = new AbortController()
 
