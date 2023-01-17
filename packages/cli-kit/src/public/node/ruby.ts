@@ -16,7 +16,7 @@ const ThemeCheckVersion = '1.14.0'
 const MinBundlerVersion = '2.3.8'
 const MinRubyVersion = '2.7.5'
 
-interface ExecCLI2Options {
+export interface ExecCLI2Options {
   // Contains token and store to pass to CLI 2.0, which will be set as environment variables
   adminSession?: AdminSession
   // Contains token for storefront access to pass to CLI 2.0 as environment variable
@@ -45,9 +45,9 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
     SHOPIFY_SHOP: options.adminSession?.storeFqdn,
     SHOPIFY_CLI_AUTH_TOKEN: options.token,
     SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
-    // Bundler uses this Gemfile to understand which gems are available in the
-    // environment. We use this to specify our own Gemfile for CLI2, which exists
-    // outside the user's project directory.
+    // Bu ndler uses this Gemfile to understand which gems are available in the
+    // en vironment. We use this to specify our own Gemfile for CLI2, which exists
+    // ou tside the user's project directory.
     BUNDLE_GEMFILE: join(shopifyCLIDirectory(), 'Gemfile'),
   }
 
@@ -59,7 +59,7 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
       signal: options.signal,
     })
   } catch (error) {
-    // CLI2 will show it's own errors, we don't need to show an additional CLI3 error
+    // CL I2 will show it's own errors, we don't need to show an additional CLI3 error
     throw new AbortSilent()
   }
 }
@@ -67,11 +67,11 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
 interface ExecThemeCheckCLIOptions {
   /** A list of directories in which theme-check should run. */
   directories: string[]
-  /** Arguments to pass to the theme-check CLI. */
+  /** A rguments to pass to the theme-check CLI. */
   args?: string[]
-  /** Writable to send standard output content through. */
+  /** W ritable to send standard output content through. */
   stdout: Writable
-  /** Writable to send standard error content through. */
+  /** W ritable to send standard error content through. */
   stderr: Writable
 }
 
@@ -85,17 +85,17 @@ export async function execThemeCheckCLI(options: ExecThemeCheckCLIOptions): Prom
   await installThemeCheckCLIDependencies(options.stdout)
 
   const processes = options.directories.map(async (directory): Promise<void> => {
-    // Check that there are files aside from the extension TOML config file,
-    // otherwise theme-check will return a false failure.
+    // Ch eck that there are files aside from the extension TOML config file,
+    // ot herwise theme-check will return a false failure.
     const files = await glob(join(directory, '/**/*'))
     const fileCount = files.filter((file) => !file.match(/\.toml$/)).length
     if (fileCount === 0) return
 
     const customStderr = new Writable({
       write(chunk, ...args) {
-        // For some reason, theme-check reports this initial status line to stderr
-        // See https://github.com/Shopify/theme-check/blob/1092737cfb58a73ca397ffb1371665dc55df2976/lib/theme_check/language_server/diagnostics_engine.rb#L31
-        // which leads to https://github.com/Shopify/theme-check/blob/1092737cfb58a73ca397ffb1371665dc55df2976/lib/theme_check/language_server/io_messenger.rb#L65
+        // Fo r some reason, theme-check reports this initial status line to stderr
+        // Se e https://github.com/Shopify/theme-check/blob/1092737cfb58a73ca397ffb1371665dc55df2976/lib/theme_check/language_server/diagnostics_engine.rb#L31
+        // wh ich leads to https://github.com/Shopify/theme-check/blob/1092737cfb58a73ca397ffb1371665dc55df2976/lib/theme_check/language_server/io_messenger.rb#L65
         if (chunk.toString('ascii').match(/^Checking/)) {
           options.stdout.write(chunk, ...args)
         } else {
@@ -251,7 +251,7 @@ async function createShopifyCLIGemfile(): Promise<void> {
   const gemFileContent = ["source 'https://rubygems.org'", `gem 'shopify-cli', '${RubyCLIVersion}'`]
   const {platform} = platformAndArch()
   if (platform === 'windows') {
-    // 'wdm' is required by 'listen', see https://github.com/Shopify/cli/issues/780
+    // 'w dm' is required by 'listen', see https://github.com/Shopify/cli/issues/780
     gemFileContent.push("gem 'wdm', '>= 0.1.0'")
   }
   await file.writeFile(gemPath, gemFileContent.join('\n'))

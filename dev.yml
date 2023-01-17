@@ -21,6 +21,7 @@ env:
   SHOPIFY_CLI_ENV: development
   SHOPIFY_SERVICE_ENV: production
   SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION: "1"
+  SHOPIFY_CLI_THEME_CLI: "embed"
 
 open:
   app: http://localhost:3000
