@@ -1,11 +1,12 @@
 import * as styles from './Extensions.module.scss'
 
-import {AppHomeRow, QRCodeModal, ExtensionRow, PostPurchaseRow, PostPurchaseModal, Row} from './components'
+import {AppHomeRow, ExtensionRow, PostPurchaseRow, Row} from './components'
 import en from './translations/en.json'
+import {useExtensions} from './hooks/useExtensions'
+import {useExtensionServerOptions} from './hooks/useExtensionServerOptions'
 import {useI18n} from '@shopify/react-i18n'
-import React, {useState} from 'react'
-import {ExtensionPayload, Surface} from '@shopify/ui-extensions-server-kit'
-import {useExtensionsInternal} from '@/sections/Extensions/hooks/useExtensionsInternal'
+import React from 'react'
+import {isEmbedded} from '@/utilities/embedded'
 
 export function Extensions() {
   const [i18n] = useI18n({
@@ -13,29 +14,20 @@ export function Extensions() {
     fallback: en,
   })
 
-  const {
-    state: {extensions, app},
-    focus,
-    unfocus,
-    embedded,
-    client: {
-      options: {surface},
-    },
-  } = useExtensionsInternal()
+  const extensionIds = useExtensions()
+  const {surface} = useExtensionServerOptions()
 
-  const [activeMobileQRCode, setActiveMobileQRCode] = useState<
-    | {
-        url: string
-        type: Surface | 'home'
-        title: string
-      }
-    | undefined
-  >(undefined)
-  const [postPurchaseUrl, setPostPurchaseUrl] = useState<string | undefined>(undefined)
+  if (!extensionIds.length) {
+    return (
+      <div className={styles.Empty}>
+        {surface ? i18n.translate('errors.noExtensions') : i18n.translate('errors.noExtensionsForSurface', {surface})}
+      </div>
+    )
+  }
 
-  const ConsoleContent = () => (
+  return (
     <section className={styles.ExtensionList}>
-      {embedded ? null : <p className={styles.Intro}>{i18n.translate('intro')}</p>}
+      {isEmbedded ? null : <p className={styles.Intro}>{i18n.translate('intro')}</p>}
       <table>
         <thead>
           <Row>
@@ -47,66 +39,16 @@ export function Extensions() {
           </Row>
         </thead>
         <tbody>
-          {app ? (
-            <AppHomeRow
-              url={app.url}
-              title={app.title}
-              onShowMobileQRCode={() => {
-                setActiveMobileQRCode({
-                  url: app.url,
-                  type: 'home',
-                  title: app.title,
-                })
-              }}
-            />
-          ) : null}
-          {extensions.map((extension) => {
-            if (extension.type === 'checkout_post_purchase') {
-              return (
-                <PostPurchaseRow
-                  key={extension.uuid}
-                  extension={extension}
-                  onHighlight={focus}
-                  onClearHighlight={unfocus}
-                  onOpenPostPurchaseModal={() => setPostPurchaseUrl(extension.development.root.url)}
-                />
-              )
+          <AppHomeRow />
+          {extensionIds.map(({uuid, type}) => {
+            if (type === 'checkout_post_purchase') {
+              return <PostPurchaseRow key={uuid} uuid={uuid} />
             }
 
-            return (
-              <ExtensionRow
-                key={extension.uuid}
-                extension={extension}
-                onHighlight={focus}
-                onClearHighlight={unfocus}
-                onShowMobileQRCode={(extension: ExtensionPayload) =>
-                  setActiveMobileQRCode({
-                    url: extension.development.root.url,
-                    type: extension.surface,
-                    title: extension.title,
-                  })
-                }
-              />
-            )
+            return <ExtensionRow key={uuid} uuid={uuid} />
           })}
         </tbody>
       </table>
     </section>
-  )
-
-  const ConsoleEmpty = () => {
-    return (
-      <div className={styles.Empty}>
-        {surface ? i18n.translate('errors.noExtensionsForSurface', {surface}) : i18n.translate('errors.noExtensions')}
-      </div>
-    )
-  }
-
-  return (
-    <>
-      {extensions.length > 0 ? <ConsoleContent /> : <ConsoleEmpty />}
-      <QRCodeModal code={activeMobileQRCode} onClose={() => setActiveMobileQRCode(undefined)} />
-      <PostPurchaseModal onClose={() => setPostPurchaseUrl(undefined)} url={postPurchaseUrl} />
-    </>
   )
 }

@@ -7,11 +7,11 @@ import {toast} from 'react-toastify'
 import {IconButton} from '@/components/IconButton'
 import {Modal, ModalProps} from '@/components/Modal'
 
-interface Props extends Pick<ModalProps, 'onClose'> {
+interface Props extends Pick<ModalProps, 'onClose' | 'open'> {
   url?: string
 }
 
-export function PostPurchaseModal({url, onClose}: Props) {
+export function PostPurchaseModal({url, onClose, open}: Props) {
   const [i18n] = useI18n({
     id: 'PostPurchaseModal',
     fallback: en,
@@ -33,7 +33,7 @@ export function PostPurchaseModal({url, onClose}: Props) {
   }
 
   return (
-    <Modal title={i18n.translate('title')} open={typeof url === 'string'} onClose={onClose} width="large">
+    <Modal title={i18n.translate('title')} open={open} onClose={onClose} width="large">
       <ol className={styles.Instructions}>
         <li>
           {i18n.translate('point1.intro')}{' '}

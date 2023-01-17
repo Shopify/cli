@@ -10,7 +10,7 @@ export interface ModalProps {
   /** Whether the modal is open or not */
   open: boolean
   /** The content for the title of the modal */
-  title: React.ReactElement<any, string | JSXElementConstructor<any>>
+  title: React.ReactElement<any, string | JSXElementConstructor<any>> | string
   /** The content to display inside modal */
   children: React.ReactNode
   /** Callback when the modal is closed */

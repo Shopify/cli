@@ -1,5 +1,6 @@
 import en from './translations/en.json'
 import * as styles from './QRCodeModal.module.scss'
+import {useApp} from '../../hooks/useApp'
 import React, {useCallback, useMemo} from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import copyToClipboard from 'copy-to-clipboard'
@@ -7,7 +8,6 @@ import QRCode from 'qrcode.react'
 import {toast} from 'react-toastify'
 import {Surface} from '@shopify/ui-extensions-server-kit'
 import {ClipboardMinor} from '@shopify/polaris-icons'
-import {useExtensionsInternal} from '@/sections/Extensions/hooks/useExtensionsInternal'
 import {Modal, ModalProps} from '@/components/Modal'
 import {IconButton} from '@/components/IconButton'
 
@@ -34,15 +34,13 @@ export function QRCodeModal({code, onClose}: QRCodeModalProps) {
   )
 }
 
-export function QRCodeContent({url, title, type}: Code) {
+export function QRCodeContent({url, type}: Code) {
   const [i18n] = useI18n({
     id: 'QRCodeModal',
     fallback: en,
   })
 
-  const {
-    state: {store, app},
-  } = useExtensionsInternal()
+  const {store, app} = useApp()
 
   const qrCodeURL = useMemo(() => {
     // The Websocket hasn't loaded data yet.

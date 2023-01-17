@@ -1,11 +1,12 @@
 import * as styles from './PreviewLink.module.scss'
 import en from './translations/en.json'
-import {useExtensionsInternal} from '../../hooks/useExtensionsInternal.js'
+import {useNavigate} from '../../hooks/useNavigate.js'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ClipboardMinor} from '@shopify/polaris-icons'
 import {toast} from 'react-toastify'
 import {IconButton} from '@/components/IconButton'
+import {isEmbedded} from '@/utilities/embedded'
 
 interface Props {
   rootUrl: string
@@ -19,8 +20,7 @@ export function PreviewLink({rootUrl, resourceUrl, title}: Props) {
     fallback: en,
   })
 
-  const {embedded, navigate} = useExtensionsInternal()
-  const isEmbedded = embedded && window.top
+  const navigate = useNavigate()
 
   const handleOpenRoot = (event: React.MouseEvent<HTMLElement>) => {
     if (isEmbedded && resourceUrl) {
