@@ -2,6 +2,6 @@ export function isUIExtension(extension: any): extension is ExtensionServer.UIEx
   return (
     extension.type === 'ui_extension' &&
     Array.isArray(extension.extensionPoints) &&
-    extension.extensionPoints.all((extensionPoint: any) => typeof extensionPoint === 'object')
+    extension.extensionPoints.every((extensionPoint: any) => typeof extensionPoint === 'object')
   )
 }
