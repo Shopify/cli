@@ -3,16 +3,7 @@ import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
 import {file, path, outputMocker} from '@shopify/cli-kit'
 import {factory} from '@shopify/cli-kit/node/git'
 
-vi.mock('@shopify/cli-kit', async () => {
-  const cliKit: any = await vi.importActual('@shopify/cli-kit')
-
-  return {
-    ...cliKit,
-    git: {
-      factory: vi.fn(),
-    },
-  }
-})
+vi.mock('@shopify/cli-kit/node/git')
 
 describe('checkLockfileStatus()', () => {
   const checkIgnoreMock = vi.fn()
