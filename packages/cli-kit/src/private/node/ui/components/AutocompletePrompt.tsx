@@ -59,6 +59,7 @@ function AutocompletePrompt<T>({
             stdout.write(ansiEscapes.clearTerminal)
           }
           setPromptState(PromptState.Submitted)
+          setSearchTerm('')
           unmountInk()
           onSubmit(answer.value)
         }
