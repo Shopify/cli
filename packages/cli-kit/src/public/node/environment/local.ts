@@ -1,6 +1,6 @@
 import {isTruthy, isSet} from '../../../private/node/environment/utilities.js'
 import {environmentVariables, pathConstants} from '../../../private/node/constants.js'
-import {exists as fileExists} from '../../../file.js'
+import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
 import {isSpin} from '../environment/spin.js'
 import isInteractive from 'is-interactive'

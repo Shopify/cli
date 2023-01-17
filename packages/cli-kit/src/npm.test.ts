@@ -1,7 +1,8 @@
-import {file, npm, path} from '.'
+import {npm, path} from '.'
 import * as os from './public/node/os.js'
 import {updateAppData} from './npm.js'
-import {inTemporaryDirectory} from './file.js'
+import {inTemporaryDirectory} from './public/node/fs.js'
+import * as file from './public/node/fs.js'
 import {describe, it, expect, vi} from 'vitest'
 
 vi.mock('os')
@@ -11,7 +12,7 @@ describe('readPackageJSON()', () => {
   async function mockPackageJSON(callback: (tmpDir: string) => Promise<void>) {
     await inTemporaryDirectory(async (tmpDir) => {
       const packageJSON = {name: 'mock name'}
-      await file.write(path.join(tmpDir, 'package.json'), JSON.stringify(packageJSON))
+      await file.writeFile(path.join(tmpDir, 'package.json'), JSON.stringify(packageJSON))
 
       return callback(tmpDir)
     })
@@ -29,7 +30,7 @@ describe('readPackageJSON()', () => {
 describe('writePackageJSON()', () => {
   it('writes the package.json and returns it parsed', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      vi.spyOn(file, 'write')
+      vi.spyOn(file, 'writeFile')
 
       const packageJSON = {name: 'mock name'}
       await npm.writePackageJSON(tmpDir, packageJSON)
@@ -37,7 +38,7 @@ describe('writePackageJSON()', () => {
       const filePath = path.join(tmpDir, 'package.json')
       const content = '{\n  "name": "mock name"\n}'
 
-      expect(file.write).toHaveBeenCalledWith(filePath, content)
+      expect(file.writeFile).toHaveBeenCalledWith(filePath, content)
     })
   })
 })

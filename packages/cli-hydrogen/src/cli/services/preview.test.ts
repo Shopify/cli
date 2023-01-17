@@ -1,8 +1,10 @@
 import {previewInWorker} from './preview.js'
 import {describe, it, expect, vi, afterEach} from 'vitest'
-import {path, file} from '@shopify/cli-kit'
+import {path} from '@shopify/cli-kit'
 import {exec} from '@shopify/cli-kit/node/system'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 
+vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit', async () => {
   const cliKit: any = await vi.importActual('@shopify/cli-kit')
   return {
@@ -10,10 +12,6 @@ vi.mock('@shopify/cli-kit', async () => {
     path: {
       ...cliKit.path,
       findUp: vi.fn(),
-    },
-    file: {
-      ...cliKit.file,
-      write: vi.fn(cliKit.file.write),
     },
   }
 })
@@ -28,7 +26,7 @@ describe('hydrogen preview', () => {
 
   describe('worker', () => {
     it('writes a local mini oxygen config file', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const port = 5000
         const envPath = undefined
@@ -43,14 +41,14 @@ describe('hydrogen preview', () => {
           autoReload: true,
         }
         const pathToExecutable = path.join(tmpDir, 'mini-oxygen.js')
-        await file.write(pathToExecutable, '// some executable file')
+        await writeFile(pathToExecutable, '// some executable file')
         vi.mocked(path.findUp).mockResolvedValue(pathToExecutable)
 
         // When
         await previewInWorker({directory: tmpDir, port, envPath})
 
         // Then
-        expect(file.write).toHaveBeenCalledWith(
+        expect(writeFile).toHaveBeenCalledWith(
           path.join(tmpDir, `mini-oxygen.config.json`),
           JSON.stringify(expectedConfig, null, 2),
         )
@@ -58,12 +56,12 @@ describe('hydrogen preview', () => {
     })
 
     it('writes a local mini oxygen config file with env bindings from a .env file', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         const tmpEnv = path.join(tmpDir, '.env')
 
-        vi.mocked(file.write).mockRestore()
+        vi.mocked(writeFile).mockRestore()
         // create a .env file in tmpDir
-        await file.write(tmpEnv, `FOO="BAR"\nBAZ="BAX"\nAPI_KEY='SUPER_SECRET'\nPORT:8000`)
+        await writeFile(tmpEnv, `FOO="BAR"\nBAZ="BAX"\nAPI_KEY='SUPER_SECRET'\nPORT:8000`)
 
         // Given
         const port = 5000
@@ -84,14 +82,14 @@ describe('hydrogen preview', () => {
           },
         }
         const pathToExecutable = path.join(tmpDir, 'mini-oxygen.js')
-        await file.write(pathToExecutable, '// some executable file')
+        await writeFile(pathToExecutable, '// some executable file')
         vi.mocked(path.findUp).mockResolvedValue(pathToExecutable)
 
         // When
         await previewInWorker({directory: tmpDir, port, envPath: tmpEnv})
 
         // Then
-        expect(file.write).toHaveBeenCalledWith(
+        expect(writeFile).toHaveBeenCalledWith(
           path.join(tmpDir, `mini-oxygen.config.json`),
           JSON.stringify(expectedConfig, null, 2),
         )
@@ -102,7 +100,7 @@ describe('hydrogen preview', () => {
       // Given
       vi.mocked(path.findUp).mockResolvedValue(undefined)
 
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         // When
         const run = previewInWorker({directory: tmpDir, port: 4000, envPath: '/foo/bar/.env'})
 
@@ -112,10 +110,10 @@ describe('hydrogen preview', () => {
     })
 
     it('runs the mini-oxygen executable from the app directory', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const pathToExecutable = path.join(tmpDir, 'mini-oxygen.js')
-        await file.write(pathToExecutable, '// some executable file')
+        await writeFile(pathToExecutable, '// some executable file')
         vi.mocked(path.findUp).mockResolvedValue(pathToExecutable)
 
         // When
@@ -134,7 +132,7 @@ describe('hydrogen preview', () => {
       // Given
       vi.mocked(path.findUp).mockResolvedValue(undefined)
 
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         // When
         const run = previewInWorker({directory: tmpDir, port: 4000, envPath: undefined})
 

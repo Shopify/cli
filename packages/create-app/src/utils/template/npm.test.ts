@@ -1,7 +1,8 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from './npm.js'
-import {file, npm, path} from '@shopify/cli-kit'
+import {npm, path} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {installNodeModules, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {platform} from 'os'
 
 beforeEach(async () => {
@@ -45,7 +46,7 @@ describe('updateCLIDependencies', () => {
 
       const dependencyOveride = mockPackageJSON.overrides[dependency]!
       const dependencyPath = path.join(dependencyOveride.replace('file:', ''), 'package.json')
-      const dependencyJSON = JSON.parse(await file.read(dependencyPath))
+      const dependencyJSON = JSON.parse(await readFile(dependencyPath))
 
       expect(dependencyJSON.name).toBe(dependency)
     },
@@ -61,7 +62,7 @@ describe('updateCLIDependencies', () => {
 
       const dependencyResolution = mockPackageJSON.resolutions[dependency]!
       const dependencyPath = path.join(dependencyResolution.replace('file:', ''), 'package.json')
-      const dependencyJSON = JSON.parse(await file.read(dependencyPath))
+      const dependencyJSON = JSON.parse(await readFile(dependencyPath))
 
       expect(dependencyJSON.name).toBe(dependency)
     },
@@ -75,7 +76,7 @@ describe('updateCLIDependencies', () => {
 
     const dependencyResolution = mockPackageJSON.dependencies[dependency]!
     const dependencyPath = path.join(dependencyResolution.replace('file:', ''), 'package.json')
-    const dependencyJSON = JSON.parse(await file.read(dependencyPath))
+    const dependencyJSON = JSON.parse(await readFile(dependencyPath))
 
     expect(dependencyJSON.name).toBe(dependency)
   })
@@ -109,13 +110,13 @@ describe('updateCLIDependencies', () => {
 
 describe('getDeepInstallNPMTasks', () => {
   async function mockAppFolder(callback: (tmpDir: string) => Promise<void>) {
-    await file.inTemporaryDirectory(async (tmpDir) => {
-      await file.mkdir(path.join(tmpDir, 'web'))
-      await file.mkdir(path.join(tmpDir, 'web', 'frontend'))
+    await inTemporaryDirectory(async (tmpDir) => {
+      await mkdir(path.join(tmpDir, 'web'))
+      await mkdir(path.join(tmpDir, 'web', 'frontend'))
       await Promise.all([
-        file.write(path.join(tmpDir, 'package.json'), '{}'),
-        file.write(path.join(tmpDir, 'web', 'package.json'), '{}'),
-        file.write(path.join(tmpDir, 'web', 'frontend', 'package.json'), '{}'),
+        writeFile(path.join(tmpDir, 'package.json'), '{}'),
+        writeFile(path.join(tmpDir, 'web', 'package.json'), '{}'),
+        writeFile(path.join(tmpDir, 'web', 'frontend', 'package.json'), '{}'),
       ])
 
       return callback(tmpDir)

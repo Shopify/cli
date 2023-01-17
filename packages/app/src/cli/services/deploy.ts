@@ -15,11 +15,12 @@ import {Extension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {path, output, file} from '@shopify/cli-kit'
+import {path, output} from '@shopify/cli-kit'
 import {useThemeBundling} from '@shopify/cli-kit/node/environment/local'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
 import {CustomSection} from '@shopify/cli-kit/src/private/node/ui/components/Alert.js'
+import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -79,10 +80,10 @@ export const deploy = async (options: DeployOptions) => {
   let registrations: AllAppExtensionRegistrationsQuerySchema
   let validationErrors: UploadExtensionValidationError[] = []
 
-  await file.inTemporaryDirectory(async (tmpDir) => {
+  await inTemporaryDirectory(async (tmpDir) => {
     try {
       const bundlePath = path.join(tmpDir, `bundle.zip`)
-      await file.mkdir(path.dirname(bundlePath))
+      await mkdir(path.dirname(bundlePath))
       const bundle = app.extensions.ui.length !== 0
       await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers, bundle})
 

@@ -1,5 +1,6 @@
-import {path, error, file, output} from '@shopify/cli-kit'
+import {path, error, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
+import {fileExists, removeFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {exec} from '@shopify/cli-kit/node/system'
 import {fileURLToPath} from 'url'
 
@@ -19,7 +20,7 @@ interface EnvConfig {
 export async function previewInNode({directory, port}: PreviewOptions) {
   const buildOutputPath = await path.resolve(directory, 'dist/node')
 
-  if (!(await file.exists(buildOutputPath))) {
+  if (!(await fileExists(buildOutputPath))) {
     output.info(
       output.content`Couldn’t find a Node.js server build for this project. Running ${output.token.packagejsonScript(
         'yarn',
@@ -56,11 +57,11 @@ export async function previewInWorker({directory, port, envPath}: PreviewOptions
     ...(envPath && (await parseEnvPath(envPath))),
   }
 
-  await file.write(path.resolve(directory, 'mini-oxygen.config.json'), JSON.stringify(config, null, 2))
+  await writeFile(path.resolve(directory, 'mini-oxygen.config.json'), JSON.stringify(config, null, 2))
 
   function cleanUp(options: {exit: boolean}) {
     if (options.exit) {
-      file.removeSync(path.resolve(directory, 'mini-oxygen.config.json'))
+      removeFileSync(path.resolve(directory, 'mini-oxygen.config.json'))
     }
   }
 
