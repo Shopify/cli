@@ -5,7 +5,7 @@ import {NotApplicable, PreviewLink, QRCodeModal, Row} from '..'
 import {useApp} from '../../hooks/useApp'
 import React, {useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
-import {Button} from '@/components/Button'
+import {Button} from '@/components'
 
 export function AppHomeRow() {
   const [showModal, setShowModal] = useState(false)
