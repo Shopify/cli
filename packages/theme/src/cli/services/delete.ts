@@ -27,7 +27,7 @@ export async function deleteThemes(adminSession: AdminSession, options: DeleteOp
     headline: pluralize(
       themes,
       (themes) => [`The following themes were deleted from ${store}:`, themesComponent(themes)],
-      (theme) => ['The theme', ...themeComponent(theme), `was deleted from ${store}`],
+      (theme) => ['The theme', ...themeComponent(theme), `was deleted from ${store}.`],
     ),
   })
 }
@@ -83,6 +83,7 @@ export function renderDeprecatedArgsWarning(argv: string[]) {
       {command: '--theme'},
       'flag:',
       {command: `shopify delete delete --theme ${ids}`},
+      '.',
     ],
   })
 }

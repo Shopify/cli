@@ -45,7 +45,7 @@ describe('deleteThemes', () => {
     // Then
     expect(deleteTheme).toBeCalledWith(theme1.id, session)
     expect(renderSuccess).toBeCalledWith({
-      headline: ['The theme', 'my theme', {subdued: '(#1)'}, 'was deleted from my-shop.myshopify.com'],
+      headline: ['The theme', 'my theme', {subdued: '(#1)'}, 'was deleted from my-shop.myshopify.com.'],
     })
   })
 
@@ -62,7 +62,7 @@ describe('deleteThemes', () => {
     // Then
     expect(deleteTheme).toBeCalledWith(theme1.id, session)
     expect(renderSuccess).toBeCalledWith({
-      headline: ['The theme', 'my theme', {subdued: '(#1)'}, 'was deleted from my-shop.myshopify.com'],
+      headline: ['The theme', 'my theme', {subdued: '(#1)'}, 'was deleted from my-shop.myshopify.com.'],
     })
   })
 
@@ -150,6 +150,7 @@ describe('renderDeprecatedArgsWarning', () => {
         {command: '--theme'},
         'flag:',
         {command: 'shopify delete delete --theme 1 2'},
+        '.',
       ],
     })
   })
