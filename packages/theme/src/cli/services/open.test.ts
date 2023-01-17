@@ -58,12 +58,7 @@ describe('open', () => {
 
     // Then
     expect(renderInfo).toBeCalledWith({
-      headline: [
-        'Preview information for theme my theme',
-        {
-          subdued: `(#1)`,
-        },
-      ],
+      headline: ['Preview information for theme', 'my theme', {subdued: '(#1)'}],
       body: {
         list: {
           items: [
