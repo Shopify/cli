@@ -24,14 +24,14 @@
       "lint": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm eslint \"src/**/*.ts\"",
+          "command": "pnpm eslint \"src/**/*.ts\"; cd theme-cli; bundle install; bundle exec rake rubocop",
           "cwd": "packages/theme"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm eslint 'src/**/*.ts' --fix",
+          "command": "pnpm eslint 'src/**/*.ts' --fix; cd theme-cli; bundle install; bundle exec rake rubocop -a",
           "cwd": "packages/theme"
         }
       },
@@ -39,7 +39,7 @@
         "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "command": "pnpm vitest run",
+          "command": "pnpm vitest run; cd theme-cli; bundle install; bundle exec rake test",
           "cwd": "packages/theme"
         }
       },
