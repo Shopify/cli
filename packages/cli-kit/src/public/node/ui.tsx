@@ -6,6 +6,8 @@ import {Fatal} from '../../error.js'
 import {alert} from '../../private/node/ui/alert.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
+import ScalarDict from '../../private/node/ui/components/Table/ScalarDict.js'
+import Table, {TableProps} from '../../private/node/ui/components/Table/Table.js'
 import {SelectPrompt, Props as SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, Props as TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
@@ -185,6 +187,7 @@ export function renderFatalError(error: Fatal) {
 /**
  * Renders a select prompt to the console.
  *
+ * ```
  * ?  Associate your project with the org Castile Ventures?
  *
  *      Add:     • new-ext
@@ -208,6 +211,7 @@ export function renderFatalError(error: Fatal) {
  *     (10) ninth
 
  *     navigate with arrows, enter to select
+ * ```
  */
 export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit'>): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -219,7 +223,7 @@ export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmi
 
 /**
  * Renders an autocomplete prompt to the console.
- *
+ * ```
  * ?  Select a template  Type to search...
 
  * \>  first
@@ -227,6 +231,7 @@ export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmi
  *     third
 
  *  navigate with arrows, enter to select
+ * ```
  */
 export function renderAutocompletePrompt<T>(props: Omit<AutocompletePromptProps<T>, 'onSubmit'>): Promise<T> {
   const newProps = {
@@ -244,6 +249,22 @@ export function renderAutocompletePrompt<T>(props: Omit<AutocompletePromptProps<
 }
 
 /**
+ * Renders a table to the console.
+ *
+ * ```
+ * name                      role           Identifier
+ * ────────────────────────  ─────────────  ──────────
+ * Dawn                      [live]         #1361
+ * Studio                                   #1363
+ * Debut                     [unpublished]  #1374
+ * Development (1a23b4-MBP)  [development]  #1368
+ * ```
+ */
+export function renderTable<T extends ScalarDict>(props: TableProps<T>) {
+  return renderOnce(<Table {...props} />)
+}
+
+/**
  * Runs async tasks and displays their progress to the console.
  */
 export async function renderTasks<TContext>(tasks: Task<TContext>[]) {
@@ -252,9 +273,10 @@ export async function renderTasks<TContext>(tasks: Task<TContext>[]) {
 
 /**
  * Renders a text prompt to the console.
- *
+ * ```
  * ?  What is your name?
  * \>  John
+ * ```
  */
 export function renderTextPrompt(props: Omit<TextPromptProps, 'onSubmit'>): Promise<string> {
   return new Promise((resolve, reject) => {
