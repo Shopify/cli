@@ -1,5 +1,5 @@
 import {SessionSchema} from './schema.js'
-import constants from '../../../constants.js'
+import {keychainConstants} from '../constants.js'
 import {platformAndArch} from '../../../public/node/os.js'
 import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../../../secure-store.js'
 import {content, debug} from '../../../output.js'
@@ -64,7 +64,7 @@ export async function remove() {
     removeSession()
   }
 
-  await clearAllAppInfo()
+  clearAllAppInfo()
 }
 
 /**
@@ -80,7 +80,7 @@ async function secureStoreAvailable(): Promise<boolean> {
       return false
     }
     const keytar = await import('keytar')
-    await keytar.default.findCredentials(constants.keychain.service)
+    await keytar.default.findCredentials(keychainConstants.service)
     debug(content`Secure store is available`)
     return true
     // eslint-disable-next-line no-catch-all/no-catch-all

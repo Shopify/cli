@@ -1,5 +1,5 @@
 import {isTruthy, isSet} from '../../../private/node/environment/utilities.js'
-import constants from '../../../constants.js'
+import {environmentVariables, pathConstants} from '../../../private/node/constants.js'
 import {exists as fileExists} from '../../../file.js'
 import {exec} from '../system.js'
 import {isSpin} from '../environment/spin.js'
@@ -32,7 +32,7 @@ export function homeDirectory(): string {
  * @returns True if SHOPIFY_ENV is development.
  */
 export function isDevelopment(env = process.env): boolean {
-  return env[constants.environmentVariables.env] === 'development'
+  return env[environmentVariables.env] === 'development'
 }
 
 /**
@@ -42,7 +42,7 @@ export function isDevelopment(env = process.env): boolean {
  * @returns True if SHOPIFY_FLAG_VERBOSE is truthy or the flag --verbose has been passed.
  */
 export function isVerbose(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.verbose]) || process.argv.includes('--verbose')
+  return isTruthy(env[environmentVariables.verbose]) || process.argv.includes('--verbose')
 }
 
 /**
@@ -53,10 +53,10 @@ export function isVerbose(env = process.env): boolean {
  * @returns True if the CLI is used in a Shopify environment.
  */
 export async function isShopify(env = process.env): Promise<boolean> {
-  if (Object.prototype.hasOwnProperty.call(env, constants.environmentVariables.runAsUser)) {
-    return !isTruthy(env[constants.environmentVariables.runAsUser])
+  if (Object.prototype.hasOwnProperty.call(env, environmentVariables.runAsUser)) {
+    return !isTruthy(env[environmentVariables.runAsUser])
   }
-  const devInstalled = await fileExists(constants.paths.executables.dev)
+  const devInstalled = await fileExists(pathConstants.executables.dev)
   return devInstalled || isSpin(env)
 }
 
@@ -69,7 +69,7 @@ export async function isShopify(env = process.env): Promise<boolean> {
  * @returns True if the SHOPIFY_UNIT_TEST environment variable is truthy.
  */
 export function isUnitTest(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.unitTest])
+  return isTruthy(env[environmentVariables.unitTest])
 }
 
 /**
@@ -79,7 +79,7 @@ export function isUnitTest(env = process.env): boolean {
  * @returns True unless SHOPIFY_CLI_NO_ANALYTICS is truthy or debug mode is enabled.
  */
 export function analyticsDisabled(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.noAnalytics]) || isDevelopment(env)
+  return isTruthy(env[environmentVariables.noAnalytics]) || isDevelopment(env)
 }
 
 /**
@@ -89,7 +89,7 @@ export function analyticsDisabled(env = process.env): boolean {
  * @returns True if SHOPIFY_CLI_ALWAYS_LOG_ANALYTICS is truthy.
  */
 export function alwaysLogAnalytics(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.alwaysLogAnalytics])
+  return isTruthy(env[environmentVariables.alwaysLogAnalytics])
 }
 
 /**
@@ -99,7 +99,7 @@ export function alwaysLogAnalytics(env = process.env): boolean {
  * @returns True if SHOPIFY_CLI_1P is truthy.
  */
 export function firstPartyDev(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.firstPartyDev])
+  return isTruthy(env[environmentVariables.firstPartyDev])
 }
 
 /**
@@ -109,7 +109,7 @@ export function firstPartyDev(env = process.env): boolean {
  * @returns True if SHOPIFY_CLI_DEVICE_AUTH is truthy or the CLI is run from a cloud environment.
  */
 export function useDeviceAuth(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.deviceAuth]) || isCloudEnvironment(env)
+  return isTruthy(env[environmentVariables.deviceAuth]) || isCloudEnvironment(env)
 }
 
 /**
@@ -119,7 +119,7 @@ export function useDeviceAuth(env = process.env): boolean {
  * @returns True if SHOPIFY_CLI_THEME_BUNDLING is truthy.
  */
 export function useThemeBundling(env = process.env): boolean {
-  return isTruthy(env[constants.environmentVariables.themeBundling])
+  return isTruthy(env[environmentVariables.themeBundling])
 }
 
 /**
@@ -130,7 +130,7 @@ export function useThemeBundling(env = process.env): boolean {
  * @returns The gitpod URL.
  */
 export function gitpodURL(env = process.env): string | undefined {
-  return env[constants.environmentVariables.gitpod]
+  return env[environmentVariables.gitpod]
 }
 
 /**
@@ -141,7 +141,7 @@ export function gitpodURL(env = process.env): string | undefined {
  * @returns The codespace URL.
  */
 export function codespaceURL(env = process.env): string | undefined {
-  return env[constants.environmentVariables.codespaceName]
+  return env[environmentVariables.codespaceName]
 }
 
 /**
@@ -165,10 +165,10 @@ export function cloudEnvironment(env: NodeJS.ProcessEnv = process.env): {
   platform: 'spin' | 'codespaces' | 'gitpod' | 'localhost'
   editor: boolean
 } {
-  if (isSet(env[constants.environmentVariables.codespaces])) {
+  if (isSet(env[environmentVariables.codespaces])) {
     return {platform: 'codespaces', editor: true}
   }
-  if (isSet(env[constants.environmentVariables.gitpod])) {
+  if (isSet(env[environmentVariables.gitpod])) {
     return {platform: 'gitpod', editor: true}
   }
   if (isSpin(env)) {

@@ -74,15 +74,15 @@ export async function runCreateCLI(options: RunCLIOptions): Promise<void> {
 
 export async function useLocalCLIIfDetected(filepath: string): Promise<boolean> {
   const {isTruthy} = await import('../../private/node/environment/utilities.js')
-  const constants = await import('../../constants.js')
+  const {environmentVariables} = await import('../../private/node/constants.js')
   const {join} = await import('../../path.js')
   const {exec} = await import('./system.js')
 
   // Temporary flag while we test out this feature and ensure it won't break anything!
-  if (!isTruthy(process.env[constants.default.environmentVariables.enableCliRedirect])) return false
+  if (!isTruthy(process.env[environmentVariables.enableCliRedirect])) return false
 
   // Setting an env variable in the child process prevents accidental recursion.
-  if (isTruthy(process.env[constants.default.environmentVariables.skipCliRedirect])) return false
+  if (isTruthy(process.env[environmentVariables.skipCliRedirect])) return false
 
   // If already running via package manager, we can assume it's running correctly already.
   if (process.env.npm_config_user_agent) return false
@@ -95,7 +95,7 @@ export async function useLocalCLIIfDetected(filepath: string): Promise<boolean> 
   try {
     await exec(correctExecutablePath, process.argv.slice(2, process.argv.length), {
       stdio: 'inherit',
-      env: {[constants.default.environmentVariables.skipCliRedirect]: '1'},
+      env: {[environmentVariables.skipCliRedirect]: '1'},
     })
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (processError: any) {
