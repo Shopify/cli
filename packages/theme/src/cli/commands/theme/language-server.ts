@@ -1,5 +1,5 @@
 import ThemeCommand from '../../utilities/theme-command.js'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {execCLI} from '../../utilities/ruby.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class LanguageServer extends ThemeCommand {
@@ -10,6 +10,6 @@ export default class LanguageServer extends ThemeCommand {
   }
 
   async run(): Promise<void> {
-    await execCLI2(['theme', 'language-server'])
+    await execCLI(['theme', 'language-server'])
   }
 }

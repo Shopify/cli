@@ -1,8 +1,8 @@
 import {themeFlags} from '../../flags.js'
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
+import {execCLI} from '../../utilities/ruby.js'
 import {path} from '@shopify/cli-kit'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
@@ -32,6 +32,6 @@ export default class Share extends ThemeCommand {
     const store = getThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
-    await execCLI2(['theme', 'share', directory, ...flagsToPass], {adminSession})
+    await execCLI(['theme', 'share', directory, ...flagsToPass], {adminSession})
   }
 }

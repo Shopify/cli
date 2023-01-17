@@ -1,6 +1,6 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {execCLI} from '../../utilities/ruby.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class Package extends ThemeCommand {
@@ -14,6 +14,6 @@ export default class Package extends ThemeCommand {
   async run(): Promise<void> {
     const {flags} = await this.parse(Package)
 
-    await execCLI2(['theme', 'package', flags.path])
+    await execCLI(['theme', 'package', flags.path])
   }
 }

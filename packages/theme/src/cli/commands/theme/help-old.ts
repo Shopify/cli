@@ -1,7 +1,7 @@
+import {execCLI} from '../../utilities/ruby.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
 export default class HelpOld extends Command {
   static description = 'Show help from Ruby CLI'
@@ -20,6 +20,6 @@ export default class HelpOld extends Command {
     const cli2Args: string[] = ['theme']
     if (flags.command) cli2Args.push(flags.command)
     cli2Args.push('-h')
-    await execCLI2(cli2Args)
+    await execCLI(cli2Args)
   }
 }
