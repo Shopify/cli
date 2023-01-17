@@ -8,7 +8,6 @@ import Command from '@shopify/cli-kit/node/base-command'
  */
 export default class KitchenSinkBanners extends Command {
   static description = 'View the UI kit components that display banners'
-  static hidden = true
 
   async run(): Promise<void> {
     await banners()

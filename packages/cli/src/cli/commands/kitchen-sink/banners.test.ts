@@ -1,4 +1,4 @@
-import KitchenSinkAll from './all.js'
+import KitchenSinkAll from './index.js'
 import {banners as bannersService} from '../../services/kitchen-sink/banners.js'
 import {describe, test, afterEach, vi, expect, beforeEach} from 'vitest'
 

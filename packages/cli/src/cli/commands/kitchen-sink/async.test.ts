@@ -1,4 +1,4 @@
-import KitchenSinkAll from './all.js'
+import KitchenSinkAll from './index.js'
 import {asyncTasks as asyncTasksService} from '../../services/kitchen-sink/async.js'
 import {describe, test, afterEach, vi, expect, beforeEach} from 'vitest'
 

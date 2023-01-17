@@ -151,7 +151,8 @@
         "description": "Auth operations."
       },
       "kitchen-sink": {
-        "description": "View the available UI kit components."
+        "description": "View the available UI kit components.",
+        "hidden": true
       }
     },
     "additionalHelpFlags": [

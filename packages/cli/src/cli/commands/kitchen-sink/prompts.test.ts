@@ -1,4 +1,4 @@
-import KitchenSinkAll from './all.js'
+import KitchenSinkAll from './index.js'
 import {prompts as promptsService} from '../../services/kitchen-sink/prompts.js'
 import {describe, test, afterEach, vi, expect, beforeEach} from 'vitest'
 

@@ -1,4 +1,4 @@
-import KitchenSinkAll from './all.js'
+import KitchenSinkAll from './index.js'
 import {asyncTasks as asyncTasksService} from '../../services/kitchen-sink/async.js'
 import {banners as bannersTasksService} from '../../services/kitchen-sink/banners.js'
 import {prompts as promptsTasksService} from '../../services/kitchen-sink/prompts.js'
