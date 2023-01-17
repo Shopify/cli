@@ -57,6 +57,10 @@ declare global {
         extension: ExtensionPayload
       }
     }
+
+    interface UIExtension extends ExtensionPayload {
+      extensionPoints: ExtensionPoint[]
+    }
   }
 }
 
