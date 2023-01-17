@@ -1,4 +1,4 @@
-import {set, replaceUpdated, resourceURLtoString} from '../../utilities'
+import {set, replaceUpdated, assetToString} from '../../utilities'
 import type {ExtensionServerActions} from '../actions'
 import type {ExtensionPayload} from '../../types'
 
@@ -9,7 +9,7 @@ export function extensionServerReducer(state: ExtensionServerState, action: Exte
     case 'connected': {
       const extensions = (action.payload.extensions ?? []).map((extension) => {
         Object.keys(extension.assets).forEach(
-          (asset) => (extension.assets[asset].url = resourceURLtoString(extension.assets[asset])),
+          (asset) => (extension.assets[asset].url = assetToString(extension.assets[asset])),
         )
         return extension
       })
@@ -24,7 +24,7 @@ export function extensionServerReducer(state: ExtensionServerState, action: Exte
     case 'update': {
       const extensions = (action.payload.extensions ?? []).map((extension) => {
         Object.keys(extension.assets).forEach(
-          (asset) => (extension.assets[asset].url = resourceURLtoString(extension.assets[asset])),
+          (asset) => (extension.assets[asset].url = assetToString(extension.assets[asset])),
         )
         return extension
       })
@@ -44,7 +44,7 @@ export function extensionServerReducer(state: ExtensionServerState, action: Exte
             Object.keys(extension.assets).forEach((asset) => {
               const resourceURL = {...extension.assets[asset]}
               resourceURL.lastUpdated = Date.now()
-              resourceURL.url = resourceURLtoString(resourceURL)
+              resourceURL.url = assetToString(resourceURL)
 
               assets[asset] = resourceURL
             })
