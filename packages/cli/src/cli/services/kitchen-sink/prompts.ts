@@ -23,6 +23,9 @@ export async function prompts() {
   await renderTextPrompt({
     message: 'App project name (can be changed later)',
     defaultValue: 'expansive commerce app',
+    validate: (value) => {
+      if (value.includes('shopify')) return 'Can\'t include "shopify" in the name'
+    },
   })
 
   const database = [
