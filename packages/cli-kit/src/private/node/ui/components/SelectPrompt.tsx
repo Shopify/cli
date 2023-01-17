@@ -1,5 +1,6 @@
 import SelectInput, {Props as SelectProps, Item as SelectItem, Item} from './SelectInput.js'
 import InfoTable, {Props as InfoTableProps} from './Prompts/InfoTable.js'
+import {appendToTokenItem, TokenItem, tokenItemToString, TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import React, {ReactElement, useCallback, useState} from 'react'
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
@@ -7,7 +8,7 @@ import {figures} from 'listr2'
 import ansiEscapes from 'ansi-escapes'
 
 export interface Props<T> {
-  message: string
+  message: TokenItem
   choices: SelectProps<T>['items']
   onSubmit: (value: T) => void
   infoTable?: InfoTableProps['table']
@@ -54,7 +55,9 @@ function SelectPrompt<T>({
     ),
   )
 
-  const messageWithPunctuation = message.endsWith('?') || message.endsWith(':') ? message : `${message}:`
+  const messageToString = tokenItemToString(message)
+  const messageWithPunctuation =
+    messageToString.endsWith('?') || messageToString.endsWith(':') ? message : appendToTokenItem(message, ':')
 
   return (
     <Box flexDirection="column" marginBottom={1} ref={measuredRef}>
@@ -62,7 +65,7 @@ function SelectPrompt<T>({
         <Box marginRight={2}>
           <Text>?</Text>
         </Box>
-        <Text>{messageWithPunctuation}</Text>
+        <TokenizedText item={messageWithPunctuation} />
       </Box>
       {infoTable && !submitted && (
         <Box marginLeft={7} marginTop={1}>

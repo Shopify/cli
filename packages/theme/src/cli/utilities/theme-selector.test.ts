@@ -1,5 +1,5 @@
 import {fetchStoreThemes} from './theme-selector/fetch.js'
-import {findOrSelectTheme} from '../utilities/theme-selector.js'
+import {findOrSelectTheme, findThemes} from './theme-selector.js'
 import {Theme} from '../models/theme.js'
 import {test, describe, vi, expect} from 'vitest'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
@@ -12,7 +12,7 @@ const session = {
   storeFqdn: 'my-shop.myshopify.com',
 }
 
-const themes = [
+const storeThemes = [
   theme(1, 'unpublished'),
   theme(2, 'unpublished'),
   theme(3, 'live'),
@@ -26,8 +26,8 @@ const themes = [
 describe('findOrSelectTheme', () => {
   test('returns selected theme when no filter is specified', async () => {
     // Given
-    const selectedTheme = themes[0]
-    vi.mocked(fetchStoreThemes).mockResolvedValue(themes)
+    const selectedTheme = storeThemes[0]
+    vi.mocked(fetchStoreThemes).mockResolvedValue(storeThemes)
     vi.mocked(renderSelectPrompt).mockResolvedValue(selectedTheme)
 
     // When
@@ -42,8 +42,7 @@ describe('findOrSelectTheme', () => {
 
   test('returns selected theme when filter is specified', async () => {
     // Given
-    const filteredTheme = themes[1]
-    vi.mocked(fetchStoreThemes).mockResolvedValue(themes)
+    vi.mocked(fetchStoreThemes).mockResolvedValue(storeThemes)
 
     // When
     const theme = await findOrSelectTheme(session, {
@@ -52,7 +51,36 @@ describe('findOrSelectTheme', () => {
     })
 
     // Then
-    expect(theme).toBe(filteredTheme)
+    expect(theme).toBe(storeThemes[1])
+  })
+})
+
+describe('findThemes', () => {
+  test('returns selected theme when no filter is specified', async () => {
+    // Given
+    vi.mocked(fetchStoreThemes).mockResolvedValue(storeThemes)
+
+    // When
+    const themes = await findThemes(session, {})
+
+    // Then
+    expect(themes).toHaveLength(0)
+  })
+
+  test('returns selected themes when filter is specified', async () => {
+    // Given
+    vi.mocked(fetchStoreThemes).mockResolvedValue(storeThemes)
+
+    // When
+    const themes = await findThemes(session, {
+      themes: ['theme 2', 'theme 3', 'theme 5'],
+    })
+
+    // Then
+    expect(themes).toHaveLength(3)
+    expect(themes[0]!.name).toEqual('theme 2')
+    expect(themes[1]!.name).toEqual('theme 3')
+    expect(themes[2]!.name).toEqual('theme 5')
   })
 })
 

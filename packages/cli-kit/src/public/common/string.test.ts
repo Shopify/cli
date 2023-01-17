@@ -1,4 +1,4 @@
-import {getRandomName, linesToColumns, tryParseInt} from './string.js'
+import {getRandomName, linesToColumns, pluralize, tryParseInt} from './string.js'
 import {describe, expect, test} from 'vitest'
 
 describe('getRandomName', () => {
@@ -41,5 +41,46 @@ one    two    three
 four   five   six
 `.trim(),
     )
+  })
+})
+
+describe('pluralize', () => {
+  const pluralized = (items: string[]) => {
+    return pluralize(
+      items,
+      (items) => `This list has many items: ${items.join(', ')}`,
+      (item) => `This list has a single item (${item})`,
+      () => 'This list has no items',
+    )
+  }
+
+  test('formats the list when it has many items', () => {
+    // Given
+    const lines = ['one', 'two', 'three']
+
+    // When
+    const str = pluralized(lines)
+
+    // Then
+    expect(str).toBe('This list has many items: one, two, three')
+  })
+
+  test('formats the list when it has only one item', () => {
+    // Given
+    const lines = ['one']
+
+    // When
+    const str = pluralized(lines)
+
+    // Then
+    expect(str).toBe('This list has a single item (one)')
+  })
+
+  test('formats the list when it has no items', () => {
+    // Given/When
+    const str = pluralized([])
+
+    // Then
+    expect(str).toBe('This list has no items')
   })
 })

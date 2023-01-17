@@ -58,6 +58,32 @@ function tokenToBlock(token: Token): Block {
   }
 }
 
+export function tokenItemToString(token: TokenItem): string {
+  if (typeof token === 'string') {
+    return token
+  } else if ('command' in token) {
+    return token.command
+  } else if ('link' in token) {
+    return token.link.label || token.link.url
+  } else if ('char' in token) {
+    return token.char
+  } else if ('userInput' in token) {
+    return token.userInput
+  } else if ('subdued' in token) {
+    return token.subdued
+  } else if ('filePath' in token) {
+    return token.filePath
+  } else if ('list' in token) {
+    return token.list.items.map(tokenItemToString).join(' ')
+  } else {
+    return token.map(tokenItemToString).join(' ')
+  }
+}
+
+export function appendToTokenItem(token: TokenItem, suffix: string): TokenItem {
+  return Array.isArray(token) ? [...token, suffix] : [token, suffix]
+}
+
 function splitByDisplayType(acc: Block[][], item: Block) {
   if (item.display === 'block') {
     acc.push([item])
