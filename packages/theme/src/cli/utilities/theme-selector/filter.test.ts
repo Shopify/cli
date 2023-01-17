@@ -36,10 +36,10 @@ describe('filterThemes', () => {
      *
      * CLI2 creates the development theme and persists the ID
      * on a PStore file. Thus, only the CLI2 can differentiate
-     * between _your_ development theme and thes others.
+     * between _your_ development theme and the others.
      *
-     * Currently, this filter just returns the first development
-     * theme, but it should return _yours_.
+     * Currently, this filter just returns all development
+     * themes, but it should only return _yours_.
      *
      * As soon as the development gets created at the CLI3 level
      * this issue must be fixed.
@@ -54,8 +54,9 @@ describe('filterThemes', () => {
     const filtered = filterThemes(store, themes, filter)
 
     // Then
-    expect(filtered).toHaveLength(1)
+    expect(filtered).toHaveLength(2)
     expect(filtered[0]!.name).toBe('theme 7')
+    expect(filtered[1]!.name).toBe('theme 8')
   })
 
   test('filters by theme (exact name)', async () => {

@@ -15,30 +15,31 @@ function filterByRole(store: string, themes: Theme[], filter: Filter) {
 
   const error = `The ${store} store doesn't have a theme with the "${role}" role`
 
-  return [
-    find(themes, (theme) => {
-      return theme.role === role
-    }).orThrow(error),
-  ]
+  return filterArray(themes, (theme) => {
+    return theme.role === role
+  }).orThrow(error)
 }
 
 function filterByTheme(store: string, themes: Theme[], filter: Filter) {
   const identifiers = filter.themeIdentifiers
 
-  return identifiers.map((identifier) => {
+  return identifiers.flatMap((identifier) => {
     const error = `The ${store} store doesn't have a theme with the "${identifier}" ID or name`
 
-    return find(themes, (theme) => {
+    return filterArray(themes, (theme) => {
       return `${theme.id}` === identifier || new RegExp(identifier, 'i').test(theme.name)
     }).orThrow(error)
   })
 }
 
-function find(themes: Theme[], predicate: (theme: Theme) => boolean): {orThrow: (error: string) => Theme | never} {
-  const theme = themes.find(predicate)
+function filterArray(
+  themes: Theme[],
+  predicate: (theme: Theme) => boolean,
+): {orThrow: (error: string) => Theme[] | never} {
+  const filteredThemes = themes.filter(predicate)
 
-  if (theme) {
-    return {orThrow: (_errorMessage: string) => theme}
+  if (filteredThemes.length > 0) {
+    return {orThrow: (_errorMessage: string) => filteredThemes}
   }
 
   return {
