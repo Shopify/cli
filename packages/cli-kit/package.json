@@ -42,7 +42,6 @@
     "/assets"
   ],
   "scripts": {
-    "preinstall": "node bin/preinstall.js",
     "build": "nx build",
     "clean": "nx clean",
     "lint": "nx lint",
