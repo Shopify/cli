@@ -26,7 +26,7 @@ describe('fetchThemes', () => {
     const themes = await fetchThemes(session)
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith('GET', '/themes', session, undefined)
+    expect(restRequest).toHaveBeenCalledWith('GET', '/themes', session, undefined, {fields: 'id,name,role'})
     expect(themes).toHaveLength(2)
 
     expect(themes[0]!.id).toEqual(123)
@@ -55,7 +55,7 @@ describe('createTheme', () => {
     const theme = await createTheme(params, session)
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith('POST', '/themes', session, {theme: params})
+    expect(restRequest).toHaveBeenCalledWith('POST', '/themes', session, {theme: params}, {})
     expect(theme).not.toBeNull()
     expect(theme!.id).toEqual(id)
     expect(theme!.name).toEqual(name)
@@ -81,7 +81,7 @@ describe('updateTheme', () => {
     const theme = await updateTheme(id, params, session)
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith('PUT', `/themes/${id}`, session, {theme: {id, ...params}})
+    expect(restRequest).toHaveBeenCalledWith('PUT', `/themes/${id}`, session, {theme: {id, ...params}}, {})
     expect(theme).not.toBeNull()
     expect(theme!.id).toEqual(id)
     expect(theme!.name).toEqual(name)
@@ -105,7 +105,7 @@ describe('deleteTheme', () => {
     const theme = await deleteTheme(id, session)
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith('DELETE', `/themes/${id}`, session, undefined)
+    expect(restRequest).toHaveBeenCalledWith('DELETE', `/themes/${id}`, session, undefined, {})
     expect(theme).not.toBeNull()
     expect(theme!.id).toEqual(id)
     expect(theme!.name).toEqual('store theme')

@@ -5,6 +5,8 @@ import {Fatal} from '../../error.js'
 import {alert} from '../../private/node/ui/alert.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
+import ScalarDict from '../../private/node/ui/components/Table/ScalarDict.js'
+import Table, {TableProps} from '../../private/node/ui/components/Table/Table.js'
 import {SelectPrompt, Props as SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, Props as TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
@@ -210,6 +212,20 @@ export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmi
       exitOnCtrlC: false,
     }).catch(reject)
   })
+}
+
+/**
+ * Renders a table to the console.
+ *
+ * name                      role           Identifier
+ * ────────────────────────  ─────────────  ──────────
+ * Dawn                      [live]         #1361
+ * Studio                                   #1363
+ * Debut                     [unpublished]  #1374
+ * Development (1a23b4-MBP)  [development]  #1368
+ */
+export function renderTable<T extends ScalarDict>(props: TableProps<T>) {
+  return renderOnce(<Table {...props} />)
 }
 
 /**
