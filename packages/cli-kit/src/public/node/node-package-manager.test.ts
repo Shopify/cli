@@ -11,10 +11,9 @@ import {
   FindUpAndReadPackageJsonNotFoundError,
   usesWorkspaces,
   addResolutionOrOverride,
-  findPackageVersionUp,
 } from './node-package-manager.js'
 import {exec} from './system.js'
-import {join as pathJoin, normalize as pathNormalize, pathToFileURL} from '../../path.js'
+import {join as pathJoin, normalize as pathNormalize} from '../../path.js'
 import {inTemporaryDirectory, mkdir, touch, write, write as writeFile} from '../../file.js'
 import {Abort} from '../../error.js'
 import {describe, it, expect, vi, test} from 'vitest'
@@ -675,26 +674,6 @@ describe('addResolutionOrOverride', () => {
       expect(packageJsonContent.resolutions).toBeDefined()
       expect(packageJsonContent.resolutions).toEqual({'@types/node': '^17.0.38', '@types/react': '17.0.30'})
       expect(packageJsonContent.overrides).toBeUndefined()
-    })
-  })
-})
-
-describe('findPackageVersionUp', () => {
-  test('returns the version if a package.json exists', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const subDirectory = pathJoin(tmpDir, 'subdir')
-      const version = '1.2.3'
-      const packageJsonPath = pathJoin(tmpDir, 'package.json')
-      await mkdir(subDirectory)
-      const packageJson = {version}
-      await write(packageJsonPath, JSON.stringify(packageJson))
-
-      // When
-      const got = await findPackageVersionUp({fromModuleURL: pathToFileURL(pathJoin(subDirectory, 'file.js'))})
-
-      // Then
-      expect(got).toEqual(version)
     })
   })
 })

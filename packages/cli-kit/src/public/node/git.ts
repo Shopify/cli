@@ -4,7 +4,7 @@ import {content, token, debug} from '../../output.js'
 import {appendSync} from '../../file.js'
 import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
 
-export const factory = git
+export const gitFactory = git
 
 /**
  * Initialize a git repository at the given directory.

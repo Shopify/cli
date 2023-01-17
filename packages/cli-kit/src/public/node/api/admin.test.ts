@@ -87,7 +87,7 @@ describe('admin-rest-api', () => {
     const status = 200
     const headers = {'X-Shopify-Access-Token': `Bearer ${token}`, 'Content-Type': 'application/json'}
 
-    vi.mocked(buildHeaders).mockResolvedValue(headers)
+    vi.mocked(buildHeaders).mockReturnValue(headers)
     vi.mocked(fetch).mockResolvedValue({
       json,
       status,
@@ -114,7 +114,7 @@ describe('admin-rest-api', () => {
     const status = 200
     const headers = {'X-Shopify-Access-Token': `Bearer ${token}`, 'Content-Type': 'application/json'}
 
-    vi.mocked(buildHeaders).mockResolvedValue(headers)
+    vi.mocked(buildHeaders).mockReturnValue(headers)
     vi.mocked(fetch).mockResolvedValue({
       json: () => Promise.resolve({result: true}),
       status,

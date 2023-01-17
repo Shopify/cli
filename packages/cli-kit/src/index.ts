@@ -1,4 +1,3 @@
-export {default as constants} from './constants.js'
 export * as error from './error.js'
 export * as file from './file.js'
 export * as http from './http.js'

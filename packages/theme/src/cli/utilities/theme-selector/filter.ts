@@ -1,3 +1,4 @@
+import {ALLOWED_ROLES} from './fetch.js'
 import {Theme} from '../../models/theme.js'
 import {error} from '@shopify/cli-kit'
 
@@ -14,30 +15,31 @@ function filterByRole(store: string, themes: Theme[], filter: Filter) {
 
   const error = `The ${store} store doesn't have a theme with the "${role}" role`
 
-  return [
-    find(themes, (theme) => {
-      return theme.role === role
-    }).orThrow(error),
-  ]
+  return filterArray(themes, (theme) => {
+    return theme.role === role
+  }).orThrow(error)
 }
 
 function filterByTheme(store: string, themes: Theme[], filter: Filter) {
   const identifiers = filter.themeIdentifiers
 
-  return identifiers.map((identifier) => {
+  return identifiers.flatMap((identifier) => {
     const error = `The ${store} store doesn't have a theme with the "${identifier}" ID or name`
 
-    return find(themes, (theme) => {
-      return [`${theme.id}`, theme.name].includes(identifier)
+    return filterArray(themes, (theme) => {
+      return `${theme.id}` === identifier || new RegExp(identifier, 'i').test(theme.name)
     }).orThrow(error)
   })
 }
 
-function find(themes: Theme[], predicate: (theme: Theme) => boolean): {orThrow: (error: string) => Theme | never} {
-  const theme = themes.find(predicate)
+function filterArray(
+  themes: Theme[],
+  predicate: (theme: Theme) => boolean,
+): {orThrow: (error: string) => Theme[] | never} {
+  const filteredThemes = themes.filter(predicate)
 
-  if (theme) {
-    return {orThrow: (_errorMessage: string) => theme}
+  if (filteredThemes.length > 0) {
+    return {orThrow: (_errorMessage: string) => filteredThemes}
   }
 
   return {
@@ -57,17 +59,17 @@ export interface FilterProps {
   theme?: ThemeIdentifier
   development?: boolean
   live?: boolean
+  unpublished?: boolean
 }
 
 export class Filter {
   constructor(public queryProps: FilterProps) {}
 
   get role() {
-    if (this.queryProps.live) {
-      return 'live'
-    }
-    if (this.queryProps.development) {
-      return 'development'
+    for (const role of ALLOWED_ROLES) {
+      if (this.queryProps[role]) {
+        return role
+      }
     }
   }
 

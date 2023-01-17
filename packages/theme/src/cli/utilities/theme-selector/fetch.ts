@@ -3,7 +3,8 @@ import {Theme} from '../../models/theme.js'
 import {error} from '@shopify/cli-kit'
 import {AdminSession} from '@shopify/cli-kit/node/session.js'
 
-const ALLOWED_ROLES = ['live', 'unpublished', 'development']
+export type Role = 'live' | 'development' | 'unpublished'
+export const ALLOWED_ROLES: Role[] = ['live', 'unpublished', 'development']
 
 export async function fetchStoreThemes(session: AdminSession) {
   const store = session.storeFqdn
@@ -17,9 +18,9 @@ export async function fetchStoreThemes(session: AdminSession) {
 }
 
 function isRoleAllowed(theme: Theme) {
-  return ALLOWED_ROLES.includes(theme.role)
+  return (ALLOWED_ROLES as string[]).includes(theme.role)
 }
 
 function byRole(themeA: Theme, themeB: Theme) {
-  return ALLOWED_ROLES.indexOf(themeA.role) - ALLOWED_ROLES.indexOf(themeB.role)
+  return (ALLOWED_ROLES as string[]).indexOf(themeA.role) - (ALLOWED_ROLES as string[]).indexOf(themeB.role)
 }

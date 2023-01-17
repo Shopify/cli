@@ -8,18 +8,26 @@ export function restRequestBody<T>(requestBody?: T) {
   return JSON.stringify(requestBody)
 }
 
-export function restRequestUrl(session: AdminSession, apiVersion: string, path: string) {
-  if (isThemeAccessSession(session)) {
-    return `https://theme-kit-access.shopifyapps.com/cli/admin/api/${apiVersion}${path}.json`
-  }
+export function restRequestUrl(
+  session: AdminSession,
+  apiVersion: string,
+  path: string,
+  searchParams: {[name: string]: string} = {},
+) {
+  const url = new URL(
+    isThemeAccessSession(session)
+      ? `https://theme-kit-access.shopifyapps.com/cli/admin/api/${apiVersion}${path}.json`
+      : `https://${session.storeFqdn}/admin/api/${apiVersion}${path}.json`,
+  )
+  Object.entries(searchParams).forEach(([name, value]) => url.searchParams.set(name, value))
 
-  return `https://${session.storeFqdn}/admin/api/${apiVersion}${path}.json`
+  return url.toString()
 }
 
-export async function restRequestHeaders(session: AdminSession) {
+export function restRequestHeaders(session: AdminSession) {
   const store = session.storeFqdn
   const token = session.token
-  const headers = await buildHeaders(session.token)
+  const headers = buildHeaders(session.token)
 
   if (isThemeAccessSession(session)) {
     headers['X-Shopify-Shop'] = store
