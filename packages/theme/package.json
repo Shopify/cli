@@ -15,7 +15,8 @@
   "type": "module",
   "files": [
     "/dist",
-    "/oclif.manifest.json"
+    "/oclif.manifest.json",
+    "/theme-cli"
   ],
   "scripts": {
     "build": "nx build",
