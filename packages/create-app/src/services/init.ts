@@ -1,13 +1,14 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
 import cleanup from '../utils/template/cleanup.js'
 
-import {path, ui, npm, git, error, output} from '@shopify/cli-kit'
+import {path, ui, npm, error, output} from '@shopify/cli-kit'
 import {packageManager, PackageManager, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {isShopify, isUnitTest} from '@shopify/cli-kit/node/environment/local'
+import {downloadGitRepository, initializeGitRepository} from '@shopify/cli-kit/node/git'
 import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile} from '@shopify/cli-kit/node/fs'
 
 interface InitOptions {
@@ -40,7 +41,7 @@ async function init(options: InitOptions) {
     await ui.task({
       title: `Downloading template from ${repoUrl}`,
       task: async () => {
-        await git.downloadRepository({
+        await downloadGitRepository({
           repoUrl,
           destination: templateDownloadDir,
           shallow: true,
@@ -136,7 +137,7 @@ async function init(options: InitOptions) {
       {
         title: 'Initializing a Git repository...',
         task: async (_, task) => {
-          await git.initializeRepository(templateScaffoldDir)
+          await initializeGitRepository(templateScaffoldDir)
           task.title = 'Git repository initialized'
         },
       },

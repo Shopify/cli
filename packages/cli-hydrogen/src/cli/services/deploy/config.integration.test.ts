@@ -1,7 +1,8 @@
 import {validateProject, fillDeployConfig} from './config.js'
 import {gitInit} from '../../prompts/git-init.js'
 import {describe, it, expect, vi} from 'vitest'
-import {error, git} from '@shopify/cli-kit'
+import {error} from '@shopify/cli-kit'
+import {getLatestGitCommit} from '@shopify/cli-kit/node/git'
 import {fileExists, inTemporaryDirectory, touchFile} from '@shopify/cli-kit/node/fs'
 
 const isWin = process.platform === 'win32'
@@ -36,7 +37,7 @@ describe('validateProject() & initializeGit()', () => {
           await validateProject({...defaultConfig, path: tmpDir})
 
           await expect(fileExists(`${tmpDir}/.gitignore`)).resolves.toBeTruthy()
-          await expect(git.getLatestCommit(tmpDir)).resolves.toBeDefined()
+          await expect(getLatestGitCommit(tmpDir)).resolves.toBeDefined()
         })
       },
       10 * 1000,
