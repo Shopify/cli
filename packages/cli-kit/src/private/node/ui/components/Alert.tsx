@@ -46,13 +46,13 @@ const Alert: React.FC<AlertProps> = ({
         </Box>
       )}
 
-      {nextSteps && (
+      {nextSteps && nextSteps.length > 0 && (
         <Box marginTop={1}>
           <List title="Next steps" items={nextSteps} ordered={orderedNextSteps} />
         </Box>
       )}
 
-      {reference && (
+      {reference && reference.length > 0 && (
         <Box marginTop={1}>
           <List title="Reference" items={reference} />
         </Box>
@@ -64,7 +64,7 @@ const Alert: React.FC<AlertProps> = ({
         </Box>
       )}
 
-      {customSections && (
+      {customSections && customSections.length > 0 && (
         <Box flexDirection="column">
           {customSections.map((section, index) => (
             <Box key={index} flexDirection="column" marginTop={1}>

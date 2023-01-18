@@ -45,7 +45,7 @@ export async function renderConcurrent({
   )
 }
 
-type RenderAlertOptions = Omit<AlertProps, 'type'>
+export type RenderAlertOptions = Omit<AlertProps, 'type'>
 
 /**
  * Renders an information banner to the console.

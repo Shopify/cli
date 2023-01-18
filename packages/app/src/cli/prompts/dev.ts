@@ -1,7 +1,7 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
 import {fetchOrgAndApps} from '../services/dev/fetch.js'
 import {output, ui} from '@shopify/cli-kit'
-import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
   if (organizations.length === 1) {
@@ -145,23 +145,24 @@ export async function reuseDevConfigPrompt(): Promise<boolean> {
   return choice.value === 'yes'
 }
 
-export async function updateURLsPrompt(): Promise<string> {
-  const options = [
-    {name: 'Always by default', value: 'always'},
-    {name: 'Yes, this time', value: 'yes'},
-    {name: 'No, not now', value: 'no'},
-    {name: `Never, don't ask again`, value: 'never'},
+export function updateURLsPrompt(currentAppUrl: string, currentRedirectUrls: string[]): Promise<string> {
+  const choices = [
+    {label: 'Always by default', value: 'always'},
+    {label: 'Yes, this time', value: 'yes'},
+    {label: 'No, not now', value: 'no'},
+    {label: `Never, don't ask again`, value: 'never'},
   ]
 
-  const choice = await ui.prompt([
-    {
-      type: 'select',
-      name: 'value',
-      message: `Have Shopify automatically update your app's URL in order to create a preview experience?`,
-      choices: options,
-    },
-  ])
-  return choice.value
+  const infoTable = {
+    'Current app URL': [currentAppUrl],
+    'Current redirect URLs': currentRedirectUrls,
+  }
+
+  return renderSelectPrompt({
+    message: `Have Shopify automatically update your app's URL in order to create a preview experience?`,
+    choices,
+    infoTable,
+  })
 }
 
 export async function tunnelConfigurationPrompt(): Promise<'always' | 'yes' | 'cancel'> {

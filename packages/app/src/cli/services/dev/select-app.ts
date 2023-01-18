@@ -55,7 +55,6 @@ export async function createApp(org: Organization, appName: string, token: strin
     throw new error.Abort(errors)
   }
 
-  output.success(`${result.appCreate.app.title} has been created on your Partners account`)
   const createdApp: OrganizationApp = result.appCreate.app
   createdApp.organizationId = org.id
   createdApp.newApp = true

@@ -12,7 +12,7 @@ import {
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {ui, outputMocker} from '@shopify/cli-kit'
-import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {
@@ -268,26 +268,29 @@ describe('createAsNewAppPrompt', () => {
 describe('updateURLsPrompt', () => {
   it('asks about the URL update and shows 4 different options', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
+    vi.mocked(renderSelectPrompt).mockResolvedValue('always')
 
     // When
-    const got = await updateURLsPrompt()
+    const got = await updateURLsPrompt('http://current-url', [
+      'http://current-redirect-url1',
+      'http://current-redirect-url2',
+    ])
 
     // Then
     expect(got).toEqual('always')
-    expect(ui.prompt).toHaveBeenCalledWith([
-      {
-        type: 'select',
-        name: 'value',
-        message: `Have Shopify automatically update your app's URL in order to create a preview experience?`,
-        choices: [
-          {name: 'Always by default', value: 'always'},
-          {name: 'Yes, this time', value: 'yes'},
-          {name: 'No, not now', value: 'no'},
-          {name: `Never, don't ask again`, value: 'never'},
-        ],
+    expect(renderSelectPrompt).toHaveBeenCalledWith({
+      message: `Have Shopify automatically update your app's URL in order to create a preview experience?`,
+      infoTable: {
+        'Current app URL': ['http://current-url'],
+        'Current redirect URLs': ['http://current-redirect-url1', 'http://current-redirect-url2'],
       },
-    ])
+      choices: [
+        {label: 'Always by default', value: 'always'},
+        {label: 'Yes, this time', value: 'yes'},
+        {label: 'No, not now', value: 'no'},
+        {label: `Never, don't ask again`, value: 'never'},
+      ],
+    })
   })
 })
 
