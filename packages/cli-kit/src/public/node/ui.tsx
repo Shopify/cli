@@ -1,3 +1,4 @@
+import {isUnitTest} from './environment/local.js'
 import ConcurrentOutput from '../../private/node/ui/components/ConcurrentOutput.js'
 import {consoleError, OutputProcess} from '../../output.js'
 import {render, renderOnce} from '../../private/node/ui.js'
@@ -10,6 +11,10 @@ import Table, {TableProps} from '../../private/node/ui/components/Table/Table.js
 import {SelectPrompt, Props as SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, Props as TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
+import {
+  AutocompletePrompt,
+  Props as AutocompletePromptProps,
+} from '../../private/node/ui/components/AutocompletePrompt.js'
 import React from 'react'
 import {RenderOptions} from 'ink'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -40,7 +45,7 @@ export async function renderConcurrent({
   )
 }
 
-type RenderAlertOptions = Omit<AlertProps, 'type'>
+export type RenderAlertOptions = Omit<AlertProps, 'type'>
 
 /**
  * Renders an information banner to the console.
@@ -182,29 +187,31 @@ export function renderFatalError(error: Fatal) {
 /**
  * Renders a select prompt to the console.
  *
+ * ```
  * ?  Associate your project with the org Castile Ventures?
  *
  *      Add:     • new-ext
  *
  *      Remove:  • integrated-demand-ext
  *               • order-discount
-
+ *
  * \>  (f) first
  *     (s) second
  *     (3) third
  *     (4) fourth
  *     (5) seventh
  *     (6) tenth
-
+ *
  *     Automations
  *     (7) fifth
  *     (8) sixth
-
+ *
  *     Merchant Admin
  *     (9) eighth
  *     (10) ninth
-
+ *
  *     navigate with arrows, enter to select
+ * ```
  */
 export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit'>): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -214,15 +221,85 @@ export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmi
   })
 }
 
+interface RenderConfirmationPromptOptions extends Pick<SelectPromptProps<boolean>, 'message' | 'infoTable'> {
+  confirmationMessage?: string
+  cancellationMessage?: string
+}
+
+/**
+ * Renders a confirmation prompt to the console.
+ *
+ * ?  Do you want to continue?
+ *
+ * \>  (y) Yes, confirm
+ *     (n) No, canccel
+ *
+ *     navigate with arrows, enter to select
+ */
+export function renderConfirmationPrompt({
+  message,
+  infoTable,
+  confirmationMessage = 'Yes, confirm',
+  cancellationMessage = 'No, cancel',
+}: RenderConfirmationPromptOptions): Promise<boolean> {
+  const choices = [
+    {
+      label: confirmationMessage,
+      value: true,
+      key: 'y',
+    },
+    {
+      label: cancellationMessage,
+      value: false,
+      key: 'n',
+    },
+  ]
+
+  return renderSelectPrompt({
+    choices,
+    message,
+    infoTable,
+  })
+}
+
+/**
+ * Renders an autocomplete prompt to the console.
+ * ```
+ * ?  Select a template  Type to search...
+
+ * \>  first
+ *     second
+ *     third
+
+ *  navigate with arrows, enter to select
+ * ```
+ */
+export function renderAutocompletePrompt<T>(props: Omit<AutocompletePromptProps<T>, 'onSubmit'>): Promise<T> {
+  const newProps = {
+    search(term: string) {
+      return Promise.resolve(props.choices.filter((item) => item.label.toLowerCase().includes(term.toLowerCase())))
+    },
+    ...props,
+  }
+
+  return new Promise((resolve, reject) => {
+    render(<AutocompletePrompt {...newProps} onSubmit={(value: T) => resolve(value)} />, {
+      exitOnCtrlC: false,
+    }).catch(reject)
+  })
+}
+
 /**
  * Renders a table to the console.
  *
+ * ```
  * name                      role           Identifier
  * ────────────────────────  ─────────────  ──────────
  * Dawn                      [live]         #1361
  * Studio                                   #1363
  * Debut                     [unpublished]  #1374
  * Development (1a23b4-MBP)  [development]  #1368
+ * ```
  */
 export function renderTable<T extends ScalarDict>(props: TableProps<T>) {
   return renderOnce(<Table {...props} />)
@@ -231,17 +308,18 @@ export function renderTable<T extends ScalarDict>(props: TableProps<T>) {
 /**
  * Runs async tasks and displays their progress to the console.
  */
-export function renderTasks(tasks: Task[]) {
-  return render(<Tasks tasks={tasks} />)
+export async function renderTasks<TContext>(tasks: Task<TContext>[]) {
+  return render(<Tasks tasks={tasks} silent={isUnitTest()} />)
 }
 
 /**
  * Renders a text prompt to the console.
- *
+ * ```
  * ?  What is your name?
  * \>  John
+ * ```
  */
-export function renderTextPrompt(props: Omit<TextPromptProps, 'onSubmit'>) {
+export function renderTextPrompt(props: Omit<TextPromptProps, 'onSubmit'>): Promise<string> {
   return new Promise((resolve, reject) => {
     render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
       exitOnCtrlC: false,

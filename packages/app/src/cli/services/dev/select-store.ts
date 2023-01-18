@@ -6,12 +6,13 @@ import {
   ConvertDevToTestStoreSchema,
   ConvertDevToTestStoreVariables,
 } from '../../api/graphql/convert_dev_to_test_store.js'
-import {error, output, ui} from '@shopify/cli-kit'
+import {error, output} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {sleep} from '@shopify/cli-kit/node/system'
+import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {isSpinEnvironment} from '@shopify/cli-kit/node/environment/spin'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
-import {firstPartyDev, isUnitTest} from '@shopify/cli-kit/node/environment/local'
+import {firstPartyDev} from '@shopify/cli-kit/node/environment/local'
 
 const CreateStoreLink = async (orgId: string) => {
   const url = `https://${await partnersFqdn()}/${orgId}/stores/new?store_type=dev_store`
@@ -65,27 +66,24 @@ async function waitForCreatedStore(orgId: string, token: string): Promise<Organi
   const retries = 10
   const secondsToWait = 3
   let data = [] as OrganizationStore[]
-  const list = ui.newListr(
-    [
-      {
-        title: 'Fetching organization data',
-        task: async () => {
-          for (let i = 0; i < retries; i++) {
-            // eslint-disable-next-line no-await-in-loop
-            const stores = await fetchAllDevStores(orgId, token)
-            if (stores.length > 0) {
-              data = stores
-              return
-            }
-            // eslint-disable-next-line no-await-in-loop
-            await sleep(secondsToWait)
+  const tasks = [
+    {
+      title: 'Fetching organization data',
+      task: async () => {
+        for (let i = 0; i < retries; i++) {
+          // eslint-disable-next-line no-await-in-loop
+          const stores = await fetchAllDevStores(orgId, token)
+          if (stores.length > 0) {
+            data = stores
+            return
           }
-        },
+          // eslint-disable-next-line no-await-in-loop
+          await sleep(secondsToWait)
+        }
       },
-    ],
-    {rendererSilent: isUnitTest()},
-  )
-  await list.run()
+    },
+  ]
+  await renderTasks(tasks)
 
   return data
 }

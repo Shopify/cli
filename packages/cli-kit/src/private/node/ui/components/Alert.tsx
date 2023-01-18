@@ -2,8 +2,13 @@ import {Banner, BannerType} from './Banner.js'
 import {Link} from './Link.js'
 import {List} from './List.js'
 import {TokenItem, TokenizedText} from './TokenizedText.js'
-import {Box} from 'ink'
+import {Box, Text} from 'ink'
 import React from 'react'
+
+export interface CustomSection {
+  title: string
+  body: TokenItem
+}
 
 export interface AlertProps {
   type: Exclude<BannerType, 'error' | 'external_error'>
@@ -16,11 +21,21 @@ export interface AlertProps {
     url: string
   }
   orderedNextSteps?: boolean
+  customSections?: CustomSection[]
 }
 
-const Alert: React.FC<AlertProps> = ({type, headline, body, nextSteps, reference, link, orderedNextSteps = false}) => {
+const Alert: React.FC<AlertProps> = ({
+  type,
+  headline,
+  body,
+  nextSteps,
+  reference,
+  link,
+  customSections,
+  orderedNextSteps = false,
+}) => {
   return (
-    <Banner type={type} marginY={1}>
+    <Banner type={type}>
       <Box>
         <TokenizedText item={headline} />
       </Box>
@@ -31,13 +46,13 @@ const Alert: React.FC<AlertProps> = ({type, headline, body, nextSteps, reference
         </Box>
       )}
 
-      {nextSteps && (
+      {nextSteps && nextSteps.length > 0 && (
         <Box marginTop={1}>
           <List title="Next steps" items={nextSteps} ordered={orderedNextSteps} />
         </Box>
       )}
 
-      {reference && (
+      {reference && reference.length > 0 && (
         <Box marginTop={1}>
           <List title="Reference" items={reference} />
         </Box>
@@ -46,6 +61,17 @@ const Alert: React.FC<AlertProps> = ({type, headline, body, nextSteps, reference
       {link && (
         <Box marginTop={1}>
           <Link url={link.url} label={link.label} />
+        </Box>
+      )}
+
+      {customSections && customSections.length > 0 && (
+        <Box flexDirection="column">
+          {customSections.map((section, index) => (
+            <Box key={index} flexDirection="column" marginTop={1}>
+              <Text bold>{section.title}</Text>
+              <TokenizedText item={section.body} />
+            </Box>
+          ))}
         </Box>
       )}
     </Banner>

@@ -6,7 +6,6 @@ export type BannerType = 'success' | 'error' | 'warning' | 'info' | 'external_er
 
 interface Props {
   type: BannerType
-  marginY?: number
 }
 
 function typeToColor(type: Props['type']) {
@@ -19,7 +18,7 @@ function typeToColor(type: Props['type']) {
   }[type]
 }
 
-const BoxWithBorder: React.FC<Props> = ({type, marginY, children}) => {
+const BoxWithBorder: React.FC<Props> = ({type, children}) => {
   const {twoThirds} = useLayout()
 
   return (
@@ -27,7 +26,7 @@ const BoxWithBorder: React.FC<Props> = ({type, marginY, children}) => {
       width={twoThirds}
       paddingY={1}
       paddingX={2}
-      marginY={marginY}
+      marginBottom={1}
       borderStyle="round"
       flexDirection="column"
       borderColor={typeToColor(type)}
@@ -40,11 +39,11 @@ const BoxWithBorder: React.FC<Props> = ({type, marginY, children}) => {
   )
 }
 
-const BoxWithTopBottomLines: React.FC<Props> = ({type, marginY, children}) => {
+const BoxWithTopBottomLines: React.FC<Props> = ({type, children}) => {
   const {twoThirds} = useLayout()
 
   return (
-    <Box marginY={marginY} flexDirection="column">
+    <Box flexDirection="column" marginBottom={1}>
       <Box marginBottom={1}>
         <Text>
           <Text color={typeToColor(type)}>{'─'.repeat(2)}</Text>

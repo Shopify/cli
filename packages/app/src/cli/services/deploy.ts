@@ -1,22 +1,25 @@
 /* eslint-disable require-atomic-updates */
-import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle.js'
 import {
-  uploadThemeExtensions,
-  uploadFunctionExtensions,
-  uploadUIExtensionsBundle,
   UploadExtensionValidationError,
+  uploadFunctionExtensions,
+  uploadThemeExtensions,
+  uploadUIExtensionsBundle,
 } from './deploy/upload.js'
 
 import {ensureDeployEnvironment} from './environment.js'
+import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
 import {Extension} from '../models/app/extensions.js'
-import {validateExtensions} from '../validators/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
+import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {output} from '@shopify/cli-kit'
 import {useThemeBundling} from '@shopify/cli-kit/node/environment/local'
+import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
+import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
+import {CustomSection} from '@shopify/cli-kit/src/private/node/ui/components/Alert.js'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 
@@ -34,10 +37,14 @@ interface DeployOptions {
   force: boolean
 }
 
+interface TasksContext {
+  bundlePath?: string
+  bundle?: boolean
+}
+
 export const deploy = async (options: DeployOptions) => {
   if (!options.app.hasExtensions()) {
-    output.newline()
-    output.info(`No extensions to deploy to Shopify Partners yet.`)
+    renderInfo({headline: 'No extensions to deploy to Shopify Partners yet.'})
     return
   }
 
@@ -71,6 +78,9 @@ export const deploy = async (options: DeployOptions) => {
     extensions.push(...themeExtensions)
   }
 
+  let registrations: AllAppExtensionRegistrationsQuerySchema
+  let validationErrors: UploadExtensionValidationError[] = []
+
   await inTemporaryDirectory(async (tmpDir) => {
     try {
       const bundlePath = joinPath(tmpDir, `bundle.zip`)
@@ -78,37 +88,41 @@ export const deploy = async (options: DeployOptions) => {
       const bundle = app.extensions.ui.length !== 0
       await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers, bundle})
 
-      output.newline()
-      output.info(`Running validation…`)
+      const tasks: Task<TasksContext>[] = [
+        {
+          title: 'Running validation',
+          task: async () => {
+            await validateExtensions(app)
+          },
+        },
+        {
+          title: 'Pushing your code to Shopify',
+          task: async () => {
+            if (bundle) {
+              /**
+               * The bundles only support UI extensions for now so we only need bundle and upload
+               * the bundle if the app has UI extensions.
+               */
+              validationErrors = await uploadUIExtensionsBundle({
+                apiKey,
+                bundlePath,
+                extensions,
+                token,
+              })
+            }
 
-      await validateExtensions(app)
+            if (!useThemeBundling()) {
+              await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
+            }
 
-      output.newline()
-      output.info(`Pushing your code to Shopify…`)
-      output.newline()
+            identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
+            app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
+            registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
+          },
+        },
+      ]
 
-      let validationErrors: UploadExtensionValidationError[] = []
-      if (bundle) {
-        /**
-         * The bundles only support UI extensions for now so we only need bundle and upload
-         * the bundle if the app has UI extensions.
-         */
-        validationErrors = await uploadUIExtensionsBundle({apiKey, bundlePath, extensions, token})
-      }
-
-      if (!useThemeBundling()) {
-        await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
-      }
-      identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
-      app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
-
-      if (validationErrors.length > 0) {
-        output.completed('Deployed to Shopify, but fixes are needed')
-      } else {
-        output.success('Deployed to Shopify')
-      }
-
-      const registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
+      await renderTasks(tasks)
 
       await outputCompletionMessage({
         app,
@@ -118,6 +132,7 @@ export const deploy = async (options: DeployOptions) => {
         registrations,
         validationErrors,
       })
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       /**
@@ -145,44 +160,77 @@ async function outputCompletionMessage({
   registrations: AllAppExtensionRegistrationsQuerySchema
   validationErrors: UploadExtensionValidationError[]
 }) {
-  output.newline()
-  output.info('  Summary:')
+  let headline: string
+
+  if (validationErrors.length > 0) {
+    headline = 'Deployed to Shopify, but fixes are needed.'
+  } else {
+    headline = 'Deployed to Shopify!'
+  }
+
   const outputDeployedButNotLiveMessage = (extension: Extension) => {
-    output.info(output.content`    • ${extension.localIdentifier} is deployed to Shopify but not yet live`)
+    const result = [`${extension.localIdentifier} is deployed to Shopify but not yet live`]
     const uuid = identifiers.extensions[extension.localIdentifier]
     const validationError = validationErrors.find((error) => error.uuid === uuid)
 
     if (validationError) {
-      const title = output.token.errorText('Validation errors found in your extension toml file')
-      output.info(output.content`       - ${title} `)
+      result.push('\n- Validation errors found in your extension toml file')
       validationError.errors.forEach((err) => {
-        output.info(output.content`       └ ${output.token.italic(err.message)}`)
+        result.push(`\n  └ ${err.message}`)
       })
     }
-  }
-  const outputDeployedAndLivedMessage = (extension: Extension) => {
-    output.info(output.content`    · ${extension.localIdentifier} is live`)
-  }
-  app.extensions.ui.forEach(outputDeployedButNotLiveMessage)
-  app.extensions.theme.forEach(outputDeployedButNotLiveMessage)
-  app.extensions.function.forEach(outputDeployedAndLivedMessage)
 
-  output.newline()
+    return result
+  }
+
+  const outputDeployedAndLivedMessage = (extension: Extension) => {
+    return `${extension.localIdentifier} is live`
+  }
+
   const outputNextStep = async (extension: Extension) => {
     const extensionId =
       registrations.app.extensionRegistrations.find((registration) => {
         return registration.uuid === identifiers.extensions[extension.localIdentifier]
       })?.id ?? ''
-    return output.content`    · Publish ${output.token.link(
-      extension.localIdentifier,
-      await extension.publishURL({orgId: partnersOrganizationId, appId: partnersApp.id, extensionId}),
-    )}`
+    return [
+      'Publish',
+      {
+        link: {
+          url: await extension.publishURL({orgId: partnersOrganizationId, appId: partnersApp.id, extensionId}),
+          label: extension.localIdentifier,
+        },
+      },
+    ]
   }
+
+  const customSections: CustomSection[] = [
+    {
+      title: 'Summary',
+      body: {
+        list: {
+          items: [
+            ...app.extensions.ui.map(outputDeployedButNotLiveMessage),
+            ...app.extensions.theme.map(outputDeployedButNotLiveMessage),
+            ...app.extensions.function.map(outputDeployedAndLivedMessage),
+          ],
+        },
+      },
+    },
+  ]
+
   if (app.extensions.ui.length !== 0 || app.extensions.function.length !== 0) {
-    const lines = await Promise.all([...app.extensions.ui, ...app.extensions.theme].map(outputNextStep))
-    if (lines.length > 0) {
-      output.info('  Next steps in Shopify Partners:')
-      lines.forEach((line) => output.info(line))
-    }
+    customSections.push({
+      title: 'Next steps',
+      body: {
+        list: {
+          items: await Promise.all([...app.extensions.ui, ...app.extensions.theme].map(outputNextStep)),
+        },
+      },
+    })
   }
+
+  renderSuccess({
+    headline,
+    customSections,
+  })
 }

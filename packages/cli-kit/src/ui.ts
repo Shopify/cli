@@ -4,27 +4,12 @@ import {info, completed, content, token, logUpdate, Message, Logger, stringifyMe
 import colors from './public/node/colors.js'
 import {relativePath} from './public/node/path.js'
 import {isTerminalInteractive} from './public/node/environment/local.js'
-import {mapper as mapperUI, run as executorUI} from './ui/executor.js'
-import {Listr as OriginalListr, ListrTask, ListrTaskState, ListrBaseClassOptions} from 'listr2'
+import {run as executorUI} from './ui/executor.js'
+import {Listr as OriginalListr, ListrTask, ListrBaseClassOptions} from 'listr2'
 import findProcess from 'find-process'
 
 export function newListr(tasks: ListrTask[], options?: object | ListrBaseClassOptions) {
   const listr = new OriginalListr(tasks, options)
-  listr.tasks.forEach((task) => {
-    const loggedSubtaskTitles: string[] = []
-    task.renderHook$.subscribe(() => {
-      if (task.hasSubtasks()) {
-        const activeSubtasks = task.subtasks.filter((subtask) => {
-          return [ListrTaskState.PENDING, ListrTaskState.COMPLETED].includes(subtask.state as ListrTaskState)
-        })
-        activeSubtasks.forEach((subtask) => {
-          if (subtask.title && !loggedSubtaskTitles.includes(subtask.title)) {
-            loggedSubtaskTitles.push(subtask.title)
-          }
-        })
-      }
-    })
-  })
   return listr
 }
 
@@ -119,16 +104,14 @@ ${token.json(questions)}
     `)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mappedQuestions: any[] = questions.map(mapperUI)
   const value = {} as TAnswers
-  for (const question of mappedQuestions) {
+  for (const question of questions) {
     if (question.preface) {
       info(question.preface)
     }
 
     // eslint-disable-next-line no-await-in-loop
-    value[question.name as TName] = await executorUI(question)
+    value[question.name] = (await executorUI(question)) as TAnswers[TName]
   }
   return value
 }
