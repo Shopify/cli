@@ -2,9 +2,11 @@ import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, sharedSecretPromp
 import {DELIVERY_METHOD} from '../../services/webhook/trigger-options.js'
 import {describe, it, expect, vi, afterEach, beforeEach} from 'vitest'
 import {ui} from '@shopify/cli-kit'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit')
+  vi.mock('@shopify/cli-kit/node/ui')
 })
 
 afterEach(async () => {
@@ -14,24 +16,21 @@ afterEach(async () => {
 describe('topicPrompt', () => {
   it('asks the user to enter a topic name', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValue({topic: 'orders/create'})
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('orders/create')
 
     // When
     const got = await topicPrompt(['orders/create', 'anything/else'])
 
     // Then
     expect(got).toEqual('orders/create')
-    expect(ui.prompt).toHaveBeenCalledWith([
-      {
-        type: 'autocomplete',
-        name: 'topic',
-        message: 'Webhook Topic',
-        choices: [
-          {name: 'orders/create', value: 'orders/create'},
-          {name: 'anything/else', value: 'anything/else'},
-        ],
-      },
-    ])
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
+      message: 'Webhook Topic',
+      choices: [
+        {label: 'orders/create', value: 'orders/create'},
+        {label: 'anything/else', value: 'anything/else'},
+      ],
+      search: expect.any(Function),
+    })
   })
 })
 
