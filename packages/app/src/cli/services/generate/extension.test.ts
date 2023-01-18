@@ -8,10 +8,11 @@ import {
   loadLocalUIExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
-import {git, output, path} from '@shopify/cli-kit'
+import {output, path} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
 import * as template from '@shopify/cli-kit/node/liquid'
 import * as file from '@shopify/cli-kit/node/fs'
+import * as git from '@shopify/cli-kit/node/git'
 import type {ExtensionFlavor} from './extension.js'
 
 beforeEach(() => {
@@ -284,7 +285,7 @@ describe('initialize a extension', async () => {
       await withTemporaryApp(async (tmpDir) => {
         // Given
         vi.spyOn(file, 'moveFile').mockResolvedValue()
-        vi.spyOn(git, 'downloadRepository').mockResolvedValue()
+        vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
         const name = 'my-ext-1'
         const specification = allFunctionSpecs.find((spec) => spec.identifier === 'order_discounts')!
         specification.templateURL = 'custom/template/url'
@@ -294,7 +295,7 @@ describe('initialize a extension', async () => {
         await createFromTemplate({name, specification, extensionFlavor, appDirectory: tmpDir, specifications})
 
         // Then
-        expect(git.downloadRepository).toHaveBeenCalledWith({
+        expect(git.downloadGitRepository).toHaveBeenCalledWith({
           destination: expect.any(String),
           repoUrl: 'custom/template/url',
           shallow: true,

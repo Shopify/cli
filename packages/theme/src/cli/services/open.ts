@@ -1,5 +1,6 @@
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themeEditorUrl, themePreviewUrl} from '../utilities/theme-urls.js'
+import {themeComponent} from '../utilities/theme-ui.js'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -21,12 +22,7 @@ export async function open(
   const editorUrl = themeEditorUrl(theme, adminSession)
 
   renderInfo({
-    headline: [
-      `Preview information for theme ${theme.name}`,
-      {
-        subdued: `(#${theme.id})`,
-      },
-    ],
+    headline: [`Preview information for theme`, ...themeComponent(theme)],
     body: {
       list: {
         items: [

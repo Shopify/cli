@@ -1,5 +1,6 @@
 import {takeRandomFromArray} from './array.js'
 import {unstyled} from '../../output.js'
+import {TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 
 const SAFE_RANDOM_BUSINESS_ADJECTIVES = [
   'commercial',
@@ -125,6 +126,36 @@ export function getRandomName(family: RandomNameFamily = 'business'): string {
  */
 export function capitalize(str: string): string {
   return str.substring(0, 1).toUpperCase() + str.substring(1)
+}
+
+/**
+ * Given a list of items, it returns a pluralized string based on the amount of items.
+ *
+ * @param items - List of items.
+ * @param plural - Supplier used when the list of items has more than one item.
+ * @param singular - Supplier used when the list of items has a single item.
+ * @param none - Supplier used when the list has no items.
+ * @returns The {@link TokenItem} supplied by the {@link plural}, {@link singular}, or {@link none} functions.
+ */
+export function pluralize<T>(
+  items: T[],
+  plural: (items: T[]) => TokenItem,
+  singular: (item: T) => TokenItem,
+  none?: () => TokenItem,
+): TokenItem {
+  if (items.length === 1) {
+    return singular(items[0]!)
+  }
+
+  if (items.length > 1) {
+    return plural(items)
+  }
+
+  if (none) {
+    return none()
+  }
+
+  return ''
 }
 
 /**
