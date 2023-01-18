@@ -160,7 +160,6 @@ async function outputCompletionMessage({
     })
     const uuid = identifiers.extensions[extension.localIdentifier]
     const validationError = validationErrors.find((error) => error.uuid === uuid)
-
     if (validationError) {
       const title = output.token.errorText('Validation errors found in your extension toml file')
       output.info(output.content`       - ${title} `)
@@ -170,7 +169,18 @@ async function outputCompletionMessage({
     }
   }
   const outputDeployedAndLivedMessage = (extension: Extension) => {
-    output.info(output.content`    · ${extension.localIdentifier} is live`)
+    renderSuccess({
+      headline: 'Deployment successful.',
+      body: 'Your extensions have been uploaded to your Shopify Partners Dashboard.',
+      nextSteps: [
+        {
+          link: {
+            label: 'See your live deployment.',
+            url: `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/deployments`,
+          },
+        },
+      ],
+    })
   }
   app.extensions.ui.forEach(outputDeployedButNotLiveMessage)
   app.extensions.theme.forEach(outputDeployedButNotLiveMessage)
