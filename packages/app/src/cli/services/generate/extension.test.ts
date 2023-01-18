@@ -1,4 +1,4 @@
-import extensionInit, {getRuntimeDependencies} from './extension.js'
+import extensionInit, {getExtensionRuntimeDependencies} from './extension.js'
 import {blocks, configurationFileNames} from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
@@ -315,7 +315,7 @@ describe('getRuntimeDependencies', () => {
 
     // When/then
     allUISpecs.forEach((specification) => {
-      const got = getRuntimeDependencies({specification, extensionFlavor})
+      const got = getExtensionRuntimeDependencies({specification, extensionFlavor})
       expect(got.find((dep) => dep.name === 'react' && dep.version === '^17.0.0')).toBeFalsy()
     })
   })
@@ -327,7 +327,7 @@ describe('getRuntimeDependencies', () => {
 
     // When/then
     allUISpecs.forEach((specification) => {
-      const got = getRuntimeDependencies({specification, extensionFlavor})
+      const got = getExtensionRuntimeDependencies({specification, extensionFlavor})
       expect(got.find((dep) => dep.name === 'react' && dep.version === '^17.0.0')).toBeTruthy()
     })
   })
@@ -340,7 +340,7 @@ describe('getRuntimeDependencies', () => {
     allUISpecs.forEach((specification) => {
       const reference = specification.dependency
       if (reference) {
-        const got = getRuntimeDependencies({specification})
+        const got = getExtensionRuntimeDependencies({specification})
         expect(got.find((dep) => dep.name === reference.name && dep.version === reference.version)).toBeTruthy()
       }
     })

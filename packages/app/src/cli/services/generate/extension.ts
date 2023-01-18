@@ -4,6 +4,7 @@ import {FunctionSpec} from '../../models/extensions/functions.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
+import {buildGraphqlTypes} from '../function/build.js'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
@@ -82,7 +83,7 @@ async function uiExtensionInit({
       title: 'Installing dependencies',
       task: async () => {
         await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor)
-        const requiredDependencies = getRuntimeDependencies({specification, extensionFlavor})
+        const requiredDependencies = getExtensionRuntimeDependencies({specification, extensionFlavor})
         await addNPMDependenciesIfNeeded(requiredDependencies, {
           packageManager: app.packageManager,
           type: 'prod',
@@ -134,7 +135,7 @@ function getSrcFileExtension(extensionFlavor: ExtensionFlavor): SrcFileExtension
   return flavorToSrcFileExtension[extensionFlavor] ?? 'js'
 }
 
-export function getRuntimeDependencies({
+export function getExtensionRuntimeDependencies({
   specification,
   extensionFlavor,
 }: Pick<UIExtensionInitOptions, 'specification' | 'extensionFlavor'>): DependencyVersion[] {
@@ -145,6 +146,22 @@ export function getRuntimeDependencies({
   const rendererDependency = specification.dependency
   if (rendererDependency) {
     dependencies.push(rendererDependency)
+  }
+  return dependencies
+}
+
+export function getFunctionRuntimeDependencies(
+  specification: FunctionSpec,
+  templateFlavor: string,
+): DependencyVersion[] {
+  const dependencies: DependencyVersion[] = []
+  if (templateFlavor === 'javascript') {
+    dependencies.push(
+      {name: '@shopify/shopify-function-internal', version: '0.0.10'},
+      {name: 'javy', version: '^0.0.2'},
+      {name: 'vite', version: '^3.1.7'},
+      {name: 'function-runner', version: '0.0.2'},
+    )
   }
   return dependencies
 }
@@ -170,41 +187,74 @@ async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, 
 
 async function functionExtensionInit(options: FunctionExtensionInitOptions) {
   const url = options.cloneUrl || options.specification.templateURL
-  const spec = options.specification
+  const specification = options.specification
+
   await inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = joinPath(tmpDir, 'download')
+    const extensionFlavor = options.extensionFlavor
 
-    await renderTasks([
-      {
-        title: `Generating ${spec.externalName} extension...`,
+    // vanilla-js and typescript functions share the same `javascript` template
+    const templateFlavor =
+      extensionFlavor === 'vanilla-js' || extensionFlavor === 'typescript' ? 'javascript' : extensionFlavor
+
+    const templatePath = specification.templatePath(templateFlavor ?? blocks.functions.defaultLanguage)
+
+    const taskList = []
+
+    if (templateFlavor === 'javascript') {
+      taskList.push({
+        title: 'Installing additional dependencies',
         task: async () => {
-          await mkdir(templateDownloadDir)
-          await downloadGitRepository({
-            repoUrl: url,
-            destination: templateDownloadDir,
-            shallow: true,
+          const requiredDependencies = getFunctionRuntimeDependencies(specification, templateFlavor)
+          await addNPMDependenciesIfNeeded(requiredDependencies, {
+            packageManager: options.app.packageManager,
+            type: 'prod',
+            directory: options.app.directory,
           })
-          // vanilla-js and typescript functions share the same template
-          const templateFlavor = options.extensionFlavor === 'vanilla-js' ? 'typescript' : options.extensionFlavor
-          const templatePath = spec.templatePath(templateFlavor ?? blocks.functions.defaultLanguage)
-          const origin = joinPath(templateDownloadDir, templatePath)
-          await recursiveLiquidTemplateCopy(origin, options.extensionDirectory, {
-            flavor: options.extensionFlavor ?? '',
-            ...options,
-          })
+        },
+      })
+    }
 
-          const srcFileExtension = getSrcFileExtension(options.extensionFlavor ?? 'vanilla-js')
-          if (options.extensionFlavor) {
+    taskList.push({
+      title: `Generating ${specification.externalName} extension`,
+      task: async () => {
+        await mkdir(templateDownloadDir)
+        await downloadGitRepository({
+          repoUrl: url,
+          destination: templateDownloadDir,
+          shallow: true,
+        })
+        const templatePath = specification.templatePath(templateFlavor ?? blocks.functions.defaultLanguage)
+        const origin = joinPath(templateDownloadDir, templatePath)
+        await recursiveLiquidTemplateCopy(origin, options.extensionDirectory, {
+          flavor: extensionFlavor ?? '',
+          ...options,
+        })
+
+        if (templateFlavor === 'javascript') {
+          const srcFileExtension = getSrcFileExtension(extensionFlavor ?? 'vanilla-js')
+          if (extensionFlavor) {
             await changeIndexFileExtension(options.extensionDirectory, srcFileExtension)
           }
+        }
 
-          const configYamlPath = joinPath(options.extensionDirectory, 'script.config.yml')
-          if (await fileExists(configYamlPath)) {
-            await removeFile(configYamlPath)
-          }
-        },
+        const configYamlPath = joinPath(options.extensionDirectory, 'script.config.yml')
+        if (await fileExists(configYamlPath)) {
+          await removeFile(configYamlPath)
+        }
       },
-    ])
+    })
+
+    if (templateFlavor === 'javascript') {
+      taskList.push({
+        title: `Building ${specification.externalName} graphql types`,
+        task: async () => {
+          await buildGraphqlTypes(options.extensionDirectory)
+        },
+      })
+    }
+
+    await renderTasks(taskList)
   })
 }
 
