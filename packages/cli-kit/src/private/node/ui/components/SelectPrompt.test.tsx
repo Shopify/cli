@@ -161,4 +161,28 @@ describe('SelectPrompt', async () => {
       "
     `)
   })
+
+  test('accepts a default value', async () => {
+    const {lastFrame} = render(
+      <SelectPrompt
+        choices={[
+          {label: 'a', value: 'a'},
+          {label: 'b', value: 'b'},
+        ]}
+        onSubmit={() => {}}
+        message="Test question?"
+        defaultValue="b"
+      />,
+    )
+
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      "?  Test question?
+
+         (1) a
+      >  (2) b
+
+         navigate with arrows, enter to select
+      "
+    `)
+  })
 })

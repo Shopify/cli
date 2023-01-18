@@ -293,4 +293,35 @@ describe('SelectInput', async () => {
     `)
     expect(onChange).not.toHaveBeenCalled()
   })
+
+  test('accepts a default value', async () => {
+    const items = [
+      {
+        label: 'First',
+        value: 'first',
+      },
+      {
+        label: 'Second',
+        value: 'second',
+      },
+      {
+        label: 'Third',
+        value: 'third',
+      },
+    ]
+
+    const renderInstance = render(
+      <SelectInput items={items} onChange={() => {}} defaultValue={{label: 'Second', value: 'second'}} />,
+    )
+
+    await waitForInputsToBeReady()
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "   (1) First
+         (2) Second
+         (3) Third
+
+         [2mnavigate with arrows, enter to select[22m"
+    `)
+  })
 })

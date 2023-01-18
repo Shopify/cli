@@ -34,6 +34,7 @@ export async function run(question: Question): Promise<string> {
     case 'select':
       mappedQuestion = {
         ...question,
+        defaultValue: question.default,
         choices: question.choices.map((choice) => {
           return {
             label: choice.name,

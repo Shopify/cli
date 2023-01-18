@@ -12,6 +12,7 @@ export interface Props<T> {
   choices: SelectProps<T>['items']
   onSubmit: (value: T) => void
   infoTable?: InfoTableProps['table']
+  defaultValue?: T
 }
 
 function SelectPrompt<T>({
@@ -19,12 +20,13 @@ function SelectPrompt<T>({
   choices,
   infoTable,
   onSubmit,
+  defaultValue,
 }: React.PropsWithChildren<Props<T>>): ReactElement | null {
   if (choices.length === 0) {
     throw new Error('SelectPrompt requires at least one choice')
   }
-
-  const [answer, setAnswer] = useState<SelectItem<T> | undefined>(choices[0])
+  const initialValue = defaultValue ? choices.find((choice) => choice.value === defaultValue) : choices[0]
+  const [answer, setAnswer] = useState<SelectItem<T> | undefined>(initialValue)
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
   const {stdout} = useStdout()
@@ -83,6 +85,7 @@ function SelectPrompt<T>({
       ) : (
         <Box marginTop={1}>
           <SelectInput
+            defaultValue={initialValue}
             items={choices}
             onChange={(item: Item<T> | undefined) => {
               setAnswer(item)
