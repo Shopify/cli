@@ -1,6 +1,7 @@
 import {ThemeExtension} from '../../models/app/extensions.js'
-import {error, output, path} from '@shopify/cli-kit'
+import {error, output} from '@shopify/cli-kit'
 import {fileSize} from '@shopify/cli-kit/node/fs'
+import {joinPath, glob, dirname, relativePath} from '@shopify/cli-kit/node/path'
 
 interface FilenameValidation {
   validator: RegExp
@@ -44,17 +45,17 @@ export async function validateThemeExtensions(extensions: ThemeExtension[]) {
 }
 
 async function validateThemeExtension(extension: ThemeExtension): Promise<void> {
-  const themeFiles = await path.glob(path.join(extension.directory, '*/*'))
+  const themeFiles = await glob(joinPath(extension.directory, '*/*'))
   const liquidBytes: number[] = []
   const extensionBytes: number[] = []
   await Promise.all(
     themeFiles.map(async (filepath) => {
-      const relativePath = path.relative(extension.directory, filepath)
-      const dirname = path.dirname(relativePath)
-      validateFile(relativePath, dirname)
+      const relativePathName = relativePath(extension.directory, filepath)
+      const directoryName = dirname(relativePathName)
+      validateFile(relativePathName, directoryName)
       const filesize = await fileSize(filepath)
       extensionBytes.push(filesize)
-      if (['blocks', 'snippets'].includes(dirname)) liquidBytes.push(filesize)
+      if (['blocks', 'snippets'].includes(directoryName)) liquidBytes.push(filesize)
     }),
   )
   validateExtensionBytes(arraySum(extensionBytes))

@@ -1,4 +1,4 @@
-import {error, output, path} from '@shopify/cli-kit'
+import {error, output} from '@shopify/cli-kit'
 import {
   addNPMDependencies,
   findUpAndReadPackageJson,
@@ -8,6 +8,7 @@ import {
   PackageJson,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {exec} from '@shopify/cli-kit/node/system'
+import {dirname, findPathUp, moduleDirectory} from '@shopify/cli-kit/node/path'
 
 type HomebrewPackageName = 'shopify-cli' | 'shopify-cli@3'
 
@@ -36,11 +37,11 @@ export async function upgrade(directory: string, currentVersion: string): Promis
 }
 
 async function getProjectDir(directory: string): Promise<string | undefined> {
-  const configFile = await path.findUp(['shopify.app.toml', 'hydrogen.config.js', 'hydrogen.config.ts'], {
+  const configFile = await findPathUp(['shopify.app.toml', 'hydrogen.config.js', 'hydrogen.config.ts'], {
     cwd: directory,
     type: 'file',
   })
-  if (configFile) return path.dirname(configFile)
+  if (configFile) return dirname(configFile)
 }
 
 async function upgradeLocalShopify(projectDir: string, currentVersion: string): Promise<string | void> {
@@ -157,7 +158,7 @@ let _packageJsonContents: PackageJsonWithName | undefined
 
 async function packageJsonContents(): Promise<PackageJsonWithName> {
   if (!_packageJsonContents) {
-    const packageJson = await findUpAndReadPackageJson(path.moduleDirectory(import.meta.url))
+    const packageJson = await findUpAndReadPackageJson(moduleDirectory(import.meta.url))
     _packageJsonContents = _packageJsonContents || (packageJson.content as PackageJsonWithName)
   }
   return _packageJsonContents

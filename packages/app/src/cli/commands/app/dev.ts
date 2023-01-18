@@ -2,9 +2,10 @@ import {appFlags} from '../../flags.js'
 import dev from '../../services/dev.js'
 import Command from '../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
-import {path, metadata} from '@shopify/cli-kit'
+import {metadata} from '@shopify/cli-kit'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class Dev extends Command {
   static description = 'Run the app.'
@@ -93,7 +94,7 @@ export default class Dev extends Command {
       cmd_app_reset_used: flags.reset,
     }))
 
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : process.cwd()
     const commandConfig = this.config
 
     await dev({

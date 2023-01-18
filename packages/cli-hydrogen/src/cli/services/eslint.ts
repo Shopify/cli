@@ -1,10 +1,11 @@
 import {HydrogenApp} from '../models/hydrogen.js'
 import {genericConfigurationFileNames} from '../constants.js'
-import {ui, npm, path, error} from '@shopify/cli-kit'
+import {ui, npm, error} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions, isVSCode} from '@shopify/cli-kit/node/vscode'
 import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
 import {writeFile, fileExists, removeFile, fileContentPrettyFormat} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import stream from 'stream'
 
 interface AddESlintOptions {
@@ -45,7 +46,7 @@ export async function addESLint({app, force, install}: AddESlintOptions) {
       {
         title: 'Adding ESLint configuration',
         task: async (_, task) => {
-          const eslintConfigPath = path.join(app.directory, genericConfigurationFileNames.eslint)
+          const eslintConfigPath = joinPath(app.directory, genericConfigurationFileNames.eslint)
 
           if (await fileExists(eslintConfigPath)) {
             if (force) {

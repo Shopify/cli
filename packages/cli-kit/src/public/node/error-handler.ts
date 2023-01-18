@@ -1,4 +1,5 @@
 import {reportAnalyticsEvent} from './analytics.js'
+import * as path from './path.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
 import {
   AbortSilent,
@@ -9,7 +10,6 @@ import {
   cleanSingleStackTracePath,
 } from '../../error.js'
 import {debug, info} from '../../output.js'
-import * as path from '../../path.js'
 import * as metadata from '../../metadata.js'
 import {fanoutHooks} from '../../plugins.js'
 import {bugsnagApiKey} from '../../private/node/constants.js'
@@ -125,13 +125,15 @@ export function cleanStackFrameFilePath({
   projectRoot: string
   pluginLocations: {name: string; pluginPath: string}[]
 }): string {
-  const fullLocation = path.isAbsolute(currentFilePath) ? currentFilePath : path.join(projectRoot, currentFilePath)
+  const fullLocation = path.isAbsolutePath(currentFilePath)
+    ? currentFilePath
+    : path.joinPath(projectRoot, currentFilePath)
 
   const matchingPluginPath = pluginLocations.filter(({pluginPath}) => fullLocation.indexOf(pluginPath) === 0)[0]
 
   if (matchingPluginPath !== undefined) {
     // the plugin name (e.g. @shopify/cli-kit), plus the relative path of the error line from within the plugin's code (e.g. dist/something.js )
-    return path.join(matchingPluginPath.name, path.relative(matchingPluginPath.pluginPath, fullLocation))
+    return path.joinPath(matchingPluginPath.name, path.relativePath(matchingPluginPath.pluginPath, fullLocation))
   }
 
   // strip prefix up to node_modules folder, so we can normalize error reporting
@@ -146,11 +148,11 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
   // Bugsnag have their own plug-ins that use this private field
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bugsnagConfigProjectRoot: string = (Bugsnag as any)?._client?._config?.projectRoot ?? process.cwd()
-  const projectRoot = path.normalize(bugsnagConfigProjectRoot)
+  const projectRoot = path.normalizePath(bugsnagConfigProjectRoot)
   const pluginLocations = await Promise.all(
     config.plugins.map(async (plugin) => {
       const followSymlinks = await realpath(plugin.root)
-      return {name: plugin.name, pluginPath: path.normalize(followSymlinks)}
+      return {name: plugin.name, pluginPath: path.normalizePath(followSymlinks)}
     }),
   )
   initializeBugsnag()

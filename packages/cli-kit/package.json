@@ -73,7 +73,7 @@
                 "@oclif/core",
                 "../../private/node/environment/utilities.js",
                 "../../private/node/constants.js",
-                "../../path.js",
+                "./path.js",
                 "./system.js"
               ],
               "static": [

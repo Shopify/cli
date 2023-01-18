@@ -1,8 +1,8 @@
 import {getUIExtensionRendererVersion} from './app.js'
 import {testApp, testUIExtension} from './app.test-data.js'
 import {describe, expect, test} from 'vitest'
-import {path} from '@shopify/cli-kit'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 const DEFAULT_APP = testApp()
 
@@ -94,8 +94,8 @@ describe('getUIExtensionRendererVersion', () => {
 })
 
 function createPackageJson(tmpDir: string, type: string, version: string) {
-  const packagePath = path.join(tmpDir, 'node_modules', '@shopify', type, 'package.json')
+  const packagePath = joinPath(tmpDir, 'node_modules', '@shopify', type, 'package.json')
   const packageJson = {name: 'name', version}
-  const dirPath = path.join(tmpDir, 'node_modules', '@shopify', type)
+  const dirPath = joinPath(tmpDir, 'node_modules', '@shopify', type)
   return mkdir(dirPath).then(() => writeFile(packagePath, JSON.stringify(packageJson)))
 }

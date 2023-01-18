@@ -6,10 +6,11 @@ import {testApp, testRemoteSpecifications, testThemeExtensions} from '../models/
 import {ensureGenerateEnvironment} from '../services/environment.js'
 import {Extension} from '../models/app/extensions.js'
 import {describe, expect, it, vi, beforeAll, afterEach} from 'vitest'
-import {path, outputMocker} from '@shopify/cli-kit'
+import {outputMocker} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 beforeAll(() => {
   vi.mock('../constants.js')
@@ -121,7 +122,7 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
   const appRoot = '/'
   const app = testApp({
     directory: appRoot,
-    configurationPath: path.join(appRoot, 'shopify.app.toml'),
+    configurationPath: joinPath(appRoot, 'shopify.app.toml'),
     extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => existingExtensions,
   })
 
@@ -129,6 +130,6 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
   vi.mocked(partnersRequest).mockResolvedValueOnce({extensionSpecifications: testRemoteSpecifications})
   vi.mocked(ensureGenerateEnvironment).mockResolvedValue('api-key')
   vi.mocked(generateExtensionPrompt).mockResolvedValue({name: 'name', extensionType: identifier})
-  vi.mocked(generateExtensionService).mockResolvedValue(path.join(appRoot, 'extensions', 'name'))
+  vi.mocked(generateExtensionService).mockResolvedValue(joinPath(appRoot, 'extensions', 'name'))
   return outputMocker.mockAndCaptureOutput()
 }

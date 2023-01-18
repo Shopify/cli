@@ -1,5 +1,5 @@
 import {Message, stringifyMessage, TokenizedString} from './output.js'
-import {normalize} from './path.js'
+import {normalizePath} from './public/node/path.js'
 import {renderFatalError} from './public/node/ui.js'
 import {TokenItem} from './private/node/ui/components/TokenizedText.js'
 import {Errors} from '@oclif/core'
@@ -156,7 +156,7 @@ export function shouldReport(error: unknown): boolean {
  *
  */
 export function cleanSingleStackTracePath(filePath: string): string {
-  return normalize(filePath)
+  return normalizePath(filePath)
     .replace('file:/', '/')
     .replace(/^\/?[A-Z]:/, '')
 }

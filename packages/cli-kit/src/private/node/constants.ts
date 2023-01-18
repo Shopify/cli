@@ -1,4 +1,4 @@
-import {join as pathJoin} from '../../path.js'
+import {joinPath} from '../../public/node/path.js'
 import envPaths from 'env-paths'
 
 const identifier = 'shopify-cli'
@@ -42,10 +42,10 @@ export const pathConstants = {
       },
       vendor: {
         path: () => {
-          return pathJoin(cacheFolder(), 'vendor')
+          return joinPath(cacheFolder(), 'vendor')
         },
         binaries: () => {
-          return pathJoin(cacheFolder(), 'vendor', 'binaries')
+          return joinPath(cacheFolder(), 'vendor', 'binaries')
         },
       },
     },

@@ -1,16 +1,17 @@
-import {path, error} from '@shopify/cli-kit'
+import {error} from '@shopify/cli-kit'
 import {readFile} from '@shopify/cli-kit/node/fs'
+import {dirname, findPathUp} from '@shopify/cli-kit/node/path'
 import {fileURLToPath} from 'url'
 
 export async function cliVersion(): Promise<string> {
   const cliPackageJsonpath =
-    (await path.findUp('@shopify/cli/package.json', {
-      cwd: path.dirname(fileURLToPath(import.meta.url)),
+    (await findPathUp('@shopify/cli/package.json', {
+      cwd: dirname(fileURLToPath(import.meta.url)),
       type: 'file',
       allowSymlinks: true,
     })) ??
-    (await path.findUp('packages/cli/package.json', {
-      cwd: path.dirname(fileURLToPath(import.meta.url)),
+    (await findPathUp('packages/cli/package.json', {
+      cwd: dirname(fileURLToPath(import.meta.url)),
       type: 'file',
     }))
   if (!cliPackageJsonpath) {

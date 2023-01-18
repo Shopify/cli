@@ -2,9 +2,10 @@ import {ThemeExtensionSchema, ZodSchemaType} from './schemas.js'
 import {loadThemeSpecifications} from './specifications.js'
 import {GenericSpecification, ThemeExtension} from '../app/extensions.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import {path, schema, output} from '@shopify/cli-kit'
+import {schema, output} from '@shopify/cli-kit'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
+import {basename} from '@shopify/cli-kit/node/path'
 
 // Base config type for a theme extension.
 export type ThemeConfigContents = schema.define.infer<typeof ThemeExtensionSchema>
@@ -79,8 +80,8 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
     this.directory = options.directory
     this.remoteSpecification = options.remoteSpecification
     this.specification = options.specification
-    this.localIdentifier = path.basename(options.directory)
-    this.idEnvironmentVariableName = `SHOPIFY_${constantize(path.basename(this.directory))}_ID`
+    this.localIdentifier = basename(options.directory)
+    this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
     this.outputBundlePath = options.outputBundlePath
   }
 

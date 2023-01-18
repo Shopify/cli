@@ -1,6 +1,6 @@
+import {joinPath} from './path.js'
 import {content as outputContent, token, debug} from '../../output.js'
 import {getRandomName, RandomNameFamily} from '../common/string.js'
-import {join as joinPath} from '../../path.js'
 import {
   copy as fsCopy,
   ensureFile as fsEnsureFile,

@@ -1,4 +1,4 @@
-import {glob, relativize} from './path.js'
+import {glob, relativizePath} from './path.js'
 import FastGlob from 'fast-glob'
 import {describe, test, expect, it, vi} from 'vitest'
 
@@ -33,7 +33,7 @@ describe('relativize', () => {
     const directory = '/path/to/project/extensions/my-extension'
 
     // When
-    const got = relativize(directory, cwd)
+    const got = relativizePath(directory, cwd)
 
     // Then
     expect(got).toMatchInlineSnapshot('"../extensions/my-extension"')

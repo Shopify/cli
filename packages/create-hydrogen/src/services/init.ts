@@ -1,4 +1,4 @@
-import {path, error, output, ui, npm} from '@shopify/cli-kit'
+import {error, output, ui, npm} from '@shopify/cli-kit'
 import {username} from '@shopify/cli-kit/node/os'
 import {
   installNodeModules,
@@ -18,6 +18,7 @@ import {
   initializeGitRepository,
 } from '@shopify/cli-kit/node/git'
 import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile, rmdir, touchFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, glob, findPathUp} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 
 interface InitOptions {
@@ -42,13 +43,13 @@ async function init(options: InitOptions) {
   const hydrogenPackageVersion = options.hydrogenVersion
   const packageManager = inferPackageManager(options.packageManager)
   const hyphenizedName = hyphenate(options.name)
-  const outputDirectory = path.join(options.directory, hyphenizedName)
+  const outputDirectory = joinPath(options.directory, hyphenizedName)
 
   await ui.nonEmptyDirectoryPrompt(outputDirectory)
 
   await inTemporaryDirectory(async (tmpDir) => {
-    const templateDownloadDir = path.join(tmpDir, 'download')
-    const templateScaffoldDir = path.join(tmpDir, 'app')
+    const templateDownloadDir = joinPath(tmpDir, 'download')
+    const templateScaffoldDir = joinPath(tmpDir, 'app')
 
     await mkdir(templateDownloadDir)
     await mkdir(templateScaffoldDir)
@@ -58,7 +59,7 @@ async function init(options: InitOptions) {
     const templateInfo = await parseGitHubRepositoryURL(options.template).valueOrAbort()
     const branch = templateInfo.ref ? `#${templateInfo.ref}` : ''
     const templatePath = templateInfo.subDirectory
-      ? path.join(templateDownloadDir, templateInfo.subDirectory)
+      ? joinPath(templateDownloadDir, templateInfo.subDirectory)
       : templateDownloadDir
 
     const repoUrl = `${templateInfo.http}${branch}`
@@ -70,7 +71,7 @@ async function init(options: InitOptions) {
           destination: templateDownloadDir,
           shallow: true,
         })
-        if (!(await fileExists(path.join(templatePath, 'package.json')))) {
+        if (!(await fileExists(joinPath(templatePath, 'package.json')))) {
           throw new error.Abort(`The template ${templatePath} was not found.`, suggestHydrogenSupport())
         }
         return {successMessage: `Downloaded template from ${repoUrl}`}
@@ -236,8 +237,8 @@ async function updateCLIDependencies(
 
   if (local) {
     const devDependencyOverrides = {
-      '@shopify/cli': `file:${(await path.findUp('packages/cli', {type: 'directory'})) as string}`,
-      '@shopify/cli-hydrogen': `file:${(await path.findUp('packages/cli-hydrogen', {type: 'directory'})) as string}`,
+      '@shopify/cli': `file:${(await findPathUp('packages/cli', {type: 'directory'})) as string}`,
+      '@shopify/cli-hydrogen': `file:${(await findPathUp('packages/cli-hydrogen', {type: 'directory'})) as string}`,
     }
 
     packageJSON.overrides = packageJSON.overrides
@@ -260,7 +261,7 @@ async function installDependencies(directory: string, packageManager: PackageMan
 }
 
 async function writeToNpmrc(directory: string, content: string) {
-  const npmrcPath = path.join(directory, '.npmrc')
+  const npmrcPath = joinPath(directory, '.npmrc')
   const npmrcContent = `${content}\n`
   if (!(await fileExists(npmrcPath))) {
     await touchFile(npmrcPath)
@@ -269,12 +270,12 @@ async function writeToNpmrc(directory: string, content: string) {
 }
 
 async function cleanup(webOutputDirectory: string) {
-  const gitPaths = await path.glob(
+  const gitPaths = await glob(
     [
-      path.join(webOutputDirectory, '**', '.git'),
-      path.join(webOutputDirectory, '**', '.github'),
-      path.join(webOutputDirectory, '**', '.gitmodules'),
-      path.join(webOutputDirectory, '.stackblitzrc'),
+      joinPath(webOutputDirectory, '**', '.git'),
+      joinPath(webOutputDirectory, '**', '.github'),
+      joinPath(webOutputDirectory, '**', '.gitmodules'),
+      joinPath(webOutputDirectory, '.stackblitzrc'),
     ],
     {
       dot: true,

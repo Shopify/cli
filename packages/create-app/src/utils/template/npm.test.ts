@@ -1,8 +1,9 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from './npm.js'
-import {npm, path, ui} from '@shopify/cli-kit'
+import {npm, ui} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {installNodeModules, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, normalizePath, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 import {platform} from 'os'
 
@@ -15,7 +16,7 @@ beforeEach(async () => {
 describe('updateCLIDependencies', () => {
   it('updates the @shopify/cli and @shopify/app dependency version', async () => {
     const mockPackageJSON = {} as npm.PackageJSON
-    const directory = path.moduleDirectory(import.meta.url)
+    const directory = moduleDirectory(import.meta.url)
 
     await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory})
 
@@ -25,7 +26,7 @@ describe('updateCLIDependencies', () => {
 
   it('does not update overrides or resolutions if local is false', async () => {
     const mockPackageJSON = {overrides: {}, resolutions: {}} as npm.PackageJSON
-    const directory = path.moduleDirectory(import.meta.url)
+    const directory = moduleDirectory(import.meta.url)
 
     await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory})
 
@@ -41,12 +42,12 @@ describe('updateCLIDependencies', () => {
     'updates overrides for %s if local is true',
     async (dependency) => {
       const mockPackageJSON = {} as npm.PackageJSON
-      const directory = path.moduleDirectory(import.meta.url)
+      const directory = moduleDirectory(import.meta.url)
 
       await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory})
 
       const dependencyOveride = mockPackageJSON.overrides[dependency]!
-      const dependencyPath = path.join(dependencyOveride.replace('file:', ''), 'package.json')
+      const dependencyPath = joinPath(dependencyOveride.replace('file:', ''), 'package.json')
       const dependencyJSON = JSON.parse(await readFile(dependencyPath))
 
       expect(dependencyJSON.name).toBe(dependency)
@@ -57,12 +58,12 @@ describe('updateCLIDependencies', () => {
     'updates resolutions for %s if local is true',
     async (dependency) => {
       const mockPackageJSON = {} as npm.PackageJSON
-      const directory = path.moduleDirectory(import.meta.url)
+      const directory = moduleDirectory(import.meta.url)
 
       await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory})
 
       const dependencyResolution = mockPackageJSON.resolutions[dependency]!
-      const dependencyPath = path.join(dependencyResolution.replace('file:', ''), 'package.json')
+      const dependencyPath = joinPath(dependencyResolution.replace('file:', ''), 'package.json')
       const dependencyJSON = JSON.parse(await readFile(dependencyPath))
 
       expect(dependencyJSON.name).toBe(dependency)
@@ -71,12 +72,12 @@ describe('updateCLIDependencies', () => {
 
   it.each(['@shopify/cli', '@shopify/app'])('updates dependency for %s if local is true', async (dependency) => {
     const mockPackageJSON = {} as npm.PackageJSON
-    const directory = path.moduleDirectory(import.meta.url)
+    const directory = moduleDirectory(import.meta.url)
 
     await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory})
 
     const dependencyResolution = mockPackageJSON.dependencies[dependency]!
-    const dependencyPath = path.join(dependencyResolution.replace('file:', ''), 'package.json')
+    const dependencyPath = joinPath(dependencyResolution.replace('file:', ''), 'package.json')
     const dependencyJSON = JSON.parse(await readFile(dependencyPath))
 
     expect(dependencyJSON.name).toBe(dependency)
@@ -100,7 +101,7 @@ describe('updateCLIDependencies', () => {
         mock: 'value',
       },
     }
-    const directory = path.moduleDirectory(import.meta.url)
+    const directory = moduleDirectory(import.meta.url)
     await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory})
 
     expect(mockPackageJSON.dependencies.mock).toBe('value')
@@ -112,12 +113,12 @@ describe('updateCLIDependencies', () => {
 describe('getDeepInstallNPMTasks', () => {
   async function mockAppFolder(callback: (tmpDir: string) => Promise<void>) {
     await inTemporaryDirectory(async (tmpDir) => {
-      await mkdir(path.join(tmpDir, 'web'))
-      await mkdir(path.join(tmpDir, 'web', 'frontend'))
+      await mkdir(joinPath(tmpDir, 'web'))
+      await mkdir(joinPath(tmpDir, 'web', 'frontend'))
       await Promise.all([
-        writeFile(path.join(tmpDir, 'package.json'), '{}'),
-        writeFile(path.join(tmpDir, 'web', 'package.json'), '{}'),
-        writeFile(path.join(tmpDir, 'web', 'frontend', 'package.json'), '{}'),
+        writeFile(joinPath(tmpDir, 'package.json'), '{}'),
+        writeFile(joinPath(tmpDir, 'web', 'package.json'), '{}'),
+        writeFile(joinPath(tmpDir, 'web', 'frontend', 'package.json'), '{}'),
       ])
 
       return callback(tmpDir)
@@ -157,21 +158,21 @@ describe('getDeepInstallNPMTasks', () => {
         await Promise.all(tasks.map(({task}) => task(null, {} as ui.ListrTaskWrapper<any, any>)))
 
         expect(installNodeModules).toHaveBeenCalledWith({
-          directory: `${path.normalize(tmpDir)}/`,
+          directory: `${normalizePath(tmpDir)}/`,
           packageManager: 'yarn',
           stdout: expect.any(Writable),
           stderr: expect.any(Writable),
           args: expectedArgs,
         })
         expect(installNodeModules).toHaveBeenCalledWith({
-          directory: `${path.join(tmpDir, 'web')}/`,
+          directory: `${joinPath(tmpDir, 'web')}/`,
           packageManager: 'yarn',
           stdout: expect.any(Writable),
           stderr: expect.any(Writable),
           args: expectedArgs,
         })
         expect(installNodeModules).toHaveBeenCalledWith({
-          directory: `${path.join(tmpDir, 'web', 'frontend')}/`,
+          directory: `${joinPath(tmpDir, 'web', 'frontend')}/`,
           packageManager: 'yarn',
           stdout: expect.any(Writable),
           stderr: expect.any(Writable),

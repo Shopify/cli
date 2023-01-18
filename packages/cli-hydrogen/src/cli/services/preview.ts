@@ -1,7 +1,8 @@
-import {path, error, output} from '@shopify/cli-kit'
+import {error, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {fileExists, removeFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {exec} from '@shopify/cli-kit/node/system'
+import {resolvePath, dirname, findPathUp} from '@shopify/cli-kit/node/path'
 import {fileURLToPath} from 'url'
 
 interface PreviewOptions {
@@ -18,7 +19,7 @@ interface EnvConfig {
 }
 
 export async function previewInNode({directory, port}: PreviewOptions) {
-  const buildOutputPath = await path.resolve(directory, 'dist/node')
+  const buildOutputPath = await resolvePath(directory, 'dist/node')
 
   if (!(await fileExists(buildOutputPath))) {
     output.info(
@@ -57,11 +58,11 @@ export async function previewInWorker({directory, port, envPath}: PreviewOptions
     ...(envPath && (await parseEnvPath(envPath))),
   }
 
-  await writeFile(path.resolve(directory, 'mini-oxygen.config.json'), JSON.stringify(config, null, 2))
+  await writeFile(resolvePath(directory, 'mini-oxygen.config.json'), JSON.stringify(config, null, 2))
 
   function cleanUp(options: {exit: boolean}) {
     if (options.exit) {
-      removeFileSync(path.resolve(directory, 'mini-oxygen.config.json'))
+      removeFileSync(resolvePath(directory, 'mini-oxygen.config.json'))
     }
   }
 
@@ -89,8 +90,12 @@ export const OxygenPreviewExecutableNotFound = new error.Bug(
 )
 
 async function oxygenPreviewExecutable(): Promise<string> {
-  const cwd = path.dirname(fileURLToPath(import.meta.url))
-  const executablePath = await path.findUp('node_modules/.bin/oxygen-preview', {type: 'file', cwd, allowSymlinks: true})
+  const cwd = dirname(fileURLToPath(import.meta.url))
+  const executablePath = await findPathUp('node_modules/.bin/oxygen-preview', {
+    type: 'file',
+    cwd,
+    allowSymlinks: true,
+  })
   if (!executablePath) {
     throw OxygenPreviewExecutableNotFound
   }

@@ -1,7 +1,7 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
 import cleanup from '../utils/template/cleanup.js'
 
-import {path, ui, npm, error, output} from '@shopify/cli-kit'
+import {ui, npm, error, output} from '@shopify/cli-kit'
 import {packageManager, PackageManager, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
@@ -10,6 +10,7 @@ import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {isShopify, isUnitTest} from '@shopify/cli-kit/node/environment/local'
 import {downloadGitRepository, initializeGitRepository} from '@shopify/cli-kit/node/git'
 import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 interface InitOptions {
   name: string
@@ -22,17 +23,17 @@ interface InitOptions {
 async function init(options: InitOptions) {
   const packageManager: PackageManager = inferPackageManager(options.packageManager)
   const hyphenizedName = hyphenate(options.name)
-  const outputDirectory = path.join(options.directory, hyphenizedName)
+  const outputDirectory = joinPath(options.directory, hyphenizedName)
   const githubRepo = parseGitHubRepositoryReference(options.template)
 
   await ensureAppDirectoryIsAvailable(outputDirectory, hyphenizedName)
 
   await inTemporaryDirectory(async (tmpDir) => {
-    const templateDownloadDir = path.join(tmpDir, 'download')
+    const templateDownloadDir = joinPath(tmpDir, 'download')
     const templatePathDir = githubRepo.filePath
-      ? path.join(templateDownloadDir, githubRepo.filePath)
+      ? joinPath(templateDownloadDir, githubRepo.filePath)
       : templateDownloadDir
-    const templateScaffoldDir = path.join(tmpDir, 'app')
+    const templateScaffoldDir = joinPath(tmpDir, 'app')
     const repoUrl = githubRepo.branch ? `${githubRepo.baseURL}#${githubRepo.branch}` : githubRepo.baseURL
 
     await mkdir(templateDownloadDir)
@@ -82,7 +83,7 @@ async function init(options: InitOptions) {
                 // Ensure that the installation of dependencies doesn't fail when using
                 // pnpm due to missing peerDependencies.
                 if (packageManager === 'pnpm') {
-                  await appendFile(path.join(templateScaffoldDir, '.npmrc'), `auto-install-peers=true\n`)
+                  await appendFile(joinPath(templateScaffoldDir, '.npmrc'), `auto-install-peers=true\n`)
                 }
 
                 task.title = 'Updated package.json'
@@ -99,7 +100,7 @@ async function init(options: InitOptions) {
         title: "[Shopifolks-only] Configure the project's NPM registry",
         task: async (_, task) => {
           task.title = "[Shopifolks-only] Configuring the project's NPM registry"
-          const npmrcPath = path.join(templateScaffoldDir, '.npmrc')
+          const npmrcPath = joinPath(templateScaffoldDir, '.npmrc')
           const npmrcContent = `@shopify:registry=https://registry.npmjs.org\n`
           await appendFile(npmrcPath, npmrcContent)
           task.title = "[Shopifolks-only] Project's NPM registry configured."

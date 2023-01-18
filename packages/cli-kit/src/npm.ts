@@ -1,4 +1,4 @@
-import {join} from './path.js'
+import {joinPath} from './public/node/path.js'
 import * as file from './public/node/fs.js'
 import * as os from './public/node/os.js'
 import {debug, token, content} from './output.js'
@@ -21,7 +21,7 @@ export interface PackageJSON extends JSON {
 
 export async function readPackageJSON(directory: string): Promise<PackageJSON> {
   debug(content`Reading and decoding the content from package.json at ${token.path(directory)}...`)
-  const packagePath = join(directory, 'package.json')
+  const packagePath = joinPath(directory, 'package.json')
   const packageJSON = JSON.parse(await file.readFile(packagePath))
 
   return packageJSON
@@ -29,7 +29,7 @@ export async function readPackageJSON(directory: string): Promise<PackageJSON> {
 
 export async function writePackageJSON(directory: string, packageJSON: JSON): Promise<void> {
   debug(content`JSON-encoding and writing content to package.json at ${token.path(directory)}...`)
-  const packagePath = join(directory, 'package.json')
+  const packagePath = joinPath(directory, 'package.json')
   await file.writeFile(packagePath, JSON.stringify(packageJSON, null, 2))
 }
 

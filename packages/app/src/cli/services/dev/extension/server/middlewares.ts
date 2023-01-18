@@ -2,8 +2,9 @@ import {getExtensionPointRedirectUrl, getExtensionUrl, getRedirectUrl, sendError
 import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {getHTML} from '../templates.js'
-import {http, output, path} from '@shopify/cli-kit'
+import {http, output} from '@shopify/cli-kit'
 import {fileExists, isDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, extname, findPathUp, moduleDirectory} from '@shopify/cli-kit/node/path'
 
 export function corsMiddleware(
   request: http.IncomingMessage,
@@ -70,7 +71,7 @@ export async function fileServerMiddleware(
     '.doc': 'application/msword',
   } as const
 
-  const extensionName = path.extname(filePath) as keyof typeof extensionToContent
+  const extensionName = extname(filePath) as keyof typeof extensionToContent
   const contentType = extensionToContent[extensionName] || 'text/plain'
 
   response.setHeader('Content-Type', contentType)
@@ -93,7 +94,7 @@ export function getExtensionAssetMiddleware({devOptions}: GetExtensionsMiddlewar
     const buildDirectory = extension.outputBundlePath.replace('main.js', '')
 
     return fileServerMiddleware(request, response, next, {
-      filePath: path.join(buildDirectory, assetPath),
+      filePath: joinPath(buildDirectory, assetPath),
     })
   }
 }
@@ -110,9 +111,9 @@ export async function devConsoleIndexMiddleware(
   response: http.ServerResponse,
   next: (err?: Error) => unknown,
 ) {
-  const rootDirectory = await path.findUp(path.join('assets', 'dev-console'), {
+  const rootDirectory = await findPathUp(joinPath('assets', 'dev-console'), {
     type: 'directory',
-    cwd: path.moduleDirectory(import.meta.url),
+    cwd: moduleDirectory(import.meta.url),
   })
 
   if (!rootDirectory) {
@@ -134,9 +135,9 @@ export async function devConsoleAssetsMiddleware(
 ) {
   const {assetPath} = request.context.params
 
-  const rootDirectory = await path.findUp(path.join('assets', 'dev-console', 'extensions', 'dev-console', 'assets'), {
+  const rootDirectory = await findPathUp(joinPath('assets', 'dev-console', 'extensions', 'dev-console', 'assets'), {
     type: 'directory',
-    cwd: path.moduleDirectory(import.meta.url),
+    cwd: moduleDirectory(import.meta.url),
   })
 
   if (!rootDirectory) {
@@ -147,7 +148,7 @@ export async function devConsoleAssetsMiddleware(
   }
 
   return fileServerMiddleware(request, response, next, {
-    filePath: path.join(rootDirectory, assetPath),
+    filePath: joinPath(rootDirectory, assetPath),
   })
 }
 

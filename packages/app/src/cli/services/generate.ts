@@ -6,11 +6,12 @@ import {GenericSpecification} from '../models/app/extensions.js'
 import generateExtensionPrompt from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
 import generateExtensionService, {ExtensionFlavor} from '../services/generate/extension.js'
-import {error, output, path} from '@shopify/cli-kit'
+import {error, output} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager.js'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isShopify} from '@shopify/cli-kit/node/environment/local'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 export interface GenerateOptions {
   directory: string
@@ -65,7 +66,7 @@ async function generate(options: GenerateOptions) {
     extensionType: specification?.identifier || options.type,
     name: options.name,
     extensionFlavor: options.template,
-    directory: path.join(options.directory, 'extensions'),
+    directory: joinPath(options.directory, 'extensions'),
     app,
     extensionSpecifications: specifications,
     reset: options.reset,

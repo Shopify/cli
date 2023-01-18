@@ -1,6 +1,6 @@
 import {DotEnvNotFoundError, patchEnvFile, readAndParseDotEnv, writeDotEnv} from './dot-env.js'
 import {inTemporaryDirectory, writeFile, readFile} from './fs.js'
-import {join as pathJoin} from '../../path.js'
+import {joinPath} from './path.js'
 import {describe, expect, test} from 'vitest'
 
 describe('readAndParseDotEnv', () => {
@@ -15,7 +15,7 @@ describe('readAndParseDotEnv', () => {
   test('returns the file if it exists and the format is valid', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const dotEnvPath = pathJoin(tmpDir, '.env')
+      const dotEnvPath = joinPath(tmpDir, '.env')
       await writeFile(dotEnvPath, 'FOO=BAR')
 
       // When
@@ -32,7 +32,7 @@ describe('writeDotEnv', () => {
   test('creates a file if the .env does not exist', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const dotEnvPath = pathJoin(tmpDir, '.env')
+      const dotEnvPath = joinPath(tmpDir, '.env')
 
       // When
       await writeDotEnv({
@@ -52,7 +52,7 @@ describe('writeDotEnv', () => {
   test('overrides any existing file', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const dotEnvPath = pathJoin(tmpDir, '.env')
+      const dotEnvPath = joinPath(tmpDir, '.env')
       await writeFile(dotEnvPath, 'FOO=BAR')
 
       // When
@@ -75,7 +75,7 @@ describe('patchEnvFile', () => {
   test('patches an environment file without changing not relevant content', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const dotEnvPath = pathJoin(tmpDir, '.env')
+      const dotEnvPath = joinPath(tmpDir, '.env')
       await writeFile(dotEnvPath, 'FOO=BAR\nABC   =XYZ\n#Wow!\n\n  DEF  =GHI')
 
       // When
@@ -95,7 +95,7 @@ describe('patchEnvFile', () => {
   test('patches an environment file without changing not relevant content in Windows', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const dotEnvPath = pathJoin(tmpDir, '.env')
+      const dotEnvPath = joinPath(tmpDir, '.env')
       await writeFile(dotEnvPath, 'FOO=BAR\nABC   =XYZ\n#Wow!\n\n  DEF  =GHI\r\nWIN=DOWS')
 
       // When

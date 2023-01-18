@@ -1,15 +1,15 @@
-import {path} from '@shopify/cli-kit'
 import {rmdir} from '@shopify/cli-kit/node/fs'
+import {joinPath, glob} from '@shopify/cli-kit/node/path'
 
 export default async function cleanup(webOutputDirectory: string) {
-  const gitPaths = await path.glob(
+  const gitPaths = await glob(
     [
-      path.join(webOutputDirectory, '**', '.git'),
-      path.join(webOutputDirectory, '**', '.github'),
-      path.join(webOutputDirectory, '**', '.gitmodules'),
-      path.join(webOutputDirectory, 'LICENSE*'),
-      path.join(webOutputDirectory, '**', 'frontend/LICENSE*'),
-      path.join(webOutputDirectory, 'package.json.cli2'),
+      joinPath(webOutputDirectory, '**', '.git'),
+      joinPath(webOutputDirectory, '**', '.github'),
+      joinPath(webOutputDirectory, '**', '.gitmodules'),
+      joinPath(webOutputDirectory, 'LICENSE*'),
+      joinPath(webOutputDirectory, '**', 'frontend/LICENSE*'),
+      joinPath(webOutputDirectory, 'package.json.cli2'),
     ],
     {
       dot: true,

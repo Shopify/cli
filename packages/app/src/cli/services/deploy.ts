@@ -15,9 +15,10 @@ import {Extension} from '../models/app/extensions.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {path, output} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {useThemeBundling} from '@shopify/cli-kit/node/environment/local'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
+import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -72,8 +73,8 @@ export const deploy = async (options: DeployOptions) => {
 
   await inTemporaryDirectory(async (tmpDir) => {
     try {
-      const bundlePath = path.join(tmpDir, `bundle.zip`)
-      await mkdir(path.dirname(bundlePath))
+      const bundlePath = joinPath(tmpDir, `bundle.zip`)
+      await mkdir(dirname(bundlePath))
       const bundle = app.extensions.ui.length !== 0
       await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers, bundle})
 

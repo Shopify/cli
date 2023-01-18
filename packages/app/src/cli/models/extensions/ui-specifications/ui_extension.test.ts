@@ -3,9 +3,9 @@ import * as loadLocales from '../../../utilities/extensions/locales-configuratio
 import {UIExtensionInstance, UIExtensionSpec} from '../ui.js'
 import {loadLocalExtensionsSpecifications} from '../specifications.js'
 import {describe, expect, test, vi} from 'vitest'
-import {path} from '@shopify/cli-kit'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {inTemporaryDirectory, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 describe('ui_extension', async () => {
   interface GetUIExtensionProps {
@@ -14,7 +14,7 @@ describe('ui_extension', async () => {
   }
 
   async function getTestUIExtension({directory, extensionPoints}: GetUIExtensionProps) {
-    const configurationPath = path.join(directory, configurationFileNames.extension.ui)
+    const configurationPath = joinPath(directory, configurationFileNames.extension.ui)
     const allSpecs = await loadLocalExtensionsSpecifications()
     const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension') as UIExtensionSpec
     const configuration = {
@@ -44,8 +44,8 @@ describe('ui_extension', async () => {
     test('returns ok({}) if there are no errors', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
-        await mkdir(path.join(tmpDir, 'src'))
-        await touchFile(path.join(tmpDir, 'src', 'ExtensionPointA.js'))
+        await mkdir(joinPath(tmpDir, 'src'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
 
         const uiExtension = await getTestUIExtension({
           directory: tmpDir,
@@ -82,8 +82,8 @@ describe('ui_extension', async () => {
         const result = await uiExtension.validate()
 
         // Then
-        const notFoundPath = path.join(tmpDir, './ExtensionPointA.js')
-        const tomlPath = path.join(tmpDir, configurationFileNames.extension.ui)
+        const notFoundPath = joinPath(tmpDir, './ExtensionPointA.js')
+        const tomlPath = joinPath(tmpDir, configurationFileNames.extension.ui)
 
         expect(result).toEqual(
           err(`Couldn't find ${notFoundPath}
@@ -97,8 +97,8 @@ Please check the configuration in ${tomlPath}`),
     test('returns err(message) when there are duplicate targets', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
-        await mkdir(path.join(tmpDir, 'src'))
-        await touchFile(path.join(tmpDir, 'src', 'ExtensionPointA.js'))
+        await mkdir(joinPath(tmpDir, 'src'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
 
         const uiExtension = await getTestUIExtension({
           directory: tmpDir,
@@ -118,7 +118,7 @@ Please check the configuration in ${tomlPath}`),
         const result = await uiExtension.validate()
 
         // Then
-        const tomlPath = path.join(tmpDir, configurationFileNames.extension.ui)
+        const tomlPath = joinPath(tmpDir, configurationFileNames.extension.ui)
 
         expect(result).toEqual(
           err(`Duplicate targets found: EXTENSION::POINT::A

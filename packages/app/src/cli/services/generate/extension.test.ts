@@ -8,11 +8,12 @@ import {
   loadLocalUIExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
-import {output, path} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
 import * as template from '@shopify/cli-kit/node/liquid'
 import * as file from '@shopify/cli-kit/node/fs'
 import * as git from '@shopify/cli-kit/node/git'
+import {joinPath, dirname, glob} from '@shopify/cli-kit/node/path'
 import type {ExtensionFlavor} from './extension.js'
 
 beforeEach(() => {
@@ -202,7 +203,7 @@ describe('initialize a extension', async () => {
           specifications,
         })
 
-        const srcFiles = await path.glob(path.join(tmpDir, 'extensions', name, 'src', `*`))
+        const srcFiles = await glob(joinPath(tmpDir, 'extensions', name, 'src', `*`))
 
         expect(srcFiles.length).toBeGreaterThan(0)
 
@@ -370,8 +371,8 @@ async function createFromTemplate({
 }
 async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | void) {
   await file.inTemporaryDirectory(async (tmpDir) => {
-    const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
-    const webConfigurationPath = path.join(tmpDir, blocks.web.directoryName, blocks.web.configurationName)
+    const appConfigurationPath = joinPath(tmpDir, configurationFileNames.app)
+    const webConfigurationPath = joinPath(tmpDir, blocks.web.directoryName, blocks.web.configurationName)
 
     const appConfiguration = `
       name = "my_app"
@@ -385,9 +386,9 @@ async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | vo
     dev = "./test.sh"
     `
     await file.writeFile(appConfigurationPath, appConfiguration)
-    await file.mkdir(path.dirname(webConfigurationPath))
+    await file.mkdir(dirname(webConfigurationPath))
     await file.writeFile(webConfigurationPath, webConfiguration)
-    await file.writeFile(path.join(tmpDir, 'package.json'), JSON.stringify({dependencies: {}, devDependencies: {}}))
+    await file.writeFile(joinPath(tmpDir, 'package.json'), JSON.stringify({dependencies: {}, devDependencies: {}}))
     return callback(tmpDir)
   })
 }

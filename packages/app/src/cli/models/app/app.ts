@@ -1,9 +1,10 @@
 import {Extension, FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {AppErrors} from './loader.js'
-import {path, schema} from '@shopify/cli-kit'
+import {schema} from '@shopify/cli-kit'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {fileRealPath} from '@shopify/cli-kit/node/fs'
+import {joinPath, dirname, findPathUp} from '@shopify/cli-kit/node/path'
 
 export const AppConfigurationSchema = schema.define.object({
   scopes: schema.define.string().default(''),
@@ -119,7 +120,7 @@ export class App implements AppInterface {
   }
 
   async updateDependencies() {
-    const nodeDependencies = await getDependencies(path.join(this.directory, 'package.json'))
+    const nodeDependencies = await getDependencies(joinPath(this.directory, 'package.json'))
     this.nodeDependencies = nodeDependencies
   }
 
@@ -170,8 +171,8 @@ export async function getDependencyVersion(dependency: string, directory: string
    */
   if (isReact) {
     const dependencyName = dependency.split('/')
-    const pattern = path.join('node_modules', dependencyName[0]!, dependencyName[1]!, 'package.json')
-    const reactPackageJsonPath = await path.findUp(pattern, {
+    const pattern = joinPath('node_modules', dependencyName[0]!, dependencyName[1]!, 'package.json')
+    const reactPackageJsonPath = await findPathUp(pattern, {
       type: 'file',
       cwd: directory,
       allowSymlinks: true,
@@ -179,14 +180,14 @@ export async function getDependencyVersion(dependency: string, directory: string
     if (!reactPackageJsonPath) {
       return 'not_found'
     }
-    cwd = await fileRealPath(path.dirname(reactPackageJsonPath))
+    cwd = await fileRealPath(dirname(reactPackageJsonPath))
   }
 
   // Split the dependency name to avoid using "/" in windows
   const dependencyName = dependency.replace('-react', '').split('/')
-  const pattern = path.join('node_modules', dependencyName[0]!, dependencyName[1]!, 'package.json')
+  const pattern = joinPath('node_modules', dependencyName[0]!, dependencyName[1]!, 'package.json')
 
-  let packagePath = await path.findUp(pattern, {
+  let packagePath = await findPathUp(pattern, {
     cwd,
     type: 'file',
     allowSymlinks: true,

@@ -3,9 +3,10 @@ import {BaseUIExtensionSchema, NewExtensionPointSchemaType, NewExtensionPointsSc
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
-import {output, path, schema} from '@shopify/cli-kit'
+import {output, schema} from '@shopify/cli-kit'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {fileExists} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.22.0'}
 
@@ -73,11 +74,11 @@ async function validateUIExtensionPointConfig(
   const duplicateTargets: string[] = []
 
   for await (const {module, target} of extensionPoints) {
-    const fullPath = path.join(directory, module)
+    const fullPath = joinPath(directory, module)
     const exists = await fileExists(fullPath)
 
     if (!exists) {
-      const notFoundPath = output.token.path(path.join(directory, module))
+      const notFoundPath = output.token.path(joinPath(directory, module))
 
       errors.push(
         output.content`Couldn't find ${notFoundPath}
@@ -97,7 +98,7 @@ Please check the module path for ${target}`.value,
   }
 
   if (errors.length) {
-    const tomlPath = path.join(directory, configurationFileNames.extension.ui)
+    const tomlPath = joinPath(directory, configurationFileNames.extension.ui)
 
     errors.push(`Please check the configuration in ${tomlPath}`)
     return err(errors.join('\n\n'))

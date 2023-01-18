@@ -57,7 +57,7 @@ export async function runCreateCLI(options: RunCLIOptions): Promise<void> {
   setupEnvironmentVariables(options)
 
   const {findUpAndReadPackageJson} = await import('./node-package-manager.js')
-  const {moduleDirectory} = await import('../../path.js')
+  const {moduleDirectory} = await import('./path.js')
 
   const packageJson = await findUpAndReadPackageJson(moduleDirectory(options.moduleURL))
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -75,7 +75,7 @@ export async function runCreateCLI(options: RunCLIOptions): Promise<void> {
 export async function useLocalCLIIfDetected(filepath: string): Promise<boolean> {
   const {isTruthy} = await import('../../private/node/environment/utilities.js')
   const {environmentVariables} = await import('../../private/node/constants.js')
-  const {join} = await import('../../path.js')
+  const {joinPath: join} = await import('./path.js')
   const {exec} = await import('./system.js')
 
   // Temporary flag while we test out this feature and ensure it won't break anything!

@@ -1,6 +1,7 @@
-import {path, ui, npm} from '@shopify/cli-kit'
+import {ui, npm} from '@shopify/cli-kit'
 import {PackageManager, installNodeModules} from '@shopify/cli-kit/node/node-package-manager'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {joinPath, normalizePath, glob, findPathUp, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 import {platform} from 'os'
 
@@ -49,9 +50,9 @@ export async function updateCLIDependencies({
 }
 
 async function packagePath(packageName: string): Promise<string> {
-  const packageAbsolutePath = (await path.findUp(`packages/${packageName}`, {
+  const packageAbsolutePath = (await findPathUp(`packages/${packageName}`, {
     type: 'directory',
-    cwd: path.moduleDirectory(import.meta.url),
+    cwd: moduleDirectory(import.meta.url),
   })) as string
   return `file:${packageAbsolutePath}`
 }
@@ -65,8 +66,8 @@ export async function getDeepInstallNPMTasks({
   packageManager: PackageManager
   didInstallEverything(): void
 }): Promise<ui.ListrTask[]> {
-  const root = path.normalize(from)
-  const packageJSONFiles = await path.glob([path.join(root, '**/package.json')])
+  const root = normalizePath(from)
+  const packageJSONFiles = await glob([joinPath(root, '**/package.json')])
   let foldersInstalled = 0
 
   return packageJSONFiles.map((filePath) => {

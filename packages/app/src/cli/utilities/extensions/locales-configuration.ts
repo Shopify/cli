@@ -1,11 +1,12 @@
-import {error, path} from '@shopify/cli-kit'
+import {error} from '@shopify/cli-kit'
+import {joinPath, basename, glob} from '@shopify/cli-kit/node/path'
 import fs from 'fs'
 
 const L10N_FILE_SIZE_LIMIT = 16 * 1024
 const L10N_BUNDLE_SIZE_LIMIT = 256 * 1024
 
 export async function loadLocalesConfig(extensionPath: string, extensionIdentifier: string) {
-  const localesPaths = await path.glob(path.join(extensionPath, 'locales/*.json'))
+  const localesPaths = await glob(joinPath(extensionPath, 'locales/*.json'))
   if (localesPaths.length === 0) return {}
 
   // Bundle validations
@@ -49,14 +50,14 @@ export async function loadLocalesConfig(extensionPath: string, extensionIdentifi
 }
 
 function findDefaultLocale(filePaths: string[]) {
-  const defaultLocale = filePaths.filter((locale) => path.basename(locale).endsWith('.default.json'))
-  return defaultLocale.map((locale) => path.basename(locale).split('.')[0])
+  const defaultLocale = filePaths.filter((locale) => basename(locale).endsWith('.default.json'))
+  return defaultLocale.map((locale) => basename(locale).split('.')[0])
 }
 
 function getAllLocales(localesPath: string[]) {
   const all: {[key: string]: string} = {}
   for (const localePath of localesPath) {
-    const localeCode = path.basename(localePath).split('.')[0]!
+    const localeCode = basename(localePath).split('.')[0]!
     const locale = fs.readFileSync(localePath, 'base64')
     all[localeCode] = locale
   }

@@ -2,10 +2,10 @@ import {addESLint} from './eslint.js'
 import {genericConfigurationFileNames} from '../constants.js'
 import {HydrogenApp} from '../models/hydrogen.js'
 import {describe, vi, it, expect, beforeEach} from 'vitest'
-import {path} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions, isVSCode} from '@shopify/cli-kit/node/vscode.js'
 import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 beforeEach(async () => {
   vi.mock('@shopify/cli-kit/node/node-package-manager')
@@ -29,7 +29,7 @@ describe('addEslint', () => {
       await addESLint({app, ...defaultOptions})
 
       // Then
-      await expect(readFile(path.join(tmpDir, genericConfigurationFileNames.eslint))).resolves.toMatchInlineSnapshot(
+      await expect(readFile(joinPath(tmpDir, genericConfigurationFileNames.eslint))).resolves.toMatchInlineSnapshot(
         `
         "module.exports = {
           extends: ['plugin:hydrogen/recommended'],
@@ -52,7 +52,7 @@ describe('addEslint', () => {
       await addESLint({app, ...defaultOptions})
 
       // Then
-      await expect(readFile(path.join(tmpDir, genericConfigurationFileNames.eslint))).resolves.toMatchInlineSnapshot(
+      await expect(readFile(joinPath(tmpDir, genericConfigurationFileNames.eslint))).resolves.toMatchInlineSnapshot(
         `
         "module.exports = {
           extends: ['plugin:hydrogen/recommended', 'plugin:hydrogen/typescript'],
@@ -115,7 +115,7 @@ describe('addEslint', () => {
   it('throws error when eslintrc already exists', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      await writeFile(path.join(tmpDir, genericConfigurationFileNames.eslint), '')
+      await writeFile(joinPath(tmpDir, genericConfigurationFileNames.eslint), '')
       const app = await createMockApp({
         directory: tmpDir,
       })
@@ -143,7 +143,7 @@ async function createMockApp(mockHydrogenApp: Partial<HydrogenApp> = {}) {
     ...mockHydrogenApp,
   } as const
 
-  await writeFile(path.join(app.directory, 'package.json'), JSON.stringify({scripts: {}}, null, 2))
+  await writeFile(joinPath(app.directory, 'package.json'), JSON.stringify({scripts: {}}, null, 2))
 
   return app
 }
