@@ -194,22 +194,22 @@ export function renderFatalError(error: Fatal) {
  *
  *      Remove:  • integrated-demand-ext
  *               • order-discount
-
+ *
  * \>  (f) first
  *     (s) second
  *     (3) third
  *     (4) fourth
  *     (5) seventh
  *     (6) tenth
-
+ *
  *     Automations
  *     (7) fifth
  *     (8) sixth
-
+ *
  *     Merchant Admin
  *     (9) eighth
  *     (10) ninth
-
+ *
  *     navigate with arrows, enter to select
  * ```
  */
@@ -218,6 +218,47 @@ export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmi
     render(<SelectPrompt {...props} onSubmit={(value: T) => resolve(value)} />, {
       exitOnCtrlC: false,
     }).catch(reject)
+  })
+}
+
+interface RenderConfirmationPromptOptions extends Pick<SelectPromptProps<boolean>, 'message' | 'infoTable'> {
+  confirmationMessage?: string
+  cancellationMessage?: string
+}
+
+/**
+ * Renders a confirmation prompt to the console.
+ *
+ * ?  Do you want to continue?
+ *
+ * \>  (y) Yes, confirm
+ *     (n) No, canccel
+ *
+ *     navigate with arrows, enter to select
+ */
+export function renderConfirmationPrompt({
+  message,
+  infoTable,
+  confirmationMessage = 'Yes, confirm',
+  cancellationMessage = 'No, cancel',
+}: RenderConfirmationPromptOptions): Promise<boolean> {
+  const choices = [
+    {
+      label: confirmationMessage,
+      value: true,
+      key: 'y',
+    },
+    {
+      label: cancellationMessage,
+      value: false,
+      key: 'n',
+    },
+  ]
+
+  return renderSelectPrompt({
+    choices,
+    message,
+    infoTable,
   })
 }
 
