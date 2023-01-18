@@ -1,8 +1,15 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
 import cleanup from '../utils/template/cleanup.js'
 
-import {path, ui, npm, error, output} from '@shopify/cli-kit'
-import {packageManager, PackageManager, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
+import {path, ui, error, output} from '@shopify/cli-kit'
+import {
+  packageManager,
+  PackageManager,
+  packageManagerUsedForCreating,
+  readAndParsePackageJson,
+  updateAppData,
+  writePackageJSON,
+} from '@shopify/cli-kit/node/node-package-manager'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
@@ -72,12 +79,12 @@ async function init(options: InitOptions) {
               title: 'Update package.json',
               task: async (_, task) => {
                 task.title = 'Updating package.json'
-                const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
+                const packageJSON = await readAndParsePackageJson(templateScaffoldDir)
 
-                await npm.updateAppData(packageJSON, hyphenizedName)
+                await updateAppData(packageJSON, hyphenizedName)
                 await updateCLIDependencies({packageJSON, local: options.local, directory: templateScaffoldDir})
 
-                await npm.writePackageJSON(templateScaffoldDir, packageJSON)
+                await writePackageJSON(templateScaffoldDir, packageJSON)
 
                 // Ensure that the installation of dependencies doesn't fail when using
                 // pnpm due to missing peerDependencies.

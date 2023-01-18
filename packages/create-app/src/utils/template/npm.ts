@@ -1,19 +1,16 @@
-import {path, ui, npm} from '@shopify/cli-kit'
-import {PackageManager, installNodeModules} from '@shopify/cli-kit/node/node-package-manager'
+import {path, ui} from '@shopify/cli-kit'
+import {PackageManager, installNodeModules, PackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {Writable} from 'stream'
 import {platform} from 'os'
 
 interface UpdateCLIDependenciesOptions {
   directory: string
-  packageJSON: npm.PackageJSON
+  packageJSON: PackageJson
   local: boolean
 }
 
-export async function updateCLIDependencies({
-  packageJSON,
-  local,
-}: UpdateCLIDependenciesOptions): Promise<npm.PackageJSON> {
+export async function updateCLIDependencies({packageJSON, local}: UpdateCLIDependenciesOptions): Promise<PackageJson> {
   packageJSON.dependencies = packageJSON.dependencies || {}
   packageJSON.dependencies['@shopify/cli'] = CLI_KIT_VERSION
   packageJSON.dependencies['@shopify/app'] = CLI_KIT_VERSION
