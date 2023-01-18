@@ -80,6 +80,11 @@ describe('optionsPrompt', () => {
       await expect(collectTopic(unknownTopic, aVersion, [aTopic])).rejects.toThrow(error.Abort)
     })
 
+    it('fails when no topics', async () => {
+      // When
+      await expect(collectTopic(aTopic, aVersion, [])).rejects.toThrow(error.Abort)
+    })
+
     describe('all params', () => {
       it('collects localhost delivery method required params', async () => {
         // When

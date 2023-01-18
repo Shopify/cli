@@ -63,6 +63,9 @@ export async function collectTopic(
     )
   }
 
+  if (availableTopics.length === 0) {
+    throw new error.Abort(`No topics found for '${apiVersion}'`)
+  }
   const promptedTopic = await topicPrompt(availableTopics)
 
   return promptedTopic
