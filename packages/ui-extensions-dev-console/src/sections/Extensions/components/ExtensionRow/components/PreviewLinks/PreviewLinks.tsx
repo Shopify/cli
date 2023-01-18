@@ -16,7 +16,7 @@ export function PreviewLinks({extension}: Props) {
     fallback: en,
   })
 
-  if (extension.surface === 'pos') {
+  if (extension.surface === 'point_of_sale') {
     return <NotApplicable />
   }
 
