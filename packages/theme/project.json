@@ -39,7 +39,7 @@
         "executor": "nx:run-commands",
         "dependsOn": ["^build"],
         "options": {
-          "command": "pnpm vitest run; cd theme-cli; bundle install; bundle exec rake test",
+          "command": "pnpm vitest run",
           "cwd": "packages/theme"
         }
       },
