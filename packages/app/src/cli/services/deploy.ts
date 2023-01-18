@@ -182,6 +182,7 @@ async function outputCompletionMessage({
       ],
     })
   }
+
   app.extensions.ui.forEach(outputDeployedButNotLiveMessage)
   app.extensions.theme.forEach(outputDeployedButNotLiveMessage)
   app.extensions.function.forEach(outputDeployedAndLivedMessage)
