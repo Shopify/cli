@@ -203,6 +203,17 @@ describe('format', () => {
     await expect(formattedContent).toEqual("const array: string[] = ['bar', 'baz'];\n")
   })
 
+  it('formats TypeScript file content with JSX', async () => {
+    // Given
+    const unformatedContent = 'const C = (p: any) => <>{ p.foo }</>'
+
+    // When
+    const formattedContent = await fileContentPrettyFormat(unformatedContent, {path: 'someFile.tsx'})
+
+    // Then
+    await expect(formattedContent).toEqual('const C = (p: any) => <>{p.foo}</>;\n')
+  })
+
   it('formats CSS file content', async () => {
     // Given
     const unformatedContent = 'body { color: red; }'
