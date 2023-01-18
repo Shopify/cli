@@ -57,7 +57,10 @@ export const uploadDeployment = async (config: ReqDeployConfig, deploymentID: st
   await inTemporaryDirectory(async (tmpDir) => {
     const distPath = config.pathToBuild ? config.pathToBuild : `${config.path}/dist`
     const distZipPath = `${tmpDir}/dist.zip`
-    await zip(distPath, distZipPath)
+    await zip({
+      inputDirectory: distPath,
+      outputZipPath: distZipPath,
+    })
 
     const form = formData()
     form.append('operations', buildOperationsString(deploymentID))
