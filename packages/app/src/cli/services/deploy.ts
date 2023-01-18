@@ -18,6 +18,7 @@ import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_ex
 import {path, output} from '@shopify/cli-kit'
 import {useThemeBundling} from '@shopify/cli-kit/node/environment/local'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
+import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -144,10 +145,19 @@ async function outputCompletionMessage({
   registrations: AllAppExtensionRegistrationsQuerySchema
   validationErrors: UploadExtensionValidationError[]
 }) {
-  output.newline()
-  output.info('  Summary:')
   const outputDeployedButNotLiveMessage = (extension: Extension) => {
-    output.info(output.content`    • ${extension.localIdentifier} is deployed to Shopify but not yet live`)
+    renderSuccess({
+      headline: 'Deployment successful.',
+      body: 'Your extensions have been uploaded to your Shopify Partners Dashboard.',
+      nextSteps: [
+        {
+          link: {
+            label: 'See your deployment and set it live',
+            url: `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/deployments`,
+          },
+        },
+      ],
+    })
     const uuid = identifiers.extensions[extension.localIdentifier]
     const validationError = validationErrors.find((error) => error.uuid === uuid)
 
