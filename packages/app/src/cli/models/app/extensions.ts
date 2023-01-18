@@ -2,6 +2,7 @@ import {FunctionSpec, FunctionConfigType} from '../extensions/functions.js'
 import {ThemeConfigContents, ThemeExtensionSpec} from '../extensions/theme.js'
 import {UIExtensionSpec} from '../extensions/ui.js'
 import {BaseConfigContents} from '../extensions/schemas.js'
+import {ExtensionFlavor} from '../../services/generate/extension.js'
 import {TokenizedString} from '@shopify/cli-kit/node/output'
 import {Result} from '@shopify/cli-kit/node/result'
 import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
@@ -17,7 +18,7 @@ export interface GenericSpecification {
   externalName: string
   registrationLimit: number
   helpURL?: string
-  supportedFlavors: {name: string; value: string}[]
+  supportedFlavors: {name: string; value: ExtensionFlavor}[]
   gated: boolean
   category: () => ExtensionCategory
 }

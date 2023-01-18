@@ -44,11 +44,25 @@ interface ExtensionDirectory {
   extensionDirectory: string
 }
 
-export type ExtensionFlavor = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react' | string
+export type ExtensionFlavor = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react' | 'rust' | 'wasm'
 
 type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionSpec> & ExtensionDirectory
 type UIExtensionInitOptions = ExtensionInitOptions<UIExtensionSpec> & ExtensionDirectory
 type ThemeExtensionInitOptions = ExtensionInitOptions<ThemeExtensionSpec> & ExtensionDirectory
+
+export type TemplateFlavor = 'javascript' | 'rust' | 'wasm'
+function getTemplateFlavor(flavor: ExtensionFlavor): TemplateFlavor {
+  switch (flavor) {
+    case 'vanilla-js':
+    case 'react':
+    case 'typescript':
+    case 'typescript-react':
+      return 'javascript'
+    case 'rust':
+    case 'wasm':
+      return flavor
+  }
+}
 
 async function extensionInit(options: ExtensionInitOptions): Promise<string> {
   const extensionDirectory = await ensureExtensionDirectoryExists({app: options.app, name: options.name})
@@ -123,13 +137,15 @@ async function uiExtensionInit({
   await renderTasks(tasks)
 }
 
-type SrcFileExtension = 'ts' | 'tsx' | 'js' | 'jsx'
+type SrcFileExtension = 'ts' | 'tsx' | 'js' | 'jsx' | 'rs' | 'wasm'
 function getSrcFileExtension(extensionFlavor: ExtensionFlavor): SrcFileExtension {
   const flavorToSrcFileExtension: {[key in ExtensionFlavor]: SrcFileExtension} = {
     'vanilla-js': 'js',
     react: 'jsx',
     typescript: 'ts',
     'typescript-react': 'tsx',
+    rust: 'rs',
+    wasm: 'wasm',
   }
 
   return flavorToSrcFileExtension[extensionFlavor] ?? 'js'
@@ -192,13 +208,7 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
   await inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = joinPath(tmpDir, 'download')
     const extensionFlavor = options.extensionFlavor
-
-    // vanilla-js and typescript functions share the same `javascript` template
-    const templateFlavor =
-      extensionFlavor === 'vanilla-js' || extensionFlavor === 'typescript' ? 'javascript' : extensionFlavor
-
-    const templatePath = specification.templatePath(templateFlavor ?? blocks.functions.defaultLanguage)
-
+    const templateFlavor = extensionFlavor && getTemplateFlavor(extensionFlavor)
     const taskList = []
 
     if (templateFlavor === 'javascript') {

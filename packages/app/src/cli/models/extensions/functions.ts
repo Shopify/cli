@@ -1,6 +1,7 @@
 import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
 import {blocks, defaultFunctionsFlavors, withJavascriptFunctionsFlavors} from '../../constants.js'
+import {ExtensionFlavor} from '../../services/generate/extension.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -25,7 +26,7 @@ export interface FunctionSpec<TConfiguration extends FunctionConfigType = Functi
   helpURL?: string
   gated: boolean
   templateURL: string
-  supportedFlavors: {name: string; value: string}[]
+  supportedFlavors: {name: string; value: ExtensionFlavor}[]
   configSchema: ZodSchemaType<TConfiguration>
   registrationLimit: number
   templatePath: (lang: string) => string
