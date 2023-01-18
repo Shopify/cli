@@ -3,7 +3,6 @@
   "type": "module",
   "scripts": {
     "package": "bin/package.js",
-    "prerelease": "bin/prerelease.js",
     "update-bugsnag": "bin/update-bugsnag.js",
     "graph": "nx graph",
     "shopify": "nx build cli && node packages/cli/bin/dev.js",
@@ -24,7 +23,7 @@
     "build:affected": "nx affected --target=build --all",
     "refresh-templates": "nx run-many --target=refresh-templates --all --skip-nx-cache",
     "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache",
-    "changeset-manifests": "changeset version && pnpm install --no-frozen-lockfile && pnpm refresh-manifests"
+    "changeset-manifests": "changeset version && pnpm install --no-frozen-lockfile && pnpm refresh-manifests && bin/update-cli-kit-version.js"
   },
   "devDependencies": {
     "@apollo/client": "^3.4.8",

@@ -1,5 +1,5 @@
-import {git} from '@shopify/cli-kit'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
+import {downloadGitRepository} from '@shopify/cli-kit/node/git'
 
 export async function cloneRepo(repoUrl: string, destination: string) {
   await downloadRepository(repoUrl, destination)
@@ -14,7 +14,7 @@ async function downloadRepository(repoUrl: string, destination: string, latestTa
     {
       title: `Cloning ${repoUrl} into ${destination}`,
       task: async () => {
-        await git.downloadRepository({
+        await downloadGitRepository({
           repoUrl,
           destination,
           latestTag,

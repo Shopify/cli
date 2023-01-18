@@ -4,7 +4,7 @@ import {FunctionSpec} from '../../models/extensions/functions.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
-import {error, git, path} from '@shopify/cli-kit'
+import {error, path} from '@shopify/cli-kit'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
@@ -13,6 +13,7 @@ import {
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
+import {downloadGitRepository} from '@shopify/cli-kit/node/git'
 import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {fileURLToPath} from 'url'
 
@@ -177,7 +178,7 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
         title: `Generating ${spec.externalName} extension...`,
         task: async () => {
           await mkdir(templateDownloadDir)
-          await git.downloadRepository({
+          await downloadGitRepository({
             repoUrl: url,
             destination: templateDownloadDir,
             shallow: true,
