@@ -25,7 +25,7 @@ function SelectPrompt<T>({
   if (choices.length === 0) {
     throw new Error('SelectPrompt requires at least one choice')
   }
-  const initialValue = defaultValue ? choices.find((choice) => choice.value === defaultValue) : choices[0]
+  const initialValue = defaultValue ? choices.find((choice) => choice.value === defaultValue) ?? choices[0] : choices[0]
   const [answer, setAnswer] = useState<SelectItem<T> | undefined>(initialValue)
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)

@@ -163,19 +163,17 @@ describe('SelectPrompt', async () => {
   })
 
   test('accepts a default value', async () => {
-    const {lastFrame} = render(
-      <SelectPrompt
-        choices={[
-          {label: 'a', value: 'a'},
-          {label: 'b', value: 'b'},
-        ]}
-        onSubmit={() => {}}
-        message="Test question?"
-        defaultValue="b"
-      />,
+    const onEnter = vi.fn()
+    const items = [
+      {label: 'a', value: 'a'},
+      {label: 'b', value: 'b'},
+    ]
+
+    const renderInstance = render(
+      <SelectPrompt choices={items} onSubmit={onEnter} message="Test question?" defaultValue="b" />,
     )
 
-    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
       "?  Test question?
 
          (1) a
@@ -184,5 +182,45 @@ describe('SelectPrompt', async () => {
          navigate with arrows, enter to select
       "
     `)
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, ENTER)
+
+    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
+      "?  Test question?
+      [36m✔[39m  [36mb[39m
+      "
+    `)
+    expect(onEnter).toHaveBeenCalledWith(items[1]!.value)
+  })
+
+  test('can submit the initial value', async () => {
+    const onEnter = vi.fn()
+    const items = [
+      {label: 'a', value: 'a'},
+      {label: 'b', value: 'b'},
+    ]
+
+    const renderInstance = render(<SelectPrompt choices={items} onSubmit={onEnter} message="Test question?" />)
+
+    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
+      "?  Test question?
+
+      >  (1) a
+         (2) b
+
+         navigate with arrows, enter to select
+      "
+    `)
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, ENTER)
+
+    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
+      "?  Test question?
+      [36m✔[39m  [36ma[39m
+      "
+    `)
+    expect(onEnter).toHaveBeenCalledWith(items[0]!.value)
   })
 })

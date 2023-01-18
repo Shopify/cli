@@ -318,7 +318,7 @@ describe('SelectInput', async () => {
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   (1) First
-         (2) Second
+      [36m>[39m  [36m(2) Second[39m
          (3) Third
 
          [2mnavigate with arrows, enter to select[22m"

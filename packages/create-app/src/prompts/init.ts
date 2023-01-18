@@ -61,7 +61,9 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
       name: 'template',
       choices: templateList,
       message: 'Which template would you like to use?',
-      default: defaults.template,
+      default: Object.keys(templateURLMap).find(
+        (key) => templateURLMap[key as 'node' | 'php' | 'ruby'] === defaults.template,
+      ),
     })
   }
 

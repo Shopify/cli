@@ -94,7 +94,7 @@ export default function SelectInput<T>({
   emptyMessage = 'No items to select.',
   defaultValue,
 }: React.PropsWithChildren<Props<T>>): JSX.Element | null {
-  const initialIndex = defaultValue ? items.findIndex((item) => item.value === defaultValue.value) : 0
+  const initialIndex = defaultValue ? items.findIndex((item) => item.value === defaultValue.value) ?? 0 : 0
   const inputStack = useRef<string | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(initialIndex)
   const keys = useRef(new Set(items.map((item) => item.key)))
