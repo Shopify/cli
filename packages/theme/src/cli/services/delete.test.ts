@@ -3,7 +3,7 @@ import {Theme} from '../models/theme.js'
 import {deleteTheme} from '../utilities/themes-api.js'
 import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
 import {test, describe, expect, vi} from 'vitest'
-import {renderSelectPrompt, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../utilities/themes-api.js')
@@ -36,7 +36,7 @@ describe('deleteThemes', () => {
     // Given
     const confirmed = true
 
-    vi.mocked(renderSelectPrompt).mockResolvedValue(confirmed)
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(confirmed)
     vi.mocked(findOrSelectTheme).mockResolvedValue(theme1)
 
     // When
@@ -53,7 +53,7 @@ describe('deleteThemes', () => {
     // Given
     const confirmed = true
 
-    vi.mocked(renderSelectPrompt).mockResolvedValue(confirmed)
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(confirmed)
     vi.mocked(findOrSelectTheme).mockResolvedValue(theme1)
 
     // When
@@ -70,7 +70,7 @@ describe('deleteThemes', () => {
     // Given
     const confirmed = true
 
-    vi.mocked(renderSelectPrompt).mockResolvedValue(confirmed)
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(confirmed)
     vi.mocked(findThemes).mockResolvedValue([theme1, theme2])
 
     // When
@@ -98,7 +98,7 @@ describe('deleteThemes', () => {
     // Given
     const confirmed = false
 
-    vi.mocked(renderSelectPrompt).mockResolvedValue(confirmed)
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(confirmed)
     vi.mocked(findThemes).mockResolvedValue([theme1, theme2])
 
     // When
@@ -126,7 +126,7 @@ describe('deleteThemes', () => {
     // Given
     const confirmed = false
 
-    vi.mocked(renderSelectPrompt).mockResolvedValue(confirmed)
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(confirmed)
     vi.mocked(findThemes).mockResolvedValue([theme1, theme2])
 
     // When
