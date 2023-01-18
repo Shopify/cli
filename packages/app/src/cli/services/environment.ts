@@ -19,12 +19,13 @@ import {Organization, OrganizationApp, OrganizationStore} from '../models/organi
 import metadata from '../metadata.js'
 import {ThemeExtension} from '../models/app/extensions.js'
 import {loadAppName} from '../models/app/loader.js'
-import {error as kitError, output, store, ui, error} from '@shopify/cli-kit'
+import {error as kitError, output, store, error} from '@shopify/cli-kit'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
+import {TokenItem} from '@shopify/cli-kit/src/private/node/ui/components/TokenizedText.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
-import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -357,22 +358,19 @@ export async function fetchAppAndIdentifiers(
 
 async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
   let data = {} as FetchResponse
-  const list = ui.newListr(
-    [
-      {
-        title: 'Fetching organization data',
-        task: async () => {
-          const organizationAndApps = await fetchOrgAndApps(orgId, token)
-          const stores = await fetchAllDevStores(orgId, token)
-          data = {...organizationAndApps, stores} as FetchResponse
-          // We need ALL stores so we can validate the selected one.
-          // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.
-        },
+  const tasks = [
+    {
+      title: 'Fetching organization data',
+      task: async () => {
+        const organizationAndApps = await fetchOrgAndApps(orgId, token)
+        const stores = await fetchAllDevStores(orgId, token)
+        data = {...organizationAndApps, stores} as FetchResponse
+        // We need ALL stores so we can validate the selected one.
+        // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.
       },
-    ],
-    {rendererSilent: isUnitTest()},
-  )
-  await list.run()
+    },
+  ]
+  await renderTasks(tasks)
   return data
 }
 
@@ -445,34 +443,42 @@ function showReusedValues(org: string, cachedAppInfo: store.CachedAppInfo, packa
   let updateURLs = 'Not yet configured'
   if (cachedAppInfo.updateURLs !== undefined) updateURLs = cachedAppInfo.updateURLs ? 'Always' : 'Never'
 
-  output.info('\nUsing your previous dev settings:')
-  output.info(`- Org:          ${org}`)
-  output.info(`- App:          ${cachedAppInfo.title}`)
-  output.info(`- Dev store:    ${cachedAppInfo.storeFqdn}`)
-  output.info(`- Update URLs:  ${updateURLs}`)
-  if (cachedAppInfo.tunnelPlugin) {
-    output.info(`- Tunnel:       ${cachedAppInfo.tunnelPlugin}`)
-  }
-  output.info(
-    output.content`\nTo reset your default dev config, run ${output.token.packagejsonScript(
-      packageManager,
-      'dev',
-      '--reset',
-    )}\n`,
-  )
+  const items: TokenItem[] = [
+    `Org:          ${org}`,
+    `App:          ${cachedAppInfo.title}`,
+    `Dev store:    ${cachedAppInfo.storeFqdn}`,
+    `Update URLs:  ${updateURLs}`,
+  ]
+
+  if (cachedAppInfo.tunnelPlugin) items.push(`Tunnel:       ${cachedAppInfo.tunnelPlugin}`)
+
+  renderInfo({
+    headline: 'Using your previous dev settings:',
+    body: [
+      {
+        list: {
+          items,
+        },
+      },
+      '\nTo reset your default dev config, run',
+      {command: output.formatPackageManagerCommand(packageManager, 'dev', '--reset')},
+    ],
+  })
 }
 
 function showGenerateReusedValues(org: string, cachedAppInfo: store.CachedAppInfo, packageManager: PackageManager) {
-  output.info('\nUsing your previous dev settings:')
-  output.info(`- Org:          ${org}`)
-  output.info(`- App:          ${cachedAppInfo.title}`)
-  output.info(
-    output.content`\nTo reset your default config, run ${output.token.packagejsonScript(
-      packageManager,
-      'generate extension',
-      '--reset',
-    )}\n`,
-  )
+  renderInfo({
+    headline: 'Using your previous dev settings:',
+    body: [
+      {
+        list: {
+          items: [`Org:          ${org}`, `App:          ${cachedAppInfo.title}`],
+        },
+      },
+      '\nTo reset your default dev config, run',
+      {command: output.formatPackageManagerCommand(packageManager, 'dev', '--reset')},
+    ],
+  })
 }
 
 /**
@@ -482,9 +488,14 @@ function showGenerateReusedValues(org: string, cachedAppInfo: store.CachedAppInf
  * @param store - Store domain
  */
 function showDevValues(org: string, appName: string) {
-  output.info('\nYour configs for dev were:')
-  output.info(`Org:        ${org}`)
-  output.info(`App:        ${appName}\n`)
+  renderInfo({
+    headline: 'Your configs for dev were:',
+    body: {
+      list: {
+        items: [`Org:        ${org}`, `App:        ${appName}`],
+      },
+    },
+  })
 }
 
 async function logMetadataForLoadedDevEnvironment(env: DevEnvironmentOutput) {

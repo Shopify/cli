@@ -73,8 +73,7 @@ describe('checkHydrogenVersion()', () => {
         await checkHydrogenVersion('dir')
 
         expect(outputMock.info()).toMatchInlineSnapshot(`
-          "
-          ╭─ info ───────────────────────────────────────────────────────────────────────╮
+          "╭─ info ───────────────────────────────────────────────────────────────────────╮
           │                                                                              │
           │  Upgrade available                                                           │
           │                                                                              │

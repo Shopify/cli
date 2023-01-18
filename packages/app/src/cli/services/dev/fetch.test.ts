@@ -199,8 +199,7 @@ describe('NoOrgError', () => {
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "
-      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  No Organization found                                                       │
       │                                                                              │

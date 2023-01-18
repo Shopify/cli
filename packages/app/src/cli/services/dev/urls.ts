@@ -2,7 +2,7 @@ import {updateURLsPrompt} from '../../prompts/dev.js'
 import {AppInterface} from '../../models/app/app.js'
 import {UpdateURLsQuery, UpdateURLsQuerySchema, UpdateURLsQueryVariables} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery, GetURLsQuerySchema, GetURLsQueryVariables} from '../../api/graphql/get_urls.js'
-import {output, plugins, store} from '@shopify/cli-kit'
+import {plugins, store} from '@shopify/cli-kit'
 import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -98,7 +98,6 @@ export async function generateURL(config: Config, frontendPort: number): Promise
   // and will need to use "getListOfTunnelPlugins" to find the available tunnel plugins
   const provider = 'ngrok'
   return (await plugins.runTunnelPlugin(config, frontendPort, provider))
-    .doOnOk(() => output.success('The tunnel is running and you can now view your app'))
     .mapError(mapRunTunnelPluginError)
     .valueOrAbort()
 }
@@ -155,11 +154,10 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
   if (options.newApp) return true
   let shouldUpdate: boolean = options.cachedUpdateURLs === true
   if (options.cachedUpdateURLs === undefined) {
-    output.info(`\nYour app's URL currently is:\n  ${options.currentURLs.applicationUrl}`)
-    output.info(`\nYour app's redirect URLs currently are:`)
-    options.currentURLs.redirectUrlWhitelist.forEach((url) => output.info(`  ${url}`))
-    output.newline()
-    const response = await updateURLsPrompt()
+    const response = await updateURLsPrompt(
+      options.currentURLs.applicationUrl,
+      options.currentURLs.redirectUrlWhitelist,
+    )
     let newUpdateURLs: boolean | undefined
     /* eslint-disable no-fallthrough */
     switch (response) {

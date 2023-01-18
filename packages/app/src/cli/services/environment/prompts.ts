@@ -1,7 +1,7 @@
 import {LocalSource, RemoteSource} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {ui} from '@shopify/cli-kit'
-import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 export async function matchConfirmationPrompt(local: LocalSource, remote: RemoteSource) {
   const choices = [
@@ -68,12 +68,10 @@ export async function deployConfirmationPrompt(summary: SourceSummary): Promise<
     return new Promise((resolve) => resolve(true))
   }
 
-  return renderSelectPrompt({
+  return renderConfirmationPrompt({
     message: summary.question,
-    choices: [
-      {label: 'Yes, deploy to push changes', value: true, key: 'y'},
-      {label: 'No, cancel', value: false, key: 'n'},
-    ],
     infoTable,
+    confirmationMessage: 'Yes, deploy to push changes',
+    cancellationMessage: 'No, cancel',
   })
 }

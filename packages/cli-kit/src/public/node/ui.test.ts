@@ -60,12 +60,29 @@ describe('renderInfo', async () => {
         label: 'Link',
         url: 'https://shopify.com',
       },
+      customSections: [
+        {
+          title: 'Custom section',
+          body: {
+            list: {
+              items: ['Item 1', 'Item 2', 'Item 3'],
+            },
+          },
+        },
+        {
+          title: 'Custom section 2',
+          body: {
+            list: {
+              items: ['Item 1', 'Item 2', 'Item 3'],
+            },
+          },
+        },
+      ],
     })
 
     // Then
     expect(mockOutput.info()).toMatchInlineSnapshot(`
-      "
-      ╭─ info ───────────────────────────────────────────────────────────────────────╮
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Title                                                                       │
       │                                                                              │
@@ -82,6 +99,16 @@ describe('renderInfo', async () => {
       │      https://shopify.dev )                                                   │
       │                                                                              │
       │  Link ( https://shopify.com )                                                │
+      │                                                                              │
+      │  Custom section                                                              │
+      │    • Item 1                                                                  │
+      │    • Item 2                                                                  │
+      │    • Item 3                                                                  │
+      │                                                                              │
+      │  Custom section 2                                                            │
+      │    • Item 1                                                                  │
+      │    • Item 2                                                                  │
+      │    • Item 3                                                                  │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
@@ -101,8 +128,7 @@ describe('renderSuccess', async () => {
 
     // Then
     expect(mockOutput.info()).toMatchInlineSnapshot(`
-      "
-      ╭─ success ────────────────────────────────────────────────────────────────────╮
+      "╭─ success ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Title                                                                       │
       │                                                                              │
@@ -130,8 +156,7 @@ describe('renderWarning', async () => {
 
     // Then
     expect(mockOutput.warn()).toMatchInlineSnapshot(`
-      "
-      ╭─ warning ────────────────────────────────────────────────────────────────────╮
+      "╭─ warning ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Title                                                                       │
       │                                                                              │
@@ -167,8 +192,7 @@ describe('renderFatalError', async () => {
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "
-      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Couldn't connect to the Shopify Partner Dashboard.                          │
       │                                                                              │
@@ -196,8 +220,7 @@ describe('renderFatalError', async () => {
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "
-      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Unexpected error                                                            │
       │                                                                              │
@@ -244,8 +267,7 @@ describe('renderFatalError', async () => {
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "
-      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  No Organization found                                                       │
       │                                                                              │
@@ -284,8 +306,7 @@ describe('renderConcurrent', async () => {
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "
-      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  example error                                                               │
       │                                                                              │
