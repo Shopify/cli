@@ -5,7 +5,7 @@ import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {isAbsolutePath, resolvePath} from '@shopify/cli-kit/node/path.js'
+import {isAbsolutePath, resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class Pull extends ThemeCommand {
   static description = 'Download your remote theme files locally.'
