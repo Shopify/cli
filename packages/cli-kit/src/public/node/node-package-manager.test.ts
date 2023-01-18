@@ -11,9 +11,12 @@ import {
   FindUpAndReadPackageJsonNotFoundError,
   usesWorkspaces,
   addResolutionOrOverride,
+  updateAppData,
+  writePackageJSON,
 } from './node-package-manager.js'
 import {exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
+import * as os from './os.js'
 import {join as pathJoin, normalize as pathNormalize} from '../../path.js'
 import {Abort} from '../../error.js'
 import {describe, it, expect, vi, test} from 'vitest'
@@ -675,5 +678,47 @@ describe('addResolutionOrOverride', () => {
       expect(packageJsonContent.resolutions).toEqual({'@types/node': '^17.0.38', '@types/react': '17.0.30'})
       expect(packageJsonContent.overrides).toBeUndefined()
     })
+  })
+})
+
+describe('writePackageJSON', () => {
+  it('writes the package.json and returns it parsed', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJSON = {name: 'mock name'}
+      const filePath = pathJoin(tmpDir, 'package.json')
+
+      // When
+      await writePackageJSON(tmpDir, packageJSON)
+
+      // Then
+      const packageJsonContent = await readAndParsePackageJson(filePath)
+      expect(packageJsonContent).toEqual(packageJSON)
+    })
+  })
+})
+
+describe('updateAppData', () => {
+  it('updates the name', async () => {
+    // Given
+    const packageJSON = {} as {name: string}
+
+    // When
+    await updateAppData(packageJSON, 'mock name')
+
+    // Then
+    expect(packageJSON.name).toBe('mock name')
+  })
+
+  it('updates the author', async () => {
+    // Given
+    const packageJSON = {} as {author: string}
+    vi.spyOn(os, 'username').mockImplementation(async () => 'mock os.username')
+
+    // When
+    await updateAppData(packageJSON, '')
+
+    // Then
+    expect(packageJSON.author).toBe('mock os.username')
   })
 })
