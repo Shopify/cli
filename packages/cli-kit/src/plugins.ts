@@ -1,5 +1,5 @@
 import {JsonMap} from './private/common/json.js'
-import {PickByPrefix} from './public/common/typing/pick-by-prefix.js.js'
+import {PickByPrefix} from './public/common/typing/pick-by-prefix.js'
 import {MonorailEventPublic, MonorailEventSensitive} from './monorail.js'
 import {HookReturnPerTunnelPlugin} from './public/node/plugins/tunnel.js'
 import {getArrayContainsDuplicates, getArrayRejectingUndefined} from './public/common/array.js'
