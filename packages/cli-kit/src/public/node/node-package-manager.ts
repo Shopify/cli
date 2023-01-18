@@ -499,7 +499,7 @@ function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: Depend
  * @returns If found, the promise resolves with the path to the
  *  package.json and its content. If not found, it throws a FindUpAndReadPackageJsonNotFoundError error.
  */
-export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{path: string; content: unknown}> {
+export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{path: string; content: PackageJson}> {
   const packageJsonPath = await findUp('package.json', {cwd: fromDirectory, type: 'file'})
   if (packageJsonPath) {
     const packageJson = JSON.parse(await readFile(packageJsonPath))

@@ -3,7 +3,7 @@ import {genericConfigurationFileNames} from '../constants.js'
 import {ui, path, error} from '@shopify/cli-kit'
 import {
   addNPMDependenciesWithoutVersionIfNeeded,
-  readAndParsePackageJson,
+  findUpAndReadPackageJson,
   writePackageJSON,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions, isVSCode} from '@shopify/cli-kit/node/vscode'
@@ -78,7 +78,7 @@ export async function addESLint({app, force, install}: AddESlintOptions) {
       {
         title: 'Updating package.json',
         task: async (_, task) => {
-          const packageJSON = await readAndParsePackageJson(app.directory)
+          const packageJSON = await (await findUpAndReadPackageJson(app.directory)).content
           packageJSON.scripts = packageJSON.scripts || {}
           packageJSON.scripts.lint = `eslint --ext .js,.ts,.jsx,.tsx src/`
 
