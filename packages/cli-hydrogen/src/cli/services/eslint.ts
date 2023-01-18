@@ -78,7 +78,7 @@ export async function addESLint({app, force, install}: AddESlintOptions) {
       {
         title: 'Updating package.json',
         task: async (_, task) => {
-          const packageJSON = await (await findUpAndReadPackageJson(app.directory)).content
+          const packageJSON = (await findUpAndReadPackageJson(app.directory)).content
           packageJSON.scripts = packageJSON.scripts || {}
           packageJSON.scripts.lint = `eslint --ext .js,.ts,.jsx,.tsx src/`
 

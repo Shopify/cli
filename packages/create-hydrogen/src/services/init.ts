@@ -1,12 +1,12 @@
 import {path, error, output, ui} from '@shopify/cli-kit'
 import {username} from '@shopify/cli-kit/node/os'
 import {
+  findUpAndReadPackageJson,
   installNodeModules,
   PackageJson,
   packageManager,
   PackageManager,
   packageManagerUsedForCreating,
-  readAndParsePackageJson,
   updateAppData,
   writePackageJSON,
 } from '@shopify/cli-kit/node/node-package-manager'
@@ -105,7 +105,7 @@ async function init(options: InitOptions) {
               {
                 title: 'Updating package.json',
                 task: async (_, task) => {
-                  const packageJSON = await readAndParsePackageJson(templateScaffoldDir)
+                  const packageJSON = (await findUpAndReadPackageJson(templateScaffoldDir)).content
                   await updateAppData(packageJSON, hyphenizedName)
                   await updateCLIDependencies(packageJSON, options.local, {
                     dependencies: {

@@ -3,10 +3,10 @@ import cleanup from '../utils/template/cleanup.js'
 
 import {path, ui, error, output} from '@shopify/cli-kit'
 import {
+  findUpAndReadPackageJson,
   packageManager,
   PackageManager,
   packageManagerUsedForCreating,
-  readAndParsePackageJson,
   updateAppData,
   writePackageJSON,
 } from '@shopify/cli-kit/node/node-package-manager'
@@ -79,7 +79,7 @@ async function init(options: InitOptions) {
               title: 'Update package.json',
               task: async (_, task) => {
                 task.title = 'Updating package.json'
-                const packageJSON = await readAndParsePackageJson(templateScaffoldDir)
+                const packageJSON = (await findUpAndReadPackageJson(templateScaffoldDir)).content
 
                 await updateAppData(packageJSON, hyphenizedName)
                 await updateCLIDependencies({packageJSON, local: options.local, directory: templateScaffoldDir})
