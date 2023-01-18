@@ -1,19 +1,20 @@
-// eslint-disable-next-line @shopify/strict-component-boundaries
-import {ExtensionRow} from './components/ExtensionRow'
-import en from './translations/en.json'
 import {Extensions} from './Extensions.js'
+
+import {AppHomeRow, ExtensionRow, PostPurchaseRow} from './components'
 import React from 'react'
-import {Checkbox} from '@shopify/polaris'
 import {ExtensionServerClient} from '@shopify/ui-extensions-server-kit'
 import {mockExtension} from '@shopify/ui-extensions-server-kit/testing'
 import {render, withProviders} from '@shopify/ui-extensions-test-utils'
 import {DefaultProviders} from 'tests/DefaultProviders'
-import {mockI18n} from 'tests/mock-i18n'
-import {Action} from '@/components/Action'
 
-const i18n = mockI18n(en)
+vi.mock('./components', () => ({
+  ExtensionRow: () => null,
+  PostPurchaseRow: () => null,
+  AppHomeRow: () => null,
+  Row: () => null,
+}))
 
-describe('Extensions', () => {
+describe('<Extensions/>', () => {
   let client: ExtensionServerClient
 
   beforeEach(() => {
@@ -24,197 +25,46 @@ describe('Extensions', () => {
     client.connection.close()
   })
 
-  test('renders ExtensionRow based on localStorage', async () => {
+  test('renders a blank slate if there is no data', async () => {
+    const container = render(<Extensions />, withProviders(DefaultProviders))
+
+    expect(container).not.toContainReactComponent('table')
+    expect(container).not.toContainReactComponent(AppHomeRow)
+    expect(container).not.toContainReactComponent(ExtensionRow)
+  })
+
+  test('renders <AppHomeRow/>', async () => {
     const extensions = [mockExtension()]
 
     const container = render(<Extensions />, withProviders(DefaultProviders), {
-      state: {extensions, store: 'shop1.myshopify.io'},
+      state: {extensions, store: 'shop1.myshopify.io', app: {url: 'mock.url', title: 'Mock App Title'}},
     })
 
-    const rows = container.findAll(ExtensionRow)
-
-    expect(rows).toHaveLength(extensions.length)
-
-    rows.forEach((row, index) => {
-      expect(row.prop('extension')).toStrictEqual(extensions[index])
-    })
+    expect(container).toContainReactComponent(AppHomeRow)
   })
 
-  test('calls refresh with selected extensions', async () => {
-    const selectedExtension = mockExtension()
-    const unselectedExtension = mockExtension()
-    const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined)
+  test('renders a <PostPurchaseRow/> for the checkout_post_purchase extension', async () => {
+    const extension1 = {...mockExtension(), type: 'checkout_post_purchase'}
 
     const container = render(<Extensions />, withProviders(DefaultProviders), {
-      client,
-      state: {extensions: [selectedExtension, unselectedExtension], store: 'shop1.myshopify.io'},
+      state: {extensions: [extension1], store: 'shop1.myshopify.io'},
     })
 
-    container.act(() => {
-      container.find(ExtensionRow, {extension: selectedExtension})?.trigger('onSelect', selectedExtension)
-    })
-
-    container.find(Action, {accessibilityLabel: i18n.translate('extensionList.refresh')})?.trigger('onAction')
-
-    expect(sendSpy).toHaveBeenCalledWith(
-      JSON.stringify({
-        event: 'dispatch',
-        data: {type: 'refresh', payload: [{uuid: selectedExtension.uuid}]},
-      }),
-    )
+    expect(container).toContainReactComponentTimes(PostPurchaseRow, 1)
+    expect(container).toContainReactComponent(PostPurchaseRow, {uuid: extension1.uuid})
   })
 
-  test('toggles selection of all extensions when select all checkbox is clicked', async () => {
-    const extensions = [mockExtension(), mockExtension()]
+  test('renders an <ExtensionRow/> for each Extension', async () => {
+    const extension1 = mockExtension()
+    const extension2 = mockExtension()
+    const extensions = [extension1, extension2]
 
     const container = render(<Extensions />, withProviders(DefaultProviders), {
       state: {extensions, store: 'shop1.myshopify.io'},
     })
 
-    container.act(() => {
-      container.find(Checkbox)?.trigger('onChange')
-    })
-
-    expect(container.findAll(ExtensionRow, {selected: true})).toHaveLength(extensions.length)
-
-    container.act(() => {
-      container.find(Checkbox)?.trigger('onChange')
-    })
-
-    expect(container.findAll(ExtensionRow, {selected: false})).toHaveLength(extensions.length)
-  })
-
-  test('toggles selection of individual extensions when onSelect for a row is triggered', async () => {
-    const toggleExtension = mockExtension()
-    const otherExtension = mockExtension()
-
-    const container = render(<Extensions />, withProviders(DefaultProviders), {
-      state: {extensions: [toggleExtension, otherExtension], store: 'shop1.myshopify.io'},
-    })
-
-    container.act(() => {
-      container.find(ExtensionRow, {extension: toggleExtension})?.trigger('onSelect', toggleExtension)
-    })
-
-    expect(container).toContainReactComponent(ExtensionRow, {
-      extension: toggleExtension,
-      selected: true,
-    })
-
-    expect(container).toContainReactComponent(ExtensionRow, {
-      extension: otherExtension,
-      selected: false,
-    })
-
-    container.act(() => {
-      container.find(ExtensionRow, {extension: toggleExtension})?.trigger('onSelect', toggleExtension)
-    })
-
-    expect(container).toContainReactComponent(ExtensionRow, {
-      extension: toggleExtension,
-      selected: false,
-    })
-
-    expect(container).toContainReactComponent(ExtensionRow, {
-      extension: otherExtension,
-      selected: false,
-    })
-  })
-
-  test('calls to set focused to true for the current extension', async () => {
-    const focusExtension = mockExtension()
-    const prevFocusedExtension = mockExtension()
-    const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined)
-
-    const container = render(<Extensions />, withProviders(DefaultProviders), {
-      client,
-      state: {extensions: [focusExtension, prevFocusedExtension], store: 'shop1.myshopify.io'},
-    })
-
-    container.act(() => {
-      container.find(ExtensionRow, {extension: focusExtension})?.trigger('onHighlight', focusExtension)
-    })
-
-    expect(sendSpy).toHaveBeenCalledWith(
-      JSON.stringify({
-        event: 'dispatch',
-        data: {type: 'focus', payload: [{uuid: focusExtension.uuid}]},
-      }),
-    )
-  })
-
-  test('clear focus state of all extensions when onClearHighlight for a row is triggered', async () => {
-    const extension1 = mockExtension({focused: true} as any)
-    const extension2 = mockExtension({focused: true} as any)
-    const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined)
-
-    const container = render(<Extensions />, withProviders(DefaultProviders), {
-      client,
-      state: {extensions: [extension1, extension2], store: 'shop1.myshopify.io'},
-    })
-
-    container.act(() => {
-      container.find(ExtensionRow, {extension: extension1})?.trigger('onClearHighlight')
-    })
-
-    expect(sendSpy).toHaveBeenCalledWith(
-      JSON.stringify({
-        event: 'dispatch',
-        data: {type: 'unfocus'},
-      }),
-    )
-  })
-
-  test('calls show with selected extensions', async () => {
-    const unselectedExtension = mockExtension()
-    const selectedExtension = mockExtension()
-    selectedExtension.development.hidden = true
-    const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined)
-
-    const container = render(<Extensions />, withProviders(DefaultProviders), {
-      client,
-      state: {extensions: [selectedExtension, unselectedExtension], store: 'shop1.myshopify.io'},
-    })
-
-    container.act(() => {
-      container.find(ExtensionRow, {extension: selectedExtension})?.trigger('onSelect', selectedExtension)
-    })
-
-    container.act(() => {
-      container.find(Action, {accessibilityLabel: i18n.translate('bulkActions.show')})?.trigger('onAction')
-    })
-
-    expect(sendSpy).toHaveBeenCalledWith(
-      JSON.stringify({
-        event: 'update',
-        data: {extensions: [{uuid: selectedExtension.uuid, development: {hidden: false}}]},
-      }),
-    )
-  })
-
-  test('calls hide with selected extensions', async () => {
-    const selectedExtension = mockExtension()
-    const unselectedExtension = mockExtension()
-    const sendSpy = vi.spyOn(client.connection, 'send').mockImplementation(() => undefined)
-
-    const container = render(<Extensions />, withProviders(DefaultProviders), {
-      client,
-      state: {extensions: [selectedExtension, unselectedExtension], store: 'shop1.myshopify.io'},
-    })
-
-    container.act(() => {
-      container.find(ExtensionRow, {extension: selectedExtension})?.trigger('onSelect', selectedExtension)
-    })
-
-    container.act(() => {
-      container.find(Action, {accessibilityLabel: i18n.translate('bulkActions.hide')})?.trigger('onAction')
-    })
-
-    expect(sendSpy).toHaveBeenCalledWith(
-      JSON.stringify({
-        event: 'update',
-        data: {extensions: [{uuid: selectedExtension.uuid, development: {hidden: true}}]},
-      }),
-    )
+    expect(container).toContainReactComponentTimes(ExtensionRow, extensions.length)
+    expect(container).toContainReactComponent(ExtensionRow, {uuid: extension1.uuid})
+    expect(container).toContainReactComponent(ExtensionRow, {uuid: extension2.uuid})
   })
 })

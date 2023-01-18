@@ -1,0 +1,34 @@
+.Theme {
+  /* Grey/Black */
+  --dc-color-grey-900: rgb(13, 13, 13);
+  --dc-color-grey-800: rgb(25, 25, 25);
+  --dc-color-grey-700: rgb(36, 36, 36);
+  --dc-color-grey-600: rgb(49, 51, 53);
+  --dc-color-grey-500: rgb(120, 125, 129);
+  --dc-color-grey-400: rgb(157, 161, 164);
+  --dc-color-grey-100: rgb(235, 235, 235);
+
+  /* Blue */
+  --dc-color-blue-500: #36A3FF;
+  --dc-color-blue-400: rgb(91, 206, 255);
+
+  /* White */
+  --dc-color-white: rgb(255, 255, 255);
+
+  /* Green */
+  --dc-color-green: rgb(0, 244, 185);
+
+  /* Red */
+  --dc-color-red: rgb(255, 87, 77);
+
+  /* Font */
+  --dc-font-weight-400: 200;
+  --dc-font-weight-400: 400;
+  --dc-font-weight-500: 600;
+  --dc-font-weight-600: 600;
+  --dc-font-weight-700: 700;
+
+  /* border */
+  --dc-border-radius: 0.4rem;
+  --dc-border-radius-2: 0.8rem;
+}
