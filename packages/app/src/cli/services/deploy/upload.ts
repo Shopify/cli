@@ -26,12 +26,13 @@ import {
   AppFunctionSetMutationSchema,
   AppFunctionSetVariables,
 } from '../../api/graphql/functions/app_function_set.js'
-import {error, http, output} from '@shopify/cli-kit'
+import {error, output} from '@shopify/cli-kit'
 
 import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {fileExists, readFile, readSync} from '@shopify/cli-kit/node/fs'
+import {fetch, formData} from '@shopify/cli-kit/node/http'
 
 interface DeployThemeExtensionOptions {
   /** The application API key */
@@ -105,13 +106,13 @@ export async function uploadUIExtensionsBundle(
   const deploymentUUID = randomUUID()
   const signedURL = await getUIExtensionUploadURL(options.apiKey, deploymentUUID)
 
-  const formData = http.formData()
+  const form = formData()
   const buffer = readSync(options.bundlePath)
-  formData.append('my_upload', buffer)
-  await http.fetch(signedURL, {
+  form.append('my_upload', buffer)
+  await fetch(signedURL, {
     method: 'put',
     body: buffer,
-    headers: formData.getHeaders(),
+    headers: form.getHeaders(),
   })
 
   const variables: CreateDeploymentVariables = {
@@ -267,7 +268,7 @@ async function uploadWasmBlob(extension: FunctionExtension, apiKey: string, toke
   headers['Content-Type'] = 'application/wasm'
 
   const functionContent = await readFile(extension.buildWasmPath(), {})
-  const res = await http.fetch(url, {body: functionContent, headers, method: 'PUT'})
+  const res = await fetch(url, {body: functionContent, headers, method: 'PUT'})
   const resBody = res.body?.read()?.toString() || ''
 
   if (res.status === 200) {

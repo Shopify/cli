@@ -1,6 +1,5 @@
 export * as error from './error.js'
 export * as git from './git.js'
-export * as http from './public/node/http.js'
 export * as npm from './npm.js'
 export * as output from './output.js'
 export * as path from './path.js'
