@@ -1,6 +1,7 @@
 import {TextInput} from './TextInput.js'
 import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
+import {messageWithPunctuation} from '../utilities.js'
 import React, {useCallback, useState} from 'react'
 import {Box, useApp, useInput, Text} from 'ink'
 import figures from 'figures'
@@ -57,15 +58,13 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, validate, defaultValue 
     ),
   )
 
-  const messageWithPunctuation = message.endsWith('?') || message.endsWith(':') ? message : `${message}:`
-
   return (
     <Box flexDirection="column" marginBottom={1} width={oneThird}>
       <Box>
         <Box marginRight={2}>
           <Text>?</Text>
         </Box>
-        <Text>{messageWithPunctuation}</Text>
+        <Text>{messageWithPunctuation(message)}</Text>
       </Box>
       {submitted && !error ? (
         <Box>
