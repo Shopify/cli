@@ -1,5 +1,18 @@
 # @shopify/app
 
+## 3.36.0
+
+### Minor Changes
+
+- c2a7c17e0: Refresh command UIs with newly implemented Ink components
+- 335a96a24: Improved dev console with new UX & functionality. New functionality: Preview app link and QRCode, better post purchase extension instructions, copy button for all preview links, support for upcoming UI extension changes
+
+### Patch Changes
+
+- Updated dependencies [c2a7c17e0]
+  - @shopify/cli-kit@3.36.0
+  - @shopify/plugin-ngrok@3.36.0
+
 ## 3.35.0
 
 ### Patch Changes
