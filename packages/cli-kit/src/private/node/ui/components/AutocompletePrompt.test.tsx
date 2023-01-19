@@ -287,7 +287,7 @@ describe('AutocompletePrompt', async () => {
       />,
     )
 
-    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?: [36m[7mT[27m[2mype to search...[22m[39m
 
       [36m>[39m  [36mfirst[39m
@@ -324,7 +324,7 @@ describe('AutocompletePrompt', async () => {
     // there is a debounce of 300ms before the search is triggered
     await sendInputAndWait(renderInstance, 400, 'i')
 
-    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?: [36mi[7m [27m[39m
 
       [36m>[39m  [36mf[1mi[22mrst[39m
@@ -359,7 +359,7 @@ describe('AutocompletePrompt', async () => {
 
     await sendInputAndWaitForChange(renderInstance, DELETE)
 
-    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?: [36m[7mT[27m[2mype to search...[22m[39m
 
       [36m>[39m  [36mfirst[39m
@@ -396,7 +396,7 @@ describe('AutocompletePrompt', async () => {
     await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
     await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
 
-    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?: [36mi[7m [27m[39m
 
          f[1mi[22mrst
@@ -462,7 +462,7 @@ describe('AutocompletePrompt', async () => {
     // there is a debounce of 300ms before the search is triggered + 300ms for the search to complete
     await sendInputAndWait(renderInstance, 700, 'e')
 
-    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?: [36me[7m [27m[39m
 
       [36m>[39m  [36ms[1me[22mcond[39m
@@ -523,7 +523,7 @@ describe('AutocompletePrompt', async () => {
     await waitForInputsToBeReady()
     await sendInputAndWaitForContent(renderInstance, 'There has been an error', 'i')
 
-    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?: [36mi[7m [27m[39m
 
          [31mThere has been an error while searching. Please try again later.[39m
@@ -559,7 +559,7 @@ describe('AutocompletePrompt', async () => {
     // there is a debounce of 300ms before the search is triggered
     await sendInputAndWait(renderInstance, 400, 'i')
 
-    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?: [36mi[7m [27m[39m
 
       [36m>[39m  [36mf[1mi[22mrst[39m
@@ -571,7 +571,7 @@ describe('AutocompletePrompt', async () => {
 
     await sendInputAndWaitForChange(renderInstance, DELETE)
 
-    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?: [36m[7mT[27m[2mype to search...[22m[39m
 
       [36m>[39m  [36mfirst[39m
