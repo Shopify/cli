@@ -1,15 +1,16 @@
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
+import {publish, renderArgumentsWarning} from '../../services/publish.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
 export default class Publish extends ThemeCommand {
   static description = 'Set a remote theme as the live theme.'
 
-  static args = [{name: 'themeId', description: 'The ID of the theme', required: false}]
+  // Accept any number of args without naming them
+  static strict = false
 
   static flags = {
     ...globalFlags,
@@ -19,23 +20,24 @@ export default class Publish extends ThemeCommand {
       description: 'Skip confirmation.',
       env: 'SHOPIFY_FLAG_FORCE',
     }),
+    theme: Flags.string({
+      char: 't',
+      description: 'Theme ID or name of the remote theme.',
+      env: 'SHOPIFY_FLAG_THEME_ID',
+    }),
     store: themeFlags.store,
   }
 
-  static cli2Flags = ['force']
-
   async run(): Promise<void> {
-    const {flags, args} = await this.parse(Publish)
-
-    const store = getThemeStore(flags)
-    const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Publish.cli2Flags})
-    const command = ['theme', 'publish']
-    if (args.themeId) {
-      command.push(args.themeId)
-    }
-    command.push(...flagsToPass)
-
+    const {flags, argv} = await this.parse(Publish)
+    const store = await getThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
-    await execCLI2(command, {adminSession})
+    const themeId = flags.theme || argv[0]
+
+    if (argv.length > 0 && typeof argv[0] === 'string') {
+      renderArgumentsWarning(argv[0])
+    }
+
+    await publish(adminSession, themeId, flags)
   }
 }
