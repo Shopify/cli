@@ -1,4 +1,4 @@
-import {fetch} from './http.js'
+import {fetch} from './public/node/http.js'
 import {debug, content, token} from './output.js'
 import {JsonMap} from './private/common/json.js'
 import {DeepRequired} from './typing/deep-required.js'
