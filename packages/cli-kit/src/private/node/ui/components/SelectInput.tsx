@@ -26,6 +26,7 @@ export interface Item<T> {
 }
 
 interface ItemWithIndex<T> extends Item<T> {
+  key: string
   index: number
 }
 
@@ -117,9 +118,9 @@ export default function SelectInput<T>({
   const initialIndex = defaultValueIndex === -1 ? 0 : defaultValueIndex
   const inputStack = useRef<string | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(initialIndex)
-  const keys = useRef(new Set(items.map((item) => item.key)))
   const [groupedItems, ungroupedItems] = groupItems(items)
   const groupedItemsValues = [...Object.values(groupedItems).flat(), ...ungroupedItems]
+  const keys = groupedItemsValues.map((item) => item.key)
   const groupTitles = Object.keys(groupedItems)
   const previousItems = useRef<Item<T>[]>(items)
 
@@ -164,11 +165,7 @@ export default function SelectInput<T>({
 
   const handleShortcuts = useCallback(
     (input: string) => {
-      const parsedInput = parseInt(input, 10)
-
-      if (parsedInput !== 0 && parsedInput <= items.length + 1) {
-        changeSelection(parsedInput - 1)
-      } else if (keys.current.has(input)) {
+      if (keys.includes(input)) {
         const groupedItem = groupedItemsValues.find((item) => item.key === input)
         if (groupedItem !== undefined) {
           changeSelection(groupedItem.index)
