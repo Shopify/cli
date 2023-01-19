@@ -7,7 +7,6 @@ import {
   packageManager,
   PackageManager,
   packageManagerUsedForCreating,
-  updateAppData,
   writePackageJSON,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
@@ -18,6 +17,7 @@ import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
 import {isShopify} from '@shopify/cli-kit/node/environment/local'
 import {downloadGitRepository, initializeGitRepository} from '@shopify/cli-kit/node/git'
 import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile} from '@shopify/cli-kit/node/fs'
+import {username} from '@shopify/cli-kit/node/os'
 
 interface InitOptions {
   name: string
@@ -71,8 +71,8 @@ async function init(options: InitOptions) {
         title: 'Updating package.json',
         task: async () => {
           const packageJSON = (await findUpAndReadPackageJson(templateScaffoldDir)).content
-
-          await updateAppData(packageJSON, hyphenizedName)
+          packageJSON.name = hyphenizedName
+          packageJSON.author = (await username()) ?? ''
           await updateCLIDependencies({packageJSON, local: options.local, directory: templateScaffoldDir})
 
           await writePackageJSON(templateScaffoldDir, packageJSON)

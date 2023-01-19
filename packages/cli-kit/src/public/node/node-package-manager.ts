@@ -3,7 +3,6 @@ import {Version} from './semver.js'
 import {AbortController, AbortSignal} from './abort.js'
 import {exec} from './system.js'
 import {fileExists, readFile, writeFile} from './fs.js'
-import {username} from './os.js'
 import {glob, dirname, join as pathJoin, findUp, join} from '../../path.js'
 import {token, content, debug} from '../../output.js'
 import latestVersion from 'latest-version'
@@ -548,15 +547,4 @@ export async function writePackageJSON(directory: string, packageJSON: PackageJs
   debug(content`JSON-encoding and writing content to package.json at ${token.path(directory)}...`)
   const packagePath = join(directory, 'package.json')
   await writeFile(packagePath, JSON.stringify(packageJSON, null, 2))
-}
-
-/**
- * Updates the package.json file with the given name and sets the user to the current OS username.
- *
- * @param packageJSON - Package.json file to update.
- * @param name - Name to set.
- */
-export async function updateAppData(packageJSON: PackageJson, name: string): Promise<void> {
-  packageJSON.name = name
-  packageJSON.author = (await username()) ?? ''
 }

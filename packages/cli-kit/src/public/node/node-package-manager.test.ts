@@ -11,12 +11,10 @@ import {
   FindUpAndReadPackageJsonNotFoundError,
   usesWorkspaces,
   addResolutionOrOverride,
-  updateAppData,
   writePackageJSON,
 } from './node-package-manager.js'
 import {exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
-import * as os from './os.js'
 import {join as pathJoin, normalize as pathNormalize} from '../../path.js'
 import {Abort} from '../../error.js'
 import {describe, it, expect, vi, test} from 'vitest'
@@ -695,30 +693,5 @@ describe('writePackageJSON', () => {
       const packageJsonContent = await readAndParsePackageJson(filePath)
       expect(packageJsonContent).toEqual(packageJSON)
     })
-  })
-})
-
-describe('updateAppData', () => {
-  it('updates the name', async () => {
-    // Given
-    const packageJSON = {} as {name: string}
-
-    // When
-    await updateAppData(packageJSON, 'mock name')
-
-    // Then
-    expect(packageJSON.name).toBe('mock name')
-  })
-
-  it('updates the author', async () => {
-    // Given
-    const packageJSON = {} as {author: string}
-    vi.spyOn(os, 'username').mockImplementation(async () => 'mock os.username')
-
-    // When
-    await updateAppData(packageJSON, '')
-
-    // Then
-    expect(packageJSON.author).toBe('mock os.username')
   })
 })

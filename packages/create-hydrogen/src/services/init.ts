@@ -7,7 +7,6 @@ import {
   packageManager,
   PackageManager,
   packageManagerUsedForCreating,
-  updateAppData,
   writePackageJSON,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
@@ -106,7 +105,8 @@ async function init(options: InitOptions) {
                 title: 'Updating package.json',
                 task: async (_, task) => {
                   const packageJSON = (await findUpAndReadPackageJson(templateScaffoldDir)).content
-                  await updateAppData(packageJSON, hyphenizedName)
+                  packageJSON.name = hyphenizedName
+                  packageJSON.author = (await username()) ?? ''
                   await updateCLIDependencies(packageJSON, options.local, {
                     dependencies: {
                       '@shopify/hydrogen': hydrogenPackageVersion,
