@@ -1,4 +1,4 @@
-import {fileExists, readSync} from '../fs.js'
+import {fileExists, readFileSync} from '../fs.js'
 import {isTruthy} from '../../../private/node/environment/utilities.js'
 import {environmentVariables} from '../../../private/node/constants.js'
 import {captureOutput} from '../system.js'
@@ -36,7 +36,7 @@ export async function spinFqdn(env = process.env): Promise<string> {
   if (spinFqdn) return spinFqdn
 
   if (await fileExists(spinFqdnFilePath)) {
-    spinFqdn = await readSync(spinFqdnFilePath).toString()
+    spinFqdn = await readFileSync(spinFqdnFilePath).toString()
   } else {
     const spinInstance = await instance(env)
     const showResponse = await show(spinInstance, env)

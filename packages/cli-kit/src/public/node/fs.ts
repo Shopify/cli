@@ -105,7 +105,7 @@ export async function readFile(path: string, options: ReadOptions = {encoding: '
  * @param path - Path to the file to read.
  * @returns The content of the file.
  */
-export function readSync(path: string): Buffer {
+export function readFileSync(path: string): Buffer {
   debug(outputContent`Sync-reading the content of file at ${token.path(path)}...`)
   return fsReadFileSync(path)
 }

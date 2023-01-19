@@ -31,7 +31,7 @@ import {error, output} from '@shopify/cli-kit'
 import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {fileExists, readFile, readSync} from '@shopify/cli-kit/node/fs'
+import {fileExists, readFile, readFileSync} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
 
 interface DeployThemeExtensionOptions {
@@ -107,7 +107,7 @@ export async function uploadUIExtensionsBundle(
   const signedURL = await getUIExtensionUploadURL(options.apiKey, deploymentUUID)
 
   const form = formData()
-  const buffer = readSync(options.bundlePath)
+  const buffer = readFileSync(options.bundlePath)
   form.append('my_upload', buffer)
   await fetch(signedURL, {
     method: 'put',

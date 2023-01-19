@@ -14,7 +14,7 @@ import {
   touchFile,
   appendFile,
   generateRandomNameForSubdirectory,
-  readSync,
+  readFileSync,
 } from './fs.js'
 import {join} from '../../path.js'
 import {takeRandomFromArray} from '../common/array.js'
@@ -267,14 +267,14 @@ describe('makeDirectoryWithRandomName', () => {
   })
 })
 
-describe('readSync', () => {
+describe('readFileSync', () => {
   test('synchronously reads content of file', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const filePath = join(tmpDir, 'test-file')
       const content = 'test-content'
       await touchFile(filePath)
       await appendFile(filePath, content)
-      await expect(readSync(filePath).toString()).toContain(content)
+      await expect(readFileSync(filePath).toString()).toContain(content)
     })
   })
 })
