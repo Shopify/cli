@@ -29,7 +29,6 @@ describe('topicPrompt', () => {
         {label: 'orders/create', value: 'orders/create'},
         {label: 'anything/else', value: 'anything/else'},
       ],
-      search: expect.any(Function),
     })
   })
 })

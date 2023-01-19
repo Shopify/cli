@@ -8,9 +8,6 @@ export async function topicPrompt(availableTopics: string[]): Promise<string> {
   const chosen = await renderAutocompletePrompt({
     message: 'Webhook Topic',
     choices: choicesList,
-    search(term: string) {
-      return Promise.resolve(choicesList.filter((item) => item.label.includes(term)))
-    },
   })
 
   return chosen
