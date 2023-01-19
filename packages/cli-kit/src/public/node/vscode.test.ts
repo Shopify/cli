@@ -1,6 +1,6 @@
 import {isVSCode} from './vscode.js'
 import {inTemporaryDirectory, mkdir} from './fs.js'
-import {join} from '../../path.js'
+import {joinPath} from './path.js'
 import {describe, expect, it} from 'vitest'
 
 describe('isVSCode', () => {
@@ -9,7 +9,7 @@ describe('isVSCode', () => {
       // Given
       await expect(isVSCode(tmpDir)).resolves.toEqual(false)
 
-      await mkdir(join(tmpDir, '.vscode'))
+      await mkdir(joinPath(tmpDir, '.vscode'))
 
       // When
       const got = await isVSCode(tmpDir)

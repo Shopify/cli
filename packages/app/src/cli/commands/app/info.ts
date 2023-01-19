@@ -6,7 +6,8 @@ import Command from '../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../models/extensions/specifications.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {output, path} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class AppInfo extends Command {
   static description = 'Print basic information about your app and extensions.'
@@ -29,7 +30,7 @@ export default class AppInfo extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(AppInfo)
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : process.cwd()
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({directory, specifications, mode: 'report'})
     output.info(await info(app, {format: (flags.json ? 'json' : 'text') as Format, webEnv: flags['web-env']}))

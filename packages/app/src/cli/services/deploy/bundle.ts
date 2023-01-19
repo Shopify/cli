@@ -2,11 +2,11 @@ import {buildFunctionExtension, buildUIExtensions} from '../build/extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {bundleThemeExtensions} from '../extensions/bundle.js'
-import {path} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {inTemporaryDirectory, mkdirSync, touchFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 
 interface BundleOptions {
@@ -18,9 +18,9 @@ interface BundleOptions {
 
 export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions) {
   await inTemporaryDirectory(async (tmpDir) => {
-    const bundleDirectory = path.join(tmpDir, 'bundle')
+    const bundleDirectory = joinPath(tmpDir, 'bundle')
     await mkdirSync(bundleDirectory)
-    await touchFile(path.join(bundleDirectory, '.shopify'))
+    await touchFile(joinPath(bundleDirectory, '.shopify'))
 
     await renderConcurrent({
       processes: [
@@ -31,7 +31,7 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
               app: options.app,
               extensions: options.app.extensions.theme.map((themeExtension) => {
                 const extensionId = options.identifiers.extensions[themeExtension.localIdentifier]!
-                themeExtension.outputBundlePath = path.join(bundleDirectory, extensionId)
+                themeExtension.outputBundlePath = joinPath(bundleDirectory, extensionId)
                 return themeExtension
               }),
               stdout,
@@ -47,10 +47,10 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
               ...options.app.extensions,
               ui: options.app.extensions.ui.map((uiExtension) => {
                 const extensionId = options.identifiers.extensions[uiExtension.localIdentifier]!
-                uiExtension.outputBundlePath = path.join(
+                uiExtension.outputBundlePath = joinPath(
                   bundleDirectory,
                   extensionId,
-                  path.basename(uiExtension.outputBundlePath),
+                  basename(uiExtension.outputBundlePath),
                 )
                 return uiExtension
               }),

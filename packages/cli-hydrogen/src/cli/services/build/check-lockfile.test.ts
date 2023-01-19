@@ -1,8 +1,9 @@
 import {checkLockfileStatus} from './check-lockfile.js'
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
-import {path, outputMocker} from '@shopify/cli-kit'
+import {outputMocker} from '@shopify/cli-kit'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {gitFactory} from '@shopify/cli-kit/node/git'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/git')
 
@@ -25,7 +26,7 @@ describe('checkLockfileStatus()', () => {
   describe('when a lockfile present', () => {
     it('returns "ok"', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
-        await writeFile(path.join(tmpDir, 'yarn.lock'), '')
+        await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
 
         expect(await checkLockfileStatus(tmpDir)).toBe('ok')
       })
@@ -33,7 +34,7 @@ describe('checkLockfileStatus()', () => {
 
     it('does not call displayLockfileWarning', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
-        await writeFile(path.join(tmpDir, 'yarn.lock'), '')
+        await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
         const outputMock = outputMocker.mockAndCaptureOutput()
 
         await checkLockfileStatus(tmpDir)
@@ -49,7 +50,7 @@ describe('checkLockfileStatus()', () => {
 
       it('returns "ignored"', async () => {
         await inTemporaryDirectory(async (tmpDir) => {
-          await writeFile(path.join(tmpDir, 'yarn.lock'), '')
+          await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
 
           expect(await checkLockfileStatus(tmpDir)).toBe('ignored')
         })
@@ -57,7 +58,7 @@ describe('checkLockfileStatus()', () => {
 
       it('renders a warning', async () => {
         await inTemporaryDirectory(async (tmpDir) => {
-          await writeFile(path.join(tmpDir, 'yarn.lock'), '')
+          await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
           const outputMock = outputMocker.mockAndCaptureOutput()
 
           await checkLockfileStatus(tmpDir)
@@ -86,8 +87,8 @@ describe('checkLockfileStatus()', () => {
   describe('when there are multiple lockfiles', () => {
     it('returns "multiple"', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
-        await writeFile(path.join(tmpDir, 'yarn.lock'), '')
-        await writeFile(path.join(tmpDir, 'package-lock.json'), '')
+        await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
+        await writeFile(joinPath(tmpDir, 'package-lock.json'), '')
 
         expect(await checkLockfileStatus(tmpDir)).toBe('multiple')
       })
@@ -95,8 +96,8 @@ describe('checkLockfileStatus()', () => {
 
     it('renders a warning', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
-        await writeFile(path.join(tmpDir, 'yarn.lock'), '')
-        await writeFile(path.join(tmpDir, 'package-lock.json'), '')
+        await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
+        await writeFile(joinPath(tmpDir, 'package-lock.json'), '')
 
         const outputMock = outputMocker.mockAndCaptureOutput()
 

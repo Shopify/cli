@@ -1,7 +1,8 @@
-import {path} from '@shopify/cli-kit'
 import {PackageManager, installNodeModules, PackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
+import {joinPath, moduleDirectory, normalizePath} from '@shopify/cli-kit/node/path'
+import {glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {platform} from 'os'
 
 interface UpdateCLIDependenciesOptions {
@@ -46,9 +47,9 @@ export async function updateCLIDependencies({packageJSON, local}: UpdateCLIDepen
 }
 
 async function packagePath(packageName: string): Promise<string> {
-  const packageAbsolutePath = (await path.findUp(`packages/${packageName}`, {
+  const packageAbsolutePath = (await findPathUp(`packages/${packageName}`, {
     type: 'directory',
-    cwd: path.moduleDirectory(import.meta.url),
+    cwd: moduleDirectory(import.meta.url),
   })) as string
   return `file:${packageAbsolutePath}`
 }
@@ -60,8 +61,8 @@ export async function getDeepInstallNPMTasks({
   from: string
   packageManager: PackageManager
 }): Promise<Task[]> {
-  const root = path.normalize(from)
-  const packageJSONFiles = await path.glob([path.join(root, '**/package.json')])
+  const root = normalizePath(from)
+  const packageJSONFiles = await glob([joinPath(root, '**/package.json')])
 
   return packageJSONFiles.map((filePath) => {
     const folderPath = filePath.replace('package.json', '')

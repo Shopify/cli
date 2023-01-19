@@ -1,9 +1,9 @@
 import {previewInWorker, previewInNode} from '../../services/preview.js'
 import {hydrogenFlags} from '../../flags.js'
-import {path} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class Preview extends Command {
   static description = 'Run a Hydrogen storefront locally in a worker environment.'
@@ -21,7 +21,7 @@ export default class Preview extends Command {
       char: 'e',
       description: 'the file path to your .env',
       default: undefined,
-      parse: (input, _) => Promise.resolve(path.resolve(input)),
+      parse: (input, _) => Promise.resolve(resolvePath(input)),
       env: 'SHOPIFY_FLAG_ENV_PATH',
     }),
     target: Flags.string({
@@ -35,7 +35,7 @@ export default class Preview extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Preview)
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : process.cwd()
     const port = parseInt(flags.port, 10)
     const envPath = flags.env
 

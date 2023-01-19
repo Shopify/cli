@@ -1,8 +1,8 @@
 import {Extension} from './extensions.js'
 import {dotEnvFileNames} from '../../constants.js'
-import {path} from '@shopify/cli-kit'
 import {writeDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {constantize} from '@shopify/cli-kit/common/string'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import type {AppInterface} from './app'
 
 export interface IdentifiersExtensions {
@@ -44,7 +44,7 @@ export async function updateAppIdentifiers(
   let dotenvFile = app.dotenv
   if (!dotenvFile) {
     dotenvFile = {
-      path: path.join(app.directory, dotEnvFileNames.production),
+      path: joinPath(app.directory, dotEnvFileNames.production),
       variables: {},
     }
   }

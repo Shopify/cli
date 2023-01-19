@@ -4,9 +4,9 @@ import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js'
 import {describe, it, expect, beforeEach, afterEach, beforeAll} from 'vitest'
-import {path} from '@shopify/cli-kit'
 import {yarnLockfile, pnpmLockfile, PackageJson, pnpmWorkspaceFile} from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 
 describe('load', () => {
   type BlockType = 'ui' | 'function' | 'theme'
@@ -32,9 +32,9 @@ scopes = "read_products"
   })
 
   const writeConfig = async (appConfiguration: string, packageJson?: PackageJson) => {
-    const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
-    const packageJsonPath = path.join(tmpDir, 'package.json')
-    const webDirectory = path.join(tmpDir, blocks.web.directoryName)
+    const appConfigurationPath = joinPath(tmpDir, configurationFileNames.app)
+    const packageJsonPath = joinPath(tmpDir, 'package.json')
+    const webDirectory = joinPath(tmpDir, blocks.web.directoryName)
     const webConfiguration = `
     type = "backend"
 
@@ -48,13 +48,13 @@ scopes = "read_products"
       JSON.stringify(packageJson ?? {name: 'my_app', dependencies: {}, devDependencies: {}}),
     )
     await mkdir(webDirectory)
-    await writeFile(path.join(webDirectory, blocks.web.configurationName), webConfiguration)
+    await writeFile(joinPath(webDirectory, blocks.web.configurationName), webConfiguration)
 
     return {webDirectory, appConfigurationPath}
   }
 
   const blockPath = (name: string) => {
-    return path.join(tmpDir, blocks.extensions.directoryName, name)
+    return joinPath(tmpDir, blocks.extensions.directoryName, name)
   }
 
   const blockConfigurationPath = ({
@@ -68,8 +68,8 @@ scopes = "read_products"
   }) => {
     const configurationName = blocks.extensions.configurationName[blockType]
     return directory
-      ? path.join(directory, configurationName)
-      : path.join(tmpDir, blocks.extensions.directoryName, name, configurationName)
+      ? joinPath(directory, configurationName)
+      : joinPath(tmpDir, blocks.extensions.directoryName, name, configurationName)
   }
 
   const makeBlockDir = async ({
@@ -81,9 +81,9 @@ scopes = "read_products"
     name: string
     directory?: string
   }) => {
-    const dirname = path.dirname(blockConfigurationPath({blockType, name, directory}))
-    await mkdir(dirname)
-    return dirname
+    const directoryName = dirname(blockConfigurationPath({blockType, name, directory}))
+    await mkdir(directoryName)
+    return directoryName
   }
 
   const writeBlockConfig = async ({
@@ -159,7 +159,7 @@ scopes = "read_products"
   it('defaults to yarn as the package manager when yarn.lock is present, the configuration is valid, and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
-    const yarnLockPath = path.join(tmpDir, yarnLockfile)
+    const yarnLockPath = joinPath(tmpDir, yarnLockfile)
     await writeFile(yarnLockPath, '')
 
     // When
@@ -172,7 +172,7 @@ scopes = "read_products"
   it('defaults to pnpm as the package manager when pnpm lockfile is present, the configuration is valid, and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
-    const pnpmLockPath = path.join(tmpDir, pnpmLockfile)
+    const pnpmLockPath = joinPath(tmpDir, pnpmLockfile)
     await writeFile(pnpmLockPath, '')
 
     // When
@@ -212,7 +212,7 @@ scopes = "read_products"
   it('identifies if the app uses pnpm workspaces', async () => {
     // Given
     await writeConfig(appConfiguration)
-    const pnpmWorkspaceFilePath = path.join(tmpDir, pnpmWorkspaceFile)
+    const pnpmWorkspaceFilePath = joinPath(tmpDir, pnpmWorkspaceFile)
     await writeFile(pnpmWorkspaceFilePath, '')
 
     // When
@@ -248,7 +248,7 @@ scopes = "read_products"
   it('loads the app with web blocks', async () => {
     // Given
     const {webDirectory} = await writeConfig(appConfiguration)
-    await moveFile(webDirectory, path.join(tmpDir, 'we_check_everywhere'))
+    await moveFile(webDirectory, joinPath(tmpDir, 'we_check_everywhere'))
 
     // When
     const app = await load({directory: tmpDir, specifications})
@@ -264,7 +264,7 @@ scopes = "read_products"
     scopes = ""
     web_directories = ["must_be_here"]
     `)
-    await moveFile(webDirectory, path.join(tmpDir, 'must_be_here'))
+    await moveFile(webDirectory, joinPath(tmpDir, 'must_be_here'))
 
     // When
     const app = await load({directory: tmpDir, specifications})
@@ -279,7 +279,7 @@ scopes = "read_products"
     scopes = ""
     web_directories = ["must_be_here"]
     `)
-    await moveFile(webDirectory, path.join(tmpDir, 'cannot_be_here'))
+    await moveFile(webDirectory, joinPath(tmpDir, 'cannot_be_here'))
 
     // When
     const app = await load({directory: tmpDir, specifications})
@@ -304,7 +304,7 @@ scopes = "read_products"
       blockConfiguration,
       name: 'my-extension',
     })
-    await writeFile(path.join(blockPath('my-extension'), 'index.js'), '')
+    await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
     // When
     const app = await load({directory: tmpDir, specifications})
@@ -331,7 +331,7 @@ scopes = "read_products"
       blockConfiguration,
       name: 'my-extension',
     })
-    await writeFile(path.join(blockPath('my-extension'), 'index.js'), '')
+    await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
     // When
     const app = await load({directory: tmpDir, specifications})
@@ -348,7 +348,7 @@ scopes = "read_products"
     scopes = ""
     extension_directories = ["custom_extension"]
     `)
-    const customExtensionDirectory = path.join(tmpDir, 'custom_extension')
+    const customExtensionDirectory = joinPath(tmpDir, 'custom_extension')
     await mkdir(customExtensionDirectory)
 
     const blockConfiguration = `
@@ -361,7 +361,7 @@ scopes = "read_products"
       name: 'custom-extension',
       directory: customExtensionDirectory,
     })
-    await writeFile(path.join(customExtensionDirectory, 'index.js'), '')
+    await writeFile(joinPath(customExtensionDirectory, 'index.js'), '')
 
     // When
     const app = await load({directory: tmpDir, specifications})
@@ -384,7 +384,7 @@ scopes = "read_products"
       blockConfiguration,
       name: 'my-extension',
     })
-    await writeFile(path.join(blockPath('my-extension'), 'index.js'), '')
+    await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
     // When
     const app = await load({directory: blockDir, specifications})
@@ -408,7 +408,7 @@ scopes = "read_products"
       blockConfiguration,
       name: 'my_extension_1',
     })
-    await writeFile(path.join(blockPath('my_extension_1'), 'index.js'), '')
+    await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
 
     blockConfiguration = `
       name = "my_extension_2"
@@ -419,7 +419,7 @@ scopes = "read_products"
       blockConfiguration,
       name: 'my_extension_2',
     })
-    await writeFile(path.join(blockPath('my_extension_2'), 'index.js'), '')
+    await writeFile(joinPath(blockPath('my_extension_2'), 'index.js'), '')
 
     // When
     const app = await load({directory: tmpDir, specifications})
@@ -449,8 +449,8 @@ scopes = "read_products"
           blockConfiguration,
           name: `my_extension_${index}`,
         })
-        const sourceAbsolutePath = path.join(blockPath(`my_extension_${index}`), sourcePath)
-        await mkdir(path.dirname(sourceAbsolutePath))
+        const sourceAbsolutePath = joinPath(blockPath(`my_extension_${index}`), sourcePath)
+        await mkdir(dirname(sourceAbsolutePath))
         await writeFile(sourceAbsolutePath, '')
       }),
     )
@@ -662,7 +662,7 @@ scopes = "read_products"
 
   it(`updates metadata after loading`, async () => {
     const {webDirectory} = await writeConfig(appConfiguration)
-    await writeFile(path.join(webDirectory, 'package.json'), JSON.stringify({}))
+    await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
 
     await load({directory: tmpDir, specifications})
 
@@ -676,7 +676,7 @@ scopes = "read_products"
       dependencies: {},
       devDependencies: {},
     })
-    await writeFile(path.join(webDirectory, 'package.json'), JSON.stringify({}))
+    await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
 
     await load({directory: tmpDir, specifications})
 
@@ -696,7 +696,7 @@ scopes = "read_products"
         blockConfiguration,
         name: 'my-extension',
       })
-      await writeFile(path.join(blockPath('my-extension'), 'index.js'), '')
+      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
       // When
       await expect(load({directory: tmpDir, specifications})).resolves.toBeDefined()
@@ -718,7 +718,7 @@ scopes = "read_products"
         blockConfiguration,
         name: 'my-extension',
       })
-      await writeFile(path.join(blockPath('my-extension'), 'index.js'), '')
+      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
       // When
       await expect(load({directory: tmpDir, specifications})).resolves.toBeDefined()
@@ -738,7 +738,7 @@ scopes = "read_products"
         blockConfiguration,
         name: 'my-extension',
       })
-      await writeFile(path.join(blockPath('my-extension'), 'index.js'), '')
+      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
       // When
       await expect(load({directory: tmpDir, specifications})).rejects.toThrow(
@@ -760,7 +760,7 @@ scopes = "read_products"
         blockConfiguration,
         name: 'my-extension',
       })
-      await writeFile(path.join(blockPath('my-extension'), 'index.js'), '')
+      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
       // When
       await expect(load({directory: tmpDir, specifications})).rejects.toThrow(
@@ -782,7 +782,7 @@ scopes = "read_products"
         blockConfiguration,
         name: 'my-extension',
       })
-      await writeFile(path.join(blockPath('my-extension'), 'index.js'), '')
+      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
       // When
       await expect(load({directory: tmpDir, specifications})).rejects.toThrow(
@@ -804,7 +804,7 @@ scopes = "read_products"
         blockConfiguration,
         name: 'my-extension',
       })
-      await writeFile(path.join(blockPath('my-extension'), 'index.js'), '')
+      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
       // When
       await expect(load({directory: tmpDir, specifications})).rejects.toThrow(
@@ -826,7 +826,7 @@ scopes = "read_products"
         blockConfiguration,
         name: 'my-extension',
       })
-      await writeFile(path.join(blockPath('my-extension'), 'index.js'), '')
+      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
       // When
       await expect(load({directory: tmpDir, specifications})).rejects.toThrow(

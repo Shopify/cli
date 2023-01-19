@@ -1,8 +1,9 @@
 import {ExtensionAssetBuildStatus} from './payload/models.js'
 import {GetUIExtensionPayloadOptions} from './payload.js'
 import {UIExtension} from '../../../models/app/extensions.js'
-import {path, output} from '@shopify/cli-kit'
-import {readFile} from '@shopify/cli-kit/node/fs'
+import {output} from '@shopify/cli-kit'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {readFile, glob} from '@shopify/cli-kit/node/fs'
 
 export type Locale = string
 
@@ -16,8 +17,8 @@ export interface Localization {
 }
 
 export async function getLocalizationFilePaths(extension: UIExtension): Promise<string[]> {
-  const localePath = path.join(extension.directory, 'locales')
-  return path.glob([path.join(localePath, '*.json')])
+  const localePath = joinPath(extension.directory, 'locales')
+  return glob([joinPath(localePath, '*.json')])
 }
 
 export async function getLocalization(

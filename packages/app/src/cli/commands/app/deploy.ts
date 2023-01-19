@@ -6,7 +6,8 @@ import Command from '../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../models/extensions/specifications.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {path, metadata} from '@shopify/cli-kit'
+import {metadata} from '@shopify/cli-kit'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class Deploy extends Command {
   static description = 'Deploy your Shopify app.'
@@ -41,7 +42,7 @@ export default class Deploy extends Command {
       cmd_app_reset_used: flags.reset,
     }))
 
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : process.cwd()
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({directory, specifications})
     await deploy({app, apiKey: flags['api-key'], reset: flags.reset, force: flags.force})

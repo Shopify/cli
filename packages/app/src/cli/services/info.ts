@@ -2,10 +2,11 @@ import {outputEnv} from './app/env/show.js'
 import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
 import {configurationFileNames} from '../constants.js'
-import {output, path, store} from '@shopify/cli-kit'
+import {output, store} from '@shopify/cli-kit'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {linesToColumns} from '@shopify/cli-kit/common/string'
+import {relativePath} from '@shopify/cli-kit/node/path'
 
 export type Format = 'json' | 'text'
 interface InfoOptions {
@@ -145,11 +146,11 @@ class AppInfo {
     const sublevels: [string, string][] = []
     this.app.webs.forEach((web) => {
       if (web.configuration && web.configuration.type) {
-        sublevels.push([`  📂 ${web.configuration.type}`, path.relative(this.app.directory, web.directory)])
+        sublevels.push([`  📂 ${web.configuration.type}`, relativePath(this.app.directory, web.directory)])
       } else if (this.app.errors) {
         const error = this.app.errors.getError(`${web.directory}/${configurationFileNames.web}`)
         if (error) {
-          sublevels.push([`  📂 ${UNKNOWN_TEXT}`, path.relative(this.app.directory, web.directory)])
+          sublevels.push([`  📂 ${UNKNOWN_TEXT}`, relativePath(this.app.directory, web.directory)])
           errors.push(error)
         }
       }
@@ -163,8 +164,8 @@ class AppInfo {
   uiExtensionSubSection(extension: UIExtension): string {
     const config = extension.configuration
     const details = [
-      [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
-      ['     config file', path.relative(extension.directory, extension.configurationPath)],
+      [`📂 ${config.name}`, relativePath(this.app.directory, extension.directory)],
+      ['     config file', relativePath(extension.directory, extension.configurationPath)],
     ]
     if (config && config.metafields?.length) {
       details.push(['     metafields', `${config.metafields.length}`])
@@ -176,8 +177,8 @@ class AppInfo {
   functionExtensionSubSection(extension: FunctionExtension): string {
     const config = extension.configuration
     const details = [
-      [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
-      ['     config file', path.relative(extension.directory, extension.configurationPath)],
+      [`📂 ${config.name}`, relativePath(this.app.directory, extension.directory)],
+      ['     config file', relativePath(extension.directory, extension.configurationPath)],
     ]
 
     return `\n${linesToColumns(details)}`
@@ -186,8 +187,8 @@ class AppInfo {
   themeExtensionSubSection(extension: ThemeExtension): string {
     const config = extension.configuration
     const details = [
-      [`📂 ${config.name}`, path.relative(this.app.directory, extension.directory)],
-      ['     config file', path.relative(extension.directory, extension.configurationPath)],
+      [`📂 ${config.name}`, relativePath(this.app.directory, extension.directory)],
+      ['     config file', relativePath(extension.directory, extension.configurationPath)],
     ]
 
     return `\n${linesToColumns(details)}`
@@ -197,8 +198,8 @@ class AppInfo {
     const error = this.app.errors?.getError(extension.configurationPath)
     if (!error) return ''
     const details = [
-      [`📂 ${extension.configuration?.type}`, path.relative(this.app.directory, extension.directory)],
-      ['     config file', path.relative(extension.directory, extension.configurationPath)],
+      [`📂 ${extension.configuration?.type}`, relativePath(this.app.directory, extension.directory)],
+      ['     config file', relativePath(extension.directory, extension.configurationPath)],
     ]
     const formattedError = this.formattedError(error)
     return `\n${linesToColumns(details)}\n${formattedError}`

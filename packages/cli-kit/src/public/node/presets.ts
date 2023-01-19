@@ -1,7 +1,7 @@
 import {decodeToml} from './toml.js'
-import {fileExists, readFile} from './fs.js'
+import {fileExists, readFile, findPathUp} from './fs.js'
+import {joinPath} from './path.js'
 import {JsonMap} from '../../private/common/json.js'
-import {findUp, join as pathJoin} from '../../path.js'
 
 export const presetsFilename = 'shopify.presets.toml'
 
@@ -11,12 +11,12 @@ export interface Presets {
 export async function loadPresetsFromDirectory(dir: string, opts?: {findUp: boolean}): Promise<Presets> {
   let presetsFilePath: string | undefined
   if (opts?.findUp) {
-    presetsFilePath = await findUp(presetsFilename, {
+    presetsFilePath = await findPathUp(presetsFilename, {
       cwd: dir,
       type: 'file',
     })
   } else {
-    const allowedPresetsFilePath = pathJoin(dir, presetsFilename)
+    const allowedPresetsFilePath = joinPath(dir, presetsFilename)
     if (await fileExists(allowedPresetsFilePath)) {
       presetsFilePath = allowedPresetsFilePath
     }

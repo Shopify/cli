@@ -6,11 +6,12 @@ import {
   loadUIExtensionSpecificiationsFromPlugins,
   loadFunctionSpecificationsFromPlugins,
 } from '../../private/plugins/extension.js'
-import {path} from '@shopify/cli-kit'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {memoize} from '@shopify/cli-kit/common/function'
 import {Config} from '@oclif/core'
 import {isShopify} from '@shopify/cli-kit/node/environment/local'
+import {joinPath, dirname} from '@shopify/cli-kit/node/path'
+import {glob} from '@shopify/cli-kit/node/fs'
 import {fileURLToPath} from 'url'
 
 export async function loadUIExtensionSpecifications(config: Config): Promise<UIExtensionSpec[]> {
@@ -66,8 +67,8 @@ async function loadSpecifications(directoryName: string) {
    * transform the TS module into a JS one before loading it. Hence the inclusion of .ts
    * in the list of files.
    */
-  const url = path.join(path.dirname(fileURLToPath(import.meta.url)), path.join(directoryName, '*.{js,ts}'))
-  let files = await path.glob(url, {ignore: ['**.d.ts', '**.test.ts']})
+  const url = joinPath(dirname(fileURLToPath(import.meta.url)), joinPath(directoryName, '*.{js,ts}'))
+  let files = await glob(url, {ignore: ['**.d.ts', '**.test.ts']})
 
   // From Node 18, all windows paths must start with file://
   const {platform} = platformAndArch()

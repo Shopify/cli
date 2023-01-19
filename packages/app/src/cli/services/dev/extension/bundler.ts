@@ -1,8 +1,9 @@
 import {ExtensionsPayloadStore} from './payload/store.js'
 import {ExtensionDevOptions} from '../extension.js'
 import {bundleExtension} from '../../extensions/bundle.js'
-import {path, output} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {AbortController} from '@shopify/cli-kit/node/abort'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 export interface WatchEvent {
   path: string
@@ -63,7 +64,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
     )
 
     const localeWatcher = chokidar
-      .watch(path.join(extension.directory, 'locales', '**.json'))
+      .watch(joinPath(extension.directory, 'locales', '**.json'))
       .on('change', (event, path) => {
         output.debug(`Locale file at path ${path} changed`, options.devOptions.stdout)
         options.payloadStore

@@ -6,7 +6,8 @@ import Command from '../../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../../models/extensions/specifications.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {output, path} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class EnvPull extends Command {
   static description = 'Pull app and extensions environment variables.'
@@ -24,8 +25,8 @@ export default class EnvPull extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(EnvPull)
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const envFile = path.resolve(directory, flags['env-file'])
+    const directory = flags.path ? resolvePath(flags.path) : process.cwd()
+    const envFile = resolvePath(directory, flags['env-file'])
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({directory, specifications, mode: 'report'})
     output.info(await pullEnv(app, {envFile}))

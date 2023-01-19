@@ -1,9 +1,9 @@
 import {updateAppIdentifiers, getAppIdentifiers} from './identifiers.js'
 import {testApp, testUIExtension} from './app.test-data.js'
 import {describe, expect, test} from 'vitest'
-import {path} from '@shopify/cli-kit'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {fileExists, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 describe('updateAppIdentifiers', () => {
   test("persists the ids that are not environment variables in the system and it's deploy", async () => {
@@ -32,7 +32,7 @@ describe('updateAppIdentifiers', () => {
       })
 
       // Then
-      const dotEnvFile = await readAndParseDotEnv(path.join(tmpDir, '.env'))
+      const dotEnvFile = await readAndParseDotEnv(joinPath(tmpDir, '.env'))
       expect(dotEnvFile.variables.SHOPIFY_API_KEY).toEqual('FOO')
       expect(dotEnvFile.variables.SHOPIFY_MY_EXTENSION_ID).toEqual('BAR')
       expect(gotApp.dotenv?.variables.SHOPIFY_API_KEY).toEqual('FOO')
@@ -69,7 +69,7 @@ describe('updateAppIdentifiers', () => {
       )
 
       // Then
-      const dotEnvFilePath = path.join(tmpDir, '.env')
+      const dotEnvFilePath = joinPath(tmpDir, '.env')
       if (await fileExists(dotEnvFilePath)) {
         const dotEnvFile = await readAndParseDotEnv(dotEnvFilePath)
         expect(dotEnvFile.variables.SHOPIFY_API_KEY).toBeUndefined()
@@ -91,7 +91,7 @@ describe('getAppIdentifiers', () => {
       const app = testApp({
         directory: tmpDir,
         dotenv: {
-          path: path.join(tmpDir, '.env'),
+          path: joinPath(tmpDir, '.env'),
           variables: {SHOPIFY_API_KEY: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
         },
         extensions: {

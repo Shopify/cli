@@ -3,9 +3,9 @@ import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {path} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {isAbsolutePath, resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class Pull extends ThemeCommand {
   static description = 'Download your remote theme files locally.'
@@ -59,8 +59,8 @@ export default class Pull extends ThemeCommand {
     const {flags} = await this.parse(Pull)
 
     let validPath = flags.path
-    if (!path.isAbsolute(validPath)) {
-      validPath = path.resolve(flags.path)
+    if (!isAbsolutePath(validPath)) {
+      validPath = resolvePath(flags.path)
     }
 
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Pull.cli2Flags})

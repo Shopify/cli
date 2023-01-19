@@ -1,6 +1,5 @@
 export * as error from './error.js'
 export * as output from './output.js'
-export * as path from './path.js'
 export * as plugins from './plugins.js'
 export * as schema from './schema.js'
 export * as store from './store.js'

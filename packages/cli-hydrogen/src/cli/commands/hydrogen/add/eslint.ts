@@ -3,8 +3,8 @@ import {addESLint} from '../../../services/eslint.js'
 import {load as loadApp, HydrogenApp} from '../../../models/hydrogen.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {path} from '@shopify/cli-kit'
 import Command from '@shopify/cli-kit/node/base-command'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class AddESLint extends Command {
   static flags = {
@@ -23,7 +23,7 @@ export default class AddESLint extends Command {
     const {
       flags: {path: pathFlag, install, force},
     } = await this.parse(AddESLint)
-    const directory = pathFlag ? path.resolve(pathFlag) : process.cwd()
+    const directory = pathFlag ? resolvePath(pathFlag) : process.cwd()
 
     const app: HydrogenApp = await loadApp(directory)
 

@@ -1,11 +1,12 @@
 import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
 import {blocks, defaultFunctionsFlavors} from '../../constants.js'
-import {schema, path, error} from '@shopify/cli-kit'
+import {schema, error} from '@shopify/cli-kit'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {exec} from '@shopify/cli-kit/node/system'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
+import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 
 // Base config type that all config schemas must extend
@@ -58,8 +59,8 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
     this.configurationPath = options.configurationPath
     this.specification = options.specification
     this.directory = options.directory
-    this.localIdentifier = path.basename(options.directory)
-    this.idEnvironmentVariableName = `SHOPIFY_${constantize(path.basename(this.directory))}_ID`
+    this.localIdentifier = basename(options.directory)
+    this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
   }
 
   get graphQLType() {
@@ -83,12 +84,12 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
   }
 
   inputQueryPath() {
-    return path.join(this.directory, 'input.graphql')
+    return joinPath(this.directory, 'input.graphql')
   }
 
   buildWasmPath() {
-    const relativePath = this.configuration.build.path ?? path.join('dist', 'index.wasm')
-    return path.join(this.directory, relativePath)
+    const relativePath = this.configuration.build.path ?? joinPath('dist', 'index.wasm')
+    return joinPath(this.directory, relativePath)
   }
 
   async build(stdout: Writable, stderr: Writable, signal: AbortSignal) {

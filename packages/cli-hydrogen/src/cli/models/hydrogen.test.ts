@@ -5,9 +5,9 @@ import {genericConfigurationFileNames} from '../constants.js'
 // @ts-ignore
 import {loadConfig} from '../utilities/load-config.js'
 import {describe, vi, it, expect} from 'vitest'
-import {path} from '@shopify/cli-kit'
 import {pnpmLockfile, yarnLockfile} from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, extname} from '@shopify/cli-kit/node/path'
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-ignore
@@ -33,14 +33,14 @@ describe('load', () => {
     appConfiguration: HydrogenConfig = {},
     packageJSON: PackageJSONContents = {},
   ) => {
-    const packageJsonPath = path.join(directory, 'package.json')
+    const packageJsonPath = joinPath(directory, 'package.json')
     await writeFile(
       packageJsonPath,
       JSON.stringify({name: 'hydrogen-app', dependencies: {}, devDependencies: {}, ...packageJSON}, null, 2),
     )
 
     if (appConfiguration) {
-      const appConfigurationPath = path.join(directory, configFileName)
+      const appConfigurationPath = joinPath(directory, configFileName)
       let configContent = JSON.stringify(appConfiguration, null, 2)
 
       vi.mocked(loadConfig).mockResolvedValue({
@@ -48,7 +48,7 @@ describe('load', () => {
         configurationPath: appConfigurationPath,
       })
 
-      switch (path.extname(configFileName)) {
+      switch (extname(configFileName)) {
         case '.json':
           configContent = JSON.stringify(appConfiguration, null, 2)
           break
@@ -96,7 +96,7 @@ describe('load', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createHydrogenProject(tmpDir)
-      const yarnLockPath = path.join(tmpDir, yarnLockfile)
+      const yarnLockPath = joinPath(tmpDir, yarnLockfile)
       await writeFile(yarnLockPath, '')
 
       // When
@@ -111,7 +111,7 @@ describe('load', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createHydrogenProject(tmpDir)
-      const pnpmLockPath = path.join(tmpDir, pnpmLockfile)
+      const pnpmLockPath = joinPath(tmpDir, pnpmLockfile)
       await writeFile(pnpmLockPath, '')
 
       // When
@@ -190,7 +190,7 @@ describe('load', () => {
           },
         },
       )
-      const tsconfigPath = path.join(tmpDir, genericConfigurationFileNames.typescript.config)
+      const tsconfigPath = joinPath(tmpDir, genericConfigurationFileNames.typescript.config)
       await writeFile(tsconfigPath, '')
 
       // When

@@ -1,11 +1,11 @@
 import {themeFlags} from '../../flags.js'
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {path} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class Share extends ThemeCommand {
   static description =
@@ -26,7 +26,7 @@ export default class Share extends ThemeCommand {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Share)
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : process.cwd()
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Share.cli2Flags})
 
     const store = getThemeStore(flags)
