@@ -100,16 +100,14 @@ export async function readFile(path: string, options: ReadOptions = {encoding: '
 }
 
 /**
- * Synchronously reads a file and returns its content as a string.
+ * Synchronously reads a file and returns its content as a buffer.
  *
  * @param path - Path to the file to read.
- * @param options - Options to read the file with (defaults to utf-8 encoding).
  * @returns The content of the file.
  */
-export function readSync(path: string, options: object = {encoding: 'utf-8'}): string {
+export function readSync(path: string): Buffer {
   debug(outputContent`Sync-reading the content of file at ${token.path(path)}...`)
-  const content = fsReadFileSync(path, options)
-  return content.toString()
+  return fsReadFileSync(path)
 }
 
 /**
