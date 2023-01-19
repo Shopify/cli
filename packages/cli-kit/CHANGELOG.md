@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.36.1
+
+### Patch Changes
+
+- d81271abd: Fix performance import for Node 14
+
 ## 3.36.0
 
 ### Minor Changes
