@@ -1,5 +1,11 @@
 # @shopify/ui-extensions-server-kit
 
+## 4.1.0
+
+### Minor Changes
+
+- 335a96a24: Improved dev console with new UX & functionality. New functionality: Preview app link and QRCode, better post purchase extension instructions, copy button for all preview links, support for upcoming UI extension changes
+
 ## 4.0.1
 
 ### Patch Changes
