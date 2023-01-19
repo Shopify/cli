@@ -1,14 +1,14 @@
 import {reportAnalyticsEvent} from './analytics.js'
 import * as path from './path.js'
-import {getEnvironmentData} from '../../private/node/analytics.js'
 import {
-  AbortSilent,
+  AbortSilentError,
   CancelExecution,
-  mapper as errorMapper,
-  shouldReport as shouldReportError,
+  errorMapper,
+  shouldReportError,
   handler,
   cleanSingleStackTracePath,
-} from '../../error.js'
+} from './error.js'
+import {getEnvironmentData} from '../../private/node/analytics.js'
 import {debug, info} from '../../output.js'
 import * as metadata from '../../metadata.js'
 import {fanoutHooks} from '../../plugins.js'
@@ -20,7 +20,7 @@ import Bugsnag, {Event} from '@bugsnag/js'
 import {realpath} from 'fs/promises'
 
 export function errorHandler(
-  error: (CancelExecution | AbortSilent) & {exitCode?: number | undefined},
+  error: (CancelExecution | AbortSilentError) & {exitCode?: number | undefined},
   config?: Interfaces.Config,
 ): void
 export function errorHandler(error: Error & {exitCode?: number | undefined}, config?: Interfaces.Config): Promise<void>
@@ -29,7 +29,7 @@ export function errorHandler(error: Error & {exitCode?: number | undefined}, con
     if (error.message && error.message !== '') {
       info(`✨  ${error.message}`)
     }
-  } else if (error instanceof AbortSilent) {
+  } else if (error instanceof AbortSilentError) {
     process.exit(1)
   } else {
     return errorMapper(error)

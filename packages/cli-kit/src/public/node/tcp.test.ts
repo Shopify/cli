@@ -1,6 +1,6 @@
 import {getAvailableTCPPort} from './tcp.js'
 import * as system from './system.js'
-import {Abort} from '../../error.js'
+import {AbortError} from './error.js'
 import * as port from 'get-port-please'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -33,6 +33,6 @@ describe('getAvailableTCPPort', () => {
     }
 
     // When/Then
-    await expect(() => getAvailableTCPPort()).rejects.toThrowError(new Abort(errorMessage))
+    await expect(() => getAvailableTCPPort()).rejects.toThrowError(new AbortError(errorMessage))
   })
 })

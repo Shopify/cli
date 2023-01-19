@@ -1,6 +1,7 @@
 import {FunctionExtension} from '../../models/app/extensions.js'
-import {output, error} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {fileExists} from '@shopify/cli-kit/node/fs'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 const extensionLine = (extension: {id: string; path: string}): string => {
   return output.stringifyMessage(
@@ -28,7 +29,7 @@ export async function validateFunctionsWasmPresence(extensions: FunctionExtensio
   ).filter((extension) => extension !== undefined) as {id: string; path: string}[]
   if (extensionsWithoutWasm.length !== 0) {
     const extensionLines = output.token.raw(extensionsWithoutWasm.map(extensionLine).join('\n'))
-    throw new error.Abort(
+    throw new AbortError(
       output.content`The following function extensions haven't compiled the wasm in the expected path:
     ${extensionLines}
         `,

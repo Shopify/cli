@@ -1,8 +1,9 @@
-import {error, output} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {fileExists, removeFileSync, writeFile, findPathUp} from '@shopify/cli-kit/node/fs'
 import {exec} from '@shopify/cli-kit/node/system'
 import {resolvePath, dirname} from '@shopify/cli-kit/node/path'
+import {BugError} from '@shopify/cli-kit/node/error'
 import {fileURLToPath} from 'url'
 
 interface PreviewOptions {
@@ -85,7 +86,7 @@ export async function previewInWorker({directory, port, envPath}: PreviewOptions
   })
 }
 
-export const OxygenPreviewExecutableNotFound = new error.Bug(
+export const OxygenPreviewExecutableNotFound = new BugError(
   'Could not locate the executable file to run Oxygen locally.',
 )
 

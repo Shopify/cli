@@ -1,4 +1,3 @@
-export * as error from './error.js'
 export * as output from './output.js'
 export * as plugins from './plugins.js'
 export * as schema from './schema.js'

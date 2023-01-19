@@ -3,8 +3,9 @@ import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {AppInterface} from '../../models/app/app.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
-import {output, error} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error.js'
 
 export interface EnsureDeploymentIdsPresenceOptions {
   app: AppInterface
@@ -55,7 +56,7 @@ function handleIdsError(errorType: MatchingError, appName: string, packageManage
   switch (errorType) {
     case 'pending-remote':
     case 'invalid-environment':
-      throw new error.Abort(
+      throw new AbortError(
         `Deployment failed because this local project doesn't seem to match the app "${appName}" in Shopify Partners.`,
         `If you didn't intend to select this app, run ${
           output.content`${output.token.packagejsonScript(packageManager, 'deploy', '--reset')}`.value
@@ -65,6 +66,6 @@ function handleIdsError(errorType: MatchingError, appName: string, packageManage
   you've selected. You may need to generate missing extensions.`,
       )
     case 'user-cancelled':
-      throw new error.AbortSilent()
+      throw new AbortSilentError()
   }
 }

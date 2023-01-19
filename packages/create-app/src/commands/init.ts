@@ -2,9 +2,10 @@ import initPrompt, {templateURLMap} from '../prompts/init.js'
 import initService from '../services/init.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {error, output} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import Command from '@shopify/cli-kit/node/base-command'
 import {resolvePath} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
 // eslint-disable-next-line node/prefer-global/url
 import {URL} from 'url'
 
@@ -72,12 +73,12 @@ export default class Init extends Command {
 
     const url = this.parseURL(template)
     if (url && url.origin !== 'https://github.com')
-      throw new error.Abort(
+      throw new AbortError(
         'Only GitHub repository references are supported, ' +
           'e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]',
       )
     if (!url && !Object.keys(templateURLMap).includes(template))
-      throw new error.Abort(
+      throw new AbortError(
         output.content`Only ${Object.keys(templateURLMap)
           .map((alias) => output.content`${output.token.yellow(alias)}`.value)
           .join(', ')} template aliases are supported`,

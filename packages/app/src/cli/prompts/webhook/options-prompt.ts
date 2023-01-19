@@ -12,7 +12,7 @@ import {
   deliveryMethodForAddress,
   isAddressAllowedForDeliveryMethod,
 } from '../../services/webhook/trigger-options.js'
-import {error} from '@shopify/cli-kit'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 /**
  * Flags collected from the command line parameters
@@ -58,7 +58,7 @@ export async function optionsPrompt(
     if (availableVersions.includes(passedApiVersion)) {
       options.apiVersion = passedApiVersion
     } else {
-      throw new error.Abort(
+      throw new AbortError(
         `Api Version '${passedApiVersion}' does not exist`,
         `Allowed values: ${availableVersions.join(', ')}`,
         ['Try again with a valid api-version value'],
@@ -72,7 +72,7 @@ export async function optionsPrompt(
   const addressPassed = flagPassed(flags.address)
 
   if (methodPassed && !validDeliveryMethodFlag(flags.deliveryMethod)) {
-    throw new error.Abort(
+    throw new AbortError(
       'Invalid Delivery Method passed',
       `${DELIVERY_METHOD.HTTP}, ${DELIVERY_METHOD.PUBSUB}, and ${DELIVERY_METHOD.EVENTBRIDGE} are allowed`,
       ['Try again with a valid delivery method'],
@@ -84,7 +84,7 @@ export async function optionsPrompt(
       options.address = (flags.address as string).trim()
       options.deliveryMethod = inferMethodFromAddress(options.address)
     } else {
-      throw new error.Abort(
+      throw new AbortError(
         "Can't deliver your webhook payload to this address",
         "Run 'shopify webhook trigger --address=<VALUE>' with a valid URL",
         deliveryMethodInstructions(flags.deliveryMethod as string),
@@ -134,7 +134,7 @@ function inferMethodFromAddress(address: string): string {
   const method = deliveryMethodForAddress(address)
 
   if (method === undefined) {
-    throw new error.Abort(
+    throw new AbortError(
       'No delivery method available for the address',
       `Use a valid address for ${DELIVERY_METHOD.HTTP}, ${DELIVERY_METHOD.PUBSUB} or ${DELIVERY_METHOD.EVENTBRIDGE}`,
     )

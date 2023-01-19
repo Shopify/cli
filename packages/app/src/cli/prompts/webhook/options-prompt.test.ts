@@ -2,7 +2,7 @@ import {optionsPrompt, WebhookTriggerFlags} from './options-prompt.js'
 import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, sharedSecretPrompt, topicPrompt} from './trigger.js'
 import {WebhookTriggerOptions} from '../../services/webhook/trigger-options.js'
 import {describe, it, expect, vi, afterEach, beforeEach} from 'vitest'
-import {error} from '@shopify/cli-kit'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit')
@@ -38,7 +38,7 @@ describe('optionsPrompt', () => {
       vi.mocked(apiVersionPrompt).mockResolvedValue(unknownVersion)
 
       // Then when
-      await expect(optionsPrompt({}, [aVersion])).rejects.toThrow(error.Abort)
+      await expect(optionsPrompt({}, [aVersion])).rejects.toThrow(AbortError)
     })
 
     it('collects HTTP localhost params', async () => {
@@ -109,7 +109,7 @@ describe('optionsPrompt', () => {
       }
 
       // Then when
-      await expect(optionsPrompt(flags, [aVersion])).rejects.toThrow(error.Abort)
+      await expect(optionsPrompt(flags, [aVersion])).rejects.toThrow(AbortError)
     })
 
     describe('all params', () => {
@@ -174,7 +174,7 @@ describe('optionsPrompt', () => {
         }
 
         // Then when
-        await expect(optionsPrompt(flags, [aVersion])).rejects.toThrow(error.Abort)
+        await expect(optionsPrompt(flags, [aVersion])).rejects.toThrow(AbortError)
       })
 
       it('fails when delivery method is not valid', async () => {
@@ -188,7 +188,7 @@ describe('optionsPrompt', () => {
         }
 
         // Then when
-        await expect(optionsPrompt(flags, [aVersion])).rejects.toThrow(error.Abort)
+        await expect(optionsPrompt(flags, [aVersion])).rejects.toThrow(AbortError)
       })
     })
 

@@ -2,7 +2,7 @@ import {fetchStoreThemes} from './fetch.js'
 import {fetchThemes} from '../themes-api.js'
 import {Theme} from '../../models/theme.js'
 import {test, vi, describe, expect} from 'vitest'
-import {error} from '@shopify/cli-kit'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 const session = {token: 'token', storeFqdn: 'my-shop.myshopify.com'}
 
@@ -42,7 +42,7 @@ describe('fetchStoreThemes', () => {
       await fetchStoreThemes(session)
 
       // Then
-    }).rejects.toThrowError(error.Abort)
+    }).rejects.toThrowError(AbortError)
   })
 })
 

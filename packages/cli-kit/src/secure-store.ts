@@ -1,5 +1,5 @@
 import {content as outputContent, debug} from './output.js'
-import {Abort} from './error.js'
+import {AbortError} from './public/node/error.js'
 import {keychainConstants} from './private/node/constants.js'
 
 /**
@@ -57,7 +57,7 @@ function createAbort(error: unknown, message: string) {
     newMessage = message.concat(`: ${error.message}`)
     stack = error.stack
   }
-  const abort = new Abort(newMessage)
+  const abort = new AbortError(newMessage)
   abort.stack = stack
   return abort
 }

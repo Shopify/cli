@@ -5,8 +5,7 @@ import {API} from '../../../network/api.js'
 import {identityFqdn} from '../../../public/node/environment/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok, Result} from '../../../public/node/result.js'
-import {AbortError} from '../../../public/node/error.js'
-import {ExtendableError} from '../../../error.js'
+import {AbortError, ExtendableError} from '../../../public/node/error.js'
 
 export class InvalidGrantError extends ExtendableError {}
 export class InvalidRequestError extends ExtendableError {}

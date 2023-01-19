@@ -1,7 +1,6 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
 import cleanup from '../utils/template/cleanup.js'
-
-import {error, output} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {
   findUpAndReadPackageJson,
   packageManager,
@@ -19,6 +18,7 @@ import {downloadGitRepository, initializeGitRepository} from '@shopify/cli-kit/n
 import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {username} from '@shopify/cli-kit/node/os'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 interface InitOptions {
   name: string
@@ -153,7 +153,7 @@ function inferPackageManager(optionsPackageManager: string | undefined): Package
 async function ensureAppDirectoryIsAvailable(directory: string, name: string): Promise<void> {
   const exists = await fileExists(directory)
   if (exists)
-    throw new error.Abort(`\nA directory with this name (${name}) already exists.\nChoose a new name for your app.`)
+    throw new AbortError(`\nA directory with this name (${name}) already exists.\nChoose a new name for your app.`)
 }
 
 export default init

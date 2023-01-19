@@ -1,10 +1,11 @@
 import {themeFlags} from '../flags.js'
-import {store as conf, error, output} from '@shopify/cli-kit'
+import {store as conf, output} from '@shopify/cli-kit'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export function getThemeStore(flags: {store: string | undefined}): string {
   const store = flags.store || conf.getThemeStore()
   if (!store) {
-    throw new error.Abort(
+    throw new AbortError(
       'A store is required',
       `Specify the store passing ${
         output.content`${output.token.genericShellCommand(`--${themeFlags.store.name}={your_store_url}`)}`.value

@@ -4,7 +4,8 @@ import initService from '../services/init.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {errorHandler} from '@shopify/cli-kit/node/error-handler'
 import {Config} from '@oclif/core'
-import {error, output} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 beforeEach(() => {
   vi.mock('../prompts/init')
@@ -51,7 +52,7 @@ describe('create app command', () => {
 
     // Then
     const anyConfig = expect.any(Config)
-    const expectedError = new error.Abort(
+    const expectedError = new AbortError(
       output.content`Only ${Object.keys(templateURLMap)
         .map((alias) => output.content`${output.token.yellow(alias)}`.value)
         .join(', ')} template aliases are supported`,
@@ -65,7 +66,7 @@ describe('create app command', () => {
 
     // Then
     const anyConfig = expect.any(Config)
-    const expectedError = new error.Abort(
+    const expectedError = new AbortError(
       'Only GitHub repository references are supported, ' +
         'e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]',
     )

@@ -6,13 +6,14 @@ import {GenericSpecification} from '../models/app/extensions.js'
 import generateExtensionPrompt from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
 import generateExtensionService, {ExtensionFlavor} from '../services/generate/extension.js'
-import {error, output} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager.js'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isShopify} from '@shopify/cli-kit/node/environment/local'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {RenderAlertOptions, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export interface GenerateOptions {
   directory: string
@@ -38,7 +39,7 @@ async function generate(options: GenerateOptions) {
   if (options.type && !specification) {
     const isShopifolk = await isShopify()
     const tryMsg = isShopifolk ? 'You might need to enable some beta flags on your Organization or App' : undefined
-    throw new error.Abort(
+    throw new AbortError(
       `Unknown extension type: ${options.type}.\nThe following extension types are supported: ${allExternalTypes.join(
         ', ',
       )}`,
@@ -52,7 +53,7 @@ async function generate(options: GenerateOptions) {
     const existing = app.extensionsForType(specification)
     const limit = specification.registrationLimit
     if (existing.length >= limit) {
-      throw new error.Abort(
+      throw new AbortError(
         'Invalid extension type',
         `You can only generate ${limit} extension(s) of type ${specification.externalIdentifier} per app`,
       )
@@ -76,7 +77,7 @@ async function generate(options: GenerateOptions) {
   const {extensionType, extensionFlavor, name} = promptAnswers
   const selectedSpecification = findSpecification(extensionType, specifications)
   if (!selectedSpecification) {
-    throw new error.Abort(`The following extension types are supported: ${allExternalTypes.join(', ')}`)
+    throw new AbortError(`The following extension types are supported: ${allExternalTypes.join(', ')}`)
   }
 
   await metadata.addPublic(() => ({
@@ -113,7 +114,7 @@ function validateExtensionFlavor(specification: GenericSpecification | undefined
 
   const possibleFlavors = specification.supportedFlavors.map((flavor) => flavor.value)
   if (!possibleFlavors.includes(flavor)) {
-    throw new error.Abort(
+    throw new AbortError(
       'Invalid template for extension type',
       `Expected template to be one of the following: ${possibleFlavors.join(', ')}.`,
     )
