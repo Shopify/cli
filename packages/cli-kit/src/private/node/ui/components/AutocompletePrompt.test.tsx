@@ -307,8 +307,7 @@ describe('AutocompletePrompt', async () => {
     `)
 
     await waitForInputsToBeReady()
-    // there is a debounce of 300ms before the search is triggered
-    await sendInputAndWait(renderInstance, 400, 'i')
+    await sendInputAndWaitForContent(renderInstance, 'th[1mi[22mrty-sixth', 'i')
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?: [36mi[7m [27m[39m
@@ -378,7 +377,7 @@ describe('AutocompletePrompt', async () => {
       "
     `)
 
-    await sendInputAndWait(renderInstance, 400, 'i')
+    await sendInputAndWaitForContent(renderInstance, 'th[1mi[22mrty-sixth', 'i')
     await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
     await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
 
@@ -531,9 +530,7 @@ describe('AutocompletePrompt', async () => {
     )
 
     await waitForInputsToBeReady()
-
-    // there is a debounce of 300ms before the search is triggered
-    await sendInputAndWait(renderInstance, 400, 'i')
+    await sendInputAndWaitForContent(renderInstance, 'th[1mi[22mrty-sixth', 'i')
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?: [36mi[7m [27m[39m

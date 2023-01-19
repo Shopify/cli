@@ -1,5 +1,4 @@
 import {isTruthy} from '../private/node/environment/utilities.js'
-import {unstyled} from '../output.js'
 import {render} from 'ink-testing-library'
 
 export function waitForInputsToBeReady() {
@@ -41,7 +40,7 @@ export function waitForContent(
 ) {
   return waitFor(
     () => func(),
-    () => unstyled(renderInstance.lastFrame()!).includes(content),
+    () => renderInstance.lastFrame()!.includes(content),
   )
 }
 
