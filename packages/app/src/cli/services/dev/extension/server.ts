@@ -12,7 +12,7 @@ import {
 } from './server/middlewares.js'
 import {ExtensionsPayloadStore} from './payload/store.js'
 import {ExtensionDevOptions} from '../extension.js'
-import {http} from '@shopify/cli-kit'
+import {createApp, createRouter} from '@shopify/cli-kit/node/http'
 import {createServer} from 'http'
 
 interface SetupHTTPServerOptions {
@@ -21,8 +21,8 @@ interface SetupHTTPServerOptions {
 }
 
 export function setupHTTPServer(options: SetupHTTPServerOptions) {
-  const httpApp = http.createApp()
-  const httpRouter = http.createRouter()
+  const httpApp = createApp()
+  const httpRouter = createRouter()
 
   httpApp.use(getLogMiddleware(options))
   httpApp.use(corsMiddleware)

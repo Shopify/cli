@@ -236,9 +236,19 @@ export interface PackageJson {
   name?: string
 
   /**
+   * The author attribute of the package.json
+   */
+  author?: string
+
+  /**
    * The version attribute of the package.json
    */
   version?: string
+
+  /**
+   * The scripts attribute of the package.json
+   */
+  scripts?: {[key: string]: string}
 
   /**
    * The dependencies attribute of the package.json
@@ -271,6 +281,11 @@ export interface PackageJson {
    * The overrides attribute of the package.json. Only useful when using npm o npmn as package managers
    */
   overrides?: {[key: string]: string}
+
+  /**
+   *  The prettier attribute of the package.json
+   */
+  prettier?: string
 }
 
 /**
@@ -483,7 +498,7 @@ function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: Depend
  * @returns If found, the promise resolves with the path to the
  *  package.json and its content. If not found, it throws a FindUpAndReadPackageJsonNotFoundError error.
  */
-export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{path: string; content: unknown}> {
+export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{path: string; content: PackageJson}> {
   const packageJsonPath = await findPathUp('package.json', {cwd: fromDirectory, type: 'file'})
   if (packageJsonPath) {
     const packageJson = JSON.parse(await readFile(packageJsonPath))
@@ -520,4 +535,16 @@ export async function addResolutionOrOverride(directory: string, dependencies: {
 async function getLatestNPMPackageVersion(name: string) {
   debug(content`Getting the latest version of NPM package: ${token.raw(name)}`)
   return latestVersion(name)
+}
+
+/**
+ * Writes the package.json file to the given directory.
+ *
+ * @param directory - Directory where the package.json file will be written.
+ * @param packageJSON - Package.json file to write.
+ */
+export async function writePackageJSON(directory: string, packageJSON: PackageJson): Promise<void> {
+  debug(content`JSON-encoding and writing content to package.json at ${token.path(directory)}...`)
+  const packagePath = joinPath(directory, 'package.json')
+  await writeFile(packagePath, JSON.stringify(packageJSON, null, 2))
 }

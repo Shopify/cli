@@ -6,11 +6,11 @@ import {
 } from './graphql/create_deployment.js'
 import {UnrecoverableError, WebPageNotAvailable, TooManyRequestsError} from './error.js'
 import {UploadDeploymentQuery} from './graphql/upload_deployment.js'
-import {http} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {ClientError} from 'graphql-request'
 import {uploadOxygenDeploymentFile, oxygenRequest} from '@shopify/cli-kit/node/api/oxygen'
 import {inTemporaryDirectory, createFileReadStream} from '@shopify/cli-kit/node/fs'
+import {fetch, formData} from '@shopify/cli-kit/node/http'
 
 export const createDeployment = async (config: ReqDeployConfig): Promise<CreateDeploymentResponse> => {
   const variables = {
@@ -59,12 +59,12 @@ export const uploadDeployment = async (config: ReqDeployConfig, deploymentID: st
     const distZipPath = `${tmpDir}/dist.zip`
     await zip(distPath, distZipPath)
 
-    const formData = http.formData()
-    formData.append('operations', buildOperationsString(deploymentID))
-    formData.append('map', JSON.stringify({'0': ['variables.file']}))
-    formData.append('0', createFileReadStream(distZipPath), {filename: distZipPath})
+    const form = formData()
+    form.append('operations', buildOperationsString(deploymentID))
+    form.append('map', JSON.stringify({'0': ['variables.file']}))
+    form.append('0', createFileReadStream(distZipPath), {filename: distZipPath})
 
-    const response = await uploadOxygenDeploymentFile(config.oxygenAddress, config.deploymentToken, formData)
+    const response = await uploadOxygenDeploymentFile(config.oxygenAddress, config.deploymentToken, form)
     if (!response.ok) {
       if (response.status === 429) {
         throw TooManyRequestsError()
@@ -94,7 +94,7 @@ export const uploadDeployment = async (config: ReqDeployConfig, deploymentID: st
 
 export const healthCheck = async (pingUrl: string) => {
   const url = `${pingUrl}/__health`
-  const result = await http.fetch(url, {method: 'GET'})
+  const result = await fetch(url, {method: 'GET'})
   if (result.status !== 200) throw WebPageNotAvailable()
 }
 

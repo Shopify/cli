@@ -1,4 +1,4 @@
-import {shopifyFetch} from '../../../http.js'
+import {shopifyFetch} from '../http.js'
 import {graphqlRequest, GraphQLVariables} from '../../../private/node/api/graphql.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'
 import FormData from 'form-data'

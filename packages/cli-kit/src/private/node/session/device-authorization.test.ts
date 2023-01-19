@@ -7,14 +7,14 @@ import {clientId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {identityFqdn} from '../../../public/node/environment/fqdn.js'
-import {shopifyFetch} from '../../../http.js'
+import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok} from '../../../public/node/result.js'
 import {describe, expect, it, vi} from 'vitest'
 import {Response} from 'node-fetch'
 
 vi.mock('../../../public/node/environment/fqdn.js')
 vi.mock('./identity')
-vi.mock('../../../http')
+vi.mock('../../../public/node/http.js')
 vi.mock('./exchange.js')
 
 describe('requestDeviceAuthorization', () => {

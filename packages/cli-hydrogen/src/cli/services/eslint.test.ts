@@ -1,14 +1,21 @@
 import {addESLint} from './eslint.js'
 import {genericConfigurationFileNames} from '../constants.js'
 import {HydrogenApp} from '../models/hydrogen.js'
-import {describe, vi, it, expect, beforeEach} from 'vitest'
+import {describe, vi, it, expect, beforeAll} from 'vitest'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions, isVSCode} from '@shopify/cli-kit/node/vscode.js'
 import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
-beforeEach(async () => {
-  vi.mock('@shopify/cli-kit/node/node-package-manager')
+beforeAll(async () => {
+  vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
+    const actual: any = await vi.importActual('@shopify/cli-kit/node/node-package-manager')
+    return {
+      ...actual,
+      writePackageJSON: vi.fn(),
+      addNPMDependenciesWithoutVersionIfNeeded: vi.fn(),
+    }
+  })
   vi.mock('@shopify/cli-kit/node/vscode.js')
 })
 
@@ -74,7 +81,7 @@ describe('addEslint', () => {
       await addESLint({app, ...defaultOptions, install: true})
 
       // Then
-      await expect(addNPMDependenciesWithoutVersionIfNeeded).toHaveBeenCalledWith(
+      await expect(vi.mocked(addNPMDependenciesWithoutVersionIfNeeded)).toHaveBeenCalledWith(
         ['eslint', 'eslint-plugin-hydrogen', 'prettier', '@shopify/prettier-config'],
         expect.objectContaining({}),
       )
@@ -92,7 +99,7 @@ describe('addEslint', () => {
       await addESLint({app, ...defaultOptions, install: false})
 
       // Then
-      await expect(addNPMDependenciesWithoutVersionIfNeeded).not.toHaveBeenCalled()
+      await expect(vi.mocked(addNPMDependenciesWithoutVersionIfNeeded)).not.toHaveBeenCalled()
     })
   })
 

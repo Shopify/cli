@@ -5,6 +5,8 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {error, output} from '@shopify/cli-kit'
 import Command from '@shopify/cli-kit/node/base-command'
 import {resolvePath} from '@shopify/cli-kit/node/path'
+// eslint-disable-next-line node/prefer-global/url
+import {URL} from 'url'
 
 export default class Init extends Command {
   static aliases = ['create-app']

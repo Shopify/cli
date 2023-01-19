@@ -3,11 +3,11 @@ import {createDeployment, healthCheck, uploadDeployment} from './upload.js'
 import {TooManyRequestsError, UnrecoverableError} from './error.js'
 import {CreateDeploymentQuery} from './graphql/create_deployment.js'
 import {beforeEach, describe, it, expect, vi} from 'vitest'
-import {http} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {ClientError} from 'graphql-request'
 import {oxygenRequest, uploadOxygenDeploymentFile} from '@shopify/cli-kit/node/api/oxygen'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {formData, fetch} from '@shopify/cli-kit/node/http'
 import {createReadStream} from 'fs'
 
 const defaultConfig: ReqDeployConfig = {
@@ -26,7 +26,7 @@ const defaultConfig: ReqDeployConfig = {
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/api/oxygen')
-  vi.mock('@shopify/cli-kit')
+  vi.mock('@shopify/cli-kit/node/http')
   vi.mock('@shopify/cli-kit/node/archiver')
   vi.mock('@shopify/cli-kit/node/fs')
   vi.mock('fs')
@@ -141,8 +141,8 @@ describe('uploadDeploymentStep()', async () => {
       const mockedZip = vi.fn()
       vi.mocked(zip).mockImplementation(mockedZip)
       const mockedFormDataAppend = vi.fn()
-      const formData = {append: mockedFormDataAppend, getHeaders: vi.fn()}
-      vi.mocked<any>(http.formData).mockReturnValue(formData)
+      const mockformData = {append: mockedFormDataAppend, getHeaders: vi.fn()}
+      vi.mocked<any>(formData).mockReturnValue(mockformData)
       const previewURL = 'https://preview.url'
       const oxygenResponse = {
         data: {
@@ -171,7 +171,7 @@ describe('uploadDeploymentStep()', async () => {
       expect(result).toBe(previewURL)
       expect(mockedFormDataAppend).toHaveBeenCalledTimes(3)
       expect(mockedZip).toHaveBeenCalledWith(`unit/test/dist`, `${tmpDir}/dist.zip`)
-      expect(uploadOxygenDeploymentFile).toHaveBeenCalledWith('oxygen.address', '123', formData)
+      expect(uploadOxygenDeploymentFile).toHaveBeenCalledWith('oxygen.address', '123', mockformData)
     })
   })
 
@@ -179,7 +179,7 @@ describe('uploadDeploymentStep()', async () => {
     beforeEach(() => {
       vi.mocked(createReadStream)
       vi.mocked<any>(zip).mockImplementation(vi.fn())
-      vi.mocked<any>(http.formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()})
+      vi.mocked<any>(formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()})
       vi.mocked<any>(inTemporaryDirectory).mockImplementation(async (runner: (tmpDir: string) => Promise<void>) =>
         runner('tmp/dir'),
       )
@@ -273,8 +273,8 @@ describe('uploadDeploymentStep()', async () => {
 describe('healthCheck()', () => {
   it('succeeds on https status 200', async () => {
     const pingUrl = 'https://unit.test'
-    const fetch = vi.fn().mockResolvedValueOnce({status: 200})
-    vi.mocked(http.fetch).mockImplementation(fetch)
+    const fetchMock = vi.fn().mockResolvedValueOnce({status: 200})
+    vi.mocked(fetch).mockImplementation(fetchMock)
 
     const result = await healthCheck(pingUrl)
 
@@ -284,8 +284,8 @@ describe('healthCheck()', () => {
 
   it('throws on any other https status', async () => {
     const pingUrl = 'https://unit.test'
-    const fetch = vi.fn().mockResolvedValueOnce({status: 404})
-    vi.mocked(http.fetch).mockImplementation(fetch)
+    const fetchMock = vi.fn().mockResolvedValueOnce({status: 404})
+    vi.mocked(fetch).mockImplementation(fetchMock)
 
     await expect(() => healthCheck(pingUrl)).rejects.toThrowError()
     expect(fetch).toHaveBeenCalledWith(`${pingUrl}/__health`, {method: 'GET'})

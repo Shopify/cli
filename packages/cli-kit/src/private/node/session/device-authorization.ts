@@ -2,7 +2,7 @@ import {clientId} from './identity.js'
 import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {IdentityToken} from './schema.js'
 import {identityFqdn} from '../../../public/node/environment/fqdn.js'
-import {shopifyFetch} from '../../../http.js'
+import {shopifyFetch} from '../../../public/node/http.js'
 import {content, debug, info, token} from '../../../output.js'
 import {Bug} from '../../../error.js'
 

@@ -7,9 +7,10 @@ import {
 } from '../../api/graphql/functions/upload_url_generate.js'
 import {AppFunctionSetMutation, AppFunctionSetMutationSchema} from '../../api/graphql/functions/app_function_set.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {error, http} from '@shopify/cli-kit'
+import {error} from '@shopify/cli-kit'
 import {functionProxyRequest} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {fetch} from '@shopify/cli-kit/node/http'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 afterEach(() => {
@@ -18,15 +19,7 @@ afterEach(() => {
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/api/partners')
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      http: {
-        fetch: vi.fn(),
-      },
-    }
-  })
+  vi.mock('@shopify/cli-kit/node/http')
 })
 
 describe('uploadFunctionExtensions', () => {
@@ -112,7 +105,7 @@ describe('uploadFunctionExtensions', () => {
       }
       const uploadError = new Error('error')
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(http.fetch).mockRejectedValue(uploadError)
+      vi.mocked(fetch).mockRejectedValue(uploadError)
 
       // When
       await expect(uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrow(uploadError)
@@ -139,7 +132,7 @@ describe('uploadFunctionExtensions', () => {
       }
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
 
-      const fetch = vi.fn().mockResolvedValueOnce({
+      const mockedFetch = vi.fn().mockResolvedValueOnce({
         status: 400,
         body: {
           read: () => {
@@ -147,7 +140,7 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       })
-      vi.mocked(http.fetch).mockImplementation(fetch)
+      vi.mocked(fetch).mockImplementation(mockedFetch)
 
       // When
       await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
@@ -178,7 +171,7 @@ describe('uploadFunctionExtensions', () => {
       }
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
 
-      const fetch = vi.fn().mockResolvedValueOnce({
+      const mockedFetch = vi.fn().mockResolvedValueOnce({
         status: 401,
         body: {
           read: () => {
@@ -186,7 +179,7 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       })
-      vi.mocked(http.fetch).mockImplementation(fetch)
+      vi.mocked(fetch).mockImplementation(mockedFetch)
 
       // When
       await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
@@ -217,7 +210,7 @@ describe('uploadFunctionExtensions', () => {
       }
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
 
-      const fetch = vi.fn().mockResolvedValueOnce({
+      const mockedFetch = vi.fn().mockResolvedValueOnce({
         status: 500,
         body: {
           read: () => {
@@ -225,7 +218,7 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       })
-      vi.mocked(http.fetch).mockImplementation(fetch)
+      vi.mocked(fetch).mockImplementation(mockedFetch)
 
       // When
       await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
@@ -254,7 +247,7 @@ describe('uploadFunctionExtensions', () => {
       }
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
 
-      const fetch = vi.fn().mockResolvedValueOnce({
+      const mockedFetch = vi.fn().mockResolvedValueOnce({
         status: 399,
         body: {
           read: () => {
@@ -262,7 +255,7 @@ describe('uploadFunctionExtensions', () => {
           },
         },
       })
-      vi.mocked(http.fetch).mockImplementation(fetch)
+      vi.mocked(fetch).mockImplementation(mockedFetch)
 
       // When
       await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
@@ -291,7 +284,7 @@ describe('uploadFunctionExtensions', () => {
       }
       const uploadError = new Error('error')
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(http.fetch).mockRejectedValue(uploadError)
+      vi.mocked(fetch).mockRejectedValue(uploadError)
 
       // When
       await expect(uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrow(uploadError)
@@ -318,7 +311,7 @@ describe('uploadFunctionExtensions', () => {
       }
       const updateAppFunctionError = new Error('error')
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
+      vi.mocked(fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
       vi.mocked(functionProxyRequest).mockRejectedValueOnce(updateAppFunctionError)
 
       // When
@@ -328,7 +321,7 @@ describe('uploadFunctionExtensions', () => {
 
       // Then
       expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
-      expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
+      expect(fetch).toHaveBeenCalledWith(uploadUrl, {
         body: Buffer.from(''),
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
@@ -384,7 +377,7 @@ describe('uploadFunctionExtensions', () => {
         },
       }
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
+      vi.mocked(fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
 
       // When
@@ -394,7 +387,7 @@ describe('uploadFunctionExtensions', () => {
 
       // Then
       expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
-      expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
+      expect(fetch).toHaveBeenCalledWith(uploadUrl, {
         body: Buffer.from(''),
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
@@ -448,7 +441,7 @@ describe('uploadFunctionExtensions', () => {
         },
       }
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
+      vi.mocked(fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
 
       // When
@@ -457,7 +450,7 @@ describe('uploadFunctionExtensions', () => {
       // Then
       expect(got.extensions[extension.localIdentifier]).toEqual(createdID)
       expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
-      expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
+      expect(fetch).toHaveBeenCalledWith(uploadUrl, {
         body: Buffer.from(''),
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',
@@ -511,7 +504,7 @@ describe('uploadFunctionExtensions', () => {
         },
       }
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
+      vi.mocked(fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
 
       // When
@@ -564,7 +557,7 @@ describe('uploadFunctionExtensions', () => {
         },
       }
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
+      vi.mocked(fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
 
       // When
@@ -615,7 +608,7 @@ describe('uploadFunctionExtensions', () => {
         },
       }
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
+      vi.mocked(fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
 
       // When
@@ -673,7 +666,7 @@ describe('uploadFunctionExtensions', () => {
         },
       }
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(http.fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
+      vi.mocked(fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
       vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
 
       // When
@@ -682,7 +675,7 @@ describe('uploadFunctionExtensions', () => {
       // Then
       expect(got.extensions[extension.localIdentifier]).toEqual(updatedID)
       expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
-      expect(http.fetch).toHaveBeenCalledWith(uploadUrl, {
+      expect(fetch).toHaveBeenCalledWith(uploadUrl, {
         body: Buffer.from(''),
         headers: {'Content-Type': 'application/wasm'},
         method: 'PUT',

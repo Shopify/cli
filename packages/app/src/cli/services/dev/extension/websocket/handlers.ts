@@ -6,13 +6,14 @@ import {
   SetupWebSocketConnectionOptions,
 } from './models.js'
 import {RawData, WebSocket, WebSocketServer} from 'ws'
-import {http, output} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
+import {IncomingMessage} from '@shopify/cli-kit/node/http'
 import {Duplex} from 'stream'
 
 export function websocketUpgradeHandler(
   wss: WebSocketServer,
   options: SetupWebSocketConnectionOptions,
-): (req: http.IncomingMessage, socket: Duplex, head: Buffer) => void {
+): (req: IncomingMessage, socket: Duplex, head: Buffer) => void {
   return (request, socket, head) => {
     if (request.url !== '/extensions') {
       return

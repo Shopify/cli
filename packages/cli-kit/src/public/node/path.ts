@@ -1,4 +1,4 @@
-import {OverloadParameters} from '../../typing/overloaded-parameters.js'
+import {OverloadParameters} from '../../private/common/ts/overloaded-parameters.js'
 import commondir from 'commondir'
 import {relative, dirname, join, normalize, resolve, basename, extname, isAbsolute} from 'pathe'
 import {findUp as internalFindUp} from 'find-up'

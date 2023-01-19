@@ -1,4 +1,4 @@
-import {http} from '@shopify/cli-kit'
+import {fetch} from '@shopify/cli-kit/node/http'
 
 /**
  * Sends a POST request to a local endpoint with a webhook payload
@@ -17,6 +17,6 @@ export async function triggerLocalWebhook(address: string, body: string, headers
       ...JSON.parse(headers),
     },
   }
-  const response = await http.fetch(address, options)
+  const response = await fetch(address, options)
   return response.status >= 200 && response.status < 300
 }
