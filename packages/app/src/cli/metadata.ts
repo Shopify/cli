@@ -1,5 +1,5 @@
 import {metadata as metadataLib, monorail} from '@shopify/cli-kit'
-import type {PickByPrefix} from '@shopify/cli-kit/common/typing/pick-by-prefix'
+import type {PickByPrefix} from '@shopify/cli-kit/common/ts/pick-by-prefix'
 
 type CmdFieldsFromMonorail = PickByPrefix<monorail.MonorailEventPublic, 'cmd_extensions_'> &
   PickByPrefix<monorail.MonorailEventPublic, 'cmd_shared_'> &
