@@ -2,6 +2,7 @@ import SelectInput, {Props as SelectProps, Item as SelectItem, Item} from './Sel
 import InfoTable, {Props as InfoTableProps} from './Prompts/InfoTable.js'
 import {TextInput} from './TextInput.js'
 import {handleCtrlC} from '../../ui.js'
+import {messageWithPunctuation} from '../utilities.js'
 import React, {ReactElement, useCallback, useRef, useState} from 'react'
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
 import figures from 'figures'
@@ -118,27 +119,24 @@ function AutocompletePrompt<T>({
         <Box marginRight={2}>
           <Text>?</Text>
         </Box>
-        <Text>{message}</Text>
+        <Text>{messageWithPunctuation(message)}</Text>
         {promptState !== PromptState.Submitted && canSearch && (
-          <Box>
-            <Text>: </Text>
-            <Box>
-              <TextInput
-                value={searchTerm}
-                onChange={(term) => {
-                  setSearchTerm(term)
+          <Box marginLeft={3}>
+            <TextInput
+              value={searchTerm}
+              onChange={(term) => {
+                setSearchTerm(term)
 
-                  if (term.length > 0) {
-                    debounceSearch(term)
-                  } else {
-                    debounceSearch.cancel()
-                    setPromptState(PromptState.Idle)
-                    setSearchResults(paginatedInitialChoices)
-                  }
-                }}
-                placeholder="Type to search..."
-              />
-            </Box>
+                if (term.length > 0) {
+                  debounceSearch(term)
+                } else {
+                  debounceSearch.cancel()
+                  setPromptState(PromptState.Idle)
+                  setSearchResults(paginatedInitialChoices)
+                }
+              }}
+              placeholder="Type to search..."
+            />
           </Box>
         )}
       </Box>

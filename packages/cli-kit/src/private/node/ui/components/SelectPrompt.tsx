@@ -1,7 +1,8 @@
 import SelectInput, {Props as SelectProps, Item as SelectItem, Item} from './SelectInput.js'
 import InfoTable, {Props as InfoTableProps} from './Prompts/InfoTable.js'
-import {appendToTokenItem, TokenItem, tokenItemToString, TokenizedText} from './TokenizedText.js'
+import {TokenItem, TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
+import {messageWithPunctuation} from '../utilities.js'
 import React, {ReactElement, useCallback, useState} from 'react'
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
 import figures from 'figures'
@@ -57,17 +58,13 @@ function SelectPrompt<T>({
     ),
   )
 
-  const messageToString = tokenItemToString(message)
-  const messageWithPunctuation =
-    messageToString.endsWith('?') || messageToString.endsWith(':') ? message : appendToTokenItem(message, ':')
-
   return (
     <Box flexDirection="column" marginBottom={1} ref={measuredRef}>
       <Box>
         <Box marginRight={2}>
           <Text>?</Text>
         </Box>
-        <TokenizedText item={messageWithPunctuation} />
+        <TokenizedText item={messageWithPunctuation(message)} />
       </Box>
       {infoTable && !submitted && (
         <Box marginLeft={7} marginTop={1}>
