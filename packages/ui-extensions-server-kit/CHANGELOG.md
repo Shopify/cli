@@ -1,5 +1,11 @@
 # @shopify/ui-extensions-server-kit
 
+## 4.0.1
+
+### Patch Changes
+
+- 10b86c459: Expose missing API types
+
 ## 4.0.0
 
 ### Major Changes

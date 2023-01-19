@@ -1,5 +1,18 @@
 # @shopify/cli-kit
 
+## 3.35.0
+
+### Minor Changes
+
+- 50c0b2cd3: - Adopt CLI UI kit on `shopify theme delete` command
+  - Introduce the `pluralize` API on `@shopify/cli-kit/common/string`
+- a4f78e95f: Update 'pathe' to 1.0.0
+
+### Patch Changes
+
+- 2aa5c07aa: Fix output for pnpm commands with parameters
+- 1a482191a: Improve the DX of the `shopify theme list` command, by adopting the CLI UI kit
+
 ## 3.34.0
 
 ## 3.33.0

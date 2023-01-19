@@ -11,8 +11,7 @@ describe('FatalError', async () => {
     const {lastFrame} = render(<FatalError error={error} />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
-      "
-      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  test                                                                        │
       │                                                                              │
@@ -36,8 +35,7 @@ describe('FatalError', async () => {
     const {lastFrame} = render(<FatalError error={error} />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
-      "
-      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Unexpected error                                                            │
       │                                                                              │
@@ -87,8 +85,7 @@ describe('FatalError', async () => {
     const {lastFrame} = render(<FatalError error={error} />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
-      "
-      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Unexpected error                                                            │
       │                                                                              │
@@ -116,8 +113,7 @@ describe('FatalError', async () => {
     const {lastFrame} = render(<FatalError error={error} />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
-      "
-      ── external error ──────────────────────────────────────────────────────────────
+      "── external error ──────────────────────────────────────────────────────────────
 
       Error coming from \`yarn install\`
 

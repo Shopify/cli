@@ -1,0 +1,29 @@
+.Row {
+  border-bottom: 1px solid var(--dc-color-grey-600);
+
+  th {
+    padding: 1.2rem 6.9rem 1.2rem 0;
+    line-height: 1.6rem;
+    font-weight: var(--dc-font-weight-600);
+  }
+
+  &.Hoverable:hover {
+    cursor: pointer;
+    background-color: rgba(3, 18, 49, 0.2);
+  }
+
+  th:first-child,
+  td:first-child {
+    padding-left: 1.8rem
+  }
+
+  td {
+    padding: 1.6rem 6.9rem 1.5rem 0;
+    vertical-align: top;
+  }
+
+  th:last-child,
+  td:last-child {
+    padding-right: 1.8rem
+  }
+}

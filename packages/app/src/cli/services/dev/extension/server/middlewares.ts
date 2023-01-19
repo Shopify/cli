@@ -2,14 +2,11 @@ import {getExtensionPointRedirectUrl, getExtensionUrl, getRedirectUrl, sendError
 import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {getHTML} from '../templates.js'
-import {http, output, path} from '@shopify/cli-kit'
+import {output, path} from '@shopify/cli-kit'
 import {fileExists, isDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {IncomingMessage, ServerResponse, sendRedirect, send} from '@shopify/cli-kit/node/http'
 
-export function corsMiddleware(
-  request: http.IncomingMessage,
-  response: http.ServerResponse,
-  next: (err?: Error) => unknown,
-) {
+export function corsMiddleware(request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) {
   response.setHeader('Access-Control-Allow-Origin', '*')
   response.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
   response.setHeader(
@@ -19,26 +16,22 @@ export function corsMiddleware(
   next()
 }
 
-export function noCacheMiddleware(
-  request: http.IncomingMessage,
-  response: http.ServerResponse,
-  next: (err?: Error) => unknown,
-) {
+export function noCacheMiddleware(request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) {
   response.setHeader('Cache-Control', 'no-cache')
   next()
 }
 
 export async function redirectToDevConsoleMiddleware(
-  request: http.IncomingMessage,
-  response: http.ServerResponse,
+  request: IncomingMessage,
+  response: ServerResponse,
   next: (err?: Error) => unknown,
 ) {
-  await http.sendRedirect(response.event, '/extensions/dev-console', 307)
+  await sendRedirect(response.event, '/extensions/dev-console', 307)
 }
 
 export async function fileServerMiddleware(
-  request: http.IncomingMessage,
-  response: http.ServerResponse,
+  request: IncomingMessage,
+  response: ServerResponse,
   next: (err?: Error) => unknown,
   options: {filePath: string},
 ) {
@@ -79,7 +72,7 @@ export async function fileServerMiddleware(
 }
 
 export function getExtensionAssetMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
-  return async (request: http.IncomingMessage, response: http.ServerResponse, next: (err?: Error) => unknown) => {
+  return async (request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) => {
     const {extensionId, assetPath} = request.context.params
     const extension = devOptions.extensions.find((extension) => extension.devUUID === extensionId)
 
@@ -99,15 +92,15 @@ export function getExtensionAssetMiddleware({devOptions}: GetExtensionsMiddlewar
 }
 
 export function getExtensionsPayloadMiddleware({payloadStore}: GetExtensionsMiddlewareOptions) {
-  return async (request: http.IncomingMessage, response: http.ServerResponse, next: (err?: Error) => unknown) => {
+  return async (request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) => {
     response.setHeader('content-type', 'application/json')
     response.end(JSON.stringify(payloadStore.getRawPayload()))
   }
 }
 
 export async function devConsoleIndexMiddleware(
-  request: http.IncomingMessage,
-  response: http.ServerResponse,
+  request: IncomingMessage,
+  response: ServerResponse,
   next: (err?: Error) => unknown,
 ) {
   const rootDirectory = await path.findUp(path.join('assets', 'dev-console'), {
@@ -128,8 +121,8 @@ export async function devConsoleIndexMiddleware(
 }
 
 export async function devConsoleAssetsMiddleware(
-  request: http.IncomingMessage,
-  response: http.ServerResponse,
+  request: IncomingMessage,
+  response: ServerResponse,
   next: (err?: Error) => unknown,
 ) {
   const {assetPath} = request.context.params
@@ -152,14 +145,14 @@ export async function devConsoleAssetsMiddleware(
 }
 
 export function getLogMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
-  return async (request: http.IncomingMessage, response: http.ServerResponse, next: (err?: Error) => unknown) => {
+  return async (request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) => {
     output.debug(`UI extensions server received a ${request.method} request to URL ${request.url}`, devOptions.stdout)
     next()
   }
 }
 
 export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
-  return async (request: http.IncomingMessage, response: http.ServerResponse, next: (err?: Error) => unknown) => {
+  return async (request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) => {
     const extensionID = request.context.params.extensionId
     const extension = devOptions.extensions.find((extension) => extension.devUUID === extensionID)
 
@@ -179,11 +172,11 @@ export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlew
           template: 'index',
           extensionSurface: 'post_purchase',
         })
-        await http.send(response.event, body)
+        await send(response.event, body)
         return
       } else {
         const url = getRedirectUrl(extension, devOptions)
-        await http.sendRedirect(response.event, url, 307)
+        await sendRedirect(response.event, url, 307)
         return
       }
     }
@@ -212,7 +205,7 @@ export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlew
 }
 
 export function getExtensionPointMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
-  return async (request: http.IncomingMessage, response: http.ServerResponse, _next: (err?: Error) => unknown) => {
+  return async (request: IncomingMessage, response: ServerResponse, _next: (err?: Error) => unknown) => {
     const extensionID = request.context.params.extensionId
     const requestedTarget = request.context.params.extensionPointTarget
     const extension = devOptions.extensions.find((extension) => extension.devUUID === extensionID)
@@ -239,7 +232,7 @@ export function getExtensionPointMiddleware({devOptions}: GetExtensionsMiddlewar
       })
     }
 
-    await http.sendRedirect(response.event, url, 307)
+    await sendRedirect(response.event, url, 307)
   }
 }
 

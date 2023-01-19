@@ -8,15 +8,33 @@ import {figures} from 'listr2'
 export interface Props {
   message: string
   onSubmit: (value: string) => void
-  placeholder?: string
+  defaultValue?: string
+  password?: boolean
+  validate?: (value: string) => string | undefined
 }
 
-const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder}) => {
+const TextPrompt: React.FC<Props> = ({message, onSubmit, validate, defaultValue = '', password = false}) => {
+  if (password && defaultValue) {
+    throw new Error("Can't use defaultValue with password")
+  }
+
+  const validateAnswer = (value: string): string | undefined => {
+    if (validate) {
+      return validate(value)
+    }
+
+    if (value.length === 0) return 'Type an answer to the prompt.'
+
+    return undefined
+  }
   const {oneThird} = useLayout()
   const [answer, setAnswer] = useState<string>('')
+  const answerOrDefault = answer.length > 0 ? answer : defaultValue
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
-  const [valid, setValid] = useState(false)
+  const [error, setError] = useState<string | undefined>(undefined)
+  const shouldShowError = submitted && error
+  const color = shouldShowError ? 'red' : 'cyan'
   const underline = new Array(oneThird - 3).fill('▔')
 
   useInput(
@@ -26,20 +44,20 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder}) => {
 
         if (key.return) {
           setSubmitted(true)
+          const error = validateAnswer(answerOrDefault)
+          setError(error)
 
-          if (valid) {
-            onSubmit(answer)
+          if (!error) {
+            onSubmit(answerOrDefault)
             unmountInk()
           }
         }
       },
-      [answer, onSubmit, valid],
+      [answerOrDefault, onSubmit],
     ),
   )
 
-  const shouldShowError = submitted && !valid
-  const color = shouldShowError ? 'red' : 'cyan'
-  const error = shouldShowError ? 'Please enter a value' : undefined
+  const messageWithPunctuation = message.endsWith('?') || message.endsWith(':') ? message : `${message}:`
 
   return (
     <Box flexDirection="column" marginBottom={1} width={oneThird}>
@@ -47,16 +65,16 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder}) => {
         <Box marginRight={2}>
           <Text>?</Text>
         </Box>
-        <Text>{message}</Text>
+        <Text>{messageWithPunctuation}</Text>
       </Box>
-      {submitted && valid ? (
+      {submitted && !error ? (
         <Box>
           <Box marginRight={2}>
             <Text color="cyan">{figures.tick}</Text>
           </Box>
 
           <Box flexGrow={1}>
-            <Text color="cyan">{answer}</Text>
+            <Text color="cyan">{password ? '*'.repeat(answer.length) : answerOrDefault}</Text>
           </Box>
         </Box>
       ) : (
@@ -70,18 +88,18 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, placeholder}) => {
                 value={answer}
                 onChange={(answer) => {
                   setAnswer(answer)
-                  setValid(answer.length > 0)
                   setSubmitted(false)
                 }}
-                placeholder={placeholder}
+                defaultValue={defaultValue}
                 color={color}
+                password={password}
               />
             </Box>
           </Box>
           <Box marginLeft={3}>
             <Text color={color}>{underline}</Text>
           </Box>
-          {error && (
+          {shouldShowError && (
             <Box marginLeft={3}>
               <Text color={color}>{error}</Text>
             </Box>

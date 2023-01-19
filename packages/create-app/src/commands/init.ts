@@ -4,6 +4,8 @@ import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {path, error, output} from '@shopify/cli-kit'
 import Command from '@shopify/cli-kit/node/base-command'
+// eslint-disable-next-line node/prefer-global/url
+import {URL} from 'url'
 
 export default class Init extends Command {
   static aliases = ['create-app']
