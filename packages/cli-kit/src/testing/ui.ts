@@ -1,5 +1,4 @@
 import {isTruthy} from '../private/node/environment/utilities.js'
-import {unstyled} from '../output.js'
 import {render} from 'ink-testing-library'
 
 export function waitForInputsToBeReady() {
@@ -34,6 +33,17 @@ function waitFor(func: () => void, condition: () => boolean) {
   })
 }
 
+export function waitForContent(
+  renderInstance: ReturnType<typeof render>,
+  content: string,
+  func: () => void = () => {},
+) {
+  return waitFor(
+    () => func(),
+    () => renderInstance.lastFrame()!.includes(content),
+  )
+}
+
 export async function sendInputAndWaitForChange(renderInstance: ReturnType<typeof render>, ...inputs: string[]) {
   await waitForChange(() => inputs.forEach((input) => renderInstance.stdin.write(input)), renderInstance.lastFrame)
   // wait for another tick so we give time to react to update caches
@@ -54,10 +64,7 @@ export async function sendInputAndWaitForContent(
   content: string,
   ...inputs: string[]
 ) {
-  await waitFor(
-    () => inputs.forEach((input) => renderInstance.stdin.write(input)),
-    () => unstyled(renderInstance.lastFrame()!).includes(content),
-  )
+  await waitForContent(renderInstance, content, () => inputs.forEach((input) => renderInstance.stdin.write(input)))
 }
 
 export function getLastFrameAfterUnmount(renderInstance: ReturnType<typeof render>) {

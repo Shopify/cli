@@ -373,6 +373,7 @@ importers:
       envfile: 6.18.0
       execa: 6.0.0
       fast-glob: 3.2.11
+      figures: 5.0.0
       find-process: 1.4.7
       find-up: 6.2.0
       find-versions: 5.0.0
@@ -437,6 +438,7 @@ importers:
       envfile: 6.18.0
       execa: 6.0.0
       fast-glob: 3.2.11
+      figures: 5.0.0
       find-process: 1.4.7
       find-up: 6.2.0
       find-versions: 5.0.0

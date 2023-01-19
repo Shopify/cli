@@ -36,7 +36,7 @@ describe('SelectInput', async () => {
          (2) Second
       [36m>[39m  [36m(3) Third[39m
 
-         [2mnavigate with arrows, enter to select[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
     expect(onChange).toHaveBeenCalledWith(items[2]!)
   })
@@ -69,7 +69,7 @@ describe('SelectInput', async () => {
       [36m>[39m  [36m(2) Second[39m
          (3) Third
 
-         [2mnavigate with arrows, enter to select[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
     expect(onChange).toHaveBeenCalledWith(items[1]!)
   })
@@ -102,7 +102,7 @@ describe('SelectInput', async () => {
          (2) Second
       [36m>[39m  [36m(10) Tenth[39m
 
-         [2mnavigate with arrows, enter to select[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
     expect(onChange).toHaveBeenCalledWith(items[2]!)
   })
@@ -168,7 +168,7 @@ describe('SelectInput', async () => {
          (2) Second
       [36m>[39m  [36m(t) Third[39m
 
-         [2mnavigate with arrows, enter to select[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
     expect(onChange).toHaveBeenCalledWith(items[2]!)
   })
@@ -202,7 +202,7 @@ describe('SelectInput', async () => {
          (2) Second
          (3) Third
 
-         [2mnavigate with arrows, enter to select[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
     expect(onChange).toHaveBeenCalledWith(items[0]!)
   })
@@ -242,7 +242,7 @@ describe('SelectInput', async () => {
          (9) ninth
          (10) tenth
 
-         [2mnavigate with arrows, enter to select[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
 
     await waitForInputsToBeReady()
@@ -265,7 +265,7 @@ describe('SelectInput', async () => {
          (9) ninth
          (10) tenth
 
-         [2mnavigate with arrows, enter to select[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
     expect(onChange).toHaveBeenCalledWith(items[4]!)
 
@@ -289,7 +289,7 @@ describe('SelectInput', async () => {
          (9) ninth
          (10) tenth
 
-         [2mnavigate with arrows, enter to select[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
     expect(onChange).toHaveBeenCalledWith(items[6]!)
   })
@@ -322,7 +322,7 @@ describe('SelectInput', async () => {
          Second
          Third
 
-         [2mnavigate with arrows, enter to select[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
     expect(onChange).not.toHaveBeenCalled()
   })
@@ -354,7 +354,7 @@ describe('SelectInput', async () => {
       [36m>[39m  [36m(2) Second[39m
          (3) Third
 
-         [2mnavigate with arrows, enter to select[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
   })
 })

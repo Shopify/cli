@@ -3,7 +3,7 @@ import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import React, {useCallback, useState} from 'react'
 import {Box, useApp, useInput, Text} from 'ink'
-import {figures} from 'listr2'
+import figures from 'figures'
 
 export interface Props {
   message: string

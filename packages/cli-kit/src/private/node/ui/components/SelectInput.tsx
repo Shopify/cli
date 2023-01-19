@@ -5,6 +5,7 @@ import React, {useState, useEffect, useRef, useCallback} from 'react'
 import {Box, Key, useInput, Text} from 'ink'
 import {debounce} from '@shopify/cli-kit/common/function'
 import chalk from 'chalk'
+import figures from 'figures'
 
 export interface Props<T> {
   items: Item<T>[]
@@ -247,7 +248,10 @@ export default function SelectInput<T>({
         )}
 
         <Box marginTop={1} marginLeft={3}>
-          <Text dimColor>navigate with arrows, enter to select</Text>
+          <Text dimColor>
+            Press {figures.arrowUp}
+            {figures.arrowDown} arrows to select, enter to confirm
+          </Text>
         </Box>
       </Box>
     )

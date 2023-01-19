@@ -4,7 +4,7 @@ import {TextInput} from './TextInput.js'
 import {handleCtrlC} from '../../ui.js'
 import React, {ReactElement, useCallback, useRef, useState} from 'react'
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
-import {figures} from 'listr2'
+import figures from 'figures'
 import {debounce} from '@shopify/cli-kit/common/function'
 import ansiEscapes from 'ansi-escapes'
 
@@ -40,6 +40,7 @@ function AutocompletePrompt<T>({
   const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(paginatedInitialChoices.slice(0, PAGE_SIZE))
   const {stdout} = useStdout()
   const [height, setHeight] = useState(0)
+  const canSearch = initialChoices.length >= PAGE_SIZE
 
   const paginatedSearch = useCallback(async (term: string) => {
     const results = await search(term)
@@ -62,7 +63,8 @@ function AutocompletePrompt<T>({
         handleCtrlC(input, key)
 
         if (key.return && promptState === PromptState.Idle && answer) {
-          if (stdout && height >= stdout.rows) {
+          // -1 is for the last row with the terminal cursor
+          if (stdout && height >= stdout.rows - 1) {
             stdout.write(ansiEscapes.clearTerminal)
           }
           setPromptState(PromptState.Submitted)
@@ -117,7 +119,7 @@ function AutocompletePrompt<T>({
           <Text>?</Text>
         </Box>
         <Text>{message}</Text>
-        {promptState !== PromptState.Submitted && (
+        {promptState !== PromptState.Submitted && canSearch && (
           <Box>
             <Text>: </Text>
             <Box>
