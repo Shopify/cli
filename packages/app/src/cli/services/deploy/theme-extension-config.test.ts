@@ -6,7 +6,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 
 describe('themeExtensionConfig', () => {
-  test('throws an error if the request to return the url errors', async () => {
+  test('builds a base64 encoded payload containing all theme files', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const themeExtension = new ThemeExtensionInstance({
