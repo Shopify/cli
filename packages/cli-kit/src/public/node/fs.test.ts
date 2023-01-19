@@ -14,10 +14,12 @@ import {
   touchFile,
   appendFile,
   generateRandomNameForSubdirectory,
+  glob,
 } from './fs.js'
 import {joinPath} from './path.js'
 import {takeRandomFromArray} from '../common/array.js'
 import {beforeAll, describe, expect, it, test, vi} from 'vitest'
+import FastGlob from 'fast-glob'
 
 beforeAll(() => {
   vi.mock('../common/array.js')
@@ -263,5 +265,29 @@ describe('makeDirectoryWithRandomName', () => {
       expect(got).toEqual('free-directory-app')
       expect(takeRandomFromArray).toHaveBeenCalledTimes(4)
     })
+  })
+})
+
+describe('glob', () => {
+  it('calls fastGlob with dot:true if no dot option is passed', async () => {
+    // Given
+    vi.mock('fast-glob')
+
+    // When
+    await glob('pattern')
+
+    // Then
+    expect(FastGlob).toBeCalledWith('pattern', {dot: true})
+  })
+
+  it('calls fastGlob with dot option if passed', async () => {
+    // Given
+    vi.mock('fast-glob')
+
+    // When
+    await glob('pattern', {dot: false})
+
+    // Then
+    expect(FastGlob).toBeCalledWith('pattern', {dot: false})
   })
 })
