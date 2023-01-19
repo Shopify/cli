@@ -1,5 +1,5 @@
-import {plugins} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
+import {getListOfTunnelPlugins} from '@shopify/cli-kit/node/plugins'
 
 /**
  * Return the name of the tunnel provider used to send analytics. Returns 'localhost' or provider name if any of those
@@ -20,6 +20,6 @@ export async function getAnalyticsTunnelType(options: Config, tunnelUrl: string)
     return 'localhost'
   }
 
-  const provider = (await plugins.getListOfTunnelPlugins(options)).plugins.find((plugin) => tunnelUrl?.includes(plugin))
+  const provider = (await getListOfTunnelPlugins(options)).plugins.find((plugin) => tunnelUrl?.includes(plugin))
   return provider ?? 'custom'
 }

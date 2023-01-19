@@ -2,7 +2,7 @@ import {updateURLsPrompt} from '../../prompts/dev.js'
 import {AppInterface} from '../../models/app/app.js'
 import {UpdateURLsQuery, UpdateURLsQuerySchema, UpdateURLsQueryVariables} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery, GetURLsQuerySchema, GetURLsQueryVariables} from '../../api/graphql/get_urls.js'
-import {plugins, store} from '@shopify/cli-kit'
+import {store} from '@shopify/cli-kit'
 import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -10,6 +10,7 @@ import {isValidURL} from '@shopify/cli-kit/common/url'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {isSpin, spinFqdn} from '@shopify/cli-kit/node/environment/spin'
 import {codespaceURL, gitpodURL} from '@shopify/cli-kit/node/environment/local'
+import {runTunnelPlugin, TunnelPluginError} from '@shopify/cli-kit/node/plugins'
 
 export interface PartnersURLs {
   applicationUrl: string
@@ -97,9 +98,7 @@ export async function generateURL(config: Config, frontendPort: number): Promise
   // For the moment we assume to always have ngrok, this will change in a future PR
   // and will need to use "getListOfTunnelPlugins" to find the available tunnel plugins
   const provider = 'ngrok'
-  return (await plugins.runTunnelPlugin(config, frontendPort, provider))
-    .mapError(mapRunTunnelPluginError)
-    .valueOrAbort()
+  return (await runTunnelPlugin(config, frontendPort, provider)).mapError(mapRunTunnelPluginError).valueOrAbort()
 }
 
 export function generatePartnersURLs(baseURL: string, authCallbackPath?: string | string[]): PartnersURLs {
@@ -190,7 +189,7 @@ export function validatePartnersURLs(urls: PartnersURLs): void {
   })
 }
 
-function mapRunTunnelPluginError(tunnelPluginError: plugins.TunnelPluginError) {
+function mapRunTunnelPluginError(tunnelPluginError: TunnelPluginError) {
   switch (tunnelPluginError.type) {
     case 'no-provider':
       return new BugError(`We couldn't find the ${tunnelPluginError.provider} tunnel plugin`)
