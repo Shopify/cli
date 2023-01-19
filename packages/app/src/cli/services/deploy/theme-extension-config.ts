@@ -17,7 +17,7 @@ export async function themeExtensionConfig(themeExtension: ThemeExtension): Prom
       const directoryName = dirname(relativePathName)
       const encoding = directoryName === 'assets' ? 'binary' : 'utf8'
       const fileContents = await readFile(filepath, {encoding})
-      files[relativePath] = Buffer.from(fileContents, encoding).toString('base64')
+      files[relativePathName] = Buffer.from(fileContents, encoding).toString('base64')
     }),
   )
   return {theme_extension: {files}}
