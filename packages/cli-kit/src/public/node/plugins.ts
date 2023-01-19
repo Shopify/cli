@@ -1,15 +1,21 @@
-import {JsonMap} from './private/common/json.js'
-import {PickByPrefix} from './public/common/ts/pick-by-prefix.js'
-import {MonorailEventPublic, MonorailEventSensitive} from './monorail.js'
-import {HookReturnPerTunnelPlugin} from './public/node/plugins/tunnel.js'
-import {getArrayContainsDuplicates, getArrayRejectingUndefined} from './public/common/array.js'
-import {err, Result} from './public/node/result.js'
+import {HookReturnPerTunnelPlugin} from './plugins/tunnel.js'
+import {err, Result} from './result.js'
+import {getArrayContainsDuplicates, getArrayRejectingUndefined} from '../common/array.js'
+import {MonorailEventPublic, MonorailEventSensitive} from '../../monorail.js'
+import {PickByPrefix} from '../common/ts/pick-by-prefix.js'
+import {JsonMap} from '../../private/common/json.js'
 import {Config, Interfaces} from '@oclif/core'
 
 /**
  * Convenience function to trigger a hook, and gather any successful responses. Failures are ignored.
  *
  * Responses are organised into a dictionary, keyed by plug-in name. Only plug-ins that have hooks registered for the given event, and the hooks were run successfully, are included.
+ *
+ * @param config - The oclif config object.
+ * @param event - The name of the hook to trigger.
+ * @param options - The options to pass to the hook.
+ * @param timeout - The timeout to use for the hook.
+ * @returns A dictionary of plug-in names to the response from the hook.
  */
 export async function fanoutHooks<TPluginMap extends HookReturnsPerPlugin, TEvent extends string & keyof TPluginMap>(
   config: Interfaces.Config,
@@ -66,10 +72,10 @@ export type FanoutHookFunction<
 
 /**
  * Execute the 'tunnel_provider' hook, and return the list of available tunnel providers.
- * Fail if there are multiple plugins for the same provider
+ * Fail if there are multiple plugins for the same provider.
  *
- * @param config - oclif config used to execute hooks
- * @returns list of available tunnel plugins
+ * @param config - Oclif config used to execute hooks.
+ * @returns List of available tunnel plugins.
  */
 export async function getListOfTunnelPlugins(config: Config): Promise<{plugins: string[]; error?: string}> {
   const hooks = await fanoutHooks(config, 'tunnel_provider', {})
@@ -88,10 +94,10 @@ export interface TunnelPluginError {
  * Execute the 'tunnel_start' hook for the given provider.
  * Fails if there aren't plugins for that provider or if there are more than one.
  *
- * @param config - oclif config used to execute hooks
- * @param port - port where the tunnel will be started
- * @param provider - selected provider, must be unique
- * @returns tunnel URL from the selected provider
+ * @param config - Oclif config used to execute hooks.
+ * @param port - Port where the tunnel will be started.
+ * @param provider - Selected provider, must be unique.
+ * @returns Tunnel URL from the selected provider.
  */
 export async function runTunnelPlugin(
   config: Config,

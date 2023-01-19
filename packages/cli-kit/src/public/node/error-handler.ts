@@ -1,5 +1,6 @@
 import {reportAnalyticsEvent} from './analytics.js'
 import * as path from './path.js'
+import {fanoutHooks} from './plugins.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
 import {
   AbortSilent,
@@ -11,7 +12,6 @@ import {
 } from '../../error.js'
 import {debug, info} from '../../output.js'
 import * as metadata from '../../metadata.js'
-import {fanoutHooks} from '../../plugins.js'
 import {bugsnagApiKey} from '../../private/node/constants.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {settings, Interfaces} from '@oclif/core'
