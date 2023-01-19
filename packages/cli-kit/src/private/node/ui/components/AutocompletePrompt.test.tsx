@@ -460,7 +460,7 @@ describe('AutocompletePrompt', async () => {
 
     await waitForInputsToBeReady()
     // there is a debounce of 300ms before the search is triggered + 300ms for the search to complete
-    await sendInputAndWait(renderInstance, 700, 'e')
+    await sendInputAndWait(renderInstance, 800, 'e')
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?: [36me[7m [27m[39m
