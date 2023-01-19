@@ -1,8 +1,8 @@
 import {previewInWorker} from './preview.js'
 import {describe, it, expect, vi, afterEach} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
-import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, findPathUp} from '@shopify/cli-kit/node/path'
+import {inTemporaryDirectory, writeFile, findPathUp} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/path', async () => {
