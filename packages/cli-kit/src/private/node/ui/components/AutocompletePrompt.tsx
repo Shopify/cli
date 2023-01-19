@@ -7,14 +7,13 @@ import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
 import {figures} from 'listr2'
 import {debounce} from '@shopify/cli-kit/common/function'
 import ansiEscapes from 'ansi-escapes'
-import chalk from 'chalk'
 
 export interface Props<T> {
   message: string
   choices: SelectProps<T>['items']
   onSubmit: (value: T) => void
   infoTable?: InfoTableProps['table']
-  search?: (term: string) => Promise<SelectItem<T>[]>
+  search: (term: string) => Promise<SelectItem<T>[]>
 }
 
 enum PromptState {
@@ -24,6 +23,8 @@ enum PromptState {
   Error = 'error',
 }
 
+const PAGE_SIZE = 25
+
 function AutocompletePrompt<T>({
   message,
   choices: initialChoices,
@@ -31,13 +32,19 @@ function AutocompletePrompt<T>({
   onSubmit,
   search,
 }: React.PropsWithChildren<Props<T>>): ReactElement | null {
-  const [answer, setAnswer] = useState<SelectItem<T> | undefined>(initialChoices[0])
+  const paginatedInitialChoices = initialChoices.slice(0, PAGE_SIZE)
+  const [answer, setAnswer] = useState<SelectItem<T> | undefined>(paginatedInitialChoices[0])
   const {exit: unmountInk} = useApp()
   const [promptState, setPromptState] = useState<PromptState>(PromptState.Idle)
   const [searchTerm, setSearchTerm] = useState('')
-  const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(initialChoices)
+  const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(paginatedInitialChoices.slice(0, PAGE_SIZE))
   const {stdout} = useStdout()
   const [height, setHeight] = useState(0)
+
+  const paginatedSearch = useCallback(async (term: string) => {
+    const results = await search(term)
+    return results.slice(0, PAGE_SIZE)
+  }, [])
 
   const measuredRef = useCallback(
     (node) => {
@@ -80,24 +87,15 @@ function AutocompletePrompt<T>({
       setLoadingWhenSlow.current = setTimeout(() => {
         setPromptState(PromptState.Loading)
       }, 100)
-      search!(term)
+      paginatedSearch(term)
         .then((result) => {
           // while we were waiting for the promise to resolve, the user
           // has emptied the search term, so we want to show the default
           // choices instead
           if (searchTermRef.current.length === 0) {
-            setSearchResults(initialChoices)
+            setSearchResults(paginatedInitialChoices)
           } else {
-            const regex = new RegExp(term, 'i')
-            const items = result.map((item) => {
-              return {
-                ...item,
-                label: item.label.replace(regex, (match) => {
-                  return chalk.bold(match)
-                }),
-              }
-            })
-            setSearchResults(items)
+            setSearchResults(result)
           }
 
           setPromptState(PromptState.Idle)
@@ -133,7 +131,7 @@ function AutocompletePrompt<T>({
                   } else {
                     debounceSearch.cancel()
                     setPromptState(PromptState.Idle)
-                    setSearchResults(initialChoices)
+                    setSearchResults(paginatedInitialChoices)
                   }
                 }}
                 placeholder="Type to search..."
@@ -149,7 +147,7 @@ function AutocompletePrompt<T>({
         </Box>
       )}
 
-      {promptState === PromptState.Submitted && (
+      {promptState === PromptState.Submitted ? (
         <Box>
           <Box marginRight={2}>
             <Text color="cyan">{figures.tick}</Text>
@@ -157,29 +155,22 @@ function AutocompletePrompt<T>({
 
           <Text color="cyan">{answer!.label}</Text>
         </Box>
-      )}
-
-      {promptState === PromptState.Loading && (
-        <Box marginTop={1} marginLeft={3}>
-          <Text dimColor>Loading...</Text>
-        </Box>
-      )}
-
-      {promptState === PromptState.Error && (
-        <Box marginTop={1} marginLeft={3}>
-          <Text color="red">There has been an error while searching. Please try again later.</Text>
-        </Box>
-      )}
-
-      {promptState === PromptState.Idle && (
+      ) : (
         <Box marginTop={1}>
           <SelectInput
-            items={searchResults.slice(0, 24)}
+            items={searchResults}
             onChange={(item: Item<T> | undefined) => {
               setAnswer(item)
             }}
             enableShortcuts={false}
             emptyMessage="No results found."
+            highlightedTerm={searchTerm}
+            loading={promptState === PromptState.Loading}
+            errorMessage={
+              promptState === PromptState.Error
+                ? 'There has been an error while searching. Please try again later.'
+                : undefined
+            }
           />
         </Box>
       )}
