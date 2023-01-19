@@ -1,7 +1,11 @@
 import {HydrogenApp} from '../models/hydrogen.js'
 import {genericConfigurationFileNames} from '../constants.js'
-import {ui, npm, path, error} from '@shopify/cli-kit'
-import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
+import {ui, path, error} from '@shopify/cli-kit'
+import {
+  addNPMDependenciesWithoutVersionIfNeeded,
+  findUpAndReadPackageJson,
+  writePackageJSON,
+} from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions, isVSCode} from '@shopify/cli-kit/node/vscode'
 import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
 import {writeFile, fileExists, removeFile, fileContentPrettyFormat} from '@shopify/cli-kit/node/fs'
@@ -74,13 +78,13 @@ export async function addESLint({app, force, install}: AddESlintOptions) {
       {
         title: 'Updating package.json',
         task: async (_, task) => {
-          const packageJSON = await npm.readPackageJSON(app.directory)
-
+          const packageJSON = (await findUpAndReadPackageJson(app.directory)).content
+          packageJSON.scripts = packageJSON.scripts || {}
           packageJSON.scripts.lint = `eslint --ext .js,.ts,.jsx,.tsx src/`
 
           packageJSON.prettier = '@shopify/prettier-config'
 
-          await npm.writePackageJSON(app.directory, packageJSON)
+          await writePackageJSON(app.directory, packageJSON)
 
           task.title = 'Package.json updated'
         },

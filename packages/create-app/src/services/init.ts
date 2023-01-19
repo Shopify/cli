@@ -1,8 +1,14 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
 import cleanup from '../utils/template/cleanup.js'
 
-import {path, npm, error, output} from '@shopify/cli-kit'
-import {packageManager, PackageManager, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
+import {path, error, output} from '@shopify/cli-kit'
+import {
+  findUpAndReadPackageJson,
+  packageManager,
+  PackageManager,
+  packageManagerUsedForCreating,
+  writePackageJSON,
+} from '@shopify/cli-kit/node/node-package-manager'
 import {renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
@@ -11,6 +17,7 @@ import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
 import {isShopify} from '@shopify/cli-kit/node/environment/local'
 import {downloadGitRepository, initializeGitRepository} from '@shopify/cli-kit/node/git'
 import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile} from '@shopify/cli-kit/node/fs'
+import {username} from '@shopify/cli-kit/node/os'
 
 interface InitOptions {
   name: string
@@ -63,12 +70,12 @@ async function init(options: InitOptions) {
       {
         title: 'Updating package.json',
         task: async () => {
-          const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
-
-          await npm.updateAppData(packageJSON, hyphenizedName)
+          const packageJSON = (await findUpAndReadPackageJson(templateScaffoldDir)).content
+          packageJSON.name = hyphenizedName
+          packageJSON.author = (await username()) ?? ''
           await updateCLIDependencies({packageJSON, local: options.local, directory: templateScaffoldDir})
 
-          await npm.writePackageJSON(templateScaffoldDir, packageJSON)
+          await writePackageJSON(templateScaffoldDir, packageJSON)
 
           // Ensure that the installation of dependencies doesn't fail when using
           // pnpm due to missing peerDependencies.

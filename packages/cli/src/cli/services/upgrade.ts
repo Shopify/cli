@@ -44,7 +44,7 @@ async function getProjectDir(directory: string): Promise<string | undefined> {
 }
 
 async function upgradeLocalShopify(projectDir: string, currentVersion: string): Promise<string | void> {
-  const packageJson = (await findUpAndReadPackageJson(projectDir)).content as PackageJson
+  const packageJson = (await findUpAndReadPackageJson(projectDir)).content
   const packageJsonDependencies = packageJson.dependencies || {}
   const packageJsonDevDependencies = packageJson.devDependencies || {}
 

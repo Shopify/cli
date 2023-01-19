@@ -1,10 +1,13 @@
-import {path, error, output, ui, npm} from '@shopify/cli-kit'
+import {path, error, output, ui} from '@shopify/cli-kit'
 import {username} from '@shopify/cli-kit/node/os'
 import {
+  findUpAndReadPackageJson,
   installNodeModules,
+  PackageJson,
   packageManager,
   PackageManager,
   packageManagerUsedForCreating,
+  writePackageJSON,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
@@ -101,8 +104,9 @@ async function init(options: InitOptions) {
               {
                 title: 'Updating package.json',
                 task: async (_, task) => {
-                  const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
-                  await npm.updateAppData(packageJSON, hyphenizedName)
+                  const packageJSON = (await findUpAndReadPackageJson(templateScaffoldDir)).content
+                  packageJSON.name = hyphenizedName
+                  packageJSON.author = (await username()) ?? ''
                   await updateCLIDependencies(packageJSON, options.local, {
                     dependencies: {
                       '@shopify/hydrogen': hydrogenPackageVersion,
@@ -113,7 +117,7 @@ async function init(options: InitOptions) {
                     },
                   })
                   await updateCLIScripts(packageJSON)
-                  await npm.writePackageJSON(templateScaffoldDir, packageJSON)
+                  await writePackageJSON(templateScaffoldDir, packageJSON)
 
                   task.title = 'Package.json updated'
                   parentTask.title = 'App initialized'
@@ -210,28 +214,29 @@ interface PackageDependencies {
   dependencies: {[key: string]: string | undefined}
 }
 
-async function updateCLIScripts(packageJSON: npm.PackageJSON): Promise<npm.PackageJSON> {
+async function updateCLIScripts(packageJSON: PackageJson): Promise<PackageJson> {
+  packageJSON.scripts = packageJSON.scripts || {}
   packageJSON.scripts.dev = `shopify hydrogen dev`
 
   return packageJSON
 }
 
 async function updateCLIDependencies(
-  packageJSON: npm.PackageJSON,
+  packageJSON: PackageJson,
   local: boolean,
   packageDependencies: PackageDependencies,
-): Promise<npm.PackageJSON> {
+): Promise<PackageJson> {
   const {devDependencies, dependencies} = packageDependencies
 
   packageJSON.devDependencies = packageJSON.devDependencies || {}
   packageJSON.dependencies = packageJSON.dependencies || {}
 
   Object.keys(devDependencies).forEach((key) => {
-    packageJSON.devDependencies[key] = devDependencies[key] || packageJSON.devDependencies[key]!
+    packageJSON.devDependencies![key] = devDependencies[key] || packageJSON.devDependencies![key]!
   })
 
   Object.keys(dependencies).forEach((key) => {
-    packageJSON.dependencies[key] = dependencies[key] || packageJSON.dependencies[key]!
+    packageJSON.dependencies![key] = dependencies[key] || packageJSON.dependencies![key]!
   })
 
   if (local) {

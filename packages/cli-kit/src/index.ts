@@ -1,5 +1,4 @@
 export * as error from './error.js'
-export * as npm from './npm.js'
 export * as output from './output.js'
 export * as path from './path.js'
 export * as plugins from './plugins.js'

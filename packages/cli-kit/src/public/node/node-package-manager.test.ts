@@ -11,6 +11,7 @@ import {
   FindUpAndReadPackageJsonNotFoundError,
   usesWorkspaces,
   addResolutionOrOverride,
+  writePackageJSON,
 } from './node-package-manager.js'
 import {exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
@@ -674,6 +675,23 @@ describe('addResolutionOrOverride', () => {
       expect(packageJsonContent.resolutions).toBeDefined()
       expect(packageJsonContent.resolutions).toEqual({'@types/node': '^17.0.38', '@types/react': '17.0.30'})
       expect(packageJsonContent.overrides).toBeUndefined()
+    })
+  })
+})
+
+describe('writePackageJSON', () => {
+  it('writes the package.json and returns it parsed', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJSON = {name: 'mock name'}
+      const filePath = pathJoin(tmpDir, 'package.json')
+
+      // When
+      await writePackageJSON(tmpDir, packageJSON)
+
+      // Then
+      const packageJsonContent = await readAndParsePackageJson(filePath)
+      expect(packageJsonContent).toEqual(packageJSON)
     })
   })
 })
