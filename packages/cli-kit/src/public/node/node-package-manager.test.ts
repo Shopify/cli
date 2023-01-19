@@ -684,7 +684,7 @@ describe('writePackageJSON', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJSON = {name: 'mock name'}
-      const filePath = pathJoin(tmpDir, 'package.json')
+      const filePath = joinPath(tmpDir, 'package.json')
 
       // When
       await writePackageJSON(tmpDir, packageJSON)
