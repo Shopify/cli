@@ -6,8 +6,8 @@ import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
 import {ThemeExtensionInstance, ThemeExtensionSpec} from '../extensions/theme.js'
 import {ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
 import {FunctionInstance, FunctionSpec} from '../extensions/functions.js'
-import {error, path, schema, output} from '@shopify/cli-kit'
-import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
+import {error, schema, output} from '@shopify/cli-kit'
+import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
   getDependencies,
@@ -21,6 +21,7 @@ import {camelize} from '@shopify/cli-kit/common/string'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
 import {isShopify} from '@shopify/cli-kit/node/environment/local'
+import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -95,7 +96,7 @@ class AppLoader {
     const {themeExtensions, usedCustomLayout: usedCustomLayoutForThemeExtensions} = await this.loadThemeExtensions(
       configuration.extensionDirectories,
     )
-    const packageJSONPath = path.join(this.appDirectory, 'package.json')
+    const packageJSONPath = joinPath(this.appDirectory, 'package.json')
     const name = await loadAppName(this.appDirectory)
     const nodeDependencies = await getDependencies(packageJSONPath)
     const packageManager = await getPackageManager(this.appDirectory)
@@ -132,7 +133,7 @@ class AppLoader {
 
   async loadDotEnv(): Promise<DotEnvFile | undefined> {
     let dotEnvFile: DotEnvFile | undefined
-    const dotEnvPath = path.join(this.appDirectory, dotEnvFileNames.production)
+    const dotEnvPath = joinPath(this.appDirectory, dotEnvFileNames.production)
     if (await fileExists(dotEnvPath)) {
       dotEnvFile = await readAndParseDotEnv(dotEnvPath)
     }
@@ -143,13 +144,13 @@ class AppLoader {
     if (!(await fileExists(this.directory))) {
       throw new error.Abort(output.content`Couldn't find directory ${output.token.path(this.directory)}`)
     }
-    return path.dirname(await this.getConfigurationPath())
+    return dirname(await this.getConfigurationPath())
   }
 
   async getConfigurationPath() {
     if (this.configurationPath) return this.configurationPath
 
-    const configurationPath = await path.findUp(configurationFileNames.app, {
+    const configurationPath = await findPathUp(configurationFileNames.app, {
       cwd: this.directory,
       type: 'file',
     })
@@ -168,15 +169,13 @@ class AppLoader {
   async loadWebs(webDirectories?: string[]): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
     const defaultWebDirectory = '**'
     const webConfigGlobs = [...(webDirectories ?? [defaultWebDirectory])].map((webGlob) => {
-      return path.join(this.appDirectory, webGlob, configurationFileNames.web)
+      return joinPath(this.appDirectory, webGlob, configurationFileNames.web)
     })
-    const webTomlPaths = await path.glob(webConfigGlobs)
+    const webTomlPaths = await glob(webConfigGlobs)
 
     const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
 
-    const webTomlsInStandardLocation = await path.glob(
-      path.join(this.appDirectory, `web/**/${configurationFileNames.web}`),
-    )
+    const webTomlsInStandardLocation = await glob(joinPath(this.appDirectory, `web/**/${configurationFileNames.web}`))
     const usedCustomLayout = webDirectories !== undefined || webTomlsInStandardLocation.length !== webTomlPaths.length
 
     return {webs, usedCustomLayout}
@@ -184,9 +183,9 @@ class AppLoader {
 
   async loadWeb(WebConfigurationFile: string): Promise<Web> {
     return {
-      directory: path.dirname(WebConfigurationFile),
+      directory: dirname(WebConfigurationFile),
       configuration: await this.parseConfigurationFile(WebConfigurationSchema, WebConfigurationFile),
-      framework: await resolveFramework(path.dirname(WebConfigurationFile)),
+      framework: await resolveFramework(dirname(WebConfigurationFile)),
     }
   }
 
@@ -253,12 +252,12 @@ class AppLoader {
     extensionDirectories?: string[],
   ): Promise<{uiExtensions: UIExtension[]; usedCustomLayout: boolean}> {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
-      return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.ui}`)
+      return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.ui}`)
     })
-    const configPaths = await path.glob(extensionConfigPaths)
+    const configPaths = await glob(extensionConfigPaths)
 
     const extensions = configPaths.map(async (configurationPath) => {
-      const directory = path.dirname(configurationPath)
+      const directory = dirname(configurationPath)
       const fileContent = await readFile(configurationPath)
       const obj = decodeToml(fileContent)
       const {type} = TypeSchema.parse(obj)
@@ -286,7 +285,7 @@ class AppLoader {
             ['index']
               .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
               .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
-              .map((relativePath) => path.join(directory, relativePath))
+              .map((relativePath) => joinPath(directory, relativePath))
               .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
           )
         ).find((sourcePath) => sourcePath !== undefined)
@@ -294,7 +293,7 @@ class AppLoader {
           this.abortOrReport(
             output.content`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${output.token.path(
               directory,
-            )} or ${output.token.path(path.join(directory, 'src'))}`,
+            )} or ${output.token.path(joinPath(directory, 'src'))}`,
             undefined,
             directory,
           )
@@ -327,12 +326,12 @@ class AppLoader {
     extensionDirectories?: string[],
   ): Promise<{functions: FunctionExtension[]; usedCustomLayout: boolean}> {
     const functionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
-      return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.function}`)
+      return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.function}`)
     })
-    const configPaths = await path.glob(functionConfigPaths)
+    const configPaths = await glob(functionConfigPaths)
 
     const allFunctions = configPaths.map(async (configurationPath) => {
-      const directory = path.dirname(configurationPath)
+      const directory = dirname(configurationPath)
       const fileContent = await readFile(configurationPath)
       const obj = decodeToml(fileContent)
       const {type} = TypeSchema.parse(obj)
@@ -358,12 +357,12 @@ class AppLoader {
     extensionDirectories?: string[],
   ): Promise<{themeExtensions: ThemeExtension[]; usedCustomLayout: boolean}> {
     const themeConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
-      return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.theme}`)
+      return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.theme}`)
     })
-    const configPaths = await path.glob(themeConfigPaths)
+    const configPaths = await glob(themeConfigPaths)
 
     const extensions = configPaths.map(async (configurationPath) => {
-      const directory = path.dirname(configurationPath)
+      const directory = dirname(configurationPath)
       const configuration = await this.parseConfigurationFile(ThemeExtensionSchema, configurationPath)
       const specification = this.findSpecificationForType('theme') as ThemeExtensionSpec | undefined
 
@@ -402,8 +401,8 @@ class AppLoader {
 }
 
 export async function loadAppName(appDirectory: string): Promise<string> {
-  const packageJSONPath = path.join(appDirectory, 'package.json')
-  return (await getPackageName(packageJSONPath)) ?? path.basename(appDirectory)
+  const packageJSONPath = joinPath(appDirectory, 'package.json')
+  return (await getPackageName(packageJSONPath)) ?? basename(appDirectory)
 }
 
 async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'frontend' | undefined> {
@@ -420,9 +419,9 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'f
   }
   const {directory} = backendWebs[0]!
 
-  const nodeConfigFile = path.join(directory, 'package.json')
-  const rubyConfigFile = path.join(directory, 'Gemfile')
-  const phpConfigFile = path.join(directory, 'composer.json')
+  const nodeConfigFile = joinPath(directory, 'package.json')
+  const rubyConfigFile = joinPath(directory, 'Gemfile')
+  const phpConfigFile = joinPath(directory, 'composer.json')
 
   if (await fileExists(nodeConfigFile)) {
     return 'node'

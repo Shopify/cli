@@ -11,9 +11,9 @@ import {
   macAddress,
 } from './environment/local.js'
 import {inTemporaryDirectory, touchFile, mkdir} from './fs.js'
+import {joinPath, dirname} from './path.js'
 import {startAnalytics} from '../../private/node/analytics.js'
 import {hashString} from '../../public/node/crypto.js'
-import {join as joinPath, dirname} from '../../path.js'
 import {mockAndCaptureOutput} from '../../testing/output.js'
 import {getAppInfo} from '../../store.js'
 import {publishEvent} from '../../monorail.js'

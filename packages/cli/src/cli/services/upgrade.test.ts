@@ -1,11 +1,12 @@
 import {upgrade} from './upgrade.js'
 import * as upgradeService from './upgrade.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {outputMocker, path} from '@shopify/cli-kit'
+import {outputMocker} from '@shopify/cli-kit'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import * as nodePackageManager from '@shopify/cli-kit/node/node-package-manager'
 import {exec} from '@shopify/cli-kit/node/system'
 import {inTemporaryDirectory, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 
 const oldCliVersion = '3.0.0'
 // just needs to be higher than oldCliVersion for these tests
@@ -119,10 +120,10 @@ describe('upgrade local CLI', () => {
       // Given
       await Promise.all([
         writeFile(
-          path.join(tmpDir, 'package.json'),
+          joinPath(tmpDir, 'package.json'),
           JSON.stringify({dependencies: {'@shopify/cli': currentCliVersion, '@shopify/app': currentCliVersion}}),
         ),
-        touchFile(path.join(tmpDir, 'shopify.app.toml')),
+        touchFile(joinPath(tmpDir, 'shopify.app.toml')),
       ])
       const outputMock = outputMocker.mockAndCaptureOutput()
       vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(undefined)
@@ -142,10 +143,10 @@ describe('upgrade local CLI', () => {
       // Given
       await Promise.all([
         writeFile(
-          path.join(tmpDir, 'package.json'),
+          joinPath(tmpDir, 'package.json'),
           JSON.stringify({dependencies: {'@shopify/cli': oldCliVersion, '@shopify/app': oldCliVersion}}),
         ),
-        touchFile(path.join(tmpDir, 'shopify.app.toml')),
+        touchFile(joinPath(tmpDir, 'shopify.app.toml')),
       ])
       const outputMock = outputMocker.mockAndCaptureOutput()
       vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(currentCliVersion)
@@ -168,7 +169,7 @@ describe('upgrade local CLI', () => {
         {
           packageManager: 'npm',
           type: 'prod',
-          directory: path.normalize(tmpDir),
+          directory: normalizePath(tmpDir),
           stdout: process.stdout,
           stderr: process.stderr,
         },

@@ -1,5 +1,5 @@
-import {mkdir, readFile, copyFile, chmod, isDirectory, writeFile, fileHasExecutablePermissions} from './fs.js'
-import {glob, join, dirname, relative} from '../../path.js'
+import {mkdir, readFile, copyFile, chmod, isDirectory, writeFile, fileHasExecutablePermissions, glob} from './fs.js'
+import {joinPath, dirname, relativePath} from './path.js'
 import {content, token, debug} from '../../output.js'
 import {Liquid} from 'liquidjs'
 
@@ -27,7 +27,7 @@ export function renderLiquidTemplate(templateContent: string, data: object): Pro
  */
 export async function recursiveLiquidTemplateCopy(from: string, to: string, data: object): Promise<void> {
   debug(content`Copying template from directory ${token.path(from)} to ${token.path(to)}`)
-  const templateFiles: string[] = await glob(join(from, '**/*'), {dot: true})
+  const templateFiles: string[] = await glob(joinPath(from, '**/*'), {dot: true})
 
   const sortedTemplateFiles = templateFiles
     .map((path) => path.split('/'))
@@ -35,7 +35,7 @@ export async function recursiveLiquidTemplateCopy(from: string, to: string, data
     .map((components) => components.join('/'))
   await Promise.all(
     sortedTemplateFiles.map(async (templateItemPath) => {
-      const outputPath = await renderLiquidTemplate(join(to, relative(from, templateItemPath)), data)
+      const outputPath = await renderLiquidTemplate(joinPath(to, relativePath(from, templateItemPath)), data)
       if (await isDirectory(templateItemPath)) {
         await mkdir(outputPath)
       } else if (templateItemPath.endsWith('.liquid')) {

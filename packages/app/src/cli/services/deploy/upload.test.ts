@@ -7,10 +7,11 @@ import {
 } from '../../api/graphql/functions/upload_url_generate.js'
 import {AppFunctionSetMutation, AppFunctionSetMutationSchema} from '../../api/graphql/functions/app_function_set.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {error, path} from '@shopify/cli-kit'
+import {error} from '@shopify/cli-kit'
 import {functionProxyRequest} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {fetch} from '@shopify/cli-kit/node/http'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -74,7 +75,7 @@ describe('uploadFunctionExtensions', () => {
   test('throws an error if the request to return the url errors', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      extension.buildWasmPath = () => joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.buildWasmPath(), '')
       const uploadURLError = new Error('upload error')
       vi.mocked(functionProxyRequest).mockRejectedValueOnce(uploadURLError)
@@ -91,7 +92,7 @@ describe('uploadFunctionExtensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
-      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      extension.buildWasmPath = () => joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
@@ -118,7 +119,7 @@ describe('uploadFunctionExtensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
-      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      extension.buildWasmPath = () => joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
@@ -157,7 +158,7 @@ describe('uploadFunctionExtensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
-      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      extension.buildWasmPath = () => joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
@@ -196,7 +197,7 @@ describe('uploadFunctionExtensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
-      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      extension.buildWasmPath = () => joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
@@ -233,7 +234,7 @@ describe('uploadFunctionExtensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
-      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      extension.buildWasmPath = () => joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
@@ -270,7 +271,7 @@ describe('uploadFunctionExtensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
-      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      extension.buildWasmPath = () => joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
@@ -297,7 +298,7 @@ describe('uploadFunctionExtensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = `test://test.com/moduleId.wasm`
-      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      extension.buildWasmPath = () => joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
@@ -351,7 +352,7 @@ describe('uploadFunctionExtensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = `test://test.com/moduleId.wasm`
-      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      extension.buildWasmPath = () => joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
@@ -418,7 +419,7 @@ describe('uploadFunctionExtensions', () => {
       // Given
       const uploadUrl = `test://test.com/moduleId.wasm`
       const createdID = 'ulid'
-      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      extension.buildWasmPath = () => joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
@@ -481,7 +482,7 @@ describe('uploadFunctionExtensions', () => {
       extension.configuration.ui!.paths = undefined
 
       const uploadUrl = `test://test.com/moduleId.wasm`
-      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      extension.buildWasmPath = () => joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
@@ -534,7 +535,7 @@ describe('uploadFunctionExtensions', () => {
       extension.configuration.input = undefined
 
       const uploadUrl = `test://test.com/moduleId.wasm`
-      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      extension.buildWasmPath = () => joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
@@ -585,7 +586,7 @@ describe('uploadFunctionExtensions', () => {
       extension.configuration.ui!.enable_create = false
 
       const uploadUrl = `test://test.com/moduleId.wasm`
-      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      extension.buildWasmPath = () => joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
@@ -643,7 +644,7 @@ describe('uploadFunctionExtensions', () => {
       identifiers.extensions[extension.localIdentifier] = existingID
       const uploadUrl = `test://test.com/moduleId.wasm`
       const updatedID = 'ulid'
-      extension.buildWasmPath = () => path.join(tmpDir, 'index.wasm')
+      extension.buildWasmPath = () => joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.buildWasmPath(), '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {

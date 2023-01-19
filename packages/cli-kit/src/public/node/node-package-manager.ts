@@ -2,8 +2,8 @@ import {AbortError, BugError} from './error.js'
 import {Version} from './semver.js'
 import {AbortController, AbortSignal} from './abort.js'
 import {exec} from './system.js'
-import {fileExists, readFile, writeFile} from './fs.js'
-import {glob, dirname, join as pathJoin, findUp, join} from '../../path.js'
+import {fileExists, readFile, writeFile, findPathUp, glob} from './fs.js'
+import {dirname, joinPath} from './path.js'
 import {token, content, debug} from '../../output.js'
 import latestVersion from 'latest-version'
 import type {Writable} from 'stream'
@@ -82,8 +82,8 @@ export function packageManagerUsedForCreating(env = process.env): PackageManager
  */
 export async function getPackageManager(directory: string): Promise<PackageManager> {
   debug(content`Obtaining the dependency manager in directory ${token.path(directory)}...`)
-  const yarnLockPath = pathJoin(directory, yarnLockfile)
-  const pnpmLockPath = pathJoin(directory, pnpmLockfile)
+  const yarnLockPath = joinPath(directory, yarnLockfile)
+  const pnpmLockPath = joinPath(directory, pnpmLockfile)
   if (await fileExists(yarnLockPath)) {
     return 'yarn'
   } else if (await fileExists(pnpmLockPath)) {
@@ -118,8 +118,8 @@ interface InstallNPMDependenciesRecursivelyOptions {
 export async function installNPMDependenciesRecursively(
   options: InstallNPMDependenciesRecursivelyOptions,
 ): Promise<void> {
-  const packageJsons = await glob(pathJoin(options.directory, '**/package.json'), {
-    ignore: [pathJoin(options.directory, 'node_modules/**/package.json')],
+  const packageJsons = await glob(joinPath(options.directory, '**/package.json'), {
+    ignore: [joinPath(options.directory, 'node_modules/**/package.json')],
     cwd: options.directory,
     onlyFiles: true,
     deep: options.deep,
@@ -199,9 +199,9 @@ export async function getDependencies(packageJsonPath: string): Promise<{[key: s
  * @returns A promise that resolves with true if the app uses workspaces, false otherwise.
  */
 export async function usesWorkspaces(appDirectory: string): Promise<boolean> {
-  const packageJsonPath = pathJoin(appDirectory, 'package.json')
+  const packageJsonPath = joinPath(appDirectory, 'package.json')
   const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
-  const pnpmWorkspacePath = pathJoin(appDirectory, pnpmWorkspaceFile)
+  const pnpmWorkspacePath = joinPath(appDirectory, pnpmWorkspaceFile)
   return Boolean(packageJsonContent.workspaces) || fileExists(pnpmWorkspacePath)
 }
 
@@ -367,7 +367,7 @@ ${token.json(dependencies)}
 With options:
 ${token.json(options)}
   `)
-  const packageJsonPath = pathJoin(options.directory, 'package.json')
+  const packageJsonPath = joinPath(options.directory, 'package.json')
   if (!(await fileExists(packageJsonPath))) {
     throw PackageJsonNotFoundError(options.directory)
   }
@@ -499,7 +499,7 @@ function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: Depend
  *  package.json and its content. If not found, it throws a FindUpAndReadPackageJsonNotFoundError error.
  */
 export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{path: string; content: PackageJson}> {
-  const packageJsonPath = await findUp('package.json', {cwd: fromDirectory, type: 'file'})
+  const packageJsonPath = await findPathUp('package.json', {cwd: fromDirectory, type: 'file'})
   if (packageJsonPath) {
     const packageJson = JSON.parse(await readFile(packageJsonPath))
     return {path: packageJsonPath, content: packageJson}
@@ -510,7 +510,7 @@ export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{
 
 export async function addResolutionOrOverride(directory: string, dependencies: {[key: string]: string}): Promise<void> {
   const packageManager = await getPackageManager(directory)
-  const packageJsonPath = pathJoin(directory, 'package.json')
+  const packageJsonPath = joinPath(directory, 'package.json')
   const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
 
   if (packageManager === 'yarn') {
@@ -545,6 +545,6 @@ async function getLatestNPMPackageVersion(name: string) {
  */
 export async function writePackageJSON(directory: string, packageJSON: PackageJson): Promise<void> {
   debug(content`JSON-encoding and writing content to package.json at ${token.path(directory)}...`)
-  const packagePath = join(directory, 'package.json')
+  const packagePath = joinPath(directory, 'package.json')
   await writeFile(packagePath, JSON.stringify(packageJSON, null, 2))
 }

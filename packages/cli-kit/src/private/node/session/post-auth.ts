@@ -1,5 +1,5 @@
-import {findUp, moduleDirectory} from '../../../path.js'
-import {readFile} from '../../../public/node/fs.js'
+import {moduleDirectory} from '../../../public/node/path.js'
+import {readFile, findPathUp} from '../../../public/node/fs.js'
 import {Bug} from '../../../error.js'
 
 const HTMLFileNames = [
@@ -19,7 +19,7 @@ const FaviconFileName = 'favicon.svg'
  * @returns The full path of the file, or null if not found.
  */
 const getFilePath = async (fileName: string): Promise<string> => {
-  const filePath = await findUp(`assets/${fileName}`, {
+  const filePath = await findPathUp(`assets/${fileName}`, {
     type: 'file',
     cwd: moduleDirectory(import.meta.url),
   })

@@ -6,7 +6,8 @@ import {loadExtensionsSpecifications} from '../../../models/extensions/specifica
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
-import {path, error, output} from '@shopify/cli-kit'
+import {error, output} from '@shopify/cli-kit'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class GenerateSchema extends Command {
   static description = 'Generates a GraphQL schema for a function.'
@@ -27,7 +28,7 @@ export default class GenerateSchema extends Command {
   public async run(): Promise<void> {
     const {flags, args} = await this.parse(GenerateSchema)
     const apiKey = flags['api-key']
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : process.cwd()
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({directory, specifications})
     const extension = app.extensions.function.find((extension) => extension.localIdentifier === args.function)

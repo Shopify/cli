@@ -4,8 +4,8 @@ import {ExtensionDevOptions} from '../extension.js'
 import {testApp, testUIExtension} from '../../../models/app/app.test-data.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
-import {path} from '@shopify/cli-kit'
 import {inTemporaryDirectory, touchFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('../../../models/app/app.js')
 
@@ -13,7 +13,7 @@ describe('getUIExtensionPayload', () => {
   test('returns the right payload', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const outputBundlePath = path.join(tmpDir, 'main.js')
+      const outputBundlePath = joinPath(tmpDir, 'main.js')
       await touchFile(outputBundlePath)
       const signal: any = vi.fn()
       const stdout: any = vi.fn()

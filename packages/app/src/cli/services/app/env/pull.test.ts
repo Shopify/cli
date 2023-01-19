@@ -4,10 +4,11 @@ import {selectApp} from '../select-app.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {testApp} from '../../../models/app/app.test-data.js'
-import {path, output} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import * as file from '@shopify/cli-kit/node/fs'
+import {resolvePath, joinPath} from '@shopify/cli-kit/node/path'
 
 beforeEach(async () => {
   vi.mock('../../dev/fetch.js')
@@ -53,7 +54,7 @@ describe('env pull', () => {
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue(token)
 
       // When
-      const filePath = path.resolve(tmpDir, '.env')
+      const filePath = resolvePath(tmpDir, '.env')
       const result = await pullEnv(app, {envFile: filePath})
 
       // Then
@@ -103,7 +104,7 @@ describe('env pull', () => {
       vi.mocked(selectApp).mockResolvedValue(organizationApp)
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue(token)
 
-      const filePath = path.resolve(tmpDir, '.env')
+      const filePath = resolvePath(tmpDir, '.env')
 
       await file.writeFile(filePath, 'SHOPIFY_API_KEY=ABC\nSHOPIFY_API_SECRET=XYZ\nSCOPES=my-scope')
 
@@ -167,7 +168,7 @@ describe('env pull', () => {
       vi.mocked(selectApp).mockResolvedValue(organizationApp)
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue(token)
 
-      const filePath = path.resolve(tmpDir, '.env')
+      const filePath = resolvePath(tmpDir, '.env')
 
       await file.writeFile(filePath, 'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=my-scope')
 
@@ -190,7 +191,7 @@ function mockApp(currentVersion = '2.2.2'): AppInterface {
   return testApp({
     name: 'myapp',
     directory: '/',
-    configurationPath: path.join('/', 'shopify.app.toml'),
+    configurationPath: joinPath('/', 'shopify.app.toml'),
     configuration: {
       scopes: 'my-scope',
       extensionDirectories: ['extensions/*'],

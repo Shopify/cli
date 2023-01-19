@@ -2,7 +2,8 @@ import {outputExtensionsMessages} from './output.js'
 import {testApp, testUIExtension} from '../../models/app/app.test-data.js'
 import {AppInterface} from '../../models/app/app.js'
 import {describe, expect, it} from 'vitest'
-import {outputMocker, path} from '@shopify/cli-kit'
+import {outputMocker} from '@shopify/cli-kit'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 describe('output', () => {
   it('logs the correct output extension message when the given app contains a customer-accounts-ui-extension', async () => {
@@ -41,7 +42,7 @@ async function mockApp(currentVersion = '2.2.2'): Promise<AppInterface> {
   return testApp({
     name: 'my-super-customer-accounts-app',
     directory: '/',
-    configurationPath: path.join('/', 'shopify.app.toml'),
+    configurationPath: joinPath('/', 'shopify.app.toml'),
     configuration: {
       scopes: 'my-scope',
     },

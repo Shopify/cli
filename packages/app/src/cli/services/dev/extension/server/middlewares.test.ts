@@ -13,10 +13,10 @@ import * as templates from '../templates.js'
 import * as payload from '../payload.js'
 import {UIExtensionPayload} from '../payload/models.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
-import {path} from '@shopify/cli-kit'
 import {describe, expect, it, vi} from 'vitest'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import * as http from '@shopify/cli-kit/node/http'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 function getMockRequest({context = {}, headers = {}}) {
   const request = {
@@ -97,9 +97,9 @@ describe('fileServerMiddleware()', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
 
-      await mkdir(path.join(tmpDir, 'foo'))
+      await mkdir(joinPath(tmpDir, 'foo'))
 
-      const filePath = path.join(tmpDir, 'foo', 'missing.file')
+      const filePath = joinPath(tmpDir, 'foo', 'missing.file')
       const response = getMockResponse()
 
       await fileServerMiddleware(getMockRequest({}), getMockResponse(), getMockNext(), {
@@ -115,14 +115,14 @@ describe('fileServerMiddleware()', async () => {
 
   it('returns an index.html for folder paths', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
-      await mkdir(path.join(tmpDir, 'foo'))
-      await touchFile(path.join(tmpDir, 'foo', 'index.html'))
-      await writeFile(path.join(tmpDir, 'foo', 'index.html'), '<html></html>')
+      await mkdir(joinPath(tmpDir, 'foo'))
+      await touchFile(joinPath(tmpDir, 'foo', 'index.html'))
+      await writeFile(joinPath(tmpDir, 'foo', 'index.html'), '<html></html>')
 
       const response = getMockResponse()
 
       await fileServerMiddleware(getMockRequest({}), response, getMockNext(), {
-        filePath: path.join(tmpDir, 'foo'),
+        filePath: joinPath(tmpDir, 'foo'),
       })
 
       expect(response.setHeader).toHaveBeenCalledWith('Content-Type', 'text/html')
@@ -149,14 +149,14 @@ describe('fileServerMiddleware()', async () => {
       const fileName = `bar.${extension}`
       const fileContent = `Content for ${fileName}`
 
-      await mkdir(path.join(tmpDir, 'foo'))
-      await touchFile(path.join(tmpDir, 'foo', fileName))
-      await writeFile(path.join(tmpDir, 'foo', fileName), fileContent)
+      await mkdir(joinPath(tmpDir, 'foo'))
+      await touchFile(joinPath(tmpDir, 'foo', fileName))
+      await writeFile(joinPath(tmpDir, 'foo', fileName), fileContent)
 
       const response = getMockResponse()
 
       await fileServerMiddleware(getMockRequest({}), response, getMockNext(), {
-        filePath: path.join(tmpDir, 'foo', fileName),
+        filePath: joinPath(tmpDir, 'foo', fileName),
       })
 
       expect(response.setHeader).toHaveBeenCalledWith('Content-Type', contentType)
@@ -167,14 +167,14 @@ describe('fileServerMiddleware()', async () => {
 
   it('sets Content-Type to text/plain if it does not understand the file extension', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
-      await mkdir(path.join(tmpDir, 'foo'))
-      await touchFile(path.join(tmpDir, 'foo', 'bar.foo'))
-      await writeFile(path.join(tmpDir, 'foo', 'bar.foo'), 'Content for bar.foo')
+      await mkdir(joinPath(tmpDir, 'foo'))
+      await touchFile(joinPath(tmpDir, 'foo', 'bar.foo'))
+      await writeFile(joinPath(tmpDir, 'foo', 'bar.foo'), 'Content for bar.foo')
 
       const response = getMockResponse()
 
       await fileServerMiddleware(getMockRequest({}), response, getMockNext(), {
-        filePath: path.join(tmpDir, 'foo', 'bar.foo'),
+        filePath: joinPath(tmpDir, 'foo', 'bar.foo'),
       })
 
       expect(response.setHeader).toHaveBeenCalledWith('Content-Type', 'text/plain')
@@ -194,7 +194,7 @@ describe('getExtensionAssetMiddleware()', () => {
           extensions: [
             await testUIExtension({
               devUUID: '123abc',
-              outputBundlePath: path.join(tmpDir, 'dist', 'main.js'),
+              outputBundlePath: joinPath(tmpDir, 'dist', 'main.js'),
             }),
           ],
         },
@@ -228,7 +228,7 @@ describe('getExtensionAssetMiddleware()', () => {
       const response = getMockResponse()
       const devUUID = '123abc'
       const fileName = 'main.js'
-      const outputBundlePath = path.join(tmpDir, devUUID, fileName)
+      const outputBundlePath = joinPath(tmpDir, devUUID, fileName)
       const options = {
         devOptions: {
           extensions: [
@@ -241,7 +241,7 @@ describe('getExtensionAssetMiddleware()', () => {
         payloadStore: {},
       } as unknown as GetExtensionsMiddlewareOptions
 
-      await mkdir(path.join(tmpDir, devUUID))
+      await mkdir(joinPath(tmpDir, devUUID))
       await touchFile(outputBundlePath)
       await writeFile(outputBundlePath, `content from ${fileName}`)
 

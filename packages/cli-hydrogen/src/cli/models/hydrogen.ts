@@ -1,5 +1,5 @@
 import {loadConfig} from '../utilities/load-config.js'
-import {path, error as kitError} from '@shopify/cli-kit'
+import {error as kitError} from '@shopify/cli-kit'
 import {
   getDependencies,
   getPackageName,
@@ -7,6 +7,7 @@ import {
   pnpmLockfile,
   yarnLockfile,
 } from '@shopify/cli-kit/node/node-package-manager'
+import {joinPath, basename} from '@shopify/cli-kit/node/path'
 
 import {fileExists} from '@shopify/cli-kit/node/fs'
 /* eslint-disable @typescript-eslint/ban-ts-comment */
@@ -65,14 +66,14 @@ class HydrogenAppLoader {
 
     const {configuration} = await this.loadConfig()
 
-    const yarnLockPath = path.join(this.directory, yarnLockfile)
+    const yarnLockPath = joinPath(this.directory, yarnLockfile)
     const yarnLockExists = await fileExists(yarnLockPath)
-    const pnpmLockPath = path.join(this.directory, pnpmLockfile)
+    const pnpmLockPath = joinPath(this.directory, pnpmLockfile)
     const pnpmLockExists = await fileExists(pnpmLockPath)
-    const packageJSONPath = path.join(this.directory, 'package.json')
+    const packageJSONPath = joinPath(this.directory, 'package.json')
     const name = await getPackageName(packageJSONPath)
     const nodeDependencies = await getDependencies(packageJSONPath)
-    const tsConfigExists = await fileExists(path.join(this.directory, 'tsconfig.json'))
+    const tsConfigExists = await fileExists(joinPath(this.directory, 'tsconfig.json'))
     const language = tsConfigExists && nodeDependencies.typescript ? 'TypeScript' : 'JavaScript'
 
     let packageManager: PackageManager
@@ -85,7 +86,7 @@ class HydrogenAppLoader {
     }
 
     const app: HydrogenApp = {
-      name: name ?? path.basename(this.directory),
+      name: name ?? basename(this.directory),
       directory: this.directory,
       configuration,
       packageManager,

@@ -1,5 +1,5 @@
-import {fileExists, writeFile, readFile} from './fs.js'
-import {findUp, join} from '../../path.js'
+import {fileExists, writeFile, readFile, findPathUp} from './fs.js'
+import {joinPath} from './path.js'
 import {content, token, debug} from '../../output.js'
 
 /**
@@ -10,7 +10,7 @@ import {content, token, debug} from '../../output.js'
  */
 export async function isVSCode(root = process.cwd()): Promise<boolean> {
   debug(content`Checking if the directory ${token.path(root)} or any of its parents has a .vscode directory... `)
-  const config = await findUp(join(root, '.vscode'), {type: 'directory'})
+  const config = await findPathUp(joinPath(root, '.vscode'), {type: 'directory'})
 
   if (!config) {
     return false
@@ -29,7 +29,7 @@ export async function addRecommendedExtensions(directory: string, recommendation
   debug(content`Adding VSCode recommended extensions at ${token.path(directory)}:
 ${token.json(recommendations)}
   `)
-  const extensionsPath = join(directory, '.vscode/extensions.json')
+  const extensionsPath = joinPath(directory, '.vscode/extensions.json')
 
   if (await isVSCode(directory)) {
     let originalExtensionsJson = {recommendations: []}

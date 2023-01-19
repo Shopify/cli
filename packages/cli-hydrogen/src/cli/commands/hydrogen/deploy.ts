@@ -1,10 +1,11 @@
 import {hydrogenFlags} from '../../flags.js'
 import {deployToOxygen} from '../../services/deploy.js'
-import {output, path} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import Command from '@shopify/cli-kit/node/base-command'
 import {Flags} from '@oclif/core'
 import {isShopify} from '@shopify/cli-kit/node/environment/local'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class Deploy extends Command {
   static description = 'Deploy your Hydrogen app to Oxygen hosting'
@@ -57,7 +58,7 @@ export default class Deploy extends Command {
     }
 
     const {flags} = await this.parse(Deploy)
-    const dir = flags.path ? path.resolve(flags.path) : process.cwd()
+    const dir = flags.path ? resolvePath(flags.path) : process.cwd()
 
     await deployToOxygen({...flags, path: dir})
   }

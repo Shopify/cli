@@ -15,10 +15,12 @@ import {
   appendFile,
   generateRandomNameForSubdirectory,
   readFileSync,
+  glob,
 } from './fs.js'
-import {join} from '../../path.js'
+import {joinPath} from './path.js'
 import {takeRandomFromArray} from '../common/array.js'
 import {beforeAll, describe, expect, it, test, vi} from 'vitest'
+import FastGlob from 'fast-glob'
 
 beforeAll(() => {
   vi.mock('../common/array.js')
@@ -31,7 +33,7 @@ describe('inTemporaryDirectory', () => {
 
     await inTemporaryDirectory(async (tmpDir) => {
       gotTmpDir = tmpDir
-      const filePath = join(tmpDir, 'test-file')
+      const filePath = joinPath(tmpDir, 'test-file')
       const content = 'test-content'
       await writeFile(filePath, content)
       await expect(fileExists(filePath)).resolves.toBe(true)
@@ -46,8 +48,8 @@ describe('copy', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
-      const from = join(tmpDir, 'from')
-      const to = join(tmpDir, 'to')
+      const from = joinPath(tmpDir, 'from')
+      const to = joinPath(tmpDir, 'to')
       await writeFile(from, content)
 
       // When
@@ -63,20 +65,20 @@ describe('copy', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
-      const from = join(tmpDir, 'from')
-      const fromChild = join(from, 'child')
-      const to = join(tmpDir, 'to')
+      const from = joinPath(tmpDir, 'from')
+      const fromChild = joinPath(from, 'child')
+      const to = joinPath(tmpDir, 'to')
       await mkdir(from)
       await mkdir(fromChild)
-      await writeFile(join(from, 'file'), content)
-      await writeFile(join(fromChild, '.dotfile'), content)
+      await writeFile(joinPath(from, 'file'), content)
+      await writeFile(joinPath(fromChild, '.dotfile'), content)
 
       // When
       await copyFile(from, to)
 
       // Then
-      await expect(readFile(join(to, 'file'))).resolves.toEqual(content)
-      await expect(readFile(join(to, 'child', '.dotfile'))).resolves.toEqual(content)
+      await expect(readFile(joinPath(to, 'file'))).resolves.toEqual(content)
+      await expect(readFile(joinPath(to, 'child', '.dotfile'))).resolves.toEqual(content)
     })
   })
 })
@@ -86,8 +88,8 @@ describe('move', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
-      const from = join(tmpDir, 'from')
-      const to = join(tmpDir, 'to')
+      const from = joinPath(tmpDir, 'from')
+      const to = joinPath(tmpDir, 'to')
       await writeFile(from, content)
 
       // When
@@ -105,7 +107,7 @@ describe('exists', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
-      const filePath = join(tmpDir, 'from')
+      const filePath = joinPath(tmpDir, 'from')
       await writeFile(filePath, content)
 
       // When
@@ -119,7 +121,7 @@ describe('exists', () => {
   it('returns false when the file does not exist', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const filePath = join(tmpDir, 'from')
+      const filePath = joinPath(tmpDir, 'from')
 
       // When
       const got = await fileExists(filePath)
@@ -135,7 +137,7 @@ describe('chmod', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
-      const filePath = join(tmpDir, 'from')
+      const filePath = joinPath(tmpDir, 'from')
       await writeFile(filePath, content)
 
       // When
@@ -152,7 +154,7 @@ describe('remove', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
-      const filePath = join(tmpDir, 'from')
+      const filePath = joinPath(tmpDir, 'from')
       await writeFile(filePath, content)
 
       // When
@@ -235,7 +237,7 @@ describe('format', () => {
 describe('appendFile', () => {
   test('it appends content to an existing file', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      const filePath = join(tmpDir, 'test-file')
+      const filePath = joinPath(tmpDir, 'test-file')
       const content = 'test-content'
       await touchFile(filePath)
       await appendFile(filePath, content)
@@ -254,7 +256,7 @@ describe('makeDirectoryWithRandomName', () => {
       vi.mocked(takeRandomFromArray).mockReturnValueOnce('directory')
 
       const content = 'test'
-      const filePath = join(tmpDir, 'taken-directory-app')
+      const filePath = joinPath(tmpDir, 'taken-directory-app')
       await writeFile(filePath, content)
 
       // When
@@ -270,11 +272,35 @@ describe('makeDirectoryWithRandomName', () => {
 describe('readFileSync', () => {
   test('synchronously reads content of file', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      const filePath = join(tmpDir, 'test-file')
+      const filePath = joinPath(tmpDir, 'test-file')
       const content = 'test-content'
       await touchFile(filePath)
       await appendFile(filePath, content)
       await expect(readFileSync(filePath).toString()).toContain(content)
     })
+  })
+})
+
+describe('glob', () => {
+  it('calls fastGlob with dot:true if no dot option is passed', async () => {
+    // Given
+    vi.mock('fast-glob')
+
+    // When
+    await glob('pattern')
+
+    // Then
+    expect(FastGlob).toBeCalledWith('pattern', {dot: true})
+  })
+
+  it('calls fastGlob with dot option if passed', async () => {
+    // Given
+    vi.mock('fast-glob')
+
+    // When
+    await glob('pattern', {dot: false})
+
+    // Then
+    expect(FastGlob).toBeCalledWith('pattern', {dot: false})
   })
 })

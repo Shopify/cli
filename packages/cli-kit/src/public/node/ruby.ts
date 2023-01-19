@@ -4,8 +4,8 @@ import {AbortSignal} from './abort.js'
 import {platformAndArch} from './os.js'
 import {captureOutput, exec} from './system.js'
 import * as file from './fs.js'
+import {joinPath} from './path.js'
 import {Abort, AbortSilent} from '../../error.js'
-import {glob, join} from '../../path.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
 import {content, token} from '../../output.js'
@@ -48,7 +48,7 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
     // Bundler uses this Gemfile to understand which gems are available in the
     // environment. We use this to specify our own Gemfile for CLI2, which exists
     // outside the user's project directory.
-    BUNDLE_GEMFILE: join(shopifyCLIDirectory(), 'Gemfile'),
+    BUNDLE_GEMFILE: joinPath(shopifyCLIDirectory(), 'Gemfile'),
   }
 
   try {
@@ -87,7 +87,7 @@ export async function execThemeCheckCLI(options: ExecThemeCheckCLIOptions): Prom
   const processes = options.directories.map(async (directory): Promise<void> => {
     // Check that there are files aside from the extension TOML config file,
     // otherwise theme-check will return a false failure.
-    const files = await glob(join(directory, '/**/*'))
+    const files = await file.glob(joinPath(directory, '/**/*'))
     const fileCount = files.filter((file) => !file.match(/\.toml$/)).length
     if (fileCount === 0) return
 
@@ -245,7 +245,7 @@ async function createThemeCheckCLIWorkingDirectory(): Promise<void> {
  * It creates the Gemfile to install The Ruby CLI and the dependencies.
  */
 async function createShopifyCLIGemfile(): Promise<void> {
-  const gemPath = join(shopifyCLIDirectory(), 'Gemfile')
+  const gemPath = joinPath(shopifyCLIDirectory(), 'Gemfile')
   const gemFileContent = ["source 'https://rubygems.org'", `gem 'shopify-cli', '${RubyCLIVersion}'`]
   const {platform} = platformAndArch()
   if (platform === 'windows') {
@@ -259,7 +259,7 @@ async function createShopifyCLIGemfile(): Promise<void> {
  * It creates the Gemfile to install theme-check and its dependencies.
  */
 async function createThemeCheckGemfile(): Promise<void> {
-  const gemPath = join(themeCheckDirectory(), 'Gemfile')
+  const gemPath = joinPath(themeCheckDirectory(), 'Gemfile')
   await file.writeFile(gemPath, `source 'https://rubygems.org'\ngem 'theme-check', '${ThemeCheckVersion}'`)
 }
 
@@ -298,7 +298,7 @@ async function bundleInstallThemeCheck() {
 function shopifyCLIDirectory(): string {
   return (
     process.env.SHOPIFY_CLI_2_0_DIRECTORY ??
-    join(pathConstants.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
+    joinPath(pathConstants.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
   )
 }
 
@@ -308,7 +308,7 @@ function shopifyCLIDirectory(): string {
  * @returns The absolute path to the theme-check directory.
  */
 function themeCheckDirectory(): string {
-  return join(pathConstants.directories.cache.vendor.path(), 'theme-check', ThemeCheckVersion)
+  return joinPath(pathConstants.directories.cache.vendor.path(), 'theme-check', ThemeCheckVersion)
 }
 
 /**
@@ -339,7 +339,7 @@ function getRubyBinDir(): string | undefined {
  */
 function rubyExecutable(): string {
   const rubyBinDir = getRubyBinDir()
-  return rubyBinDir ? join(rubyBinDir, 'ruby') : 'ruby'
+  return rubyBinDir ? joinPath(rubyBinDir, 'ruby') : 'ruby'
 }
 
 /**
@@ -349,7 +349,7 @@ function rubyExecutable(): string {
  */
 function bundleExecutable(): string {
   const rubyBinDir = getRubyBinDir()
-  return rubyBinDir ? join(rubyBinDir, 'bundle') : 'bundle'
+  return rubyBinDir ? joinPath(rubyBinDir, 'bundle') : 'bundle'
 }
 
 /**
@@ -359,5 +359,5 @@ function bundleExecutable(): string {
  */
 function gemExecutable(): string {
   const rubyBinDir = getRubyBinDir()
-  return rubyBinDir ? join(rubyBinDir, 'gem') : 'gem'
+  return rubyBinDir ? joinPath(rubyBinDir, 'gem') : 'gem'
 }

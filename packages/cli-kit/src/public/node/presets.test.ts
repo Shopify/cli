@@ -2,7 +2,7 @@ import * as presets from './presets.js'
 import {presetsFilename} from './presets.js'
 import {encodeToml as tomlEncode} from './toml.js'
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
-import {join as pathJoin} from '../../path.js'
+import {joinPath} from './path.js'
 import {describe, expect, test} from 'vitest'
 
 const preset1 = {
@@ -32,7 +32,7 @@ describe('loading presets', async () => {
   test('returns an empty object when an empty presets file exists', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      await writeFile(pathJoin(tmpDir, presetsFilename), '# no content')
+      await writeFile(joinPath(tmpDir, presetsFilename), '# no content')
 
       // When
       const loaded = await presets.loadPresetsFromDirectory(tmpDir)
@@ -45,7 +45,7 @@ describe('loading presets', async () => {
   test('returns available presets when they exist', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      await writeFile(pathJoin(tmpDir, 'shopify.presets.toml'), tomlEncode({preset1, preset2}))
+      await writeFile(joinPath(tmpDir, 'shopify.presets.toml'), tomlEncode({preset1, preset2}))
 
       // When
       const loaded = await presets.loadPresetsFromDirectory(tmpDir)
@@ -59,7 +59,7 @@ describe('loading presets', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       await writeFile(`${tmpDir}/shopify.presets.toml`, tomlEncode({preset1}))
-      const subdir = pathJoin(tmpDir, 'subdir')
+      const subdir = joinPath(tmpDir, 'subdir')
       await mkdir(subdir)
 
       // When
@@ -74,7 +74,7 @@ describe('loading presets', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       await writeFile(`${tmpDir}/shopify.presets.toml`, tomlEncode({preset1}))
-      const subdir = pathJoin(tmpDir, 'subdir')
+      const subdir = joinPath(tmpDir, 'subdir')
       await mkdir(subdir)
 
       // When

@@ -1,9 +1,10 @@
 import {HydrogenApp} from '../models/hydrogen.js'
-import {ui, path, error} from '@shopify/cli-kit'
+import {ui, error} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions} from '@shopify/cli-kit/node/vscode'
 import {exec} from '@shopify/cli-kit/node/system'
 import {writeFile, fileExists, removeFile, fileContentPrettyFormat, readFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import stream from 'stream'
 
 interface AddTailwindOptions {
@@ -53,7 +54,7 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
     {
       title: 'Adding PostCSS configuration',
       task: async (_, task) => {
-        const postCSSConfiguration = path.join(directory, 'postcss.config.js')
+        const postCSSConfiguration = joinPath(directory, 'postcss.config.js')
 
         if (await fileExists(postCSSConfiguration)) {
           if (force) {
@@ -77,7 +78,7 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
     {
       title: 'Initializing Tailwind CSS...',
       task: async (_, task) => {
-        const tailwindConfigurationPath = path.join(directory, 'tailwind.config.js')
+        const tailwindConfigurationPath = joinPath(directory, 'tailwind.config.js')
 
         if (await fileExists(tailwindConfigurationPath)) {
           if (force) {
@@ -103,7 +104,7 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
     {
       title: 'Importing Tailwind CSS in index.css',
       task: async (_ctx, task) => {
-        const indexCSSPath = path.join(directory, 'src', 'index.css')
+        const indexCSSPath = joinPath(directory, 'src', 'index.css')
         const indexCSS = await readFile(indexCSSPath)
 
         if (tailwindImportsExist(indexCSS)) {

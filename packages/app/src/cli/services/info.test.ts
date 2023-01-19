@@ -5,10 +5,11 @@ import {AppInterface} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp, testUIExtension} from '../models/app/app.test-data.js'
 import {AppErrors} from '../models/app/loader.js'
-import {path, output, store} from '@shopify/cli-kit'
+import {output, store} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 beforeEach(async () => {
   vi.mock('./dev/fetch.js')
@@ -251,7 +252,7 @@ function mockApp(currentVersion = '2.2.2', app?: Partial<AppInterface>): AppInte
   return testApp({
     name: 'myapp',
     directory: '/',
-    configurationPath: path.join('/', 'shopify.app.toml'),
+    configurationPath: joinPath('/', 'shopify.app.toml'),
     configuration: {
       scopes: 'my-scope',
       extensionDirectories: ['extensions/*'],
