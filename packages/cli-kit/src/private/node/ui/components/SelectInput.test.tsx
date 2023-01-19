@@ -107,6 +107,39 @@ describe('SelectInput', async () => {
     expect(onChange).toHaveBeenCalledWith(items[2]!)
   })
 
+  test('handles pressing non existing keys', async () => {
+    const onChange = vi.fn()
+    const items = [
+      {
+        label: 'First',
+        value: 'first',
+      },
+      {
+        label: 'Second',
+        value: 'second',
+      },
+      {
+        label: 'Tenth',
+        value: 'tenth',
+      },
+    ]
+
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
+
+    await waitForInputsToBeReady()
+    // nothing changes when pressing a key that doesn't exist
+    await sendInputAndWait(renderInstance, 100, '4')
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "[36m>[39m  [36m(1) First[39m
+         (2) Second
+         (3) Tenth
+
+         [2mnavigate with arrows, enter to select[22m"
+    `)
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
   test('handles custom keys', async () => {
     const onChange = vi.fn()
     const items = [
