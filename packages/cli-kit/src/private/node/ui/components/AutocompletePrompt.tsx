@@ -4,7 +4,7 @@ import {TextInput} from './TextInput.js'
 import {handleCtrlC} from '../../ui.js'
 import React, {ReactElement, useCallback, useRef, useState} from 'react'
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
-import {figures} from 'listr2'
+import figures from 'figures'
 import {debounce} from '@shopify/cli-kit/common/function'
 import ansiEscapes from 'ansi-escapes'
 

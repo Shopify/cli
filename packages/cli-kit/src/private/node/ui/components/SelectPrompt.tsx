@@ -4,7 +4,7 @@ import {appendToTokenItem, TokenItem, tokenItemToString, TokenizedText} from './
 import {handleCtrlC} from '../../ui.js'
 import React, {ReactElement, useCallback, useState} from 'react'
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
-import {figures} from 'listr2'
+import figures from 'figures'
 import ansiEscapes from 'ansi-escapes'
 
 export interface Props<T> {

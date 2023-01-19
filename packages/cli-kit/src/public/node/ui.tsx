@@ -209,7 +209,7 @@ export function renderFatalError(error: Fatal) {
  *     (9) eighth
  *     (10) ninth
  *
- *     navigate with arrows, enter to select
+ *     Press ↑↓ arrows to select, enter to confirm
  * ```
  */
 export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit'>): Promise<T> {
@@ -233,7 +233,7 @@ interface RenderConfirmationPromptOptions extends Pick<SelectPromptProps<boolean
  * \>  (y) Yes, confirm
  *     (n) No, canccel
  *
- *     navigate with arrows, enter to select
+ *     Press ↑↓ arrows to select, enter to confirm
  */
 export function renderConfirmationPrompt({
   message,
@@ -277,7 +277,7 @@ interface RenderAutocompletePromptProps<T> {
  *     second
  *     third
 
- *  navigate with arrows, enter to select
+ *  Press ↑↓ arrows to select, enter to confirm
  * ```
  */
 export function renderAutocompletePrompt<T>(props: RenderAutocompletePromptProps<T>): Promise<T> {

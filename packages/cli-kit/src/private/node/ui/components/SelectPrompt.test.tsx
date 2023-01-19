@@ -83,7 +83,7 @@ describe('SelectPrompt', async () => {
          (9) ninth
          (10) tenth
 
-         [2mnavigate with arrows, enter to select[22m
+         [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)
   })
@@ -123,7 +123,7 @@ describe('SelectPrompt', async () => {
          (3) third
          (4) fourth
 
-         [2mnavigate with arrows, enter to select[22m
+         [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)
   })
@@ -157,7 +157,7 @@ describe('SelectPrompt', async () => {
 
       >  (1) a
 
-         navigate with arrows, enter to select
+         Press ↑↓ arrows to select, enter to confirm
       "
     `)
   })
@@ -179,7 +179,7 @@ describe('SelectPrompt', async () => {
          (1) a
       >  (2) b
 
-         navigate with arrows, enter to select
+         Press ↑↓ arrows to select, enter to confirm
       "
     `)
 
@@ -209,7 +209,7 @@ describe('SelectPrompt', async () => {
       >  (1) a
          (2) b
 
-         navigate with arrows, enter to select
+         Press ↑↓ arrows to select, enter to confirm
       "
     `)
 

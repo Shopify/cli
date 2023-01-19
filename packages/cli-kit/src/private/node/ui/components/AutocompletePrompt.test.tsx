@@ -145,7 +145,7 @@ describe('AutocompletePrompt', async () => {
          ninth
          tenth
 
-         [2mnavigate with arrows, enter to select[22m
+         [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)
   })
@@ -186,7 +186,7 @@ describe('AutocompletePrompt', async () => {
          third
          fourth
 
-         [2mnavigate with arrows, enter to select[22m
+         [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)
   })
@@ -316,7 +316,7 @@ describe('AutocompletePrompt', async () => {
          twenty-fourth
          twenty-fifth
 
-         [2mnavigate with arrows, enter to select[22m
+         [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)
 
@@ -353,7 +353,7 @@ describe('AutocompletePrompt', async () => {
          th[1mi[22mrty-fifth
          th[1mi[22mrty-sixth
 
-         [2mnavigate with arrows, enter to select[22m
+         [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)
 
@@ -388,7 +388,7 @@ describe('AutocompletePrompt', async () => {
          twenty-fourth
          twenty-fifth
 
-         [2mnavigate with arrows, enter to select[22m
+         [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)
 
@@ -425,7 +425,7 @@ describe('AutocompletePrompt', async () => {
          th[1mi[22mrty-fifth
          th[1mi[22mrty-sixth
 
-         [2mnavigate with arrows, enter to select[22m
+         [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)
 
@@ -491,7 +491,7 @@ describe('AutocompletePrompt', async () => {
          thirti[1me[22mth
          thirty-s[1me[22mcond
 
-         [2mnavigate with arrows, enter to select[22m
+         [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)
 
@@ -565,7 +565,7 @@ describe('AutocompletePrompt', async () => {
       [36m>[39m  [36mf[1mi[22mrst[39m
          th[1mi[22mrd
 
-         [2mnavigate with arrows, enter to select[22m
+         [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)
 
@@ -577,7 +577,7 @@ describe('AutocompletePrompt', async () => {
       [36m>[39m  [36mfirst[39m
          second
 
-         [2mnavigate with arrows, enter to select[22m
+         [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)
   })
