@@ -135,7 +135,7 @@ describe('SelectInput', async () => {
          (2) Second
          (3) Tenth
 
-         [2mnavigate with arrows, enter to select[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
     expect(onChange).not.toHaveBeenCalled()
   })
