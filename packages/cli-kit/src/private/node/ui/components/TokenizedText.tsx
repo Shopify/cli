@@ -36,6 +36,7 @@ interface FilePathToken {
 
 interface ListToken {
   list: {
+    title?: string
     items: TokenItem[]
     ordered?: boolean
   }
@@ -55,6 +56,32 @@ function tokenToBlock(token: Token): Block {
     display: typeof token !== 'string' && 'list' in token ? 'block' : 'inline',
     value: token,
   }
+}
+
+export function tokenItemToString(token: TokenItem): string {
+  if (typeof token === 'string') {
+    return token
+  } else if ('command' in token) {
+    return token.command
+  } else if ('link' in token) {
+    return token.link.label || token.link.url
+  } else if ('char' in token) {
+    return token.char
+  } else if ('userInput' in token) {
+    return token.userInput
+  } else if ('subdued' in token) {
+    return token.subdued
+  } else if ('filePath' in token) {
+    return token.filePath
+  } else if ('list' in token) {
+    return token.list.items.map(tokenItemToString).join(' ')
+  } else {
+    return token.map(tokenItemToString).join(' ')
+  }
+}
+
+export function appendToTokenItem(token: TokenItem, suffix: string): TokenItem {
+  return Array.isArray(token) ? [...token, suffix] : [token, suffix]
 }
 
 function splitByDisplayType(acc: Block[][], item: Block) {
@@ -114,7 +141,7 @@ const TokenizedText: React.FC<Props> = ({item}) => {
               </Text>
             )
           } else {
-            return <List key={groupIndex} items={(items[0]!.value as ListToken).list.items} />
+            return <List key={groupIndex} {...(items[0]!.value as ListToken).list} />
           }
         })}
       </Box>

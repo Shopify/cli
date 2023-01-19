@@ -1,0 +1,25 @@
+.IconButton {
+  all: unset;
+  display: flex;
+  align-items: center;
+
+  width: 2.4rem;
+  height: 2.4rem;
+
+  background-color: var(--dc-color-grey-700);
+  border-radius: var(--dc-border-radius);
+
+  cursor: pointer;
+
+  &:hover,
+  &:focus {
+    background-color: var(--dc-color-grey-600);
+  }
+
+  .Icon {
+    margin: 0 auto;
+    position:relative;
+    top: 0.1rem;
+  }
+}
+

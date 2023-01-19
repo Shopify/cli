@@ -3,7 +3,7 @@ import {Theme} from '../models/theme.js'
 import {themeComponent, themesComponent} from '../utilities/theme-ui.js'
 import {deleteTheme} from '../utilities/themes-api.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {renderSelectPrompt, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {pluralize} from '@shopify/cli-kit/common/string'
 
 export interface DeleteOptions {
@@ -57,21 +57,7 @@ async function isConfirmed(themes: Theme[], store: string) {
     (theme) => ['Delete', ...themeComponent(theme), `from ${store}?`],
   )
 
-  return renderSelectPrompt({
-    message,
-    choices: [
-      {
-        label: 'Yes, confirm changes',
-        value: true,
-        key: 'y',
-      },
-      {
-        label: 'Cancel',
-        value: false,
-        key: 'n',
-      },
-    ],
-  })
+  return renderConfirmationPrompt({message, confirmationMessage: 'Yes, confirm changes', cancellationMessage: 'Cancel'})
 }
 
 export function renderDeprecatedArgsWarning(argv: string[]) {

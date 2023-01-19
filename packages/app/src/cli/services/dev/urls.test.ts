@@ -12,7 +12,7 @@ import {testApp} from '../../models/app/app.test-data.js'
 import {UpdateURLsQuery} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery} from '../../api/graphql/get_urls.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {error, outputMocker, plugins, store, ui} from '@shopify/cli-kit'
+import {error, plugins, store, ui} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
@@ -21,6 +21,7 @@ import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isSpin, spinFqdn} from '@shopify/cli-kit/node/environment/spin'
 import {codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/node/environment/local'
+import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/tcp')
@@ -47,6 +48,7 @@ beforeEach(() => {
       },
     }
   })
+  vi.mock('@shopify/cli-kit/node/ui')
 })
 
 describe('generateURL', () => {
@@ -229,7 +231,7 @@ describe('shouldOrPromptUpdateURLs', () => {
       currentURLs,
       appDirectory: '/path',
     }
-    vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
+    vi.mocked(renderSelectPrompt).mockResolvedValue('always')
 
     // When
     const got = await shouldOrPromptUpdateURLs(options)
@@ -244,7 +246,7 @@ describe('shouldOrPromptUpdateURLs', () => {
       currentURLs,
       appDirectory: '/path',
     }
-    vi.mocked(ui.prompt).mockResolvedValue({value: 'yes'})
+    vi.mocked(renderSelectPrompt).mockResolvedValue('yes')
 
     // When
     const got = await shouldOrPromptUpdateURLs(options)
@@ -259,7 +261,7 @@ describe('shouldOrPromptUpdateURLs', () => {
       currentURLs,
       appDirectory: '/path',
     }
-    vi.mocked(ui.prompt).mockResolvedValue({value: 'never'})
+    vi.mocked(renderSelectPrompt).mockResolvedValue('never')
 
     // When
     const got = await shouldOrPromptUpdateURLs(options)
@@ -274,7 +276,7 @@ describe('shouldOrPromptUpdateURLs', () => {
       currentURLs,
       appDirectory: '/path',
     }
-    vi.mocked(ui.prompt).mockResolvedValue({value: 'no'})
+    vi.mocked(renderSelectPrompt).mockResolvedValue('no')
 
     // When
     const got = await shouldOrPromptUpdateURLs(options)
@@ -289,7 +291,7 @@ describe('shouldOrPromptUpdateURLs', () => {
       currentURLs,
       appDirectory: '/path',
     }
-    vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
+    vi.mocked(renderSelectPrompt).mockResolvedValue('always')
 
     // When
     await shouldOrPromptUpdateURLs(options)
@@ -299,23 +301,6 @@ describe('shouldOrPromptUpdateURLs', () => {
       directory: '/path',
       updateURLs: true,
     })
-  })
-
-  it('shows the current URLs', async () => {
-    // Given
-    const options = {
-      currentURLs,
-      appDirectory: '/path',
-    }
-    const outputMock = outputMocker.mockAndCaptureOutput()
-    vi.mocked(ui.prompt).mockResolvedValue({value: 'no'})
-
-    // When
-    await shouldOrPromptUpdateURLs(options)
-
-    // Then
-    expect(outputMock.output()).toMatch(/example.com\/home/)
-    expect(outputMock.output()).toMatch(/example.com\/auth\/callback/)
   })
 })
 

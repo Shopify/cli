@@ -1,6 +1,6 @@
 import SelectInput, {Props as SelectProps, Item as SelectItem, Item} from './SelectInput.js'
-import Table, {Props as TableProps} from './Table.js'
-import {TokenItem, TokenizedText} from './TokenizedText.js'
+import InfoTable, {Props as InfoTableProps} from './Prompts/InfoTable.js'
+import {appendToTokenItem, TokenItem, tokenItemToString, TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import React, {ReactElement, useCallback, useState} from 'react'
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
@@ -11,7 +11,8 @@ export interface Props<T> {
   message: TokenItem
   choices: SelectProps<T>['items']
   onSubmit: (value: T) => void
-  infoTable?: TableProps['table']
+  infoTable?: InfoTableProps['table']
+  defaultValue?: T
 }
 
 function SelectPrompt<T>({
@@ -19,8 +20,13 @@ function SelectPrompt<T>({
   choices,
   infoTable,
   onSubmit,
+  defaultValue,
 }: React.PropsWithChildren<Props<T>>): ReactElement | null {
-  const [answer, setAnswer] = useState<SelectItem<T>>(choices[0]!)
+  if (choices.length === 0) {
+    throw new Error('SelectPrompt requires at least one choice')
+  }
+  const initialValue = defaultValue ? choices.find((choice) => choice.value === defaultValue) ?? choices[0] : choices[0]
+  const [answer, setAnswer] = useState<SelectItem<T> | undefined>(initialValue)
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
   const {stdout} = useStdout()
@@ -38,7 +44,7 @@ function SelectPrompt<T>({
       (input, key) => {
         handleCtrlC(input, key)
 
-        if (key.return) {
+        if (key.return && answer) {
           if (stdout && height >= stdout.rows) {
             stdout.write(ansiEscapes.clearTerminal)
           }
@@ -51,17 +57,21 @@ function SelectPrompt<T>({
     ),
   )
 
+  const messageToString = tokenItemToString(message)
+  const messageWithPunctuation =
+    messageToString.endsWith('?') || messageToString.endsWith(':') ? message : appendToTokenItem(message, ':')
+
   return (
     <Box flexDirection="column" marginBottom={1} ref={measuredRef}>
       <Box>
         <Box marginRight={2}>
           <Text>?</Text>
         </Box>
-        <TokenizedText item={message} />
+        <TokenizedText item={messageWithPunctuation} />
       </Box>
       {infoTable && !submitted && (
-        <Box marginLeft={7}>
-          <Table table={infoTable} />
+        <Box marginLeft={7} marginTop={1}>
+          <InfoTable table={infoTable} />
         </Box>
       )}
       {submitted ? (
@@ -70,15 +80,18 @@ function SelectPrompt<T>({
             <Text color="cyan">{figures.tick}</Text>
           </Box>
 
-          <Text color="cyan">{answer.label}</Text>
+          <Text color="cyan">{answer!.label}</Text>
         </Box>
       ) : (
-        <SelectInput
-          items={choices}
-          onChange={(item: Item<T>) => {
-            setAnswer(item)
-          }}
-        />
+        <Box marginTop={1}>
+          <SelectInput
+            defaultValue={initialValue}
+            items={choices}
+            onChange={(item: Item<T> | undefined) => {
+              setAnswer(item)
+            }}
+          />
+        </Box>
       )}
     </Box>
   )

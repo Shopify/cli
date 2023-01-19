@@ -6,11 +6,12 @@ import {GenericSpecification} from '../models/app/extensions.js'
 import generateExtensionPrompt from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
 import generateExtensionService, {ExtensionFlavor} from '../services/generate/extension.js'
-import {error, output, path} from '@shopify/cli-kit'
+import {error, path, output} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager.js'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isShopify} from '@shopify/cli-kit/node/environment/local'
+import {RenderAlertOptions, renderSuccess} from '@shopify/cli-kit/node/ui'
 
 export interface GenerateOptions {
   directory: string
@@ -99,7 +100,7 @@ async function generate(options: GenerateOptions) {
     extensionDirectory,
     app.packageManager,
   )
-  output.info(formattedSuccessfulMessage)
+  renderSuccess(formattedSuccessfulMessage)
 }
 
 function findSpecification(type: string | undefined, specifications: GenericSpecification[]) {
@@ -122,29 +123,25 @@ function formatSuccessfulRunMessage(
   specification: GenericSpecification,
   extensionDirectory: string,
   depndencyManager: PackageManager,
-): string {
-  output.completed(`Your ${specification.externalName} extension was added to your project!`)
-
-  const outputTokens = []
-  outputTokens.push(
-    output.content`\n  To find your extension, remember to ${output.token.genericShellCommand(
-      output.content`cd ${output.token.path(extensionDirectory)}`,
-    )}`.value,
-  )
+): RenderAlertOptions {
+  const options: RenderAlertOptions = {
+    headline: [{userInput: specification.externalName}, 'extension was added to your project!'],
+    nextSteps: [['To find your extension, remember to', {command: `cd ${extensionDirectory}`}]],
+    reference: [],
+  }
 
   if (specification.category() === 'ui' || specification.category() === 'theme') {
-    outputTokens.push(
-      output.content`  To preview your project, run ${output.token.packagejsonScript(depndencyManager, 'dev')}`.value,
-    )
+    options.nextSteps!.push([
+      'To preview your project, run',
+      {command: `${output.formatPackageManagerCommand(depndencyManager, 'dev')}`},
+    ])
   }
 
   if (specification.helpURL) {
-    outputTokens.push(
-      output.content`  For more details, see the ${output.token.link('docs', specification.helpURL)} ✨`.value,
-    )
+    options.reference!.push(['For more details, see the', {link: {label: 'docs', url: specification.helpURL}}])
   }
 
-  return outputTokens.join('\n').concat('\n')
+  return options
 }
 
 export default generate

@@ -1,6 +1,7 @@
-import {ui, output} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 const TEMPLATE_BASE = 'https://github.com/Shopify/hydrogen/templates/'
 const BRANCH = `dist`
@@ -117,11 +118,11 @@ const warnIfDeprecatedTemplateNameFormat = (templateName: string): void => {
     const template = normalized.slice(0, -3)
     const lang = normalized.slice(-2)
     const ts = lang === 'ts'
-    output.warn(
-      `The ${normalized} template has been deprecated. Use --template ${template} ${
+    renderWarning({
+      headline: `The ${normalized} template has been deprecated. Use --template ${template} ${
         ts ? `--${lang} ` : ''
       }to install the ${ts ? 'TypeScript' : 'JavaScript'} template.`,
-    )
+    })
   }
 }
 

@@ -47,10 +47,18 @@ describe('after extension command finishes correctly', () => {
     await generate({directory: '/', reset: false, config: mockConfig})
 
     // Then
-    expect(outputInfo.completed()).toMatchInlineSnapshot('"Your Checkout UI extension was added to your project!"')
-    expect(outputInfo.info()).toMatchInlineSnapshot(
-      '"\n  To find your extension, remember to cd /extensions/name\n  To preview your project, run yarn dev\n"',
-    )
+    expect(outputInfo.info()).toMatchInlineSnapshot(`
+      "╭─ success ────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Checkout UI extension was added to your project!                            │
+      │                                                                              │
+      │  Next steps                                                                  │
+      │    • To find your extension, remember to \`cd /extensions/name\`               │
+      │    • To preview your project, run \`yarn dev\`                                 │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
   })
 
   it('displays a confirmation message for a theme app extension', async () => {
@@ -61,12 +69,18 @@ describe('after extension command finishes correctly', () => {
     await generate({directory: '/', reset: false, config: mockConfig})
 
     // Then
-    expect(outputInfo.completed()).toMatchInlineSnapshot(
-      '"Your Theme App Extension extension was added to your project!"',
-    )
-    expect(outputInfo.info()).toMatchInlineSnapshot(
-      '"\n  To find your extension, remember to cd /extensions/name\n  To preview your project, run yarn dev\n"',
-    )
+    expect(outputInfo.info()).toMatchInlineSnapshot(`
+      "╭─ success ────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Theme App Extension extension was added to your project!                    │
+      │                                                                              │
+      │  Next steps                                                                  │
+      │    • To find your extension, remember to \`cd /extensions/name\`               │
+      │    • To preview your project, run \`yarn dev\`                                 │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
   })
 
   it('displays a confirmation message for a function', async () => {
@@ -77,9 +91,21 @@ describe('after extension command finishes correctly', () => {
     await generate({directory: '/', reset: false, config: mockConfig})
 
     // Then
-    expect(outputInfo.completed()).toMatchInlineSnapshot(
-      '"Your Function - Product discount extension was added to your project!"',
-    )
+    expect(outputInfo.info()).toMatchInlineSnapshot(`
+      "╭─ success ────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Function - Product discount extension was added to your project!            │
+      │                                                                              │
+      │  Next steps                                                                  │
+      │    • To find your extension, remember to \`cd /extensions/name\`               │
+      │                                                                              │
+      │  Reference                                                                   │
+      │    • For more details, see the docs (                                        │
+      │      https://shopify.dev/apps/subscriptions/discounts )                      │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
   })
 
   it('throws error if trying to generate a non existing type', async () => {
