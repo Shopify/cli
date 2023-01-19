@@ -7,7 +7,7 @@ import {ThemeExtensionInstance, ThemeExtensionSpec} from '../extensions/theme.js
 import {ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
 import {FunctionInstance, FunctionSpec} from '../extensions/functions.js'
 import {error, schema, output} from '@shopify/cli-kit'
-import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
   getDependencies,
@@ -21,7 +21,7 @@ import {camelize} from '@shopify/cli-kit/common/string'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
 import {isShopify} from '@shopify/cli-kit/node/environment/local'
-import {joinPath, dirname, basename, glob, findPathUp} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
 
 const defaultExtensionDirectory = 'extensions/*'
 

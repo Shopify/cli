@@ -1,8 +1,8 @@
 import {error, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
-import {fileExists, removeFileSync, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, removeFileSync, writeFile, findPathUp} from '@shopify/cli-kit/node/fs'
 import {exec} from '@shopify/cli-kit/node/system'
-import {resolvePath, dirname, findPathUp} from '@shopify/cli-kit/node/path'
+import {resolvePath, dirname} from '@shopify/cli-kit/node/path'
 import {fileURLToPath} from 'url'
 
 interface PreviewOptions {

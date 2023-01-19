@@ -1,6 +1,7 @@
 import {configurationFileNames} from '../constants.js'
 import Command from '@shopify/cli-kit/node/base-command'
-import {dirname, findPathUp} from '@shopify/cli-kit/node/path'
+import {dirname} from '@shopify/cli-kit/node/path'
+import {findPathUp} from '@shopify/cli-kit/node/fs'
 
 export default abstract class AppCommand extends Command {
   async presetsPath(rawFlags: {path?: string}): Promise<string> {

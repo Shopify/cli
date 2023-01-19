@@ -1,4 +1,5 @@
-import {glob, relativePath} from './path.js'
+import {relativePath} from './path.js'
+import {glob} from './fs.js'
 import {debug, content, token} from '../../output.js'
 import archiver from 'archiver'
 import {createWriteStream} from 'fs'

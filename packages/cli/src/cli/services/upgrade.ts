@@ -8,7 +8,8 @@ import {
   PackageJson,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {exec} from '@shopify/cli-kit/node/system'
-import {dirname, findPathUp, moduleDirectory} from '@shopify/cli-kit/node/path'
+import {dirname, moduleDirectory} from '@shopify/cli-kit/node/path'
+import {findPathUp} from '@shopify/cli-kit/node/fs'
 
 type HomebrewPackageName = 'shopify-cli' | 'shopify-cli@3'
 

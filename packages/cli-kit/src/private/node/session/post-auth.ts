@@ -1,5 +1,5 @@
-import {findPathUp, moduleDirectory} from '../../../public/node/path.js'
-import {readFile} from '../../../public/node/fs.js'
+import {moduleDirectory} from '../../../public/node/path.js'
+import {readFile, findPathUp} from '../../../public/node/fs.js'
 import {Bug} from '../../../error.js'
 
 const HTMLFileNames = [

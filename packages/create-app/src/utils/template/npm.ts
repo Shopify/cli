@@ -1,7 +1,8 @@
 import {PackageManager, installNodeModules, PackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
-import {findPathUp, glob, joinPath, moduleDirectory, normalizePath} from '@shopify/cli-kit/node/path'
+import {joinPath, moduleDirectory, normalizePath} from '@shopify/cli-kit/node/path'
+import {glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {platform} from 'os'
 
 interface UpdateCLIDependenciesOptions {

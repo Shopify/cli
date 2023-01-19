@@ -13,7 +13,7 @@ import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-
 import * as template from '@shopify/cli-kit/node/liquid'
 import * as file from '@shopify/cli-kit/node/fs'
 import * as git from '@shopify/cli-kit/node/git'
-import {joinPath, dirname, glob} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import type {ExtensionFlavor} from './extension.js'
 
 beforeEach(() => {
@@ -203,7 +203,7 @@ describe('initialize a extension', async () => {
           specifications,
         })
 
-        const srcFiles = await glob(joinPath(tmpDir, 'extensions', name, 'src', `*`))
+        const srcFiles = await file.glob(joinPath(tmpDir, 'extensions', name, 'src', `*`))
 
         expect(srcFiles.length).toBeGreaterThan(0)
 

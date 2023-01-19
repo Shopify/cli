@@ -3,8 +3,8 @@ import {AppErrors} from './loader.js'
 import {schema} from '@shopify/cli-kit'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
-import {fileRealPath} from '@shopify/cli-kit/node/fs'
-import {joinPath, dirname, findPathUp} from '@shopify/cli-kit/node/path'
+import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
+import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 
 export const AppConfigurationSchema = schema.define.object({
   scopes: schema.define.string().default(''),

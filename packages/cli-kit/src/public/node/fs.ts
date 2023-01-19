@@ -1,6 +1,7 @@
-import {joinPath} from './path.js'
+import {joinPath, normalizePath} from './path.js'
 import {content as outputContent, token, debug} from '../../output.js'
 import {getRandomName, RandomNameFamily} from '../common/string.js'
+import {OverloadParameters} from '../../private/common/ts/overloaded-parameters.js'
 import {
   copy as fsCopy,
   ensureFile as fsEnsureFile,
@@ -14,6 +15,7 @@ import {
 
 import {temporaryDirectoryTask} from 'tempy'
 import {sep, join, extname} from 'pathe'
+import {findUp as internalFindUp} from 'find-up'
 import {
   mkdirSync as fsMkdirSync,
   readFileSync as fsReadFileSync,
@@ -37,6 +39,7 @@ import {
   access as fsAccess,
 } from 'fs/promises'
 import type {Options} from 'prettier'
+import type {Pattern, Options as GlobOptions} from 'fast-glob'
 
 const DEFAULT_PRETTIER_CONFIG: Options = {
   arrowParens: 'always',
@@ -453,4 +456,38 @@ export async function generateRandomNameForSubdirectory(options: GenerateRandomD
   } else {
     return generated
   }
+}
+
+/**
+ * Traverse the file system and return pathnames that match the given pattern.
+ *
+ * @param pattern - A glob pattern or an array of glob patterns.
+ * @param options - Options for the glob.
+ * @returns A promise that resolves to an array of pathnames that match the given pattern.
+ */
+export async function glob(pattern: Pattern | Pattern[], options?: GlobOptions): Promise<string[]> {
+  const {default: fastGlob} = await import('fast-glob')
+  let overridenOptions = options
+  if (options?.dot == null) {
+    overridenOptions = {...options, dot: true}
+  }
+  return fastGlob(pattern, overridenOptions)
+}
+export {pathToFileURL} from 'url'
+
+/**
+ * Find a file by walking parent directories.
+ *
+ * @param matcher - A pattern or an array of patterns to match a file name.
+ * @param options - Options for the search.
+ * @returns The first path found that matches or `undefined` if none could be found.
+ */
+export async function findPathUp(
+  matcher: OverloadParameters<typeof internalFindUp>[0],
+  options: OverloadParameters<typeof internalFindUp>[1],
+): ReturnType<typeof internalFindUp> {
+  // findUp has odd typing
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const got = await internalFindUp(matcher as any, options)
+  return got ? normalizePath(got) : undefined
 }

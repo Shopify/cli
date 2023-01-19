@@ -1,5 +1,7 @@
 import {error} from '@shopify/cli-kit'
-import {joinPath, basename, glob} from '@shopify/cli-kit/node/path'
+import {joinPath, basename} from '@shopify/cli-kit/node/path'
+import {glob} from '@shopify/cli-kit/node/fs'
+
 import fs from 'fs'
 
 const L10N_FILE_SIZE_LIMIT = 16 * 1024

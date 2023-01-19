@@ -2,8 +2,8 @@ import {ExtensionAssetBuildStatus} from './payload/models.js'
 import {GetUIExtensionPayloadOptions} from './payload.js'
 import {UIExtension} from '../../../models/app/extensions.js'
 import {output} from '@shopify/cli-kit'
-import {readFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, glob} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {readFile, glob} from '@shopify/cli-kit/node/fs'
 
 export type Locale = string
 

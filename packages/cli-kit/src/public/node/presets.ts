@@ -1,6 +1,6 @@
 import {decodeToml} from './toml.js'
-import {fileExists, readFile} from './fs.js'
-import {findPathUp, joinPath} from './path.js'
+import {fileExists, readFile, findPathUp} from './fs.js'
+import {joinPath} from './path.js'
 import {JsonMap} from '../../private/common/json.js'
 
 export const presetsFilename = 'shopify.presets.toml'

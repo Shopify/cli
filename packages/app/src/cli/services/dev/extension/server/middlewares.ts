@@ -3,9 +3,9 @@ import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {getHTML} from '../templates.js'
 import {output} from '@shopify/cli-kit'
-import {fileExists, isDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, isDirectory, readFile, findPathUp} from '@shopify/cli-kit/node/fs'
 import {IncomingMessage, ServerResponse, sendRedirect, send} from '@shopify/cli-kit/node/http'
-import {joinPath, extname, findPathUp, moduleDirectory} from '@shopify/cli-kit/node/path'
+import {joinPath, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
 
 export function corsMiddleware(request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) {
   response.setHeader('Access-Control-Allow-Origin', '*')

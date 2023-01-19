@@ -1,11 +1,8 @@
-import {OverloadParameters} from '../../private/common/ts/overloaded-parameters.js'
 import commondir from 'commondir'
 import {relative, dirname, join, normalize, resolve, basename, extname, isAbsolute} from 'pathe'
-import {findUp as internalFindUp} from 'find-up'
 import {fileURLToPath} from 'url'
 // eslint-disable-next-line node/prefer-global/url
 import type {URL} from 'url'
-import type {Pattern, Options} from 'fast-glob'
 
 // Reexport methods from pathe
 export {
@@ -17,40 +14,6 @@ export {
   dirname,
   basename,
   extname,
-}
-
-/**
- * Traverse the file system and return pathnames that match the given pattern.
- *
- * @param pattern - A glob pattern or an array of glob patterns.
- * @param options - Options for the glob.
- * @returns A promise that resolves to an array of pathnames that match the given pattern.
- */
-export async function glob(pattern: Pattern | Pattern[], options?: Options): Promise<string[]> {
-  const {default: fastGlob} = await import('fast-glob')
-  let overridenOptions = options
-  if (options?.dot == null) {
-    overridenOptions = {...options, dot: true}
-  }
-  return fastGlob(pattern, overridenOptions)
-}
-export {pathToFileURL} from 'url'
-
-/**
- * Find a file by walking parent directories.
- *
- * @param matcher - A pattern or an array of patterns to match a file name.
- * @param options - Options for the search.
- * @returns The first path found that matches or `undefined` if none could be found.
- */
-export async function findPathUp(
-  matcher: OverloadParameters<typeof internalFindUp>[0],
-  options: OverloadParameters<typeof internalFindUp>[1],
-): ReturnType<typeof internalFindUp> {
-  // findUp has odd typing
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const got = await internalFindUp(matcher as any, options)
-  return got ? normalize(got) : undefined
 }
 
 /**

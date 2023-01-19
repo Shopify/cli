@@ -4,7 +4,7 @@ import {AbortSignal} from './abort.js'
 import {platformAndArch} from './os.js'
 import {captureOutput, exec} from './system.js'
 import * as file from './fs.js'
-import {glob, joinPath} from './path.js'
+import {joinPath} from './path.js'
 import {Abort, AbortSilent} from '../../error.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
@@ -87,7 +87,7 @@ export async function execThemeCheckCLI(options: ExecThemeCheckCLIOptions): Prom
   const processes = options.directories.map(async (directory): Promise<void> => {
     // Check that there are files aside from the extension TOML config file,
     // otherwise theme-check will return a false failure.
-    const files = await glob(joinPath(directory, '/**/*'))
+    const files = await file.glob(joinPath(directory, '/**/*'))
     const fileCount = files.filter((file) => !file.match(/\.toml$/)).length
     if (fileCount === 0) return
 

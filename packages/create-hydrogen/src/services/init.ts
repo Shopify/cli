@@ -20,8 +20,18 @@ import {
   downloadGitRepository,
   initializeGitRepository,
 } from '@shopify/cli-kit/node/git'
-import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile, rmdir, touchFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, glob, findPathUp} from '@shopify/cli-kit/node/path'
+import {
+  appendFile,
+  fileExists,
+  inTemporaryDirectory,
+  mkdir,
+  moveFile,
+  rmdir,
+  touchFile,
+  glob,
+  findPathUp,
+} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 
 interface InitOptions {

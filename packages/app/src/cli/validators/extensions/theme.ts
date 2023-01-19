@@ -1,7 +1,7 @@
 import {ThemeExtension} from '../../models/app/extensions.js'
 import {error, output} from '@shopify/cli-kit'
-import {fileSize} from '@shopify/cli-kit/node/fs'
-import {joinPath, glob, dirname, relativePath} from '@shopify/cli-kit/node/path'
+import {fileSize, glob} from '@shopify/cli-kit/node/fs'
+import {joinPath, dirname, relativePath} from '@shopify/cli-kit/node/path'
 
 interface FilenameValidation {
   validator: RegExp

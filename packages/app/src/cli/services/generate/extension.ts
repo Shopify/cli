@@ -14,8 +14,8 @@ import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository} from '@shopify/cli-kit/node/git'
-import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, dirname, glob, findPathUp, moduleDirectory} from '@shopify/cli-kit/node/path'
+import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
+import {joinPath, dirname, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {fileURLToPath} from 'url'
 
 async function getTemplatePath(name: string): Promise<string> {

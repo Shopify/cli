@@ -1,5 +1,5 @@
-import {fileExists, writeFile, readFile} from './fs.js'
-import {findPathUp, joinPath} from './path.js'
+import {fileExists, writeFile, readFile, findPathUp} from './fs.js'
+import {joinPath} from './path.js'
 import {content, token, debug} from '../../output.js'
 
 /**
