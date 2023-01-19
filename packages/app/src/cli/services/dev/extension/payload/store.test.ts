@@ -18,6 +18,9 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
 
     const options = {
       apiKey: 'mock-api-key',
+      app: {
+        name: 'mock-app-name',
+      },
       url: 'https://mock-url.com',
       websocketURL: 'wss://mock-websocket-url.com',
       extensions: [{}, {}, {}],
@@ -30,7 +33,11 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
     // Then
     expect(rawPayload).toMatchObject({
       app: {
+        title: 'mock-app-name',
         apiKey: 'mock-api-key',
+        url: 'https://mock-url.com?shop=mock-store-fqdn.shopify.com&host=bW9jay1zdG9yZS1mcWRuLnNob3BpZnkuY29tL2FkbWlu',
+        mobileUrl:
+          'https://mock-store-fqdn.shopify.com/admin/apps/mock-api-key?shop=mock-store-fqdn.shopify.com&host=bW9jay1zdG9yZS1mcWRuLnNob3BpZnkuY29tL2FkbWluL2FwcHMvbW9jay1hcGkta2V5',
       },
       version: '3',
       root: {

@@ -1,8 +1,8 @@
 import {selectApp} from './select-app.js'
 import {getURLs, PartnersURLs, updateURLs, validatePartnersURLs} from '../dev/urls.js'
 import {allowedRedirectionURLsPrompt, appUrlPrompt} from '../../prompts/update-url.js'
-import {output} from '@shopify/cli-kit'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 export interface UpdateURLOptions {
   apiKey?: string
@@ -30,7 +30,11 @@ async function getNewURLs(token: string, apiKey: string, options: UpdateURLOptio
 }
 
 function printResult(urls: PartnersURLs): void {
-  output.success('App URLs updated')
-  output.info(`\nApp URL:\n  ${urls.applicationUrl}`)
-  output.info(`\nAllowed redirection URL(s):\n  ${urls.redirectUrlWhitelist.join('\n  ')}`)
+  renderSuccess({
+    headline: 'App URLs updated',
+    customSections: [
+      {title: 'App URL', body: {list: {items: [urls.applicationUrl]}}},
+      {title: 'Allowed redirection URL(s)', body: {list: {items: urls.redirectUrlWhitelist}}},
+    ],
+  })
 }

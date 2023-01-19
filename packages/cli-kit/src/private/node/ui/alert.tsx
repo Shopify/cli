@@ -15,7 +15,16 @@ const typeToLogger: {[key in AlertProps['type']]: Logger} = {
   success: consoleLog,
 }
 
-export function alert({type, headline, body, nextSteps, reference, link, orderedNextSteps = false}: AlertProps) {
+export function alert({
+  type,
+  headline,
+  body,
+  nextSteps,
+  reference,
+  link,
+  customSections,
+  orderedNextSteps = false,
+}: AlertProps) {
   renderOnce(
     <Alert
       type={type}
@@ -25,6 +34,7 @@ export function alert({type, headline, body, nextSteps, reference, link, ordered
       reference={reference}
       link={link}
       orderedNextSteps={orderedNextSteps}
+      customSections={customSections}
     />,
     typeToLogLevel[type],
     typeToLogger[type],

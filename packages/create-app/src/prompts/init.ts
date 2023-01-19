@@ -31,7 +31,7 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
     questions.push({
       type: 'input',
       name: 'name',
-      preface: '\nWelcome. Let’s get started by naming your app. You can change it later.',
+      preface: '\nWelcome. Let’s get started by naming your app. You can change it later.\n',
       message: "Your app's name?",
       default: defaults.name,
       validate: (value) => {
@@ -40,6 +40,9 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
         }
         if (value.length > 30) {
           return 'Enter a shorter name (30 character max.)'
+        }
+        if (value.toLowerCase().includes('shopify')) {
+          return "App Name can't include the word 'shopify'"
         }
         return true
       },
@@ -58,7 +61,9 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
       name: 'template',
       choices: templateList,
       message: 'Which template would you like to use?',
-      default: defaults.template,
+      default: Object.keys(templateURLMap).find(
+        (key) => templateURLMap[key as 'node' | 'php' | 'ruby'] === defaults.template,
+      ),
     })
   }
 

@@ -6,70 +6,92 @@ import {mockApp, mockExtension} from '@shopify/ui-extensions-server-kit/testing'
 import {render, withProviders} from '@shopify/ui-extensions-test-utils'
 import {mockI18n} from 'tests/mock-i18n'
 import {DefaultProviders} from 'tests/DefaultProviders'
-import {ToastProvider} from '@/hooks/useToast'
+import {Modal} from '@/components/Modal'
 
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 
-const i18n = mockI18n(en)
+vi.mock('@/components/Modal', () => ({Modal: (props: any) => props.children}))
+
+mockI18n(en)
 
 describe('QRCodeModal', () => {
-  test('does not render QRCode if extension is not provided', async () => {
+  const defaultProps = {
+    onClose: vi.fn(),
+    code: {
+      url: 'mock.url.com',
+      title: 'mock ttle',
+      type: 'home' as const,
+    },
+  }
+
+  test('Renders <Modal/> closed if code is undefined', async () => {
     const app = mockApp()
     const store = 'example.com'
     const extension = mockExtension()
-    const container = render(<QRCodeModal onClose={vi.fn()} open />, withProviders(DefaultProviders, ToastProvider), {
+
+    expect(
+      render(<QRCodeModal {...defaultProps} code={undefined} />, withProviders(DefaultProviders), {
+        state: {app, store, extensions: [extension]},
+      }),
+    ).toContainReactComponent(Modal, {open: false})
+  })
+
+  test('Renders <Modal/> open if code is undefined', async () => {
+    const app = mockApp()
+    const store = 'example.com'
+    const extension = mockExtension()
+
+    expect(
+      render(<QRCodeModal {...defaultProps} />, withProviders(DefaultProviders), {
+        state: {app, store, extensions: [extension]},
+      }),
+    ).toContainReactComponent(Modal, {open: true, width: 'small'})
+  })
+
+  test('renders QRCode for pos', async () => {
+    const app = mockApp()
+    const store = 'example.com'
+    const extension = mockExtension()
+    const container = render(
+      <QRCodeModal {...defaultProps} code={{...defaultProps.code, type: 'point_of_sale'}} />,
+      withProviders(DefaultProviders),
+      {
+        state: {app, store, extensions: [extension]},
+      },
+    )
+
+    expect(container).toContainReactComponent(QRCode, {
+      value: `com.shopify.pos://pos-ui-extensions?url=${defaultProps.code.url}`,
+    })
+  })
+
+  test('renders QRCode for app home', async () => {
+    const app = mockApp()
+    const store = 'example.com'
+    const extension = mockExtension()
+    const container = render(<QRCodeModal {...defaultProps} />, withProviders(DefaultProviders), {
       state: {app, store, extensions: [extension]},
     })
 
-    expect(container).not.toContainReactComponent(QRCode)
-  })
-
-  test('renders QRCode with mobile deep-link url', async () => {
-    const app = mockApp()
-    const store = 'example.com'
-    const extension = mockExtension()
-    const container = render(
-      <QRCodeModal extension={extension} onClose={vi.fn()} open />,
-      withProviders(DefaultProviders, ToastProvider),
-      {state: {app, store, extensions: [extension]}},
-    )
-
-    expect(container?.find(QRCode)?.prop('value')).toStrictEqual(
-      `https://example.com/admin/extensions-dev/mobile?url=${extension.development.root.url}`,
-    )
-  })
-
-  test('renders error message when server is unsecure', async () => {
-    const store = 'example.com'
-    const extension = mockExtension()
-    extension.development.root.url = extension.development.root.url.replace(
-      'https://secure-link.com',
-      'http://localhost',
-    )
-
-    const container = render(
-      <QRCodeModal extension={extension} onClose={vi.fn()} open />,
-      withProviders(DefaultProviders, ToastProvider),
-      {state: {store, extensions: [extension]}},
-    )
-
-    expect(container).toContainReactComponent('p', {
-      children: i18n.translate('qrcode.useSecureURL'),
+    expect(container).toContainReactComponent(QRCode, {
+      value: app.mobileUrl,
     })
   })
 
-  test('renders QRCode with pos deep-link url when surface is POS', async () => {
+  test('renders QRCode for mobile', async () => {
     const app = mockApp()
     const store = 'example.com'
-    const extension = mockExtension({surface: 'point_of_sale'})
+    const extension = mockExtension()
     const container = render(
-      <QRCodeModal extension={extension} onClose={vi.fn()} open />,
-      withProviders(DefaultProviders, ToastProvider),
-      {state: {app, store, extensions: [extension]}},
+      <QRCodeModal {...defaultProps} code={{...defaultProps.code, type: 'checkout'}} />,
+      withProviders(DefaultProviders),
+      {
+        state: {app, store, extensions: [extension]},
+      },
     )
 
-    expect(container?.find(QRCode)?.prop('value')).toStrictEqual(
-      `com.shopify.pos://pos-ui-extensions?url=${extension.development.root.url}`,
-    )
+    expect(container).toContainReactComponent(QRCode, {
+      value: `https://${store}/admin/extensions-dev/mobile?url=${defaultProps.code.url}`,
+    })
   })
 })

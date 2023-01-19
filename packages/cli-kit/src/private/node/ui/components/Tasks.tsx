@@ -1,57 +1,66 @@
 import {TextAnimation} from './TextAnimation.js'
 import useLayout from '../hooks/use-layout.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
+
+// import {environment} from '@shopify/cli-kit'
 import {Box, Text} from 'ink'
-import React, {useState} from 'react'
+import React, {useRef, useState} from 'react'
 
-const loadingBarChar = '█'
+const loadingBarChar = '▀'
 
-export interface Task {
+export interface Task<TContext = unknown> {
   title: string
-  task: () => Promise<void>
+  task: (ctx: TContext) => Promise<void | Task<TContext>[]>
 }
 
-export interface Props {
-  tasks: Task[]
+export interface Props<TContext> {
+  tasks: Task<TContext>[]
+  silent?: boolean
 }
 
-const Tasks: React.FC<Props> = ({tasks}) => {
+enum TasksState {
+  Loading = 'loading',
+  Success = 'success',
+  Failure = 'failure',
+}
+
+function Tasks<TContext>({tasks, silent = false}: React.PropsWithChildren<Props<TContext>>) {
   const {twoThirds} = useLayout()
   const loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
-  const [currentTask, setCurrentTask] = useState<Task>(tasks[0]!)
-  const [state, setState] = useState<'success' | 'failure' | 'loading'>('loading')
+  const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
+  const [state, setState] = useState<TasksState>(TasksState.Loading)
+  const ctx = useRef<TContext>({} as TContext)
 
   const runTasks = async () => {
     for (const task of tasks) {
       setCurrentTask(task)
       // eslint-disable-next-line no-await-in-loop
-      await task.task()
+      const result = await task.task(ctx.current)
+      if (Array.isArray(result) && result.length > 0 && result.every((el) => 'task' in el)) {
+        for (const subTask of result) {
+          setCurrentTask(subTask)
+          // eslint-disable-next-line no-await-in-loop
+          await subTask.task(ctx.current)
+        }
+      }
     }
   }
 
-  useAsyncAndUnmount(runTasks, {onFulfilled: () => setState('success'), onRejected: () => setState('failure')})
+  useAsyncAndUnmount(runTasks, {
+    onFulfilled: () => setState(TasksState.Success),
+    onRejected: () => setState(TasksState.Failure),
+  })
 
-  return (
+  if (silent) {
+    return null
+  }
+
+  return state === TasksState.Loading ? (
     <Box flexDirection="column">
-      <Box>
-        {state === 'loading' ? (
-          <TextAnimation text={loadingBar} />
-        ) : (
-          <Text color={state === 'success' ? 'green' : 'red'}>{loadingBar}</Text>
-        )}
-      </Box>
-      <Text>
-        {state === 'success' ? (
-          <Text>Complete!</Text>
-        ) : (
-          <Text>
-            {currentTask.title}
-            {state === 'loading' && ' ...'}
-          </Text>
-        )}
-      </Text>
+      <TextAnimation text={loadingBar} />
+      <Text>{currentTask.title} ...</Text>
     </Box>
-  )
+  ) : null
 }
 
 export {Tasks}

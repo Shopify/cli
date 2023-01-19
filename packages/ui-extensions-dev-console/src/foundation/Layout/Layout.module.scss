@@ -1,0 +1,59 @@
+.OuterContainer {
+  height: 100vh;
+  background: var(--dc-color-grey-900);
+  overflow: hidden;
+}
+
+.DevTool {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  color: var(--dc-color-white);
+  font-weight: var(--dc-font-weight);
+  overflow: hidden;
+
+  a {
+    color: var(--dc-color-blue-400);
+  }
+
+  a:hover,
+  a:focus {
+    color: var(--dc-color-blue-500);
+  }
+
+  main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  svg {
+    width: 1.8rem;
+  }
+}
+
+.Header {
+  display: flex;
+  justify-content: space-between;
+  height: 5.6rem;
+  padding: 1.5rem 1.6rem 1rem;
+  background: var(--dc-color-grey-800);
+
+  svg {
+    fill: var(--dc-color-white);
+  }
+
+  .HeaderContent {
+    display: flex;
+    align-items: center;
+    gap: 1.3rem;
+  }
+
+  h1 {
+    font-weight: var(--dc-font-weight-700);
+    font-family: monospace;
+    font-size: 1.4rem;
+  }
+}
+
