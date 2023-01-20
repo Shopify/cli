@@ -13,9 +13,10 @@ up:
         version: 7.18.1
   - custom:
       name: 'Install PNPM dependencies'
-      met?: test -d node_modules
-      meet: pnpm install
-
+      # we flip these two conditions to always run `pnpm install`
+      # whenever we run dev up.
+      met?: pnpm install
+      meet: 'true'
 
 env:
   SHOPIFY_CLI_ENV: development

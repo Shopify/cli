@@ -1,9 +1,9 @@
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
 import {loadPresetsFromDirectory} from './presets.js'
 import {isDevelopment} from './environment/local.js'
+import {addPublicMetadata} from './metadata.js'
 import {JsonMap} from '../../private/common/json.js'
 import {Abort} from '../../error.js'
-import {addPublic} from '../../metadata.js'
 import {content, info, token} from '../../output.js'
 import {hashString} from '../../public/node/crypto.js'
 import {isTruthy} from '../../private/node/environment/utilities.js'
@@ -106,7 +106,7 @@ abstract class BaseCommand extends Command {
 }
 
 export async function addFromParsedFlags(flags: {path?: string; verbose?: boolean}): Promise<void> {
-  await addPublic(() => ({
+  await addPublicMetadata(() => ({
     cmd_all_verbose: flags.verbose,
     cmd_all_path_override: flags.path !== undefined,
     cmd_all_path_override_hash: flags.path === undefined ? undefined : hashString(flags.path),

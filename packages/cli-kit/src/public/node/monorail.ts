@@ -1,7 +1,7 @@
-import {fetch} from './public/node/http.js'
-import {debug, content, token} from './output.js'
-import {JsonMap} from './private/common/json.js'
-import {DeepRequired} from './private/common/ts/deep-required.js'
+import {fetch} from './http.js'
+import {JsonMap} from '../../private/common/json.js'
+import {DeepRequired} from '../../private/common/ts/deep-required.js'
+import {debug, content, token} from '../../output.js'
 
 const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 
@@ -119,7 +119,15 @@ export type MonorailEventSensitive = Schemas[typeof MONORAIL_COMMAND_TOPIC]['sen
 
 type MonorailResult = {type: 'ok'} | {type: 'error'; message: string}
 
-export async function publishEvent<TSchemaId extends keyof Schemas, TPayload extends Schemas[TSchemaId]>(
+/**
+ * Publishes an event to Monorail.
+ *
+ * @param schemaId - The schema ID of the event to publish.
+ * @param publicData - The public data to publish.
+ * @param sensitiveData - The sensitive data to publish.
+ * @returns A result indicating whether the event was successfully published.
+ */
+export async function publishMonorailEvent<TSchemaId extends keyof Schemas, TPayload extends Schemas[TSchemaId]>(
   schemaId: TSchemaId,
   publicData: TPayload['public'],
   sensitiveData: TPayload['sensitive'],

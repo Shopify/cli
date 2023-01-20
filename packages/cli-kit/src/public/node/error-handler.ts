@@ -1,6 +1,7 @@
 import {reportAnalyticsEvent} from './analytics.js'
 import * as path from './path.js'
 import {fanoutHooks} from './plugins.js'
+import * as metadata from './metadata.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
 import {
   AbortSilent,
@@ -11,7 +12,6 @@ import {
   cleanSingleStackTracePath,
 } from '../../error.js'
 import {debug, info} from '../../output.js'
-import * as metadata from '../../metadata.js'
 import {bugsnagApiKey} from '../../private/node/constants.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {settings, Interfaces} from '@oclif/core'
@@ -172,8 +172,8 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
 }
 
 export async function addBugsnagMetadata(event: Event, config: Interfaces.Config): Promise<void> {
-  const publicData = metadata.getAllPublic()
-  const {commandStartOptions} = metadata.getAllSensitive()
+  const publicData = metadata.getAllPublicMetadata()
+  const {commandStartOptions} = metadata.getAllSensitiveMetadata()
   const {startCommand} = commandStartOptions ?? {}
 
   const {'@shopify/app': appPublic, ...otherPluginsPublic} = await fanoutHooks(config, 'public_command_metadata', {})

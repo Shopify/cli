@@ -2,7 +2,7 @@ import {hashString} from '../../public/node/crypto.js'
 import {getPackageManager, packageManagerUsedForCreating} from '../../public/node/node-package-manager.js'
 import BaseCommand from '../../public/node/base-command.js'
 import {CommandContent} from '../../public/node/hooks/prerun.js'
-import * as metadata from '../../metadata.js'
+import * as metadata from '../../public/node/metadata.js'
 import {platformAndArch} from '../../public/node/os.js'
 import {Interfaces} from '@oclif/core'
 import {ciPlatform, cloudEnvironment, macAddress} from '@shopify/cli-kit/node/environment/local'
@@ -25,7 +25,7 @@ export async function startAnalytics({
     startCommand = (commandClass as typeof BaseCommand).analyticsNameOverride() ?? commandContent.command
   }
 
-  await metadata.addSensitive(() => ({
+  await metadata.addSensitiveMetadata(() => ({
     commandStartOptions: {
       startTime: currentTime,
       startCommand,
@@ -33,7 +33,7 @@ export async function startAnalytics({
     },
   }))
 
-  await metadata.addPublic(() => ({
+  await metadata.addPublicMetadata(() => ({
     cmd_all_launcher: packageManagerUsedForCreating(),
     cmd_all_alias_used: commandContent.alias,
     cmd_all_topic: commandContent.topic,

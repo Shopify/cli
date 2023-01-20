@@ -1,5 +1,18 @@
 # @shopify/ui-extensions-dev-console-app
 
+## 3.36.1
+
+## 3.36.0
+
+### Minor Changes
+
+- 335a96a24: Improved dev console with new UX & functionality. New functionality: Preview app link and QRCode, better post purchase extension instructions, copy button for all preview links, support for upcoming UI extension changes
+
+### Patch Changes
+
+- Updated dependencies [335a96a24]
+  - @shopify/ui-extensions-server-kit@4.1.0
+
 ## 3.35.0
 
 ### Patch Changes

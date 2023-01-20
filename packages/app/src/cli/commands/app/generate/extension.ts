@@ -60,7 +60,7 @@ export default class AppGenerateExtension extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(AppGenerateExtension)
 
-    await metadata.addPublic(() => ({
+    await metadata.addPublicMetadata(() => ({
       cmd_scaffold_required_auth: true,
       cmd_scaffold_template_custom: flags['clone-url'] !== undefined,
       cmd_scaffold_type_owner: '@shopify/app',

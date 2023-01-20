@@ -442,7 +442,7 @@ async function logMetadataForLoadedApp(
     usedCustomLayoutForThemeExtensions: boolean
   },
 ) {
-  await metadata.addPublic(async () => {
+  await metadata.addPublicMetadata(async () => {
     const projectType = await getProjectType(app.webs)
 
     const extensionFunctionCount = app.extensions.function.length
@@ -504,7 +504,7 @@ async function logMetadataForLoadedApp(
     }
   })
 
-  await metadata.addSensitive(async () => {
+  await metadata.addSensitiveMetadata(async () => {
     return {
       app_name: app.name,
     }

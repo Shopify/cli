@@ -1,7 +1,7 @@
 import {HookReturnPerTunnelPlugin} from './plugins/tunnel.js'
 import {err, Result} from './result.js'
+import {MonorailEventPublic, MonorailEventSensitive} from './monorail.js'
 import {getArrayContainsDuplicates, getArrayRejectingUndefined} from '../common/array.js'
-import {MonorailEventPublic, MonorailEventSensitive} from '../../monorail.js'
 import {PickByPrefix} from '../common/ts/pick-by-prefix.js'
 import {JsonMap} from '../../private/common/json.js'
 import {Config, Interfaces} from '@oclif/core'
