@@ -1,11 +1,10 @@
 import {getLocalization} from './localization.js'
-import {UIExtensionPayload} from './payload/models.js'
+import {DevNewExtensionPointSchema, UIExtensionPayload} from './payload/models.js'
 import {getExtensionPointTargetSurface} from './utilities.js'
 import {getUIExtensionResourceURL} from '../../../utilities/extensions/configuration.js'
 import {ExtensionDevOptions} from '../extension.js'
 import {UIExtension} from '../../../models/app/extensions.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
-import {NewExtensionPointSchemaType} from '../../../models/extensions/schemas.js'
 import {fileLastUpdatedTimestamp} from '@shopify/cli-kit/node/fs'
 
 export type GetUIExtensionPayloadOptions = ExtensionDevOptions & {
@@ -67,13 +66,9 @@ export async function getUIExtensionPayload(
 }
 
 function getExtensionPoints(extensionPoints: UIExtension['configuration']['extensionPoints'], url: string) {
-  if (!extensionPoints) {
-    return extensionPoints
-  }
-
-  return extensionPoints.map((extensionPoint: unknown) => {
-    if (extensionPoint && typeof extensionPoint === 'object') {
-      const {target} = extensionPoint as NewExtensionPointSchemaType
+  if (isNewExtensionPointsSchema(extensionPoints)) {
+    return extensionPoints.map((extensionPoint) => {
+      const {target, resource} = extensionPoint
 
       return {
         ...extensionPoint,
@@ -81,9 +76,17 @@ function getExtensionPoints(extensionPoints: UIExtension['configuration']['exten
         root: {
           url: `${url}/${target}`,
         },
+        resource: resource || {url: ''},
       }
-    }
+    })
+  }
 
-    return extensionPoint
-  })
+  return extensionPoints
+}
+
+export function isNewExtensionPointsSchema(extensionPoints: unknown): extensionPoints is DevNewExtensionPointSchema[] {
+  return (
+    Array.isArray(extensionPoints) &&
+    extensionPoints.every((extensionPoint: unknown) => typeof extensionPoint === 'object')
+  )
 }

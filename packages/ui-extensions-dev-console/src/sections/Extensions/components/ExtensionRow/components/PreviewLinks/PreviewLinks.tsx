@@ -35,9 +35,9 @@ export function PreviewLinks({extension}: Props) {
               return null
             }
 
-            const {root, target} = extensionPoint
+            const {root, target, resource} = extensionPoint
 
-            return <PreviewLink rootUrl={root.url} title={target} key={target} />
+            return <PreviewLink rootUrl={root.url} title={target} key={target} resourceUrl={resource.url} />
           })}
         </span>
       </>
