@@ -1,23 +1,16 @@
 import {DELIVERY_METHOD, isAddressAllowedForDeliveryMethod} from '../../services/webhook/trigger-options.js'
 import {ui, output} from '@shopify/cli-kit'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 
-export async function topicPrompt(): Promise<string> {
-  const input = await ui.prompt([
-    {
-      type: 'input',
-      name: 'topic',
-      message: 'Webhook Topic',
-      default: '',
-      validate: (value: string) => {
-        if (value.length === 0) {
-          return "Topic name can't be empty"
-        }
-        return true
-      },
-    },
-  ])
+export async function topicPrompt(availableTopics: string[]): Promise<string> {
+  const choicesList = availableTopics.map((topic) => ({label: topic, value: topic}))
 
-  return input.topic
+  const chosen = await renderAutocompletePrompt({
+    message: 'Webhook Topic',
+    choices: choicesList,
+  })
+
+  return chosen
 }
 
 export async function apiVersionPrompt(availableVersions: string[]): Promise<string> {
