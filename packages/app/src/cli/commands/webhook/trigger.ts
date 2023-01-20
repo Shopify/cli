@@ -1,5 +1,4 @@
-import {DELIVERY_METHOD} from '../../services/webhook/trigger-options.js'
-import {WebhookTriggerFlags} from '../../prompts/webhook/options-prompt.js'
+import {DELIVERY_METHOD, WebhookTriggerFlags} from '../../services/webhook/trigger-flags.js'
 import {webhookTriggerService} from '../../services/webhook/trigger.js'
 import {deliveryMethodInstructionsAsString} from '../../prompts/webhook/trigger.js'
 import {Flags} from '@oclif/core'
