@@ -127,7 +127,7 @@ type MonorailResult = {type: 'ok'} | {type: 'error'; message: string}
  * @param sensitiveData - The sensitive data to publish.
  * @returns A result indicating whether the event was successfully published.
  */
-export async function publishEvent<TSchemaId extends keyof Schemas, TPayload extends Schemas[TSchemaId]>(
+export async function publishMonorailEvent<TSchemaId extends keyof Schemas, TPayload extends Schemas[TSchemaId]>(
   schemaId: TSchemaId,
   publicData: TPayload['public'],
   sensitiveData: TPayload['sensitive'],

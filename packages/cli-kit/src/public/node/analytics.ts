@@ -1,7 +1,7 @@
 import {version as rubyVersion} from './ruby.js'
 import {alwaysLogAnalytics, analyticsDisabled, isShopify} from './environment/local.js'
 import * as metadata from './metadata.js'
-import {publishEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
+import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {content, debug, token} from '../../output.js'
 import {fanoutHooks} from '../../plugins.js'
 import {getEnvironmentData, getSensitiveEnvironmentData} from '../../private/node/analytics.js'
@@ -30,7 +30,7 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
       debug(content`Skipping command analytics, payload: ${token.json(payload)}`)
       return
     }
-    const response = await publishEvent(MONORAIL_COMMAND_TOPIC, payload.public, payload.sensitive)
+    const response = await publishMonorailEvent(MONORAIL_COMMAND_TOPIC, payload.public, payload.sensitive)
     if (response.type === 'error') {
       debug(response.message)
     }

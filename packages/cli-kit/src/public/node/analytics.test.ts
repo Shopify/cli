@@ -12,7 +12,7 @@ import {
 } from './environment/local.js'
 import {inTemporaryDirectory, touchFile, mkdir} from './fs.js'
 import {joinPath, dirname} from './path.js'
-import {publishEvent} from './monorail.js'
+import {publishMonorailEvent} from './monorail.js'
 import {startAnalytics} from '../../private/node/analytics.js'
 import {hashString} from '../../public/node/crypto.js'
 import {mockAndCaptureOutput} from '../../testing/output.js'
@@ -22,7 +22,7 @@ import {it, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'v
 
 describe('event tracking', () => {
   const currentDate = new Date(Date.UTC(2022, 1, 1, 10, 0, 0))
-  let publishEventMock: MockedFunction<typeof publishEvent>
+  let publishEventMock: MockedFunction<typeof publishMonorailEvent>
 
   beforeEach(() => {
     vi.setSystemTime(currentDate)
@@ -45,7 +45,7 @@ describe('event tracking', () => {
     vi.mocked(cloudEnvironment).mockReturnValue({platform: 'spin', editor: false})
     vi.mocked(ruby.version).mockResolvedValue('3.1.1')
     vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
-    publishEventMock = vi.mocked(publishEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
+    publishEventMock = vi.mocked(publishMonorailEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
   })
 
   afterEach(() => {
@@ -170,7 +170,7 @@ describe('event tracking', () => {
       await reportAnalyticsEvent({config})
 
       // Then
-      expect(publishEvent).not.toHaveBeenCalled()
+      expect(publishMonorailEvent).not.toHaveBeenCalled()
     })
   })
 
