@@ -1,7 +1,7 @@
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {FunctionSpec} from '../../models/extensions/functions.js'
 import {BaseConfigContents} from '../../models/extensions/schemas.js'
-import {plugins} from '@shopify/cli-kit'
+import {FanoutHookFunction, HookReturnsPerPlugin} from '@shopify/cli-kit/node/plugins'
 
 export {createUIExtensionSpecification, UIExtensionSpec, CreateExtensionSpecType} from '../../models/extensions/ui.js'
 export {createFunctionSpecification, FunctionSpec, CreateFunctionSpecType} from '../../models/extensions/functions.js'
@@ -15,7 +15,7 @@ export * from '../../models/extensions/schemas.js'
  *
  * Any plugin that provides extension definitions should implement `defineExtensionSpecs`.
  */
-export interface HookReturnPerExtensionPlugin extends plugins.HookReturnsPerPlugin {
+export interface HookReturnPerExtensionPlugin extends HookReturnsPerPlugin {
   extension_specs: {
     options: {[key: string]: never}
     pluginReturns: {
@@ -30,8 +30,8 @@ export interface HookReturnPerExtensionPlugin extends plugins.HookReturnsPerPlug
   }
 }
 
-export type ExtensionSpecsFunction = plugins.FanoutHookFunction<'extension_specs', '', HookReturnPerExtensionPlugin>
-export type FunctionSpecsFunction = plugins.FanoutHookFunction<'function_specs', '', HookReturnPerExtensionPlugin>
+export type ExtensionSpecsFunction = FanoutHookFunction<'extension_specs', '', HookReturnPerExtensionPlugin>
+export type FunctionSpecsFunction = FanoutHookFunction<'function_specs', '', HookReturnPerExtensionPlugin>
 
 /**
  * A function for plugins to register new UI extension types.

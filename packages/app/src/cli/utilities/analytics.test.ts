@@ -1,24 +1,16 @@
 import {getAnalyticsTunnelType} from './analytics.js'
-import {plugins} from '@shopify/cli-kit'
 import {test, expect, describe, vi, beforeEach} from 'vitest'
+import {getListOfTunnelPlugins} from '@shopify/cli-kit/node/plugins'
 
 describe('getAnalyticsTunnelType', () => {
   beforeEach(() => {
-    vi.mock('@shopify/cli-kit', async () => {
-      const {plugins}: any = await vi.importActual('@shopify/cli-kit')
-      return {
-        plugins: {
-          plugins,
-          getListOfTunnelPlugins: vi.fn(),
-        },
-      }
-    })
+    vi.mock('@shopify/cli-kit/node/plugins')
   })
 
   test('return a provider in case tunnelUrl contains its name', async () => {
     // Given
     const tunnelUrl = 'https://www.existing-provider.com'
-    vi.mocked(plugins.getListOfTunnelPlugins).mockResolvedValue({plugins: ['existing-provider']})
+    vi.mocked(getListOfTunnelPlugins).mockResolvedValue({plugins: ['existing-provider']})
 
     // When
     const got = await getAnalyticsTunnelType({} as any, tunnelUrl)
@@ -30,7 +22,7 @@ describe('getAnalyticsTunnelType', () => {
   test('return a custom in case tunnelUrl is not either localhost or included in the provider plugin list', async () => {
     // Given
     const tunnelUrl = 'https://www.custom-provider.com'
-    vi.mocked(plugins.getListOfTunnelPlugins).mockResolvedValue({plugins: ['existing-provider']})
+    vi.mocked(getListOfTunnelPlugins).mockResolvedValue({plugins: ['existing-provider']})
 
     // When
     const got = await getAnalyticsTunnelType({} as any, tunnelUrl)

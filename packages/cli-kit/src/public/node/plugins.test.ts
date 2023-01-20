@@ -1,5 +1,5 @@
 import {getListOfTunnelPlugins, runTunnelPlugin} from './plugins.js'
-import {err, ok} from './public/node/result.js'
+import {err, ok} from './result.js'
 import {describe, expect, it, vi} from 'vitest'
 import {Config} from '@oclif/core'
 
