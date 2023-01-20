@@ -5,7 +5,7 @@ import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath} from '@shopify/cli-kit/node/path'
-import {addPublic} from '@shopify/cli-kit/node/metadata'
+import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Dev extends Command {
   static description = 'Run the app.'
@@ -89,7 +89,7 @@ export default class Dev extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
 
-    await addPublic(() => ({
+    await addPublicMetadata(() => ({
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
       cmd_app_reset_used: flags.reset,
     }))

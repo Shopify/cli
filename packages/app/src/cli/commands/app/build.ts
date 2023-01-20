@@ -7,7 +7,7 @@ import {loadExtensionsSpecifications} from '../../models/extensions/specificatio
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath} from '@shopify/cli-kit/node/path'
-import {addPublic} from '@shopify/cli-kit/node/metadata'
+import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Build extends Command {
   static description = 'Build the app.'
@@ -31,7 +31,7 @@ export default class Build extends Command {
   async run(): Promise<void> {
     const {flags} = await this.parse(Build)
 
-    await addPublic(() => ({
+    await addPublicMetadata(() => ({
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
     }))
 

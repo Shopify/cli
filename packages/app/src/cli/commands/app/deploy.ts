@@ -7,7 +7,7 @@ import {loadExtensionsSpecifications} from '../../models/extensions/specificatio
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath} from '@shopify/cli-kit/node/path'
-import {addPublic} from '@shopify/cli-kit/node/metadata'
+import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Deploy extends Command {
   static description = 'Deploy your Shopify app.'
@@ -38,7 +38,7 @@ export default class Deploy extends Command {
   async run(): Promise<void> {
     const {args, flags} = await this.parse(Deploy)
 
-    await addPublic(() => ({
+    await addPublicMetadata(() => ({
       cmd_app_reset_used: flags.reset,
     }))
 

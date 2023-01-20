@@ -45,7 +45,7 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
 }
 
 async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions) {
-  const {commandStartOptions, ...sensitiveMetadata} = metadata.getAllSensitive()
+  const {commandStartOptions, ...sensitiveMetadata} = metadata.getAllSensitiveMetadata()
   if (commandStartOptions === undefined) {
     debug('Unable to log analytics event - no information on executed command')
     return
@@ -76,7 +76,7 @@ async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions)
       is_employee: await isShopify(),
       ...environmentData,
       ...appPublic,
-      ...metadata.getAllPublic(),
+      ...metadata.getAllPublicMetadata(),
     },
     sensitive: {
       args: startArgs.join(' '),

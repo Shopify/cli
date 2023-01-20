@@ -25,7 +25,7 @@ export async function startAnalytics({
     startCommand = (commandClass as typeof BaseCommand).analyticsNameOverride() ?? commandContent.command
   }
 
-  await metadata.addSensitive(() => ({
+  await metadata.addSensitiveMetadata(() => ({
     commandStartOptions: {
       startTime: currentTime,
       startCommand,
@@ -33,7 +33,7 @@ export async function startAnalytics({
     },
   }))
 
-  await metadata.addPublic(() => ({
+  await metadata.addPublicMetadata(() => ({
     cmd_all_launcher: packageManagerUsedForCreating(),
     cmd_all_alias_used: commandContent.alias,
     cmd_all_topic: commandContent.topic,

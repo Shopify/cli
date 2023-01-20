@@ -28,13 +28,13 @@ function getMetadataErrorHandlingStrategy(): 'mute-and-report' | 'bubble' {
 
 export interface RuntimeMetadataManager<TPublic extends AnyJson, TSensitive extends AnyJson> {
   /** Add some public metadata -- this should not contain any PII. */
-  addPublic: (getData: ProvideMetadata<TPublic>, onError?: MetadataErrorHandling) => Promise<void>
+  addPublicMetadata: (getData: ProvideMetadata<TPublic>, onError?: MetadataErrorHandling) => Promise<void>
   /** Add some potentially sensitive metadata -- this may include PII, but unnecessary data should never be tracked (this is a good fit for command args for instance). */
-  addSensitive: (getData: ProvideMetadata<TSensitive>, onError?: MetadataErrorHandling) => Promise<void>
+  addSensitiveMetadata: (getData: ProvideMetadata<TSensitive>, onError?: MetadataErrorHandling) => Promise<void>
   /** Get a snapshot of the tracked public data. */
-  getAllPublic: () => Partial<TPublic>
+  getAllPublicMetadata: () => Partial<TPublic>
   /** Get a snapshot of the tracked sensitive data. */
-  getAllSensitive: () => Partial<TSensitive>
+  getAllSensitiveMetadata: () => Partial<TSensitive>
 }
 
 export type PublicSchema<T> = T extends RuntimeMetadataManager<infer TPublic, infer _TSensitive> ? TPublic : never
@@ -85,16 +85,16 @@ export function createRuntimeMetadataContainer<
   }
 
   return {
-    getAllPublic: () => {
+    getAllPublicMetadata: () => {
       return {...raw.public}
     },
-    getAllSensitive: () => {
+    getAllSensitiveMetadata: () => {
       return {...raw.sensitive}
     },
-    addPublic: async (getData: ProvideMetadata<TPublic>, onError: MetadataErrorHandling = 'auto') => {
+    addPublicMetadata: async (getData: ProvideMetadata<TPublic>, onError: MetadataErrorHandling = 'auto') => {
       return addMetadata(addPublic, getData, onError)
     },
-    addSensitive: async (getData: ProvideMetadata<TSensitive>, onError: MetadataErrorHandling = 'auto') => {
+    addSensitiveMetadata: async (getData: ProvideMetadata<TSensitive>, onError: MetadataErrorHandling = 'auto') => {
       return addMetadata(addSensitive, getData, onError)
     },
   }
@@ -117,7 +117,7 @@ const coreData = createRuntimeMetadataContainer<
   }
 >()
 
-export const {getAllPublic, getAllSensitive, addPublic, addSensitive} = coreData
+export const {getAllPublicMetadata, getAllSensitiveMetadata, addPublicMetadata, addSensitiveMetadata} = coreData
 
 export type Public = PublicSchema<typeof coreData>
 export type Sensitive = SensitiveSchema<typeof coreData>

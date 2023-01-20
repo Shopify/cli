@@ -17,20 +17,20 @@ describe('runtime metadata', () => {
       }
     >()
 
-    expect(container.getAllPublic()).toEqual({})
-    expect(container.getAllSensitive()).toEqual({})
+    expect(container.getAllPublicMetadata()).toEqual({})
+    expect(container.getAllSensitiveMetadata()).toEqual({})
 
-    await container.addPublic(() => ({foo: 123}))
-    await container.addSensitive(() => ({bar: 'hello'}))
+    await container.addPublicMetadata(() => ({foo: 123}))
+    await container.addSensitiveMetadata(() => ({bar: 'hello'}))
 
-    const pub = container.getAllPublic()
-    const sensitive = container.getAllSensitive()
+    const pub = container.getAllPublicMetadata()
+    const sensitive = container.getAllSensitiveMetadata()
     expect(pub).toEqual({foo: 123})
     expect(sensitive).toEqual({bar: 'hello'})
 
     // getAll returns a copy of the data
-    await container.addPublic(() => ({foo: 456}))
-    expect(container.getAllPublic()).toEqual({foo: 456})
+    await container.addPublicMetadata(() => ({foo: 456}))
+    expect(container.getAllPublicMetadata()).toEqual({foo: 456})
     expect(pub).toEqual({foo: 123})
   })
 
@@ -45,7 +45,7 @@ describe('runtime metadata', () => {
     >()
 
     // Mutes a thrown error, but reports it
-    await container.addPublic(() => {
+    await container.addPublicMetadata(() => {
       throw new Error()
     }, 'mute-and-report')
 
@@ -54,14 +54,14 @@ describe('runtime metadata', () => {
 
     // Bubbles a thrown error
     await expect(
-      container.addPublic(() => {
+      container.addPublicMetadata(() => {
         throw new Error()
       }, 'bubble'),
     ).rejects.toThrowError()
     expect(errorHandler.sendErrorToBugsnag).not.toHaveBeenCalled()
 
     // In mute mode, can handle setting values
-    await container.addPublic(() => ({foo: 123}), 'mute-and-report')
-    expect(container.getAllPublic()).toEqual({foo: 123})
+    await container.addPublicMetadata(() => ({foo: 123}), 'mute-and-report')
+    expect(container.getAllPublicMetadata()).toEqual({foo: 123})
   })
 })

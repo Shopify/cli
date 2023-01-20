@@ -172,8 +172,8 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
 }
 
 export async function addBugsnagMetadata(event: Event, config: Interfaces.Config): Promise<void> {
-  const publicData = metadata.getAllPublic()
-  const {commandStartOptions} = metadata.getAllSensitive()
+  const publicData = metadata.getAllPublicMetadata()
+  const {commandStartOptions} = metadata.getAllSensitiveMetadata()
   const {startCommand} = commandStartOptions ?? {}
 
   const {'@shopify/app': appPublic, ...otherPluginsPublic} = await fanoutHooks(config, 'public_command_metadata', {})
