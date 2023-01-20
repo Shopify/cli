@@ -1,6 +1,6 @@
-import * as http from './public/node/http.js'
+import * as http from './http.js'
 import {publishEvent} from './monorail.js'
-import {mockAndCaptureOutput} from './testing/output.js'
+import {mockAndCaptureOutput} from '../../testing/output.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 describe('monorail', () => {
@@ -14,7 +14,7 @@ describe('monorail', () => {
 
   beforeEach(() => {
     vi.setSystemTime(currentDate)
-    vi.mock('./public/node/http.js')
+    vi.mock('./http.js')
     vi.mocked(http.fetch).mockResolvedValue({status: 200} as any)
   })
 

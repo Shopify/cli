@@ -12,11 +12,11 @@ import {
 } from './environment/local.js'
 import {inTemporaryDirectory, touchFile, mkdir} from './fs.js'
 import {joinPath, dirname} from './path.js'
+import {publishEvent} from './monorail.js'
 import {startAnalytics} from '../../private/node/analytics.js'
 import {hashString} from '../../public/node/crypto.js'
 import {mockAndCaptureOutput} from '../../testing/output.js'
 import {getAppInfo} from '../../store.js'
-import {publishEvent} from '../../monorail.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {it, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
@@ -33,7 +33,7 @@ describe('event tracking', () => {
     vi.mock('../../public/node/crypto.js')
 
     vi.mock('../../version.js')
-    vi.mock('../../monorail.js')
+    vi.mock('./monorail.js')
     vi.mock('./cli.js')
     vi.mocked(isShopify).mockResolvedValue(false)
     vi.mocked(isDevelopment).mockReturnValue(false)
