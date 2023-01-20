@@ -2,6 +2,7 @@ import {buildHeaders, httpsAgent, sanitizedHeadersOutput} from '../../private/no
 import {content, debug} from '../../output.js'
 import FormData from 'form-data'
 import nodeFetch, {RequestInfo, RequestInit} from 'node-fetch'
+import {performance} from 'perf_hooks'
 
 export {
   createApp,

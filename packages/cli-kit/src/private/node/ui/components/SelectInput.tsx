@@ -4,6 +4,8 @@ import {mapValues} from '../../../../public/common/object.js'
 import React, {useState, useEffect, useRef, useCallback} from 'react'
 import {Box, Key, useInput, Text} from 'ink'
 import {debounce} from '@shopify/cli-kit/common/function'
+import chalk from 'chalk'
+import figures from 'figures'
 
 export interface Props<T> {
   items: Item<T>[]
@@ -12,6 +14,9 @@ export interface Props<T> {
   focus?: boolean
   emptyMessage?: string
   defaultValue?: Item<T>
+  highlightedTerm?: string
+  loading?: boolean
+  errorMessage?: string
 }
 
 export interface Item<T> {
@@ -22,7 +27,19 @@ export interface Item<T> {
 }
 
 interface ItemWithIndex<T> extends Item<T> {
+  key: string
   index: number
+}
+
+function highlightedLabel(label: string, term: string | undefined) {
+  if (!term) {
+    return label
+  }
+
+  const regex = new RegExp(term, 'i')
+  return label.replace(regex, (match) => {
+    return chalk.bold(match)
+  })
 }
 
 function groupItems<T>(items: Item<T>[]): [{[key: string]: ItemWithIndex<T>[]}, ItemWithIndex<T>[]] {
@@ -52,6 +69,7 @@ interface SelectItemsGroupProps<T> {
   selectedIndex: number
   hasMarginTop: boolean
   enableShortcuts: boolean
+  highlightedTerm?: string
 }
 
 function SelectItemsGroup<T>({
@@ -60,6 +78,7 @@ function SelectItemsGroup<T>({
   selectedIndex,
   hasMarginTop,
   enableShortcuts,
+  highlightedTerm,
 }: SelectItemsGroupProps<T>): JSX.Element {
   return (
     <Box key={title} flexDirection="column" marginTop={hasMarginTop ? 1 : 0}>
@@ -71,14 +90,13 @@ function SelectItemsGroup<T>({
 
       {items.map((item) => {
         const isSelected = item.index === selectedIndex
+        const label = highlightedLabel(item.label, highlightedTerm)
 
         return (
           <Box key={item.key}>
             <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
 
-            <Text color={isSelected ? 'cyan' : undefined}>
-              {enableShortcuts ? `(${item.key}) ${item.label}` : item.label}
-            </Text>
+            <Text color={isSelected ? 'cyan' : undefined}>{enableShortcuts ? `(${item.key}) ${label}` : label}</Text>
           </Box>
         )
       })}
@@ -93,14 +111,17 @@ export default function SelectInput<T>({
   focus = true,
   emptyMessage = 'No items to select.',
   defaultValue,
+  highlightedTerm,
+  loading = false,
+  errorMessage,
 }: React.PropsWithChildren<Props<T>>): JSX.Element | null {
   const defaultValueIndex = defaultValue ? items.findIndex((item) => item.value === defaultValue.value) : -1
   const initialIndex = defaultValueIndex === -1 ? 0 : defaultValueIndex
   const inputStack = useRef<string | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(initialIndex)
-  const keys = useRef(new Set(items.map((item) => item.key)))
   const [groupedItems, ungroupedItems] = groupItems(items)
   const groupedItemsValues = [...Object.values(groupedItems).flat(), ...ungroupedItems]
+  const keys = groupedItemsValues.map((item) => item.key)
   const groupTitles = Object.keys(groupedItems)
   const previousItems = useRef<Item<T>[]>(items)
 
@@ -145,11 +166,7 @@ export default function SelectInput<T>({
 
   const handleShortcuts = useCallback(
     (input: string) => {
-      const parsedInput = parseInt(input, 10)
-
-      if (parsedInput !== 0 && parsedInput <= items.length + 1) {
-        changeSelection(parsedInput - 1)
-      } else if (keys.current.has(input)) {
+      if (keys.includes(input)) {
         const groupedItem = groupedItemsValues.find((item) => item.key === input)
         if (groupedItem !== undefined) {
           changeSelection(groupedItem.index)
@@ -186,32 +203,57 @@ export default function SelectInput<T>({
 
   const ungroupedItemsTitle = groupTitles.length > 0 ? 'Other' : undefined
 
-  return (
-    <Box flexDirection="column">
-      {groupTitles.map((title, index) => (
-        <SelectItemsGroup
-          title={title}
-          selectedIndex={selectedIndex}
-          items={groupedItems[title]!}
-          key={title}
-          hasMarginTop={index !== 0}
-          enableShortcuts={enableShortcuts}
-        ></SelectItemsGroup>
-      ))}
-
-      {ungroupedItems.length > 0 && (
-        <SelectItemsGroup
-          title={ungroupedItemsTitle}
-          selectedIndex={selectedIndex}
-          items={ungroupedItems}
-          hasMarginTop={groupTitles.length > 0}
-          enableShortcuts={enableShortcuts}
-        ></SelectItemsGroup>
-      )}
-
-      <Box marginTop={items.length > 0 ? 1 : 0} marginLeft={3}>
-        <Text dimColor>{items.length > 0 ? 'navigate with arrows, enter to select' : emptyMessage}</Text>
+  if (loading) {
+    return (
+      <Box marginLeft={3}>
+        <Text dimColor>Loading...</Text>
       </Box>
-    </Box>
-  )
+    )
+  } else if (errorMessage && errorMessage.length > 0) {
+    return (
+      <Box marginLeft={3}>
+        <Text color="red">{errorMessage}</Text>
+      </Box>
+    )
+  } else if (items.length === 0) {
+    return (
+      <Box marginLeft={3}>
+        <Text dimColor>{emptyMessage}</Text>
+      </Box>
+    )
+  } else {
+    return (
+      <Box flexDirection="column">
+        {groupTitles.map((title, index) => (
+          <SelectItemsGroup
+            title={title}
+            selectedIndex={selectedIndex}
+            items={groupedItems[title]!}
+            key={title}
+            hasMarginTop={index !== 0}
+            enableShortcuts={enableShortcuts}
+            highlightedTerm={highlightedTerm}
+          ></SelectItemsGroup>
+        ))}
+
+        {ungroupedItems.length > 0 && (
+          <SelectItemsGroup
+            title={ungroupedItemsTitle}
+            selectedIndex={selectedIndex}
+            items={ungroupedItems}
+            hasMarginTop={groupTitles.length > 0}
+            enableShortcuts={enableShortcuts}
+            highlightedTerm={highlightedTerm}
+          ></SelectItemsGroup>
+        )}
+
+        <Box marginTop={1} marginLeft={3}>
+          <Text dimColor>
+            Press {figures.arrowUp}
+            {figures.arrowDown} arrows to select, enter to confirm
+          </Text>
+        </Box>
+      </Box>
+    )
+  }
 }

@@ -249,7 +249,7 @@ describe('ensureDevEnvironment', () => {
       storeFqdn: STORE1.shopDomain,
     })
 
-    expect(metadata.getAllPublic()).toMatchObject({
+    expect(metadata.getAllPublicMetadata()).toMatchObject({
       api_key: APP1.apiKey,
       partner_id: 1,
     })
@@ -365,7 +365,7 @@ describe('ensureDeployEnvironment', () => {
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
 
-    expect(metadata.getAllPublic()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
+    expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
   })
 
   test("fetches the app from the partners' API and returns it alongside the id when there are no identifiers but user chooses to reuse dev store.cliKitStore()", async () => {

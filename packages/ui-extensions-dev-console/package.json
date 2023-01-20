@@ -1,6 +1,6 @@
 {
   "name": "@shopify/ui-extensions-dev-console-app",
-  "version": "3.35.0",
+  "version": "3.36.1",
   "private": true,
   "scripts": {
     "build": "nx build",
@@ -42,7 +42,7 @@
   "dependencies": {
     "@shopify/polaris-icons": "^4.6.2",
     "@shopify/react-i18n": "^6.1.0",
-    "@shopify/ui-extensions-server-kit": "4.0.1",
+    "@shopify/ui-extensions-server-kit": "4.1.0",
     "@vitejs/plugin-react": "^1.3.2",
     "copy-to-clipboard": "^3.3.1",
     "qrcode.react": "^1.0.1",

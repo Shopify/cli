@@ -343,7 +343,7 @@ async function logMetadataForDev(options: {
   storeFqdn: string
 }) {
   const tunnelType = await getAnalyticsTunnelType(options.devOptions.commandConfig, options.tunnelUrl)
-  await metadata.addPublic(() => ({
+  await metadata.addPublicMetadata(() => ({
     cmd_dev_tunnel_type: tunnelType,
     cmd_dev_tunnel_custom_hash: tunnelType === 'custom' ? hashString(options.tunnelUrl) : undefined,
     cmd_dev_urls_updated: options.shouldUpdateURLs,
@@ -352,7 +352,7 @@ async function logMetadataForDev(options: {
     cmd_app_reset_used: options.devOptions.reset,
   }))
 
-  await metadata.addSensitive(() => ({
+  await metadata.addSensitiveMetadata(() => ({
     store_fqdn: options.storeFqdn,
     cmd_dev_tunnel_custom: tunnelType === 'custom' ? options.tunnelUrl : undefined,
   }))

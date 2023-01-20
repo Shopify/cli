@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.35.0",
+  "version": "3.36.1",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -105,6 +105,7 @@
     "envfile": "6.18.0",
     "execa": "6.0.0",
     "fast-glob": "3.2.11",
+    "figures": "5.0.0",
     "find-process": "1.4.7",
     "find-up": "6.2.0",
     "find-versions": "5.0.0",

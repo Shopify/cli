@@ -1,9 +1,9 @@
 import {version as rubyVersion} from './ruby.js'
 import {alwaysLogAnalytics, analyticsDisabled, isShopify} from './environment/local.js'
+import * as metadata from './metadata.js'
+import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
+import {fanoutHooks} from './plugins.js'
 import {content, debug, token} from '../../output.js'
-import * as metadata from '../../metadata.js'
-import {publishEvent, MONORAIL_COMMAND_TOPIC} from '../../monorail.js'
-import {fanoutHooks} from '../../plugins.js'
 import {getEnvironmentData, getSensitiveEnvironmentData} from '../../private/node/analytics.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {Interfaces} from '@oclif/core'
@@ -30,7 +30,7 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
       debug(content`Skipping command analytics, payload: ${token.json(payload)}`)
       return
     }
-    const response = await publishEvent(MONORAIL_COMMAND_TOPIC, payload.public, payload.sensitive)
+    const response = await publishMonorailEvent(MONORAIL_COMMAND_TOPIC, payload.public, payload.sensitive)
     if (response.type === 'error') {
       debug(response.message)
     }
@@ -45,7 +45,7 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
 }
 
 async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions) {
-  const {commandStartOptions, ...sensitiveMetadata} = metadata.getAllSensitive()
+  const {commandStartOptions, ...sensitiveMetadata} = metadata.getAllSensitiveMetadata()
   if (commandStartOptions === undefined) {
     debug('Unable to log analytics event - no information on executed command')
     return
@@ -76,7 +76,7 @@ async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions)
       is_employee: await isShopify(),
       ...environmentData,
       ...appPublic,
-      ...metadata.getAllPublic(),
+      ...metadata.getAllPublicMetadata(),
     },
     sensitive: {
       args: startArgs.join(' '),

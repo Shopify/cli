@@ -1,8 +1,5 @@
 export * as output from './output.js'
-export * as plugins from './plugins.js'
 export * as schema from './schema.js'
 export * as store from './store.js'
 export * as ui from './ui.js'
 export * as outputMocker from './testing/output.js'
-export * as metadata from './metadata.js'
-export * as monorail from './monorail.js'

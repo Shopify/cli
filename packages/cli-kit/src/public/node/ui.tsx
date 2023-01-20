@@ -11,10 +11,9 @@ import Table, {TableProps} from '../../private/node/ui/components/Table/Table.js
 import {SelectPrompt, Props as SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, Props as TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
-import {
-  AutocompletePrompt,
-  Props as AutocompletePromptProps,
-} from '../../private/node/ui/components/AutocompletePrompt.js'
+import {Item as SelectItem, Props as SelectProps} from '../../private/node/ui/components/SelectInput.js'
+import {Props as InfoTableProps} from '../../private/node/ui/components/Prompts/InfoTable.js'
+import {AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
 import React from 'react'
 import {RenderOptions} from 'ink'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -210,7 +209,7 @@ export function renderFatalError(error: Fatal) {
  *     (9) eighth
  *     (10) ninth
  *
- *     navigate with arrows, enter to select
+ *     Press ↑↓ arrows to select, enter to confirm
  * ```
  */
 export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit'>): Promise<T> {
@@ -234,7 +233,7 @@ interface RenderConfirmationPromptOptions extends Pick<SelectPromptProps<boolean
  * \>  (y) Yes, confirm
  *     (n) No, canccel
  *
- *     navigate with arrows, enter to select
+ *     Press ↑↓ arrows to select, enter to confirm
  */
 export function renderConfirmationPrompt({
   message,
@@ -262,6 +261,13 @@ export function renderConfirmationPrompt({
   })
 }
 
+interface RenderAutocompletePromptProps<T> {
+  message: string
+  choices: SelectProps<T>['items']
+  infoTable?: InfoTableProps['table']
+  search?: (term: string) => Promise<SelectItem<T>[]>
+}
+
 /**
  * Renders an autocomplete prompt to the console.
  * ```
@@ -271,10 +277,10 @@ export function renderConfirmationPrompt({
  *     second
  *     third
 
- *  navigate with arrows, enter to select
+ *  Press ↑↓ arrows to select, enter to confirm
  * ```
  */
-export function renderAutocompletePrompt<T>(props: Omit<AutocompletePromptProps<T>, 'onSubmit'>): Promise<T> {
+export function renderAutocompletePrompt<T>(props: RenderAutocompletePromptProps<T>): Promise<T> {
   const newProps = {
     search(term: string) {
       return Promise.resolve(props.choices.filter((item) => item.label.toLowerCase().includes(term.toLowerCase())))

@@ -500,14 +500,14 @@ function showDevValues(org: string, appName: string) {
 }
 
 async function logMetadataForLoadedDevEnvironment(env: DevEnvironmentOutput) {
-  await metadata.addPublic(() => ({
+  await metadata.addPublicMetadata(() => ({
     partner_id: tryParseInt(env.remoteApp.organizationId),
     api_key: env.remoteApp.apiKey,
   }))
 }
 
 async function logMetadataForLoadedDeployEnvironment(env: DeployEnvironmentOutput) {
-  await metadata.addPublic(() => ({
+  await metadata.addPublicMetadata(() => ({
     partner_id: tryParseInt(env.partnersOrganizationId),
     api_key: env.identifiers.app,
   }))
