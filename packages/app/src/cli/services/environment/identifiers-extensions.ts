@@ -1,20 +1,33 @@
 import {manualMatchIds} from './id-manual-matching.js'
-import {automaticMatchmaking} from './id-matching.js'
+import {automaticMatchmaking, LocalRemoteSource} from './id-matching.js'
 import {EnsureDeploymentIdsPresenceOptions, LocalSource, MatchingError, RemoteSource} from './identifiers.js'
-import {deployConfirmationPrompt, matchConfirmationPrompt, migratePrompt} from './prompts.js'
+import {deployConfirmationPrompt, extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {migrateToUiExtension} from '../dev/migrate-to-ui-extension.js'
+import {getExtensionsToMigrate, migrateToUiExtension} from '../dev/migrate-to-ui-extension.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 
 export async function ensureExtensionsIds(
   options: EnsureDeploymentIdsPresenceOptions,
-  remoteExtensions: RemoteSource[],
+  initialRemoteExtensions: RemoteSource[],
 ): Promise<Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions}, MatchingError>> {
+  let remoteExtensions = initialRemoteExtensions
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
   const localExtensions = [...options.app.extensions.ui, ...options.app.extensions.theme]
+  const extensionsToMigrate = getExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
+
+  if (extensionsToMigrate.length > 0) {
+    const confirmedMigration = await extensionMigrationPrompt(extensionsToMigrate)
+
+    if (confirmedMigration) {
+      remoteExtensions = await migrateExtensions(extensionsToMigrate, options.appId, remoteExtensions)
+    } else {
+      return err('user-cancelled')
+    }
+  }
+
   const matchExtensions = await automaticMatchmaking(localExtensions, remoteExtensions, validIdentifiers, 'uuid')
 
   let validMatches = matchExtensions.identifiers
@@ -35,20 +48,6 @@ export async function ensureExtensionsIds(
     validMatches = {...validMatches, ...matchResult.identifiers}
     extensionsToCreate.push(...matchResult.toCreate)
     onlyRemoteExtensions = matchResult.onlyRemote
-  }
-
-  for (const extension of matchExtensions.toMigrate) {
-    // eslint-disable-next-line no-await-in-loop
-    const confirmed = await migratePrompt(extension.local, extension.remote)
-
-    if (!confirmed) {
-      return err('user-cancelled')
-    }
-
-    // eslint-disable-next-line no-await-in-loop
-    await migrateToUiExtension(extension.remote.id, options.appId)
-
-    outputCompleted(`Migrated ${extension.local.configuration.name}.`)
   }
 
   if (!options.force) {
@@ -78,6 +77,28 @@ export async function ensureExtensionsIds(
   return ok({
     extensions: validMatches,
     extensionIds: validMatchesById,
+  })
+}
+
+async function migrateExtensions(
+  extensionsToMigrate: LocalRemoteSource[],
+  appId: string,
+  remoteExtensions: RemoteSource[],
+) {
+  await Promise.all(
+    extensionsToMigrate.map(async ({remote}) => {
+      await migrateToUiExtension(remote.id, appId)
+    }),
+  )
+
+  return remoteExtensions.map((extension) => {
+    if (extensionsToMigrate.some(({remote}) => remote.id === extension.id)) {
+      return {
+        ...extension,
+        type: 'UI_EXTENSION',
+      }
+    }
+    return extension
   })
 }
 
