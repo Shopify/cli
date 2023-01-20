@@ -54,7 +54,7 @@ describe('after extension command finishes correctly', () => {
       │  Checkout UI extension was added to your project!                            │
       │                                                                              │
       │  Next steps                                                                  │
-      │    • To find your extension, remember to \`cd /extensions/name\`               │
+      │    • To find your extension, remember to \`cd extensions/name\`                │
       │    • To preview your project, run \`yarn dev\`                                 │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -76,7 +76,7 @@ describe('after extension command finishes correctly', () => {
       │  Theme App Extension extension was added to your project!                    │
       │                                                                              │
       │  Next steps                                                                  │
-      │    • To find your extension, remember to \`cd /extensions/name\`               │
+      │    • To find your extension, remember to \`cd extensions/name\`                │
       │    • To preview your project, run \`yarn dev\`                                 │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -98,7 +98,7 @@ describe('after extension command finishes correctly', () => {
       │  Function - Product discount extension was added to your project!            │
       │                                                                              │
       │  Next steps                                                                  │
-      │    • To find your extension, remember to \`cd /extensions/name\`               │
+      │    • To find your extension, remember to \`cd extensions/name\`                │
       │                                                                              │
       │  Reference                                                                   │
       │    • For more details, see the docs (                                        │

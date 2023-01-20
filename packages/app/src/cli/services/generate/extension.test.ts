@@ -33,7 +33,7 @@ describe('initialize a extension', async () => {
         const name = 'my-ext-1'
         const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
         const extensionFlavor = 'vanilla-js'
-        await createFromTemplate({
+        const extensionDir = await createFromTemplate({
           name,
           specification,
           extensionFlavor,
@@ -41,6 +41,8 @@ describe('initialize a extension', async () => {
           specifications,
         })
         const generatedExtension = (await loadApp({directory: tmpDir, specifications})).extensions.ui[0]!
+
+        expect(extensionDir).toEqual(joinPath('extensions', name))
         expect(generatedExtension.configuration.name).toBe(name)
       })
     },
@@ -360,8 +362,8 @@ async function createFromTemplate({
   appDirectory,
   extensionFlavor,
   specifications,
-}: CreateFromTemplateOptions) {
-  await extensionInit({
+}: CreateFromTemplateOptions): Promise<string> {
+  return extensionInit({
     name,
     specification,
     app: await loadApp({directory: appDirectory, specifications}),
