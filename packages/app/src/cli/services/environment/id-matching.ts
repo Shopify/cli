@@ -9,6 +9,7 @@ export interface MatchResult {
   identifiers: IdentifiersExtensions
   toConfirm: {local: LocalSource; remote: RemoteSource}[]
   toCreate: LocalSource[]
+  toMigrate: {local: LocalSource; remote: RemoteSource}[]
   toManualMatch: {local: LocalSource[]; remote: RemoteSource[]}
 }
 
@@ -115,6 +116,7 @@ export async function automaticMatchmaking(
   const localSourcesIds = localSources.map((source) => source.localIdentifier)
   const ids = pickBy(identifiers, (_, id) => localSourcesIds.includes(id))
   const localUUIDs = Object.values(ids)
+
   const existsRemotely = (local: LocalSource) => {
     return Boolean(
       remoteSources.find(
@@ -143,5 +145,33 @@ export async function automaticMatchmaking(
     toConfirm,
     toCreate,
     toManualMatch: pending,
+    toMigrate: getExtensionsToMigrate(localSources, remoteSources, ids),
   }
+}
+
+function getExtensionsToMigrate(
+  localSources: LocalSource[],
+  remoteSources: RemoteSource[],
+  ids: {[key: string]: string},
+) {
+  const remoteExtensionTypesToMigrate = ['CHECKOUT_UI_EXTENSION']
+
+  return localSources.reduce<MatchResult['toMigrate']>((accumulator, localSource) => {
+    if (localSource.type === 'ui_extension') {
+      const remoteSource = remoteSources.find((source) => source.uuid === ids[localSource.configuration.name])
+
+      if (!remoteSource) {
+        return accumulator
+      }
+
+      const typeMimatches = remoteSource.type !== localSource.type
+      const typeIsToMigrate = remoteExtensionTypesToMigrate.includes(remoteSource.type)
+
+      if (typeMimatches && typeIsToMigrate) {
+        accumulator.push({local: localSource, remote: remoteSource})
+      }
+    }
+
+    return accumulator
+  }, [])
 }

@@ -7,6 +7,7 @@ import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
+import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 export async function ensureExtensionsIds(
   options: EnsureDeploymentIdsPresenceOptions,
@@ -14,7 +15,6 @@ export async function ensureExtensionsIds(
 ): Promise<Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions}, MatchingError>> {
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
   const localExtensions = [...options.app.extensions.ui, ...options.app.extensions.theme]
-
   const matchExtensions = await automaticMatchmaking(localExtensions, remoteExtensions, validIdentifiers, 'uuid')
 
   let validMatches = matchExtensions.identifiers
@@ -35,6 +35,30 @@ export async function ensureExtensionsIds(
     validMatches = {...validMatches, ...matchResult.identifiers}
     extensionsToCreate.push(...matchResult.toCreate)
     onlyRemoteExtensions = matchResult.onlyRemote
+  }
+
+  for (const extension of matchExtensions.toMigrate) {
+    const remoteType = extension.remote.type.toLowerCase()
+    const localType = extension.local.type
+    // eslint-disable-next-line no-await-in-loop
+    const confirmed = await renderConfirmationPrompt({
+      message: `You've changed ${extension.local.configuration.name} from ${remoteType} to ${localType}. Would you like to migrate it in Shopify Partners?`,
+      infoTable: {
+        'Old type': [extension.remote.type.toLowerCase()],
+        'New type': [extension.local.type],
+      },
+      confirmationMessage: `Yes, update to ${localType}`,
+      cancellationMessage: 'No, cancel the deploy',
+    })
+
+    if (confirmed) {
+      // TODO: Run GraphQL Migration
+      console.log("We'll migrate the extension in Shopify Partners.")
+
+      return err('user-cancelled')
+    } else {
+      return err('user-cancelled')
+    }
   }
 
   if (!options.force) {
