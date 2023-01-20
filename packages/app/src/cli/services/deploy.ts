@@ -100,12 +100,14 @@ export const deploy = async (options: DeployOptions) => {
       if (!useThemeBundling()) {
         await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
       }
-      output.info("abc")
 
-      await createExtension(apiKey, 'FUNCTION', 'my function', token)
-      await uploadFunctionExtensionsWithEF(app.extensions.function, {identifiers, token})
-      // identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
+      output.info("Register extensions if required")
+      // await createExtension(apiKey, 'FUNCTION', 'my function', token)
+      identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
       app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
+
+      output.info("Deploy extension")
+      await uploadFunctionExtensionsWithEF(app.extensions.function, {identifiers, token})
 
       if (validationErrors.length > 0) {
         output.completed('Deployed to Shopify, but fixes are needed')

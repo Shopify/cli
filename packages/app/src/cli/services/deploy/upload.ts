@@ -32,6 +32,7 @@ import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/p
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {fileExists, readFile, readSync} from '@shopify/cli-kit/node/fs'
+import {createExtension} from '../dev/create-extension.js'
 
 interface DeployThemeExtensionOptions {
   /** The application API key */
@@ -183,13 +184,11 @@ interface UploadFunctionExtensionOptions {
   extensions: FunctionExtension[],
   options: UploadFunctionExtensionsOptions,
 ): Promise<UploadExtensionValidationError[]> {
-  output.info("123")
-
   const deploymentUUID = randomUUID()
   // const signedURL = await getUIExtensionUploadURL(options.identifiers.app, deploymentUUID)
   const formattedExtensions: ExtensionSettings[] = extensions.map((extension) => {
     return {
-      uuid: "ca946128-a0ca-4685-9510-a87c436ba10d",
+      uuid: options.identifiers.extensions[extension.localIdentifier] || "error",
       config: JSON.stringify(extension),
       context: '',
     }
@@ -253,13 +252,26 @@ export async function uploadFunctionExtensions(
 
   // Functions are uploaded sequentially to avoid reaching the API limit
   for (const extension of extensions) {
-    // eslint-disable-next-line no-await-in-loop
-    const remoteIdentifier = await uploadFunctionExtension(extension, {
+    output.info("Identifiers " + JSON.stringify(identifiers))
+    if (identifiers.extensions[extension.localIdentifier] === undefined) {
+      output.info("registering")
+      const registration = await createExtension(
+        options.identifiers.app,
+        'FUNCTION',
+        extension.localIdentifier,
+        options.token
+      )
+      output.info("registration " + JSON.stringify(registration))
+      functionIds[extension.localIdentifier] = registration.uuid
+    }
+
+    // This no longer saves anything in SS, but it emits Kafka events to the engine
+    // which is required.
+    await uploadFunctionExtension(extension, {
       apiKey: options.identifiers.app,
       token: options.token,
       identifier: identifiers.extensions[extension.localIdentifier],
     })
-    functionIds[extension.localIdentifier] = remoteIdentifier
   }
 
   identifiers = {
