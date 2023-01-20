@@ -26,8 +26,11 @@ export interface ExtensionsEndpointPayload extends ExtensionsPayloadInterface {
   }
 }
 
-interface NewExtensionPointSchema extends NewExtensionPointSchemaType {
-  main: {
+export interface DevNewExtensionPointSchema extends NewExtensionPointSchemaType {
+  root: {
+    url: string
+  }
+  resource: {
     url: string
   }
 }
@@ -51,7 +54,7 @@ export interface UIExtensionPayload {
     status: ExtensionAssetBuildStatus
     localizationStatus: ExtensionAssetBuildStatus
   }
-  extensionPoints: string[] | null | NewExtensionPointSchema[]
+  extensionPoints: string[] | null | DevNewExtensionPointSchema[]
   localization: Localization | null
   categories: string[] | null
   authenticatedRedirectStartUrl?: string
