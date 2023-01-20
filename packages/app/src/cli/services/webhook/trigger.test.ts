@@ -1,9 +1,15 @@
 import {webhookTriggerService} from './trigger.js'
-import {WebhookTriggerOptions} from './trigger-options.js'
 import {getWebhookSample} from './request-sample.js'
 import {requestApiVersions} from './request-api-versions.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
-import {optionsPrompt, WebhookTriggerFlags} from '../../prompts/webhook/options-prompt.js'
+import {requestTopics} from './request-topics.js'
+import {
+  collectAddressAndMethod,
+  collectApiVersion,
+  collectSecret,
+  collectTopic,
+  WebhookTriggerFlags,
+} from '../../prompts/webhook/options-prompt.js'
 import {output} from '@shopify/cli-kit'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
@@ -16,7 +22,7 @@ const aVersion = 'A_VERSION'
 const aSecret = 'A_SECRET'
 const aPort = '1234'
 const aUrlPath = '/a/url/path'
-const anAddress = 'http://example.org'
+const anAddress = 'https://example.org'
 
 beforeEach(async () => {
   vi.mock('@shopify/cli-kit')
@@ -24,6 +30,7 @@ beforeEach(async () => {
   vi.mock('../../prompts/webhook/options-prompt.js')
   vi.mock('./request-sample.js')
   vi.mock('./request-api-versions.js')
+  vi.mock('./request-topics.js')
   vi.mock('./trigger-local-webhook.js')
 })
 
@@ -46,7 +53,7 @@ const successEmptyResponse = {
 }
 const aFullLocalAddress = `http://localhost:${aPort}${aUrlPath}`
 
-describe('execute', () => {
+describe('webhookTriggerService', () => {
   beforeEach(async () => {
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue(aToken)
   })
@@ -58,13 +65,13 @@ describe('execute', () => {
       headers: emptyJson,
       success: false,
       userErrors: [
-        {message: '["Invalid topic pizza/update"]', fields: ['field1']},
-        {message: '["Unable to notify example"]', fields: ['field2']},
+        {message: '["Some error"]', fields: ['field1']},
+        {message: '["Another error"]', fields: ['field2']},
       ],
     }
+    mockParams(aVersion, aTopic, 'http', anAddress, aSecret)
+
     vi.mocked(getWebhookSample).mockResolvedValue(response)
-    vi.mocked(requestApiVersions).mockResolvedValue([aVersion])
-    vi.mocked(optionsPrompt).mockResolvedValue(sampleOptions())
 
     const outputSpy = vi.spyOn(output, 'consoleError')
 
@@ -72,10 +79,8 @@ describe('execute', () => {
     await webhookTriggerService(sampleFlags())
 
     // Then
-    expect(outputSpy).toHaveBeenCalledWith(
-      `Request errors:\n  · Invalid topic pizza/update\n  · Unable to notify example`,
-    )
-    expect(requestApiVersions).toHaveBeenCalledWith(aToken)
+    expectCalls(aVersion)
+    expect(outputSpy).toHaveBeenCalledWith(`Request errors:\n  · Some error\n  · Another error`)
   })
 
   it('Safe notification in case of unexpected request errors', async () => {
@@ -89,9 +94,9 @@ describe('execute', () => {
         {message: 'Another invalid JSON', fields: ['field2']},
       ],
     }
+    mockParams(aVersion, aTopic, 'http', anAddress, aSecret)
+
     vi.mocked(getWebhookSample).mockResolvedValue(response)
-    vi.mocked(requestApiVersions).mockResolvedValue([aVersion])
-    vi.mocked(optionsPrompt).mockResolvedValue(sampleOptions())
 
     const outputSpy = vi.spyOn(output, 'consoleError')
 
@@ -99,15 +104,16 @@ describe('execute', () => {
     await webhookTriggerService(sampleFlags())
 
     // Then
+    expectCalls(aVersion)
     expect(outputSpy).toHaveBeenCalledWith(`Request errors:\n${JSON.stringify(response.userErrors)}`)
   })
 
   it('notifies about real delivery being sent', async () => {
     // Given
+    mockParams(aVersion, aTopic, 'http', anAddress, aSecret)
+
     vi.mocked(triggerLocalWebhook)
     vi.mocked(getWebhookSample).mockResolvedValue(successEmptyResponse)
-    vi.mocked(requestApiVersions).mockResolvedValue([aVersion])
-    vi.mocked(optionsPrompt).mockResolvedValue(sampleRemoteOptions())
 
     const outputSpy = vi.spyOn(output, 'success')
 
@@ -115,7 +121,7 @@ describe('execute', () => {
     await webhookTriggerService(sampleFlags())
 
     // Then
-    expect(requestApiVersions).toHaveBeenCalledWith(aToken)
+    expectCalls(aVersion)
     expect(getWebhookSample).toHaveBeenCalledWith(aToken, aTopic, aVersion, 'http', anAddress, aSecret)
     expect(triggerLocalWebhook).toHaveBeenCalledTimes(0)
     expect(outputSpy).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
@@ -124,10 +130,10 @@ describe('execute', () => {
   describe('Localhost delivery', () => {
     it('delivers to localhost', async () => {
       // Given
-      vi.mocked(getWebhookSample).mockResolvedValue(successDirectResponse)
+      mockParams(aVersion, aTopic, 'localhost', aFullLocalAddress, aSecret)
+
       vi.mocked(triggerLocalWebhook).mockResolvedValue(true)
-      vi.mocked(requestApiVersions).mockResolvedValue([aVersion])
-      vi.mocked(optionsPrompt).mockResolvedValue(sampleLocalhostOptions())
+      vi.mocked(getWebhookSample).mockResolvedValue(successDirectResponse)
 
       const outputSpy = vi.spyOn(output, 'success')
 
@@ -135,7 +141,7 @@ describe('execute', () => {
       await webhookTriggerService(sampleFlags())
 
       // Then
-      expect(requestApiVersions).toHaveBeenCalledWith(aToken)
+      expectCalls(aVersion)
       expect(getWebhookSample).toHaveBeenCalledWith(aToken, aTopic, aVersion, 'localhost', aFullLocalAddress, aSecret)
       expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
       expect(outputSpy).toHaveBeenCalledWith('Localhost delivery sucessful')
@@ -143,10 +149,10 @@ describe('execute', () => {
 
     it('shows an error if localhost is not ready', async () => {
       // Given
-      vi.mocked(getWebhookSample).mockResolvedValue(successDirectResponse)
+      mockParams(aVersion, aTopic, 'localhost', aFullLocalAddress, aSecret)
+
       vi.mocked(triggerLocalWebhook).mockResolvedValue(false)
-      vi.mocked(requestApiVersions).mockResolvedValue([aVersion])
-      vi.mocked(optionsPrompt).mockResolvedValue(sampleLocalhostOptions())
+      vi.mocked(getWebhookSample).mockResolvedValue(successDirectResponse)
 
       const outputSpy = vi.spyOn(output, 'consoleError')
 
@@ -154,12 +160,26 @@ describe('execute', () => {
       await webhookTriggerService(sampleFlags())
 
       // Then
-      expect(requestApiVersions).toHaveBeenCalledWith(aToken)
+      expectCalls(aVersion)
       expect(getWebhookSample).toHaveBeenCalledWith(aToken, aTopic, aVersion, 'localhost', aFullLocalAddress, aSecret)
       expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
       expect(outputSpy).toHaveBeenCalledWith('Localhost delivery failed')
     })
   })
+
+  function mockParams(version: string, topic: string, method: string, address: string, secret: string) {
+    vi.mocked(requestApiVersions).mockResolvedValue([version])
+    vi.mocked(collectApiVersion).mockResolvedValue(version)
+    vi.mocked(requestTopics).mockResolvedValue([topic])
+    vi.mocked(collectTopic).mockResolvedValue(topic)
+    vi.mocked(collectAddressAndMethod).mockResolvedValue([method, address])
+    vi.mocked(collectSecret).mockResolvedValue(secret)
+  }
+
+  function expectCalls(version: string) {
+    expect(requestApiVersions).toHaveBeenCalledWith(aToken)
+    expect(requestTopics).toHaveBeenCalledWith(aToken, version)
+  }
 
   function sampleFlags(): WebhookTriggerFlags {
     const flags: WebhookTriggerFlags = {
@@ -171,41 +191,5 @@ describe('execute', () => {
     }
 
     return flags
-  }
-
-  function sampleOptions(): WebhookTriggerOptions {
-    const options: WebhookTriggerOptions = {
-      topic: aTopic,
-      apiVersion: aVersion,
-      deliveryMethod: 'event-bridge',
-      sharedSecret: aSecret,
-      address: '',
-    }
-
-    return options
-  }
-
-  function sampleLocalhostOptions(): WebhookTriggerOptions {
-    const options: WebhookTriggerOptions = {
-      topic: aTopic,
-      apiVersion: aVersion,
-      deliveryMethod: 'localhost',
-      sharedSecret: aSecret,
-      address: aFullLocalAddress,
-    }
-
-    return options
-  }
-
-  function sampleRemoteOptions(): WebhookTriggerOptions {
-    const options: WebhookTriggerOptions = {
-      topic: aTopic,
-      apiVersion: aVersion,
-      deliveryMethod: 'http',
-      sharedSecret: aSecret,
-      address: anAddress,
-    }
-
-    return options
   }
 })
