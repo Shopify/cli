@@ -3,6 +3,7 @@ import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle.js'
 import {
   uploadThemeExtensions,
   uploadFunctionExtensions,
+  uploadFunctionExtensionsWithEF,
   uploadUIExtensionsBundle,
   UploadExtensionValidationError,
 } from './deploy/upload.js'
@@ -18,6 +19,7 @@ import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_ex
 import {path, output} from '@shopify/cli-kit'
 import {useThemeBundling} from '@shopify/cli-kit/node/environment/local'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
+import {createExtension} from './dev/create-extension.js'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -98,7 +100,11 @@ export const deploy = async (options: DeployOptions) => {
       if (!useThemeBundling()) {
         await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
       }
-      identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
+      output.info("abc")
+
+      await createExtension(apiKey, 'FUNCTION', 'my function', token)
+      await uploadFunctionExtensionsWithEF(app.extensions.function, {identifiers, token})
+      // identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
       app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
 
       if (validationErrors.length > 0) {

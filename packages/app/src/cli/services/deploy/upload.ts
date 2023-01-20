@@ -169,6 +169,69 @@ interface UploadFunctionExtensionsOptions {
   identifiers: Identifiers
 }
 
+interface UploadFunctionExtensionOptions {
+  apiKey: string
+  identifier?: string
+  token: string
+}
+
+/**
+ * Uploads a bundle.
+ * @param options - The upload options
+ */
+ export async function uploadFunctionExtensionsWithEF(
+  extensions: FunctionExtension[],
+  options: UploadFunctionExtensionsOptions,
+): Promise<UploadExtensionValidationError[]> {
+  output.info("123")
+
+  const deploymentUUID = randomUUID()
+  // const signedURL = await getUIExtensionUploadURL(options.identifiers.app, deploymentUUID)
+  const formattedExtensions: ExtensionSettings[] = extensions.map((extension) => {
+    return {
+      uuid: "ca946128-a0ca-4685-9510-a87c436ba10d",
+      config: JSON.stringify(extension),
+      context: '',
+    }
+  })
+  let signedURL = ""
+  for (const extension of extensions) {
+    signedURL = await uploadWasmBlob(extension, options.identifiers.app, options.token)
+  }
+
+  // const formData = http.formData()
+  // const buffer = readSync("./")
+  // formData.append('my_upload', buffer)
+  // await http.fetch(signedURL, {
+  //   method: 'put',
+  //   body: buffer,
+  //   headers: formData.getHeaders(),
+  // })
+
+  const variables: CreateDeploymentVariables = {
+    apiKey: options.identifiers.app,
+    uuid: deploymentUUID,
+    bundleUrl: signedURL,
+    extensions: formattedExtensions,
+  }
+
+  const mutation = CreateDeployment
+  const result: CreateDeploymentSchema = await partnersRequest(mutation, options.token, variables)
+
+  if (result.deploymentCreate?.userErrors?.length > 0) {
+    const errors = result.deploymentCreate.userErrors.map((error) => error.message).join(', ')
+    throw new error.Abort(errors)
+  }
+
+  const validationErrors = result.deploymentCreate.deployment.deployedVersions
+    .filter((ver) => ver.extensionVersion.validationErrors.length > 0)
+    .map((ver) => {
+      return {uuid: ver.extensionVersion.registrationUuid, errors: ver.extensionVersion.validationErrors}
+    })
+
+  return validationErrors
+}
+
 /**
  * This function takes a list of function extensions and uploads them.
  * As part of the upload it creates a function server-side if it does not exist
@@ -208,12 +271,6 @@ export async function uploadFunctionExtensions(
   }
 
   return identifiers
-}
-
-interface UploadFunctionExtensionOptions {
-  apiKey: string
-  identifier?: string
-  token: string
 }
 
 async function uploadFunctionExtension(
