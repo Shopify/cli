@@ -1,13 +1,13 @@
-import {content as outputContent, debug} from './output.js'
-import {Abort} from './error.js'
-import {keychainConstants} from './private/node/constants.js'
+import {keychainConstants} from './constants.js'
+import {content as outputContent, debug} from '../../output.js'
+import {Abort} from '../../error.js'
 
 /**
  * Fetches secured content from the system's keychain.
  * @param identifier - Identifier to identify the content.
  * @returns A promise that resolves with the content or null if it doesn't exist.
  */
-export async function fetch(identifier: string): Promise<string | null> {
+export async function secureStoreFetch(identifier: string): Promise<string | null> {
   debug(outputContent`Reading ${identifier} from the secure store...`)
   try {
     const keytar = await import('keytar')
@@ -24,7 +24,7 @@ export async function fetch(identifier: string): Promise<string | null> {
  * @param content - The content to be stored.
  * @returns A promise that resolves when the storing completes.
  */
-export async function store(identifier: string, content: string): Promise<void> {
+export async function secureStoreSave(identifier: string, content: string): Promise<void> {
   debug(outputContent`Updating ${identifier} in the secure store with new content...`)
   try {
     const keytar = await import('keytar')
@@ -39,7 +39,7 @@ export async function store(identifier: string, content: string): Promise<void> 
  * @param identifier - Identifier to identify the content.
  * @returns A promise that resolves with true if the content was deleted.
  */
-export async function remove(identifier: string): Promise<boolean> {
+export async function secureStoreRemove(identifier: string): Promise<boolean> {
   debug(outputContent`Removing ${identifier} from the secure store...`)
   try {
     const keytar = await import('keytar')
