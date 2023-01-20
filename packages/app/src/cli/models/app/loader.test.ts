@@ -666,7 +666,7 @@ scopes = "read_products"
 
     await load({directory: tmpDir, specifications})
 
-    expect(metadata.getAllPublic()).toMatchObject({project_type: 'node', env_package_manager_workspaces: false})
+    expect(metadata.getAllPublicMetadata()).toMatchObject({project_type: 'node', env_package_manager_workspaces: false})
   })
 
   it(`updates metadata after loading with a flag that indicates the usage of workspaces`, async () => {
@@ -680,7 +680,7 @@ scopes = "read_products"
 
     await load({directory: tmpDir, specifications})
 
-    expect(metadata.getAllPublic()).toMatchObject({project_type: 'node', env_package_manager_workspaces: true})
+    expect(metadata.getAllPublicMetadata()).toMatchObject({project_type: 'node', env_package_manager_workspaces: true})
   })
 
   describe('customer_accounts_ui_extension', () => {

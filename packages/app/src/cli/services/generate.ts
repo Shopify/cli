@@ -79,7 +79,7 @@ async function generate(options: GenerateOptions) {
     throw new error.Abort(`The following extension types are supported: ${allExternalTypes.join(', ')}`)
   }
 
-  await metadata.addPublic(() => ({
+  await metadata.addPublicMetadata(() => ({
     cmd_scaffold_template_flavor: extensionFlavor,
     cmd_scaffold_type: extensionType,
     cmd_scaffold_type_category: selectedSpecification.category(),

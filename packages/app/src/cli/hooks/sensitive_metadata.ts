@@ -2,7 +2,7 @@ import metadata from '../metadata.js'
 import {plugins} from '@shopify/cli-kit'
 
 const gatherSensitiveMetadata: plugins.FanoutHookFunction<'sensitive_command_metadata', '@shopify/app'> = async () => {
-  return metadata.getAllSensitive()
+  return metadata.getAllSensitiveMetadata()
 }
 
 export default gatherSensitiveMetadata
