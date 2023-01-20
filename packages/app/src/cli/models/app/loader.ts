@@ -172,8 +172,7 @@ class AppLoader {
     const webConfigGlobs = [...(webDirectories ?? [defaultWebDirectory])].map((webGlob) => {
       return joinPath(this.appDirectory, webGlob, configurationFileNames.web)
     })
-    const globOptions = {ignore: ['**/node_modules/**']}
-    const webTomlPaths = await glob(webConfigGlobs, globOptions)
+    const webTomlPaths = await glob(webConfigGlobs)
 
     const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
 
