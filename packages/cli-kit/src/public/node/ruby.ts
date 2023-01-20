@@ -4,12 +4,14 @@ import {AbortSignal} from './abort.js'
 import {platformAndArch} from './os.js'
 import {captureOutput, exec} from './system.js'
 import * as file from './fs.js'
-import {joinPath} from './path.js'
+import {joinPath, dirname} from './path.js'
 import {Abort, AbortSilent} from '../../error.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
 import {content, token} from '../../output.js'
+import {isTruthy} from '../../private/node/environment/utilities.js'
 import {Writable} from 'stream'
+import {fileURLToPath} from 'url'
 
 const RubyCLIVersion = '2.34.0'
 const ThemeCheckVersion = '1.14.0'
@@ -37,7 +39,9 @@ interface ExecCLI2Options {
  * @param options - Options to customize the execution of cli2.
  */
 export async function execCLI2(args: string[], options: ExecCLI2Options = {}): Promise<void> {
-  await installCLIDependencies()
+  const embedded = isTruthy(process.env.SHOPIFY_CLI_EMBEDDED_THEME_CLI)
+
+  await installCLIDependencies(embedded)
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: options.storefrontToken,
@@ -48,11 +52,14 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
     // Bundler uses this Gemfile to understand which gems are available in the
     // environment. We use this to specify our own Gemfile for CLI2, which exists
     // outside the user's project directory.
-    BUNDLE_GEMFILE: joinPath(shopifyCLIDirectory(), 'Gemfile'),
+    BUNDLE_GEMFILE: joinPath(await shopifyCLIDirectory(embedded), 'Gemfile'),
   }
 
   try {
-    await exec(bundleExecutable(), ['exec', 'shopify'].concat(args), {
+    const executable = embedded ? await embeddedCLIExecutable() : bundleExecutable()
+    const finalArgs = embedded ? args : ['exec', 'shopify'].concat(args)
+
+    await exec(executable, finalArgs, {
       stdio: 'inherit',
       cwd: options.directory ?? process.cwd(),
       env,
@@ -136,17 +143,20 @@ async function installThemeCheckCLIDependencies(stdout: Writable) {
  * Install RubyCLI and its dependencies
  * Shows a loading spinner if it's the first time installing dependencies
  * or if we are installing a new version of RubyCLI.
+ *
+ * @param embedded - True when embebbed codebase of CLI should be used.
  */
-async function installCLIDependencies() {
-  const exists = await file.fileExists(shopifyCLIDirectory())
+async function installCLIDependencies(embedded = false) {
+  const localCLI = await shopifyCLIDirectory(embedded)
+  const exists = await file.fileExists(localCLI)
   const tasks = [
     {
       title: 'Installing theme dependencies',
       task: async () => {
-        const usingLocalCLI2 = Boolean(process.env.SHOPIFY_CLI_2_0_DIRECTORY)
+        const usingLocalCLI2 = embedded || Boolean(process.env.SHOPIFY_CLI_2_0_DIRECTORY)
         await validateRubyEnv()
         if (usingLocalCLI2) {
-          await bundleInstallLocalShopifyCLI()
+          await bundleInstallLocalShopifyCLI(localCLI)
         } else {
           await createShopifyCLIWorkingDirectory()
           await createShopifyCLIGemfile()
@@ -231,7 +241,7 @@ async function validateBundler() {
  * It creates the directory where the Ruby CLI will be downloaded along its dependencies.
  */
 async function createShopifyCLIWorkingDirectory(): Promise<void> {
-  return file.mkdir(shopifyCLIDirectory())
+  return file.mkdir(await shopifyCLIDirectory())
 }
 
 /**
@@ -265,19 +275,22 @@ async function createThemeCheckGemfile(): Promise<void> {
 
 /**
  * It runs bundle install for the dev-managed copy of the Ruby CLI.
+ *
+ * @param directory - Directory where CLI2 Gemfile is located.
  */
-async function bundleInstallLocalShopifyCLI(): Promise<void> {
-  await exec(bundleExecutable(), ['install'], {cwd: shopifyCLIDirectory()})
+async function bundleInstallLocalShopifyCLI(directory: string): Promise<void> {
+  await exec(bundleExecutable(), ['install'], {cwd: directory})
 }
 
 /**
  * It runs bundle install for the CLI-managed copy of the Ruby CLI.
  */
 async function bundleInstallShopifyCLI() {
-  await exec(bundleExecutable(), ['config', 'set', '--local', 'path', shopifyCLIDirectory()], {
-    cwd: shopifyCLIDirectory(),
+  const cliDirectory = await shopifyCLIDirectory()
+  await exec(bundleExecutable(), ['config', 'set', '--local', 'path', cliDirectory], {
+    cwd: cliDirectory,
   })
-  await exec(bundleExecutable(), ['install'], {cwd: shopifyCLIDirectory()})
+  await exec(bundleExecutable(), ['install'], {cwd: cliDirectory})
 }
 
 /**
@@ -293,13 +306,17 @@ async function bundleInstallThemeCheck() {
 /**
  * It returns the directory where the Ruby CLI is located.
  *
+ * @param embedded - True when embebbed codebase of CLI should be used.
  * @returns The absolute path to the directory.
  */
-function shopifyCLIDirectory(): string {
-  return (
-    process.env.SHOPIFY_CLI_2_0_DIRECTORY ??
-    joinPath(pathConstants.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
-  )
+async function shopifyCLIDirectory(embedded = false): Promise<string> {
+  return embedded
+    ? ((await file.findPathUp('assets/cli-sources', {
+        type: 'directory',
+        cwd: dirname(fileURLToPath(import.meta.url)),
+      })) as string)
+    : process.env.SHOPIFY_CLI_2_0_DIRECTORY ??
+        joinPath(pathConstants.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
 }
 
 /**
@@ -360,4 +377,14 @@ function bundleExecutable(): string {
 function gemExecutable(): string {
   const rubyBinDir = getRubyBinDir()
   return rubyBinDir ? joinPath(rubyBinDir, 'gem') : 'gem'
+}
+
+/**
+ * It returns the path to the "bundle" executable.
+ *
+ * @returns The path to the executable.
+ */
+async function embeddedCLIExecutable(): Promise<string> {
+  const cliDirectory = await shopifyCLIDirectory(true)
+  return joinPath(cliDirectory, 'bin', 'shopify')
 }
