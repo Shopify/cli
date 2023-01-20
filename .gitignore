@@ -132,6 +132,9 @@ fixtures/app/extensions/*/build
 .yarn*
 .pnp.*
 
+# embed CLI2
+Gemfile
+
 ### Node Patch ###
 # Serverless Webpack directories
 .webpack/
