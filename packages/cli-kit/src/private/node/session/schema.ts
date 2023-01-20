@@ -1,27 +1,27 @@
-import {define} from '../../../schema.js'
+import {schema} from '../../../public/node/schema.js'
 
-const DateSchema = define.preprocess((arg) => {
+const DateSchema = schema.preprocess((arg) => {
   if (typeof arg === 'string' || arg instanceof Date) return new Date(arg)
   return null
-}, define.date())
+}, schema.date())
 
 /**
  * The schema represents an Identity token.
  */
-const IdentityTokenSchema = define.object({
-  accessToken: define.string(),
-  refreshToken: define.string(),
+const IdentityTokenSchema = schema.object({
+  accessToken: schema.string(),
+  refreshToken: schema.string(),
   expiresAt: DateSchema,
-  scopes: define.array(define.string()),
+  scopes: schema.array(schema.string()),
 })
 
 /**
  * The schema represents an application token.
  */
-const ApplicationTokenSchema = define.object({
-  accessToken: define.string(),
+const ApplicationTokenSchema = schema.object({
+  accessToken: schema.string(),
   expiresAt: DateSchema,
-  scopes: define.array(define.string()),
+  scopes: schema.array(schema.string()),
 })
 
 /**
@@ -47,8 +47,8 @@ const ApplicationTokenSchema = define.object({
  * }
  * ```
  */
-export const SessionSchema = define.object({}).catchall(
-  define.object({
+export const SessionSchema = schema.object({}).catchall(
+  schema.object({
     /**
      * It contains the identity token. Before usint it, we exchange it
      * to get a token that we can use with different applications. The exchanged
@@ -59,10 +59,10 @@ export const SessionSchema = define.object({}).catchall(
      * It contains exchanged tokens for the applications the CLI
      * authenticates with. Tokens are scoped under the fqdn of the applications.
      */
-    applications: define.object({}).catchall(ApplicationTokenSchema),
+    applications: schema.object({}).catchall(ApplicationTokenSchema),
   }),
 )
 
-export type Session = define.infer<typeof SessionSchema>
-export type IdentityToken = define.infer<typeof IdentityTokenSchema>
-export type ApplicationToken = define.infer<typeof ApplicationTokenSchema>
+export type Session = schema.infer<typeof SessionSchema>
+export type IdentityToken = schema.infer<typeof IdentityTokenSchema>
+export type ApplicationToken = schema.infer<typeof ApplicationTokenSchema>

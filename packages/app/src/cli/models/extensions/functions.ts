@@ -1,7 +1,8 @@
 import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
 import {blocks, defaultFunctionsFlavors} from '../../constants.js'
-import {schema, error} from '@shopify/cli-kit'
+import {error} from '@shopify/cli-kit'
+import {schema} from '@shopify/cli-kit/node/schema'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -10,7 +11,7 @@ import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 
 // Base config type that all config schemas must extend
-export type FunctionConfigType = schema.define.infer<typeof BaseFunctionConfigurationSchema>
+export type FunctionConfigType = schema.infer<typeof BaseFunctionConfigurationSchema>
 
 /**
  * Specification with all the needed properties and methods to load a function.
