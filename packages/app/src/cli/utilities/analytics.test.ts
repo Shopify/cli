@@ -4,13 +4,7 @@ import {getListOfTunnelPlugins} from '@shopify/cli-kit/node/plugins'
 
 describe('getAnalyticsTunnelType', () => {
   beforeEach(() => {
-    vi.mock('@shopify/cli-kit/node/plugins', async () => {
-      const actual: any = await vi.importActual('@shopify/cli-kit/node/plugins')
-      return {
-        ...actual,
-        getListOfTunnelPlugins: vi.fn(),
-      }
-    })
+    vi.mock('@shopify/cli-kit/node/plugins')
   })
 
   test('return a provider in case tunnelUrl contains its name', async () => {
