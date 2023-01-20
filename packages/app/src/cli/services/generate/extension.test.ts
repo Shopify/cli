@@ -42,7 +42,7 @@ describe('initialize a extension', async () => {
         })
         const generatedExtension = (await loadApp({directory: tmpDir, specifications})).extensions.ui[0]!
 
-        expect(extensionDir).toEqual(joinPath('extensions', name))
+        expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
         expect(generatedExtension.configuration.name).toBe(name)
       })
     },
