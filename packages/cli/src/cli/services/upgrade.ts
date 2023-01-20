@@ -10,7 +10,7 @@ import {
 import {exec} from '@shopify/cli-kit/node/system'
 import {dirname, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {findPathUp} from '@shopify/cli-kit/node/fs'
-import {AbortError} from '@shopify/cli-kit/node/error.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 type HomebrewPackageName = 'shopify-cli' | 'shopify-cli@3'
 

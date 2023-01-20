@@ -5,7 +5,7 @@ import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.j
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {output} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error.js'
+import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 
 export interface EnsureDeploymentIdsPresenceOptions {
   app: AppInterface

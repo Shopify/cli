@@ -11,7 +11,7 @@ import {output} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/environment/local'
-import {AbortError} from '@shopify/cli-kit/node/error.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 interface GenerateSchemaOptions {
   app: AppInterface
