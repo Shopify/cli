@@ -1,7 +1,0 @@
-
-    type = "backend"
-
-    [commands]
-    build = "build"
-    dev = "dev"
-    
