@@ -146,12 +146,18 @@
       "app env": {
         "description": "Pull or display app and extensions environment variables."
       },
+      "function": {
+        "description": "Build functions."
+      },
       "auth": {
         "description": "Auth operations."
       },
       "kitchen-sink": {
         "description": "View the available UI kit components.",
         "hidden": true
+      },
+      "webhook": {
+        "description": "Manage webhooks."
       }
     },
     "additionalHelpFlags": [

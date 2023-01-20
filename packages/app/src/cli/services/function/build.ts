@@ -1,6 +1,6 @@
 import {FunctionExtension} from '../../models/app/extensions.js'
 import {exec} from '@shopify/cli-kit/node/system'
-import {path} from '@shopify/cli-kit'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {build as esBuild} from 'esbuild'
 
 export async function buildFunction(fun: FunctionExtension) {
@@ -28,8 +28,8 @@ export async function bundleExtension(fun: FunctionExtension) {
 
 function getESBuildOptions(directory: string): Parameters<typeof esBuild>[0] {
   const esbuildOptions: Parameters<typeof esBuild>[0] = {
-    outfile: path.join(directory, 'dist/function.js'),
-    entryPoints: [path.join(directory, 'src/index.js')],
+    outfile: joinPath(directory, 'dist/function.js'),
+    entryPoints: [joinPath(directory, 'src/index.js')],
     logLevel: 'info',
     bundle: true,
     legalComments: 'none',
