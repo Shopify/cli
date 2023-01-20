@@ -3,6 +3,7 @@ import {getWebhookSample} from './request-sample.js'
 import {requestApiVersions} from './request-api-versions.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {requestTopics} from './request-topics.js'
+import {findInEnv, findApiKey, requestAppInfo} from './find-app-info.js'
 import {
   collectAddressAndMethod,
   collectApiVersion,
@@ -13,6 +14,7 @@ import {
 import * as output from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 const aToken = 'A_TOKEN'
 const samplePayload = '{ "sampleField": "SampleValue" }'
@@ -160,6 +162,118 @@ describe('webhookTriggerService', () => {
     })
   })
 
+  describe('Shared secret choices', () => {
+    beforeEach(async () => {
+      vi.mock('@shopify/cli-kit/node/ui')
+      vi.mock('./find-app-info.js')
+
+      vi.mocked(requestApiVersions).mockResolvedValue([aVersion])
+      vi.mocked(collectApiVersion).mockResolvedValue(aVersion)
+      vi.mocked(requestTopics).mockResolvedValue([aTopic])
+      vi.mocked(collectTopic).mockResolvedValue(aTopic)
+      vi.mocked(collectAddressAndMethod).mockResolvedValue(['localhost', aFullLocalAddress])
+
+      vi.mocked(triggerLocalWebhook).mockResolvedValue(true)
+      vi.mocked(getWebhookSample).mockResolvedValue(successDirectResponse)
+    })
+
+    it('manual', async () => {
+      // Given
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(collectSecret).mockResolvedValue(aSecret)
+
+      // When
+      await webhookTriggerService(noSecretSampleFlags())
+
+      // Then
+      expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
+      expect(collectSecret).toHaveBeenCalledOnce()
+    })
+
+    it('uses .env credentials', async () => {
+      // Given
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+      vi.mocked(findInEnv).mockResolvedValue({clientSecret: aSecret})
+      const outputSpy = vi.spyOn(output, 'info')
+
+      // When
+      await webhookTriggerService(noSecretSampleFlags())
+
+      // Then
+      expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
+      expect(collectSecret).toHaveBeenCalledTimes(0)
+      expect(requestAppInfo).toHaveBeenCalledTimes(0)
+      expect(outputSpy).toHaveBeenCalledWith('Reading client-secret from .env file')
+    })
+
+    it('no remote apiKey found', async () => {
+      // Given
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+      vi.mocked(findInEnv).mockResolvedValue({})
+      vi.mocked(findApiKey).mockResolvedValue(undefined)
+
+      // When
+      await webhookTriggerService(noSecretSampleFlags())
+
+      // Then
+      expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
+      expect(collectSecret).toHaveBeenCalledOnce()
+      expect(requestAppInfo).toHaveBeenCalledTimes(0)
+    })
+
+    it('remote apiKey found', async () => {
+      // Given
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+      vi.mocked(findInEnv).mockResolvedValue({})
+      vi.mocked(findApiKey).mockResolvedValue('API_KEY')
+      vi.mocked(requestAppInfo).mockResolvedValue({clientSecret: aSecret, apiKey: 'API_KEY', clientId: 'Id'})
+      const outputSpy = vi.spyOn(output, 'info')
+
+      // When
+      await webhookTriggerService(noSecretSampleFlags())
+
+      // Then
+      expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
+      expect(collectSecret).toHaveBeenCalledTimes(0)
+      expect(outputSpy).toHaveBeenCalledWith('Reading client-secret from app config')
+      expect(requestAppInfo).toHaveBeenCalledWith(aToken, 'API_KEY')
+    })
+
+    it('remote apiKey found', async () => {
+      // Given
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+      vi.mocked(findInEnv).mockResolvedValue({})
+      vi.mocked(findApiKey).mockResolvedValue('API_KEY')
+      vi.mocked(requestAppInfo).mockResolvedValue({clientSecret: aSecret, apiKey: 'API_KEY', clientId: 'Id'})
+      const outputSpy = vi.spyOn(output, 'info')
+
+      // When
+      await webhookTriggerService(noSecretSampleFlags())
+
+      // Then
+      expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
+      expect(collectSecret).toHaveBeenCalledTimes(0)
+      expect(outputSpy).toHaveBeenCalledWith('Reading client-secret from app config')
+      expect(requestAppInfo).toHaveBeenCalledWith(aToken, 'API_KEY')
+    })
+
+    it('remote apiKey found but no app info', async () => {
+      // Given
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+      vi.mocked(findInEnv).mockResolvedValue({})
+      vi.mocked(findApiKey).mockResolvedValue('API_KEY')
+      vi.mocked(requestAppInfo).mockResolvedValue({})
+
+      // When
+      await webhookTriggerService(noSecretSampleFlags())
+
+      // Then
+      expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
+      expect(collectSecret).toHaveBeenCalledOnce()
+      expect(requestAppInfo).toHaveBeenCalledWith(aToken, 'API_KEY')
+    })
+  })
+
   function mockParams(version: string, topic: string, method: string, address: string, secret: string) {
     vi.mocked(requestApiVersions).mockResolvedValue([version])
     vi.mocked(collectApiVersion).mockResolvedValue(version)
@@ -181,6 +295,17 @@ describe('webhookTriggerService', () => {
       deliveryMethod: 'event-bridge',
       sharedSecret: aSecret,
       address: '',
+    }
+
+    return flags
+  }
+
+  function noSecretSampleFlags(): WebhookTriggerFlags {
+    const flags: WebhookTriggerFlags = {
+      topic: aTopic,
+      apiVersion: aVersion,
+      deliveryMethod: 'localhost',
+      address: aFullLocalAddress,
     }
 
     return flags

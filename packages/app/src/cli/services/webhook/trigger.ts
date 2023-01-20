@@ -3,6 +3,7 @@ import {getWebhookSample, UserErrors} from './request-sample.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
+import {AppCredentials, findInEnv, findApiKey, requestAppInfo} from './find-app-info.js'
 import {
   collectAddressAndMethod,
   collectApiVersion,
@@ -11,7 +12,8 @@ import {
   WebhookTriggerFlags,
 } from '../../prompts/webhook/options-prompt.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {consoleError, outputSuccess} from '@shopify/cli-kit/node/output'
+import {consoleError, outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
+import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 /**
  * Orchestrates the command request by requesting the sample and sending it to localhost if required.
@@ -27,9 +29,10 @@ export async function webhookTriggerService(flags: WebhookTriggerFlags) {
 
   const [deliveryMethod, address] = await collectAddressAndMethod(flags.deliveryMethod, flags.address)
 
-  const sharedSecret = await collectSecret(flags.sharedSecret)
+  const credentials = await getSecret(token, flags.sharedSecret)
+  const secret = credentials.clientSecret as string
 
-  const sample = await getWebhookSample(token, topic, apiVersion, deliveryMethod, address, sharedSecret)
+  const sample = await getWebhookSample(token, topic, apiVersion, deliveryMethod, address, secret)
 
   if (!sample.success) {
     consoleError(`Request errors:\n${formatErrors(sample.userErrors)}`)
@@ -66,4 +69,45 @@ function formatErrors(errors: UserErrors[]): string {
   } catch (err) {
     return JSON.stringify(errors)
   }
+}
+
+async function getSecret(token: string, sharedSecretFlag: string | undefined): Promise<AppCredentials> {
+  if (sharedSecretFlag !== undefined && sharedSecretFlag.length > 0) {
+    // Flag overwrites any other secret
+    const credentials: AppCredentials = {clientSecret: sharedSecretFlag}
+    return credentials
+  }
+
+  const manual = await renderConfirmationPrompt({
+    message: `Do you want to set the client-secret manually?`,
+    confirmationMessage: `Yes, I'll type it myself`,
+    cancellationMessage: 'No, try to get it from the app config',
+  })
+
+  if (manual) {
+    const credentials: AppCredentials = {}
+    credentials.clientSecret = await collectSecret(sharedSecretFlag)
+    return credentials
+  }
+
+  const localCredentials = await findInEnv()
+  if (localCredentials.clientSecret !== undefined && localCredentials.clientSecret?.length > 0) {
+    outputInfo('Reading client-secret from .env file')
+    return localCredentials
+  }
+
+  const apiKey = await findApiKey(token)
+  if (apiKey === undefined) {
+    localCredentials.clientSecret = await collectSecret(sharedSecretFlag)
+    return localCredentials
+  }
+
+  const appCredentials = await requestAppInfo(token, apiKey)
+  if (appCredentials.clientSecret !== undefined && appCredentials.clientSecret.length > 0) {
+    outputInfo('Reading client-secret from app config')
+  } else {
+    appCredentials.clientSecret = await collectSecret(sharedSecretFlag)
+  }
+
+  return appCredentials
 }
