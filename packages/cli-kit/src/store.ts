@@ -2,6 +2,8 @@ import {content, token, debug} from './output.js'
 import {CLI_KIT_VERSION} from './public/common/version.js'
 import Conf, {Schema} from 'conf'
 
+export {Conf, Schema}
+
 const migrations = {}
 
 export interface CachedAppInfo {
