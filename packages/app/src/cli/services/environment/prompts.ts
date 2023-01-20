@@ -62,3 +62,19 @@ export async function deployConfirmationPrompt(summary: SourceSummary): Promise<
     cancellationMessage: 'No, cancel',
   })
 }
+
+export async function migratePrompt(local: LocalSource, remote: RemoteSource): Promise<boolean> {
+  const remoteType = remote.type.toLowerCase()
+  const localType = local.type
+  const localName = local.configuration.name
+
+  return renderConfirmationPrompt({
+    message: `You've changed ${localName} from ${remoteType} to ${localType}. Would you like to migrate it in Shopify Partners?`,
+    infoTable: {
+      'Old type': [remoteType],
+      'New type': [localType],
+    },
+    confirmationMessage: `Yes, update to ${localType}`,
+    cancellationMessage: 'No, cancel the deploy',
+  })
+}
