@@ -1,6 +1,10 @@
-import * as output from '../output.js'
+import * as output from '../../../output.js'
 
-export function mockAndCaptureOutput() {
+/**
+ * Returns a set of functions to get the outputs ocurred during a test run.
+ *
+ * @returns An mock object with all the output functions.
+ */ export function mockAndCaptureOutput(): object {
   return {
     output: () => (output.collectedLogs.output ?? []).join('\n'),
     info: () => (output.collectedLogs.info ?? []).join('\n'),
