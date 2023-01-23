@@ -38,7 +38,7 @@ interface ExecCLI2Options {
  * @param options - Options to customize the execution of cli2.
  */
 export async function execCLI2(args: string[], options: ExecCLI2Options = {}): Promise<void> {
-  await installCLIDependencies(options.stdout)
+  await installCLIDependencies(options.stdout ?? process.stdout)
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: options.storefrontToken,
@@ -140,10 +140,10 @@ async function installThemeCheckCLIDependencies(stdout: Writable) {
  *
  * @param stdout - The Writable stream on which to write the standard output.
  */
-async function installCLIDependencies(stdout: Writable | undefined) {
+async function installCLIDependencies(stdout: Writable) {
   const exists = await file.fileExists(shopifyCLIDirectory())
 
-  if (!exists && stdout) stdout.write('Installing theme dependencies...')
+  if (!exists) stdout.write('Installing theme dependencies...')
   const usingLocalCLI2 = Boolean(process.env.SHOPIFY_CLI_2_0_DIRECTORY)
   await validateRubyEnv()
   if (usingLocalCLI2) {
@@ -154,7 +154,7 @@ async function installCLIDependencies(stdout: Writable | undefined) {
     await bundleInstallShopifyCLI()
   }
 
-  if (!exists && stdout) stdout.write('Installed theme dependencies!')
+  if (!exists) stdout.write('Installed theme dependencies!')
 }
 
 /**
