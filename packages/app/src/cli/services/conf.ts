@@ -11,10 +11,15 @@ export interface CachedAppInfo {
   tunnelPlugin?: string
 }
 
+// We store each app info using the directory as the key
+interface AppConfSchema {
+  [key: string]: CachedAppInfo
+}
+
 export function getAppInfo(directory: string): CachedAppInfo | undefined {
   output.debug(output.content`Reading cached app information for directory ${output.token.path(directory)}...`)
   const config = appConf()
-  return config.get(directory) as CachedAppInfo | undefined
+  return config.get(directory)
 }
 
 export function clearAppInfo(directory: string): void {
@@ -37,7 +42,7 @@ export function setAppInfo(options: CachedAppInfo): void {
       options,
     )}`,
   )
-  const savedApp = config.get(options.directory) as CachedAppInfo | undefined
+  const savedApp = config.get(options.directory)
   if (savedApp) {
     config.set(options.directory, {
       directory: options.directory,
@@ -53,11 +58,11 @@ export function setAppInfo(options: CachedAppInfo): void {
   }
 }
 
-let _instance: store.Conf | undefined
+let _instance: store.Conf<AppConfSchema> | undefined
 
 function appConf() {
   if (!_instance) {
-    _instance = new store.Conf({
+    _instance = new store.Conf<AppConfSchema>({
       projectName: 'shopify-cli-app-conf',
       projectVersion: CLI_KIT_VERSION,
     })
