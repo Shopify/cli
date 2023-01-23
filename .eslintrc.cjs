@@ -150,6 +150,7 @@ module.exports = {
     'rulesdir/command-conventional-flag-env': 'error',
     'rulesdir/command-reserved-flags': 'error',
     'rulesdir/no-error-factory-functions': 'error',
+    'rulesdir/no-process-cwd': 'error',
     'no-restricted-syntax': [
       'error',
       {

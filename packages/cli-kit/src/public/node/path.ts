@@ -59,5 +59,6 @@ export function moduleDirectory(moduleURL: string | URL): string {
  * @returns The path to the current working directory.
  */
 export function cwd(): string {
+  // eslint-disable-next-line rulesdir/no-process-cwd
   return process.env.INIT_CWD ?? process.cwd()
 }
