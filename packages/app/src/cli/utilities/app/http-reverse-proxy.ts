@@ -1,4 +1,4 @@
-import {output, ui} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -94,19 +94,18 @@ ${output.token.json(JSON.stringify(rules))}
     server.close()
   })
 
-  async function openPreviewUrl() {
-    if (!previewUrl) return
-    await ui.keypress()
-    await openURL(previewUrl)
-  }
-
   await Promise.all([
     renderConcurrent({
       processes: [...processes, ...additionalProcesses],
       abortController,
+      onInput() {
+        if (previewUrl) {
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          openURL(previewUrl)
+        }
+      },
     }),
     server.listen(availablePort),
-    openPreviewUrl(),
   ])
 }
 

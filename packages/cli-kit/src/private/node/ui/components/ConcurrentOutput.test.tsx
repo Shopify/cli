@@ -1,9 +1,9 @@
 import ConcurrentOutput from './ConcurrentOutput.js'
 import {unstyled} from '../../../../output.js'
-import {getLastFrameAfterUnmount} from '../../../../testing/ui.js'
+import {getLastFrameAfterUnmount, waitForInputsToBeReady} from '../../../../testing/ui.js'
 import {AbortController, AbortSignal} from '../../../../public/node/abort.js'
 import React from 'react'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {render} from 'ink-testing-library'
 import {Writable} from 'stream'
 
@@ -63,5 +63,33 @@ describe('ConcurrentOutput', () => {
       0000-00-00 00:00:00 | frontend | third frontend message
       "
     `)
+  })
+
+  test('accepts a onInput function that fires when a key is pressed', async () => {
+    const neverEndingPromise = new Promise<void>(function (_resolve, _reject) {})
+
+    const neverEndingProcess = {
+      prefix: 'never-ending-process',
+      action: async () => {
+        await neverEndingPromise
+      },
+    }
+
+    const onInput = vi.fn()
+
+    const renderInstance = render(
+      <ConcurrentOutput
+        processes={[neverEndingProcess]}
+        abortController={new AbortController()}
+        onInput={(input, key) => onInput(input, key)}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+    expect(onInput).toHaveBeenCalledTimes(0)
+
+    renderInstance.stdin.write('a')
+    expect(onInput).toHaveBeenCalledTimes(1)
+    expect(onInput.mock.calls[0]![0]).toBe('a')
   })
 })

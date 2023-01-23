@@ -15,7 +15,7 @@ import {Item as SelectItem, Props as SelectProps} from '../../private/node/ui/co
 import {Props as InfoTableProps} from '../../private/node/ui/components/Prompts/InfoTable.js'
 import {AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
 import React from 'react'
-import {RenderOptions} from 'ink'
+import {Key, RenderOptions} from 'ink'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 
 interface RenderConcurrentOptions {
@@ -23,6 +23,7 @@ interface RenderConcurrentOptions {
   abortController?: AbortController
   showTimestamps?: boolean
   renderOptions?: RenderOptions
+  onInput?: (input: string, key: Key) => void
 }
 
 /**
@@ -31,6 +32,7 @@ interface RenderConcurrentOptions {
 export async function renderConcurrent({
   processes,
   abortController,
+  onInput,
   showTimestamps = true,
   renderOptions = {},
 }: RenderConcurrentOptions) {
@@ -39,8 +41,12 @@ export async function renderConcurrent({
       processes={processes}
       abortController={abortController ?? new AbortController()}
       showTimestamps={showTimestamps}
+      onInput={onInput}
     />,
-    renderOptions,
+    {
+      ...renderOptions,
+      exitOnCtrlC: typeof onInput === 'undefined',
+    },
   )
 }
 

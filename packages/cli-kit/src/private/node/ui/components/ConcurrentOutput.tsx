@@ -1,8 +1,9 @@
 import {OutputProcess} from '../../../../output.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {AbortController} from '../../../../public/node/abort.js'
+import {handleCtrlC} from '../../ui.js'
 import React, {FunctionComponent, useState} from 'react'
-import {Box, Static, Text} from 'ink'
+import {Box, Key, Static, Text, useInput} from 'ink'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'stream'
 
@@ -12,6 +13,7 @@ interface Props {
   processes: OutputProcess[]
   abortController: AbortController
   showTimestamps?: boolean
+  onInput?: (input: string, key: Key) => void
 }
 interface Chunk {
   color: string
@@ -53,7 +55,7 @@ interface Chunk {
  *
  * ```
  */
-const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController, showTimestamps = true}) => {
+const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController, showTimestamps = true, onInput}) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const concurrentColors = ['yellow', 'cyan', 'magenta', 'green', 'blue']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
@@ -91,6 +93,14 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
         await process.action(stdout, stderr, abortController.signal)
       }),
     )
+  }
+
+  if (onInput) {
+    useInput((input, key) => {
+      handleCtrlC(input, key)
+
+      onInput(input, key)
+    })
   }
 
   useAsyncAndUnmount(runProcesses, {onRejected: () => abortController.abort()})
