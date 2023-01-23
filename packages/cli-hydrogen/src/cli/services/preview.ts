@@ -1,4 +1,4 @@
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {fileExists, removeFileSync, writeFile, findPathUp} from '@shopify/cli-kit/node/fs'
 import {exec} from '@shopify/cli-kit/node/system'

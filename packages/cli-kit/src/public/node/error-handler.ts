@@ -11,7 +11,7 @@ import {
   cleanSingleStackTracePath,
 } from './error.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
-import {debug, info} from '../../output.js'
+import {debug, info} from '../../public/node/output.js'
 import {bugsnagApiKey} from '../../private/node/constants.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {settings, Interfaces} from '@oclif/core'

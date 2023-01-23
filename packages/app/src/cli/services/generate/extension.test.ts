@@ -8,7 +8,7 @@ import {
   loadLocalUIExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
 import * as template from '@shopify/cli-kit/node/liquid'
 import * as file from '@shopify/cli-kit/node/fs'

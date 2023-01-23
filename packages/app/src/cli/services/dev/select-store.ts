@@ -6,7 +6,7 @@ import {
   ConvertDevToTestStoreSchema,
   ConvertDevToTestStoreVariables,
 } from '../../api/graphql/convert_dev_to_test_store.js'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {renderTasks} from '@shopify/cli-kit/node/ui'

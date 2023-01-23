@@ -6,7 +6,7 @@ import {loadExtensionsSpecifications} from '../../../models/extensions/specifica
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 

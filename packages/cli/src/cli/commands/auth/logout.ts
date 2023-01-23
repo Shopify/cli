@@ -1,5 +1,5 @@
 import Command from '@shopify/cli-kit/node/base-command'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {logout} from '@shopify/cli-kit/node/session'
 
 export default class Logout extends Command {

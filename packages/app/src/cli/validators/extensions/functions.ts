@@ -1,5 +1,5 @@
 import {FunctionExtension} from '../../models/app/extensions.js'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 

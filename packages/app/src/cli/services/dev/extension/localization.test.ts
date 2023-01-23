@@ -1,7 +1,7 @@
 import {getLocalization, Localization} from './localization.js'
 import {testUIExtension} from '../../../models/app/app.test-data.js'
 import {ExtensionDevOptions} from '../extension.js'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {describe, expect, it, vi} from 'vitest'
 import {mkdir, writeFile, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'

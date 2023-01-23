@@ -4,7 +4,7 @@ import initService from '../services/init.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {errorHandler} from '@shopify/cli-kit/node/error-handler'
 import {Config} from '@oclif/core'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 beforeEach(() => {

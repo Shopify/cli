@@ -5,7 +5,7 @@ import {OrganizationApp} from '../../models/organization.js'
 import {buildAppURLForWeb} from '../../utilities/app/app-url.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 
 export async function outputUpdateURLsResult(
   updated: boolean,

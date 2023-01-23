@@ -3,7 +3,7 @@ import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {IdentityToken} from './schema.js'
 import {identityFqdn} from '../../../public/node/environment/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
-import {content, debug, info, token} from '../../../output.js'
+import {content, debug, info, token} from '../../../public/node/output.js'
 import {BugError} from '../../../public/node/error.js'
 
 export interface DeviceAuthorizationResponse {

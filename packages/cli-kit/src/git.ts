@@ -1,6 +1,6 @@
 import {AbortError} from './public/node/error.js'
 import {hasGit, isTerminalInteractive} from './public/node/environment/local.js'
-import {content, token, debug} from './output.js'
+import {content, token, debug} from './public/node/output.js'
 import {appendFileSync} from './public/node/fs.js'
 import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
 

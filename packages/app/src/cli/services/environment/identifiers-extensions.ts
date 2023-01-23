@@ -5,7 +5,7 @@ import {deployConfirmationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export async function ensureExtensionsIds(

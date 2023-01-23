@@ -4,7 +4,7 @@ import {load as loadApp} from '../../../models/app/loader.js'
 import {showEnv} from '../../../services/app/env/show.js'
 import Command from '../../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../../models/extensions/specifications.js'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 

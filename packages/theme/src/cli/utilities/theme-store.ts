@@ -1,5 +1,6 @@
 import {themeFlags} from '../flags.js'
-import {store as conf, output} from '@shopify/cli-kit'
+import {store as conf} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export function getThemeStore(flags: {store: string | undefined}): string {

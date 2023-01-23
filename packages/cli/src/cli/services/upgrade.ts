@@ -1,4 +1,4 @@
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {
   addNPMDependencies,
   findUpAndReadPackageJson,

@@ -1,5 +1,5 @@
 import {identityFqdn} from '../../../public/node/environment/fqdn.js'
-import {debug} from '../../../output.js'
+import {debug} from '../../../public/node/output.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 
 export async function validateIdentityToken(token: string) {

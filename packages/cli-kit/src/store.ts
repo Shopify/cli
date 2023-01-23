@@ -1,4 +1,4 @@
-import {content, token, debug} from './output.js'
+import {content, token, debug} from './public/node/output.js'
 import {CLI_KIT_VERSION} from './public/common/version.js'
 import Conf, {Schema} from 'conf'
 

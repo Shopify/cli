@@ -4,7 +4,7 @@ import {base64URLEncode, randomBytes, randomHex, sha256} from '../../../public/n
 import {openURL} from '../../../public/node/system.js'
 import {AbortError, CancelExecution} from '../../../public/node/error.js'
 import {identityFqdn} from '../../../public/node/environment/fqdn.js'
-import * as output from '../../../output.js'
+import * as output from '../../../public/node/output.js'
 import {keypress, terminateBlockingPortProcessPrompt} from '../../../ui.js'
 import {checkPort as isPortAvailable} from 'get-port-please'
 

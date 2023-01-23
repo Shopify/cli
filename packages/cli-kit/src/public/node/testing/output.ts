@@ -1,4 +1,4 @@
-import * as output from '../../../output.js'
+import * as output from '../../../public/node/output.js'
 
 interface OutputMock {
   output: () => string
@@ -26,6 +26,7 @@ interface OutputMock {
     error: () => (output.collectedLogs.error ?? []).join('\n'),
     clear: () => {
       output.clearCollectedLogs()
+      // output.collectedLogs = {}
     },
   }
 }

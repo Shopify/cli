@@ -1,6 +1,6 @@
 import {sleep} from './system.js'
 import {AbortError} from './error.js'
-import {debug, content, token} from '../../output.js'
+import {debug, content, token} from '../../public/node/output.js'
 import * as port from 'get-port-please'
 
 /**

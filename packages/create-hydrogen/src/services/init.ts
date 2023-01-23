@@ -1,4 +1,5 @@
-import {output, ui} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {username} from '@shopify/cli-kit/node/os'
 import {
   findUpAndReadPackageJson,

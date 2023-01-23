@@ -2,7 +2,7 @@ import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema} from './schema
 import {ExtensionCategory, GenericSpecification, UIExtension} from '../app/extensions.js'
 import {blocks, defualtExtensionFlavors} from '../../constants.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {ok, Result} from '@shopify/cli-kit/node/result'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'

@@ -2,7 +2,7 @@ import {getExtensionPointRedirectUrl, getExtensionUrl, getRedirectUrl, sendError
 import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {getHTML} from '../templates.js'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {fileExists, isDirectory, readFile, findPathUp} from '@shopify/cli-kit/node/fs'
 import {IncomingMessage, ServerResponse, sendRedirect, send} from '@shopify/cli-kit/node/http'
 import {joinPath, extname, moduleDirectory} from '@shopify/cli-kit/node/path'

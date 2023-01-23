@@ -1,5 +1,6 @@
 import Command from '@shopify/cli-kit/node/base-command'
-import {output, ui} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 
 type Choice = 'bfs' | 'hydrogen' | 'devtools'
 

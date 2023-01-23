@@ -1,5 +1,5 @@
 import {ThemeExtension} from '../../models/app/extensions.js'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {fileSize, glob} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, relativePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'

@@ -1,6 +1,7 @@
 import {createUIExtensionSpecification} from '../ui.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
-import {schema, output} from '@shopify/cli-kit'
+import {schema} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 
 const dependency = {name: '@shopify/customer-account-ui-extensions-react', version: '^0.0.20'}
 

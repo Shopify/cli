@@ -1,5 +1,5 @@
 import {buildHeaders, httpsAgent, RequestClientError, sanitizedHeadersOutput} from './headers.js'
-import {stringifyMessage, content, token as outputToken, token, debug} from '../../../output.js'
+import {stringifyMessage, content, token as outputToken, token, debug} from '../../../public/node/output.js'
 import {AbortError} from '../../../public/node/error.js'
 import {ClientError, GraphQLClient, RequestDocument, Variables} from 'graphql-request'
 import {performance} from 'perf_hooks'

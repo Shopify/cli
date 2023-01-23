@@ -1,5 +1,5 @@
 import {AdminSession} from '../session.js'
-import {content, token as outputToken} from '../../../output.js'
+import {content, token as outputToken} from '../../../public/node/output.js'
 import {BugError, AbortError} from '../error.js'
 import {graphqlRequest, GraphQLVariables} from '../../../private/node/api/graphql.js'
 import {restRequestBody, restRequestHeaders, restRequestUrl} from '../../../private/node/api/rest.js'

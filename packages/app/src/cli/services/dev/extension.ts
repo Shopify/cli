@@ -5,7 +5,7 @@ import {setupHTTPServer} from './extension/server.js'
 import {ExtensionsPayloadStore, getExtensionsPayloadStoreRawPayload} from './extension/payload/store.js'
 import {AppInterface} from '../../models/app/app.js'
 import {UIExtension} from '../../models/app/extensions.js'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
 

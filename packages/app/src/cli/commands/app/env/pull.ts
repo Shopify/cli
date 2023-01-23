@@ -6,7 +6,7 @@ import Command from '../../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../../models/extensions/specifications.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class EnvPull extends Command {

@@ -3,7 +3,7 @@ import {load as loadApp, HydrogenApp} from '../../models/hydrogen.js'
 import {hydrogenFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import Command from '@shopify/cli-kit/node/base-command'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 

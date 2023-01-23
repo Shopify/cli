@@ -6,7 +6,7 @@ import {
   SetupWebSocketConnectionOptions,
 } from './models.js'
 import {RawData, WebSocket, WebSocketServer} from 'ws'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {IncomingMessage} from '@shopify/cli-kit/node/http'
 import {Duplex} from 'stream'
 

@@ -1,6 +1,6 @@
 import {fileExists, writeFile, readFile, findPathUp} from './fs.js'
 import {joinPath} from './path.js'
-import {content, token, debug} from '../../output.js'
+import {content, token, debug} from '../../public/node/output.js'
 
 /**
  * Check if user editor is VS Code.

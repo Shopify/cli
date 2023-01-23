@@ -7,7 +7,7 @@ import {
   ApiSchemaDefinitionQuerySchema,
   ApiSchemaDefinitionQueryVariables,
 } from '../api/graphql/functions/api_schema_definition.js'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/environment/local'

@@ -1,4 +1,4 @@
-import {debug, content} from '../../output.js'
+import {debug, content} from '../../public/node/output.js'
 import {execa} from 'execa'
 import {userInfo as osUserInfo} from 'os'
 

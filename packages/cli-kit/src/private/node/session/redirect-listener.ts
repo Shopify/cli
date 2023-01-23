@@ -11,7 +11,7 @@ import {
   MissingStateString,
 } from './post-auth.js'
 import {AbortError, BugError} from '../../../public/node/error.js'
-import {content, info, token} from '../../../output.js'
+import {content, info, token} from '../../../public/node/output.js'
 import {createApp, IncomingMessage, ServerResponse} from 'h3'
 import url from 'url'
 import {createServer, Server} from 'http'

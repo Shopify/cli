@@ -1,7 +1,7 @@
 import {ExtensionsPayloadStore} from './payload/store.js'
 import {ExtensionDevOptions} from '../extension.js'
 import {bundleExtension} from '../../extensions/bundle.js'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
 

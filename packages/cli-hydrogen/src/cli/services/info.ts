@@ -2,7 +2,7 @@ import {HydrogenApp} from '../models/hydrogen.js'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import {HydrogenConfig} from '@shopify/hydrogen/config'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {capitalize, linesToColumns} from '@shopify/cli-kit/common/string'
 

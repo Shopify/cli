@@ -8,7 +8,7 @@ import {joinPath} from './path.js'
 import {AbortError, AbortSilentError} from './error.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
-import {content, token} from '../../output.js'
+import {content, token} from '../../public/node/output.js'
 import {Writable} from 'stream'
 
 const RubyCLIVersion = '2.34.0'

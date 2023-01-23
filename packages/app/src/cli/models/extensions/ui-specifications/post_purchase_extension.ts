@@ -1,6 +1,6 @@
 import {createUIExtensionSpecification} from '../ui.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 
 const dependency = {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'}
 

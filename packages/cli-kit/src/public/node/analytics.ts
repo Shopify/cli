@@ -3,7 +3,7 @@ import {alwaysLogAnalytics, analyticsDisabled, isShopify} from './environment/lo
 import * as metadata from './metadata.js'
 import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
-import {content, debug, token} from '../../output.js'
+import {content, debug, token} from '../../public/node/output.js'
 import {getEnvironmentData, getSensitiveEnvironmentData} from '../../private/node/analytics.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {Interfaces} from '@oclif/core'

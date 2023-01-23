@@ -1,7 +1,7 @@
 import {AppInterface} from '../../models/app/app.js'
 import {UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {bundleExtension} from '../extensions/bundle.js'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {execThemeCheckCLI} from '@shopify/cli-kit/node/ruby'
 import {exec} from '@shopify/cli-kit/node/system'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'

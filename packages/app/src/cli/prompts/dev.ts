@@ -1,6 +1,7 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
 import {fetchOrgAndApps} from '../services/dev/fetch.js'
-import {output, ui} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {renderAutocompletePrompt, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {

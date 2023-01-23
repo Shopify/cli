@@ -1,6 +1,6 @@
 import ThemeCommand from '../../utilities/theme-command.js'
 import {themeInfo} from '../../services/info.js'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class ThemeInfo extends ThemeCommand {

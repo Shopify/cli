@@ -2,7 +2,7 @@ import {applicationId} from './identity.js'
 import {ApplicationToken, IdentityToken} from './schema.js'
 import {validateIdentityToken} from './identity-token-validation.js'
 import {sessionConstants} from '../constants.js'
-import {debug} from '../../../output.js'
+import {debug} from '../../../public/node/output.js'
 import {firstPartyDev} from '../../../public/node/environment/local.js'
 import {OAuthApplications} from '../session.js'
 

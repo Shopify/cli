@@ -1,6 +1,6 @@
 import {selectApp} from '../select-app.js'
 import {AppInterface} from '../../../models/app/app.js'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 
 type Format = 'json' | 'text'
 

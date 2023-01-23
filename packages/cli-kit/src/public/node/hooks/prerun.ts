@@ -1,5 +1,5 @@
 import {startAnalytics} from '../../../private/node/analytics.js'
-import {debug} from '../../../output.js'
+import {debug} from '../../../public/node/output.js'
 import Command from '../../../public/node/base-command.js'
 import {Hook} from '@oclif/core'
 

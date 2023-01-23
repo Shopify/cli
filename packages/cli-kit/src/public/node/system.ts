@@ -1,6 +1,6 @@
 import {AbortSignal} from './abort.js'
 import {AbortError, ExternalError} from './error.js'
-import {shouldDisplayColors, debug} from '../../output.js'
+import {shouldDisplayColors, debug} from '../../public/node/output.js'
 import {execa, ExecaChildProcess} from 'execa'
 import treeKill from 'tree-kill'
 import type {Writable, Readable} from 'stream'

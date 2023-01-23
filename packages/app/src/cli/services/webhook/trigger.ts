@@ -10,7 +10,7 @@ import {
   collectTopic,
   WebhookTriggerFlags,
 } from '../../prompts/webhook/options-prompt.js'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 /**

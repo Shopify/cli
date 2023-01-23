@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
-import {isUnitTest, isVerbose} from './public/node/environment/local.js'
-import {PackageManager} from './public/node/node-package-manager.js'
-import colors from './public/node/colors.js'
+import {isUnitTest, isVerbose} from './environment/local.js'
+import {PackageManager} from './node-package-manager.js'
+import colors from './colors.js'
 import {
   ColorContentToken,
   CommandContentToken,
@@ -15,7 +15,7 @@ import {
   PathContentToken,
   RawContentToken,
   SubHeadingContentToken,
-} from './content-tokens.js'
+} from '../../private/node/content-tokens.js'
 import stripAnsi from 'strip-ansi'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
@@ -35,60 +35,67 @@ export class TokenizedString {
 export type Message = string | TokenizedString
 
 export const token = {
-  raw: (value: string) => {
+  raw(value: string): RawContentToken {
     return new RawContentToken(value)
   },
-  genericShellCommand: (value: Message) => {
+  genericShellCommand(value: Message): CommandContentToken {
     return new CommandContentToken(value)
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  json: (value: any) => {
+  json(value: unknown): JsonContentToken {
     return new JsonContentToken(value)
   },
-  path: (value: Message) => {
+  path(value: Message): PathContentToken {
     return new PathContentToken(value)
   },
-  link: (value: Message, link: string) => {
+  link(value: Message, link: string): LinkContentToken {
     return new LinkContentToken(value, link)
   },
-  heading: (value: Message) => {
+  heading(value: Message): HeadingContentToken {
     return new HeadingContentToken(value)
   },
-  subheading: (value: Message) => {
+  subheading(value: Message): SubHeadingContentToken {
     return new SubHeadingContentToken(value)
   },
-  italic: (value: Message) => {
+  italic(value: Message): ItalicContentToken {
     return new ItalicContentToken(value)
   },
-  errorText: (value: Message) => {
+  errorText(value: Message): ErrorContentToken {
     return new ErrorContentToken(value)
   },
-  cyan: (value: Message) => {
+  cyan(value: Message): ColorContentToken {
     return new ColorContentToken(value, colors.cyan)
   },
-  yellow: (value: Message) => {
+  yellow(value: Message): ColorContentToken {
     return new ColorContentToken(value, colors.yellow)
   },
-  magenta: (value: Message) => {
+  magenta(value: Message): ColorContentToken {
     return new ColorContentToken(value, colors.magenta)
   },
-  green: (value: Message) => {
+  green(value: Message): ColorContentToken {
     return new ColorContentToken(value, colors.green)
   },
-  packagejsonScript: (packageManager: PackageManager, scriptName: string, ...scriptArgs: string[]) => {
+  packagejsonScript(packageManager: PackageManager, scriptName: string, ...scriptArgs: string[]): CommandContentToken {
     return new CommandContentToken(formatPackageManagerCommand(packageManager, scriptName, ...scriptArgs))
   },
-  successIcon: () => {
+  successIcon(): ColorContentToken {
     return new ColorContentToken('✔', colors.green)
   },
-  failIcon: () => {
+  failIcon(): ErrorContentToken {
     return new ErrorContentToken('✖')
   },
-  linesDiff: (value: Change[]) => {
+  linesDiff(value: Change[]): LinesDiffContentToken {
     return new LinesDiffContentToken(value)
   },
 }
 
+/**
+ * Given a command and its arguments, it formats it depending on the package manager.
+ *
+ * @param packageManager - The package manager to use (pnpm, npm, yarn).
+ * @param scriptName - The name of the script to run.
+ * @param scriptArgs - The arguments to pass to the script.
+ * @returns The formatted command.
+ */
 export function formatPackageManagerCommand(
   packageManager: PackageManager,
   scriptName: string,
@@ -111,6 +118,11 @@ export function formatPackageManagerCommand(
   }
 }
 
+/**
+ *
+ * @param strings
+ * @param keys
+ */
 export function content(strings: TemplateStringsArray, ...keys: (ContentToken<unknown> | string)[]): TokenizedString {
   let output = ``
   strings.forEach((string, i) => {
@@ -137,15 +149,16 @@ export function content(strings: TemplateStringsArray, ...keys: (ContentToken<un
   return new TokenizedString(output)
 }
 
-/** Log levels */
+/** Log levels. */
 export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace' | 'silent'
 
 /**
  * It maps a level to a numeric value.
+ *
  * @param level - The level for which we'll return its numeric value.
  * @returns The numeric value of the level.
  */
-const logLevelValue = (level: LogLevel): number => {
+function logLevelValue(level: LogLevel): number {
   switch (level) {
     case 'trace':
       return 10
@@ -168,7 +181,7 @@ const logLevelValue = (level: LogLevel): number => {
  *
  * @returns It returns the log level set by the user.
  */
-export const currentLogLevel = (): LogLevel => {
+function currentLogLevel(): LogLevel {
   if (isVerbose()) {
     return 'debug'
   } else {
@@ -176,7 +189,11 @@ export const currentLogLevel = (): LogLevel => {
   }
 }
 
-export const shouldOutput = (logLevel: LogLevel): boolean => {
+/**
+ *
+ * @param logLevel
+ */
+function shouldOutput(logLevel: LogLevel): boolean {
   if (isUnitTest()) {
     return false
   }
@@ -192,10 +209,11 @@ export let collectedLogs: {[key: string]: string[]} = {}
  * This is only used during UnitTesting.
  * If we are in a testing context, instead of printing the logs to the console,
  * we will store them in a variable that can be accessed from the tests.
+ *
  * @param key - The key of the log.
  * @param content - The content of the log.
  */
-export const collectLog = (key: string, content: Message) => {
+export function collectLog(key: string, content: Message): void {
   const output = collectedLogs.output ?? []
   const data = collectedLogs[key] ?? []
   data.push(stripAnsi(stringifyMessage(content) ?? ''))
@@ -204,18 +222,21 @@ export const collectLog = (key: string, content: Message) => {
   collectedLogs.output = output
 }
 
-export const clearCollectedLogs = () => {
+export const clearCollectedLogs = (): void => {
+  // console.log('clearCollectLogs')
   collectedLogs = {}
+  // console.log(collectedLogs)
 }
 
 /**
  * Ouputs information to the user.
  * Info messages don't get additional formatting.
  * Note: Info messages are sent through the standard output.
+ *
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export const info = (content: Message, logger: Logger = consoleLog) => {
+export function info(content: Message, logger: Logger = consoleLog): void {
   const message = stringifyMessage(content)
   if (isUnitTest()) collectLog('info', content)
   outputWhereAppropriate('info', logger, message)
@@ -225,10 +246,11 @@ export const info = (content: Message, logger: Logger = consoleLog) => {
  * Outputs a success message to the user.
  * Success messages receive a special formatting to make them stand out in the console.
  * Note: Success messages are sent through the standard output.
+ *
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export const success = (content: Message, logger: Logger = consoleLog) => {
+export function success(content: Message, logger: Logger = consoleLog): void {
   const message = colors.bold(`✅ Success! ${stringifyMessage(content)}.`)
   if (isUnitTest()) collectLog('success', content)
   outputWhereAppropriate('info', logger, message)
@@ -238,10 +260,11 @@ export const success = (content: Message, logger: Logger = consoleLog) => {
  * Outputs a completed message to the user.
  * Completed message receive a special formatting to make them stand out in the console.
  * Note: Completed messages are sent through the standard output.
+ *
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export const completed = (content: Message, logger: Logger = consoleLog) => {
+export function completed(content: Message, logger: Logger = consoleLog): void {
   const message = `${colors.green('✔')} ${stringifyMessage(content)}`
   if (isUnitTest()) collectLog('completed', content)
   outputWhereAppropriate('info', logger, message)
@@ -251,10 +274,11 @@ export const completed = (content: Message, logger: Logger = consoleLog) => {
  * Ouputs debug information to the user. By default these output is hidden unless the user calls the CLI with --verbose.
  * Debug messages don't get additional formatting.
  * Note: Debug messages are sent through the standard output.
+ *
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export const debug = (content: Message, logger: Logger = consoleLog) => {
+export function debug(content: Message, logger: Logger = consoleLog): void {
   if (isUnitTest()) collectLog('debug', content)
   const message = colors.gray(stringifyMessage(content))
   outputWhereAppropriate('debug', logger, `${new Date().toISOString()}: ${message}`)
@@ -264,10 +288,11 @@ export const debug = (content: Message, logger: Logger = consoleLog) => {
  * Outputs a warning message to the user.
  * Warning messages receive a special formatting to make them stand out in the console.
  * Note: Warning messages are sent through the standard output.
+ *
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export const warn = (content: Message, logger: Logger = consoleWarn) => {
+export function warn(content: Message, logger: Logger = consoleWarn): void {
   if (isUnitTest()) collectLog('warn', content)
   const message = colors.yellow(stringifyMessage(content))
   outputWhereAppropriate('warn', logger, message)
@@ -276,10 +301,14 @@ export const warn = (content: Message, logger: Logger = consoleWarn) => {
 /**
  * Prints a new line in the terminal.
  */
-export const newline = () => {
+export function newline(): void {
   console.log()
 }
 
+/**
+ *
+ * @param message
+ */
 export function stringifyMessage(message: Message): string {
   if (message instanceof TokenizedString) {
     return message.value
@@ -289,30 +318,49 @@ export function stringifyMessage(message: Message): string {
 }
 
 export interface OutputProcess {
-  /** The prefix to include in the logs
-   *   [vite] Output coming from Vite
+  /**
+   * The prefix to include in the logs
+   * [vite] Output coming from Vite.
    */
   prefix: string
   /**
-   * A callback to invoke the process. stdout and stderr should be used
+   * A callback to invoke the process. Stdout and stderr should be used
    * to send standard output and error data that gets formatted with the
    * right prefix.
    */
   action: (stdout: Writable, stderr: Writable, signal: AbortSignal) => Promise<void>
 }
 
+/**
+ *
+ * @param message
+ */
 export function consoleLog(message: string): void {
   console.log(withOrWithoutStyle(message))
 }
 
+/**
+ *
+ * @param message
+ */
 export function consoleError(message: string): void {
   console.error(withOrWithoutStyle(message))
 }
 
+/**
+ *
+ * @param message
+ */
 export function consoleWarn(message: string): void {
   console.warn(withOrWithoutStyle(message))
 }
 
+/**
+ *
+ * @param logLevel
+ * @param logger
+ * @param message
+ */
 export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, message: string): void {
   if (shouldOutput(logLevel)) {
     if (logger instanceof Writable) {
@@ -323,6 +371,10 @@ export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, messa
   }
 }
 
+/**
+ *
+ * @param message
+ */
 function withOrWithoutStyle(message: string): string {
   if (shouldDisplayColors()) {
     return message
@@ -331,17 +383,24 @@ function withOrWithoutStyle(message: string): string {
   }
 }
 
+/**
+ *
+ * @param message
+ */
 export function unstyled(message: string): string {
   return stripAnsi(message)
 }
 
+/**
+ *
+ */
 export function shouldDisplayColors(): boolean {
   return Boolean(process.stdout.isTTY || process.env.FORCE_COLOR)
 }
 
 /**
  * @param packageManager - The package manager that is being used.
- * @param version - The version to update to
+ * @param version - The version to update to.
  */
 export function getOutputUpdateCLIReminder(
   packageManager: PackageManager | 'unknown' | undefined,
@@ -355,10 +414,16 @@ export function getOutputUpdateCLIReminder(
 }
 
 /**
- * Parse title and body to be a single formatted string
+ * Parse title and body to be a single formatted string.
+ *
  * @param title - The title of the message. Will be formatted as a heading.
  * @param body - The body of the message. Will respect the original formatting.
  * @returns The formatted message.
+ */
+/**
+ *
+ * @param title
+ * @param body
  */
 export function section(title: string, body: string): string {
   const formattedTitle = `${title.toUpperCase()}${' '.repeat(35 - title.length)}`

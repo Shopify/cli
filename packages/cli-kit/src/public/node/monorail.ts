@@ -1,7 +1,7 @@
 import {fetch} from './http.js'
 import {JsonMap} from '../../private/common/json.js'
 import {DeepRequired} from '../../private/common/ts/deep-required.js'
-import {debug, content, token} from '../../output.js'
+import {debug, content, token} from '../../public/node/output.js'
 
 const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 

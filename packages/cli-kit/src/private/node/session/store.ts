@@ -2,7 +2,7 @@ import {SessionSchema} from './schema.js'
 import {keychainConstants} from '../constants.js'
 import {platformAndArch} from '../../../public/node/os.js'
 import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../../../secure-store.js'
-import {content, debug} from '../../../output.js'
+import {content, debug} from '../../../public/node/output.js'
 import {getSession, removeSession, setSession, clearAllAppInfo} from '../../../store.js'
 import type {Session} from './schema.js'
 

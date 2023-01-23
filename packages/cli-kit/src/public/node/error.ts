@@ -1,5 +1,5 @@
 import {renderFatalError} from './ui.js'
-import {Message, stringifyMessage, TokenizedString} from '../../output.js'
+import {Message, stringifyMessage, TokenizedString} from '../../public/node/output.js'
 import {normalizePath} from '../../public/node/path.js'
 import {TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 import {Errors} from '@oclif/core'

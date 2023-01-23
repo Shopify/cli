@@ -1,5 +1,5 @@
 import {buildHeaders, httpsAgent, sanitizedHeadersOutput} from '../../private/node/api/headers.js'
-import {content, debug} from '../../output.js'
+import {content, debug} from '../../public/node/output.js'
 import FormData from 'form-data'
 import nodeFetch, {RequestInfo, RequestInit} from 'node-fetch'
 import {performance} from 'perf_hooks'

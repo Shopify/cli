@@ -1,4 +1,5 @@
-import {output, store as conf} from '@shopify/cli-kit'
+import {store as conf} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {version as rubyVersion} from '@shopify/cli-kit/node/ruby'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'

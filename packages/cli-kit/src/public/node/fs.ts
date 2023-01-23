@@ -1,5 +1,5 @@
 import {joinPath, normalizePath} from './path.js'
-import {content as outputContent, token, debug} from '../../output.js'
+import {content as outputContent, token, debug} from '../../public/node/output.js'
 import {getRandomName, RandomNameFamily} from '../common/string.js'
 import {OverloadParameters} from '../../private/common/ts/overloaded-parameters.js'
 import {

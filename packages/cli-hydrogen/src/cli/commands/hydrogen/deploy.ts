@@ -1,6 +1,6 @@
 import {hydrogenFlags} from '../../flags.js'
 import {deployToOxygen} from '../../services/deploy.js'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import Command from '@shopify/cli-kit/node/base-command'
 import {Flags} from '@oclif/core'
 import {isShopify} from '@shopify/cli-kit/node/environment/local'
