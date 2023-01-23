@@ -1,5 +1,5 @@
-import {store, output} from '@shopify/cli-kit'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {output} from '@shopify/cli-kit'
+import {Conf} from '@shopify/cli-kit/node/store'
 
 export interface CachedAppInfo {
   directory: string
@@ -12,31 +12,35 @@ export interface CachedAppInfo {
 }
 
 // We store each app info using the directory as the key
-interface AppConfSchema {
+export interface AppConfSchema {
   [key: string]: CachedAppInfo
 }
 
-export function getAppInfo(directory: string): CachedAppInfo | undefined {
+let _instance: Conf<AppConfSchema> | undefined
+
+function appConf() {
+  if (!_instance) {
+    _instance = new Conf<AppConfSchema>({projectName: 'shopify-cli-app-conf'})
+  }
+  return _instance
+}
+
+export function getAppInfo(directory: string, config: Conf<AppConfSchema> = appConf()): CachedAppInfo | undefined {
   output.debug(output.content`Reading cached app information for directory ${output.token.path(directory)}...`)
-  const config = appConf()
   return config.get(directory)
 }
 
-export function clearAppInfo(directory: string): void {
+export function clearAppInfo(directory: string, config: Conf<AppConfSchema> = appConf()): void {
   output.debug(output.content`Clearing app information for directory ${output.token.path(directory)}...`)
-  const config = appConf()
-  config.reset(directory)
+  config.delete(directory)
 }
 
-export function clearAllAppInfo(): void {
+export function clearAllAppInfo(config: Conf<AppConfSchema> = appConf()): void {
   output.debug(output.content`Clearing all app information...`)
-  const config = appConf()
   config.clear()
 }
 
-export function setAppInfo(options: CachedAppInfo): void {
-  const config = appConf()
-
+export function setAppInfo(options: CachedAppInfo, config: Conf<AppConfSchema> = appConf()): void {
   output.debug(
     output.content`Storing app information for directory ${output.token.path(options.directory)}:${output.token.json(
       options,
@@ -56,16 +60,4 @@ export function setAppInfo(options: CachedAppInfo): void {
   } else {
     config.set(options.directory, options)
   }
-}
-
-let _instance: store.Conf<AppConfSchema> | undefined
-
-function appConf() {
-  if (!_instance) {
-    _instance = new store.Conf<AppConfSchema>({
-      projectName: 'shopify-cli-app-conf',
-      projectVersion: CLI_KIT_VERSION,
-    })
-  }
-  return _instance
 }

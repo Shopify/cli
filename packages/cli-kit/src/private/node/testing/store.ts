@@ -1,4 +1,4 @@
-import {CLIKitStore} from '../../../store.js'
+import {CLIKitStore} from '../../../public/node/store.js'
 import {removeFile} from '../../../public/node/fs.js'
 import uniqueString from 'unique-string'
 
