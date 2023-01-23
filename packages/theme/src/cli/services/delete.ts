@@ -2,9 +2,11 @@ import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
 import {Theme} from '../models/theme.js'
 import {themeComponent, themesComponent} from '../utilities/theme-ui.js'
 import {deleteTheme} from '../utilities/themes-api.js'
+import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {renderConfirmationPrompt, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {pluralize} from '@shopify/cli-kit/common/string'
+import {store as storage} from '@shopify/cli-kit'
 
 export interface DeleteOptions {
   selectTheme: boolean
@@ -14,14 +16,25 @@ export interface DeleteOptions {
 }
 
 export async function deleteThemes(adminSession: AdminSession, options: DeleteOptions) {
+  let themeIds = options.themes
+  if (options.development) {
+    const theme = await new DevelopmentThemeManager(adminSession).find()
+    themeIds = [theme.id.toString()]
+  }
+
   const store = adminSession.storeFqdn
-  const themes = await findThemesByDeleteOptions(adminSession, options)
+  const themes = await findThemesByDeleteOptions(adminSession, {...options, themes: themeIds, development: false})
 
   if (!options.force && !(await isConfirmed(themes, store))) {
     return
   }
 
-  themes.map((theme) => deleteTheme(theme.id, adminSession))
+  themes.map((theme) => {
+    if (theme.hasDevelopmentRole) {
+      storage.removeDevelopmentTheme()
+    }
+    return deleteTheme(theme.id, adminSession)
+  })
 
   renderSuccess({
     headline: pluralize(
@@ -33,7 +46,7 @@ export async function deleteThemes(adminSession: AdminSession, options: DeleteOp
 }
 
 async function findThemesByDeleteOptions(adminSession: AdminSession, options: DeleteOptions) {
-  const isSingleThemeSelection = options.selectTheme || options.development || options.themes.length <= 1
+  const isSingleThemeSelection = options.selectTheme || options.themes.length <= 1
 
   if (!isSingleThemeSelection) {
     return findThemes(adminSession, options)

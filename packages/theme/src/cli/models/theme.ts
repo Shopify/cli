@@ -1,3 +1,5 @@
+export const DEVELOPMENT_THEME_ROLE = 'development'
+
 export class Theme {
   constructor(public id: number, public name: string, private _role: string) {}
 
@@ -15,5 +17,9 @@ export class Theme {
     } else {
       this._role = _role
     }
+  }
+
+  get hasDevelopmentRole(): boolean {
+    return this.role === DEVELOPMENT_THEME_ROLE
   }
 }

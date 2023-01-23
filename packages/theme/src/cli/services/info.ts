@@ -13,7 +13,12 @@ export async function themeInfo(config: {cliVersion: string}): Promise<output.Me
 function themeConfigSection(): [string, string] {
   const title = 'Theme Configuration'
   const store = conf.getThemeStore() || 'Not configured'
-  const lines: string[][] = [['Store', store]]
+  let developmentTheme = conf.getDevelopmentTheme()
+  developmentTheme = developmentTheme ? `#${developmentTheme}` : 'Not set'
+  const lines: string[][] = [
+    ['Store', store],
+    ['Development Theme ID', developmentTheme],
+  ]
   return [title, `${linesToColumns(lines)}`]
 }
 

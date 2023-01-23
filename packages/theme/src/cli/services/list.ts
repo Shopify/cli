@@ -3,6 +3,7 @@ import {ALLOWED_ROLES, fetchStoreThemes, Role} from '../utilities/theme-selector
 import {Filter, FilterProps, filterThemes} from '../utilities/theme-selector/filter.js'
 import {renderTable} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session.js'
+import {store as storage} from '@shopify/cli-kit'
 
 export interface Options {
   role?: Role
@@ -21,15 +22,25 @@ export async function list(adminSession: AdminSession, options: Options) {
   })
 
   let storeThemes = await fetchStoreThemes(adminSession)
+  const developmentTheme = storage.getDevelopmentTheme()
   if (filter.any()) {
     storeThemes = filterThemes(store, storeThemes, filter)
   }
 
-  const themes = storeThemes.map(({id, name, role}) => ({
-    id: `#${id}`,
-    name,
-    role: role ? `[${role}]` : '',
-  }))
+  const themes = storeThemes.map(({id, name, role}) => {
+    let formattedRole = ''
+    if (role) {
+      formattedRole = `[${role}]`
+      if (`${id}` === developmentTheme) {
+        formattedRole += ' [yours]'
+      }
+    }
+    return {
+      id: `#${id}`,
+      name,
+      role: formattedRole,
+    }
+  })
 
   renderTable({rows: themes, columns})
 }

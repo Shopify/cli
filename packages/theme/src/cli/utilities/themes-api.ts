@@ -9,6 +9,11 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role'>>
 
+export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
+  const response = await request('GET', `/themes/${id}`, session, undefined, {fields: 'id'})
+  return buildTheme(response.json.theme)
+}
+
 export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
   const response = await request('GET', '/themes', session, undefined, {fields: 'id,name,role'})
   return buildThemes(response)

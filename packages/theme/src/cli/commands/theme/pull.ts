@@ -1,6 +1,7 @@
 import {themeFlags} from '../../flags.js'
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
+import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -56,7 +57,18 @@ export default class Pull extends ThemeCommand {
   static cli2Flags = ['theme', 'development', 'live', 'nodelete', 'only', 'ignore', 'force']
 
   async run(): Promise<void> {
-    const {flags} = await this.parse(Pull)
+    let {flags} = await this.parse(Pull)
+    const store = getThemeStore(flags)
+    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
+
+    if (flags.development) {
+      const theme = await new DevelopmentThemeManager(adminSession).find()
+      flags = {
+        ...flags,
+        development: false,
+        theme: theme.id.toString(),
+      }
+    }
 
     let validPath = flags.path
     if (!isAbsolutePath(validPath)) {
@@ -67,8 +79,6 @@ export default class Pull extends ThemeCommand {
 
     const command = ['theme', 'pull', validPath, ...flagsToPass]
 
-    const store = getThemeStore(flags)
-    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
     await execCLI2(command, {adminSession})
   }
 }

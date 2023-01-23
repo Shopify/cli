@@ -107,6 +107,21 @@ export function clearAllAppInfo(): void {
   store.clearAllAppInfo()
 }
 
+export function getDevelopmentTheme(): string | undefined {
+  const store = cliKitStore()
+  return store.getDevelopmentTheme()
+}
+
+export function setDevelopmentTheme(theme: string): void {
+  const store = cliKitStore()
+  store.setDevelopmentTheme(theme)
+}
+
+export function removeDevelopmentTheme(): void {
+  const store = cliKitStore()
+  store.removeDevelopmentTheme()
+}
+
 export class CLIKitStore extends Conf<ConfSchema> {
   getAppInfo(directory: string): CachedAppInfo | undefined {
     debug(content`Reading cached app information for directory ${token.path(directory)}...`)
@@ -181,5 +196,20 @@ export class CLIKitStore extends Conf<ConfSchema> {
   removeSession(): void {
     debug(content`Removing session store...`)
     this.set('sessionStore', '')
+  }
+
+  getDevelopmentTheme(): string {
+    debug(content`Getting development theme...`)
+    return this.get('developmentTheme')
+  }
+
+  setDevelopmentTheme(theme: string): void {
+    debug(content`Setting development theme...`)
+    this.set('developmentTheme', theme)
+  }
+
+  removeDevelopmentTheme(): void {
+    debug(content`Removing development theme...`)
+    this.set('developmentTheme', '')
   }
 }

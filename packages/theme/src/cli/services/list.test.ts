@@ -4,6 +4,7 @@ import {fetchStoreThemes} from '../utilities/theme-selector/fetch.js'
 import {Theme} from '../models/theme.js'
 import {renderTable} from '@shopify/cli-kit/node/ui.js'
 import {describe, expect, it, vi} from 'vitest'
+import {store} from '@shopify/cli-kit'
 
 vi.mock('../utilities/theme-selector/fetch.js')
 vi.mock('@shopify/cli-kit/node/ui.js')
@@ -15,17 +16,23 @@ const session = {
 
 describe('list', () => {
   it('should call the table render function, with correctly formatted data', async () => {
+    const developmentThemeId = 5
     vi.mocked(fetchStoreThemes).mockResolvedValue([
-      {id: 1361, name: 'Dawn', role: 'live'},
-      {id: 1363, name: 'Studio', role: ''},
+      {id: 1, name: 'Theme 1', role: 'live'},
+      {id: 2, name: 'Theme 2', role: ''},
+      {id: 3, name: 'Theme 3', role: 'development'},
+      {id: developmentThemeId, name: 'Theme 5', role: 'development'},
     ] as Theme[])
+    vi.spyOn(store, 'getDevelopmentTheme').mockReturnValue(developmentThemeId.toString())
 
     await list(session, {})
 
     expect(renderTable).toBeCalledWith({
       rows: [
-        {id: '#1361', name: 'Dawn', role: '[live]'},
-        {id: '#1363', name: 'Studio', role: ''},
+        {id: '#1', name: 'Theme 1', role: '[live]'},
+        {id: '#2', name: 'Theme 2', role: ''},
+        {id: '#3', name: 'Theme 3', role: '[development]'},
+        {id: '#5', name: 'Theme 5', role: '[development] [yours]'},
       ],
       columns,
     })

@@ -8,6 +8,11 @@ import {renderConfirmationPrompt, renderSuccess, renderWarning} from '@shopify/c
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../utilities/themes-api.js')
 vi.mock('../utilities/theme-selector.js')
+vi.mock('../utilities/development-theme-manager.js', () => {
+  const DevelopmentThemeManager = vi.fn()
+  DevelopmentThemeManager.prototype.find = () => theme1
+  return {DevelopmentThemeManager}
+})
 
 const session = {
   token: 'token',
