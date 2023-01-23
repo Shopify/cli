@@ -1,0 +1,12 @@
+/* minitest tests */
+test/fixtures/**/*
+test/**/*_test.rb
+test/**/test_helper.rb
+test/**/*test_helper.rb
+test/**/test_helpers/**/*
+test/**/*_test_helpers/**/*
+test/linux/**/*
+
+/* cucumber tests */
+features/**/*.feature
+features/**/step_definitions/**/*

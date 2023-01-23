@@ -134,6 +134,7 @@ fixtures/app/extensions/*/build
 
 # embed CLI2
 Gemfile
+README.md
 
 ### Node Patch ###
 # Serverless Webpack directories
