@@ -3,7 +3,8 @@ import {BaseUIExtensionSchema, NewExtensionPointSchemaType, NewExtensionPointsSc
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
-import {output, schema} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
+import {schema} from '@shopify/cli-kit/node/schema'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -11,9 +12,9 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.22.0'}
 
 const UIExtensionSchema = BaseUIExtensionSchema.extend({
-  settings: schema.define
+  settings: schema
     .object({
-      fields: schema.define.any().optional(),
+      fields: schema.any().optional(),
     })
     .optional(),
   extensionPoints: NewExtensionPointsSchema,
