@@ -156,6 +156,6 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
   vi.mocked(partnersRequest).mockResolvedValueOnce({extensionSpecifications: testRemoteSpecifications})
   vi.mocked(ensureGenerateEnvironment).mockResolvedValue('api-key')
   vi.mocked(generateExtensionPrompt).mockResolvedValue({name: 'name', extensionType: identifier})
-  vi.mocked(generateExtensionService).mockResolvedValue(joinPath(appRoot, 'extensions', 'name'))
+  vi.mocked(generateExtensionService).mockResolvedValue(joinPath('extensions', 'name'))
   return mockAndCaptureOutput()
 }
