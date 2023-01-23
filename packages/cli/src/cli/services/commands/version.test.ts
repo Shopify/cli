@@ -1,11 +1,12 @@
 import {versionService} from './version.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {outputMocker, output, error} from '@shopify/cli-kit'
+import {output, error} from '@shopify/cli-kit'
 import {
   checkForNewVersion,
   PackageManager,
   packageManagerUsedForCreating,
 } from '@shopify/cli-kit/node/node-package-manager'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/node-package-manager')
@@ -23,7 +24,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  outputMocker.mockAndCaptureOutput().clear()
+  mockAndCaptureOutput().clear()
 })
 
 describe('check CLI version', () => {
@@ -33,7 +34,7 @@ describe('check CLI version', () => {
       // Given
 
       const latestVersion = '3.0.10'
-      const outputMock = outputMocker.mockAndCaptureOutput()
+      const outputMock = mockAndCaptureOutput()
       vi.mocked(checkForNewVersion).mockResolvedValue(latestVersion)
       vi.mocked(packageManagerUsedForCreating).mockReturnValue(packageManager as PackageManager)
       const outputReminder = vi.mocked(output.getOutputUpdateCLIReminder).mockReturnValue('CLI reminder')
@@ -55,7 +56,7 @@ describe('check CLI version', () => {
 
   it('display only current version when no newer version exists', async () => {
     // Given
-    const outputMock = outputMocker.mockAndCaptureOutput()
+    const outputMock = mockAndCaptureOutput()
     vi.mocked(checkForNewVersion).mockResolvedValue('2.2.2')
 
     // When
@@ -73,7 +74,7 @@ describe('check CLI version', () => {
 
   it('display only current version when an error is thrown when getting latest version', async () => {
     // Given
-    const outputMock = outputMocker.mockAndCaptureOutput()
+    const outputMock = mockAndCaptureOutput()
     vi.mocked(checkForNewVersion).mockResolvedValue(undefined)
 
     // When

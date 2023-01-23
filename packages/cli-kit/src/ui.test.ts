@@ -1,5 +1,5 @@
 import {task} from './ui.js'
-import {mockAndCaptureOutput} from './testing/output.js'
+import {mockAndCaptureOutput} from './public/node/testing/output.js'
 import {describe, expect, it, vi} from 'vitest'
 
 describe('task()', () => {

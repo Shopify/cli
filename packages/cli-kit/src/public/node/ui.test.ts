@@ -1,18 +1,18 @@
 import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
 import {AbortSignal} from './abort.js'
+import {mockAndCaptureOutput} from './testing/output.js'
 import {Abort, Bug, Fatal} from '../../error.js'
-import * as outputMocker from '../../testing/output.js'
 import {afterEach, describe, expect, test} from 'vitest'
 import {Writable} from 'stream'
 
 afterEach(() => {
-  outputMocker.mockAndCaptureOutput().clear()
+  mockAndCaptureOutput().clear()
 })
 
 describe('renderInfo', async () => {
   test('renders info inside a banner', async () => {
     // Given
-    const mockOutput = outputMocker.mockAndCaptureOutput()
+    const mockOutput = mockAndCaptureOutput()
 
     // When
     renderInfo({
@@ -119,7 +119,7 @@ describe('renderInfo', async () => {
 describe('renderSuccess', async () => {
   test('renders a success message inside a banner', async () => {
     // Given
-    const mockOutput = outputMocker.mockAndCaptureOutput()
+    const mockOutput = mockAndCaptureOutput()
 
     // When
     renderSuccess({
@@ -141,7 +141,7 @@ describe('renderSuccess', async () => {
 describe('renderWarning', async () => {
   test('renders a warning inside a banner with good wrapping', async () => {
     // Given
-    const mockOutput = outputMocker.mockAndCaptureOutput()
+    const mockOutput = mockAndCaptureOutput()
 
     // When
     renderWarning({
@@ -183,7 +183,7 @@ describe('renderWarning', async () => {
 describe('renderFatalError', async () => {
   test('renders a fatal error inside a banner', async () => {
     // Given
-    const mockOutput = outputMocker.mockAndCaptureOutput()
+    const mockOutput = mockAndCaptureOutput()
 
     // When
     renderFatalError(
@@ -205,7 +205,7 @@ describe('renderFatalError', async () => {
 
   test('renders a fatal error inside a banner with a stack trace', async () => {
     // Given
-    const mockOutput = outputMocker.mockAndCaptureOutput()
+    const mockOutput = mockAndCaptureOutput()
 
     // When
     const error = new Bug('Unexpected error')
@@ -237,7 +237,7 @@ describe('renderFatalError', async () => {
 
   test('renders a fatal error inside a banner with some next steps', async () => {
     // Given
-    const mockOutput = outputMocker.mockAndCaptureOutput()
+    const mockOutput = mockAndCaptureOutput()
 
     const nextSteps = [
       [
@@ -287,7 +287,7 @@ describe('renderFatalError', async () => {
 describe('renderConcurrent', async () => {
   test('renders an error message correctly when a process throws an error', async () => {
     // Given
-    const mockOutput = outputMocker.mockAndCaptureOutput()
+    const mockOutput = mockAndCaptureOutput()
 
     // When
     const throwingProcess = {

@@ -13,9 +13,9 @@ import {AllDevStoresByOrganizationQuery} from '../../api/graphql/all_dev_stores_
 import {FindStoreByDomainQuery} from '../../api/graphql/find_store_by_domain.js'
 import {AllAppExtensionRegistrationsQuery} from '../../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, it, test, vi} from 'vitest'
-import {outputMocker} from '@shopify/cli-kit'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
 const ORG2: Organization = {id: '2', businessName: 'org2', appsNext: false}
@@ -191,7 +191,7 @@ describe('fetchAppExtensionRegistrations', () => {
 describe('NoOrgError', () => {
   test('renders correctly', () => {
     // Given
-    const mockOutput = outputMocker.mockAndCaptureOutput()
+    const mockOutput = mockAndCaptureOutput()
     const subject = NoOrgError('3')
 
     // When

@@ -1,4 +1,4 @@
-import {temporaryTestStore} from './testing/store.js'
+import {temporaryTestStore} from './private/node/testing/store.js'
 import {describe, expect, it} from 'vitest'
 
 const APP1 = {appId: 'app1', storeFqdn: 'store1', orgId: 'org1', directory: '/app1'}

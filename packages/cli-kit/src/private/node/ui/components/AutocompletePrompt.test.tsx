@@ -7,7 +7,7 @@ import {
   sendInputAndWaitForContent,
   waitForContent,
   waitForInputsToBeReady,
-} from '../../../../testing/ui.js'
+} from '../../testing/ui.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {render} from 'ink-testing-library'

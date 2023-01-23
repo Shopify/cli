@@ -1,7 +1,7 @@
 import {errorHandler, cleanStackFrameFilePath, addBugsnagMetadata, sendErrorToBugsnag} from './error-handler.js'
 import {ciPlatform, cloudEnvironment, isUnitTest, macAddress} from './environment/local.js'
+import {mockAndCaptureOutput} from './testing/output.js'
 import * as error from '../../error.js'
-import * as outputMocker from '../../testing/output.js'
 import {hashString} from '../../public/node/crypto.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -48,7 +48,7 @@ describe('errorHandler', () => {
   it('finishes the execution without exiting the proccess and display a custom message when cancel execution exception is raised with a message', async () => {
     // Given
     vi.spyOn(process, 'exit').mockResolvedValue(null as never)
-    const outputMock = outputMocker.mockAndCaptureOutput()
+    const outputMock = mockAndCaptureOutput()
 
     // When
     await errorHandler(new error.CancelExecution('Custom message'))

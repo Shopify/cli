@@ -4,7 +4,7 @@ import {
   sendInputAndWaitForChange,
   waitForChange,
   waitForInputsToBeReady,
-} from '../../../../testing/ui.js'
+} from '../../testing/ui.js'
 import React, {useState} from 'react'
 import {describe, test, expect, vi} from 'vitest'
 import {render} from 'ink-testing-library'
