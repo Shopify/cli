@@ -26,13 +26,13 @@ import {
   AppFunctionSetMutationSchema,
   AppFunctionSetVariables,
 } from '../../api/graphql/functions/app_function_set.js'
-import {error, output} from '@shopify/cli-kit'
-
+import {output} from '@shopify/cli-kit'
 import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {fileExists, readFile, readFileSync} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 
 interface DeployThemeExtensionOptions {
   /** The application API key */
@@ -68,7 +68,7 @@ export async function uploadThemeExtensions(
       const result: ExtensionUpdateSchema = await partnersRequest(mutation, token, themeExtensionInput)
       if (result.extensionUpdateDraft?.userErrors?.length > 0) {
         const errors = result.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
-        throw new error.Abort(errors)
+        throw new AbortError(errors)
       }
     }),
   )
@@ -127,7 +127,7 @@ export async function uploadUIExtensionsBundle(
 
   if (result.deploymentCreate?.userErrors?.length > 0) {
     const errors = result.deploymentCreate.userErrors.map((error) => error.message).join(', ')
-    throw new error.Abort(errors)
+    throw new AbortError(errors)
   }
 
   const validationErrors = result.deploymentCreate.deployment.deployedVersions
@@ -156,7 +156,7 @@ export async function getUIExtensionUploadURL(apiKey: string, deploymentUUID: st
   const result: GenerateSignedUploadUrlSchema = await partnersRequest(mutation, token, variables)
   if (result.deploymentGenerateSignedUploadUrl?.userErrors?.length > 0) {
     const errors = result.deploymentGenerateSignedUploadUrl.userErrors.map((error) => error.message).join(', ')
-    throw new error.Abort(errors)
+    throw new AbortError(errors)
   }
 
   return result.deploymentGenerateSignedUploadUrl.signedUploadUrl
@@ -258,7 +258,7 @@ async function uploadFunctionExtension(
     const errorMessage = output.content`The deployment of functions failed with the following errors:
 ${output.token.json(userErrors)}
     `
-    throw new error.Abort(errorMessage)
+    throw new AbortError(errorMessage)
   }
   return res.data.functionSet.function?.id as string
 }
@@ -275,15 +275,15 @@ async function uploadWasmBlob(extension: FunctionExtension, apiKey: string, toke
     return url
   } else if (res.status === 400 && resBody.includes('EntityTooLarge')) {
     const errorMessage = output.content`The size of the Wasm binary file for Function ${extension.localIdentifier} is too large. It must be less than ${maxSize}.`
-    throw new error.Abort(errorMessage)
+    throw new AbortError(errorMessage)
   } else if (res.status >= 400 && res.status < 500) {
     const errorMessage = output.content`Something went wrong uploading the Function ${
       extension.localIdentifier
     }. The server responded with status ${res.status.toString()} and body: ${resBody}`
-    throw new error.Bug(errorMessage)
+    throw new BugError(errorMessage)
   } else {
     const errorMessage = output.content`Something went wrong uploading the Function ${extension.localIdentifier}. Try again.`
-    throw new error.Abort(errorMessage)
+    throw new AbortError(errorMessage)
   }
 }
 

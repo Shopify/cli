@@ -1,7 +1,7 @@
 import {collectAddressAndMethod, collectApiVersion, collectSecret, collectTopic} from './options-prompt.js'
 import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, sharedSecretPrompt, topicPrompt} from './trigger.js'
 import {describe, it, expect, vi, afterEach, beforeEach} from 'vitest'
-import {error} from '@shopify/cli-kit'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit')
@@ -72,17 +72,17 @@ describe('optionsPrompt', () => {
 
     it('fails when unknown version', async () => {
       // When
-      await expect(collectApiVersion(unknownVersion, [aVersion])).rejects.toThrow(error.Abort)
+      await expect(collectApiVersion(unknownVersion, [aVersion])).rejects.toThrow(AbortError)
     })
 
     it('fails when unknown topic', async () => {
       // When
-      await expect(collectTopic(unknownTopic, aVersion, [aTopic])).rejects.toThrow(error.Abort)
+      await expect(collectTopic(unknownTopic, aVersion, [aTopic])).rejects.toThrow(AbortError)
     })
 
     it('fails when no topics', async () => {
       // When
-      await expect(collectTopic(aTopic, aVersion, [])).rejects.toThrow(error.Abort)
+      await expect(collectTopic(aTopic, aVersion, [])).rejects.toThrow(AbortError)
     })
 
     describe('all params', () => {
@@ -114,12 +114,12 @@ describe('optionsPrompt', () => {
 
       it('fails when delivery method and address are not compatible', async () => {
         // When
-        await expect(collectAddressAndMethod('google-pub-sub', anAddress)).rejects.toThrow(error.Abort)
+        await expect(collectAddressAndMethod('google-pub-sub', anAddress)).rejects.toThrow(AbortError)
       })
 
       it('fails when delivery method is not valid', async () => {
         // When
-        await expect(collectAddressAndMethod('WRONG_METHOD', anAddress)).rejects.toThrow(error.Abort)
+        await expect(collectAddressAndMethod('WRONG_METHOD', anAddress)).rejects.toThrow(AbortError)
       })
     })
 

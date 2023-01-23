@@ -1,7 +1,7 @@
 import {fetchThemes} from '../themes-api.js'
 import {Theme} from '../../models/theme.js'
-import {error} from '@shopify/cli-kit'
-import {AdminSession} from '@shopify/cli-kit/node/session.js'
+import {AdminSession} from '@shopify/cli-kit/node/session'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export type Role = 'live' | 'development' | 'unpublished'
 export const ALLOWED_ROLES: Role[] = ['live', 'unpublished', 'development']
@@ -11,7 +11,7 @@ export async function fetchStoreThemes(session: AdminSession) {
   const themes = (await fetchThemes(session)).filter(isRoleAllowed)
 
   if (themes.length === 0) {
-    throw new error.Abort(`There are no themes in the ${store} store`)
+    throw new AbortError(`There are no themes in the ${store} store`)
   }
 
   return themes.sort(byRole)

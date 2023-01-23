@@ -5,7 +5,7 @@ import {platformAndArch} from './os.js'
 import {captureOutput, exec} from './system.js'
 import * as file from './fs.js'
 import {joinPath} from './path.js'
-import {Abort, AbortSilent} from '../../error.js'
+import {AbortError, AbortSilentError} from './error.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
 import {content, token} from '../../output.js'
@@ -60,7 +60,7 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
     })
   } catch (error) {
     // CLI2 will show it's own errors, we don't need to show an additional CLI3 error
-    throw new AbortSilent()
+    throw new AbortSilentError()
   }
 }
 
@@ -180,7 +180,7 @@ async function validateRuby() {
     const stdout = await captureOutput(rubyExecutable(), ['-v'])
     version = coerceSemverVersion(stdout)
   } catch {
-    throw new Abort(
+    throw new AbortError(
       'Ruby environment not found',
       `Make sure you have Ruby installed on your system. ${
         content`${token.link('Documentation.', 'https://www.ruby-lang.org/en/documentation/installation/')}`.value
@@ -190,7 +190,7 @@ async function validateRuby() {
 
   const isValid = version?.compare(MinRubyVersion)
   if (isValid === -1 || isValid === undefined) {
-    throw new Abort(
+    throw new AbortError(
       `Ruby version ${content`${token.yellow(version.raw)}`.value} is not supported`,
       `Make sure you have at least Ruby ${content`${token.yellow(MinRubyVersion)}`.value} installed on your system. ${
         content`${token.link('Documentation.', 'https://www.ruby-lang.org/en/documentation/installation/')}`.value
@@ -208,7 +208,7 @@ async function validateBundler() {
     const stdout = await captureOutput(bundleExecutable(), ['-v'])
     version = coerceSemverVersion(stdout)
   } catch {
-    throw new Abort(
+    throw new AbortError(
       'Bundler not found',
       `To install the latest version of Bundler, run ${
         content`${token.genericShellCommand(`${gemExecutable()} install bundler`)}`.value
@@ -218,7 +218,7 @@ async function validateBundler() {
 
   const isValid = version?.compare(MinBundlerVersion)
   if (isValid === -1 || isValid === undefined) {
-    throw new Abort(
+    throw new AbortError(
       `Bundler version ${content`${token.yellow(version.raw)}`.value} is not supported`,
       `To update to the latest version of Bundler, run ${
         content`${token.genericShellCommand(`${gemExecutable()} install bundler`)}`.value

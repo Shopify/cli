@@ -1,4 +1,4 @@
-import {Abort} from './error.js'
+import {AbortError} from './public/node/error.js'
 import {hasGit, isTerminalInteractive} from './public/node/environment/local.js'
 import {content, token, debug} from './output.js'
 import {appendFileSync} from './public/node/fs.js'
@@ -7,29 +7,25 @@ import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine,
 export const factory = git
 
 export const GitNotPresentError = () => {
-  // eslint-disable-next-line rulesdir/no-error-factory-functions
-  return new Abort(
+  return new AbortError(
     `Git is necessary in the environment to continue`,
     content`Install ${token.link('git', 'https://git-scm.com/book/en/v2/Getting-Started-Installing-Git')}`,
   )
 }
 
 export const OutsideGitDirectoryError = (directory: string) => {
-  // eslint-disable-next-line rulesdir/no-error-factory-functions
-  return new Abort(`${token.path(directory)} is not a Git directory`)
+  return new AbortError(`${token.path(directory)} is not a Git directory`)
 }
 
 export const NoCommitError = () => {
-  // eslint-disable-next-line rulesdir/no-error-factory-functions
-  return new Abort(
+  return new AbortError(
     'Must have at least one commit to run command',
     content`Run ${token.genericShellCommand("git commit -m 'Initial commit'")} to create your first commit.`,
   )
 }
 
 export const DetachedHeadError = () => {
-  // eslint-disable-next-line rulesdir/no-error-factory-functions
-  return new Abort(
+  return new AbortError(
     "Git HEAD can't be detached to run command",
     content`Run ${token.genericShellCommand('git checkout [branchName]')} to reattach HEAD or see git ${token.link(
       'documentation',
@@ -82,14 +78,16 @@ export async function downloadRepository({
   const options: TaskOptions = {'--recurse-submodules': null}
 
   if (branch && latestTag) {
-    throw new Abort("Error cloning the repository. Git can't clone the latest release with a 'branch'.")
+    throw new AbortError("Error cloning the repository. Git can't clone the latest release with a 'branch'.")
   }
   if (branch) {
     options['--branch'] = branch
   }
 
   if (shallow && latestTag) {
-    throw new Abort("Error cloning the repository. Git can't clone the latest release with the 'shallow' property.")
+    throw new AbortError(
+      "Error cloning the repository. Git can't clone the latest release with the 'shallow' property.",
+    )
   }
   if (shallow) {
     options['--depth'] = 1
@@ -114,7 +112,7 @@ export async function downloadRepository({
     }
   } catch (err) {
     if (err instanceof Error) {
-      const abortError = new Abort(err.message)
+      const abortError = new AbortError(err.message)
       abortError.stack = err.stack
       throw abortError
     }
@@ -126,7 +124,7 @@ async function getLocalLatestTag(repository: SimpleGit, repoUrl: string) {
   const latest = (await repository.tags()).latest
 
   if (!latest) {
-    throw new Abort(`Couldn't obtain the most recent tag of the repository ${repoUrl}`)
+    throw new AbortError(`Couldn't obtain the most recent tag of the repository ${repoUrl}`)
   }
 
   return latest

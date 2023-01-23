@@ -1,11 +1,12 @@
 import {versionService} from './version.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {output, error} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {
   checkForNewVersion,
   PackageManager,
   packageManagerUsedForCreating,
 } from '@shopify/cli-kit/node/node-package-manager'
+import {CancelExecution} from '@shopify/cli-kit/node/error'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 beforeEach(() => {
@@ -42,7 +43,7 @@ describe('check CLI version', () => {
       // When
       await expect(async () => {
         await versionService()
-      }).rejects.toThrowError(new error.CancelExecution())
+      }).rejects.toThrowError(new CancelExecution())
 
       // Then
       expect(outputMock.info()).toMatchInlineSnapshot(`
@@ -62,7 +63,7 @@ describe('check CLI version', () => {
     // When
     await expect(async () => {
       await versionService()
-    }).rejects.toThrowError(new error.CancelExecution())
+    }).rejects.toThrowError(new CancelExecution())
 
     // Then
     expect(outputMock.info()).toMatchInlineSnapshot(`
@@ -80,7 +81,7 @@ describe('check CLI version', () => {
     // When
     await expect(async () => {
       await versionService()
-    }).rejects.toThrowError(new error.CancelExecution())
+    }).rejects.toThrowError(new CancelExecution())
 
     // Then
     expect(outputMock.info()).toMatchInlineSnapshot('"Current Shopify CLI version: 2.2.2"')

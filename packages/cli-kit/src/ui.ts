@@ -1,4 +1,4 @@
-import {CancelExecution, Abort, AbortSilent} from './error.js'
+import {CancelExecution, AbortError, AbortSilentError} from './public/node/error.js'
 import {removeFile, fileExists} from './public/node/fs.js'
 import {info, completed, content, token, logUpdate, Message, Logger, stringifyMessage, debug} from './output.js'
 import colors from './public/node/colors.js'
@@ -98,7 +98,7 @@ export const prompt = async <
   questions: ReadonlyArray<Question<TName>>,
 ): Promise<TAnswers> => {
   if (!isTerminalInteractive() && questions.length !== 0) {
-    throw new Abort(content`
+    throw new AbortError(content`
 The CLI prompted in a non-interactive terminal with the following questions:
 ${token.json(questions)}
     `)
@@ -177,7 +177,7 @@ export const keypress = async () => {
 
       if (bytes.length && bytes[0] === 3) {
         debug('Canceled keypress, User pressed CTRL+C')
-        reject(new AbortSilent())
+        reject(new AbortSilentError())
       }
       process.nextTick(resolve)
     }

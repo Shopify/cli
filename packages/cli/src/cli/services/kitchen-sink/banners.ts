@@ -1,4 +1,4 @@
-import {error} from '@shopify/cli-kit'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {renderFatalError, renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 
 export async function banners() {
@@ -120,7 +120,7 @@ export async function banners() {
   })
 
   // Stack trace
-  const somethingWentWrong = new error.Bug('Something went wrong.')
+  const somethingWentWrong = new BugError('Something went wrong.')
 
   somethingWentWrong.stack = `
   Error: Unexpected error
@@ -155,5 +155,5 @@ export async function banners() {
     ],
   ]
 
-  renderFatalError(new error.Abort('No Organization found', undefined, nextSteps))
+  renderFatalError(new AbortError('No Organization found', undefined, nextSteps))
 }

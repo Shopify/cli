@@ -1,6 +1,6 @@
 import {hasGit, isTerminalInteractive} from './environment/local.js'
 import {appendFileSync} from './fs.js'
-import {Abort} from '../../error.js'
+import {AbortError} from './error.js'
 import {content, token, debug} from '../../output.js'
 import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
 
@@ -73,14 +73,16 @@ export async function downloadGitRepository(cloneOptions: GitCloneOptions): Prom
   const options: TaskOptions = {'--recurse-submodules': null}
 
   if (branch && latestTag) {
-    throw new Abort("Error cloning the repository. Git can't clone the latest release with a 'branch'.")
+    throw new AbortError("Error cloning the repository. Git can't clone the latest release with a 'branch'.")
   }
   if (branch) {
     options['--branch'] = branch
   }
 
   if (shallow && latestTag) {
-    throw new Abort("Error cloning the repository. Git can't clone the latest release with the 'shallow' property.")
+    throw new AbortError(
+      "Error cloning the repository. Git can't clone the latest release with the 'shallow' property.",
+    )
   }
   if (shallow) {
     options['--depth'] = 1
@@ -105,7 +107,7 @@ export async function downloadGitRepository(cloneOptions: GitCloneOptions): Prom
     }
   } catch (err) {
     if (err instanceof Error) {
-      const abortError = new Abort(err.message)
+      const abortError = new AbortError(err.message)
       abortError.stack = err.stack
       throw abortError
     }
@@ -124,7 +126,7 @@ async function getLocalLatestTag(repository: SimpleGit, repoUrl: string): Promis
   const latest = (await repository.tags()).latest
 
   if (!latest) {
-    throw new Abort(`Couldn't obtain the most recent tag of the repository ${repoUrl}`)
+    throw new AbortError(`Couldn't obtain the most recent tag of the repository ${repoUrl}`)
   }
 
   return latest
@@ -141,7 +143,7 @@ export async function getLatestGitCommit(directory?: string): Promise<DefaultLog
     maxCount: 1,
   })
   if (!logs.latest) {
-    throw new Abort(
+    throw new AbortError(
       'Must have at least one commit to run command',
       content`Run ${token.genericShellCommand("git commit -m 'Initial commit'")} to create your first commit.`,
     )
@@ -190,7 +192,7 @@ export async function createGitCommit(message: string, options?: CreateGitCommit
 export async function getHeadSymbolicRef(directory?: string): Promise<string> {
   const ref = await git({baseDir: directory}).raw('symbolic-ref', '-q', 'HEAD')
   if (!ref) {
-    throw new Abort(
+    throw new AbortError(
       "Git HEAD can't be detached to run command",
       content`Run ${token.genericShellCommand('git checkout [branchName]')} to reattach HEAD or see git ${token.link(
         'documentation',
@@ -207,14 +209,14 @@ export async function getHeadSymbolicRef(directory?: string): Promise<string> {
  */
 export async function ensureGitIsPresentOrAbort(): Promise<void> {
   if (!(await hasGit())) {
-    throw new Abort(
+    throw new AbortError(
       `Git is necessary in the environment to continue`,
       content`Install ${token.link('git', 'https://git-scm.com/book/en/v2/Getting-Started-Installing-Git')}`,
     )
   }
 }
 
-export class OutsideGitDirectoryError extends Abort {}
+export class OutsideGitDirectoryError extends AbortError {}
 /**
  * If command run from outside a .git directory tree
  * it throws an abort error.

@@ -1,10 +1,11 @@
 import {HydrogenApp} from '../models/hydrogen.js'
-import {ui, error} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions} from '@shopify/cli-kit/node/vscode'
 import {exec} from '@shopify/cli-kit/node/system'
 import {writeFile, fileExists, removeFile, fileContentPrettyFormat, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import stream from 'stream'
 
 interface AddTailwindOptions {
@@ -60,7 +61,7 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
           if (force) {
             await removeFile(postCSSConfiguration)
           } else {
-            throw new error.Abort('PostCSS config already exists.\nUse --force to override existing config.')
+            throw new AbortError('PostCSS config already exists.\nUse --force to override existing config.')
           }
         }
 
@@ -84,7 +85,7 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
           if (force) {
             await removeFile(tailwindConfigurationPath)
           } else {
-            throw new error.Abort('Tailwind config already exists.\nUse --force to override existing config.')
+            throw new AbortError('Tailwind config already exists.\nUse --force to override existing config.')
           }
         }
 

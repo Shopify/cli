@@ -1,7 +1,7 @@
 import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
 import {AbortSignal} from './abort.js'
+import {BugError, FatalError, AbortError} from './error.js'
 import {mockAndCaptureOutput} from './testing/output.js'
-import {Abort, Bug, Fatal} from '../../error.js'
 import {afterEach, describe, expect, test} from 'vitest'
 import {Writable} from 'stream'
 
@@ -187,7 +187,10 @@ describe('renderFatalError', async () => {
 
     // When
     renderFatalError(
-      new Abort("Couldn't connect to the Shopify Partner Dashboard.", 'Check your internet connection and try again.'),
+      new AbortError(
+        "Couldn't connect to the Shopify Partner Dashboard.",
+        'Check your internet connection and try again.',
+      ),
     )
 
     // Then
@@ -208,7 +211,7 @@ describe('renderFatalError', async () => {
     const mockOutput = mockAndCaptureOutput()
 
     // When
-    const error = new Bug('Unexpected error')
+    const error = new BugError('Unexpected error')
     error.stack = `
       Error: Unexpected error
           at Module._compile (internal/modules/cjs/loader.js:1137:30)
@@ -262,7 +265,7 @@ describe('renderFatalError', async () => {
     ]
 
     // When
-    const error = new Abort('No Organization found', undefined, nextSteps)
+    const error = new AbortError('No Organization found', undefined, nextSteps)
     renderFatalError(error)
 
     // Then
@@ -301,7 +304,7 @@ describe('renderConcurrent', async () => {
       await renderConcurrent({processes: [throwingProcess], renderOptions: {patchConsole: false}})
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
-      renderFatalError(error as Fatal)
+      renderFatalError(error as FatalError)
     }
 
     // Then

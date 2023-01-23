@@ -1,8 +1,8 @@
 import {normalizeStoreFqdn} from './environment/fqdn.js'
+import {BugError} from './error.js'
 import * as secureStore from '../../private/node/session/store.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
 import {content, token, debug} from '../../output.js'
-import {Bug} from '../../error.js'
 import {ensureAuthenticated} from '../../private/node/session.js'
 import {environmentVariables} from '../../private/node/constants.js'
 
@@ -33,7 +33,7 @@ ${token.json(scopes)}
   }
   const tokens = await ensureAuthenticated({partnersApi: {scopes}})
   if (!tokens.partners) {
-    throw new Bug('No partners token found after ensuring authenticated')
+    throw new BugError('No partners token found after ensuring authenticated')
   }
   return tokens.partners
 }
@@ -56,7 +56,7 @@ ${token.json(scopes)}
 `)
   const tokens = await ensureAuthenticated({storefrontRendererApi: {scopes}})
   if (!tokens.storefront) {
-    throw new Bug('No storefront token found after ensuring authenticated')
+    throw new BugError('No storefront token found after ensuring authenticated')
   }
   return tokens.storefront
 }
@@ -81,7 +81,7 @@ ${token.json(scopes)}
 `)
   const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}}, process.env, forceRefresh)
   if (!tokens.admin) {
-    throw new Bug('No admin token found after ensuring authenticated')
+    throw new BugError('No admin token found after ensuring authenticated')
   }
   return tokens.admin
 }

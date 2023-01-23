@@ -1,15 +1,15 @@
-import {Abort, Bug, handler, cleanSingleStackTracePath} from './error.js'
-import {renderFatalError} from './public/node/ui.js'
+import {AbortError, BugError, handler, cleanSingleStackTracePath} from './error.js'
+import {renderFatalError} from './ui.js'
 import {describe, expect, test, vi, beforeEach, it} from 'vitest'
 
 beforeEach(() => {
-  vi.mock('./public/node/ui.js')
+  vi.mock('./ui.js')
 })
 
 describe('handler', () => {
   test('error output uses same input error instance when the error type is abort', async () => {
     // Given
-    const abortError = new Abort('error message', 'try message')
+    const abortError = new AbortError('error message', 'try message')
     vi.mocked(renderFatalError).mockResolvedValue()
 
     // When
@@ -21,7 +21,7 @@ describe('handler', () => {
 
   test('error output uses same input error instance when the error type is bug', async () => {
     // Given
-    const bugError = new Bug('error message', 'try message')
+    const bugError = new BugError('error message', 'try message')
     vi.mocked(renderFatalError).mockResolvedValue()
 
     // When
@@ -31,7 +31,7 @@ describe('handler', () => {
     expect(renderFatalError).toHaveBeenCalledWith(bugError)
   })
 
-  test('error output uses a Bug instance instance when the error type not extends from fatal', async () => {
+  test('error output uses a BugError instance instance when the error type not extends from fatal', async () => {
     // Given
     const unknownError = new Error('Unknown')
     vi.mocked(renderFatalError).mockResolvedValue()
