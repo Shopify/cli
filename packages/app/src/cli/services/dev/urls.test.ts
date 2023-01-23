@@ -12,10 +12,10 @@ import {testApp} from '../../models/app/app.test-data.js'
 import {UpdateURLsQuery} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery} from '../../api/graphql/get_urls.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {error, store, ui} from '@shopify/cli-kit'
+import {store, ui} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {err, ok} from '@shopify/cli-kit/node/result'
-import {AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
+import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -150,7 +150,7 @@ describe('updateURLs', () => {
     const got = updateURLs(urls, 'apiKey', 'token')
 
     // Then
-    await expect(got).rejects.toThrow(new error.Abort(`Boom!`))
+    await expect(got).rejects.toThrow(new AbortError(`Boom!`))
   })
 })
 

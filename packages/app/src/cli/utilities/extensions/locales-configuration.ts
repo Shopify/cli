@@ -1,7 +1,6 @@
-import {error} from '@shopify/cli-kit'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {glob} from '@shopify/cli-kit/node/fs'
-
+import {AbortError} from '@shopify/cli-kit/node/error'
 import fs from 'fs'
 
 const L10N_FILE_SIZE_LIMIT = 16 * 1024
@@ -16,19 +15,19 @@ export async function loadLocalesConfig(extensionPath: string, extensionIdentifi
   const defaultLanguageCode = findDefaultLocale(localesPaths)
 
   if (defaultLanguageCode.length === 0)
-    throw new error.Abort(
+    throw new AbortError(
       `Missing default language in ${extensionIdentifier} configuration`,
       'Make sure to have a {locale}.default.json file in your locales directory',
     )
 
   if (defaultLanguageCode.length > 1)
-    throw new error.Abort(
+    throw new AbortError(
       `Error loading ${extensionIdentifier}`,
       `There must be one (and only one) locale identified as the default locale: e.g. "en.default.json"`,
     )
 
   if (totalBundleSize > L10N_BUNDLE_SIZE_LIMIT)
-    throw new error.Abort(
+    throw new AbortError(
       `Error loading ${extensionIdentifier}`,
       `Total size of all locale files must be less than ${L10N_BUNDLE_SIZE_LIMIT}`,
     )
@@ -37,12 +36,11 @@ export async function loadLocalesConfig(extensionPath: string, extensionIdentifi
   for (const locale of localesPaths) {
     const size = fs.statSync(locale).size
     if (size > L10N_FILE_SIZE_LIMIT)
-      throw new error.Abort(
+      throw new AbortError(
         `Error loading ${extensionIdentifier}`,
         `Locale file ${locale} size must be less than ${L10N_FILE_SIZE_LIMIT}`,
       )
-    if (size === 0)
-      throw new error.Abort(`Error loading ${extensionIdentifier}`, `Locale file ${locale} can't be empty`)
+    if (size === 0) throw new AbortError(`Error loading ${extensionIdentifier}`, `Locale file ${locale} can't be empty`)
   }
 
   return {

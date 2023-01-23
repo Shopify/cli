@@ -1,18 +1,18 @@
 import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
 import {AbortSignal} from './abort.js'
-import {Abort, Bug, Fatal} from '../../error.js'
-import * as outputMocker from '../../testing/output.js'
+import {BugError, FatalError, AbortError} from './error.js'
+import {mockAndCaptureOutput} from './testing/output.js'
 import {afterEach, describe, expect, test} from 'vitest'
 import {Writable} from 'stream'
 
 afterEach(() => {
-  outputMocker.mockAndCaptureOutput().clear()
+  mockAndCaptureOutput().clear()
 })
 
 describe('renderInfo', async () => {
   test('renders info inside a banner', async () => {
     // Given
-    const mockOutput = outputMocker.mockAndCaptureOutput()
+    const mockOutput = mockAndCaptureOutput()
 
     // When
     renderInfo({
@@ -119,7 +119,7 @@ describe('renderInfo', async () => {
 describe('renderSuccess', async () => {
   test('renders a success message inside a banner', async () => {
     // Given
-    const mockOutput = outputMocker.mockAndCaptureOutput()
+    const mockOutput = mockAndCaptureOutput()
 
     // When
     renderSuccess({
@@ -141,7 +141,7 @@ describe('renderSuccess', async () => {
 describe('renderWarning', async () => {
   test('renders a warning inside a banner with good wrapping', async () => {
     // Given
-    const mockOutput = outputMocker.mockAndCaptureOutput()
+    const mockOutput = mockAndCaptureOutput()
 
     // When
     renderWarning({
@@ -183,11 +183,14 @@ describe('renderWarning', async () => {
 describe('renderFatalError', async () => {
   test('renders a fatal error inside a banner', async () => {
     // Given
-    const mockOutput = outputMocker.mockAndCaptureOutput()
+    const mockOutput = mockAndCaptureOutput()
 
     // When
     renderFatalError(
-      new Abort("Couldn't connect to the Shopify Partner Dashboard.", 'Check your internet connection and try again.'),
+      new AbortError(
+        "Couldn't connect to the Shopify Partner Dashboard.",
+        'Check your internet connection and try again.',
+      ),
     )
 
     // Then
@@ -205,10 +208,10 @@ describe('renderFatalError', async () => {
 
   test('renders a fatal error inside a banner with a stack trace', async () => {
     // Given
-    const mockOutput = outputMocker.mockAndCaptureOutput()
+    const mockOutput = mockAndCaptureOutput()
 
     // When
-    const error = new Bug('Unexpected error')
+    const error = new BugError('Unexpected error')
     error.stack = `
       Error: Unexpected error
           at Module._compile (internal/modules/cjs/loader.js:1137:30)
@@ -237,7 +240,7 @@ describe('renderFatalError', async () => {
 
   test('renders a fatal error inside a banner with some next steps', async () => {
     // Given
-    const mockOutput = outputMocker.mockAndCaptureOutput()
+    const mockOutput = mockAndCaptureOutput()
 
     const nextSteps = [
       [
@@ -262,7 +265,7 @@ describe('renderFatalError', async () => {
     ]
 
     // When
-    const error = new Abort('No Organization found', undefined, nextSteps)
+    const error = new AbortError('No Organization found', undefined, nextSteps)
     renderFatalError(error)
 
     // Then
@@ -287,7 +290,7 @@ describe('renderFatalError', async () => {
 describe('renderConcurrent', async () => {
   test('renders an error message correctly when a process throws an error', async () => {
     // Given
-    const mockOutput = outputMocker.mockAndCaptureOutput()
+    const mockOutput = mockAndCaptureOutput()
 
     // When
     const throwingProcess = {
@@ -301,7 +304,7 @@ describe('renderConcurrent', async () => {
       await renderConcurrent({processes: [throwingProcess], renderOptions: {patchConsole: false}})
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
-      renderFatalError(error as Fatal)
+      renderFatalError(error as FatalError)
     }
 
     // Then

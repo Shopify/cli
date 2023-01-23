@@ -1,4 +1,4 @@
-import {Bug} from '../../../error.js'
+import {BugError} from '../../../public/node/error.js'
 import {API} from '../../../network/api.js'
 import {Environment, serviceEnvironment} from '../environment/service.js'
 
@@ -46,6 +46,6 @@ export function applicationId(api: API): string {
       }
     }
     default:
-      throw new Bug(`Application id for API of type: ${api}`)
+      throw new BugError(`Application id for API of type: ${api}`)
   }
 }

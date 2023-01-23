@@ -1,7 +1,8 @@
 import {checkLockfileStatus} from './build/check-lockfile.js'
 import {build as viteBuild} from 'vite'
-import {ui, error as kitError} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
 import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 type Target = 'node' | 'client' | 'worker'
 
@@ -40,7 +41,7 @@ export function buildTaskList({directory, targets, base, assetBaseURL, verbose}:
           })
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
-          const abortError = new kitError.Abort(error.message)
+          const abortError = new AbortError(error.message)
           abortError.stack = error.stack
           throw abortError
         }

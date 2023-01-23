@@ -1,9 +1,9 @@
 import {validateProject, fillDeployConfig} from './config.js'
 import {gitInit} from '../../prompts/git-init.js'
 import {describe, it, expect, vi} from 'vitest'
-import {error} from '@shopify/cli-kit'
 import {getLatestGitCommit} from '@shopify/cli-kit/node/git'
 import {fileExists, inTemporaryDirectory, touchFile} from '@shopify/cli-kit/node/fs'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 const isWin = process.platform === 'win32'
 
@@ -22,7 +22,7 @@ describe('validateProject() & initializeGit()', () => {
         vi.mocked(gitInit).mockResolvedValue(false)
 
         await expect(() => validateProject({...defaultConfig, assumeYes: false, path: tmpDir})).rejects.toThrow(
-          new error.AbortSilent(),
+          new AbortSilentError(),
         )
       })
     })

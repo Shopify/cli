@@ -11,7 +11,7 @@ import {shopifyFetch} from '../../../public/node/http.js'
 import {identityFqdn} from '../../../public/node/environment/fqdn.js'
 import {describe, it, expect, vi, afterAll, beforeEach} from 'vitest'
 import {Response} from 'node-fetch'
-import {AbortError} from '@shopify/cli-kit/node/error.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 const currentDate = new Date(2022, 1, 1, 10)
 const expiredDate = new Date(2022, 1, 1, 11)

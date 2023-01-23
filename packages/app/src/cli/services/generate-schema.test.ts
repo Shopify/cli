@@ -3,11 +3,11 @@ import * as localEnvironment from './environment.js'
 import * as identifiers from '../models/app/identifiers.js'
 import {testApp, testFunctionExtension} from '../models/app/app.test-data.js'
 import {ApiSchemaDefinitionQuery} from '../api/graphql/functions/api_schema_definition.js'
-import {error} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, MockedFunction, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/environment/local'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 describe('generateSchemaService', () => {
   const token = 'token'
@@ -45,7 +45,7 @@ describe('generateSchemaService', () => {
     const result = generateSchemaService({app, extension, apiKey})
 
     // Then
-    await expect(result).rejects.toThrow(error.Abort)
+    await expect(result).rejects.toThrow(AbortError)
   })
 
   describe('API key', () => {

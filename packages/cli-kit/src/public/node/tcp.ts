@@ -1,6 +1,6 @@
 import {sleep} from './system.js'
+import {AbortError} from './error.js'
 import {debug, content, token} from '../../output.js'
-import {Abort} from '../../error.js'
 import * as port from 'get-port-please'
 
 /**
@@ -36,7 +36,7 @@ async function retryOnError<T>(execute: () => T, maxTries = 5, waitTimeInSeconds
         // eslint-disable-next-line no-await-in-loop
         await sleep(waitTimeInSeconds)
       } else {
-        throw new Abort(error.message)
+        throw new AbortError(error.message)
       }
     }
   }

@@ -1,6 +1,6 @@
 import ConcurrentOutput from './ConcurrentOutput.js'
 import {unstyled} from '../../../../output.js'
-import {getLastFrameAfterUnmount, waitForInputsToBeReady} from '../../../../testing/ui.js'
+import {getLastFrameAfterUnmount, waitForInputsToBeReady} from '../../testing/ui.js'
 import {AbortController, AbortSignal} from '../../../../public/node/abort.js'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'

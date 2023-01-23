@@ -1,7 +1,7 @@
 import {FindProductVariantQuery, FindProductVariantSchema} from '../../api/graphql/get_variant_id.js'
-import {error} from '@shopify/cli-kit'
 import {adminRequest} from '@shopify/cli-kit/node/api/admin'
 import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 /**
  * Retrieve the first variant of the first product of the given store
@@ -13,7 +13,7 @@ export async function fetchProductVariant(store: string) {
   const result: FindProductVariantSchema = await adminRequest(FindProductVariantQuery, adminSession)
   const products = result.products.edges
   if (products.length === 0)
-    throw new error.Abort(
+    throw new AbortError(
       'Could not find a product variant',
       `Your store needs to have at least one product to test a 'checkout_ui' extension\n
 You can add a new product here: https://${store}/admin/products/new`,

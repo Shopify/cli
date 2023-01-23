@@ -1,5 +1,5 @@
 import {TextPrompt} from './TextPrompt.js'
-import {getLastFrameAfterUnmount, sendInputAndWaitForChange, waitForInputsToBeReady} from '../../../../testing/ui.js'
+import {getLastFrameAfterUnmount, sendInputAndWaitForChange, waitForInputsToBeReady} from '../../testing/ui.js'
 import {unstyled} from '../../../../output.js'
 import {render} from 'ink-testing-library'
 import React from 'react'
