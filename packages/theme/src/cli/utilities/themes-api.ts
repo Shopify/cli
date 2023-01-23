@@ -24,6 +24,10 @@ export async function updateTheme(id: number, params: ThemeParams, session: Admi
   return buildTheme(response.json.theme)
 }
 
+export async function publishTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
+  return updateTheme(id, {role: 'main'}, session)
+}
+
 export async function deleteTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
   const response = await request('DELETE', `/themes/${id}`, session)
   return buildTheme(response.json.theme)
