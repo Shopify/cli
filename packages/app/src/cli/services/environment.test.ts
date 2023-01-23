@@ -29,7 +29,7 @@ import {loadAppName} from '../models/app/loader.js'
 import {App} from '../models/app/app.js'
 import {AllOrganizationsQuerySchemaOrganization} from '../api/graphql/all_orgs.js'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
-import {ok} from '@shopify/cli-kit/node/result.js'
+import {ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 

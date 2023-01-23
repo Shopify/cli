@@ -1,6 +1,6 @@
 import {getWebhookSample} from './request-sample.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners.js'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 const samplePayload = '{ "sampleField": "SampleValue" }'
 const sampleHeaders = '{ "header": "Header Value" }'

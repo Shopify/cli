@@ -4,7 +4,6 @@ import {selectApp} from '../select-app.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {testApp} from '../../../models/app/app.test-data.js'
-import {CachedAppInfo} from '../../conf.js'
 import {output} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -16,23 +15,12 @@ beforeEach(async () => {
   vi.mock('../select-app.js')
   vi.mock('../../../prompts/dev.js')
   vi.mock('@shopify/cli-kit/node/session')
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      store: {
-        cliKitStore: () => ({
-          getAppInfo: (): CachedAppInfo | undefined => undefined,
-        }),
-      },
-    }
-  })
   vi.mock('@shopify/cli-kit/node/node-package-manager')
   vi.restoreAllMocks()
 })
 
 describe('env show', () => {
-  it('outputs the new environment', async () => {
+  it('outputs the new environmenat', async () => {
     // Given
     vi.spyOn(file, 'writeFile')
 

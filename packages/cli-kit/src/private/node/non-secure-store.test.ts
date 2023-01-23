@@ -1,6 +1,6 @@
-import {Conf, ConfSchema, getSession, removeSession, setSession} from './store.js'
+import {Conf, ConfSchema, getSession, removeSession, setSession} from './non-secure-store.js'
 import {describe, expect, it} from 'vitest'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs.js'
+import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
 describe('getSession', () => {
   it('returns the content of the SessionStore key', async () => {
