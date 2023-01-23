@@ -6,7 +6,7 @@ import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js
 import {describe, it, expect, beforeEach, afterEach, beforeAll} from 'vitest'
 import {yarnLockfile, pnpmLockfile, PackageJson, pnpmWorkspaceFile} from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, dirname} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname, cwd} from '@shopify/cli-kit/node/path'
 
 describe('load', () => {
   type BlockType = 'ui' | 'function' | 'theme'
@@ -115,7 +115,7 @@ scopes = "read_products"
 
   it("throws an error if the configuration file doesn't exist", async () => {
     // Given
-    const currentDir = process.cwd()
+    const currentDir = cwd()
 
     // When/Then
     await expect(load({directory: currentDir, specifications})).rejects.toThrow(

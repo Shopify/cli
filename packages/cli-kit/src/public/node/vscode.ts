@@ -1,5 +1,5 @@
 import {fileExists, writeFile, readFile, findPathUp} from './fs.js'
-import {joinPath} from './path.js'
+import {joinPath, cwd} from './path.js'
 import {content, token, debug} from '../../output.js'
 
 /**
@@ -8,7 +8,7 @@ import {content, token, debug} from '../../output.js'
  * @param root - Root directory to start searching for .vscode directory.
  * @returns True if user editor is VS Code.
  */
-export async function isVSCode(root = process.cwd()): Promise<boolean> {
+export async function isVSCode(root = cwd()): Promise<boolean> {
   debug(content`Checking if the directory ${token.path(root)} or any of its parents has a .vscode directory... `)
   const config = await findPathUp(joinPath(root, '.vscode'), {type: 'directory'})
 

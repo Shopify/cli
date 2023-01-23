@@ -2,6 +2,7 @@ import {AbortError} from './public/node/error.js'
 import {hasGit, isTerminalInteractive} from './public/node/environment/local.js'
 import {content, token, debug} from './output.js'
 import {appendFileSync} from './public/node/fs.js'
+import {cwd} from './public/node/path.js'
 import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
 
 export const factory = git
@@ -174,6 +175,6 @@ export async function ensurePresentOrAbort() {
  */
 export async function ensureInsideGitDirectory(directory?: string) {
   if (!(await git({baseDir: directory}).checkIsRepo())) {
-    throw OutsideGitDirectoryError(directory || process.cwd())
+    throw OutsideGitDirectoryError(directory || cwd())
   }
 }

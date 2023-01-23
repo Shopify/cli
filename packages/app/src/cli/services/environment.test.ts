@@ -32,6 +32,7 @@ import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager.js'
 
 beforeEach(() => {
   vi.mock('./dev/fetch')
@@ -44,6 +45,7 @@ beforeEach(() => {
   vi.mock('./environment/identifiers')
   vi.mock('../models/app/loader.js')
   vi.mock('@shopify/cli-kit/node/session')
+  vi.mock('@shopify/cli-kit/node/node-package-manager.js')
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')
@@ -175,6 +177,7 @@ beforeEach(async () => {
   vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
   vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG1)
   vi.mocked(fetchOrgAndApps).mockResolvedValue(FETCH_RESPONSE)
+  vi.mocked(getPackageManager).mockResolvedValue('npm')
 })
 
 describe('ensureGenerateEnvironment', () => {
