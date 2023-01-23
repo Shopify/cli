@@ -20,11 +20,10 @@ import {content, token, debug} from '../../output.js'
 import {keypress} from '../../ui.js'
 import * as output from '../../output.js'
 import {firstPartyDev, useDeviceAuth} from '../../public/node/environment/local.js'
-import {AbortError} from '../../public/node/error.js'
+import {AbortError, BugError} from '../../public/node/error.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/environment/fqdn.js'
 import {openURL} from '../../public/node/system.js'
-import {Abort, Bug} from '../../error.js'
 import {gql} from 'graphql-request'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
@@ -218,7 +217,7 @@ async function ensureUserHasPartnerAccount(partnersToken: string) {
     output.warn(output.content`Make sure you've confirmed your Shopify and the Partner organization from the email`)
     await keypress()
     if (!(await hasPartnerAccount(partnersToken))) {
-      throw new Abort(
+      throw new AbortError(
         `Couldn't find your Shopify Partners organization`,
         `Have you confirmed your accounts from the emails you received?`,
       )
@@ -293,7 +292,7 @@ async function refreshTokens(token: IdentityToken, applications: OAuthApplicatio
 async function tokensFor(applications: OAuthApplications, session: Session, fqdn: string): Promise<OAuthSession> {
   const fqdnSession = session[fqdn]
   if (!fqdnSession) {
-    throw new Bug('No session found after ensuring authenticated')
+    throw new BugError('No session found after ensuring authenticated')
   }
   const tokens: OAuthSession = {}
   if (applications.adminApi) {

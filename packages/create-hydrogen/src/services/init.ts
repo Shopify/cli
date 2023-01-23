@@ -1,4 +1,4 @@
-import {error, output, ui} from '@shopify/cli-kit'
+import {output, ui} from '@shopify/cli-kit'
 import {username} from '@shopify/cli-kit/node/os'
 import {
   findUpAndReadPackageJson,
@@ -32,6 +32,7 @@ import {
   findPathUp,
 } from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 
 interface InitOptions {
@@ -85,7 +86,7 @@ async function init(options: InitOptions) {
           shallow: true,
         })
         if (!(await fileExists(joinPath(templatePath, 'package.json')))) {
-          throw new error.Abort(`The template ${templatePath} was not found.`, suggestHydrogenSupport())
+          throw new AbortError(`The template ${templatePath} was not found.`, suggestHydrogenSupport())
         }
         return {successMessage: `Downloaded template from ${repoUrl}`}
       },

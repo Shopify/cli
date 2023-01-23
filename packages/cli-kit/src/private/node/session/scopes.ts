@@ -1,4 +1,4 @@
-import {Bug} from '../../../error.js'
+import {BugError} from '../../../public/node/error.js'
 import {allAPIs, API} from '../../../network/api.js'
 
 /**
@@ -34,7 +34,7 @@ function defaultApiScopes(api: API): string[] {
     case 'partners':
       return ['cli']
     default:
-      throw new Bug(`Unknown API: ${api}`)
+      throw new BugError(`Unknown API: ${api}`)
   }
 }
 

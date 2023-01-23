@@ -13,7 +13,7 @@ import {
 } from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainQuery, FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {error} from '@shopify/cli-kit'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export const NoOrgError = (organizationId?: string) => {
   const nextSteps = [
@@ -44,8 +44,8 @@ export const NoOrgError = (organizationId?: string) => {
       {link: {label: 'this organization', url: `https://partner.shopify.com/${organizationId}`}},
     ])
   }
-  // eslint-disable-next-line rulesdir/no-error-factory-functions
-  return new error.Abort(`No Organization found`, undefined, nextSteps)
+
+  return new AbortError(`No Organization found`, undefined, nextSteps)
 }
 
 export interface FetchResponse {

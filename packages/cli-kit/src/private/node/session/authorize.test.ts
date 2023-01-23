@@ -1,11 +1,11 @@
-import {authorize, MismatchStateError} from './authorize.js'
+import {authorize} from './authorize.js'
 import {clientId} from './identity.js'
 import {listenRedirect} from './redirect-listener.js'
 import {randomHex, base64URLEncode} from '../../../public/node/crypto.js'
 import {openURL} from '../../../public/node/system.js'
 import {identityFqdn} from '../../../public/node/environment/fqdn.js'
 import {terminateBlockingPortProcessPrompt} from '../../../ui.js'
-import {CancelExecution} from '../../../error.js'
+import {CancelExecution} from '../../../public/node/error.js'
 import {checkPort} from 'get-port-please'
 import {killPortProcess} from 'kill-port-process'
 
@@ -60,7 +60,7 @@ describe('authorize', () => {
     const auth = () => authorize(['scope1', 'scope2'], 'state')
 
     // Then
-    await expect(auth).rejects.toThrowError(MismatchStateError)
+    await expect(auth).rejects.toThrowError(/authentication doesn't match/)
   })
 
   it('throws cancel execution exception if the port used for listening for the authorization response is already in use and the user do not want to terminate the process', async () => {

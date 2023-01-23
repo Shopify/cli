@@ -2,15 +2,11 @@ import {clientId} from './identity.js'
 import {listenRedirect} from './redirect-listener.js'
 import {base64URLEncode, randomBytes, randomHex, sha256} from '../../../public/node/crypto.js'
 import {openURL} from '../../../public/node/system.js'
-import {Abort, CancelExecution} from '../../../error.js'
+import {AbortError, CancelExecution} from '../../../public/node/error.js'
 import {identityFqdn} from '../../../public/node/environment/fqdn.js'
 import * as output from '../../../output.js'
 import {keypress, terminateBlockingPortProcessPrompt} from '../../../ui.js'
 import {checkPort as isPortAvailable} from 'get-port-please'
-
-export const MismatchStateError = new Abort(
-  "The state received from the authentication doesn't match the one that initiated the authentication process.",
-)
 
 export interface CodeAuthResult {
   code: string
@@ -50,7 +46,9 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
   const result = await listenRedirect(host, port, url)
 
   if (result.state !== state) {
-    throw MismatchStateError
+    throw new AbortError(
+      "The state received from the authentication doesn't match the one that initiated the authentication process.",
+    )
   }
 
   return {code: result.code, codeVerifier}

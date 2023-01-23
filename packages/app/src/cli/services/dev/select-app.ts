@@ -2,8 +2,9 @@ import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} fro
 import {Organization, OrganizationApp, MinimalOrganizationApp} from '../../models/organization.js'
 import {fetchAppFromApiKey} from '../dev/fetch.js'
 import {CreateAppQuery, CreateAppQuerySchema, CreateAppQueryVariables} from '../../api/graphql/create_app.js'
-import {error, output} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 /**
  * Select an app from env, list or create a new one:
@@ -52,7 +53,7 @@ export async function createApp(org: Organization, appName: string, token: strin
   const result: CreateAppQuerySchema = await partnersRequest(query, token, variables)
   if (result.appCreate.userErrors.length > 0) {
     const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
-    throw new error.Abort(errors)
+    throw new AbortError(errors)
   }
 
   const createdApp: OrganizationApp = result.appCreate.app

@@ -1,6 +1,6 @@
 import {moduleDirectory} from '../../../public/node/path.js'
 import {readFile, findPathUp} from '../../../public/node/fs.js'
-import {Bug} from '../../../error.js'
+import {BugError} from '../../../public/node/error.js'
 
 const HTMLFileNames = [
   'empty-url.html',
@@ -72,4 +72,4 @@ export const MissingCodeString = "The authentication can't continue because the 
 
 export const MissingStateString = "The authentication can't continue because the redirect doesn't include the state."
 
-export const RedirectPageAssetNotFoundError = () => new Bug(`Redirect page asset not found`)
+export const RedirectPageAssetNotFoundError = () => new BugError(`Redirect page asset not found`)
