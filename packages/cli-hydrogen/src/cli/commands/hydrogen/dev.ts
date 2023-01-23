@@ -3,7 +3,7 @@ import {hydrogenFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
-import {resolvePath} from '@shopify/cli-kit/node/path'
+import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 
 export default class Dev extends Command {
   static description = 'Run a Hydrogen storefront locally for development.'
@@ -27,7 +27,7 @@ export default class Dev extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
-    const directory = flags.path ? resolvePath(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : cwd()
 
     await devService({directory, ...flags, commandConfig: this.config})
   }
