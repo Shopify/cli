@@ -20,7 +20,7 @@ beforeEach(async () => {
 })
 
 describe('env show', () => {
-  it('outputs the new environmenat', async () => {
+  it('outputs the new environment', async () => {
     // Given
     vi.spyOn(file, 'writeFile')
 

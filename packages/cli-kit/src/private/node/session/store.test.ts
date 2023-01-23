@@ -11,7 +11,7 @@ beforeEach(() => {
   vi.resetAllMocks()
   vi.clearAllMocks()
   vi.mock('../secure-store.js')
-  vi.mock('../store.js')
+  vi.mock('../non-secure-store.js')
   vi.mock('../../../public/node/os')
   vi.mocked(platformAndArch).mockReturnValue({platform: 'darwin', arch: 'x64'})
   vi.mock('keytar', () => {
