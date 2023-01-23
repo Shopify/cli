@@ -186,17 +186,33 @@ interface UploadFunctionExtensionOptions {
 ): Promise<UploadExtensionValidationError[]> {
   const deploymentUUID = randomUUID()
   // const signedURL = await getUIExtensionUploadURL(options.identifiers.app, deploymentUUID)
-  const formattedExtensions: ExtensionSettings[] = extensions.map((extension) => {
-    return {
-      uuid: options.identifiers.extensions[extension.localIdentifier] || "error",
-      config: JSON.stringify(extension),
-      context: '',
-    }
-  })
-  let signedURL = ""
+
+  // Must upload Wasm blobs in sequence. Otherwise we run into "429 too many requests".
+  let signedURLs: {
+    [localIdentifier: string]: string
+  } = {}
+
   for (const extension of extensions) {
-    signedURL = await uploadWasmBlob(extension, options.identifiers.app, options.token)
+    const url = await uploadWasmBlob(extension, options.identifiers.app, options.token)
+    signedURLs[extension.localIdentifier] = url
+    await uploadFunctionExtension(extension, url, {
+      apiKey: options.identifiers.app,
+      token: options.token,
+      identifier: options.identifiers.extensions[extension.localIdentifier],
+    })
   }
+
+  const formattedExtensions: ExtensionSettings[] = await Promise.all(
+    extensions.map(async (extension) => {
+      return {
+        uuid: options.identifiers.extensions[extension.localIdentifier] || "error",
+        config: JSON.stringify(await functionConfiguration(extension, signedURLs[extension.localIdentifier])),
+        context: '',
+      }
+    })
+  )
+
+  output.info("formattedExtensions " + JSON.stringify(formattedExtensions))
 
   // const formData = http.formData()
   // const buffer = readSync("./")
@@ -210,7 +226,7 @@ interface UploadFunctionExtensionOptions {
   const variables: CreateDeploymentVariables = {
     apiKey: options.identifiers.app,
     uuid: deploymentUUID,
-    bundleUrl: signedURL,
+    bundleUrl: Object.values(signedURLs)[0] || "", // we don't use this, but it must be a valid URL for deploy to work.
     extensions: formattedExtensions,
   }
 
@@ -242,7 +258,7 @@ interface UploadFunctionExtensionOptions {
  * @param options - Options to adjust the upload.
  * @returns A promise that resolves with the identifiers.
  */
-export async function uploadFunctionExtensions(
+export async function registerFunctionExtensions(
   extensions: FunctionExtension[],
   options: UploadFunctionExtensionsOptions,
 ): Promise<Identifiers> {
@@ -252,26 +268,18 @@ export async function uploadFunctionExtensions(
 
   // Functions are uploaded sequentially to avoid reaching the API limit
   for (const extension of extensions) {
-    output.info("Identifiers " + JSON.stringify(identifiers))
+    // output.info("Identifiers " + JSON.stringify(identifiers))
     if (identifiers.extensions[extension.localIdentifier] === undefined) {
-      output.info("registering")
+      // output.info("registering")
       const registration = await createExtension(
         options.identifiers.app,
         'FUNCTION',
         extension.localIdentifier,
         options.token
       )
-      output.info("registration " + JSON.stringify(registration))
+      // output.info("registration " + JSON.stringify(registration))
       functionIds[extension.localIdentifier] = registration.uuid
     }
-
-    // This no longer saves anything in SS, but it emits Kafka events to the engine
-    // which is required.
-    await uploadFunctionExtension(extension, {
-      apiKey: options.identifiers.app,
-      token: options.token,
-      identifier: identifiers.extensions[extension.localIdentifier],
-    })
   }
 
   identifiers = {
@@ -285,12 +293,42 @@ export async function uploadFunctionExtensions(
   return identifiers
 }
 
+async function functionConfiguration(
+  extension: FunctionExtension,
+  moduleUploadUrl: String | undefined,
+): Promise<Object> {
+  let inputQuery: string | undefined
+  if (await fileExists(extension.inputQueryPath())) {
+    inputQuery = await readFile(extension.inputQueryPath())
+  }
+
+  return {
+    title: extension.configuration.name,
+    description: extension.configuration.description,
+    apiType: extension.configuration.type,
+    apiVersion: extension.configuration.apiVersion,
+    inputQuery,
+    inputQueryVariables: extension.configuration.input?.variables
+      ? {
+          singleJsonMetafield: extension.configuration.input.variables,
+        }
+      : undefined,
+    appBridge: extension.configuration.ui?.paths
+      ? {
+          detailsPath: extension.configuration.ui.paths.details,
+          createPath: extension.configuration.ui.paths.create,
+        }
+      : undefined,
+    enableCreationUi: extension.configuration.ui?.enable_create ?? true,
+    moduleUploadUrl: moduleUploadUrl
+  }
+}
+
 async function uploadFunctionExtension(
   extension: FunctionExtension,
+  url: string,
   options: UploadFunctionExtensionOptions,
 ): Promise<string> {
-  const url = await uploadWasmBlob(extension, options.apiKey, options.token)
-
   let inputQuery: string | undefined
   if (await fileExists(extension.inputQueryPath())) {
     inputQuery = await readFile(extension.inputQueryPath())

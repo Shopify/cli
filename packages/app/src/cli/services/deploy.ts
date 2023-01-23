@@ -2,7 +2,7 @@
 import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle.js'
 import {
   uploadThemeExtensions,
-  uploadFunctionExtensions,
+  registerFunctionExtensions,
   uploadFunctionExtensionsWithEF,
   uploadUIExtensionsBundle,
   UploadExtensionValidationError,
@@ -102,8 +102,7 @@ export const deploy = async (options: DeployOptions) => {
       }
 
       output.info("Register extensions if required")
-      // await createExtension(apiKey, 'FUNCTION', 'my function', token)
-      identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
+      identifiers = await registerFunctionExtensions(app.extensions.function, {identifiers, token})
       app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
 
       output.info("Deploy extension")
