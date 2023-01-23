@@ -17,19 +17,17 @@ export async function buildGraphqlTypes(directory: string) {
 }
 
 export async function bundleExtension(fun: FunctionExtension) {
-  // const esbuildOptions = getESBuildOptions(fun.directory)
-  // return esBuild(esbuildOptions)
-  return exec('npm', ['exec', '--', 'vite', 'build'], {
-    cwd: fun.directory,
-    stdout: process.stdout,
-    stderr: process.stderr,
-  })
+  const esbuildOptions = getESBuildOptions(fun.directory)
+  return esBuild(esbuildOptions)
 }
 
 function getESBuildOptions(directory: string): Parameters<typeof esBuild>[0] {
   const esbuildOptions: Parameters<typeof esBuild>[0] = {
     outfile: joinPath(directory, 'dist/function.js'),
-    entryPoints: [joinPath(directory, 'src/index.js')],
+    entryPoints: [joinPath(directory, 'node_modules/@shopify/shopify_function/index.ts')],
+    alias: {
+      "user-function": joinPath(directory, 'src/index.js'),
+    },
     logLevel: 'info',
     bundle: true,
     legalComments: 'none',
