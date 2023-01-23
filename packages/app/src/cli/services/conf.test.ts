@@ -1,17 +1,11 @@
 import {AppConfSchema, clearAppInfo, getAppInfo, setAppInfo} from './conf.js'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it} from 'vitest'
 import {Conf} from '@shopify/cli-kit/node/conf'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
 const APP1 = {appId: 'app1', storeFqdn: 'store1', orgId: 'org1', directory: '/app1'}
 const APP2 = {appId: 'app2', storeFqdn: 'store2', orgId: 'org2', directory: '/app2'}
 const APP1Updated = {appId: 'updated-app1', storeFqdn: 'store1-updated', orgId: 'org1-updated', directory: '/app1'}
-
-beforeEach(() => {
-  vi.resetAllMocks()
-  vi.clearAllMocks()
-  vi.useRealTimers()
-})
 
 describe('getAppInfo', async () => {
   it('returns cached info if existss', async () => {
