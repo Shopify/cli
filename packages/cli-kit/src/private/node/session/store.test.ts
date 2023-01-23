@@ -1,7 +1,7 @@
 import {ApplicationToken, Session} from './schema.js'
 import {store, fetch, remove, identifier} from './store.js'
 import {getSession, removeSession, setSession} from '../../../store.js'
-import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../../../secure-store.js'
+import {secureStoreSave, secureStoreFetch, secureStoreRemove} from '../secure-store.js'
 import {platformAndArch} from '../../../public/node/os.js'
 import {describe, expect, vi, it, beforeEach} from 'vitest'
 
@@ -10,7 +10,7 @@ const findCredentials = vi.fn()
 beforeEach(() => {
   vi.resetAllMocks()
   vi.clearAllMocks()
-  vi.mock('../../../secure-store')
+  vi.mock('../secure-store.js')
   vi.mock('../../../store')
   vi.mock('../../../public/node/os')
   vi.mocked(platformAndArch).mockReturnValue({platform: 'darwin', arch: 'x64'})
@@ -32,7 +32,7 @@ describe('store', () => {
     await store(session)
 
     // Then
-    expect(vi.mocked(secureStore)).toHaveBeenCalledWith(identifier, JSON.stringify(session))
+    expect(vi.mocked(secureStoreSave)).toHaveBeenCalledWith(identifier, JSON.stringify(session))
   })
 
   it('saves the serialized session to the local store on Windows', async () => {
@@ -63,7 +63,7 @@ describe('store', () => {
 describe('fetch', () => {
   it('returns undefined when no session exists in the secure store', async () => {
     // Given
-    vi.mocked(secureFetch).mockResolvedValue(null)
+    vi.mocked(secureStoreFetch).mockResolvedValue(null)
 
     // When
     const got = await fetch()
@@ -74,7 +74,7 @@ describe('fetch', () => {
 
   it('returns undefined when the content does not match the schema', async () => {
     // Given
-    vi.mocked(secureFetch).mockResolvedValue(JSON.stringify({invalid: 'format'}))
+    vi.mocked(secureStoreFetch).mockResolvedValue(JSON.stringify({invalid: 'format'}))
 
     // When
     const got = await fetch()
@@ -86,7 +86,7 @@ describe('fetch', () => {
   it('returns the session when the format is valid', async () => {
     // Given
     const session = testSession()
-    vi.mocked(secureFetch).mockResolvedValue(JSON.stringify(session))
+    vi.mocked(secureStoreFetch).mockResolvedValue(JSON.stringify(session))
 
     // When
     const got = await fetch()
@@ -124,7 +124,7 @@ describe('remove', () => {
     await remove()
 
     // Then
-    expect(vi.mocked(secureRemove)).toHaveBeenCalledWith(identifier)
+    expect(vi.mocked(secureStoreRemove)).toHaveBeenCalledWith(identifier)
   })
 
   it('removes the session from the secure store on Windows', async () => {
