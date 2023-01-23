@@ -310,7 +310,7 @@ async function bundleInstallThemeCheck() {
  * @returns The absolute path to the directory.
  */
 async function shopifyCLIDirectory(embedded = false): Promise<string> {
-  const embeddedDirectory = (await file.findPathUp('assets/cli-sources', {
+  const embeddedDirectory = (await file.findPathUp('assets/cli-ruby', {
     type: 'directory',
     cwd: dirname(fileURLToPath(import.meta.url)),
   })) as string
