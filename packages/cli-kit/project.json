@@ -24,14 +24,14 @@
       "lint": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm eslint \"src/**/*.ts\"; cd assets/cli-sources; bundle install; bundle exec rake rubocop",
+          "command": "pnpm eslint \"src/**/*.ts\"; cd assets/cli-ruby; bundle install; bundle exec rake rubocop",
           "cwd": "packages/cli-kit"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm eslint 'src/**/*.ts' --fix; cd assets/cli-sources; bundle install; bundle exec rake rubocop -a",
+          "command": "pnpm eslint 'src/**/*.ts' --fix; cd assets/cli-ruby; bundle install; bundle exec rake rubocop -a",
           "cwd": "packages/cli-kit"
         }
       },
