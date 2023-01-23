@@ -1,4 +1,4 @@
-import {error, output} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {
   addNPMDependencies,
   findUpAndReadPackageJson,
@@ -10,6 +10,7 @@ import {
 import {exec} from '@shopify/cli-kit/node/system'
 import {dirname, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {findPathUp} from '@shopify/cli-kit/node/fs'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 type HomebrewPackageName = 'shopify-cli' | 'shopify-cli@3'
 
@@ -23,7 +24,7 @@ export async function upgrade(directory: string, currentVersion: string): Promis
   if (projectDir) {
     newestVersion = await upgradeLocalShopify(projectDir, currentVersion)
   } else if (usingPackageManager()) {
-    throw new error.Abort(
+    throw new AbortError(
       output.content`Couldn't find the configuration file for ${output.token.path(
         directory,
       )}, are you in a Shopify project directory?`,

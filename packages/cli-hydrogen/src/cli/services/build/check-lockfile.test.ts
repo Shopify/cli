@@ -1,9 +1,9 @@
 import {checkLockfileStatus} from './check-lockfile.js'
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
-import {outputMocker} from '@shopify/cli-kit'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {gitFactory} from '@shopify/cli-kit/node/git'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/git')
 
@@ -20,7 +20,7 @@ describe('checkLockfileStatus()', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
-    outputMocker.mockAndCaptureOutput().clear()
+    mockAndCaptureOutput().clear()
   })
 
   describe('when a lockfile present', () => {
@@ -35,7 +35,7 @@ describe('checkLockfileStatus()', () => {
     it('does not call displayLockfileWarning', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
-        const outputMock = outputMocker.mockAndCaptureOutput()
+        const outputMock = mockAndCaptureOutput()
 
         await checkLockfileStatus(tmpDir)
 
@@ -59,7 +59,7 @@ describe('checkLockfileStatus()', () => {
       it('renders a warning', async () => {
         await inTemporaryDirectory(async (tmpDir) => {
           await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
-          const outputMock = outputMocker.mockAndCaptureOutput()
+          const outputMock = mockAndCaptureOutput()
 
           await checkLockfileStatus(tmpDir)
 
@@ -99,7 +99,7 @@ describe('checkLockfileStatus()', () => {
         await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
         await writeFile(joinPath(tmpDir, 'package-lock.json'), '')
 
-        const outputMock = outputMocker.mockAndCaptureOutput()
+        const outputMock = mockAndCaptureOutput()
 
         await checkLockfileStatus(tmpDir)
 
@@ -135,7 +135,7 @@ describe('checkLockfileStatus()', () => {
 
     it('renders a warning', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
-        const outputMock = outputMocker.mockAndCaptureOutput()
+        const outputMock = mockAndCaptureOutput()
 
         await checkLockfileStatus(tmpDir)
 

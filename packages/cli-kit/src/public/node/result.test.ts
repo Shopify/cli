@@ -1,5 +1,5 @@
 import {err, ok} from './result.js'
-import {mockAndCaptureOutput} from '../../testing/output.js'
+import {mockAndCaptureOutput} from './testing/output.js'
 import {success} from '../../output.js'
 import {describe, expect, it} from 'vitest'
 

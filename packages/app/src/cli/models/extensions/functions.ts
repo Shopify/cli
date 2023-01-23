@@ -1,12 +1,13 @@
 import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
 import {blocks, defaultFunctionsFlavors} from '../../constants.js'
-import {schema, error} from '@shopify/cli-kit'
+import {schema} from '@shopify/cli-kit'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {exec} from '@shopify/cli-kit/node/system'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 
 // Base config type that all config schemas must extend
@@ -104,7 +105,7 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
 
       Note that the command must output a dist/index.wasm file.
       `)
-      throw new error.AbortSilent()
+      throw new AbortSilentError()
     }
     const buildCommandComponents = buildCommand.split(' ')
     stdout.write(`Building function ${this.localIdentifier}...`)

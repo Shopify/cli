@@ -1,6 +1,6 @@
 import {buildHeaders, httpsAgent, RequestClientError, sanitizedHeadersOutput} from './headers.js'
 import {stringifyMessage, content, token as outputToken, token, debug} from '../../../output.js'
-import {Abort} from '../../../error.js'
+import {AbortError} from '../../../public/node/error.js'
 import {ClientError, GraphQLClient, RequestDocument, Variables} from 'graphql-request'
 import {performance} from 'perf_hooks'
 
@@ -70,7 +70,7 @@ async function handlingErrors<T>(api: string, action: () => Promise<T>): Promise
       if (error.response.status < 500) {
         mappedError = new RequestClientError(errorMessage, error.response.status)
       } else {
-        mappedError = new Abort(errorMessage)
+        mappedError = new AbortError(errorMessage)
       }
       mappedError.stack = error.stack
       throw mappedError

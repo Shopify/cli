@@ -4,13 +4,13 @@ import {
   CreateDeploymentQuerySchema,
   CreateDeploymentQuery,
 } from './graphql/create_deployment.js'
-import {UnrecoverableError, WebPageNotAvailable, TooManyRequestsError} from './error.js'
 import {UploadDeploymentQuery} from './graphql/upload_deployment.js'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {ClientError} from 'graphql-request'
 import {uploadOxygenDeploymentFile, oxygenRequest} from '@shopify/cli-kit/node/api/oxygen'
 import {inTemporaryDirectory, createFileReadStream} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export const createDeployment = async (config: ReqDeployConfig): Promise<CreateDeploymentResponse> => {
   const variables = {
@@ -33,17 +33,17 @@ export const createDeployment = async (config: ReqDeployConfig): Promise<CreateD
 
     if (response.createDeployment?.error) {
       if (response.createDeployment.error.unrecoverable) {
-        throw UnrecoverableError(response.createDeployment.error.debugInfo)
+        throw new AbortError(`Unrecoverable: ${response.createDeployment.error.debugInfo}`)
       }
 
-      throw new Error(`Failed to create deployment. ${response.createDeployment.error.debugInfo}`)
+      throw new AbortError(`Failed to create deployment. ${response.createDeployment.error.debugInfo}`)
     }
 
     return response.createDeployment
   } catch (error) {
     if (error instanceof ClientError) {
       if (error.response.status === 429) {
-        throw TooManyRequestsError()
+        throw new AbortError("You've made too many requests. Please try again later")
       }
     }
 
@@ -67,10 +67,10 @@ export const uploadDeployment = async (config: ReqDeployConfig, deploymentID: st
     const response = await uploadOxygenDeploymentFile(config.oxygenAddress, config.deploymentToken, form)
     if (!response.ok) {
       if (response.status === 429) {
-        throw TooManyRequestsError()
+        throw new AbortError("You've made too many requests. Please try again later")
       }
       if (response.status !== 200 && response.status !== 202) {
-        throw new Error(`Failed to upload deployment. ${await response.json()}`)
+        throw new AbortError(`Failed to upload deployment. ${await response.json()}`)
       }
     }
 
@@ -78,15 +78,15 @@ export const uploadDeployment = async (config: ReqDeployConfig, deploymentID: st
   })
 
   if (!deploymentData) {
-    throw new Error('Failed to upload deployment.')
+    throw new AbortError('Failed to upload deployment.')
   }
   const deploymentError = deploymentData.data?.uploadDeployment?.error
   if (deploymentError) {
     if (deploymentError.unrecoverable) {
-      throw UnrecoverableError(deploymentError.debugInfo)
+      throw new AbortError(`Unrecoverable: ${deploymentError.debugInfo}`)
     }
 
-    throw new Error(`Failed to upload deployment: ${deploymentError.debugInfo}`)
+    throw new AbortError(`Failed to upload deployment: ${deploymentError.debugInfo}`)
   }
 
   return deploymentData.data.uploadDeployment.deployment.previewURL
@@ -95,7 +95,7 @@ export const uploadDeployment = async (config: ReqDeployConfig, deploymentID: st
 export const healthCheck = async (pingUrl: string) => {
   const url = `${pingUrl}/__health`
   const result = await fetch(url, {method: 'GET'})
-  if (result.status !== 200) throw WebPageNotAvailable()
+  if (result.status !== 200) throw new AbortError('Web page not available.')
 }
 
 const buildOperationsString = (deploymentID: string): string => {

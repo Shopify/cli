@@ -16,7 +16,7 @@ import {
 import {exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
 import {joinPath, normalizePath as pathNormalize} from './path.js'
-import {Abort} from '../../error.js'
+import {AbortError} from './error.js'
 import {describe, it, expect, vi, test} from 'vitest'
 import latestVersion from 'latest-version'
 
@@ -566,15 +566,12 @@ describe('findUpAndReadPackageJson', () => {
 describe('addResolutionOrOverride', () => {
   it('when no package.json then an abort exception is thrown', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const reactType = {'@types/react': '17.0.30'}
-      const packageJsonPath = joinPath(tmpDir, 'package.json')
-      // When
+      // Given/When
       const result = () => addResolutionOrOverride(tmpDir, {'@types/react': '17.0.30'})
 
       // Then
 
-      await expect(result).rejects.toThrow(Abort)
+      await expect(result).rejects.toThrow(AbortError)
     })
   })
 

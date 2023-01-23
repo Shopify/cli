@@ -1,17 +1,17 @@
 import {isSpinEnvironment, spinFqdn} from './spin.js'
-import {Abort} from '../../../error.js'
+import {AbortError} from '../error.js'
 import {serviceEnvironment} from '../../../private/node/environment/service.js'
 
-export const CouldntObtainPartnersSpinFQDNError = new Abort(
+export const CouldntObtainPartnersSpinFQDNError = new AbortError(
   "Couldn't obtain the Spin FQDN for Partners when the CLI is not running from a Spin environment.",
 )
-export const CouldntObtainIdentitySpinFQDNError = new Abort(
+export const CouldntObtainIdentitySpinFQDNError = new AbortError(
   "Couldn't obtain the Spin FQDN for Identity when the CLI is not running from a Spin environment.",
 )
-export const CouldntObtainShopifySpinFQDNError = new Abort(
+export const CouldntObtainShopifySpinFQDNError = new AbortError(
   "Couldn't obtain the Spin FQDN for Shopify when the CLI is not running from a Spin environment.",
 )
-export const NotProvidedStoreFQDNError = new Abort(
+export const NotProvidedStoreFQDNError = new AbortError(
   "Couldn't obtain the Shopify FQDN because the store FQDN was not provided.",
 )
 

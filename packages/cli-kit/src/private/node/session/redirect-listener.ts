@@ -10,7 +10,7 @@ import {
   MissingCodeString,
   MissingStateString,
 } from './post-auth.js'
-import {Abort, Bug} from '../../../error.js'
+import {AbortError, BugError} from '../../../public/node/error.js'
 import {content, info, token} from '../../../output.js'
 import {createApp, IncomingMessage, ServerResponse} from 'h3'
 import url from 'url'
@@ -69,7 +69,7 @@ export class RedirectListener {
       // If there was an empty/malformed URL sent back.
       if (!requestUrl) {
         const file = await getEmptyUrlHTML()
-        const err = new Bug(EmptyUrlString)
+        const err = new BugError(EmptyUrlString)
         return respond(file, err, undefined, undefined)
       }
 
@@ -77,21 +77,21 @@ export class RedirectListener {
       const queryObject = url.parse(requestUrl, true).query
       if (queryObject.error && queryObject.error_description) {
         const file = await getAuthErrorHTML()
-        const err = new Abort(`${queryObject.error_description}`)
+        const err = new AbortError(`${queryObject.error_description}`)
         return respond(file, err, undefined, undefined)
       }
 
       // If the code isn't present in the URL.
       if (!queryObject.code) {
         const file = await getMissingCodeHTML()
-        const err = new Bug(MissingCodeString)
+        const err = new BugError(MissingCodeString)
         return respond(file, err, undefined, undefined)
       }
 
       // If the state isn't present in the URL.
       if (!queryObject.state) {
         const file = await getMissingStateHTML()
-        const err = new Bug(MissingStateString)
+        const err = new BugError(MissingStateString)
         return respond(file, err, undefined, undefined)
       }
 

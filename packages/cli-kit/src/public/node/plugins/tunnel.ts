@@ -1,5 +1,5 @@
 import {err, Result} from '../result.js'
-import {ExtendableError} from '../../../error.js'
+import {ExtendableError} from '../error.js'
 import {FanoutHookFunction, PluginReturnsForHook} from '../plugins.js'
 
 export type TunnelErrorType = 'invalid-provider' | 'tunnel-already-running' | 'wrong-credentials' | 'unknown'

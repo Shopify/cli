@@ -1,7 +1,7 @@
-import {createTheme, deleteTheme, fetchThemes, ThemeParams, updateTheme} from './themes-api.js'
+import {createTheme, deleteTheme, fetchThemes, ThemeParams, updateTheme, publishTheme} from './themes-api.js'
 import {test, vi, expect, describe} from 'vitest'
-import {error} from '@shopify/cli-kit'
 import {restRequest} from '@shopify/cli-kit/node/api/admin'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit')
 vi.mock('@shopify/cli-kit/node/api/admin')
@@ -89,6 +89,31 @@ describe('updateTheme', () => {
   })
 })
 
+describe('publishTheme', () => {
+  test('publish a theme', async () => {
+    // Given
+    const id = 123
+    const name = 'updated theme'
+    const role = 'live'
+
+    vi.mocked(restRequest).mockResolvedValue({
+      json: {theme: {id, name, role}},
+      status: 200,
+      headers: {},
+    })
+
+    // When
+    const theme = await publishTheme(id, session)
+
+    // Then
+    expect(restRequest).toHaveBeenCalledWith('PUT', `/themes/${id}`, session, {theme: {id, role: 'main'}}, {})
+    expect(theme).not.toBeNull()
+    expect(theme!.id).toEqual(id)
+    expect(theme!.name).toEqual(name)
+    expect(theme!.role).toEqual(role)
+  })
+})
+
 describe('deleteTheme', () => {
   test('deletes a theme', async () => {
     // Given
@@ -129,7 +154,7 @@ describe('request errors', () => {
         return deleteTheme(1, session)
 
         // Then
-      }).rejects.toThrowError(error.Abort)
+      }).rejects.toThrowError(AbortError)
     })
   })
 })

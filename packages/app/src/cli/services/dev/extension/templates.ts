@@ -1,7 +1,7 @@
-import {error} from '@shopify/cli-kit'
 import {renderLiquidTemplate} from '@shopify/cli-kit/node/liquid'
 import {joinPath, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
+import {BugError} from '@shopify/cli-kit/node/error'
 
 export interface GetHTMLOptions {
   extensionSurface?: string
@@ -12,7 +12,7 @@ export interface GetHTMLOptions {
 
 export type Template = 'index' | 'tunnel-error' | 'error'
 
-export class TemplateNotFoundError extends error.Bug {
+export class TemplateNotFoundError extends BugError {
   constructor(options: GetHTMLOptions) {
     super(`Couldn't find template ${options.template} for extension surface ${options.extensionSurface}`)
   }

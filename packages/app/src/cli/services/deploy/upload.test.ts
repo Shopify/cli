@@ -7,11 +7,11 @@ import {
 } from '../../api/graphql/functions/upload_url_generate.js'
 import {AppFunctionSetMutation, AppFunctionSetMutationSchema} from '../../api/graphql/functions/app_function_set.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {error} from '@shopify/cli-kit'
 import {functionProxyRequest} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -144,7 +144,7 @@ describe('uploadFunctionExtensions', () => {
 
       // When
       await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
-        new error.Abort(
+        new AbortError(
           'The size of the Wasm binary file for Function my-function is too large. It must be less than 200 kb.',
         ),
       )
@@ -183,7 +183,7 @@ describe('uploadFunctionExtensions', () => {
 
       // When
       await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
-        new error.Bug(
+        new AbortError(
           'Something went wrong uploading the Function my-function. The server responded with status 401 and body: error body',
         ),
       )
@@ -222,7 +222,7 @@ describe('uploadFunctionExtensions', () => {
 
       // When
       await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
-        new error.Abort('Something went wrong uploading the Function my-function. Try again.'),
+        new AbortError('Something went wrong uploading the Function my-function. Try again.'),
       )
 
       // Then
@@ -259,7 +259,7 @@ describe('uploadFunctionExtensions', () => {
 
       // When
       await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
-        new error.Abort('Something went wrong uploading the Function my-function. Try again.'),
+        new AbortError('Something went wrong uploading the Function my-function. Try again.'),
       )
 
       // Then

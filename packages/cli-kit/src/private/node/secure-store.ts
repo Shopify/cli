@@ -1,6 +1,6 @@
 import {keychainConstants} from './constants.js'
+import {AbortError} from '../../public/node/error.js'
 import {content as outputContent, debug} from '../../output.js'
-import {Abort} from '../../error.js'
 
 /**
  * Fetches secured content from the system's keychain.
@@ -57,7 +57,7 @@ function createAbort(error: unknown, message: string) {
     newMessage = message.concat(`: ${error.message}`)
     stack = error.stack
   }
-  const abort = new Abort(newMessage)
+  const abort = new AbortError(newMessage)
   abort.stack = stack
   return abort
 }

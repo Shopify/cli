@@ -1,19 +1,33 @@
 {%- if flavor contains "react" -%}
 import React from 'react';
-import {Tile, Text, render} from '@shopify/retail-ui-extensions-react';
+import {Tile, Text, Screen, render, useExtensionApi} from '@shopify/retail-ui-extensions-react';
 
 const SmartGridTile = () => {
-  return <Tile title="My app" subtitle="SmartGrid Extension" onPress={() => {}} enabled />
+  const api = useExtensionApi();
+  return (
+    <Tile
+      title="My app"
+      subtitle="SmartGrid Extension"
+      onPress={() => {
+        api.smartGrid.presentModal({path: 'default'});
+      }}
+      enabled
+    />
+  );
 };
 
 const SmartGridModal = () => {
-  return <Text>Welcome to the extension!</Text>;
+  return (
+    <Screen name="Hello World">
+      <Text>Welcome to the extension!</Text>
+    </Screen>
+  );
 }
 
 render('Retail::SmartGrid::Tile', () => <SmartGridTile />);
 render('Retail::SmartGrid::Modal', () => <SmartGridModal />);
 {%- else -%}
-import { extend, Text } from "@shopify/retail-ui-extensions";
+import { extend, Text, Screen } from "@shopify/retail-ui-extensions";
 
 extend('Retail::SmartGrid::Tile', (root, api) => {
   const tileProps = {
@@ -21,9 +35,9 @@ extend('Retail::SmartGrid::Tile', (root, api) => {
     subtitle: 'SmartGrid Extension',
     enabled: true,
     onPress: () => {
-      api.smartGrid.presentModal();
-    }
-  }
+      api.smartGrid.presentModal({path: 'default'});
+    },
+  };
 
   const tile = root.createComponent('Tile', tileProps);
 
@@ -32,13 +46,11 @@ extend('Retail::SmartGrid::Tile', (root, api) => {
 });
 
 extend('Retail::SmartGrid::Modal', (root, api) => {
-  root.appendChild(
-    root.createComponent(
-      Text,
-      {},
-      `Welcome to the ${api.extensionPoint} extension surface!`
-    )
-  );
+  const screen = root.createComponent(Screen, {name: 'Hello World'});
+  root.appendChild(screen);
+
+  screen.appendChild(root.createComponent(Text, {}, `Welcome to the extension!`));
+
   root.mount();
 });
 {%- endif -%}

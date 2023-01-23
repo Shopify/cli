@@ -1,6 +1,6 @@
 import {HydrogenApp} from '../models/hydrogen.js'
 import {genericConfigurationFileNames} from '../constants.js'
-import {ui, error} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
 import {
   addNPMDependenciesWithoutVersionIfNeeded,
   findUpAndReadPackageJson,
@@ -10,6 +10,7 @@ import {addRecommendedExtensions, isVSCode} from '@shopify/cli-kit/node/vscode'
 import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
 import {writeFile, fileExists, removeFile, fileContentPrettyFormat} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import stream from 'stream'
 
 interface AddESlintOptions {
@@ -56,7 +57,7 @@ export async function addESLint({app, force, install}: AddESlintOptions) {
             if (force) {
               await removeFile(eslintConfigPath)
             } else {
-              throw new error.Abort('ESLint config already exists.', 'Use --force to override existing config.')
+              throw new AbortError('ESLint config already exists.', 'Use --force to override existing config.')
             }
           }
 

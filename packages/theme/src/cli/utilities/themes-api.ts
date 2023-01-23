@@ -3,9 +3,9 @@ import {apiCallLimit, retryAfter} from './themes-api/headers.js'
 import {retry} from './themes-api/retry.js'
 import {storeAdminUrl} from './theme-urls.js'
 import {Theme} from '../models/theme.js'
-import {error} from '@shopify/cli-kit'
 import {restRequest, RestResponse} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role'>>
 
@@ -22,6 +22,10 @@ export async function createTheme(params: ThemeParams, session: AdminSession): P
 export async function updateTheme(id: number, params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
   const response = await request('PUT', `/themes/${id}`, session, {theme: {id, ...params}})
   return buildTheme(response.json.theme)
+}
+
+export async function publishTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
+  return updateTheme(id, {role: 'main'}, session)
 }
 
 export async function deleteTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
@@ -56,13 +60,13 @@ async function request<T>(
     case status === 403:
       return handleForbiddenError(session)
     case status === 401:
-      throw new error.Abort(`[${status}] API request unauthorized error`)
+      throw new AbortError(`[${status}] API request unauthorized error`)
     case status >= 400 && status <= 499:
-      throw new error.Abort(`[${status}] API request client error`)
+      throw new AbortError(`[${status}] API request client error`)
     case status >= 500 && status <= 599:
-      throw new error.Abort(`[${status}] API request server error`)
+      throw new AbortError(`[${status}] API request server error`)
     default:
-      throw new error.Abort(`[${status}] API request unexpected error`)
+      throw new AbortError(`[${status}] API request unexpected error`)
   }
 }
 
@@ -90,7 +94,7 @@ function handleForbiddenError(session: AdminSession): never {
   const store = session.storeFqdn
   const adminUrl = storeAdminUrl(session)
 
-  throw new error.Abort(
+  throw new AbortError(
     `You are not authorized to edit themes on "${store}".`,
     "You can't use Shopify CLI with development stores if you only have Partner staff " +
       'member access. If you want to use Shopify CLI to work on a development store, then ' +

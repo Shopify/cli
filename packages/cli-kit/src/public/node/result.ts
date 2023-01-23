@@ -1,5 +1,4 @@
-import {FatalError} from './error.js'
-import {Abort, ExtendableError} from '../../error.js'
+import {FatalError, AbortError, ExtendableError} from './error.js'
 
 export type Result<TValue, TError> = Ok<TValue, TError> | Err<TValue, TError>
 
@@ -115,11 +114,11 @@ export class Err<TValue, TError> {
     if (this.error instanceof FatalError) {
       throw this.error
     } else if (this.error instanceof ExtendableError || this.error instanceof Error) {
-      const error = new Abort(this.error.message)
+      const error = new AbortError(this.error.message)
       error.stack = this.error.stack
       throw error
     } else {
-      throw new Abort(`${this.error}`)
+      throw new AbortError(`${this.error}`)
     }
   }
 

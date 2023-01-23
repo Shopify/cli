@@ -419,6 +419,10 @@ export async function fileContentPrettyFormat(content: string, options: FileOpti
     case '.css':
       prettierConfig.parser = ext.slice(1)
       break
+    case '.ts':
+    case '.tsx':
+      prettierConfig.parser = 'typescript'
+      break
   }
 
   const formattedContent = await prettier.format(content, prettierConfig)

@@ -4,7 +4,7 @@ import {environmentVariables} from '../../../private/node/constants.js'
 import {captureOutput} from '../system.js'
 import {content, token} from '../../../output.js'
 import {getCachedSpinFqdn, setCachedSpinFqdn} from '../../../private/node/environment/spin-cache.js'
-import {Abort} from '../../../error.js'
+import {AbortError} from '../error.js'
 import {Environment, serviceEnvironment} from '../../../private/node/environment/service.js'
 
 const SpinInstanceNotFoundMessages = (spinInstance: string | undefined, error: string) => {
@@ -62,7 +62,7 @@ export async function show(spinInstance: string | undefined, env = process.env):
   const json = JSON.parse(output)
   if (json.error) {
     const {errorMessage, nextSteps} = SpinInstanceNotFoundMessages(spinInstance, json.error)
-    throw new Abort(errorMessage, nextSteps)
+    throw new AbortError(errorMessage, nextSteps)
   } else {
     return json
   }

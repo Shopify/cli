@@ -1,12 +1,13 @@
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
+interface SampleWebhook {
+  samplePayload: string
+  headers: string
+  success: boolean
+  userErrors: UserErrors[]
+}
 export interface SamplePayloadSchema {
-  sendSampleWebhook: {
-    samplePayload: string
-    headers: string
-    success: boolean
-    userErrors: UserErrors[]
-  }
+  sendSampleWebhook: SampleWebhook
 }
 
 export interface UserErrors {
@@ -49,7 +50,7 @@ export async function getWebhookSample(
   deliveryMethod: string,
   address: string,
   sharedSecret: string,
-) {
+): Promise<SampleWebhook> {
   const variables = {
     topic,
     api_version: apiVersion,
