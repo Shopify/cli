@@ -1,5 +1,4 @@
 import {coerceSemverVersion} from './semver.js'
-import {renderTasks} from './ui.js'
 import {AbortSignal} from './abort.js'
 import {platformAndArch} from './os.js'
 import {captureOutput, exec} from './system.js'
@@ -27,6 +26,8 @@ interface ExecCLI2Options {
   directory?: string
   // A signal to stop the process execution.
   signal?: AbortSignal
+  // Stream to pipe the command's stdout to.
+  stdout?: Writable
 }
 /**
  * Execute CLI 2.0 commands.
@@ -37,7 +38,7 @@ interface ExecCLI2Options {
  * @param options - Options to customize the execution of cli2.
  */
 export async function execCLI2(args: string[], options: ExecCLI2Options = {}): Promise<void> {
-  await installCLIDependencies()
+  await installCLIDependencies(options.stdout)
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: options.storefrontToken,
@@ -136,31 +137,24 @@ async function installThemeCheckCLIDependencies(stdout: Writable) {
  * Install RubyCLI and its dependencies
  * Shows a loading spinner if it's the first time installing dependencies
  * or if we are installing a new version of RubyCLI.
+ *
+ * @param stdout - The Writable stream on which to write the standard output.
  */
-async function installCLIDependencies() {
+async function installCLIDependencies(stdout: Writable | undefined) {
   const exists = await file.fileExists(shopifyCLIDirectory())
-  const tasks = [
-    {
-      title: 'Installing theme dependencies',
-      task: async () => {
-        const usingLocalCLI2 = Boolean(process.env.SHOPIFY_CLI_2_0_DIRECTORY)
-        await validateRubyEnv()
-        if (usingLocalCLI2) {
-          await bundleInstallLocalShopifyCLI()
-        } else {
-          await createShopifyCLIWorkingDirectory()
-          await createShopifyCLIGemfile()
-          await bundleInstallShopifyCLI()
-        }
-      },
-    },
-  ]
 
-  if (exists) {
-    await tasks[0]!.task()
+  if (!exists && stdout) stdout.write('Installing theme dependencies...')
+  const usingLocalCLI2 = Boolean(process.env.SHOPIFY_CLI_2_0_DIRECTORY)
+  await validateRubyEnv()
+  if (usingLocalCLI2) {
+    await bundleInstallLocalShopifyCLI()
   } else {
-    await renderTasks(tasks)
+    await createShopifyCLIWorkingDirectory()
+    await createShopifyCLIGemfile()
+    await bundleInstallShopifyCLI()
   }
+
+  if (!exists && stdout) stdout.write('Installed theme dependencies!')
 }
 
 /**
