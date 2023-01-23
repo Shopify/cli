@@ -37,6 +37,7 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
 
     // When
     const got = await runConcurrentHTTPProcessesAndPathForwardTraffic(
+      '',
       3000,
       [
         {
@@ -69,7 +70,7 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
     vi.mocked(getAvailableTCPPort).mockResolvedValueOnce(4000)
 
     // When
-    const got = await runConcurrentHTTPProcessesAndPathForwardTraffic(undefined, [], [])
+    const got = await runConcurrentHTTPProcessesAndPathForwardTraffic('', undefined, [], [])
 
     // Then
     expect(server.close).not.toHaveBeenCalled()

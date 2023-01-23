@@ -2,7 +2,7 @@ import {ensureDevEnvironment} from './environment.js'
 import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
-import {outputAppURL, outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
+import {outputExtensionsMessages, outputPreviewUrl, outputUpdateURLsResult} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {
@@ -79,13 +79,16 @@ async function dev(options: DevOptions) {
   })
 
   const backendPort = await getAvailableTCPPort()
-
   const frontendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Frontend)
   const backendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Backend)
 
   /** If the app doesn't have web/ the link message is not necessary */
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
   let shouldUpdateURLs = false
+  const proxyTargets: ReverseHTTPProxyTarget[] = []
+  const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
+  const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
+
   if ((frontendConfig || backendConfig) && options.update) {
     const currentURLs = await getURLs(apiKey, token)
     const newURLs = generatePartnersURLs(exposedUrl, backendConfig?.configuration.authCallbackPath)
@@ -97,7 +100,6 @@ async function dev(options: DevOptions) {
     })
     if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
     await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
-    outputAppURL(storeFqdn, exposedUrl)
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
@@ -114,10 +116,6 @@ async function dev(options: DevOptions) {
     hostname: exposedUrl,
   }
 
-  const proxyTargets: ReverseHTTPProxyTarget[] = []
-  const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
-  const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
-
   if (localApp.extensions.ui.length > 0) {
     const devExt = await devUIExtensionsTarget({
       app: localApp,
@@ -132,7 +130,15 @@ async function dev(options: DevOptions) {
     proxyTargets.push(devExt)
   }
 
-  outputExtensionsMessages(localApp, storeFqdn, proxyUrl)
+  const previewUrl = outputPreviewUrl({
+    app: localApp,
+    storeFqdn,
+    exposedUrl,
+    proxyUrl,
+    appPreviewAvailable: Boolean(frontendConfig || backendConfig) && options.update,
+  })
+
+  outputExtensionsMessages(localApp)
 
   const additionalProcesses: output.OutputProcess[] = []
 
@@ -173,7 +179,7 @@ async function dev(options: DevOptions) {
   if (proxyTargets.length === 0) {
     await renderConcurrent({processes: additionalProcesses})
   } else {
-    await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
+    await runConcurrentHTTPProcessesAndPathForwardTraffic(previewUrl, proxyPort, proxyTargets, additionalProcesses)
   }
 }
 
@@ -203,8 +209,8 @@ function devThemeExtensionTarget(
 ): output.OutputProcess {
   return {
     prefix: 'extensions',
-    action: async (_stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
-      await execCLI2(['extension', 'serve', ...args], {adminSession, storefrontToken, token})
+    action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+      await execCLI2(['extension', 'serve', ...args], {adminSession, storefrontToken, token, stdout})
     },
   }
 }

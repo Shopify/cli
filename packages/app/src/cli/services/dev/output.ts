@@ -1,10 +1,10 @@
 import {PartnersURLs} from './urls.js'
 import {AppInterface} from '../../models/app/app.js'
-import {FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
+import {FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {buildAppURLForWeb} from '../../utilities/app/app-url.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {RenderAlertOptions, renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {output} from '@shopify/cli-kit'
 
 export async function outputUpdateURLsResult(
@@ -16,45 +16,67 @@ export async function outputUpdateURLsResult(
   if (app.newApp) {
     renderInfo({
       headline: `For your convenience, we've given your app a default URL: ${urls.applicationUrl}.`,
-      body: `You can update your app's URL anytime in the ${dashboardURL}. But once your app is live, updating its URL will disrupt merchant access.`,
+      body: [
+        "You can update your app's URL anytime in the",
+        dashboardURL,
+        'But once your app is live, updating its URL will disrupt merchant access.',
+      ],
     })
   } else if (!updated) {
     renderInfo({
-      headline: `To make URL updates manually, you can add the following URLs as redirects in your ${dashboardURL}:`,
+      headline: [
+        'To make URL updates manually, you can add the following URLs as redirects in your',
+        dashboardURL,
+        {char: ':'},
+      ],
       body: {list: {items: urls.redirectUrlWhitelist}},
     })
   }
 }
 
-export function outputAppURL(storeFqdn: string, url: string) {
-  const title = url.includes('localhost') ? 'App URL' : 'Shareable app URL'
-  const heading = output.token.heading(title)
-  const appURL = buildAppURLForWeb(storeFqdn, url)
-  output.info(output.content`\n\n${heading}\n\n  ${appURL}\n`)
+interface OutputPreviewUrlOptions {
+  app: AppInterface
+  storeFqdn: string
+  exposedUrl: string
+  proxyUrl: string
+  appPreviewAvailable: boolean
 }
 
-export function outputDevConsoleURL(url: string) {
-  const title = 'Shopify extension dev console URL'
-  const heading = output.token.heading(title)
-  const devConsoleURL = `${url}/extensions/dev-console`
-  output.info(output.content`${heading}\n\n  ${devConsoleURL}\n`)
+export function outputPreviewUrl({app, storeFqdn, exposedUrl, proxyUrl, appPreviewAvailable}: OutputPreviewUrlOptions) {
+  if (!appPreviewAvailable && app.extensions.ui.length === 0) {
+    return
+  }
+
+  const successBannerOptions: RenderAlertOptions = {
+    headline: ['Preview ready!', {bold: 'Press any key to open your browser'}],
+  }
+
+  let previewUrl
+
+  if (app.extensions.ui.length > 0) {
+    previewUrl = `${proxyUrl}/extensions/dev-console`
+  } else {
+    previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
+  }
+
+  successBannerOptions.body = {subdued: previewUrl}
+
+  if (app.extensions.function.length > 0 || app.extensions.theme.length > 0) {
+    successBannerOptions.customSections = [
+      {
+        body: "Keep in mind that some Shopify extensions - like Functions and web pixel - aren't yet available for dev previews.",
+      },
+    ]
+  }
+
+  renderSuccess(successBannerOptions)
+
+  return previewUrl
 }
 
-export function outputExtensionsMessages(app: AppInterface, storeFqdn: string, url: string) {
-  outputUIExtensionsURLs(app.extensions.ui, storeFqdn, url)
+export function outputExtensionsMessages(app: AppInterface) {
   outputFunctionsMessage(app.extensions.function)
   outputThemeExtensionsMessage(app.extensions.theme)
-}
-
-function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, url: string) {
-  if (extensions.length > 0) {
-    outputDevConsoleURL(url)
-  }
-
-  for (const extension of extensions) {
-    const message = extension.previewMessage(url, storeFqdn)
-    if (message) output.info(message)
-  }
 }
 
 function outputFunctionsMessage(extensions: FunctionExtension[]) {
@@ -74,9 +96,11 @@ function outputThemeExtensionsMessage(extensions: ThemeExtension[]) {
   }
 }
 
-async function partnersURL(organizationId: string, appId: string): Promise<string> {
-  return output.content`${output.token.link(
-    `Partners Dashboard`,
-    `https://${await partnersFqdn()}/${organizationId}/apps/${appId}/edit`,
-  )}`.value
+async function partnersURL(organizationId: string, appId: string) {
+  return {
+    link: {
+      label: 'Partners Dashboard',
+      url: `https://${await partnersFqdn()}/${organizationId}/apps/${appId}/edit`,
+    },
+  }
 }

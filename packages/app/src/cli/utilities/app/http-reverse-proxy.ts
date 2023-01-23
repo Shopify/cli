@@ -1,7 +1,8 @@
-import {output} from '@shopify/cli-kit'
+import {output, ui} from '@shopify/cli-kit'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
+import {openURL} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 import * as http from 'http'
 
@@ -34,6 +35,7 @@ export interface ReverseHTTPProxyTarget {
  * @returns A promise that resolves with an interface to get the port of the proxy and stop it.
  */
 export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
+  previewUrl: string | undefined,
   portNumber: number | undefined = undefined,
   proxyTargets: ReverseHTTPProxyTarget[],
   additionalProcesses: output.OutputProcess[],
@@ -91,12 +93,20 @@ ${output.token.json(JSON.stringify(rules))}
   abortController.signal.addEventListener('abort', () => {
     server.close()
   })
+
+  async function openPreviewUrl() {
+    if (!previewUrl) return
+    await ui.keypress()
+    await openURL(previewUrl)
+  }
+
   await Promise.all([
     renderConcurrent({
       processes: [...processes, ...additionalProcesses],
       abortController,
     }),
     server.listen(availablePort),
+    openPreviewUrl(),
   ])
 }
 
