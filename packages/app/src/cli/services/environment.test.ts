@@ -27,10 +27,11 @@ import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
 import {App} from '../models/app/app.js'
 import {AllOrganizationsQuerySchemaOrganization} from '../api/graphql/all_orgs.js'
-import {store, outputMocker} from '@shopify/cli-kit'
+import {store} from '@shopify/cli-kit'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 beforeEach(() => {
   vi.mock('./dev/fetch')
@@ -257,7 +258,7 @@ describe('ensureDevEnvironment', () => {
 
   it('returns selected data and updates internal state, with cached state', async () => {
     // Given
-    const outputMock = outputMocker.mockAndCaptureOutput()
+    const outputMock = mockAndCaptureOutput()
     vi.mocked(store.getAppInfo).mockReturnValue(CACHED1)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})

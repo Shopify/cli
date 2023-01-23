@@ -1,6 +1,6 @@
-import {UIExtensionPayload, ExtensionsEndpointPayload} from './models.js'
+import {UIExtensionPayload, ExtensionsEndpointPayload, DevNewExtensionPointSchema} from './models.js'
 import {ExtensionDevOptions} from '../../extension.js'
-import {getUIExtensionPayload} from '../payload.js'
+import {getUIExtensionPayload, isNewExtensionPointsSchema} from '../payload.js'
 import {UIExtension} from '../../../../models/app/extensions.js'
 import {buildAppURLForMobile, buildAppURLForWeb} from '../../../../utilities/app/app-url.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
@@ -82,16 +82,47 @@ export class ExtensionsPayloadStore extends EventEmitter {
   updateExtensions(extensions: UIExtensionPayload[]) {
     const updatedExtensionsPayload = this.rawPayload.extensions.map((rawPayloadExtension) => {
       const foundExtension = extensions.find((ext) => ext.uuid === rawPayloadExtension.uuid)
+
       if (foundExtension) {
+        // We can't do a simple union or replacement when it comes to extension points array
+        // We need special logic to merge extension points only when the target matches
+        if (
+          isNewExtensionPointsSchema(foundExtension.extensionPoints) &&
+          isNewExtensionPointsSchema(rawPayloadExtension.extensionPoints)
+        ) {
+          const foundExtensionPointsPayloadMap = foundExtension.extensionPoints.reduce((acc, ex) => {
+            return {...acc, [ex.target]: ex}
+          }, {} as {[key: string]: DevNewExtensionPointSchema})
+
+          rawPayloadExtension.extensionPoints = deepMergeObjects(
+            rawPayloadExtension.extensionPoints,
+            foundExtension.extensionPoints,
+            (destinationArray) => {
+              return (destinationArray as DevNewExtensionPointSchema[]).map((extensionPoint) => {
+                const extensionPointPayload = foundExtensionPointsPayloadMap[extensionPoint.target]
+                if (extensionPointPayload) {
+                  return deepMergeObjects(extensionPoint, extensionPointPayload)
+                }
+                return extensionPoint
+              })
+            },
+          )
+
+          const {extensionPoints, ...rest} = foundExtension
+          return deepMergeObjects(rawPayloadExtension, rest)
+        }
+
         return deepMergeObjects(rawPayloadExtension, foundExtension)
-      } else {
-        return rawPayloadExtension
       }
+
+      return rawPayloadExtension
     })
+
     this.rawPayload = {
       ...this.rawPayload,
       extensions: updatedExtensionsPayload,
     }
+
     this.emitUpdate(extensions.map((extension) => extension.uuid))
   }
 

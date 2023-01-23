@@ -1,12 +1,12 @@
 import {upgrade} from './upgrade.js'
 import * as upgradeService from './upgrade.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {outputMocker} from '@shopify/cli-kit'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import * as nodePackageManager from '@shopify/cli-kit/node/node-package-manager'
 import {exec} from '@shopify/cli-kit/node/system'
 import {inTemporaryDirectory, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 const oldCliVersion = '3.0.0'
 // just needs to be higher than oldCliVersion for these tests
@@ -34,7 +34,7 @@ beforeEach(async () => {
   vi.mocked(platformAndArch).mockReturnValue({platform: 'windows', arch: 'amd64'})
 })
 afterEach(() => {
-  outputMocker.mockAndCaptureOutput().clear()
+  mockAndCaptureOutput().clear()
   process.env = {...OLD_ENV}
 })
 
@@ -46,7 +46,7 @@ describe('upgrade global CLI', () => {
   it('does not upgrade globally if the latest version is found', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const outputMock = outputMocker.mockAndCaptureOutput()
+      const outputMock = mockAndCaptureOutput()
       vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(undefined)
 
       // When
@@ -62,7 +62,7 @@ describe('upgrade global CLI', () => {
   it('upgrades globally using npm if the latest version is not found', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const outputMock = outputMocker.mockAndCaptureOutput()
+      const outputMock = mockAndCaptureOutput()
       vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(currentCliVersion)
 
       // When
@@ -88,7 +88,7 @@ describe('upgrade global CLI', () => {
     it('upgrades globally using Homebrew if the latest version is not found and the CLI was installed via Homebrew', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
-        const outputMock = outputMocker.mockAndCaptureOutput()
+        const outputMock = mockAndCaptureOutput()
         vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(currentCliVersion)
         process.env.SHOPIFY_HOMEBREW_FORMULA = homebrewPackageName
 
@@ -125,7 +125,7 @@ describe('upgrade local CLI', () => {
         ),
         touchFile(joinPath(tmpDir, 'shopify.app.toml')),
       ])
-      const outputMock = outputMocker.mockAndCaptureOutput()
+      const outputMock = mockAndCaptureOutput()
       vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(undefined)
 
       // When
@@ -148,7 +148,7 @@ describe('upgrade local CLI', () => {
         ),
         touchFile(joinPath(tmpDir, 'shopify.app.toml')),
       ])
-      const outputMock = outputMocker.mockAndCaptureOutput()
+      const outputMock = mockAndCaptureOutput()
       vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(currentCliVersion)
       const addNPMDependenciesMock = vi
         .spyOn(nodePackageManager as any, 'addNPMDependencies')

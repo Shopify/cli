@@ -6,11 +6,11 @@ import {testApp, testRemoteSpecifications, testThemeExtensions} from '../models/
 import {ensureGenerateEnvironment} from '../services/environment.js'
 import {Extension} from '../models/app/extensions.js'
 import {describe, expect, it, vi, beforeAll, afterEach} from 'vitest'
-import {outputMocker} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 beforeAll(() => {
   vi.mock('../constants.js')
@@ -35,7 +35,7 @@ beforeAll(() => {
 })
 
 afterEach(() => {
-  outputMocker.mockAndCaptureOutput().clear()
+  mockAndCaptureOutput().clear()
 })
 
 describe('after extension command finishes correctly', () => {
@@ -157,5 +157,5 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
   vi.mocked(ensureGenerateEnvironment).mockResolvedValue('api-key')
   vi.mocked(generateExtensionPrompt).mockResolvedValue({name: 'name', extensionType: identifier})
   vi.mocked(generateExtensionService).mockResolvedValue(joinPath(appRoot, 'extensions', 'name'))
-  return outputMocker.mockAndCaptureOutput()
+  return mockAndCaptureOutput()
 }
