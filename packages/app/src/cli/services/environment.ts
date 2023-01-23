@@ -64,6 +64,7 @@ export async function ensureGenerateEnvironment(options: {
   directory: string
   reset: boolean
   token: string
+  silent?: boolean
 }): Promise<string> {
   if (options.apiKey) {
     const app = await fetchAppFromApiKey(options.apiKey, options.token)
@@ -90,7 +91,9 @@ export async function ensureGenerateEnvironment(options: {
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
     }
     const packageManager = await getPackageManager(options.directory)
-    showGenerateReusedValues(org.businessName, cachedInfo, packageManager)
+    if (!options.silent) {
+      showGenerateReusedValues(org.businessName, cachedInfo, packageManager)
+    }
     return app.apiKey
   } else {
     const orgId = cachedInfo?.orgId || (await selectOrg(options.token))

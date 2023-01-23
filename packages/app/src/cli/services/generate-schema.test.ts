@@ -54,10 +54,9 @@ describe('generateSchemaService', () => {
     const promptApiKey = 'prompt-api-key'
 
     const getAppIdentifiers = identifiers.getAppIdentifiers as MockedFunction<typeof identifiers.getAppIdentifiers>
-    const fetchOrganizationAndFetchOrCreateApp =
-      localEnvironment.fetchOrganizationAndFetchOrCreateApp as MockedFunction<
-        typeof localEnvironment.fetchOrganizationAndFetchOrCreateApp
-      >
+    const ensureGenerateEnvironment = localEnvironment.ensureGenerateEnvironment as MockedFunction<
+      typeof localEnvironment.ensureGenerateEnvironment
+    >
 
     beforeEach(async () => {
       vi.mock('../models/app/identifiers.js', async () => {
@@ -71,21 +70,11 @@ describe('generateSchemaService', () => {
         const environment: any = await vi.importActual('./environment.js')
         return {
           ...environment,
-          fetchOrganizationAndFetchOrCreateApp: vi.fn(),
+          ensureGenerateEnvironment: vi.fn(),
         }
       })
       getAppIdentifiers.mockReturnValue({app: identifiersApiKey})
-      fetchOrganizationAndFetchOrCreateApp.mockResolvedValue({
-        partnersApp: {
-          id: 'id',
-          title: 'title',
-          apiKey: promptApiKey,
-          organizationId: '1',
-          apiSecretKeys: [],
-          grantedScopes: [],
-        },
-        orgId: '1',
-      })
+      ensureGenerateEnvironment.mockResolvedValue(promptApiKey)
       vi.mocked(isTerminalInteractive).mockReturnValue(true)
     })
 

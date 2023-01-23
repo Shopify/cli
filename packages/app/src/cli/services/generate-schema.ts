@@ -1,17 +1,17 @@
-import {fetchOrganizationAndFetchOrCreateApp} from './environment.js'
+import {ensureGenerateEnvironment} from './environment.js'
 import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension} from '../models/app/extensions.js'
-import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {
   ApiSchemaDefinitionQuery,
   ApiSchemaDefinitionQuerySchema,
   ApiSchemaDefinitionQueryVariables,
 } from '../api/graphql/functions/api_schema_definition.js'
+import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {output} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {isTerminalInteractive} from '@shopify/cli-kit/node/environment/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {isTerminalInteractive} from '@shopify/cli-kit/node/environment/local'
 
 interface GenerateSchemaOptions {
   app: AppInterface
@@ -33,7 +33,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
       )
     }
 
-    apiKey = (await fetchOrganizationAndFetchOrCreateApp(app, token)).partnersApp.apiKey
+    apiKey = await ensureGenerateEnvironment({...options, token, directory: app.directory, reset: false, silent: true})
   }
 
   const query = ApiSchemaDefinitionQuery
