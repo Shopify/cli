@@ -17,7 +17,7 @@ export function randomHex(size: number): string {
  * @returns The encoded string.
  */
 export function base64URLEncode(str: Buffer): string {
-  return str.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/[=]/g, '')
+  return str.toString('base64url')
 }
 
 /**
