@@ -19,13 +19,14 @@ import {Organization, OrganizationApp, OrganizationStore} from '../models/organi
 import metadata from '../metadata.js'
 import {ThemeExtension} from '../models/app/extensions.js'
 import {loadAppName} from '../models/app/loader.js'
-import {error as kitError, output, store, error} from '@shopify/cli-kit'
+import {output, store} from '@shopify/cli-kit'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {TokenItem} from '@shopify/cli-kit/src/private/node/ui/components/TokenizedText.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -68,7 +69,7 @@ export async function ensureGenerateEnvironment(options: {
     const app = await fetchAppFromApiKey(options.apiKey, options.token)
     if (!app) {
       const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
-      throw new kitError.Abort(errorMessage.message, errorMessage.tryMessage)
+      throw new AbortError(errorMessage.message, errorMessage.tryMessage)
     }
     return app.apiKey
   }
@@ -86,7 +87,7 @@ export async function ensureGenerateEnvironment(options: {
     const app = await fetchAppFromApiKey(cachedInfo.appId, options.token)
     if (!app || !org) {
       const errorMessage = InvalidApiKeyErrorMessage(cachedInfo.appId)
-      throw new kitError.Abort(errorMessage.message, errorMessage.tryMessage)
+      throw new AbortError(errorMessage.message, errorMessage.tryMessage)
     }
     const packageManager = await getPackageManager(options.directory)
     showGenerateReusedValues(org.businessName, cachedInfo, packageManager)
@@ -151,12 +152,12 @@ export async function ensureDevEnvironment(
   }
 
   const organization = await fetchOrgFromId(orgId, token)
-  if (!organization) throw new error.Bug(`Couldn't find Organization with id ${orgId}.`)
+  if (!organization) throw new BugError(`Couldn't find Organization with id ${orgId}.`)
 
   if (!selectedApp) {
     if (cachedInfo?.appId) {
       const app = await fetchAppFromApiKey(cachedInfo.appId, token)
-      if (!app) throw new error.Bug(`Couldn't find App with apiKey ${cachedInfo.appId}.`)
+      if (!app) throw new BugError(`Couldn't find App with apiKey ${cachedInfo.appId}.`)
       selectedApp = app
     } else {
       const {apps} = await fetchOrgAndApps(orgId, token)
@@ -179,7 +180,7 @@ export async function ensureDevEnvironment(
         await convertToTestStoreIfNeeded(result.store, organization, token)
         selectedStore = result.store
       } else {
-        throw new error.Bug(`Couldn't find Store with domain ${cachedInfo.storeFqdn}.`)
+        throw new BugError(`Couldn't find Store with domain ${cachedInfo.storeFqdn}.`)
       }
     } else {
       const allStores = await fetchAllDevStores(orgId, token)
@@ -337,7 +338,7 @@ export async function fetchAppAndIdentifiers(
     const apiKey = options.apiKey ?? envIdentifiers.app
     partnersApp = await fetchAppFromApiKey(apiKey, token)
     if (!partnersApp) {
-      throw new kitError.Abort(
+      throw new AbortError(
         output.content`Couldn't find the app with API key ${apiKey}`,
         output.content`• If you didn't intend to select this app, run ${
           output.content`${output.token.packagejsonScript(options.app.packageManager, 'deploy', '--reset')}`.value
@@ -390,17 +391,17 @@ async function fetchDevDataFromOptions(
     selectedApp = await fetchAppFromApiKey(options.apiKey, token)
     if (!selectedApp) {
       const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
-      throw new kitError.Abort(errorMessage.message, errorMessage.tryMessage)
+      throw new AbortError(errorMessage.message, errorMessage.tryMessage)
     }
   }
 
   if (options.storeFqdn) {
     const orgWithStore = await fetchStoreByDomain(orgId, token, options.storeFqdn)
-    if (!orgWithStore) throw new error.Bug(`Could not find Organization for id ${orgId}.`)
+    if (!orgWithStore) throw new BugError(`Could not find Organization for id ${orgId}.`)
     if (!orgWithStore.store) {
       const partners = await partnersFqdn()
       const org = orgWithStore.organization
-      throw new error.Bug(
+      throw new BugError(
         `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid development store.`,
         `Visit https://${partners}/${org.id}/stores to create a new store in your organization`,
       )

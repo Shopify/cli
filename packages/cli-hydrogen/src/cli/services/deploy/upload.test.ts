@@ -1,6 +1,5 @@
 import {GraphQLError, ReqDeployConfig} from './types.js'
 import {createDeployment, healthCheck, uploadDeployment} from './upload.js'
-import {TooManyRequestsError, UnrecoverableError} from './error.js'
 import {CreateDeploymentQuery} from './graphql/create_deployment.js'
 import {beforeEach, describe, it, expect, vi} from 'vitest'
 import {zip} from '@shopify/cli-kit/node/archiver'
@@ -80,7 +79,7 @@ describe('createDeploymentStep()', () => {
 
       await expect(() => {
         return createDeployment(defaultConfig)
-      }).rejects.toThrowError(TooManyRequestsError())
+      }).rejects.toThrowError(/too many requests/)
     })
 
     it('throws if we are getting a non-200 status code', async () => {
@@ -128,7 +127,7 @@ describe('createDeploymentStep()', () => {
 
       await expect(() => {
         return createDeployment(defaultConfig)
-      }).rejects.toThrowError(UnrecoverableError(errMsg))
+      }).rejects.toThrowError(/Unrecoverable/)
     })
   })
 })
@@ -240,7 +239,7 @@ describe('uploadDeploymentStep()', async () => {
 
       await expect(() => {
         return uploadDeployment({...defaultConfig, path: 'unit/test'}, '123')
-      }).rejects.toThrowError(TooManyRequestsError())
+      }).rejects.toThrowError(/too many requests/)
     })
 
     it('throws an unrecoverable exception if we receive an unrecoverable user error', async () => {

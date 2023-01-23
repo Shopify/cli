@@ -1,7 +1,7 @@
 import {errorHandler, cleanStackFrameFilePath, addBugsnagMetadata, sendErrorToBugsnag} from './error-handler.js'
 import {ciPlatform, cloudEnvironment, isUnitTest, macAddress} from './environment/local.js'
-import * as error from '../../error.js'
-import * as outputMocker from '../../testing/output.js'
+import {mockAndCaptureOutput} from './testing/output.js'
+import * as error from './error.js'
 import {hashString} from '../../public/node/crypto.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -39,7 +39,7 @@ describe('errorHandler', () => {
     vi.spyOn(process, 'exit').mockResolvedValue(null as never)
 
     // When
-    await errorHandler(new error.CancelExecution())
+    errorHandler(new error.CancelExecution())
 
     // Then
     expect(process.exit).toBeCalledTimes(0)
@@ -48,10 +48,10 @@ describe('errorHandler', () => {
   it('finishes the execution without exiting the proccess and display a custom message when cancel execution exception is raised with a message', async () => {
     // Given
     vi.spyOn(process, 'exit').mockResolvedValue(null as never)
-    const outputMock = outputMocker.mockAndCaptureOutput()
+    const outputMock = mockAndCaptureOutput()
 
     // When
-    await errorHandler(new error.CancelExecution('Custom message'))
+    errorHandler(new error.CancelExecution('Custom message'))
 
     // Then
     expect(outputMock.info()).toMatch('✨  Custom message')
@@ -63,7 +63,7 @@ describe('errorHandler', () => {
     vi.spyOn(process, 'exit').mockResolvedValue(null as never)
 
     // When
-    await errorHandler(new error.AbortSilent())
+    errorHandler(new error.AbortSilentError())
 
     // Then
     expect(process.exit).toBeCalledTimes(1)
@@ -144,7 +144,7 @@ describe('send to Bugsnag', () => {
   })
 
   it('ignores fatals', async () => {
-    const res = await sendErrorToBugsnag(new error.Abort('In test'))
+    const res = await sendErrorToBugsnag(new error.AbortError('In test'))
     expect(res.reported).toEqual(false)
     expect(onNotify).not.toHaveBeenCalled()
   })

@@ -2,8 +2,8 @@ import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error
 import {loadPresetsFromDirectory} from './presets.js'
 import {isDevelopment} from './environment/local.js'
 import {addPublicMetadata} from './metadata.js'
+import {AbortError} from './error.js'
 import {JsonMap} from '../../private/common/json.js'
-import {Abort} from '../../error.js'
 import {content, info, token} from '../../output.js'
 import {hashString} from '../../public/node/crypto.js'
 import {isTruthy} from '../../private/node/environment/utilities.js'
@@ -209,7 +209,7 @@ function argsFromPreset<
         if (value === true) {
           args.push(`--${label}`)
         } else {
-          throw new Abort(
+          throw new AbortError(
             content`Presets can only specify true for boolean flags. Attempted to set ${token.yellow(label)} to false.`,
           )
         }

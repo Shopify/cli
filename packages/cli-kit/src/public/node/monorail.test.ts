@@ -1,6 +1,6 @@
 import * as http from './http.js'
 import {publishMonorailEvent} from './monorail.js'
-import {mockAndCaptureOutput} from '../../testing/output.js'
+import {mockAndCaptureOutput} from './testing/output.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 describe('monorail', () => {

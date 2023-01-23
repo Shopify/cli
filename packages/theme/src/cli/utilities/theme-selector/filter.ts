@@ -1,6 +1,6 @@
 import {ALLOWED_ROLES} from './fetch.js'
 import {Theme} from '../../models/theme.js'
-import {error} from '@shopify/cli-kit'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export function filterThemes(store: string, themes: Theme[], filter: Filter): Theme[] {
   return filterByRole(store, themes, filter) || filterByTheme(store, themes, filter)
@@ -44,7 +44,7 @@ function filterArray(
 
   return {
     orThrow: (errorMessage: string) => {
-      throw new error.Abort(errorMessage)
+      throw new AbortError(errorMessage)
     },
   }
 }

@@ -6,7 +6,7 @@ import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
 import {ThemeExtensionInstance, ThemeExtensionSpec} from '../extensions/theme.js'
 import {ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
 import {FunctionInstance, FunctionSpec} from '../extensions/functions.js'
-import {error, output} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {schema} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -23,6 +23,7 @@ import {hashString} from '@shopify/cli-kit/node/crypto'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
 import {isShopify} from '@shopify/cli-kit/node/environment/local'
 import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -143,7 +144,7 @@ class AppLoader {
 
   async findAppDirectory() {
     if (!(await fileExists(this.directory))) {
-      throw new error.Abort(output.content`Couldn't find directory ${output.token.path(this.directory)}`)
+      throw new AbortError(output.content`Couldn't find directory ${output.token.path(this.directory)}`)
     }
     return dirname(await this.getConfigurationPath())
   }
@@ -156,7 +157,7 @@ class AppLoader {
       type: 'file',
     })
     if (!configurationPath) {
-      throw new error.Abort(
+      throw new AbortError(
         output.content`Couldn't find the configuration file for ${output.token.path(
           this.directory,
         )}, are you in an app directory?`,
@@ -393,7 +394,7 @@ class AppLoader {
 
   abortOrReport<T>(errorMessage: output.Message, fallback: T, configurationPath: string): T {
     if (this.mode === 'strict') {
-      throw new error.Abort(errorMessage)
+      throw new AbortError(errorMessage)
     } else {
       this.errors.addError(configurationPath, errorMessage)
       return fallback

@@ -6,13 +6,14 @@ import {
   ConvertDevToTestStoreSchema,
   ConvertDevToTestStoreVariables,
 } from '../../api/graphql/convert_dev_to_test_store.js'
-import {error, output} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {isSpinEnvironment} from '@shopify/cli-kit/node/environment/spin'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 import {firstPartyDev} from '@shopify/cli-kit/node/environment/local'
+import {AbortError, BugError, CancelExecution} from '@shopify/cli-kit/node/error'
 
 const CreateStoreLink = async (orgId: string) => {
   const url = `https://${await partnersFqdn()}/${orgId}/stores/new?store_type=dev_store`
@@ -48,7 +49,7 @@ export async function selectStore(
 
   const reload = await reloadStoreListPrompt(org)
   if (!reload) {
-    throw new error.CancelExecution()
+    throw new CancelExecution()
   }
 
   const data = await waitForCreatedStore(org.id, token)
@@ -108,7 +109,7 @@ export async function convertToTestStoreIfNeeded(
    */
   if (isSpinEnvironment() && firstPartyDev()) return
   if (!store.transferDisabled && !store.convertableToPartnerTest) {
-    throw new error.Abort(
+    throw new AbortError(
       `The store you specified (${store.shopDomain}) is not a dev store`,
       'Run dev --reset and select an eligible dev store.',
     )
@@ -134,7 +135,7 @@ export async function convertStoreToTest(store: OrganizationStore, orgId: string
   const result: ConvertDevToTestStoreSchema = await partnersRequest(query, token, variables)
   if (!result.convertDevToTestStore.convertedToTestStore) {
     const errors = result.convertDevToTestStore.userErrors.map((error) => error.message).join(', ')
-    throw new error.Bug(
+    throw new BugError(
       `Error converting store ${store.shopDomain} to a Test store: ${errors}`,
       'This store might not be compatible with draft apps, please try a different store',
     )

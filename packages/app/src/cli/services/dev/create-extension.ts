@@ -3,8 +3,8 @@ import {
   ExtensionCreateSchema,
   ExtensionCreateVariables,
 } from '../../api/graphql/extension_create.js'
-import {error} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export interface ExtensionRegistration {
   id: string
@@ -39,7 +39,7 @@ export async function createExtension(
 
   if (result.extensionCreate.userErrors?.length > 0) {
     const errors = result.extensionCreate.userErrors.map((error) => error.message).join(', ')
-    throw new error.Abort(errors)
+    throw new AbortError(errors)
   }
 
   return result.extensionCreate.extensionRegistration

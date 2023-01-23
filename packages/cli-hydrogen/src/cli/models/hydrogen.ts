@@ -1,5 +1,4 @@
 import {loadConfig} from '../utilities/load-config.js'
-import {error as kitError} from '@shopify/cli-kit'
 import {
   getDependencies,
   getPackageName,
@@ -8,8 +7,8 @@ import {
   yarnLockfile,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
-
 import {fileExists} from '@shopify/cli-kit/node/fs'
+import {AbortError} from '@shopify/cli-kit/node/error'
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-ignore
 import type {HydrogenConfig} from '@shopify/hydrogen/config'
@@ -61,7 +60,7 @@ class HydrogenAppLoader {
 
   async loaded() {
     if (!(await fileExists(this.directory))) {
-      throw new kitError.Abort(`Couldn't find directory ${this.directory}`)
+      throw new AbortError(`Couldn't find directory ${this.directory}`)
     }
 
     const {configuration} = await this.loadConfig()
@@ -100,7 +99,7 @@ class HydrogenAppLoader {
   }
 
   async loadConfig() {
-    const abortError = new kitError.Abort(`Couldn't find hydrogen configuration file`)
+    const abortError = new AbortError(`Couldn't find hydrogen configuration file`)
 
     try {
       const config = await loadConfig({root: this.directory})

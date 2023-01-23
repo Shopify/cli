@@ -1,8 +1,8 @@
 import {createUIExtensionSpecification} from '../ui.js'
 import {defualtExtensionFlavors} from '../../../constants.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
-import {error} from '@shopify/cli-kit'
 import {schema} from '@shopify/cli-kit/node/schema'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 const dependency = {name: '@shopify/web-pixels-extension', version: '^0.1.1'}
 
@@ -30,7 +30,7 @@ const spec = createUIExtensionSpecification({
   },
   preDeployValidation: (config) => {
     if (config.configuration) {
-      throw new error.Abort(
+      throw new AbortError(
         `The property configuration is deprecated and no longer supported.`,
         `It has been replaced by settings.`,
       )

@@ -1,5 +1,5 @@
 import {AbortSignal} from './abort.js'
-import {Abort, ExternalError} from '../../error.js'
+import {AbortError, ExternalError} from './error.js'
 import {shouldDisplayColors, debug} from '../../output.js'
 import {execa, ExecaChildProcess} from 'execa'
 import treeKill from 'tree-kill'
@@ -60,7 +60,7 @@ export async function exec(command: string, args: string[], options?: ExecOption
     if (pid) {
       aborted = true
       treeKill(pid, (err) => {
-        if (err) throw new Abort(`Failed to kill process ${pid}: ${err}`)
+        if (err) throw new AbortError(`Failed to kill process ${pid}: ${err}`)
       })
     }
   })

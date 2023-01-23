@@ -1,5 +1,5 @@
 import {Tasks} from './Tasks.js'
-import {getLastFrameAfterUnmount} from '../../../../testing/ui.js'
+import {getLastFrameAfterUnmount} from '../../testing/ui.js'
 import {unstyled} from '../../../../output.js'
 import React from 'react'
 import {describe, expect, test} from 'vitest'

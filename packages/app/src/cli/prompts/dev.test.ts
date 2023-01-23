@@ -11,8 +11,9 @@ import {
 } from './dev.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
-import {ui, outputMocker} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
 import {renderAutocompletePrompt, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {
@@ -136,7 +137,7 @@ describe('selectStore', () => {
   it('returns without asking if there is only 1 store', async () => {
     // Given
     const stores: OrganizationStore[] = [STORE1]
-    const outputMock = outputMocker.mockAndCaptureOutput()
+    const outputMock = mockAndCaptureOutput()
 
     // When
     const got = await selectStorePrompt(stores)

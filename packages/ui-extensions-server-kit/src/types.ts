@@ -86,7 +86,7 @@ export interface ExtensionPoint {
   target: string
   surface: Surface
   metafields?: Metafield[]
-  resource?: ResourceURL
+  resource: ResourceURL
   root: ResourceURL
 }
 

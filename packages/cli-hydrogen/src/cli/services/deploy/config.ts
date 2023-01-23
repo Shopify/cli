@@ -1,6 +1,5 @@
 import {DeployConfig, ReqDeployConfig} from './types.js'
 import {gitInit} from '../../prompts/git-init.js'
-import {error} from '@shopify/cli-kit'
 import {
   addAllToGitFromDirectory,
   createGitCommit,
@@ -14,6 +13,7 @@ import {
   OutsideGitDirectoryError,
 } from '@shopify/cli-kit/node/git'
 import {resolvePath} from '@shopify/cli-kit/node/path'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 const MINIMAL_GIT_IGNORE: GitIgnoreTemplate = {
   system: ['.DS_Store'],
@@ -41,7 +41,7 @@ export const validateProject = async (config: DeployConfig) => {
 export const initializeGit = async (config: DeployConfig) => {
   if (!config.assumeYes) {
     const shouldGitInit = await gitInit()
-    if (!shouldGitInit) throw new error.AbortSilent()
+    if (!shouldGitInit) throw new AbortSilentError()
   }
 
   await initializeGitRepository(config.path)

@@ -133,7 +133,7 @@ describe('getUIExtensionPayload', () => {
     })
   })
 
-  test('adds root.url and surface to extensionPoints[n] when extensionPoints[n] is an object', async () => {
+  test('adds root.url, resource.url and surface to extensionPoints[n] when extensionPoints[n] is an object', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uiExtension = await testUIExtension({
@@ -179,6 +179,9 @@ describe('getUIExtensionPayload', () => {
           root: {
             url: 'http://tunnel-url.com/extensions/devUUID/Admin::Checkout::Editor::Settings',
           },
+          resource: {
+            url: '',
+          },
         },
         {
           target: 'Checkout::ShippingMethods::RenderAfter',
@@ -186,6 +189,9 @@ describe('getUIExtensionPayload', () => {
           surface: 'checkout',
           root: {
             url: 'http://tunnel-url.com/extensions/devUUID/Checkout::ShippingMethods::RenderAfter',
+          },
+          resource: {
+            url: '',
           },
         },
       ])

@@ -4,7 +4,6 @@ import {FunctionSpec} from '../../models/extensions/functions.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
-import {error} from '@shopify/cli-kit'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
@@ -16,6 +15,7 @@ import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository} from '@shopify/cli-kit/node/git'
 import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, moduleDirectory} from '@shopify/cli-kit/node/path'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fileURLToPath} from 'url'
 
 async function getTemplatePath(name: string): Promise<string> {
@@ -26,7 +26,7 @@ async function getTemplatePath(name: string): Promise<string> {
   if (templatePath) {
     return templatePath
   } else {
-    throw new error.Bug(`Couldn't find the template ${name} in @shopify/app.`)
+    throw new BugError(`Couldn't find the template ${name} in @shopify/app.`)
   }
 }
 
@@ -101,7 +101,7 @@ async function uiExtensionInit({
           }))
 
         if (!templateDirectory) {
-          throw new error.Bug(`Couldn't find the template for ${specification.externalIdentifier}`)
+          throw new BugError(`Couldn't find the template for ${specification.externalIdentifier}`)
         }
 
         const srcFileExtension = getSrcFileExtension(extensionFlavor ?? 'vanilla-js')
@@ -201,7 +201,7 @@ async function ensureExtensionDirectoryExists({name, app}: {name: string; app: A
   const hyphenizedName = hyphenate(name)
   const extensionDirectory = joinPath(app.directory, blocks.extensions.directoryName, hyphenizedName)
   if (await fileExists(extensionDirectory)) {
-    throw new error.Abort(
+    throw new AbortError(
       `\nA directory with this name (${hyphenizedName}) already exists.\nChoose a new name for your extension.`,
     )
   }
