@@ -4,7 +4,7 @@ import {encodeToml as encodeTOML} from './toml.js'
 import {globalFlags} from './cli.js'
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
 import {joinPath, resolvePath} from './path.js'
-import {mockAndCaptureOutput} from '../../testing/output.js'
+import {mockAndCaptureOutput} from './testing/output.js'
 import {describe, expect, test} from 'vitest'
 import {Flags} from '@oclif/core'
 

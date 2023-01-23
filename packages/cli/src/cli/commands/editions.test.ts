@@ -1,6 +1,7 @@
 import Editions from './editions.js'
 import {describe, test, afterEach, vi, beforeEach, expect} from 'vitest'
-import {ui, outputMocker} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 describe('upgrade command', () => {
   beforeEach(() => {
@@ -15,12 +16,12 @@ describe('upgrade command', () => {
   })
   afterEach(() => {
     vi.restoreAllMocks()
-    outputMocker.mockAndCaptureOutput().clear()
+    mockAndCaptureOutput().clear()
   })
 
   test.each(['bfs', 'hydrogen', 'devtools'])('launches service with %s', async (mode) => {
     vi.mocked(ui.prompt).mockResolvedValue({editionschoice: mode})
-    const mockOutput = outputMocker.mockAndCaptureOutput()
+    const mockOutput = mockAndCaptureOutput()
     await Editions.run([], import.meta.url)
     expect(mockOutput.info()).toMatchSnapshot()
   })

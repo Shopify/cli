@@ -2,12 +2,12 @@ import {outputExtensionsMessages} from './output.js'
 import {testApp, testUIExtension} from '../../models/app/app.test-data.js'
 import {AppInterface} from '../../models/app/app.js'
 import {describe, expect, it} from 'vitest'
-import {outputMocker} from '@shopify/cli-kit'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 describe('output', () => {
   it('logs the correct output extension message when the given app contains a customer-accounts-ui-extension', async () => {
-    const outputMock = outputMocker.mockAndCaptureOutput()
+    const outputMock = mockAndCaptureOutput()
     const appMock = await mockApp()
 
     outputExtensionsMessages(appMock, 'shop1010', 'https://f97b-95-91-224-153.eu.ngrok.io')

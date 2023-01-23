@@ -1,8 +1,8 @@
 import {checkHydrogenVersion} from './check-version.js'
 import {afterEach, beforeEach, describe, it, expect, vi} from 'vitest'
-import {outputMocker} from '@shopify/cli-kit'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {captureOutput} from '@shopify/cli-kit/node/system'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('@shopify/cli-kit/node/node-package-manager', () => {
@@ -18,7 +18,7 @@ describe('checkHydrogenVersion()', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
-    outputMocker.mockAndCaptureOutput().clear()
+    mockAndCaptureOutput().clear()
   })
 
   it('checks the node_modules folder for the currently installed version', async () => {
@@ -50,7 +50,7 @@ describe('checkHydrogenVersion()', () => {
       })
 
       it('does not output any text', async () => {
-        const outputMock = outputMocker.mockAndCaptureOutput()
+        const outputMock = mockAndCaptureOutput()
 
         await checkHydrogenVersion('dir')
 
@@ -68,7 +68,7 @@ describe('checkHydrogenVersion()', () => {
       })
 
       it('outputs a message to the user', async () => {
-        const outputMock = outputMocker.mockAndCaptureOutput()
+        const outputMock = mockAndCaptureOutput()
 
         await checkHydrogenVersion('dir')
 
