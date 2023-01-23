@@ -1,9 +1,9 @@
 import {SessionSchema} from './schema.js'
+import {getSession, removeSession, setSession} from '../store.js'
 import {keychainConstants} from '../constants.js'
 import {platformAndArch} from '../../../public/node/os.js'
 import {secureStoreSave, secureStoreFetch, secureStoreRemove} from '../secure-store.js'
 import {content, debug} from '../../../output.js'
-import {getSession, removeSession, setSession} from '../../../public/node/store.js'
 import type {Session} from './schema.js'
 
 /**

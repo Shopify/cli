@@ -1,4 +1,4 @@
-import {CLIKitStore} from '../../../public/node/store.js'
+import {Conf} from '../store.js'
 import {removeFile} from '../../../public/node/fs.js'
 import uniqueString from 'unique-string'
 
@@ -7,11 +7,11 @@ import uniqueString from 'unique-string'
  * @param callback - Callback to execute. When the callback exits, the local config is destroyed.
  * @returns Promise that resolves with the value returned by the callback.
  */
-export async function temporaryTestStore<T>(callback: (store: CLIKitStore) => Promise<T>): Promise<T> {
-  let localConf: CLIKitStore | undefined
+export async function temporaryTestStore<T>(callback: (store: Conf) => Promise<T>): Promise<T> {
+  let localConf: Conf | undefined
   try {
     const name = `shopify-cli-test-${uniqueString()}`
-    localConf = new CLIKitStore({projectName: name})
+    localConf = new Conf({projectName: name})
     // eslint-disable-next-line node/callback-return
     const result = callback(localConf)
     return result

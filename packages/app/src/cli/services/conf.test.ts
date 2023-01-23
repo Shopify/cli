@@ -1,18 +1,18 @@
 import {AppConfSchema, clearAppInfo, getAppInfo, setAppInfo} from './conf.js'
 import {describe, expect, it} from 'vitest'
-import {Conf} from '@shopify/cli-kit/node/store.js'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs.js'
+import {Conf} from '@shopify/cli-kit/node/conf'
+import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
 const APP1 = {appId: 'app1', storeFqdn: 'store1', orgId: 'org1', directory: '/app1'}
 const APP2 = {appId: 'app2', storeFqdn: 'store2', orgId: 'org2', directory: '/app2'}
 const APP1Updated = {appId: 'updated-app1', storeFqdn: 'store1-updated', orgId: 'org1-updated', directory: '/app1'}
 
-describe('getAppInfo', () => {
+describe('getAppInfo', async () => {
   it('returns cached info if existss', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const conf = new Conf<AppConfSchema>({cwd})
-      conf.set(APP1.directory, APP1)
+      setAppInfo(APP1, conf)
 
       // When
       const got = getAppInfo(APP1.directory, conf)
@@ -36,7 +36,7 @@ describe('getAppInfo', () => {
   })
 })
 
-describe('setAppInfo', () => {
+describe('setAppInfo', async () => {
   it('updates cached info if exists', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
@@ -67,7 +67,7 @@ describe('setAppInfo', () => {
   })
 })
 
-describe('clearAppInfo', () => {
+describe('clearAppInfo', async () => {
   it('removes cached info if exists', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given

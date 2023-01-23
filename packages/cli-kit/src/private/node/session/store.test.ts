@@ -1,6 +1,6 @@
 import {ApplicationToken, Session} from './schema.js'
 import {store, fetch, remove, identifier} from './store.js'
-import {getSession, removeSession, setSession} from '../../../store.js'
+import {getSession, removeSession, setSession} from '../store.js'
 import {secureStoreSave, secureStoreFetch, secureStoreRemove} from '../secure-store.js'
 import {platformAndArch} from '../../../public/node/os.js'
 import {describe, expect, vi, it, beforeEach} from 'vitest'
@@ -11,7 +11,7 @@ beforeEach(() => {
   vi.resetAllMocks()
   vi.clearAllMocks()
   vi.mock('../secure-store.js')
-  vi.mock('../../../store')
+  vi.mock('../store.js')
   vi.mock('../../../public/node/os')
   vi.mocked(platformAndArch).mockReturnValue({platform: 'darwin', arch: 'x64'})
   vi.mock('keytar', () => {

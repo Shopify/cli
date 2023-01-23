@@ -1,5 +1,5 @@
 import {output} from '@shopify/cli-kit'
-import {Conf} from '@shopify/cli-kit/node/store'
+import {Conf} from '@shopify/cli-kit/node/conf'
 
 export interface CachedAppInfo {
   directory: string
