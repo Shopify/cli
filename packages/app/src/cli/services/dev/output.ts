@@ -4,7 +4,7 @@ import {FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {buildAppURLForWeb} from '../../utilities/app/app-url.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
-import {RenderAlertOptions, renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {output} from '@shopify/cli-kit'
 
 export async function outputUpdateURLsResult(
@@ -47,10 +47,6 @@ export function outputPreviewUrl({app, storeFqdn, exposedUrl, proxyUrl, appPrevi
     return
   }
 
-  const successBannerOptions: RenderAlertOptions = {
-    headline: ['Preview ready!', {bold: 'Press any key to open your browser'}],
-  }
-
   let previewUrl
 
   if (app.extensions.ui.length > 0) {
@@ -59,17 +55,15 @@ export function outputPreviewUrl({app, storeFqdn, exposedUrl, proxyUrl, appPrevi
     previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
   }
 
-  successBannerOptions.body = {subdued: previewUrl}
-
-  if (app.extensions.function.length > 0 || app.extensions.theme.length > 0) {
-    successBannerOptions.customSections = [
+  renderSuccess({
+    headline: ['Preview ready!', {bold: 'Press any key to open your browser'}],
+    body: {subdued: previewUrl},
+    customSections: [
       {
         body: "Keep in mind that some Shopify extensions - like Functions and web pixel - aren't yet available for dev previews.",
       },
-    ]
-  }
-
-  renderSuccess(successBannerOptions)
+    ],
+  })
 
   return previewUrl
 }
