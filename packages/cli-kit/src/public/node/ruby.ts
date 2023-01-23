@@ -13,7 +13,7 @@ import {isTruthy} from '../../private/node/environment/utilities.js'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
 
-const RubyCLIVersion = '2.34.0'
+export const RubyCLIVersion = '2.34.0'
 const ThemeCheckVersion = '1.14.0'
 const MinBundlerVersion = '2.3.8'
 const MinRubyVersion = '2.7.5'
@@ -39,7 +39,7 @@ interface ExecCLI2Options {
  * @param options - Options to customize the execution of cli2.
  */
 export async function execCLI2(args: string[], options: ExecCLI2Options = {}): Promise<void> {
-  const embedded = isTruthy(process.env.SHOPIFY_CLI_EMBEDDED_THEME_CLI)
+  const embedded = !isTruthy(process.env.SHOPIFY_CLI_BUNDLED_THEME_CLI) && !process.env.SHOPIFY_CLI_2_0_DIRECTORY
 
   await installCLIDependencies(embedded)
   const env: NodeJS.ProcessEnv = {
@@ -255,7 +255,7 @@ async function createThemeCheckCLIWorkingDirectory(): Promise<void> {
  * It creates the Gemfile to install The Ruby CLI and the dependencies.
  */
 async function createShopifyCLIGemfile(): Promise<void> {
-  const gemPath = joinPath(shopifyCLIDirectory(), 'Gemfile')
+  const gemPath = joinPath(await shopifyCLIDirectory(), 'Gemfile')
   const gemFileContent = ["source 'https://rubygems.org'", `gem 'shopify-cli', '${RubyCLIVersion}'`]
   const {platform} = platformAndArch()
   if (platform === 'windows') {
@@ -310,13 +310,13 @@ async function bundleInstallThemeCheck() {
  * @returns The absolute path to the directory.
  */
 async function shopifyCLIDirectory(embedded = false): Promise<string> {
-  return embedded
-    ? ((await file.findPathUp('assets/cli-sources', {
-        type: 'directory',
-        cwd: dirname(fileURLToPath(import.meta.url)),
-      })) as string)
-    : process.env.SHOPIFY_CLI_2_0_DIRECTORY ??
-        joinPath(pathConstants.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
+  const embeddedDirectory = (await file.findPathUp('assets/cli-ruby', {
+    type: 'directory',
+    cwd: dirname(fileURLToPath(import.meta.url)),
+  })) as string
+  const bundledDirectory = joinPath(pathConstants.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
+
+  return embedded ? embeddedDirectory : process.env.SHOPIFY_CLI_2_0_DIRECTORY ?? bundledDirectory
 }
 
 /**
