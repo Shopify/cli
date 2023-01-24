@@ -5,8 +5,8 @@ import {setupHTTPServer} from './extension/server.js'
 import {ExtensionsPayloadStore, getExtensionsPayloadStoreRawPayload} from './extension/payload/store.js'
 import {AppInterface} from '../../models/app/app.js'
 import {UIExtension} from '../../models/app/extensions.js'
-import * as output from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 export interface ExtensionDevOptions {
@@ -96,12 +96,12 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadStoreOptions)
   const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadStoreOptions)
 
-  output.outputDebug(`Setting up the UI extensions HTTP server...`, options.stdout)
+  outputDebug(`Setting up the UI extensions HTTP server...`, options.stdout)
   const httpServer = setupHTTPServer({devOptions, payloadStore})
 
-  output.outputDebug(`Setting up the UI extensions Websocket server...`, options.stdout)
+  outputDebug(`Setting up the UI extensions Websocket server...`, options.stdout)
   const websocketConnection = setupWebsocketConnection({...options, httpServer, payloadStore})
-  output.outputDebug(`Setting up the UI extensions bundler and file watching...`, options.stdout)
+  outputDebug(`Setting up the UI extensions bundler and file watching...`, options.stdout)
   const fileWatcher = await setupBundlerAndFileWatcher({devOptions, payloadStore})
 
   options.signal.addEventListener('abort', () => {

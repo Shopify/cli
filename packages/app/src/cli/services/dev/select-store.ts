@@ -6,7 +6,6 @@ import {
   ConvertDevToTestStoreSchema,
   ConvertDevToTestStoreVariables,
 } from '../../api/graphql/convert_dev_to_test_store.js'
-import * as output from '@shopify/cli-kit/node/output'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
@@ -14,6 +13,7 @@ import {isSpinEnvironment} from '@shopify/cli-kit/node/environment/spin'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 import {firstPartyDev} from '@shopify/cli-kit/node/environment/local'
 import {AbortError, BugError, CancelExecution} from '@shopify/cli-kit/node/error'
+import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
 
 const CreateStoreLink = async (orgId: string) => {
   const url = `https://${await partnersFqdn()}/${orgId}/stores/new?store_type=dev_store`
@@ -44,7 +44,7 @@ export async function selectStore(
     return store
   }
 
-  output.outputInfo(`\n${await CreateStoreLink(org.id)}`)
+  outputInfo(`\n${await CreateStoreLink(org.id)}`)
   await sleep(5)
 
   const reload = await reloadStoreListPrompt(org)
@@ -140,5 +140,5 @@ export async function convertStoreToTest(store: OrganizationStore, orgId: string
       'This store might not be compatible with draft apps, please try a different store',
     )
   }
-  output.outputSuccess(`Converted ${store.shopDomain} to a Test store`)
+  outputSuccess(`Converted ${store.shopDomain} to a Test store`)
 }

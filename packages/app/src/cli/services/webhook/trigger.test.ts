@@ -115,7 +115,7 @@ describe('webhookTriggerService', () => {
     vi.mocked(triggerLocalWebhook)
     vi.mocked(getWebhookSample).mockResolvedValue(successEmptyResponse)
 
-    const outputSpy = vi.spyOn(output, 'success')
+    const outputSpy = vi.spyOn(output, 'outputSuccess')
 
     // When
     await webhookTriggerService(sampleFlags())
@@ -135,7 +135,7 @@ describe('webhookTriggerService', () => {
       vi.mocked(triggerLocalWebhook).mockResolvedValue(true)
       vi.mocked(getWebhookSample).mockResolvedValue(successDirectResponse)
 
-      const outputSpy = vi.spyOn(output, 'success')
+      const outputSpy = vi.spyOn(output, 'outputSuccess')
 
       // When
       await webhookTriggerService(sampleFlags())

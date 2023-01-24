@@ -1,7 +1,7 @@
 import {DELIVERY_METHOD, isAddressAllowedForDeliveryMethod} from '../../services/webhook/trigger-options.js'
 import {ui} from '@shopify/cli-kit'
-import * as output from '@shopify/cli-kit/node/output'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {stringifyMessage} from '@shopify/cli-kit/node/output'
 
 export async function topicPrompt(availableTopics: string[]): Promise<string> {
   const choicesList = availableTopics.map((topic) => ({label: topic, value: topic}))
@@ -111,6 +111,6 @@ export function deliveryMethodInstructions(method: string): string[] {
 
 export function deliveryMethodInstructionsAsString(method: string): string {
   return deliveryMethodInstructions(method)
-    .map((hint) => `      · ${output.stringifyMessage(hint)}`)
+    .map((hint) => `      · ${stringifyMessage(hint)}`)
     .join('\n')
 }

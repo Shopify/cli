@@ -2,10 +2,10 @@ import {getExtensionPointRedirectUrl, getExtensionUrl, getRedirectUrl, sendError
 import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {getHTML} from '../templates.js'
-import * as output from '@shopify/cli-kit/node/output'
 import {fileExists, isDirectory, readFile, findPathUp} from '@shopify/cli-kit/node/fs'
 import {IncomingMessage, ServerResponse, sendRedirect, send} from '@shopify/cli-kit/node/http'
 import {joinPath, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export function corsMiddleware(request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) {
   response.setHeader('Access-Control-Allow-Origin', '*')
@@ -147,10 +147,7 @@ export async function devConsoleAssetsMiddleware(
 
 export function getLogMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
   return async (request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) => {
-    output.outputDebug(
-      `UI extensions server received a ${request.method} request to URL ${request.url}`,
-      devOptions.stdout,
-    )
+    outputDebug(`UI extensions server received a ${request.method} request to URL ${request.url}`, devOptions.stdout)
     next()
   }
 }

@@ -15,13 +15,13 @@ import {Extension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import * as output from '@shopify/cli-kit/node/output'
 import {useThemeBundling} from '@shopify/cli-kit/node/environment/local'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
 import {CustomSection} from '@shopify/cli-kit/src/private/node/ui/components/Alert.js'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
+import {outputNewline, outputInfo} from '@shopify/cli-kit/node/output'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -52,9 +52,9 @@ export const deploy = async (options: DeployOptions) => {
   let {app, identifiers, partnersApp, partnersOrganizationId, token} = await ensureDeployEnvironment(options)
   const apiKey = identifiers.app
 
-  output.outputNewline()
-  output.outputInfo(`Deploying your work to Shopify Partners. It will be part of ${partnersApp.title}`)
-  output.outputNewline()
+  outputNewline()
+  outputInfo(`Deploying your work to Shopify Partners. It will be part of ${partnersApp.title}`)
+  outputNewline()
 
   const extensions = await Promise.all(
     options.app.extensions.ui.map(async (extension) => {

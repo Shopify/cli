@@ -1,7 +1,7 @@
-import * as output from '@shopify/cli-kit/node/output'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
+import {OutputProcess, outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 import * as http from 'http'
 
@@ -36,7 +36,7 @@ export interface ReverseHTTPProxyTarget {
 export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
   portNumber: number | undefined = undefined,
   proxyTargets: ReverseHTTPProxyTarget[],
-  additionalProcesses: output.OutputProcess[],
+  additionalProcesses: OutputProcess[],
 ): Promise<void> {
   // Lazy-importing it because it's CJS and we don't want it
   // to block the loading of the ESM module graph.
@@ -45,7 +45,7 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
   const rules: {[key: string]: string} = {}
 
   const processes = await Promise.all(
-    proxyTargets.map(async (target): Promise<output.OutputProcess> => {
+    proxyTargets.map(async (target): Promise<OutputProcess> => {
       const targetPort = await getAvailableTCPPort()
       rules[target.pathPrefix ?? '/'] = `http://localhost:${targetPort}`
       return {
@@ -59,10 +59,10 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
 
   const availablePort = portNumber ?? (await getAvailableTCPPort())
 
-  output.outputDebug(output.outputContent`
-Starting reverse HTTP proxy on port ${output.outputToken.raw(availablePort.toString())}
+  outputDebug(outputContent`
+Starting reverse HTTP proxy on port ${outputToken.raw(availablePort.toString())}
 Routing traffic rules:
-${output.outputToken.json(JSON.stringify(rules))}
+${outputToken.json(JSON.stringify(rules))}
 `)
 
   const proxy = httpProxy.createProxy()
@@ -70,10 +70,10 @@ ${output.outputToken.json(JSON.stringify(rules))}
     const target = match(rules, req)
     if (target) return proxy.web(req, res, {target})
 
-    output.outputDebug(`
+    outputDebug(`
 Reverse HTTP proxy error - Invalid path: ${req.url}
 These are the allowed paths:
-${output.outputToken.json(JSON.stringify(rules))}
+${outputToken.json(JSON.stringify(rules))}
 `)
 
     res.statusCode = 500

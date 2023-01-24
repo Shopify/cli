@@ -1,6 +1,6 @@
 import {authenticate} from '../../tunnel.js'
-import * as output from '@shopify/cli-kit/node/output'
 import {Command} from '@oclif/core'
+import {outputSuccess} from '@shopify/cli-kit/node/output'
 
 export default class NgrokAuth extends Command {
   static description =
@@ -11,6 +11,6 @@ export default class NgrokAuth extends Command {
   async run() {
     const {args} = await this.parse(NgrokAuth)
     await authenticate(args.token)
-    output.outputSuccess('Auth token saved')
+    outputSuccess('Auth token saved')
   }
 }

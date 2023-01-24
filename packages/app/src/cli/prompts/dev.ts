@@ -1,8 +1,8 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
 import {fetchOrgAndApps} from '../services/dev/fetch.js'
 import {ui} from '@shopify/cli-kit'
-import * as output from '@shopify/cli-kit/node/output'
 import {renderAutocompletePrompt, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {outputCompleted} from '@shopify/cli-kit/node/output'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
   if (organizations.length === 1) {
@@ -38,7 +38,7 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
 export async function selectStorePrompt(stores: OrganizationStore[]): Promise<OrganizationStore | undefined> {
   if (stores.length === 0) return undefined
   if (stores.length === 1) {
-    output.outputCompleted(`Using your default dev store (${stores[0]!.shopName}) to preview your project.`)
+    outputCompleted(`Using your default dev store (${stores[0]!.shopName}) to preview your project.`)
     return stores[0]
   }
   const storeList = stores.map((store) => ({name: store.shopName, value: store.shopId}))

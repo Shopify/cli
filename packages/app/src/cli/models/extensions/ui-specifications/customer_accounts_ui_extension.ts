@@ -1,7 +1,7 @@
 import {createUIExtensionSpecification} from '../ui.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
-import * as output from '@shopify/cli-kit/node/output'
 import {schema} from '@shopify/cli-kit/node/schema'
+import {outputContent} from '@shopify/cli-kit/node/output'
 
 const dependency = {name: '@shopify/customer-account-ui-extensions-react', version: '^0.0.20'}
 
@@ -51,7 +51,7 @@ const spec = createUIExtensionSpecification({
     const origin = encodeURIComponent(`${host}/extensions`)
     const publicURL = `https://${accountsUrl}/extensions-development?origin=${origin}&extensionId=${uuid}`
     const notice = `Please open ${host} and click on 'Visit Site' and then close the tab to allow connections.\n`
-    return output.outputContent`${notice}Preview link: ${publicURL}`
+    return outputContent`${notice}Preview link: ${publicURL}`
   },
 })
 

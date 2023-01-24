@@ -10,8 +10,8 @@ import {
   collectTopic,
   WebhookTriggerFlags,
 } from '../../prompts/webhook/options-prompt.js'
-import * as output from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {consoleError, outputSuccess} from '@shopify/cli-kit/node/output'
 
 /**
  * Orchestrates the command request by requesting the sample and sending it to localhost if required.
@@ -32,7 +32,7 @@ export async function webhookTriggerService(flags: WebhookTriggerFlags) {
   const sample = await getWebhookSample(token, topic, apiVersion, deliveryMethod, address, sharedSecret)
 
   if (!sample.success) {
-    await output.consoleError(`Request errors:\n${formatErrors(sample.userErrors)}`)
+    consoleError(`Request errors:\n${formatErrors(sample.userErrors)}`)
     return
   }
 
@@ -40,16 +40,16 @@ export async function webhookTriggerService(flags: WebhookTriggerFlags) {
     const result = await triggerLocalWebhook(address, sample.samplePayload, sample.headers)
 
     if (result) {
-      output.outputSuccess('Localhost delivery sucessful')
+      outputSuccess('Localhost delivery sucessful')
       return
     }
 
-    await output.consoleError('Localhost delivery failed')
+    consoleError('Localhost delivery failed')
     return
   }
 
   if (sample.samplePayload === JSON.stringify({})) {
-    output.outputSuccess('Webhook has been enqueued for delivery')
+    outputSuccess('Webhook has been enqueued for delivery')
   }
 }
 

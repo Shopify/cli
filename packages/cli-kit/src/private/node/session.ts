@@ -18,7 +18,6 @@ import {RequestClientError} from './api/headers.js'
 import {environmentVariables} from './constants.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import {keypress} from '../../ui.js'
-import * as output from '../../public/node/output.js'
 import {firstPartyDev, useDeviceAuth} from '../../public/node/environment/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
@@ -26,6 +25,7 @@ import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/
 import {openURL} from '../../public/node/system.js'
 import {gql} from 'graphql-request'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+import {outputCompleted, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 
 /**
  * A scope supported by the Shopify Admin API.
@@ -194,7 +194,7 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
     },
   }
 
-  output.outputCompleted('Logged in.')
+  outputCompleted('Logged in.')
 
   return session
 }
@@ -209,16 +209,12 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
 async function ensureUserHasPartnerAccount(partnersToken: string) {
   outputDebug(outputContent`Verifying that the user has a Partner organization`)
   if (!(await hasPartnerAccount(partnersToken))) {
-    output.outputInfo(`\nA Shopify Partners organization is needed to proceed.`)
-    output.outputInfo(`👉 Press any key to create one`)
+    outputInfo(`\nA Shopify Partners organization is needed to proceed.`)
+    outputInfo(`👉 Press any key to create one`)
     await keypress()
     await openURL(`https://${await partnersFqdn()}/signup`)
-    output.outputInfo(
-      output.outputContent`👉 Press any key when you have ${output.outputToken.cyan('created the organization')}`,
-    )
-    output.outputWarn(
-      output.outputContent`Make sure you've confirmed your Shopify and the Partner organization from the email`,
-    )
+    outputInfo(outputContent`👉 Press any key when you have ${outputToken.cyan('created the organization')}`)
+    outputWarn(outputContent`Make sure you've confirmed your Shopify and the Partner organization from the email`)
     await keypress()
     if (!(await hasPartnerAccount(partnersToken))) {
       throw new AbortError(

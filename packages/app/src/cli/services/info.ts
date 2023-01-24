@@ -3,11 +3,18 @@ import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
 import {configurationFileNames} from '../constants.js'
 import {store} from '@shopify/cli-kit'
-import * as output from '@shopify/cli-kit/node/output'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {linesToColumns} from '@shopify/cli-kit/common/string'
 import {relativePath} from '@shopify/cli-kit/node/path'
+import {
+  OutputMessage,
+  outputContent,
+  outputToken,
+  formatSection,
+  stringifyMessage,
+  getOutputUpdateCLIReminder,
+} from '@shopify/cli-kit/node/output'
 
 export type Format = 'json' | 'text'
 interface InfoOptions {
@@ -20,7 +27,7 @@ interface Configurable {
   externalType: string
 }
 
-export async function info(app: AppInterface, {format, webEnv}: InfoOptions): Promise<output.OutputMessage> {
+export async function info(app: AppInterface, {format, webEnv}: InfoOptions): Promise<OutputMessage> {
   if (webEnv) {
     return infoWeb(app, {format})
   } else {
@@ -28,21 +35,21 @@ export async function info(app: AppInterface, {format, webEnv}: InfoOptions): Pr
   }
 }
 
-export async function infoWeb(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.OutputMessage> {
+export async function infoWeb(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<OutputMessage> {
   return outputEnv(app, format)
 }
 
-export async function infoApp(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<output.OutputMessage> {
+export async function infoApp(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<OutputMessage> {
   if (format === 'json') {
-    return output.outputContent`${JSON.stringify(app, null, 2)}`
+    return outputContent`${JSON.stringify(app, null, 2)}`
   } else {
     const appInfo = new AppInfo(app)
     return appInfo.output()
   }
 }
 
-const UNKNOWN_TEXT = output.outputContent`${output.outputToken.italic('unknown')}`.value
-const NOT_CONFIGURED_TEXT = output.outputContent`${output.outputToken.italic('Not yet configured')}`.value
+const UNKNOWN_TEXT = outputContent`${outputToken.italic('unknown')}`.value
+const NOT_CONFIGURED_TEXT = outputContent`${outputToken.italic('Not yet configured')}`.value
 
 class AppInfo {
   private app: AppInterface
@@ -60,7 +67,7 @@ class AppInfo {
       this.accessScopesSection(),
       await this.systemInfoSection(),
     ]
-    return sections.map((sectionContents: [string, string]) => output.formatSection(...sectionContents)).join('\n\n')
+    return sections.map((sectionContents: [string, string]) => formatSection(...sectionContents)).join('\n\n')
   }
 
   devConfigsSection(): [string, string] {
@@ -70,18 +77,17 @@ class AppInfo {
     let storeDescription = NOT_CONFIGURED_TEXT
     let apiKey = NOT_CONFIGURED_TEXT
     let updateURLs = NOT_CONFIGURED_TEXT
-    let postscript =
-      output.outputContent`💡 These will be populated when you run ${output.outputToken.packagejsonScript(
-        this.app.packageManager,
-        'dev',
-      )}`.value
+    let postscript = outputContent`💡 These will be populated when you run ${outputToken.packagejsonScript(
+      this.app.packageManager,
+      'dev',
+    )}`.value
     const cachedAppInfo = store.getAppInfo(this.app.directory)
     if (cachedAppInfo) {
       if (cachedAppInfo.title) appName = cachedAppInfo.title
       if (cachedAppInfo.storeFqdn) storeDescription = cachedAppInfo.storeFqdn
       if (cachedAppInfo.appId) apiKey = cachedAppInfo.appId
       if (cachedAppInfo.updateURLs !== undefined) updateURLs = cachedAppInfo.updateURLs ? 'Always' : 'Never'
-      postscript = output.outputContent`💡 To change these, run ${output.outputToken.packagejsonScript(
+      postscript = outputContent`💡 To change these, run ${outputToken.packagejsonScript(
         this.app.packageManager,
         'dev',
         '--reset',
@@ -118,9 +124,7 @@ class AppInfo {
       types.forEach((extensionType: string) => {
         const relevantExtensions = extensions.filter((extension: TExtension) => extension.type === extensionType)
         if (relevantExtensions[0]) {
-          body += `\n\n${
-            output.outputContent`${output.outputToken.subheading(relevantExtensions[0].externalType)}`.value
-          }`
+          body += `\n\n${outputContent`${outputToken.subheading(relevantExtensions[0].externalType)}`.value}`
           relevantExtensions.forEach((extension: TExtension) => {
             body += `${outputFormatter(extension)}`
           })
@@ -135,7 +139,7 @@ class AppInfo {
     const allExtensions = [...this.app.extensions.ui, ...this.app.extensions.theme, ...this.app.extensions.function]
 
     if (this.app.errors?.isEmpty() === false) {
-      body += `\n\n${output.outputContent`${output.outputToken.subheading('Extensions with errors')}`.value}`
+      body += `\n\n${outputContent`${outputToken.subheading('Extensions with errors')}`.value}`
       allExtensions.forEach((extension) => {
         body += `${this.invalidExtensionSubSection(extension)}`
       })
@@ -144,8 +148,8 @@ class AppInfo {
   }
 
   webComponentsSection(): string {
-    const errors: output.OutputMessage[] = []
-    const subtitle = [output.outputContent`${output.outputToken.subheading('web')}`.value]
+    const errors: OutputMessage[] = []
+    const subtitle = [outputContent`${outputToken.subheading('web')}`.value]
     const toplevel = ['📂 web', '']
     const sublevels: [string, string][] = []
     this.app.webs.forEach((web) => {
@@ -209,10 +213,10 @@ class AppInfo {
     return `\n${linesToColumns(details)}\n${formattedError}`
   }
 
-  formattedError(str: output.OutputMessage): string {
-    const [errorFirstLine, ...errorRemainingLines] = output.stringifyMessage(str).split('\n')
+  formattedError(str: OutputMessage): string {
+    const [errorFirstLine, ...errorRemainingLines] = stringifyMessage(str).split('\n')
     const errorLines = [`! ${errorFirstLine}`, ...errorRemainingLines.map((line) => `  ${line}`)]
-    return output.outputContent`${output.outputToken.errorText(errorLines.join('\n'))}`.value
+    return outputContent`${outputToken.errorText(errorLines.join('\n'))}`.value
   }
 
   accessScopesSection(): [string, string] {
@@ -244,7 +248,7 @@ class AppInfo {
     const cliDependency = '@shopify/cli'
     const newestVersion = await checkForNewVersion(cliDependency, this.currentCliVersion())
     if (newestVersion) {
-      return output.getOutputUpdateCLIReminder(this.app.packageManager, newestVersion)
+      return getOutputUpdateCLIReminder(this.app.packageManager, newestVersion)
     }
     return ''
   }

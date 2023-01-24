@@ -4,8 +4,8 @@ import initService from '../services/init.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {errorHandler} from '@shopify/cli-kit/node/error-handler'
 import {Config} from '@oclif/core'
-import * as output from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 beforeEach(() => {
   vi.mock('../prompts/init')
@@ -53,8 +53,8 @@ describe('create app command', () => {
     // Then
     const anyConfig = expect.any(Config)
     const expectedError = new AbortError(
-      output.outputContent`Only ${Object.keys(templateURLMap)
-        .map((alias) => output.outputContent`${output.outputToken.yellow(alias)}`.value)
+      outputContent`Only ${Object.keys(templateURLMap)
+        .map((alias) => outputContent`${outputToken.yellow(alias)}`.value)
         .join(', ')} template aliases are supported`,
     )
     expect(errorHandler).toHaveBeenCalledWith(expectedError, anyConfig)

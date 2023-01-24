@@ -1,11 +1,11 @@
 import {hydrogenFlags} from '../../flags.js'
 import {deployToOxygen} from '../../services/deploy.js'
-import * as output from '@shopify/cli-kit/node/output'
 import Command from '@shopify/cli-kit/node/base-command'
 import {Flags} from '@oclif/core'
 import {isShopify} from '@shopify/cli-kit/node/environment/local'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
+import {outputWarn} from '@shopify/cli-kit/node/output'
 
 export default class Deploy extends Command {
   static description = 'Deploy your Hydrogen app to Oxygen hosting'
@@ -53,7 +53,7 @@ export default class Deploy extends Command {
   public async run(): Promise<void> {
     const isShopifolk = await isShopify()
     if (!isShopifolk) {
-      output.outputWarn('Command coming soon...')
+      outputWarn('Command coming soon...')
       return
     }
 

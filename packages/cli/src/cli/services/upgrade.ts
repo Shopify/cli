@@ -1,4 +1,3 @@
-import * as output from '@shopify/cli-kit/node/output'
 import {
   addNPMDependencies,
   findUpAndReadPackageJson,
@@ -11,6 +10,7 @@ import {exec} from '@shopify/cli-kit/node/system'
 import {dirname, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {findPathUp} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputContent, outputInfo, outputSuccess, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 
 type HomebrewPackageName = 'shopify-cli' | 'shopify-cli@3'
 
@@ -25,7 +25,7 @@ export async function upgrade(directory: string, currentVersion: string): Promis
     newestVersion = await upgradeLocalShopify(projectDir, currentVersion)
   } else if (usingPackageManager()) {
     throw new AbortError(
-      output.outputContent`Couldn't find the configuration file for ${output.outputToken.path(
+      outputContent`Couldn't find the configuration file for ${outputToken.path(
         directory,
       )}, are you in a Shopify project directory?`,
     )
@@ -34,7 +34,7 @@ export async function upgrade(directory: string, currentVersion: string): Promis
   }
 
   if (newestVersion) {
-    output.outputSuccess(`Upgraded Shopify CLI to version ${newestVersion}`)
+    outputSuccess(`Upgraded Shopify CLI to version ${newestVersion}`)
   }
 }
 
@@ -81,15 +81,15 @@ async function upgradeGlobalShopify(currentVersion: string): Promise<string | vo
   try {
     await (homebrewPackage ? upgradeGlobalViaHomebrew(homebrewPackage) : upgradeGlobalViaNpm())
   } catch (err) {
-    output.outputWarn('Upgrade failed!')
+    outputWarn('Upgrade failed!')
     throw err
   }
   return newestVersion
 }
 
 async function upgradeGlobalViaHomebrew(homebrewPackage: HomebrewPackageName): Promise<void> {
-  output.outputInfo(
-    output.outputContent`Homebrew installation detected. Attempting to upgrade via ${output.outputToken.genericShellCommand(
+  outputInfo(
+    outputContent`Homebrew installation detected. Attempting to upgrade via ${outputToken.genericShellCommand(
       'brew upgrade',
     )}...`,
   )
@@ -104,27 +104,19 @@ async function upgradeGlobalViaNpm(): Promise<void> {
     `${await cliDependency()}@latest`,
     ...globalPlugins.map((plugin) => `${plugin}@latest`),
   ]
-  output.outputInfo(
-    output.outputContent`Attempting to upgrade via ${output.outputToken.genericShellCommand(
-      [command, ...args].join(' '),
-    )}...`,
+  outputInfo(
+    outputContent`Attempting to upgrade via ${outputToken.genericShellCommand([command, ...args].join(' '))}...`,
   )
   await exec(command, args, {stdio: 'inherit'})
 }
 
 function outputWontInstallMessage(currentVersion: string): void {
-  output.outputInfo(
-    output.outputContent`You're on the latest version, ${output.outputToken.yellow(
-      currentVersion,
-    )}, no need to upgrade!`,
-  )
+  outputInfo(outputContent`You're on the latest version, ${outputToken.yellow(currentVersion)}, no need to upgrade!`)
 }
 
 function outputUpgradeMessage(currentVersion: string, newestVersion: string): void {
-  output.outputInfo(
-    output.outputContent`Upgrading CLI from ${output.outputToken.yellow(currentVersion)} to ${output.outputToken.yellow(
-      newestVersion,
-    )}...`,
+  outputInfo(
+    outputContent`Upgrading CLI from ${outputToken.yellow(currentVersion)} to ${outputToken.yellow(newestVersion)}...`,
   )
 }
 

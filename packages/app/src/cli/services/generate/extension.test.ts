@@ -29,7 +29,7 @@ describe('initialize a extension', async () => {
     'successfully generates the extension when no other extensions exist',
     async () => {
       await withTemporaryApp(async (tmpDir) => {
-        vi.spyOn(output, 'info').mockImplementation(() => {})
+        vi.spyOn(output, 'outputInfo').mockImplementation(() => {})
         const name = 'my-ext-1'
         const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
         const extensionFlavor = 'vanilla-js'
