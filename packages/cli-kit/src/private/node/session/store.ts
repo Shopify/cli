@@ -1,5 +1,5 @@
 import {SessionSchema} from './schema.js'
-import {getSession, removeSession, setSession} from '../non-secure-store.js'
+import {getSession, removeSession, setSession} from '../conf-store.js'
 import {keychainConstants} from '../constants.js'
 import {platformAndArch} from '../../../public/node/os.js'
 import {secureStoreSave, secureStoreFetch, secureStoreRemove} from '../secure-store.js'

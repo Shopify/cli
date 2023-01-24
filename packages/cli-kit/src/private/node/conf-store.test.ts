@@ -1,4 +1,4 @@
-import {Conf, ConfSchema, getSession, removeSession, setSession} from './non-secure-store.js'
+import {Conf, ConfSchema, getSession, removeSession, setSession} from './conf-store.js'
 import {describe, expect, it} from 'vitest'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 

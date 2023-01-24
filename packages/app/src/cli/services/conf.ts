@@ -20,7 +20,7 @@ let _instance: Conf<AppConfSchema> | undefined
 
 function appConf() {
   if (!_instance) {
-    _instance = new Conf<AppConfSchema>({projectName: 'shopify-cli-app-conf'})
+    _instance = new Conf<AppConfSchema>({projectName: 'shopify-cli-app'})
   }
   return _instance
 }
