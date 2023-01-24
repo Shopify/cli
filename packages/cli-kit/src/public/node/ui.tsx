@@ -269,7 +269,9 @@ export function renderConfirmationPrompt({
  *  Press ↑↓ arrows to select, enter to confirm
  * ```
  */
-export function renderAutocompletePrompt<T>(props: PartialBy<AutocompletePromptProps<T>, 'search'>): Promise<T> {
+export function renderAutocompletePrompt<T>(
+  props: PartialBy<Omit<AutocompletePromptProps<T>, 'onSubmit'>, 'search'>,
+): Promise<T> {
   const newProps = {
     search(term: string) {
       return Promise.resolve(props.choices.filter((item) => item.label.toLowerCase().includes(term.toLowerCase())))
