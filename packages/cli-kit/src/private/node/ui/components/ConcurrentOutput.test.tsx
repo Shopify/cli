@@ -50,7 +50,10 @@ describe('ConcurrentOutput', () => {
       <ConcurrentOutput
         processes={[backendProcess, frontendProcess]}
         abortController={new AbortController()}
-        stickyMessage="Sticky message"
+        hotKeys={[
+          {key: 'q', effect: 'quit'},
+          {key: 'p', effect: 'open your browser'},
+        ]}
       />,
     )
 
@@ -66,7 +69,7 @@ describe('ConcurrentOutput', () => {
       0000-00-00 00:00:00 | frontend | second frontend message
       0000-00-00 00:00:00 | frontend | third frontend message
 
-      Sticky message"
+      Press q to quit.                            Press p to open your browser."
     `)
   })
 

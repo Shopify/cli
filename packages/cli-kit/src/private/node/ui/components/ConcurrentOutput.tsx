@@ -9,12 +9,15 @@ import {Writable} from 'stream'
 
 export type WritableStream = (process: OutputProcess, index: number) => Writable
 
-interface Props {
+export interface Props {
   processes: OutputProcess[]
   abortController: AbortController
   showTimestamps?: boolean
   onInput?: (input: string, key: Key) => void
-  stickyMessage?: string
+  hotKeys?: {
+    key: string
+    effect: string
+  }[]
 }
 interface Chunk {
   color: string
@@ -61,7 +64,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({
   abortController,
   showTimestamps = true,
   onInput,
-  stickyMessage,
+  hotKeys,
 }) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const concurrentColors = ['yellow', 'cyan', 'magenta', 'green', 'blue']
@@ -155,9 +158,15 @@ const ConcurrentOutput: FunctionComponent<Props> = ({
           )
         }}
       </Static>
-      {stickyMessage && (
-        <Box marginTop={1}>
-          <Text>{stickyMessage}</Text>
+      {hotKeys && hotKeys.length > 0 && (
+        <Box flexDirection="column" marginTop={1}>
+          {hotKeys.map((hotKey, index) => (
+            <Box key={index}>
+              <Text>
+                Press <Text bold>{hotKey.key}</Text> to {hotKey.effect}.
+              </Text>
+            </Box>
+          ))}
         </Box>
       )}
     </>

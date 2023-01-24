@@ -1,7 +1,7 @@
 import {isUnitTest} from './environment/local.js'
 import {FatalError as Fatal} from './error.js'
-import ConcurrentOutput from '../../private/node/ui/components/ConcurrentOutput.js'
-import {consoleError, OutputProcess} from '../../output.js'
+import ConcurrentOutput, {Props as ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
+import {consoleError} from '../../output.js'
 import {render, renderOnce} from '../../private/node/ui.js'
 import {alert} from '../../private/node/ui/alert.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
@@ -11,46 +11,33 @@ import Table, {TableProps} from '../../private/node/ui/components/Table/Table.js
 import {SelectPrompt, Props as SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, Props as TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
-import {Item as SelectItem, Props as SelectProps} from '../../private/node/ui/components/SelectInput.js'
-import {Props as InfoTableProps} from '../../private/node/ui/components/Prompts/InfoTable.js'
-import {AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
+import {
+  Props as AutocompletePromptProps,
+  AutocompletePrompt,
+} from '../../private/node/ui/components/AutocompletePrompt.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 
-interface RenderConcurrentOptions {
-  processes: OutputProcess[]
-  abortController?: AbortController
-  showTimestamps?: boolean
+type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>
+
+interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortController'> {
   renderOptions?: RenderOptions
-  stickyMessage?: string
-  onInput?: (input: string, key: Key) => void
 }
 
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
  */
-export async function renderConcurrent({
-  processes,
-  abortController,
-  onInput,
-  showTimestamps = true,
-  stickyMessage,
-  renderOptions = {},
-}: RenderConcurrentOptions) {
-  return render(
-    <ConcurrentOutput
-      processes={processes}
-      abortController={abortController ?? new AbortController()}
-      showTimestamps={showTimestamps}
-      onInput={onInput}
-      stickyMessage={stickyMessage}
-    />,
-    {
-      ...renderOptions,
-      exitOnCtrlC: typeof onInput === 'undefined',
-    },
-  )
+export async function renderConcurrent({renderOptions = {}, ...props}: RenderConcurrentOptions) {
+  const newProps = {
+    abortController: new AbortController(),
+    ...props,
+  }
+
+  return render(<ConcurrentOutput {...newProps} />, {
+    ...renderOptions,
+    exitOnCtrlC: typeof props.onInput === 'undefined',
+  })
 }
 
 export type RenderAlertOptions = Omit<AlertProps, 'type'>
@@ -270,13 +257,6 @@ export function renderConfirmationPrompt({
   })
 }
 
-interface RenderAutocompletePromptProps<T> {
-  message: string
-  choices: SelectProps<T>['items']
-  infoTable?: InfoTableProps['table']
-  search?: (term: string) => Promise<SelectItem<T>[]>
-}
-
 /**
  * Renders an autocomplete prompt to the console.
  * ```
@@ -289,7 +269,7 @@ interface RenderAutocompletePromptProps<T> {
  *  Press ↑↓ arrows to select, enter to confirm
  * ```
  */
-export function renderAutocompletePrompt<T>(props: RenderAutocompletePromptProps<T>): Promise<T> {
+export function renderAutocompletePrompt<T>(props: PartialBy<AutocompletePromptProps<T>, 'search'>): Promise<T> {
   const newProps = {
     search(term: string) {
       return Promise.resolve(props.choices.filter((item) => item.label.toLowerCase().includes(term.toLowerCase())))

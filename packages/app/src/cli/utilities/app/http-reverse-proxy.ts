@@ -1,5 +1,5 @@
 import {output} from '@shopify/cli-kit'
-import {Key, renderConcurrent} from '@shopify/cli-kit/node/ui'
+import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {openURL} from '@shopify/cli-kit/node/system'
@@ -105,7 +105,7 @@ ${output.token.json(JSON.stringify(rules))}
     renderConcurrent({
       processes: [...processes, ...additionalProcesses],
       abortController,
-      onInput(input: string, key: Key) {
+      onInput(input: string) {
         if (input === 'p' && previewUrl) {
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
           openURL(previewUrl)
@@ -113,7 +113,16 @@ ${output.token.json(JSON.stringify(rules))}
           process.exit(0)
         }
       },
-      stickyMessage: "Press 'p' to open your browser.\nPress 'q' to quit.",
+      hotKeys: [
+        {
+          key: 'p',
+          effect: 'open your browser',
+        },
+        {
+          key: 'q',
+          effect: 'quit',
+        },
+      ],
     }),
     server.listen(availablePort),
   ])
