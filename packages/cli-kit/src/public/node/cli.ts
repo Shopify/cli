@@ -1,4 +1,5 @@
-import {Flags} from '@oclif/core'
+import {Flags, Plugin} from '@oclif/core'
+import {fileURLToPath} from 'url'
 
 /**
  * IMPORTANT NOTE: Imports in this module are dynamic to ensure that "setupEnvironmentVariables" can dynamically
@@ -45,7 +46,18 @@ export async function runCLI(options: RunCLIOptions): Promise<void> {
     settings.debug = true
   }
 
-  run(undefined, options.moduleURL)
+  const url = fileURLToPath(options.moduleURL)
+
+  // Manually load plugins
+  const plug = new Plugin({
+    type: 'user',
+    root: '/Users/isaac/Projects/internal-cli-plugins/packages/shopifolk',
+  })
+  await plug.load()
+
+  run(undefined, {root: url, plugins: [plug]})
+    .then(() => flush())
+    .catch(errorHandler)
     .then(() => flush())
     .catch(errorHandler)
 }
