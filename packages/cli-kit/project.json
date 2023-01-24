@@ -23,16 +23,46 @@
       },
       "lint": {
         "executor": "nx:run-commands",
+        "dependsOn": ["lint:ruby", "lint:js"],
         "options": {
-          "command": "pnpm eslint \"src/**/*.ts\"; cd assets/cli-ruby; bundle install; bundle exec rake rubocop",
+          "cwd": "packages/cli-kit",
+          "commands": []
+        }
+      },
+      "lint:ruby": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "bundle exec rake rubocop",
+          "cwd": "packages/cli-kit/assets/cli-ruby"
+        }
+      },
+      "lint:js": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "pnpm eslint \"src/**/*.ts\"",
           "cwd": "packages/cli-kit"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
+        "dependsOn": ["lint:js:fix", "lint:ruby:fix"],
         "options": {
-          "command": "pnpm eslint 'src/**/*.ts' --fix; cd assets/cli-ruby; bundle install; bundle exec rake rubocop -a",
+          "cwd": "packages/cli-kit",
+          "commands": []
+        }
+      },
+      "lint:js:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "pnpm eslint 'src/**/*.ts' --fix",
           "cwd": "packages/cli-kit"
+        }
+      },
+      "lint:ruby:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "bundle exec rake rubocop -a",
+          "cwd": "packages/cli-kit/assets/cli-ruby"
         }
       },
       "test": {
