@@ -12,7 +12,7 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
     {
       type: 'autocomplete',
       name: 'id',
-      message: 'Which Partners organization is this work for abc?',
+      message: 'Which Partners organization is this work for?',
       choices: orgList,
     },
   ])
@@ -31,7 +31,7 @@ export async function selectAppPrompt(
     {
       type: 'autocomplete',
       name: 'apiKey',
-      message: 'Which existing app is this for abc?',
+      message: 'Which existing app is this for?',
       choices: appList,
       /* filterFunction is a local filter-and-search, to be applied to the
        * results from the remote search for proper sorting and display.

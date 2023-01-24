@@ -212,7 +212,7 @@ interface UploadFunctionExtensionOptions {
     })
   )
 
-  output.info("formattedExtensions " + JSON.stringify(formattedExtensions))
+  // output.info("formattedExtensions " + JSON.stringify(formattedExtensions))
 
   // const formData = http.formData()
   // const buffer = readSync("./")
