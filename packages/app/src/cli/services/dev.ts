@@ -2,7 +2,7 @@ import {ensureDevEnvironment} from './environment.js'
 import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
-import {outputExtensionsMessages, outputPreviewUrl, outputUpdateURLsResult} from './dev/output.js'
+import {outputExtensionsMessages, outputDevSuccess, outputUpdateURLsResult} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {
@@ -16,7 +16,8 @@ import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant
 import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
-import {output} from '@shopify/cli-kit'
+import {buildAppURLForWeb} from '../utilities/app/app-url.js'
+import {output, ui} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -24,7 +25,7 @@ import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
-import {exec} from '@shopify/cli-kit/node/system'
+import {exec, openURL} from '@shopify/cli-kit/node/system'
 import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/environment/spin'
 import {
   AdminSession,
@@ -89,6 +90,14 @@ async function dev(options: DevOptions) {
   const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
 
+  let previewUrl
+
+  if (localApp.extensions.ui.length > 0) {
+    previewUrl = `${proxyUrl}/extensions/dev-console`
+  } else {
+    previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
+  }
+
   if ((frontendConfig || backendConfig) && options.update) {
     const currentURLs = await getURLs(apiKey, token)
     const newURLs = generatePartnersURLs(exposedUrl, backendConfig?.configuration.authCallbackPath)
@@ -100,6 +109,9 @@ async function dev(options: DevOptions) {
     })
     if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
     await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
+    outputDevSuccess(localApp)
+    await ui.keypress('\r')
+    await openURL(previewUrl)
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
@@ -130,14 +142,8 @@ async function dev(options: DevOptions) {
     proxyTargets.push(devExt)
   }
 
-  const previewUrl = outputPreviewUrl({
-    app: localApp,
-    storeFqdn,
-    exposedUrl,
-    proxyUrl,
-    appPreviewAvailable: Boolean(frontendConfig || backendConfig) && options.update,
-  })
-
+  // Remove this once theme app extensions are supported
+  // by the dev console
   outputExtensionsMessages(localApp)
 
   const additionalProcesses: output.OutputProcess[] = []

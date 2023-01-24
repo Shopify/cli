@@ -167,23 +167,34 @@ export async function terminateBlockingPortProcessPrompt(port: number, stepDescr
   return choice.value === 'finish'
 }
 
-export const keypress = async () => {
+export const keypress = async (key?: string) => {
   return new Promise((resolve, reject) => {
-    const handler = (buffer: Buffer) => {
-      process.stdin.setRawMode(false)
-      process.stdin.pause()
+    const disableRawMode = () => {}
 
-      const bytes = Array.from(buffer)
-
-      if (bytes.length && bytes[0] === 3) {
+    const handler = (data: string) => {
+      if (data === '\u0003') {
+        disableRawMode()
         debug('Canceled keypress, User pressed CTRL+C')
         reject(new AbortSilentError())
+        return
       }
-      process.nextTick(resolve)
+
+      if (key) {
+        if (data === key) {
+          process.nextTick(resolve)
+        } else {
+          return
+        }
+      } else {
+        process.nextTick(resolve)
+      }
+
+      process.stdin.pause()
+      process.stdin.setRawMode(false)
     }
 
     process.stdin.resume()
     process.stdin.setRawMode(true)
-    process.stdin.once('data', handler)
+    process.stdin.on('data', handler)
   })
 }

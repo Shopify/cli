@@ -1,10 +1,9 @@
 import {PartnersURLs} from './urls.js'
 import {AppInterface} from '../../models/app/app.js'
-import {FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
+import {ThemeExtension} from '../../models/app/extensions.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {buildAppURLForWeb} from '../../utilities/app/app-url.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
-import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {RenderAlertOptions, renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {output} from '@shopify/cli-kit'
 
 export async function outputUpdateURLsResult(
@@ -34,52 +33,24 @@ export async function outputUpdateURLsResult(
   }
 }
 
-interface OutputPreviewUrlOptions {
-  app: AppInterface
-  storeFqdn: string
-  exposedUrl: string
-  proxyUrl: string
-  appPreviewAvailable: boolean
-}
-
-export function outputPreviewUrl({app, storeFqdn, exposedUrl, proxyUrl, appPreviewAvailable}: OutputPreviewUrlOptions) {
-  if (!appPreviewAvailable && app.extensions.ui.length === 0) {
-    return
+export function outputDevSuccess(app: AppInterface) {
+  const renderSuccessOptions: RenderAlertOptions = {
+    headline: ['Preview ready.', {bold: "Press 'Enter' to open your browser."}],
   }
 
-  let previewUrl
-
-  if (app.extensions.ui.length > 0) {
-    previewUrl = `${proxyUrl}/extensions/dev-console`
-  } else {
-    previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
-  }
-
-  renderSuccess({
-    headline: ['Preview ready!', {bold: 'Press any key to open your browser'}],
-    body: {subdued: previewUrl},
-    customSections: [
+  if (app.extensions.function.length > 0) {
+    renderSuccessOptions.customSections = [
       {
-        body: "Keep in mind that some Shopify extensions - like Functions and web pixel - aren't yet available for dev previews.",
+        body: 'Keep in mind that Shopify Functions need to be deployed to be manually tested.',
       },
-    ],
-  })
+    ]
 
-  return previewUrl
+    renderSuccess(renderSuccessOptions)
+  }
 }
 
 export function outputExtensionsMessages(app: AppInterface) {
-  outputFunctionsMessage(app.extensions.function)
   outputThemeExtensionsMessage(app.extensions.theme)
-}
-
-function outputFunctionsMessage(extensions: FunctionExtension[]) {
-  if (extensions.length === 0) return
-  const names = extensions.map((ext) => ext.configuration.name)
-  const heading = output.token.heading(names.join(', '))
-  const message = `These extensions need to be deployed to be manually tested.
-One testing option is to use a separate app dedicated to staging.`
-  output.info(output.content`${heading}\n${message}\n`)
 }
 
 function outputThemeExtensionsMessage(extensions: ThemeExtension[]) {
