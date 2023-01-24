@@ -119,9 +119,11 @@ export function formatPackageManagerCommand(
 }
 
 /**
+ * Creates a tokenized string from an array of strings and tokens.
  *
- * @param strings
- * @param keys
+ * @param strings - The strings to join.
+ * @param keys - Array of tokens or strings to join.
+ * @returns The tokenized string.
  */
 export function content(strings: TemplateStringsArray, ...keys: (ContentToken<unknown> | string)[]): TokenizedString {
   let output = ``
@@ -178,8 +180,9 @@ function logLevelValue(level: LogLevel): number {
 }
 
 /**
+ * It returns the current log level (debug or info).
  *
- * @returns It returns the log level set by the user.
+ * @returns The log level set by the user.
  */
 function currentLogLevel(): LogLevel {
   if (isVerbose()) {
@@ -190,8 +193,10 @@ function currentLogLevel(): LogLevel {
 }
 
 /**
+ * It checks if the message should be outputted or not.
  *
- * @param logLevel
+ * @param logLevel - The desired log level for the message.
+ * @returns True if the message should be outputted, false otherwise.
  */
 function shouldOutput(logLevel: LogLevel): boolean {
   if (isUnitTest()) {
@@ -306,8 +311,10 @@ export function newline(): void {
 }
 
 /**
+ * Converts a Message to string.
  *
- * @param message
+ * @param message - The message to convert to string.
+ * @returns The string representation of the message.
  */
 export function stringifyMessage(message: Message): string {
   if (message instanceof TokenizedString) {
@@ -332,34 +339,38 @@ export interface OutputProcess {
 }
 
 /**
+ * Prints a log message in the console.
  *
- * @param message
+ * @param message - The message to print.
  */
 export function consoleLog(message: string): void {
   console.log(withOrWithoutStyle(message))
 }
 
 /**
+ * Prints an error message in the console.
  *
- * @param message
+ * @param message - The message to print.
  */
 export function consoleError(message: string): void {
   console.error(withOrWithoutStyle(message))
 }
 
 /**
+ * Prints a warning message in the console.
  *
- * @param message
+ * @param message - The message to print.
  */
 export function consoleWarn(message: string): void {
   console.warn(withOrWithoutStyle(message))
 }
 
 /**
+ * Writes a message to the appropiated logger.
  *
- * @param logLevel
- * @param logger
- * @param message
+ * @param logLevel - The log level to use to determine if the message should be output.
+ * @param logger - The logger to use to output the message.
+ * @param message - The message to output.
  */
 export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, message: string): void {
   if (shouldOutput(logLevel)) {
@@ -372,8 +383,10 @@ export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, messa
 }
 
 /**
+ * Returns a colored or uncolored version of a message, depending on the environment.
  *
- * @param message
+ * @param message - The message to color or not.
+ * @returns The message with or without colors.
  */
 function withOrWithoutStyle(message: string): string {
   if (shouldDisplayColors()) {
@@ -384,23 +397,30 @@ function withOrWithoutStyle(message: string): string {
 }
 
 /**
+ * Returns a message without styles (colors or any ANSI escape codes).
  *
- * @param message
+ * @param message - The message to remove styles from.
+ * @returns The message without styles.
  */
 export function unstyled(message: string): string {
   return stripAnsi(message)
 }
 
 /**
+ * Checks if the console outputs should display colors or not.
  *
+ * @returns True if the console outputs should display colors, false otherwise.
  */
 export function shouldDisplayColors(): boolean {
   return Boolean(process.stdout.isTTY || process.env.FORCE_COLOR)
 }
 
 /**
+ * Generates a message to remind the user to update the CLI.
+ *
  * @param packageManager - The package manager that is being used.
  * @param version - The version to update to.
+ * @returns The message to remind the user to update the CLI.
  */
 export function getOutputUpdateCLIReminder(
   packageManager: PackageManager | 'unknown' | undefined,
@@ -419,11 +439,6 @@ export function getOutputUpdateCLIReminder(
  * @param title - The title of the message. Will be formatted as a heading.
  * @param body - The body of the message. Will respect the original formatting.
  * @returns The formatted message.
- */
-/**
- *
- * @param title
- * @param body
  */
 export function section(title: string, body: string): string {
   const formattedTitle = `${title.toUpperCase()}${' '.repeat(35 - title.length)}`
