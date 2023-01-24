@@ -174,8 +174,8 @@ export function getFunctionRuntimeDependencies(
   if (templateFlavor === 'javascript') {
     dependencies.push(
       {name: '@shopify/shopify_function', version: '0.0.3'},
-      {name: 'javy', version: '^0.0.2'},
-      {name: 'vite', version: '^3.1.7'},
+      {name: 'javy', version: '0.0.3'},
+      {name: 'javy-cli', version: '0.0.1'},
       {name: 'function-runner', version: '0.0.2'},
     )
   }
