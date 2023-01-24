@@ -1,0 +1,29 @@
+name: dev
+type:
+  - ruby
+
+env:
+  SHOPIFY_CLI_DEVELOPMENT: "1"
+
+up:
+  - ruby: 3.1.0
+  - homebrew:
+      - dpkg:
+          version: 1.21.1
+      - rpm:
+          version: 4.17.0
+  - bundler
+
+test:
+  desc: "Run tests."
+  run: |
+    if [ "$#" -eq 1 ] && [[ -f $1 ]];
+    then
+      bundle exec rake test TEST=$1
+    else
+      bundle exec rake test $@
+    fi
+
+commands:
+  style:
+    run: bundle exec rubocop .
