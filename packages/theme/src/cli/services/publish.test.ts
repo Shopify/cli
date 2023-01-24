@@ -54,6 +54,7 @@ describe('publish', () => {
             url: 'https://my-shop.myshopify.com',
           },
         },
+        {char: '.'},
       ],
     })
   })
@@ -99,6 +100,7 @@ describe('publish', () => {
             url: 'https://my-shop.myshopify.com',
           },
         },
+        {char: '.'},
       ],
     })
   })
