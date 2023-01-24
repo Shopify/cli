@@ -19,11 +19,11 @@ import {AbortError} from '@shopify/cli-kit/node/error'
  */
 export async function selectOrCreateApp(
   localAppName: string,
-  apps: MinimalOrganizationApp[],
+  apps: {pageInfo: {hasNextPage: boolean}; nodes: MinimalOrganizationApp[]},
   org: Organization,
   token: string,
 ): Promise<OrganizationApp> {
-  let createNewApp = apps.length === 0
+  let createNewApp = apps.nodes.length === 0
   if (!createNewApp) {
     output.info(`\nBefore you preview your work, it needs to be associated with an app.\n`)
     createNewApp = await createAsNewAppPrompt()

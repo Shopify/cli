@@ -9,12 +9,20 @@ import figures from 'figures'
 import {debounce} from '@shopify/cli-kit/common/function'
 import ansiEscapes from 'ansi-escapes'
 
+export interface SearchResults<T> {
+  nodes: SelectItem<T>[]
+  pageInfo?: {
+    hasNextPage: boolean
+  }
+}
+
 export interface Props<T> {
   message: string
   choices: SelectProps<T>['items']
   onSubmit: (value: T) => void
   infoTable?: InfoTableProps['table']
-  search: (term: string) => Promise<SelectItem<T>[]>
+  hasMorePages?: boolean
+  search: (term: string) => Promise<SearchResults<T>>
 }
 
 enum PromptState {
@@ -32,6 +40,7 @@ function AutocompletePrompt<T>({
   infoTable,
   onSubmit,
   search,
+  hasMorePages: initialHasMorePages = false,
 }: React.PropsWithChildren<Props<T>>): ReactElement | null {
   const paginatedInitialChoices = initialChoices.slice(0, PAGE_SIZE)
   const [answer, setAnswer] = useState<SelectItem<T> | undefined>(paginatedInitialChoices[0])
@@ -42,10 +51,12 @@ function AutocompletePrompt<T>({
   const {stdout} = useStdout()
   const [height, setHeight] = useState(0)
   const canSearch = initialChoices.length >= PAGE_SIZE
+  const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
 
   const paginatedSearch = useCallback(async (term: string) => {
     const results = await search(term)
-    return results.slice(0, PAGE_SIZE)
+    results.nodes = results.nodes.slice(0, PAGE_SIZE)
+    return results
   }, [])
 
   const measuredRef = useCallback(
@@ -97,8 +108,10 @@ function AutocompletePrompt<T>({
           // choices instead
           if (searchTermRef.current.length === 0) {
             setSearchResults(paginatedInitialChoices)
+            setHasMorePages(initialHasMorePages)
           } else {
-            setSearchResults(result)
+            setSearchResults(result.nodes)
+            setHasMorePages(result.pageInfo?.hasNextPage ?? false)
           }
 
           setPromptState(PromptState.Idle)
@@ -171,6 +184,7 @@ function AutocompletePrompt<T>({
                 ? 'There has been an error while searching. Please try again later.'
                 : undefined
             }
+            hasMorePages={hasMorePages}
           />
         </Box>
       )}

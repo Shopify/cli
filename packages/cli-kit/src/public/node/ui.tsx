@@ -11,9 +11,9 @@ import Table, {TableProps} from '../../private/node/ui/components/Table/Table.js
 import {SelectPrompt, Props as SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, Props as TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
-import {Item as SelectItem, Props as SelectProps} from '../../private/node/ui/components/SelectInput.js'
+import {Props as SelectProps} from '../../private/node/ui/components/SelectInput.js'
 import {Props as InfoTableProps} from '../../private/node/ui/components/Prompts/InfoTable.js'
-import {AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
+import {AutocompletePrompt, SearchResults} from '../../private/node/ui/components/AutocompletePrompt.js'
 import React from 'react'
 import {RenderOptions} from 'ink'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -265,7 +265,8 @@ interface RenderAutocompletePromptProps<T> {
   message: string
   choices: SelectProps<T>['items']
   infoTable?: InfoTableProps['table']
-  search?: (term: string) => Promise<SelectItem<T>[]>
+  search?: (term: string) => Promise<SearchResults<T>>
+  hasMorePages?: boolean
 }
 
 /**
@@ -283,7 +284,9 @@ interface RenderAutocompletePromptProps<T> {
 export function renderAutocompletePrompt<T>(props: RenderAutocompletePromptProps<T>): Promise<T> {
   const newProps = {
     search(term: string) {
-      return Promise.resolve(props.choices.filter((item) => item.label.toLowerCase().includes(term.toLowerCase())))
+      return Promise.resolve({
+        nodes: props.choices.filter((item) => item.label.toLowerCase().includes(term.toLowerCase())),
+      })
     },
     ...props,
   }
