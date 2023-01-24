@@ -7,6 +7,7 @@ import {
   useDeviceAuth,
   cloudEnvironment,
   macAddress,
+  firstPartyDev,
 } from './local.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
@@ -244,5 +245,39 @@ describe('cloudEnvironment', () => {
 
     // Then
     expect(got.platform).toBe('localhost')
+  })
+})
+
+describe('firstPartyDev', () => {
+  it('returns true when in spin', () => {
+    // Given
+    const env = {SPIN: '1'}
+
+    // When
+    expect(firstPartyDev(env)).toBe(true)
+  })
+
+  it('returns true when the service environment is a spin environment', () => {
+    // Given
+    const env = {SHOPIFY_SERVICE_ENV: 'spin'}
+
+    // When
+    expect(firstPartyDev(env)).toBe(true)
+  })
+
+  it('returns true when the first party dev enviroment variable exists', () => {
+    // Given
+    const env = {SHOPIFY_CLI_1P_DEV: '1'}
+
+    // When
+    expect(firstPartyDev(env)).toBe(true)
+  })
+
+  it('returns false when no first party dev enviroment variable exists', () => {
+    // Given
+    const env = {}
+
+    // When
+    expect(firstPartyDev(env)).toBe(false)
   })
 })
