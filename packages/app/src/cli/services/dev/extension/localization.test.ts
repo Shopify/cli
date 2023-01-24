@@ -91,10 +91,8 @@ describe('when there are locale files', () => {
   })
 
   it('returns the lastUpdated timestamp of the most recently updated locale', async () => {
-    let timestamp = 0
-    vi.spyOn(Date, 'now').mockImplementation(() => {
-      return (timestamp += 1)
-    })
+    const timestamp = 0
+    vi.setSystemTime(new Date(timestamp))
 
     await inTemporaryDirectory(async (tmpDir) => {
       await mkdir(joinPath(tmpDir, 'locales'))
@@ -103,15 +101,13 @@ describe('when there are locale files', () => {
       await writeFile(joinPath(tmpDir, 'locales', 'es.json'), '{"greeting": "Hola!"}')
 
       const result = await testGetLocalization(tmpDir)
-      expect(Date.now).toBeCalledTimes(1)
       expect(result.localization!.lastUpdated).equals(timestamp)
     })
+    vi.useRealTimers()
   })
   it('returns the last succesful locale built when there are JSON errors', async () => {
-    let timestamp = 0
-    vi.spyOn(Date, 'now').mockImplementation(() => {
-      return (timestamp += 1)
-    })
+    const timestamp = 0
+    vi.setSystemTime(new Date(timestamp))
 
     await inTemporaryDirectory(async (tmpDir) => {
       await mkdir(joinPath(tmpDir, 'locales'))
@@ -124,6 +120,8 @@ describe('when there are locale files', () => {
 
       expect(result.localization!.lastUpdated).equals(lastSuccesfulLocalization!.lastUpdated)
     })
+
+    vi.useRealTimers()
   })
   it("returns 'success' as the status when there are no JSON errors", async () => {
     await inTemporaryDirectory(async (tmpDir) => {

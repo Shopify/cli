@@ -1,10 +1,10 @@
 import {themeFlags} from '../flags.js'
-import {store as conf} from '@shopify/cli-kit'
+import {themeConf} from '../services/conf.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 export function getThemeStore(flags: {store: string | undefined}): string {
-  const store = flags.store || conf.getThemeStore()
+  const store = flags.store || themeConf().get('themeStore')
   if (!store) {
     throw new AbortError(
       'A store is required',
@@ -15,6 +15,6 @@ export function getThemeStore(flags: {store: string | undefined}): string {
       } environment variable.`,
     )
   }
-  conf.setThemeStore(store)
+  themeConf().set('themeStore', store)
   return store
 }

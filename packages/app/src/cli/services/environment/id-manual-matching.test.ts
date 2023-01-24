@@ -3,7 +3,7 @@ import {ExtensionRegistration} from '../dev/create-extension.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {ui} from '@shopify/cli-kit'
-import {ok} from '@shopify/cli-kit/node/result.js'
+import {ok} from '@shopify/cli-kit/node/result'
 
 const REGISTRATION_A: ExtensionRegistration = {
   uuid: 'UUID_A',

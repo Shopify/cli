@@ -1,8 +1,8 @@
 import {outputEnv} from './app/env/show.js'
+import {CachedAppInfo, getAppInfo} from './conf.js'
 import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
 import {configurationFileNames} from '../constants.js'
-import {store} from '@shopify/cli-kit'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {linesToColumns} from '@shopify/cli-kit/common/string'
@@ -53,7 +53,7 @@ const NOT_CONFIGURED_TEXT = outputContent`${outputToken.italic('Not yet configur
 
 class AppInfo {
   private app: AppInterface
-  private cachedAppInfo: store.CachedAppInfo | undefined
+  private cachedAppInfo: CachedAppInfo | undefined
 
   constructor(app: AppInterface) {
     this.app = app
@@ -81,7 +81,7 @@ class AppInfo {
       this.app.packageManager,
       'dev',
     )}`.value
-    const cachedAppInfo = store.getAppInfo(this.app.directory)
+    const cachedAppInfo = getAppInfo(this.app.directory)
     if (cachedAppInfo) {
       if (cachedAppInfo.title) appName = cachedAppInfo.title
       if (cachedAppInfo.storeFqdn) storeDescription = cachedAppInfo.storeFqdn
