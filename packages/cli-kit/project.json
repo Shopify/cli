@@ -67,6 +67,22 @@
       },
       "test": {
         "executor": "nx:run-commands",
+        "dependsOn": ["test:ruby", "test:js"],
+        "options": {
+          "commands": [],
+          "cwd": "packages/cli-kit"
+        }
+      },
+      "test:ruby": {
+        "executor": "nx:run-commands",
+        "dependsOn": [],
+        "options": {
+          "command": "bundle exec rake test",
+          "cwd": "packages/cli-kit/assets/cli-ruby"
+        }
+      },
+      "test:js": {
+        "executor": "nx:run-commands",
         "dependsOn": ["build"],
         "options": {
           "command": "pnpm vitest run",
