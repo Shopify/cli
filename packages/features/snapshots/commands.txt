@@ -4,8 +4,8 @@
  app env pull           @shopify/app           
  app env show           @shopify/app           
  app generate extension @shopify/app           
- app generate schema    @shopify/app           
  app info               @shopify/app           
+ app pull schema        @shopify/app           
  app update-url         @shopify/app           
  auth logout            @shopify/cli           
  commands               @oclif/plugin-commands 
