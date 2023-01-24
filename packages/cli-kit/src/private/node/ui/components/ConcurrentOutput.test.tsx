@@ -69,7 +69,8 @@ describe('ConcurrentOutput', () => {
       0000-00-00 00:00:00 | frontend | second frontend message
       0000-00-00 00:00:00 | frontend | third frontend message
 
-      Press q to quit.                            Press p to open your browser."
+      Press q to quit.
+      Press p to open your browser."
     `)
   })
 

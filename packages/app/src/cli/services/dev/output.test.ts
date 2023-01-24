@@ -26,7 +26,7 @@ describe('output', () => {
   })
 
   describe('outputPreviewUrl', () => {
-    it.only('renders a banner with instructions on how to preview the app', async () => {
+    it('renders a banner with instructions on how to preview the app', async () => {
       const outputMock = mockAndCaptureOutput()
       const appMock = await mockApp({functions: false})
 
@@ -35,7 +35,7 @@ describe('output', () => {
       expect(outputMock.output()).toMatchInlineSnapshot(`
         "╭─ success ────────────────────────────────────────────────────────────────────╮
         │                                                                              │
-        │  Preview ready. Press 'Enter' to open your browser.                          │
+        │  Preview ready! Press \`Enter\` to open your browser.                          │
         │                                                                              │
         ╰──────────────────────────────────────────────────────────────────────────────╯
         "
@@ -51,7 +51,7 @@ describe('output', () => {
       expect(outputMock.output()).toMatchInlineSnapshot(`
         "╭─ success ────────────────────────────────────────────────────────────────────╮
         │                                                                              │
-        │  Preview ready. Press 'Enter' to open your browser.                          │
+        │  Preview ready! Press \`Enter\` to open your browser.                          │
         │                                                                              │
         │  Keep in mind that Shopify Functions need to be deployed to be manually      │
         │  tested.                                                                     │
