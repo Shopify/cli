@@ -64,11 +64,7 @@ export function renderDeprecatedArgsWarning(argv: string[]) {
   const ids = argv.join(' ')
 
   renderWarning({
-    headline: [
-      'Positional arguments are deprecated. Use the',
-      {command: '--theme'},
-      'flag:',
-      {command: `shopify theme delete --theme ${ids}`},
-    ],
+    headline: ['Positional arguments are deprecated. Use the', {command: '--theme'}, 'flag instead:'],
+    body: [{command: `$ shopify theme delete --theme ${ids}`}, {char: '.'}],
   })
 }
