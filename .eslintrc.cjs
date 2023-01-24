@@ -90,19 +90,19 @@ module.exports = {
         paths: [
           {
             name: 'path',
-            message: "Please use: import { path } from '@shopify/cli-kit'",
+            message: "Please use: import { joinPath } from '@shopify/cli-kit/node/path'",
           },
           {
             name: 'node:path',
-            message: "Please use: import { path } from '@shopify/cli-kit'",
+            message: "Please use: import { joinPath } from '@shopify/cli-kit/node/path'",
           },
           {
             name: 'child_process',
-            message: "Please use: import { system } from '@shopify/cli-kit'",
+            message: "Please use: import { exec } from '@shopify/cli-kit/node/system'",
           },
           {
             name: 'node:child_process',
-            message: "Please use: import { system } from '@shopify/cli-kit'",
+            message: "Please use: import { exec } from '@shopify/cli-kit/node/system'",
           },
         ],
       },
@@ -150,6 +150,7 @@ module.exports = {
     'rulesdir/command-conventional-flag-env': 'error',
     'rulesdir/command-reserved-flags': 'error',
     'rulesdir/no-error-factory-functions': 'error',
+    'rulesdir/no-process-cwd': 'error',
     'no-restricted-syntax': [
       'error',
       {

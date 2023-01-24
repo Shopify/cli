@@ -122,7 +122,7 @@ export default class Dev extends Command {
 
   async run(): Promise<void> {
     const {args, flags} = await this.parse(Dev)
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    const directory = flags.path ? path.resolve(flags.path) : path.cwd()
     const app = loadApp(directory)
     await devService({app, port: flags.port})
   }

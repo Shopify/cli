@@ -147,7 +147,7 @@ export function cleanStackFrameFilePath({
 export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interfaces.Config): Promise<void> {
   // Bugsnag have their own plug-ins that use this private field
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const bugsnagConfigProjectRoot: string = (Bugsnag as any)?._client?._config?.projectRoot ?? process.cwd()
+  const bugsnagConfigProjectRoot: string = (Bugsnag as any)?._client?._config?.projectRoot ?? path.cwd()
   const projectRoot = path.normalizePath(bugsnagConfigProjectRoot)
   const pluginLocations = await Promise.all(
     config.plugins.map(async (plugin) => {

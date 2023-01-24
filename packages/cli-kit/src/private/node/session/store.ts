@@ -1,7 +1,7 @@
 import {SessionSchema} from './schema.js'
 import {keychainConstants} from '../constants.js'
 import {platformAndArch} from '../../../public/node/os.js'
-import {store as secureStore, fetch as secureFetch, remove as secureRemove} from '../../../secure-store.js'
+import {secureStoreSave, secureStoreFetch, secureStoreRemove} from '../secure-store.js'
 import {content, debug} from '../../../public/node/output.js'
 import {getSession, removeSession, setSession, clearAllAppInfo} from '../../../store.js'
 import type {Session} from './schema.js'
@@ -19,7 +19,7 @@ export const identifier = 'session'
 export async function store(session: Session) {
   const jsonSession = JSON.stringify(session)
   if (await secureStoreAvailable()) {
-    await secureStore(identifier, jsonSession)
+    await secureStoreSave(identifier, jsonSession)
   } else {
     setSession(jsonSession)
   }
@@ -36,7 +36,7 @@ export async function store(session: Session) {
 export async function fetch(): Promise<Session | undefined> {
   let content
   if (await secureStoreAvailable()) {
-    content = await secureFetch(identifier)
+    content = await secureStoreFetch(identifier)
   } else {
     content = getSession()
   }
@@ -59,7 +59,7 @@ export async function fetch(): Promise<Session | undefined> {
  */
 export async function remove() {
   if (await secureStoreAvailable()) {
-    await secureRemove(identifier)
+    await secureStoreRemove(identifier)
   } else {
     removeSession()
   }

@@ -2,14 +2,14 @@ import {ThemeExtensionSchema, ZodSchemaType} from './schemas.js'
 import {loadThemeSpecifications} from './specifications.js'
 import {GenericSpecification, ThemeExtension} from '../app/extensions.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import {schema} from '@shopify/cli-kit'
 import * as output from '@shopify/cli-kit/node/output'
+import {schema} from '@shopify/cli-kit/node/schema'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 import {basename} from '@shopify/cli-kit/node/path'
 
 // Base config type for a theme extension.
-export type ThemeConfigContents = schema.define.infer<typeof ThemeExtensionSchema>
+export type ThemeConfigContents = schema.infer<typeof ThemeExtensionSchema>
 
 export interface ThemeExtensionSpec extends GenericSpecification {
   identifier: 'theme'

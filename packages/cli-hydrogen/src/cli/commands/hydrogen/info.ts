@@ -5,7 +5,7 @@ import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import * as output from '@shopify/cli-kit/node/output'
 import Command from '@shopify/cli-kit/node/base-command'
-import {resolvePath} from '@shopify/cli-kit/node/path'
+import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 
 export default class Info extends Command {
   static description = 'Print basic information about your hydrogen app.'
@@ -23,7 +23,7 @@ export default class Info extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Info)
-    const directory = flags.path ? resolvePath(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : cwd()
     const app: HydrogenApp = await loadApp(directory)
 
     output.info(info(app, {showPrivateData: flags.showToken}))

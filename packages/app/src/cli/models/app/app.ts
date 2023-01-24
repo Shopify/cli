@@ -1,15 +1,15 @@
 import {Extension, FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {AppErrors} from './loader.js'
-import {schema} from '@shopify/cli-kit'
+import {schema} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 
-export const AppConfigurationSchema = schema.define.object({
-  scopes: schema.define.string().default(''),
-  extensionDirectories: schema.define.array(schema.define.string()).optional(),
-  webDirectories: schema.define.array(schema.define.string()).optional(),
+export const AppConfigurationSchema = schema.object({
+  scopes: schema.string().default(''),
+  extensionDirectories: schema.array(schema.string()).optional(),
+  webDirectories: schema.array(schema.string()).optional(),
 })
 
 export enum WebType {
@@ -17,24 +17,24 @@ export enum WebType {
   Backend = 'backend',
 }
 
-const WebConfigurationAuthCallbackPathSchema = schema.define.preprocess(
+const WebConfigurationAuthCallbackPathSchema = schema.preprocess(
   (arg) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg),
-  schema.define.string(),
+  schema.string(),
 )
 
-export const WebConfigurationSchema = schema.define.object({
-  type: schema.define.enum([WebType.Frontend, WebType.Backend]),
-  authCallbackPath: schema.define
+export const WebConfigurationSchema = schema.object({
+  type: schema.enum([WebType.Frontend, WebType.Backend]),
+  authCallbackPath: schema
     .union([WebConfigurationAuthCallbackPathSchema, WebConfigurationAuthCallbackPathSchema.array()])
     .optional(),
-  commands: schema.define.object({
-    build: schema.define.string().optional(),
-    dev: schema.define.string(),
+  commands: schema.object({
+    build: schema.string().optional(),
+    dev: schema.string(),
   }),
 })
 
-export type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
-export type WebConfiguration = schema.define.infer<typeof WebConfigurationSchema>
+export type AppConfiguration = schema.infer<typeof AppConfigurationSchema>
+export type WebConfiguration = schema.infer<typeof WebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
 
 export interface Web {

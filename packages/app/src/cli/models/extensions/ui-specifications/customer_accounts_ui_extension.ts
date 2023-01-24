@@ -1,23 +1,23 @@
 import {createUIExtensionSpecification} from '../ui.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
-import {schema} from '@shopify/cli-kit'
 import * as output from '@shopify/cli-kit/node/output'
+import {schema} from '@shopify/cli-kit/node/schema'
 
 const dependency = {name: '@shopify/customer-account-ui-extensions-react', version: '^0.0.20'}
 
 const CustomerAccountsSchema = BaseUIExtensionSchema.extend({
-  categories: schema.define.array(schema.define.string()).optional(),
-  extensionPoints: schema.define.array(schema.define.string()).optional(),
-  localization: schema.define.any().optional(),
-  authenticatedRedirectStartUrl: schema.define
+  categories: schema.array(schema.string()).optional(),
+  extensionPoints: schema.array(schema.string()).optional(),
+  localization: schema.any().optional(),
+  authenticatedRedirectStartUrl: schema
     .string()
     .url({
       message: 'authenticated_redirect_start_url must be a valid URL.',
     })
     .optional(),
-  authenticatedRedirectRedirectUrls: schema.define
+  authenticatedRedirectRedirectUrls: schema
     .array(
-      schema.define.string().url({
+      schema.string().url({
         message: 'authenticated_redirect_redirect_urls does contain invalid URLs.',
       }),
     )

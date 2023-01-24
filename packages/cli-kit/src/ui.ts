@@ -12,7 +12,7 @@ import {
   debug,
 } from './public/node/output.js'
 import colors from './public/node/colors.js'
-import {relativePath} from './public/node/path.js'
+import {relativizePath} from './public/node/path.js'
 import {isTerminalInteractive} from './public/node/environment/local.js'
 import {run as executorUI} from './ui/executor.js'
 import {Listr as OriginalListr, ListrTask, ListrBaseClassOptions} from 'listr2'
@@ -133,7 +133,7 @@ export async function nonEmptyDirectoryPrompt(directory: string) {
       {name: 'Yes, delete the files', value: 'overwrite'},
     ]
 
-    const relativeDirectory = relativePath(process.cwd(), directory)
+    const relativeDirectory = relativizePath(directory)
 
     const questions: Question<'value'> = {
       type: 'select',

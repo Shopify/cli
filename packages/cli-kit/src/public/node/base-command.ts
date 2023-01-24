@@ -3,6 +3,7 @@ import {loadPresetsFromDirectory} from './presets.js'
 import {isDevelopment} from './environment/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
+import {cwd} from './path.js'
 import {JsonMap} from '../../private/common/json.js'
 import {content, info, token} from '../../public/node/output.js'
 import {hashString} from '../../public/node/crypto.js'
@@ -97,7 +98,7 @@ abstract class BaseCommand extends Command {
   }
 
   protected async presetsPath(rawFlags: {path?: string}): Promise<string> {
-    return rawFlags.path || process.cwd()
+    return rawFlags.path || cwd()
   }
 
   protected findUpForPresets(): boolean {

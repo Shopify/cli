@@ -7,7 +7,7 @@ import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
 import * as output from '@shopify/cli-kit/node/output'
-import {resolvePath} from '@shopify/cli-kit/node/path'
+import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export default class GenerateSchema extends Command {
@@ -29,7 +29,7 @@ export default class GenerateSchema extends Command {
   public async run(): Promise<void> {
     const {flags, args} = await this.parse(GenerateSchema)
     const apiKey = flags['api-key']
-    const directory = flags.path ? resolvePath(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : cwd()
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({directory, specifications})
     const extension = app.extensions.function.find((extension) => extension.localIdentifier === args.function)

@@ -77,10 +77,15 @@ export function packageManagerUsedForCreating(env = process.env): PackageManager
 
 /**
  * Returns the dependency manager used by an existing project.
- * @param directory - The root directory of the project.
+ * @param fromDirectory - The starting directory
  * @returns The dependency manager
  */
-export async function getPackageManager(directory: string): Promise<PackageManager> {
+export async function getPackageManager(fromDirectory: string): Promise<PackageManager> {
+  const packageJson = await findPathUp('package.json', {cwd: fromDirectory, type: 'file'})
+  if (!packageJson) {
+    throw FindUpAndReadPackageJsonNotFoundError(fromDirectory)
+  }
+  const directory = dirname(packageJson)
   debug(content`Obtaining the dependency manager in directory ${token.path(directory)}...`)
   const yarnLockPath = joinPath(directory, yarnLockfile)
   const pnpmLockPath = joinPath(directory, pnpmLockfile)

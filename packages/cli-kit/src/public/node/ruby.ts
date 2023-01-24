@@ -4,7 +4,7 @@ import {AbortSignal} from './abort.js'
 import {platformAndArch} from './os.js'
 import {captureOutput, exec} from './system.js'
 import * as file from './fs.js'
-import {joinPath} from './path.js'
+import {joinPath, cwd} from './path.js'
 import {AbortError, AbortSilentError} from './error.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
@@ -54,7 +54,7 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
   try {
     await exec(bundleExecutable(), ['exec', 'shopify'].concat(args), {
       stdio: 'inherit',
-      cwd: options.directory ?? process.cwd(),
+      cwd: options.directory ?? cwd(),
       env,
       signal: options.signal,
     })
