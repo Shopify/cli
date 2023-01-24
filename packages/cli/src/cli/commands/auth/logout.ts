@@ -7,6 +7,6 @@ export default class Logout extends Command {
 
   async run(): Promise<void> {
     await logout()
-    output.success('Logged out from Shopify')
+    output.outputSuccess('Logged out from Shopify')
   }
 }

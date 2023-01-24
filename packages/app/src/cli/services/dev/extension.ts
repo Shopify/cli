@@ -96,12 +96,12 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadStoreOptions)
   const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadStoreOptions)
 
-  output.debug(`Setting up the UI extensions HTTP server...`, options.stdout)
+  output.outputDebug(`Setting up the UI extensions HTTP server...`, options.stdout)
   const httpServer = setupHTTPServer({devOptions, payloadStore})
 
-  output.debug(`Setting up the UI extensions Websocket server...`, options.stdout)
+  output.outputDebug(`Setting up the UI extensions Websocket server...`, options.stdout)
   const websocketConnection = setupWebsocketConnection({...options, httpServer, payloadStore})
-  output.debug(`Setting up the UI extensions bundler and file watching...`, options.stdout)
+  output.outputDebug(`Setting up the UI extensions bundler and file watching...`, options.stdout)
   const fileWatcher = await setupBundlerAndFileWatcher({devOptions, payloadStore})
 
   options.signal.addEventListener('abort', () => {

@@ -28,8 +28,8 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
   if (!apiKey) {
     if (!isTerminalInteractive()) {
       throw new AbortError(
-        output.content`No API key was provided.`,
-        output.content`Provide an API key with the --api-key flag.`,
+        output.outputContent`No API key was provided.`,
+        output.outputContent`Provide an API key with the --api-key flag.`,
       )
     }
 
@@ -46,8 +46,8 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
 
   if (!response.definition) {
     throw new AbortError(
-      output.content`A schema could not be generated for ${extension.localIdentifier}`,
-      output.content`Check that the Function API type and version are valid.`,
+      output.outputContent`A schema could not be generated for ${extension.localIdentifier}`,
+      output.outputContent`Check that the Function API type and version are valid.`,
     )
   }
 

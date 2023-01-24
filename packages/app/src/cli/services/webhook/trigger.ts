@@ -40,7 +40,7 @@ export async function webhookTriggerService(flags: WebhookTriggerFlags) {
     const result = await triggerLocalWebhook(address, sample.samplePayload, sample.headers)
 
     if (result) {
-      output.success('Localhost delivery sucessful')
+      output.outputSuccess('Localhost delivery sucessful')
       return
     }
 
@@ -49,7 +49,7 @@ export async function webhookTriggerService(flags: WebhookTriggerFlags) {
   }
 
   if (sample.samplePayload === JSON.stringify({})) {
-    output.success('Webhook has been enqueued for delivery')
+    output.outputSuccess('Webhook has been enqueued for delivery')
   }
 }
 

@@ -38,11 +38,11 @@ export default class GenerateSchema extends Command {
       const functions = app.extensions.function.map((extension) => extension.localIdentifier).join(', ')
 
       throw new AbortError(
-        output.content`No function named ${args.function} found in this app.`,
-        output.content`Use one of the available functions: ${functions}`,
+        output.outputContent`No function named ${args.function} found in this app.`,
+        output.outputContent`Use one of the available functions: ${functions}`,
       )
     }
 
-    output.info(await generateSchemaService({app, extension, apiKey}))
+    output.outputInfo(await generateSchemaService({app, extension, apiKey}))
   }
 }

@@ -3,7 +3,7 @@ import {alwaysLogAnalytics, analyticsDisabled, isShopify} from './environment/lo
 import * as metadata from './metadata.js'
 import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
-import {content, debug, token} from '../../public/node/output.js'
+import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
 import {getEnvironmentData, getSensitiveEnvironmentData} from '../../private/node/analytics.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {Interfaces} from '@oclif/core'
@@ -27,12 +27,12 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
       return
     }
     if (!alwaysLogAnalytics() && analyticsDisabled()) {
-      debug(content`Skipping command analytics, payload: ${token.json(payload)}`)
+      outputDebug(outputContent`Skipping command analytics, payload: ${outputToken.json(payload)}`)
       return
     }
     const response = await publishMonorailEvent(MONORAIL_COMMAND_TOPIC, payload.public, payload.sensitive)
     if (response.type === 'error') {
-      debug(response.message)
+      outputDebug(response.message)
     }
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
@@ -40,14 +40,14 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
     if (error instanceof Error) {
       message = message.concat(`: ${error.message}`)
     }
-    debug(message)
+    outputDebug(message)
   }
 }
 
 async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions) {
   const {commandStartOptions, ...sensitiveMetadata} = metadata.getAllSensitiveMetadata()
   if (commandStartOptions === undefined) {
-    debug('Unable to log analytics event - no information on executed command')
+    outputDebug('Unable to log analytics event - no information on executed command')
     return
   }
   const {startCommand, startArgs, startTime} = commandStartOptions

@@ -5,9 +5,9 @@ import {version as rubyVersion} from '@shopify/cli-kit/node/ruby'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {linesToColumns} from '@shopify/cli-kit/common/string'
 
-export async function themeInfo(config: {cliVersion: string}): Promise<output.Message> {
+export async function themeInfo(config: {cliVersion: string}): Promise<output.OutputMessage> {
   const sections: [string, string][] = [themeConfigSection(), await systemInfoSection(config)]
-  const message = sections.map((sectionContents) => output.section(...sectionContents)).join('\n\n')
+  const message = sections.map((sectionContents) => output.formatSection(...sectionContents)).join('\n\n')
   return message
 }
 

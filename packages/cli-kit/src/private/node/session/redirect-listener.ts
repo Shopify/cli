@@ -11,7 +11,7 @@ import {
   MissingStateString,
 } from './post-auth.js'
 import {AbortError, BugError} from '../../../public/node/error.js'
-import {content, info, token} from '../../../public/node/output.js'
+import {outputContent, outputInfo, outputToken} from '../../../public/node/output.js'
 import {createApp, IncomingMessage, ServerResponse} from 'h3'
 import url from 'url'
 import {createServer, Server} from 'http'
@@ -126,7 +126,7 @@ export async function listenRedirect(host: string, port: number, url: string): P
   const result = await new Promise<{code: string; state: string}>((resolve, reject) => {
     const timeout = setTimeout(() => {
       const message = '\nAuto-open timed out. Open the login page: '
-      info(content`${message}${token.link('Log in to Shopify Partners', url)}\n`)
+      outputInfo(outputContent`${message}${outputToken.link('Log in to Shopify Partners', url)}\n`)
     }, ResponseTimeoutSeconds * 1000)
 
     const callback: RedirectCallback = (error, code, state) => {

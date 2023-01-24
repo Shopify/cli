@@ -1,5 +1,5 @@
 import {renderFatalError} from './ui.js'
-import {Message, stringifyMessage, TokenizedString} from '../../public/node/output.js'
+import {OutputMessage, stringifyMessage, TokenizedString} from '../../public/node/output.js'
 import {normalizePath} from '../../public/node/path.js'
 import {TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 import {Errors} from '@oclif/core'
@@ -33,9 +33,9 @@ export abstract class FatalError extends Error {
    * @param nextSteps - Message to show as "next steps" with suggestions to solve the issue.
    */
   constructor(
-    message: Message,
+    message: OutputMessage,
     type: FatalErrorType,
-    tryMessage: TokenItem | Message | null = null,
+    tryMessage: TokenItem | OutputMessage | null = null,
     nextSteps?: TokenItem[],
   ) {
     super(stringifyMessage(message))
@@ -61,7 +61,7 @@ export abstract class FatalError extends Error {
  */
 export class AbortError extends FatalError {
   nextSteps?: TokenItem[]
-  constructor(message: Message, tryMessage: TokenItem | Message | null = null, nextSteps?: TokenItem[]) {
+  constructor(message: OutputMessage, tryMessage: TokenItem | OutputMessage | null = null, nextSteps?: TokenItem[]) {
     super(message, FatalErrorType.Abort, tryMessage, nextSteps)
   }
 }
@@ -74,7 +74,12 @@ export class ExternalError extends FatalError {
   command: string
   args: string[]
 
-  constructor(message: Message, command: string, args: string[], tryMessage: TokenItem | Message | null = null) {
+  constructor(
+    message: OutputMessage,
+    command: string,
+    args: string[],
+    tryMessage: TokenItem | OutputMessage | null = null,
+  ) {
     super(message, FatalErrorType.Abort, tryMessage)
     this.command = command
     this.args = args
@@ -91,7 +96,7 @@ export class AbortSilentError extends FatalError {
  * A bug error is an error that represents a bug and therefore should be reported.
  */
 export class BugError extends FatalError {
-  constructor(message: Message, tryMessage: TokenItem | null = null) {
+  constructor(message: OutputMessage, tryMessage: TokenItem | null = null) {
     super(message, FatalErrorType.Bug, tryMessage)
   }
 }

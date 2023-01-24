@@ -1,6 +1,6 @@
 import {err, ok} from './result.js'
 import {mockAndCaptureOutput} from './testing/output.js'
-import {success} from '../../public/node/output.js'
+import {outputSuccess} from '../../public/node/output.js'
 import {describe, expect, it} from 'vitest'
 
 describe('ok', () => {
@@ -65,7 +65,7 @@ describe('doOnOk', () => {
     const outpuMocker = mockAndCaptureOutput()
 
     // When
-    const result = ok(123).doOnOk((value) => success(`result ok ${value}`))
+    const result = ok(123).doOnOk((value) => outputSuccess(`result ok ${value}`))
 
     // Then
     expect(!result.isErr() && result.value).toEqual(123)

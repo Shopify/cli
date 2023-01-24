@@ -1,4 +1,4 @@
-import {content, token, debug} from './public/node/output.js'
+import {outputContent, outputToken, outputDebug} from './public/node/output.js'
 import {CLI_KIT_VERSION} from './public/common/version.js'
 import Conf, {Schema} from 'conf'
 
@@ -109,7 +109,7 @@ export function clearAllAppInfo(): void {
 
 export class CLIKitStore extends Conf<ConfSchema> {
   getAppInfo(directory: string): CachedAppInfo | undefined {
-    debug(content`Reading cached app information for directory ${token.path(directory)}...`)
+    outputDebug(outputContent`Reading cached app information for directory ${outputToken.path(directory)}...`)
     const apps = this.get('appInfo') ?? []
     return apps.find((app: CachedAppInfo) => app.directory === directory)
   }
@@ -123,7 +123,11 @@ export class CLIKitStore extends Conf<ConfSchema> {
     updateURLs?: boolean
     tunnelPlugin?: string
   }): void {
-    debug(content`Storing app information for directory ${token.path(options.directory)}:${token.json(options)}`)
+    outputDebug(
+      outputContent`Storing app information for directory ${outputToken.path(options.directory)}:${outputToken.json(
+        options,
+      )}`,
+    )
     const apps = this.get('appInfo') ?? []
     const index = apps.findIndex((saved: CachedAppInfo) => saved.directory === options.directory)
     if (index === -1) {
@@ -144,7 +148,7 @@ export class CLIKitStore extends Conf<ConfSchema> {
   }
 
   clearAppInfo(directory: string): void {
-    debug(content`Clearing app information for directory ${token.path(directory)}...`)
+    outputDebug(outputContent`Clearing app information for directory ${outputToken.path(directory)}...`)
     const apps = this.get('appInfo') ?? []
     const index = apps.findIndex((saved: CachedAppInfo) => saved.directory === directory)
     if (index !== -1) {
@@ -154,32 +158,32 @@ export class CLIKitStore extends Conf<ConfSchema> {
   }
 
   clearAllAppInfo(): void {
-    debug(content`Clearing all app information...`)
+    outputDebug(outputContent`Clearing all app information...`)
     this.set('appInfo', [])
   }
 
   getThemeStore(): string | undefined {
-    debug(content`Getting theme store...`)
+    outputDebug(outputContent`Getting theme store...`)
     return this.get('themeStore')
   }
 
   setThemeStore(themeStore: string): void {
-    debug(content`Setting theme store...`)
+    outputDebug(outputContent`Setting theme store...`)
     this.set('themeStore', themeStore)
   }
 
   getSession(): string | undefined {
-    debug(content`Getting session store...`)
+    outputDebug(outputContent`Getting session store...`)
     return this.get('sessionStore')
   }
 
   setSession(session: string): void {
-    debug(content`Setting session store...`)
+    outputDebug(outputContent`Setting session store...`)
     this.set('sessionStore', session)
   }
 
   removeSession(): void {
-    debug(content`Removing session store...`)
+    outputDebug(outputContent`Removing session store...`)
     this.set('sessionStore', '')
   }
 }

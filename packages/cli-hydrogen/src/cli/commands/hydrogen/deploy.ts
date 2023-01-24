@@ -53,7 +53,7 @@ export default class Deploy extends Command {
   public async run(): Promise<void> {
     const isShopifolk = await isShopify()
     if (!isShopifolk) {
-      output.warn('Command coming soon...')
+      output.outputWarn('Command coming soon...')
       return
     }
 

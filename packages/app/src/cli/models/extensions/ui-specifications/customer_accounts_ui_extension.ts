@@ -51,7 +51,7 @@ const spec = createUIExtensionSpecification({
     const origin = encodeURIComponent(`${host}/extensions`)
     const publicURL = `https://${accountsUrl}/extensions-development?origin=${origin}&extensionId=${uuid}`
     const notice = `Please open ${host} and click on 'Visit Site' and then close the tab to allow connections.\n`
-    return output.content`${notice}Preview link: ${publicURL}`
+    return output.outputContent`${notice}Preview link: ${publicURL}`
   },
 })
 

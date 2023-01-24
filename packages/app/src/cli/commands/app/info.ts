@@ -33,7 +33,7 @@ export default class AppInfo extends Command {
     const directory = flags.path ? resolvePath(flags.path) : cwd()
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({directory, specifications, mode: 'report'})
-    output.info(await info(app, {format: (flags.json ? 'json' : 'text') as Format, webEnv: flags['web-env']}))
+    output.outputInfo(await info(app, {format: (flags.json ? 'json' : 'text') as Format, webEnv: flags['web-env']}))
     if (app.errors) process.exit(2)
   }
 }

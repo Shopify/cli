@@ -28,16 +28,16 @@ export async function outputUpdateURLsResult(
 
 export function outputAppURL(storeFqdn: string, url: string) {
   const title = url.includes('localhost') ? 'App URL' : 'Shareable app URL'
-  const heading = output.token.heading(title)
+  const heading = output.outputToken.heading(title)
   const appURL = buildAppURLForWeb(storeFqdn, url)
-  output.info(output.content`\n\n${heading}\n\n  ${appURL}\n`)
+  output.outputInfo(output.outputContent`\n\n${heading}\n\n  ${appURL}\n`)
 }
 
 export function outputDevConsoleURL(url: string) {
   const title = 'Shopify extension dev console URL'
-  const heading = output.token.heading(title)
+  const heading = output.outputToken.heading(title)
   const devConsoleURL = `${url}/extensions/dev-console`
-  output.info(output.content`${heading}\n\n  ${devConsoleURL}\n`)
+  output.outputInfo(output.outputContent`${heading}\n\n  ${devConsoleURL}\n`)
 }
 
 export function outputExtensionsMessages(app: AppInterface, storeFqdn: string, url: string) {
@@ -53,29 +53,29 @@ function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, ur
 
   for (const extension of extensions) {
     const message = extension.previewMessage(url, storeFqdn)
-    if (message) output.info(message)
+    if (message) output.outputInfo(message)
   }
 }
 
 function outputFunctionsMessage(extensions: FunctionExtension[]) {
   if (extensions.length === 0) return
   const names = extensions.map((ext) => ext.configuration.name)
-  const heading = output.token.heading(names.join(', '))
+  const heading = output.outputToken.heading(names.join(', '))
   const message = `These extensions need to be deployed to be manually tested.
 One testing option is to use a separate app dedicated to staging.`
-  output.info(output.content`${heading}\n${message}\n`)
+  output.outputInfo(output.outputContent`${heading}\n${message}\n`)
 }
 
 function outputThemeExtensionsMessage(extensions: ThemeExtension[]) {
   if (extensions.length === 0) return
   for (const extension of extensions) {
     const message = extension.previewMessage('', '')
-    if (message) output.info(message)
+    if (message) output.outputInfo(message)
   }
 }
 
 async function partnersURL(organizationId: string, appId: string): Promise<string> {
-  return output.content`${output.token.link(
+  return output.outputContent`${output.outputToken.link(
     `Partners Dashboard`,
     `https://${await partnersFqdn()}/${organizationId}/apps/${appId}/edit`,
   )}`.value

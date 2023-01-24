@@ -5,10 +5,12 @@ import {checkForNewVersion, packageManagerUsedForCreating} from '@shopify/cli-ki
 export async function versionService(): Promise<void> {
   const cliDependency = '@shopify/cli'
   const currentVersion = CLI_KIT_VERSION
-  output.info(output.content`Current Shopify CLI version: ${output.token.yellow(currentVersion)}`.value)
+  output.outputInfo(
+    output.outputContent`Current Shopify CLI version: ${output.outputToken.yellow(currentVersion)}`.value,
+  )
   const lastVersion = await checkForNewVersion(cliDependency, currentVersion)
   if (lastVersion) {
     const packageManager = packageManagerUsedForCreating()
-    output.info(output.getOutputUpdateCLIReminder(packageManager, lastVersion))
+    output.outputInfo(output.getOutputUpdateCLIReminder(packageManager, lastVersion))
   }
 }

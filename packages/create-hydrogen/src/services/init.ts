@@ -196,19 +196,19 @@ async function init(options: InitOptions) {
     await moveFile(templateScaffoldDir, outputDirectory)
   })
 
-  output.info(output.content`
+  output.outputInfo(output.outputContent`
 ✨ ${hyphenizedName} is ready to build!
-🚀 Run ${output.token.packagejsonScript(
+🚀 Run ${output.outputToken.packagejsonScript(
     packageManager,
     'dev',
   )} to start your local development server and start building.
 
-📚 Docs: ${output.token.link('Quick start guide', 'https://shopify.dev/custom-storefronts/hydrogen')}`)
+📚 Docs: ${output.outputToken.link('Quick start guide', 'https://shopify.dev/custom-storefronts/hydrogen')}`)
 
-  output.info(output.content`
+  output.outputInfo(output.outputContent`
 👋 Note: your project will display inventory from the Hydrogen Demo Store.\
  To connect this project to your Shopify store’s inventory instead,\
- update ${output.token.yellow(`${hyphenizedName}/hydrogen.config.js`)} with your\
+ update ${output.outputToken.yellow(`${hyphenizedName}/hydrogen.config.js`)} with your\
  store ID and Storefront API key.\n`)
 }
 

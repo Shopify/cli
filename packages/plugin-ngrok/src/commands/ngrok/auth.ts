@@ -11,6 +11,6 @@ export default class NgrokAuth extends Command {
   async run() {
     const {args} = await this.parse(NgrokAuth)
     await authenticate(args.token)
-    output.success('Auth token saved')
+    output.outputSuccess('Auth token saved')
   }
 }

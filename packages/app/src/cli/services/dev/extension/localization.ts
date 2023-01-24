@@ -57,7 +57,7 @@ export async function getLocalization(
       }),
     )
     localization.lastUpdated = Date.now()
-    output.info(
+    output.outputInfo(
       `Parsed locales for extension ${extension.configuration.name} at ${extension.directory}`,
       options.stdout,
     )
@@ -86,7 +86,7 @@ async function compileLocalizationFiles(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     const message = `Error parsing ${locale} locale for ${extension.configuration.name} at ${path}: ${error.message}`
-    output.warn(message, options.stderr)
+    output.outputWarn(message, options.stderr)
     throw new ExtendableError(message)
   }
 }

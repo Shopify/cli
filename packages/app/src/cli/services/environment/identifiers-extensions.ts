@@ -74,7 +74,7 @@ async function createExtensions(extensions: LocalSource[], appId: string) {
     // Create one at a time to avoid API rate limiting issues.
     // eslint-disable-next-line no-await-in-loop
     const registration = await createExtension(appId, extension.graphQLType, extension.configuration.name, token)
-    output.completed(`Created extension ${extension.configuration.name}.`)
+    output.outputCompleted(`Created extension ${extension.configuration.name}.`)
     result[extension.localIdentifier] = registration
   }
   return result

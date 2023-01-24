@@ -21,6 +21,6 @@ export default class EnvShow extends Command {
     const directory = flags.path ? resolvePath(flags.path) : cwd()
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({directory, specifications, mode: 'report'})
-    output.info(await showEnv(app))
+    output.outputInfo(await showEnv(app))
   }
 }

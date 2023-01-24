@@ -48,8 +48,8 @@ async function tokenPrompt(showExplanation = true): Promise<string> {
       'Shopify-trusted tunneling service called ngrok. '
     : ''
   const ngrokURL = 'https://dashboard.ngrok.com/get-started/your-authtoken'
-  const link = output.token.link(ngrokURL, ngrokURL)
-  output.info(output.content`${explanation}To sign up and get an auth token: ${link}\n`)
+  const link = output.outputToken.link(ngrokURL, ngrokURL)
+  output.outputInfo(output.outputContent`${explanation}To sign up and get an auth token: ${link}\n`)
 
   const input: {token: string} = await ui.prompt([
     {
@@ -73,12 +73,16 @@ function buildTryMessage(errorType: TunnelErrorType): string | undefined {
     const {platform} = platformAndArch()
     const tryMessage = 'Kill all the ngrok processes with '
     if (platform === 'windows') {
-      return tryMessage.concat(output.content`${output.token.genericShellCommand('taskkill /f /im ngrok.exe')}`.value)
+      return tryMessage.concat(
+        output.outputContent`${output.outputToken.genericShellCommand('taskkill /f /im ngrok.exe')}`.value,
+      )
     } else {
-      return tryMessage.concat(output.content`${output.token.genericShellCommand('killall ngrok')}`.value)
+      return tryMessage.concat(output.outputContent`${output.outputToken.genericShellCommand('killall ngrok')}`.value)
     }
   } else if (errorType === 'wrong-credentials') {
-    return output.content`Update your ngrok token with ${output.token.genericShellCommand('shopify ngrok auth')}`.value
+    return output.outputContent`Update your ngrok token with ${output.outputToken.genericShellCommand(
+      'shopify ngrok auth',
+    )}`.value
   }
   return undefined
 }

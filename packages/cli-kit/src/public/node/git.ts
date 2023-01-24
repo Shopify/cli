@@ -2,7 +2,7 @@ import {hasGit, isTerminalInteractive} from './environment/local.js'
 import {appendFileSync} from './fs.js'
 import {AbortError} from './error.js'
 import {cwd} from './path.js'
-import {content, token, debug} from '../../public/node/output.js'
+import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
 
 export const gitFactory = git
@@ -14,7 +14,7 @@ export const gitFactory = git
  * @param initialBranch - The name of the initial branch.
  */
 export async function initializeGitRepository(directory: string, initialBranch = 'main'): Promise<void> {
-  debug(content`Initializing git repository at ${token.path(directory)}...`)
+  outputDebug(outputContent`Initializing git repository at ${outputToken.path(directory)}...`)
   await ensureGitIsPresentOrAbort()
   // We use init and checkout instead of `init --initial-branch` because the latter is only supported in git 2.28+
   const repo = git(directory)
@@ -32,7 +32,7 @@ export interface GitIgnoreTemplate {
  * @param template - The template to use to create the .gitignore file.
  */
 export function createGitIgnore(directory: string, template: GitIgnoreTemplate): void {
-  debug(content`Creating .gitignore at ${token.path(directory)}...`)
+  outputDebug(outputContent`Creating .gitignore at ${outputToken.path(directory)}...`)
   const filePath = `${directory}/.gitignore`
 
   let fileContent = ''
@@ -68,7 +68,7 @@ export interface GitCloneOptions {
  */
 export async function downloadGitRepository(cloneOptions: GitCloneOptions): Promise<void> {
   const {repoUrl, destination, progressUpdater, shallow, latestTag} = cloneOptions
-  debug(content`Git-cloning repository ${repoUrl} into ${token.path(destination)}...`)
+  outputDebug(outputContent`Git-cloning repository ${repoUrl} into ${outputToken.path(destination)}...`)
   await ensureGitIsPresentOrAbort()
   const [repository, branch] = repoUrl.split('#')
   const options: TaskOptions = {'--recurse-submodules': null}
@@ -146,7 +146,9 @@ export async function getLatestGitCommit(directory?: string): Promise<DefaultLog
   if (!logs.latest) {
     throw new AbortError(
       'Must have at least one commit to run command',
-      content`Run ${token.genericShellCommand("git commit -m 'Initial commit'")} to create your first commit.`,
+      outputContent`Run ${outputToken.genericShellCommand(
+        "git commit -m 'Initial commit'",
+      )} to create your first commit.`,
     )
   }
   return logs.latest
@@ -195,7 +197,9 @@ export async function getHeadSymbolicRef(directory?: string): Promise<string> {
   if (!ref) {
     throw new AbortError(
       "Git HEAD can't be detached to run command",
-      content`Run ${token.genericShellCommand('git checkout [branchName]')} to reattach HEAD or see git ${token.link(
+      outputContent`Run ${outputToken.genericShellCommand(
+        'git checkout [branchName]',
+      )} to reattach HEAD or see git ${outputToken.link(
         'documentation',
         'https://git-scm.com/book/en/v2/Git-Internals-Git-References',
       )} for more details`,
@@ -212,7 +216,10 @@ export async function ensureGitIsPresentOrAbort(): Promise<void> {
   if (!(await hasGit())) {
     throw new AbortError(
       `Git is necessary in the environment to continue`,
-      content`Install ${token.link('git', 'https://git-scm.com/book/en/v2/Getting-Started-Installing-Git')}`,
+      outputContent`Install ${outputToken.link(
+        'git',
+        'https://git-scm.com/book/en/v2/Getting-Started-Installing-Git',
+      )}`,
     )
   }
 }
@@ -226,6 +233,6 @@ export class OutsideGitDirectoryError extends AbortError {}
  */
 export async function ensureInsideGitDirectory(directory?: string): Promise<void> {
   if (!(await git({baseDir: directory}).checkIsRepo())) {
-    throw new OutsideGitDirectoryError(`${token.path(directory || cwd())} is not a Git directory`)
+    throw new OutsideGitDirectoryError(`${outputToken.path(directory || cwd())} is not a Git directory`)
   }
 }

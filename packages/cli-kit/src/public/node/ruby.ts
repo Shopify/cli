@@ -8,7 +8,7 @@ import {joinPath, cwd} from './path.js'
 import {AbortError, AbortSilentError} from './error.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
-import {content, token} from '../../public/node/output.js'
+import {outputContent, outputToken} from '../../public/node/output.js'
 import {Writable} from 'stream'
 
 const RubyCLIVersion = '2.34.0'
@@ -183,7 +183,8 @@ async function validateRuby() {
     throw new AbortError(
       'Ruby environment not found',
       `Make sure you have Ruby installed on your system. ${
-        content`${token.link('Documentation.', 'https://www.ruby-lang.org/en/documentation/installation/')}`.value
+        outputContent`${outputToken.link('Documentation.', 'https://www.ruby-lang.org/en/documentation/installation/')}`
+          .value
       }`,
     )
   }
@@ -191,9 +192,12 @@ async function validateRuby() {
   const isValid = version?.compare(MinRubyVersion)
   if (isValid === -1 || isValid === undefined) {
     throw new AbortError(
-      `Ruby version ${content`${token.yellow(version.raw)}`.value} is not supported`,
-      `Make sure you have at least Ruby ${content`${token.yellow(MinRubyVersion)}`.value} installed on your system. ${
-        content`${token.link('Documentation.', 'https://www.ruby-lang.org/en/documentation/installation/')}`.value
+      `Ruby version ${outputContent`${outputToken.yellow(version.raw)}`.value} is not supported`,
+      `Make sure you have at least Ruby ${
+        outputContent`${outputToken.yellow(MinRubyVersion)}`.value
+      } installed on your system. ${
+        outputContent`${outputToken.link('Documentation.', 'https://www.ruby-lang.org/en/documentation/installation/')}`
+          .value
       }`,
     )
   }
@@ -211,7 +215,7 @@ async function validateBundler() {
     throw new AbortError(
       'Bundler not found',
       `To install the latest version of Bundler, run ${
-        content`${token.genericShellCommand(`${gemExecutable()} install bundler`)}`.value
+        outputContent`${outputToken.genericShellCommand(`${gemExecutable()} install bundler`)}`.value
       }`,
     )
   }
@@ -219,9 +223,9 @@ async function validateBundler() {
   const isValid = version?.compare(MinBundlerVersion)
   if (isValid === -1 || isValid === undefined) {
     throw new AbortError(
-      `Bundler version ${content`${token.yellow(version.raw)}`.value} is not supported`,
+      `Bundler version ${outputContent`${outputToken.yellow(version.raw)}`.value} is not supported`,
       `To update to the latest version of Bundler, run ${
-        content`${token.genericShellCommand(`${gemExecutable()} install bundler`)}`.value
+        outputContent`${outputToken.genericShellCommand(`${gemExecutable()} install bundler`)}`.value
       }`,
     )
   }

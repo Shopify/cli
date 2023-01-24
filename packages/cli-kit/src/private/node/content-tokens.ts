@@ -1,5 +1,5 @@
 import colors from '../../public/node/colors.js'
-import {Message, stringifyMessage} from '../../public/node/output.js'
+import {OutputMessage, stringifyMessage} from '../../public/node/output.js'
 import {relativizePath} from '../../public/node/path.js'
 import terminalLink from 'terminal-link'
 import cjs from 'color-json'
@@ -21,10 +21,10 @@ export class RawContentToken extends ContentToken<string> {
   }
 }
 
-export class LinkContentToken extends ContentToken<Message> {
+export class LinkContentToken extends ContentToken<OutputMessage> {
   link: string
 
-  constructor(value: Message, link: string) {
+  constructor(value: OutputMessage, link: string) {
     super(value)
     this.link = link
   }
@@ -36,7 +36,7 @@ export class LinkContentToken extends ContentToken<Message> {
   }
 }
 
-export class CommandContentToken extends ContentToken<Message> {
+export class CommandContentToken extends ContentToken<OutputMessage> {
   output(): string {
     return colors.bold(colors.yellow(stringifyMessage(this.value)))
   }
@@ -80,10 +80,10 @@ export class LinesDiffContentToken extends ContentToken<Change[]> {
   }
 }
 
-export class ColorContentToken extends ContentToken<Message> {
+export class ColorContentToken extends ContentToken<OutputMessage> {
   color: (text: string) => string
 
-  constructor(value: Message, color: (text: string) => string) {
+  constructor(value: OutputMessage, color: (text: string) => string) {
     super(value)
     this.color = color
   }
@@ -93,31 +93,31 @@ export class ColorContentToken extends ContentToken<Message> {
   }
 }
 
-export class ErrorContentToken extends ContentToken<Message> {
+export class ErrorContentToken extends ContentToken<OutputMessage> {
   output(): string {
     return colors.bold.redBright(stringifyMessage(this.value))
   }
 }
 
-export class PathContentToken extends ContentToken<Message> {
+export class PathContentToken extends ContentToken<OutputMessage> {
   output(): string {
     return relativizePath(stringifyMessage(this.value))
   }
 }
 
-export class HeadingContentToken extends ContentToken<Message> {
+export class HeadingContentToken extends ContentToken<OutputMessage> {
   output(): string {
     return colors.bold.underline(stringifyMessage(this.value))
   }
 }
 
-export class SubHeadingContentToken extends ContentToken<Message> {
+export class SubHeadingContentToken extends ContentToken<OutputMessage> {
   output(): string {
     return colors.underline(stringifyMessage(this.value))
   }
 }
 
-export class ItalicContentToken extends ContentToken<Message> {
+export class ItalicContentToken extends ContentToken<OutputMessage> {
   output(): string {
     return colors.italic(stringifyMessage(this.value))
   }

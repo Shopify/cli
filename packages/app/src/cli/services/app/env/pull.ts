@@ -9,11 +9,14 @@ interface PullEnvOptions {
   envFile: string
 }
 
-export async function pullEnv(app: AppInterface, {envFile}: PullEnvOptions): Promise<output.Message> {
+export async function pullEnv(app: AppInterface, {envFile}: PullEnvOptions): Promise<output.OutputMessage> {
   return updateEnvFile(app, envFile)
 }
 
-export async function updateEnvFile(app: AppInterface, envFile: PullEnvOptions['envFile']): Promise<output.Message> {
+export async function updateEnvFile(
+  app: AppInterface,
+  envFile: PullEnvOptions['envFile'],
+): Promise<output.OutputMessage> {
   const selectedApp = await selectApp()
 
   const updatedValues = {
@@ -27,18 +30,18 @@ export async function updateEnvFile(app: AppInterface, envFile: PullEnvOptions['
     const updatedEnvFileContent = patchEnvFile(envFileContent, updatedValues)
 
     if (updatedEnvFileContent === envFileContent) {
-      return output.content`No changes to ${output.token.path(envFile)}`
+      return output.outputContent`No changes to ${output.outputToken.path(envFile)}`
     } else {
       await writeFile(envFile, updatedEnvFileContent)
 
       const diff = diffLines(envFileContent ?? '', updatedEnvFileContent)
-      return output.content`Updated ${output.token.path(envFile)} to be:
+      return output.outputContent`Updated ${output.outputToken.path(envFile)} to be:
 
 ${updatedEnvFileContent}
 
 Here's what changed:
 
-${output.token.linesDiff(diff)}
+${output.outputToken.linesDiff(diff)}
   `
     }
   } else {
@@ -46,7 +49,7 @@ ${output.token.linesDiff(diff)}
 
     await writeFile(envFile, newEnvFileContent)
 
-    return output.content`Created ${output.token.path(envFile)}:
+    return output.outputContent`Created ${output.outputToken.path(envFile)}:
 
 ${newEnvFileContent}
 `

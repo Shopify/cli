@@ -145,8 +145,8 @@ describe('when there are locale files', () => {
 
       const result = await testGetLocalization(tmpDir)
 
-      expect(output.info).toHaveBeenCalledWith(expect.stringContaining('mock-name'), undefined)
-      expect(output.info).toHaveBeenCalledWith(expect.stringContaining(tmpDir), undefined)
+      expect(output.outputInfo).toHaveBeenCalledWith(expect.stringContaining('mock-name'), undefined)
+      expect(output.outputInfo).toHaveBeenCalledWith(expect.stringContaining(tmpDir), undefined)
     })
   })
 

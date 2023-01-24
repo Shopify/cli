@@ -255,8 +255,8 @@ async function uploadFunctionExtension(
   const res: AppFunctionSetMutationSchema = await functionProxyRequest(options.apiKey, query, options.token, variables)
   const userErrors = res.data.functionSet.userErrors ?? []
   if (userErrors.length !== 0) {
-    const errorMessage = output.content`The deployment of functions failed with the following errors:
-${output.token.json(userErrors)}
+    const errorMessage = output.outputContent`The deployment of functions failed with the following errors:
+${output.outputToken.json(userErrors)}
     `
     throw new AbortError(errorMessage)
   }
@@ -274,15 +274,15 @@ async function uploadWasmBlob(extension: FunctionExtension, apiKey: string, toke
   if (res.status === 200) {
     return url
   } else if (res.status === 400 && resBody.includes('EntityTooLarge')) {
-    const errorMessage = output.content`The size of the Wasm binary file for Function ${extension.localIdentifier} is too large. It must be less than ${maxSize}.`
+    const errorMessage = output.outputContent`The size of the Wasm binary file for Function ${extension.localIdentifier} is too large. It must be less than ${maxSize}.`
     throw new AbortError(errorMessage)
   } else if (res.status >= 400 && res.status < 500) {
-    const errorMessage = output.content`Something went wrong uploading the Function ${
+    const errorMessage = output.outputContent`Something went wrong uploading the Function ${
       extension.localIdentifier
     }. The server responded with status ${res.status.toString()} and body: ${resBody}`
     throw new BugError(errorMessage)
   } else {
-    const errorMessage = output.content`Something went wrong uploading the Function ${extension.localIdentifier}. Try again.`
+    const errorMessage = output.outputContent`Something went wrong uploading the Function ${extension.localIdentifier}. Try again.`
     throw new AbortError(errorMessage)
   }
 }

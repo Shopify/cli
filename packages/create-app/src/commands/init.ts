@@ -79,8 +79,8 @@ export default class Init extends Command {
       )
     if (!url && !Object.keys(templateURLMap).includes(template))
       throw new AbortError(
-        output.content`Only ${Object.keys(templateURLMap)
-          .map((alias) => output.content`${output.token.yellow(alias)}`.value)
+        output.outputContent`Only ${Object.keys(templateURLMap)
+          .map((alias) => output.outputContent`${output.outputToken.yellow(alias)}`.value)
           .join(', ')} template aliases are supported`,
       )
   }

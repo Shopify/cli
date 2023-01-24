@@ -12,6 +12,6 @@ export default class ThemeInfo extends ThemeCommand {
 
   public async run(): Promise<void> {
     const infoMessage = await themeInfo({cliVersion: this.config.version})
-    output.info(infoMessage)
+    output.outputInfo(infoMessage)
   }
 }

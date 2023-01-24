@@ -59,10 +59,10 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
 
   const availablePort = portNumber ?? (await getAvailableTCPPort())
 
-  output.debug(output.content`
-Starting reverse HTTP proxy on port ${output.token.raw(availablePort.toString())}
+  output.outputDebug(output.outputContent`
+Starting reverse HTTP proxy on port ${output.outputToken.raw(availablePort.toString())}
 Routing traffic rules:
-${output.token.json(JSON.stringify(rules))}
+${output.outputToken.json(JSON.stringify(rules))}
 `)
 
   const proxy = httpProxy.createProxy()
@@ -70,10 +70,10 @@ ${output.token.json(JSON.stringify(rules))}
     const target = match(rules, req)
     if (target) return proxy.web(req, res, {target})
 
-    output.debug(`
+    output.outputDebug(`
 Reverse HTTP proxy error - Invalid path: ${req.url}
 These are the allowed paths:
-${output.token.json(JSON.stringify(rules))}
+${output.outputToken.json(JSON.stringify(rules))}
 `)
 
     res.statusCode = 500

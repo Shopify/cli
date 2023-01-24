@@ -3,7 +3,7 @@ import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {IdentityToken} from './schema.js'
 import {identityFqdn} from '../../../public/node/environment/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
-import {content, debug, info, token} from '../../../public/node/output.js'
+import {outputContent, outputDebug, outputInfo, outputToken} from '../../../public/node/output.js'
 import {BugError} from '../../../public/node/error.js'
 
 export interface DeviceAuthorizationResponse {
@@ -40,14 +40,18 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const jsonResult: any = await response.json()
 
-  debug(content`Received device authorization code: ${token.json(jsonResult)}`)
+  outputDebug(outputContent`Received device authorization code: ${outputToken.json(jsonResult)}`)
   if (!jsonResult.device_code || !jsonResult.verification_uri_complete) {
     throw new BugError('Failed to start authorization process')
   }
 
-  info('\nTo run this command, log in to Shopify Partners.')
-  info(content`User verification code: ${jsonResult.user_code}`)
-  info(content`👉 Open this link to start the auth process: ${token.green(jsonResult.verification_uri_complete)}`)
+  outputInfo('\nTo run this command, log in to Shopify Partners.')
+  outputInfo(outputContent`User verification code: ${jsonResult.user_code}`)
+  outputInfo(
+    outputContent`👉 Open this link to start the auth process: ${outputToken.green(
+      jsonResult.verification_uri_complete,
+    )}`,
+  )
 
   return {
     deviceCode: jsonResult.device_code,
@@ -80,7 +84,7 @@ export async function pollForDeviceAuthorization(code: string, interval = 5): Pr
 
       const error = result.error ?? 'unknown_failure'
 
-      debug(content`Polling for device authorization... status: ${error}`)
+      outputDebug(outputContent`Polling for device authorization... status: ${error}`)
       switch (error) {
         case 'authorization_pending':
           return startPolling()

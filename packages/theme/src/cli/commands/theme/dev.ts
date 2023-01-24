@@ -106,7 +106,7 @@ export default class Dev extends ThemeCommand {
     let controller = new AbortController()
 
     setInterval(() => {
-      output.debug('Refreshing theme session token and restarting theme server...')
+      output.outputDebug('Refreshing theme session token and restarting theme server...')
       controller.abort()
       controller = new AbortController()
       // eslint-disable-next-line @typescript-eslint/no-floating-promises

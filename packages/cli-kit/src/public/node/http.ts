@@ -1,5 +1,5 @@
 import {buildHeaders, httpsAgent, sanitizedHeadersOutput} from '../../private/node/api/headers.js'
-import {content, debug} from '../../public/node/output.js'
+import {outputContent, outputDebug} from '../../public/node/output.js'
 import FormData from 'form-data'
 import nodeFetch, {RequestInfo, RequestInit} from 'node-fetch'
 import {performance} from 'perf_hooks'
@@ -63,13 +63,13 @@ export async function shopifyFetch(url: RequestInfo, init?: RequestInit): Respon
     },
   }
 
-  debug(content`
+  outputDebug(outputContent`
 Sending ${options.method ?? 'GET'} request to URL ${url.toString()} and headers:
 ${sanitizedHeadersOutput((options?.headers ?? {}) as {[header: string]: string})}
 `)
   const t0 = performance.now()
   const response = await nodeFetch(url, {...init, agent: await httpsAgent()})
   const t1 = performance.now()
-  debug(`Request to ${url.toString()} completed with status ${response.status} in ${Math.round(t1 - t0)} ms`)
+  outputDebug(`Request to ${url.toString()} completed with status ${response.status} in ${Math.round(t1 - t0)} ms`)
   return response
 }

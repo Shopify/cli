@@ -16,7 +16,7 @@ import * as secureStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {RequestClientError} from './api/headers.js'
 import {environmentVariables} from './constants.js'
-import {content, token, debug} from '../../public/node/output.js'
+import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import {keypress} from '../../ui.js'
 import * as output from '../../public/node/output.js'
 import {firstPartyDev, useDeviceAuth} from '../../public/node/environment/local.js'
@@ -105,20 +105,20 @@ export async function ensureAuthenticated(
   const fqdnSession = currentSession[fqdn]!
   const scopes = getFlattenScopes(applications)
 
-  debug(content`Validating existing session against the scopes:
-${token.json(scopes)}
+  outputDebug(outputContent`Validating existing session against the scopes:
+${outputToken.json(scopes)}
 For applications:
-${token.json(applications)}
+${outputToken.json(applications)}
 `)
   const validationResult = await validateSession(scopes, applications, fqdnSession)
 
   let newSession = {}
 
   if (validationResult === 'needs_full_auth') {
-    debug(content`Initiating the full authentication flow...`)
+    outputDebug(outputContent`Initiating the full authentication flow...`)
     newSession = await executeCompleteFlow(applications, fqdn)
   } else if (validationResult === 'needs_refresh' || forceRefresh) {
-    debug(content`The current session is valid but needs refresh. Refreshing...`)
+    outputDebug(outputContent`The current session is valid but needs refresh. Refreshing...`)
     try {
       newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
     } catch (error) {
@@ -160,31 +160,31 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
   const exchangeScopes = getExchangeScopes(applications)
   const store = applications.adminApi?.storeFqdn
   if (firstPartyDev()) {
-    debug(content`Authenticating as Shopify Employee...`)
+    outputDebug(outputContent`Authenticating as Shopify Employee...`)
     scopes.push('employee')
   }
 
   let identityToken: IdentityToken
   if (useDeviceAuth()) {
     // Request a device code to authorize without a browser redirect.
-    debug(content`Requesting device authorization code...`)
+    outputDebug(outputContent`Requesting device authorization code...`)
     const deviceAuth = await requestDeviceAuthorization(scopes)
 
     // Poll for the identity token
-    debug(content`Starting polling for the identity token...`)
+    outputDebug(outputContent`Starting polling for the identity token...`)
     identityToken = await pollForDeviceAuthorization(deviceAuth.deviceCode, deviceAuth.interval)
   } else {
     // Authorize user via browser
-    debug(content`Authorizing through Identity's website...`)
+    outputDebug(outputContent`Authorizing through Identity's website...`)
     const code = await authorize(scopes)
 
     // Exchange code for identity token
-    debug(content`Authorization code received. Exchanging it for a CLI token...`)
+    outputDebug(outputContent`Authorization code received. Exchanging it for a CLI token...`)
     identityToken = await exchangeCodeForAccessToken(code)
   }
 
   // Exchange identity token for application tokens
-  debug(content`CLI token received. Exchanging it for application tokens...`)
+  outputDebug(outputContent`CLI token received. Exchanging it for application tokens...`)
   const result = await exchangeAccessForApplicationTokens(identityToken, exchangeScopes, store)
 
   const session: Session = {
@@ -194,7 +194,7 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
     },
   }
 
-  output.completed('Logged in.')
+  output.outputCompleted('Logged in.')
 
   return session
 }
@@ -207,14 +207,18 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
  * @param partnersToken - Partners token.
  */
 async function ensureUserHasPartnerAccount(partnersToken: string) {
-  debug(content`Verifying that the user has a Partner organization`)
+  outputDebug(outputContent`Verifying that the user has a Partner organization`)
   if (!(await hasPartnerAccount(partnersToken))) {
-    output.info(`\nA Shopify Partners organization is needed to proceed.`)
-    output.info(`👉 Press any key to create one`)
+    output.outputInfo(`\nA Shopify Partners organization is needed to proceed.`)
+    output.outputInfo(`👉 Press any key to create one`)
     await keypress()
     await openURL(`https://${await partnersFqdn()}/signup`)
-    output.info(output.content`👉 Press any key when you have ${output.token.cyan('created the organization')}`)
-    output.warn(output.content`Make sure you've confirmed your Shopify and the Partner organization from the email`)
+    output.outputInfo(
+      output.outputContent`👉 Press any key when you have ${output.outputToken.cyan('created the organization')}`,
+    )
+    output.outputWarn(
+      output.outputContent`Make sure you've confirmed your Shopify and the Partner organization from the email`,
+    )
     await keypress()
     if (!(await hasPartnerAccount(partnersToken))) {
       throw new AbortError(

@@ -1,6 +1,6 @@
 import {relativePath} from './path.js'
 import {glob} from './fs.js'
-import {debug, content, token} from '../../public/node/output.js'
+import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
 import archiver from 'archiver'
 import {createWriteStream} from 'fs'
 /**
@@ -12,7 +12,7 @@ import {createWriteStream} from 'fs'
  * @param outputZipPath - The absolute path to the output zip file.
  */
 export async function zip(inputDirectory: string, outputZipPath: string): Promise<void> {
-  debug(content`Zipping ${token.path(inputDirectory)} into ${token.path(outputZipPath)}`)
+  outputDebug(outputContent`Zipping ${outputToken.path(inputDirectory)} into ${outputToken.path(outputZipPath)}`)
   const pathsToZip = await glob('**/*', {cwd: inputDirectory, absolute: true, dot: true, followSymbolicLinks: false})
   return new Promise((resolve, reject) => {
     const archive = archiver('zip')

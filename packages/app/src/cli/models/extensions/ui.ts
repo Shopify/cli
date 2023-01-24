@@ -143,8 +143,8 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
   }
 
   previewMessage(url: string, storeFqdn: string) {
-    const heading = output.token.heading(`${this.name} (${this.humanName})`)
-    let message = output.content`Preview link: ${url}/extensions/${this.devUUID}`
+    const heading = output.outputToken.heading(`${this.name} (${this.humanName})`)
+    let message = output.outputContent`Preview link: ${url}/extensions/${this.devUUID}`
 
     if (this.specification.previewMessage) {
       const customMessage = this.specification.previewMessage(url, this.devUUID, this.configuration, storeFqdn)
@@ -152,7 +152,7 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
       message = customMessage
     }
 
-    return output.content`${heading}\n${message.value}\n`
+    return output.outputContent`${heading}\n${message.value}\n`
   }
 
   getBundleExtensionStdinContent() {

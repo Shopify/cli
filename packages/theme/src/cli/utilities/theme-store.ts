@@ -9,9 +9,10 @@ export function getThemeStore(flags: {store: string | undefined}): string {
     throw new AbortError(
       'A store is required',
       `Specify the store passing ${
-        output.content`${output.token.genericShellCommand(`--${themeFlags.store.name}={your_store_url}`)}`.value
+        output.outputContent`${output.outputToken.genericShellCommand(`--${themeFlags.store.name}={your_store_url}`)}`
+          .value
       } or set the ${
-        output.content`${output.token.genericShellCommand(themeFlags.store.env as string)}`.value
+        output.outputContent`${output.outputToken.genericShellCommand(themeFlags.store.env as string)}`.value
       } environment variable.`,
     )
   }

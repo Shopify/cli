@@ -2,7 +2,7 @@ import {applicationId} from './identity.js'
 import {ApplicationToken, IdentityToken} from './schema.js'
 import {validateIdentityToken} from './identity-token-validation.js'
 import {sessionConstants} from '../constants.js'
-import {debug} from '../../../public/node/output.js'
+import {outputDebug} from '../../../public/node/output.js'
 import {firstPartyDev} from '../../../public/node/environment/local.js'
 import {OAuthApplications} from '../session.js'
 
@@ -57,7 +57,7 @@ export async function validateSession(
     tokensAreExpired = tokensAreExpired || isTokenExpired(token)
   }
 
-  debug(`
+  outputDebug(`
 The validation of the token for application/identity completed with the following results:
 - It's expired: ${tokensAreExpired}
 - It's invalid in identity: ${!identityIsValid}

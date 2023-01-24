@@ -86,7 +86,7 @@ function validateLiquidBytes(liquidBytesTotal: number): void {
 function validateFile(filepath: string, dirname: string): void {
   if (!SUPPORTED_BUCKETS.includes(dirname)) {
     throw new AbortError(
-      output.content`Your theme app extension includes files in an unsupported directory, ${output.token.path(
+      output.outputContent`Your theme app extension includes files in an unsupported directory, ${output.outputToken.path(
         dirname,
       )}`,
       `Make sure all theme app extension files are in the supported directories: ${SUPPORTED_BUCKETS.join(', ')}`,

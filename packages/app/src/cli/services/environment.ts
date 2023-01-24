@@ -31,8 +31,8 @@ import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
-    message: output.content`Invalid API key: ${apiKey}`,
-    tryMessage: output.content`You can find the API key in the app settings in the Partners Dashboard.`,
+    message: output.outputContent`Invalid API key: ${apiKey}`,
+    tryMessage: output.outputContent`You can find the API key in the app settings in the Partners Dashboard.`,
   }
 }
 
@@ -80,7 +80,7 @@ export async function ensureGenerateEnvironment(options: {
     const explanation =
       `\nLooks like this is the first time you're running 'generate extension' for this project.\n` +
       'Configure your preferences by answering a few questions.\n'
-    output.info(explanation)
+    output.outputInfo(explanation)
   }
 
   if (cachedInfo?.appId && cachedInfo?.orgId) {
@@ -135,7 +135,7 @@ export async function ensureDevEnvironment(
     const explanation =
       `\nLooks like this is the first time you're running dev for this project.\n` +
       'Configure your preferences by answering a few questions.\n'
-    output.info(explanation)
+    output.outputInfo(explanation)
   }
 
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
@@ -340,9 +340,10 @@ export async function fetchAppAndIdentifiers(
     partnersApp = await fetchAppFromApiKey(apiKey, token)
     if (!partnersApp) {
       throw new AbortError(
-        output.content`Couldn't find the app with API key ${apiKey}`,
-        output.content`• If you didn't intend to select this app, run ${
-          output.content`${output.token.packagejsonScript(options.app.packageManager, 'deploy', '--reset')}`.value
+        output.outputContent`Couldn't find the app with API key ${apiKey}`,
+        output.outputContent`• If you didn't intend to select this app, run ${
+          output.outputContent`${output.outputToken.packagejsonScript(options.app.packageManager, 'deploy', '--reset')}`
+            .value
         }`,
       )
     }

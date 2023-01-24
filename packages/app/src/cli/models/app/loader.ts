@@ -31,10 +31,10 @@ export type AppLoaderMode = 'strict' | 'report'
 
 export class AppErrors {
   private errors: {
-    [key: string]: output.Message
+    [key: string]: output.OutputMessage
   } = {}
 
-  addError(path: string, message: output.Message): void {
+  addError(path: string, message: output.OutputMessage): void {
     this.errors[path] = message
   }
 
@@ -46,7 +46,7 @@ export class AppErrors {
     return Object.keys(this.errors).length === 0
   }
 
-  toJSON(): output.Message[] {
+  toJSON(): output.OutputMessage[] {
     return Object.values(this.errors)
   }
 }
@@ -144,7 +144,7 @@ class AppLoader {
 
   async findAppDirectory() {
     if (!(await fileExists(this.directory))) {
-      throw new AbortError(output.content`Couldn't find directory ${output.token.path(this.directory)}`)
+      throw new AbortError(output.outputContent`Couldn't find directory ${output.outputToken.path(this.directory)}`)
     }
     return dirname(await this.getConfigurationPath())
   }
@@ -158,7 +158,7 @@ class AppLoader {
     })
     if (!configurationPath) {
       throw new AbortError(
-        output.content`Couldn't find the configuration file for ${output.token.path(
+        output.outputContent`Couldn't find the configuration file for ${output.outputToken.path(
           this.directory,
         )}, are you in an app directory?`,
       )
@@ -198,7 +198,7 @@ class AppLoader {
   ): Promise<unknown> {
     if (!(await fileExists(filepath))) {
       return this.abortOrReport(
-        output.content`Couldn't find the configuration file at ${output.token.path(filepath)}`,
+        output.outputContent`Couldn't find the configuration file at ${output.outputToken.path(filepath)}`,
         '',
         filepath,
       )
@@ -212,7 +212,7 @@ class AppLoader {
       // TOML errors have line, pos and col properties
       if (err.line && err.pos && err.col) {
         return this.abortOrReport(
-          output.content`Fix the following error in ${output.token.path(filepath)}:\n${err.message}`,
+          output.outputContent`Fix the following error in ${output.outputToken.path(filepath)}:\n${err.message}`,
           null,
           filepath,
         )
@@ -242,7 +242,7 @@ class AppLoader {
     if (!parseResult.success) {
       const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
       return this.abortOrReport(
-        output.content`Fix a schema error in ${output.token.path(filepath)}:\n${formattedError}`,
+        output.outputContent`Fix a schema error in ${output.outputToken.path(filepath)}:\n${formattedError}`,
         fallbackOutput,
         filepath,
       )
@@ -269,7 +269,7 @@ class AppLoader {
         const isShopifolk = await isShopify()
         const shopifolkMessage = '\nYou might need to enable some beta flags on your Organization or App'
         this.abortOrReport(
-          output.content`Unknown extension type ${output.token.yellow(type)} in ${output.token.path(
+          output.outputContent`Unknown extension type ${output.outputToken.yellow(type)} in ${output.outputToken.path(
             configurationPath,
           )}. ${isShopifolk ? shopifolkMessage : ''}`,
           undefined,
@@ -293,9 +293,9 @@ class AppLoader {
         ).find((sourcePath) => sourcePath !== undefined)
         if (!entryPath) {
           this.abortOrReport(
-            output.content`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${output.token.path(
+            output.outputContent`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${output.outputToken.path(
               directory,
-            )} or ${output.token.path(joinPath(directory, 'src'))}`,
+            )} or ${output.outputToken.path(joinPath(directory, 'src'))}`,
             undefined,
             directory,
           )
@@ -314,7 +314,7 @@ class AppLoader {
       if (configuration.type) {
         const validateResult = await extensionInstance.validate()
         if (validateResult.isErr()) {
-          this.abortOrReport(output.content`\n${validateResult.error}`, undefined, configurationPath)
+          this.abortOrReport(output.outputContent`\n${validateResult.error}`, undefined, configurationPath)
         }
       }
       return extensionInstance
@@ -340,7 +340,9 @@ class AppLoader {
       const specification = this.findSpecificationForType(type) as FunctionSpec | undefined
       if (!specification) {
         this.abortOrReport(
-          output.content`Unknown function type ${output.token.yellow(type)} in ${output.token.path(configurationPath)}`,
+          output.outputContent`Unknown function type ${output.outputToken.yellow(type)} in ${output.outputToken.path(
+            configurationPath,
+          )}`,
           undefined,
           configurationPath,
         )
@@ -370,7 +372,9 @@ class AppLoader {
 
       if (!specification) {
         this.abortOrReport(
-          output.content`Unknown theme type ${output.token.yellow('theme')} in ${output.token.path(configurationPath)}`,
+          output.outputContent`Unknown theme type ${output.outputToken.yellow('theme')} in ${output.outputToken.path(
+            configurationPath,
+          )}`,
           undefined,
           configurationPath,
         )
@@ -392,7 +396,7 @@ class AppLoader {
     return {themeExtensions, usedCustomLayout: extensionDirectories !== undefined}
   }
 
-  abortOrReport<T>(errorMessage: output.Message, fallback: T, configurationPath: string): T {
+  abortOrReport<T>(errorMessage: output.OutputMessage, fallback: T, configurationPath: string): T {
     if (this.mode === 'strict') {
       throw new AbortError(errorMessage)
     } else {

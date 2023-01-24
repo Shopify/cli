@@ -59,7 +59,7 @@ function handleIdsError(errorType: MatchingError, appName: string, packageManage
       throw new AbortError(
         `Deployment failed because this local project doesn't seem to match the app "${appName}" in Shopify Partners.`,
         `If you didn't intend to select this app, run ${
-          output.content`${output.token.packagejsonScript(packageManager, 'deploy', '--reset')}`.value
+          output.outputContent`${output.outputToken.packagejsonScript(packageManager, 'deploy', '--reset')}`.value
         }
 • If this is the app you intended, check your local project and make sure
   it contains the same number and types of extensions as the Shopify app

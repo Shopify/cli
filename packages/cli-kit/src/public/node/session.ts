@@ -2,7 +2,7 @@ import {normalizeStoreFqdn} from './environment/fqdn.js'
 import {BugError} from './error.js'
 import * as secureStore from '../../private/node/session/store.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
-import {content, token, debug} from '../../public/node/output.js'
+import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import {ensureAuthenticated} from '../../private/node/session.js'
 import {environmentVariables} from '../../private/node/constants.js'
 
@@ -24,8 +24,8 @@ export interface AdminSession {
  * @returns The access token for the Partners API.
  */
 export async function ensureAuthenticatedPartners(scopes: string[] = [], env = process.env): Promise<string> {
-  debug(content`Ensuring that the user is authenticated with the Partners API with the following scopes:
-${token.json(scopes)}
+  outputDebug(outputContent`Ensuring that the user is authenticated with the Partners API with the following scopes:
+${outputToken.json(scopes)}
 `)
   const envToken = env[environmentVariables.partnersToken]
   if (envToken) {
@@ -51,8 +51,8 @@ export async function ensureAuthenticatedStorefront(
 ): Promise<string> {
   if (password) return password
 
-  debug(content`Ensuring that the user is authenticated with the Storefront API with the following scopes:
-${token.json(scopes)}
+  outputDebug(outputContent`Ensuring that the user is authenticated with the Storefront API with the following scopes:
+${outputToken.json(scopes)}
 `)
   const tokens = await ensureAuthenticated({storefrontRendererApi: {scopes}})
   if (!tokens.storefront) {
@@ -74,10 +74,10 @@ export async function ensureAuthenticatedAdmin(
   scopes: string[] = [],
   forceRefresh = false,
 ): Promise<AdminSession> {
-  debug(content`Ensuring that the user is authenticated with the Admin API with the following scopes for the store ${token.raw(
+  outputDebug(outputContent`Ensuring that the user is authenticated with the Admin API with the following scopes for the store ${outputToken.raw(
     store,
   )}:
-${token.json(scopes)}
+${outputToken.json(scopes)}
 `)
   const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}}, process.env, forceRefresh)
   if (!tokens.admin) {
@@ -103,8 +103,8 @@ export async function ensureAuthenticatedThemes(
   scopes: string[] = [],
   forceRefresh = false,
 ): Promise<AdminSession> {
-  debug(content`Ensuring that the user is authenticated with the Theme API with the following scopes:
-${token.json(scopes)}
+  outputDebug(outputContent`Ensuring that the user is authenticated with the Theme API with the following scopes:
+${outputToken.json(scopes)}
 `)
   if (password) return {token: password, storeFqdn: await normalizeStoreFqdn(store)}
   return ensureAuthenticatedAdmin(store, scopes, forceRefresh)

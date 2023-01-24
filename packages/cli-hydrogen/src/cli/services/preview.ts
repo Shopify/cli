@@ -23,8 +23,8 @@ export async function previewInNode({directory, port}: PreviewOptions) {
   const buildOutputPath = await resolvePath(directory, 'dist/node')
 
   if (!(await fileExists(buildOutputPath))) {
-    output.info(
-      output.content`Couldn’t find a Node.js server build for this project. Running ${output.token.packagejsonScript(
+    output.outputInfo(
+      output.outputContent`Couldn’t find a Node.js server build for this project. Running ${output.outputToken.packagejsonScript(
         'yarn',
         'shopify hydrogen build',
         '--target=node',

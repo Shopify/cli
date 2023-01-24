@@ -135,8 +135,8 @@ export class ExtensionsPayloadStore extends EventEmitter {
     const index = payloadExtensions.findIndex((extensionPayload) => extensionPayload.uuid === extension.devUUID)
 
     if (index === -1) {
-      output.debug(
-        output.content`Could not updateExtension() for extension with uuid: ${extension.devUUID}`,
+      output.outputDebug(
+        output.outputContent`Could not updateExtension() for extension with uuid: ${extension.devUUID}`,
         options.stderr,
       )
       return

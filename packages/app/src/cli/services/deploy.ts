@@ -52,9 +52,9 @@ export const deploy = async (options: DeployOptions) => {
   let {app, identifiers, partnersApp, partnersOrganizationId, token} = await ensureDeployEnvironment(options)
   const apiKey = identifiers.app
 
-  output.newline()
-  output.info(`Deploying your work to Shopify Partners. It will be part of ${partnersApp.title}`)
-  output.newline()
+  output.outputNewline()
+  output.outputInfo(`Deploying your work to Shopify Partners. It will be part of ${partnersApp.title}`)
+  output.outputNewline()
 
   const extensions = await Promise.all(
     options.app.extensions.ui.map(async (extension) => {

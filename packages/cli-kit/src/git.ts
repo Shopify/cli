@@ -1,6 +1,6 @@
 import {AbortError} from './public/node/error.js'
 import {hasGit, isTerminalInteractive} from './public/node/environment/local.js'
-import {content, token, debug} from './public/node/output.js'
+import {outputContent, outputToken, outputDebug} from './public/node/output.js'
 import {appendFileSync} from './public/node/fs.js'
 import {cwd} from './public/node/path.js'
 import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
@@ -10,25 +10,29 @@ export const factory = git
 export const GitNotPresentError = () => {
   return new AbortError(
     `Git is necessary in the environment to continue`,
-    content`Install ${token.link('git', 'https://git-scm.com/book/en/v2/Getting-Started-Installing-Git')}`,
+    outputContent`Install ${outputToken.link('git', 'https://git-scm.com/book/en/v2/Getting-Started-Installing-Git')}`,
   )
 }
 
 export const OutsideGitDirectoryError = (directory: string) => {
-  return new AbortError(`${token.path(directory)} is not a Git directory`)
+  return new AbortError(`${outputToken.path(directory)} is not a Git directory`)
 }
 
 export const NoCommitError = () => {
   return new AbortError(
     'Must have at least one commit to run command',
-    content`Run ${token.genericShellCommand("git commit -m 'Initial commit'")} to create your first commit.`,
+    outputContent`Run ${outputToken.genericShellCommand(
+      "git commit -m 'Initial commit'",
+    )} to create your first commit.`,
   )
 }
 
 export const DetachedHeadError = () => {
   return new AbortError(
     "Git HEAD can't be detached to run command",
-    content`Run ${token.genericShellCommand('git checkout [branchName]')} to reattach HEAD or see git ${token.link(
+    outputContent`Run ${outputToken.genericShellCommand(
+      'git checkout [branchName]',
+    )} to reattach HEAD or see git ${outputToken.link(
       'documentation',
       'https://git-scm.com/book/en/v2/Git-Internals-Git-References',
     )} for more details`,
@@ -36,7 +40,7 @@ export const DetachedHeadError = () => {
 }
 
 export async function initializeRepository(directory: string, initialBranch = 'main') {
-  debug(content`Initializing git repository at ${token.path(directory)}...`)
+  outputDebug(outputContent`Initializing git repository at ${outputToken.path(directory)}...`)
   await ensurePresentOrAbort()
   // We use init and checkout instead of `init --initial-branch` because the latter is only supported in git 2.28+
   const repo = git(directory)
@@ -48,7 +52,7 @@ export interface GitIgnoreTemplate {
   [section: string]: string[]
 }
 export function createGitIgnore(directory: string, template: GitIgnoreTemplate): void {
-  debug(content`Creating .gitignore at ${token.path(directory)}...`)
+  outputDebug(outputContent`Creating .gitignore at ${outputToken.path(directory)}...`)
   const filePath = `${directory}/.gitignore`
 
   let fileContent = ''
@@ -73,7 +77,7 @@ export async function downloadRepository({
   shallow?: boolean
   latestTag?: boolean
 }) {
-  debug(content`Git-cloning repository ${repoUrl} into ${token.path(destination)}...`)
+  outputDebug(outputContent`Git-cloning repository ${repoUrl} into ${outputToken.path(destination)}...`)
   await ensurePresentOrAbort()
   const [repository, branch] = repoUrl.split('#')
   const options: TaskOptions = {'--recurse-submodules': null}

@@ -93,14 +93,14 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
   }
 
   previewMessage() {
-    const heading = output.token.heading(`${this.name} (${this.humanName})`)
-    const link = output.token.link(
+    const heading = output.outputToken.heading(`${this.name} (${this.humanName})`)
+    const link = output.outputToken.link(
       'dev doc instructions',
       'https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-3-test-your-changes',
     )
-    const message = output.content`Follow the ${link} by deploying your work as a draft`
+    const message = output.outputContent`Follow the ${link} by deploying your work as a draft`
 
-    return output.content`${heading}\n${message.value}\n`
+    return output.outputContent`${heading}\n${message.value}\n`
   }
 }
 

@@ -18,15 +18,15 @@ const spec = createUIExtensionSpecification({
   },
   previewMessage: (host, uuid, _): output.TokenizedString => {
     const publicURL = `${host}/extensions/${uuid}`
-    const devDocsLink = output.token.link(
+    const devDocsLink = output.outputToken.link(
       'dev docs',
       'https://shopify.dev/apps/checkout/post-purchase/getting-started-post-purchase-extension#step-2-test-the-extension',
     )
-    const chromeLink = output.token.link(
+    const chromeLink = output.outputToken.link(
       'Shopify’s post-purchase Chrome extension',
       'https://chrome.google.com/webstore/detail/shopify-post-purchase-dev/nenmcifhoegealiiblnpihbnjenleong',
     )
-    return output.content`To view this extension:
+    return output.outputContent`To view this extension:
   1. Install ${chromeLink}
   2. Open the Chrome extension and paste this URL into it: ${publicURL}
   3. Run a test purchase on your store to view your extension

@@ -32,46 +32,46 @@ export class TokenizedString {
   }
 }
 
-export type Message = string | TokenizedString
+export type OutputMessage = string | TokenizedString
 
-export const token = {
+export const outputToken = {
   raw(value: string): RawContentToken {
     return new RawContentToken(value)
   },
-  genericShellCommand(value: Message): CommandContentToken {
+  genericShellCommand(value: OutputMessage): CommandContentToken {
     return new CommandContentToken(value)
   },
   json(value: unknown): JsonContentToken {
     return new JsonContentToken(value)
   },
-  path(value: Message): PathContentToken {
+  path(value: OutputMessage): PathContentToken {
     return new PathContentToken(value)
   },
-  link(value: Message, link: string): LinkContentToken {
+  link(value: OutputMessage, link: string): LinkContentToken {
     return new LinkContentToken(value, link)
   },
-  heading(value: Message): HeadingContentToken {
+  heading(value: OutputMessage): HeadingContentToken {
     return new HeadingContentToken(value)
   },
-  subheading(value: Message): SubHeadingContentToken {
+  subheading(value: OutputMessage): SubHeadingContentToken {
     return new SubHeadingContentToken(value)
   },
-  italic(value: Message): ItalicContentToken {
+  italic(value: OutputMessage): ItalicContentToken {
     return new ItalicContentToken(value)
   },
-  errorText(value: Message): ErrorContentToken {
+  errorText(value: OutputMessage): ErrorContentToken {
     return new ErrorContentToken(value)
   },
-  cyan(value: Message): ColorContentToken {
+  cyan(value: OutputMessage): ColorContentToken {
     return new ColorContentToken(value, colors.cyan)
   },
-  yellow(value: Message): ColorContentToken {
+  yellow(value: OutputMessage): ColorContentToken {
     return new ColorContentToken(value, colors.yellow)
   },
-  magenta(value: Message): ColorContentToken {
+  magenta(value: OutputMessage): ColorContentToken {
     return new ColorContentToken(value, colors.magenta)
   },
-  green(value: Message): ColorContentToken {
+  green(value: OutputMessage): ColorContentToken {
     return new ColorContentToken(value, colors.green)
   },
   packagejsonScript(packageManager: PackageManager, scriptName: string, ...scriptArgs: string[]): CommandContentToken {
@@ -125,7 +125,10 @@ export function formatPackageManagerCommand(
  * @param keys - Array of tokens or strings to join.
  * @returns The tokenized string.
  */
-export function content(strings: TemplateStringsArray, ...keys: (ContentToken<unknown> | string)[]): TokenizedString {
+export function outputContent(
+  strings: TemplateStringsArray,
+  ...keys: (ContentToken<unknown> | string)[]
+): TokenizedString {
   let output = ``
   strings.forEach((string, i) => {
     output += string
@@ -218,7 +221,7 @@ export let collectedLogs: {[key: string]: string[]} = {}
  * @param key - The key of the log.
  * @param content - The content of the log.
  */
-export function collectLog(key: string, content: Message): void {
+export function collectLog(key: string, content: OutputMessage): void {
   const output = collectedLogs.output ?? []
   const data = collectedLogs[key] ?? []
   data.push(stripAnsi(stringifyMessage(content) ?? ''))
@@ -241,7 +244,7 @@ export const clearCollectedLogs = (): void => {
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export function info(content: Message, logger: Logger = consoleLog): void {
+export function outputInfo(content: OutputMessage, logger: Logger = consoleLog): void {
   const message = stringifyMessage(content)
   if (isUnitTest()) collectLog('info', content)
   outputWhereAppropriate('info', logger, message)
@@ -255,7 +258,7 @@ export function info(content: Message, logger: Logger = consoleLog): void {
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export function success(content: Message, logger: Logger = consoleLog): void {
+export function outputSuccess(content: OutputMessage, logger: Logger = consoleLog): void {
   const message = colors.bold(`✅ Success! ${stringifyMessage(content)}.`)
   if (isUnitTest()) collectLog('success', content)
   outputWhereAppropriate('info', logger, message)
@@ -269,7 +272,7 @@ export function success(content: Message, logger: Logger = consoleLog): void {
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export function completed(content: Message, logger: Logger = consoleLog): void {
+export function outputCompleted(content: OutputMessage, logger: Logger = consoleLog): void {
   const message = `${colors.green('✔')} ${stringifyMessage(content)}`
   if (isUnitTest()) collectLog('completed', content)
   outputWhereAppropriate('info', logger, message)
@@ -283,7 +286,7 @@ export function completed(content: Message, logger: Logger = consoleLog): void {
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export function debug(content: Message, logger: Logger = consoleLog): void {
+export function outputDebug(content: OutputMessage, logger: Logger = consoleLog): void {
   if (isUnitTest()) collectLog('debug', content)
   const message = colors.gray(stringifyMessage(content))
   outputWhereAppropriate('debug', logger, `${new Date().toISOString()}: ${message}`)
@@ -297,7 +300,7 @@ export function debug(content: Message, logger: Logger = consoleLog): void {
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export function warn(content: Message, logger: Logger = consoleWarn): void {
+export function outputWarn(content: OutputMessage, logger: Logger = consoleWarn): void {
   if (isUnitTest()) collectLog('warn', content)
   const message = colors.yellow(stringifyMessage(content))
   outputWhereAppropriate('warn', logger, message)
@@ -306,7 +309,7 @@ export function warn(content: Message, logger: Logger = consoleWarn): void {
 /**
  * Prints a new line in the terminal.
  */
-export function newline(): void {
+export function outputNewline(): void {
   console.log()
 }
 
@@ -316,7 +319,7 @@ export function newline(): void {
  * @param message - The message to convert to string.
  * @returns The string representation of the message.
  */
-export function stringifyMessage(message: Message): string {
+export function stringifyMessage(message: OutputMessage): string {
   if (message instanceof TokenizedString) {
     return message.value
   } else {
@@ -429,8 +432,8 @@ export function getOutputUpdateCLIReminder(
   const versionMessage = `💡 Version ${version} available!`
   if (!packageManager || packageManager === 'unknown') return versionMessage
 
-  const updateCommand = token.packagejsonScript(packageManager, 'shopify upgrade')
-  return content`${versionMessage} Run ${updateCommand}`.value
+  const updateCommand = outputToken.packagejsonScript(packageManager, 'shopify upgrade')
+  return outputContent`${versionMessage} Run ${updateCommand}`.value
 }
 
 /**
@@ -440,9 +443,9 @@ export function getOutputUpdateCLIReminder(
  * @param body - The body of the message. Will respect the original formatting.
  * @returns The formatted message.
  */
-export function section(title: string, body: string): string {
+export function formatSection(title: string, body: string): string {
   const formattedTitle = `${title.toUpperCase()}${' '.repeat(35 - title.length)}`
-  return content`${token.heading(formattedTitle)}\n${body}`.value
+  return outputContent`${outputToken.heading(formattedTitle)}\n${body}`.value
 }
 
 /* eslint-enable no-console */

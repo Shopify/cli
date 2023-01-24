@@ -45,7 +45,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
         stdout: options.devOptions.stdout,
         watchSignal: abortController.signal,
         watch: (error) => {
-          output.debug(
+          output.outputDebug(
             `The Javascript bundle of the UI extension with ID ${extension.devUUID} has ${
               error ? 'an error' : 'changed'
             }`,
@@ -66,26 +66,35 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
     const localeWatcher = chokidar
       .watch(joinPath(extension.directory, 'locales', '**.json'))
       .on('change', (event, path) => {
-        output.debug(`Locale file at path ${path} changed`, options.devOptions.stdout)
+        output.outputDebug(`Locale file at path ${path} changed`, options.devOptions.stdout)
         options.payloadStore
           .updateExtension(extension, options.devOptions)
           .then((_closed) => {
-            output.debug(`Notified extension ${extension.devUUID} about the locale change.`, options.devOptions.stdout)
+            output.outputDebug(
+              `Notified extension ${extension.devUUID} about the locale change.`,
+              options.devOptions.stdout,
+            )
           })
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .catch((_: any) => {})
       })
 
     abortController.signal.addEventListener('abort', () => {
-      output.debug(`Closing locale file watching for extension with ID ${extension.devUUID}`, options.devOptions.stdout)
+      output.outputDebug(
+        `Closing locale file watching for extension with ID ${extension.devUUID}`,
+        options.devOptions.stdout,
+      )
       localeWatcher
         .close()
         .then(() => {
-          output.debug(`Locale file watching closed for extension with ${extension.devUUID}`, options.devOptions.stdout)
+          output.outputDebug(
+            `Locale file watching closed for extension with ${extension.devUUID}`,
+            options.devOptions.stdout,
+          )
         })
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .catch((error: any) => {
-          output.debug(
+          output.outputDebug(
             `Locale file watching failed to close for extension with ${extension.devUUID}: ${error.message}`,
             options.devOptions.stderr,
           )

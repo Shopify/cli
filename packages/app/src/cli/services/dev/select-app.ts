@@ -25,7 +25,7 @@ export async function selectOrCreateApp(
 ): Promise<OrganizationApp> {
   let createNewApp = apps.length === 0
   if (!createNewApp) {
-    output.info(`\nBefore you preview your work, it needs to be associated with an app.\n`)
+    output.outputInfo(`\nBefore you preview your work, it needs to be associated with an app.\n`)
     createNewApp = await createAsNewAppPrompt()
   }
   if (createNewApp) {

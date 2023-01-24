@@ -36,7 +36,7 @@ const spec = createUIExtensionSpecification({
     const links = config.extensionPoints.map(
       ({target}) => `${target} preview link: ${host}/extensions/${uuid}/${target}`,
     )
-    return output.content`${links.join('\n')}`
+    return output.outputContent`${links.join('\n')}`
   },
   deployConfig: async (config, directory) => {
     return {
@@ -79,10 +79,10 @@ async function validateUIExtensionPointConfig(
     const exists = await fileExists(fullPath)
 
     if (!exists) {
-      const notFoundPath = output.token.path(joinPath(directory, module))
+      const notFoundPath = output.outputToken.path(joinPath(directory, module))
 
       errors.push(
-        output.content`Couldn't find ${notFoundPath}
+        output.outputContent`Couldn't find ${notFoundPath}
 Please check the module path for ${target}`.value,
       )
     }

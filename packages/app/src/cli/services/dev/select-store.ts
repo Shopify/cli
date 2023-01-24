@@ -44,7 +44,7 @@ export async function selectStore(
     return store
   }
 
-  output.info(`\n${await CreateStoreLink(org.id)}`)
+  output.outputInfo(`\n${await CreateStoreLink(org.id)}`)
   await sleep(5)
 
   const reload = await reloadStoreListPrompt(org)
@@ -140,5 +140,5 @@ export async function convertStoreToTest(store: OrganizationStore, orgId: string
       'This store might not be compatible with draft apps, please try a different store',
     )
   }
-  output.success(`Converted ${store.shopDomain} to a Test store`)
+  output.outputSuccess(`Converted ${store.shopDomain} to a Test store`)
 }
