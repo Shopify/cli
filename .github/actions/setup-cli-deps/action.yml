@@ -16,7 +16,7 @@ runs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ env.RUBY_VERSION }}
-        bundler-cache: true
+        bundler-cache: false
     - name: Install Bundler
       run: gem install bundler -v ${{ env.BUNDLER_VERSION }}
       shell: bash
