@@ -16,7 +16,6 @@ import {publishMonorailEvent} from './monorail.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {startAnalytics} from '../../private/node/analytics.js'
 import {hashString} from '../../public/node/crypto.js'
-import {getAppInfo} from '../../store.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {it, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
@@ -65,12 +64,6 @@ describe('event tracking', () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
       const commandContent = {command: 'dev', topic: 'app', alias: 'alias'}
-      vi.mocked(getAppInfo).mockReturnValueOnce({
-        appId: 'key1',
-        orgId: '1',
-        storeFqdn: 'domain1',
-        directory: '/cached',
-      })
       await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
 
       // When

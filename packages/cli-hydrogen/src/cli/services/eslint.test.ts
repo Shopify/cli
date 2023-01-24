@@ -3,7 +3,7 @@ import {genericConfigurationFileNames} from '../constants.js'
 import {HydrogenApp} from '../models/hydrogen.js'
 import {describe, vi, it, expect, beforeAll} from 'vitest'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
-import {addRecommendedExtensions, isVSCode} from '@shopify/cli-kit/node/vscode.js'
+import {addRecommendedExtensions, isVSCode} from '@shopify/cli-kit/node/vscode'
 import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -16,7 +16,7 @@ beforeAll(async () => {
       addNPMDependenciesWithoutVersionIfNeeded: vi.fn(),
     }
   })
-  vi.mock('@shopify/cli-kit/node/vscode.js')
+  vi.mock('@shopify/cli-kit/node/vscode')
 })
 
 describe('addEslint', () => {
