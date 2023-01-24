@@ -25,6 +25,13 @@ export interface ReverseHTTPProxyTarget {
   action: (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => Promise<void> | void
 }
 
+interface Options {
+  previewUrl: string | undefined
+  portNumber: number | undefined
+  proxyTargets: ReverseHTTPProxyTarget[]
+  additionalProcesses: output.OutputProcess[]
+}
+
 /**
  * A convenient function that runs an HTTP server and does path-based traffic forwarding to sub-processes that run
  * an HTTP server. The method assigns a random port to each of the processes.
@@ -34,12 +41,12 @@ export interface ReverseHTTPProxyTarget {
  * @param additionalProcesses - Additional processes to run. The proxy won't forward traffic to these processes.
  * @returns A promise that resolves with an interface to get the port of the proxy and stop it.
  */
-export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
-  previewUrl: string | undefined,
-  portNumber: number | undefined = undefined,
-  proxyTargets: ReverseHTTPProxyTarget[],
-  additionalProcesses: output.OutputProcess[],
-): Promise<void> {
+export async function runConcurrentHTTPProcessesAndPathForwardTraffic({
+  previewUrl,
+  portNumber,
+  proxyTargets,
+  additionalProcesses,
+}: Options): Promise<void> {
   // Lazy-importing it because it's CJS and we don't want it
   // to block the loading of the ESM module graph.
   const {default: httpProxy} = await import('http-proxy')

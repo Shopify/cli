@@ -44,9 +44,9 @@ export function outputDevSuccess(app: AppInterface) {
         body: 'Keep in mind that Shopify Functions need to be deployed to be manually tested.',
       },
     ]
-
-    renderSuccess(renderSuccessOptions)
   }
+
+  renderSuccess(renderSuccessOptions)
 }
 
 export function outputExtensionsMessages(app: AppInterface) {
