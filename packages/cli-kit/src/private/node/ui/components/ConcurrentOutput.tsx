@@ -14,6 +14,7 @@ interface Props {
   abortController: AbortController
   showTimestamps?: boolean
   onInput?: (input: string, key: Key) => void
+  stickyMessage?: string
 }
 interface Chunk {
   color: string
@@ -55,7 +56,13 @@ interface Chunk {
  *
  * ```
  */
-const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController, showTimestamps = true, onInput}) => {
+const ConcurrentOutput: FunctionComponent<Props> = ({
+  processes,
+  abortController,
+  showTimestamps = true,
+  onInput,
+  stickyMessage,
+}) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const concurrentColors = ['yellow', 'cyan', 'magenta', 'green', 'blue']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
@@ -106,41 +113,50 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
   useAsyncAndUnmount(runProcesses, {onRejected: () => abortController.abort()})
 
   return (
-    <Static items={processOutput}>
-      {(chunk, index) => {
-        return (
-          <Box flexDirection="column" key={index}>
-            {chunk.lines.map((line, index) => (
-              <Box key={index} flexDirection="row">
-                {showTimestamps && (
-                  <Box>
-                    <Box marginRight={1}>
-                      <Text color={chunk.color}>{new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}</Text>
+    <>
+      <Static items={processOutput}>
+        {(chunk, index) => {
+          return (
+            <Box flexDirection="column" key={index}>
+              {chunk.lines.map((line, index) => (
+                <Box key={index} flexDirection="row">
+                  {showTimestamps && (
+                    <Box>
+                      <Box marginRight={1}>
+                        <Text color={chunk.color}>
+                          {new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}
+                        </Text>
+                      </Box>
+
+                      <Text bold color={chunk.color}>
+                        |
+                      </Text>
                     </Box>
+                  )}
 
-                    <Text bold color={chunk.color}>
-                      |
-                    </Text>
+                  <Box width={prefixColumnSize} marginX={1}>
+                    <Text color={chunk.color}>{chunk.prefix}</Text>
                   </Box>
-                )}
 
-                <Box width={prefixColumnSize} marginX={1}>
-                  <Text color={chunk.color}>{chunk.prefix}</Text>
+                  <Text bold color={chunk.color}>
+                    |
+                  </Text>
+
+                  <Box flexGrow={1} paddingLeft={1}>
+                    <Text color={chunk.color}>{line}</Text>
+                  </Box>
                 </Box>
-
-                <Text bold color={chunk.color}>
-                  |
-                </Text>
-
-                <Box flexGrow={1} paddingLeft={1}>
-                  <Text color={chunk.color}>{line}</Text>
-                </Box>
-              </Box>
-            ))}
-          </Box>
-        )
-      }}
-    </Static>
+              ))}
+            </Box>
+          )
+        }}
+      </Static>
+      {stickyMessage && (
+        <Box marginTop={1}>
+          <Text>{stickyMessage}</Text>
+        </Box>
+      )}
+    </>
   )
 }
 

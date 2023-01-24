@@ -47,7 +47,11 @@ describe('ConcurrentOutput', () => {
     // When
 
     const renderInstance = render(
-      <ConcurrentOutput processes={[backendProcess, frontendProcess]} abortController={new AbortController()} />,
+      <ConcurrentOutput
+        processes={[backendProcess, frontendProcess]}
+        abortController={new AbortController()}
+        stickyMessage="Sticky message"
+      />,
     )
 
     // wait for all output to be rendered
@@ -61,6 +65,8 @@ describe('ConcurrentOutput', () => {
       0000-00-00 00:00:00 | frontend | first frontend message
       0000-00-00 00:00:00 | frontend | second frontend message
       0000-00-00 00:00:00 | frontend | third frontend message
+
+      Sticky message
       "
     `)
   })

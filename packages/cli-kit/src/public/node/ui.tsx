@@ -15,7 +15,7 @@ import {Item as SelectItem, Props as SelectProps} from '../../private/node/ui/co
 import {Props as InfoTableProps} from '../../private/node/ui/components/Prompts/InfoTable.js'
 import {AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
 import React from 'react'
-import {Key, RenderOptions} from 'ink'
+import {Key as InkKey, RenderOptions} from 'ink'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 
 interface RenderConcurrentOptions {
@@ -23,6 +23,7 @@ interface RenderConcurrentOptions {
   abortController?: AbortController
   showTimestamps?: boolean
   renderOptions?: RenderOptions
+  stickyMessage?: string
   onInput?: (input: string, key: Key) => void
 }
 
@@ -34,6 +35,7 @@ export async function renderConcurrent({
   abortController,
   onInput,
   showTimestamps = true,
+  stickyMessage,
   renderOptions = {},
 }: RenderConcurrentOptions) {
   return render(
@@ -42,6 +44,7 @@ export async function renderConcurrent({
       abortController={abortController ?? new AbortController()}
       showTimestamps={showTimestamps}
       onInput={onInput}
+      stickyMessage={stickyMessage}
     />,
     {
       ...renderOptions,
@@ -338,3 +341,5 @@ export function renderTextPrompt(props: Omit<TextPromptProps, 'onSubmit'>): Prom
     }).catch(reject)
   })
 }
+
+export type Key = InkKey
