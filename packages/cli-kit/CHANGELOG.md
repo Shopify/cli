@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.36.2
+
+### Patch Changes
+
+- 3ddd21dba: Add better TypeScript support when formating files with the fs module by explicitly setting the parser to "typescript" in the prettier config. Fixes issues where the babel parser was not able to process JSX in TypeScript files.
+
 ## 3.36.1
 
 ### Patch Changes
