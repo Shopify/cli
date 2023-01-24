@@ -5,7 +5,6 @@ import {
   PackageManager,
   packageManagerUsedForCreating,
 } from '@shopify/cli-kit/node/node-package-manager'
-import {CancelExecution} from '@shopify/cli-kit/node/error'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 beforeEach(() => {
@@ -27,9 +26,7 @@ describe('check CLI version', () => {
       vi.mocked(packageManagerUsedForCreating).mockReturnValue(packageManager as PackageManager)
 
       // When
-      await expect(async () => {
-        await versionService()
-      }).rejects.toThrowError(new CancelExecution())
+      await versionService()
 
       // Then
       expect(outputMock.info()).toMatchInlineSnapshot(`
@@ -45,9 +42,7 @@ describe('check CLI version', () => {
     vi.mocked(checkForNewVersion).mockResolvedValue(undefined)
 
     // When
-    await expect(async () => {
-      await versionService()
-    }).rejects.toThrowError(new CancelExecution())
+    await versionService()
 
     // Then
     expect(outputMock.info()).toMatchInlineSnapshot(`"Current Shopify CLI version: 2.2.2"`)

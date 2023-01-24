@@ -1,6 +1,5 @@
 import * as output from '@shopify/cli-kit/node/output'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
-import {CancelExecution} from '@shopify/cli-kit/node/error'
 import {checkForNewVersion, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
 
 export async function versionService(): Promise<void> {
@@ -12,5 +11,4 @@ export async function versionService(): Promise<void> {
     const packageManager = packageManagerUsedForCreating()
     output.info(output.getOutputUpdateCLIReminder(packageManager, lastVersion))
   }
-  throw new CancelExecution()
 }
