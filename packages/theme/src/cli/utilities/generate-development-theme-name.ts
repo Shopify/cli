@@ -1,11 +1,11 @@
 import {replaceInvalidCharacters} from './replace-invalid-characters.js'
-import {hostname as osHostName} from 'os'
-import {randomBytes as cryptoRandomBytes} from 'crypto'
+import {hostname} from 'os'
+import {randomBytes} from 'crypto'
 
 const API_NAME_LIMIT = 50
 
-export function generateDevelopmentThemeName(hostName = osHostName, randomBytes = cryptoRandomBytes): string {
-  const hostNameWithoutDomain = hostName().split('.')[0]!
+export function generateDevelopmentThemeName(): string {
+  const hostNameWithoutDomain = hostname().split('.')[0]!
   const hash = randomBytes(3).toString('hex')
 
   const name = 'Development ()'

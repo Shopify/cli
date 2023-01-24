@@ -3,37 +3,18 @@ import {generateDevelopmentThemeName} from './generate-development-theme-name.js
 import {DEVELOPMENT_THEME_ROLE} from '../models/theme.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {store as defaultStorage} from '@shopify/cli-kit'
+import {store} from '@shopify/cli-kit'
 
 export const DEVELOPMENT_THEME_NOT_FOUND = (themeId: string) =>
   `Development theme #${themeId} could not be found. Please create a new development theme.`
 export const NO_DEVELOPMENT_THEME_ID_SET =
   'No development theme ID has been set. Please create a development theme first.'
 
-interface Storage {
-  getDevelopmentTheme: () => string | undefined
-  setDevelopmentTheme: (theme: string) => void
-  removeDevelopmentTheme: () => void
-}
-
-interface ThemesAPI {
-  fetchTheme: typeof fetchTheme
-  createTheme: typeof createTheme
-}
-
 export class DevelopmentThemeManager {
   private themeId: string | undefined
 
-  constructor(
-    private adminSession: AdminSession,
-    private storage: Storage = defaultStorage,
-    private api: ThemesAPI = {
-      fetchTheme,
-      createTheme,
-    },
-    private generateName = generateDevelopmentThemeName,
-  ) {
-    this.themeId = storage.getDevelopmentTheme()
+  constructor(private adminSession: AdminSession) {
+    this.themeId = store.getDevelopmentTheme()
   }
 
   async find() {
@@ -56,17 +37,17 @@ export class DevelopmentThemeManager {
     if (!this.themeId) {
       return
     }
-    const theme = await this.api.fetchTheme(parseInt(this.themeId, 10), this.adminSession)
+    const theme = await fetchTheme(parseInt(this.themeId, 10), this.adminSession)
     if (!theme) {
-      this.storage.removeDevelopmentTheme()
+      store.removeDevelopmentTheme()
     }
     return theme
   }
 
   private async create() {
-    const name = this.generateName()
+    const name = generateDevelopmentThemeName()
     const role = DEVELOPMENT_THEME_ROLE
-    const theme = await this.api.createTheme(
+    const theme = await createTheme(
       {
         name,
         role,
@@ -76,7 +57,7 @@ export class DevelopmentThemeManager {
     if (!theme) {
       throw new BugError(`Could not create theme with name "${name}" and role "${role}"`)
     }
-    this.storage.setDevelopmentTheme(theme.id.toString())
+    store.setDevelopmentTheme(theme.id.toString())
     return theme
   }
 }
