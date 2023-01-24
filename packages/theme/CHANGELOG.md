@@ -1,5 +1,13 @@
 # @shopify/theme
 
+## 3.36.2
+
+### Patch Changes
+
+- 868befded: Migrate `theme publish` to TypeScript
+- Updated dependencies [3ddd21dba]
+  - @shopify/cli-kit@3.36.2
+
 ## 3.36.1
 
 ### Patch Changes
