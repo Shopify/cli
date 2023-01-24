@@ -150,12 +150,8 @@ describe('renderDeprecatedArgsWarning', () => {
 
     // Then
     expect(renderWarning).toBeCalledWith({
-      headline: [
-        'Positional arguments are deprecated. Use the',
-        {command: '--theme'},
-        'flag:',
-        {command: 'shopify theme delete --theme 1 2'},
-      ],
+      headline: ['Positional arguments are deprecated. Use the', {command: '--theme'}, 'flag instead:'],
+      body: [{command: `$ shopify theme delete --theme 1 2`}, {char: '.'}],
     })
   })
 })

@@ -12,11 +12,11 @@ import {
   usesWorkspaces,
   addResolutionOrOverride,
   writePackageJSON,
+  getPackageManager,
 } from './node-package-manager.js'
 import {exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
 import {joinPath, normalizePath as pathNormalize} from './path.js'
-import {AbortError} from './error.js'
 import {describe, it, expect, vi, test} from 'vitest'
 import latestVersion from 'latest-version'
 
@@ -570,8 +570,7 @@ describe('addResolutionOrOverride', () => {
       const result = () => addResolutionOrOverride(tmpDir, {'@types/react': '17.0.30'})
 
       // Then
-
-      await expect(result).rejects.toThrow(AbortError)
+      await expect(result).rejects.toThrow(FindUpAndReadPackageJsonNotFoundError(tmpDir))
     })
   })
 
@@ -689,6 +688,70 @@ describe('writePackageJSON', () => {
       // Then
       const packageJsonContent = await readAndParsePackageJson(filePath)
       expect(packageJsonContent).toEqual(packageJSON)
+    })
+  })
+})
+
+describe('getPackageManager', () => {
+  it('finds if npm is being used', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJSON = {name: 'mock name'}
+      const filePath = joinPath(tmpDir, 'package.json')
+
+      // When
+      await writePackageJSON(tmpDir, packageJSON)
+
+      // Then
+      const packageManager = await getPackageManager(tmpDir)
+      expect(packageManager).toEqual('npm')
+    })
+  })
+
+  it('finds if yarn is being used', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJSON = {name: 'mock name'}
+      const filePath = joinPath(tmpDir, 'package.json')
+      const yarnLock = joinPath(tmpDir, 'yarn.lock')
+
+      // When
+      await writePackageJSON(tmpDir, packageJSON)
+      await writeFile(yarnLock, '')
+
+      // Then
+      const packageManager = await getPackageManager(tmpDir)
+      expect(packageManager).toEqual('yarn')
+    })
+  })
+
+  it('finds if pnpm is being used', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJSON = {name: 'mock name'}
+      const filePath = joinPath(tmpDir, 'package.json')
+      const pnpmLock = joinPath(tmpDir, 'pnpm-lock.yaml')
+
+      // When
+      await writePackageJSON(tmpDir, packageJSON)
+      await writeFile(pnpmLock, '')
+
+      // Then
+      const packageManager = await getPackageManager(tmpDir)
+      expect(packageManager).toEqual('pnpm')
+    })
+  })
+
+  it("throws a FindUpAndReadPackageJsonNotFoundError error if it can't find a package.json", async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const subDirectory = joinPath(tmpDir, 'subdir')
+      await mkdir(subDirectory)
+
+      // When/Then
+      await expect(() => getPackageManager(subDirectory)).rejects.toThrowError(
+        FindUpAndReadPackageJsonNotFoundError(subDirectory),
+      )
     })
   })
 })

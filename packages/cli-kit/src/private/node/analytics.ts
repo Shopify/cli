@@ -6,6 +6,7 @@ import * as metadata from '../../public/node/metadata.js'
 import {platformAndArch} from '../../public/node/os.js'
 import {Interfaces} from '@oclif/core'
 import {ciPlatform, cloudEnvironment, macAddress} from '@shopify/cli-kit/node/environment/local'
+import {cwd} from '@shopify/cli-kit/node/path'
 
 interface StartOptions {
   commandContent: CommandContent
@@ -72,7 +73,7 @@ export async function getEnvironmentData(config: Interfaces.Config): Promise<Env
     env_web_ide: cloudEnvironment().editor ? cloudEnvironment().platform : undefined,
     env_device_id: hashString(await macAddress()),
     env_cloud: cloudEnvironment().platform,
-    env_package_manager: await getPackageManager(process.cwd()),
+    env_package_manager: await getPackageManager(cwd()),
   }
 }
 

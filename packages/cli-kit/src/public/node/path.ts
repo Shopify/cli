@@ -23,12 +23,12 @@ export {
  * in the editor of choice.
  *
  * @param path - Path to relativize.
- * @param cwd - Current working directory.
+ * @param dir - Current working directory.
  * @returns Relativized path.
  */
-export function relativizePath(path: string, cwd: string = process.cwd()): string {
-  const result = commondir([path, cwd])
-  const relativePath = relative(cwd, path)
+export function relativizePath(path: string, dir: string = cwd()): string {
+  const result = commondir([path, dir])
+  const relativePath = relative(dir, path)
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   const relativeComponents = relativePath.split('/').filter((component) => component === '..').length
@@ -47,4 +47,18 @@ export function relativizePath(path: string, cwd: string = process.cwd()): strin
  */
 export function moduleDirectory(moduleURL: string | URL): string {
   return dirname(fileURLToPath(moduleURL))
+}
+
+/**
+ * When running a script using `npm run`, something interesting happens. If the current
+ * folder does not have a `package.json` or a `node_modules` folder, npm will traverse
+ * the directory tree upwards until it finds one. Then it will run the script and set
+ * `process.cwd()` to that folder, while the actual path is stored in the INIT_CWD
+ * environment variable (see here: https://docs.npmjs.com/cli/v9/commands/npm-run-script#description).
+ *
+ * @returns The path to the current working directory.
+ */
+export function cwd(): string {
+  // eslint-disable-next-line rulesdir/no-process-cwd
+  return process.env.INIT_CWD ?? process.cwd()
 }

@@ -6,7 +6,7 @@ import Command from '../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../models/extensions/specifications.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {resolvePath} from '@shopify/cli-kit/node/path'
+import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Build extends Command {
@@ -35,7 +35,7 @@ export default class Build extends Command {
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
     }))
 
-    const directory = flags.path ? resolvePath(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : cwd()
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({directory, specifications})
     await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey: flags['api-key']})

@@ -1,4 +1,4 @@
-import {createEntryFiles} from './scripts/createEntryFiles'
+import {createEntryFiles} from './scripts/create-entry-files.js'
 import {defineConfig} from 'vite'
 import reactRefresh from '@vitejs/plugin-react-refresh'
 import path from 'path'
@@ -10,15 +10,15 @@ export default defineConfig({
     outDir: path.join(__dirname, 'dist'),
     lib: {
       name: 'UIExtensionsServerKit',
-      entry: path.join(process.cwd(), 'src/index.ts'),
+      entry: path.join(__dirname, 'src/index.ts'),
       formats: ['cjs', 'es'],
       fileName: (type) => `index.${type}.js`,
     },
     rollupOptions: {
       external: ['react'],
       input: {
-        index: path.join(process.cwd(), 'src/index.ts'),
-        testing: path.join(process.cwd(), 'src/testing/index.ts'),
+        index: path.join(__dirname, 'src/index.ts'),
+        testing: path.join(__dirname, 'src/testing/index.ts'),
       },
       output: {
         globals: {

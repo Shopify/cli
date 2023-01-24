@@ -8,8 +8,8 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 
 export function renderArgumentsWarning(id: string) {
   renderWarning({
-    headline: 'The theme ID positional argument is deprecated. Use the --theme flag instead:',
-    body: [`$ shopify theme publish --theme ${id}`],
+    headline: ['The theme ID positional argument is deprecated. Use the', {command: '--theme'}, 'flag instead:'],
+    body: [{command: `$ shopify theme publish --theme ${id}`}, {char: '.'}],
   })
 }
 
@@ -47,6 +47,7 @@ export async function publish(adminSession: AdminSession, themeId: string | unde
           url: previewUrl,
         },
       },
+      {char: '.'},
     ],
   })
 }
