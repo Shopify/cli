@@ -20,6 +20,9 @@ runs:
     - name: Install Bundler
       run: gem install bundler -v ${{ env.BUNDLER_VERSION }}
       shell: bash
+    - name: Install Bundler dependencies
+      working-directory: packages/cli-kit/assets/cli-ruby
+      run: bundle install
     - name: Install pnpm
       uses: pnpm/action-setup@v2.2.2
       with:
