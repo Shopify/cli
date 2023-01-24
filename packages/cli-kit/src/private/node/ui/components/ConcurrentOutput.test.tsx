@@ -66,8 +66,7 @@ describe('ConcurrentOutput', () => {
       0000-00-00 00:00:00 | frontend | second frontend message
       0000-00-00 00:00:00 | frontend | third frontend message
 
-      Sticky message
-      "
+      Sticky message"
     `)
   })
 

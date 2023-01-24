@@ -106,14 +106,14 @@ ${output.token.json(JSON.stringify(rules))}
       processes: [...processes, ...additionalProcesses],
       abortController,
       onInput(input: string, key: Key) {
-        if (key.return && previewUrl) {
+        if (input === 'p' && previewUrl) {
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
           openURL(previewUrl)
         } else if (input === 'q') {
           process.exit(0)
         }
       },
-      stickyMessage: "Press 'Enter' to open your browser.\nPress q to quit.",
+      stickyMessage: "Press 'p' to open your browser.\nPress 'q' to quit.",
     }),
     server.listen(availablePort),
   ])

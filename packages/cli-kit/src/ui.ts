@@ -169,11 +169,10 @@ export async function terminateBlockingPortProcessPrompt(port: number, stepDescr
 
 export const keypress = async (key?: string) => {
   return new Promise((resolve, reject) => {
-    const disableRawMode = () => {}
-
     const handler = (data: string) => {
       if (data === '\u0003') {
-        disableRawMode()
+        process.stdin.pause()
+        process.stdin.setRawMode(false)
         debug('Canceled keypress, User pressed CTRL+C')
         reject(new AbortSilentError())
         return
