@@ -68,10 +68,11 @@ export async function runJavy(fun: FunctionExtension) {
   })
 }
 
-export async function runFunctionRunner(fun: FunctionExtension, json: string) {
-  return exec('npm', ['exec', '--', 'function-runner', json], {
+export async function runFunctionRunner(fun: FunctionExtension) {
+  return exec('npm', ['exec', '--', 'function-runner', '-f', fun.buildWasmPath()], {
     cwd: fun.directory,
-    stdout: process.stdout,
-    stderr: process.stderr,
+    stdin: 'inherit',
+    stdout: 'inherit',
+    stderr: 'inherit',
   })
 }

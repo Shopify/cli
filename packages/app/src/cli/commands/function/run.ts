@@ -19,7 +19,6 @@ export default class FunctionRun extends Command {
 
   public async run() {
     const {flags} = await this.parse(FunctionRun)
-    const input = await this.readStdin()
     const directory = flags.path ? resolvePath(flags.path) : process.cwd()
 
     const specifications = await loadExtensionsSpecifications(this.config)
@@ -27,19 +26,11 @@ export default class FunctionRun extends Command {
 
     const ourFunction = app.extensions.function.find((fun) => fun.directory === directory)
     if (ourFunction) {
-      const input = await this.readStdin()
-      await runFunctionRunner(ourFunction, input)
+      await runFunctionRunner(ourFunction)
     } else {
       const err = new error.Bug('You should run this command from the root of a function.')
       err.stack = undefined
       renderFatalError(err)
     }
-  }
-
-  // from: https://stackoverflow.com/a/54565854
-  private async readStdin(): Promise<string> {
-    const chunks = []
-    for await (const chunk of process.stdin) chunks.push(chunk)
-    return Buffer.concat(chunks).toString('utf8')
   }
 }
