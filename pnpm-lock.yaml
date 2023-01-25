@@ -136,7 +136,7 @@ importers:
       '@shopify/admin-ui-extensions': 1.0.1
       '@shopify/admin-ui-extensions-react': 1.0.1
       '@shopify/app': 3.37.0
-      '@shopify/checkout-ui-extensions-react': ^0.22.0
+      '@shopify/checkout-ui-extensions-react': ^0.23.0
       '@shopify/cli': 3.37.0
       '@shopify/customer-account-ui-extensions-react': ^0.0.8
       '@shopify/post-purchase-ui-extensions': ^0.13.3
@@ -148,7 +148,7 @@ importers:
       '@shopify/admin-ui-extensions': 1.0.1
       '@shopify/admin-ui-extensions-react': 1.0.1_react@17.0.2
       '@shopify/app': link:../../packages/app
-      '@shopify/checkout-ui-extensions-react': 0.22.0_react@17.0.2
+      '@shopify/checkout-ui-extensions-react': registry.npmjs.org/@shopify/checkout-ui-extensions-react/0.23.0_react@17.0.2
       '@shopify/cli': link:../../packages/cli
       '@shopify/customer-account-ui-extensions-react': 0.0.8_react@17.0.2
       '@shopify/post-purchase-ui-extensions': 0.13.3
@@ -3624,39 +3624,8 @@ packages:
       web-vitals: 3.1.0
     dev: false
 
-  /@shopify/checkout-ui-extensions-react/0.17.1_react@17.0.2:
-    resolution: {integrity: sha512-TiGSVLwJ4Azod2MAzon7+bLKdh88AWkcPUxNK34U0tm01zXEaRFZOhagY+nkmWEAw1rCa9PsHVruxLU9qiOMpQ==}
-    peerDependencies:
-      react: '>=17.0.0 <18.0.0'
-    dependencies:
-      '@remote-ui/async-subscription': 2.1.13
-      '@remote-ui/react': 4.5.13_react@17.0.2
-      '@shopify/checkout-ui-extensions': 0.17.1
-      '@types/react': 16.14.0
-      react: 17.0.2
-    dev: false
-
-  /@shopify/checkout-ui-extensions-react/0.22.0_react@17.0.2:
-    resolution: {integrity: sha512-CQhi2SerTXvmRkicy+xaLqkd2ZO6uyD634aiabDsWsy67+OzF82u0GQMahOUpDvkfw4p+zEAO8CkeEKjlVzqXg==}
-    peerDependencies:
-      react: '>=17.0.0 <18.0.0'
-    dependencies:
-      '@remote-ui/async-subscription': 2.1.13
-      '@remote-ui/react': 4.5.13_react@17.0.2
-      '@shopify/checkout-ui-extensions': 0.22.0
-      '@types/react': 16.14.0
-      react: 17.0.2
-    dev: false
-
   /@shopify/checkout-ui-extensions/0.17.1:
     resolution: {integrity: sha512-45Zx2AQpq+rMRkhR8NtH5tyTif/KgjF9m+pTtME2tfoJyTXJUtQU5A1woDFpTLvenwf3e7r4ARauQGRqZS1PAA==}
-    dependencies:
-      '@remote-ui/async-subscription': 2.1.13
-      '@remote-ui/core': 2.1.16
-    dev: false
-
-  /@shopify/checkout-ui-extensions/0.22.0:
-    resolution: {integrity: sha512-E2zp88WSnCM+Z6FfzKNa4VF5hfl4zC469rx5dNaAx/oyccPC9Ol0WGgcUeFRgSRHe9FyPo25p35Mw4lFcmWCuA==}
     dependencies:
       '@remote-ui/async-subscription': 2.1.13
       '@remote-ui/core': 2.1.16
@@ -3668,7 +3637,7 @@ packages:
       react: '>=17.0.0 <18.0.0'
     dependencies:
       '@remote-ui/react': 4.5.13_react@17.0.2
-      '@shopify/checkout-ui-extensions-react': 0.17.1_react@17.0.2
+      '@shopify/checkout-ui-extensions-react': registry.npmjs.org/@shopify/checkout-ui-extensions-react/0.17.1_react@17.0.2
       '@shopify/customer-account-ui-extensions': 0.0.8
       react: 17.0.2
     dev: false
@@ -15308,4 +15277,43 @@ packages:
 
   /zod/3.17.3:
     resolution: {integrity: sha512-4oKP5zvG6GGbMlqBkI5FESOAweldEhSOZ6LI6cG+JzUT7ofj1ZOC0PJudpQOpT1iqOFpYYtX5Pw0+o403y4bcg==}
+    dev: false
+
+  registry.npmjs.org/@shopify/checkout-ui-extensions-react/0.17.1_react@17.0.2:
+    resolution: {integrity: sha512-TiGSVLwJ4Azod2MAzon7+bLKdh88AWkcPUxNK34U0tm01zXEaRFZOhagY+nkmWEAw1rCa9PsHVruxLU9qiOMpQ==, registry: https://npm.shopify.io/node/, tarball: https://registry.npmjs.org/@shopify/checkout-ui-extensions-react/-/checkout-ui-extensions-react-0.17.1.tgz}
+    id: registry.npmjs.org/@shopify/checkout-ui-extensions-react/0.17.1
+    name: '@shopify/checkout-ui-extensions-react'
+    version: 0.17.1
+    peerDependencies:
+      react: '>=17.0.0 <18.0.0'
+    dependencies:
+      '@remote-ui/async-subscription': 2.1.13
+      '@remote-ui/react': 4.5.13_react@17.0.2
+      '@shopify/checkout-ui-extensions': 0.17.1
+      '@types/react': 16.14.0
+      react: 17.0.2
+    dev: false
+
+  registry.npmjs.org/@shopify/checkout-ui-extensions-react/0.23.0_react@17.0.2:
+    resolution: {integrity: sha512-P8NPHTolXa/Ugb1tCjFsnHEZcI2VZVzAAnYeHHxLsl8eJUFhhEWrextDw1CIznieNBbQBEW6VT+zpqnHppgjVw==, registry: https://npm.shopify.io/node/, tarball: https://registry.npmjs.org/@shopify/checkout-ui-extensions-react/-/checkout-ui-extensions-react-0.23.0.tgz}
+    id: registry.npmjs.org/@shopify/checkout-ui-extensions-react/0.23.0
+    name: '@shopify/checkout-ui-extensions-react'
+    version: 0.23.0
+    peerDependencies:
+      react: '>=17.0.0 <18.0.0'
+    dependencies:
+      '@remote-ui/async-subscription': 2.1.13
+      '@remote-ui/react': 4.5.13_react@17.0.2
+      '@shopify/checkout-ui-extensions': registry.npmjs.org/@shopify/checkout-ui-extensions/0.23.0
+      '@types/react': 16.14.0
+      react: 17.0.2
+    dev: false
+
+  registry.npmjs.org/@shopify/checkout-ui-extensions/0.23.0:
+    resolution: {integrity: sha512-7pBbZqeDbIQ9nBdY6gmyQWuUkijHyT2vR9HpRhYHVI2VKo7uOVhweuOdmbG7WtQ9P3Pmz47ODGupvVcQCtsHNA==, registry: https://npm.shopify.io/node/, tarball: https://registry.npmjs.org/@shopify/checkout-ui-extensions/-/checkout-ui-extensions-0.23.0.tgz}
+    name: '@shopify/checkout-ui-extensions'
+    version: 0.23.0
+    dependencies:
+      '@remote-ui/async-subscription': 2.1.13
+      '@remote-ui/core': 2.1.16
     dev: false
