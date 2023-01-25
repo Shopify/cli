@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.37.0
+
+### Patch Changes
+
+- a5224543b: Fix issue with CLI2 task output not being rendered correctly inside the output from the dev command
+
 ## 3.36.2
 
 ### Patch Changes
