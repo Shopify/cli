@@ -20,7 +20,6 @@ import {Organization, OrganizationApp, OrganizationStore} from '../models/organi
 import metadata from '../metadata.js'
 import {ThemeExtension} from '../models/app/extensions.js'
 import {loadAppName} from '../models/app/loader.js'
-import {output} from '@shopify/cli-kit'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -28,11 +27,12 @@ import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {TokenItem} from '@shopify/cli-kit/src/private/node/ui/components/TokenizedText.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
-    message: output.content`Invalid API key: ${apiKey}`,
-    tryMessage: output.content`You can find the API key in the app settings in the Partners Dashboard.`,
+    message: outputContent`Invalid API key: ${apiKey}`,
+    tryMessage: outputContent`You can find the API key in the app settings in the Partners Dashboard.`,
   }
 }
 
@@ -80,7 +80,7 @@ export async function ensureGenerateEnvironment(options: {
     const explanation =
       `\nLooks like this is the first time you're running 'generate extension' for this project.\n` +
       'Configure your preferences by answering a few questions.\n'
-    output.info(explanation)
+    outputInfo(explanation)
   }
 
   if (cachedInfo?.appId && cachedInfo?.orgId) {
@@ -135,7 +135,7 @@ export async function ensureDevEnvironment(
     const explanation =
       `\nLooks like this is the first time you're running dev for this project.\n` +
       'Configure your preferences by answering a few questions.\n'
-    output.info(explanation)
+    outputInfo(explanation)
   }
 
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
@@ -336,9 +336,9 @@ export async function fetchAppAndIdentifiers(
     partnersApp = await fetchAppFromApiKey(apiKey, token)
     if (!partnersApp) {
       throw new AbortError(
-        output.content`Couldn't find the app with API key ${apiKey}`,
-        output.content`• If you didn't intend to select this app, run ${
-          output.content`${output.token.packagejsonScript(options.app.packageManager, 'deploy', '--reset')}`.value
+        outputContent`Couldn't find the app with API key ${apiKey}`,
+        outputContent`• If you didn't intend to select this app, run ${
+          outputContent`${outputToken.packagejsonScript(options.app.packageManager, 'deploy', '--reset')}`.value
         }`,
       )
     }
@@ -459,7 +459,7 @@ function showReusedValues(org: string, cachedAppInfo: CachedAppInfo, packageMana
         },
       },
       '\nTo reset your default dev config, run',
-      {command: output.formatPackageManagerCommand(packageManager, 'dev', '--reset')},
+      {command: formatPackageManagerCommand(packageManager, 'dev', '--reset')},
     ],
   })
 }
@@ -474,7 +474,7 @@ function showGenerateReusedValues(org: string, cachedAppInfo: CachedAppInfo, pac
         },
       },
       '\nTo reset your default dev config, run',
-      {command: output.formatPackageManagerCommand(packageManager, 'dev', '--reset')},
+      {command: formatPackageManagerCommand(packageManager, 'dev', '--reset')},
     ],
   })
 }

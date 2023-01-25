@@ -1,6 +1,6 @@
 import {Tasks} from './Tasks.js'
 import {getLastFrameAfterUnmount} from '../../testing/ui.js'
-import {unstyled} from '../../../../output.js'
+import {unstyled} from '../../../../public/node/output.js'
 import React from 'react'
 import {describe, expect, test} from 'vitest'
 import {render} from 'ink-testing-library'

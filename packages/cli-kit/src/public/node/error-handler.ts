@@ -11,7 +11,7 @@ import {
   cleanSingleStackTracePath,
 } from './error.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
-import {debug, info} from '../../output.js'
+import {outputDebug, outputInfo} from '../../public/node/output.js'
 import {bugsnagApiKey} from '../../private/node/constants.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {settings, Interfaces} from '@oclif/core'
@@ -27,7 +27,7 @@ export function errorHandler(error: Error & {exitCode?: number | undefined}, con
 export function errorHandler(error: Error & {exitCode?: number | undefined}, config?: Interfaces.Config): unknown {
   if (error instanceof CancelExecution) {
     if (error.message && error.message !== '') {
-      info(`✨  ${error.message}`)
+      outputInfo(`✨  ${error.message}`)
     }
   } else if (error instanceof AbortSilentError) {
     process.exit(1)
@@ -166,7 +166,7 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
       await addBugsnagMetadata(event, config)
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (metadataError) {
-      debug(`There was an error adding metadata to the Bugsnag report; Ignoring and carrying on ${metadataError}`)
+      outputDebug(`There was an error adding metadata to the Bugsnag report; Ignoring and carrying on ${metadataError}`)
     }
   })
 }

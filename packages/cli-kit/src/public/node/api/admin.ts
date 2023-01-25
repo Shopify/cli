@@ -1,5 +1,5 @@
 import {AdminSession} from '../session.js'
-import {content, token as outputToken} from '../../../output.js'
+import {outputContent, outputToken} from '../../../public/node/output.js'
 import {BugError, AbortError} from '../error.js'
 import {graphqlRequest, GraphQLVariables} from '../../../private/node/api/graphql.js'
 import {restRequestBody, restRequestHeaders, restRequestUrl} from '../../../private/node/api/rest.js'
@@ -42,11 +42,11 @@ async function fetchApiVersion(session: AdminSession): Promise<string> {
     if (error instanceof ClientError && error.response.status === 403) {
       const storeName = session.storeFqdn.replace('.myshopify.com', '')
       throw new AbortError(
-        content`Looks like you don't have access this dev store: (${outputToken.link(
+        outputContent`Looks like you don't have access this dev store: (${outputToken.link(
           storeName,
           `https://${session.storeFqdn}`,
         )})`,
-        content`If you're not the owner, create a dev store staff account for yourself`,
+        outputContent`If you're not the owner, create a dev store staff account for yourself`,
       )
     }
     throw new BugError(`Unknown error connecting to your store`)

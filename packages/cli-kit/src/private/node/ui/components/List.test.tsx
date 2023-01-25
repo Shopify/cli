@@ -1,5 +1,5 @@
 import {List} from './List.js'
-import {unstyled} from '../../../../output.js'
+import {unstyled} from '../../../../public/node/output.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
 import {render} from 'ink-testing-library'

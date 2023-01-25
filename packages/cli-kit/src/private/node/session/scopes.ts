@@ -1,5 +1,5 @@
+import {allAPIs, API} from '../api.js'
 import {BugError} from '../../../public/node/error.js'
-import {allAPIs, API} from '../../../network/api.js'
 
 /**
  * Generate a flat array with all the default scopes for all the APIs plus

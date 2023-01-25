@@ -1,6 +1,5 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
 import cleanup from '../utils/template/cleanup.js'
-import {output} from '@shopify/cli-kit'
 import {
   findUpAndReadPackageJson,
   packageManager,
@@ -19,6 +18,7 @@ import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile} from '@sh
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {username} from '@shopify/cli-kit/node/os'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 interface InitOptions {
   name: string
@@ -129,14 +129,14 @@ async function init(options: InitOptions) {
     headline: [{userInput: hyphenizedName}, 'is ready for you to build!'],
     nextSteps: [
       ['Run', {command: `cd ${hyphenizedName}`}],
-      ['For extensions, run', {command: output.formatPackageManagerCommand(packageManager, 'generate extension')}],
-      ['To see your app, run', {command: output.formatPackageManagerCommand(packageManager, 'dev')}],
+      ['For extensions, run', {command: formatPackageManagerCommand(packageManager, 'generate extension')}],
+      ['To see your app, run', {command: formatPackageManagerCommand(packageManager, 'dev')}],
     ],
     reference: [
       {link: {label: 'Shopify docs', url: 'https://shopify.dev'}},
       [
         'For an overview of commands, run',
-        {command: `${output.formatPackageManagerCommand(packageManager, 'shopify app', '--help')}`},
+        {command: `${formatPackageManagerCommand(packageManager, 'shopify app', '--help')}`},
       ],
     ],
   })

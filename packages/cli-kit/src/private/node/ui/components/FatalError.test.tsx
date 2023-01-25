@@ -1,5 +1,5 @@
 import {FatalError} from './FatalError.js'
-import {unstyled} from '../../../../output.js'
+import {unstyled} from '../../../../public/node/output.js'
 import {AbortError, BugError, ExternalError} from '../../../../public/node/error.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'

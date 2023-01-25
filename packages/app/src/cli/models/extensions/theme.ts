@@ -2,11 +2,11 @@ import {ThemeExtensionSchema, ZodSchemaType} from './schemas.js'
 import {loadThemeSpecifications} from './specifications.js'
 import {GenericSpecification, ThemeExtension} from '../app/extensions.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import {output} from '@shopify/cli-kit'
 import {schema} from '@shopify/cli-kit/node/schema'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 import {basename} from '@shopify/cli-kit/node/path'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 // Base config type for a theme extension.
 export type ThemeConfigContents = schema.infer<typeof ThemeExtensionSchema>
@@ -93,14 +93,14 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
   }
 
   previewMessage() {
-    const heading = output.token.heading(`${this.name} (${this.humanName})`)
-    const link = output.token.link(
+    const heading = outputToken.heading(`${this.name} (${this.humanName})`)
+    const link = outputToken.link(
       'dev doc instructions',
       'https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-3-test-your-changes',
     )
-    const message = output.content`Follow the ${link} by deploying your work as a draft`
+    const message = outputContent`Follow the ${link} by deploying your work as a draft`
 
-    return output.content`${heading}\n${message.value}\n`
+    return outputContent`${heading}\n${message.value}\n`
   }
 }
 
