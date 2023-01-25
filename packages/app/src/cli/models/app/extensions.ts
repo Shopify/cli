@@ -36,6 +36,7 @@ export interface Extension {
 
 export type FunctionExtension<TConfiguration extends FunctionConfigType = FunctionConfigType> = Extension & {
   configuration: TConfiguration
+  entrySourceFilePath?: string
   buildWasmPath: () => string
   inputQueryPath: () => string
 }

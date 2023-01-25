@@ -2,7 +2,7 @@ import {FunctionExtension} from '../../models/app/extensions.js'
 import {exec} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {build as esBuild} from 'esbuild'
-import {fileExists, findPathUp} from '@shopify/cli-kit/node/fs'
+import {findPathUp} from '@shopify/cli-kit/node/fs'
 
 export async function buildFunction(fun: FunctionExtension) {
   await buildGraphqlTypes(fun.directory)
@@ -24,23 +24,14 @@ export async function bundleExtension(fun: FunctionExtension) {
   })
   if (!entryPoint) {
     throw new Error(
-      'Could not find the Shopify Function runtime. Make sure you have @shopify/shopify_function installed',
+      "Could not find the Shopify Function runtime. Make sure you have '@shopify/shopify_function' installed",
     )
   }
-
-  const jsUserFunction = joinPath(fun.directory, 'src/index.js')
-  const tsUserFunction = joinPath(fun.directory, 'src/index.ts')
-
-  let userFunction
-  if (await fileExists(jsUserFunction)) {
-    userFunction = jsUserFunction
-  } else if (await fileExists(tsUserFunction)) {
-    userFunction = tsUserFunction
-  } else {
-    throw new Error('Could not find your function entry point. It must be either src/index.js or src/index.ts')
+  if (!fun.entrySourceFilePath) {
+    throw new Error('Could not find your function entry point. It must be in src/index.js or src/index.ts')
   }
 
-  const esbuildOptions = getESBuildOptions(fun.directory, entryPoint, userFunction)
+  const esbuildOptions = getESBuildOptions(fun.directory, entryPoint, fun.entrySourceFilePath)
   return esBuild(esbuildOptions)
 }
 

@@ -47,6 +47,7 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
   idEnvironmentVariableName: string
   localIdentifier: string
   directory: string
+  entrySourceFilePath?: string
   configuration: TConfiguration
   configurationPath: string
 
@@ -57,11 +58,13 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
     configurationPath: string
     specification: FunctionSpec<TConfiguration>
     directory: string
+    entryPath?: string
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
     this.specification = options.specification
     this.directory = options.directory
+    this.entrySourceFilePath = options.entryPath
     this.localIdentifier = basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
   }
