@@ -11,9 +11,9 @@ import {
   collectTopic,
   WebhookTriggerFlags,
 } from '../../prompts/webhook/options-prompt.js'
-import * as output from '@shopify/cli-kit/node/output'
+import {outputInfo, outputSuccess, consoleError} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 const aToken = 'A_TOKEN'
@@ -26,12 +26,20 @@ const aPort = '1234'
 const aUrlPath = '/a/url/path'
 const anAddress = 'https://example.org'
 
-vi.mock('@shopify/cli-kit/node/session')
-vi.mock('../../prompts/webhook/options-prompt.js')
-vi.mock('./request-sample.js')
-vi.mock('./request-api-versions.js')
-vi.mock('./request-topics.js')
-vi.mock('./trigger-local-webhook.js')
+beforeEach(async () => {
+  vi.mock('@shopify/cli-kit')
+  vi.mock('@shopify/cli-kit/node/output')
+  vi.mock('@shopify/cli-kit/node/session')
+  vi.mock('../../prompts/webhook/options-prompt.js')
+  vi.mock('./request-sample.js')
+  vi.mock('./request-api-versions.js')
+  vi.mock('./request-topics.js')
+  vi.mock('./trigger-local-webhook.js')
+})
+
+afterEach(async () => {
+  vi.clearAllMocks()
+})
 
 const emptyJson = '{}'
 const successDirectResponse = {
@@ -68,14 +76,12 @@ describe('webhookTriggerService', () => {
 
     vi.mocked(getWebhookSample).mockResolvedValue(response)
 
-    const outputSpy = vi.spyOn(output, 'consoleError')
-
     // When
     await webhookTriggerService(sampleFlags())
 
     // Then
     expectCalls(aVersion)
-    expect(outputSpy).toHaveBeenCalledWith(`Request errors:\n  · Some error\n  · Another error`)
+    expect(consoleError).toHaveBeenCalledWith(`Request errors:\n  · Some error\n  · Another error`)
   })
 
   it('Safe notification in case of unexpected request errors', async () => {
@@ -93,14 +99,12 @@ describe('webhookTriggerService', () => {
 
     vi.mocked(getWebhookSample).mockResolvedValue(response)
 
-    const outputSpy = vi.spyOn(output, 'consoleError')
-
     // When
     await webhookTriggerService(sampleFlags())
 
     // Then
     expectCalls(aVersion)
-    expect(outputSpy).toHaveBeenCalledWith(`Request errors:\n${JSON.stringify(response.userErrors)}`)
+    expect(consoleError).toHaveBeenCalledWith(`Request errors:\n${JSON.stringify(response.userErrors)}`)
   })
 
   it('notifies about real delivery being sent', async () => {
@@ -110,8 +114,6 @@ describe('webhookTriggerService', () => {
     vi.mocked(triggerLocalWebhook)
     vi.mocked(getWebhookSample).mockResolvedValue(successEmptyResponse)
 
-    const outputSpy = vi.spyOn(output, 'outputSuccess')
-
     // When
     await webhookTriggerService(sampleFlags())
 
@@ -119,7 +121,7 @@ describe('webhookTriggerService', () => {
     expectCalls(aVersion)
     expect(getWebhookSample).toHaveBeenCalledWith(aToken, aTopic, aVersion, 'http', anAddress, aSecret)
     expect(triggerLocalWebhook).toHaveBeenCalledTimes(0)
-    expect(outputSpy).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
+    expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
   })
 
   describe('Localhost delivery', () => {
@@ -130,8 +132,6 @@ describe('webhookTriggerService', () => {
       vi.mocked(triggerLocalWebhook).mockResolvedValue(true)
       vi.mocked(getWebhookSample).mockResolvedValue(successDirectResponse)
 
-      const outputSpy = vi.spyOn(output, 'outputSuccess')
-
       // When
       await webhookTriggerService(sampleFlags())
 
@@ -139,7 +139,7 @@ describe('webhookTriggerService', () => {
       expectCalls(aVersion)
       expect(getWebhookSample).toHaveBeenCalledWith(aToken, aTopic, aVersion, 'localhost', aFullLocalAddress, aSecret)
       expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
-      expect(outputSpy).toHaveBeenCalledWith('Localhost delivery sucessful')
+      expect(outputSuccess).toHaveBeenCalledWith('Localhost delivery sucessful')
     })
 
     it('shows an error if localhost is not ready', async () => {
@@ -149,8 +149,6 @@ describe('webhookTriggerService', () => {
       vi.mocked(triggerLocalWebhook).mockResolvedValue(false)
       vi.mocked(getWebhookSample).mockResolvedValue(successDirectResponse)
 
-      const outputSpy = vi.spyOn(output, 'consoleError')
-
       // When
       await webhookTriggerService(sampleFlags())
 
@@ -158,7 +156,7 @@ describe('webhookTriggerService', () => {
       expectCalls(aVersion)
       expect(getWebhookSample).toHaveBeenCalledWith(aToken, aTopic, aVersion, 'localhost', aFullLocalAddress, aSecret)
       expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
-      expect(outputSpy).toHaveBeenCalledWith('Localhost delivery failed')
+      expect(consoleError).toHaveBeenCalledWith('Localhost delivery failed')
     })
   })
 
@@ -194,7 +192,6 @@ describe('webhookTriggerService', () => {
       // Given
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
       vi.mocked(findInEnv).mockResolvedValue({clientSecret: aSecret})
-      const outputSpy = vi.spyOn(output, 'info')
 
       // When
       await webhookTriggerService(noSecretSampleFlags())
@@ -203,7 +200,7 @@ describe('webhookTriggerService', () => {
       expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
       expect(collectSecret).toHaveBeenCalledTimes(0)
       expect(requestAppInfo).toHaveBeenCalledTimes(0)
-      expect(outputSpy).toHaveBeenCalledWith('Reading client-secret from .env file')
+      expect(outputInfo).toHaveBeenCalledWith('Reading client-secret from .env file')
     })
 
     it('no remote apiKey found', async () => {
@@ -227,7 +224,6 @@ describe('webhookTriggerService', () => {
       vi.mocked(findInEnv).mockResolvedValue({})
       vi.mocked(findApiKey).mockResolvedValue('API_KEY')
       vi.mocked(requestAppInfo).mockResolvedValue({clientSecret: aSecret, apiKey: 'API_KEY', clientId: 'Id'})
-      const outputSpy = vi.spyOn(output, 'info')
 
       // When
       await webhookTriggerService(noSecretSampleFlags())
@@ -235,7 +231,7 @@ describe('webhookTriggerService', () => {
       // Then
       expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
       expect(collectSecret).toHaveBeenCalledTimes(0)
-      expect(outputSpy).toHaveBeenCalledWith('Reading client-secret from app config')
+      expect(outputInfo).toHaveBeenCalledWith('Reading client-secret from app config')
       expect(requestAppInfo).toHaveBeenCalledWith(aToken, 'API_KEY')
     })
 
@@ -245,7 +241,6 @@ describe('webhookTriggerService', () => {
       vi.mocked(findInEnv).mockResolvedValue({})
       vi.mocked(findApiKey).mockResolvedValue('API_KEY')
       vi.mocked(requestAppInfo).mockResolvedValue({clientSecret: aSecret, apiKey: 'API_KEY', clientId: 'Id'})
-      const outputSpy = vi.spyOn(output, 'info')
 
       // When
       await webhookTriggerService(noSecretSampleFlags())
@@ -253,7 +248,7 @@ describe('webhookTriggerService', () => {
       // Then
       expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
       expect(collectSecret).toHaveBeenCalledTimes(0)
-      expect(outputSpy).toHaveBeenCalledWith('Reading client-secret from app config')
+      expect(outputInfo).toHaveBeenCalledWith('Reading client-secret from app config')
       expect(requestAppInfo).toHaveBeenCalledWith(aToken, 'API_KEY')
     })
 

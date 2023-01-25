@@ -1,13 +1,13 @@
 import {findInEnv, findApiKey, requestAppInfo} from './find-app-info.js'
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {fetchAppFromApiKey, fetchOrganizations, fetchOrgAndApps} from '../dev/fetch.js'
+import {fetchAppFromApiKey, fetchOrganizations, fetchOrgAndApps, FetchResponse} from '../dev/fetch.js'
+import {MinimalOrganizationApp} from '../../models/organization.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {basename} from '@shopify/cli-kit/node/path'
 
 const aToken = 'A_TOKEN'
-const anApp = 'app-name'
 const anApiKey = 'API_KEY'
 
 afterEach(async () => {
@@ -34,7 +34,7 @@ describe('findInEnv', () => {
   it('dotenv file does not contain secret', async () => {
     // Given
     vi.mocked(fileExists).mockResolvedValue(true)
-    vi.mocked(readAndParseDotEnv).mockResolvedValue({variables: {ANYTHING: 'ELSE'}})
+    vi.mocked(readAndParseDotEnv).mockResolvedValue({path: 'A_PATH', variables: {ANYTHING: 'ELSE'}})
 
     // When
     const credentials = await findInEnv()
@@ -46,7 +46,7 @@ describe('findInEnv', () => {
   it('dotenv file contains secret', async () => {
     // Given
     vi.mocked(fileExists).mockResolvedValue(true)
-    vi.mocked(readAndParseDotEnv).mockResolvedValue({variables: {SHOPIFY_API_SECRET: 'A_SECRET'}})
+    vi.mocked(readAndParseDotEnv).mockResolvedValue({path: 'A_PATH', variables: {SHOPIFY_API_SECRET: 'A_SECRET'}})
 
     // When
     const credentials = await findInEnv()
@@ -57,18 +57,25 @@ describe('findInEnv', () => {
 })
 
 describe('findApiKey', () => {
+  const anAppName = 'app-name'
+  const anotherAppName = 'another-app'
+  const anotherApiKey = 'ANOTHER_API_KEY'
+  const anApp = {id: '1', title: anAppName, apiKey: anApiKey}
+  const anotherApp = {id: '2', title: anotherAppName, apiKey: anotherApiKey}
+  const org = {id: '1', businessName: 'org1', appsNext: true, website: 'http://example.org'}
+
   beforeEach(async () => {
     vi.mock('../dev/fetch')
     vi.mock('../../prompts/dev')
     vi.mock('@shopify/cli-kit/node/path')
 
-    vi.mocked(fetchOrganizations).mockResolvedValue({})
-    vi.mocked(selectOrganizationPrompt).mockResolvedValue({id: 'id'})
+    vi.mocked(fetchOrganizations).mockResolvedValue([org])
+    vi.mocked(selectOrganizationPrompt).mockResolvedValue(org)
   })
 
   it('no apps available', async () => {
     // Given
-    vi.mocked(fetchOrgAndApps).mockResolvedValue({apps: []})
+    vi.mocked(fetchOrgAndApps).mockResolvedValue(buildFetchResponse([]))
 
     // When
     const apiKey = await findApiKey(aToken)
@@ -79,8 +86,8 @@ describe('findApiKey', () => {
 
   it('app guessed from directory', async () => {
     // Given
-    vi.mocked(fetchOrgAndApps).mockResolvedValue({apps: [{title: anApp, apiKey: anApiKey}]})
-    vi.mocked(basename).mockResolvedValue(`folder/${anApp}`)
+    vi.mocked(fetchOrgAndApps).mockResolvedValue(buildFetchResponse([anApp]))
+    vi.mocked(basename).mockResolvedValue(`folder/${anAppName}`)
 
     // When
     const apiKey = await findApiKey(aToken)
@@ -91,8 +98,8 @@ describe('findApiKey', () => {
 
   it('app guessed because there is only one', async () => {
     // Given
-    vi.mocked(fetchOrgAndApps).mockResolvedValue({apps: [{title: anApp, apiKey: anApiKey}]})
-    vi.mocked(basename).mockResolvedValue(`folder/another-app`)
+    vi.mocked(fetchOrgAndApps).mockResolvedValue(buildFetchResponse([anApp]))
+    vi.mocked(basename).mockResolvedValue(`folder/${anotherAppName}`)
 
     // When
     const apiKey = await findApiKey(aToken)
@@ -103,19 +110,41 @@ describe('findApiKey', () => {
 
   it('app selected from prompt', async () => {
     // Given
-    const app1 = {title: anApp, apiKey: anApiKey}
-    const app2 = {title: 'another-app', apiKey: 'ANOTHER_API_KEY'}
-    vi.mocked(fetchOrgAndApps).mockResolvedValue({apps: [app1, app2]})
+    vi.mocked(fetchOrgAndApps).mockResolvedValue(buildFetchResponse([anApp, anotherApp]))
     vi.mocked(basename).mockResolvedValue(`folder/somewhere-else`)
-    vi.mocked(selectAppPrompt).mockResolvedValue(app2.apiKey)
+    vi.mocked(selectAppPrompt).mockResolvedValue(anotherApp.apiKey)
 
     // When
     const apiKey = await findApiKey(aToken)
 
     // Then
     expect(selectAppPrompt).toHaveBeenCalledOnce()
-    expect(apiKey).toEqual(app2.apiKey)
+    expect(apiKey).toEqual(anotherApp.apiKey)
   })
+
+  function buildFetchResponse(apps: MinimalOrganizationApp[]): FetchResponse {
+    const response: FetchResponse = {
+      organization: {id: '1', businessName: 'org1', appsNext: true},
+      apps: {
+        pageInfo: {
+          hasNextPage: false,
+        },
+        nodes: apps,
+      },
+      stores: [
+        {
+          shopId: '1',
+          link: 'link1',
+          shopDomain: 'domain1',
+          shopName: 'store1',
+          transferDisabled: false,
+          convertableToPartnerTest: false,
+        },
+      ],
+    }
+
+    return response
+  }
 })
 
 describe('requestAppInfo', () => {
@@ -136,7 +165,14 @@ describe('requestAppInfo', () => {
 
   it('no secrets available', async () => {
     // Given
-    vi.mocked(fetchAppFromApiKey).mockResolvedValue({id: 'id', apiSecretKeys: []})
+    vi.mocked(fetchAppFromApiKey).mockResolvedValue({
+      id: 'id',
+      title: 'title',
+      apiKey: anApiKey,
+      organizationId: 'orgid',
+      apiSecretKeys: [],
+      grantedScopes: [],
+    })
 
     // When
     const credentials = await requestAppInfo(aToken, anApiKey)
@@ -149,7 +185,11 @@ describe('requestAppInfo', () => {
     // Given
     vi.mocked(fetchAppFromApiKey).mockResolvedValue({
       id: 'id',
-      apiSecretKeys: [{some_secret: 'SECRET1'}, {secret: 'SECRET'}],
+      title: 'title',
+      apiKey: anApiKey,
+      organizationId: 'orgid',
+      apiSecretKeys: [{secret: 'SECRET'}],
+      grantedScopes: [],
     })
 
     // When

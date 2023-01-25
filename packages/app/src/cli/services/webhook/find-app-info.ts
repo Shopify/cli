@@ -2,7 +2,7 @@ import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {fetchAppFromApiKey, fetchOrganizations, fetchOrgAndApps} from '../dev/fetch.js'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {fileExists} from '@shopify/cli-kit/node/fs'
-import {joinPath, basename} from '@shopify/cli-kit/node/path'
+import {joinPath, basename, cwd} from '@shopify/cli-kit/node/path'
 
 export interface AppCredentials {
   clientSecret?: string
@@ -18,7 +18,7 @@ export interface AppCredentials {
 export async function findInEnv(): Promise<AppCredentials> {
   const credentials: AppCredentials = {}
 
-  const envFile = joinPath(process.cwd(), '.env')
+  const envFile = joinPath(cwd(), '.env')
   if (await fileExists(envFile)) {
     const dotenv = await readAndParseDotEnv(envFile)
 
@@ -40,17 +40,17 @@ export async function findApiKey(token: string): Promise<string | undefined> {
   const org = await selectOrganizationPrompt(orgs)
   const {apps} = await fetchOrgAndApps(org.id, token)
 
-  if (apps.length === 0) {
+  if (apps.nodes.length === 0) {
     return
   }
 
   // Try to infer from current folder
-  const currentDir = basename(process.cwd())
-  const appFromDir = apps.find((elm) => elm.title === currentDir)
+  const currentDir = basename(cwd())
+  const appFromDir = apps.nodes.find((elm) => elm.title === currentDir)
   let apiKey
   if (appFromDir === undefined) {
-    if (apps.length === 1 && apps[0]?.apiKey) {
-      apiKey = apps[0].apiKey
+    if (apps.nodes.length === 1 && apps.nodes[0]?.apiKey) {
+      apiKey = apps.nodes[0].apiKey
     } else {
       apiKey = await selectAppPrompt(apps, org.id, token)
     }
