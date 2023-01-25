@@ -293,7 +293,7 @@ describe('webhookTriggerService', () => {
       topic: aTopic,
       apiVersion: aVersion,
       deliveryMethod: 'event-bridge',
-      sharedSecret: aSecret,
+      clientSecret: aSecret,
       address: '',
     }
 

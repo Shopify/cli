@@ -29,7 +29,7 @@ export async function webhookTriggerService(flags: WebhookTriggerFlags) {
 
   const [deliveryMethod, address] = await collectAddressAndMethod(flags.deliveryMethod, flags.address)
 
-  const credentials = await getSecret(token, flags.sharedSecret)
+  const credentials = await getSecret(token, flags.clientSecret)
   const secret = credentials.clientSecret as string
 
   const sample = await getWebhookSample(token, topic, apiVersion, deliveryMethod, address, secret)
@@ -71,10 +71,10 @@ function formatErrors(errors: UserErrors[]): string {
   }
 }
 
-async function getSecret(token: string, sharedSecretFlag: string | undefined): Promise<AppCredentials> {
-  if (sharedSecretFlag !== undefined && sharedSecretFlag.length > 0) {
+async function getSecret(token: string, clientSecretFlag: string | undefined): Promise<AppCredentials> {
+  if (valueSet(clientSecretFlag)) {
     // Flag overwrites any other secret
-    const credentials: AppCredentials = {clientSecret: sharedSecretFlag}
+    const credentials: AppCredentials = {clientSecret: clientSecretFlag}
     return credentials
   }
 
@@ -86,28 +86,36 @@ async function getSecret(token: string, sharedSecretFlag: string | undefined): P
 
   if (manual) {
     const credentials: AppCredentials = {}
-    credentials.clientSecret = await collectSecret(sharedSecretFlag)
+    credentials.clientSecret = await collectSecret(clientSecretFlag)
     return credentials
   }
 
   const localCredentials = await findInEnv()
-  if (localCredentials.clientSecret !== undefined && localCredentials.clientSecret?.length > 0) {
+  if (valueSet(localCredentials.clientSecret)) {
     outputInfo('Reading client-secret from .env file')
     return localCredentials
   }
 
   const apiKey = await findApiKey(token)
   if (apiKey === undefined) {
-    localCredentials.clientSecret = await collectSecret(sharedSecretFlag)
+    localCredentials.clientSecret = await collectSecret(clientSecretFlag)
     return localCredentials
   }
 
   const appCredentials = await requestAppInfo(token, apiKey)
-  if (appCredentials.clientSecret !== undefined && appCredentials.clientSecret.length > 0) {
+  if (valueSet(appCredentials.clientSecret)) {
     outputInfo('Reading client-secret from app config')
   } else {
-    appCredentials.clientSecret = await collectSecret(sharedSecretFlag)
+    appCredentials.clientSecret = await collectSecret(clientSecretFlag)
   }
 
   return appCredentials
+}
+
+function valueSet(value: string | undefined): boolean {
+  if (value === undefined) {
+    return false
+  }
+
+  return value.length > 0
 }

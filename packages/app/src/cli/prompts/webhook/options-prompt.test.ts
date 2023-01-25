@@ -1,5 +1,5 @@
 import {collectAddressAndMethod, collectApiVersion, collectSecret, collectTopic} from './options-prompt.js'
-import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, sharedSecretPrompt, topicPrompt} from './trigger.js'
+import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, clientSecretPrompt, topicPrompt} from './trigger.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -19,7 +19,7 @@ describe('optionsPrompt', () => {
   describe('without params', () => {
     beforeEach(async () => {
       vi.mocked(topicPrompt).mockResolvedValue(aTopic)
-      vi.mocked(sharedSecretPrompt).mockResolvedValue(aSecret)
+      vi.mocked(clientSecretPrompt).mockResolvedValue(aSecret)
     })
 
     it('collects HTTP localhost params', async () => {
@@ -55,7 +55,7 @@ describe('optionsPrompt', () => {
     beforeEach(async () => {
       vi.mocked(topicPrompt)
       vi.mocked(apiVersionPrompt)
-      vi.mocked(sharedSecretPrompt)
+      vi.mocked(clientSecretPrompt)
       vi.mocked(deliveryMethodPrompt)
       vi.mocked(addressPrompt)
     })
@@ -162,7 +162,7 @@ describe('optionsPrompt', () => {
     function expectNoPrompts() {
       expect(topicPrompt).toHaveBeenCalledTimes(0)
       expect(apiVersionPrompt).toHaveBeenCalledTimes(0)
-      expect(sharedSecretPrompt).toHaveBeenCalledTimes(0)
+      expect(clientSecretPrompt).toHaveBeenCalledTimes(0)
       expect(deliveryMethodPrompt).toHaveBeenCalledTimes(0)
       expect(addressPrompt).toHaveBeenCalledTimes(0)
     }
