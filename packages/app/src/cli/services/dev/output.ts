@@ -35,7 +35,7 @@ export async function outputUpdateURLsResult(
 
 export function outputDevSuccess(app: AppInterface) {
   const renderSuccessOptions: RenderAlertOptions = {
-    headline: {bold: 'Preview ready! Press `Enter` to open your browser.'},
+    headline: {bold: 'Preview ready! Press any key to open your browser.'},
   }
 
   if (app.extensions.function.length > 0) {

@@ -1,3 +1,4 @@
+import TextWithBackground from './TextWithBackground.js'
 import {OutputProcess} from '../../../../output.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {AbortController} from '../../../../public/node/abort.js'
@@ -14,10 +15,8 @@ export interface Props {
   abortController: AbortController
   showTimestamps?: boolean
   onInput?: (input: string, key: Key) => void
-  hotKeys?: {
-    key: string
-    effect: string
-  }[]
+  stickyMessage?: string
+  footer?: string
 }
 interface Chunk {
   color: string
@@ -64,7 +63,8 @@ const ConcurrentOutput: FunctionComponent<Props> = ({
   abortController,
   showTimestamps = true,
   onInput,
-  hotKeys,
+  stickyMessage,
+  footer,
 }) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const concurrentColors = ['yellow', 'cyan', 'magenta', 'green', 'blue']
@@ -158,15 +158,14 @@ const ConcurrentOutput: FunctionComponent<Props> = ({
           )
         }}
       </Static>
-      {hotKeys && hotKeys.length > 0 && (
-        <Box flexDirection="column" marginTop={1}>
-          {hotKeys.map((hotKey, index) => (
-            <Box key={index}>
-              <Text>
-                Press <Text bold>{hotKey.key}</Text> to {hotKey.effect}.
-              </Text>
-            </Box>
-          ))}
+      {stickyMessage && (
+        <Box marginTop={1} flexGrow={1}>
+          <TextWithBackground text={stickyMessage} inverse paddingX={2} paddingY={1} />
+        </Box>
+      )}
+      {(stickyMessage || footer) && (
+        <Box marginY={1}>
+          <Text>{footer}</Text>
         </Box>
       )}
     </>

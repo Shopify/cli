@@ -2,7 +2,7 @@ import {ensureDevEnvironment} from './environment.js'
 import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
-import {outputExtensionsMessages, outputDevSuccess, outputUpdateURLsResult} from './dev/output.js'
+import {outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {
@@ -17,7 +17,7 @@ import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {buildAppURLForWeb} from '../utilities/app/app-url.js'
-import {output, ui} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -25,7 +25,7 @@ import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
-import {exec, openURL} from '@shopify/cli-kit/node/system'
+import {exec} from '@shopify/cli-kit/node/system'
 import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/environment/spin'
 import {
   AdminSession,
@@ -92,12 +92,6 @@ async function dev(options: DevOptions) {
 
   let previewUrl
 
-  if (localApp.extensions.ui.length > 0) {
-    previewUrl = `${proxyUrl}/extensions/dev-console`
-  } else {
-    previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
-  }
-
   if ((frontendConfig || backendConfig) && options.update) {
     const currentURLs = await getURLs(apiKey, token)
     const newURLs = generatePartnersURLs(exposedUrl, backendConfig?.configuration.authCallbackPath)
@@ -109,9 +103,12 @@ async function dev(options: DevOptions) {
     })
     if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
     await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
-    outputDevSuccess(localApp)
-    await ui.keypress('\r')
-    await openURL(previewUrl)
+
+    if (localApp.extensions.ui.length > 0) {
+      previewUrl = `${proxyUrl}/extensions/dev-console`
+    } else {
+      previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
+    }
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
@@ -186,6 +183,7 @@ async function dev(options: DevOptions) {
     await renderConcurrent({processes: additionalProcesses})
   } else {
     await runConcurrentHTTPProcessesAndPathForwardTraffic({
+      app: localApp,
       previewUrl,
       portNumber: proxyPort,
       proxyTargets,

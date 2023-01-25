@@ -21,7 +21,7 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 
 type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>
 
-interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortController'> {
+export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortController'> {
   renderOptions?: RenderOptions
 }
 

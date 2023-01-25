@@ -50,10 +50,8 @@ describe('ConcurrentOutput', () => {
       <ConcurrentOutput
         processes={[backendProcess, frontendProcess]}
         abortController={new AbortController()}
-        hotKeys={[
-          {key: 'q', effect: 'quit'},
-          {key: 'p', effect: 'open your browser'},
-        ]}
+        stickyMessage="Press `p` to open your browser. Press `q` to quit."
+        footer="http://shopify.com"
       />,
     )
 
@@ -61,17 +59,7 @@ describe('ConcurrentOutput', () => {
     await frontendPromise
 
     // Then
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "0000-00-00 00:00:00 | backend  | first backend message
-      0000-00-00 00:00:00 | backend  | second backend message
-      0000-00-00 00:00:00 | backend  | third backend message
-      0000-00-00 00:00:00 | frontend | first frontend message
-      0000-00-00 00:00:00 | frontend | second frontend message
-      0000-00-00 00:00:00 | frontend | third frontend message
-
-      Press q to quit.
-      Press p to open your browser."
-    `)
+    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot()
   })
 
   test('accepts a onInput function that fires when a key is pressed', async () => {

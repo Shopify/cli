@@ -37,7 +37,11 @@ export async function asyncTasks() {
     },
   }
 
-  await renderConcurrent({processes: [backendProcess, frontendProcess]})
+  await renderConcurrent({
+    processes: [backendProcess, frontendProcess],
+    stickyMessage: 'Press `p` to open your browser. Press `q` to quit.',
+    footer: 'http://shopify.com',
+  })
 
   // renderTasks
   const tasks = [
