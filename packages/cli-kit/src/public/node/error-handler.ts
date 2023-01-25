@@ -14,14 +14,10 @@ import {getEnvironmentData} from '../../private/node/analytics.js'
 import {outputDebug, outputInfo} from '../../public/node/output.js'
 import {bugsnagApiKey} from '../../private/node/constants.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
+import {Bugsnag} from '../../private/node/error-handler.js'
 import {settings, Interfaces} from '@oclif/core'
 import StackTracey from 'stacktracey'
 import {realpath} from 'fs/promises'
-
-import {createRequire} from 'module'
-
-const require = createRequire(import.meta.url)
-const {default: Bugsnag} = require('@bugsnag/js')
 
 export function errorHandler(
   error: (CancelExecution | AbortSilentError) & {exitCode?: number | undefined},
