@@ -10,7 +10,7 @@ describe('version command', () => {
     vi.restoreAllMocks()
   })
 
-  test('launches service', async () => {
+  test('launches the service', async () => {
     vi.mocked(versionService).mockResolvedValue()
 
     await Version.run([], import.meta.url)
