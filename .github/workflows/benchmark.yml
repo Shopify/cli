@@ -18,6 +18,7 @@ jobs:
   benchmark:
     name: benchmark with Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    if: github.repository_owner == 'Shopify'
     timeout-minutes: 30
     strategy:
       matrix:
