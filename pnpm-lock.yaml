@@ -363,7 +363,7 @@ importers:
       archiver: 5.3.1
       chalk: 5.1.0
       change-case: 4.1.2
-      color-json: 2.0.1
+      color-json: 3.0.0
       commondir: 1.0.1
       conf: 11.0.1
       cross-zip: 4.0.0
@@ -428,7 +428,7 @@ importers:
       archiver: 5.3.1
       chalk: 5.1.0
       change-case: 4.1.2
-      color-json: 2.0.1
+      color-json: 3.0.0
       commondir: 1.0.1
       conf: 11.0.1
       cross-zip: 4.0.0
@@ -5873,8 +5873,8 @@ packages:
     dependencies:
       color-name: 1.1.4
 
-  /color-json/2.0.1:
-    resolution: {integrity: sha512-591ayKvCpq0ghzRock4T3hfdbSqBioVa5k2KRzYeRWXDO+1T3KxZ1EUd0FuB1ntwMgbiNnQ+vTXfWhaV7yM/Tw==}
+  /color-json/3.0.0:
+    resolution: {integrity: sha512-3LjqRpPQOlJb3hJE54l19OCf1M/5bSqkxOpwQrpBbn1yMDBHqz/QHi88HpV6aiZMWMEkEuqnIU+jXqX9H05BYA==}
     dev: false
 
   /color-name/1.1.3:
