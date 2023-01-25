@@ -42,8 +42,8 @@ export const defaultFunctionsFlavors: {name: string; value: ExtensionFlavor}[] =
 ]
 
 export const withJavascriptFunctionsFlavors: {name: string; value: ExtensionFlavor}[] = [
-  {name: 'Javascript', value: 'vanilla-js'},
-  {name: 'Typescript', value: 'typescript'},
+  {name: 'JavaScript', value: 'vanilla-js'},
+  {name: 'TypeScript', value: 'typescript'},
   {name: 'Rust', value: 'rust'},
   {name: 'Wasm', value: 'wasm'},
 ]
