@@ -5,7 +5,7 @@
 <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
 <a href="https://github.com/Shopify/cli/actions/workflows/shopify-cli.yml">![badge](https://github.com/Shopify/cli/actions/workflows/shopify-cli.yml/badge.svg)</a>
 
-With the Shopify command line interface (Shopify CLI 3.0), you can:
+With the Spotify command line interface (Shopify CLI 3.0), you can:
 - build custom storefronts and manage their hosting
 - initialize, build, dev, and deploy Shopify apps — and generate app extensions
 
