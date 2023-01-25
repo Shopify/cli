@@ -1,28 +1,13 @@
 import {checkLockfileStatus} from './check-lockfile.js'
-import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
+import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
-import {gitFactory} from '@shopify/cli-kit/node/git'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
 
 vi.mock('@shopify/cli-kit/node/git')
 
 describe('checkLockfileStatus()', () => {
-  const checkIgnoreMock = vi.fn()
-  const gitFactoryMock = {
-    checkIgnore: checkIgnoreMock,
-  }
-
-  beforeEach(() => {
-    vi.mocked(gitFactory).mockReturnValue(gitFactoryMock as any)
-    vi.mocked(checkIgnoreMock).mockResolvedValue([])
-  })
-
-  afterEach(() => {
-    vi.restoreAllMocks()
-    mockAndCaptureOutput().clear()
-  })
-
   describe('when a lockfile present', () => {
     it('returns "ok"', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
@@ -45,7 +30,7 @@ describe('checkLockfileStatus()', () => {
 
     describe('and it is being ignored by Git', () => {
       beforeEach(() => {
-        vi.mocked(checkIgnoreMock).mockResolvedValue(['yarn.lock'])
+        vi.mocked(checkIfIgnoredInGitRepository).mockResolvedValue(['yarn.lock'])
       })
 
       it('returns "ignored"', async () => {

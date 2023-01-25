@@ -1,7 +1,7 @@
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {lockfiles} from '@shopify/cli-kit/node/node-package-manager'
 import {fileExists} from '@shopify/cli-kit/node/fs'
-import {gitFactory} from '@shopify/cli-kit/node/git'
+import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 import type {Lockfile} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -83,11 +83,8 @@ export async function checkLockfileStatus(directory: string): Promise<LockFileSt
     return 'multiple'
   }
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const repo = gitFactory(directory)
   const lockfile = availableLockfiles[0]!
-  const ignoredLockfile = await repo.checkIgnore([lockfile])
+  const ignoredLockfile = await checkIfIgnoredInGitRepository(directory, [lockfile])
 
   if (ignoredLockfile.length) {
     lockfileIgnoredWarning(lockfile)

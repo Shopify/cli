@@ -5,8 +5,6 @@ import {cwd} from './path.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
 
-export const gitFactory = git
-
 /**
  * Initialize a git repository at the given directory.
  *
@@ -22,6 +20,22 @@ export async function initializeGitRepository(directory: string, initialBranch =
   const repo = git(directory)
   await repo.init()
   await repo.checkoutLocalBranch(initialBranch)
+}
+
+/**
+ * Given a Git repository and a list of absolute paths to files contained
+ * in the repository, it filters and returns the files that are ignored
+ * by the .gitignore.
+ *
+ * @param directory - The absolute path to the directory containing the files.
+ * @param files - The list of files to check against.
+ */
+export async function checkIfIgnoredInGitRepository(directory: string, files: string[]): Promise<string[]> {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const repo = git(directory)
+  const ignoredLockfile = await repo.checkIgnore(files)
+  return ignoredLockfile
 }
 
 export interface GitIgnoreTemplate {

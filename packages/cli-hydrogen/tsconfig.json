@@ -3,6 +3,7 @@
   "include": ["./src/**/*.ts"],
   "exclude": ["./dist"],
   "compilerOptions": {
+    "moduleResolution": "node",
     "outDir": "dist",
     "rootDir": "src",
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"

@@ -63,7 +63,7 @@ class HydrogenAppLoader {
       throw new AbortError(`Couldn't find directory ${this.directory}`)
     }
 
-    const configuration = await this.loadConfig()
+    const {configuration} = await this.loadConfig()
 
     const yarnLockPath = joinPath(this.directory, yarnLockfile)
     const yarnLockExists = await fileExists(yarnLockPath)
