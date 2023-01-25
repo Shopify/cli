@@ -1,5 +1,5 @@
 import {checkLockfileStatus} from './check-lockfile.js'
-import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -8,6 +8,15 @@ import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
 vi.mock('@shopify/cli-kit/node/git')
 
 describe('checkLockfileStatus()', () => {
+  beforeEach(() => {
+    vi.mocked(checkIfIgnoredInGitRepository).mockResolvedValue([])
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    mockAndCaptureOutput().clear()
+  })
+
   describe('when a lockfile present', () => {
     it('returns "ok"', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
