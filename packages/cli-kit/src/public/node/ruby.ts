@@ -8,6 +8,7 @@ import {AbortError, AbortSilentError} from './error.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
 import {content, token} from '../../output.js'
+import {isTruthy} from '../../private/node/environment/utilities.js'
 import {Writable} from 'stream'
 
 const RubyCLIVersion = '2.34.0'
@@ -144,7 +145,7 @@ async function installCLIDependencies(stdout: Writable) {
   const exists = await file.fileExists(shopifyCLIDirectory())
 
   if (!exists) stdout.write('Installing theme dependencies...')
-  const usingLocalCLI2 = Boolean(process.env.SHOPIFY_CLI_2_0_DIRECTORY)
+  const usingLocalCLI2 = isTruthy(process.env.SHOPIFY_CLI_2_0_DIRECTORY)
   await validateRubyEnv()
   if (usingLocalCLI2) {
     await bundleInstallLocalShopifyCLI()
