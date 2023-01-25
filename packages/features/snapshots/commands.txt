@@ -9,6 +9,9 @@
  app update-url         @shopify/app           
  auth logout            @shopify/cli           
  commands               @oclif/plugin-commands 
+ function build         @shopify/app           
+ function run           @shopify/app           
+ function typegen       @shopify/app           
  help                   @oclif/plugin-help     
  kitchen-sink async     @shopify/cli           
  kitchen-sink prompts   @shopify/cli           
