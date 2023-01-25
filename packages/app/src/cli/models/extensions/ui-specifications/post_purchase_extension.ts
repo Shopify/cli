@@ -1,6 +1,6 @@
 import {createUIExtensionSpecification} from '../ui.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
-import {output} from '@shopify/cli-kit'
+import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
 
 const dependency = {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'}
 
@@ -16,17 +16,17 @@ const spec = createUIExtensionSpecification({
   deployConfig: async (config, _) => {
     return {metafields: config.metafields}
   },
-  previewMessage: (host, uuid, _): output.TokenizedString => {
+  previewMessage: (host, uuid, _): TokenizedString => {
     const publicURL = `${host}/extensions/${uuid}`
-    const devDocsLink = output.token.link(
+    const devDocsLink = outputToken.link(
       'dev docs',
       'https://shopify.dev/apps/checkout/post-purchase/getting-started-post-purchase-extension#step-2-test-the-extension',
     )
-    const chromeLink = output.token.link(
+    const chromeLink = outputToken.link(
       'Shopify’s post-purchase Chrome extension',
       'https://chrome.google.com/webstore/detail/shopify-post-purchase-dev/nenmcifhoegealiiblnpihbnjenleong',
     )
-    return output.content`To view this extension:
+    return outputContent`To view this extension:
   1. Install ${chromeLink}
   2. Open the Chrome extension and paste this URL into it: ${publicURL}
   3. Run a test purchase on your store to view your extension

@@ -1,41 +1,42 @@
 import Command from '@shopify/cli-kit/node/base-command'
-import {output, ui} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
+import {outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 type Choice = 'bfs' | 'hydrogen' | 'devtools'
 
 const subcommands: {[key in Choice]: () => void | Promise<void>} = {
   bfs: () => {
-    output.info(
+    outputInfo(
       unindent(`
         - Built for Shopify: Build great commerce apps that look and perform like they’re part of Shopify
         - Shopify Functions: New ways to extend Shopify: Build custom discounts, shipping, and payments
         - Checkout Extensibility: Apps for checkout are here: Powerful customizations that work with Shop Pay
       `),
     )
-    output.info(`\n\n`)
-    output.info(output.content`${output.token.yellow('Read more here: https://shopify.com/editions/dev#chapter-1')}`)
+    outputInfo(`\n\n`)
+    outputInfo(outputContent`${outputToken.yellow('Read more here: https://shopify.com/editions/dev#chapter-1')}`)
   },
   devtools: () => {
-    output.info(
+    outputInfo(
       unindent(`
         - Developer Experience: Simplified updates to write and distribute an app
         - Embedded App Improvements: Offer a truly seamless app experience
         - Data Protection: Future-proof the apps you build
       `),
     )
-    output.info(`\n\n`)
-    output.info(output.content`${output.token.yellow('Read more here: https://shopify.com/editions/dev#chapter-2')}`)
+    outputInfo(`\n\n`)
+    outputInfo(outputContent`${outputToken.yellow('Read more here: https://shopify.com/editions/dev#chapter-2')}`)
   },
   hydrogen: () => {
-    output.info(
+    outputInfo(
       unindent(`
         - Hydrogen + Oxygen: The Shopify stack for headless commerce
         - Pixels: Intelligent interactions—powered by secure data
         - Marketplace Kit: Add commerce to any platform
       `),
     )
-    output.info(`\n\n`)
-    output.info(output.content`${output.token.yellow('Read more here: https://shopify.com/editions/dev#chapter-3')}`)
+    outputInfo(`\n\n`)
+    outputInfo(outputContent`${outputToken.yellow('Read more here: https://shopify.com/editions/dev#chapter-3')}`)
   },
 }
 export default class Editions extends Command {
@@ -43,8 +44,8 @@ export default class Editions extends Command {
   static hidden = true
 
   async run(): Promise<void> {
-    output.info(
-      output.content`${output.token.green(
+    outputInfo(
+      outputContent`${outputToken.green(
         unindent(`
              _____ __                _ ____         ______    ___ __  _
             / ___// /_  ____  ____  (_) __/_  __   / ____/___/ (_) /_(_)___  ____  _____
@@ -61,7 +62,7 @@ export default class Editions extends Command {
       )}`,
     )
 
-    output.info(
+    outputInfo(
       unindent(`
 
 
@@ -95,7 +96,7 @@ export default class Editions extends Command {
     ])
 
     await subcommands[answer.editionschoice]?.()
-    output.info(`\n\n\n`)
+    outputInfo(`\n\n\n`)
   }
 }
 

@@ -1,6 +1,6 @@
 import {Alert, AlertProps} from './components/Alert.js'
 import {renderOnce} from '../ui.js'
-import {consoleLog, consoleWarn, Logger, LogLevel} from '../../../output.js'
+import {consoleLog, consoleWarn, Logger, LogLevel} from '../../../public/node/output.js'
 import React from 'react'
 
 const typeToLogLevel: {[key in AlertProps['type']]: LogLevel} = {

@@ -26,13 +26,13 @@ import {
   AppFunctionSetMutationSchema,
   AppFunctionSetVariables,
 } from '../../api/graphql/functions/app_function_set.js'
-import {output} from '@shopify/cli-kit'
 import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {fileExists, readFile, readFileSync} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 interface DeployThemeExtensionOptions {
   /** The application API key */
@@ -255,8 +255,8 @@ async function uploadFunctionExtension(
   const res: AppFunctionSetMutationSchema = await functionProxyRequest(options.apiKey, query, options.token, variables)
   const userErrors = res.data.functionSet.userErrors ?? []
   if (userErrors.length !== 0) {
-    const errorMessage = output.content`The deployment of functions failed with the following errors:
-${output.token.json(userErrors)}
+    const errorMessage = outputContent`The deployment of functions failed with the following errors:
+${outputToken.json(userErrors)}
     `
     throw new AbortError(errorMessage)
   }
@@ -274,15 +274,15 @@ async function uploadWasmBlob(extension: FunctionExtension, apiKey: string, toke
   if (res.status === 200) {
     return url
   } else if (res.status === 400 && resBody.includes('EntityTooLarge')) {
-    const errorMessage = output.content`The size of the Wasm binary file for Function ${extension.localIdentifier} is too large. It must be less than ${maxSize}.`
+    const errorMessage = outputContent`The size of the Wasm binary file for Function ${extension.localIdentifier} is too large. It must be less than ${maxSize}.`
     throw new AbortError(errorMessage)
   } else if (res.status >= 400 && res.status < 500) {
-    const errorMessage = output.content`Something went wrong uploading the Function ${
+    const errorMessage = outputContent`Something went wrong uploading the Function ${
       extension.localIdentifier
     }. The server responded with status ${res.status.toString()} and body: ${resBody}`
     throw new BugError(errorMessage)
   } else {
-    const errorMessage = output.content`Something went wrong uploading the Function ${extension.localIdentifier}. Try again.`
+    const errorMessage = outputContent`Something went wrong uploading the Function ${extension.localIdentifier}. Try again.`
     throw new AbortError(errorMessage)
   }
 }

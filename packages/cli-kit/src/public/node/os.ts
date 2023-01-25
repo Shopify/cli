@@ -1,4 +1,4 @@
-import {debug, content} from '../../output.js'
+import {outputDebug, outputContent} from '../../public/node/output.js'
 import {execa} from 'execa'
 import {userInfo as osUserInfo} from 'os'
 
@@ -10,7 +10,7 @@ import {userInfo as osUserInfo} from 'os'
  * @returns The username of the current user.
  */
 export async function username(platform: typeof process.platform = process.platform): Promise<string | null> {
-  debug(content`Obtaining user name...`)
+  outputDebug(outputContent`Obtaining user name...`)
   const environmentVariable = getEnvironmentVariable()
   if (environmentVariable) {
     return environmentVariable

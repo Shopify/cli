@@ -1,5 +1,5 @@
-import {output} from '@shopify/cli-kit'
 import {Conf} from '@shopify/cli-kit/node/conf'
+import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 export interface CachedAppInfo {
   directory: string
@@ -26,23 +26,23 @@ function appConf() {
 }
 
 export function getAppInfo(directory: string, config: Conf<AppConfSchema> = appConf()): CachedAppInfo | undefined {
-  output.debug(output.content`Reading cached app information for directory ${output.token.path(directory)}...`)
+  outputDebug(outputContent`Reading cached app information for directory ${outputToken.path(directory)}...`)
   return config.get(directory)
 }
 
 export function clearAppInfo(directory: string, config: Conf<AppConfSchema> = appConf()): void {
-  output.debug(output.content`Clearing app information for directory ${output.token.path(directory)}...`)
+  outputDebug(outputContent`Clearing app information for directory ${outputToken.path(directory)}...`)
   config.delete(directory)
 }
 
 export function clearAllAppInfo(config: Conf<AppConfSchema> = appConf()): void {
-  output.debug(output.content`Clearing all app information...`)
+  outputDebug(outputContent`Clearing all app information...`)
   config.clear()
 }
 
 export function setAppInfo(options: CachedAppInfo, config: Conf<AppConfSchema> = appConf()): void {
-  output.debug(
-    output.content`Storing app information for directory ${output.token.path(options.directory)}:${output.token.json(
+  outputDebug(
+    outputContent`Storing app information for directory ${outputToken.path(options.directory)}:${outputToken.json(
       options,
     )}`,
   )

@@ -1,6 +1,16 @@
 import {CancelExecution, AbortError, AbortSilentError} from './public/node/error.js'
 import {removeFile, fileExists} from './public/node/fs.js'
-import {info, completed, content, token, logUpdate, Message, Logger, stringifyMessage, debug} from './output.js'
+import {
+  outputInfo,
+  outputCompleted,
+  outputContent,
+  outputToken,
+  logUpdate,
+  OutputMessage,
+  Logger,
+  stringifyMessage,
+  outputDebug,
+} from './public/node/output.js'
 import colors from './public/node/colors.js'
 import {relativizePath} from './public/node/path.js'
 import {isTerminalInteractive} from './public/node/environment/local.js'
@@ -59,14 +69,14 @@ export interface QuestionChoiceType {
   group?: {name: string; order: number}
 }
 
-const started = (content: Message, logger: Logger) => {
+const started = (content: OutputMessage, logger: Logger) => {
   const message = `${colors.yellow('❯')} ${stringifyMessage(content)}`
-  info(message, logger)
+  outputInfo(message, logger)
 }
 
-const failed = (content: Message, logger: Logger) => {
+const failed = (content: OutputMessage, logger: Logger) => {
   const message = `${colors.red('✖')} ${stringifyMessage(content)}`
-  info(message, logger)
+  outputInfo(message, logger)
 }
 
 /**
@@ -88,7 +98,7 @@ export const task = async ({title, task}: TaskOptions) => {
     logUpdate.done()
     throw err
   }
-  completed(success, logUpdate)
+  outputCompleted(success, logUpdate)
   logUpdate.done()
 }
 export const prompt = async <
@@ -98,16 +108,16 @@ export const prompt = async <
   questions: ReadonlyArray<Question<TName>>,
 ): Promise<TAnswers> => {
   if (!isTerminalInteractive() && questions.length !== 0) {
-    throw new AbortError(content`
+    throw new AbortError(outputContent`
 The CLI prompted in a non-interactive terminal with the following questions:
-${token.json(questions)}
+${outputToken.json(questions)}
     `)
   }
 
   const value = {} as TAnswers
   for (const question of questions) {
     if (question.preface) {
-      info(question.preface)
+      outputInfo(question.preface)
     }
 
     // eslint-disable-next-line no-await-in-loop
@@ -148,7 +158,7 @@ export async function terminateBlockingPortProcessPrompt(port: number, stepDescr
   const processInfo = await findProcess('port', port)
   const formattedProcessName =
     processInfo && processInfo.length > 0 && processInfo[0]?.name
-      ? ` ${content`${token.italic(`(${processInfo[0].name})`)}`.value}`
+      ? ` ${outputContent`${outputToken.italic(`(${processInfo[0].name})`)}`.value}`
       : ''
 
   const options = [
@@ -176,7 +186,7 @@ export const keypress = async () => {
       const bytes = Array.from(buffer)
 
       if (bytes.length && bytes[0] === 3) {
-        debug('Canceled keypress, User pressed CTRL+C')
+        outputDebug('Canceled keypress, User pressed CTRL+C')
         reject(new AbortSilentError())
       }
       process.nextTick(resolve)
