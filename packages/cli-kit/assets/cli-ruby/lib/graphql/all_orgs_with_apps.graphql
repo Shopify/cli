@@ -1,0 +1,30 @@
+query AllOrgs{
+  organizations {
+    nodes {
+      id
+      businessName
+      website
+      stores(first: 500) {
+        nodes {
+          shopId
+          link
+          shopDomain
+          shopName
+          transferDisabled
+          convertableToPartnerTest
+        }
+      }
+      apps(first: 500) {
+        nodes {
+          id
+          title
+          apiKey
+          apiSecretKeys{
+            secret
+          }
+          appType
+        }
+      }
+    }
+  }
+}

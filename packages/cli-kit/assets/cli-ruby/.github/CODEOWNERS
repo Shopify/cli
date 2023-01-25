@@ -1,0 +1,10 @@
+*       @shopify/core-build-learn
+*       @shopify/cli-foundations
+
+/lib/project_types/script/ @shopify/scripts-platform
+/test/project_types/script/ @shopify/scripts-platform
+
+/lib/project_types/theme/ @shopify/theme-developer-tools
+/lib/shopify_cli/theme/ @shopify/theme-developer-tools
+/test/project_types/theme/ @shopify/theme-developer-tools
+/test/shopify-cli/theme/ @shopify/theme-developer-tools
