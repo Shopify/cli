@@ -4,7 +4,7 @@ import {selectApp} from '../select-app.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {testApp} from '../../../models/app/app.test-data.js'
-import {output, store} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import * as file from '@shopify/cli-kit/node/fs'
@@ -15,17 +15,6 @@ beforeEach(async () => {
   vi.mock('../select-app.js')
   vi.mock('../../../prompts/dev.js')
   vi.mock('@shopify/cli-kit/node/session')
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      store: {
-        cliKitStore: () => ({
-          getAppInfo: (): store.CachedAppInfo | undefined => undefined,
-        }),
-      },
-    }
-  })
   vi.mock('@shopify/cli-kit/node/node-package-manager')
   vi.restoreAllMocks()
 })

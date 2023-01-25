@@ -1,6 +1,7 @@
 import {hasGit, isTerminalInteractive} from './environment/local.js'
 import {appendFileSync} from './fs.js'
 import {AbortError} from './error.js'
+import {cwd} from './path.js'
 import {content, token, debug} from '../../output.js'
 import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
 
@@ -225,6 +226,6 @@ export class OutsideGitDirectoryError extends AbortError {}
  */
 export async function ensureInsideGitDirectory(directory?: string): Promise<void> {
   if (!(await git({baseDir: directory}).checkIsRepo())) {
-    throw new OutsideGitDirectoryError(`${token.path(directory || process.cwd())} is not a Git directory`)
+    throw new OutsideGitDirectoryError(`${token.path(directory || cwd())} is not a Git directory`)
   }
 }

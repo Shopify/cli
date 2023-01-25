@@ -11,8 +11,9 @@ import {
 import {testApp} from '../../models/app/app.test-data.js'
 import {UpdateURLsQuery} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery} from '../../api/graphql/get_urls.js'
+import {setAppInfo} from '../conf.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {store, ui} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
@@ -25,6 +26,7 @@ import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {runTunnelPlugin} from '@shopify/cli-kit/node/plugins'
 
 beforeEach(() => {
+  vi.mock('../conf.js')
   vi.mock('@shopify/cli-kit/node/tcp')
   vi.mocked(getAvailableTCPPort).mockResolvedValue(3042)
   vi.mock('@shopify/cli-kit/node/api/partners')
@@ -40,9 +42,6 @@ beforeEach(() => {
       ...cliKit,
       ui: {
         prompt: vi.fn(),
-      },
-      store: {
-        setAppInfo: vi.fn(),
       },
     }
   })
@@ -293,7 +292,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     await shouldOrPromptUpdateURLs(options)
 
     // Then
-    expect(store.setAppInfo).toHaveBeenNthCalledWith(1, {
+    expect(setAppInfo).toHaveBeenNthCalledWith(1, {
       directory: '/path',
       updateURLs: true,
     })
@@ -440,7 +439,7 @@ describe('generateFrontendURL', () => {
 
     // Then
     expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingLocalhost: false})
-    expect(store.setAppInfo).not.toBeCalled()
+    expect(setAppInfo).not.toBeCalled()
     expect(ui.prompt).not.toBeCalled()
   })
 
@@ -459,7 +458,7 @@ describe('generateFrontendURL', () => {
 
     // Then
     expect(got).toEqual({frontendUrl: 'https://4040-gitpod.url.fqdn.com', frontendPort: 4040, usingLocalhost: false})
-    expect(store.setAppInfo).not.toBeCalled()
+    expect(setAppInfo).not.toBeCalled()
     expect(ui.prompt).not.toBeCalled()
   })
 
@@ -482,7 +481,7 @@ describe('generateFrontendURL', () => {
       frontendPort: 4040,
       usingLocalhost: false,
     })
-    expect(store.setAppInfo).not.toBeCalled()
+    expect(setAppInfo).not.toBeCalled()
     expect(ui.prompt).not.toBeCalled()
   })
 
@@ -506,7 +505,7 @@ describe('generateFrontendURL', () => {
       frontendPort: 4040,
       usingLocalhost: false,
     })
-    expect(store.setAppInfo).not.toBeCalled()
+    expect(setAppInfo).not.toBeCalled()
     expect(ui.prompt).not.toBeCalled()
   })
 

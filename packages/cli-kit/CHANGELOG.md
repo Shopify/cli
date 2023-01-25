@@ -1,5 +1,17 @@
 # @shopify/cli-kit
 
+## 3.37.0
+
+### Patch Changes
+
+- a5224543b: Fix issue with CLI2 task output not being rendered correctly inside the output from the dev command
+
+## 3.36.2
+
+### Patch Changes
+
+- 3ddd21dba: Add better TypeScript support when formating files with the fs module by explicitly setting the parser to "typescript" in the prettier config. Fixes issues where the babel parser was not able to process JSX in TypeScript files.
+
 ## 3.36.1
 
 ### Patch Changes

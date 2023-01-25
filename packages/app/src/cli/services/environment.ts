@@ -12,6 +12,7 @@ import {
 import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
 import {createExtension, ExtensionRegistration} from './dev/create-extension.js'
+import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './conf.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
@@ -19,7 +20,7 @@ import {Organization, OrganizationApp, OrganizationStore} from '../models/organi
 import metadata from '../metadata.js'
 import {ThemeExtension} from '../models/app/extensions.js'
 import {loadAppName} from '../models/app/loader.js'
-import {output, store} from '@shopify/cli-kit'
+import {output} from '@shopify/cli-kit'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -97,7 +98,7 @@ export async function ensureGenerateEnvironment(options: {
     const {organization, apps} = await fetchOrgAndApps(orgId, options.token)
     const localAppName = await loadAppName(options.directory)
     const selectedApp = await selectOrCreateApp(localAppName, apps, organization, options.token)
-    store.setAppInfo({
+    setAppInfo({
       appId: selectedApp.apiKey,
       title: selectedApp.title,
       directory: options.directory,
@@ -141,7 +142,7 @@ export async function ensureDevEnvironment(
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
   if (selectedApp && selectedStore) {
-    store.setAppInfo({
+    setAppInfo({
       appId: selectedApp.apiKey,
       directory: options.directory,
       storeFqdn: selectedStore.shopDomain,
@@ -166,7 +167,7 @@ export async function ensureDevEnvironment(
     }
   }
 
-  store.setAppInfo({
+  setAppInfo({
     appId: selectedApp.apiKey,
     title: selectedApp.title,
     directory: options.directory,
@@ -188,7 +189,7 @@ export async function ensureDevEnvironment(
     }
   }
 
-  store.setAppInfo({
+  setAppInfo({
     appId: selectedApp.apiKey,
     directory: options.directory,
     storeFqdn: selectedStore?.shopDomain,
@@ -204,11 +205,7 @@ export async function ensureDevEnvironment(
   return result
 }
 
-function buildOutput(
-  app: OrganizationApp,
-  store: OrganizationStore,
-  cachedInfo?: store.CachedAppInfo,
-): DevEnvironmentOutput {
+function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?: CachedAppInfo): DevEnvironmentOutput {
   return {
     remoteApp: {
       ...app,
@@ -244,7 +241,7 @@ interface DeployEnvironmentOutput {
  * undefined if there is no cached value or the user doesn't want to use it.
  */
 export async function fetchDevAppAndPrompt(app: AppInterface, token: string): Promise<OrganizationApp | undefined> {
-  const devAppId = store.getAppInfo(app.directory)?.appId
+  const devAppId = getAppInfo(app.directory)?.appId
   if (!devAppId) return undefined
 
   const partnersResponse = await fetchAppFromApiKey(devAppId, token)
@@ -418,9 +415,9 @@ async function fetchDevDataFromOptions(
  * @param reset - Whether to reset the cache or not
  * @param directory - The directory containing the app.
  */
-function getAppDevCachedInfo({reset, directory}: {reset: boolean; directory: string}): store.CachedAppInfo | undefined {
-  if (reset) store.clearAppInfo(directory)
-  return store.getAppInfo(directory)
+function getAppDevCachedInfo({reset, directory}: {reset: boolean; directory: string}): CachedAppInfo | undefined {
+  if (reset) clearAppInfo(directory)
+  return getAppInfo(directory)
 }
 
 /**
@@ -440,7 +437,7 @@ async function selectOrg(token: string): Promise<string> {
  * @param app - App name
  * @param store - Store domain
  */
-function showReusedValues(org: string, cachedAppInfo: store.CachedAppInfo, packageManager: PackageManager): void {
+function showReusedValues(org: string, cachedAppInfo: CachedAppInfo, packageManager: PackageManager): void {
   let updateURLs = 'Not yet configured'
   if (cachedAppInfo.updateURLs !== undefined) updateURLs = cachedAppInfo.updateURLs ? 'Always' : 'Never'
 
@@ -467,7 +464,7 @@ function showReusedValues(org: string, cachedAppInfo: store.CachedAppInfo, packa
   })
 }
 
-function showGenerateReusedValues(org: string, cachedAppInfo: store.CachedAppInfo, packageManager: PackageManager) {
+function showGenerateReusedValues(org: string, cachedAppInfo: CachedAppInfo, packageManager: PackageManager) {
   renderInfo({
     headline: 'Using your previous dev settings:',
     body: [

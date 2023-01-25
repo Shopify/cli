@@ -1,44 +1,44 @@
-import {schema} from '@shopify/cli-kit'
+import {schema} from '@shopify/cli-kit/node/schema'
 
-export const BundleUIExtensionSchema = schema.define.object({
+export const BundleUIExtensionSchema = schema.object({
   /** The extension UUID */
-  id: schema.define.string(),
+  id: schema.string(),
   /** The relative path to the Javascript bundle. */
-  bundlePath: schema.define.string(),
+  bundlePath: schema.string(),
 })
 
-export type BundleUIExtension = schema.define.infer<typeof BundleUIExtensionSchema>
+export type BundleUIExtension = schema.infer<typeof BundleUIExtensionSchema>
 
-export const BundleThemeExtensionSchema = schema.define.object({
+export const BundleThemeExtensionSchema = schema.object({
   /** The extension UUID */
-  id: schema.define.string(),
+  id: schema.string(),
   /** A list of paths to the files that are part of the schema. */
-  filePaths: schema.define.array(schema.define.string()),
+  filePaths: schema.array(schema.string()),
 })
 
-export type BundleThemeExtension = schema.define.infer<typeof BundleThemeExtensionSchema>
+export type BundleThemeExtension = schema.infer<typeof BundleThemeExtensionSchema>
 
-export const BundleFunctionExtensionSchema = schema.define.object({
+export const BundleFunctionExtensionSchema = schema.object({
   /** The extension UUID */
-  id: schema.define.string(),
+  id: schema.string(),
   /** The path to the .wasm file of the function. */
-  wasmPath: schema.define.string(),
+  wasmPath: schema.string(),
 })
 
-export type BundleFunctionExtension = schema.define.infer<typeof BundleFunctionExtensionSchema>
+export type BundleFunctionExtension = schema.infer<typeof BundleFunctionExtensionSchema>
 
-export const BundleSchema = schema.define.object({
+export const BundleSchema = schema.object({
   /** The application API key */
-  id: schema.define.string(),
+  id: schema.string(),
   /** The collection of extensions that are part of the bundle */
-  extensions: schema.define.object({
+  extensions: schema.object({
     /** UI extensions */
-    ui: schema.define.array(BundleUIExtensionSchema),
+    ui: schema.array(BundleUIExtensionSchema),
     /** Theme extensions */
-    theme: schema.define.array(BundleThemeExtensionSchema),
+    theme: schema.array(BundleThemeExtensionSchema),
     /** Function extensions */
-    function: schema.define.array(BundleFunctionExtensionSchema),
+    function: schema.array(BundleFunctionExtensionSchema),
   }),
 })
 
-export type Bundle = schema.define.infer<typeof BundleSchema>
+export type Bundle = schema.infer<typeof BundleSchema>

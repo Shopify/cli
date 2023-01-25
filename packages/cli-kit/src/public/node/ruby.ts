@@ -3,11 +3,12 @@ import {AbortSignal} from './abort.js'
 import {platformAndArch} from './os.js'
 import {captureOutput, exec} from './system.js'
 import * as file from './fs.js'
-import {joinPath} from './path.js'
+import {joinPath, cwd} from './path.js'
 import {AbortError, AbortSilentError} from './error.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
 import {content, token} from '../../output.js'
+import {isTruthy} from '../../private/node/environment/utilities.js'
 import {Writable} from 'stream'
 
 const RubyCLIVersion = '2.34.0'
@@ -55,7 +56,7 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
   try {
     await exec(bundleExecutable(), ['exec', 'shopify'].concat(args), {
       stdio: 'inherit',
-      cwd: options.directory ?? process.cwd(),
+      cwd: options.directory ?? cwd(),
       env,
       signal: options.signal,
     })
@@ -144,7 +145,7 @@ async function installCLIDependencies(stdout: Writable) {
   const exists = await file.fileExists(shopifyCLIDirectory())
 
   if (!exists) stdout.write('Installing theme dependencies...')
-  const usingLocalCLI2 = Boolean(process.env.SHOPIFY_CLI_2_0_DIRECTORY)
+  const usingLocalCLI2 = isTruthy(process.env.SHOPIFY_CLI_2_0_DIRECTORY)
   await validateRubyEnv()
   if (usingLocalCLI2) {
     await bundleInstallLocalShopifyCLI()
