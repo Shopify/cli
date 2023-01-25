@@ -5,8 +5,8 @@ import {load as loadApp} from '../../models/app/loader.js'
 import {AppInterface} from '../../models/app/app.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {resolvePath} from '@shopify/cli-kit/node/path'
-import {error} from '@shopify/cli-kit'
+import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 
 export default class FunctionTypegen extends Command {
@@ -19,7 +19,7 @@ export default class FunctionTypegen extends Command {
 
   public async run() {
     const {flags} = await this.parse(FunctionTypegen)
-    const directory = flags.path ? resolvePath(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : cwd()
 
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({directory, specifications})
@@ -28,9 +28,7 @@ export default class FunctionTypegen extends Command {
     if (ourFunction) {
       await buildGraphqlTypes(ourFunction.directory)
     } else {
-      const err = new error.Bug('You should run this command from the root of a function.')
-      err.stack = undefined
-      renderFatalError(err)
+      renderFatalError(new AbortError('You should run this command from the root of a function.'))
     }
   }
 }
