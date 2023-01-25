@@ -83,6 +83,8 @@ export async function checkLockfileStatus(directory: string): Promise<LockFileSt
     return 'multiple'
   }
 
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const repo = gitFactory(directory)
   const lockfile = availableLockfiles[0]!
   const ignoredLockfile = await repo.checkIgnore([lockfile])

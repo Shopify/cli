@@ -17,6 +17,8 @@ export async function initializeGitRepository(directory: string, initialBranch =
   outputDebug(outputContent`Initializing git repository at ${outputToken.path(directory)}...`)
   await ensureGitIsPresentOrAbort()
   // We use init and checkout instead of `init --initial-branch` because the latter is only supported in git 2.28+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const repo = git(directory)
   await repo.init()
   await repo.checkoutLocalBranch(initialBranch)
@@ -99,9 +101,13 @@ export async function downloadGitRepository(cloneOptions: GitCloneOptions): Prom
     ...(!isTerminalInteractive() && {config: ['core.askpass=true']}),
   }
   try {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     await git(simpleGitOptions).clone(repository!, destination, options)
 
     if (latestTag) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       const localGitRepository = git(destination)
       const latestTag = await getLocalLatestTag(localGitRepository, repoUrl)
       await localGitRepository.checkout(latestTag)
@@ -140,6 +146,8 @@ async function getLocalLatestTag(repository: SimpleGit, repoUrl: string): Promis
  * @returns The latest commit of the repository.
  */
 export async function getLatestGitCommit(directory?: string): Promise<DefaultLogFields & ListLogLine> {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const logs = await git({baseDir: directory}).log({
     maxCount: 1,
   })
@@ -161,6 +169,8 @@ export async function getLatestGitCommit(directory?: string): Promise<DefaultLog
  * @returns A promise that resolves when the files are added to the index.
  */
 export async function addAllToGitFromDirectory(directory?: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const simpleGit = git({baseDir: directory})
   await simpleGit.raw('add', '--all')
 }
@@ -178,6 +188,8 @@ export interface CreateGitCommitOptions {
  * @returns The hash of the created commit.
  */
 export async function createGitCommit(message: string, options?: CreateGitCommitOptions): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const simpleGit = git({baseDir: options?.directory})
 
   const commitOptions = options?.author ? {'--author': options.author} : undefined
@@ -193,6 +205,8 @@ export async function createGitCommit(message: string, options?: CreateGitCommit
  * @returns The HEAD symbolic reference of the repository.
  */
 export async function getHeadSymbolicRef(directory?: string): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const ref = await git({baseDir: directory}).raw('symbolic-ref', '-q', 'HEAD')
   if (!ref) {
     throw new AbortError(
@@ -232,6 +246,8 @@ export class OutsideGitDirectoryError extends AbortError {}
  * @param directory - The directory to check.
  */
 export async function ensureInsideGitDirectory(directory?: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   if (!(await git({baseDir: directory}).checkIsRepo())) {
     throw new OutsideGitDirectoryError(`${outputToken.path(directory || cwd())} is not a Git directory`)
   }
