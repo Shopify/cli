@@ -1,10 +1,10 @@
 import {ExtensionAssetBuildStatus} from './payload/models.js'
 import {GetUIExtensionPayloadOptions} from './payload.js'
 import {UIExtension} from '../../../models/app/extensions.js'
-import {output} from '@shopify/cli-kit'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile, glob} from '@shopify/cli-kit/node/fs'
 import {ExtendableError} from '@shopify/cli-kit/node/error'
+import {outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 
 export type Locale = string
 
@@ -57,10 +57,7 @@ export async function getLocalization(
       }),
     )
     localization.lastUpdated = Date.now()
-    output.info(
-      `Parsed locales for extension ${extension.configuration.name} at ${extension.directory}`,
-      options.stdout,
-    )
+    outputInfo(`Parsed locales for extension ${extension.configuration.name} at ${extension.directory}`, options.stdout)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-catch-all/no-catch-all
   } catch (error: any) {
     status = 'error'
@@ -86,7 +83,7 @@ async function compileLocalizationFiles(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     const message = `Error parsing ${locale} locale for ${extension.configuration.name} at ${path}: ${error.message}`
-    output.warn(message, options.stderr)
+    outputWarn(message, options.stderr)
     throw new ExtendableError(message)
   }
 }

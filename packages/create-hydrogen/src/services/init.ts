@@ -1,4 +1,4 @@
-import {output, ui} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
 import {username} from '@shopify/cli-kit/node/os'
 import {
   findUpAndReadPackageJson,
@@ -33,6 +33,7 @@ import {
 } from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 interface InitOptions {
@@ -195,19 +196,19 @@ async function init(options: InitOptions) {
     await moveFile(templateScaffoldDir, outputDirectory)
   })
 
-  output.info(output.content`
+  outputInfo(outputContent`
 ✨ ${hyphenizedName} is ready to build!
-🚀 Run ${output.token.packagejsonScript(
+🚀 Run ${outputToken.packagejsonScript(
     packageManager,
     'dev',
   )} to start your local development server and start building.
 
-📚 Docs: ${output.token.link('Quick start guide', 'https://shopify.dev/custom-storefronts/hydrogen')}`)
+📚 Docs: ${outputToken.link('Quick start guide', 'https://shopify.dev/custom-storefronts/hydrogen')}`)
 
-  output.info(output.content`
+  outputInfo(outputContent`
 👋 Note: your project will display inventory from the Hydrogen Demo Store.\
  To connect this project to your Shopify store’s inventory instead,\
- update ${output.token.yellow(`${hyphenizedName}/hydrogen.config.js`)} with your\
+ update ${outputToken.yellow(`${hyphenizedName}/hydrogen.config.js`)} with your\
  store ID and Storefront API key.\n`)
 }
 

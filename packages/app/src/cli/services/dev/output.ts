@@ -4,7 +4,7 @@ import {FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
-import {output} from '@shopify/cli-kit'
+import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 
 export async function outputUpdateURLsResult(
   updated: boolean,
@@ -41,17 +41,17 @@ export function outputExtensionsMessages(app: AppInterface) {
 function outputFunctionsMessage(extensions: FunctionExtension[]) {
   if (extensions.length === 0) return
   const names = extensions.map((ext) => ext.configuration.name)
-  const heading = output.token.heading(names.join(', '))
+  const heading = outputToken.heading(names.join(', '))
   const message = `These extensions need to be deployed to be manually tested.
 One testing option is to use a separate app dedicated to staging.`
-  output.info(output.content`${heading}\n${message}\n`)
+  outputInfo(outputContent`${heading}\n${message}\n`)
 }
 
 function outputThemeExtensionsMessage(extensions: ThemeExtension[]) {
   if (extensions.length === 0) return
   for (const extension of extensions) {
     const message = extension.previewMessage('', '')
-    if (message) output.info(message)
+    if (message) outputInfo(message)
   }
 }
 

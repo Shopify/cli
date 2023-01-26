@@ -6,9 +6,9 @@ import {loadExtensionsSpecifications} from '../../../models/extensions/specifica
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
-import {output} from '@shopify/cli-kit'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputContent, outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class GenerateSchema extends Command {
   static description = 'Generates a GraphQL schema for a function.'
@@ -38,11 +38,11 @@ export default class GenerateSchema extends Command {
       const functions = app.extensions.function.map((extension) => extension.localIdentifier).join(', ')
 
       throw new AbortError(
-        output.content`No function named ${args.function} found in this app.`,
-        output.content`Use one of the available functions: ${functions}`,
+        outputContent`No function named ${args.function} found in this app.`,
+        outputContent`Use one of the available functions: ${functions}`,
       )
     }
 
-    output.info(await generateSchemaService({app, extension, apiKey}))
+    outputInfo(await generateSchemaService({app, extension, apiKey}))
   }
 }

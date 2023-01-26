@@ -4,11 +4,11 @@ import {selectApp} from '../select-app.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {testApp} from '../../../models/app/app.test-data.js'
-import {output} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import * as file from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 
 beforeEach(async () => {
   vi.mock('../../dev/fetch.js')
@@ -59,7 +59,7 @@ describe('env show', () => {
 
     // Then
     expect(file.writeFile).not.toHaveBeenCalled()
-    expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
+    expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
     "
         SHOPIFY_API_KEY=api-key
         SHOPIFY_API_SECRET=api-secret

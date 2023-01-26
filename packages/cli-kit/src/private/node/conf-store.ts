@@ -1,4 +1,4 @@
-import {content, debug} from '../../output.js'
+import {outputContent, outputDebug} from '@shopify/cli-kit/node/output'
 import Conf, {Schema} from 'conf'
 
 export {Conf, Schema}
@@ -27,7 +27,7 @@ function cliKitStore() {
  * @returns Session.
  */
 export function getSession(config: Conf<ConfSchema> = cliKitStore()): string | undefined {
-  debug(content`Getting session store...`)
+  outputDebug(outputContent`Getting session store...`)
   return config.get('sessionStore')
 }
 
@@ -37,7 +37,7 @@ export function getSession(config: Conf<ConfSchema> = cliKitStore()): string | u
  * @param session - Session.
  */
 export function setSession(session: string, config: Conf<ConfSchema> = cliKitStore()): void {
-  debug(content`Setting session store...`)
+  outputDebug(outputContent`Setting session store...`)
   config.set('sessionStore', session)
 }
 
@@ -45,6 +45,6 @@ export function setSession(session: string, config: Conf<ConfSchema> = cliKitSto
  * Remove session.
  */
 export function removeSession(config: Conf<ConfSchema> = cliKitStore()): void {
-  debug(content`Removing session store...`)
+  outputDebug(outputContent`Removing session store...`)
   config.delete('sessionStore')
 }

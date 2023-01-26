@@ -6,7 +6,7 @@ import Command from '../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../models/extensions/specifications.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {output} from '@shopify/cli-kit'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 
 export default class AppInfo extends Command {
@@ -33,7 +33,7 @@ export default class AppInfo extends Command {
     const directory = flags.path ? resolvePath(flags.path) : cwd()
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({directory, specifications, mode: 'report'})
-    output.info(await info(app, {format: (flags.json ? 'json' : 'text') as Format, webEnv: flags['web-env']}))
+    outputInfo(await info(app, {format: (flags.json ? 'json' : 'text') as Format, webEnv: flags['web-env']}))
     if (app.errors) process.exit(2)
   }
 }

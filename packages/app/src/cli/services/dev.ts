@@ -17,7 +17,6 @@ import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {buildAppURLForWeb} from '../utilities/app/app-url.js'
-import {output} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -33,6 +32,7 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
+import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 export interface DevOptions {
@@ -143,7 +143,7 @@ async function dev(options: DevOptions) {
   // by the dev console
   outputExtensionsMessages(localApp)
 
-  const additionalProcesses: output.OutputProcess[] = []
+  const additionalProcesses: OutputProcess[] = []
 
   if (localApp.extensions.theme.length > 0) {
     const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
@@ -196,10 +196,7 @@ interface DevFrontendTargetOptions extends DevWebOptions {
   backendPort: number
 }
 
-async function devFrontendNonProxyTarget(
-  options: DevFrontendTargetOptions,
-  port: number,
-): Promise<output.OutputProcess> {
+async function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: number): Promise<OutputProcess> {
   const devFrontend = await devFrontendProxyTarget(options)
   return {
     prefix: devFrontend.logPrefix,
@@ -214,7 +211,7 @@ function devThemeExtensionTarget(
   adminSession: AdminSession,
   storefrontToken: string,
   token: string,
-): output.OutputProcess {
+): OutputProcess {
   return {
     prefix: 'extensions',
     action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
@@ -264,7 +261,7 @@ async function getDevEnvironmentVariables(options: DevWebOptions) {
   }
 }
 
-async function devBackendTarget(web: Web, options: DevWebOptions): Promise<output.OutputProcess> {
+async function devBackendTarget(web: Web, options: DevWebOptions): Promise<OutputProcess> {
   const {commands} = web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
   const env = {

@@ -1,5 +1,5 @@
 import TextWithBackground from './TextWithBackground.js'
-import {OutputProcess} from '../../../../output.js'
+import {OutputProcess} from '../../../../public/node/output.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {AbortController} from '../../../../public/node/abort.js'
 import {handleCtrlC} from '../../ui.js'

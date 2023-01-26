@@ -1,7 +1,7 @@
-import {output} from '@shopify/cli-kit'
 import {renderConcurrent, RenderConcurrentOptions} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
+import {OutputProcess, outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 import * as http from 'http'
@@ -29,7 +29,7 @@ interface Options {
   previewUrl: string | undefined
   portNumber: number | undefined
   proxyTargets: ReverseHTTPProxyTarget[]
-  additionalProcesses: output.OutputProcess[]
+  additionalProcesses: OutputProcess[]
 }
 
 /**
@@ -43,7 +43,7 @@ interface Options {
  */
 export async function runConcurrentHTTPProcessesAndPathForwardTraffic({
   previewUrl,
-  portNumber,
+  portNumber = undefined,
   proxyTargets,
   additionalProcesses,
 }: Options): Promise<void> {
@@ -54,7 +54,7 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic({
   const rules: {[key: string]: string} = {}
 
   const processes = await Promise.all(
-    proxyTargets.map(async (target): Promise<output.OutputProcess> => {
+    proxyTargets.map(async (target): Promise<OutputProcess> => {
       const targetPort = await getAvailableTCPPort()
       rules[target.pathPrefix ?? '/'] = `http://localhost:${targetPort}`
       return {
@@ -68,10 +68,10 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic({
 
   const availablePort = portNumber ?? (await getAvailableTCPPort())
 
-  output.debug(output.content`
-Starting reverse HTTP proxy on port ${output.token.raw(availablePort.toString())}
+  outputDebug(outputContent`
+Starting reverse HTTP proxy on port ${outputToken.raw(availablePort.toString())}
 Routing traffic rules:
-${output.token.json(JSON.stringify(rules))}
+${outputToken.json(JSON.stringify(rules))}
 `)
 
   const proxy = httpProxy.createProxy()
@@ -79,10 +79,10 @@ ${output.token.json(JSON.stringify(rules))}
     const target = match(rules, req)
     if (target) return proxy.web(req, res, {target})
 
-    output.debug(`
+    outputDebug(`
 Reverse HTTP proxy error - Invalid path: ${req.url}
 These are the allowed paths:
-${output.token.json(JSON.stringify(rules))}
+${outputToken.json(JSON.stringify(rules))}
 `)
 
     res.statusCode = 500

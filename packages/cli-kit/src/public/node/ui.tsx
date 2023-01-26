@@ -1,7 +1,7 @@
 import {isUnitTest} from './environment/local.js'
 import {FatalError as Fatal} from './error.js'
+import {consoleError} from './output.js'
 import ConcurrentOutput, {Props as ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
-import {consoleError} from '../../output.js'
 import {render, renderOnce} from '../../private/node/ui.js'
 import {alert} from '../../private/node/ui/alert.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
