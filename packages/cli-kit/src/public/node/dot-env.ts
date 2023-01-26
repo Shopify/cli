@@ -1,6 +1,8 @@
 import {AbortError} from './error.js'
 import {fileExists, readFile, writeFile} from './fs.js'
 import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import {parse, stringify} from 'envfile'
 
 /**
