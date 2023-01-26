@@ -17,11 +17,10 @@ import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {useThemeBundling} from '@shopify/cli-kit/node/environment/local'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
-import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
-import {CustomSection} from '@shopify/cli-kit/src/private/node/ui/components/Alert.js'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo} from '@shopify/cli-kit/node/output'
+import type {AlertCustomSection, Task} from '@shopify/cli-kit/node/ui'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -203,7 +202,7 @@ async function outputCompletionMessage({
     ]
   }
 
-  const customSections: CustomSection[] = [
+  const customSections: AlertCustomSection[] = [
     {
       title: 'Summary',
       body: {

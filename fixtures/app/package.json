@@ -1,6 +1,6 @@
 {
   "name": "@shopify/fixtures-app",
-  "version": "3.37.0",
+  "version": "3.38.0",
   "main": "web/backend/index.js",
   "license": "UNLICENSED",
   "private": true,
@@ -16,9 +16,9 @@
   "dependencies": {
     "@shopify/admin-ui-extensions": "1.0.1",
     "@shopify/admin-ui-extensions-react": "1.0.1",
-    "@shopify/app": "3.37.0",
-    "@shopify/checkout-ui-extensions-react": "^0.22.0",
-    "@shopify/cli": "3.37.0",
+    "@shopify/app": "3.38.0",
+    "@shopify/checkout-ui-extensions-react": "^0.23.0",
+    "@shopify/cli": "3.38.0",
     "@shopify/customer-account-ui-extensions-react": "^0.0.8",
     "@shopify/post-purchase-ui-extensions": "^0.13.3",
     "@shopify/post-purchase-ui-extensions-react": "^0.13.3",
