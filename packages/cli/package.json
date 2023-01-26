@@ -143,11 +143,11 @@
       "app": {
         "description": "Build Shopify apps."
       },
-      "app env": {
-        "description": "Pull or display app and extensions environment variables."
+      "app:env": {
+        "description": "Manage environment variables."
       },
-      "function": {
-        "description": "Build functions."
+      "app:function": {
+        "description": "Build Shopify Functions."
       },
       "auth": {
         "description": "Auth operations."
