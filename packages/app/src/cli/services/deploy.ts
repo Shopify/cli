@@ -20,7 +20,7 @@ import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo} from '@shopify/cli-kit/node/output'
-import type {RenderAlertCutomSection, Task} from '@shopify/cli-kit/node/ui'
+import type {AlertCustomSection, Task} from '@shopify/cli-kit/node/ui'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -202,7 +202,7 @@ async function outputCompletionMessage({
     ]
   }
 
-  const customSections: RenderAlertCutomSection[] = [
+  const customSections: AlertCustomSection[] = [
     {
       title: 'Summary',
       body: {
