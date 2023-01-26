@@ -56,7 +56,7 @@ export async function buildJSFunctionWithTasks(fun: FunctionExtension, options: 
 }
 
 export async function buildGraphqlTypes(directory: string, options: JSFunctionBuildOptions) {
-  return exec('npm', ['exec', '--', 'graphql-code-generator', '-c', '.graphqlrc'], {
+  return exec('npm', ['exec', '--', 'graphql-code-generator'], {
     cwd: directory,
     stderr: options.stderr,
     signal: options.signal,
