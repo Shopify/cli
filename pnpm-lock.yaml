@@ -3625,7 +3625,7 @@ packages:
     dev: false
 
   /@shopify/checkout-ui-extensions-react/0.17.1_react@17.0.2:
-    resolution: {integrity: sha512-TiGSVLwJ4Azod2MAzon7+bLKdh88AWkcPUxNK34U0tm01zXEaRFZOhagY+nkmWEAw1rCa9PsHVruxLU9qiOMpQ==, registry: https://npm.shopify.io/node/}
+    resolution: {integrity: sha512-TiGSVLwJ4Azod2MAzon7+bLKdh88AWkcPUxNK34U0tm01zXEaRFZOhagY+nkmWEAw1rCa9PsHVruxLU9qiOMpQ==}
     peerDependencies:
       react: '>=17.0.0 <18.0.0'
     dependencies:
@@ -3637,7 +3637,7 @@ packages:
     dev: false
 
   /@shopify/checkout-ui-extensions-react/0.23.0_react@17.0.2:
-    resolution: {integrity: sha512-P8NPHTolXa/Ugb1tCjFsnHEZcI2VZVzAAnYeHHxLsl8eJUFhhEWrextDw1CIznieNBbQBEW6VT+zpqnHppgjVw==, registry: https://npm.shopify.io/node/}
+    resolution: {integrity: sha512-P8NPHTolXa/Ugb1tCjFsnHEZcI2VZVzAAnYeHHxLsl8eJUFhhEWrextDw1CIznieNBbQBEW6VT+zpqnHppgjVw==}
     peerDependencies:
       react: '>=17.0.0 <18.0.0'
     dependencies:
@@ -3656,7 +3656,7 @@ packages:
     dev: false
 
   /@shopify/checkout-ui-extensions/0.23.0:
-    resolution: {integrity: sha512-7pBbZqeDbIQ9nBdY6gmyQWuUkijHyT2vR9HpRhYHVI2VKo7uOVhweuOdmbG7WtQ9P3Pmz47ODGupvVcQCtsHNA==, registry: https://npm.shopify.io/node/}
+    resolution: {integrity: sha512-7pBbZqeDbIQ9nBdY6gmyQWuUkijHyT2vR9HpRhYHVI2VKo7uOVhweuOdmbG7WtQ9P3Pmz47ODGupvVcQCtsHNA==}
     dev: false
 
   /@shopify/customer-account-ui-extensions-react/0.0.8_react@17.0.2:
