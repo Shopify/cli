@@ -7,7 +7,7 @@ const APP1 = {appId: 'app1', storeFqdn: 'store1', orgId: 'org1', directory: '/ap
 const APP2 = {appId: 'app2', storeFqdn: 'store2', orgId: 'org2', directory: '/app2'}
 const APP1Updated = {appId: 'updated-app1', storeFqdn: 'store1-updated', orgId: 'org1-updated', directory: '/app1'}
 
-describe('getAppInfo', async () => {
+describe('getAppInfo asdf', async () => {
   it('returns cached info if existss', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
