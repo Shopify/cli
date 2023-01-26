@@ -1,13 +1,14 @@
 import {list} from './list.js'
 import {columns} from './list.columns.js'
+import {getDevelopmentTheme} from './conf.js'
 import {fetchStoreThemes} from '../utilities/theme-selector/fetch.js'
 import {Theme} from '../models/theme.js'
 import {renderTable} from '@shopify/cli-kit/node/ui'
 import {describe, expect, it, vi} from 'vitest'
-import {store} from '@shopify/cli-kit'
 
 vi.mock('../utilities/theme-selector/fetch.js')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('./conf.js')
 
 const session = {
   token: 'token',
@@ -23,7 +24,7 @@ describe('list', () => {
       {id: 3, name: 'Theme 3', role: 'development'},
       {id: developmentThemeId, name: 'Theme 5', role: 'development'},
     ] as Theme[])
-    vi.spyOn(store, 'getDevelopmentTheme').mockReturnValue(developmentThemeId.toString())
+    vi.mocked(getDevelopmentTheme).mockReturnValue(developmentThemeId.toString())
 
     await list(session, {})
 

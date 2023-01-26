@@ -1,9 +1,9 @@
 import {fetchTheme, createTheme} from './themes-api.js'
 import {generateDevelopmentThemeName} from './generate-development-theme-name.js'
 import {DEVELOPMENT_THEME_ROLE} from '../models/theme.js'
+import {getDevelopmentTheme, setDevelopmentTheme, removeDevelopmentTheme} from '../services/conf.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {store} from '@shopify/cli-kit'
 
 export const DEVELOPMENT_THEME_NOT_FOUND = (themeId: string) =>
   `Development theme #${themeId} could not be found. Please create a new development theme.`
@@ -14,7 +14,7 @@ export class DevelopmentThemeManager {
   private themeId: string | undefined
 
   constructor(private adminSession: AdminSession) {
-    this.themeId = store.getDevelopmentTheme()
+    this.themeId = getDevelopmentTheme()
   }
 
   async find() {
@@ -39,7 +39,7 @@ export class DevelopmentThemeManager {
     }
     const theme = await fetchTheme(parseInt(this.themeId, 10), this.adminSession)
     if (!theme) {
-      store.removeDevelopmentTheme()
+      removeDevelopmentTheme()
     }
     return theme
   }
@@ -57,7 +57,7 @@ export class DevelopmentThemeManager {
     if (!theme) {
       throw new BugError(`Could not create theme with name "${name}" and role "${role}"`)
     }
-    store.setDevelopmentTheme(theme.id.toString())
+    setDevelopmentTheme(theme.id.toString())
     return theme
   }
 }
