@@ -1,7 +1,7 @@
 import {AbortSignal} from './abort.js'
 import {AbortError, ExternalError} from './error.js'
 import {cwd} from './path.js'
-import {shouldDisplayColors, debug} from '../../output.js'
+import {shouldDisplayColors, outputDebug} from '../../public/node/output.js'
 import {execa, ExecaChildProcess} from 'execa'
 import treeKill from 'tree-kill'
 import type {Writable, Readable} from 'stream'
@@ -103,7 +103,7 @@ function buildExec(command: string, args: string[], options?: ExecOptions): Exec
     // and all its sub-processes with Ctrl+C on Windows
     windowsHide: false,
   })
-  debug(`
+  outputDebug(`
 Running system process:
   · Command: ${command} ${args.join(' ')}
   · Working directory: ${options?.cwd ?? cwd()}

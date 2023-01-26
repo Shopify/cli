@@ -1,7 +1,7 @@
 import {ApplicationToken, IdentityToken} from './schema.js'
 import {applicationId, clientId as getIdentityClientId} from './identity.js'
 import {CodeAuthResult} from './authorize.js'
-import {API} from '../../../network/api.js'
+import {API} from '../api.js'
 import {identityFqdn} from '../../../public/node/environment/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok, Result} from '../../../public/node/result.js'

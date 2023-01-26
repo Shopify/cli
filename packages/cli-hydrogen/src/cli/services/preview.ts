@@ -1,9 +1,9 @@
-import {output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {fileExists, removeFileSync, writeFile, findPathUp} from '@shopify/cli-kit/node/fs'
 import {exec} from '@shopify/cli-kit/node/system'
 import {resolvePath, dirname} from '@shopify/cli-kit/node/path'
 import {BugError} from '@shopify/cli-kit/node/error'
+import {outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {fileURLToPath} from 'url'
 
 interface PreviewOptions {
@@ -23,8 +23,8 @@ export async function previewInNode({directory, port}: PreviewOptions) {
   const buildOutputPath = await resolvePath(directory, 'dist/node')
 
   if (!(await fileExists(buildOutputPath))) {
-    output.info(
-      output.content`Couldn’t find a Node.js server build for this project. Running ${output.token.packagejsonScript(
+    outputInfo(
+      outputContent`Couldn’t find a Node.js server build for this project. Running ${outputToken.packagejsonScript(
         'yarn',
         'shopify hydrogen build',
         '--target=node',

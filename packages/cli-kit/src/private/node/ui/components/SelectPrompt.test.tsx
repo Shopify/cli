@@ -1,6 +1,6 @@
 import {SelectPrompt} from './SelectPrompt.js'
 import {getLastFrameAfterUnmount, sendInputAndWaitForChange, waitForInputsToBeReady} from '../../testing/ui.js'
-import {unstyled} from '../../../../output.js'
+import {unstyled} from '../../../../public/node/output.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {render} from 'ink-testing-library'

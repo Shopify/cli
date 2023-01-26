@@ -4,7 +4,7 @@ import {AbortController, AbortSignal} from './abort.js'
 import {exec} from './system.js'
 import {fileExists, readFile, writeFile, findPathUp, glob} from './fs.js'
 import {dirname, joinPath} from './path.js'
-import {token, content, debug} from '../../output.js'
+import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
 import latestVersion from 'latest-version'
 import type {Writable} from 'stream'
 import type {ExecOptions} from './system.js'
@@ -56,7 +56,9 @@ export const PackageJsonNotFoundError = (directory: string): AbortError => {
  * @returns An abort error.
  */
 export const FindUpAndReadPackageJsonNotFoundError = (directory: string): BugError => {
-  return new BugError(content`Couldn't find a a package.json traversing directories from ${token.path(directory)}`)
+  return new BugError(
+    outputContent`Couldn't find a a package.json traversing directories from ${outputToken.path(directory)}`,
+  )
 }
 
 /**
@@ -86,7 +88,7 @@ export async function getPackageManager(fromDirectory: string): Promise<PackageM
     throw FindUpAndReadPackageJsonNotFoundError(fromDirectory)
   }
   const directory = dirname(packageJson)
-  debug(content`Obtaining the dependency manager in directory ${token.path(directory)}...`)
+  outputDebug(outputContent`Obtaining the dependency manager in directory ${outputToken.path(directory)}...`)
   const yarnLockPath = joinPath(directory, yarnLockfile)
   const pnpmLockPath = joinPath(directory, pnpmLockfile)
   if (await fileExists(yarnLockPath)) {
@@ -217,7 +219,7 @@ export async function usesWorkspaces(appDirectory: string): Promise<boolean> {
  * @returns A promise that resolves with a more recent version or undefined if there's no more recent version.
  */
 export async function checkForNewVersion(dependency: string, currentVersion: string): Promise<string | undefined> {
-  debug(content`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
+  outputDebug(outputContent`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
   try {
     const lastVersion = await getLatestNPMPackageVersion(dependency)
     if (lastVersion && new Version(currentVersion).compare(lastVersion) < 0) {
@@ -367,10 +369,10 @@ export async function addNPMDependenciesIfNeeded(
   dependencies: DependencyVersion[],
   options: AddNPMDependenciesIfNeededOptions,
 ): Promise<void> {
-  debug(content`Adding the following dependencies if needed:
-${token.json(dependencies)}
+  outputDebug(outputContent`Adding the following dependencies if needed:
+${outputToken.json(dependencies)}
 With options:
-${token.json(options)}
+${outputToken.json(options)}
   `)
   const packageJsonPath = joinPath(options.directory, 'package.json')
   if (!(await fileExists(packageJsonPath))) {
@@ -538,7 +540,7 @@ export async function addResolutionOrOverride(directory: string, dependencies: {
  * @returns A promise to get the latest available version of a package.
  */
 async function getLatestNPMPackageVersion(name: string) {
-  debug(content`Getting the latest version of NPM package: ${token.raw(name)}`)
+  outputDebug(outputContent`Getting the latest version of NPM package: ${outputToken.raw(name)}`)
   return latestVersion(name)
 }
 
@@ -549,7 +551,7 @@ async function getLatestNPMPackageVersion(name: string) {
  * @param packageJSON - Package.json file to write.
  */
 export async function writePackageJSON(directory: string, packageJSON: PackageJson): Promise<void> {
-  debug(content`JSON-encoding and writing content to package.json at ${token.path(directory)}...`)
+  outputDebug(outputContent`JSON-encoding and writing content to package.json at ${outputToken.path(directory)}...`)
   const packagePath = joinPath(directory, 'package.json')
   await writeFile(packagePath, JSON.stringify(packageJSON, null, 2))
 }

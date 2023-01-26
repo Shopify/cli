@@ -6,7 +6,6 @@ import {GenericSpecification} from '../models/app/extensions.js'
 import generateExtensionPrompt from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
 import generateExtensionService, {ExtensionFlavor} from '../services/generate/extension.js'
-import {output} from '@shopify/cli-kit'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager.js'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -14,6 +13,7 @@ import {isShopify} from '@shopify/cli-kit/node/environment/local'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {RenderAlertOptions, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 export interface GenerateOptions {
   directory: string
@@ -135,7 +135,7 @@ function formatSuccessfulRunMessage(
   if (specification.category() === 'ui' || specification.category() === 'theme') {
     options.nextSteps!.push([
       'To preview your project, run',
-      {command: `${output.formatPackageManagerCommand(depndencyManager, 'dev')}`},
+      {command: `${formatPackageManagerCommand(depndencyManager, 'dev')}`},
     ])
   }
 

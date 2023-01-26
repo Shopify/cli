@@ -1,18 +1,19 @@
-import {output, store as conf} from '@shopify/cli-kit'
+import {getThemeStore} from '../utilities/theme-store.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {version as rubyVersion} from '@shopify/cli-kit/node/ruby'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {linesToColumns} from '@shopify/cli-kit/common/string'
+import {OutputMessage, formatSection, getOutputUpdateCLIReminder} from '@shopify/cli-kit/node/output'
 
-export async function themeInfo(config: {cliVersion: string}): Promise<output.Message> {
+export async function themeInfo(config: {cliVersion: string}): Promise<OutputMessage> {
   const sections: [string, string][] = [themeConfigSection(), await systemInfoSection(config)]
-  const message = sections.map((sectionContents) => output.section(...sectionContents)).join('\n\n')
+  const message = sections.map((sectionContents) => formatSection(...sectionContents)).join('\n\n')
   return message
 }
 
 function themeConfigSection(): [string, string] {
   const title = 'Theme Configuration'
-  const store = conf.getThemeStore() || 'Not configured'
+  const store = getThemeStore({store: undefined}) || 'Not configured'
   const lines: string[][] = [['Store', store]]
   return [title, `${linesToColumns(lines)}`]
 }
@@ -35,6 +36,6 @@ async function cliVersionInfo(config: {cliVersion: string}): Promise<string> {
   const dependency = '@shopify/cli'
   const newestVersion = await checkForNewVersion(dependency, config.cliVersion)
   if (!newestVersion) return config.cliVersion
-  const upgradeMessage = output.getOutputUpdateCLIReminder(undefined, newestVersion)
+  const upgradeMessage = getOutputUpdateCLIReminder(undefined, newestVersion)
   return [config.cliVersion, upgradeMessage].join(' ').trim()
 }

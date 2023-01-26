@@ -1,5 +1,5 @@
 import {startAnalytics} from '../../../private/node/analytics.js'
-import {debug} from '../../../output.js'
+import {outputDebug} from '../../../public/node/output.js'
 import Command from '../../../public/node/base-command.js'
 import {Hook} from '@oclif/core'
 
@@ -16,7 +16,7 @@ export const hook: Hook.Prerun = async (options) => {
     pluginAlias: options.Command.plugin?.alias,
   })
   const args = options.argv
-  debug(`Running command ${commandContent.command}`)
+  outputDebug(`Running command ${commandContent.command}`)
   await startAnalytics({commandContent, args, commandClass: options.Command as unknown as typeof Command})
 }
 
