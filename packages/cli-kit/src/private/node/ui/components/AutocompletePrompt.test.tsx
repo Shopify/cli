@@ -225,7 +225,7 @@ describe('AutocompletePrompt', async () => {
   test('has a loading state', async () => {
     const onEnter = vi.fn()
     const searchPromise = new Promise<SearchResults<string>>((resolve) => {
-      setTimeout(() => resolve({nodes: [{label: 'a', value: 'b'}]}), 2000)
+      setTimeout(() => resolve({data: [{label: 'a', value: 'b'}]}), 2000)
     })
 
     const search = () => {
@@ -261,7 +261,7 @@ describe('AutocompletePrompt', async () => {
 
     const search = async (term: string) => {
       return {
-        nodes: DATABASE.filter((item) => item.label.includes(term)),
+        data: DATABASE.filter((item) => item.label.includes(term)),
       }
     }
 
@@ -432,7 +432,7 @@ describe('AutocompletePrompt', async () => {
     const search = async (term: string) => {
       await new Promise((resolve) => setTimeout(resolve, 300))
       return {
-        nodes: DATABASE.filter((item) => item.label.includes(term)),
+        data: DATABASE.filter((item) => item.label.includes(term)),
       }
     }
 
@@ -521,7 +521,7 @@ describe('AutocompletePrompt', async () => {
   test('immediately shows the initial items if the search is empty', async () => {
     const search = (term: string) => {
       return Promise.resolve({
-        nodes: DATABASE.filter((item) => item.label.includes(term)),
+        data: DATABASE.filter((item) => item.label.includes(term)),
       })
     }
 
@@ -609,8 +609,8 @@ describe('AutocompletePrompt', async () => {
   test('shows a message that indicates there are more results than shown', async () => {
     const search = (_term: string) => {
       return Promise.resolve({
-        nodes: DATABASE,
-        pageInfo: {hasNextPage: true},
+        data: DATABASE,
+        meta: {hasNextPage: true},
       })
     }
 
@@ -653,7 +653,7 @@ describe('AutocompletePrompt', async () => {
          twenty-fourth
          twenty-fifth
 
-         [1m1-25 of many[22m Find what you're looking for by typing its name
+         [1m1-25 of many[22m Find what you're looking for by typing its name.
          [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)

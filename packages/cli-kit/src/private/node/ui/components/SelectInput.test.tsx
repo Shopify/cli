@@ -357,4 +357,41 @@ describe('SelectInput', async () => {
          [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
   })
+
+  test('shows if there are more pages', async () => {
+    const items = [
+      {
+        label: 'First',
+        value: 'first',
+      },
+      {
+        label: 'Second',
+        value: 'second',
+      },
+      {
+        label: 'Third',
+        value: 'third',
+      },
+    ]
+
+    const renderInstance = render(
+      <SelectInput
+        items={items}
+        onChange={() => {}}
+        morePagesMessage="Keep scrolling to see more items"
+        hasMorePages
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "[36m>[39m  [36m(1) First[39m
+         (2) Second
+         (3) Third
+
+         [1m1-3 of many[22m Keep scrolling to see more items
+         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+    `)
+  })
 })

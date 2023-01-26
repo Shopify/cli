@@ -285,7 +285,7 @@ export function renderAutocompletePrompt<T>(props: RenderAutocompletePromptProps
   const newProps = {
     search(term: string) {
       return Promise.resolve({
-        nodes: props.choices.filter((item) => item.label.toLowerCase().includes(term.toLowerCase())),
+        data: props.choices.filter((item) => item.label.toLowerCase().includes(term.toLowerCase())),
       })
     },
     ...props,

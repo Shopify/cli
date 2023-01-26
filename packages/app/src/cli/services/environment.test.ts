@@ -147,7 +147,7 @@ const BAD_INPUT_WITH_DATA: DevEnvironmentOptions = {
 
 const FETCH_RESPONSE = {
   organization: ORG1,
-  apps: [APP1, APP2],
+  apps: {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
   stores: [STORE1, STORE2],
 }
 

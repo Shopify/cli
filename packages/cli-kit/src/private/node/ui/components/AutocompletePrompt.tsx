@@ -10,8 +10,8 @@ import {debounce} from '@shopify/cli-kit/common/function'
 import ansiEscapes from 'ansi-escapes'
 
 export interface SearchResults<T> {
-  nodes: SelectItem<T>[]
-  pageInfo?: {
+  data: SelectItem<T>[]
+  meta?: {
     hasNextPage: boolean
   }
 }
@@ -55,7 +55,7 @@ function AutocompletePrompt<T>({
 
   const paginatedSearch = useCallback(async (term: string) => {
     const results = await search(term)
-    results.nodes = results.nodes.slice(0, PAGE_SIZE)
+    results.data = results.data.slice(0, PAGE_SIZE)
     return results
   }, [])
 
@@ -110,8 +110,8 @@ function AutocompletePrompt<T>({
             setSearchResults(paginatedInitialChoices)
             setHasMorePages(initialHasMorePages)
           } else {
-            setSearchResults(result.nodes)
-            setHasMorePages(result.pageInfo?.hasNextPage ?? false)
+            setSearchResults(result.data)
+            setHasMorePages(result.meta?.hasNextPage ?? false)
           }
 
           setPromptState(PromptState.Idle)
@@ -185,6 +185,7 @@ function AutocompletePrompt<T>({
                 : undefined
             }
             hasMorePages={hasMorePages}
+            morePagesMessage="Find what you're looking for by typing its name."
           />
         </Box>
       )}

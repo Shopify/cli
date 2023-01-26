@@ -102,7 +102,7 @@ describe('selectOrganization', () => {
 describe('selectApp', () => {
   it('returns app if user selects one', async () => {
     // Given
-    const apps: OrganizationApp[] = [APP1, APP2]
+    const apps = {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}}
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('key2')
 
     // When

@@ -36,8 +36,8 @@ export async function selectAppPrompt(
       const result = await fetchOrgAndApps(orgId, token, term)
 
       return {
-        nodes: result.apps.nodes.map(toAnswer),
-        pageInfo: {
+        data: result.apps.nodes.map(toAnswer),
+        meta: {
           hasNextPage: result.apps.pageInfo.hasNextPage,
         },
       }

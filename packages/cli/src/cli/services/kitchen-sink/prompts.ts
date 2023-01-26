@@ -86,7 +86,7 @@ export async function prompts() {
     message: 'Select a template',
     choices: database,
     search(term: string) {
-      return Promise.resolve({nodes: database.filter((item) => item.label.includes(term))})
+      return Promise.resolve({data: database.filter((item) => item.label.includes(term))})
     },
   })
 }
