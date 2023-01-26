@@ -13,12 +13,16 @@ describe('output', () => {
   describe('outputExtensionsMessages', () => {
     it('logs the correct output extension message when the given app contains a customer-accounts-ui-extension', async () => {
       const outputMock = mockAndCaptureOutput()
-      const appMock = await mockApp({functions: false})
+      const appMock = await mockApp()
 
       outputExtensionsMessages(appMock)
 
       expect(outputMock.output()).toMatchInlineSnapshot(`
-        "theme extension name (Theme app extension)
+        "test function extension
+        These extensions need to be deployed to be manually tested.
+        One testing option is to use a separate app dedicated to staging.
+
+        theme extension name (Theme app extension)
         Follow the dev doc instructions ( https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-3-test-your-changes ) by deploying your work as a draft
         "
       `)
@@ -26,7 +30,7 @@ describe('output', () => {
   })
 })
 
-async function mockApp({functions}: {functions: boolean}): Promise<AppInterface> {
+async function mockApp(): Promise<AppInterface> {
   const nodeDependencies: {[key: string]: string} = {}
   nodeDependencies['@shopify/cli'] = '2.2.2'
 
@@ -45,7 +49,7 @@ async function mockApp({functions}: {functions: boolean}): Promise<AppInterface>
     extensions: {
       ui: [uiExtension],
       theme: [themeExtension],
-      function: functions ? [functionExtension] : [],
+      function: [functionExtension],
     },
   })
 }
