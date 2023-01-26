@@ -1,5 +1,15 @@
 # @shopify/cli
 
+## 3.38.0
+
+### Minor Changes
+
+- a9ee91b2e: Drop editions command
+
+### Patch Changes
+
+- @shopify/cli-kit@3.38.0
+
 ## 3.37.0
 
 ### Patch Changes
