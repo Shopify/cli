@@ -8,6 +8,7 @@ on:
 jobs:
   remind:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - name: comment PR
         uses: unsplash/comment-on-pr@v1.3.0
