@@ -12,6 +12,7 @@ concurrency:
 
 env:
   PNPM_VERSION: "7.18.1"
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   release:
@@ -33,8 +34,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Create Release Pull Request
-        uses: changesets/action@v1
+        uses: Wandalen/wretry.action@master
         with:
-          version: pnpm changeset-manifests
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          action: changesets/action@v1
+          attempt_limit: 3
+          attempt_delay: 2000
+          with: |
+            version: pnpm changeset-manifests
