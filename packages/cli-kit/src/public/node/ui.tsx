@@ -47,7 +47,7 @@ export async function renderConcurrent({
   )
 }
 
-export type RenderAlertCutomSection = CustomSection
+export type AlertCustomSection = CustomSection
 export type RenderAlertOptions = Omit<AlertProps, 'type'>
 
 /**
