@@ -12,6 +12,7 @@ concurrency:
 
 env:
   PNPM_VERSION: "7.18.1"
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   release:
@@ -36,8 +37,10 @@ jobs:
       - name: Generate documentation
         run: pnpm docs:generate
       - name: Create Release Pull Request
-        uses: changesets/action@e9cc34b540dd3ad1b030c57fd97269e8f6ad905a # pin@v1
+        uses: Wandalen/wretry.action@e6cf3db7de3777ba5f999f903c2f4efdd9ac7288 # pin@v1.0.36
         with:
-          version: pnpm changeset-manifests
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          action: changesets/action@e9cc34b540dd3ad1b030c57fd97269e8f6ad905a # pin@v1
+          attempt_limit: 3
+          attempt_delay: 2000
+          with: |
+            version: pnpm changeset-manifests
