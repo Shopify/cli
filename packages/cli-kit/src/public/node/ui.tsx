@@ -1,4 +1,3 @@
-import {isUnitTest} from './environment/local.js'
 import {FatalError as Fatal} from './error.js'
 import {consoleError, OutputProcess} from './output.js'
 import ConcurrentOutput from '../../private/node/ui/components/ConcurrentOutput.js'

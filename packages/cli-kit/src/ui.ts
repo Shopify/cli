@@ -15,13 +15,8 @@ import colors from './public/node/colors.js'
 import {relativizePath} from './public/node/path.js'
 import {isTerminalInteractive} from './public/node/environment/local.js'
 import {run as executorUI} from './ui/executor.js'
-import {Listr as OriginalListr, ListrTask, ListrBaseClassOptions} from 'listr2'
+import {Listr as OriginalListr} from 'listr2'
 import findProcess from 'find-process'
-
-export function newListr(tasks: ListrTask[], options?: object | ListrBaseClassOptions) {
-  const listr = new OriginalListr(tasks, options)
-  return listr
-}
 
 export type ListrTasks = ConstructorParameters<typeof OriginalListr>[0]
 export type {ListrTaskWrapper, ListrDefaultRenderer, ListrTask} from 'listr2'

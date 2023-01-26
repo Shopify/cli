@@ -13,7 +13,7 @@ import {parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
-import {isShopify, isUnitTest} from '@shopify/cli-kit/node/environment/local'
+import {isShopify} from '@shopify/cli-kit/node/environment/local'
 import {
   addAllToGitFromDirectory,
   createGitCommit,
@@ -34,7 +34,8 @@ import {
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {Writable} from 'stream'
+import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
+import {renderTasks} from '@shopify/cli-kit/node/ui'
 
 interface InitOptions {
   name: string
@@ -69,7 +70,7 @@ async function init(options: InitOptions) {
     await mkdir(templateDownloadDir)
     await mkdir(templateScaffoldDir)
 
-    let tasks: ui.ListrTasks = []
+    let tasks: Task[] = []
 
     const templateInfo = await parseGitHubRepositoryURL(options.template).valueOrAbort()
     const branch = templateInfo.ref ? `#${templateInfo.ref}` : ''
@@ -89,56 +90,47 @@ async function init(options: InitOptions) {
         if (!(await fileExists(joinPath(templatePath, 'package.json')))) {
           throw new AbortError(`The template ${templatePath} was not found.`, suggestHydrogenSupport())
         }
-        return {successMessage: `Downloaded template from ${repoUrl}`}
       },
     })
 
     tasks = tasks.concat([
       {
         title: `Initializing your app ${hyphenizedName}`,
-        task: async (_, parentTask) => {
-          return parentTask.newListr(
-            [
-              {
-                title: 'Parsing template files',
-                task: async (_, task) => {
-                  const templateData = {
-                    name: hyphenizedName,
-                    shopify_cli_version: cliVersion,
-                    hydrogen_version: hydrogenPackageVersion,
-                    author: user,
-                    dependency_manager: options.packageManager,
-                  }
-                  await recursiveLiquidTemplateCopy(templatePath, templateScaffoldDir, templateData)
-
-                  task.title = 'Template files parsed'
-                },
+        task: async () => {
+          return [
+            {
+              title: 'Parsing template files',
+              task: async (_, task) => {
+                const templateData = {
+                  name: hyphenizedName,
+                  shopify_cli_version: cliVersion,
+                  hydrogen_version: hydrogenPackageVersion,
+                  author: user,
+                  dependency_manager: options.packageManager,
+                }
+                await recursiveLiquidTemplateCopy(templatePath, templateScaffoldDir, templateData)
               },
-              {
-                title: 'Updating package.json',
-                task: async (_, task) => {
-                  const packageJSON = (await findUpAndReadPackageJson(templateScaffoldDir)).content
-                  packageJSON.name = hyphenizedName
-                  packageJSON.author = (await username()) ?? ''
-                  await updateCLIDependencies(packageJSON, options.local, {
-                    dependencies: {
-                      '@shopify/hydrogen': hydrogenPackageVersion,
-                    },
-                    devDependencies: {
-                      '@shopify/cli-hydrogen': cliVersion,
-                      '@shopify/cli': cliVersion,
-                    },
-                  })
-                  await updateCLIScripts(packageJSON)
-                  await writePackageJSON(templateScaffoldDir, packageJSON)
-
-                  task.title = 'Package.json updated'
-                  parentTask.title = 'App initialized'
-                },
+            },
+            {
+              title: 'Updating package.json',
+              task: async (_, task) => {
+                const packageJSON = (await findUpAndReadPackageJson(templateScaffoldDir)).content
+                packageJSON.name = hyphenizedName
+                packageJSON.author = (await username()) ?? ''
+                await updateCLIDependencies(packageJSON, options.local, {
+                  dependencies: {
+                    '@shopify/hydrogen': hydrogenPackageVersion,
+                  },
+                  devDependencies: {
+                    '@shopify/cli-hydrogen': cliVersion,
+                    '@shopify/cli': cliVersion,
+                  },
+                })
+                await updateCLIScripts(packageJSON)
+                await writePackageJSON(templateScaffoldDir, packageJSON)
               },
-            ],
-            {concurrent: false},
-          )
+            },
+          ]
         },
       },
     ])
@@ -148,7 +140,6 @@ async function init(options: InitOptions) {
         title: "[Shopifolks-only] Configuring the project's NPM registry",
         task: async (_, task) => {
           await writeToNpmrc(templateScaffoldDir, `@shopify:registry=https://registry.npmjs.org`)
-          task.title = "[Shopifolks-only] Project's NPM registry configured."
         },
       })
     }
@@ -156,42 +147,27 @@ async function init(options: InitOptions) {
     tasks = tasks.concat([
       {
         title: `Installing dependencies with ${packageManager}`,
-        task: async (_, task) => {
-          const stdout = new Writable({
-            write(chunk, encoding, next) {
-              task.output = chunk.toString()
-              next()
-            },
-          })
-          await installDependencies(templateScaffoldDir, packageManager, stdout)
+        task: async () => {
+          await installDependencies(templateScaffoldDir, packageManager)
         },
       },
       {
         title: 'Cleaning up',
-        task: async (_, task) => {
+        task: async () => {
           await cleanup(templateScaffoldDir)
-
-          task.title = 'Completed clean up'
         },
       },
       {
         title: 'Initializing a Git repository...',
-        task: async (_, task) => {
+        task: async () => {
           await initializeGitRepository(templateScaffoldDir)
           await addAllToGitFromDirectory(templateScaffoldDir)
           await createGitCommit('Initial commit generated by Hydrogen', {directory: templateScaffoldDir})
-          task.title = 'Git repository initialized'
         },
       },
     ])
 
-    const list = ui.newListr(tasks, {
-      concurrent: false,
-      rendererOptions: {collapse: false},
-      rendererSilent: isUnitTest(),
-    })
-
-    await list.run()
+    await renderTasks(tasks)
 
     await moveFile(templateScaffoldDir, outputDirectory)
   })
@@ -270,11 +246,11 @@ async function updateCLIDependencies(
   return packageJSON
 }
 
-async function installDependencies(directory: string, packageManager: PackageManager, stdout: Writable): Promise<void> {
+async function installDependencies(directory: string, packageManager: PackageManager): Promise<void> {
   if (packageManager === 'pnpm') {
     await writeToNpmrc(directory, 'auto-install-peers = true')
   }
-  await installNodeModules({directory, packageManager, stdout, args: []})
+  await installNodeModules({directory, packageManager, args: []})
 }
 
 async function writeToNpmrc(directory: string, content: string) {
