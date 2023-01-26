@@ -1,8 +1,7 @@
 import {TextAnimation} from './TextAnimation.js'
 import useLayout from '../hooks/use-layout.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
-
-// import {environment} from '@shopify/cli-kit'
+import {isUnitTest} from '../../../../public/node/environment/local.js'
 import {Box, Text} from 'ink'
 import React, {useRef, useState} from 'react'
 
@@ -15,7 +14,6 @@ export interface Task<TContext = unknown> {
 
 export interface Props<TContext> {
   tasks: Task<TContext>[]
-  silent?: boolean
 }
 
 enum TasksState {
@@ -24,7 +22,7 @@ enum TasksState {
   Failure = 'failure',
 }
 
-function Tasks<TContext>({tasks, silent = false}: React.PropsWithChildren<Props<TContext>>) {
+function Tasks<TContext>({tasks}: React.PropsWithChildren<Props<TContext>>) {
   const {twoThirds} = useLayout()
   const loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
@@ -51,7 +49,7 @@ function Tasks<TContext>({tasks, silent = false}: React.PropsWithChildren<Props<
     onRejected: () => setState(TasksState.Failure),
   })
 
-  if (silent) {
+  if (isUnitTest()) {
     return null
   }
 

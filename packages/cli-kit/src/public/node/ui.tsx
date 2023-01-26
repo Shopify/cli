@@ -315,7 +315,7 @@ export function renderTable<T extends ScalarDict>(props: TableProps<T>) {
  * Runs async tasks and displays their progress to the console.
  */
 export async function renderTasks<TContext>(tasks: Task<TContext>[]) {
-  return render(<Tasks tasks={tasks} silent={isUnitTest()} />)
+  return render(<Tasks tasks={tasks} />)
 }
 
 /**
