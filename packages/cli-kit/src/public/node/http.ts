@@ -85,11 +85,7 @@ ${sanitizedHeadersOutput((options?.headers ?? {}) as {[header: string]: string})
  * @returns - A promise that resolves with the local path.
  */
 export function downloadFile(url: string, to: string, redirect = 0): Promise<string> {
-  if (redirect === 0) {
-    outputDebug(`Downloading ${url} to ${to}`)
-  } else {
-    outputDebug(`Redirecting to ${url}`)
-  }
+  outputDebug(redirect ? `Redirecting to ${url}` : `Downloading ${url} to ${to}`)
 
   return new Promise<string>((resolve, reject) => {
     if (!fileExistsSync(dirname(to))) {
