@@ -84,22 +84,19 @@ ${sanitizedHeadersOutput((options?.headers ?? {}) as {[header: string]: string})
  * @param redirect - The number of redirects that have been followed.
  * @returns - A promise that resolves with the local path.
  */
-export function downloadFile(url: string, to: string, redirect = 0): Promise<string> {
-  outputDebug(redirect ? `Redirecting to ${url}` : `Downloading ${url} to ${to}`)
+export function downloadFile(url: string, to: string): Promise<string> {
+  outputDebug(`Downloading ${url} to ${to}`)
 
   return new Promise<string>((resolve, reject) => {
     if (!fileExistsSync(dirname(to))) {
       mkdirSync(dirname(to))
     }
 
-    let done = true
     const file = createFileWriteStream(to)
 
     file.on('finish', () => {
-      if (done) {
-        file.close()
-        resolve(to)
-      }
+      file.close()
+      resolve(to)
     })
 
     file.on('error', (err) => {
@@ -107,14 +104,8 @@ export function downloadFile(url: string, to: string, redirect = 0): Promise<str
       reject(err)
     })
 
-    nodeFetch(url)
+    nodeFetch(url, {redirect: 'follow'})
       .then((res) => {
-        if (res.status === 302 && res.headers.get('location') !== null) {
-          const redirection = res.headers.get('location')!
-          done = false
-          file.close()
-          resolve(downloadFile(redirection, to, redirect + 1))
-        }
         res.body?.pipe(file)
       })
       .catch((err) => {
