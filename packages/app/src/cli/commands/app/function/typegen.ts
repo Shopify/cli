@@ -5,7 +5,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 export default class FunctionTypegen extends Command {
-  static description = 'Generate GraphQL types for your JavaScript function.'
+  static description = 'Generate GraphQL types for a JavaScript Function.'
 
   static flags = {
     ...globalFlags,
