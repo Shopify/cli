@@ -117,7 +117,7 @@ export async function buildFunctionExtension(
   extension: FunctionExtension,
   options: BuildFunctionExtensionOptions,
 ): Promise<void> {
-  if (extension.isJavaScript()) {
+  if (extension.isJavaScript) {
     return buildJavaScriptFunction(extension, options)
   } else {
     return buildOtherFunction(extension, options)
@@ -125,17 +125,15 @@ export async function buildFunctionExtension(
 }
 
 async function buildJavaScriptFunction(extension: FunctionExtension, options: BuildFunctionExtensionOptions) {
-  const buildCommand = extension.buildCommand()
-  if (buildCommand) {
-    return runCommand(buildCommand, extension, options)
+  if (extension.buildCommand) {
+    return runCommand(extension.buildCommand, extension, options)
   } else {
     return buildJSFunction(extension, options)
   }
 }
 
 async function buildOtherFunction(extension: FunctionExtension, options: BuildFunctionExtensionOptions) {
-  const buildCommand = extension.buildCommand()
-  if (!buildCommand) {
+  if (!extension.buildCommand) {
     options.stderr.write(
       `The function extension ${extension.localIdentifier} doesn't have a build command or it's empty`,
     )
@@ -149,7 +147,7 @@ async function buildOtherFunction(extension: FunctionExtension, options: BuildFu
     `)
     throw new AbortSilentError()
   }
-  return runCommand(buildCommand, extension, options)
+  return runCommand(extension.buildCommand, extension, options)
 }
 
 async function runCommand(buildCommand: string, extension: FunctionExtension, options: BuildFunctionExtensionOptions) {

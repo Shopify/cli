@@ -85,25 +85,21 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
     return this.configuration.name
   }
 
-  inputQueryPath() {
+  get buildCommand() {
+    return this.configuration.build.command
+  }
+
+  get inputQueryPath() {
     return joinPath(this.directory, 'input.graphql')
   }
 
-  buildWasmPath() {
+  get buildWasmPath() {
     const relativePath = this.configuration.build.path ?? joinPath('dist', 'index.wasm')
     return joinPath(this.directory, relativePath)
   }
 
-  isJavaScript() {
+  get isJavaScript() {
     return this.entrySourceFilePath?.endsWith('.js') || this.entrySourceFilePath?.endsWith('.ts') || false
-  }
-
-  buildCommand() {
-    const cmd = this.configuration.build.command
-    if (!cmd || cmd.trim() === '') {
-      return undefined
-    }
-    return cmd
   }
 
   async publishURL(options: {orgId: string; appId: string}) {

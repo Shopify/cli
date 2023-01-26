@@ -37,10 +37,10 @@ export interface Extension {
 export type FunctionExtension<TConfiguration extends FunctionConfigType = FunctionConfigType> = Extension & {
   configuration: TConfiguration
   entrySourceFilePath?: string
-  buildWasmPath: () => string
-  inputQueryPath: () => string
-  isJavaScript: () => boolean
-  buildCommand: () => string | undefined
+  buildCommand: string | undefined
+  buildWasmPath: string
+  inputQueryPath: string
+  isJavaScript: boolean
 }
 
 export type ThemeExtension<TConfiguration extends ThemeConfigContents = ThemeConfigContents> = Extension & {

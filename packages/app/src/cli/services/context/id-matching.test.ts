@@ -248,8 +248,10 @@ const FUNCTION_A: FunctionExtension = {
     configurationUi: false,
     apiVersion: '2022-07',
   },
-  buildWasmPath: () => '/function/dist/index.wasm',
-  inputQueryPath: () => '/function/input.graphql',
+  buildCommand: 'make build',
+  buildWasmPath: '/function/dist/index.wasm',
+  inputQueryPath: '/function/input.graphql',
+  isJavaScript: false,
   externalType: 'function',
   publishURL: (_) => Promise.resolve(''),
 }

@@ -98,7 +98,7 @@ function getESBuildOptions(directory: string, entryPoint: string, userFunction: 
 }
 
 export async function runJavy(fun: FunctionExtension, options: JSFunctionBuildOptions) {
-  return exec('npm', ['exec', '--', 'javy', '-o', fun.buildWasmPath(), 'dist/function.js'], {
+  return exec('npm', ['exec', '--', 'javy', '-o', fun.buildWasmPath, 'dist/function.js'], {
     cwd: fun.directory,
     stdout: options.stdout,
     stderr: options.stderr,
@@ -107,7 +107,7 @@ export async function runJavy(fun: FunctionExtension, options: JSFunctionBuildOp
 }
 
 export async function runFunctionRunner(fun: FunctionExtension) {
-  return exec('npm', ['exec', '--', 'function-runner', '-f', fun.buildWasmPath()], {
+  return exec('npm', ['exec', '--', 'function-runner', '-f', fun.buildWasmPath], {
     cwd: fun.directory,
     stdin: 'inherit',
     stdout: 'inherit',
