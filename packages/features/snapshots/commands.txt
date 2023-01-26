@@ -3,15 +3,15 @@
  app dev                @shopify/app           
  app env pull           @shopify/app           
  app env show           @shopify/app           
+ app function build     @shopify/app           
+ app function run       @shopify/app           
+ app function typegen   @shopify/app           
  app generate extension @shopify/app           
  app generate schema    @shopify/app           
  app info               @shopify/app           
  app update-url         @shopify/app           
  auth logout            @shopify/cli           
  commands               @oclif/plugin-commands 
- function build         @shopify/app           
- function run           @shopify/app           
- function typegen       @shopify/app           
  help                   @oclif/plugin-help     
  kitchen-sink async     @shopify/cli           
  kitchen-sink prompts   @shopify/cli           
