@@ -117,8 +117,10 @@ ${outputToken.json(JSON.stringify(rules))}
           process.exit(0)
         }
       },
-      stickyMessage: 'Press `p` to open your browser. Press `q` to quit.',
-      footer: `Preview URL: ${previewUrl}`,
+      footer: {
+        title: 'Press `p` to open your browser. Press `q` to quit.',
+        subTitle: `Preview URL: ${previewUrl}`,
+      },
     }
   }
 

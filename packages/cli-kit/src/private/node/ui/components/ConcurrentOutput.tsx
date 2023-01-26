@@ -15,8 +15,10 @@ export interface Props {
   abortController: AbortController
   showTimestamps?: boolean
   onInput?: (input: string, key: Key) => void
-  stickyMessage?: string
-  footer?: string
+  footer?: {
+    title: string
+    subTitle?: string
+  }
 }
 interface Chunk {
   color: string
@@ -63,7 +65,6 @@ const ConcurrentOutput: FunctionComponent<Props> = ({
   abortController,
   showTimestamps = true,
   onInput,
-  stickyMessage,
   footer,
 }) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
@@ -158,14 +159,16 @@ const ConcurrentOutput: FunctionComponent<Props> = ({
           )
         }}
       </Static>
-      {stickyMessage && (
-        <Box marginTop={1} flexGrow={1}>
-          <TextWithBackground text={stickyMessage} inverse paddingX={2} paddingY={1} />
-        </Box>
-      )}
-      {(stickyMessage || footer) && (
-        <Box marginY={1}>
-          <Text>{footer}</Text>
+      {footer && (
+        <Box marginY={1} flexDirection="column">
+          <Box flexGrow={1}>
+            <TextWithBackground text={footer.title} inverse paddingX={2} paddingY={1} />
+          </Box>
+          {footer.subTitle && (
+            <Box marginTop={1} flexGrow={1}>
+              <Text>{footer.subTitle}</Text>
+            </Box>
+          )}
         </Box>
       )}
     </>
