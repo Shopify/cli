@@ -86,7 +86,11 @@ describe('AutocompletePrompt', async () => {
         choices={items}
         infoTable={infoTable}
         onSubmit={onEnter}
-        search={() => Promise.resolve({} as SearchResults<string>)}
+        search={() =>
+          Promise.resolve({
+            data: [],
+          } as SearchResults<string>)
+        }
       />,
     )
 
@@ -122,7 +126,11 @@ describe('AutocompletePrompt', async () => {
         message="Associate your project with the org Castile Ventures?"
         choices={items}
         onSubmit={() => {}}
-        search={() => Promise.resolve({} as SearchResults<string>)}
+        search={() =>
+          Promise.resolve({
+            data: [],
+          } as SearchResults<string>)
+        }
       />,
     )
 
@@ -169,7 +177,7 @@ describe('AutocompletePrompt', async () => {
         choices={items}
         infoTable={infoTable}
         onSubmit={() => {}}
-        search={() => Promise.resolve({} as SearchResults<string>)}
+        search={() => Promise.resolve({data: []} as SearchResults<string>)}
       />,
     )
 
@@ -193,7 +201,9 @@ describe('AutocompletePrompt', async () => {
 
   test("doesn't submit if there are no choices", async () => {
     const onEnter = vi.fn()
-    const searchPromise = Promise.resolve({} as SearchResults<string>)
+    const searchPromise = Promise.resolve({
+      data: [],
+    } as SearchResults<string>)
     const search = () => {
       return searchPromise
     }
