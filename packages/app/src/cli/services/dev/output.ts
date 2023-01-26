@@ -3,7 +3,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {ThemeExtension} from '../../models/app/extensions.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
-import {RenderAlertOptions, renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {output} from '@shopify/cli-kit'
 
 export async function outputUpdateURLsResult(
@@ -31,22 +31,6 @@ export async function outputUpdateURLsResult(
       body: {list: {items: urls.redirectUrlWhitelist}},
     })
   }
-}
-
-export function outputDevSuccess(app: AppInterface) {
-  const renderSuccessOptions: RenderAlertOptions = {
-    headline: {bold: 'Preview ready! Press any key to open your browser.'},
-  }
-
-  if (app.extensions.function.length > 0) {
-    renderSuccessOptions.customSections = [
-      {
-        body: 'Keep in mind that Shopify Functions need to be deployed to be manually tested.',
-      },
-    ]
-  }
-
-  renderSuccess(renderSuccessOptions)
 }
 
 export function outputExtensionsMessages(app: AppInterface) {

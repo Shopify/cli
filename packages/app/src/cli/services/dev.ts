@@ -183,7 +183,6 @@ async function dev(options: DevOptions) {
     await renderConcurrent({processes: additionalProcesses})
   } else {
     await runConcurrentHTTPProcessesAndPathForwardTraffic({
-      app: localApp,
       previewUrl,
       portNumber: proxyPort,
       proxyTargets,
