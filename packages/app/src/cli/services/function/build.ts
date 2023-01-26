@@ -3,21 +3,67 @@ import {exec} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {build as esBuild} from 'esbuild'
 import {findPathUp} from '@shopify/cli-kit/node/fs'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {renderTasks} from '@shopify/cli-kit/node/ui'
+import {Writable} from 'stream'
 
-export async function buildFunction(fun: FunctionExtension) {
-  await buildGraphqlTypes(fun.directory)
-  await bundleExtension(fun)
-  return runJavy(fun)
+interface JSFunctionBuildOptions {
+  stdout: Writable
+  stderr: Writable
+  signal?: AbortSignal
+  useTasks?: boolean
 }
 
-export async function buildGraphqlTypes(directory: string) {
+export async function buildJSFunction(fun: FunctionExtension, options: JSFunctionBuildOptions) {
+  if (options.useTasks) {
+    return buildJSFunctionWithTasks(fun, options)
+  } else {
+    return buildJSFunctionWithoutTasks(fun, options)
+  }
+}
+
+async function buildJSFunctionWithoutTasks(fun: FunctionExtension, options: JSFunctionBuildOptions) {
+  options.stdout.write(`Building GraphQL types...\n`)
+  await buildGraphqlTypes(fun.directory, options)
+  options.stdout.write(`Bundling JS function...\n`)
+  await bundleExtension(fun, options)
+  options.stdout.write(`Running javy...\n`)
+  await runJavy(fun, options)
+  options.stdout.write(`Done!\n`)
+}
+
+export async function buildJSFunctionWithTasks(fun: FunctionExtension, options: JSFunctionBuildOptions) {
+  return renderTasks([
+    {
+      title: 'Building GraphQL types',
+      task: async () => {
+        await buildGraphqlTypes(fun.directory, options)
+      },
+    },
+    {
+      title: 'Bundling JS function',
+      task: async () => {
+        await bundleExtension(fun, options)
+      },
+    },
+    {
+      title: 'Running javy',
+      task: async () => {
+        await runJavy(fun, options)
+      },
+    },
+  ])
+}
+
+export async function buildGraphqlTypes(directory: string, options: JSFunctionBuildOptions) {
   return exec('npm', ['exec', '--', 'graphql-code-generator', '-c', '.graphqlrc'], {
     cwd: directory,
-    stderr: process.stderr,
+    stderr: options.stderr,
+    signal: options.signal,
   })
 }
 
-export async function bundleExtension(fun: FunctionExtension) {
+export async function bundleExtension(fun: FunctionExtension, options: JSFunctionBuildOptions) {
   const entryPoint = await findPathUp('node_modules/@shopify/shopify_function/index.ts', {
     type: 'file',
     cwd: fun.directory,
@@ -42,7 +88,7 @@ function getESBuildOptions(directory: string, entryPoint: string, userFunction: 
     alias: {
       'user-function': userFunction,
     },
-    logLevel: 'info',
+    logLevel: 'silent',
     bundle: true,
     legalComments: 'none',
     target: 'es2022',
@@ -51,11 +97,12 @@ function getESBuildOptions(directory: string, entryPoint: string, userFunction: 
   return esbuildOptions
 }
 
-export async function runJavy(fun: FunctionExtension) {
+export async function runJavy(fun: FunctionExtension, options: JSFunctionBuildOptions) {
   return exec('npm', ['exec', '--', 'javy', '-o', fun.buildWasmPath(), 'dist/function.js'], {
     cwd: fun.directory,
-    stdout: process.stdout,
-    stderr: process.stderr,
+    stdout: options.stdout,
+    stderr: options.stderr,
+    signal: options.signal,
   })
 }
 

@@ -1,6 +1,7 @@
 import {AppInterface} from '../../models/app/app.js'
 import {UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {bundleExtension} from '../extensions/bundle.js'
+import {buildJSFunction} from '../function/build.js'
 import {execThemeCheckCLI} from '@shopify/cli-kit/node/ruby'
 import {exec} from '@shopify/cli-kit/node/system'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -21,12 +22,17 @@ export interface ExtensionBuildOptions {
   /**
    * Signal to abort the build process.
    */
-  signal: AbortSignal
+  signal?: AbortSignal
 
   /**
    * Overrides the default build directory.
    */
   buildDirectory?: string
+
+  /**
+   * Use tasks to build the extension.
+   */
+  useTasks?: boolean
 
   /**
    * The app that contains the extensions.
@@ -111,8 +117,25 @@ export async function buildFunctionExtension(
   extension: FunctionExtension,
   options: BuildFunctionExtensionOptions,
 ): Promise<void> {
-  const buildCommand = extension.configuration.build?.command
-  if (!buildCommand || buildCommand.trim() === '') {
+  if (extension.isJavaScript()) {
+    return buildJavaScriptFunction(extension, options)
+  } else {
+    return buildOtherFunction(extension, options)
+  }
+}
+
+async function buildJavaScriptFunction(extension: FunctionExtension, options: BuildFunctionExtensionOptions) {
+  const buildCommand = extension.buildCommand()
+  if (buildCommand) {
+    return runCommand(buildCommand, extension, options)
+  } else {
+    return buildJSFunction(extension, options)
+  }
+}
+
+async function buildOtherFunction(extension: FunctionExtension, options: BuildFunctionExtensionOptions) {
+  const buildCommand = extension.buildCommand()
+  if (!buildCommand) {
     options.stderr.write(
       `The function extension ${extension.localIdentifier} doesn't have a build command or it's empty`,
     )
@@ -126,6 +149,10 @@ export async function buildFunctionExtension(
     `)
     throw new AbortSilentError()
   }
+  return runCommand(buildCommand, extension, options)
+}
+
+async function runCommand(buildCommand: string, extension: FunctionExtension, options: BuildFunctionExtensionOptions) {
   const buildCommandComponents = buildCommand.split(' ')
   options.stdout.write(`Building function ${extension.localIdentifier}...`)
   await exec(buildCommandComponents[0]!, buildCommandComponents.slice(1), {

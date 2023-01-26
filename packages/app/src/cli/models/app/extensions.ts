@@ -39,6 +39,8 @@ export type FunctionExtension<TConfiguration extends FunctionConfigType = Functi
   entrySourceFilePath?: string
   buildWasmPath: () => string
   inputQueryPath: () => string
+  isJavaScript: () => boolean
+  buildCommand: () => string | undefined
 }
 
 export type ThemeExtension<TConfiguration extends ThemeConfigContents = ThemeConfigContents> = Extension & {
