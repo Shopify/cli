@@ -390,7 +390,7 @@ describe('SelectInput', async () => {
          (2) Second
          (3) Third
 
-         [1m1-3 of many[22m Keep scrolling to see more items
+         [1m1-3 of many[22m  Keep scrolling to see more items
          [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
   })

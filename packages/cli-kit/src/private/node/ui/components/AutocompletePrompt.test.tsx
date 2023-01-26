@@ -663,7 +663,7 @@ describe('AutocompletePrompt', async () => {
          twenty-fourth
          twenty-fifth
 
-         [1m1-25 of many[22m Find what you're looking for by typing its name.
+         [1m1-25 of many[22m  Find what you're looking for by typing its name.
          [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)

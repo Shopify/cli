@@ -255,7 +255,7 @@ export default function SelectInput<T>({
           {hasMorePages && (
             <Text>
               <Text bold>1-{items.length} of many</Text>
-              {morePagesMessage ? ` ${morePagesMessage}` : null}
+              {morePagesMessage ? `  ${morePagesMessage}` : null}
             </Text>
           )}
           <Text dimColor>
