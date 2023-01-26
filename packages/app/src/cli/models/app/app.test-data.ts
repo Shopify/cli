@@ -170,7 +170,7 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     name: 'Customer Accounts',
     externalName: 'Customer Accounts',
     identifier: 'customer_accounts_ui_extension',
-    externalIdentifier: 'customer_accounts_ui_extension',
+    externalIdentifier: 'customer_accounts_ui',
     gated: false,
     options: {
       managementExperience: 'cli',
