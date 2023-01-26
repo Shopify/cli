@@ -1,11 +1,11 @@
 import {AppInterface} from '../../models/app/app.js'
 import {UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {bundleExtension} from '../extensions/bundle.js'
-import {output} from '@shopify/cli-kit'
 import {execThemeCheckCLI} from '@shopify/cli-kit/node/ruby'
 import {exec} from '@shopify/cli-kit/node/system'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 export interface ExtensionBuildOptions {
@@ -61,7 +61,7 @@ interface BuildUIExtensionsOptions {
   app: AppInterface
 }
 
-export async function buildUIExtensions(options: BuildUIExtensionsOptions): Promise<output.OutputProcess[]> {
+export async function buildUIExtensions(options: BuildUIExtensionsOptions): Promise<OutputProcess[]> {
   if (options.app.extensions.ui.length === 0) {
     return []
   }

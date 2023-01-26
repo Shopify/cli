@@ -1,6 +1,6 @@
 import {mkdir, readFile, copyFile, chmod, isDirectory, writeFile, fileHasExecutablePermissions, glob} from './fs.js'
 import {joinPath, dirname, relativePath} from './path.js'
-import {content, token, debug} from '../../output.js'
+import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import {Liquid} from 'liquidjs'
 
 /**
@@ -26,7 +26,7 @@ export function renderLiquidTemplate(templateContent: string, data: object): Pro
  * @param data - Data to feed the template engine.
  */
 export async function recursiveLiquidTemplateCopy(from: string, to: string, data: object): Promise<void> {
-  debug(content`Copying template from directory ${token.path(from)} to ${token.path(to)}`)
+  outputDebug(outputContent`Copying template from directory ${outputToken.path(from)} to ${outputToken.path(to)}`)
   const templateFiles: string[] = await glob(joinPath(from, '**/*'), {dot: true})
 
   const sortedTemplateFiles = templateFiles

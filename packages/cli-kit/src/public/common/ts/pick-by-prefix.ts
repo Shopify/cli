@@ -1,3 +1,5 @@
+export {}
+
 /**
  * Produces a subset of a mapping type, where the keys either match some prefix string, or are in a list of exact matches.
  *

@@ -1,5 +1,5 @@
+import {API} from '../api.js'
 import {BugError} from '../../../public/node/error.js'
-import {API} from '../../../network/api.js'
 import {Environment, serviceEnvironment} from '../environment/service.js'
 
 export function clientId(): string {

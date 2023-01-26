@@ -1,6 +1,5 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/npm.js'
 import cleanup from '../utils/template/cleanup.js'
-import {output} from '@shopify/cli-kit'
 import {
   findUpAndReadPackageJson,
   packageManager,
@@ -8,17 +7,17 @@ import {
   packageManagerUsedForCreating,
   writePackageJSON,
 } from '@shopify/cli-kit/node/node-package-manager'
-import {renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
-import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
 import {isShopify} from '@shopify/cli-kit/node/environment/local'
 import {downloadGitRepository, initializeGitRepository} from '@shopify/cli-kit/node/git'
 import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {username} from '@shopify/cli-kit/node/os'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 interface InitOptions {
   name: string
@@ -129,14 +128,14 @@ async function init(options: InitOptions) {
     headline: [{userInput: hyphenizedName}, 'is ready for you to build!'],
     nextSteps: [
       ['Run', {command: `cd ${hyphenizedName}`}],
-      ['For extensions, run', {command: output.formatPackageManagerCommand(packageManager, 'generate extension')}],
-      ['To see your app, run', {command: output.formatPackageManagerCommand(packageManager, 'dev')}],
+      ['For extensions, run', {command: formatPackageManagerCommand(packageManager, 'generate extension')}],
+      ['To see your app, run', {command: formatPackageManagerCommand(packageManager, 'dev')}],
     ],
     reference: [
       {link: {label: 'Shopify docs', url: 'https://shopify.dev'}},
       [
         'For an overview of commands, run',
-        {command: `${output.formatPackageManagerCommand(packageManager, 'shopify app', '--help')}`},
+        {command: `${formatPackageManagerCommand(packageManager, 'shopify app', '--help')}`},
       ],
     ],
   })

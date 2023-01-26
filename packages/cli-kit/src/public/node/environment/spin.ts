@@ -2,13 +2,13 @@ import {fileExists, readFileSync} from '../fs.js'
 import {isTruthy} from '../../../private/node/environment/utilities.js'
 import {environmentVariables} from '../../../private/node/constants.js'
 import {captureOutput} from '../system.js'
-import {content, token} from '../../../output.js'
+import {outputContent, outputToken} from '../../../public/node/output.js'
 import {getCachedSpinFqdn, setCachedSpinFqdn} from '../../../private/node/environment/spin-cache.js'
 import {AbortError} from '../error.js'
 import {Environment, serviceEnvironment} from '../../../private/node/environment/service.js'
 
 const SpinInstanceNotFoundMessages = (spinInstance: string | undefined, error: string) => {
-  const errorMessage = content`${token.genericShellCommand(
+  const errorMessage = outputContent`${outputToken.genericShellCommand(
     `spin`,
   )} yielded the following error trying to obtain the fully qualified domain name of the Spin instance:
 ${error}

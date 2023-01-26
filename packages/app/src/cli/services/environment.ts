@@ -12,6 +12,7 @@ import {
 import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
 import {createExtension, ExtensionRegistration} from './dev/create-extension.js'
+import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './conf.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
@@ -19,19 +20,18 @@ import {Organization, OrganizationApp, OrganizationStore} from '../models/organi
 import metadata from '../metadata.js'
 import {ThemeExtension} from '../models/app/extensions.js'
 import {loadAppName} from '../models/app/loader.js'
-import {output, store} from '@shopify/cli-kit'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
-import {TokenItem} from '@shopify/cli-kit/src/private/node/ui/components/TokenizedText.js'
+import {renderInfo, renderTasks, TokenItem} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
-    message: output.content`Invalid API key: ${apiKey}`,
-    tryMessage: output.content`You can find the API key in the app settings in the Partners Dashboard.`,
+    message: outputContent`Invalid API key: ${apiKey}`,
+    tryMessage: outputContent`You can find the API key in the app settings in the Partners Dashboard.`,
   }
 }
 
@@ -79,7 +79,7 @@ export async function ensureGenerateEnvironment(options: {
     const explanation =
       `\nLooks like this is the first time you're running 'generate extension' for this project.\n` +
       'Configure your preferences by answering a few questions.\n'
-    output.info(explanation)
+    outputInfo(explanation)
   }
 
   if (cachedInfo?.appId && cachedInfo?.orgId) {
@@ -97,7 +97,7 @@ export async function ensureGenerateEnvironment(options: {
     const {organization, apps} = await fetchOrgAndApps(orgId, options.token)
     const localAppName = await loadAppName(options.directory)
     const selectedApp = await selectOrCreateApp(localAppName, apps, organization, options.token)
-    store.setAppInfo({
+    setAppInfo({
       appId: selectedApp.apiKey,
       title: selectedApp.title,
       directory: options.directory,
@@ -134,14 +134,14 @@ export async function ensureDevEnvironment(
     const explanation =
       `\nLooks like this is the first time you're running dev for this project.\n` +
       'Configure your preferences by answering a few questions.\n'
-    output.info(explanation)
+    outputInfo(explanation)
   }
 
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
   if (selectedApp && selectedStore) {
-    store.setAppInfo({
+    setAppInfo({
       appId: selectedApp.apiKey,
       directory: options.directory,
       storeFqdn: selectedStore.shopDomain,
@@ -166,7 +166,7 @@ export async function ensureDevEnvironment(
     }
   }
 
-  store.setAppInfo({
+  setAppInfo({
     appId: selectedApp.apiKey,
     title: selectedApp.title,
     directory: options.directory,
@@ -188,7 +188,7 @@ export async function ensureDevEnvironment(
     }
   }
 
-  store.setAppInfo({
+  setAppInfo({
     appId: selectedApp.apiKey,
     directory: options.directory,
     storeFqdn: selectedStore?.shopDomain,
@@ -204,11 +204,7 @@ export async function ensureDevEnvironment(
   return result
 }
 
-function buildOutput(
-  app: OrganizationApp,
-  store: OrganizationStore,
-  cachedInfo?: store.CachedAppInfo,
-): DevEnvironmentOutput {
+function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?: CachedAppInfo): DevEnvironmentOutput {
   return {
     remoteApp: {
       ...app,
@@ -244,7 +240,7 @@ interface DeployEnvironmentOutput {
  * undefined if there is no cached value or the user doesn't want to use it.
  */
 export async function fetchDevAppAndPrompt(app: AppInterface, token: string): Promise<OrganizationApp | undefined> {
-  const devAppId = store.getAppInfo(app.directory)?.appId
+  const devAppId = getAppInfo(app.directory)?.appId
   if (!devAppId) return undefined
 
   const partnersResponse = await fetchAppFromApiKey(devAppId, token)
@@ -339,9 +335,9 @@ export async function fetchAppAndIdentifiers(
     partnersApp = await fetchAppFromApiKey(apiKey, token)
     if (!partnersApp) {
       throw new AbortError(
-        output.content`Couldn't find the app with API key ${apiKey}`,
-        output.content`• If you didn't intend to select this app, run ${
-          output.content`${output.token.packagejsonScript(options.app.packageManager, 'deploy', '--reset')}`.value
+        outputContent`Couldn't find the app with API key ${apiKey}`,
+        outputContent`• If you didn't intend to select this app, run ${
+          outputContent`${outputToken.packagejsonScript(options.app.packageManager, 'deploy', '--reset')}`.value
         }`,
       )
     }
@@ -418,9 +414,9 @@ async function fetchDevDataFromOptions(
  * @param reset - Whether to reset the cache or not
  * @param directory - The directory containing the app.
  */
-function getAppDevCachedInfo({reset, directory}: {reset: boolean; directory: string}): store.CachedAppInfo | undefined {
-  if (reset) store.clearAppInfo(directory)
-  return store.getAppInfo(directory)
+function getAppDevCachedInfo({reset, directory}: {reset: boolean; directory: string}): CachedAppInfo | undefined {
+  if (reset) clearAppInfo(directory)
+  return getAppInfo(directory)
 }
 
 /**
@@ -440,7 +436,7 @@ async function selectOrg(token: string): Promise<string> {
  * @param app - App name
  * @param store - Store domain
  */
-function showReusedValues(org: string, cachedAppInfo: store.CachedAppInfo, packageManager: PackageManager): void {
+function showReusedValues(org: string, cachedAppInfo: CachedAppInfo, packageManager: PackageManager): void {
   let updateURLs = 'Not yet configured'
   if (cachedAppInfo.updateURLs !== undefined) updateURLs = cachedAppInfo.updateURLs ? 'Always' : 'Never'
 
@@ -462,12 +458,12 @@ function showReusedValues(org: string, cachedAppInfo: store.CachedAppInfo, packa
         },
       },
       '\nTo reset your default dev config, run',
-      {command: output.formatPackageManagerCommand(packageManager, 'dev', '--reset')},
+      {command: formatPackageManagerCommand(packageManager, 'dev', '--reset')},
     ],
   })
 }
 
-function showGenerateReusedValues(org: string, cachedAppInfo: store.CachedAppInfo, packageManager: PackageManager) {
+function showGenerateReusedValues(org: string, cachedAppInfo: CachedAppInfo, packageManager: PackageManager) {
   renderInfo({
     headline: 'Using your previous dev settings:',
     body: [
@@ -477,7 +473,7 @@ function showGenerateReusedValues(org: string, cachedAppInfo: store.CachedAppInf
         },
       },
       '\nTo reset your default dev config, run',
-      {command: output.formatPackageManagerCommand(packageManager, 'dev', '--reset')},
+      {command: formatPackageManagerCommand(packageManager, 'dev', '--reset')},
     ],
   })
 }

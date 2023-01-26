@@ -4,11 +4,11 @@ import ThemeCommand from '../../utilities/theme-command.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {output} from '@shopify/cli-kit'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {sleep} from '@shopify/cli-kit/node/system'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export default class Dev extends ThemeCommand {
   static description =
@@ -112,7 +112,7 @@ export default class Dev extends ThemeCommand {
     let controller = new AbortController()
 
     setInterval(() => {
-      output.debug('Refreshing theme session token and restarting theme server...')
+      outputDebug('Refreshing theme session token and restarting theme server...')
       controller.abort()
       controller = new AbortController()
       // eslint-disable-next-line @typescript-eslint/no-floating-promises

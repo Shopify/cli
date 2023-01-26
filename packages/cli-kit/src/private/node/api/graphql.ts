@@ -1,5 +1,5 @@
 import {buildHeaders, httpsAgent, RequestClientError, sanitizedHeadersOutput} from './headers.js'
-import {stringifyMessage, content, token as outputToken, token, debug} from '../../../output.js'
+import {stringifyMessage, outputContent, outputToken, outputDebug} from '../../../public/node/output.js'
 import {AbortError} from '../../../public/node/error.js'
 import {ClientError, GraphQLClient, RequestDocument, Variables} from 'graphql-request'
 import {performance} from 'perf_hooks'
@@ -25,7 +25,7 @@ export function graphqlRequest<T>(
     const t0 = performance.now()
     const response = await client.request<T>(query, variables)
     const t1 = performance.now()
-    debug(`Request to ${url.toString()} completed in ${Math.round(t1 - t0)} ms`)
+    outputDebug(`Request to ${url.toString()} completed in ${Math.round(t1 - t0)} ms`)
     return response
   }
 
@@ -42,9 +42,9 @@ function debugLogRequest<T>(
   variables?: Variables,
   headers: {[key: string]: string} = {},
 ) {
-  debug(content`
-Sending ${token.json(api)} GraphQL request:
-${token.raw(query.toString())}
+  outputDebug(outputContent`
+Sending ${outputToken.json(api)} GraphQL request:
+${outputToken.raw(query.toString())}
 
 With variables:
 ${variables ? JSON.stringify(variables, null, 2) : ''}
@@ -59,8 +59,8 @@ async function handlingErrors<T>(api: string, action: () => Promise<T>): Promise
     return await action()
   } catch (error) {
     if (error instanceof ClientError) {
-      const errorMessage = stringifyMessage(content`
-  The ${token.raw(
+      const errorMessage = stringifyMessage(outputContent`
+  The ${outputToken.raw(
     api,
   )} GraphQL API responded unsuccessfully with the HTTP status ${`${error.response.status}`} and errors:
 

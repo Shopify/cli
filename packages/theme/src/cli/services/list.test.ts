@@ -2,12 +2,12 @@ import {list} from './list.js'
 import {columns} from './list.columns.js'
 import {fetchStoreThemes} from '../utilities/theme-selector/fetch.js'
 import {Theme} from '../models/theme.js'
-import {renderTable} from '@shopify/cli-kit/node/ui.js'
+import {renderTable} from '@shopify/cli-kit/node/ui'
 import {describe, expect, it, vi} from 'vitest'
 import {store} from '@shopify/cli-kit'
 
 vi.mock('../utilities/theme-selector/fetch.js')
-vi.mock('@shopify/cli-kit/node/ui.js')
+vi.mock('@shopify/cli-kit/node/ui')
 
 const session = {
   token: 'token',

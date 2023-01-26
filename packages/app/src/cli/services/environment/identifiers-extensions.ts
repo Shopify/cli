@@ -5,8 +5,8 @@ import {deployConfirmationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {output} from '@shopify/cli-kit'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {outputCompleted} from '@shopify/cli-kit/node/output'
 
 export async function ensureExtensionsIds(
   options: EnsureDeploymentIdsPresenceOptions,
@@ -74,7 +74,7 @@ async function createExtensions(extensions: LocalSource[], appId: string) {
     // Create one at a time to avoid API rate limiting issues.
     // eslint-disable-next-line no-await-in-loop
     const registration = await createExtension(appId, extension.graphQLType, extension.configuration.name, token)
-    output.completed(`Created extension ${extension.configuration.name}.`)
+    outputCompleted(`Created extension ${extension.configuration.name}.`)
     result[extension.localIdentifier] = registration
   }
   return result

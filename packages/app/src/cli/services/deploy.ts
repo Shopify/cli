@@ -15,13 +15,12 @@ import {Extension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {output} from '@shopify/cli-kit'
 import {useThemeBundling} from '@shopify/cli-kit/node/environment/local'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
-import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
-import {CustomSection} from '@shopify/cli-kit/src/private/node/ui/components/Alert.js'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
+import {outputNewline, outputInfo} from '@shopify/cli-kit/node/output'
+import type {AlertCustomSection, Task} from '@shopify/cli-kit/node/ui'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -52,9 +51,9 @@ export const deploy = async (options: DeployOptions) => {
   let {app, identifiers, partnersApp, partnersOrganizationId, token} = await ensureDeployEnvironment(options)
   const apiKey = identifiers.app
 
-  output.newline()
-  output.info(`Deploying your work to Shopify Partners. It will be part of ${partnersApp.title}`)
-  output.newline()
+  outputNewline()
+  outputInfo(`Deploying your work to Shopify Partners. It will be part of ${partnersApp.title}`)
+  outputNewline()
 
   const extensions = await Promise.all(
     options.app.extensions.ui.map(async (extension) => {
@@ -203,7 +202,7 @@ async function outputCompletionMessage({
     ]
   }
 
-  const customSections: CustomSection[] = [
+  const customSections: AlertCustomSection[] = [
     {
       title: 'Summary',
       body: {

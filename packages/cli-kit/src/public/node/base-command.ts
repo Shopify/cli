@@ -5,7 +5,7 @@ import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
 import {cwd} from './path.js'
 import {JsonMap} from '../../private/common/json.js'
-import {content, info, token} from '../../output.js'
+import {outputContent, outputInfo, outputToken} from '../../public/node/output.js'
 import {hashString} from '../../public/node/crypto.js'
 import {isTruthy} from '../../private/node/environment/utilities.js'
 import {Command, Interfaces} from '@oclif/core'
@@ -37,7 +37,7 @@ abstract class BaseCommand extends Command {
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   protected exitWithTimestampWhenEnvVariablePresent() {
     if (isTruthy(process.env.SHOPIFY_CLI_ENV_STARTUP_PERFORMANCE_RUN)) {
-      info(`
+      outputInfo(`
       SHOPIFY_CLI_TIMESTAMP_START
       { "timestamp": ${Date.now()} }
       SHOPIFY_CLI_TIMESTAMP_END
@@ -143,7 +143,7 @@ function reportPresetApplication<
     if (!userSpecifiedThisFlag && presetContainsFlag) changes[name] = value
   }
   if (Object.keys(changes).length === 0) return
-  info(content`Using applicable flags from the preset ${token.yellow(presetName)}:
+  outputInfo(outputContent`Using applicable flags from the preset ${outputToken.yellow(presetName)}:
 
 ${Object.entries(changes)
   .map(([name, value]) => `• ${name} = ${value}`)
@@ -211,7 +211,9 @@ function argsFromPreset<
           args.push(`--${label}`)
         } else {
           throw new AbortError(
-            content`Presets can only specify true for boolean flags. Attempted to set ${token.yellow(label)} to false.`,
+            outputContent`Presets can only specify true for boolean flags. Attempted to set ${outputToken.yellow(
+              label,
+            )} to false.`,
           )
         }
       } else if (Array.isArray(value)) {

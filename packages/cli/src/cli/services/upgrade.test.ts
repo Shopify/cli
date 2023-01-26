@@ -15,16 +15,6 @@ const currentCliVersion = '3.10.0'
 const OLD_ENV = {...process.env}
 
 beforeEach(async () => {
-  vi.mock('@shopify/cli-kit', async () => {
-    const module: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...module,
-      output: {
-        ...module.output,
-        getOutputUpdateCLIReminder: vi.fn(),
-      },
-    }
-  })
   vi.mock('@shopify/cli-kit/node/os', async () => {
     return {
       platformAndArch: vi.fn(),

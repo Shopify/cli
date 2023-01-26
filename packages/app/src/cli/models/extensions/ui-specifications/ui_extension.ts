@@ -3,13 +3,13 @@ import {BaseUIExtensionSchema, NewExtensionPointSchemaType, NewExtensionPointsSc
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
-import {output} from '@shopify/cli-kit'
 import {schema} from '@shopify/cli-kit/node/schema'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
-const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.22.0'}
+const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.23.0'}
 
 const UIExtensionSchema = BaseUIExtensionSchema.extend({
   settings: schema
@@ -36,7 +36,7 @@ const spec = createUIExtensionSpecification({
     const links = config.extensionPoints.map(
       ({target}) => `${target} preview link: ${host}/extensions/${uuid}/${target}`,
     )
-    return output.content`${links.join('\n')}`
+    return outputContent`${links.join('\n')}`
   },
   deployConfig: async (config, directory) => {
     return {
@@ -79,10 +79,10 @@ async function validateUIExtensionPointConfig(
     const exists = await fileExists(fullPath)
 
     if (!exists) {
-      const notFoundPath = output.token.path(joinPath(directory, module))
+      const notFoundPath = outputToken.path(joinPath(directory, module))
 
       errors.push(
-        output.content`Couldn't find ${notFoundPath}
+        outputContent`Couldn't find ${notFoundPath}
 Please check the module path for ${target}`.value,
       )
     }
