@@ -1,10 +1,10 @@
 import {buildFunctionExtension} from './extension.js'
 import {FunctionExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {exec} from '@shopify/cli-kit/node/system.js'
+import {exec} from '@shopify/cli-kit/node/system'
 
 beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/system.js')
+  vi.mock('@shopify/cli-kit/node/system')
 })
 
 describe('buildFunctionExtension', () => {

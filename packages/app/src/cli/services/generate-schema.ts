@@ -7,11 +7,11 @@ import {
   ApiSchemaDefinitionQuerySchema,
   ApiSchemaDefinitionQueryVariables,
 } from '../api/graphql/functions/api_schema_definition.js'
-import {output} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/environment/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputContent} from '@shopify/cli-kit/node/output'
 
 interface GenerateSchemaOptions {
   app: AppInterface
@@ -28,8 +28,8 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
   if (!apiKey) {
     if (!isTerminalInteractive()) {
       throw new AbortError(
-        output.content`No API key was provided.`,
-        output.content`Provide an API key with the --api-key flag.`,
+        outputContent`No API key was provided.`,
+        outputContent`Provide an API key with the --api-key flag.`,
       )
     }
 
@@ -46,8 +46,8 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
 
   if (!response.definition) {
     throw new AbortError(
-      output.content`A schema could not be generated for ${extension.localIdentifier}`,
-      output.content`Check that the Function API type and version are valid.`,
+      outputContent`A schema could not be generated for ${extension.localIdentifier}`,
+      outputContent`Check that the Function API type and version are valid.`,
     )
   }
 

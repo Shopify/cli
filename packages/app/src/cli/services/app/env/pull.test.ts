@@ -4,11 +4,11 @@ import {selectApp} from '../select-app.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {testApp} from '../../../models/app/app.test-data.js'
-import {output} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import * as file from '@shopify/cli-kit/node/fs'
 import {resolvePath, joinPath} from '@shopify/cli-kit/node/path'
+import {unstyled, stringifyMessage} from '@shopify/cli-kit/node/output'
 
 beforeEach(async () => {
   vi.mock('../../dev/fetch.js')
@@ -62,7 +62,7 @@ describe('env pull', () => {
         filePath,
         'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=my-scope',
       )
-      expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
+      expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
       "Created ${filePath}:
 
       SHOPIFY_API_KEY=api-key
@@ -118,7 +118,7 @@ describe('env pull', () => {
         filePath,
         'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=my-scope',
       )
-      expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
+      expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
       "Updated ${filePath} to be:
 
       SHOPIFY_API_KEY=api-key
@@ -178,7 +178,7 @@ describe('env pull', () => {
 
       // Then
       expect(file.writeFile).not.toHaveBeenCalled()
-      expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
+      expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
       "No changes to ${filePath}"
       `)
     })

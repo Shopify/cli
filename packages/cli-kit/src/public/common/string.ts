@@ -1,5 +1,5 @@
 import {takeRandomFromArray} from './array.js'
-import {unstyled} from '../../output.js'
+import {unstyled} from '../../public/node/output.js'
 import {TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 
 const SAFE_RANDOM_BUSINESS_ADJECTIVES = [

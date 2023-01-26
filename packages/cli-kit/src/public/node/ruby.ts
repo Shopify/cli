@@ -1,5 +1,4 @@
 import {coerceSemverVersion} from './semver.js'
-import {renderTasks} from './ui.js'
 import {AbortSignal} from './abort.js'
 import {platformAndArch} from './os.js'
 import {captureOutput, exec} from './system.js'
@@ -8,7 +7,7 @@ import {joinPath, dirname, cwd} from './path.js'
 import {AbortError, AbortSilentError} from './error.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
-import {content, token} from '../../output.js'
+import {outputContent, outputToken} from '../../public/node/output.js'
 import {isTruthy} from '../../private/node/environment/utilities.js'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
@@ -29,6 +28,8 @@ interface ExecCLI2Options {
   directory?: string
   // A signal to stop the process execution.
   signal?: AbortSignal
+  // Stream to pipe the command's stdout to.
+  stdout?: Writable
 }
 /**
  * Execute CLI 2.0 commands.
@@ -41,7 +42,7 @@ interface ExecCLI2Options {
 export async function execCLI2(args: string[], options: ExecCLI2Options = {}): Promise<void> {
   const embedded = !isTruthy(process.env.SHOPIFY_CLI_BUNDLED_THEME_CLI) && !process.env.SHOPIFY_CLI_2_0_DIRECTORY
 
-  await installCLIDependencies(embedded)
+  await installCLIDependencies(options.stdout ?? process.stdout, embedded)
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: options.storefrontToken,
@@ -144,33 +145,25 @@ async function installThemeCheckCLIDependencies(stdout: Writable) {
  * Shows a loading spinner if it's the first time installing dependencies
  * or if we are installing a new version of RubyCLI.
  *
+ * @param stdout - The Writable stream on which to write the standard output.
  * @param embedded - True when embebbed codebase of CLI should be used.
  */
-async function installCLIDependencies(embedded = false) {
+async function installCLIDependencies(stdout: Writable, embedded = false) {
   const localCLI = await shopifyCLIDirectory(embedded)
   const exists = await file.fileExists(localCLI)
-  const tasks = [
-    {
-      title: 'Installing theme dependencies',
-      task: async () => {
-        const usingLocalCLI2 = embedded || Boolean(process.env.SHOPIFY_CLI_2_0_DIRECTORY)
-        await validateRubyEnv()
-        if (usingLocalCLI2) {
-          await bundleInstallLocalShopifyCLI(localCLI)
-        } else {
-          await createShopifyCLIWorkingDirectory()
-          await createShopifyCLIGemfile()
-          await bundleInstallShopifyCLI()
-        }
-      },
-    },
-  ]
 
-  if (exists) {
-    await tasks[0]!.task()
+  if (!exists) stdout.write('Installing theme dependencies...')
+  const usingLocalCLI2 = embedded || isTruthy(process.env.SHOPIFY_CLI_2_0_DIRECTORY)
+  await validateRubyEnv()
+  if (usingLocalCLI2) {
+    await bundleInstallLocalShopifyCLI(localCLI)
   } else {
-    await renderTasks(tasks)
+    await createShopifyCLIWorkingDirectory()
+    await createShopifyCLIGemfile()
+    await bundleInstallShopifyCLI()
   }
+
+  if (!exists) stdout.write('Installed theme dependencies!')
 }
 
 /**
@@ -193,7 +186,8 @@ async function validateRuby() {
     throw new AbortError(
       'Ruby environment not found',
       `Make sure you have Ruby installed on your system. ${
-        content`${token.link('Documentation.', 'https://www.ruby-lang.org/en/documentation/installation/')}`.value
+        outputContent`${outputToken.link('Documentation.', 'https://www.ruby-lang.org/en/documentation/installation/')}`
+          .value
       }`,
     )
   }
@@ -201,9 +195,12 @@ async function validateRuby() {
   const isValid = version?.compare(MinRubyVersion)
   if (isValid === -1 || isValid === undefined) {
     throw new AbortError(
-      `Ruby version ${content`${token.yellow(version.raw)}`.value} is not supported`,
-      `Make sure you have at least Ruby ${content`${token.yellow(MinRubyVersion)}`.value} installed on your system. ${
-        content`${token.link('Documentation.', 'https://www.ruby-lang.org/en/documentation/installation/')}`.value
+      `Ruby version ${outputContent`${outputToken.yellow(version.raw)}`.value} is not supported`,
+      `Make sure you have at least Ruby ${
+        outputContent`${outputToken.yellow(MinRubyVersion)}`.value
+      } installed on your system. ${
+        outputContent`${outputToken.link('Documentation.', 'https://www.ruby-lang.org/en/documentation/installation/')}`
+          .value
       }`,
     )
   }
@@ -221,7 +218,7 @@ async function validateBundler() {
     throw new AbortError(
       'Bundler not found',
       `To install the latest version of Bundler, run ${
-        content`${token.genericShellCommand(`${gemExecutable()} install bundler`)}`.value
+        outputContent`${outputToken.genericShellCommand(`${gemExecutable()} install bundler`)}`.value
       }`,
     )
   }
@@ -229,9 +226,9 @@ async function validateBundler() {
   const isValid = version?.compare(MinBundlerVersion)
   if (isValid === -1 || isValid === undefined) {
     throw new AbortError(
-      `Bundler version ${content`${token.yellow(version.raw)}`.value} is not supported`,
+      `Bundler version ${outputContent`${outputToken.yellow(version.raw)}`.value} is not supported`,
       `To update to the latest version of Bundler, run ${
-        content`${token.genericShellCommand(`${gemExecutable()} install bundler`)}`.value
+        outputContent`${outputToken.genericShellCommand(`${gemExecutable()} install bundler`)}`.value
       }`,
     )
   }

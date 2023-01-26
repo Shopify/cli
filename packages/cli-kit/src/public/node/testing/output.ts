@@ -1,4 +1,4 @@
-import * as output from '../../../output.js'
+import {collectedLogs, clearCollectedLogs} from '../../../public/node/output.js'
 
 interface OutputMock {
   output: () => string
@@ -17,15 +17,16 @@ interface OutputMock {
  * @returns An mock object with all the output functions.
  */ export function mockAndCaptureOutput(): OutputMock {
   return {
-    output: () => (output.collectedLogs.output ?? []).join('\n'),
-    info: () => (output.collectedLogs.info ?? []).join('\n'),
-    debug: () => (output.collectedLogs.debug ?? []).join('\n'),
-    success: () => (output.collectedLogs.success ?? []).join('\n'),
-    completed: () => (output.collectedLogs.completed ?? []).join('\n'),
-    warn: () => (output.collectedLogs.warn ?? []).join('\n'),
-    error: () => (output.collectedLogs.error ?? []).join('\n'),
+    output: () => (collectedLogs.output ?? []).join('\n'),
+    info: () => (collectedLogs.info ?? []).join('\n'),
+    debug: () => (collectedLogs.debug ?? []).join('\n'),
+    success: () => (collectedLogs.success ?? []).join('\n'),
+    completed: () => (collectedLogs.completed ?? []).join('\n'),
+    warn: () => (collectedLogs.warn ?? []).join('\n'),
+    error: () => (collectedLogs.error ?? []).join('\n'),
     clear: () => {
-      output.clearCollectedLogs()
+      clearCollectedLogs()
+      // output.collectedLogs = {}
     },
   }
 }

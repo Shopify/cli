@@ -180,12 +180,12 @@ jobs:
         run: pnpm nx run features:test
       - name: Run and save test coverage
         uses: ./.github/actions/run-and-save-test-coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        if: ${{ github.repository_owner == 'Shopify' && matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
         with:
           branch-name: "${{ github.head_ref }}"
       - name: Download and publish test coverage
         uses: ./.github/actions/download-and-publish-test-coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        if: ${{ github.repository_owner == 'Shopify' && matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
         with:
           base-branch-name: "${{ github.base_ref }}"
 
