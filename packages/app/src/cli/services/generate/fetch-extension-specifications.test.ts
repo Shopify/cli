@@ -47,7 +47,7 @@ describe('fetchExtensionSpecifications', () => {
         expect.objectContaining({
           externalName: 'Customer Accounts',
           identifier: 'customer_accounts_ui_extension',
-          externalIdentifier: 'customer_accounts_ui_extension',
+          externalIdentifier: 'customer_accounts_ui',
           registrationLimit: 10,
           surface: 'customer_accounts',
         }),
