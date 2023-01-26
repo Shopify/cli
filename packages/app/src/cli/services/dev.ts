@@ -139,7 +139,7 @@ async function dev(options: DevOptions) {
     proxyTargets.push(devExt)
   }
 
-  // Remove this once theme app extensions are supported
+  // Remove this once theme app extensions and functions are displayed
   // by the dev console
   outputExtensionsMessages(localApp)
 
