@@ -50,7 +50,7 @@ const FETCH_ORG_RESPONSE_VALUE = {
         id: ORG1.id,
         businessName: ORG1.businessName,
         appsNext: ORG1.appsNext,
-        apps: {nodes: [APP1, APP2]},
+        apps: {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
         stores: {nodes: [STORE1]},
       },
     ],
@@ -107,7 +107,7 @@ describe('fetchApp', async () => {
     const got = await fetchOrgAndApps(ORG1.id, 'token')
 
     // Then
-    expect(got).toEqual({organization: ORG1, apps: [APP1, APP2], stores: []})
+    expect(got).toEqual({organization: ORG1, apps: {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}}, stores: []})
     expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id})
   })
 

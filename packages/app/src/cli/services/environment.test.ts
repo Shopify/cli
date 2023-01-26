@@ -206,7 +206,12 @@ describe('ensureGenerateEnvironment', () => {
 
     // Then
     expect(got).toEqual(APP1.apiKey)
-    expect(selectOrCreateApp).toHaveBeenCalledWith('my-app', [APP1, APP2], ORG1, 'token')
+    expect(selectOrCreateApp).toHaveBeenCalledWith(
+      'my-app',
+      {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
+      ORG1,
+      'token',
+    )
     expect(setAppInfo).toHaveBeenCalledWith({
       appId: APP1.apiKey,
       title: APP1.title,
@@ -404,7 +409,12 @@ describe('ensureDeployEnvironment', () => {
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')
-    expect(selectOrCreateApp).toHaveBeenCalledWith(app.name, [APP1, APP2], ORG1, 'token')
+    expect(selectOrCreateApp).toHaveBeenCalledWith(
+      app.name,
+      {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
+      ORG1,
+      'token',
+    )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
       identifiers,
@@ -448,7 +458,12 @@ describe('ensureDeployEnvironment', () => {
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')
-    expect(selectOrCreateApp).toHaveBeenCalledWith(app.name, [APP1, APP2], ORG1, 'token')
+    expect(selectOrCreateApp).toHaveBeenCalledWith(
+      app.name,
+      {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
+      ORG1,
+      'token',
+    )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
       identifiers,
