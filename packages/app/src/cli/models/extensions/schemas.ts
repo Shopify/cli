@@ -30,6 +30,7 @@ export const ExtensionPointSchema = schema.union([OldExtensionPointsSchema, NewE
 
 export const BaseUIExtensionSchema = schema.object({
   name: schema.string(),
+  description: schema.string().optional(),
   type: schema.string().default('ui_extension'),
   extensionPoints: schema.any().optional(),
   capabilities: CapabilitiesSchema.optional(),
