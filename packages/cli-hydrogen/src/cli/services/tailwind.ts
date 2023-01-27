@@ -5,8 +5,7 @@ import {exec} from '@shopify/cli-kit/node/system'
 import {writeFile, fileExists, removeFile, fileContentPrettyFormat, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {renderTasks} from '@shopify/cli-kit/node/ui'
-import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
+import {renderTasks, Task} from '@shopify/cli-kit/node/ui'
 
 interface AddTailwindOptions {
   app: HydrogenApp

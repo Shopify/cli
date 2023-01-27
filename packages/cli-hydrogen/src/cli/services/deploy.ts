@@ -4,8 +4,7 @@ import {buildTaskList} from './build.js'
 import {validateProject, fillDeployConfig} from './deploy/config.js'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
-import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
-import {renderTasks} from '@shopify/cli-kit/node/ui.js'
+import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
 
 interface TaskContext {
   config: ReqDeployConfig

@@ -34,8 +34,7 @@ import {
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
-import {renderTasks} from '@shopify/cli-kit/node/ui'
+import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
 
 interface InitOptions {
   name: string
