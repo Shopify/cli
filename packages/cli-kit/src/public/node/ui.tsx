@@ -3,7 +3,7 @@ import {consoleError, OutputProcess} from './output.js'
 import ConcurrentOutput from '../../private/node/ui/components/ConcurrentOutput.js'
 import {render, renderOnce} from '../../private/node/ui.js'
 import {alert} from '../../private/node/ui/alert.js'
-import {AlertProps} from '../../private/node/ui/components/Alert.js'
+import {AlertProps, CustomSection} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
 import ScalarDict from '../../private/node/ui/components/Table/ScalarDict.js'
 import Table, {TableProps} from '../../private/node/ui/components/Table/Table.js'
@@ -13,9 +13,12 @@ import {TextPrompt, Props as TextPromptProps} from '../../private/node/ui/compon
 import {Item as SelectItem, Props as SelectProps} from '../../private/node/ui/components/SelectInput.js'
 import {Props as InfoTableProps} from '../../private/node/ui/components/Prompts/InfoTable.js'
 import {AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
+import {TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 import React from 'react'
 import {RenderOptions} from 'ink'
 import {AbortController} from '@shopify/cli-kit/node/abort'
+
+export {TokenItem}
 
 interface RenderConcurrentOptions {
   processes: OutputProcess[]
@@ -43,6 +46,7 @@ export async function renderConcurrent({
   )
 }
 
+export type AlertCustomSection = CustomSection
 export type RenderAlertOptions = Omit<AlertProps, 'type'>
 
 /**
@@ -309,6 +313,8 @@ export function renderAutocompletePrompt<T>(props: RenderAutocompletePromptProps
 export function renderTable<T extends ScalarDict>(props: TableProps<T>) {
   return renderOnce(<Table {...props} />)
 }
+
+export {Task}
 
 /**
  * Runs async tasks and displays their progress to the console.

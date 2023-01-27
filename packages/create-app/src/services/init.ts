@@ -7,11 +7,10 @@ import {
   packageManagerUsedForCreating,
   writePackageJSON,
 } from '@shopify/cli-kit/node/node-package-manager'
-import {renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
-import {Task} from '@shopify/cli-kit/src/private/node/ui/components/Tasks.js'
 import {isShopify} from '@shopify/cli-kit/node/environment/local'
 import {downloadGitRepository, initializeGitRepository} from '@shopify/cli-kit/node/git'
 import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile} from '@shopify/cli-kit/node/fs'
