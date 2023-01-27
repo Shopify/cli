@@ -4,7 +4,7 @@ import {retry} from './themes-api/retry.js'
 import {storeAdminUrl} from './theme-urls.js'
 import {Theme} from '../models/theme.js'
 import {restRequest, RestResponse} from '@shopify/cli-kit/node/api/admin'
-import {AdminSession} from '@shopify/cli-kit/node/session.js'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role'>>
