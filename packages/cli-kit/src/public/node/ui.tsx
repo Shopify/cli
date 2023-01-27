@@ -4,7 +4,7 @@ import {consoleError} from './output.js'
 import ConcurrentOutput, {Props as ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
 import {render, renderOnce} from '../../private/node/ui.js'
 import {alert} from '../../private/node/ui/alert.js'
-import {AlertProps} from '../../private/node/ui/components/Alert.js'
+import {AlertProps, CustomSection} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
 import ScalarDict from '../../private/node/ui/components/Table/ScalarDict.js'
 import Table, {TableProps} from '../../private/node/ui/components/Table/Table.js'
@@ -15,6 +15,7 @@ import {
   Props as AutocompletePromptProps,
   AutocompletePrompt,
 } from '../../private/node/ui/components/AutocompletePrompt.js'
+import {TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -24,6 +25,8 @@ type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>
 export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortController'> {
   renderOptions?: RenderOptions
 }
+
+export {TokenItem}
 
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
@@ -40,6 +43,7 @@ export async function renderConcurrent({renderOptions = {}, ...props}: RenderCon
   })
 }
 
+export type AlertCustomSection = CustomSection
 export type RenderAlertOptions = Omit<AlertProps, 'type'>
 
 /**
@@ -301,6 +305,8 @@ export function renderAutocompletePrompt<T>(
 export function renderTable<T extends ScalarDict>(props: TableProps<T>) {
   return renderOnce(<Table {...props} />)
 }
+
+export {Task}
 
 /**
  * Runs async tasks and displays their progress to the console.

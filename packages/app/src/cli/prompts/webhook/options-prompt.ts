@@ -52,15 +52,17 @@ export async function collectTopic(
   const topicPassed = flagPassed(topic)
 
   if (topicPassed) {
-    const passedTopic = (topic as string).trim()
-    if (availableTopics.includes(passedTopic)) {
-      return passedTopic
+    const passedTopic = equivalentTopic((topic as string).trim(), availableTopics)
+
+    if (passedTopic === undefined) {
+      throw new AbortError(
+        `Topic '${passedTopic}' does not exist for ApiVersion '${apiVersion}'`,
+        `Allowed values: ${availableTopics.join(', ')}`,
+        ['Try again with a valid api-version - topic pair'],
+      )
     }
-    throw new AbortError(
-      `Topic '${passedTopic}' does not exist for ApiVersion '${apiVersion}'`,
-      `Allowed values: ${availableTopics.join(', ')}`,
-      ['Try again with a valid api-version - topic pair'],
-    )
+
+    return passedTopic
   }
 
   if (availableTopics.length === 0) {
@@ -154,4 +156,12 @@ function inferMethodFromAddress(address: string): string {
   }
 
   return method
+}
+
+function equivalentTopic(passedTopic: string, availableTopics: string[]): string | undefined {
+  if (availableTopics.includes(passedTopic)) {
+    return passedTopic
+  }
+
+  return availableTopics.find((elm) => elm.toUpperCase().replace('/', '_') === passedTopic)
 }

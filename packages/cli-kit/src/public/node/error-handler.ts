@@ -14,9 +14,9 @@ import {getEnvironmentData} from '../../private/node/analytics.js'
 import {outputDebug, outputInfo} from '../../public/node/output.js'
 import {bugsnagApiKey} from '../../private/node/constants.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
+import {Bugsnag} from '../../private/node/error-handler.js'
 import {settings, Interfaces} from '@oclif/core'
 import StackTracey from 'stacktracey'
-import Bugsnag, {Event} from '@bugsnag/js'
 import {realpath} from 'fs/promises'
 
 export function errorHandler(
@@ -98,6 +98,8 @@ export async function sendErrorToBugsnag(
   if (report) {
     initializeBugsnag()
     await new Promise((resolve, reject) => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       Bugsnag.notify(reportableError, undefined, (error, event) => {
         if (error) {
           reject(error)
@@ -146,8 +148,8 @@ export function cleanStackFrameFilePath({
  */
 export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interfaces.Config): Promise<void> {
   // Bugsnag have their own plug-ins that use this private field
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const bugsnagConfigProjectRoot: string = (Bugsnag as any)?._client?._config?.projectRoot ?? path.cwd()
+
+  const bugsnagConfigProjectRoot: string = Bugsnag?._client?._config?.projectRoot ?? path.cwd()
   const projectRoot = path.normalizePath(bugsnagConfigProjectRoot)
   const pluginLocations = await Promise.all(
     config.plugins.map(async (plugin) => {
@@ -156,9 +158,13 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
     }),
   )
   initializeBugsnag()
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   Bugsnag.addOnError(async (event) => {
-    event.errors.forEach((error) => {
-      error.stacktrace.forEach((stackFrame) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    event.errors.forEach((error: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      error.stacktrace.forEach((stackFrame: any) => {
         stackFrame.file = cleanStackFrameFilePath({currentFilePath: stackFrame.file, projectRoot, pluginLocations})
       })
     })
@@ -171,7 +177,8 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
   })
 }
 
-export async function addBugsnagMetadata(event: Event, config: Interfaces.Config): Promise<void> {
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+export async function addBugsnagMetadata(event: any, config: Interfaces.Config): Promise<void> {
   const publicData = metadata.getAllPublicMetadata()
   const {commandStartOptions} = metadata.getAllSensitiveMetadata()
   const {startCommand} = commandStartOptions ?? {}
@@ -221,9 +228,13 @@ export async function addBugsnagMetadata(event: Event, config: Interfaces.Config
 }
 
 function initializeBugsnag() {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   if (Bugsnag.isStarted()) {
     return
   }
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   Bugsnag.start({
     appType: 'node',
     apiKey: bugsnagApiKey,

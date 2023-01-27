@@ -3,7 +3,7 @@ import {dotEnvFileNames} from '../../constants.js'
 import {writeDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import type {AppInterface} from './app'
+import type {AppInterface} from './app.js'
 
 export interface IdentifiersExtensions {
   [localIdentifier: string]: string

@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 3.38.0
+
+### Patch Changes
+
+- da8c87a9f: Fix an issue with CLI2 not printing to the right stdout
+  - @shopify/cli-kit@3.38.0
+  - @shopify/plugin-ngrok@3.38.0
+
 ## 3.37.0
 
 ### Patch Changes

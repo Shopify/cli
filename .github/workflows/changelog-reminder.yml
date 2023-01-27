@@ -7,7 +7,7 @@ jobs:
   remind:
     name: Changelog Reminder
     runs-on: ubuntu-latest
-    if: ${{ !github.event.pull_request.draft }}
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && !github.event.pull_request.draft }}
     steps:
       - uses: actions/checkout@v2
       - uses: mskelton/changelog-reminder-action@v2
