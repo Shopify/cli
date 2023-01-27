@@ -5,6 +5,7 @@ import {devUIExtensions} from './dev/extension.js'
 import {outputAppURL, outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
+import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -62,7 +63,13 @@ interface DevWebOptions {
 
 async function dev(options: DevOptions) {
   const token = await ensureAuthenticatedPartners()
-  const {storeFqdn, remoteApp, updateURLs: cachedUpdateURLs, tunnelPlugin} = await ensureDevEnvironment(options, token)
+  const {
+    storeFqdn,
+    remoteApp,
+    remoteAppUpdated,
+    updateURLs: cachedUpdateURLs,
+    tunnelPlugin,
+  } = await ensureDevEnvironment(options, token)
 
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
@@ -82,6 +89,12 @@ async function dev(options: DevOptions) {
 
   const frontendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Frontend)
   const backendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Backend)
+  const webhooksPath = backendConfig?.configuration?.webhooksPath
+  const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated
+
+  if (sendUninstallWebhook) {
+    output.info('Using a different app than last time, sending uninstall webhook to app server')
+  }
 
   /** If the app doesn't have web/ the link message is not necessary */
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
@@ -164,6 +177,21 @@ async function dev(options: DevOptions) {
     } else {
       proxyTargets.push(await devFrontendProxyTarget(frontendOptions))
     }
+  }
+
+  if (sendUninstallWebhook) {
+    additionalProcesses.push({
+      prefix: 'webhooks',
+      action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+        await sendUninstallWebhookToAppServer({
+          stdout,
+          token,
+          address: `http://localhost:${backendOptions.backendPort}${webhooksPath}`,
+          sharedSecret: backendOptions.apiSecret,
+          storeFqdn,
+        })
+      },
+    })
   }
 
   await logMetadataForDev({devOptions: options, tunnelUrl: frontendUrl, shouldUpdateURLs, storeFqdn})

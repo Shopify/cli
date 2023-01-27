@@ -17,6 +17,8 @@ export {
   H3Error,
 } from 'h3'
 
+export {FetchError} from 'node-fetch'
+
 /**
  * Create a new FormData object.
  *
