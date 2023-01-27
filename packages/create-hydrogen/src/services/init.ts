@@ -99,7 +99,7 @@ async function init(options: InitOptions) {
           return [
             {
               title: 'Parsing template files',
-              task: async (_, task) => {
+              task: async () => {
                 const templateData = {
                   name: hyphenizedName,
                   shopify_cli_version: cliVersion,
@@ -112,7 +112,7 @@ async function init(options: InitOptions) {
             },
             {
               title: 'Updating package.json',
-              task: async (_, task) => {
+              task: async () => {
                 const packageJSON = (await findUpAndReadPackageJson(templateScaffoldDir)).content
                 packageJSON.name = hyphenizedName
                 packageJSON.author = (await username()) ?? ''
@@ -137,7 +137,7 @@ async function init(options: InitOptions) {
     if (await isShopify()) {
       tasks.push({
         title: "[Shopifolks-only] Configuring the project's NPM registry",
-        task: async (_, task) => {
+        task: async () => {
           await writeToNpmrc(templateScaffoldDir, `@shopify:registry=https://registry.npmjs.org`)
         },
       })

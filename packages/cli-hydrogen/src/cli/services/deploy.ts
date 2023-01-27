@@ -4,7 +4,7 @@ import {buildTaskList} from './build.js'
 import {validateProject, fillDeployConfig} from './deploy/config.js'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
-import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
+import {Task, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
 
 interface TaskContext {
   config: ReqDeployConfig
@@ -69,9 +69,7 @@ export async function deployToOxygen(_config: DeployConfig) {
         const retryCount = task.retryCount
 
         if (retryCount === backoffPolicy.length) {
-          throw new Error(
-            "The deployment uploaded but hasn't become reachable within 2 minutes. Check the preview URL to see if deployment succeeded. If it didn't, then try again later.",
-          )
+          throw new Error(`Deployment health check failed.`)
         }
 
         if (retryCount && !isUnitTest()) await sleep(backoffPolicy[retryCount - 1]!)
@@ -84,7 +82,18 @@ export async function deployToOxygen(_config: DeployConfig) {
   ]
   /* eslint-enable require-atomic-updates */
 
-  await renderTasks(tasks)
+  try {
+    await renderTasks(tasks)
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Deployment health check failed.') {
+      renderWarning({
+        headline:
+          "The deployment uploaded but hasn't become reachable within 2 minutes. Check the preview URL to see if deployment succeeded. If it didn't, then try again later.",
+      })
+    } else {
+      throw error
+    }
+  }
 }
 
 async function shouldRetryOxygenCall(task: Task<TaskContext>, errorMessage: string) {
@@ -94,8 +103,8 @@ async function shouldRetryOxygenCall(task: Task<TaskContext>, errorMessage: stri
     throw new Error(`${errorMessage} ${taskErrors[taskErrors.length - 1]?.message}`)
   }
   if (retryCount) {
-    if (task.errors && task.errors.length > 0) {
-      const unrecoverableError = task.errors.find((error) => error.message.includes('Unrecoverable'))
+    if (taskErrors.length > 0) {
+      const unrecoverableError = taskErrors.find((error) => error.message.includes('Unrecoverable'))
       if (unrecoverableError) {
         throw new Error(unrecoverableError.message)
       }

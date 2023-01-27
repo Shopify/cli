@@ -1,4 +1,4 @@
-import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderWarning} from './ui.js'
+import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderTasks, renderWarning} from './ui.js'
 import {AbortSignal} from './abort.js'
 import {BugError, FatalError, AbortError} from './error.js'
 import {mockAndCaptureOutput} from './testing/output.js'
@@ -310,6 +310,38 @@ describe('renderConcurrent', async () => {
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
       "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  example error                                                               │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
+  })
+})
+
+describe('renderTasks', async () => {
+  test('renders an error message correctly when the task throws an error', async () => {
+    // Given
+    const mockOutput = mockAndCaptureOutput()
+
+    // When
+    const throwingTask = {
+      title: 'throwing task',
+      task: async () => {
+        throw new Error('example error')
+      },
+    }
+
+    try {
+      await renderTasks([throwingTask])
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error: any) {
+      renderWarning({headline: error.message})
+    }
+
+    // Then
+    expect(mockOutput.warn()).toMatchInlineSnapshot(`
+      "╭─ warning ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  example error                                                               │
       │                                                                              │

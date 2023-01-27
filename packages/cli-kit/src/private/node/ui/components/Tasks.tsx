@@ -18,6 +18,7 @@ export interface Task<TContext = unknown> {
 
 export interface Props<TContext> {
   tasks: Task<TContext>[]
+  silent?: boolean
 }
 
 enum TasksState {
@@ -26,7 +27,30 @@ enum TasksState {
   Failure = 'failure',
 }
 
-function Tasks<TContext>({tasks}: React.PropsWithChildren<Props<TContext>>) {
+async function runTask<TContext>(task: Task<TContext>, ctx: TContext) {
+  for (let retries = 1; retries <= (task.retry ?? 1); retries++) {
+    try {
+      if (task.skip?.(ctx)) {
+        return
+      }
+      // eslint-disable-next-line no-await-in-loop
+      return await task.task(ctx, task)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      if (retries === (task.retry ?? 1)) {
+        throw error
+      } else {
+        if (!task.errors) {
+          task.errors = []
+        }
+        task.errors.push(error)
+        task.retryCount = retries
+      }
+    }
+  }
+}
+
+function Tasks<TContext>({tasks, silent = isUnitTest()}: React.PropsWithChildren<Props<TContext>>) {
   const {twoThirds} = useLayout()
   const loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
@@ -37,55 +61,15 @@ function Tasks<TContext>({tasks}: React.PropsWithChildren<Props<TContext>>) {
     for (const task of tasks) {
       setCurrentTask(task)
 
-      let subTasks
-
-      for (let retries = 1; retries <= (task.retry ?? 1); retries++) {
-        try {
-          if (task.skip?.(ctx.current)) {
-            break
-          }
-          // eslint-disable-next-line no-await-in-loop
-          subTasks = await task.task(ctx.current, task)
-          break
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-          if (retries === (task.retry ?? 1)) {
-            throw error
-          } else {
-            if (!task.errors) {
-              task.errors = []
-            }
-            task.errors.push(error)
-            task.retryCount = retries
-          }
-        }
-      }
+      // eslint-disable-next-line no-await-in-loop
+      const subTasks = await runTask(task, ctx.current)
 
       // subtasks
       if (Array.isArray(subTasks) && subTasks.length > 0 && subTasks.every((task) => 'task' in task)) {
         for (const subTask of subTasks) {
           setCurrentTask(subTask)
-          for (let retries = 1; retries <= (subTask.retry ?? 1); retries++) {
-            try {
-              if (subTask.skip?.(ctx.current)) {
-                break
-              }
-              // eslint-disable-next-line no-await-in-loop
-              await subTask.task(ctx.current, subTask)
-              break
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } catch (error: any) {
-              if (retries === (subTask.retry ?? 1)) {
-                throw error
-              } else {
-                if (!subTask.errors) {
-                  subTask.errors = []
-                }
-                subTask.errors.push(error)
-                subTask.retryCount = retries
-              }
-            }
-          }
+          // eslint-disable-next-line no-await-in-loop
+          await runTask(subTask, ctx.current)
         }
       }
     }
@@ -96,7 +80,7 @@ function Tasks<TContext>({tasks}: React.PropsWithChildren<Props<TContext>>) {
     onRejected: () => setState(TasksState.Failure),
   })
 
-  if (isUnitTest()) {
+  if (silent) {
     return null
   }
 
