@@ -202,12 +202,9 @@ describe('Tasks', () => {
 
   test('supports retrying', async () => {
     // Given
-    let retryCount = 0
-
     const firstTaskFunction = vi.fn(async (_ctx, task) => {
-      if (retryCount < task.retry - 1) {
-        retryCount++
-        throw new Error(`something went wrong${retryCount}`)
+      if (task.retryCount < task.retry - 1) {
+        throw new Error(`something went wrong${task.retryCount}`)
       }
 
       await new Promise((resolve) => setTimeout(resolve, 2000))
@@ -231,17 +228,14 @@ describe('Tasks', () => {
       task 1 ..."
     `)
     expect(firstTask.retryCount).toBe(2)
-    expect(firstTask.errors).toEqual([Error('something went wrong1'), Error('something went wrong2')])
+    expect(firstTask.errors).toEqual([Error('something went wrong0'), Error('something went wrong1')])
   })
 
   test('supports retrying up to a limit', async () => {
     // Given
-    let retryCount = 0
-
     const firstTaskFunction = vi.fn(async (_ctx, task) => {
-      if (retryCount < task.retry) {
-        retryCount++
-        throw new Error(`something went wrong${retryCount}`)
+      if (task.retryCount < task.retry) {
+        throw new Error(`something went wrong${task.retryCount}`)
       }
 
       await new Promise((resolve) => setTimeout(resolve, 2000))
@@ -269,18 +263,15 @@ describe('Tasks', () => {
     // Then
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot('""')
     expect(firstTask.retryCount).toBe(2)
-    expect(firstTask.errors).toEqual([Error('something went wrong1'), Error('something went wrong2')])
+    expect(firstTask.errors).toEqual([Error('something went wrong0'), Error('something went wrong1')])
     expect(secondTaskFunction).toHaveBeenCalledTimes(0)
   })
 
   test('supports retrying a subtask', async () => {
     // Given
-    let retryCount = 0
-
     const firstSubTaskFunction = vi.fn(async (_ctx, task) => {
-      if (retryCount < task.retry) {
-        retryCount++
-        throw new Error(`something went wrong${retryCount}`)
+      if (task.retryCount < task.retry - 1) {
+        throw new Error(`something went wrong${task.retryCount}`)
       }
 
       await new Promise((resolve) => setTimeout(resolve, 2000))
@@ -306,19 +297,19 @@ describe('Tasks', () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
 
     // Then
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot('""')
+    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
+      "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+      subtask 1 ..."
+    `)
     expect(firstSubTask.retryCount).toBe(2)
-    expect(firstSubTask.errors).toEqual([Error('something went wrong1'), Error('something went wrong2')])
+    expect(firstSubTask.errors).toEqual([Error('something went wrong0'), Error('something went wrong1')])
   })
 
   test('supports retrying a subtask up to a limit', async () => {
     // Given
-    let retryCount = 0
-
     const firstSubTaskFunction = vi.fn(async (_ctx, task) => {
-      if (retryCount < task.retry) {
-        retryCount++
-        throw new Error(`something went wrong${retryCount}`)
+      if (task.retryCount < task.retry) {
+        throw new Error(`something went wrong${task.retryCount}`)
       }
 
       await new Promise((resolve) => setTimeout(resolve, 2000))
@@ -353,7 +344,7 @@ describe('Tasks', () => {
     // Then
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot('""')
     expect(firstSubTask.retryCount).toBe(2)
-    expect(firstSubTask.errors).toEqual([Error('something went wrong1'), Error('something went wrong2')])
+    expect(firstSubTask.errors).toEqual([Error('something went wrong0'), Error('something went wrong1')])
     expect(secondSubTaskFunction).toHaveBeenCalledTimes(0)
   })
 

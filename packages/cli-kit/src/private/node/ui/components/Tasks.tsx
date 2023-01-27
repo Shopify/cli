@@ -28,6 +28,9 @@ enum TasksState {
 }
 
 async function runTask<TContext>(task: Task<TContext>, ctx: TContext) {
+  task.retryCount = 0
+  task.errors = []
+
   for (let retries = 1; retries <= (task.retry ?? 1); retries++) {
     try {
       if (task.skip?.(ctx)) {
@@ -40,9 +43,6 @@ async function runTask<TContext>(task: Task<TContext>, ctx: TContext) {
       if (retries === (task.retry ?? 1)) {
         throw error
       } else {
-        if (!task.errors) {
-          task.errors = []
-        }
         task.errors.push(error)
         task.retryCount = retries
       }
