@@ -99,7 +99,7 @@ export async function deployToOxygen(_config: DeployConfig) {
 async function shouldRetryOxygenCall(task: Task<TaskContext>, errorMessage: string) {
   const retryCount = task.retryCount
   const taskErrors = task.errors ?? []
-  if (retryCount === backoffPolicy.length - 1) {
+  if (retryCount === backoffPolicy.length) {
     throw new Error(`${errorMessage} ${taskErrors[taskErrors.length - 1]?.message}`)
   }
   if (retryCount) {

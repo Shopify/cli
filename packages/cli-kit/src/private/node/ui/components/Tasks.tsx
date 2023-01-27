@@ -30,8 +30,9 @@ enum TasksState {
 async function runTask<TContext>(task: Task<TContext>, ctx: TContext) {
   task.retryCount = 0
   task.errors = []
+  const retry = task?.retry && task?.retry > 0 ? task.retry + 1 : 1
 
-  for (let retries = 1; retries <= (task.retry ?? 1); retries++) {
+  for (let retries = 1; retries <= retry; retries++) {
     try {
       if (task.skip?.(ctx)) {
         return
@@ -40,7 +41,7 @@ async function runTask<TContext>(task: Task<TContext>, ctx: TContext) {
       return await task.task(ctx, task)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      if (retries === (task.retry ?? 1)) {
+      if (retries === retry) {
         throw error
       } else {
         task.errors.push(error)
