@@ -38,7 +38,7 @@
     "@shopify/eslint-plugin": "^41.3.0",
     "@shopify/typescript-configs": "^5.1.0",
     "@shopify/web-pixels-extension": "0.1.4",
-    "@types/node": "14.17.0",
+    "@types/node": "14.18.36",
     "@types/rimraf": "^3.0.2",
     "@types/tmp": "^0.2.3",
     "@typescript-eslint/eslint-plugin": "^5.27.0",
