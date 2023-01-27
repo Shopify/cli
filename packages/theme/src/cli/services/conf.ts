@@ -1,36 +1,34 @@
+import {getThemeStore} from '../utilities/theme-store.js'
 import {Conf} from '@shopify/cli-kit/node/conf'
 import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
 
-const DEVELOPMENT_THEME_KEY = 'developmentTheme'
+type DevelopmentThemeId = string
 
 export interface ThemeConfSchema {
   themeStore: string
-  developmentTheme: string
+  [developmentThemeStore: string]: DevelopmentThemeId
 }
 
-let _instance: Conf<ThemeConfSchema> | undefined
+let _themeConfInstance: Conf<ThemeConfSchema> | undefined
 
 export function themeConf() {
-  if (!_instance) {
-    _instance = new Conf<ThemeConfSchema>({projectName: 'shopify-cli-theme-conf'})
+  if (!_themeConfInstance) {
+    _themeConfInstance = new Conf<ThemeConfSchema>({projectName: 'shopify-cli-theme-conf'})
   }
-  return _instance
+  return _themeConfInstance
 }
 
 export function getDevelopmentTheme(): string | undefined {
   outputDebug(outputContent`Getting development theme...`)
-  const config = themeConf()
-  return config.get(DEVELOPMENT_THEME_KEY)
+  return themeConf().get(getThemeStore({store: undefined}))
 }
 
 export function setDevelopmentTheme(theme: string): void {
   outputDebug(outputContent`Setting development theme...`)
-  const config = themeConf()
-  config.set(DEVELOPMENT_THEME_KEY, theme)
+  themeConf().set(getThemeStore({store: undefined}), theme)
 }
 
 export function removeDevelopmentTheme(): void {
   outputDebug(outputContent`Removing development theme...`)
-  const config = themeConf()
-  config.reset(DEVELOPMENT_THEME_KEY)
+  themeConf().reset(getThemeStore({store: undefined}))
 }
