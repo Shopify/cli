@@ -1,4 +1,8 @@
-import extensionInit, {getExtensionRuntimeDependencies} from './extension.js'
+import extensionInit, {
+  getExtensionRuntimeDependencies,
+  getFunctionRuntimeDependencies,
+  TemplateFlavor,
+} from './extension.js'
 import {blocks, configurationFileNames} from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
@@ -7,6 +11,7 @@ import {
   loadLocalFunctionSpecifications,
   loadLocalUIExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
+import * as functionBuild from '../function/build.js'
 import {describe, it, expect, vi, test} from 'vitest'
 import * as output from '@shopify/cli-kit/node/output'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
@@ -285,8 +290,8 @@ describe('initialize a extension', async () => {
     async () => {
       await withTemporaryApp(async (tmpDir) => {
         // Given
-        vi.spyOn(file, 'moveFile').mockResolvedValue()
         vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
+
         const name = 'my-ext-1'
         const specification = allFunctionSpecs.find((spec) => spec.identifier === 'order_discounts')!
         specification.templateURL = 'custom/template/url'
@@ -305,9 +310,99 @@ describe('initialize a extension', async () => {
     },
     30 * 1000,
   )
+
+  it(
+    'generates a Rust function',
+    async () => {
+      await withTemporaryApp(async (tmpDir) => {
+        // Given
+        const name = 'my-fun-1'
+        const specification = allFunctionSpecs.find((spec) => spec.identifier === 'order_discounts')!
+        const extensionFlavor = 'rust'
+
+        vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
+        vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockImplementationOnce(async (_origin, destination) => {
+          await file.writeFile(
+            joinPath(destination, 'shopify.function.extension.toml'),
+            `name = "my-fun-1"
+          type = "order_discounts"
+          api_version = "2023-01"
+
+          [build]
+          command = "cargo wasi build --release"
+          path = "target/wasm32-wasi/release/prod-discount-rust.wasm"`,
+          )
+        })
+
+        // When
+        const extensionDir = await createFromTemplate({
+          name,
+          specification,
+          extensionFlavor,
+          appDirectory: tmpDir,
+          specifications,
+        })
+
+        // Then
+        const app = await loadApp({directory: tmpDir, specifications})
+        const generatedFunction = app.extensions.function[0]!
+        expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
+        expect(generatedFunction.configuration.name).toBe(name)
+      })
+    },
+    30 * 1000,
+  )
+
+  it(
+    'generates a JS function',
+    async () => {
+      await withTemporaryApp(async (tmpDir) => {
+        // Given
+        const name = 'my-fun-1'
+        const specification = allFunctionSpecs.find((spec) => spec.identifier === 'order_discounts')!
+        const extensionFlavor = 'vanilla-js'
+
+        vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
+        vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockImplementationOnce(async (_origin, destination) => {
+          await file.writeFile(
+            joinPath(destination, 'shopify.function.extension.toml'),
+            `name = "my-fun-1"
+          type = "order_discounts"
+          api_version = "2023-01"
+
+          [build]
+          path = "dist/function.wasm"`,
+          )
+          await file.mkdir(joinPath(destination, 'src'))
+          await file.writeFile(joinPath(destination, 'src', 'index.js'), '')
+        })
+        const buildGraphqlTypesSpy = vi.spyOn(functionBuild, 'buildGraphqlTypes').mockResolvedValue()
+
+        // When
+        const extensionDir = await createFromTemplate({
+          name,
+          specification,
+          extensionFlavor,
+          appDirectory: tmpDir,
+          specifications,
+        })
+
+        // Then
+        const app = await loadApp({directory: tmpDir, specifications})
+        const generatedFunction = app.extensions.function[0]!
+        expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
+        expect(generatedFunction.configuration.name).toBe(name)
+        expect(generatedFunction.entrySourceFilePath).toBe(joinPath(extensionDir, 'src', 'index.js'))
+
+        expect(addNPMDependenciesIfNeeded).toHaveBeenCalledOnce()
+        expect(buildGraphqlTypesSpy).toHaveBeenCalledOnce()
+      })
+    },
+    30 * 1000,
+  )
 })
 
-describe('getRuntimeDependencies', () => {
+describe('getExtensionRuntimeDependencies', () => {
   test('no not include React for flavored Vanilla UI extensions', async () => {
     // Given
     const allUISpecs = await loadLocalUIExtensionsSpecifications()
@@ -392,3 +487,33 @@ async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | vo
     return callback(tmpDir)
   })
 }
+
+describe('getFunctionRuntimeDependencies', () => {
+  test('adds dependencies for JS functions', async () => {
+    // Given
+    const allFunctionSpecs = await loadLocalFunctionSpecifications()
+    const templateFlavor: TemplateFlavor = 'javascript'
+
+    // When/then
+    allFunctionSpecs.forEach((specification) => {
+      const got = getFunctionRuntimeDependencies(specification, templateFlavor)
+      expect(got.find((dep) => dep.name === '@shopify/shopify_function')).toBeTruthy()
+      expect(got.find((dep) => dep.name === 'javy-cli')).toBeTruthy()
+      expect(got.find((dep) => dep.name === 'javy')).toBeTruthy()
+    })
+  })
+
+  test('no-ops for non-JS functions', async () => {
+    // Given
+    const allFunctionSpecs = await loadLocalFunctionSpecifications()
+    const templateFlavor: TemplateFlavor = 'rust'
+
+    // When/then
+    allFunctionSpecs.forEach((specification) => {
+      const got = getFunctionRuntimeDependencies(specification, templateFlavor)
+      expect(got.find((dep) => dep.name === '@shopify/shopify_function')).toBeFalsy()
+      expect(got.find((dep) => dep.name === 'javy-cli')).toBeFalsy()
+      expect(got.find((dep) => dep.name === 'javy')).toBeFalsy()
+    })
+  })
+})
