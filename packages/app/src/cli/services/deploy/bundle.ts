@@ -70,7 +70,10 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
     })
 
     if (options.bundle) {
-      await zip(bundleDirectory, options.bundlePath)
+      await zip({
+        inputDirectory: bundleDirectory,
+        outputZipPath: options.bundlePath,
+      })
     }
   })
 }

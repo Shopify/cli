@@ -1,3 +1,5 @@
+export {}
+
 /**
  * Converts a mapping type to be non-optional.
  *
