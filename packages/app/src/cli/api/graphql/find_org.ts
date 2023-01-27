@@ -8,7 +8,7 @@ export const FindOrganizationQuery = gql`
         businessName
         website
         appsNext
-        apps(first: 100, title: $title) {
+        apps(first: 25, title: $title) {
           pageInfo {
             hasNextPage
           }
