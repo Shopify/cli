@@ -240,6 +240,7 @@ importers:
       chokidar: 3.5.3
       diff: 5.1.0
       esbuild: 0.15.16
+      function-runner: 3.2.1
       graphql: ^16.0.0
       graphql-request: 4.3.0
       graphql-tag: ^2.11.0
@@ -258,6 +259,7 @@ importers:
       chokidar: 3.5.3
       diff: 5.1.0
       esbuild: 0.15.16
+      function-runner: 3.2.1
       graphql-request: 4.3.0_graphql@16.6.0
       http-proxy: 1.18.1
       serve-static: 1.15.0
@@ -8538,6 +8540,13 @@ packages:
   /function-bind/1.1.1:
     resolution: {integrity: sha512-yIovAzMX49sF8Yl58fSCWJ5svSLuaibPxXQJFLmBObTuCr0Mf1KiPopGM9NiFjiYBCbfaa2Fh6breQ6ANVTI0A==}
 
+  /function-runner/3.2.1:
+    resolution: {integrity: sha512-YnNmiREky4QRwm7j7Ytu9PBH1W1F8Nej3YjbE6WYdmhjVsOqBsuElKXWTWUa5MBBVX1pqWry2LDRi+nIMeKDTQ==}
+    hasBin: true
+    dependencies:
+      node-fetch: 3.3.0
+    dev: false
+
   /function.prototype.name/1.1.5:
     resolution: {integrity: sha512-uN7m/BzVKQnCUF/iW8jYea67v++2u7m5UgENbHRtdDVclOUP+FMPlCNdmk0h/ysGyo2tavMJEDqJAkJdRa1vMA==}
     engines: {node: '>= 0.4'}
@@ -10965,7 +10974,6 @@ packages:
       data-uri-to-buffer: 4.0.0
       fetch-blob: 3.2.0
       formdata-polyfill: 4.0.10
-    dev: true
 
   /node-gyp-build/4.5.0:
     resolution: {integrity: sha512-2iGbaQBV+ITgCz76ZEjmhUKAKVf7xfY1sRl4UiKQspfZMH2h06SyhNsnSVy50cwkFQDGLyif6m/6uFXHkOZ6rg==}
