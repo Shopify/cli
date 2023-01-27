@@ -23,7 +23,7 @@ export async function addESLint({app, force, install}: AddESlintOptions) {
   const list = ui.newListr(
     [
       {
-        title: 'Installing additional dependencies',
+        title: 'Installing dependencies',
         skip: () => !install,
         task: async (_, task) => {
           const requiredDependencies = ['eslint', 'eslint-plugin-hydrogen', 'prettier', '@shopify/prettier-config']

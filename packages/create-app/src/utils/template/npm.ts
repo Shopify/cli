@@ -66,7 +66,7 @@ export async function getDeepInstallNPMTasks({
 
   return packageJSONFiles.map((filePath) => {
     const folderPath = filePath.replace('package.json', '')
-    const titlePath = folderPath.replace(root, '')
+    const titlePath = folderPath.replace(joinPath(root, '/'), '')
 
     /**
      * Installation of dependencies using Yarn on Windows might lead
@@ -78,8 +78,9 @@ export async function getDeepInstallNPMTasks({
      * Reported issue: https://github.com/yarnpkg/yarn/issues/7212
      */
     const args = platform() === 'win32' && packageManager === 'yarn' ? ['--network-concurrency', '1'] : []
+    const title = titlePath === '' ? 'Installing dependencies' : `Installing dependencies in ${titlePath}`
     return {
-      title: `Installing dependencies in ${titlePath}`,
+      title,
       task: async () => {
         await installNodeModules({directory: folderPath, packageManager, args})
       },
