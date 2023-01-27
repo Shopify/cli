@@ -147,7 +147,8 @@
         "description": "Manage environment variables."
       },
       "app:function": {
-        "description": "Build Shopify Functions."
+        "description": "Manage Shopify Functions.",
+        "hidden": true
       },
       "auth": {
         "description": "Auth operations."

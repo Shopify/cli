@@ -4,7 +4,7 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class FunctionRun extends Command {
-  static description = 'Run a Shopify Function locally for testing.'
+  static description = 'Run a Function locally for testing.'
 
   static flags = {
     ...globalFlags,
