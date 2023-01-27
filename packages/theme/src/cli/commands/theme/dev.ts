@@ -81,6 +81,7 @@ export default class Dev extends ThemeCommand {
     'live-reload',
     'poll',
     'theme-editor-sync',
+    'overwrite-json',
     'port',
     'theme',
     'only',
@@ -104,6 +105,7 @@ export default class Dev extends ThemeCommand {
     flags = {
       ...flags,
       theme,
+      'overwrite-json': Boolean(flags['theme-editor-sync']),
     }
 
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Dev.cli2Flags})
