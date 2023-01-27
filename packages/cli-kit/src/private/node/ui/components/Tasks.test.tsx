@@ -23,7 +23,7 @@ describe('Tasks', () => {
     await new Promise((resolve) => setTimeout(resolve, 100))
 
     // Then
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
       "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
       task 1 ..."
     `)
@@ -116,7 +116,7 @@ describe('Tasks', () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
 
     // Then
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
       "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
       subtask 1 ..."
     `)
@@ -150,7 +150,7 @@ describe('Tasks', () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
 
     // Then
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
       "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
       task 2 ..."
     `)
@@ -191,7 +191,7 @@ describe('Tasks', () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
 
     // Then
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
       "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
       subtask 2 ..."
     `)
@@ -223,7 +223,7 @@ describe('Tasks', () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
 
     // Then
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
       "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
       task 1 ..."
     `)
@@ -305,7 +305,7 @@ describe('Tasks', () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
 
     // Then
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
       "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
       subtask 1 ..."
     `)
@@ -400,7 +400,7 @@ describe('Tasks', () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
 
     // Then
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
       "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
       task 3 ..."
     `)
