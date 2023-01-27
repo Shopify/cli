@@ -169,7 +169,7 @@ describe('uploadDeploymentStep()', async () => {
 
       expect(result).toBe(previewURL)
       expect(mockedFormDataAppend).toHaveBeenCalledTimes(3)
-      expect(mockedZip).toHaveBeenCalledWith(`unit/test/dist`, `${tmpDir}/dist.zip`)
+      expect(mockedZip).toHaveBeenCalledWith({inputDirectory: 'unit/test/dist', outputZipPath: `${tmpDir}/dist.zip`})
       expect(uploadOxygenDeploymentFile).toHaveBeenCalledWith('oxygen.address', '123', mockformData)
     })
   })
