@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - stable/3.*
 
 concurrency:
   group: changeset-${{ github.head_ref }}
@@ -36,5 +37,6 @@ jobs:
         uses: changesets/action@e9cc34b540dd3ad1b030c57fd97269e8f6ad905a # pin@v1
         with:
           version: pnpm changeset-manifests
+          title: Version Packages - ${{ github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
