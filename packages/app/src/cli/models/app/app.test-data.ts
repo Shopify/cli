@@ -94,8 +94,14 @@ function defaultFunctionConfiguration(): FunctionConfigType {
   }
 }
 
-export async function testFunctionExtension(config?: FunctionConfigType): Promise<FunctionExtension> {
-  const configuration = config ?? defaultFunctionConfiguration()
+interface TestFunctionExtensionOptions {
+  dir?: string
+  config?: FunctionConfigType
+}
+
+export async function testFunctionExtension(opts: TestFunctionExtensionOptions = {}): Promise<FunctionExtension> {
+  const directory = opts.dir ?? '/tmp/project/extensions/my-function'
+  const configuration = opts.config ?? defaultFunctionConfiguration()
 
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === configuration.type) as FunctionSpec
@@ -104,7 +110,7 @@ export async function testFunctionExtension(config?: FunctionConfigType): Promis
     configuration,
     configurationPath: '',
     specification,
-    directory: './my-extension',
+    directory,
   })
 }
 

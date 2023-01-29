@@ -22,15 +22,17 @@ describe('buildFunctionExtension', () => {
     signal = vi.fn()
     app = {}
     extension = await testFunctionExtension({
-      name: 'MyFunction',
-      type: 'product_discounts',
-      description: '',
-      build: {
-        command: 'make build',
-        path: 'dist/index.wasm',
+      config: {
+        name: 'MyFunction',
+        type: 'product_discounts',
+        description: '',
+        build: {
+          command: 'make build',
+          path: 'dist/index.wasm',
+        },
+        configurationUi: true,
+        apiVersion: '2022-07',
       },
-      configurationUi: true,
-      apiVersion: '2022-07',
     })
   })
 
