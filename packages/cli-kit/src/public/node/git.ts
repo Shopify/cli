@@ -2,10 +2,8 @@ import {hasGit, isTerminalInteractive} from './environment/local.js'
 import {appendFileSync} from './fs.js'
 import {AbortError} from './error.js'
 import {cwd} from './path.js'
-import {content, token, debug} from '../../output.js'
+import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
-
-export const gitFactory = git
 
 /**
  * Initialize a git repository at the given directory.
@@ -14,12 +12,30 @@ export const gitFactory = git
  * @param initialBranch - The name of the initial branch.
  */
 export async function initializeGitRepository(directory: string, initialBranch = 'main'): Promise<void> {
-  debug(content`Initializing git repository at ${token.path(directory)}...`)
+  outputDebug(outputContent`Initializing git repository at ${outputToken.path(directory)}...`)
   await ensureGitIsPresentOrAbort()
   // We use init and checkout instead of `init --initial-branch` because the latter is only supported in git 2.28+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const repo = git(directory)
   await repo.init()
   await repo.checkoutLocalBranch(initialBranch)
+}
+
+/**
+ * Given a Git repository and a list of absolute paths to files contained
+ * in the repository, it filters and returns the files that are ignored
+ * by the .gitignore.
+ *
+ * @param directory - The absolute path to the directory containing the files.
+ * @param files - The list of files to check against.
+ */
+export async function checkIfIgnoredInGitRepository(directory: string, files: string[]): Promise<string[]> {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const repo = git(directory)
+  const ignoredLockfile = await repo.checkIgnore(files)
+  return ignoredLockfile
 }
 
 export interface GitIgnoreTemplate {
@@ -32,7 +48,7 @@ export interface GitIgnoreTemplate {
  * @param template - The template to use to create the .gitignore file.
  */
 export function createGitIgnore(directory: string, template: GitIgnoreTemplate): void {
-  debug(content`Creating .gitignore at ${token.path(directory)}...`)
+  outputDebug(outputContent`Creating .gitignore at ${outputToken.path(directory)}...`)
   const filePath = `${directory}/.gitignore`
 
   let fileContent = ''
@@ -68,7 +84,7 @@ export interface GitCloneOptions {
  */
 export async function downloadGitRepository(cloneOptions: GitCloneOptions): Promise<void> {
   const {repoUrl, destination, progressUpdater, shallow, latestTag} = cloneOptions
-  debug(content`Git-cloning repository ${repoUrl} into ${token.path(destination)}...`)
+  outputDebug(outputContent`Git-cloning repository ${repoUrl} into ${outputToken.path(destination)}...`)
   await ensureGitIsPresentOrAbort()
   const [repository, branch] = repoUrl.split('#')
   const options: TaskOptions = {'--recurse-submodules': null}
@@ -99,9 +115,13 @@ export async function downloadGitRepository(cloneOptions: GitCloneOptions): Prom
     ...(!isTerminalInteractive() && {config: ['core.askpass=true']}),
   }
   try {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     await git(simpleGitOptions).clone(repository!, destination, options)
 
     if (latestTag) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       const localGitRepository = git(destination)
       const latestTag = await getLocalLatestTag(localGitRepository, repoUrl)
       await localGitRepository.checkout(latestTag)
@@ -140,13 +160,17 @@ async function getLocalLatestTag(repository: SimpleGit, repoUrl: string): Promis
  * @returns The latest commit of the repository.
  */
 export async function getLatestGitCommit(directory?: string): Promise<DefaultLogFields & ListLogLine> {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const logs = await git({baseDir: directory}).log({
     maxCount: 1,
   })
   if (!logs.latest) {
     throw new AbortError(
       'Must have at least one commit to run command',
-      content`Run ${token.genericShellCommand("git commit -m 'Initial commit'")} to create your first commit.`,
+      outputContent`Run ${outputToken.genericShellCommand(
+        "git commit -m 'Initial commit'",
+      )} to create your first commit.`,
     )
   }
   return logs.latest
@@ -159,6 +183,8 @@ export async function getLatestGitCommit(directory?: string): Promise<DefaultLog
  * @returns A promise that resolves when the files are added to the index.
  */
 export async function addAllToGitFromDirectory(directory?: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const simpleGit = git({baseDir: directory})
   await simpleGit.raw('add', '--all')
 }
@@ -176,6 +202,8 @@ export interface CreateGitCommitOptions {
  * @returns The hash of the created commit.
  */
 export async function createGitCommit(message: string, options?: CreateGitCommitOptions): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const simpleGit = git({baseDir: options?.directory})
 
   const commitOptions = options?.author ? {'--author': options.author} : undefined
@@ -191,11 +219,15 @@ export async function createGitCommit(message: string, options?: CreateGitCommit
  * @returns The HEAD symbolic reference of the repository.
  */
 export async function getHeadSymbolicRef(directory?: string): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const ref = await git({baseDir: directory}).raw('symbolic-ref', '-q', 'HEAD')
   if (!ref) {
     throw new AbortError(
       "Git HEAD can't be detached to run command",
-      content`Run ${token.genericShellCommand('git checkout [branchName]')} to reattach HEAD or see git ${token.link(
+      outputContent`Run ${outputToken.genericShellCommand(
+        'git checkout [branchName]',
+      )} to reattach HEAD or see git ${outputToken.link(
         'documentation',
         'https://git-scm.com/book/en/v2/Git-Internals-Git-References',
       )} for more details`,
@@ -212,7 +244,10 @@ export async function ensureGitIsPresentOrAbort(): Promise<void> {
   if (!(await hasGit())) {
     throw new AbortError(
       `Git is necessary in the environment to continue`,
-      content`Install ${token.link('git', 'https://git-scm.com/book/en/v2/Getting-Started-Installing-Git')}`,
+      outputContent`Install ${outputToken.link(
+        'git',
+        'https://git-scm.com/book/en/v2/Getting-Started-Installing-Git',
+      )}`,
     )
   }
 }
@@ -225,7 +260,9 @@ export class OutsideGitDirectoryError extends AbortError {}
  * @param directory - The directory to check.
  */
 export async function ensureInsideGitDirectory(directory?: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   if (!(await git({baseDir: directory}).checkIsRepo())) {
-    throw new OutsideGitDirectoryError(`${token.path(directory || cwd())} is not a Git directory`)
+    throw new OutsideGitDirectoryError(`${outputToken.path(directory || cwd())} is not a Git directory`)
   }
 }

@@ -17,6 +17,8 @@ export interface Props<T> {
   highlightedTerm?: string
   loading?: boolean
   errorMessage?: string
+  hasMorePages?: boolean
+  morePagesMessage?: string
 }
 
 export interface Item<T> {
@@ -114,6 +116,8 @@ export default function SelectInput<T>({
   highlightedTerm,
   loading = false,
   errorMessage,
+  hasMorePages = false,
+  morePagesMessage,
 }: React.PropsWithChildren<Props<T>>): JSX.Element | null {
   const defaultValueIndex = defaultValue ? items.findIndex((item) => item.value === defaultValue.value) : -1
   const initialIndex = defaultValueIndex === -1 ? 0 : defaultValueIndex
@@ -247,7 +251,13 @@ export default function SelectInput<T>({
           ></SelectItemsGroup>
         )}
 
-        <Box marginTop={1} marginLeft={3}>
+        <Box marginTop={1} marginLeft={3} flexDirection="column">
+          {hasMorePages && (
+            <Text>
+              <Text bold>1-{items.length} of many</Text>
+              {morePagesMessage ? `  ${morePagesMessage}` : null}
+            </Text>
+          )}
           <Text dimColor>
             Press {figures.arrowUp}
             {figures.arrowDown} arrows to select, enter to confirm

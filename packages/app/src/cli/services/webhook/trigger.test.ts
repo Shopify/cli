@@ -10,7 +10,7 @@ import {
   collectTopic,
   WebhookTriggerFlags,
 } from '../../prompts/webhook/options-prompt.js'
-import {output} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -115,7 +115,7 @@ describe('webhookTriggerService', () => {
     vi.mocked(triggerLocalWebhook)
     vi.mocked(getWebhookSample).mockResolvedValue(successEmptyResponse)
 
-    const outputSpy = vi.spyOn(output, 'success')
+    const outputSpy = vi.spyOn(output, 'outputSuccess')
 
     // When
     await webhookTriggerService(sampleFlags())
@@ -135,7 +135,7 @@ describe('webhookTriggerService', () => {
       vi.mocked(triggerLocalWebhook).mockResolvedValue(true)
       vi.mocked(getWebhookSample).mockResolvedValue(successDirectResponse)
 
-      const outputSpy = vi.spyOn(output, 'success')
+      const outputSpy = vi.spyOn(output, 'outputSuccess')
 
       // When
       await webhookTriggerService(sampleFlags())

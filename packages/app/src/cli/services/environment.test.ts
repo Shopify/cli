@@ -32,7 +32,7 @@ import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager.js'
+import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 beforeEach(() => {
   vi.mock('./conf.js')
@@ -147,7 +147,7 @@ const BAD_INPUT_WITH_DATA: DevEnvironmentOptions = {
 
 const FETCH_RESPONSE = {
   organization: ORG1,
-  apps: [APP1, APP2],
+  apps: {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
   stores: [STORE1, STORE2],
 }
 
@@ -206,7 +206,12 @@ describe('ensureGenerateEnvironment', () => {
 
     // Then
     expect(got).toEqual(APP1.apiKey)
-    expect(selectOrCreateApp).toHaveBeenCalledWith('my-app', [APP1, APP2], ORG1, 'token')
+    expect(selectOrCreateApp).toHaveBeenCalledWith(
+      'my-app',
+      {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
+      ORG1,
+      'token',
+    )
     expect(setAppInfo).toHaveBeenCalledWith({
       appId: APP1.apiKey,
       title: APP1.title,
@@ -407,7 +412,12 @@ describe('ensureDeployEnvironment', () => {
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')
-    expect(selectOrCreateApp).toHaveBeenCalledWith(app.name, [APP1, APP2], ORG1, 'token')
+    expect(selectOrCreateApp).toHaveBeenCalledWith(
+      app.name,
+      {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
+      ORG1,
+      'token',
+    )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
       identifiers,
@@ -451,7 +461,12 @@ describe('ensureDeployEnvironment', () => {
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')
-    expect(selectOrCreateApp).toHaveBeenCalledWith(app.name, [APP1, APP2], ORG1, 'token')
+    expect(selectOrCreateApp).toHaveBeenCalledWith(
+      app.name,
+      {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
+      ORG1,
+      'token',
+    )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
       identifiers,

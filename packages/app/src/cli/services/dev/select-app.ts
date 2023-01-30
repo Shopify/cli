@@ -2,9 +2,9 @@ import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} fro
 import {Organization, OrganizationApp, MinimalOrganizationApp} from '../../models/organization.js'
 import {fetchAppFromApiKey} from '../dev/fetch.js'
 import {CreateAppQuery, CreateAppQuerySchema, CreateAppQueryVariables} from '../../api/graphql/create_app.js'
-import {output} from '@shopify/cli-kit'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 /**
  * Select an app from env, list or create a new one:
@@ -19,13 +19,13 @@ import {AbortError} from '@shopify/cli-kit/node/error'
  */
 export async function selectOrCreateApp(
   localAppName: string,
-  apps: MinimalOrganizationApp[],
+  apps: {pageInfo: {hasNextPage: boolean}; nodes: MinimalOrganizationApp[]},
   org: Organization,
   token: string,
 ): Promise<OrganizationApp> {
-  let createNewApp = apps.length === 0
+  let createNewApp = apps.nodes.length === 0
   if (!createNewApp) {
-    output.info(`\nBefore you preview your work, it needs to be associated with an app.\n`)
+    outputInfo(`\nBefore you preview your work, it needs to be associated with an app.\n`)
     createNewApp = await createAsNewAppPrompt()
   }
   if (createNewApp) {

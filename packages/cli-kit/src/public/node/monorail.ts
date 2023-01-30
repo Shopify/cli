@@ -1,7 +1,9 @@
 import {fetch} from './http.js'
 import {JsonMap} from '../../private/common/json.js'
-import {DeepRequired} from '../../private/common/ts/deep-required.js'
-import {debug, content, token} from '../../output.js'
+import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
+import {DeepRequired} from '../common/ts/deep-required.js'
+
+export {DeepRequired}
 
 const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 
@@ -141,10 +143,10 @@ export async function publishMonorailEvent<TSchemaId extends keyof Schemas, TPay
     const response = await fetch(url, {method: 'POST', body, headers})
 
     if (response.status === 200) {
-      debug(content`Analytics event sent: ${token.json(payload)}`)
+      outputDebug(outputContent`Analytics event sent: ${outputToken.json(payload)}`)
       return {type: 'ok'}
     } else {
-      debug(`Failed to report usage analytics: ${response.statusText}`)
+      outputDebug(`Failed to report usage analytics: ${response.statusText}`)
       return {type: 'error', message: response.statusText}
     }
     // eslint-disable-next-line no-catch-all/no-catch-all
@@ -153,7 +155,7 @@ export async function publishMonorailEvent<TSchemaId extends keyof Schemas, TPay
     if (error instanceof Error) {
       message = message.concat(`: ${error.message}`)
     }
-    debug(message)
+    outputDebug(message)
     return {type: 'error', message}
   }
 }

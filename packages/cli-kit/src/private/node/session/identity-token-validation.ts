@@ -1,5 +1,5 @@
 import {identityFqdn} from '../../../public/node/environment/fqdn.js'
-import {debug} from '../../../output.js'
+import {outputDebug} from '../../../public/node/output.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 
 export async function validateIdentityToken(token: string) {
@@ -10,18 +10,18 @@ export async function validateIdentityToken(token: string) {
       headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
       body: JSON.stringify({token}),
     }
-    debug(`Sending Identity Introspection request to URL: ${instrospectionURL}`)
+    outputDebug(`Sending Identity Introspection request to URL: ${instrospectionURL}`)
 
     const response = await shopifyFetch(instrospectionURL, options)
 
     if (response.ok && response.headers.get('content-type')?.includes('json')) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const json: any = await response.json()
-      debug(`The identity token is valid: ${json.valid}`)
+      outputDebug(`The identity token is valid: ${json.valid}`)
       return json.valid
     } else {
       const text = await response.text()
-      debug(`The Introspection request failed with:
+      outputDebug(`The Introspection request failed with:
  - status: ${response.status}
  - www-authenticate header: ${JSON.stringify(response.headers.get('www-authenticate'))}
  - body: ${JSON.stringify(text)}`)
@@ -29,7 +29,7 @@ export async function validateIdentityToken(token: string) {
     }
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    debug(`The identity token is invalid: ${error}`)
+    outputDebug(`The identity token is invalid: ${error}`)
     return false
   }
 }

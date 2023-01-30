@@ -1,7 +1,8 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
 import {fetchOrgAndApps} from '../services/dev/fetch.js'
-import {output, ui} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
 import {renderAutocompletePrompt, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {outputCompleted} from '@shopify/cli-kit/node/output'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
   if (organizations.length === 1) {
@@ -19,17 +20,27 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
   return organizations.find((org) => org.id === choice.id)!
 }
 
-export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: string, token: string): Promise<string> {
+export async function selectAppPrompt(
+  apps: {pageInfo: {hasNextPage: boolean}; nodes: MinimalOrganizationApp[]},
+  orgId: string,
+  token: string,
+): Promise<string> {
   const toAnswer = (app: MinimalOrganizationApp) => ({label: app.title, value: app.apiKey})
-  const appList = apps.map(toAnswer)
+  const appList = apps.nodes.map(toAnswer)
 
   return renderAutocompletePrompt({
     message: 'Which existing app is this for?',
     choices: appList,
+    hasMorePages: apps.pageInfo.hasNextPage,
     search: async (term) => {
       const result = await fetchOrgAndApps(orgId, token, term)
 
-      return result.apps.map(toAnswer)
+      return {
+        data: result.apps.nodes.map(toAnswer),
+        meta: {
+          hasNextPage: result.apps.pageInfo.hasNextPage,
+        },
+      }
     },
   })
 }
@@ -37,7 +48,7 @@ export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: str
 export async function selectStorePrompt(stores: OrganizationStore[]): Promise<OrganizationStore | undefined> {
   if (stores.length === 0) return undefined
   if (stores.length === 1) {
-    output.completed(`Using your default dev store (${stores[0]!.shopName}) to preview your project.`)
+    outputCompleted(`Using your default dev store (${stores[0]!.shopName}) to preview your project.`)
     return stores[0]
   }
   const storeList = stores.map((store) => ({name: store.shopName, value: store.shopId}))

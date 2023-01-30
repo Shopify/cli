@@ -1,8 +1,7 @@
 import {checkLockfileStatus} from './build/check-lockfile.js'
 import {build as viteBuild} from 'vite'
-import {ui} from '@shopify/cli-kit'
-import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {renderTasks} from '@shopify/cli-kit/node/ui'
 
 type Target = 'node' | 'client' | 'worker'
 
@@ -14,14 +13,14 @@ interface DevOptions {
   verbose?: boolean
 }
 
-export function buildTaskList({directory, targets, base, assetBaseURL, verbose}: DevOptions): ui.ListrTask[] {
+export function buildTaskList({directory, targets, base, assetBaseURL, verbose}: DevOptions) {
   const commonConfig = {base, root: directory}
 
   return Object.entries(targets)
     .filter(([_, value]) => value)
     .map(([key, value]) => ({
       title: `Building ${key} code`,
-      task: async (_, task) => {
+      task: async () => {
         if (key === 'worker') {
           process.env.WORKER = 'true'
         }
@@ -45,8 +44,6 @@ export function buildTaskList({directory, targets, base, assetBaseURL, verbose}:
           abortError.stack = error.stack
           throw abortError
         }
-
-        task.title = `Built ${key} code`
       },
     }))
 }
@@ -56,7 +53,5 @@ export async function build(options: DevOptions) {
 
   const tasks = await buildTaskList(options)
 
-  const list = ui.newListr(tasks, {rendererSilent: isUnitTest()})
-
-  await list.run()
+  await renderTasks(tasks)
 }

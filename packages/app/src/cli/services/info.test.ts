@@ -6,11 +6,11 @@ import {AppInterface} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp, testUIExtension} from '../models/app/app.test-data.js'
 import {AppErrors} from '../models/app/loader.js'
-import {output} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 
 beforeEach(async () => {
   vi.mock('./conf.js')
@@ -29,11 +29,9 @@ describe('info', () => {
     vi.mocked(checkForNewVersion).mockResolvedValue(latestVersion)
 
     // When
-    const result = output.stringifyMessage(await info(app, {format: 'text', webEnv: false}))
+    const result = stringifyMessage(await info(app, {format: 'text', webEnv: false}))
     // Then
-    expect(output.unstyled(result)).toMatch(
-      'Shopify CLI       2.2.2 💡 Version 2.2.3 available! Run yarn shopify upgrade',
-    )
+    expect(unstyled(result)).toMatch('Shopify CLI       2.2.2 💡 Version 2.2.3 available! Run yarn shopify upgrade')
   })
 
   it('returns the current configs for dev when present', async () => {
@@ -49,13 +47,13 @@ describe('info', () => {
     const app = mockApp()
 
     // When
-    const result = output.stringifyMessage(await info(app, {format: 'text', webEnv: false}))
+    const result = stringifyMessage(await info(app, {format: 'text', webEnv: false}))
 
     // Then
-    expect(output.unstyled(result)).toMatch(/App\s*My App/)
-    expect(output.unstyled(result)).toMatch(/Dev store\s*my-app.example.com/)
-    expect(output.unstyled(result)).toMatch(/API key\s*123/)
-    expect(output.unstyled(result)).toMatch(/Update URLs\s*Always/)
+    expect(unstyled(result)).toMatch(/App\s*My App/)
+    expect(unstyled(result)).toMatch(/Dev store\s*my-app.example.com/)
+    expect(unstyled(result)).toMatch(/API key\s*123/)
+    expect(unstyled(result)).toMatch(/Update URLs\s*Always/)
   })
 
   it('returns empty configs for dev when not present', async () => {
@@ -63,13 +61,13 @@ describe('info', () => {
     const app = mockApp()
 
     // When
-    const result = output.stringifyMessage(await info(app, {format: 'text', webEnv: false}))
+    const result = stringifyMessage(await info(app, {format: 'text', webEnv: false}))
 
     // Then
-    expect(output.unstyled(result)).toMatch(/App\s*Not yet configured/)
-    expect(output.unstyled(result)).toMatch(/Dev store\s*Not yet configured/)
-    expect(output.unstyled(result)).toMatch(/API key\s*Not yet configured/)
-    expect(output.unstyled(result)).toMatch(/Update URLs\s*Not yet configured/)
+    expect(unstyled(result)).toMatch(/App\s*Not yet configured/)
+    expect(unstyled(result)).toMatch(/Dev store\s*Not yet configured/)
+    expect(unstyled(result)).toMatch(/API key\s*Not yet configured/)
+    expect(unstyled(result)).toMatch(/Update URLs\s*Not yet configured/)
   })
 
   it('returns update shopify cli reminder when last version lower or equals to current version', async () => {
@@ -78,10 +76,10 @@ describe('info', () => {
     vi.mocked(checkForNewVersion).mockResolvedValue(undefined)
 
     // When
-    const result = output.stringifyMessage(await info(app, {format: 'text', webEnv: false}))
+    const result = stringifyMessage(await info(app, {format: 'text', webEnv: false}))
     // Then
-    expect(output.unstyled(result)).toMatch('Shopify CLI       2.2.2')
-    expect(output.unstyled(result)).not.toMatch('CLI reminder')
+    expect(unstyled(result)).toMatch('Shopify CLI       2.2.2')
+    expect(unstyled(result)).not.toMatch('CLI reminder')
   })
 
   it('returns the web environment as a text when webEnv is true', async () => {
@@ -108,7 +106,10 @@ describe('info', () => {
     vi.mocked(fetchOrgAndApps).mockResolvedValue({
       organization,
       stores: [],
-      apps: [organizationApp],
+      apps: {
+        nodes: [organizationApp],
+        pageInfo: {hasNextPage: false},
+      },
     })
     vi.mocked(selectApp).mockResolvedValue(organizationApp)
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
@@ -117,7 +118,7 @@ describe('info', () => {
     const result = await info(app, {format: 'text', webEnv: true})
 
     // Then
-    expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
+    expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
     "
         SHOPIFY_API_KEY=api-key
         SHOPIFY_API_SECRET=api-secret
@@ -150,7 +151,10 @@ describe('info', () => {
     vi.mocked(fetchOrgAndApps).mockResolvedValue({
       organization,
       stores: [],
-      apps: [organizationApp],
+      apps: {
+        nodes: [organizationApp],
+        pageInfo: {hasNextPage: false},
+      },
     })
     vi.mocked(selectApp).mockResolvedValue(organizationApp)
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
@@ -159,7 +163,7 @@ describe('info', () => {
     const result = await info(app, {format: 'json', webEnv: true})
 
     // Then
-    expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
+    expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
       "{
         \\"SHOPIFY_API_KEY\\": \\"api-key\\",
         \\"SHOPIFY_API_SECRET\\": \\"api-secret\\",
@@ -220,7 +224,10 @@ describe('info', () => {
     vi.mocked(fetchOrgAndApps).mockResolvedValue({
       organization,
       stores: [],
-      apps: [organizationApp],
+      apps: {
+        nodes: [organizationApp],
+        pageInfo: {hasNextPage: false},
+      },
     })
     vi.mocked(selectApp).mockResolvedValue(organizationApp)
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')

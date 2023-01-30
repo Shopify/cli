@@ -1,5 +1,22 @@
 # @shopify/theme
 
+## 3.38.0
+
+### Patch Changes
+
+- @shopify/cli-kit@3.38.0
+
+## 3.37.0
+
+### Minor Changes
+
+- 2f0420599: Slightly improve the text messages in the `shopify theme delete` and `shopify theme publish` commands
+
+### Patch Changes
+
+- Updated dependencies [a5224543b]
+  - @shopify/cli-kit@3.37.0
+
 ## 3.36.2
 
 ### Patch Changes

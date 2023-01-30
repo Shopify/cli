@@ -3,7 +3,7 @@ import {getSession, removeSession, setSession} from '../conf-store.js'
 import {keychainConstants} from '../constants.js'
 import {platformAndArch} from '../../../public/node/os.js'
 import {secureStoreSave, secureStoreFetch, secureStoreRemove} from '../secure-store.js'
-import {content, debug} from '../../../output.js'
+import {outputContent, outputDebug} from '../../../public/node/output.js'
 import type {Session} from './schema.js'
 
 /**
@@ -74,16 +74,16 @@ export async function remove() {
 async function secureStoreAvailable(): Promise<boolean> {
   try {
     if (platformAndArch().platform === 'windows') {
-      debug(content`Secure store not supported on Windows`)
+      outputDebug(outputContent`Secure store not supported on Windows`)
       return false
     }
     const keytar = await import('keytar')
     await keytar.default.findCredentials(keychainConstants.service)
-    debug(content`Secure store is available`)
+    outputDebug(outputContent`Secure store is available`)
     return true
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (_error) {
-    debug(content`Failed to load secure store`)
+    outputDebug(outputContent`Failed to load secure store`)
     return false
   }
 }

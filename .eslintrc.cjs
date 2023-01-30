@@ -151,6 +151,7 @@ module.exports = {
     'rulesdir/command-reserved-flags': 'error',
     'rulesdir/no-error-factory-functions': 'error',
     'rulesdir/no-process-cwd': 'error',
+    'rulesdir/no-trailing-js-in-cli-kit-imports': 'error',
     'no-restricted-syntax': [
       'error',
       {
