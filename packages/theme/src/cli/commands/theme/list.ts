@@ -1,4 +1,4 @@
-import {getThemeStore} from '../../utilities/theme-store.js'
+import {requiredThemeStore} from '../../utilities/theme-store.js'
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {list} from '../../services/list.js'
@@ -31,7 +31,7 @@ export default class List extends ThemeCommand {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(List)
-    const store = getThemeStore(flags)
+    const store = requiredThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
     await list(adminSession, flags)

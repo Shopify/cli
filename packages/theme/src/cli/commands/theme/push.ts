@@ -1,5 +1,5 @@
 import {themeFlags} from '../../flags.js'
-import {getThemeStore} from '../../utilities/theme-store.js'
+import {requiredThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -100,7 +100,7 @@ export default class Push extends ThemeCommand {
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Push.cli2Flags})
     const command = ['theme', 'push', flags.path, ...flagsToPass]
 
-    const store = getThemeStore(flags)
+    const store = requiredThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
     await execCLI2(command, {adminSession})
   }

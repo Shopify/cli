@@ -1,4 +1,4 @@
-import {getThemeStore} from '../../utilities/theme-store.js'
+import {requiredThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
 import {publish, renderArgumentsWarning} from '../../services/publish.js'
@@ -30,7 +30,7 @@ export default class Publish extends ThemeCommand {
 
   async run(): Promise<void> {
     const {flags, argv} = await this.parse(Publish)
-    const store = await getThemeStore(flags)
+    const store = await requiredThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
     const themeId = flags.theme || argv[0]
 

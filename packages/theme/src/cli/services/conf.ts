@@ -6,11 +6,11 @@ export interface ThemeConfSchema {
 
 let _instance: Conf<ThemeConfSchema> | undefined
 
-export function getCachedThemeStore() {
+export function getThemeStore() {
   return themeConf().get('themeStore')
 }
 
-export function setCachedThemeStore(store: string) {
+export function setThemeStore(store: string) {
   themeConf().set('themeStore', store)
 }
 

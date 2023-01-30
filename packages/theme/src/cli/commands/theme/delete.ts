@@ -1,4 +1,4 @@
-import {getThemeStore} from '../../utilities/theme-store.js'
+import {requiredThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
 import {deleteThemes, renderDeprecatedArgsWarning} from '../../services/delete.js'
@@ -44,7 +44,7 @@ export default class Delete extends ThemeCommand {
     const {development, force, password, theme} = flags
     const themes = [...argv, ...(theme ?? [])]
 
-    const store = getThemeStore(flags)
+    const store = requiredThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, password)
 
     const hasDeprecatedArgs = argv.length > 0
