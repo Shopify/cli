@@ -53,7 +53,7 @@ importers:
       fs-extra: ^11.1.0
       graphql: ^15.5.1
       graphql-tag: ^2.12.4
-      liquidjs: ^9.36.0
+      liquidjs: ^10.5.0
       node-fetch: ^3.2.4
       nx: ^15.3.0
       oclif: 3.6.4
@@ -115,7 +115,7 @@ importers:
       fs-extra: 11.1.0
       graphql: 15.8.0
       graphql-tag: 2.12.6_graphql@15.8.0
-      liquidjs: 9.43.0
+      liquidjs: 10.5.0
       node-fetch: 3.3.0
       nx: 15.3.0
       oclif: 3.6.4
@@ -396,7 +396,7 @@ importers:
       keytar: 7.9.0
       kill-port-process: 3.1.0
       latest-version: 7.0.0
-      liquidjs: 9.36.0
+      liquidjs: 10.5.0
       lodash: 4.17.21
       log-update: 4.0.0
       macaddress: 0.5.3
@@ -461,7 +461,7 @@ importers:
       keytar: 7.9.0
       kill-port-process: 3.1.0
       latest-version: 7.0.0
-      liquidjs: 9.36.0
+      liquidjs: 10.5.0
       lodash: 4.17.21
       log-update: 4.0.0
       macaddress: 0.5.3
@@ -5932,6 +5932,10 @@ packages:
       typical: 5.2.0
     dev: true
 
+  /commander/10.0.0:
+    resolution: {integrity: sha512-zS5PnTI22FIRM6ylNW8G4Ap0IEOyk62fhLSD0+uHRT9McRCLGpkVNvao4bjimpK/GShynyQkFFxHhwMcETmduA==}
+    engines: {node: '>=14'}
+
   /commander/2.20.3:
     resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
     dev: false
@@ -10198,17 +10202,12 @@ packages:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}
     dev: true
 
-  /liquidjs/9.36.0:
-    resolution: {integrity: sha512-HbU4xBsY1r3ZEORTgPsiluXsOtMx8iI0MqTsPejgIk+sIgta5wQUYsoQgUPuGKWVHKKKMO9PidiMEPKlePl8rg==}
-    engines: {node: '>=4.8.7'}
+  /liquidjs/10.5.0:
+    resolution: {integrity: sha512-qs1lbzfeSx5ICegKFrdYvxtKz8VXaw0Rfbu0zaCgC/M5aR62h89aR3wmL1W5C908y5yq+PBRPRFZZisS/gTPyA==}
+    engines: {node: '>=14'}
     hasBin: true
-    dev: false
-
-  /liquidjs/9.43.0:
-    resolution: {integrity: sha512-qZZuL5Emja2UgCqiLewiw9bvwZQwm19TTGFxDkonVzB4YSTOZ8tuTVo/7Uu/AeW1cL2Qb/at3DSoV8wwyFXQCw==}
-    engines: {node: '>=4.8.7'}
-    hasBin: true
-    dev: true
+    dependencies:
+      commander: 10.0.0
 
   /load-json-file/5.3.0:
     resolution: {integrity: sha512-cJGP40Jc/VXUsp8/OrnyKyTZ1y6v/dphm3bioS+RrKXjK2BB6wHUd6JptZEFDGgGahMT+InnZO5i1Ei9mpC8Bw==}
