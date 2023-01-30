@@ -31,10 +31,9 @@ export function getExtensionsToMigrate(
         return accumulator
       }
 
-      const typeMimatches = remoteSource.type !== localSource.type
       const typeIsToMigrate = remoteExtensionTypesToMigrate.includes(remoteSource.type)
 
-      if (typeMimatches && typeIsToMigrate) {
+      if (typeIsToMigrate) {
         accumulator.push({local: localSource, remote: remoteSource})
       }
     }
@@ -43,18 +42,43 @@ export function getExtensionsToMigrate(
   }, [])
 }
 
-export async function migrateToUiExtension(
+export async function migrateExtensionsToUIExtension(
+  extensionsToMigrate: LocalRemoteSource[],
+  appId: string,
+  remoteExtensions: RemoteSource[],
+) {
+  await Promise.all(
+    extensionsToMigrate.map(async ({remote}) => {
+      await migrateExtensionToUIExtension(appId, remote.id)
+    }),
+  )
+
+  return remoteExtensions.map((extension) => {
+    if (extensionsToMigrate.some(({remote}) => remote.id === extension.id)) {
+      return {
+        ...extension,
+        type: 'UI_EXTENSION',
+      }
+    }
+    return extension
+  })
+}
+
+export async function migrateExtensionToUIExtension(
   apiKey: ExtensionMigrateToUiExtensionVariables['apiKey'],
   registrationId: ExtensionMigrateToUiExtensionVariables['registrationId'],
 ) {
   const token = await ensureAuthenticatedPartners()
-  const query = ExtensionMigrateToUiExtensionQuery
   const variables: ExtensionMigrateToUiExtensionVariables = {
     apiKey,
     registrationId,
   }
 
-  const result: ExtensionMigrateToUiExtensionSchema = await partnersRequest(query, token, variables)
+  const result: ExtensionMigrateToUiExtensionSchema = await partnersRequest(
+    ExtensionMigrateToUiExtensionQuery,
+    token,
+    variables,
+  )
 
   if (result?.migrateToUiExtension?.userErrors?.length > 0) {
     const errors = result.migrateToUiExtension.userErrors.map((error) => error.message).join(', ')

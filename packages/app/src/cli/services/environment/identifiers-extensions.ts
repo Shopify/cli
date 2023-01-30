@@ -1,10 +1,10 @@
 import {manualMatchIds} from './id-manual-matching.js'
-import {automaticMatchmaking, LocalRemoteSource} from './id-matching.js'
+import {automaticMatchmaking} from './id-matching.js'
 import {EnsureDeploymentIdsPresenceOptions, LocalSource, MatchingError, RemoteSource} from './identifiers.js'
 import {deployConfirmationPrompt, extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {getExtensionsToMigrate, migrateToUiExtension} from '../dev/migrate-to-ui-extension.js'
+import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
@@ -22,7 +22,7 @@ export async function ensureExtensionsIds(
     const confirmedMigration = await extensionMigrationPrompt(extensionsToMigrate)
 
     if (confirmedMigration) {
-      remoteExtensions = await migrateExtensions(extensionsToMigrate, options.appId, remoteExtensions)
+      remoteExtensions = await migrateExtensionsToUIExtension(extensionsToMigrate, options.appId, remoteExtensions)
     } else {
       return err('user-cancelled')
     }
@@ -77,28 +77,6 @@ export async function ensureExtensionsIds(
   return ok({
     extensions: validMatches,
     extensionIds: validMatchesById,
-  })
-}
-
-async function migrateExtensions(
-  extensionsToMigrate: LocalRemoteSource[],
-  appId: string,
-  remoteExtensions: RemoteSource[],
-) {
-  await Promise.all(
-    extensionsToMigrate.map(async ({remote}) => {
-      await migrateToUiExtension(remote.id, appId)
-    }),
-  )
-
-  return remoteExtensions.map((extension) => {
-    if (extensionsToMigrate.some(({remote}) => remote.id === extension.id)) {
-      return {
-        ...extension,
-        type: 'UI_EXTENSION',
-      }
-    }
-    return extension
   })
 }
 
