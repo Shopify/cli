@@ -1,5 +1,5 @@
 import {themeFlags} from '../../flags.js'
-import {getThemeStore} from '../../utilities/theme-store.js'
+import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -101,7 +101,7 @@ export default class Dev extends ThemeCommand {
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Dev.cli2Flags})
     const command = ['theme', 'serve', flags.path, ...flagsToPass]
 
-    const store = getThemeStore(flags)
+    const store = ensureThemeStore(flags)
 
     let controller = new AbortController()
 
