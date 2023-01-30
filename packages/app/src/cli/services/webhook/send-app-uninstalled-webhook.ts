@@ -2,7 +2,7 @@ import {requestApiVersions} from './request-api-versions.js'
 import {getWebhookSample, SampleWebhook} from './request-sample.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {DELIVERY_METHOD} from './trigger-options.js'
-import {FetchError} from '@shopify/cli-kit/node/http.js'
+import {FetchError} from '@shopify/cli-kit/node/http'
 import {Writable} from 'stream'
 
 interface SendUninstallWebhookToAppServerOptions {
