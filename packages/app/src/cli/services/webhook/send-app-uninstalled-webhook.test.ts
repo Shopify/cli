@@ -31,6 +31,9 @@ const webhookSampleResponse = {
   },
 }
 
+const address = 'http://localhost:3000/test/path'
+const storeFqdn = 'test-store.myshopify.io'
+
 describe('sendUninstallWebhookToAppServer', () => {
   it('requests sample and API versions, triggers local webhook', async () => {
     vi.mocked(partnersRequest).mockResolvedValueOnce(apiVersionsResponse).mockResolvedValueOnce(webhookSampleResponse)
@@ -39,15 +42,21 @@ describe('sendUninstallWebhookToAppServer', () => {
 
     const result = await sendUninstallWebhookToAppServer({
       stdout,
-      address: 'http://localhost:3000/test/path',
+      address,
       sharedSecret: 'sharedSecret',
-      storeFqdn: 'test-store.myshopify.io',
+      storeFqdn,
       token: 'token',
     })
 
     expect(result).toBe(true)
     expect(partnersRequest).toHaveBeenCalledTimes(2)
-    expect(triggerLocalWebhook).toHaveBeenCalledTimes(1)
+    expect(triggerLocalWebhook).toHaveBeenCalledWith(
+      address,
+      webhookSampleResponse.sendSampleWebhook.samplePayload,
+      `{"header":"Header Value","X-Shopify-Shop-Domain":"${storeFqdn}"}`,
+    )
+    expect(stdout.write).toHaveBeenNthCalledWith(1, expect.stringMatching(/Sending APP_UNINSTALLED/))
+    expect(stdout.write).toHaveBeenNthCalledWith(2, expect.stringMatching(/delivered/))
   })
 
   it('gracefully deals with the webhook delivery failing', async () => {
@@ -57,15 +66,17 @@ describe('sendUninstallWebhookToAppServer', () => {
 
     const result = await sendUninstallWebhookToAppServer({
       stdout,
-      address: 'http://localhost:3000/test/path',
+      address,
       sharedSecret: 'sharedSecret',
-      storeFqdn: 'test-store.myshopify.io',
+      storeFqdn,
       token: 'token',
     })
 
     expect(result).toBe(false)
     expect(partnersRequest).toHaveBeenCalledTimes(2)
     expect(triggerLocalWebhook).toHaveBeenCalledTimes(1)
+    expect(stdout.write).toHaveBeenNthCalledWith(1, expect.stringMatching(/Sending APP_UNINSTALLED/))
+    expect(stdout.write).toHaveBeenNthCalledWith(2, expect.stringMatching(/failed/))
   })
 
   it("retries the webhook request if the app hasn't started yet", async () => {
@@ -77,14 +88,17 @@ describe('sendUninstallWebhookToAppServer', () => {
 
     const result = await sendUninstallWebhookToAppServer({
       stdout,
-      address: 'http://localhost:3000/test/path',
+      address,
       sharedSecret: 'sharedSecret',
-      storeFqdn: 'test-store.myshopify.io',
+      storeFqdn,
       token: 'token',
     })
 
     expect(result).toBe(true)
     expect(partnersRequest).toHaveBeenCalledTimes(2)
     expect(triggerLocalWebhook).toHaveBeenCalledTimes(2)
+    expect(stdout.write).toHaveBeenNthCalledWith(1, expect.stringMatching(/Sending APP_UNINSTALLED/))
+    expect(stdout.write).toHaveBeenNthCalledWith(2, expect.stringMatching(/retrying/))
+    expect(stdout.write).toHaveBeenNthCalledWith(3, expect.stringMatching(/delivered/))
   })
 })
