@@ -1,4 +1,3 @@
-import {isUnitTest} from './environment/local.js'
 import {FatalError as Fatal} from './error.js'
 import {consoleError, OutputProcess} from './output.js'
 import ConcurrentOutput from '../../private/node/ui/components/ConcurrentOutput.js'
@@ -11,9 +10,9 @@ import Table, {TableProps} from '../../private/node/ui/components/Table/Table.js
 import {SelectPrompt, Props as SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, Props as TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
-import {Item as SelectItem, Props as SelectProps} from '../../private/node/ui/components/SelectInput.js'
+import {Props as SelectProps} from '../../private/node/ui/components/SelectInput.js'
 import {Props as InfoTableProps} from '../../private/node/ui/components/Prompts/InfoTable.js'
-import {AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
+import {AutocompletePrompt, SearchResults} from '../../private/node/ui/components/AutocompletePrompt.js'
 import {TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 import React from 'react'
 import {RenderOptions} from 'ink'
@@ -269,7 +268,8 @@ interface RenderAutocompletePromptProps<T> {
   message: string
   choices: SelectProps<T>['items']
   infoTable?: InfoTableProps['table']
-  search?: (term: string) => Promise<SelectItem<T>[]>
+  search?: (term: string) => Promise<SearchResults<T>>
+  hasMorePages?: boolean
 }
 
 /**
@@ -287,7 +287,9 @@ interface RenderAutocompletePromptProps<T> {
 export function renderAutocompletePrompt<T>(props: RenderAutocompletePromptProps<T>): Promise<T> {
   const newProps = {
     search(term: string) {
-      return Promise.resolve(props.choices.filter((item) => item.label.toLowerCase().includes(term.toLowerCase())))
+      return Promise.resolve({
+        data: props.choices.filter((item) => item.label.toLowerCase().includes(term.toLowerCase())),
+      })
     },
     ...props,
   }
@@ -321,7 +323,7 @@ export {Task}
  * Runs async tasks and displays their progress to the console.
  */
 export async function renderTasks<TContext>(tasks: Task<TContext>[]) {
-  return render(<Tasks tasks={tasks} silent={isUnitTest()} />)
+  return render(<Tasks tasks={tasks} />)
 }
 
 /**
