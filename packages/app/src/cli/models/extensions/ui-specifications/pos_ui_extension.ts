@@ -13,10 +13,14 @@ const spec = createUIExtensionSpecification({
   dependency,
   partnersWebIdentifier: 'pos_ui_extension',
   schema: BaseUIExtensionSchema,
-  deployConfig: async (_, directory) => {
+  deployConfig: async (config, directory) => {
     const result = await getDependencyVersion(dependency.name, directory)
     if (result === 'not_found') throw new BugError(`Dependency ${dependency.name} not found`)
-    return {renderer_version: result?.version}
+    return {
+      name: config.name,
+      description: config.description,
+      renderer_version: result?.version,
+    }
   },
   previewMessage: () => undefined,
 })

@@ -50,7 +50,12 @@ export const NoOrgError = (organizationId?: string) => {
 
 export interface FetchResponse {
   organization: Organization
-  apps: MinimalOrganizationApp[]
+  apps: {
+    pageInfo: {
+      hasNextPage: boolean
+    }
+    nodes: MinimalOrganizationApp[]
+  }
   stores: OrganizationStore[]
 }
 
@@ -96,7 +101,7 @@ export async function fetchOrgAndApps(orgId: string, token: string, title?: stri
   const org = result.organizations.nodes[0]
   if (!org) throw NoOrgError(orgId)
   const parsedOrg = {id: org.id, businessName: org.businessName, appsNext: org.appsNext}
-  return {organization: parsedOrg, apps: org.apps.nodes, stores: []}
+  return {organization: parsedOrg, apps: org.apps, stores: []}
 }
 
 export async function fetchAppFromApiKey(apiKey: string, token: string): Promise<OrganizationApp | undefined> {

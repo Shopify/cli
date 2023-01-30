@@ -217,7 +217,7 @@ async function outputCompletionMessage({
     },
   ]
 
-  if (app.extensions.ui.length !== 0 || app.extensions.function.length !== 0) {
+  if (app.extensions.ui.length !== 0 || app.extensions.theme.length !== 0) {
     customSections.push({
       title: 'Next steps',
       body: {

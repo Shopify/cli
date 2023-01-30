@@ -8,7 +8,10 @@ export const FindOrganizationQuery = gql`
         businessName
         website
         appsNext
-        apps(first: 100, title: $title) {
+        apps(first: 25, title: $title) {
+          pageInfo {
+            hasNextPage
+          }
           nodes {
             id
             title
@@ -28,6 +31,9 @@ export interface FindOrganizationQuerySchema {
       website: string
       appsNext: boolean
       apps: {
+        pageInfo: {
+          hasNextPage: boolean
+        }
         nodes: {
           id: string
           title: string
