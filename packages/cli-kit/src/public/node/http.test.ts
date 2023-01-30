@@ -1,7 +1,7 @@
-import {beforeAll, describe, expect, it, vi} from 'vitest'
 import {fileExists, inTemporaryDirectory, readFile} from './fs.js'
 import {downloadFile} from './http.js'
 import {joinPath} from './path.js'
+import {beforeAll, describe, expect, it, vi} from 'vitest'
 import nodeFetch, {Response} from 'node-fetch'
 import {Readable} from 'stream'
 

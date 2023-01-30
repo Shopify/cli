@@ -81,7 +81,6 @@ ${sanitizedHeadersOutput((options?.headers ?? {}) as {[header: string]: string})
  *
  * @param url - The URL to download from.
  * @param to - The local path to download to.
- * @param redirect - The number of redirects that have been followed.
  * @returns - A promise that resolves with the local path.
  */
 export function downloadFile(url: string, to: string): Promise<string> {
