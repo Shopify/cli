@@ -69,8 +69,6 @@ async function init(options: InitOptions) {
     await mkdir(templateDownloadDir)
     await mkdir(templateScaffoldDir)
 
-    let tasks: Task[] = []
-
     const templateInfo = await parseGitHubRepositoryURL(options.template).valueOrAbort()
     const branch = templateInfo.ref ? `#${templateInfo.ref}` : ''
     const templatePath = templateInfo.subDirectory
@@ -78,21 +76,21 @@ async function init(options: InitOptions) {
       : templateDownloadDir
 
     const repoUrl = `${templateInfo.http}${branch}`
-    await ui.task({
-      title: `Downloading template from ${repoUrl}`,
-      task: async () => {
-        await downloadGitRepository({
-          repoUrl,
-          destination: templateDownloadDir,
-          shallow: true,
-        })
-        if (!(await fileExists(joinPath(templatePath, 'package.json')))) {
-          throw new AbortError(`The template ${templatePath} was not found.`, suggestHydrogenSupport())
-        }
-      },
-    })
 
-    tasks = tasks.concat([
+    let tasks: Task[] = [
+      {
+        title: `Downloading template from ${repoUrl}`,
+        task: async () => {
+          await downloadGitRepository({
+            repoUrl,
+            destination: templateDownloadDir,
+            shallow: true,
+          })
+          if (!(await fileExists(joinPath(templatePath, 'package.json')))) {
+            throw new AbortError(`The template ${templatePath} was not found.`, suggestHydrogenSupport())
+          }
+        },
+      },
       {
         title: `Initializing your app ${hyphenizedName}`,
         task: async () => {
@@ -132,7 +130,7 @@ async function init(options: InitOptions) {
           ]
         },
       },
-    ])
+    ]
 
     if (await isShopify()) {
       tasks.push({
