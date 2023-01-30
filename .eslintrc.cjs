@@ -186,7 +186,7 @@ module.exports = {
         '**/public/node/os.ts',
         '**/public/node/node-package-manager.ts',
         '**/public/node/plugins/tunnel.ts',
-        '**/public/node/presets.ts',
+        '**/public/node/environments.ts',
         '**/public/node/result.ts',
       ],
       rules: {
