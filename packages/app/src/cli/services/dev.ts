@@ -32,7 +32,7 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
-import {OutputProcess} from '@shopify/cli-kit/node/output'
+import {OutputProcess, outputInfo} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 export interface DevOptions {
@@ -93,7 +93,7 @@ async function dev(options: DevOptions) {
   const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated
 
   if (sendUninstallWebhook) {
-    output.info('Using a different app than last time, sending uninstall webhook to app server')
+    outputInfo('Using a different app than last time, sending uninstall webhook to app server')
   }
 
   /** If the app doesn't have web/ the link message is not necessary */
