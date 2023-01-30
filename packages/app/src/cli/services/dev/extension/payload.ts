@@ -60,6 +60,7 @@ export async function getUIExtensionPayload(
     version: renderer?.version,
 
     title: extension.configuration.name,
+    apiVersion: extension.configuration.apiVersion,
     approvalScopes: options.grantedScopes,
   }
   return defaultConfig

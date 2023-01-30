@@ -149,6 +149,26 @@ describe('optionsPrompt', () => {
       })
     })
 
+    describe('collectTopic', async () => {
+      const availableTopics = ['products/update', 'orders/create', 'shop/redact']
+
+      it('accepts and transforms an ORDERS_CREATE-like topic name into orders/create-like', async () => {
+        // When
+        const topic = await collectTopic('ORDERS_CREATE', aVersion, availableTopics)
+
+        // Then
+        expect(topic).toEqual('orders/create')
+      })
+
+      it('rejects case insensitive versions', async () => {
+        // When
+        await expect(collectTopic('OrdERS_Create', aVersion, availableTopics)).rejects.toThrow(AbortError)
+        await expect(collectTopic('orders_create', aVersion, availableTopics)).rejects.toThrow(AbortError)
+        await expect(collectTopic('OrdERS/CreaTE', aVersion, availableTopics)).rejects.toThrow(AbortError)
+        await expect(collectTopic('ORDERS/CREATE', aVersion, availableTopics)).rejects.toThrow(AbortError)
+      })
+    })
+
     function expectNoPrompts() {
       expect(topicPrompt).toHaveBeenCalledTimes(0)
       expect(apiVersionPrompt).toHaveBeenCalledTimes(0)

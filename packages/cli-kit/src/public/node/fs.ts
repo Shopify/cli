@@ -23,8 +23,12 @@ import {
   appendFileSync as fsAppendFileSync,
   statSync as fsStatSync,
   createReadStream as fsCreateReadStream,
+  createWriteStream as fsCreateWriteStream,
   constants as fsConstants,
+  existsSync as fsFileExistsSync,
+  unlinkSync as fsUnlinkSync,
   ReadStream,
+  WriteStream,
 } from 'fs'
 import {
   mkdir as fsMkdir,
@@ -37,6 +41,7 @@ import {
   lstat as fsLstat,
   chmod as fsChmod,
   access as fsAccess,
+  rename as fsRename,
 } from 'fs/promises'
 import type {Options} from 'prettier'
 import type {Pattern, Options as GlobOptions} from 'fast-glob'
@@ -233,6 +238,16 @@ export async function removeFile(path: string): Promise<void> {
 }
 
 /**
+ * Renames a file.
+ * @param from - Path to the file to be renamed.
+ * @param to - New path for the file.
+ */
+export async function renameFile(from: string, to: string): Promise<void> {
+  outputDebug(outputContent`Renaming file from ${outputToken.path(from)} to ${outputToken.path(to)}...`)
+  await fsRename(from, to)
+}
+
+/**
  * Synchronously removes a file at the given path.
  *
  * @param path - Path to the file to be removed.
@@ -302,6 +317,15 @@ export function fileSizeSync(path: string): number {
 }
 
 /**
+ * Unlink a file at the given path.
+ * @param path - Path to the file.
+ * @returns A promise that resolves when the file is unlinked.
+ */
+export function unlinkFileSync(path: string): void {
+  return fsUnlinkSync(path)
+}
+
+/**
  * Create a read stream for a file.
  *
  * @param path - Path to the file.
@@ -309,6 +333,16 @@ export function fileSizeSync(path: string): number {
  */
 export function createFileReadStream(path: string): ReadStream {
   return fsCreateReadStream(path)
+}
+
+/**
+ * Create a write stream for a file.
+ *
+ * @param path - Path to the file.
+ * @returns A write stream for the file.
+ */
+export function createFileWriteStream(path: string): WriteStream {
+  return fsCreateWriteStream(path)
 }
 
 /**
@@ -392,6 +426,10 @@ export async function fileExists(path: string): Promise<boolean> {
   } catch {
     return false
   }
+}
+
+export function fileExistsSync(path: string): boolean {
+  return fsFileExistsSync(path)
 }
 
 interface FileOptions {

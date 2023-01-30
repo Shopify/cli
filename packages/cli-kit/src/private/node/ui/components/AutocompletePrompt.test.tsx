@@ -1,5 +1,4 @@
-import {AutocompletePrompt} from './AutocompletePrompt.js'
-import {Item} from './SelectInput.js'
+import {AutocompletePrompt, SearchResults} from './AutocompletePrompt.js'
 import {
   getLastFrameAfterUnmount,
   sendInputAndWait,
@@ -87,7 +86,11 @@ describe('AutocompletePrompt', async () => {
         choices={items}
         infoTable={infoTable}
         onSubmit={onEnter}
-        search={() => Promise.resolve([] as Item<string>[])}
+        search={() =>
+          Promise.resolve({
+            data: [],
+          } as SearchResults<string>)
+        }
       />,
     )
 
@@ -123,7 +126,11 @@ describe('AutocompletePrompt', async () => {
         message="Associate your project with the org Castile Ventures?"
         choices={items}
         onSubmit={() => {}}
-        search={() => Promise.resolve([] as Item<string>[])}
+        search={() =>
+          Promise.resolve({
+            data: [],
+          } as SearchResults<string>)
+        }
       />,
     )
 
@@ -170,7 +177,7 @@ describe('AutocompletePrompt', async () => {
         choices={items}
         infoTable={infoTable}
         onSubmit={() => {}}
-        search={() => Promise.resolve([] as Item<string>[])}
+        search={() => Promise.resolve({data: []} as SearchResults<string>)}
       />,
     )
 
@@ -194,7 +201,9 @@ describe('AutocompletePrompt', async () => {
 
   test("doesn't submit if there are no choices", async () => {
     const onEnter = vi.fn()
-    const searchPromise = Promise.resolve([] as Item<string>[])
+    const searchPromise = Promise.resolve({
+      data: [],
+    } as SearchResults<string>)
     const search = () => {
       return searchPromise
     }
@@ -225,8 +234,8 @@ describe('AutocompletePrompt', async () => {
 
   test('has a loading state', async () => {
     const onEnter = vi.fn()
-    const searchPromise = new Promise<Item<string>[]>((resolve) => {
-      setTimeout(() => resolve([{label: 'a', value: 'b'}]), 2000)
+    const searchPromise = new Promise<SearchResults<string>>((resolve) => {
+      setTimeout(() => resolve({data: [{label: 'a', value: 'b'}]}), 2000)
     })
 
     const search = () => {
@@ -261,7 +270,9 @@ describe('AutocompletePrompt', async () => {
     const onEnter = vi.fn()
 
     const search = async (term: string) => {
-      return DATABASE.filter((item) => item.label.includes(term))
+      return {
+        data: DATABASE.filter((item) => item.label.includes(term)),
+      }
     }
 
     const renderInstance = render(
@@ -430,7 +441,9 @@ describe('AutocompletePrompt', async () => {
 
     const search = async (term: string) => {
       await new Promise((resolve) => setTimeout(resolve, 300))
-      return DATABASE.filter((item) => item.label.includes(term))
+      return {
+        data: DATABASE.filter((item) => item.label.includes(term)),
+      }
     }
 
     const renderInstance = render(
@@ -517,7 +530,9 @@ describe('AutocompletePrompt', async () => {
 
   test('immediately shows the initial items if the search is empty', async () => {
     const search = (term: string) => {
-      return Promise.resolve(DATABASE.filter((item) => item.label.includes(term)))
+      return Promise.resolve({
+        data: DATABASE.filter((item) => item.label.includes(term)),
+      })
     }
 
     const renderInstance = render(
@@ -596,6 +611,59 @@ describe('AutocompletePrompt', async () => {
          twenty-fourth
          twenty-fifth
 
+         [2mPress ↑↓ arrows to select, enter to confirm[22m
+      "
+    `)
+  })
+
+  test('shows a message that indicates there are more results than shown', async () => {
+    const search = (_term: string) => {
+      return Promise.resolve({
+        data: DATABASE,
+        meta: {hasNextPage: true},
+      })
+    }
+
+    const renderInstance = render(
+      <AutocompletePrompt
+        message="Associate your project with the org Castile Ventures?"
+        choices={DATABASE}
+        onSubmit={() => {}}
+        hasMorePages={true}
+        search={search}
+      />,
+    )
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "?  Associate your project with the org Castile Ventures?   [36m[7mT[27m[2mype to search...[22m[39m
+
+      [36m>[39m  [36mfirst[39m
+         second
+         third
+         fourth
+         fifth
+         sixth
+         seventh
+         eighth
+         ninth
+         tenth
+         eleventh
+         twelfth
+         thirteenth
+         fourteenth
+         fifteenth
+         sixteenth
+         seventeenth
+         eighteenth
+         nineteenth
+         twentieth
+         twenty-first
+         twenty-second
+         twenty-third
+         twenty-fourth
+         twenty-fifth
+
+         [1m1-25 of many[22m  Find what you're looking for by typing its name.
          [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)

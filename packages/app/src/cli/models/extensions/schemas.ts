@@ -27,10 +27,15 @@ export const NewExtensionPointSchema = schema.object({
 export const OldExtensionPointsSchema = schema.array(schema.string()).default([])
 export const NewExtensionPointsSchema = schema.array(NewExtensionPointSchema)
 export const ExtensionPointSchema = schema.union([OldExtensionPointsSchema, NewExtensionPointsSchema])
+export const ApiVersionSchema = schema.string()
+
+export type ApiVersionSchemaType = schema.infer<typeof ApiVersionSchema>
 
 export const BaseUIExtensionSchema = schema.object({
   name: schema.string(),
+  description: schema.string().optional(),
   type: schema.string().default('ui_extension'),
+  apiVersion: ApiVersionSchema.optional(),
   extensionPoints: schema.any().optional(),
   capabilities: CapabilitiesSchema.optional(),
   metafields: schema.array(MetafieldSchema).optional().default([]),

@@ -1,5 +1,30 @@
 # @shopify/app
 
+## 3.39.0
+
+### Minor Changes
+
+- 11f6fbec6: Add description configuration to POS UI Extension
+
+### Patch Changes
+
+- afe541577: Adopt the CLI UI kit in the `shopify theme package` command
+- b8a96a215: Fix next steps in deploy success banner
+- 91a44020b: Warn the user if there are more than 25 apps in app selection prompt
+- Updated dependencies [afe541577]
+- Updated dependencies [f4d5fb1a8]
+- Updated dependencies [91a44020b]
+  - @shopify/cli-kit@3.39.0
+  - @shopify/plugin-ngrok@3.39.0
+
+## 3.38.0
+
+### Patch Changes
+
+- da8c87a9f: Fix an issue with CLI2 not printing to the right stdout
+  - @shopify/cli-kit@3.38.0
+  - @shopify/plugin-ngrok@3.38.0
+
 ## 3.37.0
 
 ### Patch Changes

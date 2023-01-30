@@ -1,5 +1,18 @@
 # @shopify/cli-kit
 
+## 3.39.0
+
+### Minor Changes
+
+- f4d5fb1a8: Replace the UI of all tasks renderers and remove listr2 as a dependency
+
+### Patch Changes
+
+- afe541577: Adopt the CLI UI kit in the `shopify theme package` command
+- 91a44020b: Warn the user if there are more than 25 apps in app selection prompt
+
+## 3.38.0
+
 ## 3.37.0
 
 ### Patch Changes

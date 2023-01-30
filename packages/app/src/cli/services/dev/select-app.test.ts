@@ -1,6 +1,6 @@
 import {createApp, selectOrCreateApp} from './select-app.js'
 import {AppInterface, WebType} from '../../models/app/app.js'
-import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../models/organization.js'
+import {Organization, OrganizationApp} from '../../models/organization.js'
 import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {CreateAppQuery} from '../../api/graphql/create_app.js'
@@ -42,10 +42,13 @@ const APP2: OrganizationApp = {
   organizationId: '1',
   grantedScopes: [],
 }
-const APP_LIST: MinimalOrganizationApp[] = [
-  {id: APP1.id, title: APP1.title, apiKey: APP1.apiKey},
-  {id: APP2.id, title: APP2.title, apiKey: APP2.apiKey},
-]
+const APP_LIST = {
+  nodes: [
+    {id: APP1.id, title: APP1.title, apiKey: APP1.apiKey},
+    {id: APP2.id, title: APP2.title, apiKey: APP2.apiKey},
+  ],
+  pageInfo: {hasNextPage: false},
+}
 
 beforeEach(() => {
   vi.mock('../../prompts/dev')
