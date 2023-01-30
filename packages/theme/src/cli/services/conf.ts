@@ -6,7 +6,15 @@ export interface ThemeConfSchema {
 
 let _instance: Conf<ThemeConfSchema> | undefined
 
-export function themeConf() {
+export function getCachedThemeStore() {
+  return themeConf().get('themeStore')
+}
+
+export function setCachedThemeStore(store: string) {
+  themeConf().set('themeStore', store)
+}
+
+function themeConf() {
   if (!_instance) {
     _instance = new Conf<ThemeConfSchema>({projectName: 'shopify-cli-theme-conf'})
   }
