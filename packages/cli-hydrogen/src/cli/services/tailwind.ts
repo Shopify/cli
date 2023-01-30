@@ -1,12 +1,11 @@
 import {HydrogenApp} from '../models/hydrogen.js'
-import {ui} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions} from '@shopify/cli-kit/node/vscode'
 import {exec} from '@shopify/cli-kit/node/system'
 import {writeFile, fileExists, removeFile, fileContentPrettyFormat, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import stream from 'stream'
+import {renderTasks, Task} from '@shopify/cli-kit/node/ui'
 
 interface AddTailwindOptions {
   app: HydrogenApp
@@ -25,36 +24,23 @@ const tailwindImportsExist = (indexCSS: string) =>
   tailwindImports.map((el) => new RegExp(el)).every((tailwindDirective) => tailwindDirective.test(indexCSS))
 
 export async function addTailwind({app, force, install, directory}: AddTailwindOptions) {
-  const list = ui.newListr([
+  const tasks: Task[] = [
     {
       title: 'Installing dependencies',
       skip: () => !install,
-      task: async (_, task) => {
+      task: async () => {
         const requiredDependencies = ['postcss', 'postcss-loader', 'tailwindcss', 'autoprefixer']
         await addNPMDependenciesWithoutVersionIfNeeded(requiredDependencies, {
           packageManager: app.packageManager,
           type: 'prod',
           directory: app.directory,
-          stderr: new stream.Writable({
-            write(chunk, encoding, next) {
-              task.output = chunk.toString()
-              next()
-            },
-          }),
-          stdout: new stream.Writable({
-            write(chunk, encoding, next) {
-              task.output = chunk.toString()
-              next()
-            },
-          }),
         })
-        task.title = 'Dependencies installed'
       },
     },
 
     {
       title: 'Adding PostCSS configuration',
-      task: async (_, task) => {
+      task: async () => {
         const postCSSConfiguration = joinPath(directory, 'postcss.config.js')
 
         if (await fileExists(postCSSConfiguration)) {
@@ -71,14 +57,12 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
         )
 
         await writeFile(postCSSConfiguration, postCSSConfig)
-
-        task.title = 'PostCSS configuration added'
       },
     },
 
     {
       title: 'Initializing Tailwind CSS...',
-      task: async (_, task) => {
+      task: async () => {
         const tailwindConfigurationPath = joinPath(directory, 'tailwind.config.js')
 
         if (await fileExists(tailwindConfigurationPath)) {
@@ -98,8 +82,6 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
           "content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}']",
           tailwindConfigurationPath,
         )
-
-        task.title = 'Tailwind configuration added'
       },
     },
     {
@@ -108,26 +90,22 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
         const indexCSSPath = joinPath(directory, 'src', 'index.css')
         const indexCSS = await readFile(indexCSSPath)
 
-        if (tailwindImportsExist(indexCSS)) {
-          task.skip('Imports already exist in index.css')
-        } else {
+        if (!tailwindImportsExist(indexCSS)) {
           const newIndexCSS = tailwindImports.join('\n') + indexCSS
 
           await writeFile(indexCSSPath, newIndexCSS)
         }
-
-        task.title = 'Tailwind imports added'
       },
     },
     {
       title: 'Adding editor plugin recommendations',
-      task: async (_, task) => {
+      task: async () => {
         await addRecommendedExtensions(directory, ['csstools.postcss', 'bradlc.vscode-tailwindcss'])
-        task.title = 'Editor plugin recommendations added'
       },
     },
-  ])
-  await list.run()
+  ]
+
+  await renderTasks(tasks)
 }
 
 async function replace(find: string | RegExp, replace: string, filepath: string) {

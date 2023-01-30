@@ -1,4 +1,3 @@
-import {isUnitTest} from './environment/local.js'
 import {FatalError as Fatal} from './error.js'
 import {consoleError, OutputProcess} from './output.js'
 import ConcurrentOutput from '../../private/node/ui/components/ConcurrentOutput.js'
@@ -324,7 +323,7 @@ export {Task}
  * Runs async tasks and displays their progress to the console.
  */
 export async function renderTasks<TContext>(tasks: Task<TContext>[]) {
-  return render(<Tasks tasks={tasks} silent={isUnitTest()} />)
+  return render(<Tasks tasks={tasks} />)
 }
 
 /**

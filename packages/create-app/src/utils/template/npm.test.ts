@@ -156,7 +156,7 @@ describe('getDeepInstallNPMTasks', () => {
 
       const tasks = await getDeepInstallNPMTasks({...defaultArgs, packageManager: 'yarn', from: tmpDir})
 
-      await Promise.all(tasks.map(({task}) => task({})))
+      await Promise.all(tasks.map((task) => task.task({}, task)))
 
       expect(installNodeModules).toHaveBeenCalledWith({
         directory: `${normalizePath(tmpDir)}/`,
