@@ -3,6 +3,7 @@ import {getWebhookSample, SampleWebhook} from './request-sample.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {DELIVERY_METHOD} from './trigger-options.js'
 import {FetchError} from '@shopify/cli-kit/node/http'
+import {sleep} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 
 interface SendUninstallWebhookToAppServerOptions {
@@ -60,8 +61,7 @@ async function triggerWebhook(
       if (error instanceof FetchError && error.code === 'ECONNREFUSED') {
         if (tries < 3) {
           options.stdout.write("App isn't responding yet, retrying in 5 seconds")
-
-          await new Promise((resolve) => setTimeout(resolve, 5000))
+          await sleep(5)
         }
       } else {
         throw error
