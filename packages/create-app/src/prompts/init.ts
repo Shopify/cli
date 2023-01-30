@@ -1,5 +1,6 @@
 import {ui} from '@shopify/cli-kit'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
+import {renderText} from '@shopify/cli-kit/node/ui'
 
 interface InitOptions {
   name?: string
@@ -21,6 +22,8 @@ export const templateURLMap = {
 } as const
 
 const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutput> => {
+  renderText('\nWelcome. Let’s get started by naming your app project. You can change it later.')
+
   const defaults = {
     name: await generateRandomNameForSubdirectory({suffix: 'app', directory: options.directory}),
     template: templateURLMap.node,
@@ -31,18 +34,17 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
     questions.push({
       type: 'input',
       name: 'name',
-      preface: '\nWelcome. Let’s get started by naming your app. You can change it later.\n',
-      message: "Your app's name?",
+      message: 'Your app project name?',
       default: defaults.name,
       validate: (value) => {
         if (value.length === 0) {
-          return "App Name can't be empty"
+          return "App name can't be empty"
         }
         if (value.length > 30) {
           return 'Enter a shorter name (30 character max.)'
         }
         if (value.toLowerCase().includes('shopify')) {
-          return "App Name can't include the word 'shopify'"
+          return "App name can't include the word 'shopify'"
         }
         return true
       },

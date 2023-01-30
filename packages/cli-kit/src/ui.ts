@@ -35,7 +35,6 @@ export type FilterFunction = (answers: PromptAnswer[], input: string) => Promise
 interface BaseQuestion<TName extends string> {
   name: TName
   message: string
-  preface?: string
   validate?: (value: string) => string | true
   default?: string
   result?: (value: string) => string | boolean
@@ -116,10 +115,6 @@ ${outputToken.json(questions)}
 
   const value = {} as TAnswers
   for (const question of questions) {
-    if (question.preface) {
-      outputInfo(question.preface)
-    }
-
     // eslint-disable-next-line no-await-in-loop
     value[question.name] = (await executorUI(question)) as TAnswers[TName]
   }

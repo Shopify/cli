@@ -28,7 +28,7 @@ describe('extension prompt', async () => {
   const extensionNameQuestion = {
     type: 'input',
     name: 'name',
-    message: "Your extension's working name?",
+    message: 'Extension name (internal only)',
     default: expect.stringMatching(/^\w+-\w+-ext$/),
   }
 

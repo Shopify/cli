@@ -113,8 +113,7 @@ describe('SelectPrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
 
-             Add:     • new-ext
-
+             Add:       new-ext
              Remove:  • integrated-demand-ext
                       • order-discount
 

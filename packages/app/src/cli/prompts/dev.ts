@@ -76,7 +76,7 @@ export async function appNamePrompt(currentName: string): Promise<string> {
     {
       type: 'input',
       name: 'name',
-      message: 'App Name',
+      message: 'App name',
       default: currentName,
       validate: (value) => {
         if (value.length === 0) {

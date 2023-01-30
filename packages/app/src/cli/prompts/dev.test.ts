@@ -210,7 +210,7 @@ describe('appName', () => {
       {
         type: 'input',
         name: 'name',
-        message: 'App Name',
+        message: 'App name',
         default: 'suggested-name',
         validate: expect.any(Function),
       },

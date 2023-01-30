@@ -127,14 +127,14 @@ function formatSuccessfulRunMessage(
   depndencyManager: PackageManager,
 ): RenderAlertOptions {
   const options: RenderAlertOptions = {
-    headline: [{userInput: specification.externalName}, 'extension was added to your project!'],
-    nextSteps: [['To find your extension, remember to', {command: `cd ${extensionDirectory}`}]],
+    headline: `Your extension was created in ${extensionDirectory}`,
+    nextSteps: [],
     reference: [],
   }
 
   if (specification.category() === 'ui' || specification.category() === 'theme') {
     options.nextSteps!.push([
-      'To preview your project, run',
+      'To preview this extension along with the rest of the project, run',
       {command: `${formatPackageManagerCommand(depndencyManager, 'dev')}`},
     ])
   }

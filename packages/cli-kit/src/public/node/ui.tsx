@@ -1,6 +1,6 @@
 import {isUnitTest} from './environment/local.js'
 import {FatalError as Fatal} from './error.js'
-import {consoleError} from './output.js'
+import {collectLog, consoleError, consoleLog, Logger, LogLevel, outputWhereAppropriate} from './output.js'
 import ConcurrentOutput, {Props as ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
 import {render, renderOnce} from '../../private/node/ui.js'
 import {alert} from '../../private/node/ui/alert.js'
@@ -328,6 +328,16 @@ export function renderTextPrompt(props: Omit<TextPromptProps, 'onSubmit'>): Prom
       exitOnCtrlC: false,
     }).catch(reject)
   })
+}
+
+/** Renders a text string to the console.
+ * Using this function makes sure that correct spacing is applied among the various components. */
+export function renderText(text: string, logLevel: LogLevel = 'info', logger: Logger = consoleLog) {
+  let textWithLineReturn = text
+  if (!text.endsWith('\n')) textWithLineReturn += '\n'
+
+  if (isUnitTest()) collectLog(logLevel, textWithLineReturn)
+  outputWhereAppropriate(logLevel, logger, textWithLineReturn)
 }
 
 export type Key = InkKey

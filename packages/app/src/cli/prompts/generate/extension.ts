@@ -77,7 +77,7 @@ const generateExtensionPrompt = async (
     questions.push({
       type: 'input',
       name: 'name',
-      message: "Your extension's working name?",
+      message: 'Extension name (internal only)',
       default: await generateRandomNameForSubdirectory({suffix: 'ext', directory: options.directory}),
     })
   }

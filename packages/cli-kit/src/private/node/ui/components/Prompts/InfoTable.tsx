@@ -16,12 +16,12 @@ const InfoTable: React.FC<Props> = ({table}) => {
   return (
     <Box flexDirection="column">
       {headers.map((header, index) => (
-        <Box key={index} marginBottom={index === headers.length - 1 ? 0 : 1}>
+        <Box key={index}>
           <Box width={headerColumnWidth + 1}>
             <Text>{capitalize(header)}:</Text>
           </Box>
           <Box flexGrow={1}>
-            <List items={table[header]!} />
+            {table[header]!.length === 1 ? <Text>{`    ${table[header]![0]}`}</Text> : <List items={table[header]!} />}
           </Box>
         </Box>
       ))}
