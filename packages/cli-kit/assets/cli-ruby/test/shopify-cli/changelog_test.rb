@@ -19,7 +19,6 @@ module ShopifyCLI
     CHANGELOG
 
     def test_changelog_outputs_equal_inputs
-      skip
       assert_equal(Changelog.new.full_contents, File.read(Changelog::CHANGELOG_FILE))
     end
 
