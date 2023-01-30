@@ -11,20 +11,15 @@ import {
 } from './dev.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
-import {ui} from '@shopify/cli-kit'
-import {renderAutocompletePrompt, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {
+  renderAutocompletePrompt,
+  renderConfirmationPrompt,
+  renderSelectPrompt,
+  renderTextPrompt,
+} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 beforeEach(() => {
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      ui: {
-        prompt: vi.fn(),
-      },
-    }
-  })
   vi.mock('@shopify/cli-kit/node/ui')
 })
 
@@ -66,24 +61,20 @@ const STORE2: OrganizationStore = {
 describe('selectOrganization', () => {
   it('request org selection if passing more than 1 org', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValue({id: '1'})
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('1')
 
     // When
     const got = await selectOrganizationPrompt([ORG1, ORG2])
 
     // Then
     expect(got).toEqual(ORG1)
-    expect(ui.prompt).toHaveBeenCalledWith([
-      {
-        type: 'autocomplete',
-        name: 'id',
-        message: 'Which Partners organization is this work for?',
-        choices: [
-          {name: 'org1', value: '1'},
-          {name: 'org2', value: '2'},
-        ],
-      },
-    ])
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
+      message: 'Which Partners organization is this work for?',
+      choices: [
+        {label: 'org1', value: '1'},
+        {label: 'org2', value: '2'},
+      ],
+    })
   })
 
   it('returns directly if passing only 1 org', async () => {
@@ -95,7 +86,7 @@ describe('selectOrganization', () => {
 
     // Then
     expect(got).toEqual(ORG2)
-    expect(ui.prompt).not.toBeCalled()
+    expect(renderAutocompletePrompt).not.toBeCalled()
   })
 })
 
@@ -132,7 +123,7 @@ describe('selectStore', () => {
 
     // Then
     expect(got).toEqual(undefined)
-    expect(ui.prompt).not.toBeCalled()
+    expect(renderAutocompletePrompt).not.toBeCalled()
   })
 
   it('returns without asking if there is only 1 store', async () => {
@@ -145,52 +136,46 @@ describe('selectStore', () => {
 
     // Then
     expect(got).toEqual(STORE1)
-    expect(ui.prompt).not.toBeCalled()
+    expect(renderAutocompletePrompt).not.toBeCalled()
     expect(outputMock.output()).toMatch('Using your default dev store (store1) to preview your project')
   })
 
   it('returns store if user selects one', async () => {
     // Given
     const stores: OrganizationStore[] = [STORE1, STORE2]
-    vi.mocked(ui.prompt).mockResolvedValue({id: '2'})
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('2')
 
     // When
     const got = await selectStorePrompt(stores)
 
     // Then
     expect(got).toEqual(STORE2)
-    expect(ui.prompt).toHaveBeenCalledWith([
-      {
-        type: 'autocomplete',
-        name: 'id',
-        message: 'Which development store would you like to use to view your project?',
-        choices: [
-          {name: 'store1', value: '1'},
-          {name: 'store2', value: '2'},
-        ],
-      },
-    ])
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
+      message: 'Which development store would you like to use to view your project?',
+      choices: [
+        {label: 'store1', value: '1'},
+        {label: 'store2', value: '2'},
+      ],
+    })
   })
 })
 
 describe('appType', () => {
   it('asks the user to select a type and returns it', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValue({value: 'custom'})
+    vi.mocked(renderSelectPrompt).mockResolvedValue('custom')
 
     // When
     const got = await appTypePrompt()
 
     // Then
     expect(got).toEqual('custom')
-    expect(ui.prompt).toHaveBeenCalledWith([
+    expect(renderSelectPrompt).toHaveBeenCalledWith([
       {
-        type: 'select',
-        name: 'value',
         message: 'What type of app are you building?',
         choices: [
-          {name: 'Public: An app built for a wide merchant audience.', value: 'public'},
-          {name: 'Custom: An app custom built for a single client.', value: 'custom'},
+          {label: 'Public: An app built for a wide merchant audience.', value: 'public'},
+          {label: 'Custom: An app custom built for a single client.', value: 'custom'},
         ],
       },
     ])
@@ -200,19 +185,17 @@ describe('appType', () => {
 describe('appName', () => {
   it('asks the user to write a name and returns it', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValue({name: 'app-name'})
+    vi.mocked(renderTextPrompt).mockResolvedValue('app-name')
 
     // When
     const got = await appNamePrompt('suggested-name')
 
     // Then
     expect(got).toEqual('app-name')
-    expect(ui.prompt).toHaveBeenCalledWith([
+    expect(renderTextPrompt).toHaveBeenCalledWith([
       {
-        type: 'input',
-        name: 'name',
         message: 'App Name',
-        default: 'suggested-name',
+        defaultValue: 'suggested-name',
         validate: expect.any(Function),
       },
     ])
@@ -222,22 +205,18 @@ describe('appName', () => {
 describe('reloadStoreList', () => {
   it('returns true if user selects reload', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValue({value: 'reload'})
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
     // When
     const got = await reloadStoreListPrompt(ORG1)
 
     // Then
     expect(got).toEqual(true)
-    expect(ui.prompt).toHaveBeenCalledWith([
+    expect(renderConfirmationPrompt).toHaveBeenCalledWith([
       {
-        type: 'select',
-        name: 'value',
         message: 'Finished creating a dev store?',
-        choices: [
-          {name: 'Yes, org1 has a new dev store', value: 'reload'},
-          {name: 'No, cancel dev', value: 'cancel'},
-        ],
+        confirmationMessage: 'Yes, org1 has a new dev store',
+        cancellationMessage: 'No, cancel dev',
       },
     ])
   })
@@ -246,22 +225,18 @@ describe('reloadStoreList', () => {
 describe('createAsNewAppPrompt', () => {
   it('returns true if user selects to create a new app', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValue({value: 'yes'})
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
     // When
     const got = await createAsNewAppPrompt()
 
     // Then
     expect(got).toEqual(true)
-    expect(ui.prompt).toHaveBeenCalledWith([
+    expect(renderConfirmationPrompt).toHaveBeenCalledWith([
       {
-        type: 'select',
-        name: 'value',
         message: 'Create this project as a new app on Shopify?',
-        choices: [
-          {name: 'Yes, create it as a new app', value: 'yes'},
-          {name: 'No, connect it to an existing app', value: 'cancel'},
-        ],
+        confirmationMessage: 'Yes, create it as a new app',
+        cancellationMessage: 'No, connect it to an existing app',
       },
     ])
   })
@@ -299,22 +274,20 @@ describe('updateURLsPrompt', () => {
 describe('tunnelConfigurationPrompt', () => {
   it('asks about the selected tunnel plugin configuration and shows 3 different options', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
+    vi.mocked(renderSelectPrompt).mockResolvedValue({value: 'always'})
 
     // When
     const got = await tunnelConfigurationPrompt()
 
     // Then
     expect(got).toEqual('always')
-    expect(ui.prompt).toHaveBeenCalledWith([
+    expect(renderSelectPrompt).toHaveBeenCalledWith([
       {
-        type: 'select',
-        name: 'value',
         message: 'How would you like your tunnel to work in the future?',
         choices: [
-          {name: 'Always use it by default', value: 'always'},
-          {name: 'Use it now and ask me next time', value: 'yes'},
-          {name: 'Nevermind, cancel dev', value: 'cancel'},
+          {label: 'Always use it by default', value: 'always'},
+          {label: 'Use it now and ask me next time', value: 'yes'},
+          {label: 'Nevermind, cancel dev', value: 'cancel'},
         ],
       },
     ])

@@ -1,9 +1,11 @@
 import init from './init.js'
 import {describe, it, expect, vi} from 'vitest'
+import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
+
+vi.mock('@shopify/cli-kit/node/ui')
 
 describe('init', () => {
   it('when name is not passed', async () => {
-    const prompt = vi.fn()
     const answers = {
       name: 'app',
       template: 'https://github.com/Shopify/shopify-app-template-node#add-shopify-home-toml',
@@ -11,41 +13,32 @@ describe('init', () => {
     const options = {template: 'template', directory: '/'}
 
     // Given
-    prompt.mockResolvedValue(Promise.resolve(answers))
+    vi.mocked(renderTextPrompt).mockResolvedValueOnce(answers.name)
 
     // When
-    const got = await init(options, prompt)
+    const got = await init(options)
 
     // Then
-    expect(prompt).toHaveBeenCalledWith([
-      {
-        type: 'input',
-        name: 'name',
-        preface: '\nWelcome. Let’s get started by naming your app. You can change it later.\n',
-        message: "Your app's name?",
-        default: expect.stringMatching(/^\w+-\w+-app$/),
-        validate: expect.any(Function),
-      },
-    ])
+    expect(renderTextPrompt).toHaveBeenCalledWith({
+      message: "Your app's name?",
+      defaultValue: expect.stringMatching(/^\w+-\w+-app$/),
+      validate: expect.any(Function),
+    })
     expect(got).toEqual({...options, ...answers})
   })
 
   it('when name is passed', async () => {
-    const prompt = vi.fn()
     const answers = {
       name: 'app',
       template: 'https://github.com/Shopify/shopify-app-template-node#add-shopify-home-toml',
     }
     const options = {name: 'app', template: 'template', directory: '/'}
 
-    // Given
-    prompt.mockResolvedValue(Promise.resolve(answers))
-
     // When
-    const got = await init(options, prompt)
+    const got = await init(options)
 
     // Then
-    expect(prompt).toHaveBeenCalledWith([])
+    expect(renderTextPrompt).not.toHaveBeenCalled()
     expect(got).toEqual({...options, ...answers})
   })
 })

@@ -1,8 +1,8 @@
 import {extensionTypesGroups} from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
-import {ui} from '@shopify/cli-kit'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
+import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 interface GenerateExtensionOptions {
   name?: string
@@ -20,82 +20,62 @@ interface GenerateExtensionOutput {
   extensionFlavor?: string
 }
 
-export const extensionFlavorQuestion = (specification: GenericSpecification): ui.Question => {
-  return {
-    type: 'select',
-    name: 'extensionFlavor',
-    message: 'What would you like to work in?',
-    choices: specification.supportedFlavors,
-    default: 'react',
-  }
-}
-
 export function buildChoices(specifications: GenericSpecification[]) {
   return specifications
     .map((type) => {
       const choiceWithoutGroup = {
-        name: type.externalName,
+        label: type.externalName,
         value: type.identifier,
       }
       const group = extensionTypesGroups.find((group) => includes(group.extensions, type.identifier))
       if (group) {
         return {
           ...choiceWithoutGroup,
-          group: {
-            name: group.name,
-            order: extensionTypesGroups.indexOf(group),
-          },
+          group: group.name,
         }
       }
       return choiceWithoutGroup
     })
-    .sort((c1, c2) => c1.name.localeCompare(c2.name))
+    .sort((c1, c2) => c1.label.localeCompare(c2.label))
 }
 
-const generateExtensionPrompt = async (
-  options: GenerateExtensionOptions,
-  prompt = ui.prompt,
-): Promise<GenerateExtensionOutput> => {
-  const questions: ui.Question<'name' | 'extensionType'>[] = []
-
+const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promise<GenerateExtensionOutput> => {
   let allExtensions = options.extensionSpecifications
+  let extensionType = options.extensionType
+  let name = options.name
+  let extensionFlavor = options.extensionFlavor
 
-  if (!options.extensionType) {
-    if (options.extensionFlavor) {
-      const flavor = options.extensionFlavor
-      allExtensions = allExtensions.filter((spec) => spec.supportedFlavors.map((elem) => elem.value).includes(flavor))
+  if (!extensionType) {
+    if (extensionFlavor) {
+      allExtensions = allExtensions.filter((spec) =>
+        spec.supportedFlavors.map((elem) => elem.value).includes(extensionFlavor!),
+      )
     }
 
-    questions.push({
-      type: 'select',
-      name: 'extensionType',
+    // eslint-disable-next-line require-atomic-updates
+    extensionType = await renderSelectPrompt({
       message: 'Type of extension?',
       choices: buildChoices(allExtensions),
     })
   }
-  if (!options.name) {
-    questions.push({
-      type: 'input',
-      name: 'name',
+  if (!name) {
+    name = await renderTextPrompt({
       message: "Your extension's working name?",
-      default: await generateRandomNameForSubdirectory({suffix: 'ext', directory: options.directory}),
+      defaultValue: await generateRandomNameForSubdirectory({suffix: 'ext', directory: options.directory}),
     })
   }
-  let promptOutput: GenerateExtensionOutput = await prompt(questions)
-  const extensionType = {...options, ...promptOutput}.extensionType
   const specification = options.extensionSpecifications.find((spec) => spec.identifier === extensionType)!
-  if (!options.extensionFlavor && specification.supportedFlavors.length > 1) {
-    promptOutput = {
-      ...promptOutput,
-      extensionFlavor: (
-        (await prompt([
-          extensionFlavorQuestion(specification),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ])) as any
-      ).extensionFlavor,
-    }
+  if (!extensionFlavor && specification.supportedFlavors.length > 1) {
+    // eslint-disable-next-line require-atomic-updates
+    extensionFlavor = await renderSelectPrompt({
+      message: 'What would you like to work in?',
+      choices: specification.supportedFlavors.map((flavor) => {
+        return {...flavor, label: flavor.name}
+      }),
+      defaultValue: 'react',
+    })
   }
-  return {...options, ...promptOutput}
+  return {...options, name, extensionType, extensionFlavor}
 }
 
 function includes<TNarrow extends TWide, TWide>(coll: ReadonlyArray<TNarrow>, el: TWide): el is TNarrow {
