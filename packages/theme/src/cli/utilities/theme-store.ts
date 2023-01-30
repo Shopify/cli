@@ -3,7 +3,7 @@ import {getThemeStore, setThemeStore} from '../services/conf.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
-export function requiredThemeStore(flags: {store: string | undefined}): string {
+export function ensureThemeStore(flags: {store: string | undefined}): string {
   const store = flags.store || getThemeStore()
   if (!store) {
     throw new AbortError(
