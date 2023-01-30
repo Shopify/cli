@@ -26,7 +26,7 @@ const tailwindImportsExist = (indexCSS: string) =>
 export async function addTailwind({app, force, install, directory}: AddTailwindOptions) {
   const tasks: Task[] = [
     {
-      title: 'Installing additional dependencies',
+      title: 'Installing dependencies',
       skip: () => !install,
       task: async () => {
         const requiredDependencies = ['postcss', 'postcss-loader', 'tailwindcss', 'autoprefixer']

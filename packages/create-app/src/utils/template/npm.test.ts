@@ -128,49 +128,51 @@ describe('getDeepInstallNPMTasks', () => {
     didInstallEverything: () => {},
   }
 
-  it.each([
-    ['/', 0],
-    ['/web/', 1],
-    ['/web/frontend/', 2],
-  ])('returns a task for %s', async (folderPath, i) => {
+  it('returns a task for each folder with a package.json', async () => {
     await mockAppFolder(async (tmpDir) => {
       const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir})
-      const thisTask = tasks[i]
 
-      expect(thisTask).toStrictEqual({
-        title: `Installing dependencies in ${folderPath}`,
-        task: expect.any(Function),
-      })
+      expect(tasks).toStrictEqual([
+        {
+          title: `Installing dependencies`,
+          task: expect.any(Function),
+        },
+        {
+          title: `Installing dependencies in web/`,
+          task: expect.any(Function),
+        },
+        {
+          title: `Installing dependencies in web/frontend/`,
+          task: expect.any(Function),
+        },
+      ])
     })
   })
 
-  it.each([['darwin'], ['win32']])(
-    'each task.task installs dependencies when the os is %s',
-    async (operativeSystem) => {
-      await mockAppFolder(async (tmpDir) => {
-        const expectedArgs = operativeSystem === 'win32' ? ['--network-concurrency', '1'] : []
-        vi.mocked(platform).mockReturnValue(operativeSystem as NodeJS.Platform)
+  it.each([['darwin'], ['win32']])('each task installs dependencies when the os is %s', async (operativeSystem) => {
+    await mockAppFolder(async (tmpDir) => {
+      const expectedArgs = operativeSystem === 'win32' ? ['--network-concurrency', '1'] : []
+      vi.mocked(platform).mockReturnValue(operativeSystem as NodeJS.Platform)
 
-        const tasks = await getDeepInstallNPMTasks({...defaultArgs, packageManager: 'yarn', from: tmpDir})
+      const tasks = await getDeepInstallNPMTasks({...defaultArgs, packageManager: 'yarn', from: tmpDir})
 
-        await Promise.all(tasks.map((task) => task.task({}, task)))
+      await Promise.all(tasks.map((task) => task.task({}, task)))
 
-        expect(installNodeModules).toHaveBeenCalledWith({
-          directory: `${normalizePath(tmpDir)}/`,
-          packageManager: 'yarn',
-          args: expectedArgs,
-        })
-        expect(installNodeModules).toHaveBeenCalledWith({
-          directory: `${joinPath(tmpDir, 'web')}/`,
-          packageManager: 'yarn',
-          args: expectedArgs,
-        })
-        expect(installNodeModules).toHaveBeenCalledWith({
-          directory: `${joinPath(tmpDir, 'web', 'frontend')}/`,
-          packageManager: 'yarn',
-          args: expectedArgs,
-        })
+      expect(installNodeModules).toHaveBeenCalledWith({
+        directory: `${normalizePath(tmpDir)}/`,
+        packageManager: 'yarn',
+        args: expectedArgs,
       })
-    },
-  )
+      expect(installNodeModules).toHaveBeenCalledWith({
+        directory: `${joinPath(tmpDir, 'web')}/`,
+        packageManager: 'yarn',
+        args: expectedArgs,
+      })
+      expect(installNodeModules).toHaveBeenCalledWith({
+        directory: `${joinPath(tmpDir, 'web', 'frontend')}/`,
+        packageManager: 'yarn',
+        args: expectedArgs,
+      })
+    })
+  })
 })

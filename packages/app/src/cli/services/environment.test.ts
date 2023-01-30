@@ -32,7 +32,7 @@ import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager.js'
+import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 beforeEach(() => {
   vi.mock('./conf.js')
