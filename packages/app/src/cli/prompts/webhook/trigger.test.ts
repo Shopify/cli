@@ -45,9 +45,9 @@ describe('apiVersionPrompt', () => {
     expect(renderSelectPrompt).toHaveBeenCalledWith({
       message: 'Webhook ApiVersion',
       choices: [
-        {name: '2023-01', value: '2023-01'},
-        {name: '2022-10', value: '2022-10'},
-        {name: 'unstable', value: 'unstable'},
+        {label: '2023-01', value: '2023-01'},
+        {label: '2022-10', value: '2022-10'},
+        {label: 'unstable', value: 'unstable'},
       ],
     })
   })
@@ -66,9 +66,9 @@ describe('deliveryMethodPrompt', () => {
     expect(renderSelectPrompt).toHaveBeenCalledWith({
       message: 'Delivery method',
       choices: [
-        {name: 'HTTP', value: 'http'},
-        {name: 'Google Pub/Sub', value: 'google-pub-sub'},
-        {name: 'Amazon EventBridge', value: 'event-bridge'},
+        {label: 'HTTP', value: 'http'},
+        {label: 'Google Pub/Sub', value: 'google-pub-sub'},
+        {label: 'Amazon EventBridge', value: 'event-bridge'},
       ],
     })
   })

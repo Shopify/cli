@@ -170,15 +170,13 @@ describe('appType', () => {
 
     // Then
     expect(got).toEqual('custom')
-    expect(renderSelectPrompt).toHaveBeenCalledWith([
-      {
-        message: 'What type of app are you building?',
-        choices: [
-          {label: 'Public: An app built for a wide merchant audience.', value: 'public'},
-          {label: 'Custom: An app custom built for a single client.', value: 'custom'},
-        ],
-      },
-    ])
+    expect(renderSelectPrompt).toHaveBeenCalledWith({
+      message: 'What type of app are you building?',
+      choices: [
+        {label: 'Public: An app built for a wide merchant audience.', value: 'public'},
+        {label: 'Custom: An app custom built for a single client.', value: 'custom'},
+      ],
+    })
   })
 })
 
@@ -192,13 +190,11 @@ describe('appName', () => {
 
     // Then
     expect(got).toEqual('app-name')
-    expect(renderTextPrompt).toHaveBeenCalledWith([
-      {
-        message: 'App Name',
-        defaultValue: 'suggested-name',
-        validate: expect.any(Function),
-      },
-    ])
+    expect(renderTextPrompt).toHaveBeenCalledWith({
+      message: 'App Name',
+      defaultValue: 'suggested-name',
+      validate: expect.any(Function),
+    })
   })
 })
 
@@ -212,13 +208,11 @@ describe('reloadStoreList', () => {
 
     // Then
     expect(got).toEqual(true)
-    expect(renderConfirmationPrompt).toHaveBeenCalledWith([
-      {
-        message: 'Finished creating a dev store?',
-        confirmationMessage: 'Yes, org1 has a new dev store',
-        cancellationMessage: 'No, cancel dev',
-      },
-    ])
+    expect(renderConfirmationPrompt).toHaveBeenCalledWith({
+      message: 'Finished creating a dev store?',
+      confirmationMessage: 'Yes, org1 has a new dev store',
+      cancellationMessage: 'No, cancel dev',
+    })
   })
 })
 
@@ -232,13 +226,11 @@ describe('createAsNewAppPrompt', () => {
 
     // Then
     expect(got).toEqual(true)
-    expect(renderConfirmationPrompt).toHaveBeenCalledWith([
-      {
-        message: 'Create this project as a new app on Shopify?',
-        confirmationMessage: 'Yes, create it as a new app',
-        cancellationMessage: 'No, connect it to an existing app',
-      },
-    ])
+    expect(renderConfirmationPrompt).toHaveBeenCalledWith({
+      message: 'Create this project as a new app on Shopify?',
+      confirmationMessage: 'Yes, create it as a new app',
+      cancellationMessage: 'No, connect it to an existing app',
+    })
   })
 })
 
@@ -274,22 +266,20 @@ describe('updateURLsPrompt', () => {
 describe('tunnelConfigurationPrompt', () => {
   it('asks about the selected tunnel plugin configuration and shows 3 different options', async () => {
     // Given
-    vi.mocked(renderSelectPrompt).mockResolvedValue({value: 'always'})
+    vi.mocked(renderSelectPrompt).mockResolvedValue('always')
 
     // When
     const got = await tunnelConfigurationPrompt()
 
     // Then
     expect(got).toEqual('always')
-    expect(renderSelectPrompt).toHaveBeenCalledWith([
-      {
-        message: 'How would you like your tunnel to work in the future?',
-        choices: [
-          {label: 'Always use it by default', value: 'always'},
-          {label: 'Use it now and ask me next time', value: 'yes'},
-          {label: 'Nevermind, cancel dev', value: 'cancel'},
-        ],
-      },
-    ])
+    expect(renderSelectPrompt).toHaveBeenCalledWith({
+      message: 'How would you like your tunnel to work in the future?',
+      choices: [
+        {label: 'Always use it by default', value: 'always'},
+        {label: 'Use it now and ask me next time', value: 'yes'},
+        {label: 'Nevermind, cancel dev', value: 'cancel'},
+      ],
+    })
   })
 })

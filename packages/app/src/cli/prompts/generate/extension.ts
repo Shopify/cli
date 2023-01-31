@@ -70,7 +70,10 @@ const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promi
     extensionFlavor = await renderSelectPrompt({
       message: 'What would you like to work in?',
       choices: specification.supportedFlavors.map((flavor) => {
-        return {...flavor, label: flavor.name}
+        return {
+          label: flavor.name,
+          value: flavor.value,
+        }
       }),
       defaultValue: 'react',
     })

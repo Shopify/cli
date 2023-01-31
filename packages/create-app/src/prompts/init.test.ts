@@ -8,7 +8,6 @@ describe('init', () => {
   it('when name is not passed', async () => {
     const answers = {
       name: 'app',
-      template: 'https://github.com/Shopify/shopify-app-template-node#add-shopify-home-toml',
     }
     const options = {template: 'template', directory: '/'}
 
@@ -29,10 +28,9 @@ describe('init', () => {
 
   it('when name is passed', async () => {
     const answers = {
-      name: 'app',
-      template: 'https://github.com/Shopify/shopify-app-template-node#add-shopify-home-toml',
+      template: 'https://github.com/Shopify/shopify-app-template-node',
     }
-    const options = {name: 'app', template: 'template', directory: '/'}
+    const options = {name: 'app', directory: '/'}
 
     // When
     const got = await init(options)

@@ -16,12 +16,10 @@ describe('init', () => {
     const got = await init(input)
 
     // Then
-    expect(renderTextPrompt).toHaveBeenCalledWith([
-      {
-        message: 'Name your new Hydrogen storefront',
-        default: 'hydrogen-app',
-      },
-    ])
+    expect(renderTextPrompt).toHaveBeenCalledWith({
+      message: 'Name your new Hydrogen storefront',
+      defaultValue: 'hydrogen-app',
+    })
 
     expect(got.name).toEqual(output.name)
   })
@@ -56,22 +54,20 @@ describe('init', () => {
     const got = await init(input)
 
     // Then
-    expect(renderSelectPrompt).toHaveBeenCalledWith([
-      expect.objectContaining({
-        choices: [
-          {
-            label: 'Demo Store',
-            value: 'demo-store',
-          },
-          {
-            label: 'Hello World',
-            value: 'hello-world',
-          },
-        ],
-        message: 'Choose a template',
-        defaultValue: 'demo-store',
-      }),
-    ])
+    expect(renderSelectPrompt).toHaveBeenCalledWith({
+      choices: [
+        {
+          label: 'Demo Store',
+          value: 'demo-store',
+        },
+        {
+          label: 'Hello World',
+          value: 'hello-world',
+        },
+      ],
+      message: 'Choose a template',
+      defaultValue: 'demo-store',
+    })
     expect(got).toEqual(output)
   })
 
@@ -88,22 +84,20 @@ describe('init', () => {
     const got = await init(input)
 
     // Then
-    expect(renderSelectPrompt).toHaveBeenCalledWith([
-      expect.objectContaining({
-        choices: [
-          {
-            label: 'JavaScript',
-            value: 'js',
-          },
-          {
-            label: 'TypeScript',
-            value: 'ts',
-          },
-        ],
-        message: 'Choose a language',
-        defaultValue: 'js',
-      }),
-    ])
+    expect(renderSelectPrompt).toHaveBeenCalledWith({
+      choices: [
+        {
+          label: 'JavaScript',
+          value: 'js',
+        },
+        {
+          label: 'TypeScript',
+          value: 'ts',
+        },
+      ],
+      message: 'Choose a language',
+      defaultValue: 'js',
+    })
     expect(got).toEqual(output)
   })
 

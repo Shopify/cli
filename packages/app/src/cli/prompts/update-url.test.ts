@@ -16,13 +16,11 @@ describe('appUrlPrompt', () => {
 
     // Then
     expect(got).toEqual('https://my-app.example.com')
-    expect(renderTextPrompt).toHaveBeenCalledWith([
-      {
-        message: 'App URL',
-        defaultValue: 'https://example.com',
-        validate: expect.any(Function),
-      },
-    ])
+    expect(renderTextPrompt).toHaveBeenCalledWith({
+      message: 'App URL',
+      defaultValue: 'https://example.com',
+      validate: expect.any(Function),
+    })
   })
 })
 
@@ -38,7 +36,7 @@ describe('allowedRedirectionURLsPrompt', () => {
     expect(got).toEqual(['https://example.com/callback1', 'https://example.com/callback2'])
     expect(renderTextPrompt).toHaveBeenCalledWith({
       message: 'Allowed redirection URLs (comma separated)',
-      default: 'https://example.com/callback',
+      defaultValue: 'https://example.com/callback',
       validate: expect.any(Function),
     })
   })

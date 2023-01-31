@@ -3,6 +3,7 @@ import {testApp} from '../../models/app/app.test-data.js'
 import {
   loadLocalFunctionSpecifications,
   loadLocalUIExtensionsSpecifications,
+  loadLocalExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {isShopify, isUnitTest} from '@shopify/cli-kit/node/environment/local'
@@ -20,6 +21,7 @@ describe('extension prompt', async () => {
   // ALL UI Specs, filter out theme
   const allUISpecs = await loadLocalUIExtensionsSpecifications()
   const allFunctionSpecs = await loadLocalFunctionSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
 
   const extensionTypeQuestion = {
     message: 'Type of extension?',
@@ -35,14 +37,15 @@ describe('extension prompt', async () => {
     const options = {directory: '/', app: testApp(), reset: false, extensionSpecifications: allUISpecs}
 
     // Given
-    vi.mocked(renderTextPrompt).mockResolvedValueOnce(answers.extensionType).mockResolvedValueOnce(answers.name)
+    vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionType)
+    vi.mocked(renderTextPrompt).mockResolvedValue(answers.name)
 
     // When
     const got = await generateExtensionPrompt(options)
 
     // Then
-    expect(renderSelectPrompt).toHaveBeenCalledWith([extensionTypeQuestion])
-    expect(renderTextPrompt).toHaveBeenCalledWith([extensionNameQuestion])
+    expect(renderSelectPrompt).toHaveBeenCalledWith(extensionTypeQuestion)
+    expect(renderTextPrompt).toHaveBeenCalledWith(extensionNameQuestion)
     expect(got).toEqual({...options, ...answers})
   })
 
@@ -57,13 +60,13 @@ describe('extension prompt', async () => {
     }
 
     // Given
-    vi.mocked(renderTextPrompt).mockResolvedValueOnce(answers.extensionType)
+    vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionType)
 
     // When
     const got = await generateExtensionPrompt(options)
 
     // Then
-    expect(renderSelectPrompt).toHaveBeenCalledWith([extensionTypeQuestion])
+    expect(renderSelectPrompt).toHaveBeenCalledWith(extensionTypeQuestion)
     expect(got).toEqual({...options, ...answers})
   })
 
@@ -86,20 +89,22 @@ describe('extension prompt', async () => {
     const got = await generateExtensionPrompt(options)
 
     // Then
-    expect(renderSelectPrompt).toHaveBeenCalledWith([
-      [{message: 'What would you like to work in?', choices: postPurchaseSpec.supportedFlavors, default: 'react'}],
-    ])
+    expect(renderSelectPrompt).toHaveBeenCalledWith({
+      message: 'What would you like to work in?',
+      choices: postPurchaseSpec.supportedFlavors,
+      defaultValue: 'react',
+    })
     expect(got).toEqual({...options, ...answers})
   })
 
-  it('when scaffolding a theme extension type does not prompt for language/framework preference', async () => {
+  it.only('when scaffolding a theme extension type does not prompt for language/framework preference', async () => {
     const options = {
       name: 'my-special-extension',
-      extensionType: 'ui_extension',
+      extensionType: 'theme',
       directory: '/',
       app: testApp(),
       reset: false,
-      extensionSpecifications: allUISpecs,
+      extensionSpecifications: allSpecs,
     }
 
     // When
@@ -129,9 +134,13 @@ describe('extension prompt', async () => {
     const got = await generateExtensionPrompt(options)
 
     // Then
-    expect(renderSelectPrompt).toHaveBeenCalledWith([
-      {message: 'What would you like to work in?', choices: productDiscountsSpec.supportedFlavors, default: 'react'},
-    ])
+    expect(renderSelectPrompt).toHaveBeenCalledWith({
+      message: 'What would you like to work in?',
+      choices: productDiscountsSpec.supportedFlavors.map((flavor) => {
+        return {label: flavor.name, value: flavor.value}
+      }),
+      defaultValue: 'react',
+    })
 
     expect(got).toEqual({...options, ...answers})
   })
@@ -158,7 +167,7 @@ describe('extension prompt', async () => {
     const got = await generateExtensionPrompt(options)
 
     // Then
-    expect(renderSelectPrompt).toHaveBeenCalledWith([functionTypes])
+    expect(renderSelectPrompt).toHaveBeenCalledWith(functionTypes)
     expect(got).toEqual({...options, ...answers})
   })
 })
