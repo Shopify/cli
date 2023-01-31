@@ -83,7 +83,7 @@ describe('extension prompt', async () => {
     }
 
     // Given
-    vi.mocked(renderTextPrompt).mockResolvedValueOnce(answers.extensionFlavor)
+    vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionFlavor)
 
     // When
     const got = await generateExtensionPrompt(options)
@@ -91,7 +91,9 @@ describe('extension prompt', async () => {
     // Then
     expect(renderSelectPrompt).toHaveBeenCalledWith({
       message: 'What would you like to work in?',
-      choices: postPurchaseSpec.supportedFlavors,
+      choices: postPurchaseSpec.supportedFlavors.map((flavor) => {
+        return {label: flavor.name, value: flavor.value}
+      }),
       defaultValue: 'react',
     })
     expect(got).toEqual({...options, ...answers})
