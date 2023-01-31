@@ -78,18 +78,3 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
 }
 
 export default init
-function renderTextInput(arg0: {
-  type: string
-  name: string
-  message: string
-  default: string
-  validate: (
-    value: unknown,
-  ) =>
-    | "App Name can't be empty"
-    | 'Enter a shorter name (30 character max.)'
-    | "App Name can't include the word 'shopify'"
-    | undefined
-}): string | PromiseLike<string | undefined> | undefined {
-  throw new Error('Function not implemented.')
-}
