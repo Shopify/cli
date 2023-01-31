@@ -37,7 +37,7 @@ describe('packageTheme', () => {
       expect(themeRelativePaths.sort()).toEqual(archiveEntries.sort())
 
       expect(renderSuccess).toBeCalledWith({
-        headline: ['Your local theme was packaged in', {filePath: expectedOutputZipPath}],
+        body: ['Your local theme was packaged in', {filePath: expectedOutputZipPath}],
       })
     })
   })
@@ -71,7 +71,7 @@ describe('packageTheme', () => {
       expect(expectedThemeRelativePaths.sort()).toEqual(archiveEntries.sort())
 
       expect(renderSuccess).toBeCalledWith({
-        headline: ['Your local theme was packaged in', {filePath: expectedOutputZipPath}],
+        body: ['Your local theme was packaged in', {filePath: expectedOutputZipPath}],
       })
     })
   })
@@ -101,7 +101,7 @@ describe('packageTheme', () => {
       expect(themeRelativePaths.sort()).toEqual(archiveEntries.sort())
 
       expect(renderSuccess).toBeCalledWith({
-        headline: ['Your local theme was packaged in', {filePath: expectedOutputZipPath}],
+        body: ['Your local theme was packaged in', {filePath: expectedOutputZipPath}],
       })
     })
   })
