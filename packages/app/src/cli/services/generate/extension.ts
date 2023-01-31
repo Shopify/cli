@@ -258,7 +258,10 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
       taskList.push({
         title: `Building ${specification.externalName} graphql types`,
         task: async () => {
-          await buildGraphqlTypes(options.extensionDirectory, {stdout: process.stdout, stderr: process.stderr})
+          await buildGraphqlTypes(
+            {directory: options.extensionDirectory, isJavaScript: true},
+            {stdout: process.stdout, stderr: process.stderr},
+          )
         },
       })
     }

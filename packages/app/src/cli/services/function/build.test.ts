@@ -29,9 +29,10 @@ describe('buildGraphqlTypes', () => {
   test('generate types', async () => {
     // Given
     const ourFunction = await testFunctionExtension()
+    ourFunction.entrySourceFilePath = 'src/index.js'
 
     // When
-    await expect(buildGraphqlTypes(ourFunction.directory, {stdout, stderr, signal})).resolves.toBeUndefined()
+    await expect(buildGraphqlTypes(ourFunction, {stdout, stderr, signal})).resolves.toBeUndefined()
 
     // Then
     expect(exec).toHaveBeenCalledWith('npm', ['exec', '--', 'graphql-code-generator'], {
@@ -39,6 +40,17 @@ describe('buildGraphqlTypes', () => {
       stderr,
       signal,
     })
+  })
+
+  test('errors if function is not a JS function', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+    ourFunction.entrySourceFilePath = 'src/main.rs'
+
+    // When/Then
+    await expect(buildGraphqlTypes(ourFunction, {stdout, stderr, signal})).rejects.toThrow(
+      /GraphQL types can only be built for JavaScript functions/,
+    )
   })
 })
 

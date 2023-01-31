@@ -24,7 +24,7 @@ export async function buildJSFunction(fun: FunctionExtension, options: JSFunctio
 
 async function buildJSFunctionWithoutTasks(fun: FunctionExtension, options: JSFunctionBuildOptions) {
   options.stdout.write(`Building GraphQL types...\n`)
-  await buildGraphqlTypes(fun.directory, options)
+  await buildGraphqlTypes(fun, options)
   options.stdout.write(`Bundling JS function...\n`)
   await bundleExtension(fun, options)
   options.stdout.write(`Running javy...\n`)
@@ -37,7 +37,7 @@ export async function buildJSFunctionWithTasks(fun: FunctionExtension, options: 
     {
       title: 'Building GraphQL types',
       task: async () => {
-        await buildGraphqlTypes(fun.directory, options)
+        await buildGraphqlTypes(fun, options)
       },
     },
     {
@@ -55,9 +55,16 @@ export async function buildJSFunctionWithTasks(fun: FunctionExtension, options: 
   ])
 }
 
-export async function buildGraphqlTypes(directory: string, options: JSFunctionBuildOptions) {
+export async function buildGraphqlTypes(
+  fun: {directory: string; isJavaScript: boolean},
+  options: JSFunctionBuildOptions,
+) {
+  if (!fun.isJavaScript) {
+    throw new Error('GraphQL types can only be built for JavaScript functions')
+  }
+
   return exec('npm', ['exec', '--', 'graphql-code-generator'], {
-    cwd: directory,
+    cwd: fun.directory,
     stderr: options.stderr,
     signal: options.signal,
   })
