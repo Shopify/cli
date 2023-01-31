@@ -97,7 +97,8 @@
     "@oclif/plugin-commands": "2.2.0",
     "@oclif/plugin-help": "5.1.12",
     "@oclif/plugin-plugins": "2.1.0",
-    "@shopify/cli-kit": "3.39.0"
+    "@shopify/cli-kit": "3.39.0",
+    "@shopify/polaris-cli": "0.1.0"
   },
   "devDependencies": {
     "@shopify/app": "3.39.0",
@@ -153,6 +154,9 @@
       "kitchen-sink": {
         "description": "View the available UI kit components.",
         "hidden": true
+      },
+      "polaris": {
+        "description": "Tools for managing Polaris in Shopify apps."
       }
     },
     "additionalHelpFlags": [
