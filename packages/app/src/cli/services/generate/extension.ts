@@ -79,7 +79,7 @@ async function uiExtensionInit({
 }: UIExtensionInitOptions) {
   const tasks = [
     {
-      title: 'Installing additional dependencies',
+      title: 'Installing dependencies',
       task: async () => {
         await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor)
         const requiredDependencies = getRuntimeDependencies({specification, extensionFlavor})

@@ -1,4 +1,3 @@
-import {isUnitTest} from './environment/local.js'
 import {FatalError as Fatal} from './error.js'
 import {collectLog, consoleError, consoleLog, Logger, LogLevel, outputWhereAppropriate} from './output.js'
 import ConcurrentOutput, {Props as ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
@@ -276,7 +275,9 @@ export function renderAutocompletePrompt<T>(
 ): Promise<T> {
   const newProps = {
     search(term: string) {
-      return Promise.resolve(props.choices.filter((item) => item.label.toLowerCase().includes(term.toLowerCase())))
+      return Promise.resolve({
+        data: props.choices.filter((item) => item.label.toLowerCase().includes(term.toLowerCase())),
+      })
     },
     ...props,
   }
@@ -308,7 +309,7 @@ export function renderTable<T extends ScalarDict>(props: TableProps<T>) {
  * Runs async tasks and displays their progress to the console.
  */
 export async function renderTasks<TContext>(tasks: Task<TContext>[]) {
-  return render(<Tasks tasks={tasks} silent={isUnitTest()} />)
+  return render(<Tasks tasks={tasks} />)
 }
 
 /**

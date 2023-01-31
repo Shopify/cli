@@ -49,7 +49,7 @@ describe('env show', () => {
     vi.mocked(fetchOrgAndApps).mockResolvedValue({
       organization,
       stores: [],
-      apps: [organizationApp],
+      apps: {nodes: [organizationApp], pageInfo: {hasNextPage: false}},
     })
     vi.mocked(selectApp).mockResolvedValue(organizationApp)
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue(token)

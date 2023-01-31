@@ -2,10 +2,8 @@ import {CancelExecution, AbortError, AbortSilentError} from './public/node/error
 import {removeFile, fileExists} from './public/node/fs.js'
 import {
   outputInfo,
-  outputCompleted,
   outputContent,
   outputToken,
-  logUpdate,
   OutputMessage,
   Logger,
   stringifyMessage,
@@ -15,16 +13,7 @@ import colors from './public/node/colors.js'
 import {relativizePath} from './public/node/path.js'
 import {isTerminalInteractive} from './public/node/environment/local.js'
 import {run as executorUI} from './ui/executor.js'
-import {Listr as OriginalListr, ListrTask, ListrBaseClassOptions} from 'listr2'
 import findProcess from 'find-process'
-
-export function newListr(tasks: ListrTask[], options?: object | ListrBaseClassOptions) {
-  const listr = new OriginalListr(tasks, options)
-  return listr
-}
-
-export type ListrTasks = ConstructorParameters<typeof OriginalListr>[0]
-export type {ListrTaskWrapper, ListrDefaultRenderer, ListrTask} from 'listr2'
 
 export interface PromptAnswer {
   name: string
@@ -78,28 +67,6 @@ const failed = (content: OutputMessage, logger: Logger) => {
   outputInfo(message, logger)
 }
 
-/**
- * Performs a task with the title kept up to date and stdout available to the
- * task while it runs (there is no re-writing stdout while the task runs).
- */
-export interface TaskOptions {
-  title: string
-  task: () => Promise<void | {successMessage: string}>
-}
-export const task = async ({title, task}: TaskOptions) => {
-  let success
-  started(title, logUpdate)
-  try {
-    const result = await task()
-    success = result?.successMessage || title
-  } catch (err) {
-    failed(title, logUpdate)
-    logUpdate.done()
-    throw err
-  }
-  outputCompleted(success, logUpdate)
-  logUpdate.done()
-}
 export const prompt = async <
   TName extends string & keyof TAnswers,
   TAnswers extends {[key in TName]: string} = {[key in TName]: string},

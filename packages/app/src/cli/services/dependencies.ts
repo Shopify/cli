@@ -12,7 +12,7 @@ import {renderTasks} from '@shopify/cli-kit/node/ui'
 export async function installAppDependencies(app: AppInterface) {
   const tasks = [
     {
-      title: 'Installing any necessary dependencies',
+      title: 'Installing dependencies',
       task: async () => {
         await installNPMDependenciesRecursively({
           packageManager: app.packageManager,

@@ -6,6 +6,7 @@ import {handleCtrlC} from '../../ui.js'
 import React, {FunctionComponent, useCallback, useState} from 'react'
 import {Box, Key, Static, Text, useInput} from 'ink'
 import stripAnsi from 'strip-ansi'
+import treeKill from 'tree-kill'
 import {Writable} from 'stream'
 
 export type WritableStream = (process: OutputProcess, index: number) => Writable
@@ -14,7 +15,7 @@ export interface Props {
   processes: OutputProcess[]
   abortController: AbortController
   showTimestamps?: boolean
-  onInput?: (input: string, key: Key) => void
+  onInput?: (input: string, key: Key, exit: () => void) => void
   footer?: {
     title: string
     subTitle?: string
@@ -111,7 +112,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({
       useCallback(
         (input, key) => {
           handleCtrlC(input, key)
-          onInput(input, key)
+          onInput(input, key, () => treeKill(process.pid, 'SIGINT'))
         },
         [onInput],
       ),

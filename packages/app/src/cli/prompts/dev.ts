@@ -20,17 +20,27 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
   return organizations.find((org) => org.id === choice.id)!
 }
 
-export async function selectAppPrompt(apps: MinimalOrganizationApp[], orgId: string, token: string): Promise<string> {
+export async function selectAppPrompt(
+  apps: {pageInfo: {hasNextPage: boolean}; nodes: MinimalOrganizationApp[]},
+  orgId: string,
+  token: string,
+): Promise<string> {
   const toAnswer = (app: MinimalOrganizationApp) => ({label: app.title, value: app.apiKey})
-  const appList = apps.map(toAnswer)
+  const appList = apps.nodes.map(toAnswer)
 
   return renderAutocompletePrompt({
     message: 'Which existing app is this for?',
     choices: appList,
+    hasMorePages: apps.pageInfo.hasNextPage,
     search: async (term) => {
       const result = await fetchOrgAndApps(orgId, token, term)
 
-      return result.apps.map(toAnswer)
+      return {
+        data: result.apps.nodes.map(toAnswer),
+        meta: {
+          hasNextPage: result.apps.pageInfo.hasNextPage,
+        },
+      }
     },
   })
 }

@@ -109,12 +109,12 @@ ${outputToken.json(JSON.stringify(rules))}
   if (previewUrl) {
     renderConcurrentOptions = {
       ...renderConcurrentOptions,
-      onInput: (input: string) => {
+      onInput: (input, _key, exit) => {
         if (input === 'p' && previewUrl) {
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
           openURL(previewUrl)
         } else if (input === 'q') {
-          process.exit(0)
+          exit()
         }
       },
       footer: {

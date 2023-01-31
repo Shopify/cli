@@ -1,7 +1,7 @@
 import {fetchStoreThemes} from './theme-selector/fetch.js'
 import {Filter, FilterProps, filterThemes} from './theme-selector/filter.js'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
-import {AdminSession} from '@shopify/cli-kit/node/session.js'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 
 /**
  * Finds or selects a theme in the store.
