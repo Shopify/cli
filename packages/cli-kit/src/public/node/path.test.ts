@@ -1,4 +1,4 @@
-import {relativizePath} from './path.js'
+import {relativizePath, cwd} from './path.js'
 import {describe, test, expect} from 'vitest'
 
 describe('relativize', () => {
@@ -12,5 +12,16 @@ describe('relativize', () => {
 
     // Then
     expect(got).toMatchInlineSnapshot('"../extensions/my-extension"')
+  })
+})
+
+describe('cwd', () => {
+  test('returns the initial cwd where the command has been called', () => {
+    // Given
+    const path = cwd()
+
+    // Then
+    // eslint-disable-next-line rulesdir/no-process-cwd
+    expect(path).toStrictEqual(process.cwd())
   })
 })
