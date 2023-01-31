@@ -5,13 +5,14 @@ import React from 'react'
 import {render} from 'ink-testing-library'
 
 describe('InfoTable', async () => {
-  test('renders bullet points only for lists bigger than 1 item', async () => {
+  test('renders a horizontal table with bullet points', async () => {
     const {lastFrame} = render(<InfoTable table={{'header 1': ['some', 'items'], 'header 2': ['one item']}} />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "Header 1:  • some
                  • items
-      Header 2:    one item"
+
+      Header 2:  • one item"
     `)
   })
 })

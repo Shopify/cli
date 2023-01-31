@@ -8,7 +8,7 @@ describe('Alert', async () => {
   test('renders correctly with all the options', async () => {
     const options = {
       headline: [{userInput: 'my-app'}, 'initialized and ready to build.'],
-      body: ['You can find the build files in the ', {filePath: 'dist'}, 'folder.'],
+      body: ['You can find the build files in the', {filePath: 'dist'}, 'folder.'],
       nextSteps: [
         [
           'Run',
@@ -78,7 +78,7 @@ describe('Alert', async () => {
       │                                                                              │
       │  my-app initialized and ready to build.                                      │
       │                                                                              │
-      │  You can find the build files in the  \\"dist\\" folder.                         │
+      │  You can find the build files in the dist folder.                            │
       │                                                                              │
       │  Next steps                                                                  │
       │    • Run \`cd santorini-goods\`                                                │

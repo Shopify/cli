@@ -43,7 +43,7 @@ describe('TokenizedText', async () => {
         • Item 1
         • Item 2
         • Item 3
-      \\"src/this/is/a/test.js\\""
+      src/this/is/a/test.js"
     `)
   })
 })
