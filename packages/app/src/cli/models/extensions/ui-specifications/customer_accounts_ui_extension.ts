@@ -1,5 +1,6 @@
 import {createUIExtensionSpecification} from '../ui.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
+import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {schema} from '@shopify/cli-kit/node/schema'
 import {outputContent} from '@shopify/cli-kit/node/output'
 
@@ -41,6 +42,7 @@ const spec = createUIExtensionSpecification({
       extension_points: config.extensionPoints,
       name: config.name,
       categories: config.categories,
+      localization: await loadLocalesConfig(directory, 'customer_accounts_ui'),
       authenticated_redirect_start_url: config.authenticatedRedirectStartUrl,
       authenticated_redirect_redirect_urls: config.authenticatedRedirectRedirectUrls,
     }
