@@ -57,7 +57,7 @@ export async function selectStorePrompt(stores: OrganizationStore[]): Promise<Or
     {
       type: 'autocomplete',
       name: 'id',
-      message: 'Which development store would you like to use to view your project?',
+      message: 'Which store would you like to use to view your project?',
       choices: storeList,
     },
   ])
