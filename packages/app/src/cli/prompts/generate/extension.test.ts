@@ -97,7 +97,7 @@ describe('extension prompt', async () => {
     expect(got).toEqual({...options, ...answers})
   })
 
-  it.only('when scaffolding a theme extension type does not prompt for language/framework preference', async () => {
+  it('when scaffolding a theme extension type does not prompt for language/framework preference', async () => {
     const options = {
       name: 'my-special-extension',
       extensionType: 'theme',
