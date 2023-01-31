@@ -5,7 +5,7 @@ import {FunctionInstance, FunctionSpec} from '../extensions/functions.js'
 import {ThemeExtensionInstance} from '../extensions/theme.js'
 import themeSpec from '../extensions/theme-specifications/theme.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js'
-import {api} from '@shopify/cli-kit'
+import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -79,6 +79,7 @@ export async function testThemeExtensions(): Promise<ThemeExtension> {
     directory: './my-extension',
     remoteSpecification: undefined,
     specification: themeSpec,
+    outputBundlePath: './my-extension',
   })
 }
 
@@ -105,7 +106,7 @@ export async function testFunctionExtension(): Promise<FunctionExtension> {
   })
 }
 
-export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
+export const testRemoteSpecifications: RemoteSpecification[] = [
   {
     name: 'Checkout Post Purchase',
     externalName: 'Post-purchase UI',

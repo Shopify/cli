@@ -1,38 +1,28 @@
 import {DELIVERY_METHOD, isAddressAllowedForDeliveryMethod} from '../../services/webhook/trigger-options.js'
-import {ui, output} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {stringifyMessage} from '@shopify/cli-kit/node/output'
 
-export async function topicPrompt(): Promise<string> {
-  const input = await ui.prompt([
-    {
-      type: 'input',
-      name: 'topic',
-      message: 'Webhook Topic',
-      default: '',
-      validate: (value: string) => {
-        if (value.length === 0) {
-          return "Topic name can't be empty"
-        }
-        return true
-      },
-    },
-  ])
+export async function topicPrompt(availableTopics: string[]): Promise<string> {
+  const choicesList = availableTopics.map((topic) => ({label: topic, value: topic}))
 
-  return input.topic
+  const chosen = await renderAutocompletePrompt({
+    message: 'Webhook Topic',
+    choices: choicesList,
+  })
+
+  return chosen
 }
 
-export async function apiVersionPrompt(): Promise<string> {
+export async function apiVersionPrompt(availableVersions: string[]): Promise<string> {
+  const choices = availableVersions.map((version) => ({name: version, value: version}))
+
   const input = await ui.prompt([
     {
-      type: 'input',
+      type: 'select',
       name: 'apiVersion',
       message: 'Webhook ApiVersion',
-      default: '2022-10',
-      validate: (value: string) => {
-        if (value.length === 0) {
-          return "ApiVersion name can't be empty"
-        }
-        return true
-      },
+      choices,
     },
   ])
 
@@ -121,6 +111,6 @@ export function deliveryMethodInstructions(method: string): string[] {
 
 export function deliveryMethodInstructionsAsString(method: string): string {
   return deliveryMethodInstructions(method)
-    .map((hint) => `      · ${output.stringifyMessage(hint)}`)
+    .map((hint) => `      · ${stringifyMessage(hint)}`)
     .join('\n')
 }

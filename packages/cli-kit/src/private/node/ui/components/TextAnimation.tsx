@@ -37,7 +37,7 @@ const TextAnimation: React.FC<Props> = ({text}): JSX.Element => {
     renderAnimation()
 
     return () => {
-      clearTimeout(timeout.current)
+      clearTimeout(timeout.current as unknown as number)
     }
   }, [])
 

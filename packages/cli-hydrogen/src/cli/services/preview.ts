@@ -1,5 +1,9 @@
-import {path, error, system, file, output} from '@shopify/cli-kit'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
+import {fileExists, removeFileSync, writeFile, findPathUp} from '@shopify/cli-kit/node/fs'
+import {exec} from '@shopify/cli-kit/node/system'
+import {resolvePath, dirname} from '@shopify/cli-kit/node/path'
+import {BugError} from '@shopify/cli-kit/node/error'
+import {outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {fileURLToPath} from 'url'
 
 interface PreviewOptions {
@@ -16,25 +20,25 @@ interface EnvConfig {
 }
 
 export async function previewInNode({directory, port}: PreviewOptions) {
-  const buildOutputPath = await path.resolve(directory, 'dist/node')
+  const buildOutputPath = await resolvePath(directory, 'dist/node')
 
-  if (!(await file.exists(buildOutputPath))) {
-    output.info(
-      output.content`Couldn’t find a Node.js server build for this project. Running ${output.token.packagejsonScript(
+  if (!(await fileExists(buildOutputPath))) {
+    outputInfo(
+      outputContent`Couldn’t find a Node.js server build for this project. Running ${outputToken.packagejsonScript(
         'yarn',
         'shopify hydrogen build',
         '--target=node',
       )} to create one.`,
     )
 
-    await system.exec('yarn', ['shopify', 'hydrogen', 'build', '--target=node'], {
+    await exec('yarn', ['shopify', 'hydrogen', 'build', '--target=node'], {
       cwd: directory,
       stdout: process.stdout,
       stderr: process.stderr,
     })
   }
 
-  await system.exec('node', ['--enable-source-maps', buildOutputPath], {
+  await exec('node', ['--enable-source-maps', buildOutputPath], {
     env: {PORT: `${port}`},
     cwd: directory,
     stdout: process.stdout,
@@ -55,11 +59,11 @@ export async function previewInWorker({directory, port, envPath}: PreviewOptions
     ...(envPath && (await parseEnvPath(envPath))),
   }
 
-  await file.write(path.resolve(directory, 'mini-oxygen.config.json'), JSON.stringify(config, null, 2))
+  await writeFile(resolvePath(directory, 'mini-oxygen.config.json'), JSON.stringify(config, null, 2))
 
   function cleanUp(options: {exit: boolean}) {
     if (options.exit) {
-      file.removeSync(path.resolve(directory, 'mini-oxygen.config.json'))
+      removeFileSync(resolvePath(directory, 'mini-oxygen.config.json'))
     }
   }
 
@@ -74,7 +78,7 @@ export async function previewInWorker({directory, port, envPath}: PreviewOptions
 
   const executable = await oxygenPreviewExecutable()
 
-  await system.exec(executable, [], {
+  await exec(executable, [], {
     env: {NODE_OPTIONS: '--experimental-vm-modules'},
     cwd: directory,
     stdout: process.stdout,
@@ -82,13 +86,17 @@ export async function previewInWorker({directory, port, envPath}: PreviewOptions
   })
 }
 
-export const OxygenPreviewExecutableNotFound = new error.Bug(
+export const OxygenPreviewExecutableNotFound = new BugError(
   'Could not locate the executable file to run Oxygen locally.',
 )
 
 async function oxygenPreviewExecutable(): Promise<string> {
-  const cwd = path.dirname(fileURLToPath(import.meta.url))
-  const executablePath = await path.findUp('node_modules/.bin/oxygen-preview', {type: 'file', cwd, allowSymlinks: true})
+  const cwd = dirname(fileURLToPath(import.meta.url))
+  const executablePath = await findPathUp('node_modules/.bin/oxygen-preview', {
+    type: 'file',
+    cwd,
+    allowSymlinks: true,
+  })
   if (!executablePath) {
     throw OxygenPreviewExecutableNotFound
   }

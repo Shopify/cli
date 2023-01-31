@@ -1,10 +1,11 @@
-import {createRequire} from 'node:module'
+import {createRequire} from 'module'
 import type {List, ValueIteratee} from 'lodash'
 
 const require = createRequire(import.meta.url)
 
 /**
  * Takes a random value from an array.
+ *
  * @param array - Array from which we'll select a random item.
  * @returns A random element from the array.
  */
@@ -14,6 +15,7 @@ export function takeRandomFromArray<T>(array: T[]): T {
 
 /**
  * Returns a copy of the array deleting the elemements that are undefined.
+ *
  * @param array - The array whose undefined will be deleted.
  * @returns A copy of the array with the undefined elements deleted.
  */
@@ -23,6 +25,8 @@ export function getArrayRejectingUndefined<T>(array: (T | undefined)[]): T[] {
 
 /**
  * Returns true if an array contains duplicates.
+ *
+ * @param array - The array to check against.
  * @returns True if the array contains duplicates.
  */
 export function getArrayContainsDuplicates<T>(array: T[]): boolean {

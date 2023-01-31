@@ -2,15 +2,16 @@ import {appFlags} from '../../../flags.js'
 import metadata from '../../../metadata.js'
 import Command from '../../../utilities/app-command.js'
 import generate from '../../../services/generate.js'
-import {path, cli} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 
 export default class AppGenerateExtension extends Command {
-  static description = 'Scaffold an Extension'
+  static description = 'Scaffold an Extension.'
   static examples = ['<%= config.bin %> <%= command.id %>']
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...appFlags,
     type: Flags.string({
       char: 't',
@@ -59,13 +60,13 @@ export default class AppGenerateExtension extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(AppGenerateExtension)
 
-    await metadata.addPublic(() => ({
+    await metadata.addPublicMetadata(() => ({
       cmd_scaffold_required_auth: true,
       cmd_scaffold_template_custom: flags['clone-url'] !== undefined,
       cmd_scaffold_type_owner: '@shopify/app',
     }))
 
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : cwd()
 
     await generate({
       directory,

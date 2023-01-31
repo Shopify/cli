@@ -1,12 +1,13 @@
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
 import {loadPresetsFromDirectory} from './presets.js'
-import {JsonMap} from '../../json.js'
-import {isDevelopment} from '../../environment/local.js'
-import {Abort} from '../../error.js'
-import {addPublic} from '../../metadata.js'
-import {content, info, token} from '../../output.js'
-import {hashString} from '../../string.js'
-import {isTruthy} from '../../environment/utilities.js'
+import {isDevelopment} from './environment/local.js'
+import {addPublicMetadata} from './metadata.js'
+import {AbortError} from './error.js'
+import {cwd} from './path.js'
+import {JsonMap} from '../../private/common/json.js'
+import {outputContent, outputInfo, outputToken} from '../../public/node/output.js'
+import {hashString} from '../../public/node/crypto.js'
+import {isTruthy} from '../../private/node/environment/utilities.js'
 import {Command, Interfaces} from '@oclif/core'
 
 interface PresettableFlags {
@@ -36,7 +37,7 @@ abstract class BaseCommand extends Command {
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   protected exitWithTimestampWhenEnvVariablePresent() {
     if (isTruthy(process.env.SHOPIFY_CLI_ENV_STARTUP_PERFORMANCE_RUN)) {
-      info(`
+      outputInfo(`
       SHOPIFY_CLI_TIMESTAMP_START
       { "timestamp": ${Date.now()} }
       SHOPIFY_CLI_TIMESTAMP_END
@@ -97,7 +98,7 @@ abstract class BaseCommand extends Command {
   }
 
   protected async presetsPath(rawFlags: {path?: string}): Promise<string> {
-    return rawFlags.path || process.cwd()
+    return rawFlags.path || cwd()
   }
 
   protected findUpForPresets(): boolean {
@@ -106,7 +107,7 @@ abstract class BaseCommand extends Command {
 }
 
 export async function addFromParsedFlags(flags: {path?: string; verbose?: boolean}): Promise<void> {
-  await addPublic(() => ({
+  await addPublicMetadata(() => ({
     cmd_all_verbose: flags.verbose,
     cmd_all_path_override: flags.path !== undefined,
     cmd_all_path_override_hash: flags.path === undefined ? undefined : hashString(flags.path),
@@ -142,7 +143,7 @@ function reportPresetApplication<
     if (!userSpecifiedThisFlag && presetContainsFlag) changes[name] = value
   }
   if (Object.keys(changes).length === 0) return
-  info(content`Using applicable flags from the preset ${token.yellow(presetName)}:
+  outputInfo(outputContent`Using applicable flags from the preset ${outputToken.yellow(presetName)}:
 
 ${Object.entries(changes)
   .map(([name, value]) => `• ${name} = ${value}`)
@@ -170,7 +171,6 @@ ${Object.entries(changes)
  * If we parse using this configuration, the only specified flags will be those
  * the user actually passed on the command line.
  */
-
 function noDefaultsOptions<TFlags extends Interfaces.FlagOutput, TGlobalFlags extends Interfaces.FlagOutput>(
   options: Interfaces.Input<TFlags, TGlobalFlags> | undefined,
 ): Interfaces.Input<TFlags, TGlobalFlags> | undefined {
@@ -210,8 +210,10 @@ function argsFromPreset<
         if (value === true) {
           args.push(`--${label}`)
         } else {
-          throw new Abort(
-            content`Presets can only specify true for boolean flags. Attempted to set ${token.yellow(label)} to false.`,
+          throw new AbortError(
+            outputContent`Presets can only specify true for boolean flags. Attempted to set ${outputToken.yellow(
+              label,
+            )} to false.`,
           )
         }
       } else if (Array.isArray(value)) {

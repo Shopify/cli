@@ -4,11 +4,16 @@ import {load as loadApp} from '../../models/app/loader.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {
   loadLocalExtensionsSpecifications,
+  loadLocalFunctionSpecifications,
   loadLocalUIExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
 import {describe, it, expect, vi, test, beforeEach} from 'vitest'
-import {file, output, path, template} from '@shopify/cli-kit'
+import * as output from '@shopify/cli-kit/node/output'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
+import * as template from '@shopify/cli-kit/node/liquid'
+import * as file from '@shopify/cli-kit/node/fs'
+import * as git from '@shopify/cli-kit/node/git'
+import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import type {ExtensionFlavor} from './extension.js'
 
 beforeEach(() => {
@@ -17,17 +22,18 @@ beforeEach(() => {
 
 describe('initialize a extension', async () => {
   const allUISpecs = await loadLocalUIExtensionsSpecifications()
+  const allFunctionSpecs = await loadLocalFunctionSpecifications()
   const specifications = await loadLocalExtensionsSpecifications()
 
   it(
     'successfully generates the extension when no other extensions exist',
     async () => {
       await withTemporaryApp(async (tmpDir) => {
-        vi.spyOn(output, 'info').mockImplementation(() => {})
+        vi.spyOn(output, 'outputInfo').mockImplementation(() => {})
         const name = 'my-ext-1'
         const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
         const extensionFlavor = 'vanilla-js'
-        await createFromTemplate({
+        const extensionDir = await createFromTemplate({
           name,
           specification,
           extensionFlavor,
@@ -35,6 +41,8 @@ describe('initialize a extension', async () => {
           specifications,
         })
         const generatedExtension = (await loadApp({directory: tmpDir, specifications})).extensions.ui[0]!
+
+        expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
         expect(generatedExtension.configuration.name).toBe(name)
       })
     },
@@ -197,7 +205,7 @@ describe('initialize a extension', async () => {
           specifications,
         })
 
-        const srcFiles = await path.glob(path.join(tmpDir, 'extensions', name, 'src', `*`))
+        const srcFiles = await file.glob(joinPath(tmpDir, 'extensions', name, 'src', `*`))
 
         expect(srcFiles.length).toBeGreaterThan(0)
 
@@ -219,13 +227,13 @@ describe('initialize a extension', async () => {
       return accumulator
     }, [] as [GenericSpecification, ExtensionFlavor, FileExtension][]),
   )(
-    'calls recursiveDirectoryCopy with type "%s", flavor "%s", liquidFlavor "%s" and fileExtension "%s"',
+    'calls recursiveLiquidTemplateCopy with type "%s", flavor "%s", liquidFlavor "%s" and fileExtension "%s"',
 
     async (specification, extensionFlavor, srcFileExtension) => {
       await withTemporaryApp(async (tmpDir: string) => {
-        vi.spyOn(file, 'move').mockResolvedValue()
+        vi.spyOn(file, 'moveFile').mockResolvedValue()
 
-        const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveDirectoryCopy').mockResolvedValue()
+        const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockResolvedValue()
         const name = 'extension-name'
 
         await createFromTemplate({
@@ -252,12 +260,12 @@ describe('initialize a extension', async () => {
     async () => {
       await withTemporaryApp(async (tmpDir) => {
         // Given
-        vi.spyOn(file, 'move').mockResolvedValue()
+        vi.spyOn(file, 'moveFile').mockResolvedValue()
         const name = 'my-ext-1'
         const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
         specification.templatePath = 'path/to/custom/template'
         const extensionFlavor = 'vanilla-js'
-        const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveDirectoryCopy').mockResolvedValue()
+        const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockResolvedValue()
 
         // When
         await createFromTemplate({name, specification, extensionFlavor, appDirectory: tmpDir, specifications})
@@ -268,6 +276,32 @@ describe('initialize a extension', async () => {
           flavor: extensionFlavor,
           srcFileExtension: 'js',
           name,
+        })
+      })
+    },
+    30 * 1000,
+  )
+
+  it(
+    'uses the custom templateURL for functions',
+    async () => {
+      await withTemporaryApp(async (tmpDir) => {
+        // Given
+        vi.spyOn(file, 'moveFile').mockResolvedValue()
+        vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
+        const name = 'my-ext-1'
+        const specification = allFunctionSpecs.find((spec) => spec.identifier === 'order_discounts')!
+        specification.templateURL = 'custom/template/url'
+        const extensionFlavor = 'rust'
+
+        // When
+        await createFromTemplate({name, specification, extensionFlavor, appDirectory: tmpDir, specifications})
+
+        // Then
+        expect(git.downloadGitRepository).toHaveBeenCalledWith({
+          destination: expect.any(String),
+          repoUrl: 'custom/template/url',
+          shallow: true,
         })
       })
     },
@@ -328,20 +362,19 @@ async function createFromTemplate({
   appDirectory,
   extensionFlavor,
   specifications,
-}: CreateFromTemplateOptions) {
-  await extensionInit({
+}: CreateFromTemplateOptions): Promise<string> {
+  return extensionInit({
     name,
     specification,
     app: await loadApp({directory: appDirectory, specifications}),
-    cloneUrl: 'cloneurl',
     extensionFlavor,
     extensionType: specification.identifier,
   })
 }
 async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | void) {
   await file.inTemporaryDirectory(async (tmpDir) => {
-    const appConfigurationPath = path.join(tmpDir, configurationFileNames.app)
-    const webConfigurationPath = path.join(tmpDir, blocks.web.directoryName, blocks.web.configurationName)
+    const appConfigurationPath = joinPath(tmpDir, configurationFileNames.app)
+    const webConfigurationPath = joinPath(tmpDir, blocks.web.directoryName, blocks.web.configurationName)
 
     const appConfiguration = `
       name = "my_app"
@@ -354,10 +387,10 @@ async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | vo
     build = "./build.sh"
     dev = "./test.sh"
     `
-    await file.write(appConfigurationPath, appConfiguration)
-    await file.mkdir(path.dirname(webConfigurationPath))
-    await file.write(webConfigurationPath, webConfiguration)
-    await file.write(path.join(tmpDir, 'package.json'), JSON.stringify({dependencies: {}, devDependencies: {}}))
+    await file.writeFile(appConfigurationPath, appConfiguration)
+    await file.mkdir(dirname(webConfigurationPath))
+    await file.writeFile(webConfigurationPath, webConfiguration)
+    await file.writeFile(joinPath(tmpDir, 'package.json'), JSON.stringify({dependencies: {}, devDependencies: {}}))
     return callback(tmpDir)
   })
 }

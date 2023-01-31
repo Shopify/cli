@@ -4,22 +4,17 @@ import {selectApp} from '../select-app.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {testApp} from '../../../models/app/app.test-data.js'
-import {path, session, output, file} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import * as file from '@shopify/cli-kit/node/fs'
+import {resolvePath, joinPath} from '@shopify/cli-kit/node/path'
+import {unstyled, stringifyMessage} from '@shopify/cli-kit/node/output'
 
 beforeEach(async () => {
   vi.mock('../../dev/fetch.js')
   vi.mock('../select-app.js')
   vi.mock('../../../prompts/dev.js')
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      session: {
-        ensureAuthenticatedPartners: vi.fn(),
-      },
-    }
-  })
+  vi.mock('@shopify/cli-kit/node/session')
   vi.mock('@shopify/cli-kit/node/node-package-manager')
   vi.restoreAllMocks()
 })
@@ -28,7 +23,7 @@ describe('env pull', () => {
   it('creates a new environment file when there is no .env', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
-      vi.spyOn(file, 'write')
+      vi.spyOn(file, 'writeFile')
 
       const app = mockApp()
       const token = 'token'
@@ -53,21 +48,21 @@ describe('env pull', () => {
       vi.mocked(fetchOrgAndApps).mockResolvedValue({
         organization,
         stores: [],
-        apps: [organizationApp],
+        apps: {nodes: [organizationApp], pageInfo: {hasNextPage: false}},
       })
       vi.mocked(selectApp).mockResolvedValue(organizationApp)
-      vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
+      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue(token)
 
       // When
-      const filePath = path.resolve(tmpDir, '.env')
+      const filePath = resolvePath(tmpDir, '.env')
       const result = await pullEnv(app, {envFile: filePath})
 
       // Then
-      expect(file.write).toHaveBeenCalledWith(
+      expect(file.writeFile).toHaveBeenCalledWith(
         filePath,
         'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=my-scope',
       )
-      expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
+      expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
       "Created ${filePath}:
 
       SHOPIFY_API_KEY=api-key
@@ -104,26 +99,26 @@ describe('env pull', () => {
       vi.mocked(fetchOrgAndApps).mockResolvedValue({
         organization,
         stores: [],
-        apps: [organizationApp],
+        apps: {nodes: [organizationApp], pageInfo: {hasNextPage: false}},
       })
       vi.mocked(selectApp).mockResolvedValue(organizationApp)
-      vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
+      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue(token)
 
-      const filePath = path.resolve(tmpDir, '.env')
+      const filePath = resolvePath(tmpDir, '.env')
 
-      await file.write(filePath, 'SHOPIFY_API_KEY=ABC\nSHOPIFY_API_SECRET=XYZ\nSCOPES=my-scope')
+      await file.writeFile(filePath, 'SHOPIFY_API_KEY=ABC\nSHOPIFY_API_SECRET=XYZ\nSCOPES=my-scope')
 
-      vi.spyOn(file, 'write')
+      vi.spyOn(file, 'writeFile')
 
       // When
       const result = await pullEnv(app, {envFile: filePath})
 
       // Then
-      expect(file.write).toHaveBeenCalledWith(
+      expect(file.writeFile).toHaveBeenCalledWith(
         filePath,
         'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=my-scope',
       )
-      expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
+      expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
       "Updated ${filePath} to be:
 
       SHOPIFY_API_KEY=api-key
@@ -168,22 +163,22 @@ describe('env pull', () => {
       vi.mocked(fetchOrgAndApps).mockResolvedValue({
         organization,
         stores: [],
-        apps: [organizationApp],
+        apps: {nodes: [organizationApp], pageInfo: {hasNextPage: false}},
       })
       vi.mocked(selectApp).mockResolvedValue(organizationApp)
-      vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
+      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue(token)
 
-      const filePath = path.resolve(tmpDir, '.env')
+      const filePath = resolvePath(tmpDir, '.env')
 
-      await file.write(filePath, 'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=my-scope')
+      await file.writeFile(filePath, 'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=my-scope')
 
-      vi.spyOn(file, 'write')
+      vi.spyOn(file, 'writeFile')
       // When
       const result = await pullEnv(app, {envFile: filePath})
 
       // Then
-      expect(file.write).not.toHaveBeenCalled()
-      expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
+      expect(file.writeFile).not.toHaveBeenCalled()
+      expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
       "No changes to ${filePath}"
       `)
     })
@@ -196,7 +191,7 @@ function mockApp(currentVersion = '2.2.2'): AppInterface {
   return testApp({
     name: 'myapp',
     directory: '/',
-    configurationPath: path.join('/', 'shopify.app.toml'),
+    configurationPath: joinPath('/', 'shopify.app.toml'),
     configuration: {
       scopes: 'my-scope',
       extensionDirectories: ['extensions/*'],

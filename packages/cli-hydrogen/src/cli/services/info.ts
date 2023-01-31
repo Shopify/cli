@@ -2,20 +2,22 @@ import {HydrogenApp} from '../models/hydrogen.js'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import {HydrogenConfig} from '@shopify/hydrogen/config'
-import {output, string, os} from '@shopify/cli-kit'
+import {platformAndArch} from '@shopify/cli-kit/node/os'
+import {capitalize, linesToColumns} from '@shopify/cli-kit/common/string'
+import {OutputMessage, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 interface InfoOptions {
   showPrivateData: boolean
 }
 
-export function info(app: HydrogenApp, {showPrivateData}: InfoOptions): output.Message {
+export function info(app: HydrogenApp, {showPrivateData}: InfoOptions): OutputMessage {
   const appInfo = new HydrogenAppInfo(app)
 
   return appInfo.output({showPrivateData})
 }
 
-const NOT_FOUND_TEXT = output.content`${output.token.italic('Not found')}`.value
-const NOT_CONFIGURED_TEXT = output.content`${output.token.italic('Not yet configured')}`.value
+const NOT_FOUND_TEXT = outputContent`${outputToken.italic('Not found')}`.value
+const NOT_CONFIGURED_TEXT = outputContent`${outputToken.italic('Not yet configured')}`.value
 
 class AppInfo {
   private app: HydrogenApp
@@ -42,7 +44,7 @@ class AppInfo {
       ['Language', this.app.language],
     ]
 
-    const projectInfo = this.linesToColumns(lines)
+    const projectInfo = linesToColumns(lines)
     return [title, projectInfo]
   }
 
@@ -68,7 +70,7 @@ class AppInfo {
 
     if (errorContent.trim() === '') errorContent = ''
 
-    return [title, `${this.linesToColumns(storefrontInfo)}${errorContent}`]
+    return [title, `${linesToColumns(storefrontInfo)}${errorContent}`]
   }
 
   eslintSection(): [string, string] {
@@ -84,7 +86,7 @@ class AppInfo {
 
     if (errorContent.trim() === '') errorContent = ''
 
-    return [title, `${this.linesToColumns(dependencyResults)}${errorContent}`]
+    return [title, `${linesToColumns(dependencyResults)}${errorContent}`]
   }
 
   configurationCheck(
@@ -99,7 +101,7 @@ class AppInfo {
       const found = configObject[key as keyof HydrogenConfig & keyof HydrogenConfig['shopify']]
 
       if (typeof found === 'string') {
-        const result = [string.capitalize(key.toString()), found]
+        const result = [capitalize(key.toString()), found]
         return [...acc, result]
       }
 
@@ -130,12 +132,12 @@ class AppInfo {
   formattedError(str: string): string {
     const [errorFirstLine, ...errorRemainingLines] = str.split('\n')
     const errorLines = [`! ${errorFirstLine}`, ...errorRemainingLines.map((line) => `  ${line}`)]
-    return output.content`${output.token.errorText(errorLines.join('\n'))}`.value
+    return outputContent`${outputToken.errorText(errorLines.join('\n'))}`.value
   }
 
   systemInfoSection(): [string, string] {
     const title = 'Tooling and System'
-    const {platform, arch} = os.platformAndArch()
+    const {platform, arch} = platformAndArch()
     const lines: string[][] = [
       ...this.dependencyCheck(['@shopify/hydrogen', '@shopify/cli-hydrogen', '@shopify/cli']),
       ['Package manager', this.app.packageManager],
@@ -144,31 +146,12 @@ class AppInfo {
       ['Node.js version', process.version],
     ]
 
-    return [title, this.linesToColumns(lines)]
-  }
-
-  linesToColumns(lines: string[][]): string {
-    const widths: number[] = []
-    for (let i = 0; lines[0] && i < lines[0].length; i++) {
-      const columnRows = lines.map((line) => line[i]!)
-      widths.push(Math.max(...columnRows.map((row) => output.unstyled(row).length)))
-    }
-    const paddedLines = lines
-      .map((line) => {
-        return line
-          .map((col, index) => {
-            return `${col}${' '.repeat(widths[index]! - output.unstyled(col).length)}`
-          })
-          .join('   ')
-          .trimEnd()
-      })
-      .join('\n')
-    return paddedLines
+    return [title, linesToColumns(lines)]
   }
 
   section(title: string, body: string): string {
     const formattedTitle = `${title.toUpperCase()}${' '.repeat(35 - title.length)}`
-    return output.content`${output.token.heading(formattedTitle)}\n${body}`.value
+    return outputContent`${outputToken.heading(formattedTitle)}\n${body}`.value
   }
 }
 

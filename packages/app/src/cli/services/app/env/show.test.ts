@@ -4,27 +4,17 @@ import {selectApp} from '../select-app.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {testApp} from '../../../models/app/app.test-data.js'
-import {path, session, output, store, file} from '@shopify/cli-kit'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import * as file from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 
 beforeEach(async () => {
   vi.mock('../../dev/fetch.js')
   vi.mock('../select-app.js')
   vi.mock('../../../prompts/dev.js')
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      session: {
-        ensureAuthenticatedPartners: vi.fn(),
-      },
-      store: {
-        cliKitStore: () => ({
-          getAppInfo: (): store.CachedAppInfo | undefined => undefined,
-        }),
-      },
-    }
-  })
+  vi.mock('@shopify/cli-kit/node/session')
   vi.mock('@shopify/cli-kit/node/node-package-manager')
   vi.restoreAllMocks()
 })
@@ -32,7 +22,7 @@ beforeEach(async () => {
 describe('env show', () => {
   it('outputs the new environment', async () => {
     // Given
-    vi.spyOn(file, 'write')
+    vi.spyOn(file, 'writeFile')
 
     const app = mockApp()
     const token = 'token'
@@ -59,17 +49,17 @@ describe('env show', () => {
     vi.mocked(fetchOrgAndApps).mockResolvedValue({
       organization,
       stores: [],
-      apps: [organizationApp],
+      apps: {nodes: [organizationApp], pageInfo: {hasNextPage: false}},
     })
     vi.mocked(selectApp).mockResolvedValue(organizationApp)
-    vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue(token)
+    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue(token)
 
     // When
     const result = await showEnv(app)
 
     // Then
-    expect(file.write).not.toHaveBeenCalled()
-    expect(output.unstyled(output.stringifyMessage(result))).toMatchInlineSnapshot(`
+    expect(file.writeFile).not.toHaveBeenCalled()
+    expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
     "
         SHOPIFY_API_KEY=api-key
         SHOPIFY_API_SECRET=api-secret
@@ -85,7 +75,7 @@ function mockApp(currentVersion = '2.2.2'): AppInterface {
   return testApp({
     name: 'myapp',
     directory: '/',
-    configurationPath: path.join('/', 'shopify.app.toml'),
+    configurationPath: joinPath('/', 'shopify.app.toml'),
     configuration: {
       scopes: 'my-scope',
     },

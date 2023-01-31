@@ -1,18 +1,14 @@
-import {output, error} from '@shopify/cli-kit'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {checkForNewVersion, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
+import {outputInfo, outputContent, outputToken, getOutputUpdateCLIReminder} from '@shopify/cli-kit/node/output'
 
-interface VersionServiceOptions {
-  currentVersion: string
-}
-
-export async function versionService(options: VersionServiceOptions): Promise<void> {
+export async function versionService(): Promise<void> {
   const cliDependency = '@shopify/cli'
-  const currentVersion = options.currentVersion
-  output.info(output.content`Current Shopify CLI version: ${output.token.yellow(currentVersion)}`.value)
+  const currentVersion = CLI_KIT_VERSION
+  outputInfo(outputContent`Current Shopify CLI version: ${outputToken.yellow(currentVersion)}`.value)
   const lastVersion = await checkForNewVersion(cliDependency, currentVersion)
   if (lastVersion) {
     const packageManager = packageManagerUsedForCreating()
-    output.info(output.getOutputUpdateCLIReminder(packageManager, lastVersion))
+    outputInfo(getOutputUpdateCLIReminder(packageManager, lastVersion))
   }
-  throw new error.CancelExecution()
 }

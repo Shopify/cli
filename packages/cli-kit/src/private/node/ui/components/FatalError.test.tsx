@@ -1,18 +1,17 @@
 import {FatalError} from './FatalError.js'
-import {renderString} from '../../ui.js'
-import {unstyled} from '../../../../output.js'
-import {Abort, Bug, ExternalError} from '../../../../error.js'
+import {unstyled} from '../../../../public/node/output.js'
+import {AbortError, BugError, ExternalError} from '../../../../public/node/error.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
+import {render} from 'ink-testing-library'
 
 describe('FatalError', async () => {
   test('renders correctly with a just a message and tryMessage', async () => {
-    const error = new Abort('test', 'try this')
-    const {output} = renderString(<FatalError error={error} />)
+    const error = new AbortError('test', 'try this')
+    const {lastFrame} = render(<FatalError error={error} />)
 
-    expect(unstyled(output!)).toMatchInlineSnapshot(`
-      "
-      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  test                                                                        │
       │                                                                              │
@@ -24,7 +23,7 @@ describe('FatalError', async () => {
   })
 
   test('renders correctly with a message and a stack', async () => {
-    const error = new Bug('Unexpected error')
+    const error = new BugError('Unexpected error')
     error.stack = `
       Error: Unexpected error
           at Module._compile (internal/modules/cjs/loader.js:1137:30)
@@ -33,11 +32,10 @@ describe('FatalError', async () => {
           at Function.Module._load (internal/modules/cjs/loader.js:878:14)
     `
 
-    const {output} = renderString(<FatalError error={error} />)
+    const {lastFrame} = render(<FatalError error={error} />)
 
-    expect(unstyled(output!)).toMatchInlineSnapshot(`
-      "
-      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Unexpected error                                                            │
       │                                                                              │
@@ -53,7 +51,7 @@ describe('FatalError', async () => {
   })
 
   test('renders correctly with a message, a stack, and next steps', async () => {
-    const error = new Bug('Unexpected error')
+    const error = new BugError('Unexpected error')
     error.stack = `
       Error: Unexpected error
           at Module._compile (internal/modules/cjs/loader.js:1137:30)
@@ -84,11 +82,10 @@ describe('FatalError', async () => {
       ],
     ]
 
-    const {output} = renderString(<FatalError error={error} />)
+    const {lastFrame} = render(<FatalError error={error} />)
 
-    expect(unstyled(output!)).toMatchInlineSnapshot(`
-      "
-      ╭─ error ──────────────────────────────────────────────────────────────────────╮
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Unexpected error                                                            │
       │                                                                              │
@@ -113,11 +110,10 @@ describe('FatalError', async () => {
   test('renders correctly an external error', async () => {
     const error = new ExternalError('Unexpected error', 'yarn', ['install'])
 
-    const {output} = renderString(<FatalError error={error} />)
+    const {lastFrame} = render(<FatalError error={error} />)
 
-    expect(unstyled(output!)).toMatchInlineSnapshot(`
-      "
-      ── external error ──────────────────────────────────────────────────────────────
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      "── external error ──────────────────────────────────────────────────────────────
 
       Error coming from \`yarn install\`
 

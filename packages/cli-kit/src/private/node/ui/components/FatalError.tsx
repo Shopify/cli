@@ -2,7 +2,7 @@ import {Banner} from './Banner.js'
 import {TokenizedText} from './TokenizedText.js'
 import {Command} from './Command.js'
 import {List} from './List.js'
-import {Bug, cleanSingleStackTracePath, ExternalError, Fatal} from '../../../../error.js'
+import {BugError, cleanSingleStackTracePath, ExternalError, FatalError as Fatal} from '../../../../public/node/error.js'
 import {Box, Text} from 'ink'
 import React from 'react'
 import StackTracey from 'stacktracey'
@@ -15,7 +15,7 @@ const FatalError: React.FC<FatalErrorProps> = ({error}) => {
   let stack
   let tool
 
-  if (error instanceof Bug) {
+  if (error instanceof BugError) {
     stack = new StackTracey(error)
     stack.items.forEach((item) => {
       item.file = cleanSingleStackTracePath(item.file)
@@ -39,7 +39,7 @@ const FatalError: React.FC<FatalErrorProps> = ({error}) => {
   }
 
   return (
-    <Banner type={tool ? 'external_error' : 'error'} marginY={1}>
+    <Banner type={tool ? 'external_error' : 'error'}>
       {tool && (
         <Box marginBottom={1}>
           <Text>

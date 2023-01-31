@@ -1,16 +1,17 @@
 import {themeFlags} from '../../flags.js'
-import {getThemeStore} from '../../utilities/theme-store.js'
+import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
-import {cli, session} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
 export default class Push extends ThemeCommand {
   static description =
     'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...themeFlags,
     theme: Flags.string({
       char: 't',
@@ -99,8 +100,8 @@ export default class Push extends ThemeCommand {
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Push.cli2Flags})
     const command = ['theme', 'push', flags.path, ...flagsToPass]
 
-    const store = await getThemeStore(flags)
-    const adminSession = await session.ensureAuthenticatedThemes(store, flags.password)
+    const store = ensureThemeStore(flags)
+    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
     await execCLI2(command, {adminSession})
   }
 }

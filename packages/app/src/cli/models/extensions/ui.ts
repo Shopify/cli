@@ -1,8 +1,13 @@
 import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, UIExtension} from '../app/extensions.js'
 import {blocks, defualtExtensionFlavors} from '../../constants.js'
-import {id, path, api, output, environment, string} from '@shopify/cli-kit'
+import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {ok, Result} from '@shopify/cli-kit/node/result'
+import {constantize} from '@shopify/cli-kit/common/string'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
+import {joinPath, basename} from '@shopify/cli-kit/node/path'
+import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -33,7 +38,7 @@ export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = Bas
     uuid: string,
     config: TConfiguration,
     storeFqdn: string,
-  ) => output.TokenizedString | undefined
+  ) => TokenizedString | undefined
   shouldFetchCartUrl?(config: TConfiguration): boolean
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
 }
@@ -63,7 +68,7 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
   configurationPath: string
 
   private specification: UIExtensionSpec
-  private remoteSpecification?: api.graphql.RemoteSpecification
+  private remoteSpecification?: RemoteSpecification
 
   get graphQLType() {
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
@@ -103,7 +108,7 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
     entryPath: string
     directory: string
     specification: UIExtensionSpec
-    remoteSpecification?: api.graphql.RemoteSpecification
+    remoteSpecification?: RemoteSpecification
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
@@ -111,10 +116,10 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
     this.directory = options.directory
     this.specification = options.specification
     this.remoteSpecification = options.remoteSpecification
-    this.outputBundlePath = path.join(options.directory, 'dist/main.js')
-    this.devUUID = `dev-${id.generateRandomUUID()}`
-    this.localIdentifier = path.basename(options.directory)
-    this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
+    this.outputBundlePath = joinPath(options.directory, 'dist/main.js')
+    this.devUUID = `dev-${randomUUID()}`
+    this.localIdentifier = basename(options.directory)
+    this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
   }
 
   deployConfig(): Promise<{[key: string]: unknown}> {
@@ -132,14 +137,14 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
   }
 
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
-    const partnersFqdn = await environment.fqdn.partners()
+    const fqdn = await partnersFqdn()
     const parnersPath = this.specification.partnersWebIdentifier
-    return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
+    return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }
 
   previewMessage(url: string, storeFqdn: string) {
-    const heading = output.token.heading(`${this.name} (${this.humanName})`)
-    let message = output.content`Preview link: ${url}/extensions/${this.devUUID}`
+    const heading = outputToken.heading(`${this.name} (${this.humanName})`)
+    let message = outputContent`Preview link: ${url}/extensions/${this.devUUID}`
 
     if (this.specification.previewMessage) {
       const customMessage = this.specification.previewMessage(url, this.devUUID, this.configuration, storeFqdn)
@@ -147,7 +152,7 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
       message = customMessage
     }
 
-    return output.content`${heading}\n${message.value}\n`
+    return outputContent`${heading}\n${message.value}\n`
   }
 
   getBundleExtensionStdinContent() {

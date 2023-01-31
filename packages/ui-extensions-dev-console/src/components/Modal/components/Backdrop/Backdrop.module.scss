@@ -1,0 +1,16 @@
+@keyframes opacity {
+  from {opacity: 0;}
+  to {opacity: 0.5;}
+}
+
+.Backdrop {
+  position: fixed;
+  z-index: 10;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: block;
+  background-color: var(--dc-color-grey-900);
+  animation: opacity 100ms 1 forwards;
+}

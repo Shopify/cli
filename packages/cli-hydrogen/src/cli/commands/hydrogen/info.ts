@@ -2,14 +2,16 @@ import {info} from '../../services/info.js'
 import {load as loadApp, HydrogenApp} from '../../models/hydrogen.js'
 import {hydrogenFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
-import {output, path, cli} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
+import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class Info extends Command {
-  static description = 'Print basic information about your hydrogen app'
+  static description = 'Print basic information about your hydrogen app.'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...hydrogenFlags,
     showToken: Flags.boolean({
       hidden: false,
@@ -21,10 +23,10 @@ export default class Info extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Info)
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : cwd()
     const app: HydrogenApp = await loadApp(directory)
 
-    output.info(info(app, {showPrivateData: flags.showToken}))
+    outputInfo(info(app, {showPrivateData: flags.showToken}))
     if (app.errors) process.exit(2)
   }
 }

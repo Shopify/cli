@@ -4,14 +4,17 @@ import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import {loadExtensionsSpecifications} from '../../../models/extensions/specifications.js'
 import {Flags} from '@oclif/core'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
-import {path, error, cli, output} from '@shopify/cli-kit'
+import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputContent, outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class GenerateSchema extends Command {
-  static description = 'Generates a GraphQL schema for a function'
+  static description = 'Generates a GraphQL schema for a function.'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...appFlags,
     'api-key': Flags.string({
       name: 'API key',
@@ -26,7 +29,7 @@ export default class GenerateSchema extends Command {
   public async run(): Promise<void> {
     const {flags, args} = await this.parse(GenerateSchema)
     const apiKey = flags['api-key']
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : cwd()
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({directory, specifications})
     const extension = app.extensions.function.find((extension) => extension.localIdentifier === args.function)
@@ -34,12 +37,12 @@ export default class GenerateSchema extends Command {
     if (!extension) {
       const functions = app.extensions.function.map((extension) => extension.localIdentifier).join(', ')
 
-      throw new error.Abort(
-        output.content`No function named ${args.function} found in this app.`,
-        output.content`Use one of the available functions: ${functions}`,
+      throw new AbortError(
+        outputContent`No function named ${args.function} found in this app.`,
+        outputContent`Use one of the available functions: ${functions}`,
       )
     }
 
-    output.info(await generateSchemaService({app, extension, apiKey}))
+    outputInfo(await generateSchemaService({app, extension, apiKey}))
   }
 }

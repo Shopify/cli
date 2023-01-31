@@ -2,9 +2,11 @@ import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, sharedSecretPromp
 import {DELIVERY_METHOD} from '../../services/webhook/trigger-options.js'
 import {describe, it, expect, vi, afterEach, beforeEach} from 'vitest'
 import {ui} from '@shopify/cli-kit'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit')
+  vi.mock('@shopify/cli-kit/node/ui')
 })
 
 afterEach(async () => {
@@ -14,42 +16,43 @@ afterEach(async () => {
 describe('topicPrompt', () => {
   it('asks the user to enter a topic name', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValue({topic: 'orders/create'})
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('orders/create')
 
     // When
-    const got = await topicPrompt()
+    const got = await topicPrompt(['orders/create', 'anything/else'])
 
     // Then
     expect(got).toEqual('orders/create')
-    expect(ui.prompt).toHaveBeenCalledWith([
-      {
-        type: 'input',
-        name: 'topic',
-        message: 'Webhook Topic',
-        default: '',
-        validate: expect.any(Function),
-      },
-    ])
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
+      message: 'Webhook Topic',
+      choices: [
+        {label: 'orders/create', value: 'orders/create'},
+        {label: 'anything/else', value: 'anything/else'},
+      ],
+    })
   })
 })
 
 describe('apiVersionPrompt', () => {
   it('asks the user to enter an api_version', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValue({apiVersion: '2022-01'})
+    vi.mocked(ui.prompt).mockResolvedValue({apiVersion: '2022-10'})
 
     // When
-    const got = await apiVersionPrompt()
+    const got = await apiVersionPrompt(['2023-01', '2022-10', 'unstable'])
 
     // Then
-    expect(got).toEqual('2022-01')
+    expect(got).toEqual('2022-10')
     expect(ui.prompt).toHaveBeenCalledWith([
       {
-        type: 'input',
+        type: 'select',
         name: 'apiVersion',
         message: 'Webhook ApiVersion',
-        default: '2022-10',
-        validate: expect.any(Function),
+        choices: [
+          {name: '2023-01', value: '2023-01'},
+          {name: '2022-10', value: '2022-10'},
+          {name: 'unstable', value: 'unstable'},
+        ],
       },
     ])
   })

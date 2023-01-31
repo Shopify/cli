@@ -1,9 +1,9 @@
 import {getDependencyVersion} from '../../app/app.js'
 import {createUIExtensionSpecification} from '../ui.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
-import {error} from '@shopify/cli-kit'
+import {BugError} from '@shopify/cli-kit/node/error'
 
-const dependency = {name: '@shopify/retail-ui-extensions-react', version: '^0.19.0'}
+const dependency = {name: '@shopify/retail-ui-extensions-react', version: '^0.42.0'}
 
 const spec = createUIExtensionSpecification({
   identifier: 'pos_ui_extension',
@@ -13,10 +13,14 @@ const spec = createUIExtensionSpecification({
   dependency,
   partnersWebIdentifier: 'pos_ui_extension',
   schema: BaseUIExtensionSchema,
-  deployConfig: async (_, directory) => {
+  deployConfig: async (config, directory) => {
     const result = await getDependencyVersion(dependency.name, directory)
-    if (result === 'not_found') throw new error.Bug(`Dependency ${dependency.name} not found`)
-    return {renderer_version: result?.version}
+    if (result === 'not_found') throw new BugError(`Dependency ${dependency.name} not found`)
+    return {
+      name: config.name,
+      description: config.description,
+      renderer_version: result?.version,
+    }
   },
   previewMessage: () => undefined,
 })

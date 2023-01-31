@@ -2,22 +2,46 @@ import {useStdout} from 'ink'
 
 const MIN_WIDTH = 80
 
-export default function useLayout() {
+interface Layout {
+  twoThirds: number
+  oneThird: number
+}
+
+export default function useLayout(): Layout {
   const {stdout} = useStdout()
 
   const fullWidth = stdout?.columns ?? MIN_WIDTH
-  const twoThirdsOfWidth = Math.floor((fullWidth / 3) * 2)
-  let width
+  let oneThird
+  let twoThirds
 
   if (fullWidth <= MIN_WIDTH) {
-    width = fullWidth
-  } else if (twoThirdsOfWidth < MIN_WIDTH) {
-    width = MIN_WIDTH
+    oneThird = fullWidth
+    twoThirds = fullWidth
   } else {
-    width = twoThirdsOfWidth
+    oneThird = column({fullWidth, fraction: [1, 3], minWidth: MIN_WIDTH})
+    twoThirds = column({fullWidth, fraction: [2, 3], minWidth: MIN_WIDTH})
   }
 
   return {
-    width,
+    twoThirds,
+    oneThird,
+  }
+}
+
+function column({
+  fullWidth,
+  fraction,
+  minWidth,
+}: {
+  fullWidth: number
+  fraction: [number, number]
+  minWidth: number
+}): number {
+  const fractionedWidth = Math.floor((fullWidth / fraction[1]) * fraction[0])
+
+  if (fractionedWidth < minWidth) {
+    return minWidth
+  } else {
+    return fractionedWidth
   }
 }

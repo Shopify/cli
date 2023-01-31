@@ -1,5 +1,8 @@
 import {ThemeExtension} from '../../models/app/extensions.js'
-import {error, file, output, path} from '@shopify/cli-kit'
+import {fileSize, glob} from '@shopify/cli-kit/node/fs'
+import {joinPath, dirname, relativePath} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 interface FilenameValidation {
   validator: RegExp
@@ -43,17 +46,17 @@ export async function validateThemeExtensions(extensions: ThemeExtension[]) {
 }
 
 async function validateThemeExtension(extension: ThemeExtension): Promise<void> {
-  const themeFiles = await path.glob(path.join(extension.directory, '*/*'))
+  const themeFiles = await glob(joinPath(extension.directory, '*/*'))
   const liquidBytes: number[] = []
   const extensionBytes: number[] = []
   await Promise.all(
     themeFiles.map(async (filepath) => {
-      const relativePath = path.relative(extension.directory, filepath)
-      const dirname = path.dirname(relativePath)
-      validateFile(relativePath, dirname)
-      const filesize = await file.size(filepath)
+      const relativePathName = relativePath(extension.directory, filepath)
+      const directoryName = dirname(relativePathName)
+      validateFile(relativePathName, directoryName)
+      const filesize = await fileSize(filepath)
       extensionBytes.push(filesize)
-      if (['blocks', 'snippets'].includes(dirname)) liquidBytes.push(filesize)
+      if (['blocks', 'snippets'].includes(directoryName)) liquidBytes.push(filesize)
     }),
   )
   validateExtensionBytes(arraySum(extensionBytes))
@@ -63,7 +66,7 @@ async function validateThemeExtension(extension: ThemeExtension): Promise<void> 
 function validateExtensionBytes(extensionBytesTotal: number): void {
   if (extensionBytesTotal > BUNDLE_SIZE_LIMIT) {
     const humanBundleSize = `${(extensionBytesTotal / megabytes).toFixed(2)} MB`
-    throw new error.Abort(
+    throw new AbortError(
       `Your theme app extension exceeds the file size limit (${BUNDLE_SIZE_LIMIT_MB} MB). It's currently ${humanBundleSize}.`,
       `Reduce your total file size and try again.`,
     )
@@ -73,7 +76,7 @@ function validateExtensionBytes(extensionBytesTotal: number): void {
 function validateLiquidBytes(liquidBytesTotal: number): void {
   if (liquidBytesTotal > LIQUID_SIZE_LIMIT) {
     const humanLiquidSize = `${(liquidBytesTotal / kilobytes).toFixed(2)} kB`
-    throw new error.Abort(
+    throw new AbortError(
       `Your theme app extension exceeds the total liquid file size limit (${LIQUID_SIZE_LIMIT_KB} kB). It's currently ${humanLiquidSize}.`,
       `Reduce your total file size and try again.`,
     )
@@ -82,16 +85,14 @@ function validateLiquidBytes(liquidBytesTotal: number): void {
 
 function validateFile(filepath: string, dirname: string): void {
   if (!SUPPORTED_BUCKETS.includes(dirname)) {
-    throw new error.Abort(
-      output.content`Your theme app extension includes files in an unsupported directory, ${output.token.path(
-        dirname,
-      )}`,
+    throw new AbortError(
+      outputContent`Your theme app extension includes files in an unsupported directory, ${outputToken.path(dirname)}`,
       `Make sure all theme app extension files are in the supported directories: ${SUPPORTED_BUCKETS.join(', ')}`,
     )
   }
   const filenameValidation = SUPPORTED_EXTS[dirname]!
   if (!filepath.match(filenameValidation.validator)) {
-    throw new error.Abort(`Invalid filename in your theme app extension: ${filepath}
+    throw new AbortError(`Invalid filename in your theme app extension: ${filepath}
 ${filenameValidation.failureMessage(filepath)}`)
   }
 }

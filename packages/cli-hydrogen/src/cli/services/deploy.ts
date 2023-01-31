@@ -2,7 +2,9 @@ import {DeployConfig, ReqDeployConfig} from './deploy/types.js'
 import {createDeployment, healthCheck, uploadDeployment} from './deploy/upload.js'
 import {buildTaskList} from './build.js'
 import {validateProject, fillDeployConfig} from './deploy/config.js'
-import {environment, system, ui} from '@shopify/cli-kit'
+import {sleep} from '@shopify/cli-kit/node/system'
+import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
+import {Task, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
 
 interface TaskContext {
   config: ReqDeployConfig
@@ -11,36 +13,33 @@ interface TaskContext {
   previewURL: string
 }
 
-const isUnitTest = environment.local.isUnitTest()
 const backoffPolicy = [5, 10, 15, 30, 60]
 
 export async function deployToOxygen(_config: DeployConfig) {
   await validateProject(_config)
 
   /* eslint-disable require-atomic-updates */
-  const tasks: ui.ListrTask<TaskContext>[] = [
+  const tasks: Task<TaskContext>[] = [
     {
-      title: '📝 Getting deployment config',
-      task: async (ctx, task) => {
+      title: 'Getting deployment config',
+      task: async (ctx) => {
         ctx.config = await fillDeployConfig(_config)
-        task.title = '📝 Deployment config parsed'
       },
     },
     {
-      title: '💡 Initializing deployment',
+      title: 'Initializing deployment',
       task: async (ctx, task) => {
         await shouldRetryOxygenCall(task, 'Could not create deployment on Oxygen.')
 
         const {deploymentID, assetBaseURL} = await createDeployment(ctx.config)
         ctx.assetBaseURL = assetBaseURL
         ctx.deploymentID = deploymentID
-        task.title = '✨ Deployment initialized'
       },
       retry: backoffPolicy.length,
     },
     {
-      title: '🛠 Building project',
-      task: async (ctx, task) => {
+      title: 'Building project',
+      task: async (ctx) => {
         const subTasks = buildTaskList({
           directory: ctx.config.path,
           targets: {
@@ -51,39 +50,31 @@ export async function deployToOxygen(_config: DeployConfig) {
           assetBaseURL: ctx.assetBaseURL,
         })
 
-        return task.newListr(subTasks)
+        return subTasks
       },
-      skip: (ctx) => ctx.config.pathToBuild,
+      skip: (ctx) => Boolean(ctx.config.pathToBuild),
     },
     {
-      title: '🚀 Uploading deployment files',
+      title: 'Uploading deployment files',
       task: async (ctx, task) => {
         await shouldRetryOxygenCall(task, 'Uploading files to Oxygen failed.')
 
         ctx.previewURL = await uploadDeployment(ctx.config, ctx.deploymentID)
-        task.output = `Preview URL: ${ctx.previewURL}`
-        task.title = '🚀 Files uploaded'
-      },
-      options: {
-        bottomBar: Infinity,
-        persistentOutput: true,
       },
       retry: backoffPolicy.length,
     },
     {
-      title: '📡 Checking deployment health',
+      title: 'Checking deployment health',
       task: async (ctx, task) => {
-        const retryCount = task.isRetrying()?.count
+        const retryCount = task.retryCount
 
         if (retryCount === backoffPolicy.length) {
-          task.title =
-            "The deployment uploaded but hasn't become reachable within 2 minutes. Check the preview URL to see if deployment succeeded. If it didn't, then try again later."
-          return
+          throw new Error(`Deployment health check failed.`)
         }
-        if (retryCount && !isUnitTest) await system.sleep(backoffPolicy[retryCount - 1]!)
+
+        if (retryCount && !isUnitTest()) await sleep(backoffPolicy[retryCount - 1]!)
 
         await healthCheck(ctx.previewURL)
-        task.title = '✅ Deployed successfully'
       },
       retry: backoffPolicy.length,
       skip: (ctx) => !ctx.config.healthCheck,
@@ -91,31 +82,33 @@ export async function deployToOxygen(_config: DeployConfig) {
   ]
   /* eslint-enable require-atomic-updates */
 
-  const list = ui.newListr(tasks, {
-    concurrent: false,
-    rendererOptions: {collapse: false},
-    rendererSilent: isUnitTest,
-  })
-
-  return list.run()
+  try {
+    await renderTasks(tasks)
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Deployment health check failed.') {
+      renderWarning({
+        headline:
+          "The deployment uploaded but hasn't become reachable within 2 minutes. Check the preview URL to see if deployment succeeded. If it didn't, then try again later.",
+      })
+    } else {
+      throw error
+    }
+  }
 }
 
-async function shouldRetryOxygenCall(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  task: ui.ListrTaskWrapper<TaskContext, any>,
-  errorMessage: string,
-) {
-  const retryCount = task.isRetrying()?.count
+async function shouldRetryOxygenCall(task: Task<TaskContext>, errorMessage: string) {
+  const retryCount = task.retryCount
+  const taskErrors = task.errors ?? []
   if (retryCount === backoffPolicy.length) {
-    throw new Error(`${errorMessage} ${task.errors[task.errors.length - 1]?.message}`)
+    throw new Error(`${errorMessage} ${taskErrors[taskErrors.length - 1]?.message}`)
   }
   if (retryCount) {
-    if (task.errors.length > 0) {
-      const unrecoverableError = task.errors.find((error) => error.message.includes('Unrecoverable'))
+    if (taskErrors.length > 0) {
+      const unrecoverableError = taskErrors.find((error) => error.message.includes('Unrecoverable'))
       if (unrecoverableError) {
         throw new Error(unrecoverableError.message)
       }
     }
   }
-  if (retryCount && !isUnitTest) await system.sleep(backoffPolicy[retryCount - 1]!)
+  if (retryCount && !isUnitTest()) await sleep(backoffPolicy[retryCount - 1]!)
 }

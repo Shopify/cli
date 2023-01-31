@@ -2,7 +2,7 @@ import {FunctionSpec, FunctionConfigType} from '../extensions/functions.js'
 import {ThemeConfigContents, ThemeExtensionSpec} from '../extensions/theme.js'
 import {UIExtensionSpec} from '../extensions/ui.js'
 import {BaseConfigContents} from '../extensions/schemas.js'
-import {output} from '@shopify/cli-kit'
+import {TokenizedString} from '@shopify/cli-kit/node/output'
 import {Result} from '@shopify/cli-kit/node/result'
 import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -42,7 +42,8 @@ export type FunctionExtension<TConfiguration extends FunctionConfigType = Functi
 
 export type ThemeExtension<TConfiguration extends ThemeConfigContents = ThemeConfigContents> = Extension & {
   configuration: TConfiguration
-  previewMessage(url: string, storeFqdn: string): output.TokenizedString | undefined
+  previewMessage(url: string, storeFqdn: string): TokenizedString | undefined
+  outputBundlePath: string
 }
 
 export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigContents> = Extension & {
@@ -56,7 +57,7 @@ export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigCo
   validate(): Promise<Result<unknown, string>>
   preDeployValidation(): Promise<void>
   deployConfig(): Promise<{[key: string]: unknown}>
-  previewMessage(url: string, storeFqdn: string): output.TokenizedString | undefined
+  previewMessage(url: string, storeFqdn: string): TokenizedString | undefined
   shouldFetchCartUrl(): boolean
   hasExtensionPointTarget(target: string): boolean
 }

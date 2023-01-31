@@ -54,7 +54,7 @@ describe('getExtensionPointRedirectUrl()', () => {
     const result = getExtensionPointRedirectUrl('Admin::CheckoutEditor::RenderSettings', extension, options)
 
     expect(result).toBe(
-      'https://example.myshopify.com/admin/extensions-dev?url=https%3A%2F%2Flocalhost%3A8081%2Fextensions%2F123abc',
+      'https://example.myshopify.com/admin/extensions-dev?url=https%3A%2F%2Flocalhost%3A8081%2Fextensions%2F123abc&target=Admin%3A%3ACheckoutEditor%3A%3ARenderSettings',
     )
   })
 

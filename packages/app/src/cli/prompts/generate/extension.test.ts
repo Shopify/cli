@@ -5,23 +5,13 @@ import {
   loadLocalUIExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
-import {environment} from '@shopify/cli-kit'
+import {isShopify, isUnitTest} from '@shopify/cli-kit/node/environment/local'
 
-vi.mock('@shopify/cli-kit', async () => {
-  const cliKit: any = await vi.importActual('@shopify/cli-kit')
-  return {
-    ...cliKit,
-    environment: {
-      local: {
-        isShopify: vi.fn(),
-        isUnitTest: vi.fn(() => true),
-      },
-    },
-  }
-})
+vi.mock('@shopify/cli-kit/node/environment/local')
 
 beforeEach(() => {
-  vi.mocked(environment.local.isShopify).mockResolvedValue(true)
+  vi.mocked(isShopify).mockResolvedValue(true)
+  vi.mocked(isUnitTest).mockResolvedValue(true)
 })
 
 describe('extension prompt', async () => {
@@ -152,6 +142,37 @@ describe('extension prompt', async () => {
     expect(prompt).toHaveBeenNthCalledWith(1, [])
     expect(prompt).toHaveBeenNthCalledWith(2, [extensionFlavorQuestion(productDiscountsSpec)])
 
+    expect(got).toEqual({...options, ...answers})
+  })
+
+  it('when extensionFlavor is passed, only compatible extensions are shown', async () => {
+    // Given
+    const prompt = vi.fn()
+    const answers = {}
+    const options = {
+      name: 'my-product-discount',
+      directory: '/',
+      app: testApp(),
+      reset: false,
+      extensionFlavor: 'rust',
+      extensionSpecifications: [...allFunctionSpecs, ...allUISpecs],
+    }
+
+    // only function types should be shown if flavor is rust
+    const functionTypes = {
+      type: 'select',
+      name: 'extensionType',
+      message: 'Type of extension?',
+      choices: buildChoices(allFunctionSpecs),
+    }
+
+    prompt.mockResolvedValue(answers)
+
+    // When
+    const got = await generateExtensionPrompt(options, prompt)
+
+    // Then
+    expect(prompt).toHaveBeenCalledWith([functionTypes])
     expect(got).toEqual({...options, ...answers})
   })
 })

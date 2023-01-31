@@ -1,4 +1,3 @@
-import {error, output, path, system} from '@shopify/cli-kit'
 import {
   addNPMDependencies,
   findUpAndReadPackageJson,
@@ -7,6 +6,11 @@ import {
   getPackageManager,
   PackageJson,
 } from '@shopify/cli-kit/node/node-package-manager'
+import {exec} from '@shopify/cli-kit/node/system'
+import {dirname, moduleDirectory} from '@shopify/cli-kit/node/path'
+import {findPathUp} from '@shopify/cli-kit/node/fs'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputContent, outputInfo, outputSuccess, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 
 type HomebrewPackageName = 'shopify-cli' | 'shopify-cli@3'
 
@@ -20,8 +24,8 @@ export async function upgrade(directory: string, currentVersion: string): Promis
   if (projectDir) {
     newestVersion = await upgradeLocalShopify(projectDir, currentVersion)
   } else if (usingPackageManager()) {
-    throw new error.Abort(
-      output.content`Couldn't find the configuration file for ${output.token.path(
+    throw new AbortError(
+      outputContent`Couldn't find the configuration file for ${outputToken.path(
         directory,
       )}, are you in a Shopify project directory?`,
     )
@@ -30,20 +34,20 @@ export async function upgrade(directory: string, currentVersion: string): Promis
   }
 
   if (newestVersion) {
-    output.success(`Upgraded Shopify CLI to version ${newestVersion}`)
+    outputSuccess(`Upgraded Shopify CLI to version ${newestVersion}`)
   }
 }
 
 async function getProjectDir(directory: string): Promise<string | undefined> {
-  const configFile = await path.findUp(['shopify.app.toml', 'hydrogen.config.js', 'hydrogen.config.ts'], {
+  const configFile = await findPathUp(['shopify.app.toml', 'hydrogen.config.js', 'hydrogen.config.ts'], {
     cwd: directory,
     type: 'file',
   })
-  if (configFile) return path.dirname(configFile)
+  if (configFile) return dirname(configFile)
 }
 
 async function upgradeLocalShopify(projectDir: string, currentVersion: string): Promise<string | void> {
-  const packageJson = (await findUpAndReadPackageJson(projectDir)).content as PackageJson
+  const packageJson = (await findUpAndReadPackageJson(projectDir)).content
   const packageJsonDependencies = packageJson.dependencies || {}
   const packageJsonDevDependencies = packageJson.devDependencies || {}
 
@@ -77,19 +81,19 @@ async function upgradeGlobalShopify(currentVersion: string): Promise<string | vo
   try {
     await (homebrewPackage ? upgradeGlobalViaHomebrew(homebrewPackage) : upgradeGlobalViaNpm())
   } catch (err) {
-    output.warn('Upgrade failed!')
+    outputWarn('Upgrade failed!')
     throw err
   }
   return newestVersion
 }
 
 async function upgradeGlobalViaHomebrew(homebrewPackage: HomebrewPackageName): Promise<void> {
-  output.info(
-    output.content`Homebrew installation detected. Attempting to upgrade via ${output.token.genericShellCommand(
+  outputInfo(
+    outputContent`Homebrew installation detected. Attempting to upgrade via ${outputToken.genericShellCommand(
       'brew upgrade',
     )}...`,
   )
-  await system.exec('brew', ['upgrade', homebrewPackage], {stdio: 'inherit'})
+  await exec('brew', ['upgrade', homebrewPackage], {stdio: 'inherit'})
 }
 
 async function upgradeGlobalViaNpm(): Promise<void> {
@@ -100,21 +104,19 @@ async function upgradeGlobalViaNpm(): Promise<void> {
     `${await cliDependency()}@latest`,
     ...globalPlugins.map((plugin) => `${plugin}@latest`),
   ]
-  output.info(
-    output.content`Attempting to upgrade via ${output.token.genericShellCommand([command, ...args].join(' '))}...`,
+  outputInfo(
+    outputContent`Attempting to upgrade via ${outputToken.genericShellCommand([command, ...args].join(' '))}...`,
   )
-  await system.exec(command, args, {stdio: 'inherit'})
+  await exec(command, args, {stdio: 'inherit'})
 }
 
 function outputWontInstallMessage(currentVersion: string): void {
-  output.info(output.content`You're on the latest version, ${output.token.yellow(currentVersion)}, no need to upgrade!`)
+  outputInfo(outputContent`You're on the latest version, ${outputToken.yellow(currentVersion)}, no need to upgrade!`)
 }
 
 function outputUpgradeMessage(currentVersion: string, newestVersion: string): void {
-  output.info(
-    output.content`Upgrading CLI from ${output.token.yellow(currentVersion)} to ${output.token.yellow(
-      newestVersion,
-    )}...`,
+  outputInfo(
+    outputContent`Upgrading CLI from ${outputToken.yellow(currentVersion)} to ${outputToken.yellow(newestVersion)}...`,
   )
 }
 
@@ -156,7 +158,7 @@ let _packageJsonContents: PackageJsonWithName | undefined
 
 async function packageJsonContents(): Promise<PackageJsonWithName> {
   if (!_packageJsonContents) {
-    const packageJson = await findUpAndReadPackageJson(path.moduleDirectory(import.meta.url))
+    const packageJson = await findUpAndReadPackageJson(moduleDirectory(import.meta.url))
     _packageJsonContents = _packageJsonContents || (packageJson.content as PackageJsonWithName)
   }
   return _packageJsonContents

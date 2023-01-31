@@ -106,11 +106,6 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
         with:
           branch-name: main
-      - name: Run and save benchmark
-        uses: ./.github/actions/run-and-save-benchmark
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
-        with:
-          branch-name: main
 
   pr-platform-agnostic:
     name: ${{ matrix.target }} with Node ${{ matrix.node }} in ${{ matrix.os }}
@@ -158,7 +153,7 @@ jobs:
         run: 'test -z "$(git status --porcelain "**/oclif.manifest.json" )" || { echo -e "Run pnpm refresh-manifests before pushing new commands or flags. Diff here:\n\n$(git diff)" ; exit 1; }'
 
   pr-platform-dependent:
-    name: Testing with Node ${{ matrix.node }} in ${{ matrix.os }}
+    name: test with Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: pr-platform-agnostic
     if: ${{ github.event_name == 'pull_request' }}
@@ -184,27 +179,17 @@ jobs:
         run: pnpm nx run features:test
       - name: Run and save test coverage
         uses: ./.github/actions/run-and-save-test-coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository && matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
         with:
           branch-name: "${{ github.head_ref }}"
       - name: Download and publish test coverage
         uses: ./.github/actions/download-and-publish-test-coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
-        with:
-          base-branch-name: "${{ github.base_ref }}"
-      - name: Run and save benchmark
-        uses: ./.github/actions/run-and-save-benchmark
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
-        with:
-          branch-name: "${{ github.head_ref }}"
-      - name: Download and publish benchmark
-        uses: ./.github/actions/download-and-publish-benchmark
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository && matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
         with:
           base-branch-name: "${{ github.base_ref }}"
 
   manually-triggered:
-    name: Testing with Node ${{ inputs.node-version }} in ${{ inputs.os }}
+    name: test with Node ${{ inputs.node-version }} in ${{ inputs.os }}
     runs-on: ${{ inputs.os }}
     if: ${{ github.event_name == 'workflow_dispatch' }}
     timeout-minutes: 60

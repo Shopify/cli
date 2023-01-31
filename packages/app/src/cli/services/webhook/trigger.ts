@@ -1,44 +1,58 @@
-import {DELIVERY_METHOD, WebhookTriggerOptions} from './trigger-options.js'
+import {DELIVERY_METHOD} from './trigger-options.js'
 import {getWebhookSample, UserErrors} from './request-sample.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
-import {output} from '@shopify/cli-kit'
+import {requestApiVersions} from './request-api-versions.js'
+import {requestTopics} from './request-topics.js'
+import {
+  collectAddressAndMethod,
+  collectApiVersion,
+  collectSecret,
+  collectTopic,
+  WebhookTriggerFlags,
+} from '../../prompts/webhook/options-prompt.js'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {consoleError, outputSuccess} from '@shopify/cli-kit/node/output'
 
 /**
  * Orchestrates the command request by requesting the sample and sending it to localhost if required.
  * It outputs the result in console
  *
- * @param options - Request options once the flags, prompts, and transformations have been performed
+ * @param flags - Passed flags
  */
-export async function webhookTriggerService(options: WebhookTriggerOptions) {
-  const sample = await getWebhookSample(
-    options.topic,
-    options.apiVersion,
-    options.deliveryMethod,
-    options.address,
-    options.sharedSecret,
-  )
+export async function webhookTriggerService(flags: WebhookTriggerFlags) {
+  const token = await ensureAuthenticatedPartners()
+
+  const apiVersion = await collectApiVersion(flags.apiVersion, await requestApiVersions(token))
+  const topic = await collectTopic(flags.topic, apiVersion, await requestTopics(token, apiVersion))
+
+  const [deliveryMethod, address] = await collectAddressAndMethod(flags.deliveryMethod, flags.address)
+
+  const sharedSecret = await collectSecret(flags.sharedSecret)
+
+  const sample = await getWebhookSample(token, topic, apiVersion, deliveryMethod, address, sharedSecret)
 
   if (!sample.success) {
-    await output.consoleError(`Request errors:\n${formatErrors(sample.userErrors)}`)
+    consoleError(`Request errors:\n${formatErrors(sample.userErrors)}`)
     return
   }
 
-  if (options.deliveryMethod === DELIVERY_METHOD.LOCALHOST) {
-    const result = await triggerLocalWebhook(options.address, sample.samplePayload, sample.headers)
+  if (deliveryMethod === DELIVERY_METHOD.LOCALHOST) {
+    const result = await triggerLocalWebhook(address, sample.samplePayload, sample.headers)
 
     if (result) {
-      output.success('Localhost delivery sucessful')
+      outputSuccess('Localhost delivery sucessful')
       return
     }
 
-    await output.consoleError('Localhost delivery failed')
+    consoleError('Localhost delivery failed')
     return
   }
 
   if (sample.samplePayload === JSON.stringify({})) {
-    output.success('Webhook has been enqueued for delivery')
+    outputSuccess('Webhook has been enqueued for delivery')
   }
 }
+
 function formatErrors(errors: UserErrors[]): string {
   try {
     return errors

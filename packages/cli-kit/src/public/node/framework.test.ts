@@ -1,13 +1,13 @@
 import {resolveFramework} from './framework.js'
-import {inTemporaryDirectory, write as writeFile} from '../../file.js'
-import {join as pathJoin} from '../../path.js'
+import {inTemporaryDirectory, writeFile} from './fs.js'
+import {joinPath} from './path.js'
 import {describe, expect, it} from 'vitest'
 
 describe('frontFrameworkUsed', () => {
   it('return rails when match every detectors', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const gemFilePath = pathJoin(tmpDir, 'Gemfile')
+      const gemFilePath = joinPath(tmpDir, 'Gemfile')
       const gemFile = 'gem "rails"'
       await writeFile(gemFilePath, gemFile)
 
@@ -21,7 +21,7 @@ describe('frontFrameworkUsed', () => {
   it('return next when match every detectors', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      const packageJsonPath = joinPath(tmpDir, 'package.json')
       const packageJson = {
         dependencies: {react: '1.2.3', next: '1.2.3'},
       }
@@ -37,7 +37,7 @@ describe('frontFrameworkUsed', () => {
   it('return remix when match every detectors', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      const packageJsonPath = joinPath(tmpDir, 'package.json')
       const packageJson = {
         dependencies: {'@remix-run/node': '1.2.3', react: '1.2.3'},
       }
@@ -53,7 +53,7 @@ describe('frontFrameworkUsed', () => {
   it('return flask when match every detectors', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const pipFilePath = pathJoin(tmpDir, 'Pipfile')
+      const pipFilePath = joinPath(tmpDir, 'Pipfile')
       const pipFile = 'flask'
       await writeFile(pipFilePath, pipFile)
 
@@ -67,7 +67,7 @@ describe('frontFrameworkUsed', () => {
   it('return laravel when match every detectors', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const composerFilePath = pathJoin(tmpDir, 'composer.json')
+      const composerFilePath = joinPath(tmpDir, 'composer.json')
       const composerFile = {require: {'laravel/framework': '1.2.3'}}
       await writeFile(composerFilePath, JSON.stringify(composerFile))
 
@@ -81,7 +81,7 @@ describe('frontFrameworkUsed', () => {
   it('return symfony when match every detectors', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const composerFilePath = pathJoin(tmpDir, 'composer.json')
+      const composerFilePath = joinPath(tmpDir, 'composer.json')
       const composerFile = {require: {'symfony/requirement': '1.2.3'}}
       await writeFile(composerFilePath, JSON.stringify(composerFile))
 
@@ -104,7 +104,7 @@ describe('frontFrameworkUsed', () => {
   it('return unkonw when unsupported dependency', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      const packageJsonPath = joinPath(tmpDir, 'package.json')
       const packageJson = {
         dependencies: {unsupported: '1.2.3'},
       }
@@ -119,7 +119,7 @@ describe('frontFrameworkUsed', () => {
   it('return unkonw when not every detector is present', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const packageJsonPath = pathJoin(tmpDir, 'package.json')
+      const packageJsonPath = joinPath(tmpDir, 'package.json')
       const packageJson = {
         dependencies: {'@remix-run/node': '1.2.3', 'other-react': '1.2.3'},
       }

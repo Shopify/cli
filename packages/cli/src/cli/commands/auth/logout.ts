@@ -1,11 +1,12 @@
 import Command from '@shopify/cli-kit/node/base-command'
-import {output, session} from '@shopify/cli-kit'
+import {outputSuccess} from '@shopify/cli-kit/node/output'
+import {logout} from '@shopify/cli-kit/node/session'
 
 export default class Logout extends Command {
-  static description = 'Logout from Shopify'
+  static description = 'Logout from Shopify.'
 
   async run(): Promise<void> {
-    await session.logout()
-    output.success('Logged out from Shopify')
+    await logout()
+    outputSuccess('Logged out from Shopify')
   }
 }

@@ -1,10 +1,10 @@
-import {OutputProcess} from '../../../../output.js'
+import {OutputProcess} from '../../../../public/node/output.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
+import {AbortController} from '../../../../public/node/abort.js'
 import React, {FunctionComponent, useState} from 'react'
 import {Box, Static, Text} from 'ink'
 import stripAnsi from 'strip-ansi'
-import AbortController from 'abort-controller'
-import {Writable} from 'node:stream'
+import {Writable} from 'stream'
 
 export type WritableStream = (process: OutputProcess, index: number) => Writable
 

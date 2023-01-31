@@ -1,8 +1,7 @@
-import {output, abort} from '@shopify/cli-kit'
-import httpProxy from 'http-proxy'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
-import {AbortController} from 'abort-controller'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
+import {OutputProcess, outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 import * as http from 'http'
 
@@ -22,7 +21,7 @@ export interface ReverseHTTPProxyTarget {
    * to send standard output and error data that gets formatted with the
    * right prefix.
    */
-  action: (stdout: Writable, stderr: Writable, signal: abort.Signal, port: number) => Promise<void> | void
+  action: (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => Promise<void> | void
 }
 
 /**
@@ -37,12 +36,16 @@ export interface ReverseHTTPProxyTarget {
 export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
   portNumber: number | undefined = undefined,
   proxyTargets: ReverseHTTPProxyTarget[],
-  additionalProcesses: output.OutputProcess[],
+  additionalProcesses: OutputProcess[],
 ): Promise<void> {
+  // Lazy-importing it because it's CJS and we don't want it
+  // to block the loading of the ESM module graph.
+  const {default: httpProxy} = await import('http-proxy')
+
   const rules: {[key: string]: string} = {}
 
   const processes = await Promise.all(
-    proxyTargets.map(async (target): Promise<output.OutputProcess> => {
+    proxyTargets.map(async (target): Promise<OutputProcess> => {
       const targetPort = await getAvailableTCPPort()
       rules[target.pathPrefix ?? '/'] = `http://localhost:${targetPort}`
       return {
@@ -56,10 +59,10 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
 
   const availablePort = portNumber ?? (await getAvailableTCPPort())
 
-  output.debug(output.content`
-Starting reverse HTTP proxy on port ${output.token.raw(availablePort.toString())}
+  outputDebug(outputContent`
+Starting reverse HTTP proxy on port ${outputToken.raw(availablePort.toString())}
 Routing traffic rules:
-${output.token.json(JSON.stringify(rules))}
+${outputToken.json(JSON.stringify(rules))}
 `)
 
   const proxy = httpProxy.createProxy()
@@ -67,10 +70,10 @@ ${output.token.json(JSON.stringify(rules))}
     const target = match(rules, req)
     if (target) return proxy.web(req, res, {target})
 
-    output.debug(`
+    outputDebug(`
 Reverse HTTP proxy error - Invalid path: ${req.url}
 These are the allowed paths:
-${output.token.json(JSON.stringify(rules))}
+${outputToken.json(JSON.stringify(rules))}
 `)
 
     res.statusCode = 500

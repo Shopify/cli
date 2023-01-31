@@ -1,47 +1,35 @@
 import {checkLockfileStatus} from './check-lockfile.js'
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
-import {file, path, git, outputMocker} from '@shopify/cli-kit'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
 
-vi.mock('@shopify/cli-kit', async () => {
-  const cliKit: any = await vi.importActual('@shopify/cli-kit')
-
-  return {
-    ...cliKit,
-    git: {
-      factory: vi.fn(),
-    },
-  }
-})
+vi.mock('@shopify/cli-kit/node/git')
 
 describe('checkLockfileStatus()', () => {
-  const checkIgnoreMock = vi.fn()
-  const gitFactoryMock = {
-    checkIgnore: checkIgnoreMock,
-  }
-
   beforeEach(() => {
-    vi.mocked(git.factory).mockReturnValue(gitFactoryMock as any)
-    vi.mocked(checkIgnoreMock).mockResolvedValue([])
+    vi.mocked(checkIfIgnoredInGitRepository).mockResolvedValue([])
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
-    outputMocker.mockAndCaptureOutput().clear()
+    mockAndCaptureOutput().clear()
   })
 
   describe('when a lockfile present', () => {
     it('returns "ok"', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
-        await file.write(path.join(tmpDir, 'yarn.lock'), '')
+      await inTemporaryDirectory(async (tmpDir) => {
+        await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
 
         expect(await checkLockfileStatus(tmpDir)).toBe('ok')
       })
     })
 
     it('does not call displayLockfileWarning', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
-        await file.write(path.join(tmpDir, 'yarn.lock'), '')
-        const outputMock = outputMocker.mockAndCaptureOutput()
+      await inTemporaryDirectory(async (tmpDir) => {
+        await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
+        const outputMock = mockAndCaptureOutput()
 
         await checkLockfileStatus(tmpDir)
 
@@ -51,27 +39,26 @@ describe('checkLockfileStatus()', () => {
 
     describe('and it is being ignored by Git', () => {
       beforeEach(() => {
-        vi.mocked(checkIgnoreMock).mockResolvedValue(['yarn.lock'])
+        vi.mocked(checkIfIgnoredInGitRepository).mockResolvedValue(['yarn.lock'])
       })
 
       it('returns "ignored"', async () => {
-        await file.inTemporaryDirectory(async (tmpDir) => {
-          await file.write(path.join(tmpDir, 'yarn.lock'), '')
+        await inTemporaryDirectory(async (tmpDir) => {
+          await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
 
           expect(await checkLockfileStatus(tmpDir)).toBe('ignored')
         })
       })
 
       it('renders a warning', async () => {
-        await file.inTemporaryDirectory(async (tmpDir) => {
-          await file.write(path.join(tmpDir, 'yarn.lock'), '')
-          const outputMock = outputMocker.mockAndCaptureOutput()
+        await inTemporaryDirectory(async (tmpDir) => {
+          await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
+          const outputMock = mockAndCaptureOutput()
 
           await checkLockfileStatus(tmpDir)
 
           expect(outputMock.warn()).toMatchInlineSnapshot(`
-            "
-            ╭─ warning ────────────────────────────────────────────────────────────────────╮
+            "╭─ warning ────────────────────────────────────────────────────────────────────╮
             │                                                                              │
             │  Lockfile ignored by Git                                                     │
             │                                                                              │
@@ -93,26 +80,25 @@ describe('checkLockfileStatus()', () => {
 
   describe('when there are multiple lockfiles', () => {
     it('returns "multiple"', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
-        await file.write(path.join(tmpDir, 'yarn.lock'), '')
-        await file.write(path.join(tmpDir, 'package-lock.json'), '')
+      await inTemporaryDirectory(async (tmpDir) => {
+        await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
+        await writeFile(joinPath(tmpDir, 'package-lock.json'), '')
 
         expect(await checkLockfileStatus(tmpDir)).toBe('multiple')
       })
     })
 
     it('renders a warning', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
-        await file.write(path.join(tmpDir, 'yarn.lock'), '')
-        await file.write(path.join(tmpDir, 'package-lock.json'), '')
+      await inTemporaryDirectory(async (tmpDir) => {
+        await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
+        await writeFile(joinPath(tmpDir, 'package-lock.json'), '')
 
-        const outputMock = outputMocker.mockAndCaptureOutput()
+        const outputMock = mockAndCaptureOutput()
 
         await checkLockfileStatus(tmpDir)
 
         expect(outputMock.warn()).toMatchInlineSnapshot(`
-          "
-          ╭─ warning ────────────────────────────────────────────────────────────────────╮
+          "╭─ warning ────────────────────────────────────────────────────────────────────╮
           │                                                                              │
           │  Multiple lockfiles found                                                    │
           │                                                                              │
@@ -136,20 +122,19 @@ describe('checkLockfileStatus()', () => {
 
   describe('when a lockfile is missing', () => {
     it('returns "missing"', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         expect(await checkLockfileStatus(tmpDir)).toBe('missing')
       })
     })
 
     it('renders a warning', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
-        const outputMock = outputMocker.mockAndCaptureOutput()
+      await inTemporaryDirectory(async (tmpDir) => {
+        const outputMock = mockAndCaptureOutput()
 
         await checkLockfileStatus(tmpDir)
 
         expect(outputMock.warn()).toMatchInlineSnapshot(`
-          "
-          ╭─ warning ────────────────────────────────────────────────────────────────────╮
+          "╭─ warning ────────────────────────────────────────────────────────────────────╮
           │                                                                              │
           │  No lockfile found                                                           │
           │                                                                              │

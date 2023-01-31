@@ -1,35 +1,19 @@
-import {CancelExecution, Abort, AbortSilent} from './error.js'
-import {remove, exists} from './file.js'
-import {info, completed, content, token, logUpdate, Message, Logger, stringifyMessage, debug} from './output.js'
+import {CancelExecution, AbortError, AbortSilentError} from './public/node/error.js'
+import {removeFile, fileExists} from './public/node/fs.js'
+import {
+  outputInfo,
+  outputContent,
+  outputToken,
+  OutputMessage,
+  Logger,
+  stringifyMessage,
+  outputDebug,
+} from './public/node/output.js'
 import colors from './public/node/colors.js'
-import {relative} from './path.js'
-import {isTerminalInteractive} from './environment/local.js'
-import {mapper as mapperUI, run as executorUI} from './ui/executor.js'
-import {Listr as OriginalListr, ListrTask, ListrTaskState, ListrBaseClassOptions} from 'listr2'
+import {relativizePath} from './public/node/path.js'
+import {isTerminalInteractive} from './public/node/environment/local.js'
+import {run as executorUI} from './ui/executor.js'
 import findProcess from 'find-process'
-
-export function newListr(tasks: ListrTask[], options?: object | ListrBaseClassOptions) {
-  const listr = new OriginalListr(tasks, options)
-  listr.tasks.forEach((task) => {
-    const loggedSubtaskTitles: string[] = []
-    task.renderHook$.subscribe(() => {
-      if (task.hasSubtasks()) {
-        const activeSubtasks = task.subtasks.filter((subtask) => {
-          return [ListrTaskState.PENDING, ListrTaskState.COMPLETED].includes(subtask.state as ListrTaskState)
-        })
-        activeSubtasks.forEach((subtask) => {
-          if (subtask.title && !loggedSubtaskTitles.includes(subtask.title)) {
-            loggedSubtaskTitles.push(subtask.title)
-          }
-        })
-      }
-    })
-  })
-  return listr
-}
-
-export type ListrTasks = ConstructorParameters<typeof OriginalListr>[0]
-export type {ListrTaskWrapper, ListrDefaultRenderer, ListrTask} from 'listr2'
 
 export interface PromptAnswer {
   name: string
@@ -74,38 +58,16 @@ export interface QuestionChoiceType {
   group?: {name: string; order: number}
 }
 
-const started = (content: Message, logger: Logger) => {
+const started = (content: OutputMessage, logger: Logger) => {
   const message = `${colors.yellow('❯')} ${stringifyMessage(content)}`
-  info(message, logger)
+  outputInfo(message, logger)
 }
 
-const failed = (content: Message, logger: Logger) => {
+const failed = (content: OutputMessage, logger: Logger) => {
   const message = `${colors.red('✖')} ${stringifyMessage(content)}`
-  info(message, logger)
+  outputInfo(message, logger)
 }
 
-/**
- * Performs a task with the title kept up to date and stdout available to the
- * task while it runs (there is no re-writing stdout while the task runs).
- */
-export interface TaskOptions {
-  title: string
-  task: () => Promise<void | {successMessage: string}>
-}
-export const task = async ({title, task}: TaskOptions) => {
-  let success
-  started(title, logUpdate)
-  try {
-    const result = await task()
-    success = result?.successMessage || title
-  } catch (err) {
-    failed(title, logUpdate)
-    logUpdate.done()
-    throw err
-  }
-  completed(success, logUpdate)
-  logUpdate.done()
-}
 export const prompt = async <
   TName extends string & keyof TAnswers,
   TAnswers extends {[key in TName]: string} = {[key in TName]: string},
@@ -113,34 +75,32 @@ export const prompt = async <
   questions: ReadonlyArray<Question<TName>>,
 ): Promise<TAnswers> => {
   if (!isTerminalInteractive() && questions.length !== 0) {
-    throw new Abort(content`
+    throw new AbortError(outputContent`
 The CLI prompted in a non-interactive terminal with the following questions:
-${token.json(questions)}
+${outputToken.json(questions)}
     `)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mappedQuestions: any[] = questions.map(mapperUI)
   const value = {} as TAnswers
-  for (const question of mappedQuestions) {
+  for (const question of questions) {
     if (question.preface) {
-      info(question.preface)
+      outputInfo(question.preface)
     }
 
     // eslint-disable-next-line no-await-in-loop
-    value[question.name as TName] = await executorUI(question)
+    value[question.name] = (await executorUI(question)) as TAnswers[TName]
   }
   return value
 }
 
 export async function nonEmptyDirectoryPrompt(directory: string) {
-  if (await exists(directory)) {
+  if (await fileExists(directory)) {
     const options = [
       {name: 'No, don’t delete the files', value: 'abort'},
       {name: 'Yes, delete the files', value: 'overwrite'},
     ]
 
-    const relativeDirectory = relative(process.cwd(), directory)
+    const relativeDirectory = relativizePath(directory)
 
     const questions: Question<'value'> = {
       type: 'select',
@@ -155,7 +115,7 @@ export async function nonEmptyDirectoryPrompt(directory: string) {
       throw new CancelExecution()
     }
 
-    await remove(directory)
+    await removeFile(directory)
   }
 }
 
@@ -165,7 +125,7 @@ export async function terminateBlockingPortProcessPrompt(port: number, stepDescr
   const processInfo = await findProcess('port', port)
   const formattedProcessName =
     processInfo && processInfo.length > 0 && processInfo[0]?.name
-      ? ` ${content`${token.italic(`(${processInfo[0].name})`)}`.value}`
+      ? ` ${outputContent`${outputToken.italic(`(${processInfo[0].name})`)}`.value}`
       : ''
 
   const options = [
@@ -193,8 +153,8 @@ export const keypress = async () => {
       const bytes = Array.from(buffer)
 
       if (bytes.length && bytes[0] === 3) {
-        debug('Canceled keypress, User pressed CTRL+C')
-        reject(new AbortSilent())
+        outputDebug('Canceled keypress, User pressed CTRL+C')
+        reject(new AbortSilentError())
       }
       process.nextTick(resolve)
     }

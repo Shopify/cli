@@ -1,6 +1,7 @@
+import {unionArrayStrategy} from '../../private/common/array.js'
 import deepMerge from 'deepmerge'
 import {Dictionary, ObjectIterator, ValueKeyIteratee} from 'lodash'
-import {createRequire} from 'node:module'
+import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)
 
@@ -21,15 +22,11 @@ export function deepMergeObjects<T1, T2>(
   return deepMerge(lhs, rhs, {arrayMerge: arrayMergeStrategy})
 }
 
-function unionArrayStrategy(destinationArray: unknown[], sourceArray: unknown[]): unknown[] {
-  return Array.from(new Set([...destinationArray, ...sourceArray]))
-}
-
 /**
  * Creates an object composed of the `object` properties `predicate` returns
  * truthy for. The predicate is invoked with two arguments: (value, key).
  *
- * @param object-  The source object.
+ * @param object - The source object.
  * @param predicate - The function invoked per property.
  * @returns Returns the new object.
  */
@@ -47,14 +44,14 @@ export function pickBy<T, S extends T>(
  * enumerable property of object through iteratee. The iteratee function is
  * invoked with three arguments: (value, key, object).
  *
- * @param object - The object to iterate over.
+ * @param source - The object to iterate over.
  * @param callback -  The function invoked per iteration.
  * @returns Returns the new mapped object.
  */
 export function mapValues<T extends object, TResult>(
-  obj: T | null | undefined,
+  source: T | null | undefined,
   callback: ObjectIterator<T, TResult>,
 ): {[P in keyof T]: TResult} {
   const lodashMapValues = require('lodash/mapValues.js')
-  return lodashMapValues(obj, callback)
+  return lodashMapValues(source, callback)
 }

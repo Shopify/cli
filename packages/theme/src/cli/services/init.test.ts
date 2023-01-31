@@ -1,18 +1,9 @@
 import {cloneRepoAndCheckoutLatestTag, cloneRepo} from './init.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {git} from '@shopify/cli-kit'
+import * as git from '@shopify/cli-kit/node/git'
 
 beforeEach(async () => {
-  vi.mock('@shopify/cli-kit', async () => {
-    const actualCliKit = await vi.importActual<typeof import('@shopify/cli-kit')>('@shopify/cli-kit')
-
-    return {
-      ...actualCliKit,
-      git: {
-        downloadRepository: vi.fn(),
-      },
-    }
-  })
+  vi.mock('@shopify/cli-kit/node/git')
 })
 
 describe('cloneRepoAndCheckoutLatestTag()', async () => {
@@ -21,7 +12,7 @@ describe('cloneRepoAndCheckoutLatestTag()', async () => {
     const repoUrl = 'https://github.com/Shopify/dawn.git'
     const destination = 'destination'
     const latestTag = true
-    const downloadRepositorySpy = vi.spyOn(git, 'downloadRepository')
+    const downloadRepositorySpy = vi.spyOn(git, 'downloadGitRepository')
 
     // When
     await cloneRepoAndCheckoutLatestTag(repoUrl, destination)
@@ -36,7 +27,7 @@ describe('cloneRepo()', async () => {
     // Given
     const repoUrl = 'https://github.com/Shopify/dawn.git'
     const destination = 'destination'
-    const downloadRepositorySpy = vi.spyOn(git, 'downloadRepository')
+    const downloadRepositorySpy = vi.spyOn(git, 'downloadGitRepository')
 
     // When
     await cloneRepo(repoUrl, destination)

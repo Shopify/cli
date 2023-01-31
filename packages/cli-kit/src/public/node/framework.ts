@@ -1,5 +1,5 @@
-import {join as pathJoin} from '../../path.js'
-import {existsSync, readFileSync} from 'node:fs'
+import {joinPath} from './path.js'
+import {existsSync, readFileSync} from 'fs'
 
 interface FrameworkDetectionPattern {
   /**
@@ -187,7 +187,7 @@ function loadFwConfigFile(
     return fwConfigFiles
   }
 
-  const fwConfigFilePath = pathJoin(rootPath, fwConfigFileName)
+  const fwConfigFilePath = joinPath(rootPath, fwConfigFileName)
   if (!existsSync(fwConfigFilePath)) {
     return fwConfigFiles
   }

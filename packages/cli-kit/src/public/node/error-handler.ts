@@ -1,33 +1,35 @@
+import {reportAnalyticsEvent} from './analytics.js'
+import * as path from './path.js'
+import {fanoutHooks} from './plugins.js'
+import * as metadata from './metadata.js'
 import {
-  AbortSilent,
+  AbortSilentError,
   CancelExecution,
-  mapper as errorMapper,
-  shouldReport as shouldReportError,
+  errorMapper,
+  shouldReportError,
   handler,
   cleanSingleStackTracePath,
-} from '../../error.js'
-import {debug, info} from '../../output.js'
-import {getEnvironmentData, reportEvent} from '../../analytics.js'
-import * as path from '../../path.js'
-import * as metadata from '../../metadata.js'
-import {fanoutHooks} from '../../plugins.js'
-import constants, {bugsnagApiKey} from '../../constants.js'
+} from './error.js'
+import {getEnvironmentData} from '../../private/node/analytics.js'
+import {outputDebug, outputInfo} from '../../public/node/output.js'
+import {bugsnagApiKey} from '../../private/node/constants.js'
+import {CLI_KIT_VERSION} from '../common/version.js'
+import {Bugsnag} from '../../private/node/error-handler.js'
 import {settings, Interfaces} from '@oclif/core'
 import StackTracey from 'stacktracey'
-import Bugsnag, {Event} from '@bugsnag/js'
 import {realpath} from 'fs/promises'
 
 export function errorHandler(
-  error: (CancelExecution | AbortSilent) & {exitCode?: number | undefined},
+  error: (CancelExecution | AbortSilentError) & {exitCode?: number | undefined},
   config?: Interfaces.Config,
 ): void
 export function errorHandler(error: Error & {exitCode?: number | undefined}, config?: Interfaces.Config): Promise<void>
 export function errorHandler(error: Error & {exitCode?: number | undefined}, config?: Interfaces.Config): unknown {
   if (error instanceof CancelExecution) {
     if (error.message && error.message !== '') {
-      info(`✨  ${error.message}`)
+      outputInfo(`✨  ${error.message}`)
     }
-  } else if (error instanceof AbortSilent) {
+  } else if (error instanceof AbortSilentError) {
     process.exit(1)
   } else {
     return errorMapper(error)
@@ -44,7 +46,7 @@ export function errorHandler(error: Error & {exitCode?: number | undefined}, con
 const reportError = async (error: unknown, config?: Interfaces.Config): Promise<void> => {
   if (config !== undefined) {
     // Log an analytics event when there's an error
-    await reportEvent({config, errorMessage: error instanceof Error ? error.message : undefined})
+    await reportAnalyticsEvent({config, errorMessage: error instanceof Error ? error.message : undefined})
   }
   await sendErrorToBugsnag(error)
 }
@@ -94,8 +96,10 @@ export async function sendErrorToBugsnag(
   reportableError.stack = `Error: ${reportableError.message}\n${formattedStacktrace}`
 
   if (report) {
-    await initializeBugsnag()
+    initializeBugsnag()
     await new Promise((resolve, reject) => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       Bugsnag.notify(reportableError, undefined, (error, event) => {
         if (error) {
           reject(error)
@@ -123,13 +127,15 @@ export function cleanStackFrameFilePath({
   projectRoot: string
   pluginLocations: {name: string; pluginPath: string}[]
 }): string {
-  const fullLocation = path.isAbsolute(currentFilePath) ? currentFilePath : path.join(projectRoot, currentFilePath)
+  const fullLocation = path.isAbsolutePath(currentFilePath)
+    ? currentFilePath
+    : path.joinPath(projectRoot, currentFilePath)
 
   const matchingPluginPath = pluginLocations.filter(({pluginPath}) => fullLocation.indexOf(pluginPath) === 0)[0]
 
   if (matchingPluginPath !== undefined) {
     // the plugin name (e.g. @shopify/cli-kit), plus the relative path of the error line from within the plugin's code (e.g. dist/something.js )
-    return path.join(matchingPluginPath.name, path.relative(matchingPluginPath.pluginPath, fullLocation))
+    return path.joinPath(matchingPluginPath.name, path.relativePath(matchingPluginPath.pluginPath, fullLocation))
   }
 
   // strip prefix up to node_modules folder, so we can normalize error reporting
@@ -142,19 +148,23 @@ export function cleanStackFrameFilePath({
  */
 export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interfaces.Config): Promise<void> {
   // Bugsnag have their own plug-ins that use this private field
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const bugsnagConfigProjectRoot: string = (Bugsnag as any)?._client?._config?.projectRoot ?? process.cwd()
-  const projectRoot = path.normalize(bugsnagConfigProjectRoot)
+
+  const bugsnagConfigProjectRoot: string = Bugsnag?._client?._config?.projectRoot ?? path.cwd()
+  const projectRoot = path.normalizePath(bugsnagConfigProjectRoot)
   const pluginLocations = await Promise.all(
     config.plugins.map(async (plugin) => {
       const followSymlinks = await realpath(plugin.root)
-      return {name: plugin.name, pluginPath: path.normalize(followSymlinks)}
+      return {name: plugin.name, pluginPath: path.normalizePath(followSymlinks)}
     }),
   )
-  await initializeBugsnag()
+  initializeBugsnag()
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   Bugsnag.addOnError(async (event) => {
-    event.errors.forEach((error) => {
-      error.stacktrace.forEach((stackFrame) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    event.errors.forEach((error: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      error.stacktrace.forEach((stackFrame: any) => {
         stackFrame.file = cleanStackFrameFilePath({currentFilePath: stackFrame.file, projectRoot, pluginLocations})
       })
     })
@@ -162,14 +172,15 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
       await addBugsnagMetadata(event, config)
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (metadataError) {
-      debug(`There was an error adding metadata to the Bugsnag report; Ignoring and carrying on ${metadataError}`)
+      outputDebug(`There was an error adding metadata to the Bugsnag report; Ignoring and carrying on ${metadataError}`)
     }
   })
 }
 
-export async function addBugsnagMetadata(event: Event, config: Interfaces.Config): Promise<void> {
-  const publicData = metadata.getAllPublic()
-  const {commandStartOptions} = metadata.getAllSensitive()
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+export async function addBugsnagMetadata(event: any, config: Interfaces.Config): Promise<void> {
+  const publicData = metadata.getAllPublicMetadata()
+  const {commandStartOptions} = metadata.getAllSensitiveMetadata()
   const {startCommand} = commandStartOptions ?? {}
 
   const {'@shopify/app': appPublic, ...otherPluginsPublic} = await fanoutHooks(config, 'public_command_metadata', {})
@@ -216,15 +227,19 @@ export async function addBugsnagMetadata(event: Event, config: Interfaces.Config
   })
 }
 
-async function initializeBugsnag() {
+function initializeBugsnag() {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   if (Bugsnag.isStarted()) {
     return
   }
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   Bugsnag.start({
     appType: 'node',
     apiKey: bugsnagApiKey,
     logger: null,
-    appVersion: await constants.versions.cliKit(),
+    appVersion: CLI_KIT_VERSION,
     autoTrackSessions: false,
     autoDetectErrors: false,
   })

@@ -11,7 +11,9 @@ import {
 } from './dev.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
-import {ui, outputMocker} from '@shopify/cli-kit'
+import {ui} from '@shopify/cli-kit'
+import {renderAutocompletePrompt, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 beforeEach(() => {
   vi.mock('@shopify/cli-kit', async () => {
@@ -23,6 +25,7 @@ beforeEach(() => {
       },
     }
   })
+  vi.mock('@shopify/cli-kit/node/ui')
 })
 
 const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
@@ -99,26 +102,23 @@ describe('selectOrganization', () => {
 describe('selectApp', () => {
   it('returns app if user selects one', async () => {
     // Given
-    const apps: OrganizationApp[] = [APP1, APP2]
-    vi.mocked(ui.prompt).mockResolvedValue({apiKey: 'key2'})
+    const apps = {nodes: [APP1, APP2], pageInfo: {hasNextPage: true}}
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('key2')
 
     // When
     const got = await selectAppPrompt(apps, ORG1.id, 'token')
 
     // Then
-    expect(got).toEqual({apiKey: APP2.apiKey})
-    expect(ui.prompt).toHaveBeenCalledWith([
-      {
-        type: 'autocomplete',
-        name: 'apiKey',
-        message: 'Which existing app is this for?',
-        choices: [
-          {name: 'app1', value: 'key1'},
-          {name: 'app2', value: 'key2'},
-        ],
-        source: expect.any(Function),
-      },
-    ])
+    expect(got).toEqual(APP2.apiKey)
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
+      message: 'Which existing app is this for?',
+      choices: [
+        {label: 'app1', value: 'key1'},
+        {label: 'app2', value: 'key2'},
+      ],
+      search: expect.any(Function),
+      hasMorePages: true,
+    })
   })
 })
 
@@ -138,7 +138,7 @@ describe('selectStore', () => {
   it('returns without asking if there is only 1 store', async () => {
     // Given
     const stores: OrganizationStore[] = [STORE1]
-    const outputMock = outputMocker.mockAndCaptureOutput()
+    const outputMock = mockAndCaptureOutput()
 
     // When
     const got = await selectStorePrompt(stores)
@@ -270,26 +270,29 @@ describe('createAsNewAppPrompt', () => {
 describe('updateURLsPrompt', () => {
   it('asks about the URL update and shows 4 different options', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValue({value: 'always'})
+    vi.mocked(renderSelectPrompt).mockResolvedValue('always')
 
     // When
-    const got = await updateURLsPrompt()
+    const got = await updateURLsPrompt('http://current-url', [
+      'http://current-redirect-url1',
+      'http://current-redirect-url2',
+    ])
 
     // Then
     expect(got).toEqual('always')
-    expect(ui.prompt).toHaveBeenCalledWith([
-      {
-        type: 'select',
-        name: 'value',
-        message: `Have Shopify automatically update your app's URL in order to create a preview experience?`,
-        choices: [
-          {name: 'Always by default', value: 'always'},
-          {name: 'Yes, this time', value: 'yes'},
-          {name: 'No, not now', value: 'no'},
-          {name: `Never, don't ask again`, value: 'never'},
-        ],
+    expect(renderSelectPrompt).toHaveBeenCalledWith({
+      message: `Have Shopify automatically update your app's URL in order to create a preview experience?`,
+      infoTable: {
+        'Current app URL': ['http://current-url'],
+        'Current redirect URLs': ['http://current-redirect-url1', 'http://current-redirect-url2'],
       },
-    ])
+      choices: [
+        {label: 'Always by default', value: 'always'},
+        {label: 'Yes, this time', value: 'yes'},
+        {label: 'No, not now', value: 'no'},
+        {label: `Never, don't ask again`, value: 'never'},
+      ],
+    })
   })
 })
 

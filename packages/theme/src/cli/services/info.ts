@@ -1,23 +1,26 @@
-import {os, output, string, store as conf} from '@shopify/cli-kit'
+import {getThemeStore} from './conf.js'
+import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {version as rubyVersion} from '@shopify/cli-kit/node/ruby'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
+import {linesToColumns} from '@shopify/cli-kit/common/string'
+import {OutputMessage, formatSection, getOutputUpdateCLIReminder} from '@shopify/cli-kit/node/output'
 
-export async function themeInfo(config: {cliVersion: string}): Promise<output.Message> {
-  const sections: [string, string][] = [await themeConfigSection(), await systemInfoSection(config)]
-  const message = sections.map((sectionContents) => output.section(...sectionContents)).join('\n\n')
+export async function themeInfo(config: {cliVersion: string}): Promise<OutputMessage> {
+  const sections: [string, string][] = [themeConfigSection(), await systemInfoSection(config)]
+  const message = sections.map((sectionContents) => formatSection(...sectionContents)).join('\n\n')
   return message
 }
 
-async function themeConfigSection(): Promise<[string, string]> {
+function themeConfigSection(): [string, string] {
   const title = 'Theme Configuration'
-  const store = (await conf.getThemeStore()) || 'Not configured'
+  const store = getThemeStore() || 'Not configured'
   const lines: string[][] = [['Store', store]]
-  return [title, `${string.linesToColumns(lines)}`]
+  return [title, `${linesToColumns(lines)}`]
 }
 
 async function systemInfoSection(config: {cliVersion: string}): Promise<[string, string]> {
   const title = 'Tooling and System'
-  const {platform, arch} = os.platformAndArch()
+  const {platform, arch} = platformAndArch()
   const ruby = (await rubyVersion()) || 'Not installed'
   const lines: string[][] = [
     ['Shopify CLI', await cliVersionInfo(config)],
@@ -26,13 +29,13 @@ async function systemInfoSection(config: {cliVersion: string}): Promise<[string,
     ['Node version', process.version],
     ['Ruby version', ruby],
   ]
-  return [title, `${string.linesToColumns(lines)}`]
+  return [title, `${linesToColumns(lines)}`]
 }
 
 async function cliVersionInfo(config: {cliVersion: string}): Promise<string> {
   const dependency = '@shopify/cli'
   const newestVersion = await checkForNewVersion(dependency, config.cliVersion)
   if (!newestVersion) return config.cliVersion
-  const upgradeMessage = output.getOutputUpdateCLIReminder(undefined, newestVersion)
+  const upgradeMessage = getOutputUpdateCLIReminder(undefined, newestVersion)
   return [config.cliVersion, upgradeMessage].join(' ').trim()
 }

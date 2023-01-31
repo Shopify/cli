@@ -1,9 +1,12 @@
-import {NewExtensionPointSchemaType} from '../../../../models/extensions/schemas.js'
 import {Localization} from '../localization.js'
+import type {NewExtensionPointSchemaType, ApiVersionSchemaType} from '../../../../models/extensions/schemas.js'
 
 export interface ExtensionsPayloadInterface {
   app: {
     apiKey: string
+    url: string
+    mobileUrl: string
+    title: string
   }
   appId?: string
   store: string
@@ -23,8 +26,11 @@ export interface ExtensionsEndpointPayload extends ExtensionsPayloadInterface {
   }
 }
 
-interface NewExtensionPointSchema extends NewExtensionPointSchemaType {
-  main: {
+export interface DevNewExtensionPointSchema extends NewExtensionPointSchemaType {
+  root: {
+    url: string
+  }
+  resource: {
     url: string
   }
 }
@@ -32,7 +38,6 @@ interface NewExtensionPointSchema extends NewExtensionPointSchemaType {
 export interface UIExtensionPayload {
   assets: {
     main: {
-      name: string
       url: string
       lastUpdated: number
     }
@@ -49,7 +54,7 @@ export interface UIExtensionPayload {
     status: ExtensionAssetBuildStatus
     localizationStatus: ExtensionAssetBuildStatus
   }
-  extensionPoints: string[] | null | NewExtensionPointSchema[]
+  extensionPoints: string[] | null | DevNewExtensionPointSchema[]
   localization: Localization | null
   categories: string[] | null
   authenticatedRedirectStartUrl?: string
@@ -57,6 +62,7 @@ export interface UIExtensionPayload {
   metafields?: {namespace: string; key: string}[] | null
   type: string
   externalType: string
+  apiVersion?: ApiVersionSchemaType
   uuid: string
   version?: string
   surface: string

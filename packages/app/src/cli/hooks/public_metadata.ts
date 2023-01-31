@@ -1,8 +1,8 @@
 import metadata from '../metadata.js'
-import {plugins} from '@shopify/cli-kit'
+import {FanoutHookFunction} from '@shopify/cli-kit/node/plugins'
 
-const gatherPublicMetadata: plugins.FanoutHookFunction<'public_command_metadata', '@shopify/app'> = async () => {
-  return metadata.getAllPublic()
+const gatherPublicMetadata: FanoutHookFunction<'public_command_metadata', '@shopify/app'> = async () => {
+  return metadata.getAllPublicMetadata()
 }
 
 export default gatherPublicMetadata

@@ -6,7 +6,8 @@ import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
 import {ThemeExtensionInstance, ThemeExtensionSpec} from '../extensions/theme.js'
 import {ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
 import {FunctionInstance, FunctionSpec} from '../extensions/functions.js'
-import {error, file, path, schema, string, toml, output, environment} from '@shopify/cli-kit'
+import {schema} from '@shopify/cli-kit/node/schema'
+import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
   getDependencies,
@@ -16,6 +17,13 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
+import {camelize} from '@shopify/cli-kit/common/string'
+import {hashString} from '@shopify/cli-kit/node/crypto'
+import {decodeToml} from '@shopify/cli-kit/node/toml'
+import {isShopify} from '@shopify/cli-kit/node/environment/local'
+import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -23,10 +31,10 @@ export type AppLoaderMode = 'strict' | 'report'
 
 export class AppErrors {
   private errors: {
-    [key: string]: output.Message
+    [key: string]: OutputMessage
   } = {}
 
-  addError(path: string, message: output.Message): void {
+  addError(path: string, message: OutputMessage): void {
     this.errors[path] = message
   }
 
@@ -38,7 +46,7 @@ export class AppErrors {
     return Object.keys(this.errors).length === 0
   }
 
-  toJSON(): output.Message[] {
+  toJSON(): OutputMessage[] {
     return Object.values(this.errors)
   }
 }
@@ -90,7 +98,7 @@ class AppLoader {
     const {themeExtensions, usedCustomLayout: usedCustomLayoutForThemeExtensions} = await this.loadThemeExtensions(
       configuration.extensionDirectories,
     )
-    const packageJSONPath = path.join(this.appDirectory, 'package.json')
+    const packageJSONPath = joinPath(this.appDirectory, 'package.json')
     const name = await loadAppName(this.appDirectory)
     const nodeDependencies = await getDependencies(packageJSONPath)
     const packageManager = await getPackageManager(this.appDirectory)
@@ -127,30 +135,30 @@ class AppLoader {
 
   async loadDotEnv(): Promise<DotEnvFile | undefined> {
     let dotEnvFile: DotEnvFile | undefined
-    const dotEnvPath = path.join(this.appDirectory, dotEnvFileNames.production)
-    if (await file.exists(dotEnvPath)) {
+    const dotEnvPath = joinPath(this.appDirectory, dotEnvFileNames.production)
+    if (await fileExists(dotEnvPath)) {
       dotEnvFile = await readAndParseDotEnv(dotEnvPath)
     }
     return dotEnvFile
   }
 
   async findAppDirectory() {
-    if (!(await file.exists(this.directory))) {
-      throw new error.Abort(output.content`Couldn't find directory ${output.token.path(this.directory)}`)
+    if (!(await fileExists(this.directory))) {
+      throw new AbortError(outputContent`Couldn't find directory ${outputToken.path(this.directory)}`)
     }
-    return path.dirname(await this.getConfigurationPath())
+    return dirname(await this.getConfigurationPath())
   }
 
   async getConfigurationPath() {
     if (this.configurationPath) return this.configurationPath
 
-    const configurationPath = await path.findUp(configurationFileNames.app, {
+    const configurationPath = await findPathUp(configurationFileNames.app, {
       cwd: this.directory,
       type: 'file',
     })
     if (!configurationPath) {
-      throw new error.Abort(
-        output.content`Couldn't find the configuration file for ${output.token.path(
+      throw new AbortError(
+        outputContent`Couldn't find the configuration file for ${outputToken.path(
           this.directory,
         )}, are you in an app directory?`,
       )
@@ -163,15 +171,13 @@ class AppLoader {
   async loadWebs(webDirectories?: string[]): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
     const defaultWebDirectory = '**'
     const webConfigGlobs = [...(webDirectories ?? [defaultWebDirectory])].map((webGlob) => {
-      return path.join(this.appDirectory, webGlob, configurationFileNames.web)
+      return joinPath(this.appDirectory, webGlob, configurationFileNames.web)
     })
-    const webTomlPaths = await path.glob(webConfigGlobs)
+    const webTomlPaths = await glob(webConfigGlobs)
 
     const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
 
-    const webTomlsInStandardLocation = await path.glob(
-      path.join(this.appDirectory, `web/**/${configurationFileNames.web}`),
-    )
+    const webTomlsInStandardLocation = await glob(joinPath(this.appDirectory, `web/**/${configurationFileNames.web}`))
     const usedCustomLayout = webDirectories !== undefined || webTomlsInStandardLocation.length !== webTomlPaths.length
 
     return {webs, usedCustomLayout}
@@ -179,25 +185,25 @@ class AppLoader {
 
   async loadWeb(WebConfigurationFile: string): Promise<Web> {
     return {
-      directory: path.dirname(WebConfigurationFile),
+      directory: dirname(WebConfigurationFile),
       configuration: await this.parseConfigurationFile(WebConfigurationSchema, WebConfigurationFile),
-      framework: await resolveFramework(path.dirname(WebConfigurationFile)),
+      framework: await resolveFramework(dirname(WebConfigurationFile)),
     }
   }
 
   async loadConfigurationFile(
     filepath: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    decode: (input: any) => any = toml.decode,
+    decode: (input: any) => any = decodeToml,
   ): Promise<unknown> {
-    if (!(await file.exists(filepath))) {
+    if (!(await fileExists(filepath))) {
       return this.abortOrReport(
-        output.content`Couldn't find the configuration file at ${output.token.path(filepath)}`,
+        outputContent`Couldn't find the configuration file at ${outputToken.path(filepath)}`,
         '',
         filepath,
       )
     }
-    const configurationContent = await file.read(filepath)
+    const configurationContent = await readFile(filepath)
     let configuration: object
     try {
       configuration = decode(configurationContent)
@@ -206,7 +212,7 @@ class AppLoader {
       // TOML errors have line, pos and col properties
       if (err.line && err.pos && err.col) {
         return this.abortOrReport(
-          output.content`Fix the following error in ${output.token.path(filepath)}:\n${err.message}`,
+          outputContent`Fix the following error in ${outputToken.path(filepath)}:\n${err.message}`,
           null,
           filepath,
         )
@@ -216,17 +222,17 @@ class AppLoader {
     }
     // Convert snake_case keys to camelCase before returning
     return {
-      ...Object.fromEntries(Object.entries(configuration).map((kv) => [string.camelize(kv[0]), kv[1]])),
+      ...Object.fromEntries(Object.entries(configuration).map((kv) => [camelize(kv[0]), kv[1]])),
     }
   }
 
-  async parseConfigurationFile<TSchema extends schema.define.ZodType>(
+  async parseConfigurationFile<TSchema extends schema.ZodType>(
     schema: TSchema,
     filepath: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    decode: (input: any) => any = toml.decode,
-  ): Promise<schema.define.TypeOf<TSchema>> {
-    const fallbackOutput = {} as schema.define.TypeOf<TSchema>
+    decode: (input: any) => any = decodeToml,
+  ): Promise<schema.TypeOf<TSchema>> {
+    const fallbackOutput = {} as schema.TypeOf<TSchema>
 
     const configurationObject = await this.loadConfigurationFile(filepath, decode)
     if (!configurationObject) return fallbackOutput
@@ -236,7 +242,7 @@ class AppLoader {
     if (!parseResult.success) {
       const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
       return this.abortOrReport(
-        output.content`Fix a schema error in ${output.token.path(filepath)}:\n${formattedError}`,
+        outputContent`Fix a schema error in ${outputToken.path(filepath)}:\n${formattedError}`,
         fallbackOutput,
         filepath,
       )
@@ -248,24 +254,24 @@ class AppLoader {
     extensionDirectories?: string[],
   ): Promise<{uiExtensions: UIExtension[]; usedCustomLayout: boolean}> {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
-      return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.ui}`)
+      return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.ui}`)
     })
-    const configPaths = await path.glob(extensionConfigPaths)
+    const configPaths = await glob(extensionConfigPaths)
 
     const extensions = configPaths.map(async (configurationPath) => {
-      const directory = path.dirname(configurationPath)
-      const fileContent = await file.read(configurationPath)
-      const obj = toml.decode(fileContent)
+      const directory = dirname(configurationPath)
+      const fileContent = await readFile(configurationPath)
+      const obj = decodeToml(fileContent)
       const {type} = TypeSchema.parse(obj)
       const specification = this.findSpecificationForType(type) as UIExtensionSpec | undefined
 
       if (!specification) {
-        const isShopify = await environment.local.isShopify()
+        const isShopifolk = await isShopify()
         const shopifolkMessage = '\nYou might need to enable some beta flags on your Organization or App'
         this.abortOrReport(
-          output.content`Unknown extension type ${output.token.yellow(type)} in ${output.token.path(
-            configurationPath,
-          )}. ${isShopify ? shopifolkMessage : ''}`,
+          outputContent`Unknown extension type ${outputToken.yellow(type)} in ${outputToken.path(configurationPath)}. ${
+            isShopifolk ? shopifolkMessage : ''
+          }`,
           undefined,
           configurationPath,
         )
@@ -281,15 +287,15 @@ class AppLoader {
             ['index']
               .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
               .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
-              .map((relativePath) => path.join(directory, relativePath))
-              .map(async (sourcePath) => ((await file.exists(sourcePath)) ? sourcePath : undefined)),
+              .map((relativePath) => joinPath(directory, relativePath))
+              .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
           )
         ).find((sourcePath) => sourcePath !== undefined)
         if (!entryPath) {
           this.abortOrReport(
-            output.content`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${output.token.path(
+            outputContent`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${outputToken.path(
               directory,
-            )} or ${output.token.path(path.join(directory, 'src'))}`,
+            )} or ${outputToken.path(joinPath(directory, 'src'))}`,
             undefined,
             directory,
           )
@@ -308,7 +314,7 @@ class AppLoader {
       if (configuration.type) {
         const validateResult = await extensionInstance.validate()
         if (validateResult.isErr()) {
-          this.abortOrReport(output.content`\n${validateResult.error}`, undefined, configurationPath)
+          this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
         }
       }
       return extensionInstance
@@ -322,19 +328,19 @@ class AppLoader {
     extensionDirectories?: string[],
   ): Promise<{functions: FunctionExtension[]; usedCustomLayout: boolean}> {
     const functionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
-      return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.function}`)
+      return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.function}`)
     })
-    const configPaths = await path.glob(functionConfigPaths)
+    const configPaths = await glob(functionConfigPaths)
 
     const allFunctions = configPaths.map(async (configurationPath) => {
-      const directory = path.dirname(configurationPath)
-      const fileContent = await file.read(configurationPath)
-      const obj = toml.decode(fileContent)
+      const directory = dirname(configurationPath)
+      const fileContent = await readFile(configurationPath)
+      const obj = decodeToml(fileContent)
       const {type} = TypeSchema.parse(obj)
       const specification = this.findSpecificationForType(type) as FunctionSpec | undefined
       if (!specification) {
         this.abortOrReport(
-          output.content`Unknown function type ${output.token.yellow(type)} in ${output.token.path(configurationPath)}`,
+          outputContent`Unknown function type ${outputToken.yellow(type)} in ${outputToken.path(configurationPath)}`,
           undefined,
           configurationPath,
         )
@@ -353,18 +359,18 @@ class AppLoader {
     extensionDirectories?: string[],
   ): Promise<{themeExtensions: ThemeExtension[]; usedCustomLayout: boolean}> {
     const themeConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
-      return path.join(this.appDirectory, extensionPath, `${configurationFileNames.extension.theme}`)
+      return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.theme}`)
     })
-    const configPaths = await path.glob(themeConfigPaths)
+    const configPaths = await glob(themeConfigPaths)
 
     const extensions = configPaths.map(async (configurationPath) => {
-      const directory = path.dirname(configurationPath)
+      const directory = dirname(configurationPath)
       const configuration = await this.parseConfigurationFile(ThemeExtensionSchema, configurationPath)
       const specification = this.findSpecificationForType('theme') as ThemeExtensionSpec | undefined
 
       if (!specification) {
         this.abortOrReport(
-          output.content`Unknown theme type ${output.token.yellow('theme')} in ${output.token.path(configurationPath)}`,
+          outputContent`Unknown theme type ${outputToken.yellow('theme')} in ${outputToken.path(configurationPath)}`,
           undefined,
           configurationPath,
         )
@@ -377,6 +383,7 @@ class AppLoader {
         directory,
         remoteSpecification: undefined,
         specification,
+        outputBundlePath: directory,
       })
     })
 
@@ -385,9 +392,9 @@ class AppLoader {
     return {themeExtensions, usedCustomLayout: extensionDirectories !== undefined}
   }
 
-  abortOrReport<T>(errorMessage: output.Message, fallback: T, configurationPath: string): T {
+  abortOrReport<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {
     if (this.mode === 'strict') {
-      throw new error.Abort(errorMessage)
+      throw new AbortError(errorMessage)
     } else {
       this.errors.addError(configurationPath, errorMessage)
       return fallback
@@ -396,33 +403,33 @@ class AppLoader {
 }
 
 export async function loadAppName(appDirectory: string): Promise<string> {
-  const packageJSONPath = path.join(appDirectory, 'package.json')
-  return (await getPackageName(packageJSONPath)) ?? path.basename(appDirectory)
+  const packageJSONPath = joinPath(appDirectory, 'package.json')
+  return (await getPackageName(packageJSONPath)) ?? basename(appDirectory)
 }
 
 async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'frontend' | undefined> {
   const backendWebs = webs.filter((web) => web.configuration.type === WebType.Backend)
   const frontendWebs = webs.filter((web) => web.configuration.type === WebType.Frontend)
   if (backendWebs.length > 1) {
-    output.debug('Unable to decide project type as multiple web backends')
+    outputDebug('Unable to decide project type as multiple web backends')
     return
   } else if (backendWebs.length === 0 && frontendWebs.length > 0) {
     return 'frontend'
   } else if (backendWebs.length === 0) {
-    output.debug('Unable to decide project type as no web backend')
+    outputDebug('Unable to decide project type as no web backend')
     return
   }
   const {directory} = backendWebs[0]!
 
-  const nodeConfigFile = path.join(directory, 'package.json')
-  const rubyConfigFile = path.join(directory, 'Gemfile')
-  const phpConfigFile = path.join(directory, 'composer.json')
+  const nodeConfigFile = joinPath(directory, 'package.json')
+  const rubyConfigFile = joinPath(directory, 'Gemfile')
+  const phpConfigFile = joinPath(directory, 'composer.json')
 
-  if (await file.exists(nodeConfigFile)) {
+  if (await fileExists(nodeConfigFile)) {
     return 'node'
-  } else if (await file.exists(rubyConfigFile)) {
+  } else if (await fileExists(rubyConfigFile)) {
     return 'ruby'
-  } else if (await file.exists(phpConfigFile)) {
+  } else if (await fileExists(phpConfigFile)) {
     return 'php'
   }
   return undefined
@@ -437,7 +444,7 @@ async function logMetadataForLoadedApp(
     usedCustomLayoutForThemeExtensions: boolean
   },
 ) {
-  await metadata.addPublic(async () => {
+  await metadata.addPublicMetadata(async () => {
     const projectType = await getProjectType(app.webs)
 
     const extensionFunctionCount = app.extensions.function.length
@@ -481,8 +488,8 @@ async function logMetadataForLoadedApp(
       app_extensions_ui_any: extensionUICount > 0,
       app_extensions_ui_count: extensionUICount,
       app_extensions_ui_custom_layout: loadingStrategy.usedCustomLayoutForUIExtensions,
-      app_name_hash: string.hashString(app.name),
-      app_path_hash: string.hashString(app.directory),
+      app_name_hash: hashString(app.name),
+      app_path_hash: hashString(app.directory),
       app_scopes: JSON.stringify(
         app.configuration.scopes
           .split(',')
@@ -499,7 +506,7 @@ async function logMetadataForLoadedApp(
     }
   })
 
-  await metadata.addSensitive(async () => {
+  await metadata.addSensitiveMetadata(async () => {
     return {
       app_name: app.name,
     }

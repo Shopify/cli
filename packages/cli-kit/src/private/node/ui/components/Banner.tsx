@@ -6,7 +6,6 @@ export type BannerType = 'success' | 'error' | 'warning' | 'info' | 'external_er
 
 interface Props {
   type: BannerType
-  marginY?: number
 }
 
 function typeToColor(type: Props['type']) {
@@ -19,15 +18,15 @@ function typeToColor(type: Props['type']) {
   }[type]
 }
 
-const BoxWithBorder: React.FC<Props> = ({type, marginY, children}) => {
-  const {width} = useLayout()
+const BoxWithBorder: React.FC<Props> = ({type, children}) => {
+  const {twoThirds} = useLayout()
 
   return (
     <Box
-      width={width}
+      width={twoThirds}
       paddingY={1}
       paddingX={2}
-      marginY={marginY}
+      marginBottom={1}
       borderStyle="round"
       flexDirection="column"
       borderColor={typeToColor(type)}
@@ -40,24 +39,24 @@ const BoxWithBorder: React.FC<Props> = ({type, marginY, children}) => {
   )
 }
 
-const BoxWithTopBottomLines: React.FC<Props> = ({type, marginY, children}) => {
-  const {width} = useLayout()
+const BoxWithTopBottomLines: React.FC<Props> = ({type, children}) => {
+  const {twoThirds} = useLayout()
 
   return (
-    <Box marginY={marginY} flexDirection="column">
+    <Box flexDirection="column" marginBottom={1}>
       <Box marginBottom={1}>
         <Text>
           <Text color={typeToColor(type)}>{'─'.repeat(2)}</Text>
           <Text>{` ${type.replace(/_/g, ' ')} `}</Text>
           {/* 2 initial dashes + 2 spaces surrounding the type */}
-          <Text color={typeToColor(type)}>{'─'.repeat(width - 2 - type.length - 2)}</Text>
+          <Text color={typeToColor(type)}>{'─'.repeat(twoThirds - 2 - type.length - 2)}</Text>
         </Text>
       </Box>
 
       {children}
 
       <Box marginTop={1}>
-        <Text color={typeToColor(type)}>{'─'.repeat(width)}</Text>
+        <Text color={typeToColor(type)}>{'─'.repeat(twoThirds)}</Text>
       </Box>
     </Box>
   )

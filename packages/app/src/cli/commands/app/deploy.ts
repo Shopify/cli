@@ -5,13 +5,15 @@ import {load as loadApp} from '../../models/app/loader.js'
 import Command from '../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../models/extensions/specifications.js'
 import {Flags} from '@oclif/core'
-import {path, cli, metadata} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
+import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Deploy extends Command {
-  static description = 'Deploy your Shopify app'
+  static description = 'Deploy your Shopify app.'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...appFlags,
     'api-key': Flags.string({
       hidden: false,
@@ -24,18 +26,25 @@ export default class Deploy extends Command {
       env: 'SHOPIFY_FLAG_RESET',
       default: false,
     }),
+    force: Flags.boolean({
+      hidden: false,
+      description: 'Deploy without asking for confirmation.',
+      env: 'SHOPIFY_FLAG_FORCE',
+      char: 'f',
+      default: false,
+    }),
   }
 
   async run(): Promise<void> {
     const {args, flags} = await this.parse(Deploy)
 
-    await metadata.addPublic(() => ({
+    await addPublicMetadata(() => ({
       cmd_app_reset_used: flags.reset,
     }))
 
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : cwd()
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({directory, specifications})
-    await deploy({app, apiKey: flags['api-key'], reset: flags.reset})
+    await deploy({app, apiKey: flags['api-key'], reset: flags.reset, force: flags.force})
   }
 }

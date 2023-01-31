@@ -13,17 +13,6 @@ const PROTOCOL = {
 }
 
 /**
- * Transformed flags
- */
-export interface WebhookTriggerOptions {
-  topic: string
-  apiVersion: string
-  deliveryMethod: string
-  sharedSecret: string
-  address: string
-}
-
-/**
  * Detect which delivery-method an address belongs to
  *
  * @param address - A target endpoint

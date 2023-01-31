@@ -1,14 +1,14 @@
 import {Flags} from '@oclif/core'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {cli} from '@shopify/cli-kit'
 
 export default class HelpOld extends Command {
   static description = 'Show help from Ruby CLI'
   static hidden = true
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     command: Flags.string({
       description: 'The command for which to show CLI2 help.',
       env: 'SHOPIFY_FLAG_COMMAND',

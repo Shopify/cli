@@ -1,27 +1,27 @@
 import {selectApp} from '../select-app.js'
 import {AppInterface} from '../../../models/app/app.js'
-import {output} from '@shopify/cli-kit'
+import {OutputMessage, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 type Format = 'json' | 'text'
 
-export async function showEnv(app: AppInterface): Promise<output.Message> {
+export async function showEnv(app: AppInterface): Promise<OutputMessage> {
   return outputEnv(app, 'text')
 }
 
-export async function outputEnv(app: AppInterface, format: Format): Promise<output.Message> {
+export async function outputEnv(app: AppInterface, format: Format): Promise<OutputMessage> {
   const selectedApp = await selectApp()
 
   if (format === 'json') {
-    return output.content`${output.token.json({
+    return outputContent`${outputToken.json({
       SHOPIFY_API_KEY: selectedApp.apiKey,
       SHOPIFY_API_SECRET: selectedApp.apiSecretKeys[0]?.secret,
       SCOPES: app.configuration.scopes,
     })}`
   } else {
-    return output.content`
-    ${output.token.green('SHOPIFY_API_KEY')}=${selectedApp.apiKey}
-    ${output.token.green('SHOPIFY_API_SECRET')}=${selectedApp.apiSecretKeys[0]?.secret ?? ''}
-    ${output.token.green('SCOPES')}=${app.configuration.scopes}
+    return outputContent`
+    ${outputToken.green('SHOPIFY_API_KEY')}=${selectedApp.apiKey}
+    ${outputToken.green('SHOPIFY_API_SECRET')}=${selectedApp.apiSecretKeys[0]?.secret ?? ''}
+    ${outputToken.green('SCOPES')}=${app.configuration.scopes}
   `
   }
 }

@@ -1,19 +1,10 @@
 import {checkHydrogenVersion} from './check-version.js'
 import {afterEach, beforeEach, describe, it, expect, vi} from 'vitest'
-import {system, outputMocker} from '@shopify/cli-kit'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
+import {captureOutput} from '@shopify/cli-kit/node/system'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
-vi.mock('@shopify/cli-kit', async () => {
-  const cliKit: any = await vi.importActual('@shopify/cli-kit')
-
-  return {
-    ...cliKit,
-    system: {
-      captureOutput: vi.fn(),
-    },
-  }
-})
-
+vi.mock('@shopify/cli-kit/node/system')
 vi.mock('@shopify/cli-kit/node/node-package-manager', () => {
   return {
     checkForNewVersion: vi.fn(),
@@ -22,18 +13,18 @@ vi.mock('@shopify/cli-kit/node/node-package-manager', () => {
 
 describe('checkHydrogenVersion()', () => {
   beforeEach(() => {
-    vi.mocked(system.captureOutput).mockResolvedValue('1.0.0')
+    vi.mocked(captureOutput).mockResolvedValue('1.0.0')
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
-    outputMocker.mockAndCaptureOutput().clear()
+    mockAndCaptureOutput().clear()
   })
 
   it('checks the node_modules folder for the currently installed version', async () => {
     await checkHydrogenVersion('dir')
 
-    expect(system.captureOutput).toHaveBeenCalledWith(
+    expect(captureOutput).toHaveBeenCalledWith(
       'node',
       ['-p', `require('./node_modules/@shopify/hydrogen/package.json').version`],
       {
@@ -59,7 +50,7 @@ describe('checkHydrogenVersion()', () => {
       })
 
       it('does not output any text', async () => {
-        const outputMock = outputMocker.mockAndCaptureOutput()
+        const outputMock = mockAndCaptureOutput()
 
         await checkHydrogenVersion('dir')
 
@@ -77,13 +68,12 @@ describe('checkHydrogenVersion()', () => {
       })
 
       it('outputs a message to the user', async () => {
-        const outputMock = outputMocker.mockAndCaptureOutput()
+        const outputMock = mockAndCaptureOutput()
 
         await checkHydrogenVersion('dir')
 
         expect(outputMock.info()).toMatchInlineSnapshot(`
-          "
-          ╭─ info ───────────────────────────────────────────────────────────────────────╮
+          "╭─ info ───────────────────────────────────────────────────────────────────────╮
           │                                                                              │
           │  Upgrade available                                                           │
           │                                                                              │
@@ -103,7 +93,7 @@ describe('checkHydrogenVersion()', () => {
 
   describe('when no current version can be found', () => {
     it('returns undefined and does not call checkForNewVersion', async () => {
-      vi.mocked(system.captureOutput).mockResolvedValue('')
+      vi.mocked(captureOutput).mockResolvedValue('')
 
       expect(await checkHydrogenVersion('dir')).toBe(undefined)
 

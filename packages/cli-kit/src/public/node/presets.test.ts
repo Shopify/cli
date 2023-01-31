@@ -1,8 +1,8 @@
 import * as presets from './presets.js'
 import {presetsFilename} from './presets.js'
-import {inTemporaryDirectory, mkdir, write as fileWrite} from '../../file.js'
-import {join as pathJoin} from '../../path.js'
-import {encode as tomlEncode} from '../../toml.js'
+import {encodeToml as tomlEncode} from './toml.js'
+import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
+import {joinPath} from './path.js'
 import {describe, expect, test} from 'vitest'
 
 const preset1 = {
@@ -32,7 +32,7 @@ describe('loading presets', async () => {
   test('returns an empty object when an empty presets file exists', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      await fileWrite(pathJoin(tmpDir, presetsFilename), '# no content')
+      await writeFile(joinPath(tmpDir, presetsFilename), '# no content')
 
       // When
       const loaded = await presets.loadPresetsFromDirectory(tmpDir)
@@ -45,7 +45,7 @@ describe('loading presets', async () => {
   test('returns available presets when they exist', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      await fileWrite(pathJoin(tmpDir, 'shopify.presets.toml'), tomlEncode({preset1, preset2}))
+      await writeFile(joinPath(tmpDir, 'shopify.presets.toml'), tomlEncode({preset1, preset2}))
 
       // When
       const loaded = await presets.loadPresetsFromDirectory(tmpDir)
@@ -58,8 +58,8 @@ describe('loading presets', async () => {
   test('does not search upwards for presets when no file exists and searching up is disabled', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      await fileWrite(`${tmpDir}/shopify.presets.toml`, tomlEncode({preset1}))
-      const subdir = pathJoin(tmpDir, 'subdir')
+      await writeFile(`${tmpDir}/shopify.presets.toml`, tomlEncode({preset1}))
+      const subdir = joinPath(tmpDir, 'subdir')
       await mkdir(subdir)
 
       // When
@@ -73,8 +73,8 @@ describe('loading presets', async () => {
   test('searches upwards for presets when no file exists and searching up is enabled', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      await fileWrite(`${tmpDir}/shopify.presets.toml`, tomlEncode({preset1}))
-      const subdir = pathJoin(tmpDir, 'subdir')
+      await writeFile(`${tmpDir}/shopify.presets.toml`, tomlEncode({preset1}))
+      const subdir = joinPath(tmpDir, 'subdir')
       await mkdir(subdir)
 
       // When

@@ -12,6 +12,7 @@ import {
 import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
 import {createExtension, ExtensionRegistration} from './dev/create-extension.js'
+import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './conf.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
@@ -19,13 +20,18 @@ import {Organization, OrganizationApp, OrganizationStore} from '../models/organi
 import metadata from '../metadata.js'
 import {ThemeExtension} from '../models/app/extensions.js'
 import {loadAppName} from '../models/app/loader.js'
-import {error as kitError, output, session, store, ui, environment, error, string} from '@shopify/cli-kit'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {tryParseInt} from '@shopify/cli-kit/common/string'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {renderInfo, renderTasks, TokenItem} from '@shopify/cli-kit/node/ui'
+import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
-    message: output.content`Invalid API key: ${apiKey}`,
-    tryMessage: output.content`You can find the API key in the app settings in the Partners Dashboard.`,
+    message: outputContent`Invalid API key: ${apiKey}`,
+    tryMessage: outputContent`You can find the API key in the app settings in the Partners Dashboard.`,
   }
 }
 
@@ -63,17 +69,17 @@ export async function ensureGenerateEnvironment(options: {
     const app = await fetchAppFromApiKey(options.apiKey, options.token)
     if (!app) {
       const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
-      throw new kitError.Abort(errorMessage.message, errorMessage.tryMessage)
+      throw new AbortError(errorMessage.message, errorMessage.tryMessage)
     }
     return app.apiKey
   }
-  const cachedInfo = await getAppDevCachedInfo({reset: options.reset, directory: options.directory})
+  const cachedInfo = getAppDevCachedInfo({reset: options.reset, directory: options.directory})
 
   if (cachedInfo === undefined && !options.reset) {
     const explanation =
       `\nLooks like this is the first time you're running 'generate extension' for this project.\n` +
       'Configure your preferences by answering a few questions.\n'
-    output.info(explanation)
+    outputInfo(explanation)
   }
 
   if (cachedInfo?.appId && cachedInfo?.orgId) {
@@ -81,7 +87,7 @@ export async function ensureGenerateEnvironment(options: {
     const app = await fetchAppFromApiKey(cachedInfo.appId, options.token)
     if (!app || !org) {
       const errorMessage = InvalidApiKeyErrorMessage(cachedInfo.appId)
-      throw new kitError.Abort(errorMessage.message, errorMessage.tryMessage)
+      throw new AbortError(errorMessage.message, errorMessage.tryMessage)
     }
     const packageManager = await getPackageManager(options.directory)
     showGenerateReusedValues(org.businessName, cachedInfo, packageManager)
@@ -91,7 +97,7 @@ export async function ensureGenerateEnvironment(options: {
     const {organization, apps} = await fetchOrgAndApps(orgId, options.token)
     const localAppName = await loadAppName(options.directory)
     const selectedApp = await selectOrCreateApp(localAppName, apps, organization, options.token)
-    await store.setAppInfo({
+    setAppInfo({
       appId: selectedApp.apiKey,
       title: selectedApp.title,
       directory: options.directory,
@@ -119,7 +125,7 @@ export async function ensureDevEnvironment(
   options: DevEnvironmentOptions,
   token: string,
 ): Promise<DevEnvironmentOutput> {
-  const cachedInfo = await getAppDevCachedInfo({
+  const cachedInfo = getAppDevCachedInfo({
     reset: options.reset,
     directory: options.directory,
   })
@@ -128,14 +134,14 @@ export async function ensureDevEnvironment(
     const explanation =
       `\nLooks like this is the first time you're running dev for this project.\n` +
       'Configure your preferences by answering a few questions.\n'
-    output.info(explanation)
+    outputInfo(explanation)
   }
 
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
   if (selectedApp && selectedStore) {
-    await store.setAppInfo({
+    setAppInfo({
       appId: selectedApp.apiKey,
       directory: options.directory,
       storeFqdn: selectedStore.shopDomain,
@@ -146,12 +152,12 @@ export async function ensureDevEnvironment(
   }
 
   const organization = await fetchOrgFromId(orgId, token)
-  if (!organization) throw new error.Bug(`Couldn't find Organization with id ${orgId}.`)
+  if (!organization) throw new BugError(`Couldn't find Organization with id ${orgId}.`)
 
   if (!selectedApp) {
     if (cachedInfo?.appId) {
       const app = await fetchAppFromApiKey(cachedInfo.appId, token)
-      if (!app) throw new error.Bug(`Couldn't find App with apiKey ${cachedInfo.appId}.`)
+      if (!app) throw new BugError(`Couldn't find App with apiKey ${cachedInfo.appId}.`)
       selectedApp = app
     } else {
       const {apps} = await fetchOrgAndApps(orgId, token)
@@ -160,7 +166,7 @@ export async function ensureDevEnvironment(
     }
   }
 
-  await store.setAppInfo({
+  setAppInfo({
     appId: selectedApp.apiKey,
     title: selectedApp.title,
     directory: options.directory,
@@ -174,7 +180,7 @@ export async function ensureDevEnvironment(
         await convertToTestStoreIfNeeded(result.store, organization, token)
         selectedStore = result.store
       } else {
-        throw new error.Bug(`Couldn't find Store with domain ${cachedInfo.storeFqdn}.`)
+        throw new BugError(`Couldn't find Store with domain ${cachedInfo.storeFqdn}.`)
       }
     } else {
       const allStores = await fetchAllDevStores(orgId, token)
@@ -182,7 +188,7 @@ export async function ensureDevEnvironment(
     }
   }
 
-  await store.setAppInfo({
+  setAppInfo({
     appId: selectedApp.apiKey,
     directory: options.directory,
     storeFqdn: selectedStore?.shopDomain,
@@ -198,11 +204,7 @@ export async function ensureDevEnvironment(
   return result
 }
 
-function buildOutput(
-  app: OrganizationApp,
-  store: OrganizationStore,
-  cachedInfo?: store.CachedAppInfo,
-): DevEnvironmentOutput {
+function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?: CachedAppInfo): DevEnvironmentOutput {
   return {
     remoteApp: {
       ...app,
@@ -218,6 +220,7 @@ export interface DeployEnvironmentOptions {
   app: AppInterface
   apiKey?: string
   reset: boolean
+  force: boolean
 }
 
 interface DeployEnvironmentOutput {
@@ -237,7 +240,7 @@ interface DeployEnvironmentOutput {
  * undefined if there is no cached value or the user doesn't want to use it.
  */
 export async function fetchDevAppAndPrompt(app: AppInterface, token: string): Promise<OrganizationApp | undefined> {
-  const devAppId = (await store.getAppInfo(app.directory))?.appId
+  const devAppId = getAppInfo(app.directory)?.appId
   if (!devAppId) return undefined
 
   const partnersResponse = await fetchAppFromApiKey(devAppId, token)
@@ -270,7 +273,7 @@ export async function ensureThemeExtensionDevEnvironment(
 }
 
 export async function ensureDeployEnvironment(options: DeployEnvironmentOptions): Promise<DeployEnvironmentOutput> {
-  const token = await session.ensureAuthenticatedPartners()
+  const token = await ensureAuthenticatedPartners()
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
@@ -279,6 +282,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     app: options.app,
     appId: partnersApp.apiKey,
     appName: partnersApp.title,
+    force: options.force,
     token,
     envIdentifiers,
   })
@@ -330,10 +334,10 @@ export async function fetchAppAndIdentifiers(
     const apiKey = options.apiKey ?? envIdentifiers.app
     partnersApp = await fetchAppFromApiKey(apiKey, token)
     if (!partnersApp) {
-      throw new kitError.Abort(
-        output.content`Couldn't find the app with API key ${apiKey}`,
-        output.content`• If you didn't intend to select this app, run ${
-          output.content`${output.token.packagejsonScript(options.app.packageManager, 'deploy', '--reset')}`.value
+      throw new AbortError(
+        outputContent`Couldn't find the app with API key ${apiKey}`,
+        outputContent`• If you didn't intend to select this app, run ${
+          outputContent`${outputToken.packagejsonScript(options.app.packageManager, 'deploy', '--reset')}`.value
         }`,
       )
     }
@@ -351,22 +355,19 @@ export async function fetchAppAndIdentifiers(
 
 async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
   let data = {} as FetchResponse
-  const list = ui.newListr(
-    [
-      {
-        title: 'Fetching organization data',
-        task: async () => {
-          const organizationAndApps = await fetchOrgAndApps(orgId, token)
-          const stores = await fetchAllDevStores(orgId, token)
-          data = {...organizationAndApps, stores} as FetchResponse
-          // We need ALL stores so we can validate the selected one.
-          // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.
-        },
+  const tasks = [
+    {
+      title: 'Fetching organization data',
+      task: async () => {
+        const organizationAndApps = await fetchOrgAndApps(orgId, token)
+        const stores = await fetchAllDevStores(orgId, token)
+        data = {...organizationAndApps, stores} as FetchResponse
+        // We need ALL stores so we can validate the selected one.
+        // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.
       },
-    ],
-    {rendererSilent: environment.local.isUnitTest()},
-  )
-  await list.run()
+    },
+  ]
+  await renderTasks(tasks)
   return data
 }
 
@@ -386,17 +387,17 @@ async function fetchDevDataFromOptions(
     selectedApp = await fetchAppFromApiKey(options.apiKey, token)
     if (!selectedApp) {
       const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
-      throw new kitError.Abort(errorMessage.message, errorMessage.tryMessage)
+      throw new AbortError(errorMessage.message, errorMessage.tryMessage)
     }
   }
 
   if (options.storeFqdn) {
     const orgWithStore = await fetchStoreByDomain(orgId, token, options.storeFqdn)
-    if (!orgWithStore) throw new error.Bug(`Could not find Organization for id ${orgId}.`)
+    if (!orgWithStore) throw new BugError(`Could not find Organization for id ${orgId}.`)
     if (!orgWithStore.store) {
-      const partners = await environment.fqdn.partners()
+      const partners = await partnersFqdn()
       const org = orgWithStore.organization
-      throw new error.Bug(
+      throw new BugError(
         `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid development store.`,
         `Visit https://${partners}/${org.id}/stores to create a new store in your organization`,
       )
@@ -413,15 +414,9 @@ async function fetchDevDataFromOptions(
  * @param reset - Whether to reset the cache or not
  * @param directory - The directory containing the app.
  */
-async function getAppDevCachedInfo({
-  reset,
-  directory,
-}: {
-  reset: boolean
-  directory: string
-}): Promise<store.CachedAppInfo | undefined> {
-  if (reset) await store.clearAppInfo(directory)
-  return store.getAppInfo(directory)
+function getAppDevCachedInfo({reset, directory}: {reset: boolean; directory: string}): CachedAppInfo | undefined {
+  if (reset) clearAppInfo(directory)
+  return getAppInfo(directory)
 }
 
 /**
@@ -441,38 +436,46 @@ async function selectOrg(token: string): Promise<string> {
  * @param app - App name
  * @param store - Store domain
  */
-function showReusedValues(org: string, cachedAppInfo: store.CachedAppInfo, packageManager: PackageManager): void {
+function showReusedValues(org: string, cachedAppInfo: CachedAppInfo, packageManager: PackageManager): void {
   let updateURLs = 'Not yet configured'
   if (cachedAppInfo.updateURLs !== undefined) updateURLs = cachedAppInfo.updateURLs ? 'Always' : 'Never'
 
-  output.info('\nUsing your previous dev settings:')
-  output.info(`- Org:          ${org}`)
-  output.info(`- App:          ${cachedAppInfo.title}`)
-  output.info(`- Dev store:    ${cachedAppInfo.storeFqdn}`)
-  output.info(`- Update URLs:  ${updateURLs}`)
-  if (cachedAppInfo.tunnelPlugin) {
-    output.info(`- Tunnel:       ${cachedAppInfo.tunnelPlugin}`)
-  }
-  output.info(
-    output.content`\nTo reset your default dev config, run ${output.token.packagejsonScript(
-      packageManager,
-      'dev',
-      '--reset',
-    )}\n`,
-  )
+  const items: TokenItem[] = [
+    `Org:          ${org}`,
+    `App:          ${cachedAppInfo.title}`,
+    `Dev store:    ${cachedAppInfo.storeFqdn}`,
+    `Update URLs:  ${updateURLs}`,
+  ]
+
+  if (cachedAppInfo.tunnelPlugin) items.push(`Tunnel:       ${cachedAppInfo.tunnelPlugin}`)
+
+  renderInfo({
+    headline: 'Using your previous dev settings:',
+    body: [
+      {
+        list: {
+          items,
+        },
+      },
+      '\nTo reset your default dev config, run',
+      {command: formatPackageManagerCommand(packageManager, 'dev', '--reset')},
+    ],
+  })
 }
 
-function showGenerateReusedValues(org: string, cachedAppInfo: store.CachedAppInfo, packageManager: PackageManager) {
-  output.info('\nUsing your previous dev settings:')
-  output.info(`- Org:          ${org}`)
-  output.info(`- App:          ${cachedAppInfo.title}`)
-  output.info(
-    output.content`\nTo reset your default config, run ${output.token.packagejsonScript(
-      packageManager,
-      'generate extension',
-      '--reset',
-    )}\n`,
-  )
+function showGenerateReusedValues(org: string, cachedAppInfo: CachedAppInfo, packageManager: PackageManager) {
+  renderInfo({
+    headline: 'Using your previous dev settings:',
+    body: [
+      {
+        list: {
+          items: [`Org:          ${org}`, `App:          ${cachedAppInfo.title}`],
+        },
+      },
+      '\nTo reset your default dev config, run',
+      {command: formatPackageManagerCommand(packageManager, 'dev', '--reset')},
+    ],
+  })
 }
 
 /**
@@ -482,21 +485,26 @@ function showGenerateReusedValues(org: string, cachedAppInfo: store.CachedAppInf
  * @param store - Store domain
  */
 function showDevValues(org: string, appName: string) {
-  output.info('\nYour configs for dev were:')
-  output.info(`Org:        ${org}`)
-  output.info(`App:        ${appName}\n`)
+  renderInfo({
+    headline: 'Your configs for dev were:',
+    body: {
+      list: {
+        items: [`Org:        ${org}`, `App:        ${appName}`],
+      },
+    },
+  })
 }
 
 async function logMetadataForLoadedDevEnvironment(env: DevEnvironmentOutput) {
-  await metadata.addPublic(() => ({
-    partner_id: string.tryParseInt(env.remoteApp.organizationId),
+  await metadata.addPublicMetadata(() => ({
+    partner_id: tryParseInt(env.remoteApp.organizationId),
     api_key: env.remoteApp.apiKey,
   }))
 }
 
 async function logMetadataForLoadedDeployEnvironment(env: DeployEnvironmentOutput) {
-  await metadata.addPublic(() => ({
-    partner_id: string.tryParseInt(env.partnersOrganizationId),
+  await metadata.addPublicMetadata(() => ({
+    partner_id: tryParseInt(env.partnersOrganizationId),
     api_key: env.identifiers.app,
   }))
 }

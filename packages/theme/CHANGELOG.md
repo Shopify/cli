@@ -1,5 +1,122 @@
 # @shopify/theme
 
+## 3.39.0
+
+### Patch Changes
+
+- afe541577: Adopt the CLI UI kit in the `shopify theme package` command
+- Updated dependencies [afe541577]
+- Updated dependencies [f4d5fb1a8]
+- Updated dependencies [91a44020b]
+  - @shopify/cli-kit@3.39.0
+
+## 3.38.0
+
+### Patch Changes
+
+- @shopify/cli-kit@3.38.0
+
+## 3.37.0
+
+### Minor Changes
+
+- 2f0420599: Slightly improve the text messages in the `shopify theme delete` and `shopify theme publish` commands
+
+### Patch Changes
+
+- Updated dependencies [a5224543b]
+  - @shopify/cli-kit@3.37.0
+
+## 3.36.2
+
+### Patch Changes
+
+- 868befded: Migrate `theme publish` to TypeScript
+- Updated dependencies [3ddd21dba]
+  - @shopify/cli-kit@3.36.2
+
+## 3.36.1
+
+### Patch Changes
+
+- Updated dependencies [d81271abd]
+  - @shopify/cli-kit@3.36.1
+
+## 3.36.0
+
+### Minor Changes
+
+- c2a7c17e0: Refresh command UIs with newly implemented Ink components
+
+### Patch Changes
+
+- Updated dependencies [c2a7c17e0]
+  - @shopify/cli-kit@3.36.0
+
+## 3.35.0
+
+### Minor Changes
+
+- 50c0b2cd3: - Adopt CLI UI kit on `shopify theme delete` command
+  - Introduce the `pluralize` API on `@shopify/cli-kit/common/string`
+
+### Patch Changes
+
+- 1a482191a: Improve the DX of the `shopify theme list` command, by adopting the CLI UI kit
+- Updated dependencies [50c0b2cd3]
+- Updated dependencies [2aa5c07aa]
+- Updated dependencies [1a482191a]
+- Updated dependencies [a4f78e95f]
+  - @shopify/cli-kit@3.35.0
+
+## 3.34.0
+
+### Patch Changes
+
+- 8fa3e7094: Add extra timeout when restarting theme dev
+  - @shopify/cli-kit@3.34.0
+
+## 3.33.0
+
+### Patch Changes
+
+- eee1293ef: - Introduce REST Admin API client on `@shopify/cli-kit`
+  - Improve the DX of the `shopify theme open` command, by adopting the CLI UI kit
+- Updated dependencies [eee1293ef]
+- Updated dependencies [5e7474fab]
+- Updated dependencies [9eb807bf7]
+  - @shopify/cli-kit@3.33.0
+
+## 3.32.1
+
+### Patch Changes
+
+- Updated dependencies [39315c3d0]
+  - @shopify/cli-kit@3.32.1
+
+## 3.32.0
+
+### Patch Changes
+
+- Updated dependencies [a8489366]
+- Updated dependencies [00de42e8]
+  - @shopify/cli-kit@3.32.0
+
+## 3.31.1
+
+### Patch Changes
+
+- db48152c: Fix theme dev not refreshing session automatically
+  - @shopify/cli-kit@3.31.1
+
+## 3.31.0
+
+### Patch Changes
+
+- Updated dependencies [80c6638c]
+- Updated dependencies [dcf53ece]
+  - @shopify/cli-kit@3.31.0
+
 ## 3.30.2
 
 ### Patch Changes

@@ -15,8 +15,10 @@ import {
   ensureDeployEnvironment,
   ensureThemeExtensionDevEnvironment,
   ensureGenerateEnvironment,
+  DeployEnvironmentOptions,
 } from './environment.js'
 import {createExtension} from './dev/create-extension.js'
+import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './conf.js'
 import {OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {UIExtension} from '../models/app/extensions.js'
@@ -24,11 +26,16 @@ import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
-import {store, api, outputMocker} from '@shopify/cli-kit'
+import {App} from '../models/app/app.js'
+import {AllOrganizationsQuerySchemaOrganization} from '../api/graphql/all_orgs.js'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
-import {ok} from '@shopify/cli-kit/node/result.js'
+import {ok} from '@shopify/cli-kit/node/result'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 beforeEach(() => {
+  vi.mock('./conf.js')
   vi.mock('./dev/fetch')
   vi.mock('./dev/create-extension')
   vi.mock('./dev/select-app')
@@ -38,26 +45,9 @@ beforeEach(() => {
   vi.mock('../models/app/identifiers')
   vi.mock('./environment/identifiers')
   vi.mock('../models/app/loader.js')
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      session: {
-        ensureAuthenticatedPartners: () => 'token',
-      },
-      api: {
-        partners: {
-          request: vi.fn(),
-        },
-        graphql: cliKit.api.graphql,
-      },
-      store: {
-        getAppInfo: vi.fn(),
-        setAppInfo: vi.fn(),
-        clearAppInfo: vi.fn(),
-      },
-    }
-  })
+  vi.mock('@shopify/cli-kit/node/session')
+  vi.mock('@shopify/cli-kit/node/node-package-manager.js')
+  vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 })
 
 const APP1: OrganizationApp = {
@@ -77,20 +67,20 @@ const APP2: OrganizationApp = {
   grantedScopes: [],
 }
 
-const ORG1: api.graphql.AllOrganizationsQuerySchemaOrganization = {
+const ORG1: AllOrganizationsQuerySchemaOrganization = {
   id: '1',
   businessName: 'org1',
   appsNext: true,
   website: '',
 }
-const ORG2: api.graphql.AllOrganizationsQuerySchemaOrganization = {
+const ORG2: AllOrganizationsQuerySchemaOrganization = {
   id: '2',
   businessName: 'org2',
   appsNext: false,
   website: '',
 }
 
-const CACHED1: store.CachedAppInfo = {appId: 'key1', orgId: '1', storeFqdn: 'domain1', directory: '/cached'}
+const CACHED1: CachedAppInfo = {appId: 'key1', orgId: '1', storeFqdn: 'domain1', directory: '/cached'}
 const STORE1: OrganizationStore = {
   shopId: '1',
   link: 'link1',
@@ -157,8 +147,16 @@ const BAD_INPUT_WITH_DATA: DevEnvironmentOptions = {
 
 const FETCH_RESPONSE = {
   organization: ORG1,
-  apps: [APP1, APP2],
+  apps: {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
   stores: [STORE1, STORE2],
+}
+
+const options = (app: App): DeployEnvironmentOptions => {
+  return {
+    app,
+    reset: false,
+    force: false,
+  }
 }
 
 beforeEach(async () => {
@@ -169,6 +167,7 @@ beforeEach(async () => {
   vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
   vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG1)
   vi.mocked(fetchOrgAndApps).mockResolvedValue(FETCH_RESPONSE)
+  vi.mocked(getPackageManager).mockResolvedValue('npm')
 })
 
 describe('ensureGenerateEnvironment', () => {
@@ -187,7 +186,7 @@ describe('ensureGenerateEnvironment', () => {
     // Given
     const input = {directory: '/app', reset: false, token: 'token'}
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(store.getAppInfo).mockResolvedValue(CACHED1)
+    vi.mocked(getAppInfo).mockReturnValue(CACHED1)
 
     // When
     const got = await ensureGenerateEnvironment(input)
@@ -200,15 +199,20 @@ describe('ensureGenerateEnvironment', () => {
     const input = {directory: '/app', reset: true, token: 'token'}
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(loadAppName).mockResolvedValueOnce('my-app')
-    vi.mocked(store.getAppInfo).mockResolvedValue(undefined)
+    vi.mocked(getAppInfo).mockReturnValue(undefined)
 
     // When
     const got = await ensureGenerateEnvironment(input)
 
     // Then
     expect(got).toEqual(APP1.apiKey)
-    expect(selectOrCreateApp).toHaveBeenCalledWith('my-app', [APP1, APP2], ORG1, 'token')
-    expect(store.setAppInfo).toHaveBeenCalledWith({
+    expect(selectOrCreateApp).toHaveBeenCalledWith(
+      'my-app',
+      {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
+      ORG1,
+      'token',
+    )
+    expect(setAppInfo).toHaveBeenCalledWith({
       appId: APP1.apiKey,
       title: APP1.title,
       directory: '/app',
@@ -220,7 +224,7 @@ describe('ensureGenerateEnvironment', () => {
 describe('ensureDevEnvironment', () => {
   it('returns selected data and updates internal state, without cached state', async () => {
     // Given
-    vi.mocked(store.getAppInfo).mockResolvedValue(undefined)
+    vi.mocked(getAppInfo).mockReturnValue(undefined)
 
     // When
     const got = await ensureDevEnvironment(INPUT, 'token')
@@ -232,19 +236,19 @@ describe('ensureDevEnvironment', () => {
       tunnelPlugin: undefined,
       updateURLs: undefined,
     })
-    expect(store.setAppInfo).toHaveBeenNthCalledWith(1, {
+    expect(setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
       title: APP1.title,
       directory: INPUT.directory,
       orgId: ORG1.id,
     })
-    expect(store.setAppInfo).toHaveBeenNthCalledWith(2, {
+    expect(setAppInfo).toHaveBeenNthCalledWith(2, {
       appId: APP1.apiKey,
       directory: INPUT.directory,
       storeFqdn: STORE1.shopDomain,
     })
 
-    expect(metadata.getAllPublic()).toMatchObject({
+    expect(metadata.getAllPublicMetadata()).toMatchObject({
       api_key: APP1.apiKey,
       partner_id: 1,
     })
@@ -252,8 +256,8 @@ describe('ensureDevEnvironment', () => {
 
   it('returns selected data and updates internal state, with cached state', async () => {
     // Given
-    const outputMock = outputMocker.mockAndCaptureOutput()
-    vi.mocked(store.getAppInfo).mockResolvedValue(CACHED1)
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(getAppInfo).mockReturnValue(CACHED1)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
@@ -269,13 +273,13 @@ describe('ensureDevEnvironment', () => {
     })
     expect(fetchOrganizations).not.toBeCalled()
     expect(selectOrganizationPrompt).not.toBeCalled()
-    expect(store.setAppInfo).toHaveBeenNthCalledWith(1, {
+    expect(setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
       title: APP1.title,
       directory: INPUT.directory,
       orgId: ORG1.id,
     })
-    expect(store.setAppInfo).toHaveBeenNthCalledWith(2, {
+    expect(setAppInfo).toHaveBeenNthCalledWith(2, {
       appId: APP1.apiKey,
       directory: INPUT.directory,
       storeFqdn: STORE1.shopDomain,
@@ -286,7 +290,7 @@ describe('ensureDevEnvironment', () => {
 
   it('returns selected data and updates internal state, with inputs from flags', async () => {
     // Given
-    vi.mocked(store.getAppInfo).mockResolvedValue(undefined)
+    vi.mocked(getAppInfo).mockReturnValue(undefined)
     vi.mocked(convertToTestStoreIfNeeded).mockResolvedValueOnce()
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
@@ -301,7 +305,7 @@ describe('ensureDevEnvironment', () => {
       tunnelPlugin: undefined,
       updateURLs: undefined,
     })
-    expect(store.setAppInfo).toHaveBeenNthCalledWith(1, {
+    expect(setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP2.apiKey,
       directory: INPUT_WITH_DATA.directory,
       storeFqdn: STORE1.shopDomain,
@@ -316,7 +320,7 @@ describe('ensureDevEnvironment', () => {
 
   it('throws if the store input is not valid', async () => {
     // Given
-    vi.mocked(store.getAppInfo).mockResolvedValue(undefined)
+    vi.mocked(getAppInfo).mockReturnValue(undefined)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: undefined})
 
@@ -332,7 +336,7 @@ describe('ensureDevEnvironment', () => {
     await ensureDevEnvironment({...INPUT, reset: true}, 'token')
 
     // Then
-    expect(store.clearAppInfo).toHaveBeenCalledWith(BAD_INPUT_WITH_DATA.directory)
+    expect(clearAppInfo).toHaveBeenCalledWith(BAD_INPUT_WITH_DATA.directory)
     expect(fetchOrgAndApps).toBeCalled()
   })
 })
@@ -351,7 +355,7 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
     // When
-    const got = await ensureDeployEnvironment({app, reset: false})
+    const got = await ensureDeployEnvironment({app, reset: false, force: false})
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
@@ -360,7 +364,7 @@ describe('ensureDeployEnvironment', () => {
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
 
-    expect(metadata.getAllPublic()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
+    expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
   })
 
   test("fetches the app from the partners' API and returns it alongside the id when there are no identifiers but user chooses to reuse dev store.cliKitStore()", async () => {
@@ -372,13 +376,13 @@ describe('ensureDeployEnvironment', () => {
       extensionIds: {},
     }
     vi.mocked(getAppIdentifiers).mockResolvedValue({app: undefined})
-    vi.mocked(store.getAppInfo).mockResolvedValueOnce(CACHED1)
+    vi.mocked(getAppInfo).mockReturnValueOnce(CACHED1)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(reuseDevConfigPrompt).mockResolvedValueOnce(true)
 
     // When
-    const got = await ensureDeployEnvironment({app, reset: false})
+    const got = await ensureDeployEnvironment(options(app))
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
@@ -401,11 +405,16 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     // When
-    const got = await ensureDeployEnvironment({app, reset: false})
+    const got = await ensureDeployEnvironment(options(app))
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')
-    expect(selectOrCreateApp).toHaveBeenCalledWith(app.name, [APP1, APP2], ORG1, 'token')
+    expect(selectOrCreateApp).toHaveBeenCalledWith(
+      app.name,
+      {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
+      ORG1,
+      'token',
+    )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
       identifiers,
@@ -424,9 +433,7 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(undefined)
 
     // When
-    await expect(ensureDeployEnvironment({app, reset: false})).rejects.toThrow(
-      /Couldn't find the app with API key key1/,
-    )
+    await expect(ensureDeployEnvironment(options(app))).rejects.toThrow(/Couldn't find the app with API key key1/)
   })
 
   test('prompts the user to create or select an app if reset is true', async () => {
@@ -443,12 +450,20 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
+    const opts = options(app)
+    opts.reset = true
+
     // When
-    const got = await ensureDeployEnvironment({app, reset: true})
+    const got = await ensureDeployEnvironment(opts)
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')
-    expect(selectOrCreateApp).toHaveBeenCalledWith(app.name, [APP1, APP2], ORG1, 'token')
+    expect(selectOrCreateApp).toHaveBeenCalledWith(
+      app.name,
+      {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
+      ORG1,
+      'token',
+    )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
       identifiers,

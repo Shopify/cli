@@ -1,5 +1,111 @@
 # @shopify/cli-hydrogen
 
+## 3.39.0
+
+### Minor Changes
+
+- f4d5fb1a8: Replace the UI of all tasks renderers and remove listr2 as a dependency
+
+### Patch Changes
+
+- afe541577: Adopt the CLI UI kit in the `shopify theme package` command
+- Updated dependencies [afe541577]
+- Updated dependencies [f4d5fb1a8]
+- Updated dependencies [91a44020b]
+  - @shopify/cli-kit@3.39.0
+
+## 3.38.0
+
+### Patch Changes
+
+- @shopify/cli-kit@3.38.0
+
+## 3.37.0
+
+### Patch Changes
+
+- Updated dependencies [a5224543b]
+  - @shopify/cli-kit@3.37.0
+
+## 3.36.2
+
+### Patch Changes
+
+- Updated dependencies [3ddd21dba]
+  - @shopify/cli-kit@3.36.2
+
+## 3.36.1
+
+### Patch Changes
+
+- Updated dependencies [d81271abd]
+  - @shopify/cli-kit@3.36.1
+
+## 3.36.0
+
+### Minor Changes
+
+- c2a7c17e0: Refresh command UIs with newly implemented Ink components
+
+### Patch Changes
+
+- Updated dependencies [c2a7c17e0]
+  - @shopify/cli-kit@3.36.0
+
+## 3.35.0
+
+### Patch Changes
+
+- Updated dependencies [50c0b2cd3]
+- Updated dependencies [2aa5c07aa]
+- Updated dependencies [1a482191a]
+- Updated dependencies [a4f78e95f]
+  - @shopify/cli-kit@3.35.0
+
+## 3.34.0
+
+### Patch Changes
+
+- @shopify/cli-kit@3.34.0
+
+## 3.33.0
+
+### Patch Changes
+
+- Updated dependencies [eee1293ef]
+- Updated dependencies [5e7474fab]
+- Updated dependencies [9eb807bf7]
+  - @shopify/cli-kit@3.33.0
+
+## 3.32.1
+
+### Patch Changes
+
+- Updated dependencies [39315c3d0]
+  - @shopify/cli-kit@3.32.1
+
+## 3.32.0
+
+### Patch Changes
+
+- Updated dependencies [a8489366]
+- Updated dependencies [00de42e8]
+  - @shopify/cli-kit@3.32.0
+
+## 3.31.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.31.1
+
+## 3.31.0
+
+### Patch Changes
+
+- Updated dependencies [80c6638c]
+- Updated dependencies [dcf53ece]
+  - @shopify/cli-kit@3.31.0
+
 ## 3.30.2
 
 ### Patch Changes

@@ -1,8 +1,8 @@
 import {Alert} from './Alert.js'
-import {renderString} from '../../ui.js'
-import {unstyled} from '../../../../output.js'
+import {unstyled} from '../../../../public/node/output.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
+import {render} from 'ink-testing-library'
 
 describe('Alert', async () => {
   test('renders correctly with all the options', async () => {
@@ -51,13 +51,30 @@ describe('Alert', async () => {
         label: 'Link',
         url: 'https://shopify.com',
       },
+      customSections: [
+        {
+          title: 'Custom section',
+          body: {
+            list: {
+              items: ['Item 1', 'Item 2', 'Item 3'],
+            },
+          },
+        },
+        {
+          title: 'Custom section 2',
+          body: {
+            list: {
+              items: ['Item 1', 'Item 2', 'Item 3'],
+            },
+          },
+        },
+      ],
     }
 
-    const {output} = renderString(<Alert type="info" {...options} />)
+    const {lastFrame} = render(<Alert type="info" {...options} />)
 
-    expect(unstyled(output!)).toMatchInlineSnapshot(`
-      "
-      ╭─ info ───────────────────────────────────────────────────────────────────────╮
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  my-app initialized and ready to build.                                      │
       │                                                                              │
@@ -75,6 +92,16 @@ describe('Alert', async () => {
       │                                                                              │
       │  Link ( https://shopify.com )                                                │
       │                                                                              │
+      │  Custom section                                                              │
+      │    • Item 1                                                                  │
+      │    • Item 2                                                                  │
+      │    • Item 3                                                                  │
+      │                                                                              │
+      │  Custom section 2                                                            │
+      │    • Item 1                                                                  │
+      │    • Item 2                                                                  │
+      │    • Item 3                                                                  │
+      │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
     `)
@@ -85,11 +112,10 @@ describe('Alert', async () => {
       headline: 'Title',
     }
 
-    const {output} = renderString(<Alert type="info" {...options} />)
+    const {lastFrame} = render(<Alert type="info" {...options} />)
 
-    expect(unstyled(output!)).toMatchInlineSnapshot(`
-      "
-      ╭─ info ───────────────────────────────────────────────────────────────────────╮
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Title                                                                       │
       │                                                                              │

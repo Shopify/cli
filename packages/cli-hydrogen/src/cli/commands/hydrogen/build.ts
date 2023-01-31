@@ -1,8 +1,9 @@
 import {build} from '../../services/build.js'
 import {hydrogenFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
-import {path, cli} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
+import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 
 const PLATFORM_ENTRIES = {
   node: `@shopify/hydrogen/platforms/node`,
@@ -10,9 +11,9 @@ const PLATFORM_ENTRIES = {
 }
 
 export default class Build extends Command {
-  static description = 'Builds a Hydrogen storefront for production'
+  static description = 'Builds a Hydrogen storefront for production.'
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     path: hydrogenFlags.path,
     base: Flags.string({
       description: ' the public path when served in production',
@@ -39,7 +40,7 @@ export default class Build extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Build)
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : cwd()
 
     const entry = flags.entry || PLATFORM_ENTRIES[flags.target as 'node' | 'worker']
 

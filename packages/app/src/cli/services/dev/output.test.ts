@@ -2,11 +2,11 @@
 import {outputExtensionsMessages} from './output.js'
 import {testApp, testThemeExtensions, testUIExtension} from '../../models/app/app.test-data.js'
 import {AppInterface} from '../../models/app/app.js'
-import {UIExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, it} from 'vitest'
-import {outputMocker, path} from '@shopify/cli-kit'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
-const outputMock = outputMocker.mockAndCaptureOutput()
+const outputMock = mockAndCaptureOutput()
 beforeEach(() => {
   outputMock.clear()
 })
@@ -77,7 +77,7 @@ async function mockApp(currentVersion = '2.2.2'): Promise<AppInterface> {
   return testApp({
     name: 'my-super-customer-accounts-app',
     directory: '/',
-    configurationPath: path.join('/', 'shopify.app.toml'),
+    configurationPath: joinPath('/', 'shopify.app.toml'),
     configuration: {
       scopes: 'my-scope',
     },

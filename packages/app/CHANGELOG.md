@@ -1,5 +1,144 @@
 # @shopify/app
 
+## 3.39.0
+
+### Minor Changes
+
+- 11f6fbec6: Add description configuration to POS UI Extension
+
+### Patch Changes
+
+- afe541577: Adopt the CLI UI kit in the `shopify theme package` command
+- b8a96a215: Fix next steps in deploy success banner
+- 91a44020b: Warn the user if there are more than 25 apps in app selection prompt
+- Updated dependencies [afe541577]
+- Updated dependencies [f4d5fb1a8]
+- Updated dependencies [91a44020b]
+  - @shopify/cli-kit@3.39.0
+  - @shopify/plugin-ngrok@3.39.0
+
+## 3.38.0
+
+### Patch Changes
+
+- da8c87a9f: Fix an issue with CLI2 not printing to the right stdout
+  - @shopify/cli-kit@3.38.0
+  - @shopify/plugin-ngrok@3.38.0
+
+## 3.37.0
+
+### Patch Changes
+
+- Updated dependencies [a5224543b]
+  - @shopify/cli-kit@3.37.0
+  - @shopify/plugin-ngrok@3.37.0
+
+## 3.36.2
+
+### Patch Changes
+
+- Updated dependencies [3ddd21dba]
+  - @shopify/cli-kit@3.36.2
+  - @shopify/plugin-ngrok@3.36.2
+
+## 3.36.1
+
+### Patch Changes
+
+- Updated dependencies [d81271abd]
+  - @shopify/cli-kit@3.36.1
+  - @shopify/plugin-ngrok@3.36.1
+
+## 3.36.0
+
+### Minor Changes
+
+- c2a7c17e0: Refresh command UIs with newly implemented Ink components
+- 335a96a24: Improved dev console with new UX & functionality. New functionality: Preview app link and QRCode, better post purchase extension instructions, copy button for all preview links, support for upcoming UI extension changes
+
+### Patch Changes
+
+- Updated dependencies [c2a7c17e0]
+  - @shopify/cli-kit@3.36.0
+  - @shopify/plugin-ngrok@3.36.0
+
+## 3.35.0
+
+### Patch Changes
+
+- Updated dependencies [50c0b2cd3]
+- Updated dependencies [2aa5c07aa]
+- Updated dependencies [1a482191a]
+- Updated dependencies [a4f78e95f]
+  - @shopify/cli-kit@3.35.0
+  - @shopify/plugin-ngrok@3.35.0
+
+## 3.34.0
+
+### Minor Changes
+
+- 39d6bcae8: Update to app_function_set: Adds new feature Input Query Variables - adds optional inqut query varialbes, updates schema + tests
+
+### Patch Changes
+
+- @shopify/cli-kit@3.34.0
+- @shopify/plugin-ngrok@3.34.0
+
+## 3.33.0
+
+### Minor Changes
+
+- d7b582cb1: Add the @shopify/ngrok plugin to the @shopify/app package
+- 9eb807bf7: Add confirmation summary when deploying your app to Shopify. This will show new extensions, updated extensions and extensions which are missing locally. You can pass `--force` to the deploy command to skip this prompt.
+
+### Patch Changes
+
+- Updated dependencies [eee1293ef]
+- Updated dependencies [5e7474fab]
+- Updated dependencies [9eb807bf7]
+  - @shopify/cli-kit@3.33.0
+  - @shopify/plugin-ngrok@3.33.0
+
+## 3.32.1
+
+### Patch Changes
+
+- Updated dependencies [39315c3d0]
+  - @shopify/cli-kit@3.32.1
+
+## 3.32.0
+
+### Minor Changes
+
+- aaa9730d: New update-url command
+
+### Patch Changes
+
+- Updated dependencies [a8489366]
+- Updated dependencies [00de42e8]
+  - @shopify/cli-kit@3.32.0
+
+## 3.31.1
+
+### Patch Changes
+
+- 21a15024: Fix loading function specifications
+  - @shopify/cli-kit@3.31.1
+
+## 3.31.0
+
+### Minor Changes
+
+- 49f8f895: Add support for multiple custom OAuth callback paths by setting auth_callback_path to an array in shopify.web.toml
+
+### Patch Changes
+
+- a786f371: Fix bug in functions using a custom template repository
+- b37ace4c: Fix extension generate not accepting some template values
+- Updated dependencies [80c6638c]
+- Updated dependencies [dcf53ece]
+  - @shopify/cli-kit@3.31.0
+
 ## 3.30.2
 
 ### Patch Changes

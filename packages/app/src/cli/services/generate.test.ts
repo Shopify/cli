@@ -6,8 +6,11 @@ import {testApp, testRemoteSpecifications, testThemeExtensions} from '../models/
 import {ensureGenerateEnvironment} from '../services/environment.js'
 import {Extension} from '../models/app/extensions.js'
 import {describe, expect, it, vi, beforeAll, afterEach} from 'vitest'
-import {path, outputMocker, api} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 beforeAll(() => {
   vi.mock('../constants.js')
@@ -15,30 +18,14 @@ beforeAll(() => {
   vi.mock('../prompts/generate/extension.js')
   vi.mock('../services/generate/extension.js')
   vi.mock('../services/environment.js')
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      session: {
-        ensureAuthenticatedPartners: () => 'token',
-      },
-      api: {
-        partners: {
-          request: vi.fn(),
-        },
-        graphql: cliKit.api.graphql,
-      },
-      store: {
-        getAppInfo: vi.fn(),
-        setAppInfo: vi.fn(),
-        clearAppInfo: vi.fn(),
-      },
-    }
-  })
+  vi.mock('@shopify/cli-kit/node/api/partners')
+  vi.mock('@shopify/cli-kit/node/session')
+  vi.mock('./conf.js')
+  vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 })
 
 afterEach(() => {
-  outputMocker.mockAndCaptureOutput().clear()
+  mockAndCaptureOutput().clear()
 })
 
 describe('after extension command finishes correctly', () => {
@@ -51,10 +38,18 @@ describe('after extension command finishes correctly', () => {
     await generate({directory: '/', reset: false, config: mockConfig})
 
     // Then
-    expect(outputInfo.completed()).toMatchInlineSnapshot('"Your Checkout UI extension was added to your project!"')
-    expect(outputInfo.info()).toMatchInlineSnapshot(
-      '"\n  To find your extension, remember to cd extensions/name\n  To preview your project, run yarn dev\n"',
-    )
+    expect(outputInfo.info()).toMatchInlineSnapshot(`
+      "╭─ success ────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Checkout UI extension was added to your project!                            │
+      │                                                                              │
+      │  Next steps                                                                  │
+      │    • To find your extension, remember to \`cd extensions/name\`                │
+      │    • To preview your project, run \`yarn dev\`                                 │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
   })
 
   it('displays a confirmation message for a theme app extension', async () => {
@@ -65,12 +60,18 @@ describe('after extension command finishes correctly', () => {
     await generate({directory: '/', reset: false, config: mockConfig})
 
     // Then
-    expect(outputInfo.completed()).toMatchInlineSnapshot(
-      '"Your Theme App Extension extension was added to your project!"',
-    )
-    expect(outputInfo.info()).toMatchInlineSnapshot(
-      '"\n  To find your extension, remember to cd extensions/name\n  To preview your project, run yarn dev\n"',
-    )
+    expect(outputInfo.info()).toMatchInlineSnapshot(`
+      "╭─ success ────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Theme App Extension extension was added to your project!                    │
+      │                                                                              │
+      │  Next steps                                                                  │
+      │    • To find your extension, remember to \`cd extensions/name\`                │
+      │    • To preview your project, run \`yarn dev\`                                 │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
   })
 
   it('displays a confirmation message for a function', async () => {
@@ -81,9 +82,21 @@ describe('after extension command finishes correctly', () => {
     await generate({directory: '/', reset: false, config: mockConfig})
 
     // Then
-    expect(outputInfo.completed()).toMatchInlineSnapshot(
-      '"Your Function - Product discount extension was added to your project!"',
-    )
+    expect(outputInfo.info()).toMatchInlineSnapshot(`
+      "╭─ success ────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Function - Product discount extension was added to your project!            │
+      │                                                                              │
+      │  Next steps                                                                  │
+      │    • To find your extension, remember to \`cd extensions/name\`                │
+      │                                                                              │
+      │  Reference                                                                   │
+      │    • For more details, see the docs (                                        │
+      │      https://shopify.dev/apps/subscriptions/discounts )                      │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
   })
 
   it('throws error if trying to generate a non existing type', async () => {
@@ -117,7 +130,7 @@ describe('after extension command finishes correctly', () => {
     const got = generate({directory: '/', reset: false, config: mockConfig, type: 'checkout_ui', template: 'unknown'})
 
     // Then
-    await expect(got).rejects.toThrow(/Specified extension template on invalid extension type/)
+    await expect(got).rejects.toThrow(/Invalid template for extension type/)
   })
 })
 
@@ -125,14 +138,14 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
   const appRoot = '/'
   const app = testApp({
     directory: appRoot,
-    configurationPath: path.join(appRoot, 'shopify.app.toml'),
+    configurationPath: joinPath(appRoot, 'shopify.app.toml'),
     extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => existingExtensions,
   })
 
   vi.mocked(loadApp).mockResolvedValue(app)
-  vi.mocked(api.partners.request).mockResolvedValueOnce({extensionSpecifications: testRemoteSpecifications})
+  vi.mocked(partnersRequest).mockResolvedValueOnce({extensionSpecifications: testRemoteSpecifications})
   vi.mocked(ensureGenerateEnvironment).mockResolvedValue('api-key')
   vi.mocked(generateExtensionPrompt).mockResolvedValue({name: 'name', extensionType: identifier})
-  vi.mocked(generateExtensionService).mockResolvedValue(path.join(appRoot, 'extensions', 'name'))
-  return outputMocker.mockAndCaptureOutput()
+  vi.mocked(generateExtensionService).mockResolvedValue(joinPath('extensions', 'name'))
+  return mockAndCaptureOutput()
 }

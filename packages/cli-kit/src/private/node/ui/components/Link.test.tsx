@@ -1,7 +1,7 @@
 import {Link} from './Link.js'
-import {renderString} from '../../ui.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
+import {render} from 'ink-testing-library'
 
 describe('Link', async () => {
   test("renders correctly with a fallback for terminals that don't support hyperlinks", async () => {
@@ -10,9 +10,9 @@ describe('Link', async () => {
       label: 'Example',
     }
 
-    const {output} = renderString(<Link {...link} />)
+    const {lastFrame} = render(<Link {...link} />)
 
-    expect(output).toMatchInlineSnapshot('"Example [2m( https://example.com )[22m"')
+    expect(lastFrame()).toMatchInlineSnapshot('"Example [2m( https://example.com )[22m"')
   })
 
   test("it doesn't render a fallback if only url is passed", async () => {
@@ -20,8 +20,8 @@ describe('Link', async () => {
       url: 'https://example.com',
     }
 
-    const {output} = renderString(<Link {...link} />)
+    const {lastFrame} = render(<Link {...link} />)
 
-    expect(output).toMatchInlineSnapshot('"https://example.com"')
+    expect(lastFrame()).toMatchInlineSnapshot('"https://example.com"')
   })
 })

@@ -1,10 +1,15 @@
 import {ThemeExtensionSchema, ZodSchemaType} from './schemas.js'
 import {loadThemeSpecifications} from './specifications.js'
 import {GenericSpecification, ThemeExtension} from '../app/extensions.js'
-import {path, schema, api, output, environment, string} from '@shopify/cli-kit'
+import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
+import {schema} from '@shopify/cli-kit/node/schema'
+import {constantize} from '@shopify/cli-kit/common/string'
+import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
+import {basename} from '@shopify/cli-kit/node/path'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 // Base config type for a theme extension.
-export type ThemeConfigContents = schema.define.infer<typeof ThemeExtensionSchema>
+export type ThemeConfigContents = schema.infer<typeof ThemeExtensionSchema>
 
 export interface ThemeExtensionSpec extends GenericSpecification {
   identifier: 'theme'
@@ -35,8 +40,9 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
   configuration: TConfiguration
   configurationPath: string
   specification: ThemeExtensionSpec
+  outputBundlePath: string
 
-  private remoteSpecification?: api.graphql.RemoteSpecification
+  private remoteSpecification?: RemoteSpecification
 
   get graphQLType() {
     return this.specification.graphQLType.toUpperCase()
@@ -66,33 +72,35 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
     configuration: TConfiguration
     configurationPath: string
     directory: string
-    remoteSpecification?: api.graphql.RemoteSpecification
+    remoteSpecification?: RemoteSpecification
     specification: ThemeExtensionSpec
+    outputBundlePath: string
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
     this.directory = options.directory
     this.remoteSpecification = options.remoteSpecification
     this.specification = options.specification
-    this.localIdentifier = path.basename(options.directory)
-    this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
+    this.localIdentifier = basename(options.directory)
+    this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
+    this.outputBundlePath = options.outputBundlePath
   }
 
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
-    const partnersFqdn = await environment.fqdn.partners()
+    const fqdn = await partnersFqdn()
     const parnersPath = this.specification.partnersWebIdentifier
-    return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
+    return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }
 
   previewMessage() {
-    const heading = output.token.heading(`${this.name} (${this.humanName})`)
-    const link = output.token.link(
+    const heading = outputToken.heading(`${this.name} (${this.humanName})`)
+    const link = outputToken.link(
       'dev doc instructions',
       'https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-3-test-your-changes',
     )
-    const message = output.content`Follow the ${link} by deploying your work as a draft`
+    const message = outputContent`Follow the ${link} by deploying your work as a draft`
 
-    return output.content`${heading}\n${message.value}\n`
+    return outputContent`${heading}\n${message.value}\n`
   }
 }
 

@@ -1,11 +1,9 @@
-import {MatchingError, RemoteSource} from './identifiers.js'
+import {RemoteSource, LocalSource} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {string} from '@shopify/cli-kit'
 import {groupBy, partition} from '@shopify/cli-kit/common/collection'
 import {uniqBy, difference} from '@shopify/cli-kit/common/array'
 import {pickBy} from '@shopify/cli-kit/common/object'
-import type {LocalSource} from './identifiers'
+import {slugify} from '@shopify/cli-kit/common/string'
 
 export interface MatchResult {
   identifiers: IdentifiersExtensions
@@ -18,7 +16,7 @@ export interface MatchResult {
  * Filter function to match a local and a remote source by type and name
  */
 const sameTypeAndName = (local: LocalSource, remote: RemoteSource) => {
-  return remote.type === local.graphQLType && string.slugify(remote.title) === string.slugify(local.configuration.name)
+  return remote.type === local.graphQLType && slugify(remote.title) === slugify(local.configuration.name)
 }
 
 /**
@@ -113,16 +111,14 @@ export async function automaticMatchmaking(
   remoteSources: RemoteSource[],
   identifiers: IdentifiersExtensions,
   remoteIdField: 'id' | 'uuid',
-): Promise<Result<MatchResult, MatchingError>> {
-  if (remoteSources.length > localSources.length) {
-    return err('invalid-environment')
-  }
-
-  const localUUIDs = Object.values(identifiers)
+): Promise<MatchResult> {
+  const localSourcesIds = localSources.map((source) => source.localIdentifier)
+  const ids = pickBy(identifiers, (_, id) => localSourcesIds.includes(id))
+  const localUUIDs = Object.values(ids)
   const existsRemotely = (local: LocalSource) => {
     return Boolean(
       remoteSources.find(
-        (remote) => remote[remoteIdField] === identifiers[local.localIdentifier] && remote.type === local.graphQLType,
+        (remote) => remote[remoteIdField] === ids[local.localIdentifier] && remote.type === local.graphQLType,
       ),
     )
   }
@@ -142,20 +138,10 @@ export async function automaticMatchmaking(
   // LOCAL_PROD_SUBSCR_NAMED_ORANGE -> REMOTE_PROD_SUBSCR_NAMED_LEMON
   const {toConfirm, toCreate, pending} = matchByUniqueType(matchResult.local, matchResult.remote)
 
-  // If we still have remote sources with a type that's missing from the local sources,
-  // or if we have more remote sources than local sources, we return an error
-  const remoteUnmatched = pending.remote.filter(
-    (remote) => !pending.local.map((local) => local.graphQLType).includes(remote.type),
-  )
-  if (remoteUnmatched.length > 0 || pending.remote.length > pending.local.length) {
-    return err('invalid-environment')
-  }
-
-  // At this point, all sources are matched either automatically, manually or are new
-  return ok({
-    identifiers: {...identifiers, ...matchedByNameAndType},
+  return {
+    identifiers: {...ids, ...matchedByNameAndType},
     toConfirm,
     toCreate,
     toManualMatch: pending,
-  })
+  }
 }

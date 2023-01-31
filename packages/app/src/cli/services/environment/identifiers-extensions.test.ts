@@ -2,13 +2,14 @@ import {automaticMatchmaking} from './id-matching.js'
 import {manualMatchIds} from './id-manual-matching.js'
 import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {RemoteSource} from './identifiers.js'
+import {deployConfirmationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {createExtension} from '../dev/create-extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
-import {ui} from '@shopify/cli-kit'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 const REGISTRATION_A: RemoteSource = {
   uuid: 'UUID_A',
@@ -21,6 +22,13 @@ const REGISTRATION_A_2 = {
   uuid: 'UUID_A_2',
   id: 'A_2',
   title: 'A_2',
+  type: 'CHECKOUT_POST_PURCHASE',
+}
+
+const REGISTRATION_A_3 = {
+  uuid: 'UUID_A_3',
+  id: 'A_3',
+  title: 'A_3',
   type: 'CHECKOUT_POST_PURCHASE',
 }
 
@@ -132,16 +140,19 @@ const options = (uiExtensions: UIExtension[], identifiers: any = {}) => {
     appId: 'appId',
     appName: 'appName',
     envIdentifiers: {extensions: identifiers},
+    force: false,
   }
 }
 
 beforeEach(() => {
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
+  vi.mock('@shopify/cli-kit/node/session')
+  vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+  vi.mock('./prompts', async () => {
+    const prompts: any = await vi.importActual('./prompts')
     return {
-      ...cliKit,
-      session: {ensureAuthenticatedPartners: async () => 'token'},
-      ui: {prompt: vi.fn()},
+      ...prompts,
+      matchConfirmationPrompt: vi.fn(),
+      deployConfirmationPrompt: vi.fn(),
     }
   })
   vi.mock('../dev/create-extension')
@@ -149,40 +160,56 @@ beforeEach(() => {
   vi.mock('./id-manual-matching')
 })
 
-describe('ensureExtensionsIds: matchmaking returns invalid', () => {
-  it('throw an invalid environment error', async () => {
+describe('ensureExtensionsIds: matchmaking returns more remote sources than local', () => {
+  it('requires user confirmation to go through partial deploy', async () => {
     // Given
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce(err('invalid-environment'))
+    vi.mocked(matchConfirmationPrompt).mockResolvedValueOnce(true)
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {EXTENSION_A: 'UUID_A'},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [],
+        remote: [REGISTRATION_B],
+      },
+    })
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
-    const got = await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), [REGISTRATION_A, REGISTRATION_B])
+    const got = await ensureExtensionsIds(options([EXTENSION_A]), [REGISTRATION_A, REGISTRATION_B])
 
     // Then
-    expect(got).toEqual(err('invalid-environment'))
+    expect(got).toEqual(
+      ok({
+        extensions: {
+          EXTENSION_A: 'UUID_A',
+        },
+        extensionIds: {EXTENSION_A: 'A'},
+      }),
+    )
   })
 })
 
 describe('ensureExtensionsIds: matchmaking returns ok with pending manual matches', () => {
   it('will call manualMatch and merge automatic and manual matches and create missing extensions', async () => {
     // Given
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
-      ok({
-        identifiers: {},
-        toCreate: [],
-        toConfirm: [],
-        toManualMatch: {
-          local: [EXTENSION_A, EXTENSION_A_2, EXTENSION_B],
-          remote: [REGISTRATION_A, REGISTRATION_A_2],
-        },
-      }),
-    )
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [EXTENSION_A, EXTENSION_A_2, EXTENSION_B],
+        remote: [REGISTRATION_A, REGISTRATION_A_2],
+      },
+    })
 
     vi.mocked(manualMatchIds).mockResolvedValueOnce({
-      result: 'ok',
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
       toCreate: [EXTENSION_B],
+      onlyRemote: [],
     })
     vi.mocked(createExtension).mockResolvedValueOnce(REGISTRATION_B)
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
     const got = await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
@@ -206,46 +233,61 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending manual matche
 })
 
 describe('ensureExtensionsIds: matchmaking returns ok with pending manual matches and manual match fails', () => {
-  it('throws an error for missing remote extension matches', async () => {
+  it('requires user confirmation to proceed with deploy', async () => {
     // Given
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
-      ok({
-        identifiers: {},
-        toCreate: [],
-        toConfirm: [],
-        toManualMatch: {
-          local: [EXTENSION_A],
-          remote: [REGISTRATION_A, REGISTRATION_A_2],
-        },
-      }),
-    )
-    vi.mocked(manualMatchIds).mockResolvedValueOnce({result: 'pending-remote'})
+    vi.mocked(matchConfirmationPrompt).mockResolvedValueOnce(true)
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [EXTENSION_A, EXTENSION_A_2],
+        remote: [REGISTRATION_A, REGISTRATION_A_2],
+      },
+    })
+    vi.mocked(manualMatchIds).mockResolvedValueOnce({
+      identifiers: {EXTENSION_A: 'UUID_A'},
+      toCreate: [EXTENSION_A_2],
+      onlyRemote: [REGISTRATION_A_2],
+    })
+    vi.mocked(createExtension).mockResolvedValueOnce(REGISTRATION_A_3)
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
     const got = await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
 
     // Then
-    expect(got).toEqual(err('pending-remote'))
-    expect(manualMatchIds).toBeCalledWith({local: [EXTENSION_A], remote: [REGISTRATION_A, REGISTRATION_A_2]}, 'uuid')
+    expect(got).toEqual(
+      ok({
+        extensions: {
+          EXTENSION_A: 'UUID_A',
+          EXTENSION_A_2: 'UUID_A_3',
+        },
+        extensionIds: {EXTENSION_A: 'A', EXTENSION_A_2: 'A_3'},
+      }),
+    )
+    expect(manualMatchIds).toBeCalledWith(
+      {local: [EXTENSION_A, EXTENSION_A_2], remote: [REGISTRATION_A, REGISTRATION_A_2]},
+      'uuid',
+    )
   })
 })
 
 describe('ensureExtensionsIds: matchmaking returns ok with pending some pending to create', () => {
-  it('Create the pending extensions and suceeds', async () => {
+  it('Create the pending extensions and succeeds', async () => {
     // Given
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
-      ok({
-        identifiers: {},
-        toConfirm: [],
-        toCreate: [EXTENSION_A, EXTENSION_A_2],
-        toManualMatch: {
-          local: [],
-          remote: [],
-        },
-      }),
-    )
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {},
+      toConfirm: [],
+      toCreate: [EXTENSION_A, EXTENSION_A_2],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
     vi.mocked(createExtension).mockResolvedValueOnce(REGISTRATION_A)
     vi.mocked(createExtension).mockResolvedValueOnce(REGISTRATION_A_2)
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
     const got = await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
@@ -262,20 +304,19 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending some pending 
 })
 
 describe('ensureExtensionsIds: matchmaking returns ok with some pending confirmation', () => {
-  it('confirms the pending ones and suceeds', async () => {
+  it('confirms the pending ones and succeeds', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValueOnce({value: 'yes'})
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
-      ok({
-        identifiers: {},
-        toConfirm: [{local: EXTENSION_B, remote: REGISTRATION_B}],
-        toCreate: [],
-        toManualMatch: {
-          local: [],
-          remote: [],
-        },
-      }),
-    )
+    vi.mocked(matchConfirmationPrompt).mockResolvedValueOnce(true)
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {},
+      toConfirm: [{local: EXTENSION_B, remote: REGISTRATION_B}],
+      toCreate: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
     const got = await ensureExtensionsIds(options([EXTENSION_B]), [REGISTRATION_B])
@@ -294,18 +335,17 @@ describe('ensureExtensionsIds: matchmaking returns ok with some pending confirma
 describe('ensureExtensionsIds: matchmaking returns ok with some pending confirmation', () => {
   it('do not confirms the pending ones and fails', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValueOnce({value: 'no'})
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
-      ok({
-        identifiers: {},
-        toConfirm: [{local: EXTENSION_B, remote: REGISTRATION_B}],
-        toCreate: [],
-        toManualMatch: {
-          local: [],
-          remote: [],
-        },
-      }),
-    )
+    vi.mocked(matchConfirmationPrompt).mockResolvedValueOnce(false)
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {},
+      toConfirm: [{local: EXTENSION_B, remote: REGISTRATION_B}],
+      toCreate: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
     const got = await ensureExtensionsIds(options([EXTENSION_B]), [REGISTRATION_B])
@@ -316,19 +356,18 @@ describe('ensureExtensionsIds: matchmaking returns ok with some pending confirma
 })
 
 describe('ensureExtensionsIds: matchmaking returns ok with nothing pending', () => {
-  it('suceeds and returns all identifiers', async () => {
+  it('succeeds and returns all identifiers', async () => {
     // Given
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce(
-      ok({
-        identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
-        toCreate: [],
-        toConfirm: [],
-        toManualMatch: {
-          local: [],
-          remote: [],
-        },
-      }),
-    )
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
     const got = await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
@@ -340,5 +379,57 @@ describe('ensureExtensionsIds: matchmaking returns ok with nothing pending', () 
         extensionIds: {EXTENSION_A: 'A', EXTENSION_A_2: 'A_2'},
       }),
     )
+  })
+})
+
+describe('ensureExtensionsIds: asks user to confirm deploy', () => {
+  it('shows confirmation prompt', async () => {
+    // Given
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
+
+    // When
+    const got = await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
+
+    // Then
+    expect(deployConfirmationPrompt).toBeCalledWith({
+      question: 'Make the following changes to your extensions in Shopify Partners?',
+      identifiers: {
+        EXTENSION_A: 'UUID_A',
+        EXTENSION_A_2: 'UUID_A_2',
+      },
+      onlyRemote: [],
+      toCreate: [],
+    })
+  })
+
+  it('skips confirmation prompt if --force is passed', async () => {
+    // Given
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+
+    const opts = options([EXTENSION_A, EXTENSION_A_2])
+    opts.force = true
+
+    // When
+    await ensureExtensionsIds(opts, [REGISTRATION_A, REGISTRATION_A_2])
+
+    // Then
+    expect(deployConfirmationPrompt).not.toBeCalled()
   })
 })

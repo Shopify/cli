@@ -1,14 +1,15 @@
 import initPrompt from '../prompts/init.js'
 import initService from '../services/init.js'
-import {path, cli} from '@shopify/cli-kit'
 import {Flags} from '@oclif/core'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
+import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 
 export default class Init extends Command {
   static aliases = ['create-hydrogen']
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     name: Flags.string({
       description: 'The name of the Hydrogen app.',
       char: 'n',
@@ -31,7 +32,7 @@ export default class Init extends Command {
       description: 'The path to the directory where the Hydrogen app will be created.',
       char: 'p',
       env: 'SHOPIFY_FLAG_PATH',
-      parse: (input, _) => Promise.resolve(path.resolve(input)),
+      parse: (input, _) => Promise.resolve(resolvePath(input)),
       hidden: false,
     }),
     'package-manager': Flags.string({
@@ -62,7 +63,7 @@ export default class Init extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Init)
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : cwd()
     const promptAnswers = await initPrompt({
       name: flags.name,
       template: flags.template,

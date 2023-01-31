@@ -3,8 +3,9 @@ import * as loadLocales from '../../../utilities/extensions/locales-configuratio
 import {UIExtensionInstance, UIExtensionSpec} from '../ui.js'
 import {loadLocalExtensionsSpecifications} from '../specifications.js'
 import {describe, expect, test, vi} from 'vitest'
-import {file, path} from '@shopify/cli-kit'
 import {err, ok} from '@shopify/cli-kit/node/result'
+import {inTemporaryDirectory, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 describe('ui_extension', async () => {
   interface GetUIExtensionProps {
@@ -13,11 +14,12 @@ describe('ui_extension', async () => {
   }
 
   async function getTestUIExtension({directory, extensionPoints}: GetUIExtensionProps) {
-    const configurationPath = path.join(directory, configurationFileNames.extension.ui)
+    const configurationPath = joinPath(directory, configurationFileNames.extension.ui)
     const allSpecs = await loadLocalExtensionsSpecifications()
     const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension') as UIExtensionSpec
     const configuration = {
       extensionPoints,
+      apiVersion: '2023-01' as const,
       name: 'UI Extension',
       type: 'ui_extension',
       metafields: [],
@@ -41,10 +43,10 @@ describe('ui_extension', async () => {
 
   describe('validate()', () => {
     test('returns ok({}) if there are no errors', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         // Given
-        await file.mkdir(path.join(tmpDir, 'src'))
-        await file.touch(path.join(tmpDir, 'src', 'ExtensionPointA.js'))
+        await mkdir(joinPath(tmpDir, 'src'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
 
         const uiExtension = await getTestUIExtension({
           directory: tmpDir,
@@ -65,7 +67,7 @@ describe('ui_extension', async () => {
     })
 
     test('returns err(message) when extensionPoints[n].module does not map to a file', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const uiExtension = await getTestUIExtension({
           directory: tmpDir,
@@ -81,8 +83,8 @@ describe('ui_extension', async () => {
         const result = await uiExtension.validate()
 
         // Then
-        const notFoundPath = path.join(tmpDir, './ExtensionPointA.js')
-        const tomlPath = path.join(tmpDir, configurationFileNames.extension.ui)
+        const notFoundPath = joinPath(tmpDir, './ExtensionPointA.js')
+        const tomlPath = joinPath(tmpDir, configurationFileNames.extension.ui)
 
         expect(result).toEqual(
           err(`Couldn't find ${notFoundPath}
@@ -94,10 +96,10 @@ Please check the configuration in ${tomlPath}`),
     })
 
     test('returns err(message) when there are duplicate targets', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         // Given
-        await file.mkdir(path.join(tmpDir, 'src'))
-        await file.touch(path.join(tmpDir, 'src', 'ExtensionPointA.js'))
+        await mkdir(joinPath(tmpDir, 'src'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
 
         const uiExtension = await getTestUIExtension({
           directory: tmpDir,
@@ -117,7 +119,7 @@ Please check the configuration in ${tomlPath}`),
         const result = await uiExtension.validate()
 
         // Then
-        const tomlPath = path.join(tmpDir, configurationFileNames.extension.ui)
+        const tomlPath = joinPath(tmpDir, configurationFileNames.extension.ui)
 
         expect(result).toEqual(
           err(`Duplicate targets found: EXTENSION::POINT::A
@@ -131,7 +133,7 @@ Please check the configuration in ${tomlPath}`),
 
   describe('previewMessage()', async () => {
     test('maps every target to a preview link', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const uiExtension = await getTestUIExtension({
           directory: tmpDir,
@@ -164,7 +166,7 @@ Please check the configuration in ${tomlPath}`),
 
   describe('deployConfig()', () => {
     test('returns the deploy config', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const localization = {
           default_locale: 'en',
@@ -191,6 +193,7 @@ Please check the configuration in ${tomlPath}`),
           extension_points: uiExtension.configuration.extensionPoints,
           capabilities: uiExtension.configuration.capabilities,
           name: uiExtension.configuration.name,
+          api_version: uiExtension.configuration.apiVersion,
           settings: uiExtension.configuration.settings,
         })
       })
@@ -199,7 +202,7 @@ Please check the configuration in ${tomlPath}`),
 
   describe('getBundleExtensionStdinContent()', async () => {
     test('maps every target to an import statement', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const uiExtension = await getTestUIExtension({
           directory: tmpDir,
@@ -227,7 +230,7 @@ Please check the configuration in ${tomlPath}`),
 
   describe('shouldFetchCartUrl()', async () => {
     test('returns true if a Checkout target exists', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const uiExtension = await getTestUIExtension({
           directory: tmpDir,
@@ -245,7 +248,7 @@ Please check the configuration in ${tomlPath}`),
     })
 
     test('returns false if a Checkout target does not exist', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const uiExtension = await getTestUIExtension({
           directory: tmpDir,
@@ -265,7 +268,7 @@ Please check the configuration in ${tomlPath}`),
 
   describe('hasExtensionPointTarget()', async () => {
     test('returns true if the target exists', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const uiExtension = await getTestUIExtension({
           directory: tmpDir,
@@ -283,7 +286,7 @@ Please check the configuration in ${tomlPath}`),
     })
 
     test('returns false if the target does not exist', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const uiExtension = await getTestUIExtension({
           directory: tmpDir,

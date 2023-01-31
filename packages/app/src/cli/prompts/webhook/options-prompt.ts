@@ -8,11 +8,10 @@ import {
 } from './trigger.js'
 import {
   DELIVERY_METHOD,
-  WebhookTriggerOptions,
   deliveryMethodForAddress,
   isAddressAllowedForDeliveryMethod,
 } from '../../services/webhook/trigger-options.js'
-import {error} from '@shopify/cli-kit'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 /**
  * Flags collected from the command line parameters
@@ -25,72 +24,110 @@ export interface WebhookTriggerFlags {
   sharedSecret?: string
 }
 
-/**
- * Collect all required data, validate and transform values into options for the Service
- * Some UX decisions:
- * - Flags validation will happen before we request any prompts
- * - Any option not passed as a flag will be requested via prompt
- * - In the case of having a flag for address and not for delivery-method, the delivery-method will be inferred from it
- * - An http delivery method sent to a localhost address will be transformed into a localhost delivery method.
- *   `localhost` is only internal: it requests core to return the data so that the plugin will deliver it locally without
- *   needing ngrok
- *
- * @param flags - Flags collected from the command-line arguments
- * @returns flags/prompts transformed into WebhookTriggerOptions to pass to the service
- */
-export async function optionsPrompt(flags: WebhookTriggerFlags): Promise<WebhookTriggerOptions> {
-  const options: WebhookTriggerOptions = {
-    topic: '',
-    apiVersion: '',
-    sharedSecret: '',
-    deliveryMethod: '',
-    address: '',
-  }
+export async function collectApiVersion(apiVersion: string | undefined, availableVersions: string[]): Promise<string> {
+  const apiVersionPassed = flagPassed(apiVersion)
 
-  const methodPassed = flagPassed(flags.deliveryMethod)
-  const addressPassed = flagPassed(flags.address)
-
-  if (methodPassed && !validDeliveryMethodFlag(flags.deliveryMethod)) {
-    throw new error.Abort(
-      'Invalid Delivery Method passed',
-      `${DELIVERY_METHOD.HTTP}, ${DELIVERY_METHOD.PUBSUB}, and ${DELIVERY_METHOD.EVENTBRIDGE} are allowed`,
+  if (apiVersionPassed) {
+    const passedApiVersion = (apiVersion as string).trim()
+    if (availableVersions.includes(passedApiVersion)) {
+      return passedApiVersion
+    }
+    throw new AbortError(
+      `Api Version '${passedApiVersion}' does not exist`,
+      `Allowed values: ${availableVersions.join(', ')}`,
+      ['Try again with a valid api-version value'],
     )
   }
 
-  if (methodPassed && addressPassed) {
-    if (isAddressAllowedForDeliveryMethod(flags.address as string, flags.deliveryMethod as string)) {
-      options.address = (flags.address as string).trim()
-      options.deliveryMethod = inferMethodFromAddress(options.address)
+  const promptedApiVersion = await apiVersionPrompt(availableVersions)
+
+  return promptedApiVersion
+}
+
+export async function collectTopic(
+  topic: string | undefined,
+  apiVersion: string,
+  availableTopics: string[],
+): Promise<string> {
+  const topicPassed = flagPassed(topic)
+
+  if (topicPassed) {
+    const passedTopic = equivalentTopic((topic as string).trim(), availableTopics)
+
+    if (passedTopic === undefined) {
+      throw new AbortError(
+        `Topic '${passedTopic}' does not exist for ApiVersion '${apiVersion}'`,
+        `Allowed values: ${availableTopics.join(', ')}`,
+        ['Try again with a valid api-version - topic pair'],
+      )
+    }
+
+    return passedTopic
+  }
+
+  if (availableTopics.length === 0) {
+    throw new AbortError(`No topics found for '${apiVersion}'`)
+  }
+  const promptedTopic = await topicPrompt(availableTopics)
+
+  return promptedTopic
+}
+
+export async function collectAddressAndMethod(
+  deliveryMethod: string | undefined,
+  address: string | undefined,
+): Promise<[string, string]> {
+  const methodWasPassed = flagPassed(deliveryMethod)
+  const addressWasPassed = flagPassed(address)
+
+  if (methodWasPassed && !validDeliveryMethodFlag(deliveryMethod)) {
+    throw new AbortError(
+      'Invalid Delivery Method passed',
+      `${DELIVERY_METHOD.HTTP}, ${DELIVERY_METHOD.PUBSUB}, and ${DELIVERY_METHOD.EVENTBRIDGE} are allowed`,
+      ['Try again with a valid delivery method'],
+    )
+  }
+  // Method is valid
+
+  let actualAddress = ''
+  let actualMethod = ''
+
+  if (methodWasPassed && addressWasPassed) {
+    if (isAddressAllowedForDeliveryMethod(address as string, deliveryMethod as string)) {
+      actualAddress = (address as string).trim()
+      actualMethod = inferMethodFromAddress(actualAddress)
     } else {
-      throw new error.Abort(
-        "Can't deliver your webhook payload to this address. Run 'shopify webhook trigger --address=<VALUE>' with a valid URL",
-        undefined,
-        deliveryMethodInstructions(flags.deliveryMethod as string),
+      throw new AbortError(
+        `Can't deliver your webhook payload to this address using '${deliveryMethod}'`,
+        "Run 'shopify webhook trigger --address=<VALUE>' with a valid URL",
+        deliveryMethodInstructions(deliveryMethod as string),
       )
     }
   }
 
-  if (!methodPassed && addressPassed) {
-    options.address = (flags.address as string).trim()
-    options.deliveryMethod = inferMethodFromAddress(options.address)
+  if (!methodWasPassed && addressWasPassed) {
+    actualAddress = (address as string).trim()
+    actualMethod = inferMethodFromAddress(actualAddress)
   }
 
-  options.topic = await useFlagOrPrompt(flags.topic, topicPrompt)
-  options.apiVersion = await useFlagOrPrompt(flags.apiVersion, apiVersionPrompt)
-  options.sharedSecret = await useFlagOrPrompt(flags.sharedSecret, sharedSecretPrompt)
+  if (methodWasPassed && !addressWasPassed) {
+    actualAddress = await addressPrompt(deliveryMethod as string)
+    actualMethod = inferMethodFromAddress(actualAddress)
+  }
 
-  if (!methodPassed && !addressPassed) {
+  if (!methodWasPassed && !addressWasPassed) {
     const method = await deliveryMethodPrompt()
-    options.address = await addressPrompt(method)
-    options.deliveryMethod = inferMethodFromAddress(options.address)
+    actualAddress = await addressPrompt(method)
+    actualMethod = inferMethodFromAddress(actualAddress)
   }
 
-  if (methodPassed && !addressPassed) {
-    options.address = await addressPrompt(flags.deliveryMethod as string)
-    options.deliveryMethod = inferMethodFromAddress(options.address)
-  }
+  return [actualMethod, actualAddress]
+}
 
-  return options
+export async function collectSecret(sharedSecret: string | undefined): Promise<string> {
+  const secret = await useFlagOrPrompt(sharedSecret, sharedSecretPrompt)
+
+  return secret
 }
 
 async function useFlagOrPrompt(value: string | undefined, prompt: () => Promise<string>): Promise<string> {
@@ -111,13 +148,20 @@ function validDeliveryMethodFlag(value: string | undefined): boolean {
 
 function inferMethodFromAddress(address: string): string {
   const method = deliveryMethodForAddress(address)
-
   if (method === undefined) {
-    throw new error.Abort(
+    throw new AbortError(
       'No delivery method available for the address',
       `Use a valid address for ${DELIVERY_METHOD.HTTP}, ${DELIVERY_METHOD.PUBSUB} or ${DELIVERY_METHOD.EVENTBRIDGE}`,
     )
   }
 
   return method
+}
+
+function equivalentTopic(passedTopic: string, availableTopics: string[]): string | undefined {
+  if (availableTopics.includes(passedTopic)) {
+    return passedTopic
+  }
+
+  return availableTopics.find((elm) => elm.toUpperCase().replace('/', '_') === passedTopic)
 }

@@ -1,5 +1,11 @@
 # @shopify/features
 
+## 0.7.0
+
+### Minor Changes
+
+- aaa9730d: New update-url command
+
 ## 0.6.0
 
 ### Minor Changes

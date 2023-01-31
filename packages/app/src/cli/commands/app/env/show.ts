@@ -4,21 +4,23 @@ import {load as loadApp} from '../../../models/app/loader.js'
 import {showEnv} from '../../../services/app/env/show.js'
 import Command from '../../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../../models/extensions/specifications.js'
-import {output, path, cli} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class EnvShow extends Command {
-  static description = 'Display app and extensions environment variables'
+  static description = 'Display app and extensions environment variables.'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...appFlags,
   }
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(EnvShow)
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : cwd()
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({directory, specifications, mode: 'report'})
-    output.info(await showEnv(app))
+    outputInfo(await showEnv(app))
   }
 }

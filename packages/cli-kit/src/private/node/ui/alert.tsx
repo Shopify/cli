@@ -1,6 +1,6 @@
 import {Alert, AlertProps} from './components/Alert.js'
 import {renderOnce} from '../ui.js'
-import {consoleLog, consoleWarn, Logger, LogLevel} from '../../../output.js'
+import {consoleLog, consoleWarn, Logger, LogLevel} from '../../../public/node/output.js'
 import React from 'react'
 
 const typeToLogLevel: {[key in AlertProps['type']]: LogLevel} = {
@@ -15,7 +15,16 @@ const typeToLogger: {[key in AlertProps['type']]: Logger} = {
   success: consoleLog,
 }
 
-export function alert({type, headline, body, nextSteps, reference, link, orderedNextSteps = false}: AlertProps) {
+export function alert({
+  type,
+  headline,
+  body,
+  nextSteps,
+  reference,
+  link,
+  customSections,
+  orderedNextSteps = false,
+}: AlertProps) {
   renderOnce(
     <Alert
       type={type}
@@ -25,6 +34,7 @@ export function alert({type, headline, body, nextSteps, reference, link, ordered
       reference={reference}
       link={link}
       orderedNextSteps={orderedNextSteps}
+      customSections={customSections}
     />,
     typeToLogLevel[type],
     typeToLogger[type],

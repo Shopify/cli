@@ -1,7 +1,10 @@
 import {ExtensionAssetBuildStatus} from './payload/models.js'
 import {GetUIExtensionPayloadOptions} from './payload.js'
 import {UIExtension} from '../../../models/app/extensions.js'
-import {path, file, output} from '@shopify/cli-kit'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {readFile, glob} from '@shopify/cli-kit/node/fs'
+import {ExtendableError} from '@shopify/cli-kit/node/error'
+import {outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 
 export type Locale = string
 
@@ -15,8 +18,8 @@ export interface Localization {
 }
 
 export async function getLocalizationFilePaths(extension: UIExtension): Promise<string[]> {
-  const localePath = path.join(extension.directory, 'locales')
-  return path.glob([path.join(localePath, '*.json')])
+  const localePath = joinPath(extension.directory, 'locales')
+  return glob([joinPath(localePath, '*.json')])
 }
 
 export async function getLocalization(
@@ -37,33 +40,28 @@ export async function getLocalization(
         lastUpdated: 0,
       } as Localization)
 
-  const compilingTranslations = []
-
-  for (const path of localeFiles) {
-    const [locale, ...fileNameSegments] = (path.split('/').pop() as string).split('.')
-
-    if (locale) {
-      if (fileNameSegments[0] === 'default') {
-        localization.defaultLocale = locale
-      }
-
-      compilingTranslations.push(compileLocalizationFiles(locale, path, localization, extension, options))
-    }
-  }
-
   let status: ExtensionAssetBuildStatus = 'success'
 
-  await Promise.all(compilingTranslations)
-    .then(async () => {
-      localization.lastUpdated = Date.now()
-      output.info(
-        `Parsed locales for extension ${extension.configuration.name} at ${extension.directory}`,
-        options.stdout,
-      )
-    })
-    .catch(() => {
-      status = 'error'
-    })
+  try {
+    await Promise.all(
+      localeFiles.map(async (localeFile) => {
+        const [locale, ...fileNameSegments] = (localeFile.split('/').pop() as string).split('.')
+
+        if (locale) {
+          if (fileNameSegments[0] === 'default') {
+            localization.defaultLocale = locale
+          }
+
+          return compileLocalizationFiles(locale, localeFile, localization, extension, options)
+        }
+      }),
+    )
+    localization.lastUpdated = Date.now()
+    outputInfo(`Parsed locales for extension ${extension.configuration.name} at ${extension.directory}`, options.stdout)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-catch-all/no-catch-all
+  } catch (error: any) {
+    status = 'error'
+  }
 
   return {
     localization,
@@ -78,12 +76,14 @@ async function compileLocalizationFiles(
   extension: UIExtension,
   options: GetUIExtensionPayloadOptions,
 ): Promise<void> {
+  let localeContent: string | undefined
   try {
-    localization.translations[locale] = JSON.parse(await file.read(path))
+    localeContent = await readFile(path)
+    localization.translations[locale] = JSON.parse(localeContent)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     const message = `Error parsing ${locale} locale for ${extension.configuration.name} at ${path}: ${error.message}`
-    await output.warn(message, options.stderr)
-    throw new Error(message)
+    outputWarn(message, options.stderr)
+    throw new ExtendableError(message)
   }
 }

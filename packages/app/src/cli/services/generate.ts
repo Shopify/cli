@@ -6,9 +6,14 @@ import {GenericSpecification} from '../models/app/extensions.js'
 import generateExtensionPrompt from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
 import generateExtensionService, {ExtensionFlavor} from '../services/generate/extension.js'
-import {environment, error, output, path, session} from '@shopify/cli-kit'
-import {PackageManager} from '@shopify/cli-kit/node/node-package-manager.js'
+import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Config} from '@oclif/core'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {isShopify} from '@shopify/cli-kit/node/environment/local'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {RenderAlertOptions, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 export interface GenerateOptions {
   directory: string
@@ -22,7 +27,7 @@ export interface GenerateOptions {
 }
 
 async function generate(options: GenerateOptions) {
-  const token = await session.ensureAuthenticatedPartners()
+  const token = await ensureAuthenticatedPartners()
   const apiKey = await ensureGenerateEnvironment({...options, token})
   let specifications = await fetchSpecifications({token, apiKey, config: options.config})
   const app: AppInterface = await loadApp({directory: options.directory, specifications})
@@ -32,9 +37,9 @@ async function generate(options: GenerateOptions) {
   const allExternalTypes = specifications.map((spec) => spec.externalIdentifier)
 
   if (options.type && !specification) {
-    const isShopify = await environment.local.isShopify()
-    const tryMsg = isShopify ? 'You might need to enable some beta flags on your Organization or App' : undefined
-    throw new error.Abort(
+    const isShopifolk = await isShopify()
+    const tryMsg = isShopifolk ? 'You might need to enable some beta flags on your Organization or App' : undefined
+    throw new AbortError(
       `Unknown extension type: ${options.type}.\nThe following extension types are supported: ${allExternalTypes.join(
         ', ',
       )}`,
@@ -48,7 +53,7 @@ async function generate(options: GenerateOptions) {
     const existing = app.extensionsForType(specification)
     const limit = specification.registrationLimit
     if (existing.length >= limit) {
-      throw new error.Abort(
+      throw new AbortError(
         'Invalid extension type',
         `You can only generate ${limit} extension(s) of type ${specification.externalIdentifier} per app`,
       )
@@ -63,7 +68,7 @@ async function generate(options: GenerateOptions) {
     extensionType: specification?.identifier || options.type,
     name: options.name,
     extensionFlavor: options.template,
-    directory: path.join(options.directory, 'extensions'),
+    directory: joinPath(options.directory, 'extensions'),
     app,
     extensionSpecifications: specifications,
     reset: options.reset,
@@ -72,10 +77,10 @@ async function generate(options: GenerateOptions) {
   const {extensionType, extensionFlavor, name} = promptAnswers
   const selectedSpecification = findSpecification(extensionType, specifications)
   if (!selectedSpecification) {
-    throw new error.Abort(`The following extension types are supported: ${allExternalTypes.join(', ')}`)
+    throw new AbortError(`The following extension types are supported: ${allExternalTypes.join(', ')}`)
   }
 
-  await metadata.addPublic(() => ({
+  await metadata.addPublicMetadata(() => ({
     cmd_scaffold_template_flavor: extensionFlavor,
     cmd_scaffold_type: extensionType,
     cmd_scaffold_type_category: selectedSpecification.category(),
@@ -94,10 +99,10 @@ async function generate(options: GenerateOptions) {
 
   const formattedSuccessfulMessage = formatSuccessfulRunMessage(
     selectedSpecification,
-    path.relative(app.directory, extensionDirectory),
+    extensionDirectory,
     app.packageManager,
   )
-  output.info(formattedSuccessfulMessage)
+  renderSuccess(formattedSuccessfulMessage)
 }
 
 function findSpecification(type: string | undefined, specifications: GenericSpecification[]) {
@@ -107,11 +112,11 @@ function findSpecification(type: string | undefined, specifications: GenericSpec
 function validateExtensionFlavor(specification: GenericSpecification | undefined, flavor: string | undefined) {
   if (!flavor || !specification) return
 
-  const possibleFlavors = specification.supportedFlavors.map((flavor) => flavor.name)
+  const possibleFlavors = specification.supportedFlavors.map((flavor) => flavor.value)
   if (!possibleFlavors.includes(flavor)) {
-    throw new error.Abort(
-      'Specified extension template on invalid extension type',
-      `You can only specify a template for these extension types: ${possibleFlavors.join(', ')}.`,
+    throw new AbortError(
+      'Invalid template for extension type',
+      `Expected template to be one of the following: ${possibleFlavors.join(', ')}.`,
     )
   }
 }
@@ -120,29 +125,25 @@ function formatSuccessfulRunMessage(
   specification: GenericSpecification,
   extensionDirectory: string,
   depndencyManager: PackageManager,
-): string {
-  output.completed(`Your ${specification.externalName} extension was added to your project!`)
-
-  const outputTokens = []
-  outputTokens.push(
-    output.content`\n  To find your extension, remember to ${output.token.genericShellCommand(
-      output.content`cd ${output.token.path(extensionDirectory)}`,
-    )}`.value,
-  )
+): RenderAlertOptions {
+  const options: RenderAlertOptions = {
+    headline: [{userInput: specification.externalName}, 'extension was added to your project!'],
+    nextSteps: [['To find your extension, remember to', {command: `cd ${extensionDirectory}`}]],
+    reference: [],
+  }
 
   if (specification.category() === 'ui' || specification.category() === 'theme') {
-    outputTokens.push(
-      output.content`  To preview your project, run ${output.token.packagejsonScript(depndencyManager, 'dev')}`.value,
-    )
+    options.nextSteps!.push([
+      'To preview your project, run',
+      {command: `${formatPackageManagerCommand(depndencyManager, 'dev')}`},
+    ])
   }
 
   if (specification.helpURL) {
-    outputTokens.push(
-      output.content`  For more details, see the ${output.token.link('docs', specification.helpURL)} ✨`.value,
-    )
+    options.reference!.push(['For more details, see the', {link: {label: 'docs', url: specification.helpURL}}])
   }
 
-  return outputTokens.join('\n').concat('\n')
+  return options
 }
 
 export default generate

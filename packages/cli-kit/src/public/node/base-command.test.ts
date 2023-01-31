@@ -1,10 +1,10 @@
 import Command from './base-command.js'
 import {Presets, presetsFilename} from './presets.js'
-import {globalFlags} from '../../cli.js'
-import {inTemporaryDirectory, mkdir, write as writeFile} from '../../file.js'
-import {mockAndCaptureOutput} from '../../testing/output.js'
-import {encode as encodeTOML} from '../../toml.js'
-import {join as pathJoin, resolve as resolvePath} from '../../path.js'
+import {encodeToml as encodeTOML} from './toml.js'
+import {globalFlags} from './cli.js'
+import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
+import {joinPath, resolvePath} from './path.js'
+import {mockAndCaptureOutput} from './testing/output.js'
 import {describe, expect, test} from 'vitest'
 import {Flags} from '@oclif/core'
 
@@ -102,7 +102,7 @@ describe('applying presets', async () => {
       disableFindUpPresets = false
 
       await inTemporaryDirectory(async (tmpDir) => {
-        await writeFile(pathJoin(tmpDir, presetsFilename), encodeTOML(allPresets as any))
+        await writeFile(joinPath(tmpDir, presetsFilename), encodeTOML(allPresets as any))
         await testFunc(tmpDir)
       })
     })
@@ -153,7 +153,7 @@ describe('applying presets', async () => {
 
   runTestInTmpDir('searches up recursively from path by default', async (tmpDir: string) => {
     // Given
-    const subdir = pathJoin(tmpDir, 'somedir', '--preset', 'validPreset')
+    const subdir = joinPath(tmpDir, 'somedir', '--preset', 'validPreset')
     await mkdir(subdir)
 
     // When
@@ -167,7 +167,7 @@ describe('applying presets', async () => {
     'searches only in the current directory when recursive search is disabled',
     async (tmpDir: string) => {
       // Given
-      const subdir = pathJoin(tmpDir, 'somedir')
+      const subdir = joinPath(tmpDir, 'somedir')
       await mkdir(subdir)
       disableFindUpPresets = true
 

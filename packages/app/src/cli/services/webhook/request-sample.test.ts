@@ -1,23 +1,21 @@
 import {getWebhookSample} from './request-sample.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {api, session} from '@shopify/cli-kit'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 const samplePayload = '{ "sampleField": "SampleValue" }'
 const sampleHeaders = '{ "header": "Header Value" }'
 
 beforeEach(async () => {
-  vi.mock('@shopify/cli-kit')
+  vi.mock('@shopify/cli-kit/node/api/partners')
 })
 
 afterEach(async () => {
   vi.clearAllMocks()
 })
 
-describe('getWebhookSample', () => {
-  beforeEach(async () => {
-    vi.mocked(session.ensureAuthenticatedPartners).mockResolvedValue('A_TOKEN')
-  })
+const aToken = 'A_TOKEN'
 
+describe('getWebhookSample', () => {
   it('calls partners to request data', async () => {
     // Given
     const inputValues = {
@@ -45,13 +43,11 @@ describe('getWebhookSample', () => {
         ],
       },
     }
-    vi.mocked(api.partners.request).mockResolvedValue(graphQLResult)
-
-    const requestSpy = vi.spyOn(api.partners, 'request')
-    const sessionSpy = vi.spyOn(session, 'ensureAuthenticatedPartners')
+    vi.mocked(partnersRequest).mockResolvedValue(graphQLResult)
 
     // When
     const got = await getWebhookSample(
+      aToken,
       inputValues.topic,
       inputValues.apiVersion,
       inputValues.value,
@@ -60,8 +56,7 @@ describe('getWebhookSample', () => {
     )
 
     // Then
-    expect(sessionSpy).toHaveBeenCalledOnce()
-    expect(requestSpy).toHaveBeenCalledWith(expect.any(String), 'A_TOKEN', requestValues)
+    expect(partnersRequest).toHaveBeenCalledWith(expect.any(String), 'A_TOKEN', requestValues)
     expect(got.samplePayload).toEqual(samplePayload)
     expect(got.headers).toEqual(sampleHeaders)
     expect(got.success).toEqual(graphQLResult.sendSampleWebhook.success)

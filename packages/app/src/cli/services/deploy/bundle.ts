@@ -1,10 +1,13 @@
-import {buildThemeExtensions, buildFunctionExtension, buildUIExtensions} from '../build/extension.js'
+import {buildFunctionExtension, buildUIExtensions} from '../build/extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
-import {path, file, abort} from '@shopify/cli-kit'
+import {bundleThemeExtensions} from '../extensions/bundle.js'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
-import {Writable} from 'node:stream'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {inTemporaryDirectory, mkdirSync, touchFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, basename} from '@shopify/cli-kit/node/path'
+import {Writable} from 'stream'
 
 interface BundleOptions {
   app: AppInterface
@@ -14,19 +17,23 @@ interface BundleOptions {
 }
 
 export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions) {
-  await file.inTemporaryDirectory(async (tmpDir) => {
-    const bundleDirectory = path.join(tmpDir, 'bundle')
-    await file.mkdir(bundleDirectory)
-    await file.touch(path.join(bundleDirectory, '.shopify'))
+  await inTemporaryDirectory(async (tmpDir) => {
+    const bundleDirectory = joinPath(tmpDir, 'bundle')
+    await mkdirSync(bundleDirectory)
+    await touchFile(joinPath(bundleDirectory, '.shopify'))
 
     await renderConcurrent({
       processes: [
         {
           prefix: 'theme_extensions',
-          action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
-            await buildThemeExtensions({
+          action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+            await bundleThemeExtensions({
               app: options.app,
-              extensions: options.app.extensions.theme,
+              extensions: options.app.extensions.theme.map((themeExtension) => {
+                const extensionId = options.identifiers.extensions[themeExtension.localIdentifier]!
+                themeExtension.outputBundlePath = joinPath(bundleDirectory, extensionId)
+                return themeExtension
+              }),
               stdout,
               stderr,
               signal,
@@ -40,10 +47,10 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
               ...options.app.extensions,
               ui: options.app.extensions.ui.map((uiExtension) => {
                 const extensionId = options.identifiers.extensions[uiExtension.localIdentifier]!
-                uiExtension.outputBundlePath = path.join(
+                uiExtension.outputBundlePath = joinPath(
                   bundleDirectory,
                   extensionId,
-                  path.basename(uiExtension.outputBundlePath),
+                  basename(uiExtension.outputBundlePath),
                 )
                 return uiExtension
               }),
@@ -53,7 +60,7 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
         ...options.app.extensions.function.map((functionExtension) => {
           return {
             prefix: functionExtension.localIdentifier,
-            action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+            action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
               await buildFunctionExtension(functionExtension, {stdout, stderr, signal, app: options.app})
             },
           }
@@ -63,7 +70,10 @@ export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions)
     })
 
     if (options.bundle) {
-      await zip(bundleDirectory, options.bundlePath)
+      await zip({
+        inputDirectory: bundleDirectory,
+        outputZipPath: options.bundlePath,
+      })
     }
   })
 }

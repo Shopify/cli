@@ -2,8 +2,10 @@ import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {cloneRepoAndCheckoutLatestTag, cloneRepo} from '../../services/init.js'
 import {Flags} from '@oclif/core'
-import {cli, path, ui} from '@shopify/cli-kit'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {ui} from '@shopify/cli-kit'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
+import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 
 export default class Init extends ThemeCommand {
   static description = 'Clones a Git repository to use as a starting point for building a new theme.'
@@ -17,7 +19,7 @@ export default class Init extends ThemeCommand {
   ]
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     path: themeFlags.path,
     'clone-url': Flags.string({
       char: 'u',
@@ -35,9 +37,9 @@ export default class Init extends ThemeCommand {
 
   async run(): Promise<void> {
     const {args, flags} = await this.parse(Init)
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : cwd()
     const name = args.name || (await this.promptName(directory))
-    const destination = path.resolve(flags.path, name)
+    const destination = resolvePath(flags.path, name)
     const repoUrl = flags['clone-url']
 
     if (flags.latest) {

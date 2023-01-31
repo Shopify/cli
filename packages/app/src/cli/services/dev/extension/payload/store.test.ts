@@ -18,6 +18,9 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
 
     const options = {
       apiKey: 'mock-api-key',
+      app: {
+        name: 'mock-app-name',
+      },
       url: 'https://mock-url.com',
       websocketURL: 'wss://mock-websocket-url.com',
       extensions: [{}, {}, {}],
@@ -30,7 +33,11 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
     // Then
     expect(rawPayload).toMatchObject({
       app: {
+        title: 'mock-app-name',
         apiKey: 'mock-api-key',
+        url: 'https://mock-url.com?shop=mock-store-fqdn.shopify.com&host=bW9jay1zdG9yZS1mcWRuLnNob3BpZnkuY29tL2FkbWlu',
+        mobileUrl:
+          'https://mock-store-fqdn.shopify.com/admin/apps/mock-api-key?shop=mock-store-fqdn.shopify.com&host=bW9jay1zdG9yZS1mcWRuLnNob3BpZnkuY29tL2FkbWluL2FwcHMvbW9jay1hcGkta2V5',
       },
       version: '3',
       root: {
@@ -165,6 +172,47 @@ describe('ExtensionsPayloadStore()', () => {
       expect(extensionsPayloadStore.getRawPayload().extensions[0]?.test).toEqual('value')
     })
 
+    it('deep merge extension points with incoming payload when the target matches', () => {
+      // Given
+      const payload = {
+        extensions: [
+          {
+            uuid: '123',
+            extensionPoints: [
+              {target: 'First::Extension::Point', extraProp: '1', resource: {url: ''}},
+              {target: 'Second::Extension::Point', extraProp: '2', resource: {url: ''}},
+              {target: 'Third::Extension::Point', extraProp: '3', resource: {url: ''}},
+            ],
+          },
+        ],
+      } as unknown as ExtensionsEndpointPayload
+
+      const extensionsPayloadStore = new ExtensionsPayloadStore(payload, mockOptions)
+
+      // When
+      extensionsPayloadStore.updateExtensions([
+        {
+          uuid: '123',
+          extensionPoints: [
+            {target: 'First::Extension::Point', resource: {url: '/first-extension-point-url'}},
+            {target: 'Second::Extension::Point', resource: {url: '/second-extension-point-url'}},
+          ],
+        },
+      ] as unknown as UIExtensionPayload[])
+
+      // Then
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      expect(extensionsPayloadStore.getRawPayload().extensions[0]).toMatchObject({
+        uuid: '123',
+        extensionPoints: [
+          {target: 'First::Extension::Point', extraProp: '1', resource: {url: '/first-extension-point-url'}},
+          {target: 'Second::Extension::Point', extraProp: '2', resource: {url: '/second-extension-point-url'}},
+          {target: 'Third::Extension::Point', extraProp: '3', resource: {url: ''}},
+        ],
+      })
+    })
+
     it('informs event listeners of updated extensions', () => {
       // Given
       const payload = {
@@ -297,7 +345,7 @@ describe('ExtensionsPayloadStore()', () => {
       expect(onUpdateSpy).toHaveBeenCalledWith(['123'])
     })
 
-    test('Does not update or inform event listeners if the extension does not exist', async () => {
+    test('does not update or inform event listeners if the extension does not exist', async () => {
       // Given
       const mockPayload = {
         extensions: [{uuid: '123'}],

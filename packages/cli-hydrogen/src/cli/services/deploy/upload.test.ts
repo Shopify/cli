@@ -1,12 +1,13 @@
 import {GraphQLError, ReqDeployConfig} from './types.js'
 import {createDeployment, healthCheck, uploadDeployment} from './upload.js'
-import {TooManyRequestsError, UnrecoverableError} from './error.js'
 import {CreateDeploymentQuery} from './graphql/create_deployment.js'
 import {beforeEach, describe, it, expect, vi} from 'vitest'
-import {http, api, file} from '@shopify/cli-kit'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {ClientError} from 'graphql-request'
-import {createReadStream} from 'node:fs'
+import {oxygenRequest, uploadOxygenDeploymentFile} from '@shopify/cli-kit/node/api/oxygen'
+import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {formData, fetch} from '@shopify/cli-kit/node/http'
+import {createReadStream} from 'fs'
 
 const defaultConfig: ReqDeployConfig = {
   deploymentToken: '123',
@@ -23,9 +24,11 @@ const defaultConfig: ReqDeployConfig = {
 }
 
 beforeEach(() => {
-  vi.mock('@shopify/cli-kit')
+  vi.mock('@shopify/cli-kit/node/api/oxygen')
+  vi.mock('@shopify/cli-kit/node/http')
   vi.mock('@shopify/cli-kit/node/archiver')
-  vi.mock('node:fs')
+  vi.mock('@shopify/cli-kit/node/fs')
+  vi.mock('fs')
 })
 
 describe('createDeploymentStep()', () => {
@@ -40,7 +43,7 @@ describe('createDeploymentStep()', () => {
 
     const mockedResponse = vi.fn().mockResolvedValue(deploymentResponse)
     const mockedRequest = vi.fn().mockResolvedValue(mockedResponse)
-    vi.mocked(api.oxygen.request).mockImplementation(mockedRequest)
+    vi.mocked(oxygenRequest).mockImplementation(mockedRequest)
     const cfg = {
       ...defaultConfig,
       commitRef: 'ref/branch',
@@ -72,16 +75,16 @@ describe('createDeploymentStep()', () => {
   describe('failure', () => {
     it('throws a rate limit error if we are getting ratelimited', async () => {
       const graphQLError = new ClientError({status: 429}, {query: ''})
-      vi.mocked(api.oxygen.request).mockRejectedValueOnce(graphQLError)
+      vi.mocked(oxygenRequest).mockRejectedValueOnce(graphQLError)
 
       await expect(() => {
         return createDeployment(defaultConfig)
-      }).rejects.toThrowError(TooManyRequestsError())
+      }).rejects.toThrowError(/too many requests/)
     })
 
     it('throws if we are getting a non-200 status code', async () => {
       const graphQLError = new ClientError({status: 500}, {query: ''})
-      vi.mocked(api.oxygen.request).mockRejectedValueOnce(graphQLError)
+      vi.mocked(oxygenRequest).mockRejectedValueOnce(graphQLError)
 
       await expect(() => {
         return createDeployment(defaultConfig)
@@ -100,7 +103,7 @@ describe('createDeploymentStep()', () => {
           },
         },
       }
-      vi.mocked(api.oxygen.request).mockResolvedValue(oxygenResponse)
+      vi.mocked(oxygenRequest).mockResolvedValue(oxygenResponse)
 
       await expect(() => {
         return createDeployment(defaultConfig)
@@ -120,11 +123,11 @@ describe('createDeploymentStep()', () => {
           },
         },
       }
-      vi.mocked(api.oxygen.request).mockResolvedValue(oxygenResponse)
+      vi.mocked(oxygenRequest).mockResolvedValue(oxygenResponse)
 
       await expect(() => {
         return createDeployment(defaultConfig)
-      }).rejects.toThrowError(UnrecoverableError(errMsg))
+      }).rejects.toThrowError(/Unrecoverable/)
     })
   })
 })
@@ -137,8 +140,8 @@ describe('uploadDeploymentStep()', async () => {
       const mockedZip = vi.fn()
       vi.mocked(zip).mockImplementation(mockedZip)
       const mockedFormDataAppend = vi.fn()
-      const formData = {append: mockedFormDataAppend, getHeaders: vi.fn()}
-      vi.mocked<any>(http.formData).mockReturnValue(formData)
+      const mockformData = {append: mockedFormDataAppend, getHeaders: vi.fn()}
+      vi.mocked<any>(formData).mockReturnValue(mockformData)
       const previewURL = 'https://preview.url'
       const oxygenResponse = {
         data: {
@@ -153,9 +156,9 @@ describe('uploadDeploymentStep()', async () => {
       const mockedUploadDeployment = vi
         .fn()
         .mockResolvedValue({json: vi.fn().mockResolvedValue(oxygenResponse), status: 200})
-      vi.mocked<any>(api.oxygen.uploadDeploymentFile).mockImplementation(mockedUploadDeployment)
+      vi.mocked<any>(uploadOxygenDeploymentFile).mockImplementation(mockedUploadDeployment)
       const tmpDir = 'tmp/dir'
-      vi.mocked<any>(file.inTemporaryDirectory).mockImplementation(async (runner: (tmpDir: string) => Promise<void>) =>
+      vi.mocked<any>(inTemporaryDirectory).mockImplementation(async (runner: (tmpDir: string) => Promise<void>) =>
         runner(tmpDir),
       )
 
@@ -166,8 +169,8 @@ describe('uploadDeploymentStep()', async () => {
 
       expect(result).toBe(previewURL)
       expect(mockedFormDataAppend).toHaveBeenCalledTimes(3)
-      expect(mockedZip).toHaveBeenCalledWith(`unit/test/dist`, `${tmpDir}/dist.zip`)
-      expect(api.oxygen.uploadDeploymentFile).toHaveBeenCalledWith('oxygen.address', '123', formData)
+      expect(mockedZip).toHaveBeenCalledWith({inputDirectory: 'unit/test/dist', outputZipPath: `${tmpDir}/dist.zip`})
+      expect(uploadOxygenDeploymentFile).toHaveBeenCalledWith('oxygen.address', '123', mockformData)
     })
   })
 
@@ -175,8 +178,8 @@ describe('uploadDeploymentStep()', async () => {
     beforeEach(() => {
       vi.mocked(createReadStream)
       vi.mocked<any>(zip).mockImplementation(vi.fn())
-      vi.mocked<any>(http.formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()})
-      vi.mocked<any>(file.inTemporaryDirectory).mockImplementation(async (runner: (tmpDir: string) => Promise<void>) =>
+      vi.mocked<any>(formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()})
+      vi.mocked<any>(inTemporaryDirectory).mockImplementation(async (runner: (tmpDir: string) => Promise<void>) =>
         runner('tmp/dir'),
       )
     })
@@ -192,9 +195,9 @@ describe('uploadDeploymentStep()', async () => {
       const mockedUploadDeployment = vi
         .fn()
         .mockResolvedValue({json: vi.fn().mockResolvedValue(oxygenResponse), status: 500})
-      vi.mocked<any>(api.oxygen.uploadDeploymentFile).mockImplementation(mockedUploadDeployment)
+      vi.mocked<any>(uploadOxygenDeploymentFile).mockImplementation(mockedUploadDeployment)
       const tmpDir = 'tmp/dir'
-      vi.mocked<any>(file.inTemporaryDirectory).mockImplementation(async (runner: (tmpDir: string) => Promise<void>) =>
+      vi.mocked<any>(inTemporaryDirectory).mockImplementation(async (runner: (tmpDir: string) => Promise<void>) =>
         runner(tmpDir),
       )
 
@@ -221,7 +224,7 @@ describe('uploadDeploymentStep()', async () => {
       const mockedUploadDeployment = vi
         .fn()
         .mockResolvedValue({json: vi.fn().mockResolvedValue(oxygenResponse), status: 200})
-      vi.mocked<any>(api.oxygen.uploadDeploymentFile).mockImplementation(mockedUploadDeployment)
+      vi.mocked<any>(uploadOxygenDeploymentFile).mockImplementation(mockedUploadDeployment)
 
       await expect(() => {
         return uploadDeployment({...defaultConfig, path: 'unit/test'}, '123')
@@ -232,11 +235,11 @@ describe('uploadDeploymentStep()', async () => {
       const mockedUploadDeployment = vi
         .fn()
         .mockResolvedValue({json: vi.fn().mockResolvedValue('Too Many Requests'), status: 429})
-      vi.mocked<any>(api.oxygen.uploadDeploymentFile).mockImplementation(mockedUploadDeployment)
+      vi.mocked<any>(uploadOxygenDeploymentFile).mockImplementation(mockedUploadDeployment)
 
       await expect(() => {
         return uploadDeployment({...defaultConfig, path: 'unit/test'}, '123')
-      }).rejects.toThrowError(TooManyRequestsError())
+      }).rejects.toThrowError(/too many requests/)
     })
 
     it('throws an unrecoverable exception if we receive an unrecoverable user error', async () => {
@@ -257,7 +260,7 @@ describe('uploadDeploymentStep()', async () => {
       const mockedUploadDeployment = vi
         .fn()
         .mockResolvedValue({json: vi.fn().mockResolvedValue(oxygenResponse), status: 200})
-      vi.mocked<any>(api.oxygen.uploadDeploymentFile).mockImplementation(mockedUploadDeployment)
+      vi.mocked<any>(uploadOxygenDeploymentFile).mockImplementation(mockedUploadDeployment)
 
       await expect(() => {
         return uploadDeployment({...defaultConfig, path: 'unit/test'}, '123')
@@ -269,8 +272,8 @@ describe('uploadDeploymentStep()', async () => {
 describe('healthCheck()', () => {
   it('succeeds on https status 200', async () => {
     const pingUrl = 'https://unit.test'
-    const fetch = vi.fn().mockResolvedValueOnce({status: 200})
-    vi.mocked(http.fetch).mockImplementation(fetch)
+    const fetchMock = vi.fn().mockResolvedValueOnce({status: 200})
+    vi.mocked(fetch).mockImplementation(fetchMock)
 
     const result = await healthCheck(pingUrl)
 
@@ -280,8 +283,8 @@ describe('healthCheck()', () => {
 
   it('throws on any other https status', async () => {
     const pingUrl = 'https://unit.test'
-    const fetch = vi.fn().mockResolvedValueOnce({status: 404})
-    vi.mocked(http.fetch).mockImplementation(fetch)
+    const fetchMock = vi.fn().mockResolvedValueOnce({status: 404})
+    vi.mocked(fetch).mockImplementation(fetchMock)
 
     await expect(() => healthCheck(pingUrl)).rejects.toThrowError()
     expect(fetch).toHaveBeenCalledWith(`${pingUrl}/__health`, {method: 'GET'})
