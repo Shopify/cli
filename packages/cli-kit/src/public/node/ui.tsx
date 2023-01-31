@@ -15,7 +15,7 @@ import {
   Props as AutocompletePromptProps,
   AutocompletePrompt,
 } from '../../private/node/ui/components/AutocompletePrompt.js'
-import {TokenItem} from '../../private/node/ui/components/TokenizedText.js'
+import {InlineToken, LinkToken, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -25,8 +25,6 @@ type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>
 export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortController'> {
   renderOptions?: RenderOptions
 }
-
-export {TokenItem}
 
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
@@ -306,8 +304,6 @@ export function renderTable<T extends ScalarDict>(props: TableProps<T>) {
   return renderOnce(<Table {...props} />)
 }
 
-export {Task}
-
 /**
  * Runs async tasks and displays their progress to the console.
  */
@@ -341,3 +337,4 @@ export function renderText(text: string, logLevel: LogLevel = 'info', logger: Lo
 }
 
 export type Key = InkKey
+export {Task, TokenItem, InlineToken, LinkToken}

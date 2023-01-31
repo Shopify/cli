@@ -7,46 +7,46 @@ import {Subdued} from './Subdued.js'
 import {Box, Text} from 'ink'
 import React from 'react'
 
-interface CommandToken {
+export interface CommandToken {
   command: string
 }
 
-interface LinkToken {
+export interface LinkToken {
   link: {
     label?: string
     url: string
   }
 }
 
-interface CharToken {
+export interface CharToken {
   char: string
 }
 
-interface UserInputToken {
+export interface UserInputToken {
   userInput: string
 }
 
-interface SubduedToken {
+export interface SubduedToken {
   subdued: string
 }
 
-interface FilePathToken {
+export interface FilePathToken {
   filePath: string
 }
 
-interface ListToken {
+export interface ListToken {
   list: {
     title?: string
-    items: TokenItem[]
+    items: TokenItem<InlineToken>[]
     ordered?: boolean
   }
 }
 
-interface BoldToken {
+export interface BoldToken {
   bold: string
 }
 
-type Token =
+export type Token =
   | string
   | CommandToken
   | LinkToken
@@ -56,7 +56,9 @@ type Token =
   | FilePathToken
   | ListToken
   | BoldToken
-export type TokenItem = Token | Token[]
+
+export type InlineToken = Exclude<Token, ListToken>
+export type TokenItem<T extends Token = Token> = T | T[]
 
 type DisplayType = 'block' | 'inline'
 interface Block {
@@ -113,6 +115,19 @@ function splitByDisplayType(acc: Block[][], item: Block) {
   return acc
 }
 
+const InlineBlocks: React.FC<{blocks: Block[]}> = ({blocks}) => {
+  return (
+    <Text>
+      {blocks.map((block, blockIndex) => (
+        <Text key={blockIndex}>
+          {blockIndex !== 0 && !(typeof block.value !== 'string' && 'char' in block.value) && <Text> </Text>}
+          <TokenizedText item={block.value} />
+        </Text>
+      ))}
+    </Text>
+  )
+}
+
 interface Props {
   item: TokenItem
 }
@@ -143,20 +158,13 @@ const TokenizedText: React.FC<Props> = ({item}) => {
   } else {
     const groupedItems = item.map(tokenToBlock).reduce(splitByDisplayType, [])
 
-    return (
+    return groupedItems.length === 1 && groupedItems[0]!.every((item) => item.display === 'inline') ? (
+      <InlineBlocks blocks={groupedItems[0]!} />
+    ) : (
       <Box flexDirection="column">
         {groupedItems.map((items, groupIndex) => {
           if (items[0]!.display === 'inline') {
-            return (
-              <Text key={groupIndex}>
-                {items.map((item, itemIndex) => (
-                  <Text key={itemIndex}>
-                    {itemIndex !== 0 && !(typeof item.value !== 'string' && 'char' in item.value) && <Text> </Text>}
-                    <TokenizedText item={item.value} />
-                  </Text>
-                ))}
-              </Text>
-            )
+            return <InlineBlocks blocks={items} key={groupIndex} />
           } else {
             return <List key={groupIndex} {...(items[0]!.value as ListToken).list} />
           }

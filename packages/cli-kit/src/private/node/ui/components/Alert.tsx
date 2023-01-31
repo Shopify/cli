@@ -1,7 +1,7 @@
 import {Banner, BannerType} from './Banner.js'
 import {Link} from './Link.js'
 import {List} from './List.js'
-import {TokenItem, TokenizedText} from './TokenizedText.js'
+import {BoldToken, InlineToken, LinkToken, TokenItem, TokenizedText} from './TokenizedText.js'
 import {Box, Text} from 'ink'
 import React from 'react'
 
@@ -12,10 +12,10 @@ export interface CustomSection {
 
 export interface AlertProps {
   type: Exclude<BannerType, 'error' | 'external_error'>
-  headline: TokenItem
+  headline?: TokenItem<Exclude<InlineToken, LinkToken | BoldToken>>
   body?: TokenItem
-  nextSteps?: TokenItem[]
-  reference?: TokenItem[]
+  nextSteps?: TokenItem<InlineToken>[]
+  reference?: TokenItem<InlineToken>[]
   link?: {
     label: string
     url: string
@@ -36,9 +36,13 @@ const Alert: React.FC<AlertProps> = ({
 }) => {
   return (
     <Banner type={type}>
-      <Box>
-        <TokenizedText item={headline} />
-      </Box>
+      {headline && (
+        <Box>
+          <Text bold>
+            <TokenizedText item={headline} />
+          </Text>
+        </Box>
+      )}
 
       {body && (
         <Box marginTop={1}>

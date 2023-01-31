@@ -29,7 +29,7 @@ export async function packageTheme(inputDirectory: string) {
   })
 
   renderSuccess({
-    headline: ['Your local theme was packaged in', {filePath: relativizePath(outputZipPath)}],
+    body: ['Your local theme was packaged in', {filePath: relativizePath(outputZipPath)}],
   })
 }
 

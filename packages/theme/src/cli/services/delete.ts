@@ -3,7 +3,7 @@ import {Theme} from '../models/theme.js'
 import {themeComponent, themesComponent} from '../utilities/theme-ui.js'
 import {deleteTheme} from '../utilities/themes-api.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {renderConfirmationPrompt, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderSuccess, renderWarning, InlineToken, LinkToken} from '@shopify/cli-kit/node/ui'
 import {pluralize} from '@shopify/cli-kit/common/string'
 
 export interface DeleteOptions {
@@ -24,7 +24,7 @@ export async function deleteThemes(adminSession: AdminSession, options: DeleteOp
   themes.map((theme) => deleteTheme(theme.id, adminSession))
 
   renderSuccess({
-    headline: pluralize(
+    body: pluralize(
       themes,
       (themes) => [`The following themes were deleted from ${store}:`, themesComponent(themes)],
       (theme) => ['The theme', ...themeComponent(theme), `was deleted from ${store}.`],
@@ -51,9 +51,16 @@ async function findThemesByDeleteOptions(adminSession: AdminSession, options: De
 }
 
 async function isConfirmed(themes: Theme[], store: string) {
-  const message = pluralize(
+  const message = pluralize<Theme, Exclude<InlineToken, LinkToken>>(
     themes,
-    (themes) => [`Delete the following themes from ${store}?`, themesComponent(themes)],
+    (themes) => [
+      `Delete the following themes from ${store}:`,
+      ...themes
+        .flatMap((theme) => [themeComponent(theme), {char: ', '}])
+        .slice(0, -1)
+        .flat(),
+      {char: '?'},
+    ],
     (theme) => ['Delete', ...themeComponent(theme), `from ${store}?`],
   )
 
@@ -64,7 +71,12 @@ export function renderDeprecatedArgsWarning(argv: string[]) {
   const ids = argv.join(' ')
 
   renderWarning({
-    headline: ['Positional arguments are deprecated. Use the', {command: '--theme'}, 'flag instead:'],
-    body: [{command: `$ shopify theme delete --theme ${ids}`}, {char: '.'}],
+    body: [
+      'Positional arguments are deprecated. Use the',
+      {command: '--theme'},
+      'flag instead:\n\n',
+      {command: `$ shopify theme delete --theme ${ids}`},
+      {char: '.'},
+    ],
   })
 }

@@ -127,7 +127,7 @@ function formatSuccessfulRunMessage(
   depndencyManager: PackageManager,
 ): RenderAlertOptions {
   const options: RenderAlertOptions = {
-    headline: `Your extension was created in ${extensionDirectory}`,
+    headline: ['Your extension was created in', {filePath: extensionDirectory}],
     nextSteps: [],
     reference: [],
   }
