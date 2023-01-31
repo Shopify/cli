@@ -163,7 +163,7 @@ describe('selectStore', () => {
       {
         type: 'autocomplete',
         name: 'id',
-        message: 'Which development store would you like to use to view your project?',
+        message: 'Which store would you like to use to view your project?',
         choices: [
           {name: 'store1', value: '1'},
           {name: 'store2', value: '2'},
