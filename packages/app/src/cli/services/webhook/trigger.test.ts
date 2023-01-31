@@ -231,7 +231,7 @@ describe('webhookTriggerService', () => {
       // Then
       expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
       expect(collectSecret).toHaveBeenCalledTimes(0)
-      expect(outputInfo).toHaveBeenCalledWith('Reading client-secret from app config')
+      expect(outputInfo).toHaveBeenCalledWith('Reading client-secret from app settings in Partners')
       expect(requestAppInfo).toHaveBeenCalledWith(aToken, 'API_KEY')
     })
 
@@ -248,7 +248,7 @@ describe('webhookTriggerService', () => {
       // Then
       expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
       expect(collectSecret).toHaveBeenCalledTimes(0)
-      expect(outputInfo).toHaveBeenCalledWith('Reading client-secret from app config')
+      expect(outputInfo).toHaveBeenCalledWith('Reading client-secret from app settings in Partners')
       expect(requestAppInfo).toHaveBeenCalledWith(aToken, 'API_KEY')
     })
 

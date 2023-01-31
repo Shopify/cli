@@ -123,27 +123,9 @@ describe('findApiKey', () => {
   })
 
   function buildFetchResponse(apps: MinimalOrganizationApp[]): FetchResponse {
-    const response: FetchResponse = {
-      organization: {id: '1', businessName: 'org1', appsNext: true},
-      apps: {
-        pageInfo: {
-          hasNextPage: false,
-        },
-        nodes: apps,
-      },
-      stores: [
-        {
-          shopId: '1',
-          link: 'link1',
-          shopDomain: 'domain1',
-          shopName: 'store1',
-          transferDisabled: false,
-          convertableToPartnerTest: false,
-        },
-      ],
-    }
+    const resp: FetchResponse = {organization: org, apps: {pageInfo: {hasNextPage: false}, nodes: apps}, stores: []}
 
-    return response
+    return resp
   }
 })
 

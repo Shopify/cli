@@ -72,7 +72,7 @@ export default class WebhookTrigger extends Command {
     if (flags['shared-secret']) {
       renderWarning({
         headline: [
-          'The flag shared-secret has been deprecated in favor of client-secret and will be eventually deleted.',
+          'The flag shared-secret has been deprecated in favor of client-secret and will eventually be deleted.',
         ],
         body: ['Please use --client-secret instead.'],
       })

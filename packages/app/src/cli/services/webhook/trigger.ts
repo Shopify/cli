@@ -81,7 +81,7 @@ async function getSecret(token: string, clientSecretFlag: string | undefined): P
   const manual = await renderConfirmationPrompt({
     message: `Do you want to set the client-secret manually?`,
     confirmationMessage: `Yes, I'll type it myself`,
-    cancellationMessage: 'No, try to get it from the app config',
+    cancellationMessage: 'No, try to get it from the configuration',
   })
 
   if (manual) {
@@ -104,7 +104,7 @@ async function getSecret(token: string, clientSecretFlag: string | undefined): P
 
   const appCredentials = await requestAppInfo(token, apiKey)
   if (valueSet(appCredentials.clientSecret)) {
-    outputInfo('Reading client-secret from app config')
+    outputInfo('Reading client-secret from app settings in Partners')
   } else {
     appCredentials.clientSecret = await collectSecret(clientSecretFlag)
   }
