@@ -41,7 +41,7 @@ describe('after extension command finishes correctly', () => {
     expect(outputInfo.info()).toMatchInlineSnapshot(`
       "╭─ success ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Your extension was created in extensions/name                               │
+      │  Your extension was created in extensions/name.                              │
       │                                                                              │
       │  Next steps                                                                  │
       │    • To preview this extension along with the rest of the project, run       │
@@ -63,7 +63,7 @@ describe('after extension command finishes correctly', () => {
     expect(outputInfo.info()).toMatchInlineSnapshot(`
       "╭─ success ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Your extension was created in extensions/name                               │
+      │  Your extension was created in extensions/name.                              │
       │                                                                              │
       │  Next steps                                                                  │
       │    • To preview this extension along with the rest of the project, run       │
@@ -85,7 +85,7 @@ describe('after extension command finishes correctly', () => {
     expect(outputInfo.info()).toMatchInlineSnapshot(`
       "╭─ success ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Your extension was created in extensions/name                               │
+      │  Your extension was created in extensions/name.                              │
       │                                                                              │
       │  Reference                                                                   │
       │    • For more details, see the docs (                                        │
