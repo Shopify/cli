@@ -8,7 +8,7 @@ import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getExtensionIds, LocalRemoteSource} from '../environment/id-matching.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {error} from '@shopify/cli-kit'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export function getExtensionsToMigrate(
   localSources: LocalSource[],
@@ -82,10 +82,10 @@ export async function migrateExtensionToUIExtension(
 
   if (result?.migrateToUiExtension?.userErrors?.length > 0) {
     const errors = result.migrateToUiExtension.userErrors.map((error) => error.message).join(', ')
-    throw new error.Abort(errors)
+    throw new AbortError(errors)
   }
 
   if (!result?.migrateToUiExtension?.migratedToUiExtension) {
-    throw new error.Abort("Couldn't migrate to UI extension")
+    throw new AbortError("Couldn't migrate to UI extension")
   }
 }
