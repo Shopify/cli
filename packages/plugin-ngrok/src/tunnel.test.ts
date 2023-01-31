@@ -23,16 +23,6 @@ beforeEach(async () => {
       AbortError: vi.fn(),
     }
   })
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      ui: {
-        prompt: vi.fn(),
-      },
-      environment: vi.fn(),
-    }
-  })
   vi.mock('@shopify/cli-kit/node/os', async () => {
     return {
       platformAndArch: vi.fn(),

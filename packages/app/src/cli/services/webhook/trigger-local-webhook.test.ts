@@ -6,7 +6,6 @@ const samplePayload = '{ "sampleField": "SampleValue" }'
 const sampleHeaders = '{ "header": "Header Value" }'
 
 beforeEach(async () => {
-  vi.mock('@shopify/cli-kit')
   vi.mock('@shopify/cli-kit/node/http')
 })
 

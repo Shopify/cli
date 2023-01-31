@@ -4,7 +4,6 @@ import {describe, it, expect, vi, afterEach, beforeEach} from 'vitest'
 import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 beforeEach(() => {
-  vi.mock('@shopify/cli-kit')
   vi.mock('@shopify/cli-kit/node/ui')
 })
 
