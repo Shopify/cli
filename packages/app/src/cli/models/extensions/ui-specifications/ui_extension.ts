@@ -22,8 +22,6 @@ const UIExtensionSchema = BaseUIExtensionSchema.extend({
 
 const spec = createUIExtensionSpecification({
   identifier: 'ui_extension',
-  externalIdentifier: 'ui_extension',
-  externalName: 'UI Extension',
   surface: 'all',
   dependency,
   partnersWebIdentifier: 'checkout_ui_extension',

@@ -173,10 +173,19 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
 }
 
 /**
+ * These fields are forbidden when creating a new ExtensionSpec
+ * They belong to the ExtensionSpec interface, but the values are obtained from the API
+ * and should not be set by the user locally
+ *
+ * WARNING: 'surface' should be included here but is not yet compatible with the extension server
+ */
+export type ForbiddenFields = 'registrationLimit' | 'category' | 'externalIdentifier' | 'externalName' | 'name'
+
+/**
  * Partial ExtensionSpec type used when creating a new ExtensionSpec, the only mandatory field is the identifier
  */
 export interface CreateExtensionSpecType<TConfiguration extends BaseConfigContents = BaseConfigContents>
-  extends Partial<Omit<UIExtensionSpec<TConfiguration>, 'registrationLimit' | 'category'>> {
+  extends Partial<Omit<UIExtensionSpec<TConfiguration>, ForbiddenFields>> {
   identifier: string
 }
 
