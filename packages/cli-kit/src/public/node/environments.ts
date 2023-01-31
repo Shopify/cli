@@ -31,6 +31,6 @@ export async function loadEnvironmentsFromDirectory(dir: string, opts?: {findUp:
   if (environmentsFilePath) {
     return decodeToml(await readFile(environmentsFilePath)) as Environments
   } else {
-    return {} as Environments
+    return {}
   }
 }

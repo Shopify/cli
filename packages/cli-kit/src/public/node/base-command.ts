@@ -10,7 +10,7 @@ import {hashString} from '../../public/node/crypto.js'
 import {isTruthy} from '../../private/node/environment/utilities.js'
 import {Command, Interfaces} from '@oclif/core'
 
-interface EnvironmenttableFlags {
+interface EnvironmentFlags {
   environment?: string
   path?: string
 }
@@ -70,7 +70,7 @@ abstract class BaseCommand extends Command {
     argv?: string[],
   ): Promise<Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>> {
     // If no environment is specified, don't modify the results
-    const flags = originalResult.flags as EnvironmenttableFlags
+    const flags = originalResult.flags as EnvironmentFlags
     if (!flags.environment) return originalResult
 
     // If the specified environment isn't found, don't modify the results
