@@ -1,5 +1,5 @@
 import {themeFlags} from '../../flags.js'
-import {getThemeStore} from '../../utilities/theme-store.js'
+import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {Flags} from '@oclif/core'
@@ -58,7 +58,7 @@ export default class Pull extends ThemeCommand {
 
   async run(): Promise<void> {
     let {flags} = await this.parse(Pull)
-    const store = getThemeStore(flags)
+    const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
     if (flags.development) {

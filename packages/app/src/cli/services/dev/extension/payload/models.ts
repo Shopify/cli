@@ -1,5 +1,5 @@
-import {NewExtensionPointSchemaType} from '../../../../models/extensions/schemas.js'
 import {Localization} from '../localization.js'
+import type {NewExtensionPointSchemaType, ApiVersionSchemaType} from '../../../../models/extensions/schemas.js'
 
 export interface ExtensionsPayloadInterface {
   app: {
@@ -62,6 +62,7 @@ export interface UIExtensionPayload {
   metafields?: {namespace: string; key: string}[] | null
   type: string
   externalType: string
+  apiVersion?: ApiVersionSchemaType
   uuid: string
   version?: string
   surface: string

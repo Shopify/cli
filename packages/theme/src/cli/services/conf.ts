@@ -1,4 +1,4 @@
-import {getThemeStore} from '../utilities/theme-store.js'
+import {ensureThemeStore} from '../utilities/theme-store.js'
 import {Conf} from '@shopify/cli-kit/node/conf'
 import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
 
@@ -22,6 +22,14 @@ export function themeConf() {
   return _themeConfInstance
 }
 
+export function getThemeStore() {
+  return themeConf().get('themeStore')
+}
+
+export function setThemeStore(store: string) {
+  themeConf().set('themeStore', store)
+}
+
 export function developmentThemeConf() {
   if (!_developmentThemeConfInstance) {
     _developmentThemeConfInstance = new Conf<DevelopmentThemeConfSchema>({
@@ -33,15 +41,15 @@ export function developmentThemeConf() {
 
 export function getDevelopmentTheme(): string | undefined {
   outputDebug(outputContent`Getting development theme...`)
-  return developmentThemeConf().get(getThemeStore({store: undefined}))
+  return developmentThemeConf().get(ensureThemeStore({store: undefined}))
 }
 
 export function setDevelopmentTheme(theme: string): void {
   outputDebug(outputContent`Setting development theme...`)
-  developmentThemeConf().set(getThemeStore({store: undefined}), theme)
+  developmentThemeConf().set(ensureThemeStore({store: undefined}), theme)
 }
 
 export function removeDevelopmentTheme(): void {
   outputDebug(outputContent`Removing development theme...`)
-  developmentThemeConf().reset(getThemeStore({store: undefined}))
+  developmentThemeConf().reset(ensureThemeStore({store: undefined}))
 }

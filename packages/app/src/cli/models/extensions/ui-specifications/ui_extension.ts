@@ -40,6 +40,7 @@ const spec = createUIExtensionSpecification({
   },
   deployConfig: async (config, directory) => {
     return {
+      api_version: config.apiVersion,
       extension_points: config.extensionPoints,
       capabilities: config.capabilities,
       name: config.name,

@@ -1,3 +1,5 @@
+import {dirname} from './path.js'
+import {createFileWriteStream, fileExistsSync, mkdirSync, unlinkFileSync} from './fs.js'
 import {buildHeaders, httpsAgent, sanitizedHeadersOutput} from '../../private/node/api/headers.js'
 import {outputContent, outputDebug} from '../../public/node/output.js'
 import FormData from 'form-data'
@@ -72,4 +74,42 @@ ${sanitizedHeadersOutput((options?.headers ?? {}) as {[header: string]: string})
   const t1 = performance.now()
   outputDebug(`Request to ${url.toString()} completed with status ${response.status} in ${Math.round(t1 - t0)} ms`)
   return response
+}
+
+/**
+ * Download a file from a URL to a local path.
+ *
+ * @param url - The URL to download from.
+ * @param to - The local path to download to.
+ * @returns - A promise that resolves with the local path.
+ */
+export function downloadFile(url: string, to: string): Promise<string> {
+  outputDebug(`Downloading ${url} to ${to}`)
+
+  return new Promise<string>((resolve, reject) => {
+    if (!fileExistsSync(dirname(to))) {
+      mkdirSync(dirname(to))
+    }
+
+    const file = createFileWriteStream(to)
+
+    file.on('finish', () => {
+      file.close()
+      resolve(to)
+    })
+
+    file.on('error', (err) => {
+      unlinkFileSync(to)
+      reject(err)
+    })
+
+    nodeFetch(url, {redirect: 'follow'})
+      .then((res) => {
+        res.body?.pipe(file)
+      })
+      .catch((err) => {
+        unlinkFileSync(to)
+        reject(err)
+      })
+  })
 }
