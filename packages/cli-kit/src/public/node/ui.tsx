@@ -328,9 +328,14 @@ export function renderTextPrompt(props: Omit<TextPromptProps, 'onSubmit'>): Prom
   })
 }
 
+interface RenderTextOptions {
+  logLevel?: LogLevel
+  logger?: Logger
+}
+
 /** Renders a text string to the console.
  * Using this function makes sure that correct spacing is applied among the various components. */
-export function renderText(text: string, logLevel: LogLevel = 'info', logger: Logger = consoleLog) {
+export function renderText(text: string, {logLevel = 'info', logger = consoleLog}: RenderTextOptions) {
   let textWithLineReturn = text
   if (!text.endsWith('\n')) textWithLineReturn += '\n'
 
