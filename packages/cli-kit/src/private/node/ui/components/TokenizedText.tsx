@@ -93,12 +93,20 @@ export function tokenItemToString(token: TokenItem): string {
   } else if ('bold' in token) {
     return token.bold
   } else {
-    return token.map(tokenItemToString).join(' ')
+    return token
+      .map((item, index) => {
+        if (index !== 0 && !(typeof item !== 'string' && 'char' in item)) {
+          return ` ${tokenItemToString(item)}`
+        } else {
+          return tokenItemToString(item)
+        }
+      })
+      .join('')
   }
 }
 
 export function appendToTokenItem(token: TokenItem, suffix: string): TokenItem {
-  return Array.isArray(token) ? [...token, suffix] : [token, suffix]
+  return Array.isArray(token) ? [...token, {char: suffix}] : [token, {char: suffix}]
 }
 
 function splitByDisplayType(acc: Block[][], item: Block) {
