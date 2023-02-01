@@ -1,4 +1,3 @@
-import {ui} from '@shopify/cli-kit'
 import {username} from '@shopify/cli-kit/node/os'
 import {
   findUpAndReadPackageJson,
@@ -30,11 +29,12 @@ import {
   touchFile,
   glob,
   findPathUp,
+  removeFile,
 } from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {joinPath, relativizePath} from '@shopify/cli-kit/node/path'
+import {AbortError, CancelExecution} from '@shopify/cli-kit/node/error'
 import {outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
+import {Task, renderTasks, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 interface InitOptions {
   name: string
@@ -60,7 +60,7 @@ async function init(options: InitOptions) {
   const hyphenizedName = hyphenate(options.name)
   const outputDirectory = joinPath(options.directory, hyphenizedName)
 
-  await ui.nonEmptyDirectoryPrompt(outputDirectory)
+  await nonEmptyDirectoryPrompt(outputDirectory)
 
   await inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = joinPath(tmpDir, 'download')
@@ -276,4 +276,22 @@ async function cleanup(webOutputDirectory: string) {
   )
 
   return Promise.all(gitPaths.map((path) => rmdir(path, {force: true}))).then(() => {})
+}
+
+async function nonEmptyDirectoryPrompt(directory: string) {
+  if (await fileExists(directory)) {
+    const relativeDirectory = relativizePath(directory)
+
+    const choice = await renderConfirmationPrompt({
+      message: `${relativeDirectory} is not an empty directory. Do you want to delete the existing files and continue?`,
+      confirmationMessage: 'Yes, delete the files',
+      cancellationMessage: 'No, don’t delete the files',
+    })
+
+    if (!choice) {
+      throw new CancelExecution()
+    }
+
+    await removeFile(directory)
+  }
 }

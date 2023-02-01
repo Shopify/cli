@@ -5,7 +5,6 @@ import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 
 beforeAll(() => {
-  vi.mock('@shopify/cli-kit')
   vi.mock('@shopify/cli-kit/node/ui')
   vi.mock('@shopify/cli-kit/node/tcp')
   vi.mock('http-proxy', () => {
@@ -36,9 +35,10 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
     vi.mocked(getAvailableTCPPort).mockResolvedValueOnce(3002)
 
     // When
-    const got = await runConcurrentHTTPProcessesAndPathForwardTraffic(
-      3000,
-      [
+    const got = await runConcurrentHTTPProcessesAndPathForwardTraffic({
+      previewUrl: '',
+      portNumber: 3000,
+      proxyTargets: [
         {
           logPrefix: 'extensions',
           pathPrefix: '/extensions',
@@ -49,8 +49,8 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
           action: async (stdout, stderr, signal, port) => {},
         },
       ],
-      [],
-    )
+      additionalProcesses: [],
+    })
 
     // Then
     expect(httpProxy.createProxy).toHaveBeenCalled()
@@ -69,7 +69,12 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
     vi.mocked(getAvailableTCPPort).mockResolvedValueOnce(4000)
 
     // When
-    const got = await runConcurrentHTTPProcessesAndPathForwardTraffic(undefined, [], [])
+    const got = await runConcurrentHTTPProcessesAndPathForwardTraffic({
+      previewUrl: '',
+      portNumber: undefined,
+      proxyTargets: [],
+      additionalProcesses: [],
+    })
 
     // Then
     expect(server.close).not.toHaveBeenCalled()

@@ -2,6 +2,7 @@ import {collectLog, consoleLog, Logger, LogLevel, outputWhereAppropriate} from '
 import {isUnitTest} from '../../public/node/context/local.js'
 import {ReactElement} from 'react'
 import {Key, render as inkRender, RenderOptions} from 'ink'
+import treeKill from 'tree-kill'
 import {EventEmitter} from 'events'
 
 export function renderOnce(element: JSX.Element, logLevel: LogLevel = 'info', logger: Logger = consoleLog) {
@@ -66,6 +67,6 @@ export const renderString = (element: ReactElement): Instance => {
 export function handleCtrlC(input: string, key: Key) {
   if (input === 'c' && key.ctrl) {
     // Exceptions thrown in hooks aren't caught by our errorHandler.
-    process.exit(1)
+    treeKill(process.pid, 'SIGINT')
   }
 }

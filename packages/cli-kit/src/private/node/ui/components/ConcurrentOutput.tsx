@@ -1,17 +1,25 @@
+import TextWithBackground from './TextWithBackground.js'
 import {OutputProcess} from '../../../../public/node/output.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {AbortController} from '../../../../public/node/abort.js'
-import React, {FunctionComponent, useState} from 'react'
-import {Box, Static, Text} from 'ink'
+import {handleCtrlC} from '../../ui.js'
+import React, {FunctionComponent, useCallback, useState} from 'react'
+import {Box, Key, Static, Text, useInput} from 'ink'
 import stripAnsi from 'strip-ansi'
+import treeKill from 'tree-kill'
 import {Writable} from 'stream'
 
 export type WritableStream = (process: OutputProcess, index: number) => Writable
 
-interface Props {
+export interface Props {
   processes: OutputProcess[]
   abortController: AbortController
   showTimestamps?: boolean
+  onInput?: (input: string, key: Key, exit: () => void) => void
+  footer?: {
+    title: string
+    subTitle?: string
+  }
 }
 interface Chunk {
   color: string
@@ -53,7 +61,13 @@ interface Chunk {
  *
  * ```
  */
-const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController, showTimestamps = true}) => {
+const ConcurrentOutput: FunctionComponent<Props> = ({
+  processes,
+  abortController,
+  showTimestamps = true,
+  onInput,
+  footer,
+}) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const concurrentColors = ['yellow', 'cyan', 'magenta', 'green', 'blue']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
@@ -93,44 +107,72 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
     )
   }
 
+  if (onInput) {
+    useInput(
+      useCallback(
+        (input, key) => {
+          handleCtrlC(input, key)
+          onInput(input, key, () => treeKill(process.pid, 'SIGINT'))
+        },
+        [onInput],
+      ),
+    )
+  }
+
   useAsyncAndUnmount(runProcesses, {onRejected: () => abortController.abort()})
 
   return (
-    <Static items={processOutput}>
-      {(chunk, index) => {
-        return (
-          <Box flexDirection="column" key={index}>
-            {chunk.lines.map((line, index) => (
-              <Box key={index} flexDirection="row">
-                {showTimestamps && (
-                  <Box>
-                    <Box marginRight={1}>
-                      <Text color={chunk.color}>{new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}</Text>
+    <>
+      <Static items={processOutput}>
+        {(chunk, index) => {
+          return (
+            <Box flexDirection="column" key={index}>
+              {chunk.lines.map((line, index) => (
+                <Box key={index} flexDirection="row">
+                  {showTimestamps && (
+                    <Box>
+                      <Box marginRight={1}>
+                        <Text color={chunk.color}>
+                          {new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}
+                        </Text>
+                      </Box>
+
+                      <Text bold color={chunk.color}>
+                        |
+                      </Text>
                     </Box>
+                  )}
 
-                    <Text bold color={chunk.color}>
-                      |
-                    </Text>
+                  <Box width={prefixColumnSize} marginX={1}>
+                    <Text color={chunk.color}>{chunk.prefix}</Text>
                   </Box>
-                )}
 
-                <Box width={prefixColumnSize} marginX={1}>
-                  <Text color={chunk.color}>{chunk.prefix}</Text>
+                  <Text bold color={chunk.color}>
+                    |
+                  </Text>
+
+                  <Box flexGrow={1} paddingLeft={1}>
+                    <Text color={chunk.color}>{line}</Text>
+                  </Box>
                 </Box>
-
-                <Text bold color={chunk.color}>
-                  |
-                </Text>
-
-                <Box flexGrow={1} paddingLeft={1}>
-                  <Text color={chunk.color}>{line}</Text>
-                </Box>
-              </Box>
-            ))}
+              ))}
+            </Box>
+          )
+        }}
+      </Static>
+      {footer && (
+        <Box marginY={1} flexDirection="column">
+          <Box flexGrow={1}>
+            <TextWithBackground text={footer.title} inverse paddingX={2} paddingY={1} />
           </Box>
-        )
-      }}
-    </Static>
+          {footer.subTitle && (
+            <Box marginTop={1} flexGrow={1}>
+              <Text>{footer.subTitle}</Text>
+            </Box>
+          )}
+        </Box>
+      )}
+    </>
   )
 }
 

@@ -6,15 +6,6 @@ import {installNPMDependenciesRecursively} from '@shopify/cli-kit/node/node-pack
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 
 beforeEach(() => {
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      dependency: {
-        installNPMDependenciesRecursively: vi.fn(),
-      },
-    }
-  })
   vi.mock('@shopify/cli-kit/node/node-package-manager')
   vi.mock('@shopify/cli-kit/node/ui')
 })

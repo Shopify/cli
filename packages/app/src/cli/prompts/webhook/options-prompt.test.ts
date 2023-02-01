@@ -1,15 +1,7 @@
 import {collectAddressAndMethod, collectApiVersion, collectSecret, collectTopic} from './options-prompt.js'
 import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, sharedSecretPrompt, topicPrompt} from './trigger.js'
-import {describe, it, expect, vi, afterEach, beforeEach} from 'vitest'
+import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
-
-beforeEach(() => {
-  vi.mock('@shopify/cli-kit')
-})
-
-afterEach(async () => {
-  vi.clearAllMocks()
-})
 
 const aTopic = 'A_TOPIC'
 const aVersion = 'A_VERSION'

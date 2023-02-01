@@ -46,15 +46,6 @@ beforeEach(() => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
   vi.mock('@shopify/cli-kit/node/context/spin')
   vi.mocked(isSpinEnvironment).mockReturnValue(false)
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      http: {
-        fetch: vi.fn(),
-      },
-    }
-  })
 })
 
 describe('selectStore', async () => {

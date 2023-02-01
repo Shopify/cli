@@ -4,8 +4,8 @@ import {listenRedirect} from './redirect-listener.js'
 import {randomHex, base64URLEncode} from '../../../public/node/crypto.js'
 import {openURL} from '../../../public/node/system.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
-import {terminateBlockingPortProcessPrompt} from '../../../ui.js'
 import {CancelExecution} from '../../../public/node/error.js'
+import {renderConfirmationPrompt} from '../../../public/node/ui.js'
 import {checkPort} from 'get-port-please'
 import {killPortProcess} from 'kill-port-process'
 
@@ -14,9 +14,9 @@ import {describe, it, expect, vi} from 'vitest'
 vi.mock('../../../public/node/system.js')
 vi.mock('./redirect-listener')
 vi.mock('../../../public/node/crypto.js')
+vi.mock('../../../public/node/ui.js')
 vi.mock('../../../public/node/context/fqdn.js')
 vi.mock('./identity')
-vi.mock('../../../ui')
 vi.mock('get-port-please')
 vi.mock('kill-port-process')
 
@@ -66,7 +66,7 @@ describe('authorize', () => {
   it('throws cancel execution exception if the port used for listening for the authorization response is already in use and the user do not want to terminate the process', async () => {
     // Given
     vi.mocked(checkPort).mockResolvedValue(false)
-    vi.mocked(terminateBlockingPortProcessPrompt).mockResolvedValue(false)
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
 
     // When
     const auth = authorize(['scope1', 'scope2'], 'state')
@@ -89,7 +89,7 @@ describe('authorize', () => {
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
     vi.mocked(clientId).mockReturnValue('clientId')
     vi.mocked(checkPort).mockResolvedValue(false)
-    vi.mocked(terminateBlockingPortProcessPrompt).mockResolvedValue(true)
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
     // When
     const got = await authorize(['scope1', 'scope2'], 'state')

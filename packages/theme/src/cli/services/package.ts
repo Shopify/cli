@@ -12,6 +12,7 @@ const themeDirectoriesPattern = [
   'sections',
   'snippets',
   'templates',
+  'templates/customers',
   'release-notes.md',
 ].join('/**|')
 
