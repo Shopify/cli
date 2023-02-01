@@ -3,9 +3,9 @@ import ThemeCommand from '../../utilities/theme-command.js'
 import {cloneRepoAndCheckoutLatestTag, cloneRepo} from '../../services/init.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {ui} from '@shopify/cli-kit'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
+import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 export default class Init extends ThemeCommand {
   static description = 'Clones a Git repository to use as a starting point for building a new theme.'
@@ -52,13 +52,6 @@ export default class Init extends ThemeCommand {
   async promptName(directory: string) {
     const defaultName = await generateRandomNameForSubdirectory({suffix: 'theme', directory, family: 'creative'})
 
-    const question: ui.Question = {
-      type: 'input',
-      name: 'name',
-      message: 'Name of the new theme',
-      default: defaultName,
-    }
-    const {name} = await ui.prompt([question])
-    return name
+    return renderTextPrompt({message: 'Name of the new theme', defaultValue: defaultName})
   }
 }

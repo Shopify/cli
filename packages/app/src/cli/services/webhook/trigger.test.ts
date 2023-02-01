@@ -25,7 +25,6 @@ const aUrlPath = '/a/url/path'
 const anAddress = 'https://example.org'
 
 beforeEach(async () => {
-  vi.mock('@shopify/cli-kit')
   vi.mock('@shopify/cli-kit/node/session')
   vi.mock('../../prompts/webhook/options-prompt.js')
   vi.mock('./request-sample.js')

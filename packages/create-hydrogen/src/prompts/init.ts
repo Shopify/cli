@@ -1,7 +1,6 @@
-import {ui} from '@shopify/cli-kit'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderSelectPrompt, renderTextPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
 
 const TEMPLATE_BASE = 'https://github.com/Shopify/hydrogen/templates/'
 const BRANCH = `dist`
@@ -25,63 +24,52 @@ interface InitOptions {
   language?: string
 }
 
-const init = async (options: InitOptions, prompt = ui.prompt): Promise<Required<InitOptions>> => {
-  const questions: ui.Question[] = []
-  const explicitTemplate = options.template
+const init = async (options: InitOptions): Promise<Required<InitOptions>> => {
   let isAShopifyTemplateName = false
+  let name = options.name
+  let template = options.template
+  let language = options.language
+
   // If the template is passed through the CLI, then it can either be a Shopify template name (hello-world or demo-store)
   // or a custom URL to any template.
-  if (explicitTemplate) {
-    warnIfDeprecatedTemplateNameFormat(explicitTemplate)
-    const hydrogenTemplate =
-      checkIfShopifyTemplateName(explicitTemplate, 'js') || checkIfShopifyTemplateName(explicitTemplate, 'ts')
+  if (template) {
+    warnIfDeprecatedTemplateNameFormat(template)
+    const hydrogenTemplate = checkIfShopifyTemplateName(template, 'js') || checkIfShopifyTemplateName(template, 'ts')
     isAShopifyTemplateName = Boolean(hydrogenTemplate)
   } else {
     isAShopifyTemplateName = true
-    questions.push({
-      type: 'select',
-      name: 'template',
+    template = await renderSelectPrompt({
       message: 'Choose a template',
       choices: Object.keys(TEMPLATE_NAME_DATA).map((value) => ({
-        name: TEMPLATE_NAME_DATA[value as keyof typeof TEMPLATE_NAME_DATA].name,
+        label: TEMPLATE_NAME_DATA[value as keyof typeof TEMPLATE_NAME_DATA].name,
         value,
       })),
-      default: TEMPLATE_NAMES[0],
+      defaultValue: TEMPLATE_NAMES[0],
     })
   }
 
   // Prompt the user for the template language if it isn't provided and
   // the given template is a URL.
-  if (!options.language && isAShopifyTemplateName) {
-    questions.push({
-      type: 'select',
-      name: 'language',
+  if (!language && isAShopifyTemplateName) {
+    language = await renderSelectPrompt({
       message: 'Choose a language',
       choices: Object.keys(LANGUAGE_NAME_DATA).map((value) => {
         const {name} = LANGUAGE_NAME_DATA[value as keyof typeof LANGUAGE_NAME_DATA]
-        return {name, value}
+        return {label: name, value}
       }),
-      default: LANGUAGE_NAMES[0],
+      defaultValue: LANGUAGE_NAMES[0],
     })
   }
 
-  if (!options.name) {
-    questions.push({
-      type: 'input',
-      name: 'name',
+  if (!name) {
+    name = await renderTextPrompt({
       message: 'Name your new Hydrogen storefront',
-      default: 'hydrogen-app',
+      defaultValue: 'hydrogen-app',
     })
   }
-
-  const promptResults = await prompt(questions)
-  const name = options.name ?? promptResults.name!
-  const templateName = options.template ?? promptResults.template!
-  const language = options.language ?? promptResults.language!
-  let template = templateName
 
   // Get final template URLS
-  const hydrogenTemplate = checkIfShopifyTemplateName(templateName, language)
+  const hydrogenTemplate = checkIfShopifyTemplateName(template, language!)
   if (hydrogenTemplate) template = convertTemplateNameToUrl(hydrogenTemplate as string)
 
   // Else it's a user-provided URL.

@@ -1,9 +1,8 @@
 import {TUNNEL_PROVIDER} from './provider.js'
-import {ui} from '@shopify/cli-kit'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {startTunnel, TunnelError, TunnelErrorType} from '@shopify/cli-kit/node/plugins/tunnel'
 import ngrok from '@shopify/ngrok'
-import {renderFatalError} from '@shopify/cli-kit/node/ui'
+import {renderFatalError, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputToken, outputInfo, outputContent} from '@shopify/cli-kit/node/output'
@@ -51,21 +50,15 @@ async function tokenPrompt(showExplanation = true): Promise<string> {
   const link = outputToken.link(ngrokURL, ngrokURL)
   outputInfo(outputContent`${explanation}To sign up and get an auth token: ${link}\n`)
 
-  const input: {token: string} = await ui.prompt([
-    {
-      type: 'password',
-      name: 'token',
-      message: 'Enter your ngrok token.',
-      validate: (value) => {
-        if (value.length === 0) {
-          return "Token can't be empty"
-        }
-        return true
-      },
+  return renderTextPrompt({
+    password: true,
+    message: 'Enter your ngrok token.',
+    validate: (value) => {
+      if (value.length === 0) {
+        return "Token can't be empty"
+      }
     },
-  ])
-
-  return input.token
+  })
 }
 
 function buildTryMessage(errorType: TunnelErrorType): string | undefined {
