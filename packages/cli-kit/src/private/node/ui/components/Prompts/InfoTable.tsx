@@ -23,8 +23,8 @@ const InfoTable: React.FC<Props> = ({table}) => {
               <Text>{capitalize(header)}:</Text>
             </Box>
           )}
-          <Box flexGrow={1}>
-            <List items={table[header]!} />
+          <Box marginLeft={header.length > 0 ? 2 : 0} flexGrow={1}>
+            <List margin={false} items={table[header]!} />
           </Box>
         </Box>
       ))}
