@@ -13,7 +13,6 @@ import {UpdateURLsQuery} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery} from '../../api/graphql/get_urls.js'
 import {setAppInfo} from '../conf.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {ui} from '@shopify/cli-kit'
 import {Config} from '@oclif/core'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
@@ -36,15 +35,6 @@ beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/environment/local')
   vi.mock('@shopify/cli-kit/node/plugins')
   vi.mocked(isUnitTest).mockReturnValue(true)
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      ui: {
-        prompt: vi.fn(),
-      },
-    }
-  })
   vi.mock('@shopify/cli-kit/node/ui')
 })
 
@@ -301,7 +291,7 @@ describe('shouldOrPromptUpdateURLs', () => {
 
 describe('generateFrontendURL', () => {
   beforeEach(() => {
-    vi.mocked(ui.prompt).mockResolvedValue({value: 'yes'})
+    vi.mocked(renderSelectPrompt).mockResolvedValue('yes')
   })
 
   it('returns tunnelUrl when there is a tunnelUrl ignoring all other false values', async () => {
@@ -369,7 +359,7 @@ describe('generateFrontendURL', () => {
 
     // Then
     expect(got).toEqual({frontendUrl: 'http://localhost', frontendPort: 3042, usingLocalhost: true})
-    expect(ui.prompt).not.toBeCalled()
+    expect(renderSelectPrompt).not.toBeCalled()
   })
 
   it('returns localhost if noTunnel is true even if there are extensions', async () => {
@@ -386,7 +376,7 @@ describe('generateFrontendURL', () => {
 
     // Then
     expect(got).toEqual({frontendUrl: 'http://localhost', frontendPort: 3042, usingLocalhost: true})
-    expect(ui.prompt).not.toBeCalled()
+    expect(renderSelectPrompt).not.toBeCalled()
   })
 
   it('raises error if tunnelUrl does not include port', async () => {
@@ -408,7 +398,7 @@ describe('generateFrontendURL', () => {
 
   it('cancels execution if you select not to continue in the plugin prompt', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValue({value: 'cancel'})
+    vi.mocked(renderSelectPrompt).mockResolvedValue('cancel')
     const options = {
       app: testApp({hasUIExtensions: () => true}),
       tunnel: true,
@@ -440,7 +430,7 @@ describe('generateFrontendURL', () => {
     // Then
     expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingLocalhost: false})
     expect(setAppInfo).not.toBeCalled()
-    expect(ui.prompt).not.toBeCalled()
+    expect(renderSelectPrompt).not.toBeCalled()
   })
 
   it('Returns a gitpod url if we are in a gitpod environment', async () => {
@@ -459,7 +449,7 @@ describe('generateFrontendURL', () => {
     // Then
     expect(got).toEqual({frontendUrl: 'https://4040-gitpod.url.fqdn.com', frontendPort: 4040, usingLocalhost: false})
     expect(setAppInfo).not.toBeCalled()
-    expect(ui.prompt).not.toBeCalled()
+    expect(renderSelectPrompt).not.toBeCalled()
   })
 
   it('Returns a codespace url if we are in a codespace environment', async () => {
@@ -482,7 +472,7 @@ describe('generateFrontendURL', () => {
       usingLocalhost: false,
     })
     expect(setAppInfo).not.toBeCalled()
-    expect(ui.prompt).not.toBeCalled()
+    expect(renderSelectPrompt).not.toBeCalled()
   })
 
   it('Returns a spin url if we are in a spin environment', async () => {
@@ -506,7 +496,7 @@ describe('generateFrontendURL', () => {
       usingLocalhost: false,
     })
     expect(setAppInfo).not.toBeCalled()
-    expect(ui.prompt).not.toBeCalled()
+    expect(renderSelectPrompt).not.toBeCalled()
   })
 
   it('Returns a custom tunnel url if we are in a spin environment but a custom tunnel option is active', async () => {

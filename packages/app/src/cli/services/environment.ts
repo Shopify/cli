@@ -398,8 +398,8 @@ async function fetchDevDataFromOptions(
       const partners = await partnersFqdn()
       const org = orgWithStore.organization
       throw new BugError(
-        `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid development store.`,
-        `Visit https://${partners}/${org.id}/stores to create a new store in your organization`,
+        `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid store.`,
+        `Visit https://${partners}/${org.id}/stores to create a new development or Shopify Plus sandbox store in your organization`,
       )
     }
     await convertToTestStoreIfNeeded(orgWithStore.store, orgWithStore.organization, token)

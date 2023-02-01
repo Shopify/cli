@@ -1,9 +1,8 @@
 import ConcurrentOutput from './ConcurrentOutput.js'
-import {unstyled} from '../../../../public/node/output.js'
-import {getLastFrameAfterUnmount} from '../../testing/ui.js'
+import {getLastFrameAfterUnmount, waitForInputsToBeReady} from '../../testing/ui.js'
 import {AbortController, AbortSignal} from '../../../../public/node/abort.js'
 import React from 'react'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {render} from 'ink-testing-library'
 import {Writable} from 'stream'
 
@@ -47,21 +46,62 @@ describe('ConcurrentOutput', () => {
     // When
 
     const renderInstance = render(
-      <ConcurrentOutput processes={[backendProcess, frontendProcess]} abortController={new AbortController()} />,
+      <ConcurrentOutput
+        processes={[backendProcess, frontendProcess]}
+        abortController={new AbortController()}
+        footer={{
+          title: 'Press `p` to open your browser. Press `q` to quit.',
+          subTitle: `Preview URL: https://shopify.com`,
+        }}
+      />,
     )
 
     // wait for all output to be rendered
     await frontendPromise
 
     // Then
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "0000-00-00 00:00:00 | backend  | first backend message
-      0000-00-00 00:00:00 | backend  | second backend message
-      0000-00-00 00:00:00 | backend  | third backend message
-      0000-00-00 00:00:00 | frontend | first frontend message
-      0000-00-00 00:00:00 | frontend | second frontend message
-      0000-00-00 00:00:00 | frontend | third frontend message
+    expect(getLastFrameAfterUnmount(renderInstance)!.replace(/\d/g, '0')).toMatchInlineSnapshot(`
+      "[00m0000-00-00 00:00:00[00m [0m[00m|[00m[00m [00mbackend[00m  [0m[00m|[00m[00m [00mfirst backend message[00m
+      [00m0000-00-00 00:00:00[00m [0m[00m|[00m[00m [00mbackend[00m  [0m[00m|[00m[00m [00msecond backend message[00m
+      [00m0000-00-00 00:00:00[00m [0m[00m|[00m[00m [00mbackend[00m  [0m[00m|[00m[00m [00mthird backend message[00m
+      [00m0000-00-00 00:00:00[00m [0m[00m|[00m[00m [00mfrontend[00m [0m[00m|[00m[00m [00mfirst frontend message[00m
+      [00m0000-00-00 00:00:00[00m [0m[00m|[00m[00m [00mfrontend[00m [0m[00m|[00m[00m [00msecond frontend message[00m
+      [00m0000-00-00 00:00:00[00m [0m[00m|[00m[00m [00mfrontend[00m [0m[00m|[00m[00m [00mthird frontend message[00m
+
+      [0m                                                                                                    [00m
+      [0m  Press \`p\` to open your browser. Press \`q\` to quit.                                                [00m
+      [0m                                                                                                    [00m
+
+      Preview URL: https://shopify.com
       "
     `)
+  })
+
+  test('accepts a onInput function that fires when a key is pressed', async () => {
+    const neverEndingPromise = new Promise<void>(function (_resolve, _reject) {})
+
+    const neverEndingProcess = {
+      prefix: 'never-ending-process',
+      action: async () => {
+        await neverEndingPromise
+      },
+    }
+
+    const onInput = vi.fn()
+
+    const renderInstance = render(
+      <ConcurrentOutput
+        processes={[neverEndingProcess]}
+        abortController={new AbortController()}
+        onInput={(input, key) => onInput(input, key)}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+    expect(onInput).toHaveBeenCalledTimes(0)
+
+    renderInstance.stdin.write('a')
+    expect(onInput).toHaveBeenCalledTimes(1)
+    expect(onInput.mock.calls[0]![0]).toBe('a')
   })
 })

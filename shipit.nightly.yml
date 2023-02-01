@@ -15,6 +15,7 @@ deploy:
   override:
     - |-
       bash -i -c 'echo -e "---\n'"'@shopify/cli'"': patch\n---" > .changeset/force-nightly-build.md'
+    - bash -i -c "npm_config_loglevel=verbose pnpm clean"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset version --snapshot nightly"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset-manifests"
     - bash -i -c "npm_config_loglevel=verbose pnpm nx run cli-kit:build"

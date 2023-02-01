@@ -42,7 +42,20 @@ interface ListToken {
   }
 }
 
-type Token = string | CommandToken | LinkToken | CharToken | UserInputToken | SubduedToken | FilePathToken | ListToken
+interface BoldToken {
+  bold: string
+}
+
+type Token =
+  | string
+  | CommandToken
+  | LinkToken
+  | CharToken
+  | UserInputToken
+  | SubduedToken
+  | FilePathToken
+  | ListToken
+  | BoldToken
 export type TokenItem = Token | Token[]
 
 type DisplayType = 'block' | 'inline'
@@ -75,6 +88,8 @@ export function tokenItemToString(token: TokenItem): string {
     return token.filePath
   } else if ('list' in token) {
     return token.list.items.map(tokenItemToString).join(' ')
+  } else if ('bold' in token) {
+    return token.bold
   } else {
     return token.map(tokenItemToString).join(' ')
   }
@@ -123,6 +138,8 @@ const TokenizedText: React.FC<Props> = ({item}) => {
     return <FilePath filePath={item.filePath} />
   } else if ('list' in item) {
     return <List {...item.list} />
+  } else if ('bold' in item) {
+    return <Text bold>{item.bold}</Text>
   } else {
     const groupedItems = item.map(tokenToBlock).reduce(splitByDisplayType, [])
 

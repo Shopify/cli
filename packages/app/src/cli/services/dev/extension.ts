@@ -61,7 +61,7 @@ export interface ExtensionDevOptions {
   port: number
 
   /**
-   * The development store where the extension wants to be previewed
+   * The store where the extension wants to be previewed
    */
   storeFqdn: string
 

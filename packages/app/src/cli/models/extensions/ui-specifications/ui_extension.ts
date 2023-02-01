@@ -24,7 +24,7 @@ const spec = createUIExtensionSpecification({
   identifier: 'ui_extension',
   surface: 'all',
   dependency,
-  partnersWebIdentifier: 'checkout_ui_extension',
+  partnersWebIdentifier: 'ui_extension',
   singleEntryPath: false,
   schema: UIExtensionSchema,
   validate: async (config, directory) => {
@@ -38,6 +38,7 @@ const spec = createUIExtensionSpecification({
   },
   deployConfig: async (config, directory) => {
     return {
+      api_version: config.apiVersion,
       extension_points: config.extensionPoints,
       capabilities: config.capabilities,
       name: config.name,
