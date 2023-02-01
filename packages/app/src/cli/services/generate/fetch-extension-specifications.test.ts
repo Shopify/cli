@@ -92,7 +92,7 @@ describe('fetchExtensionSpecifications', () => {
         }),
       ]),
     )
-    expect(api.partners.request).toBeCalled()
+    expect(partnersRequest).toBeCalled()
   })
   it('returns local specifications when fetching remote is disabled', async () => {
     // When
@@ -106,6 +106,6 @@ describe('fetchExtensionSpecifications', () => {
     // Then
     expect(got).toBeDefined()
     expect(got.length).toBeGreaterThan(0)
-    expect(api.partners.request).not.toBeCalled()
+    expect(partnersRequest).not.toBeCalled()
   })
 })

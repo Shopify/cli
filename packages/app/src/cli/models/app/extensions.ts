@@ -6,8 +6,7 @@ import {TokenizedString} from '@shopify/cli-kit/node/output'
 import {Result} from '@shopify/cli-kit/node/result'
 import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 
-export const EXTENSION_CATEGORIES = ['ui', 'function', 'theme'] as const
-export type ExtensionCategory = typeof EXTENSION_CATEGORIES[number]
+export type ExtensionCategory = 'ui' | 'function' | 'theme'
 
 /**
  * Common interface for ExtensionSpec and FunctionSpec

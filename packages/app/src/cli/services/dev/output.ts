@@ -1,6 +1,6 @@
 import {PartnersURLs} from './urls.js'
 import {AppInterface} from '../../models/app/app.js'
-import {ExtensionCategory, FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
+import {FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {buildAppURLForWeb} from '../../utilities/app/app-url.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
@@ -40,25 +40,14 @@ export function outputDevConsoleURL(url: string) {
   outputInfo(outputContent`${heading}\n\n  ${devConsoleURL}\n`)
 }
 
-export function outputExtensionsMessages(
-  app: AppInterface,
-  storeFqdn: string,
-  url: string,
-  skipExtensionCategories: ExtensionCategory[] = [],
-) {
-  outputUIExtensionsURLs(app.extensions.ui, storeFqdn, url, skipExtensionCategories)
+export function outputExtensionsMessages(app: AppInterface, storeFqdn: string, url: string) {
+  outputUIExtensionsURLs(app.extensions.ui, storeFqdn, url)
   outputFunctionsMessage(app.extensions.function)
-  outputThemeExtensionsMessage(app.extensions.theme, skipExtensionCategories)
+  outputThemeExtensionsMessage(app.extensions.theme)
 }
 
-function outputUIExtensionsURLs(
-  extensions: UIExtension[],
-  storeFqdn: string,
-  url: string,
-  skipExtensionCategories: ExtensionCategory[],
-) {
+function outputUIExtensionsURLs(extensions: UIExtension[], storeFqdn: string, url: string) {
   if (extensions.length > 0) {
-    if (outputSkippedCategoryMessage('ui', skipExtensionCategories)) return
     outputDevConsoleURL(url)
   }
 
@@ -77,9 +66,8 @@ One testing option is to use a separate app dedicated to staging.`
   outputInfo(outputContent`${heading}\n${message}\n`)
 }
 
-function outputThemeExtensionsMessage(extensions: ThemeExtension[], skipExtensionCategories: ExtensionCategory[]) {
+function outputThemeExtensionsMessage(extensions: ThemeExtension[]) {
   if (extensions.length === 0) return
-  if (outputSkippedCategoryMessage('theme', skipExtensionCategories)) return
   for (const extension of extensions) {
     const message = extension.previewMessage('', '')
     if (message) outputInfo(message)
@@ -91,15 +79,4 @@ async function partnersURL(organizationId: string, appId: string): Promise<strin
     `Partners Dashboard`,
     `https://${await partnersFqdn()}/${organizationId}/apps/${appId}/edit`,
   )}`.value
-}
-
-function outputSkippedCategoryMessage(
-  category: ExtensionCategory,
-  skipExtensionCategories: ExtensionCategory[],
-): boolean {
-  if (skipExtensionCategories.includes(category)) {
-    outputInfo(outputContent`${outputToken.heading(`${category} Extensions`)}\n  Skipped in this run\n`)
-    return true
-  }
-  return false
 }

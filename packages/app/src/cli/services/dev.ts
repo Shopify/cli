@@ -1,4 +1,4 @@
-import {DevEnvironmentOutput, ensureDevEnvironment} from './environment.js'
+import {ensureDevEnvironment} from './environment.js'
 import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
@@ -24,7 +24,7 @@ import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {exec} from '@shopify/cli-kit/node/system'
-import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/environment/spin'
+import {isSpin, isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/environment/spin'
 import {
   AdminSession,
   ensureAuthenticatedAdmin,
@@ -32,6 +32,7 @@ import {
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 
 export interface DevOptions {
@@ -51,7 +52,6 @@ export interface DevOptions {
   noTunnel: boolean
   theme?: string
   themeExtensionPort?: number
-  skipRemoteSpecifications: boolean
   extensionsIncluded: string[]
   extensionsExcluded: string[]
 }
@@ -73,7 +73,9 @@ async function dev(options: DevOptions) {
     token,
     apiKey,
     config: options.commandConfig,
-    skipFetchRemote: options.skipRemoteSpecifications,
+    // Spin enviroment is designed to run CLI as a service in a non-interactive mode. Other environments should require
+    // user interaction.
+    skipFetchRemote: isSpin(),
   })
   let localApp = await load({directory: options.directory, specifications})
 
@@ -394,25 +396,40 @@ async function resolveDevParameters(options: DevOptions): Promise<{token: string
 }
 
 function filterExtensions(app: AppInterface, extensionsIncluded: string[], extensionsExcluded: string[]): AppInterface {
-  const included = (extensions: Extension[], filter: string[]) =>
-    extensions.filter((extension) => filter.includes(extension.localIdentifier))
-  if (extensionsIncluded && extensionsIncluded.length > 0) {
-    app.extensions.function = included(app.extensions.function, extensionsIncluded) as FunctionExtension[]
-    app.extensions.ui = included(app.extensions.function, extensionsIncluded) as UIExtension[]
-    app.extensions.theme = included(app.extensions.theme, extensionsIncluded) as ThemeExtension[]
+  const extensionCounter = (app: AppInterface) =>
+    app.extensions.function.length + app.extensions.ui.length + app.extensions.theme.length
+  const filterExtensions = (
+    extensions: Extension[],
+    extensionId: string,
+    included: (id1: string, id2: string) => boolean,
+  ) => extensions.filter((extension) => included(extension.localIdentifier, extensionId))
+  const included = (id1: string, id2: string) => id1 === id2
+  const notIncluded = (id1: string, id2: string) => id1 !== id2
+
+  const applyFilter = (
+    app: AppInterface,
+    filter: string[],
+    filterType: (id1: string, id2: string) => boolean,
+  ): AppInterface | undefined => {
+    if (!filter || filter.length === 0) return undefined
+
+    extensionsIncluded.forEach((extensionId) => {
+      app.extensions.function = filterExtensions(
+        app.extensions.function,
+        extensionId,
+        filterType,
+      ) as FunctionExtension[]
+      app.extensions.ui = filterExtensions(app.extensions.function, extensionId, filterType) as UIExtension[]
+      app.extensions.theme = filterExtensions(app.extensions.theme, extensionId, filterType) as ThemeExtension[]
+      if (extensionsIncluded.length !== extensionCounter(app)) {
+        throw new AbortError('One or more included extensions donnot exist')
+      }
+    })
+
     return app
   }
 
-  const excluded = (extensions: Extension[], filter: string[]) =>
-    extensions.filter((extension) => !filter.includes(extension.localIdentifier))
-  if (extensionsExcluded && extensionsExcluded.length > 0) {
-    app.extensions.function = excluded(app.extensions.function, extensionsExcluded) as FunctionExtension[]
-    app.extensions.ui = excluded(app.extensions.function, extensionsExcluded) as UIExtension[]
-    app.extensions.theme = excluded(app.extensions.theme, extensionsExcluded) as ThemeExtension[]
-    return app
-  }
-
-  return app
+  return applyFilter(app, extensionsIncluded, included) ?? applyFilter(app, extensionsExcluded, notIncluded) ?? app
 }
 
 export default dev

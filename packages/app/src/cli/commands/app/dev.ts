@@ -89,12 +89,6 @@ export default class Dev extends Command {
       description: 'Local port of the theme app extension development server.',
       env: 'SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT',
     }),
-    'skip-remote-specifications': Flags.boolean({
-      hidden: false,
-      description: 'Use only local extension specification.',
-      env: 'SHOPIFY_FLAG_SKIP_REMOTE_SPECIFICATIONS',
-      default: false,
-    }),
     include: Flags.string({
       hidden: false,
       description:
@@ -140,7 +134,6 @@ export default class Dev extends Command {
       noTunnel: flags['no-tunnel'],
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
-      skipRemoteSpecifications: flags['skip-remote-specifications'],
       extensionsExcluded: flags.exclude,
       extensionsIncluded: flags.include,
     })
