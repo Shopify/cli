@@ -1,7 +1,6 @@
 import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, UIExtension} from '../app/extensions.js'
 import {blocks, defualtExtensionFlavors} from '../../constants.js'
-import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {ok, Result} from '@shopify/cli-kit/node/result'
 import {capitalize, constantize} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -66,7 +65,6 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
   configurationPath: string
 
   private specification: UIExtensionSpec
-  private remoteSpecification?: RemoteSpecification
 
   get graphQLType() {
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
@@ -81,7 +79,7 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
   }
 
   get humanName() {
-    return this.remoteSpecification?.externalName ?? this.specification.externalName
+    return this.specification.externalName
   }
 
   get name() {
@@ -93,7 +91,7 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
   }
 
   get externalType() {
-    return this.remoteSpecification?.externalIdentifier ?? this.specification.externalIdentifier
+    return this.specification.externalIdentifier
   }
 
   get surface() {
@@ -106,14 +104,12 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
     entryPath: string
     directory: string
     specification: UIExtensionSpec
-    remoteSpecification?: RemoteSpecification
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
     this.entrySourceFilePath = options.entryPath
     this.directory = options.directory
     this.specification = options.specification
-    this.remoteSpecification = options.remoteSpecification
     this.outputBundlePath = joinPath(options.directory, 'dist/main.js')
     this.devUUID = `dev-${randomUUID()}`
     this.localIdentifier = basename(options.directory)

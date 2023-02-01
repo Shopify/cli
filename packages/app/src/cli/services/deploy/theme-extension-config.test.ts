@@ -16,7 +16,6 @@ describe('themeExtensionConfig', () => {
         },
         configurationPath: '',
         directory: tmpDir,
-        remoteSpecification: undefined,
         specification: themeSpec,
         outputBundlePath: tmpDir,
       })

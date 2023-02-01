@@ -61,7 +61,6 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
     entryPath: entrySourceFilePath,
     directory,
     specification,
-    remoteSpecification: undefined,
   })
   extension.devUUID = uiExtension?.devUUID ?? 'test-ui-extension-uuid'
   return extension
@@ -77,7 +76,6 @@ export async function testThemeExtensions(): Promise<ThemeExtension> {
     configuration,
     configurationPath: '',
     directory: './my-extension',
-    remoteSpecification: undefined,
     specification: themeSpec,
     outputBundlePath: './my-extension',
   })

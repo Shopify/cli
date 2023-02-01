@@ -1,7 +1,6 @@
 import {ThemeExtensionSchema, ZodSchemaType} from './schemas.js'
 import {loadThemeSpecifications} from './specifications.js'
 import {GenericSpecification, ThemeExtension} from '../app/extensions.js'
-import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {schema} from '@shopify/cli-kit/node/schema'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
@@ -40,8 +39,6 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
   specification: ThemeExtensionSpec
   outputBundlePath: string
 
-  private remoteSpecification?: RemoteSpecification
-
   get graphQLType() {
     return this.specification.graphQLType.toUpperCase()
   }
@@ -55,7 +52,7 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
   }
 
   get humanName() {
-    return this.remoteSpecification?.externalName ?? this.specification.externalName
+    return this.specification.externalName
   }
 
   get name() {
@@ -63,21 +60,19 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
   }
 
   get externalType() {
-    return this.remoteSpecification?.externalIdentifier ?? this.specification.externalIdentifier
+    return this.specification.externalIdentifier
   }
 
   constructor(options: {
     configuration: TConfiguration
     configurationPath: string
     directory: string
-    remoteSpecification?: RemoteSpecification
     specification: ThemeExtensionSpec
     outputBundlePath: string
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
     this.directory = options.directory
-    this.remoteSpecification = options.remoteSpecification
     this.specification = options.specification
     this.localIdentifier = basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
