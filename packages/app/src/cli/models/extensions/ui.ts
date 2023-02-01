@@ -3,7 +3,7 @@ import {ExtensionCategory, GenericSpecification, UIExtension} from '../app/exten
 import {blocks, defualtExtensionFlavors} from '../../constants.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {ok, Result} from '@shopify/cli-kit/node/result'
-import {constantize} from '@shopify/cli-kit/common/string'
+import {capitalize, constantize} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
@@ -15,8 +15,6 @@ import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node
 export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>
   extends GenericSpecification {
   identifier: string
-  externalIdentifier: string
-  externalName: string
   partnersWebIdentifier: string
   surface: string
   singleEntryPath: boolean
@@ -218,8 +216,10 @@ export function createUIExtensionSpecification<TConfiguration extends BaseConfig
   spec: CreateExtensionSpecType<TConfiguration>,
 ): UIExtensionSpec<TConfiguration> {
   const defaults = {
-    externalIdentifier: spec.identifier,
-    externalName: spec.identifier,
+    // these two fields are going to be overridden by the extension specification API response,
+    // but we need them to have a default value for tests
+    externalIdentifier: `${spec.identifier}_external`,
+    externalName: capitalize(spec.identifier.replace(/_/g, ' ')),
     surface: 'unknown',
     partnersWebIdentifier: spec.identifier,
     singleEntryPath: true,

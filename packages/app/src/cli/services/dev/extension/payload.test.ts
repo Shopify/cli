@@ -93,7 +93,7 @@ describe('getUIExtensionPayload', () => {
         },
         categories: null,
         extensionPoints: ['CUSTOM_EXTENSION_POINT'],
-        externalType: 'checkout_ui',
+        externalType: 'checkout_ui_extension_external',
         localization: null,
         metafields: null,
         surface: 'checkout',

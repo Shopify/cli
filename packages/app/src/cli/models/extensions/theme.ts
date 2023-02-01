@@ -13,8 +13,6 @@ export type ThemeConfigContents = schema.infer<typeof ThemeExtensionSchema>
 
 export interface ThemeExtensionSpec extends GenericSpecification {
   identifier: 'theme'
-  externalIdentifier: 'theme_app_extension'
-  externalName: 'Theme app extension'
   supportedFlavors: []
   registrationLimit: 1
   gated: false

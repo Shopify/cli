@@ -17,7 +17,7 @@ describe('output', () => {
 
         https://f97b-95-91-224-153.eu.ngrok.io/extensions/dev-console
 
-      customer-accounts-ui-extension (Customer accounts UI)
+      customer-accounts-ui-extension (Customer accounts ui extension)
       Please open https://f97b-95-91-224-153.eu.ngrok.io and click on 'Visit Site' and then close the tab to allow connections.
       Preview link: https://shop1010.account./extensions-development?origin=https%3A%2F%2Ff97b-95-91-224-153.eu.ngrok.io%2Fextensions&extensionId=dev-94b5f0a6-1264-461d-8f78-08db4565b044
       "
