@@ -1,7 +1,6 @@
 import {appFlags} from '../../flags.js'
 import dev from '../../services/dev.js'
 import Command from '../../utilities/app-command.js'
-import {ExtensionCategory, EXTENSION_CATEGORIES} from '../../models/app/extensions.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -96,12 +95,20 @@ export default class Dev extends Command {
       env: 'SHOPIFY_FLAG_SKIP_REMOTE_SPECIFICATIONS',
       default: false,
     }),
-    'skip-extension-category': Flags.string({
+    include: Flags.string({
       hidden: false,
-      description: 'In case there are some extension of this categories, they are skipped from the dev flow execution',
-      env: 'SHOPIFY_FLAG_SKIP_REMOTE_SPECIFICATIONS',
+      description:
+        'Only the extension which local identifier matches this value will be included in the dev flow execution',
+      env: 'SHOPIFY_FLAG_INCLUDE',
       multiple: true,
-      options: EXTENSION_CATEGORIES.slice(),
+      default: [],
+    }),
+    exclude: Flags.string({
+      hidden: false,
+      description:
+        'All the existing extensions will be included in the dev flow execution except for the one which local identifier matches this value',
+      env: 'SHOPIFY_FLAG_EXCLUDE',
+      multiple: true,
       default: [],
     }),
   }
@@ -134,9 +141,8 @@ export default class Dev extends Command {
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
       skipRemoteSpecifications: flags['skip-remote-specifications'],
-      skipExtensionCategories: flags['skip-extension-category'].map(
-        (extensionCategory) => extensionCategory as ExtensionCategory,
-      ),
+      extensionsExcluded: flags.exclude,
+      extensionsIncluded: flags.include,
     })
   }
 }

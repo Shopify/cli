@@ -98,7 +98,7 @@ function outputSkippedCategoryMessage(
   skipExtensionCategories: ExtensionCategory[],
 ): boolean {
   if (skipExtensionCategories.includes(category)) {
-    output.info(output.content`${output.token.heading(`${category} Extensions`)}\n  Skipped in this run\n`)
+    outputInfo(outputContent`${outputToken.heading(`${category} Extensions`)}\n  Skipped in this run\n`)
     return true
   }
   return false

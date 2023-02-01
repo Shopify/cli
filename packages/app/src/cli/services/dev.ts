@@ -11,7 +11,7 @@ import {
 } from '../utilities/app/http-reverse-proxy.js'
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import metadata from '../metadata.js'
-import {ExtensionCategory, UIExtension} from '../models/app/extensions.js'
+import {Extension, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
@@ -52,7 +52,8 @@ export interface DevOptions {
   theme?: string
   themeExtensionPort?: number
   skipRemoteSpecifications: boolean
-  skipExtensionCategories: ExtensionCategory[]
+  extensionsIncluded: string[]
+  extensionsExcluded: string[]
 }
 
 interface DevWebOptions {
@@ -75,6 +76,8 @@ async function dev(options: DevOptions) {
     skipFetchRemote: options.skipRemoteSpecifications,
   })
   let localApp = await load({directory: options.directory, specifications})
+
+  localApp = filterExtensions(localApp, options.extensionsIncluded, options.extensionsExcluded)
 
   if (!options.skipDependenciesInstallation) {
     localApp = await installAppDependencies(localApp)
@@ -128,7 +131,7 @@ async function dev(options: DevOptions) {
   const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
 
-  if (localApp.extensions.ui.length > 0 && !options.skipExtensionCategories.includes('ui')) {
+  if (localApp.extensions.ui.length > 0) {
     const devExt = await devUIExtensionsTarget({
       app: localApp,
       id: remoteApp.id,
@@ -142,11 +145,11 @@ async function dev(options: DevOptions) {
     proxyTargets.push(devExt)
   }
 
-  outputExtensionsMessages(localApp, storeFqdn, proxyUrl, options.skipExtensionCategories)
+  outputExtensionsMessages(localApp, storeFqdn, proxyUrl)
 
   const additionalProcesses: OutputProcess[] = []
 
-  if (localApp.extensions.theme.length > 0 && !options.skipExtensionCategories.includes('theme')) {
+  if (localApp.extensions.theme.length > 0) {
     const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
     const storefrontToken = await ensureAuthenticatedStorefront()
     const extension = localApp.extensions.theme[0]!
@@ -388,6 +391,28 @@ async function resolveDevParameters(options: DevOptions): Promise<{token: string
 
   const token = await ensureAuthenticatedPartners()
   return {token, devOutput: await ensureDevEnvironment(options, token)}
+}
+
+function filterExtensions(app: AppInterface, extensionsIncluded: string[], extensionsExcluded: string[]): AppInterface {
+  const included = (extensions: Extension[], filter: string[]) =>
+    extensions.filter((extension) => filter.includes(extension.localIdentifier))
+  if (extensionsIncluded && extensionsIncluded.length > 0) {
+    app.extensions.function = included(app.extensions.function, extensionsIncluded) as FunctionExtension[]
+    app.extensions.ui = included(app.extensions.function, extensionsIncluded) as UIExtension[]
+    app.extensions.theme = included(app.extensions.theme, extensionsIncluded) as ThemeExtension[]
+    return app
+  }
+
+  const excluded = (extensions: Extension[], filter: string[]) =>
+    extensions.filter((extension) => !filter.includes(extension.localIdentifier))
+  if (extensionsExcluded && extensionsExcluded.length > 0) {
+    app.extensions.function = excluded(app.extensions.function, extensionsExcluded) as FunctionExtension[]
+    app.extensions.ui = excluded(app.extensions.function, extensionsExcluded) as UIExtension[]
+    app.extensions.theme = excluded(app.extensions.theme, extensionsExcluded) as ThemeExtension[]
+    return app
+  }
+
+  return app
 }
 
 export default dev
