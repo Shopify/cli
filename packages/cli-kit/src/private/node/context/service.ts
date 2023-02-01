@@ -1,4 +1,4 @@
-import {isSpin} from '../../../public/node/environment/spin.js'
+import {isSpin} from '../../../public/node/context/spin.js'
 import {environmentVariables} from '../constants.js'
 
 /**

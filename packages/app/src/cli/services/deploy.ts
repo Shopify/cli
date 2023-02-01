@@ -6,7 +6,7 @@ import {
   uploadUIExtensionsBundle,
 } from './deploy/upload.js'
 
-import {ensureDeployEnvironment} from './environment.js'
+import {ensureDeployContext} from './context.js'
 import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {AppInterface} from '../models/app/app.js'
@@ -15,7 +15,7 @@ import {Extension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {useThemeBundling} from '@shopify/cli-kit/node/environment/local'
+import {useThemeBundling} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -48,7 +48,7 @@ export const deploy = async (options: DeployOptions) => {
   }
 
   // eslint-disable-next-line prefer-const
-  let {app, identifiers, partnersApp, partnersOrganizationId, token} = await ensureDeployEnvironment(options)
+  let {app, identifiers, partnersApp, partnersOrganizationId, token} = await ensureDeployContext(options)
   const apiKey = identifiers.app
 
   outputNewline()

@@ -1,6 +1,6 @@
 import {isSpinEnvironment, spinFqdn} from './spin.js'
 import {AbortError} from '../error.js'
-import {serviceEnvironment} from '../../../private/node/environment/service.js'
+import {serviceEnvironment} from '../../../private/node/context/service.js'
 
 export const CouldntObtainPartnersSpinFQDNError = new AbortError(
   "Couldn't obtain the Spin FQDN for Partners when the CLI is not running from a Spin environment.",

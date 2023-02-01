@@ -5,8 +5,8 @@ import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {isSpinEnvironment} from '@shopify/cli-kit/node/environment/spin'
-import {firstPartyDev} from '@shopify/cli-kit/node/environment/local'
+import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
+import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 
 const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
 const STORE1: OrganizationStore = {
@@ -39,12 +39,12 @@ const STORE3: OrganizationStore = {
 beforeEach(() => {
   vi.mock('../../prompts/dev')
   vi.mock('./fetch')
-  vi.mock('@shopify/cli-kit/node/environment/local')
+  vi.mock('@shopify/cli-kit/node/context/local')
   vi.mock('@shopify/cli-kit/node/system')
   vi.mock('@shopify/cli-kit/node/api/partners')
   vi.mock('@shopify/cli-kit/node/session')
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-  vi.mock('@shopify/cli-kit/node/environment/spin')
+  vi.mock('@shopify/cli-kit/node/context/spin')
   vi.mocked(isSpinEnvironment).mockReturnValue(false)
   vi.mock('@shopify/cli-kit', async () => {
     const cliKit: any = await vi.importActual('@shopify/cli-kit')

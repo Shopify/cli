@@ -9,7 +9,7 @@ import {
   isShopify,
   isUnitTest,
   macAddress,
-} from './environment/local.js'
+} from './context/local.js'
 import {inTemporaryDirectory, touchFile, mkdir} from './fs.js'
 import {joinPath, dirname} from './path.js'
 import {publishMonorailEvent} from './monorail.js'
@@ -25,7 +25,7 @@ describe('event tracking', () => {
 
   beforeEach(() => {
     vi.setSystemTime(currentDate)
-    vi.mock('./environment/local.js')
+    vi.mock('./context/local.js')
     vi.mock('./ruby.js')
     vi.mock('./os.js')
     vi.mock('../../store.js')

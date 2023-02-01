@@ -9,9 +9,9 @@ import {
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
-import {isSpinEnvironment} from '@shopify/cli-kit/node/environment/spin'
-import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
-import {firstPartyDev} from '@shopify/cli-kit/node/environment/local'
+import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
+import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError, CancelExecution} from '@shopify/cli-kit/node/error'
 import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
 

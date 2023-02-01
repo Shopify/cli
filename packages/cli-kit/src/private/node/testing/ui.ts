@@ -1,4 +1,4 @@
-import {isTruthy} from '../environment/utilities.js'
+import {isTruthy} from '../context/utilities.js'
 import {render} from 'ink-testing-library'
 
 export function waitForInputsToBeReady() {

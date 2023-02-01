@@ -5,9 +5,9 @@ import {
   loadLocalUIExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
-import {isShopify, isUnitTest} from '@shopify/cli-kit/node/environment/local'
+import {isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
 
-vi.mock('@shopify/cli-kit/node/environment/local')
+vi.mock('@shopify/cli-kit/node/context/local')
 
 beforeEach(() => {
   vi.mocked(isShopify).mockResolvedValue(true)

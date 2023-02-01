@@ -3,7 +3,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from '../../models/app/extensions.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {buildAppURLForWeb} from '../../utilities/app/app-url.js'
-import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
+import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 

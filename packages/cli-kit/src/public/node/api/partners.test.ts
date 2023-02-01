@@ -1,10 +1,10 @@
 import * as partnersApi from './partners.js'
-import {partnersFqdn} from '../environment/fqdn.js'
+import {partnersFqdn} from '../context/fqdn.js'
 import {graphqlRequest} from '../../../private/node/api/graphql.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 
 vi.mock('../../../private/node/api/graphql')
-vi.mock('../environment/fqdn.js')
+vi.mock('../context/fqdn.js')
 
 const mockedResult = 'OK'
 const partnersFQDN = 'partners.shopify.com'

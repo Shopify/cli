@@ -11,7 +11,7 @@ import {
 } from './public/node/output.js'
 import colors from './public/node/colors.js'
 import {relativizePath} from './public/node/path.js'
-import {isTerminalInteractive} from './public/node/environment/local.js'
+import {isTerminalInteractive} from './public/node/context/local.js'
 import {run as executorUI} from './ui/executor.js'
 import findProcess from 'find-process'
 

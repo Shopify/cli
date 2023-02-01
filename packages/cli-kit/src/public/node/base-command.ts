@@ -1,13 +1,13 @@
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
 import {loadEnvironmentsFromDirectory} from './environments.js'
-import {isDevelopment} from './environment/local.js'
+import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
 import {cwd} from './path.js'
 import {JsonMap} from '../../private/common/json.js'
 import {outputContent, outputInfo, outputToken} from '../../public/node/output.js'
 import {hashString} from '../../public/node/crypto.js'
-import {isTruthy} from '../../private/node/environment/utilities.js'
+import {isTruthy} from '../../private/node/context/utilities.js'
 import {Command, Interfaces} from '@oclif/core'
 
 interface EnvironmentFlags {

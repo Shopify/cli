@@ -8,7 +8,7 @@ import {AbortError, AbortSilentError} from './error.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
 import {outputContent, outputToken} from '../../public/node/output.js'
-import {isTruthy} from '../../private/node/environment/utilities.js'
+import {isTruthy} from '../../private/node/context/utilities.js'
 import {Writable} from 'stream'
 
 const RubyCLIVersion = '2.34.0'

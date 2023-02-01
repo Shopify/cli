@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import {isUnitTest, isVerbose} from './environment/local.js'
+import {isUnitTest, isVerbose} from './context/local.js'
 import {PackageManager} from './node-package-manager.js'
 import colors from './colors.js'
 import {

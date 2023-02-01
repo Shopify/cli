@@ -1,4 +1,4 @@
-import {hasGit, isTerminalInteractive} from './environment/local.js'
+import {hasGit, isTerminalInteractive} from './context/local.js'
 import {appendFileSync} from './fs.js'
 import {AbortError} from './error.js'
 import {cwd} from './path.js'
