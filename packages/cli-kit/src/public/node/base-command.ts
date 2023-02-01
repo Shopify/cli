@@ -1,8 +1,9 @@
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
-import {loadEnvironmentsFromDirectory} from './environments.js'
+import {loadEnvironment} from './environments.js'
 import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
+import {findPathUp} from './fs.js'
 import {cwd} from './path.js'
 import {JsonMap} from '../../private/common/json.js'
 import {outputContent, outputInfo, outputToken} from '../../public/node/output.js'
@@ -74,10 +75,8 @@ abstract class BaseCommand extends Command {
     if (!flags.environment) return originalResult
 
     // If the specified environment isn't found, don't modify the results
-    const environments = await loadEnvironmentsFromDirectory(await this.environmentsPath(flags), {
-      findUp: this.findUpForEnvironments(),
-    })
-    const environment = environments[flags.environment]
+    const environmentsFile = await this.environmentsFilePath(flags)
+    const environment = await loadEnvironment(flags.environment, environmentsFile)
     if (!environment) return originalResult
 
     // Parse using noDefaultsOptions to derive a list of flags specified as
@@ -104,12 +103,16 @@ abstract class BaseCommand extends Command {
     return result
   }
 
-  protected async environmentsPath(rawFlags: {path?: string}): Promise<string> {
-    return rawFlags.path || cwd()
+  protected async environmentsFilePath(rawFlags: {path?: string}): Promise<string | undefined> {
+    const basePath = rawFlags.path || cwd()
+    return findPathUp(this.environmentsFilename(), {
+      cwd: basePath,
+      type: 'file',
+    })
   }
 
-  protected findUpForEnvironments(): boolean {
-    return true
+  protected environmentsFilename(): string {
+    throw new Error('Not implemented')
   }
 }
 

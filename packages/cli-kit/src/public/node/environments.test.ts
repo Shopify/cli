@@ -22,7 +22,7 @@ describe('loading environments', async () => {
   test('returns an empty object when no environments file exists', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // When
-      const loaded = await environments.loadEnvironmentsFromDirectory(tmpDir)
+      const loaded = await environments.loadEnvironments(tmpDir)
 
       // Then
       expect(loaded).toEqual({})
@@ -35,7 +35,7 @@ describe('loading environments', async () => {
       await writeFile(joinPath(tmpDir, environmentsFilename), '# no content')
 
       // When
-      const loaded = await environments.loadEnvironmentsFromDirectory(tmpDir)
+      const loaded = await environments.loadEnvironments(tmpDir)
 
       // Then
       expect(loaded).toEqual({})
@@ -48,7 +48,7 @@ describe('loading environments', async () => {
       await writeFile(joinPath(tmpDir, 'shopify.environments.toml'), tomlEncode({environment1, environment2}))
 
       // When
-      const loaded = await environments.loadEnvironmentsFromDirectory(tmpDir)
+      const loaded = await environments.loadEnvironments(tmpDir)
 
       // Then
       expect(loaded).toEqual({environment1, environment2})
@@ -63,7 +63,7 @@ describe('loading environments', async () => {
       await mkdir(subdir)
 
       // When
-      const loaded = await environments.loadEnvironmentsFromDirectory(subdir)
+      const loaded = await environments.loadEnvironments(subdir)
 
       // Then
       expect(loaded).toEqual({})
@@ -78,7 +78,7 @@ describe('loading environments', async () => {
       await mkdir(subdir)
 
       // When
-      const loaded = await environments.loadEnvironmentsFromDirectory(subdir, {findUp: true})
+      const loaded = await environments.loadEnvironments(subdir, {findUp: true})
 
       // Then
       expect(loaded).toEqual({environment1})
