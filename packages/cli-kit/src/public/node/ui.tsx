@@ -1,5 +1,5 @@
-import {FatalError as Fatal} from './error.js'
-import {collectLog, consoleError, consoleLog, Logger, LogLevel, outputWhereAppropriate} from './output.js'
+import {AbortSilentError, FatalError as Fatal} from './error.js'
+import {collectLog, consoleError, consoleLog, Logger, LogLevel, outputDebug, outputWhereAppropriate} from './output.js'
 import {isUnitTest} from './environment/local.js'
 import ConcurrentOutput, {Props as ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
 import {render, renderOnce} from '../../private/node/ui.js'
@@ -335,12 +335,34 @@ interface RenderTextOptions {
 
 /** Renders a text string to the console.
  * Using this function makes sure that correct spacing is applied among the various components. */
-export function renderText(text: string, {logLevel = 'info', logger = consoleLog}: RenderTextOptions) {
+export function renderText(text: string, {logLevel = 'info', logger = consoleLog}: RenderTextOptions = {}) {
   let textWithLineReturn = text
   if (!text.endsWith('\n')) textWithLineReturn += '\n'
 
   if (isUnitTest()) collectLog(logLevel, textWithLineReturn)
   outputWhereAppropriate(logLevel, logger, textWithLineReturn)
+}
+
+/** Waits for any key to be pressed except Ctrl+C which will terminate the process. */
+export const keypress = async () => {
+  return new Promise((resolve, reject) => {
+    const handler = (buffer: Buffer) => {
+      process.stdin.setRawMode(false)
+      process.stdin.pause()
+
+      const bytes = Array.from(buffer)
+
+      if (bytes.length && bytes[0] === 3) {
+        outputDebug('Canceled keypress, User pressed CTRL+C')
+        reject(new AbortSilentError())
+      }
+      process.nextTick(resolve)
+    }
+
+    process.stdin.resume()
+    process.stdin.setRawMode(true)
+    process.stdin.once('data', handler)
+  })
 }
 
 export type Key = InkKey

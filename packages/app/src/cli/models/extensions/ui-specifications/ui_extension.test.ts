@@ -19,6 +19,7 @@ describe('ui_extension', async () => {
     const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension') as UIExtensionSpec
     const configuration = {
       extensionPoints,
+      apiVersion: '2023-01' as const,
       name: 'UI Extension',
       type: 'ui_extension',
       metafields: [],
@@ -192,6 +193,7 @@ Please check the configuration in ${tomlPath}`),
           extension_points: uiExtension.configuration.extensionPoints,
           capabilities: uiExtension.configuration.capabilities,
           name: uiExtension.configuration.name,
+          api_version: uiExtension.configuration.apiVersion,
           settings: uiExtension.configuration.settings,
         })
       })

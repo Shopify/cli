@@ -50,10 +50,16 @@ describe('packageTheme', () => {
       const themeRelativePaths = [
         'assets/base.css',
         'config/settings_schema.json',
+        'config/unsupported_dir/settings_schema.json',
+        'templates/customers/account.json',
         'invalid-file.md',
         'invalid/file.liquid',
       ]
-      const expectedThemeRelativePaths = ['assets/base.css', 'config/settings_schema.json']
+      const expectedThemeRelativePaths = [
+        'assets/base.css',
+        'config/settings_schema.json',
+        'templates/customers/account.json',
+      ]
       await createFiles(themeRelativePaths, inputDirectory)
       await createSettingsSchema(
         '[{"name": "theme_info", "theme_name": "Dawn", "theme_version": "7.0.2"}]',

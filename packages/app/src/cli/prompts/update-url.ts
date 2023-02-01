@@ -1,34 +1,23 @@
 import {isValidURL} from '@shopify/cli-kit/common/url'
-import {ui} from '@shopify/cli-kit'
+import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 export async function appUrlPrompt(defaultValue: string): Promise<string> {
-  const input = await ui.prompt([
-    {
-      type: 'input',
-      name: 'url',
-      message: 'App URL',
-      default: defaultValue,
-      validate: (value: string) => {
-        if (isValidURL(value)) return true
-        return 'Invalid URL'
-      },
+  return renderTextPrompt({
+    message: 'App URL',
+    defaultValue,
+    validate: (value: string) => {
+      if (!isValidURL(value)) return 'Invalid URL'
     },
-  ])
-  return input.url
+  })
 }
 
 export async function allowedRedirectionURLsPrompt(defaultValue: string): Promise<string[]> {
-  const input = await ui.prompt([
-    {
-      type: 'input',
-      name: 'urls',
-      message: 'Allowed redirection URLs (comma separated)',
-      default: defaultValue,
-      validate: (value: string) => {
-        if (value.split(',').every((url) => isValidURL(url))) return true
-        return 'Invalid URLs'
-      },
+  const urls = await renderTextPrompt({
+    message: 'Allowed redirection URLs (comma separated)',
+    defaultValue,
+    validate: (value: string) => {
+      if (!value.split(',').every((url) => isValidURL(url))) return 'Invalid URLs'
     },
-  ])
-  return input.urls.split(',')
+  })
+  return urls.split(',')
 }

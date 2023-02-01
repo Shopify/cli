@@ -3,7 +3,6 @@ import {test, vi, expect, describe} from 'vitest'
 import {restRequest} from '@shopify/cli-kit/node/api/admin'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-vi.mock('@shopify/cli-kit')
 vi.mock('@shopify/cli-kit/node/api/admin')
 
 const session = {token: 'token', storeFqdn: 'my-shop.myshopify.com'}

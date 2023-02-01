@@ -1,6 +1,5 @@
-import {ui} from '@shopify/cli-kit'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
-import {renderText} from '@shopify/cli-kit/node/ui'
+import {renderText, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 interface InitOptions {
   name?: string
@@ -21,21 +20,21 @@ export const templateURLMap = {
   ruby: 'https://github.com/Shopify/shopify-app-template-ruby',
 } as const
 
-const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutput> => {
-  renderText('\nWelcome. Let’s get started by naming your app project. You can change it later.')
+const init = async (options: InitOptions): Promise<InitOutput> => {
+  let name = options.name
+  let template = options.template
 
   const defaults = {
     name: await generateRandomNameForSubdirectory({suffix: 'app', directory: options.directory}),
     template: templateURLMap.node,
   } as const
 
-  const questions: ui.Question<'name' | 'template'>[] = []
-  if (!options.name) {
-    questions.push({
-      type: 'input',
-      name: 'name',
+  renderText('\nWelcome. Let’s get started by naming your app project. You can change it later.')
+
+  if (!name) {
+    name = await renderTextPrompt({
       message: 'Your app project name?',
-      default: defaults.name,
+      defaultValue: defaults.name,
       validate: (value) => {
         if (value.length === 0) {
           return "App name can't be empty"
@@ -46,33 +45,29 @@ const init = async (options: InitOptions, prompt = ui.prompt): Promise<InitOutpu
         if (value.toLowerCase().includes('shopify')) {
           return "App name can't include the word 'shopify'"
         }
-        return true
       },
     })
   }
 
-  if (!options.template && Object.keys(templateURLMap).length > 1) {
-    const templateList = Object.keys(templateURLMap).map((key) => {
-      return {
-        name: key,
-        value: key,
-      }
-    })
-    questions.push({
-      type: 'select',
-      name: 'template',
-      choices: templateList,
+  if (!template) {
+    template = await renderSelectPrompt({
+      choices: Object.keys(templateURLMap).map((key) => {
+        return {
+          label: key,
+          value: key,
+        }
+      }),
       message: 'Which template would you like to use?',
-      default: Object.keys(templateURLMap).find(
+      defaultValue: Object.keys(templateURLMap).find(
         (key) => templateURLMap[key as 'node' | 'php' | 'ruby'] === defaults.template,
       ),
     })
   }
 
-  const promptOutput: InitOutput = await prompt(questions)
   const answers = {
     ...options,
-    ...promptOutput,
+    name,
+    template,
   }
 
   const templateURL = templateURLMap[answers.template as keyof typeof templateURLMap]

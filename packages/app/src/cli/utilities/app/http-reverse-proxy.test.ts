@@ -5,7 +5,6 @@ import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 
 beforeAll(() => {
-  vi.mock('@shopify/cli-kit')
   vi.mock('@shopify/cli-kit/node/ui')
   vi.mock('@shopify/cli-kit/node/tcp')
   vi.mock('http-proxy', () => {
