@@ -2,8 +2,8 @@ import {manualMatchIds, ManualMatchResult} from './id-manual-matching.js'
 import {ExtensionRegistration} from '../dev/create-extension.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {ui} from '@shopify/cli-kit'
 import {ok} from '@shopify/cli-kit/node/result'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 
 const REGISTRATION_A: ExtensionRegistration = {
   uuid: 'UUID_A',
@@ -104,22 +104,14 @@ const EXTENSION_B: UIExtension = {
 }
 
 beforeEach(() => {
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      ui: {
-        prompt: vi.fn(),
-      },
-    }
-  })
+  vi.mock('@shopify/cli-kit/node/ui')
 })
 
 describe('manualMatch: when all sources are matched', () => {
   it('returns IDs', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'UUID_A'})
-    vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'UUID_A_2'})
+    vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce('UUID_A')
+    vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce('UUID_A_2')
 
     // When
     const got = await manualMatchIds(
@@ -140,7 +132,7 @@ describe('manualMatch: when all sources are matched', () => {
 describe('manualMatch: when there are more local sources', () => {
   it('returns IDs and some sources pending creation', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'UUID_A'})
+    vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce('UUID_A')
 
     // When
     const got = await manualMatchIds({local: [EXTENSION_A, EXTENSION_A_2], remote: [REGISTRATION_A]}, 'uuid')
@@ -158,9 +150,9 @@ describe('manualMatch: when there are more local sources', () => {
 describe('manualMatch: when there are more local sources and user selects to create', () => {
   it('returns IDs and some sources pending creation', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'UUID_A'})
-    vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'create'})
-    vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'UUID_A_2'})
+    vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce('UUID_A')
+    vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce('create')
+    vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce('UUID_A_2')
 
     // When
     const got = await manualMatchIds(
@@ -184,9 +176,9 @@ describe('manualMatch: when there are more local sources and user selects to cre
 describe('manualMatch: when not all remote sources are matched', () => {
   it('returns matched IDs and only remote sources', async () => {
     // Given
-    vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'create'})
-    vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'create'})
-    vi.mocked(ui.prompt).mockResolvedValueOnce({uuid: 'create'})
+    vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce('create')
+    vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce('create')
+    vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce('create')
 
     // When
     const got = await manualMatchIds(

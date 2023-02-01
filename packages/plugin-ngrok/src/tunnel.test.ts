@@ -1,9 +1,8 @@
 import {authenticate, hookStart} from './tunnel.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {ui} from '@shopify/cli-kit'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import ngrok from '@shopify/ngrok'
-import {renderFatalError} from '@shopify/cli-kit/node/ui'
+import {renderFatalError, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 const port = 1234
@@ -22,16 +21,6 @@ beforeEach(async () => {
     return {
       ...error,
       AbortError: vi.fn(),
-    }
-  })
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      ui: {
-        prompt: vi.fn(),
-      },
-      environment: vi.fn(),
     }
   })
   vi.mock('@shopify/cli-kit/node/os', async () => {
@@ -54,7 +43,7 @@ describe('start', () => {
   it('asks for the token and authenticates if the configuration file is wrong', async () => {
     // Given
     vi.mocked(ngrok.validConfig).mockResolvedValue(false)
-    vi.mocked(ui.prompt).mockResolvedValue({token: '123'})
+    vi.mocked(renderTextPrompt).mockResolvedValue('123')
     const authtokenSpy = vi.spyOn(ngrok, 'authtoken')
 
     // When

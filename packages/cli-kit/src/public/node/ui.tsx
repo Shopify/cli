@@ -1,5 +1,5 @@
-import {FatalError as Fatal} from './error.js'
-import {consoleError} from './output.js'
+import {AbortSilentError, FatalError as Fatal} from './error.js'
+import {consoleError, outputDebug} from './output.js'
 import ConcurrentOutput, {Props as ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
 import {render, renderOnce} from '../../private/node/ui.js'
 import {alert} from '../../private/node/ui/alert.js'
@@ -328,6 +328,28 @@ export function renderTextPrompt(props: Omit<TextPromptProps, 'onSubmit'>): Prom
     render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
       exitOnCtrlC: false,
     }).catch(reject)
+  })
+}
+
+/** Waits for any key to be pressed except Ctrl+C which will terminate the process. */
+export const keypress = async () => {
+  return new Promise((resolve, reject) => {
+    const handler = (buffer: Buffer) => {
+      process.stdin.setRawMode(false)
+      process.stdin.pause()
+
+      const bytes = Array.from(buffer)
+
+      if (bytes.length && bytes[0] === 3) {
+        outputDebug('Canceled keypress, User pressed CTRL+C')
+        reject(new AbortSilentError())
+      }
+      process.nextTick(resolve)
+    }
+
+    process.stdin.resume()
+    process.stdin.setRawMode(true)
+    process.stdin.once('data', handler)
   })
 }
 
