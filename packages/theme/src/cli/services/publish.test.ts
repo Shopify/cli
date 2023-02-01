@@ -43,7 +43,7 @@ describe('publish', () => {
     })
 
     expect(renderSuccess).toBeCalledWith({
-      headline: [
+      body: [
         'The theme',
         'my theme',
         {subdued: `(#1)`},
@@ -89,7 +89,7 @@ describe('publish', () => {
     // Then
     expect(renderConfirmationPrompt).not.toBeCalled()
     expect(renderSuccess).toBeCalledWith({
-      headline: [
+      body: [
         'The theme',
         'my theme',
         {subdued: `(#1)`},

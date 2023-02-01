@@ -72,7 +72,7 @@ export async function appTypePrompt(): Promise<'public' | 'custom'> {
 
 export async function appNamePrompt(currentName: string): Promise<string> {
   return renderTextPrompt({
-    message: 'App Name',
+    message: 'App name',
     defaultValue: currentName,
     validate: (value) => {
       if (value.length === 0) {

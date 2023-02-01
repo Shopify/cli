@@ -1,4 +1,4 @@
-import {TokenizedText} from './TokenizedText.js'
+import {tokenItemToString, TokenizedText} from './TokenizedText.js'
 import {unstyled} from '../../../../public/node/output.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
@@ -43,7 +43,13 @@ describe('TokenizedText', async () => {
         • Item 1
         • Item 2
         • Item 3
-      \\"src/this/is/a/test.js\\""
+      src/this/is/a/test.js"
     `)
+  })
+
+  describe('tokenItemToString', async () => {
+    test("doesn't add a space before char", async () => {
+      expect(tokenItemToString(['Run', {char: '!'}])).toBe('Run!')
+    })
   })
 })

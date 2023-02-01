@@ -41,11 +41,11 @@ describe('after extension command finishes correctly', () => {
     expect(outputInfo.info()).toMatchInlineSnapshot(`
       "╭─ success ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Checkout UI extension was added to your project!                            │
+      │  Your extension was created in extensions/name.                              │
       │                                                                              │
       │  Next steps                                                                  │
-      │    • To find your extension, remember to \`cd extensions/name\`                │
-      │    • To preview your project, run \`yarn dev\`                                 │
+      │    • To preview this extension along with the rest of the project, run       │
+      │      \`yarn dev\`                                                              │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
@@ -63,11 +63,11 @@ describe('after extension command finishes correctly', () => {
     expect(outputInfo.info()).toMatchInlineSnapshot(`
       "╭─ success ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Theme App Extension extension was added to your project!                    │
+      │  Your extension was created in extensions/name.                              │
       │                                                                              │
       │  Next steps                                                                  │
-      │    • To find your extension, remember to \`cd extensions/name\`                │
-      │    • To preview your project, run \`yarn dev\`                                 │
+      │    • To preview this extension along with the rest of the project, run       │
+      │      \`yarn dev\`                                                              │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
@@ -85,10 +85,7 @@ describe('after extension command finishes correctly', () => {
     expect(outputInfo.info()).toMatchInlineSnapshot(`
       "╭─ success ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Function - Product discount extension was added to your project!            │
-      │                                                                              │
-      │  Next steps                                                                  │
-      │    • To find your extension, remember to \`cd extensions/name\`                │
+      │  Your extension was created in extensions/name.                              │
       │                                                                              │
       │  Reference                                                                   │
       │    • For more details, see the docs (                                        │

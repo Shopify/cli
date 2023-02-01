@@ -1,6 +1,6 @@
 import {takeRandomFromArray} from './array.js'
 import {unstyled} from '../../public/node/output.js'
-import {TokenItem} from '../../private/node/ui/components/TokenizedText.js'
+import {Token, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 
 const SAFE_RANDOM_BUSINESS_ADJECTIVES = [
   'commercial',
@@ -137,12 +137,18 @@ export function capitalize(str: string): string {
  * @param none - Supplier used when the list has no items.
  * @returns The {@link TokenItem} supplied by the {@link plural}, {@link singular}, or {@link none} functions.
  */
-export function pluralize<T>(
+export function pluralize<
+  T,
+  TToken extends Token = Token,
+  TPluralToken extends TToken = TToken,
+  TSingularToken extends TToken = TToken,
+  TNoneToken extends TToken = TToken,
+>(
   items: T[],
-  plural: (items: T[]) => TokenItem,
-  singular: (item: T) => TokenItem,
-  none?: () => TokenItem,
-): TokenItem {
+  plural: (items: T[]) => TokenItem<TPluralToken>,
+  singular: (item: T) => TokenItem<TSingularToken>,
+  none?: () => TokenItem<TNoneToken>,
+): TokenItem<TPluralToken | TSingularToken | TNoneToken> | string {
   if (items.length === 1) {
     return singular(items[0]!)
   }
