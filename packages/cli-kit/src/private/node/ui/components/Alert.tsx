@@ -6,7 +6,7 @@ import {Box, Text} from 'ink'
 import React from 'react'
 
 export interface CustomSection {
-  title: string
+  title?: string
   body: TokenItem
 }
 
@@ -68,7 +68,7 @@ const Alert: React.FC<AlertProps> = ({
         <Box flexDirection="column">
           {customSections.map((section, index) => (
             <Box key={index} flexDirection="column" marginTop={1}>
-              <Text bold>{section.title}</Text>
+              {section.title && <Text bold>{section.title}</Text>}
               <TokenizedText item={section.body} />
             </Box>
           ))}
