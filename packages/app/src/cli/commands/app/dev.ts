@@ -50,7 +50,7 @@ export default class Dev extends Command {
     }),
     'checkout-cart-url': Flags.string({
       hidden: false,
-      description: 'Resource URL for checkeout UI extension. Format: "/cart/{productVariantID}:{productQuantity}"',
+      description: 'Resource URL for checkout UI extension. Format: "/cart/{productVariantID}:{productQuantity}"',
       env: 'SHOPIFY_FLAG_CHECKOUT_CART_URL',
     }),
     'tunnel-url': Flags.string({
