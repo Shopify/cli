@@ -1,11 +1,12 @@
 import {List} from '../List.js'
 import {capitalize} from '../../../../../public/common/string.js'
+import {InlineToken, TokenItem} from '../TokenizedText.js'
 import {Box, Text} from 'ink'
 import React from 'react'
 
 export interface Props {
   table: {
-    [header: string]: string[]
+    [header: string]: TokenItem<InlineToken>[]
   }
 }
 
@@ -17,9 +18,11 @@ const InfoTable: React.FC<Props> = ({table}) => {
     <Box flexDirection="column">
       {headers.map((header, index) => (
         <Box key={index} marginBottom={index === headers.length - 1 ? 0 : 1}>
-          <Box width={headerColumnWidth + 1}>
-            <Text>{capitalize(header)}:</Text>
-          </Box>
+          {header.length > 0 && (
+            <Box width={headerColumnWidth + 1}>
+              <Text>{capitalize(header)}:</Text>
+            </Box>
+          )}
           <Box flexGrow={1}>
             <List items={table[header]!} />
           </Box>

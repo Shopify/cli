@@ -218,7 +218,7 @@ export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmi
   })
 }
 
-interface RenderConfirmationPromptOptions extends Pick<SelectPromptProps<boolean>, 'message' | 'infoTable'> {
+export interface RenderConfirmationPromptOptions extends Pick<SelectPromptProps<boolean>, 'message' | 'infoTable'> {
   confirmationMessage?: string
   cancellationMessage?: string
 }

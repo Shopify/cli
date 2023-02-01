@@ -3,7 +3,14 @@ import {Theme} from '../models/theme.js'
 import {themeComponent, themesComponent} from '../utilities/theme-ui.js'
 import {deleteTheme} from '../utilities/themes-api.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {renderConfirmationPrompt, renderSuccess, renderWarning, InlineToken, LinkToken} from '@shopify/cli-kit/node/ui'
+import {
+  renderConfirmationPrompt,
+  RenderConfirmationPromptOptions,
+  renderSuccess,
+  renderWarning,
+  InlineToken,
+  LinkToken,
+} from '@shopify/cli-kit/node/ui'
 import {pluralize} from '@shopify/cli-kit/common/string'
 
 export interface DeleteOptions {
@@ -53,18 +60,21 @@ async function findThemesByDeleteOptions(adminSession: AdminSession, options: De
 async function isConfirmed(themes: Theme[], store: string) {
   const message = pluralize<Theme, Exclude<InlineToken, LinkToken>>(
     themes,
-    (themes) => [
-      `Delete the following themes from ${store}:`,
-      ...themes
-        .flatMap((theme) => [themeComponent(theme), {char: ', '}])
-        .slice(0, -1)
-        .flat(),
-      {char: '?'},
-    ],
+    (_themes) => [`Delete the following themes from ${store}?`],
     (theme) => ['Delete', ...themeComponent(theme), `from ${store}?`],
   )
 
-  return renderConfirmationPrompt({message, confirmationMessage: 'Yes, confirm changes', cancellationMessage: 'Cancel'})
+  const options: RenderConfirmationPromptOptions = {
+    message,
+    confirmationMessage: 'Yes, confirm changes',
+    cancellationMessage: 'Cancel',
+  }
+
+  if (themes.length > 1) {
+    options.infoTable = {'': themes.map(themeComponent)}
+  }
+
+  return renderConfirmationPrompt(options)
 }
 
 export function renderDeprecatedArgsWarning(argv: string[]) {
