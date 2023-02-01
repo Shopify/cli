@@ -250,5 +250,43 @@ module.exports = {
         '@typescript-eslint/explicit-module-boundary-types': 'error',
       },
     },
+    {
+      files: ['src/private/node/ui/components/**/*.tsx'],
+      extends: ['plugin:react/recommended'],
+      rules: {
+        'react/destructuring-assignment': 2,
+        'react/function-component-definition': [
+          'error',
+          {
+            namedComponents: 'arrow-function',
+            unnamedComponents: 'arrow-function',
+          },
+        ],
+        'react/hook-use-state': 2,
+        'react/jsx-boolean-value': 2,
+        'react/jsx-child-element-spacing': 2,
+        'react/jsx-closing-bracket-location': 2,
+        'react/jsx-closing-tag-location': 2,
+        'react/jsx-curly-brace-presence': 2,
+        'react/jsx-curly-newline': 2,
+        'react/jsx-curly-spacing': 2,
+        'react/jsx-equals-spacing': 2,
+        'react/jsx-first-prop-new-line': 2,
+        'react/jsx-fragments': 2,
+        'react/jsx-handler-names': 2,
+        'react/jsx-indent': 2,
+        'react/jsx-indent-props': 2,
+        'react/jsx-no-leaked-render': 2,
+        'react/jsx-no-useless-fragment': 2,
+        //TODO start from here tomorrow
+        // also use https://typescript-eslint.io/rules/naming-convention/ for Props -> AlertProps
+        // also check if there is a rule to enforce the use of React.FC instead of React.FunctionComponent
+      },
+      settings: {
+        react: {
+          version: 'detect',
+        },
+      },
+    },
   ],
 }

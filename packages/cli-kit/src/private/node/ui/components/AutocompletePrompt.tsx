@@ -120,7 +120,7 @@ function AutocompletePrompt<T>({
           setPromptState(PromptState.Error)
         })
         .finally(() => {
-          clearTimeout(setLoadingWhenSlow.current!)
+          clearTimeout(setLoadingWhenSlow.current)
         })
     }, 300),
     [],
