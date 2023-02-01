@@ -54,7 +54,7 @@ export async function selectStorePrompt(stores: OrganizationStore[]): Promise<Or
   const storeList = stores.map((store) => ({label: store.shopName, value: store.shopId}))
 
   const id = await renderAutocompletePrompt({
-    message: 'Which development store would you like to use to view your project?',
+    message: 'Which store would you like to use to view your project?',
     choices: storeList,
   })
   return stores.find((store) => store.shopId === id)

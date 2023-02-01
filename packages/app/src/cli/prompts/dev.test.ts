@@ -151,7 +151,7 @@ describe('selectStore', () => {
     // Then
     expect(got).toEqual(STORE2)
     expect(renderAutocompletePrompt).toHaveBeenCalledWith({
-      message: 'Which development store would you like to use to view your project?',
+      message: 'Which store would you like to use to view your project?',
       choices: [
         {label: 'store1', value: '1'},
         {label: 'store2', value: '2'},

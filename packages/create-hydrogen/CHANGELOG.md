@@ -1,5 +1,18 @@
 # @shopify/create-hydrogen
 
+## 3.39.0
+
+### Minor Changes
+
+- f4d5fb1a8: Replace the UI of all tasks renderers and remove listr2 as a dependency
+
+### Patch Changes
+
+- Updated dependencies [afe541577]
+- Updated dependencies [f4d5fb1a8]
+- Updated dependencies [91a44020b]
+  - @shopify/cli-kit@3.39.0
+
 ## 3.38.0
 
 ### Patch Changes

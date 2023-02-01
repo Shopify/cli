@@ -197,4 +197,44 @@ describe('getUIExtensionPayload', () => {
       ])
     })
   })
+
+  test('adds apiVersion when present in the configuration', async () => {
+    await inTemporaryDirectory(async () => {
+      // Given
+      const apiVersion = '2023-01'
+      const uiExtension = await testUIExtension({
+        devUUID: 'devUUID',
+        configuration: {
+          name: 'UI Extension',
+          type: 'ui_extension',
+          apiVersion,
+          metafields: [],
+          capabilities: {
+            block_progress: false,
+            network_access: false,
+            api_access: false,
+          },
+          extensionPoints: [
+            {
+              target: 'Admin::Checkout::Editor::Settings',
+              module: './src/AdminCheckoutEditorSettings.js',
+            },
+          ],
+        },
+      })
+
+      const options: ExtensionDevOptions = {} as ExtensionDevOptions
+      const development: Partial<UIExtensionPayload['development']> = {}
+
+      // When
+      const got = await getUIExtensionPayload(uiExtension, {
+        ...options,
+        currentDevelopmentPayload: development,
+        url: 'http://tunnel-url.com',
+      })
+
+      // Then
+      expect(got).toHaveProperty('apiVersion', apiVersion)
+    })
+  })
 })

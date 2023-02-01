@@ -1,5 +1,15 @@
 # @shopify/cli
 
+## 3.39.0
+
+### Patch Changes
+
+- 91a44020b: Warn the user if there are more than 25 apps in app selection prompt
+- Updated dependencies [afe541577]
+- Updated dependencies [f4d5fb1a8]
+- Updated dependencies [91a44020b]
+  - @shopify/cli-kit@3.39.0
+
 ## 3.38.0
 
 ### Minor Changes
