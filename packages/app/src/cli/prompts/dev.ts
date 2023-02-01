@@ -67,7 +67,7 @@ export async function appTypePrompt(): Promise<'public' | 'custom'> {
       {label: 'Public: An app built for a wide merchant audience.', value: 'public'},
       {label: 'Custom: An app custom built for a single client.', value: 'custom'},
     ],
-  }) as Promise<'public' | 'custom'>
+  })
 }
 
 export async function appNamePrompt(currentName: string): Promise<string> {
@@ -136,5 +136,5 @@ export async function tunnelConfigurationPrompt(): Promise<'always' | 'yes' | 'c
       {label: 'Use it now and ask me next time', value: 'yes'},
       {label: 'Nevermind, cancel dev', value: 'cancel'},
     ],
-  }) as Promise<'always' | 'yes' | 'cancel'>
+  })
 }
