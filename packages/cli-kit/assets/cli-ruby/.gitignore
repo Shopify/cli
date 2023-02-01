@@ -1,3 +1,4 @@
 package.json
 !test/fixtures/**/*
 .byebug_history
+.tmp/**/*

@@ -23,7 +23,7 @@
       },
       "lint": {
         "executor": "nx:run-commands",
-        "dependsOn": ["lint:ruby", "lint:js"],
+        "dependsOn": ["lint:js"],
         "options": {
           "cwd": "packages/cli-kit",
           "commands": []
@@ -45,7 +45,7 @@
       },
       "lint:fix": {
         "executor": "nx:run-commands",
-        "dependsOn": ["lint:js:fix", "lint:ruby:fix"],
+        "dependsOn": ["lint:js:fix"],
         "options": {
           "cwd": "packages/cli-kit",
           "commands": []
@@ -67,7 +67,7 @@
       },
       "test": {
         "executor": "nx:run-commands",
-        "dependsOn": ["test:ruby", "test:js"],
+        "dependsOn": ["test:js"],
         "options": {
           "commands": [],
           "cwd": "packages/cli-kit"

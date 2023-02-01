@@ -1,4 +1,4 @@
-name: CLI2 Temp Tests
+name: cli-ruby
 
 on:
   push:
@@ -9,6 +9,10 @@ on:
 concurrency:
   group: shopify-${{ github.head_ref }}
   cancel-in-progress: true
+
+defaults:
+ run:
+  working-directory: ./packages/cli-kit/assets/cli-ruby
 
 jobs:
   test:
@@ -38,7 +42,31 @@ jobs:
           bundler-cache: true
 
       - name: Install Dependencies
-        run: cd packages/cli-kit/assets/cli-ruby; bundle install
+        run: bundle install
 
       - name: Run Tests
-        run: cd packages/cli-kit/assets/cli-ruby; bundle exec rake test
+        run: bundle exec rake test
+
+  rubocop:
+    name: Rubocop
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        version:
+          - 3.1.0
+        os:
+          - macos-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Ruby ${{ matrix.version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.version }}
+          bundler-cache: true
+
+      - name: Install Dependencies
+        run: bundle install
+
+      - name: Rubocop
+        run: bundle exec rake rubocop
