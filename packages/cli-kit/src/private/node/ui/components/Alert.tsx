@@ -45,7 +45,7 @@ const Alert: React.FC<AlertProps> = ({
       )}
 
       {body && (
-        <Box marginTop={1}>
+        <Box marginTop={headline ? 1 : 0}>
           <TokenizedText item={body} />
         </Box>
       )}
