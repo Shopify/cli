@@ -47,11 +47,7 @@ export async function migrateExtensionsToUIExtension(
   appId: string,
   remoteExtensions: RemoteSource[],
 ) {
-  await Promise.all(
-    extensionsToMigrate.map(async ({remote}) => {
-      await migrateExtensionToUIExtension(appId, remote.id)
-    }),
-  )
+  await Promise.all(extensionsToMigrate.map(({remote}) => migrateExtensionToUIExtension(appId, remote.id)))
 
   return remoteExtensions.map((extension) => {
     if (extensionsToMigrate.some(({remote}) => remote.id === extension.id)) {
