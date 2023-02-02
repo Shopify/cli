@@ -32,7 +32,7 @@ describe('after extension command finishes correctly', () => {
   const mockConfig = new Config({root: ''})
   it('displays a confirmation message with instructions to run dev', async () => {
     // Given
-    const outputInfo = await mockSuccessfulCommandExecution('checkout_ui')
+    const outputInfo = await mockSuccessfulCommandExecution('checkout_ui_extension_external')
 
     // When
     await generate({directory: '/', reset: false, config: mockConfig})
@@ -121,10 +121,16 @@ describe('after extension command finishes correctly', () => {
 
   it('throws error if trying to generate with an unsupported flavor', async () => {
     // Given
-    await mockSuccessfulCommandExecution('checkout_ui')
+    await mockSuccessfulCommandExecution('checkout_ui_extension_external')
 
     // When
-    const got = generate({directory: '/', reset: false, config: mockConfig, type: 'checkout_ui', template: 'unknown'})
+    const got = generate({
+      directory: '/',
+      reset: false,
+      config: mockConfig,
+      type: 'checkout_ui_extension_external',
+      template: 'unknown',
+    })
 
     // Then
     await expect(got).rejects.toThrow(/Invalid template for extension type/)
