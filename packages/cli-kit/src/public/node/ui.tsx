@@ -208,6 +208,7 @@ export function renderFatalError(error: Fatal) {
  * ```
  */
 export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit'>): Promise<T> {
+  // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {
     render(<SelectPrompt {...props} onSubmit={(value: T) => resolve(value)} />, {
       exitOnCtrlC: false,
@@ -280,6 +281,7 @@ export function renderAutocompletePrompt<T>(
     ...props,
   }
 
+  // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {
     render(<AutocompletePrompt {...newProps} onSubmit={(value: T) => resolve(value)} />, {
       exitOnCtrlC: false,
@@ -318,6 +320,7 @@ export async function renderTasks<TContext>(tasks: Task<TContext>[]) {
  * ```
  */
 export function renderTextPrompt(props: Omit<TextPromptProps, 'onSubmit'>): Promise<string> {
+  // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {
     render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
       exitOnCtrlC: false,
@@ -326,13 +329,14 @@ export function renderTextPrompt(props: Omit<TextPromptProps, 'onSubmit'>): Prom
 }
 
 interface RenderTextOptions {
+  text: string
   logLevel?: LogLevel
   logger?: Logger
 }
 
 /** Renders a text string to the console.
  * Using this function makes sure that correct spacing is applied among the various components. */
-export function renderText(text: string, {logLevel = 'info', logger = consoleLog}: RenderTextOptions = {}) {
+export function renderText({text, logLevel = 'info', logger = consoleLog}: RenderTextOptions) {
   let textWithLineReturn = text
   if (!text.endsWith('\n')) textWithLineReturn += '\n'
 
@@ -342,6 +346,7 @@ export function renderText(text: string, {logLevel = 'info', logger = consoleLog
 
 /** Waits for any key to be pressed except Ctrl+C which will terminate the process. */
 export const keypress = async () => {
+  // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {
     const handler = (buffer: Buffer) => {
       process.stdin.setRawMode(false)

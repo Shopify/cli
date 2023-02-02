@@ -29,7 +29,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
     template: templateURLMap.node,
   } as const
 
-  renderText('\nWelcome. Let’s get started by naming your app project. You can change it later.')
+  renderText({text: '\nWelcome. Let’s get started by naming your app project. You can change it later.'})
 
   if (!name) {
     name = await renderTextPrompt({
