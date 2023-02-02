@@ -32,9 +32,10 @@ describe('buildGraphqlTypes', () => {
     ourFunction.entrySourceFilePath = 'src/index.js'
 
     // When
-    await expect(buildGraphqlTypes(ourFunction, {stdout, stderr, signal})).resolves.toBeUndefined()
+    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal})
 
     // Then
+    await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith('npm', ['exec', '--', 'graphql-code-generator'], {
       cwd: ourFunction.directory,
       stderr,
@@ -47,10 +48,11 @@ describe('buildGraphqlTypes', () => {
     const ourFunction = await testFunctionExtension()
     ourFunction.entrySourceFilePath = 'src/main.rs'
 
-    // When/Then
-    await expect(buildGraphqlTypes(ourFunction, {stdout, stderr, signal})).rejects.toThrow(
-      /GraphQL types can only be built for JavaScript functions/,
-    )
+    // When
+    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal})
+
+    // Then
+    await expect(got).rejects.toThrow(/GraphQL types can only be built for JavaScript functions/)
   })
 })
 
@@ -71,9 +73,10 @@ describe('bundleExtension', () => {
       const shopifyFunction = await installShopifyLibrary(tmpDir)
 
       // When
-      await expect(bundleExtension(ourFunction, {stdout, stderr, signal})).resolves.toBeUndefined()
+      const got = bundleExtension(ourFunction, {stdout, stderr, signal})
 
       // Then
+      await expect(got).resolves.toBeUndefined()
       expect(esBuild).toHaveBeenCalledWith({
         outfile: joinPath(tmpDir, 'dist/function.js'),
         entryPoints: [shopifyFunction],
@@ -95,10 +98,11 @@ describe('bundleExtension', () => {
       const ourFunction = await testFunctionExtension({dir: tmpDir})
       ourFunction.entrySourceFilePath = joinPath(tmpDir, 'src/index.ts')
 
-      // When/Then
-      await expect(bundleExtension(ourFunction, {stdout, stderr, signal})).rejects.toThrow(
-        /Could not find the Shopify Function runtime/,
-      )
+      // When
+      const got = bundleExtension(ourFunction, {stdout, stderr, signal})
+
+      // Then
+      await expect(got).rejects.toThrow(/Could not find the Shopify Function runtime/)
     })
   })
 
@@ -108,10 +112,11 @@ describe('bundleExtension', () => {
       const ourFunction = await testFunctionExtension({dir: tmpDir})
       await installShopifyLibrary(tmpDir)
 
-      // When/Then
-      await expect(bundleExtension(ourFunction, {stdout, stderr, signal})).rejects.toThrow(
-        /Could not find your function entry point./,
-      )
+      // When
+      const got = bundleExtension(ourFunction, {stdout, stderr, signal})
+
+      // Then
+      await expect(got).rejects.toThrow(/Could not find your function entry point./)
     })
   })
 })
@@ -122,9 +127,10 @@ describe('runJavy', () => {
     const ourFunction = await testFunctionExtension()
 
     // When
-    await expect(runJavy(ourFunction, {stdout, stderr, signal})).resolves.toBeUndefined()
+    const got = runJavy(ourFunction, {stdout, stderr, signal})
 
     // Then
+    await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith(
       'npm',
       ['exec', '--', 'javy', '-o', joinPath(ourFunction.directory, 'dist/index.wasm'), 'dist/function.js'],
