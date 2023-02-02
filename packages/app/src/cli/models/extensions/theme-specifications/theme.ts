@@ -6,7 +6,9 @@ import {ThemeExtensionSpec} from '../theme.js'
  */
 const themeSpecification: ThemeExtensionSpec = {
   identifier: 'theme',
-  externalIdentifier: 'theme_app_extension',
+  // these two fields are going to be overridden by the extension specification API response,
+  // but we need them to have a default value for tests
+  externalIdentifier: 'theme_external',
   externalName: 'Theme app extension',
   supportedFlavors: [],
   registrationLimit: 1,

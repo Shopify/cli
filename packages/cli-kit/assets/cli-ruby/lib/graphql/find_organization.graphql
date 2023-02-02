@@ -1,0 +1,18 @@
+query FindOrg($id: ID!) {
+  organizations(id: $id) {
+    nodes {
+      id
+      businessName
+      website
+      stores(first: 500) {
+        nodes {
+          link
+          shopDomain
+          shopName
+          transferDisabled
+          convertableToPartnerTest
+        }
+      }
+    }
+  }
+}

@@ -23,8 +23,8 @@ import {loadAppName} from '../models/app/loader.js'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {renderInfo, renderTasks, TokenItem} from '@shopify/cli-kit/node/ui'
-import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
+import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
@@ -437,7 +437,7 @@ function showReusedValues(org: string, cachedAppInfo: CachedAppInfo, packageMana
   let updateURLs = 'Not yet configured'
   if (cachedAppInfo.updateURLs !== undefined) updateURLs = cachedAppInfo.updateURLs ? 'Always' : 'Never'
 
-  const items: TokenItem[] = [
+  const items = [
     `Org:          ${org}`,
     `App:          ${cachedAppInfo.title}`,
     `Dev store:    ${cachedAppInfo.storeFqdn}`,

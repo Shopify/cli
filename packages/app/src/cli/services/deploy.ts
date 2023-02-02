@@ -15,7 +15,7 @@ import {Extension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {useThemeBundling} from '@shopify/cli-kit/node/context/local'
+import {themeBundlingDisabled} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -64,7 +64,7 @@ export const deploy = async (options: DeployOptions) => {
       }
     }),
   )
-  if (useThemeBundling()) {
+  if (!themeBundlingDisabled()) {
     const themeExtensions = await Promise.all(
       options.app.extensions.theme.map(async (extension) => {
         return {
@@ -110,7 +110,7 @@ export const deploy = async (options: DeployOptions) => {
               })
             }
 
-            if (!useThemeBundling()) {
+            if (themeBundlingDisabled()) {
               await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
             }
 
