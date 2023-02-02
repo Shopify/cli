@@ -12,7 +12,7 @@ import {
   loadLocalUIExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
 import * as functionBuild from '../function/build.js'
-import {describe, it, expect, vi, test} from 'vitest'
+import {describe, it, expect, vi} from 'vitest'
 import * as output from '@shopify/cli-kit/node/output'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
 import * as template from '@shopify/cli-kit/node/liquid'
@@ -375,7 +375,7 @@ describe('initialize a extension', async () => {
 })
 
 describe('getExtensionRuntimeDependencies', () => {
-  test('no not include React for flavored Vanilla UI extensions', async () => {
+  it('no not include React for flavored Vanilla UI extensions', async () => {
     // Given
     const allUISpecs = await loadLocalUIExtensionsSpecifications()
     const extensionFlavor: ExtensionFlavor = 'vanilla-js'
@@ -387,7 +387,7 @@ describe('getExtensionRuntimeDependencies', () => {
     })
   })
 
-  test('includes React for flavored React UI extensions', async () => {
+  it('includes React for flavored React UI extensions', async () => {
     // Given
     const allUISpecs = await loadLocalUIExtensionsSpecifications()
     const extensionFlavor: ExtensionFlavor = 'react'
@@ -399,7 +399,7 @@ describe('getExtensionRuntimeDependencies', () => {
     })
   })
 
-  test('includes the renderer package for UI extensions', async () => {
+  it('includes the renderer package for UI extensions', async () => {
     // Given
     const allUISpecs = await loadLocalUIExtensionsSpecifications()
 
@@ -461,7 +461,7 @@ async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | vo
 }
 
 describe('getFunctionRuntimeDependencies', () => {
-  test('adds dependencies for JS functions', async () => {
+  it('adds dependencies for JS functions', async () => {
     // Given
     const allFunctionSpecs = await loadLocalFunctionSpecifications()
     const templateFlavor: TemplateFlavor = 'javascript'
@@ -475,7 +475,7 @@ describe('getFunctionRuntimeDependencies', () => {
     })
   })
 
-  test('no-ops for non-JS functions', async () => {
+  it('no-ops for non-JS functions', async () => {
     // Given
     const allFunctionSpecs = await loadLocalFunctionSpecifications()
     const templateFlavor: TemplateFlavor = 'rust'
