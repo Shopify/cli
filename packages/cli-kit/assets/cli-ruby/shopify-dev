@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+
+require_relative "./bin/load_shopify"
+
+exit(proc do
+  ShopifyCLI::ErrorHandler.call do
+    ShopifyCLI::Core::EntryPoint.call(ARGV.dup)
+  end
+     rescue StandardError => error
+       ShopifyCLI::ErrorHandler.exception = error
+       if ShopifyCLI::Environment.print_stacktrace?
+         raise error
+       else
+         1
+       end
+end.call)

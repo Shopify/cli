@@ -1,5 +1,6 @@
 import {AbortSilentError, FatalError as Fatal} from './error.js'
-import {consoleError, outputDebug} from './output.js'
+import {collectLog, consoleError, consoleLog, Logger, LogLevel, outputDebug, outputWhereAppropriate} from './output.js'
+import {isUnitTest} from './context/local.js'
 import ConcurrentOutput, {Props as ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
 import {render, renderOnce} from '../../private/node/ui.js'
 import {alert} from '../../private/node/ui/alert.js'
@@ -14,7 +15,7 @@ import {
   Props as AutocompletePromptProps,
   AutocompletePrompt,
 } from '../../private/node/ui/components/AutocompletePrompt.js'
-import {TokenItem} from '../../private/node/ui/components/TokenizedText.js'
+import {InlineToken, LinkToken, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -24,8 +25,6 @@ type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>
 export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortController'> {
   renderOptions?: RenderOptions
 }
-
-export {TokenItem}
 
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
@@ -219,7 +218,7 @@ export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmi
   })
 }
 
-interface RenderConfirmationPromptOptions extends Pick<SelectPromptProps<boolean>, 'message' | 'infoTable'> {
+export interface RenderConfirmationPromptOptions extends Pick<SelectPromptProps<boolean>, 'message' | 'infoTable'> {
   confirmationMessage?: string
   cancellationMessage?: string
 }
@@ -307,8 +306,6 @@ export function renderTable<T extends ScalarDict>(props: TableProps<T>) {
   return renderOnce(<Table {...props} />)
 }
 
-export {Task}
-
 /**
  * Runs async tasks and displays their progress to the console.
  */
@@ -329,6 +326,21 @@ export function renderTextPrompt(props: Omit<TextPromptProps, 'onSubmit'>): Prom
       exitOnCtrlC: false,
     }).catch(reject)
   })
+}
+
+interface RenderTextOptions {
+  logLevel?: LogLevel
+  logger?: Logger
+}
+
+/** Renders a text string to the console.
+ * Using this function makes sure that correct spacing is applied among the various components. */
+export function renderText(text: string, {logLevel = 'info', logger = consoleLog}: RenderTextOptions = {}) {
+  let textWithLineReturn = text
+  if (!text.endsWith('\n')) textWithLineReturn += '\n'
+
+  if (isUnitTest()) collectLog(logLevel, textWithLineReturn)
+  outputWhereAppropriate(logLevel, logger, textWithLineReturn)
 }
 
 /** Waits for any key to be pressed except Ctrl+C which will terminate the process. */
@@ -354,3 +366,4 @@ export const keypress = async () => {
 }
 
 export type Key = InkKey
+export {Task, TokenItem, InlineToken, LinkToken}

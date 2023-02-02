@@ -1,0 +1,102 @@
+inherit_from: .rubocop_todo.yml
+
+require:
+  - rubocop-minitest
+  - rubocop-rake
+
+inherit_gem:
+  rubocop-shopify:
+    - rubocop-cli.yml
+
+Minitest:
+  Enabled: true
+  Include:
+    - "**/test/**/*"
+    - "**/*_test.rb"
+
+Minitest/AssertInDelta: # (new in 0.10)
+  Enabled: true
+Minitest/AssertionInLifecycleHook: # (new in 0.10)
+  Enabled: true
+Minitest/AssertKindOf: # (new in 0.10)
+  Enabled: true
+Minitest/AssertOutput: # (new in 0.10)
+  Enabled: true
+Minitest/AssertPathExists: # (new in 0.10)
+  Enabled: false # only available from minitest 5.13.0
+Minitest/AssertSilent: # (new in 0.10)
+  Enabled: true
+Minitest/LiteralAsActualArgument: # (new in 0.10)
+  Enabled: true
+Minitest/MultipleAssertions: # (new in 0.10)
+  Enabled: true
+Minitest/RefuteInDelta: # (new in 0.10)
+  Enabled: true
+Minitest/RefuteKindOf: # (new in 0.10)
+  Enabled: true
+Minitest/RefutePathExists: # (new in 0.10)
+  Enabled: false # only available from minitest 5.13.0
+Minitest/TestMethodName: # (new in 0.10)
+  Enabled: true
+Minitest/UnspecifiedException: # (new in 0.10)
+  Enabled: true
+
+AllCops:
+  Exclude:
+    - "vendor/**/*"
+    - "docs/**/*"
+    - "packaging/**/*"
+  TargetRubyVersion: 2.6
+
+Layout/EmptyLines:
+  Exclude:
+    # Need extra line so comment at top isnt registered to the Dev namespace
+    - "lib/dev/helpers/chruby_reset.rb"
+
+Layout/EmptyLineBetweenDefs:
+  AllowAdjacentOneLineDefs: true
+
+# Changing this could effect the way the content is rendered.
+Layout/HeredocIndentation:
+  Exclude:
+    - "lib/project_types/node/messages/messages.rb"
+    - "lib/project_types/rails/messages/messages.rb"
+    - "lib/project_types/script/messages/messages.rb"
+    - "lib/shopify_cli/messages/messages.rb"
+
+# allow String.new to create mutable strings
+Style/EmptyLiteral:
+  Enabled: false
+
+# allow String.new to create mutable strings
+Style/HashSyntax:
+  Exclude:
+    - "Rakefile"
+
+# allow using %r{} for regexes
+Style/RegexpLiteral:
+  Enabled: false
+
+Style/MethodCallWithArgsParentheses:
+  IgnoredMethods:
+    - assert
+    - assert_equal
+    - assert_includes
+    - assert_nil
+    - assert_raises
+    - assert_requested # from Webmock
+    - puts
+    - raise
+    - refute
+    - refute_empty
+    - refute_nil
+    - require
+    - require_dependency
+    - require_relative
+    - yield
+
+Layout/TrailingWhitespace:
+  Exclude:
+    - "ext/shopify-cli/extconf.rb" # unsure if safe to remove
+    - "lib/project_types/extension/messages/messages.rb" # unsure if safe to remove
+    - "test/project_types/extension/extension_test_helpers/stubs/argo_script.rb" # unsure if save to remove

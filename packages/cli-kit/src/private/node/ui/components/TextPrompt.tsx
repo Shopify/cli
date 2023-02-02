@@ -1,4 +1,5 @@
 import {TextInput} from './TextInput.js'
+import {TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {messageWithPunctuation} from '../utilities.js'
@@ -64,7 +65,7 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, validate, defaultValue 
         <Box marginRight={2}>
           <Text>?</Text>
         </Box>
-        <Text>{messageWithPunctuation(message)}</Text>
+        <TokenizedText item={messageWithPunctuation(message)} />
       </Box>
       {submitted && !error ? (
         <Box>

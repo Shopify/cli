@@ -61,7 +61,6 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
     entryPath: entrySourceFilePath,
     directory,
     specification,
-    remoteSpecification: undefined,
   })
   extension.devUUID = uiExtension?.devUUID ?? 'test-ui-extension-uuid'
   return extension
@@ -77,7 +76,6 @@ export async function testThemeExtensions(): Promise<ThemeExtension> {
     configuration,
     configurationPath: '',
     directory: './my-extension',
-    remoteSpecification: undefined,
     specification: themeSpec,
     outputBundlePath: './my-extension',
   })
@@ -111,7 +109,7 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     name: 'Checkout Post Purchase',
     externalName: 'Post-purchase UI',
     identifier: 'checkout_post_purchase',
-    externalIdentifier: 'post_purchase_ui',
+    externalIdentifier: 'checkout_post_purchase_external',
     gated: false,
     options: {
       managementExperience: 'cli',
@@ -127,7 +125,7 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     name: 'Online Store - App Theme Extension',
     externalName: 'Theme App Extension',
     identifier: 'theme',
-    externalIdentifier: 'theme_app_extension',
+    externalIdentifier: 'theme_external',
     gated: false,
     options: {
       managementExperience: 'cli',
@@ -138,7 +136,7 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     name: 'Product Subscription',
     externalName: 'Subscription UI',
     identifier: 'product_subscription',
-    externalIdentifier: 'subscription_ui',
+    externalIdentifier: 'product_subscription_external',
     gated: false,
     options: {
       managementExperience: 'cli',
@@ -154,7 +152,7 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     name: 'UI Extension',
     externalName: 'UI Extension',
     identifier: 'ui_extension',
-    externalIdentifier: 'ui_extension',
+    externalIdentifier: 'ui_extension_external',
     gated: false,
     options: {
       managementExperience: 'cli',
@@ -170,7 +168,7 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     name: 'Customer Accounts',
     externalName: 'Customer Accounts',
     identifier: 'customer_accounts_ui_extension',
-    externalIdentifier: 'customer_accounts_ui_extension',
+    externalIdentifier: 'customer_accounts_ui_extension_external',
     gated: false,
     options: {
       managementExperience: 'cli',
@@ -186,7 +184,7 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     name: 'Checkout Extension',
     externalName: 'Checkout UI',
     identifier: 'checkout_ui_extension',
-    externalIdentifier: 'checkout_ui',
+    externalIdentifier: 'checkout_ui_extension_external',
     gated: false,
     options: {
       managementExperience: 'cli',
@@ -201,8 +199,10 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
   {
     name: 'Product Subscription',
     externalName: 'Subscription UI',
+    // we are going to replace this to 'product_subscription' because we
+    // started using it before relying on the extension specification identifier
     identifier: 'subscription_management',
-    externalIdentifier: 'subscription_ui',
+    externalIdentifier: 'product_subscription_external',
     gated: false,
     options: {
       managementExperience: 'cli',
@@ -218,7 +218,7 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     name: 'Marketing Activity',
     externalName: 'Marketing Activity',
     identifier: 'marketing_activity_extension',
-    externalIdentifier: 'marketing_activity_extension',
+    externalIdentifier: 'marketing_activity_extension_external',
     gated: false,
     options: {
       managementExperience: 'dashboard',

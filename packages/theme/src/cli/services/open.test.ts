@@ -58,25 +58,30 @@ describe('open', () => {
 
     // Then
     expect(renderInfo).toBeCalledWith({
-      headline: ['Preview information for theme', 'my theme', {subdued: '(#1)'}],
-      body: {
-        list: {
-          items: [
-            {
-              link: {
-                label: 'Preview your theme',
-                url: 'https://my-shop.myshopify.com?preview_theme_id=1',
+      body: [
+        'Preview information for theme',
+        'my theme',
+        {subdued: '(#1)'},
+        '\n\n',
+        {
+          list: {
+            items: [
+              {
+                link: {
+                  label: 'Preview your theme',
+                  url: 'https://my-shop.myshopify.com?preview_theme_id=1',
+                },
               },
-            },
-            {
-              link: {
-                label: 'Customize your theme at the theme editor',
-                url: 'https://my-shop.myshopify.com/admin/themes/1/editor',
+              {
+                link: {
+                  label: 'Customize your theme at the theme editor',
+                  url: 'https://my-shop.myshopify.com/admin/themes/1/editor',
+                },
               },
-            },
-          ],
+            ],
+          },
         },
-      },
+      ],
     })
   })
 })

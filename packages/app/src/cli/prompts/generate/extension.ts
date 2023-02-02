@@ -60,7 +60,7 @@ const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promi
   }
   if (!name) {
     name = await renderTextPrompt({
-      message: "Your extension's working name?",
+      message: 'Extension name (internal only)',
       defaultValue: await generateRandomNameForSubdirectory({suffix: 'ext', directory: options.directory}),
     })
   }
