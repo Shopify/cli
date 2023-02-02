@@ -40,7 +40,7 @@ export function Extensions() {
             <th>
               <span className={styles.WithIcon}>
                 {i18n.translate('extensionList.view')}
-                <Tooltip text="Hide your local extensions to view what's in production.">
+                <Tooltip text={i18n.translate('tooltips.viewColumnHeader')}>
                   <Icon source={QuestionMarkMajor} />
                 </Tooltip>
               </span>
