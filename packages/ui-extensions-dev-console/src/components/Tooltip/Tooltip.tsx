@@ -1,11 +1,13 @@
 import styles from './Tooltip.module.css'
-import React, {useRef, useReducer} from 'react'
+import React, {useRef, useReducer, useLayoutEffect} from 'react'
+
+interface Position {
+  x: number
+  y: number
+}
 
 interface TooltipPopoverProps {
-  position: {
-    x: number
-    y: number
-  }
+  position: Position
   text: string
 }
 
@@ -16,21 +18,29 @@ interface TooltipProps {
 
 interface TooltipState {
   isVisible: boolean
-  position: {
-    x: number
-    y: number
-  }
+  position: Position
 }
 
+type TooltipAction = {type: 'show' | 'hide'} | {type: 'position'; payload: Position}
+
 function TooltipPopover({position, text}: TooltipPopoverProps) {
+  const ref = useRef<HTMLDivElement | null>(null)
+
+  useLayoutEffect(() => {
+    if (ref.current) {
+      ref.current.style.top = `${position.y}px`
+      ref.current.style.left = `${position.x}px`
+    }
+  }, [])
+
   return (
-    <div className={styles.Popover} style={{top: position.y, left: position.x}} role="tooltip">
+    <div className={styles.Popover} role="tooltip" ref={ref}>
       {text}
     </div>
   )
 }
 
-function tooltipReducer(state: TooltipState, action: any) {
+function tooltipReducer(state: TooltipState, action: TooltipAction) {
   switch (action.type) {
     case 'show':
       return {...state, isVisible: true}
@@ -75,7 +85,7 @@ export function Tooltip({children, text}: TooltipProps) {
     <>
       <div
         className={styles.Tooltip}
-        style={{border: '1px solid red'}}
+        style={{outline: '1px solid red'}}
         onMouseEnter={handleShow}
         onFocus={handleShow}
         onBlur={() => dispatch({type: 'hide'})}
