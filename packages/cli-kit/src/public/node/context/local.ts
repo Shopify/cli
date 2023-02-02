@@ -128,7 +128,7 @@ export function themeBundlingDisabled(env = process.env): boolean {
  * @param env - The environment variables from the environment of the current process.
  * @returns True if SHOPIFY_CLI_FUNCTIONS_JAVASCRIPT is truthy.
  */
-export function enableJavascriptFunctions(env = process.env): boolean {
+export function areJavaScriptFunctionsEnabled(env = process.env): boolean {
   return isTruthy(env[environmentVariables.javascriptFunctions])
 }
 

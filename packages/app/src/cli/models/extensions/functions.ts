@@ -1,12 +1,12 @@
 import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
-import {blocks, defaultFunctionsFlavors, withJavascriptFunctionsFlavors} from '../../constants.js'
+import {blocks, defaultFunctionsFlavors, withJavaScriptFunctionsFlavors} from '../../constants.js'
 import {ExtensionFlavor} from '../../services/generate/extension.js'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {areJavaScriptFunctionsEnabled} from '@shopify/cli-kit/node/environment/local'
-import {schema} from '@shopify/cli-kit/node/schema'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
+import {schema} from '@shopify/cli-kit/node/schema'
 
 // Base config type that all config schemas must extend
 export type FunctionConfigType = schema.infer<typeof BaseFunctionConfigurationSchema>
@@ -141,7 +141,7 @@ export function createFunctionSpecification<TConfiguration extends FunctionConfi
     templateURL: 'https://github.com/Shopify/function-examples',
     externalIdentifier: spec.identifier,
     externalName: spec.identifier,
-    supportedFlavors: areJavaScriptFunctionsEnabled() ? withJavascriptFunctionsFlavors : defaultFunctionsFlavors,
+    supportedFlavors: areJavaScriptFunctionsEnabled() ? withJavaScriptFunctionsFlavors : defaultFunctionsFlavors,
     configSchema: BaseFunctionConfigurationSchema,
     gated: false,
     registrationLimit: spec.registrationLimit ?? blocks.functions.defaultRegistrationLimit,
