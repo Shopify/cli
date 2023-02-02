@@ -6,6 +6,8 @@ up:
       packages: []
   - ruby:
       version: 3.1.2
+  - bundler:
+      gemfile: packages/cli-kit/assets/cli-ruby/Gemfile
   - homebrew:
     - jq
     - delve

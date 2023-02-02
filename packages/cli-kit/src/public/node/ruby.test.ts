@@ -1,7 +1,8 @@
-import {execCLI2} from './ruby.js'
+import {execCLI2, RubyCLIVersion} from './ruby.js'
 import {captureOutput} from './system.js'
 import * as system from './system.js'
 import * as file from './fs.js'
+import {pathConstants} from '../../private/node/constants.js'
 import {beforeAll, describe, expect, it, vi} from 'vitest'
 
 beforeAll(() => {
@@ -49,14 +50,26 @@ describe('execCLI', () => {
   })
 
   it('throws an exception when creating CLI working directory', async () => {
+    // Setup
+    const originalEnv = process.env
+
+    // Given
     const rubyVersion = '2.7.5'
     const bundlerVersion = '2.4.0'
+
+    process.env = {...originalEnv, SHOPIFY_CLI_BUNDLED_THEME_CLI: '1'}
+
     vi.mocked(file.fileExists).mockResolvedValue(true)
     vi.mocked(captureOutput).mockResolvedValueOnce(rubyVersion)
     vi.mocked(captureOutput).mockResolvedValueOnce(bundlerVersion)
     vi.mocked(file.mkdir).mockRejectedValue({message: 'Error'})
 
+    // When / Then
     await expect(() => execCLI2(['args'])).rejects.toThrowError('Error')
+
+    // Teardown
+    // eslint-disable-next-line require-atomic-updates
+    process.env = originalEnv
   })
 
   it('passes token to the CLI2', async () => {
@@ -64,9 +77,10 @@ describe('execCLI', () => {
     const originalEnv = process.env
 
     // Given
+    vi.spyOn(pathConstants.directories.cache.vendor, 'path').mockImplementation(() => '/bundled')
     const execSpy = vi.spyOn(system, 'exec')
 
-    process.env = {...originalEnv, SHOPIFY_CLI_2_0_DIRECTORY: './CLI2'}
+    process.env = {...originalEnv, SHOPIFY_CLI_BUNDLED_THEME_CLI: '1'}
 
     vi.mocked(file.fileExists).mockResolvedValue(true)
     vi.mocked(captureOutput).mockResolvedValueOnce('2.7.5')
@@ -89,11 +103,80 @@ describe('execCLI', () => {
         SHOPIFY_CLI_STORE: undefined,
         SHOPIFY_CLI_AUTH_TOKEN: 'token_0000_1111_2222_3333',
         SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
-        BUNDLE_GEMFILE: 'CLI2/Gemfile',
+        BUNDLE_GEMFILE: `/bundled/ruby-cli/${RubyCLIVersion}/Gemfile`,
       },
     })
 
     // Teardown
     process.env = originalEnv
+  })
+
+  it('run the CLI2 stored at a manual path', async () => {
+    // Setup
+    const originalEnv = process.env
+
+    // Given
+    const execSpy = vi.spyOn(system, 'exec')
+
+    process.env = {...originalEnv, SHOPIFY_CLI_2_0_DIRECTORY: '/manual'}
+
+    vi.mocked(file.fileExists).mockResolvedValue(true)
+    vi.mocked(captureOutput).mockResolvedValueOnce('2.7.5')
+    vi.mocked(captureOutput).mockResolvedValueOnce('2.4.0')
+
+    // When
+    await execCLI2(['args'], {
+      token: 'token_0000_1111_2222_3333',
+      directory: './directory',
+    })
+
+    // Then
+    expect(execSpy).toHaveBeenLastCalledWith('bundle', ['exec', 'shopify', 'args'], {
+      stdio: 'inherit',
+      cwd: './directory',
+      env: {
+        ...process.env,
+        SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: undefined,
+        SHOPIFY_CLI_ADMIN_AUTH_TOKEN: undefined,
+        SHOPIFY_CLI_STORE: undefined,
+        SHOPIFY_CLI_AUTH_TOKEN: 'token_0000_1111_2222_3333',
+        SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
+        BUNDLE_GEMFILE: `/manual/Gemfile`,
+      },
+    })
+
+    // Teardown
+    process.env = originalEnv
+  })
+
+  it('run embbed CLI2 when active', async () => {
+    // Given
+    const execSpy = vi.spyOn(system, 'exec')
+
+    vi.mocked(file.fileExists).mockResolvedValue(true)
+    vi.mocked(file.findPathUp).mockResolvedValue('/embed/internal')
+    vi.mocked(captureOutput).mockResolvedValueOnce('2.7.5')
+    vi.mocked(captureOutput).mockResolvedValueOnce('2.4.0')
+
+    // When
+    await execCLI2(['args'], {
+      token: 'token_0000_1111_2222_3333',
+      directory: './directory',
+    })
+
+    // Then
+    expect(execSpy).toHaveBeenLastCalledWith('/embed/internal/bin/shopify', ['args'], {
+      stdio: 'inherit',
+      cwd: './directory',
+      env: {
+        ...process.env,
+        SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: undefined,
+        SHOPIFY_CLI_ADMIN_AUTH_TOKEN: undefined,
+        SHOPIFY_CLI_STORE: undefined,
+        SHOPIFY_CLI_AUTH_TOKEN: 'token_0000_1111_2222_3333',
+        SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
+        BUNDLE_GEMFILE: '/embed/internal/Gemfile',
+      },
+    })
   })
 })
