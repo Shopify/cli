@@ -18,9 +18,19 @@
     border-collapse: collapse;
   }
 
+  th {
+    vertical-align: middle;
+  }
+
   svg {
     fill: var(--dc-color-white);
   }
+}
+
+.WithIcon {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  grid-gap: 6px;
 }
 
 .Empty {

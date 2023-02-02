@@ -10,6 +10,7 @@ import {Surface} from '@shopify/ui-extensions-server-kit'
 import {ClipboardMinor} from '@shopify/polaris-icons'
 import {Modal, ModalProps} from '@/components/Modal'
 import {IconButton} from '@/components/IconButton'
+import {Tooltip} from '@/components/Tooltip'
 
 interface Code {
   url: string
@@ -85,12 +86,14 @@ export function QRCodeContent({url, type}: Code) {
         {i18n.translate('right.one')}
         <span className={styles.UrlCta}>
           {i18n.translate('right.two')}{' '}
-          <IconButton
-            type="button"
-            source={ClipboardMinor}
-            accessibilityLabel={i18n.translate('qrcode.copy')}
-            onClick={onButtonClick}
-          />
+          <Tooltip text="Copy to clipboard">
+            <IconButton
+              type="button"
+              source={ClipboardMinor}
+              accessibilityLabel={i18n.translate('qrcode.copy')}
+              onClick={onButtonClick}
+            />
+          </Tooltip>
         </span>
       </span>
     </div>
