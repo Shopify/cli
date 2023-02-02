@@ -315,5 +315,11 @@ module.exports = {
         },
       },
     },
+    {
+      files: ['src/public/node/ui.tsx'],
+      rules: {
+        'max-params': ['error', 2],
+      },
+    },
   ],
 }
