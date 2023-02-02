@@ -191,7 +191,7 @@ describe('appName', () => {
     // Then
     expect(got).toEqual('app-name')
     expect(renderTextPrompt).toHaveBeenCalledWith({
-      message: 'App Name',
+      message: 'App name',
       defaultValue: 'suggested-name',
       validate: expect.any(Function),
     })

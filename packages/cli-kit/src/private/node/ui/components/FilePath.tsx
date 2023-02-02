@@ -9,7 +9,7 @@ interface FilePathProps {
  * `FilePath` displays a path to a file.
  */
 const FilePath: FunctionComponent<FilePathProps> = ({filePath}): JSX.Element => {
-  return <Text>&quot;{filePath}&quot;</Text>
+  return <Text>{filePath}</Text>
 }
 
 export {FilePath}

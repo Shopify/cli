@@ -1,6 +1,7 @@
 import {SelectInput, SelectInputProps, Item as SelectItem, Item} from './SelectInput.js'
 import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import {TextInput} from './TextInput.js'
+import {TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import {messageWithPunctuation} from '../utilities.js'
 import React, {ReactElement, useCallback, useRef, useState} from 'react'
@@ -133,7 +134,7 @@ function AutocompletePrompt<T>({
         <Box marginRight={2}>
           <Text>?</Text>
         </Box>
-        <Text>{messageWithPunctuation(message)}</Text>
+        <TokenizedText item={messageWithPunctuation(message)} />
         {promptState !== PromptState.Submitted && canSearch ? (
           <Box marginLeft={3}>
             <TextInput

@@ -1,4 +1,9 @@
-import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {
+  renderAutocompletePrompt,
+  renderConfirmationPrompt,
+  renderSelectPrompt,
+  renderTextPrompt,
+} from '@shopify/cli-kit/node/ui'
 
 export async function prompts() {
   // renderSelectPrompt
@@ -89,4 +94,28 @@ export async function prompts() {
       return Promise.resolve({data: database.filter((item) => item.label.includes(term))})
     },
   })
+
+  const themes = [
+    [
+      'first theme',
+      {
+        subdued: `(#${1})`,
+      },
+    ],
+    [
+      'second theme',
+      {
+        subdued: `(#${2})`,
+      },
+    ],
+  ]
+
+  const options = {
+    message: `Delete the following themes from the store?`,
+    infoTable: {'': themes},
+    confirmationMessage: 'Yes, confirm changes',
+    cancellationMessage: 'Cancel',
+  }
+
+  await renderConfirmationPrompt(options)
 }

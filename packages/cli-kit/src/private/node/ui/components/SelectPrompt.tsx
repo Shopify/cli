@@ -1,6 +1,6 @@
 import {SelectInput, SelectInputProps, Item as SelectItem, Item} from './SelectInput.js'
 import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
-import {TokenItem, TokenizedText} from './TokenizedText.js'
+import {InlineToken, LinkToken, TokenItem, TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import {messageWithPunctuation} from '../utilities.js'
 import React, {ReactElement, useCallback, useState} from 'react'
@@ -9,7 +9,7 @@ import figures from 'figures'
 import ansiEscapes from 'ansi-escapes'
 
 export interface SelectPromptProps<T> {
-  message: TokenItem
+  message: TokenItem<Exclude<InlineToken, LinkToken>>
   choices: SelectInputProps<T>['items']
   onSubmit: (value: T) => void
   infoTable?: InfoTableProps['table']

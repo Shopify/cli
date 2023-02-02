@@ -23,12 +23,13 @@ export async function outputUpdateURLsResult(
     })
   } else if (!updated) {
     renderInfo({
-      headline: [
+      body: [
         'To make URL updates manually, you can add the following URLs as redirects in your',
         dashboardURL,
         {char: ':'},
+        '\n\n',
+        {list: {items: urls.redirectUrlWhitelist}},
       ],
-      body: {list: {items: urls.redirectUrlWhitelist}},
     })
   }
 }
