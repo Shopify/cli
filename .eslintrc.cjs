@@ -285,6 +285,7 @@ module.exports = {
         'react/self-closing-comp': 2,
         'react/no-unused-prop-types': 2,
         'import/no-default-export': 2,
+        'import/no-namespace': 2,
         'no-restricted-imports': [
           'error',
           {
