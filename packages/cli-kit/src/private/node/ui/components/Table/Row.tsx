@@ -20,7 +20,7 @@ function join<T, TI>(elements: T[], separator: (index: number) => TI): (T | TI)[
   }, [] as (T | TI)[])
 }
 
-export function Row<T extends ScalarDict>({rowKey, columns, data, fillerChar, ignoreColumnColor}: RowProps<T>) {
+const Row = <T extends ScalarDict>({rowKey, columns, data, fillerChar, ignoreColumnColor}: RowProps<T>) => {
   return (
     <Box flexDirection="row">
       {...join(
@@ -45,3 +45,5 @@ export function Row<T extends ScalarDict>({rowKey, columns, data, fillerChar, ig
     </Box>
   )
 }
+
+export {Row}

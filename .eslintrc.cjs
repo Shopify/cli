@@ -11,7 +11,7 @@ module.exports = {
     project: './tsconfig.json',
     EXPERIMENTAL_useSourceOfProjectReferenceRedirect: true,
   },
-  plugins: ['no-catch-all', 'jest', '@nrwl/nx', 'unused-imports', 'rulesdir', 'eslint-plugin-tsdoc', 'jsdoc'],
+  plugins: ['no-catch-all', 'jest', '@nrwl/nx', 'unused-imports', 'rulesdir', 'eslint-plugin-tsdoc', 'jsdoc', 'import'],
   extends: ['plugin:@shopify/typescript', 'plugin:@shopify/prettier', 'plugin:@shopify/node', 'prettier'],
   rules: {
     'prettier/prettier': ['error'],
@@ -268,7 +268,6 @@ module.exports = {
         'react/jsx-closing-bracket-location': 2,
         'react/jsx-closing-tag-location': 2,
         'react/jsx-curly-brace-presence': 2,
-        'react/jsx-curly-newline': 2,
         'react/jsx-curly-spacing': 2,
         'react/jsx-equals-spacing': 2,
         'react/jsx-first-prop-new-line': 2,
@@ -281,12 +280,34 @@ module.exports = {
         'react/jsx-pascal-case': 2,
         'react/jsx-props-no-multi-spaces': 2,
         'react/jsx-tag-spacing': 2,
-        'react/no-array-index-key': 2,
         'react/no-namespace': 2,
         'react/no-object-type-as-default-prop': 2,
         'react/self-closing-comp': 2,
-        // also use https://typescript-eslint.io/rules/naming-convention/ for Props -> AlertProps
-        // also check if there is a rule to enforce the use of React.FC instead of React.FunctionComponent
+        'react/no-unused-prop-types': 2,
+        'import/no-default-export': 2,
+        'no-restricted-imports': [
+          'error',
+          {
+            paths: [
+              {
+                name: 'react',
+                importNames: ['FC'],
+                message: 'Please use FunctionComponent from react instead.',
+              },
+            ],
+          },
+        ],
+        '@typescript-eslint/naming-convention': [
+          'error',
+          {
+            selector: 'interface',
+            format: ['PascalCase'],
+            custom: {
+              regex: '^Props',
+              match: false,
+            },
+          },
+        ],
       },
       settings: {
         react: {

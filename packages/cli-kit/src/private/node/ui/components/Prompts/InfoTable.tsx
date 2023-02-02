@@ -1,15 +1,15 @@
 import {List} from '../List.js'
 import {capitalize} from '../../../../../public/common/string.js'
 import {Box, Text} from 'ink'
-import React from 'react'
+import React, {FunctionComponent} from 'react'
 
-export interface Props {
+export interface InfoTableProps {
   table: {
     [header: string]: string[]
   }
 }
 
-const InfoTable: React.FC<Props> = ({table}) => {
+const InfoTable: FunctionComponent<InfoTableProps> = ({table}) => {
   const headers = Object.keys(table)
   const headerColumnWidth = Math.max(...headers.map((header) => header.length))
 
@@ -29,4 +29,4 @@ const InfoTable: React.FC<Props> = ({table}) => {
   )
 }
 
-export default InfoTable
+export {InfoTable}

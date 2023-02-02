@@ -1,8 +1,8 @@
 import {TokenItem, TokenizedText} from './TokenizedText.js'
 import {Box, Text} from 'ink'
-import React from 'react'
+import React, {FunctionComponent} from 'react'
 
-interface Props {
+interface ListProps {
   title?: string
   items: TokenItem[]
   ordered?: boolean
@@ -14,10 +14,10 @@ const DOT = '•'
  * `List` displays an unordered or ordered list with text aligned with the bullet point
  * and wrapped to the container width.
  */
-const List: React.FC<Props> = ({title, items, ordered = false}): JSX.Element => {
+const List: FunctionComponent<ListProps> = ({title, items, ordered = false}): JSX.Element => {
   return (
     <Box flexDirection="column">
-      {title && <Text bold>{title}</Text>}
+      {title ? <Text bold>{title}</Text> : null}
       {items.map((item, index) => (
         <Box key={index}>
           <Box>

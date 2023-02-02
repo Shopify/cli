@@ -1,9 +1,9 @@
 /* eslint-disable id-length */
 import {Text} from 'ink'
-import React, {useEffect, useRef, useState} from 'react'
+import React, {FunctionComponent, useEffect, useRef, useState} from 'react'
 import gradient from 'gradient-string'
 
-interface Props {
+interface TextAnimationProps {
   text: string
 }
 
@@ -17,7 +17,7 @@ function rainbow(text: string, frame: number) {
 /**
  * `TextAnimation` applies a rainbow animation to text.
  */
-const TextAnimation: React.FC<Props> = ({text}): JSX.Element => {
+const TextAnimation: FunctionComponent<TextAnimationProps> = ({text}): JSX.Element => {
   const frame = useRef(0)
   const [renderedFrame, setRenderedFrame] = useState(text)
   const timeout = useRef<NodeJS.Timeout>()

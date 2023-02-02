@@ -1,5 +1,5 @@
-import SelectInput, {Props as SelectProps, Item as SelectItem, Item} from './SelectInput.js'
-import InfoTable, {Props as InfoTableProps} from './Prompts/InfoTable.js'
+import {SelectInput, SelectInputProps, Item as SelectItem, Item} from './SelectInput.js'
+import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import {TokenItem, TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import {messageWithPunctuation} from '../utilities.js'
@@ -8,21 +8,22 @@ import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
 import figures from 'figures'
 import ansiEscapes from 'ansi-escapes'
 
-export interface Props<T> {
+export interface SelectPromptProps<T> {
   message: TokenItem
-  choices: SelectProps<T>['items']
+  choices: SelectInputProps<T>['items']
   onSubmit: (value: T) => void
   infoTable?: InfoTableProps['table']
   defaultValue?: T
 }
 
+// eslint-disable-next-line react/function-component-definition
 function SelectPrompt<T>({
   message,
   choices,
   infoTable,
   onSubmit,
   defaultValue,
-}: React.PropsWithChildren<Props<T>>): ReactElement | null {
+}: React.PropsWithChildren<SelectPromptProps<T>>): ReactElement | null {
   if (choices.length === 0) {
     throw new Error('SelectPrompt requires at least one choice')
   }
@@ -66,11 +67,11 @@ function SelectPrompt<T>({
         </Box>
         <TokenizedText item={messageWithPunctuation(message)} />
       </Box>
-      {infoTable && !submitted && (
+      {infoTable && !submitted ? (
         <Box marginLeft={7} marginTop={1}>
           <InfoTable table={infoTable} />
         </Box>
-      )}
+      ) : null}
       {submitted ? (
         <Box>
           <Box marginRight={2}>

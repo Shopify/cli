@@ -2,11 +2,11 @@ import {TextInput} from './TextInput.js'
 import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {messageWithPunctuation} from '../utilities.js'
-import React, {useCallback, useState} from 'react'
+import React, {FunctionComponent, useCallback, useState} from 'react'
 import {Box, useApp, useInput, Text} from 'ink'
 import figures from 'figures'
 
-export interface Props {
+export interface TextPromptProps {
   message: string
   onSubmit: (value: string) => void
   defaultValue?: string
@@ -14,7 +14,13 @@ export interface Props {
   validate?: (value: string) => string | undefined
 }
 
-const TextPrompt: React.FC<Props> = ({message, onSubmit, validate, defaultValue = '', password = false}) => {
+const TextPrompt: FunctionComponent<TextPromptProps> = ({
+  message,
+  onSubmit,
+  validate,
+  defaultValue = '',
+  password = false,
+}) => {
   if (password && defaultValue) {
     throw new Error("Can't use defaultValue with password")
   }
@@ -98,11 +104,11 @@ const TextPrompt: React.FC<Props> = ({message, onSubmit, validate, defaultValue 
           <Box marginLeft={3}>
             <Text color={color}>{underline}</Text>
           </Box>
-          {shouldShowError && (
+          {shouldShowError ? (
             <Box marginLeft={3}>
               <Text color={color}>{error}</Text>
             </Box>
-          )}
+          ) : null}
         </Box>
       )}
     </Box>
