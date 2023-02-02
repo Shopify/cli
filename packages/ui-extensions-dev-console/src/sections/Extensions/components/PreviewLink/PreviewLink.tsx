@@ -7,7 +7,6 @@ import {ClipboardMinor} from '@shopify/polaris-icons'
 import {toast} from 'react-toastify'
 import {IconButton} from '@/components/IconButton'
 import {isEmbedded} from '@/utilities/embedded'
-import {Tooltip} from '@/components/Tooltip'
 
 interface Props {
   rootUrl: string
@@ -43,24 +42,20 @@ export function PreviewLink({rootUrl, resourceUrl, title}: Props) {
 
   return (
     <span className={styles.PreviewLink}>
-      <Tooltip text="Go to preview">
-        <a
-          href={rootUrl}
-          target={isEmbedded ? '_top' : '_blank'}
-          aria-label={i18n.translate('linkLabel', {title})}
-          onClick={handleOpenRoot}
-        >
-          {title}
-        </a>
-      </Tooltip>
-      <Tooltip text="Copy to clipboard">
-        <IconButton
-          type="button"
-          onClick={() => handleCopyPreviewLink()}
-          source={ClipboardMinor}
-          accessibilityLabel={i18n.translate('iconLabel', {title})}
-        />
-      </Tooltip>
+      <a
+        href={rootUrl}
+        target={isEmbedded ? '_top' : '_blank'}
+        aria-label={i18n.translate('linkLabel', {title})}
+        onClick={handleOpenRoot}
+      >
+        {title}
+      </a>
+      <IconButton
+        type="button"
+        onClick={() => handleCopyPreviewLink()}
+        source={ClipboardMinor}
+        accessibilityLabel={i18n.translate('iconLabel', {title})}
+      />
     </span>
   )
 }

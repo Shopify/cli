@@ -85,7 +85,6 @@ export function Tooltip({children, text}: TooltipProps) {
     <>
       <div
         className={styles.Tooltip}
-        style={{outline: '1px solid red'}}
         onMouseEnter={handleShow}
         onFocus={handleShow}
         onBlur={() => dispatch({type: 'hide'})}
