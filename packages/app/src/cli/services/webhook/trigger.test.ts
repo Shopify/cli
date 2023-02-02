@@ -177,7 +177,7 @@ describe('webhookTriggerService', () => {
 
     it('manual', async () => {
       // Given
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
       vi.mocked(collectSecret).mockResolvedValue(aSecret)
 
       // When
@@ -190,7 +190,7 @@ describe('webhookTriggerService', () => {
 
     it('uses .env credentials', async () => {
       // Given
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
       vi.mocked(findInEnv).mockResolvedValue({clientSecret: aSecret})
 
       // When
@@ -205,7 +205,7 @@ describe('webhookTriggerService', () => {
 
     it('no remote apiKey found', async () => {
       // Given
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
       vi.mocked(findInEnv).mockResolvedValue({})
       vi.mocked(findApiKey).mockResolvedValue(undefined)
 
@@ -220,7 +220,7 @@ describe('webhookTriggerService', () => {
 
     it('remote apiKey found', async () => {
       // Given
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
       vi.mocked(findInEnv).mockResolvedValue({})
       vi.mocked(findApiKey).mockResolvedValue('API_KEY')
       vi.mocked(requestAppInfo).mockResolvedValue({clientSecret: aSecret, apiKey: 'API_KEY', clientId: 'Id'})
@@ -237,7 +237,7 @@ describe('webhookTriggerService', () => {
 
     it('remote apiKey found', async () => {
       // Given
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
       vi.mocked(findInEnv).mockResolvedValue({})
       vi.mocked(findApiKey).mockResolvedValue('API_KEY')
       vi.mocked(requestAppInfo).mockResolvedValue({clientSecret: aSecret, apiKey: 'API_KEY', clientId: 'Id'})
@@ -254,7 +254,7 @@ describe('webhookTriggerService', () => {
 
     it('remote apiKey found but no app info', async () => {
       // Given
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
       vi.mocked(findInEnv).mockResolvedValue({})
       vi.mocked(findApiKey).mockResolvedValue('API_KEY')
       vi.mocked(requestAppInfo).mockResolvedValue({})
