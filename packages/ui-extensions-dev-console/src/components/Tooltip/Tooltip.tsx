@@ -1,44 +1,7 @@
 import styles from './Tooltip.module.css'
-import React, {useRef, useReducer, useLayoutEffect} from 'react'
-
-interface Position {
-  x: number
-  y: number
-}
-
-interface TooltipPopoverProps {
-  position: Position
-  text: string
-}
-
-interface TooltipProps {
-  children: JSX.Element
-  text: string
-}
-
-interface TooltipState {
-  isVisible: boolean
-  position: Position
-}
-
-type TooltipAction = {type: 'show' | 'hide'} | {type: 'position'; payload: Position}
-
-function TooltipPopover({position, text}: TooltipPopoverProps) {
-  const ref = useRef<HTMLDivElement | null>(null)
-
-  useLayoutEffect(() => {
-    if (ref.current) {
-      ref.current.style.top = `${position.y}px`
-      ref.current.style.left = `${position.x}px`
-    }
-  }, [])
-
-  return (
-    <div className={styles.Popover} role="tooltip" ref={ref}>
-      {text}
-    </div>
-  )
-}
+import {TooltipPopover} from './TooltipPopover'
+import React, {useRef, useReducer} from 'react'
+import type {TooltipProps, TooltipState, TooltipAction} from './types'
 
 function tooltipReducer(state: TooltipState, action: TooltipAction) {
   switch (action.type) {

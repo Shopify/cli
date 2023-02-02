@@ -2,19 +2,6 @@
   display: inline-block;
 }
 
-.Popover {
-  position: fixed;
-  background-color: var(--dc-color-grey-600);
-  color: #fff;
-  padding: 1rem;
-  border-radius: 4px;
-  max-width: 250px;
-
-  z-index: 9999;
-  box-shadow: 0px 3px 6px -3px rgba(23, 24, 24, 0.08),
-    0px 8px 20px -4px rgba(23, 24, 24, 0.12);
-}
-
 .Tooltip:hover {
    cursor: help;
 }
