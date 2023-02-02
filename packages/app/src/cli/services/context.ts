@@ -24,7 +24,7 @@ import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-pack
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
-import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
+import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
