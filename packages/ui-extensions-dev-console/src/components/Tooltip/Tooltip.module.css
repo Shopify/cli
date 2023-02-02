@@ -1,0 +1,19 @@
+.Tooltip {
+  display: inline-block;
+}
+
+.Popover {
+  position: fixed;
+  background-color: var(--dc-color-grey-600);
+  color: #fff;
+  padding: 1rem;
+  border-radius: 0.25rem;
+  max-width: 24rem;
+
+  z-index: 9999;
+  shadow: 0 0 0.5rem rgba(0, 0, 0, 0.5);
+}
+
+.Tooltip:hover {
+   cursor: help;
+}
