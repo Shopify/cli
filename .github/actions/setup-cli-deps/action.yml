@@ -13,7 +13,7 @@ runs:
         git config --global user.name "CLI Foundations"
       shell: bash
     - name: Set Ruby
-      uses: ruby/setup-ruby@v1
+      uses: ruby/setup-ruby@ee26e27437bde475b19a6bf8cb73c9fa658876a2 # pin@v1
       with:
         ruby-version: ${{ env.RUBY_VERSION }}
         bundler-cache: false
@@ -25,9 +25,9 @@ runs:
       run: bundle install
       shell: bash
     - name: Install pnpm
-      uses: pnpm/action-setup@v2.2.2
+      uses: pnpm/action-setup@10693b3829bf86eb2572aef5f3571dcf5ca9287d # pin@v2.2.2
       with:
-        version:  ${{ env.PNPM_VERSION }}
+        version: ${{ env.PNPM_VERSION }}
     - name: Set Node.js
       uses: actions/setup-node@master
       with:
@@ -43,4 +43,4 @@ runs:
       run: pnpm install
       shell: bash
     - name: Derive appropriate SHAs for base and head for `nx affected` commands
-      uses: nrwl/nx-set-shas@v2.2.5
+      uses: nrwl/nx-set-shas@526caa9cb6b172df606cd33b7a3544bf1bc49c2e # pin@v2.2.5
