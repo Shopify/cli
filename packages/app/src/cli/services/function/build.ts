@@ -11,6 +11,8 @@ interface JSFunctionBuildOptions {
   stdout: Writable
   stderr: Writable
   signal?: AbortSignal
+  // we want to use tasks when this is a primary command, i.e. 'shopify app function build',
+  // but we don't want the fancy UI when this is running as part of 'shopify app build'.
   useTasks?: boolean
 }
 
