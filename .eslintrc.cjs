@@ -274,11 +274,17 @@ module.exports = {
         'react/jsx-first-prop-new-line': 2,
         'react/jsx-fragments': 2,
         'react/jsx-handler-names': 2,
-        'react/jsx-indent': 2,
-        'react/jsx-indent-props': 2,
+        'react/jsx-indent': [2, 2, {checkAttributes: true, indentLogicalExpressions: true}],
+        'react/jsx-indent-props': [2, 2],
         'react/jsx-no-leaked-render': 2,
         'react/jsx-no-useless-fragment': 2,
-        //TODO start from here tomorrow
+        'react/jsx-pascal-case': 2,
+        'react/jsx-props-no-multi-spaces': 2,
+        'react/jsx-tag-spacing': 2,
+        'react/no-array-index-key': 2,
+        'react/no-namespace': 2,
+        'react/no-object-type-as-default-prop': 2,
+        'react/self-closing-comp': 2,
         // also use https://typescript-eslint.io/rules/naming-convention/ for Props -> AlertProps
         // also check if there is a rule to enforce the use of React.FC instead of React.FunctionComponent
       },
