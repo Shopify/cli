@@ -99,7 +99,7 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
   }
 
   get isJavaScript() {
-    return this.entrySourceFilePath?.endsWith('.js') || this.entrySourceFilePath?.endsWith('.ts') || false
+    return Boolean(this.entrySourceFilePath?.endsWith('.js') || this.entrySourceFilePath?.endsWith('.ts'))
   }
 
   async publishURL(options: {orgId: string; appId: string}) {
