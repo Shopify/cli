@@ -1,7 +1,8 @@
 .Popover {
   position: fixed;
   background-color: var(--dc-color-grey-600);
-  color: #fff;
+  color: var(--dc-color-white);
+  font-weight: 400;
   padding: 1rem;
   border-radius: 4px;
   max-width: 250px;

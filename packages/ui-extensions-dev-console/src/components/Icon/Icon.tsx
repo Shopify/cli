@@ -8,16 +8,19 @@ export interface IconProps {
 
   /** Descriptive text to be read to screenreaders */
   accessibilityLabel?: string
+
+  /** Causes the SVG to be filled with a muted grey */
+  muted?: boolean
 }
 
-export function Icon({source, accessibilityLabel}: IconProps) {
+export function Icon({source, accessibilityLabel, muted = false}: IconProps) {
   const SourceComponent = source
 
   return (
     <>
       <VisuallyHidden>{accessibilityLabel}</VisuallyHidden>
       <span className={styles.Icon}>
-        <SourceComponent className={styles.Svg} focusable="false" aria-hidden="true" />
+        <SourceComponent className={(styles.Svg, muted && styles.Muted)} focusable="false" aria-hidden="true" />
       </span>
     </>
   )

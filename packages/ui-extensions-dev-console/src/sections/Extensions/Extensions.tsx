@@ -41,7 +41,7 @@ export function Extensions() {
               <span className={styles.WithIcon}>
                 {i18n.translate('extensionList.view')}
                 <Tooltip text={i18n.translate('tooltips.viewColumnHeader')}>
-                  <Icon source={QuestionMarkMajor} />
+                  <Icon source={QuestionMarkMajor} muted />
                 </Tooltip>
               </span>
             </th>

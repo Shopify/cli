@@ -9,7 +9,7 @@ export interface TooltipPopoverProps {
 }
 
 export interface TooltipProps {
-  children: JSX.Element
+  children: JSX.Element | string
   text: string
 }
 
