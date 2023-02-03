@@ -7,9 +7,14 @@ import {debounce} from '@shopify/cli-kit/common/function'
 import chalk from 'chalk'
 import figures from 'figures'
 
+interface OnChangeOptions<T> {
+  item: Item<T> | undefined
+  usedShortcut: boolean
+}
+
 export interface Props<T> {
   items: Item<T>[]
-  onChange: (item: Item<T> | undefined) => void
+  onChange: ({item, usedShortcut}: OnChangeOptions<T>) => void
   enableShortcuts?: boolean
   focus?: boolean
   emptyMessage?: string
@@ -130,10 +135,13 @@ export default function SelectInput<T>({
   const previousItems = useRef<Item<T>[]>(items)
 
   const changeSelection = useCallback(
-    (index: number) => {
+    (index: number, usedShortcut = false) => {
       const groupedItem = groupedItemsValues.find((item) => item.index === index)!
       setSelectedIndex(index)
-      onChange(items.find((item) => item.value === groupedItem.value))
+      onChange({
+        item: items.find((item) => item.value === groupedItem.value),
+        usedShortcut,
+      })
     },
     [items],
   )
@@ -141,7 +149,10 @@ export default function SelectInput<T>({
   useEffect(() => {
     if (items.length === 0) {
       // reset selection when items are empty
-      onChange(undefined)
+      onChange({
+        item: undefined,
+        usedShortcut: false,
+      })
     } else if (
       // reset index when items change
       !isEqual(
@@ -173,7 +184,7 @@ export default function SelectInput<T>({
       if (keys.includes(input)) {
         const groupedItem = groupedItemsValues.find((item) => item.key === input)
         if (groupedItem !== undefined) {
-          changeSelection(groupedItem.index)
+          changeSelection(groupedItem.index, true)
         }
       }
     },

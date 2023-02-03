@@ -223,4 +223,26 @@ describe('SelectPrompt', async () => {
     `)
     expect(onEnter).toHaveBeenCalledWith(items[0]!.value)
   })
+
+  test('allow submitting with a shortcut directly', async () => {
+    const onEnter = vi.fn()
+    const items = [
+      {label: 'a', value: 'a', key: 'a'},
+      {label: 'b', value: 'b', key: 'b'},
+    ]
+
+    const renderInstance = render(
+      <SelectPrompt choices={items} onSubmit={onEnter} message="Test question?" submitWithShortcuts />,
+    )
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, 'b')
+
+    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
+      "?  Test question?
+      [36m✔[39m  [36mb[39m
+      "
+    `)
+    expect(onEnter).toHaveBeenCalledWith(items[1]!.value)
+  })
 })

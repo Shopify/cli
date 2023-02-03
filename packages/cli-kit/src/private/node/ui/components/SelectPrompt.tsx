@@ -1,4 +1,4 @@
-import SelectInput, {Props as SelectProps, Item as SelectItem, Item} from './SelectInput.js'
+import SelectInput, {Props as SelectProps, Item as SelectItem} from './SelectInput.js'
 import InfoTable, {Props as InfoTableProps} from './Prompts/InfoTable.js'
 import {InlineToken, LinkToken, TokenItem, TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
@@ -14,6 +14,7 @@ export interface Props<T> {
   onSubmit: (value: T) => void
   infoTable?: InfoTableProps['table']
   defaultValue?: T
+  submitWithShortcuts?: boolean
 }
 
 function SelectPrompt<T>({
@@ -22,6 +23,7 @@ function SelectPrompt<T>({
   infoTable,
   onSubmit,
   defaultValue,
+  submitWithShortcuts = false,
 }: React.PropsWithChildren<Props<T>>): ReactElement | null {
   if (choices.length === 0) {
     throw new Error('SelectPrompt requires at least one choice')
@@ -40,21 +42,28 @@ function SelectPrompt<T>({
     }
   }, [])
 
+  const submitAnswer = useCallback(
+    (answer: SelectItem<T>) => {
+      if (stdout && height >= stdout.rows) {
+        stdout.write(ansiEscapes.clearTerminal)
+      }
+      setSubmitted(true)
+      unmountInk()
+      onSubmit(answer.value)
+    },
+    [stdout, stdout?.rows, height, onSubmit],
+  )
+
   useInput(
     useCallback(
       (input, key) => {
         handleCtrlC(input, key)
 
         if (key.return && answer) {
-          if (stdout && height >= stdout.rows) {
-            stdout.write(ansiEscapes.clearTerminal)
-          }
-          setSubmitted(true)
-          unmountInk()
-          onSubmit(answer.value)
+          submitAnswer(answer)
         }
       },
-      [answer, onSubmit, height],
+      [answer, submitAnswer],
     ),
   )
 
@@ -84,8 +93,12 @@ function SelectPrompt<T>({
           <SelectInput
             defaultValue={initialValue}
             items={choices}
-            onChange={(item: Item<T> | undefined) => {
+            onChange={({item, usedShortcut}) => {
               setAnswer(item)
+
+              if (submitWithShortcuts && usedShortcut && item) {
+                submitAnswer(item)
+              }
             }}
           />
         </Box>

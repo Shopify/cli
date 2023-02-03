@@ -1,4 +1,4 @@
-import SelectInput, {Props as SelectProps, Item as SelectItem, Item} from './SelectInput.js'
+import SelectInput, {Props as SelectProps, Item as SelectItem} from './SelectInput.js'
 import InfoTable, {Props as InfoTableProps} from './Prompts/InfoTable.js'
 import {TextInput} from './TextInput.js'
 import {TokenizedText} from './TokenizedText.js'
@@ -121,7 +121,7 @@ function AutocompletePrompt<T>({
           setPromptState(PromptState.Error)
         })
         .finally(() => {
-          clearTimeout(setLoadingWhenSlow.current!)
+          clearTimeout(setLoadingWhenSlow.current)
         })
     }, 300),
     [],
@@ -173,7 +173,7 @@ function AutocompletePrompt<T>({
         <Box marginTop={1}>
           <SelectInput
             items={searchResults}
-            onChange={(item: Item<T> | undefined) => {
+            onChange={({item}) => {
               setAnswer(item)
             }}
             enableShortcuts={false}

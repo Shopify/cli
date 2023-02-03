@@ -256,6 +256,7 @@ export function renderConfirmationPrompt({
     choices,
     message,
     infoTable,
+    submitWithShortcuts: true,
   })
 }
 
