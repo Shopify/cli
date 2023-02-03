@@ -15,8 +15,6 @@ const WebPixelSchema = BaseUIExtensionSchema.extend({
 
 const spec = createUIExtensionSpecification({
   identifier: 'web_pixel_extension',
-  externalIdentifier: 'web_pixel',
-  externalName: 'Web pixel',
   surface: 'unknown',
   dependency,
   partnersWebIdentifier: 'web_pixel',

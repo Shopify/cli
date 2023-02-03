@@ -16,8 +16,6 @@ const CheckoutSchema = BaseUIExtensionSchema.extend({
 
 const spec = createUIExtensionSpecification({
   identifier: 'checkout_ui_extension',
-  externalIdentifier: 'checkout_ui',
-  externalName: 'Checkout UI',
   surface: 'checkout',
   dependency,
   partnersWebIdentifier: 'checkout_ui_extension',

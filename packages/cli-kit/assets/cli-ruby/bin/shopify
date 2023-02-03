@@ -1,0 +1,60 @@
+#!/usr/bin/env ruby
+
+module Kernel
+  # make an alias of the original require
+  alias_method :original_require, :require
+
+  # rewrite require
+  def require(name)
+    original_require(name)
+  rescue LoadError => e
+    # Special case for readline.so, which fails harmlessly on Windows
+    raise if (name == "readline.so") && ShopifyCLI::Context.new.windows?
+    # Special case for psych (yaml), which rescues this itself
+    raise if name == "#{RUBY_VERSION[/\d+\.\d+/]}/psych.so"
+    # Special case for ffi, which rescues this itself
+    raise if name == "#{RUBY_VERSION.split(".")[0, 2].join(".")}/ffi_c"
+    # Special case for nokogiri, which might install the wrong architecture
+    if name == "nokogiri/nokogiri"
+      STDERR.puts(<<~MESSAGE)
+        The Nokogiri gem is failing to load, due to an installation or architecture issue.
+
+        To fix this, reinstall Nokogiri.
+
+        • Installation guide: https://nokogiri.org/tutorials/installing_nokogiri.html
+
+      MESSAGE
+      STDERR.puts e.full_message
+      exit(1)
+    end
+    STDERR.puts "[Note] You cannot use gems with Shopify CLI."
+    STDERR.puts "[LoadError] #{e.message}"
+    if ENV["DEBUG"]
+      STDERR.puts e.backtrace
+      STDERR.puts "\n"
+    end
+    STDERR.puts "       They are disabled."
+    STDERR.puts "       Please don't modify the CLI locally."
+    STDERR.puts "       If you would like to contribute to the CLI project, please refer to"
+    STDERR.puts "       https://github.com/Shopify/shopify-cli/blob/main/.github/CONTRIBUTING.md"
+    STDERR.puts "\n"
+    raise
+  end
+end
+
+require_relative "./load_shopify"
+
+exit(
+  proc do
+    ShopifyCLI::ErrorHandler.call do
+      ShopifyCLI::Core::EntryPoint.call(ARGV.dup)
+    end
+  rescue StandardError => error
+    ShopifyCLI::ErrorHandler.exception = error
+    if ShopifyCLI::Environment.print_stacktrace?
+      raise error
+    else
+      1
+    end
+  end.call
+)
