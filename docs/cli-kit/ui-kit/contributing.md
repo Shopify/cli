@@ -9,14 +9,14 @@ having to change your code too often.
 
 At its core, UI Kit is built with [ink](https://github.com/vadimdemedes/ink) which uses React under the hood.
 If you're familiar with React already that's great! This guide will only cover details that are specific to UI kit,
-so an understanding of [React](https://reactjs.org/docs/getting-started.html) is a prerequiste if you wish to contribute to its components library.
+so an understanding of [React](https://reactjs.org/docs/getting-started.html) is a prerequisite if you wish to contribute to its components library.
 
 ## Principles
 
 UI Kit defines all its available functions inside the `public/node/ui.tsx` file.
 These functions take simple JavaScript objects as params and output something to the terminal, be it a prompt or a banner.
 We chose this API design so that you wouldn't have to worry about the underlying React implementation when implementing commands,
-and could focus on simple data structures to pass in to these `render` functions. This will also make it easier for us to
+and could focus on simple data structures to pass into these `render` functions. This will also make it easier for us to
 restructure and upgrade the underlying React components without causing API breakage.
 
 The public functions have all been documented via comments above the function themselves.
@@ -24,7 +24,7 @@ These comments include some examples of what the command would output if invoked
 
 ## Adding a new `render` function
 
-If none of the availble functions does what you want, you might want to add a new function to the list,
+If none of the available functions does what you want, you might want to add a new function to the list,
 but before doing that please consider:
 
 1. Can I extend what is already implemented with new functionality?
@@ -61,7 +61,7 @@ For example for `renderConfirmationPrompt` and `renderSelectPrompt`. `renderConf
 
 ---
 
-Ok you've though about the params and you've created your corresponding component. What now? Now you need to choose between
+Ok you've thought about the params and you've created your corresponding component. What now? Now you need to choose between
 using two different render functions, `render` and `renderOnce`, both exposed by the private `ui` module.
 
 The difference is that **`render` will return a promise that can be awaited**. This is useful for components that need to stay
@@ -82,7 +82,7 @@ but without the reactive part of React. As an example, banners are being rendere
 - Chose between `render` and `renderOnce` ✅
 
 It's time to add a new component! Components are built with `ink` so please go to [their readme](https://github.com/vadimdemedes/ink) if you need documentation on the components it exposes. If you know React things will work as you'd expect.
-The main differece with using React on the web is that (obviously) we don't have access to the dom or CSS for styling.
+The main difference with using React on the web is that (obviously) we don't have access to the dom or CSS for styling.
 Ink instead uses [yoga](https://github.com/facebook/yoga) under the hood for its layout system, which will give you access to [most](https://github.com/vadimdemedes/ink/pull/479)
 of the flexbox system properties you've used for the web.
 
@@ -114,7 +114,7 @@ On top of what `ink` provides there are a few utility components that are import
 
 If you're building a component and you'd like to accept various different small tokens as an attribute, you should define
 the type of the attribute as `{attribute: TokenItem}` and then include `render(<TokenizedText item={attribute} />` in your component.
-This way, if an user wants to render a link inside your attribute, all they need to do is pass the link token (which is a POJO)
+This way, if a user wants to render a link inside your attribute, all they need to do is pass the link token (which is a POJO)
 to your render function. For example:
 
 ```
@@ -140,20 +140,20 @@ like `span` elements in HTML. Block elements will be wrapped in a `Box` element 
 adding a line return after the block.
 
 If you wish to force users to use inline elements with certain params, you can use the `TokenItem<InlineToken>` param.
-This will forbit users of the function to pass params that contain block elements. In this case `TokenizedText`
+This will forbid users of the function to pass params that contain block elements. In this case `TokenizedText`
 will not use any `Box` components and will wrap everything with `Text` only.
 As a result you can confidently use `TokenizedText` with such items inside `Text` elements.
 
 **Adding a new token**
 
 If you think that you need a new type of style (for example italics) for the text inside your components you can
-add a new interface named `ItalicToken` in the `TokenizedText` and decide how it's going to be rendered, if inline or block.
+add a new interface named `ItalicToken` in the `TokenizedText` and decide how it's going to be rendered, inline or block.
 In this example we would use `inline`. But before you go ahead and add a new token, consider if all the users of UI kit
 might need this new token or not. If the answer is no, then a simple regular component will suffice.
 
 **`FullScreen`**
 
-This component is useful if you want to clear the terminal and render something full screen. The benefit is that resizing
+This component is useful if you want to clear the terminal and render something full-screen. The benefit is that resizing
 the terminal will cause the interface to refresh and adapt to the new size. `FullScreen` will also create a new buffer
 so once `ink` is unmounted the previous terminal history will be restored. This might be useful if you're rendering
 a very tall UI and don't want `ink` to [delete the history when it renders](https://github.com/vadimdemedes/ink/issues/382).
@@ -175,18 +175,18 @@ and will be only fullscreen, meaning it won't have the width of the box it's inc
 For input you can use `ink`'s `useInput` callback. One thing to note is that, because using `useInput`
 will set the standard input to raw mode, if you will have to pass `exitOnCtrlC: false` to the `render` function so that
 `ink` won't handle the Ctrl+C input and instead leave that to you. This flag should be used in conjunction with the
-`handleCtrlC` utility function that will take take or handing the `Ctrl+C` input for you.
+`handleCtrlC` utility function that will handle the `Ctrl+C` input for you.
 
 ### Components that deal with async functions
 
 React doesn't really allow you to call async functions inside the body of a component as `render` should be pure and all side effects
-should be wrapped in `useEffect`. Because it's very common to pass async functions to components we've added a `useAsyncAndUnmount` hook that will execute your function in a `useEffect` hook and appropiately
-unmount ink if the function resolve or rejects. From the outside, using this hook will make sure that in case of errors `render`
+should be wrapped in `useEffect`. Because it's very common to pass async functions to components we've added a `useAsyncAndUnmount` hook that will execute your function in a `useEffect` hook and appropriately
+unmount ink if the function resolves or rejects. From the outside, using this hook will make sure that in case of errors `render`
 will first clean up `ink`'s rendering instance and then will reject with the error that the function rejected with.
 
 ### Layout system
 
-One of the great things about using Ink that the output will try to adapt to the user terminal size much like a web page
+One of the great things about using Ink is that the output will try to adapt to the user terminal size much like a web page
 will try to adapt the user browser window size.
 
 Still, to make it easier to create components that visually align together, we've added a layout system made of three columns.
@@ -207,11 +207,26 @@ frame with something like `await new Promise((resolve) => setTimeout(resolve, 0)
 
 **Input**
 
+After you've rendered a component in a test it won't be ready to accept inputs immediately. This is a known shortcoming of
+`ink` that the author is aware of. Lacking a callback or a promise we can await we've added a `waitForInputsToBeReady`
+function that can be awaited and will make sure that the component is ready to accept input.
 
+Input can be sent by writing to the `stdin` of the instance returned by `render`, as so
+
+```
+renderInstance.stdin.write("a")
+```
+
+You typically will want to wait for some change to happen in the component after input has been sent.
+For that we've added a bunch of helper functions to help you test inputs inside `src/private/node/testing/ui.ts`.
+Every function is documented with a comment above so check out that file to know more about them.
 
 ### My tests are passing locally but not on CI!
 
-`getLastFrameAfterUnmount`
+Ink behaves [differently in CI](https://github.com/vadimdemedes/ink/pull/266). Apart from forking the project or contributing
+by adding an extra flag to override that behavior (something the maintainer doesn't like), there isn't a way to prevent that.
+For that reason we've added a `getLastFrameAfterUnmount` function that should be used only after the component being rendered
+has been unmounted. This function will make sure that no matter the environment the last frame will be consistent.
 
 ## Testing outside of components
 
@@ -221,6 +236,6 @@ For commands that use `renderOnce` you can use the already existing `mockOutput`
 For commands that use `render` the testing story is not great at the moment, but we're working on it.
 The problem is that we don't want to output things to the terminal during tests, but we still want a way to capture this
 output in a separate stream that we can then check.
-Ideally the `ink` `render` function that our `render` functions use under the hood should be injectable from the outside
-so that for tests we can swap it for something that will render to a fake `stoud`.
+Ideally, the `ink` `render` function that our `render` functions use under the hood should be injectable from the outside
+so that for tests we can swap it for something that will render to a fake `stdout`.
 We'd then be able to get this fake stream's frames and compare them with our expectations. This is still WIP.
