@@ -8,8 +8,6 @@ import {describe, expect, vi, it, beforeEach} from 'vitest'
 const findCredentials = vi.fn()
 
 beforeEach(() => {
-  vi.resetAllMocks()
-  vi.clearAllMocks()
   vi.mock('../secure-store.js')
   vi.mock('../conf-store.js')
   vi.mock('../../../public/node/os')

@@ -17,7 +17,6 @@ describe('checkHydrogenVersion()', () => {
   })
 
   afterEach(() => {
-    vi.restoreAllMocks()
     mockAndCaptureOutput().clear()
   })
 

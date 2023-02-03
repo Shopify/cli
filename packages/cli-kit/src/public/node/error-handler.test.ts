@@ -3,7 +3,7 @@ import {ciPlatform, cloudEnvironment, isUnitTest, macAddress} from './environmen
 import {mockAndCaptureOutput} from './testing/output.js'
 import * as error from './error.js'
 import {hashString} from '../../public/node/crypto.js'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const onNotify = vi.fn()
 beforeEach(() => {
@@ -27,10 +27,6 @@ beforeEach(() => {
   vi.mocked(cloudEnvironment).mockReturnValue({platform: 'spin', editor: false})
   vi.mocked(hashString).mockReturnValue('hashed-macaddress')
   vi.mocked(isUnitTest).mockReturnValue(true)
-})
-
-afterEach(() => {
-  vi.resetAllMocks()
 })
 
 describe('errorHandler', () => {

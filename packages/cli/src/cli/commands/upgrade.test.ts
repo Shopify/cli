@@ -1,13 +1,10 @@
 import Upgrade from './upgrade.js'
 import {upgrade as upgradeService} from '../services/upgrade.js'
-import {describe, test, afterEach, vi, expect, beforeEach} from 'vitest'
+import {describe, test, vi, expect, beforeEach} from 'vitest'
 
 describe('upgrade command', () => {
   beforeEach(() => {
     vi.mock('../services/upgrade.js')
-  })
-  afterEach(() => {
-    vi.restoreAllMocks()
   })
 
   test('launches service with path', async () => {

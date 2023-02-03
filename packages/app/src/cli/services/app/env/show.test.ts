@@ -16,7 +16,6 @@ beforeEach(async () => {
   vi.mock('../../../prompts/dev.js')
   vi.mock('@shopify/cli-kit/node/session')
   vi.mock('@shopify/cli-kit/node/node-package-manager')
-  vi.restoreAllMocks()
 })
 
 describe('env show', () => {
