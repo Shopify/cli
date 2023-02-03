@@ -48,7 +48,6 @@ const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promi
   if (!extensionType) {
     if (extensionFlavor) {
       allExtensions = allExtensions.filter((spec) =>
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         spec.supportedFlavors.map((elem) => elem.value as string).includes(extensionFlavor!),
       )
     }
