@@ -5,6 +5,7 @@ import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
 import {findPathUp} from './fs.js'
 import {cwd} from './path.js'
+import {renderInfo} from './ui.js'
 import {JsonMap} from '../../private/common/json.js'
 import {outputContent, outputInfo, outputToken} from '../../public/node/output.js'
 import {hashString} from '../../public/node/crypto.js'
@@ -156,11 +157,12 @@ function reportEnvironmentApplication<
     }
   }
   if (Object.keys(changes).length === 0) return
-  outputInfo(outputContent`Using applicable flags from the environment ${outputToken.yellow(environmentName)}:
 
-${Object.entries(changes)
-  .map(([name, value]) => `• ${name} = ${value}`)
-  .join('\n')}\n`)
+  const items = Object.entries(changes).map(([name, value]) => `${name}: ${value}`)
+  renderInfo({
+    headline: ['Using applicable flags from', {userInput: environmentName}, 'environment:'],
+    body: [{list: {items}}],
+  })
 }
 
 /**

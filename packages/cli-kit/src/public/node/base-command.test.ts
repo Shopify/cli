@@ -149,10 +149,15 @@ describe('applying environments', async () => {
     // Then
     expectFlags(tmpDir, 'validEnvironment')
     expect(outputMock.info()).toMatchInlineSnapshot(`
-      "Using applicable flags from the environment validEnvironment:
-
-      • someString = stringy
-      • someBoolean = true\n"
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Using applicable flags from validEnvironment environment:                   │
+      │                                                                              │
+      │    • someString: stringy                                                     │
+      │    • someBoolean: true                                                       │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 
@@ -179,9 +184,14 @@ describe('applying environments', async () => {
     // Then
     expect(testResult.someString).toEqual('cheesy')
     expect(outputMock.info()).toMatchInlineSnapshot(`
-      "Using applicable flags from the environment validEnvironment:
-
-      • someBoolean = true\n"
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Using applicable flags from validEnvironment environment:                   │
+      │                                                                              │
+      │    • someBoolean: true                                                       │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 
@@ -266,9 +276,14 @@ describe('applying environments', async () => {
     // Then
     expectFlags(tmpDir, 'environmentWithDefaultOverride')
     expect(outputMock.info()).toMatchInlineSnapshot(`
-      "Using applicable flags from the environment environmentWithDefaultOverride:
-
-      • someStringWithDefault = non-default stringy\n"
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Using applicable flags from environmentWithDefaultOverride environment:     │
+      │                                                                              │
+      │    • someStringWithDefault: non-default stringy                              │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 
@@ -283,9 +298,14 @@ describe('applying environments', async () => {
     // Then
     expectFlags(tmpDir, 'environmentMatchingDefault')
     expect(outputMock.info()).toMatchInlineSnapshot(`
-      "Using applicable flags from the environment environmentMatchingDefault:
-
-      • someStringWithDefault = default stringy\n"
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Using applicable flags from environmentMatchingDefault environment:         │
+      │                                                                              │
+      │    • someStringWithDefault: default stringy                                  │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 
@@ -300,9 +320,14 @@ describe('applying environments', async () => {
     // Then
     expectFlags(tmpDir, 'environmentWithPassword')
     expect(outputMock.info()).toMatchInlineSnapshot(`
-      "Using applicable flags from the environment environmentWithPassword:
-
-      • password = ********word\n"
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Using applicable flags from environmentWithPassword environment:            │
+      │                                                                              │
+      │    • password: ********word                                                  │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 })
