@@ -31,11 +31,11 @@ export function Tooltip({children, text}: TooltipProps) {
   const handleShow = () => {
     if (!ref.current || state.isVisible) return
 
-    // This is necessary to avoid tabbing to the tooltip wrapper and
-    // then its contents.  This will cause a tooltip that wraps something
-    // like a link to immediately focus the link on tab.
+    // This is currently my best solution for avoid the tooltip-wrapped element
+    // from needing two tab presses to get past.  I'm not sure if this is the best
+    // solution, but it works for now.
     if (typeof children !== 'string') {
-      ;(ref.current.firstChild as HTMLElement).focus()
+      ;(ref.current.firstChild as HTMLElement).tabIndex = -1
     }
 
     const {x, y, height} = ref.current.getBoundingClientRect()
@@ -52,6 +52,17 @@ export function Tooltip({children, text}: TooltipProps) {
     dispatch({type: 'show'})
   }
 
+  // This is part of the double-tab solution menmtioned above. Since we will
+  // never tab to the child, we can use the enter key to trigger the click.
+  // Foreseeable problem: if the child is an input, we will need to write a
+  // special case for that.  Off the top of my head, we could probably just have a
+  // boolean prop that disables this behavior.
+  const handleEnter = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter') {
+      ;(ref.current?.firstChild as HTMLElement).click()
+    }
+  }
+
   return (
     <div
       className={classNames(styles.Tooltip, typeof children === 'string' && styles.TooltipUnderline)}
@@ -59,6 +70,7 @@ export function Tooltip({children, text}: TooltipProps) {
       onFocus={handleShow}
       onBlur={() => dispatch({type: 'hide'})}
       onMouseLeave={() => dispatch({type: 'hide'})}
+      onKeyUp={handleEnter}
       ref={ref}
       tabIndex={0}
     >
