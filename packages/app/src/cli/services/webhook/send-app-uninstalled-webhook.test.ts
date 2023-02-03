@@ -1,20 +1,13 @@
 import {sendUninstallWebhookToAppServer} from './send-app-uninstalled-webhook.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {FetchError} from '@shopify/cli-kit/node/http'
 import {Writable} from 'stream'
 
-beforeEach(async () => {
-  vi.mock('@shopify/cli-kit/node/api/partners')
-  vi.mock('./trigger-local-webhook.js')
-  // Stub out sleep so that we don't have to wait for the retries
-  vi.mock('@shopify/cli-kit/node/system')
-})
-
-afterEach(async () => {
-  vi.clearAllMocks()
-})
+vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('./trigger-local-webhook.js')
+vi.mock('@shopify/cli-kit/node/system')
 
 const apiVersionsResponse = {
   publicApiVersions: ['2022', '2023', 'unstable'],
