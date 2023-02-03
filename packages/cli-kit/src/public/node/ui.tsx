@@ -7,7 +7,7 @@ import {alert} from '../../private/node/ui/alert.js'
 import {AlertProps, CustomSection} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
 import ScalarDict from '../../private/node/ui/components/Table/ScalarDict.js'
-import Table, {TableProps} from '../../private/node/ui/components/Table/Table.js'
+import Table, {TableColumn, TableProps} from '../../private/node/ui/components/Table/Table.js'
 import {SelectPrompt, Props as SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, Props as TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
@@ -367,4 +367,4 @@ export const keypress = async () => {
 }
 
 export type Key = InkKey
-export {Task, TokenItem, InlineToken, LinkToken}
+export {Task, TokenItem, InlineToken, LinkToken, TableColumn}
