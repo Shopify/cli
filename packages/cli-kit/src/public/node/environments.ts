@@ -1,9 +1,7 @@
 import {decodeToml} from './toml.js'
 import {fileExists, readFile} from './fs.js'
-import {outputDebug} from './output.js'
+import {outputWarn} from './output.js'
 import {JsonMap} from '../../private/common/json.js'
-
-export const environmentsFilename = 'shopify.environments.toml'
 
 export interface Environments {
   [name: string]: JsonMap
@@ -19,9 +17,11 @@ export async function loadEnvironment(
 ): Promise<JsonMap | undefined> {
   if (filePath && (await fileExists(filePath))) {
     const environments = decodeToml(await readFile(filePath)) as Environments
-    return environments[environmentName]
+    const environment = environments[environmentName]
+    if (!environment) outputWarn(`Environment ${environmentName} not found`)
+    return environment
   } else {
-    outputDebug(`Environment ${environmentName} not found in ${filePath}`)
-    return {}
+    outputWarn(`Environment file not found`)
+    return undefined
   }
 }

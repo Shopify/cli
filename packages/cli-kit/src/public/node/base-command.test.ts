@@ -1,5 +1,5 @@
 import Command from './base-command.js'
-import {Environments, environmentsFilename} from './environments.js'
+import {Environments} from './environments.js'
 import {encodeToml as encodeTOML} from './toml.js'
 import {globalFlags} from './cli.js'
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
@@ -42,9 +42,8 @@ class MockCommand extends Command {
     testError = error
   }
 
-  findUpForEnvironments() {
-    if (disableFindUpEnvironments) return false
-    return super.findUpForEnvironments()
+  environmentsFilename(): string {
+    return 'shopify.environments.toml'
   }
 }
 
@@ -102,7 +101,7 @@ describe('applying environments', async () => {
       disableFindUpEnvironments = false
 
       await inTemporaryDirectory(async (tmpDir) => {
-        await writeFile(joinPath(tmpDir, environmentsFilename), encodeTOML(allEnvironments as any))
+        await writeFile(joinPath(tmpDir, 'shopify.environments.toml'), encodeTOML(allEnvironments as any))
         await testFunc(tmpDir)
       })
     })
@@ -162,27 +161,6 @@ describe('applying environments', async () => {
     // Then
     expectFlags(subdir, 'validEnvironment')
   })
-
-  runTestInTmpDir(
-    'searches only in the current directory when recursive search is disabled',
-    async (tmpDir: string) => {
-      // Given
-      const subdir = joinPath(tmpDir, 'somedir')
-      await mkdir(subdir)
-      disableFindUpEnvironments = true
-
-      // When
-      await MockCommand.run(['--path', subdir, '--environment', 'validEnvironment'])
-
-      // Then
-      expect(testResult).toEqual({
-        path: resolvePath(subdir),
-        environment: 'validEnvironment',
-        // no flags applied from the environment
-        someStringWithDefault: 'default stringy',
-      })
-    },
-  )
 
   runTestInTmpDir('prefers command line arguments to environment settings', async (tmpDir: string) => {
     // Given
