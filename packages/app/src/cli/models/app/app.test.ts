@@ -98,7 +98,9 @@ describe('extensionByLocalIdentifier', () => {
   test('returns ui extension when found', async () => {
     // Given
     const uiExtension = createGenericExtension('uiExtension') as UIExtension
-    const appWithExistingExtension = testApp({extensions: {ui: [uiExtension], function: [], theme: []}})
+    const appWithExistingExtension = testApp({
+      extensions: {specifications: [], ui: [uiExtension], function: [], theme: []},
+    })
 
     // When
     const got = appWithExistingExtension.extensionByLocalIdentifier('uiExtension')
@@ -109,7 +111,7 @@ describe('extensionByLocalIdentifier', () => {
   test('returns function when found', async () => {
     // Given
     const func = createGenericExtension('function') as FunctionExtension
-    const appWithExistingExtension = testApp({extensions: {ui: [], function: [func], theme: []}})
+    const appWithExistingExtension = testApp({extensions: {specifications: [], ui: [], function: [func], theme: []}})
 
     // When
     const got = appWithExistingExtension.extensionByLocalIdentifier('function')
@@ -120,7 +122,7 @@ describe('extensionByLocalIdentifier', () => {
   test('returns theme extension when found', async () => {
     // Given
     const theme = createGenericExtension('themeExtension') as ThemeExtension
-    const appWithExistingExtension = testApp({extensions: {ui: [], function: [], theme: [theme]}})
+    const appWithExistingExtension = testApp({extensions: {specifications: [], ui: [], function: [], theme: [theme]}})
 
     // When
     const got = appWithExistingExtension.extensionByLocalIdentifier('themeExtension')
@@ -131,7 +133,7 @@ describe('extensionByLocalIdentifier', () => {
   test('returns undefined when extension not found', async () => {
     // Given
     const theme = createGenericExtension('themeExtension') as ThemeExtension
-    const appWithExistingExtension = testApp({extensions: {ui: [], function: [], theme: [theme]}})
+    const appWithExistingExtension = testApp({extensions: {specifications: [], ui: [], function: [], theme: [theme]}})
 
     // When
     const got = appWithExistingExtension.extensionByLocalIdentifier('themeExtensionNotFound')

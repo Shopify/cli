@@ -47,6 +47,7 @@ async function mockApp(): Promise<AppInterface> {
     },
     nodeDependencies,
     extensions: {
+      specifications: [],
       ui: [uiExtension],
       theme: [themeExtension],
       function: [functionExtension],

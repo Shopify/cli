@@ -13,6 +13,7 @@ describe('updateAppIdentifiers', () => {
       const app = testApp({
         directory: tmpDir,
         extensions: {
+          specifications: [],
           ui: [uiExtension],
           function: [],
           theme: [],
@@ -47,6 +48,7 @@ describe('updateAppIdentifiers', () => {
       const app = testApp({
         directory: tmpDir,
         extensions: {
+          specifications: [],
           ui: [uiExtension],
           function: [],
           theme: [],
@@ -95,6 +97,7 @@ describe('getAppIdentifiers', () => {
           variables: {SHOPIFY_API_KEY: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
         },
         extensions: {
+          specifications: [],
           ui: [uiExtension],
           function: [],
           theme: [],
@@ -123,6 +126,7 @@ describe('getAppIdentifiers', () => {
       const app = testApp({
         directory: tmpDir,
         extensions: {
+          specifications: [],
           ui: [uiExtension],
           function: [],
           theme: [],
