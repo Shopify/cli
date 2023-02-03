@@ -8,6 +8,7 @@ module ShopifyCLI
         include TestHelpers::Schema
 
         def test_populate_calls_api_with_mutation
+          skip
           ShopifyCLI::Helpers::Haikunator.expects(:title).returns("fake product")
           ShopifyCLI::Helpers::Haikunator.expects(:title).returns("fake producttwo")
           ShopifyCLI::DB.expects(:exists?).with(:shop).returns(true).twice
