@@ -137,7 +137,7 @@ export default function SelectInput<T>({
   const previousItems = useRef<Item<T>[]>(items)
 
   const changeSelection = useCallback(
-    (index: number, usedShortcut = false) => {
+    ({index, usedShortcut = false}: {index: number; usedShortcut?: boolean}) => {
       const groupedItem = groupedItemsValues.find((item) => item.index === index)!
       setSelectedIndex(index)
       onChange({
@@ -162,7 +162,7 @@ export default function SelectInput<T>({
         items.map((item) => item.value),
       )
     ) {
-      changeSelection(0)
+      changeSelection({index: 0})
     }
 
     previousItems.current = items
@@ -173,9 +173,9 @@ export default function SelectInput<T>({
       const lastIndex = items.length - 1
 
       if (key.upArrow) {
-        changeSelection(selectedIndex === 0 ? lastIndex : selectedIndex - 1)
+        changeSelection({index: selectedIndex === 0 ? lastIndex : selectedIndex - 1})
       } else if (key.downArrow) {
-        changeSelection(selectedIndex === lastIndex ? 0 : selectedIndex + 1)
+        changeSelection({index: selectedIndex === lastIndex ? 0 : selectedIndex + 1})
       }
     },
     [selectedIndex, items],
@@ -186,7 +186,7 @@ export default function SelectInput<T>({
       if (keys.includes(input)) {
         const groupedItem = groupedItemsValues.find((item) => item.key === input)
         if (groupedItem !== undefined) {
-          changeSelection(groupedItem.index, true)
+          changeSelection({index: groupedItem.index, usedShortcut: true})
         }
       }
     },
