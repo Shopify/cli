@@ -5,9 +5,14 @@ import {uniqBy, difference} from '@shopify/cli-kit/common/array'
 import {pickBy} from '@shopify/cli-kit/common/object'
 import {slugify} from '@shopify/cli-kit/common/string'
 
+export interface LocalRemoteSource {
+  local: LocalSource
+  remote: RemoteSource
+}
+
 export interface MatchResult {
   identifiers: IdentifiersExtensions
-  toConfirm: {local: LocalSource; remote: RemoteSource}[]
+  toConfirm: LocalRemoteSource[]
   toCreate: LocalSource[]
   toManualMatch: {local: LocalSource[]; remote: RemoteSource[]}
 }
@@ -112,16 +117,13 @@ export async function automaticMatchmaking(
   identifiers: IdentifiersExtensions,
   remoteIdField: 'id' | 'uuid',
 ): Promise<MatchResult> {
-  const localSourcesIds = localSources.map((source) => source.localIdentifier)
-  const ids = pickBy(identifiers, (_, id) => localSourcesIds.includes(id))
+  const ids = getExtensionIds(localSources, identifiers)
   const localUUIDs = Object.values(ids)
-  const existsRemotely = (local: LocalSource) => {
-    return Boolean(
-      remoteSources.find(
-        (remote) => remote[remoteIdField] === ids[local.localIdentifier] && remote.type === local.graphQLType,
-      ),
+
+  const existsRemotely = (local: LocalSource) =>
+    remoteSources.some(
+      (remote) => remote[remoteIdField] === ids[local.localIdentifier] && remote.type === local.graphQLType,
     )
-  }
 
   // We try to automatically match sources if they have the same name and type,
   // by considering local sources which are missing on the remote side and
@@ -144,4 +146,13 @@ export async function automaticMatchmaking(
     toCreate,
     toManualMatch: pending,
   }
+}
+
+export function getExtensionIds(
+  localSources: LocalSource[],
+  identifiers: IdentifiersExtensions,
+): IdentifiersExtensions {
+  const localSourcesIds = localSources.map((source) => source.localIdentifier)
+
+  return pickBy(identifiers, (_, id) => localSourcesIds.includes(id))
 }

@@ -2,11 +2,12 @@ import {automaticMatchmaking} from './id-matching.js'
 import {manualMatchIds} from './id-manual-matching.js'
 import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {RemoteSource} from './identifiers.js'
-import {deployConfirmationPrompt, matchConfirmationPrompt} from './prompts.js'
+import {deployConfirmationPrompt, extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {createExtension} from '../dev/create-extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
+import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -153,11 +154,14 @@ beforeEach(() => {
       ...prompts,
       matchConfirmationPrompt: vi.fn(),
       deployConfirmationPrompt: vi.fn(),
+      extensionMigrationPrompt: vi.fn(),
     }
   })
   vi.mock('../dev/create-extension')
   vi.mock('./id-matching')
   vi.mock('./id-manual-matching')
+  vi.mock('../dev/migrate-to-ui-extension')
+  vi.mocked(getExtensionsToMigrate).mockReturnValue([])
 })
 
 describe('ensureExtensionsIds: matchmaking returns more remote sources than local', () => {
@@ -431,5 +435,58 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
 
     // Then
     expect(deployConfirmationPrompt).not.toBeCalled()
+  })
+})
+
+describe('ensureExtensionsIds: Migrates extension', () => {
+  it('shows confirmation prompt', async () => {
+    // Given
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    const extensionsToMigrate = [
+      {local: EXTENSION_A, remote: REGISTRATION_A},
+      {local: EXTENSION_A_2, remote: REGISTRATION_A_2},
+    ]
+    vi.mocked(getExtensionsToMigrate).mockReturnValueOnce(extensionsToMigrate)
+
+    // When
+    await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
+
+    // Then
+    expect(extensionMigrationPrompt).toBeCalledWith(extensionsToMigrate)
+  })
+
+  it('migrates extensions', async () => {
+    // Given
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    const extensionsToMigrate = [
+      {local: EXTENSION_A, remote: REGISTRATION_A},
+      {local: EXTENSION_A_2, remote: REGISTRATION_A_2},
+    ]
+    vi.mocked(getExtensionsToMigrate).mockReturnValueOnce(extensionsToMigrate)
+    vi.mocked(extensionMigrationPrompt).mockResolvedValueOnce(true)
+    const opts = options([EXTENSION_A, EXTENSION_A_2])
+    const remoteExtensions = [REGISTRATION_A, REGISTRATION_A_2]
+
+    // When
+    await ensureExtensionsIds(opts, remoteExtensions)
+
+    // Then
+    expect(migrateExtensionsToUIExtension).toBeCalledWith(extensionsToMigrate, opts.appId, remoteExtensions)
   })
 })

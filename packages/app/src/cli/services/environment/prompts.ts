@@ -1,6 +1,7 @@
 import {LocalSource, RemoteSource} from './identifiers.js'
+import {LocalRemoteSource} from './id-matching.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {renderAutocompletePrompt, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt, renderConfirmationPrompt, renderInfo} from '@shopify/cli-kit/node/ui'
 
 export async function matchConfirmationPrompt(local: LocalSource, remote: RemoteSource) {
   return renderConfirmationPrompt({
@@ -59,6 +60,23 @@ export async function deployConfirmationPrompt(summary: SourceSummary): Promise<
     message: summary.question,
     infoTable,
     confirmationMessage: 'Yes, deploy to push changes',
+    cancellationMessage: 'No, cancel',
+  })
+}
+
+export async function extensionMigrationPrompt(toMigrate: LocalRemoteSource[]): Promise<boolean> {
+  const migrationNames = toMigrate.map(({local}) => local.configuration.name).join(',')
+  const allMigrationTypes = toMigrate.map(({remote}) => remote.type.toLocaleLowerCase())
+  const uniqueMigrationTypes = allMigrationTypes.filter((type, i) => allMigrationTypes.indexOf(type) === i).join(',')
+
+  renderInfo({
+    headline: "Extension migrations can't be undone",
+    body: `Your ${migrationNames} configuration has been updated. Migrating gives you access to new features and won't impact the end user experience. All previous extension versions will reflect this change.`,
+  })
+
+  return renderConfirmationPrompt({
+    message: `Migrate ${migrationNames}?`,
+    confirmationMessage: `Yes, confirm migration from ${uniqueMigrationTypes}`,
     cancellationMessage: 'No, cancel',
   })
 }

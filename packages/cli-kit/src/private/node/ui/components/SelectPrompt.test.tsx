@@ -98,7 +98,7 @@ describe('SelectPrompt', async () => {
 
     const infoTable = {
       Add: ['new-ext'],
-      Remove: ['integrated-demand-ext', 'order-discount'],
+      Remove: ['integrated-demand-ext', ['order-discount', {subdued: '(1)'}]],
     }
 
     const renderInstance = render(
@@ -116,7 +116,7 @@ describe('SelectPrompt', async () => {
              Add:     • new-ext
 
              Remove:  • integrated-demand-ext
-                      • order-discount
+                      • order-discount [2m(1)[22m
 
       [36m>[39m  [36m(1) first[39m
          (2) second

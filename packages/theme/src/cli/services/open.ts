@@ -22,15 +22,19 @@ export async function open(
   const editorUrl = themeEditorUrl(theme, adminSession)
 
   renderInfo({
-    headline: [`Preview information for theme`, ...themeComponent(theme)],
-    body: {
-      list: {
-        items: [
-          {link: {label: 'Preview your theme', url: previewUrl}},
-          {link: {label: 'Customize your theme at the theme editor', url: editorUrl}},
-        ],
+    body: [
+      `Preview information for theme`,
+      ...themeComponent(theme),
+      '\n\n',
+      {
+        list: {
+          items: [
+            {link: {label: 'Preview your theme', url: previewUrl}},
+            {link: {label: 'Customize your theme at the theme editor', url: editorUrl}},
+          ],
+        },
       },
-    },
+    ],
   })
 
   if (options.editor) {

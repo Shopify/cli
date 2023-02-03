@@ -8,7 +8,7 @@ describe('Alert', async () => {
   test('renders correctly with all the options', async () => {
     const options = {
       headline: [{userInput: 'my-app'}, 'initialized and ready to build.'],
-      body: ['You can find the build files in the ', {filePath: 'dist'}, 'folder.'],
+      body: ['You can find the build files in the', {filePath: 'dist'}, 'folder.'],
       nextSteps: [
         [
           'Run',
@@ -78,7 +78,7 @@ describe('Alert', async () => {
       │                                                                              │
       │  my-app initialized and ready to build.                                      │
       │                                                                              │
-      │  You can find the build files in the  \\"dist\\" folder.                         │
+      │  You can find the build files in the dist folder.                            │
       │                                                                              │
       │  Next steps                                                                  │
       │    • Run \`cd santorini-goods\`                                                │
@@ -107,9 +107,9 @@ describe('Alert', async () => {
     `)
   })
 
-  test('renders correctly with only required options', async () => {
+  test('allows passing just a body', async () => {
     const options = {
-      headline: 'Title',
+      body: 'Title',
     }
 
     const {lastFrame} = render(<Alert type="info" {...options} />)
@@ -120,6 +120,23 @@ describe('Alert', async () => {
       │  Title                                                                       │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
+  })
+
+  test('has the headline in bold', async () => {
+    const options = {
+      headline: 'Title',
+    }
+
+    const {lastFrame} = render(<Alert type="info" {...options} />)
+
+    expect(lastFrame()).toMatchInlineSnapshot(`
+      "[2m╭─[22m info [2m───────────────────────────────────────────────────────────────────────╮[22m
+      [2m│[22m                                                                              [2m│[22m
+      [2m│[22m  [1mTitle[22m                                                                       [2m│[22m
+      [2m│[22m                                                                              [2m│[22m
+      [2m╰──────────────────────────────────────────────────────────────────────────────╯[22m
       "
     `)
   })

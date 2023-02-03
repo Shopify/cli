@@ -1,9 +1,8 @@
 import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, UIExtension} from '../app/extensions.js'
 import {blocks, defualtExtensionFlavors} from '../../constants.js'
-import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {ok, Result} from '@shopify/cli-kit/node/result'
-import {constantize} from '@shopify/cli-kit/common/string'
+import {capitalize, constantize} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
@@ -15,8 +14,6 @@ import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node
 export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>
   extends GenericSpecification {
   identifier: string
-  externalIdentifier: string
-  externalName: string
   partnersWebIdentifier: string
   surface: string
   singleEntryPath: boolean
@@ -68,7 +65,6 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
   configurationPath: string
 
   private specification: UIExtensionSpec
-  private remoteSpecification?: RemoteSpecification
 
   get graphQLType() {
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
@@ -83,7 +79,7 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
   }
 
   get humanName() {
-    return this.remoteSpecification?.externalName ?? this.specification.externalName
+    return this.specification.externalName
   }
 
   get name() {
@@ -95,7 +91,7 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
   }
 
   get externalType() {
-    return this.remoteSpecification?.externalIdentifier ?? this.specification.externalIdentifier
+    return this.specification.externalIdentifier
   }
 
   get surface() {
@@ -108,14 +104,12 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
     entryPath: string
     directory: string
     specification: UIExtensionSpec
-    remoteSpecification?: RemoteSpecification
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
     this.entrySourceFilePath = options.entryPath
     this.directory = options.directory
     this.specification = options.specification
-    this.remoteSpecification = options.remoteSpecification
     this.outputBundlePath = joinPath(options.directory, 'dist/main.js')
     this.devUUID = `dev-${randomUUID()}`
     this.localIdentifier = basename(options.directory)
@@ -173,10 +167,19 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
 }
 
 /**
+ * These fields are forbidden when creating a new ExtensionSpec
+ * They belong to the ExtensionSpec interface, but the values are obtained from the API
+ * and should not be set by the user locally
+ *
+ * WARNING: 'surface' should be included here but is not yet compatible with the extension server
+ */
+export type ForbiddenFields = 'registrationLimit' | 'category' | 'externalIdentifier' | 'externalName' | 'name'
+
+/**
  * Partial ExtensionSpec type used when creating a new ExtensionSpec, the only mandatory field is the identifier
  */
 export interface CreateExtensionSpecType<TConfiguration extends BaseConfigContents = BaseConfigContents>
-  extends Partial<Omit<UIExtensionSpec<TConfiguration>, 'registrationLimit' | 'category'>> {
+  extends Partial<Omit<UIExtensionSpec<TConfiguration>, ForbiddenFields>> {
   identifier: string
 }
 
@@ -209,8 +212,10 @@ export function createUIExtensionSpecification<TConfiguration extends BaseConfig
   spec: CreateExtensionSpecType<TConfiguration>,
 ): UIExtensionSpec<TConfiguration> {
   const defaults = {
-    externalIdentifier: spec.identifier,
-    externalName: spec.identifier,
+    // these two fields are going to be overridden by the extension specification API response,
+    // but we need them to have a default value for tests
+    externalIdentifier: `${spec.identifier}_external`,
+    externalName: capitalize(spec.identifier.replace(/_/g, ' ')),
     surface: 'unknown',
     partnersWebIdentifier: spec.identifier,
     singleEntryPath: true,
