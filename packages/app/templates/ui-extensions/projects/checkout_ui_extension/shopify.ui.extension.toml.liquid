@@ -1,17 +1,18 @@
-type = "{{ type }}"
 name = "{{ name }}"
+api_version = "2022-10"
 
-extension_points = [
-  'Checkout::Dynamic::Render'
-]
+[capabilities]
+api_access = true
+network_access = true
+block_progress = true
 
-# [[metafields]]
+[[extension_points]]
+target = "Checkout::Dynamic::Render"
+module = "./src/CheckoutDynamicRender.{{ srcFileExtension }}"
+
+# [[extension_points.metafields]]
 # namespace = "my-namespace"
 # key = "my-key"
-
-# [[metafields]]
-# namespace = "my-namespace"
-# key = "my-key-2"
 
 # Read more on extension settings at https://shopify.dev/api/checkout-extensions/checkout/configuration
 # [settings]
