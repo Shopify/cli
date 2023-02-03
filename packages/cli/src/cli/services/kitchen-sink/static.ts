@@ -9,11 +9,7 @@ export async function staticService() {
   })
 
   renderInfo({
-    headline: [
-      "To connect this project to your shopify store's inventory:",
-      {filePath: '/my-store/hydrogen.config.js'},
-      'with your store ID and Storefront API key.',
-    ],
+    headline: ['To connect this project to your shopify store cd into:', {filePath: '/my-store/hydrogen.config.js'}],
     body: [
       'You can also try the following steps:',
       {
