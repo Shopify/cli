@@ -1,6 +1,6 @@
 import {fetchTheme, createTheme} from './themes-api.js'
 import {generateDevelopmentThemeName} from './generate-development-theme-name.js'
-import {DEVELOPMENT_THEME_ROLE} from '../models/theme.js'
+import {DEVELOPMENT_THEME_ROLE, Theme} from '../models/theme.js'
 import {getDevelopmentTheme, setDevelopmentTheme, removeDevelopmentTheme} from '../services/conf.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -17,7 +17,7 @@ export class DevelopmentThemeManager {
     this.themeId = getDevelopmentTheme()
   }
 
-  async find() {
+  async find(): Promise<Theme> {
     const theme = await this.fetch()
     if (!theme) {
       throw new AbortError(this.themeId ? DEVELOPMENT_THEME_NOT_FOUND(this.themeId) : NO_DEVELOPMENT_THEME_ID_SET)
@@ -25,12 +25,12 @@ export class DevelopmentThemeManager {
     return theme
   }
 
-  async findOrCreate() {
+  async findOrCreate(): Promise<Theme> {
     let theme = await this.fetch()
     if (!theme) {
       theme = await this.create()
     }
-    return theme.id.toString()
+    return theme
   }
 
   private async fetch() {

@@ -105,7 +105,7 @@ export default class Push extends ThemeCommand {
       flags = {
         ...flags,
         development: false,
-        theme,
+        theme: theme.id.toString(),
       }
     }
 

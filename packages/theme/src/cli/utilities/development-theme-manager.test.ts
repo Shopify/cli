@@ -66,19 +66,19 @@ describe('DevelopmentThemeManager', () => {
     it('should not create a new development theme if API returns theme with locally stored ID', async () => {
       const theme = existingId.toString()
       localDevelopmentThemeId = theme
-      expect(await buildDevelopmentThemeManager().findOrCreate()).toEqual(theme)
+      expect((await buildDevelopmentThemeManager().findOrCreate()).id.toString()).toEqual(theme)
     })
 
     it('should create a new development theme if no ID is locally stored', async () => {
       localDevelopmentThemeId = undefined
-      expect(await buildDevelopmentThemeManager().findOrCreate()).toEqual(newThemeId.toString())
+      expect((await buildDevelopmentThemeManager().findOrCreate()).id.toString()).toEqual(newThemeId.toString())
       expect(removeDevelopmentTheme).not.toHaveBeenCalled()
     })
 
     it('should create a new development theme if locally existing ID points to nowhere', async () => {
       const theme = onlyLocallyExistingId.toString()
       localDevelopmentThemeId = theme
-      expect(await buildDevelopmentThemeManager().findOrCreate()).toEqual(newThemeId.toString())
+      expect((await buildDevelopmentThemeManager().findOrCreate()).id.toString()).toEqual(newThemeId.toString())
       expect(removeDevelopmentTheme).toHaveBeenCalledOnce()
     })
   })

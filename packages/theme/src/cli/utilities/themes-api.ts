@@ -21,7 +21,7 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
 
 export async function createTheme(params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
   const response = await request('POST', '/themes', session, {theme: {...params}})
-  return buildTheme(response.json.theme)
+  return buildTheme({...response.json.theme, createdAtRuntime: true})
 }
 
 export async function updateTheme(id: number, params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
@@ -92,7 +92,7 @@ function buildTheme(themeJson: any): Theme | undefined {
     return undefined
   }
 
-  return new Theme(themeJson.id, themeJson.name, themeJson.role)
+  return new Theme(themeJson.id, themeJson.name, themeJson.role, themeJson.createdAtRuntime)
 }
 
 function handleForbiddenError(session: AdminSession): never {
