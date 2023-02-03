@@ -2,7 +2,7 @@ import {ensureGenerateEnvironment} from './environment.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {AppInterface} from '../models/app/app.js'
 import {load as loadApp} from '../models/app/loader.js'
-import {GenericSpecification} from '../models/app/extensions.js'
+import {findSpecificationForType, GenericSpecification} from '../models/app/extensions.js'
 import generateExtensionPrompt from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
 import generateExtensionService, {ExtensionFlavor} from '../services/generate/extension.js'
@@ -29,11 +29,12 @@ export interface GenerateOptions {
 async function generate(options: GenerateOptions) {
   const token = await ensureAuthenticatedPartners()
   const apiKey = await ensureGenerateEnvironment({...options, token})
-  let specifications = await fetchSpecifications({token, apiKey, config: options.config})
-  const app: AppInterface = await loadApp({directory: options.directory, specifications})
+  const specificationsFetcher = async () => fetchSpecifications({token, apiKey, config: options.config})
+  const app: AppInterface = await loadApp({directory: options.directory, specificationsFetcher})
+  let specifications = app.extensions.specifications
 
   // If the user has specified a type, we need to validate it
-  const specification = findSpecification(options.type, specifications)
+  const specification = findSpecificationForType(specifications, options.type)
   const allExternalTypes = specifications.map((spec) => spec.externalIdentifier)
 
   if (options.type && !specification) {
@@ -75,7 +76,7 @@ async function generate(options: GenerateOptions) {
   })
 
   const {extensionType, extensionFlavor, name} = promptAnswers
-  const selectedSpecification = findSpecification(extensionType, specifications)
+  const selectedSpecification = findSpecificationForType(specifications, extensionType)
   if (!selectedSpecification) {
     throw new AbortError(`The following extension types are supported: ${allExternalTypes.join(', ')}`)
   }
@@ -103,10 +104,6 @@ async function generate(options: GenerateOptions) {
     app.packageManager,
   )
   renderSuccess(formattedSuccessfulMessage)
-}
-
-function findSpecification(type: string | undefined, specifications: GenericSpecification[]) {
-  return specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
 }
 
 function validateExtensionFlavor(specification: GenericSpecification | undefined, flavor: string | undefined) {

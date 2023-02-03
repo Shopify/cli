@@ -96,6 +96,7 @@ export default class Dev extends Command {
       env: 'SHOPIFY_FLAG_INCLUDE',
       multiple: true,
       default: [],
+      exclusive: ['exclude'],
     }),
     exclude: Flags.string({
       hidden: false,
@@ -104,6 +105,7 @@ export default class Dev extends Command {
       env: 'SHOPIFY_FLAG_EXCLUDE',
       multiple: true,
       default: [],
+      exclusive: ['include'],
     }),
   }
 

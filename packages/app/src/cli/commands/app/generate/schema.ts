@@ -30,8 +30,8 @@ export default class GenerateSchema extends Command {
     const {flags, args} = await this.parse(GenerateSchema)
     const apiKey = flags['api-key']
     const directory = flags.path ? resolvePath(flags.path) : cwd()
-    const specifications = await loadExtensionsSpecifications(this.config)
-    const app: AppInterface = await loadApp({directory, specifications})
+    const specificationsFetcher = async () => loadExtensionsSpecifications(this.config)
+    const app: AppInterface = await loadApp({directory, specificationsFetcher})
     const extension = app.extensions.function.find((extension) => extension.localIdentifier === args.function)
 
     if (!extension) {

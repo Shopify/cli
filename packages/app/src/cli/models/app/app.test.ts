@@ -1,5 +1,6 @@
 import {getUIExtensionRendererVersion} from './app.js'
 import {testApp, testUIExtension} from './app.test-data.js'
+import {Extension, FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -93,9 +94,69 @@ describe('getUIExtensionRendererVersion', () => {
   })
 })
 
+describe('extensionByLocalIdentifier', () => {
+  test('returns ui extension when found', async () => {
+    // Given
+    const uiExtension = createGenericExtension('uiExtension') as UIExtension
+    const appWithExistingExtension = testApp({extensions: {ui: [uiExtension], function: [], theme: []}})
+
+    // When
+    const got = appWithExistingExtension.extensionByLocalIdentifier('uiExtension')
+
+    // Then
+    expect(got).toEqual(uiExtension)
+  })
+  test('returns function when found', async () => {
+    // Given
+    const func = createGenericExtension('function') as FunctionExtension
+    const appWithExistingExtension = testApp({extensions: {ui: [], function: [func], theme: []}})
+
+    // When
+    const got = appWithExistingExtension.extensionByLocalIdentifier('function')
+
+    // Then
+    expect(got).toEqual(func)
+  })
+  test('returns theme extension when found', async () => {
+    // Given
+    const theme = createGenericExtension('themeExtension') as ThemeExtension
+    const appWithExistingExtension = testApp({extensions: {ui: [], function: [], theme: [theme]}})
+
+    // When
+    const got = appWithExistingExtension.extensionByLocalIdentifier('themeExtension')
+
+    // Then
+    expect(got).toEqual(theme)
+  })
+  test('returns undefined when extension not found', async () => {
+    // Given
+    const theme = createGenericExtension('themeExtension') as ThemeExtension
+    const appWithExistingExtension = testApp({extensions: {ui: [], function: [], theme: [theme]}})
+
+    // When
+    const got = appWithExistingExtension.extensionByLocalIdentifier('themeExtensionNotFound')
+
+    // Then
+    expect(got).toBeUndefined()
+  })
+})
+
 function createPackageJson(tmpDir: string, type: string, version: string) {
   const packagePath = joinPath(tmpDir, 'node_modules', '@shopify', type, 'package.json')
   const packageJson = {name: 'name', version}
   const dirPath = joinPath(tmpDir, 'node_modules', '@shopify', type)
   return mkdir(dirPath).then(() => writeFile(packagePath, JSON.stringify(packageJson)))
+}
+
+function createGenericExtension(localIdentifier: string): Extension {
+  return {
+    idEnvironmentVariableName: 'idEnvironmentVariableName',
+    localIdentifier,
+    configurationPath: 'configurationPath',
+    directory: 'directory',
+    type: 'type',
+    externalType: 'externalType',
+    graphQLType: 'graphQLType',
+    publishURL: async () => 'publishURL',
+  }
 }

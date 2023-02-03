@@ -1,4 +1,4 @@
-import {Extension, FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
+import {Extension, FunctionExtension, GenericSpecification, ThemeExtension, UIExtension} from './extensions.js'
 import {AppErrors} from './loader.js'
 import {schema} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -55,6 +55,7 @@ export interface AppInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   extensions: {
+    specifications: GenericSpecification[]
     ui: UIExtension[]
     theme: ThemeExtension[]
     function: FunctionExtension[]
@@ -64,6 +65,7 @@ export interface AppInterface {
   hasUIExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => Extension[]
+  extensionByLocalIdentifier: (localIdentifiar: string) => Extension | undefined
 }
 
 export class App implements AppInterface {
@@ -79,6 +81,7 @@ export class App implements AppInterface {
   dotenv?: DotEnvFile
   errors?: AppErrors
   extensions: {
+    specifications: GenericSpecification[]
     ui: UIExtension[]
     theme: ThemeExtension[]
     function: FunctionExtension[]
@@ -97,6 +100,7 @@ export class App implements AppInterface {
     ui: UIExtension[],
     theme: ThemeExtension[],
     functions: FunctionExtension[],
+    specifications: GenericSpecification[],
     usesWorkspaces: boolean,
     dotenv?: DotEnvFile,
     errors?: AppErrors,
@@ -111,6 +115,7 @@ export class App implements AppInterface {
     this.webs = webs
     this.dotenv = dotenv
     this.extensions = {
+      specifications,
       ui,
       theme,
       function: functions,
@@ -139,6 +144,11 @@ export class App implements AppInterface {
     return allExternsions.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
+  }
+
+  extensionByLocalIdentifier(localIdentifier: string): Extension | undefined {
+    const allExternsions = [...this.extensions.ui, ...this.extensions.function, ...this.extensions.theme]
+    return allExternsions.find((extension) => extension.localIdentifier === localIdentifier)
   }
 }
 

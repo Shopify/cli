@@ -3,14 +3,14 @@ import {GenericSpecification} from './extensions.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js'
-import {describe, it, expect, beforeEach, afterEach, beforeAll} from 'vitest'
+import {describe, it, expect, beforeEach, afterEach, beforeAll, vi} from 'vitest'
 import {yarnLockfile, pnpmLockfile, PackageJson, pnpmWorkspaceFile} from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd} from '@shopify/cli-kit/node/path'
 
 describe('load', () => {
   type BlockType = 'ui' | 'function' | 'theme'
-  let specifications: GenericSpecification[] = []
+  let specificationsFetcher: () => Promise<GenericSpecification[]>
 
   let tmpDir: string
   const appConfiguration = `
@@ -18,7 +18,7 @@ scopes = "read_products"
 `
 
   beforeAll(async () => {
-    specifications = await loadLocalExtensionsSpecifications()
+    specificationsFetcher = async () => loadLocalExtensionsSpecifications()
   })
 
   beforeEach(async () => {
@@ -109,7 +109,7 @@ scopes = "read_products"
       await rmdir(tmp, {force: true})
 
       // When/Then
-      await expect(load({directory: tmp, specifications})).rejects.toThrow(`Couldn't find directory ${tmp}`)
+      await expect(load({directory: tmp, specificationsFetcher})).rejects.toThrow(`Couldn't find directory ${tmp}`)
     })
   })
 
@@ -118,7 +118,7 @@ scopes = "read_products"
     const currentDir = cwd()
 
     // When/Then
-    await expect(load({directory: currentDir, specifications})).rejects.toThrow(
+    await expect(load({directory: currentDir, specificationsFetcher})).rejects.toThrow(
       `Couldn't find the configuration file for ${currentDir}`,
     )
   })
@@ -131,7 +131,7 @@ scopes = "read_products"
     await writeConfig(appConfiguration)
 
     // When/Then
-    await expect(load({directory: tmpDir, specifications})).rejects.toThrow()
+    await expect(load({directory: tmpDir, specificationsFetcher})).rejects.toThrow()
   })
 
   it('loads the app when the configuration is valid and has no blocks', async () => {
@@ -139,7 +139,7 @@ scopes = "read_products"
     await writeConfig(appConfiguration)
 
     // When
-    const app = await load({directory: tmpDir, specifications})
+    const app = await load({directory: tmpDir, specificationsFetcher})
 
     // Then
     expect(app.name).toBe('my_app')
@@ -150,7 +150,7 @@ scopes = "read_products"
     await writeConfig(appConfiguration)
 
     // When
-    const app = await load({directory: tmpDir, specifications})
+    const app = await load({directory: tmpDir, specificationsFetcher})
 
     // Then
     expect(app.packageManager).toBe('npm')
@@ -163,7 +163,7 @@ scopes = "read_products"
     await writeFile(yarnLockPath, '')
 
     // When
-    const app = await load({directory: tmpDir, specifications})
+    const app = await load({directory: tmpDir, specificationsFetcher})
 
     // Then
     expect(app.packageManager).toBe('yarn')
@@ -176,7 +176,7 @@ scopes = "read_products"
     await writeFile(pnpmLockPath, '')
 
     // When
-    const app = await load({directory: tmpDir, specifications})
+    const app = await load({directory: tmpDir, specificationsFetcher})
 
     // Then
     expect(app.packageManager).toBe('pnpm')
@@ -187,7 +187,7 @@ scopes = "read_products"
     await writeConfig(appConfiguration)
 
     // When
-    const app = await load({directory: tmpDir, specifications})
+    const app = await load({directory: tmpDir, specificationsFetcher})
 
     // Then
     expect(app.usesWorkspaces).toBe(false)
@@ -203,7 +203,7 @@ scopes = "read_products"
     })
 
     // When
-    const app = await load({directory: tmpDir, specifications})
+    const app = await load({directory: tmpDir, specificationsFetcher})
 
     // Then
     expect(app.usesWorkspaces).toBe(true)
@@ -216,7 +216,7 @@ scopes = "read_products"
     await writeFile(pnpmWorkspaceFilePath, '')
 
     // When
-    const app = await load({directory: tmpDir, specifications})
+    const app = await load({directory: tmpDir, specificationsFetcher})
 
     // Then
     expect(app.usesWorkspaces).toBe(true)
@@ -227,7 +227,9 @@ scopes = "read_products"
     await makeBlockDir({blockType: 'ui', name: 'my-extension'})
 
     // When
-    await expect(load({directory: tmpDir, specifications})).rejects.toThrow(/Couldn't find the configuration file/)
+    await expect(load({directory: tmpDir, specificationsFetcher})).rejects.toThrow(
+      /Couldn't find the configuration file/,
+    )
   })
 
   it('throws an error if the extension configuration file is invalid', async () => {
@@ -242,20 +244,22 @@ scopes = "read_products"
     })
 
     // When
-    await expect(load({directory: tmpDir, specifications})).rejects.toThrow()
+    await expect(load({directory: tmpDir, specificationsFetcher})).rejects.toThrow()
   })
 
   it('loads the app with web blocks', async () => {
     // Given
     const {webDirectory} = await writeConfig(appConfiguration)
     await moveFile(webDirectory, joinPath(tmpDir, 'we_check_everywhere'))
+    const mockSpecificationsFetcher = vi.fn(specificationsFetcher)
 
     // When
-    const app = await load({directory: tmpDir, specifications})
+    const app = await load({directory: tmpDir, specificationsFetcher: mockSpecificationsFetcher})
 
     // Then
     expect(app.webs.length).toBe(1)
     expect(app.webs[0]!.configuration.type).toBe('backend')
+    expect(mockSpecificationsFetcher).not.toBeCalled()
   })
 
   it('loads the app with custom located web blocks', async () => {
@@ -267,7 +271,7 @@ scopes = "read_products"
     await moveFile(webDirectory, joinPath(tmpDir, 'must_be_here'))
 
     // When
-    const app = await load({directory: tmpDir, specifications})
+    const app = await load({directory: tmpDir, specificationsFetcher})
 
     // Then
     expect(app.webs.length).toBe(1)
@@ -282,13 +286,13 @@ scopes = "read_products"
     await moveFile(webDirectory, joinPath(tmpDir, 'cannot_be_here'))
 
     // When
-    const app = await load({directory: tmpDir, specifications})
+    const app = await load({directory: tmpDir, specificationsFetcher})
 
     // Then
     expect(app.webs.length).toBe(0)
   })
 
-  it('loads the app when it has a extension with a valid configuration', async () => {
+  it('loads the app and fetch specifications when it has a extension with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
     const blockConfiguration = `
@@ -305,14 +309,16 @@ scopes = "read_products"
       name: 'my-extension',
     })
     await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
+    const mockSpecificationsFetcher = vi.fn(specificationsFetcher)
 
     // When
-    const app = await load({directory: tmpDir, specifications})
+    const app = await load({directory: tmpDir, specificationsFetcher: mockSpecificationsFetcher})
 
     // Then
     expect(app.extensions.ui[0]!.configuration.name).toBe('my_extension')
     expect(app.extensions.ui[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
     expect(app.extensions.ui[0]!.localIdentifier).toBe('my-extension')
+    expect(mockSpecificationsFetcher).toBeCalled()
   })
 
   it('loads the app when it has a extension with a valid configuration using a supported extension type', async () => {
@@ -334,7 +340,7 @@ scopes = "read_products"
     await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
     // When
-    const app = await load({directory: tmpDir, specifications})
+    const app = await load({directory: tmpDir, specificationsFetcher})
 
     // Then
     expect(app.extensions.ui[0]!.configuration.name).toBe('my_extension')
@@ -364,7 +370,7 @@ scopes = "read_products"
     await writeFile(joinPath(customExtensionDirectory, 'index.js'), '')
 
     // When
-    const app = await load({directory: tmpDir, specifications})
+    const app = await load({directory: tmpDir, specificationsFetcher})
 
     // Then
     expect(app.extensions.ui[0]!.configuration.name).toBe('custom_extension')
@@ -387,7 +393,7 @@ scopes = "read_products"
     await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
     // When
-    const app = await load({directory: blockDir, specifications})
+    const app = await load({directory: blockDir, specificationsFetcher})
 
     // Then
     expect(app.name).toBe('my_app')
@@ -422,7 +428,7 @@ scopes = "read_products"
     await writeFile(joinPath(blockPath('my_extension_2'), 'index.js'), '')
 
     // When
-    const app = await load({directory: tmpDir, specifications})
+    const app = await load({directory: tmpDir, specificationsFetcher})
 
     // Then
     expect(app.extensions.ui).toHaveLength(2)
@@ -456,7 +462,7 @@ scopes = "read_products"
     )
 
     // When
-    await expect(load({directory: tmpDir, specifications})).resolves.not.toBeUndefined()
+    await expect(load({directory: tmpDir, specificationsFetcher})).resolves.not.toBeUndefined()
   })
 
   it(`throws an error if the extension doesn't have a source file`, async () => {
@@ -473,7 +479,7 @@ scopes = "read_products"
     })
 
     // When
-    await expect(load({directory: blockDir, specifications})).rejects.toThrow(
+    await expect(load({directory: blockDir, specificationsFetcher})).rejects.toThrow(
       /Couldn't find an index.{js,jsx,ts,tsx} file in the directories/,
     )
   })
@@ -491,7 +497,7 @@ scopes = "read_products"
     })
 
     // When
-    await expect(() => load({directory: tmpDir, specifications})).rejects.toThrowError()
+    await expect(() => load({directory: tmpDir, specificationsFetcher})).rejects.toThrowError()
   })
 
   it("throws an error if the configuration file doesn't exist", async () => {
@@ -499,7 +505,9 @@ scopes = "read_products"
     await makeBlockDir({blockType: 'function', name: 'my-functions'})
 
     // When
-    await expect(load({directory: tmpDir, specifications})).rejects.toThrow(/Couldn't find the configuration file/)
+    await expect(load({directory: tmpDir, specificationsFetcher})).rejects.toThrow(
+      /Couldn't find the configuration file/,
+    )
   })
 
   it('throws an error if the function configuration file is invalid', async () => {
@@ -514,7 +522,7 @@ scopes = "read_products"
     })
 
     // When
-    await expect(() => load({directory: tmpDir, specifications})).rejects.toThrowError()
+    await expect(() => load({directory: tmpDir, specificationsFetcher})).rejects.toThrowError()
   })
 
   it('throws an error if the function has a type non included in the specs', async () => {
@@ -531,7 +539,7 @@ scopes = "read_products"
     })
 
     // When
-    await expect(() => load({directory: tmpDir, specifications})).rejects.toThrowError()
+    await expect(() => load({directory: tmpDir, specificationsFetcher})).rejects.toThrowError()
   })
 
   it('loads the app when it has a function with a valid configuration', async () => {
@@ -554,7 +562,7 @@ scopes = "read_products"
     })
 
     // When
-    const app = await load({directory: tmpDir, specifications})
+    const app = await load({directory: tmpDir, specificationsFetcher})
 
     // Then
     expect(app.extensions.function[0]!.configuration.name).toBe('my-function')
@@ -596,7 +604,7 @@ scopes = "read_products"
     })
 
     // When
-    const app = await load({directory: tmpDir, specifications})
+    const app = await load({directory: tmpDir, specificationsFetcher})
 
     // Then
     expect(app.extensions.function).toHaveLength(2)
@@ -630,7 +638,7 @@ scopes = "read_products"
     })
 
     // When
-    const app = await load({directory: tmpDir, specifications})
+    const app = await load({directory: tmpDir, specificationsFetcher})
 
     // Then
     expect(app.extensions.function[0]!.buildWasmPath()).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
@@ -654,7 +662,7 @@ scopes = "read_products"
     })
 
     // When
-    const app = await load({directory: tmpDir, specifications})
+    const app = await load({directory: tmpDir, specificationsFetcher})
 
     // Then
     expect(app.extensions.function[0]!.buildWasmPath()).toMatch(/.+dist\/index.wasm$/)
@@ -664,7 +672,7 @@ scopes = "read_products"
     const {webDirectory} = await writeConfig(appConfiguration)
     await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
 
-    await load({directory: tmpDir, specifications})
+    await load({directory: tmpDir, specificationsFetcher})
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({project_type: 'node', env_package_manager_workspaces: false})
   })
@@ -678,7 +686,7 @@ scopes = "read_products"
     })
     await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
 
-    await load({directory: tmpDir, specifications})
+    await load({directory: tmpDir, specificationsFetcher})
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({project_type: 'node', env_package_manager_workspaces: true})
   })
@@ -699,7 +707,7 @@ scopes = "read_products"
       await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
       // When
-      await expect(load({directory: tmpDir, specifications})).resolves.toBeDefined()
+      await expect(load({directory: tmpDir, specificationsFetcher})).resolves.toBeDefined()
     })
 
     it('should not throw when "authenticatedRedirectStartUrl" and "authenticatedRedirectRedirectUrls" are set and valid', async () => {
@@ -721,7 +729,7 @@ scopes = "read_products"
       await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
       // When
-      await expect(load({directory: tmpDir, specifications})).resolves.toBeDefined()
+      await expect(load({directory: tmpDir, specificationsFetcher})).resolves.toBeDefined()
     })
 
     it('should throw when "authenticatedRedirectStartUrl" is not a valid URL', async () => {
@@ -741,7 +749,7 @@ scopes = "read_products"
       await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
       // When
-      await expect(load({directory: tmpDir, specifications})).rejects.toThrow(
+      await expect(load({directory: tmpDir, specificationsFetcher})).rejects.toThrow(
         /authenticated_redirect_start_url must be a valid URL./,
       )
     })
@@ -763,7 +771,7 @@ scopes = "read_products"
       await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
       // When
-      await expect(load({directory: tmpDir, specifications})).rejects.toThrow(
+      await expect(load({directory: tmpDir, specificationsFetcher})).rejects.toThrow(
         /authenticated_redirect_start_url must be a valid URL./,
       )
     })
@@ -785,7 +793,7 @@ scopes = "read_products"
       await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
       // When
-      await expect(load({directory: tmpDir, specifications})).rejects.toThrow(
+      await expect(load({directory: tmpDir, specificationsFetcher})).rejects.toThrow(
         /authenticated_redirect_redirect_urls does contain invalid URLs./,
       )
     })
@@ -807,7 +815,7 @@ scopes = "read_products"
       await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
       // When
-      await expect(load({directory: tmpDir, specifications})).rejects.toThrow(
+      await expect(load({directory: tmpDir, specificationsFetcher})).rejects.toThrow(
         /authenticated_redirect_redirect_urls does contain invalid URLs./,
       )
     })
@@ -829,7 +837,7 @@ scopes = "read_products"
       await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
       // When
-      await expect(load({directory: tmpDir, specifications})).rejects.toThrow(
+      await expect(load({directory: tmpDir, specificationsFetcher})).rejects.toThrow(
         /authenticated_redirect_redirect_urls can not be an empty array! It may only contain one or multiple valid URLs./,
       )
     })

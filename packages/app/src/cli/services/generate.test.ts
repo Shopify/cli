@@ -1,4 +1,5 @@
 import generate from './generate.js'
+import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {load as loadApp} from '../models/app/loader.js'
 import generateExtensionPrompt from '../prompts/generate/extension.js'
 import generateExtensionService from '../services/generate/extension.js'
@@ -135,15 +136,22 @@ describe('after extension command finishes correctly', () => {
 })
 
 async function mockSuccessfulCommandExecution(identifier: string, existingExtensions: Extension[] = []) {
+  vi.mocked(partnersRequest).mockResolvedValueOnce({extensionSpecifications: testRemoteSpecifications})
+  const specifications = await fetchSpecifications({token: 'token', apiKey: 'api-key', config: new Config({root: ''})})
   const appRoot = '/'
   const app = testApp({
     directory: appRoot,
     configurationPath: joinPath(appRoot, 'shopify.app.toml'),
     extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => existingExtensions,
+    extensions: {
+      specifications,
+      ui: [],
+      function: [],
+      theme: [],
+    },
   })
 
   vi.mocked(loadApp).mockResolvedValue(app)
-  vi.mocked(partnersRequest).mockResolvedValueOnce({extensionSpecifications: testRemoteSpecifications})
   vi.mocked(ensureGenerateEnvironment).mockResolvedValue('api-key')
   vi.mocked(generateExtensionPrompt).mockResolvedValue({name: 'name', extensionType: identifier})
   vi.mocked(generateExtensionService).mockResolvedValue(joinPath('extensions', 'name'))

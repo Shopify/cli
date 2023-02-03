@@ -31,8 +31,8 @@ export default class AppInfo extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(AppInfo)
     const directory = flags.path ? resolvePath(flags.path) : cwd()
-    const specifications = await loadExtensionsSpecifications(this.config)
-    const app: AppInterface = await loadApp({directory, specifications, mode: 'report'})
+    const specificationsFetcher = async () => loadExtensionsSpecifications(this.config)
+    const app: AppInterface = await loadApp({directory, specificationsFetcher, mode: 'report'})
     outputInfo(await info(app, {format: (flags.json ? 'json' : 'text') as Format, webEnv: flags['web-env']}))
     if (app.errors) process.exit(2)
   }

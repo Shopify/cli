@@ -36,8 +36,8 @@ export default class Build extends Command {
     }))
 
     const directory = flags.path ? resolvePath(flags.path) : cwd()
-    const specifications = await loadExtensionsSpecifications(this.config)
-    const app: AppInterface = await loadApp({directory, specifications})
+    const specificationsFetcher = async () => loadExtensionsSpecifications(this.config)
+    const app: AppInterface = await loadApp({directory, specificationsFetcher})
     await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey: flags['api-key']})
   }
 }

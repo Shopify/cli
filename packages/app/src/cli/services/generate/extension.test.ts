@@ -23,7 +23,7 @@ beforeEach(() => {
 describe('initialize a extension', async () => {
   const allUISpecs = await loadLocalUIExtensionsSpecifications()
   const allFunctionSpecs = await loadLocalFunctionSpecifications()
-  const specifications = await loadLocalExtensionsSpecifications()
+  const specificationsFetcher = async () => loadLocalExtensionsSpecifications()
 
   it(
     'successfully generates the extension when no other extensions exist',
@@ -38,9 +38,9 @@ describe('initialize a extension', async () => {
           specification,
           extensionFlavor,
           appDirectory: tmpDir,
-          specifications,
+          specificationsFetcher,
         })
-        const generatedExtension = (await loadApp({directory: tmpDir, specifications})).extensions.ui[0]!
+        const generatedExtension = (await loadApp({directory: tmpDir, specificationsFetcher})).extensions.ui[0]!
 
         expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
         expect(generatedExtension.configuration.name).toBe(name)
@@ -62,19 +62,19 @@ describe('initialize a extension', async () => {
           specification,
           extensionFlavor,
           appDirectory: tmpDir,
-          specifications,
+          specificationsFetcher,
         })
         await createFromTemplate({
           name: name2,
           specification,
           extensionFlavor,
           appDirectory: tmpDir,
-          specifications,
+          specificationsFetcher,
         })
         const addDependenciesCalls = vi.mocked(addNPMDependenciesIfNeeded).mock.calls
         expect(addDependenciesCalls.length).toEqual(2)
 
-        const loadedApp = await loadApp({directory: tmpDir, specifications})
+        const loadedApp = await loadApp({directory: tmpDir, specificationsFetcher})
         const generatedExtension2 = loadedApp.extensions.ui.sort((lhs, rhs) =>
           lhs.directory < rhs.directory ? -1 : 1,
         )[1]!
@@ -110,7 +110,7 @@ describe('initialize a extension', async () => {
           specification,
           extensionFlavor,
           appDirectory: tmpDir,
-          specifications,
+          specificationsFetcher,
         })
         await expect(
           createFromTemplate({
@@ -118,7 +118,7 @@ describe('initialize a extension', async () => {
             specification,
             extensionFlavor,
             appDirectory: tmpDir,
-            specifications,
+            specificationsFetcher,
           }),
         ).rejects.toThrow(`A directory with this name (${name}) already exists.\nChoose a new name for your extension.`)
       })
@@ -140,7 +140,7 @@ describe('initialize a extension', async () => {
           appDirectory: tmpDir,
           name: 'extension-name',
           extensionFlavor: 'typescript-react',
-          specifications,
+          specificationsFetcher,
         })
 
         expect(addResolutionOrOverrideMock).toHaveBeenCalledOnce()
@@ -172,7 +172,7 @@ describe('initialize a extension', async () => {
           extensionFlavor,
           appDirectory: tmpDir,
           name: 'extension-name',
-          specifications,
+          specificationsFetcher,
         })
 
         expect(addResolutionOrOverrideMock).not.toHaveBeenCalled()
@@ -202,7 +202,7 @@ describe('initialize a extension', async () => {
           specification,
           extensionFlavor,
           appDirectory: tmpDir,
-          specifications,
+          specificationsFetcher,
         })
 
         const srcFiles = await file.glob(joinPath(tmpDir, 'extensions', name, 'src', `*`))
@@ -241,7 +241,7 @@ describe('initialize a extension', async () => {
           specification,
           extensionFlavor,
           appDirectory: tmpDir,
-          specifications,
+          specificationsFetcher,
         })
 
         expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
@@ -268,7 +268,7 @@ describe('initialize a extension', async () => {
         const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockResolvedValue()
 
         // When
-        await createFromTemplate({name, specification, extensionFlavor, appDirectory: tmpDir, specifications})
+        await createFromTemplate({name, specification, extensionFlavor, appDirectory: tmpDir, specificationsFetcher})
 
         // Then
         expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith('path/to/custom/template', expect.any(String), {
@@ -295,7 +295,7 @@ describe('initialize a extension', async () => {
         const extensionFlavor = 'rust'
 
         // When
-        await createFromTemplate({name, specification, extensionFlavor, appDirectory: tmpDir, specifications})
+        await createFromTemplate({name, specification, extensionFlavor, appDirectory: tmpDir, specificationsFetcher})
 
         // Then
         expect(git.downloadGitRepository).toHaveBeenCalledWith({
@@ -354,19 +354,19 @@ interface CreateFromTemplateOptions {
   specification: GenericSpecification
   appDirectory: string
   extensionFlavor: ExtensionFlavor
-  specifications: GenericSpecification[]
+  specificationsFetcher: () => Promise<GenericSpecification[]>
 }
 async function createFromTemplate({
   name,
   specification,
   appDirectory,
   extensionFlavor,
-  specifications,
+  specificationsFetcher,
 }: CreateFromTemplateOptions): Promise<string> {
   return extensionInit({
     name,
     specification,
-    app: await loadApp({directory: appDirectory, specifications}),
+    app: await loadApp({directory: appDirectory, specificationsFetcher}),
     extensionFlavor,
     extensionType: specification.identifier,
   })

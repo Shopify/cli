@@ -31,6 +31,7 @@ describe('bundleExtension()', () => {
         },
       },
       extensions: {
+        specifications: [],
         ui: [extension],
         theme: [],
         function: [],
@@ -104,6 +105,7 @@ describe('bundleExtension()', () => {
         },
       },
       extensions: {
+        specifications: [],
         ui: [extension],
         theme: [],
         function: [],
@@ -157,6 +159,7 @@ describe('bundleExtension()', () => {
         },
       },
       extensions: {
+        specifications: [],
         ui: [extension],
         theme: [],
         function: [],

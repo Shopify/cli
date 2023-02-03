@@ -43,8 +43,8 @@ export default class Deploy extends Command {
     }))
 
     const directory = flags.path ? resolvePath(flags.path) : cwd()
-    const specifications = await loadExtensionsSpecifications(this.config)
-    const app: AppInterface = await loadApp({directory, specifications})
+    const specificationsFetcher = async () => loadExtensionsSpecifications(this.config)
+    const app: AppInterface = await loadApp({directory, specificationsFetcher})
     await deploy({app, apiKey: flags['api-key'], reset: flags.reset, force: flags.force})
   }
 }

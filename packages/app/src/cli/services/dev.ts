@@ -1,4 +1,4 @@
-import {ensureDevEnvironment} from './environment.js'
+import {DevEnvironmentOutput, ensureDevEnvironment} from './environment.js'
 import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
@@ -11,7 +11,13 @@ import {
 } from '../utilities/app/http-reverse-proxy.js'
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import metadata from '../metadata.js'
-import {Extension, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
+import {
+  Extension,
+  FunctionExtension,
+  GenericSpecification,
+  ThemeExtension,
+  UIExtension,
+} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
@@ -31,7 +37,7 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
-import {OutputProcess} from '@shopify/cli-kit/node/output'
+import {outputContent, OutputProcess, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 
@@ -69,15 +75,17 @@ async function dev(options: DevOptions) {
   const {storeFqdn, remoteApp, updateURLs: cachedUpdateURLs, tunnelPlugin} = devOutput
 
   const apiKey = remoteApp.apiKey
-  const specifications = await fetchSpecifications({
-    token,
-    apiKey,
-    config: options.commandConfig,
-    // Spin enviroment is designed to run CLI as a service in a non-interactive mode. Other environments should require
-    // user interaction.
-    skipFetchRemote: isSpin(),
-  })
-  let localApp = await load({directory: options.directory, specifications})
+  const specificationsFetcher = async (): Promise<GenericSpecification[]> =>
+    fetchSpecifications({
+      token,
+      apiKey,
+      config: options.commandConfig,
+      // Spin enviroment is designed to run CLI as a service in a non-interactive mode. Other environments should require
+      // user interaction.
+      skipFetchRemote: isSpin(),
+    })
+
+  let localApp = await load({directory: options.directory, specificationsFetcher})
 
   localApp = filterExtensions(localApp, options.extensionsIncluded, options.extensionsExcluded)
 
@@ -396,40 +404,37 @@ async function resolveDevParameters(options: DevOptions): Promise<{token: string
 }
 
 function filterExtensions(app: AppInterface, extensionsIncluded: string[], extensionsExcluded: string[]): AppInterface {
-  const extensionCounter = (app: AppInterface) =>
-    app.extensions.function.length + app.extensions.ui.length + app.extensions.theme.length
-  const filterExtensions = (
-    extensions: Extension[],
-    extensionId: string,
-    included: (id1: string, id2: string) => boolean,
-  ) => extensions.filter((extension) => included(extension.localIdentifier, extensionId))
-  const included = (id1: string, id2: string) => id1 === id2
-  const notIncluded = (id1: string, id2: string) => id1 !== id2
-
-  const applyFilter = (
-    app: AppInterface,
-    filter: string[],
-    filterType: (id1: string, id2: string) => boolean,
-  ): AppInterface | undefined => {
-    if (!filter || filter.length === 0) return undefined
-
-    extensionsIncluded.forEach((extensionId) => {
-      app.extensions.function = filterExtensions(
-        app.extensions.function,
-        extensionId,
-        filterType,
-      ) as FunctionExtension[]
-      app.extensions.ui = filterExtensions(app.extensions.function, extensionId, filterType) as UIExtension[]
-      app.extensions.theme = filterExtensions(app.extensions.theme, extensionId, filterType) as ThemeExtension[]
-      if (extensionsIncluded.length !== extensionCounter(app)) {
-        throw new AbortError('One or more included extensions donnot exist')
-      }
+  const validateExistingExtensions = (extensionsIdentifiers: string[]) =>
+    extensionsIdentifiers.forEach((extensionIdentifier) => {
+      if (!app.extensionByLocalIdentifier(extensionIdentifier))
+        throw new AbortError(
+          outputContent`${outputToken.yellow(
+            extensionIdentifier,
+          )} not found. Make sure you have the right extension ID, then run ${outputToken.yellow('dev')} again.`,
+        )
     })
 
+  validateExistingExtensions([...extensionsIncluded, ...extensionsExcluded])
+
+  const included = (extensions: Extension[], filter: string[]) =>
+    extensions.filter((extension) => filter.includes(extension.localIdentifier))
+  if (extensionsIncluded && extensionsIncluded.length > 0) {
+    app.extensions.function = included(app.extensions.function, extensionsIncluded) as FunctionExtension[]
+    app.extensions.ui = included(app.extensions.function, extensionsIncluded) as UIExtension[]
+    app.extensions.theme = included(app.extensions.theme, extensionsIncluded) as ThemeExtension[]
     return app
   }
 
-  return applyFilter(app, extensionsIncluded, included) ?? applyFilter(app, extensionsExcluded, notIncluded) ?? app
+  const excluded = (extensions: Extension[], filter: string[]) =>
+    extensions.filter((extension) => !filter.includes(extension.localIdentifier))
+  if (extensionsExcluded && extensionsExcluded.length > 0) {
+    app.extensions.function = excluded(app.extensions.function, extensionsExcluded) as FunctionExtension[]
+    app.extensions.ui = excluded(app.extensions.function, extensionsExcluded) as UIExtension[]
+    app.extensions.theme = excluded(app.extensions.theme, extensionsExcluded) as ThemeExtension[]
+    return app
+  }
+
+  return app
 }
 
 export default dev

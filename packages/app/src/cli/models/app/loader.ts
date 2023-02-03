@@ -1,4 +1,11 @@
-import {UIExtension, ThemeExtension, FunctionExtension, Extension, GenericSpecification} from './extensions.js'
+import {
+  UIExtension,
+  ThemeExtension,
+  FunctionExtension,
+  Extension,
+  GenericSpecification,
+  findSpecificationForType,
+} from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -54,7 +61,7 @@ export class AppErrors {
 interface AppLoaderConstructorArgs {
   directory: string
   mode?: AppLoaderMode
-  specifications: GenericSpecification[]
+  specificationsFetcher: () => Promise<GenericSpecification[]>
 }
 
 /**
@@ -72,16 +79,12 @@ class AppLoader {
   private appDirectory = ''
   private configurationPath = ''
   private errors: AppErrors = new AppErrors()
-  private specifications: GenericSpecification[]
+  private specificationsFetcher: () => Promise<GenericSpecification[]>
 
-  constructor({directory, mode, specifications}: AppLoaderConstructorArgs) {
+  constructor({directory, mode, specificationsFetcher}: AppLoaderConstructorArgs) {
     this.mode = mode ?? 'strict'
     this.directory = directory
-    this.specifications = specifications
-  }
-
-  findSpecificationForType(type: string) {
-    return this.specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
+    this.specificationsFetcher = specificationsFetcher
   }
 
   async loaded() {
@@ -89,15 +92,10 @@ class AppLoader {
     const configurationPath = await this.getConfigurationPath()
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
     const dotenv = await this.loadDotEnv()
-    const {functions, usedCustomLayout: usedCustomLayoutForFunctionExtensions} = await this.loadFunctions(
+    const {functions, uiExtensions, themeExtensions, specifications} = await this.loadExtensions(
       configuration.extensionDirectories,
     )
-    const {uiExtensions, usedCustomLayout: usedCustomLayoutForUIExtensions} = await this.loadUIExtensions(
-      configuration.extensionDirectories,
-    )
-    const {themeExtensions, usedCustomLayout: usedCustomLayoutForThemeExtensions} = await this.loadThemeExtensions(
-      configuration.extensionDirectories,
-    )
+    const usedCustomLayoutForExtensions = configuration.extensionDirectories !== undefined
     const packageJSONPath = joinPath(this.appDirectory, 'package.json')
     const name = await loadAppName(this.appDirectory)
     const nodeDependencies = await getDependencies(packageJSONPath)
@@ -117,6 +115,7 @@ class AppLoader {
       uiExtensions,
       themeExtensions,
       functions,
+      specifications,
       usesWorkspaces,
       dotenv,
     )
@@ -125,9 +124,9 @@ class AppLoader {
 
     await logMetadataForLoadedApp(appClass, {
       usedCustomLayoutForWeb,
-      usedCustomLayoutForUIExtensions,
-      usedCustomLayoutForFunctionExtensions,
-      usedCustomLayoutForThemeExtensions,
+      usedCustomLayoutForUIExtensions: usedCustomLayoutForExtensions,
+      usedCustomLayoutForFunctionExtensions: usedCustomLayoutForExtensions,
+      usedCustomLayoutForThemeExtensions: usedCustomLayoutForExtensions,
     })
 
     return appClass
@@ -191,6 +190,32 @@ class AppLoader {
     }
   }
 
+  async loadExtensions(extensionDirectories?: string[]) {
+    const functionsConfigFilePaths = await this.getConfigFilesFromExtensionDirectories(
+      [configurationFileNames.extension.function],
+      extensionDirectories,
+    )
+    const uiConfigFilePaths = await this.getConfigFilesFromExtensionDirectories(
+      [configurationFileNames.extension.ui],
+      extensionDirectories,
+    )
+    const themeConfigFilePaths = await this.getConfigFilesFromExtensionDirectories(
+      [configurationFileNames.extension.theme],
+      extensionDirectories,
+    )
+
+    const extensionsCount = functionsConfigFilePaths.length + uiConfigFilePaths.length + themeConfigFilePaths.length
+    if (extensionsCount === 0) return {functions: [], uiExtensions: [], themeExtensions: [], specifications: []}
+
+    const specifications = (await this.specificationsFetcher()) ?? []
+
+    const functions = await this.loadFunctions(functionsConfigFilePaths, specifications)
+    const uiExtensions = await this.loadUIExtensions(uiConfigFilePaths, specifications)
+    const themeExtensions = await this.loadThemeExtensions(themeConfigFilePaths, specifications)
+
+    return {functions, uiExtensions, themeExtensions, specifications}
+  }
+
   async loadConfigurationFile(
     filepath: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -250,20 +275,25 @@ class AppLoader {
     return parseResult.data
   }
 
-  async loadUIExtensions(
+  async getConfigFilesFromExtensionDirectories(
+    extensionConfigFileNames: string[],
     extensionDirectories?: string[],
-  ): Promise<{uiExtensions: UIExtension[]; usedCustomLayout: boolean}> {
-    const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
-      return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.ui}`)
+  ): Promise<string[]> {
+    const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].flatMap((extensionPath) => {
+      return extensionConfigFileNames.map((extensionConfigFileName) =>
+        joinPath(this.appDirectory, extensionPath, `${extensionConfigFileName}`),
+      )
     })
-    const configPaths = await glob(extensionConfigPaths)
+    return glob(extensionConfigPaths)
+  }
 
+  async loadUIExtensions(configPaths: string[], specifications: GenericSpecification[]): Promise<UIExtension[]> {
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = dirname(configurationPath)
       const fileContent = await readFile(configurationPath)
       const obj = decodeToml(fileContent)
       const {type} = TypeSchema.parse(obj)
-      const specification = this.findSpecificationForType(type) as UIExtensionSpec | undefined
+      const specification = findSpecificationForType(specifications, type) as UIExtensionSpec | undefined
 
       if (!specification) {
         const isShopifolk = await isShopify()
@@ -320,24 +350,16 @@ class AppLoader {
       return extensionInstance
     })
 
-    const uiExtensions = getArrayRejectingUndefined(await Promise.all(extensions))
-    return {uiExtensions, usedCustomLayout: extensionDirectories !== undefined}
+    return getArrayRejectingUndefined(await Promise.all(extensions))
   }
 
-  async loadFunctions(
-    extensionDirectories?: string[],
-  ): Promise<{functions: FunctionExtension[]; usedCustomLayout: boolean}> {
-    const functionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
-      return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.function}`)
-    })
-    const configPaths = await glob(functionConfigPaths)
-
+  async loadFunctions(configPaths: string[], specifications: GenericSpecification[]): Promise<FunctionExtension[]> {
     const allFunctions = configPaths.map(async (configurationPath) => {
       const directory = dirname(configurationPath)
       const fileContent = await readFile(configurationPath)
       const obj = decodeToml(fileContent)
       const {type} = TypeSchema.parse(obj)
-      const specification = this.findSpecificationForType(type) as FunctionSpec | undefined
+      const specification = findSpecificationForType(specifications, type) as FunctionSpec | undefined
       if (!specification) {
         this.abortOrReport(
           outputContent`Unknown function type ${outputToken.yellow(type)} in ${outputToken.path(configurationPath)}`,
@@ -351,22 +373,14 @@ class AppLoader {
 
       return new FunctionInstance({configuration, configurationPath, specification, directory})
     })
-    const functions = getArrayRejectingUndefined(await Promise.all(allFunctions))
-    return {functions, usedCustomLayout: extensionDirectories !== undefined}
+    return getArrayRejectingUndefined(await Promise.all(allFunctions))
   }
 
-  async loadThemeExtensions(
-    extensionDirectories?: string[],
-  ): Promise<{themeExtensions: ThemeExtension[]; usedCustomLayout: boolean}> {
-    const themeConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
-      return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.theme}`)
-    })
-    const configPaths = await glob(themeConfigPaths)
-
+  async loadThemeExtensions(configPaths: string[], specifications: GenericSpecification[]): Promise<ThemeExtension[]> {
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = dirname(configurationPath)
       const configuration = await this.parseConfigurationFile(ThemeExtensionSchema, configurationPath)
-      const specification = this.findSpecificationForType('theme') as ThemeExtensionSpec | undefined
+      const specification = findSpecificationForType(specifications, 'theme') as ThemeExtensionSpec | undefined
 
       if (!specification) {
         this.abortOrReport(
@@ -387,9 +401,7 @@ class AppLoader {
       })
     })
 
-    const themeExtensions = getArrayRejectingUndefined(await Promise.all(extensions))
-
-    return {themeExtensions, usedCustomLayout: extensionDirectories !== undefined}
+    return getArrayRejectingUndefined(await Promise.all(extensions))
   }
 
   abortOrReport<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {

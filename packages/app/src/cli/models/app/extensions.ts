@@ -72,3 +72,10 @@ export function isThemeExtension(spec: GenericSpecification): spec is ThemeExten
 export function isFunctionExtension(spec: GenericSpecification): spec is FunctionSpec {
   return spec.category() === 'function'
 }
+
+export function findSpecificationForType(
+  specifications: GenericSpecification[],
+  type: string | undefined,
+): GenericSpecification | undefined {
+  return specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
+}

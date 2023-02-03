@@ -19,8 +19,8 @@ export default class EnvShow extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(EnvShow)
     const directory = flags.path ? resolvePath(flags.path) : cwd()
-    const specifications = await loadExtensionsSpecifications(this.config)
-    const app: AppInterface = await loadApp({directory, specifications, mode: 'report'})
+    const specificationsFetcher = async () => loadExtensionsSpecifications(this.config)
+    const app: AppInterface = await loadApp({directory, specificationsFetcher, mode: 'report'})
     outputInfo(await showEnv(app))
   }
 }
