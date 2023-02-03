@@ -34,19 +34,20 @@ import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
+vi.mock('./conf.js')
+vi.mock('./dev/fetch')
+vi.mock('./dev/create-extension')
+vi.mock('./dev/select-app')
+vi.mock('./dev/select-store')
+vi.mock('../prompts/dev')
+vi.mock('../models/app/app')
+vi.mock('../models/app/identifiers')
+vi.mock('./environment/identifiers')
+vi.mock('../models/app/loader.js')
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/node/node-package-manager.js')
+
 beforeEach(() => {
-  vi.mock('./conf.js')
-  vi.mock('./dev/fetch')
-  vi.mock('./dev/create-extension')
-  vi.mock('./dev/select-app')
-  vi.mock('./dev/select-store')
-  vi.mock('../prompts/dev')
-  vi.mock('../models/app/app')
-  vi.mock('../models/app/identifiers')
-  vi.mock('./environment/identifiers')
-  vi.mock('../models/app/loader.js')
-  vi.mock('@shopify/cli-kit/node/session')
-  vi.mock('@shopify/cli-kit/node/node-package-manager.js')
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 })
 

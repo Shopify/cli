@@ -3,9 +3,7 @@ import {FunctionExtension} from '../../models/app/extensions.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 
-beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/system')
-})
+vi.mock('@shopify/cli-kit/node/system')
 
 describe('buildFunctionExtension', () => {
   let extension: FunctionExtension

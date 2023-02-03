@@ -1,13 +1,11 @@
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 import * as http from '@shopify/cli-kit/node/http'
 
 const samplePayload = '{ "sampleField": "SampleValue" }'
 const sampleHeaders = '{ "header": "Header Value" }'
 
-beforeEach(async () => {
-  vi.mock('@shopify/cli-kit/node/http')
-})
+vi.mock('@shopify/cli-kit/node/http')
 
 describe('triggerLocalWebhook', () => {
   it('delivers to localhost port', async () => {

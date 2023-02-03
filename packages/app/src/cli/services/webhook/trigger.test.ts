@@ -24,14 +24,12 @@ const aPort = '1234'
 const aUrlPath = '/a/url/path'
 const anAddress = 'https://example.org'
 
-beforeEach(async () => {
-  vi.mock('@shopify/cli-kit/node/session')
-  vi.mock('../../prompts/webhook/options-prompt.js')
-  vi.mock('./request-sample.js')
-  vi.mock('./request-api-versions.js')
-  vi.mock('./request-topics.js')
-  vi.mock('./trigger-local-webhook.js')
-})
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('../../prompts/webhook/options-prompt.js')
+vi.mock('./request-sample.js')
+vi.mock('./request-api-versions.js')
+vi.mock('./request-topics.js')
+vi.mock('./trigger-local-webhook.js')
 
 const emptyJson = '{}'
 const successDirectResponse = {

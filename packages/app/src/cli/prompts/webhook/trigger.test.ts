@@ -1,11 +1,9 @@
 import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, sharedSecretPrompt, topicPrompt} from './trigger.js'
 import {DELIVERY_METHOD} from '../../services/webhook/trigger-options.js'
-import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {describe, it, expect, vi} from 'vitest'
 import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
-beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/ui')
-})
+vi.mock('@shopify/cli-kit/node/ui')
 
 describe('topicPrompt', () => {
   it('asks the user to enter a topic name', async () => {

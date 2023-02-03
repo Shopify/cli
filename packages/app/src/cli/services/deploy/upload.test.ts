@@ -13,10 +13,8 @@ import {fetch} from '@shopify/cli-kit/node/http'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/api/partners')
-  vi.mock('@shopify/cli-kit/node/http')
-})
+vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('@shopify/cli-kit/node/http')
 
 describe('uploadFunctionExtensions', () => {
   let extension: FunctionExtension

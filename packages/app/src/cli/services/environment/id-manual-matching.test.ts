@@ -1,9 +1,11 @@
 import {manualMatchIds, ManualMatchResult} from './id-manual-matching.js'
 import {ExtensionRegistration} from '../dev/create-extension.js'
 import {UIExtension} from '../../models/app/extensions.js'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+
+vi.mock('@shopify/cli-kit/node/ui')
 
 const REGISTRATION_A: ExtensionRegistration = {
   uuid: 'UUID_A',
@@ -102,10 +104,6 @@ const EXTENSION_B: UIExtension = {
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
 }
-
-beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/ui')
-})
 
 describe('manualMatch: when all sources are matched', () => {
   it('returns IDs', async () => {

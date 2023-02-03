@@ -7,7 +7,7 @@ import {
   loadLocalFunctionSpecifications,
   loadLocalUIExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
-import {describe, it, expect, vi, test, beforeEach} from 'vitest'
+import {describe, it, expect, vi, test} from 'vitest'
 import * as output from '@shopify/cli-kit/node/output'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
 import * as template from '@shopify/cli-kit/node/liquid'
@@ -16,9 +16,7 @@ import * as git from '@shopify/cli-kit/node/git'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import type {ExtensionFlavor} from './extension.js'
 
-beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/node-package-manager')
-})
+vi.mock('@shopify/cli-kit/node/node-package-manager')
 
 describe('initialize a extension', async () => {
   const allUISpecs = await loadLocalUIExtensionsSpecifications()
