@@ -3,7 +3,7 @@ import {load as loadApp} from '../../models/app/loader.js'
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension} from '../../models/app/extensions.js'
-import {describe, vi, it, afterEach, expect, beforeEach} from 'vitest'
+import {describe, vi, it, expect, beforeEach} from 'vitest'
 import {Config} from '@oclif/core'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -19,10 +19,6 @@ beforeEach(async () => {
   app = testApp({extensions: {ui: [], theme: [], function: [ourFunction]}})
   vi.mocked(loadApp).mockResolvedValue(app)
   vi.mocked(renderFatalError).mockReturnValue()
-})
-
-afterEach(() => {
-  vi.restoreAllMocks()
 })
 
 describe('ensure we are within a function context', () => {
