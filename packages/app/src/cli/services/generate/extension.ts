@@ -95,13 +95,13 @@ async function uiExtensionInit({
       task: async () => {
         const templateDirectory =
           specification.templatePath ??
-          (await findPathUp(`templates/ui-extensions/projects/${specification.externalIdentifier}`, {
+          (await findPathUp(`templates/ui-extensions/projects/${specification.identifier}`, {
             type: 'directory',
             cwd: moduleDirectory(import.meta.url),
           }))
 
         if (!templateDirectory) {
-          throw new BugError(`Couldn't find the template for ${specification.externalIdentifier}`)
+          throw new BugError(`Couldn't find the template for '${specification.externalName}'`)
         }
 
         const srcFileExtension = getSrcFileExtension(extensionFlavor ?? 'vanilla-js')

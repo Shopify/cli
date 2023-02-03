@@ -47,7 +47,7 @@ describe('TextPrompt', () => {
       <TextPrompt
         onSubmit={() => {}}
         message="Test question"
-        validate={(value) => (value.includes('shopify') ? "App Name can't include the word shopify" : undefined)}
+        validate={(value) => (value.includes('shopify') ? "App name can't include the word shopify" : undefined)}
       />,
     )
 
@@ -59,7 +59,7 @@ describe('TextPrompt', () => {
       "?  Test question:
       [31m>[39m  [31mthis-test-includes-shopify[7m [27m[39m
          [31m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
-         [31mApp Name can't include the word shopify[39m
+         [31mApp name can't include the word shopify[39m
       "
     `)
   })

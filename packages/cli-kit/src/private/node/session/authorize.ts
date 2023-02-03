@@ -4,9 +4,10 @@ import {base64URLEncode, randomBytes, randomHex, sha256} from '../../../public/n
 import {openURL} from '../../../public/node/system.js'
 import {AbortError, CancelExecution} from '../../../public/node/error.js'
 import {identityFqdn} from '../../../public/node/environment/fqdn.js'
-import {keypress, terminateBlockingPortProcessPrompt} from '../../../ui.js'
+import {keypress, renderConfirmationPrompt} from '../../../public/node/ui.js'
+import {outputInfo} from '../../../public/node/output.js'
 import {checkPort as isPortAvailable} from 'get-port-please'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import findProcess from 'find-process'
 
 export interface CodeAuthResult {
   code: string
@@ -72,4 +73,16 @@ async function validateRedirectionPortAvailability(port: number) {
   } else {
     throw new CancelExecution()
   }
+}
+
+async function terminateBlockingPortProcessPrompt(port: number, stepDescription: string): Promise<boolean> {
+  const processInfo = await findProcess('port', port)
+  const formattedProcessName =
+    processInfo && processInfo.length > 0 && processInfo[0]?.name ? ` (${processInfo[0].name})` : ''
+
+  return renderConfirmationPrompt({
+    message: `${stepDescription} requires a port ${port} that's unavailable because it's running another process${formattedProcessName}. Terminate that process?`,
+    confirmationMessage: 'Yes, terminate process in order to log in now',
+    cancellationMessage: `No, cancel command and try later`,
+  })
 }

@@ -26,7 +26,7 @@ export default class Dev extends Command {
     store: Flags.string({
       hidden: false,
       char: 's',
-      description: 'Development store URL. Must be an existing development store.',
+      description: 'Store URL. Must be an existing development or Shopify Plus sandbox store.',
       env: 'SHOPIFY_FLAG_STORE',
       parse: (input, _) => Promise.resolve(normalizeStoreFqdn(input)),
     }),
@@ -55,7 +55,7 @@ export default class Dev extends Command {
     }),
     'checkout-cart-url': Flags.string({
       hidden: false,
-      description: 'Resource URL for checkeout UI extension. Format: "/cart/{productVariantID}:{productQuantity}"',
+      description: 'Resource URL for checkout UI extension. Format: "/cart/{productVariantID}:{productQuantity}"',
       env: 'SHOPIFY_FLAG_CHECKOUT_CART_URL',
     }),
     'tunnel-url': Flags.string({

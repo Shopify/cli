@@ -326,7 +326,7 @@ scopes = "read_products"
     await writeConfig(appConfiguration)
     const blockConfiguration = `
       name = "my_extension"
-      type = "post_purchase_ui"
+      type = "checkout_post_purchase_external"
 
       [build]
       command = "make build"
@@ -359,7 +359,7 @@ scopes = "read_products"
 
     const blockConfiguration = `
       name = "custom_extension"
-      type = "post_purchase_ui"
+      type = "checkout_post_purchase_external"
     `
     await writeBlockConfig({
       blockType: 'ui',

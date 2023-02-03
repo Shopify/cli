@@ -23,17 +23,14 @@ export async function findOrSelectTheme(session: AdminSession, options: {header:
     return filterThemes(store, themes, filter)[0]!
   }
 
-  const message = options.header
-  const choices = themes.map((theme) => {
-    return {
-      value: theme,
-      label: `${theme.name} [${theme.role}]`,
-    }
-  })
-
   return renderSelectPrompt({
-    message,
-    choices,
+    message: options.header,
+    choices: themes.map((theme) => {
+      return {
+        value: theme,
+        label: `${theme.name} [${theme.role}]`,
+      }
+    }),
   })
 }
 

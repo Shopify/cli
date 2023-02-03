@@ -5,6 +5,7 @@ const MIN_WIDTH = 80
 interface Layout {
   twoThirds: number
   oneThird: number
+  fullWidth: number
 }
 
 export default function useLayout(): Layout {
@@ -25,6 +26,7 @@ export default function useLayout(): Layout {
   return {
     twoThirds,
     oneThird,
+    fullWidth,
   }
 }
 

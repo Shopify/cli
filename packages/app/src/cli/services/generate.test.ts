@@ -33,7 +33,7 @@ describe('after extension command finishes correctly', () => {
   const mockConfig = new Config({root: ''})
   it('displays a confirmation message with instructions to run dev', async () => {
     // Given
-    const outputInfo = await mockSuccessfulCommandExecution('checkout_ui')
+    const outputInfo = await mockSuccessfulCommandExecution('checkout_ui_extension_external')
 
     // When
     await generate({directory: '/', reset: false, config: mockConfig})
@@ -42,11 +42,11 @@ describe('after extension command finishes correctly', () => {
     expect(outputInfo.info()).toMatchInlineSnapshot(`
       "╭─ success ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Checkout UI extension was added to your project!                            │
+      │  Your extension was created in extensions/name.                              │
       │                                                                              │
       │  Next steps                                                                  │
-      │    • To find your extension, remember to \`cd extensions/name\`                │
-      │    • To preview your project, run \`yarn dev\`                                 │
+      │    • To preview this extension along with the rest of the project, run       │
+      │      \`yarn dev\`                                                              │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
@@ -64,11 +64,11 @@ describe('after extension command finishes correctly', () => {
     expect(outputInfo.info()).toMatchInlineSnapshot(`
       "╭─ success ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Theme App Extension extension was added to your project!                    │
+      │  Your extension was created in extensions/name.                              │
       │                                                                              │
       │  Next steps                                                                  │
-      │    • To find your extension, remember to \`cd extensions/name\`                │
-      │    • To preview your project, run \`yarn dev\`                                 │
+      │    • To preview this extension along with the rest of the project, run       │
+      │      \`yarn dev\`                                                              │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
@@ -86,10 +86,7 @@ describe('after extension command finishes correctly', () => {
     expect(outputInfo.info()).toMatchInlineSnapshot(`
       "╭─ success ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Function - Product discount extension was added to your project!            │
-      │                                                                              │
-      │  Next steps                                                                  │
-      │    • To find your extension, remember to \`cd extensions/name\`                │
+      │  Your extension was created in extensions/name.                              │
       │                                                                              │
       │  Reference                                                                   │
       │    • For more details, see the docs (                                        │
@@ -125,10 +122,16 @@ describe('after extension command finishes correctly', () => {
 
   it('throws error if trying to generate with an unsupported flavor', async () => {
     // Given
-    await mockSuccessfulCommandExecution('checkout_ui')
+    await mockSuccessfulCommandExecution('checkout_ui_extension_external')
 
     // When
-    const got = generate({directory: '/', reset: false, config: mockConfig, type: 'checkout_ui', template: 'unknown'})
+    const got = generate({
+      directory: '/',
+      reset: false,
+      config: mockConfig,
+      type: 'checkout_ui_extension_external',
+      template: 'unknown',
+    })
 
     // Then
     await expect(got).rejects.toThrow(/Invalid template for extension type/)

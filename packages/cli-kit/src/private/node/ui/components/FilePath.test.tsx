@@ -7,6 +7,6 @@ describe('FilePath', async () => {
   test('renders correctly', async () => {
     const {lastFrame} = render(<FilePath filePath="src/this/is/a/test.js" />)
 
-    expect(lastFrame()).toMatchInlineSnapshot('"\\"src/this/is/a/test.js\\""')
+    expect(lastFrame()).toMatchInlineSnapshot('"src/this/is/a/test.js"')
   })
 })

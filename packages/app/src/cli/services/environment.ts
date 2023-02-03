@@ -23,7 +23,7 @@ import {loadAppName} from '../models/app/loader.js'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {renderInfo, renderTasks, TokenItem} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
@@ -398,8 +398,8 @@ async function fetchDevDataFromOptions(
       const partners = await partnersFqdn()
       const org = orgWithStore.organization
       throw new BugError(
-        `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid development store.`,
-        `Visit https://${partners}/${org.id}/stores to create a new store in your organization`,
+        `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid store.`,
+        `Visit https://${partners}/${org.id}/stores to create a new development or Shopify Plus sandbox store in your organization`,
       )
     }
     await convertToTestStoreIfNeeded(orgWithStore.store, orgWithStore.organization, token)
@@ -440,7 +440,7 @@ function showReusedValues(org: string, cachedAppInfo: CachedAppInfo, packageMana
   let updateURLs = 'Not yet configured'
   if (cachedAppInfo.updateURLs !== undefined) updateURLs = cachedAppInfo.updateURLs ? 'Always' : 'Never'
 
-  const items: TokenItem[] = [
+  const items = [
     `Org:          ${org}`,
     `App:          ${cachedAppInfo.title}`,
     `Dev store:    ${cachedAppInfo.storeFqdn}`,

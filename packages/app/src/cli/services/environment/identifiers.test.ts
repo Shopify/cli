@@ -134,13 +134,6 @@ const options = (uiExtensions: UIExtension[], functionExtensions: FunctionExtens
 beforeEach(() => {
   vi.mock('@shopify/cli-kit/node/session')
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      ui: {prompt: vi.fn()},
-    }
-  })
   vi.mock('../dev/fetch')
   vi.mock('./identifiers-extensions')
   vi.mock('./identifiers-functions')

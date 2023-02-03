@@ -6,7 +6,7 @@ interface Options {
   onRejected?: (error: Error) => void
 }
 
-export default function useEffectAsync(
+export default function useAsyncAndUnmount(
   asyncFunction: () => Promise<unknown>,
   {onFulfilled = () => {}, onRejected = () => {}}: Options,
 ) {

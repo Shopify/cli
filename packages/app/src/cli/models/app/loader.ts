@@ -338,7 +338,6 @@ class AppLoader {
         entryPath: entryPath ?? '',
         directory,
         specification,
-        remoteSpecification: undefined,
       })
 
       if (configuration.type) {
@@ -395,7 +394,6 @@ class AppLoader {
         configuration,
         configurationPath,
         directory,
-        remoteSpecification: undefined,
         specification,
         outputBundlePath: directory,
       })

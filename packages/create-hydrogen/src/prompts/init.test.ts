@@ -1,132 +1,114 @@
 import init from './init.js'
 import {describe, test, it, expect, vi} from 'vitest'
+import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+
+vi.mock('@shopify/cli-kit/node/ui')
 
 describe('init', () => {
   it('uses default name "hydrogen-app" when name is not passed', async () => {
-    const prompt = vi.fn()
     const input = {template: 'hello-world', language: 'js'}
     const output = {name: 'hydrogen-app'}
 
     // Given
-    prompt.mockResolvedValue(Promise.resolve(output))
+    vi.mocked(renderTextPrompt).mockResolvedValue(output.name)
 
     // When
-    const got = await init(input, prompt)
+    const got = await init(input)
 
     // Then
-    expect(prompt).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        {
-          type: 'input',
-          name: 'name',
-          message: 'Name your new Hydrogen storefront',
-          default: 'hydrogen-app',
-        },
-      ]),
-    )
+    expect(renderTextPrompt).toHaveBeenCalledWith({
+      message: 'Name your new Hydrogen storefront',
+      defaultValue: 'hydrogen-app',
+    })
 
     expect(got.name).toEqual(output.name)
   })
 
   it('uses the name when passed to the prompt', async () => {
-    const prompt = vi.fn()
     const input = {name: 'snow-devil', template: 'hello-world', language: 'js'}
     const output = {name: 'snow-devil'}
 
     // Given
-    prompt.mockResolvedValue(Promise.resolve(output))
+    vi.mocked(renderTextPrompt).mockResolvedValue(output.name)
 
     // When
-    const got = await init(input, prompt)
+    const got = await init(input)
 
     // Then
-    expect(prompt).not.toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({name: 'name'})]))
+    expect(renderTextPrompt).not.toHaveBeenCalledWith([
+      expect.objectContaining({message: 'Name your new Hydrogen storefront'}),
+    ])
     expect(got.name).toEqual(output.name)
   })
 
   it('when template is not passed', async () => {
     const expected = 'https://github.com/Shopify/hydrogen/templates/demo-store-js#dist'
 
-    const prompt = vi.fn()
     const input = {name: 'snow-devil', language: 'js'}
     const output = {name: 'snow-devil', template: expected, language: 'js'}
 
     // Given
-    prompt.mockResolvedValue(Promise.resolve(output))
+    vi.mocked(renderSelectPrompt).mockResolvedValue(expected)
 
     // When
-    const got = await init(input, prompt)
+    const got = await init(input)
 
     // Then
-    expect(prompt).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({
-          type: 'select',
-          name: 'template',
-          choices: [
-            {
-              name: 'Demo Store',
-              value: 'demo-store',
-            },
-            {
-              name: 'Hello World',
-              value: 'hello-world',
-            },
-          ],
-          message: 'Choose a template',
-          default: 'demo-store',
-        }),
-      ]),
-    )
+    expect(renderSelectPrompt).toHaveBeenCalledWith({
+      choices: [
+        {
+          label: 'Demo Store',
+          value: 'demo-store',
+        },
+        {
+          label: 'Hello World',
+          value: 'hello-world',
+        },
+      ],
+      message: 'Choose a template',
+      defaultValue: 'demo-store',
+    })
     expect(got).toEqual(output)
   })
 
   it('when language is not passed', async () => {
     const expected = 'https://github.com/Shopify/hydrogen/templates/demo-store-js#dist'
 
-    const prompt = vi.fn()
     const input = {name: 'snow-devil', template: 'demo-store'}
     const output = {name: 'snow-devil', template: expected, language: 'js'}
 
     // Given
-    prompt.mockResolvedValue(Promise.resolve(output))
+    vi.mocked(renderSelectPrompt).mockResolvedValue('js')
 
     // When
-    const got = await init(input, prompt)
+    const got = await init(input)
 
     // Then
-    expect(prompt).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({
-          type: 'select',
-          name: 'language',
-          choices: [
-            {
-              name: 'JavaScript',
-              value: 'js',
-            },
-            {
-              name: 'TypeScript',
-              value: 'ts',
-            },
-          ],
-          message: 'Choose a language',
-          default: 'js',
-        }),
-      ]),
-    )
+    expect(renderSelectPrompt).toHaveBeenCalledWith({
+      choices: [
+        {
+          label: 'JavaScript',
+          value: 'js',
+        },
+        {
+          label: 'TypeScript',
+          value: 'ts',
+        },
+      ],
+      message: 'Choose a language',
+      defaultValue: 'js',
+    })
     expect(got).toEqual(output)
   })
 
   it('when language is set to ts', async () => {
     const expected = 'https://github.com/Shopify/hydrogen/templates/demo-store-ts#dist'
 
-    const prompt = vi.fn()
     const input = {name: 'snow-devil', template: 'demo-store', language: 'ts'}
     const output = {name: 'snow-devil', template: expected, language: 'ts'}
 
     // When
-    const got = await init(input, prompt)
+    const got = await init(input)
 
     // Then
     expect(got).toEqual(output)

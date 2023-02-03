@@ -2,7 +2,7 @@ import {DevEnvironmentOutput, ensureDevEnvironment} from './environment.js'
 import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
-import {outputAppURL, outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
+import {outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {
@@ -22,6 +22,7 @@ import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant
 import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
+import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -100,27 +101,35 @@ async function dev(options: DevOptions) {
   })
 
   const backendPort = await getAvailableTCPPort()
-
   const frontendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Frontend)
   const backendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Backend)
 
   /** If the app doesn't have web/ the link message is not necessary */
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
   let shouldUpdateURLs = false
-  if (frontendConfig || backendConfig) {
-    if (options.update) {
-      const currentURLs = await getURLs(apiKey, token)
-      const newURLs = generatePartnersURLs(exposedUrl, backendConfig?.configuration.authCallbackPath)
-      shouldUpdateURLs = await shouldOrPromptUpdateURLs({
-        currentURLs,
-        appDirectory: localApp.directory,
-        cachedUpdateURLs,
-        newApp: remoteApp.newApp,
-      })
-      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
-      await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
+  const proxyTargets: ReverseHTTPProxyTarget[] = []
+  const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
+  const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
+
+  let previewUrl
+
+  if ((frontendConfig || backendConfig) && options.update) {
+    const currentURLs = await getURLs(apiKey, token)
+    const newURLs = generatePartnersURLs(exposedUrl, backendConfig?.configuration.authCallbackPath)
+    shouldUpdateURLs = await shouldOrPromptUpdateURLs({
+      currentURLs,
+      appDirectory: localApp.directory,
+      cachedUpdateURLs,
+      newApp: remoteApp.newApp,
+    })
+    if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
+    await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
+
+    if (localApp.extensions.ui.length > 0) {
+      previewUrl = `${proxyUrl}/extensions/dev-console`
+    } else {
+      previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
     }
-    outputAppURL(storeFqdn, exposedUrl)
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
@@ -137,10 +146,6 @@ async function dev(options: DevOptions) {
     hostname: exposedUrl,
   }
 
-  const proxyTargets: ReverseHTTPProxyTarget[] = []
-  const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
-  const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
-
   if (localApp.extensions.ui.length > 0) {
     const devExt = await devUIExtensionsTarget({
       app: localApp,
@@ -155,7 +160,9 @@ async function dev(options: DevOptions) {
     proxyTargets.push(devExt)
   }
 
-  outputExtensionsMessages(localApp, storeFqdn, proxyUrl)
+  // Remove this once theme app extensions and functions are displayed
+  // by the dev console
+  outputExtensionsMessages(localApp)
 
   const additionalProcesses: OutputProcess[] = []
 
@@ -196,7 +203,12 @@ async function dev(options: DevOptions) {
   if (proxyTargets.length === 0) {
     await renderConcurrent({processes: additionalProcesses})
   } else {
-    await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
+    await runConcurrentHTTPProcessesAndPathForwardTraffic({
+      previewUrl,
+      portNumber: proxyPort,
+      proxyTargets,
+      additionalProcesses,
+    })
   }
 }
 

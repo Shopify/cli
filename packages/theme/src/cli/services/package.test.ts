@@ -37,7 +37,7 @@ describe('packageTheme', () => {
       expect(themeRelativePaths.sort()).toEqual(archiveEntries.sort())
 
       expect(renderSuccess).toBeCalledWith({
-        headline: ['Your local theme was packaged in', {filePath: expectedOutputZipPath}],
+        body: ['Your local theme was packaged in', {filePath: expectedOutputZipPath}],
       })
     })
   })
@@ -50,10 +50,16 @@ describe('packageTheme', () => {
       const themeRelativePaths = [
         'assets/base.css',
         'config/settings_schema.json',
+        'config/unsupported_dir/settings_schema.json',
+        'templates/customers/account.json',
         'invalid-file.md',
         'invalid/file.liquid',
       ]
-      const expectedThemeRelativePaths = ['assets/base.css', 'config/settings_schema.json']
+      const expectedThemeRelativePaths = [
+        'assets/base.css',
+        'config/settings_schema.json',
+        'templates/customers/account.json',
+      ]
       await createFiles(themeRelativePaths, inputDirectory)
       await createSettingsSchema(
         '[{"name": "theme_info", "theme_name": "Dawn", "theme_version": "7.0.2"}]',
@@ -71,7 +77,7 @@ describe('packageTheme', () => {
       expect(expectedThemeRelativePaths.sort()).toEqual(archiveEntries.sort())
 
       expect(renderSuccess).toBeCalledWith({
-        headline: ['Your local theme was packaged in', {filePath: expectedOutputZipPath}],
+        body: ['Your local theme was packaged in', {filePath: expectedOutputZipPath}],
       })
     })
   })
@@ -101,7 +107,7 @@ describe('packageTheme', () => {
       expect(themeRelativePaths.sort()).toEqual(archiveEntries.sort())
 
       expect(renderSuccess).toBeCalledWith({
-        headline: ['Your local theme was packaged in', {filePath: expectedOutputZipPath}],
+        body: ['Your local theme was packaged in', {filePath: expectedOutputZipPath}],
       })
     })
   })
