@@ -136,8 +136,8 @@ export default class Dev extends Command {
       noTunnel: flags['no-tunnel'],
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
-      extensionsExcluded: flags.exclude,
-      extensionsIncluded: flags.include,
+      extensionsExcluded: typeof flags.exclude === 'string' ? (flags.exclude as string).split(',') : flags.exclude,
+      extensionsIncluded: typeof flags.include === 'string' ? (flags.include as string).split(',') : flags.include,
     })
   }
 }
