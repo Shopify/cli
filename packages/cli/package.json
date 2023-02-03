@@ -101,7 +101,6 @@
   },
   "devDependencies": {
     "@shopify/app": "3.39.0",
-    "@shopify/cli-hydrogen": "3.39.0",
     "@shopify/theme": "3.39.0",
     "@types/node": "14.18.36",
     "@vitest/coverage-istanbul": "^0.26.3",
