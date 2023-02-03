@@ -17,16 +17,16 @@ export enum WebType {
   Backend = 'backend',
 }
 
-const WebConfigurationAuthCallbackPathSchema = schema.preprocess(
-  (arg) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg),
-  schema.string(),
-)
+const ensurePathStartsWithSlash = (arg: unknown) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg)
+
+const WebConfigurationAuthCallbackPathSchema = schema.preprocess(ensurePathStartsWithSlash, schema.string())
 
 export const WebConfigurationSchema = schema.object({
   type: schema.enum([WebType.Frontend, WebType.Backend]),
   authCallbackPath: schema
     .union([WebConfigurationAuthCallbackPathSchema, WebConfigurationAuthCallbackPathSchema.array()])
     .optional(),
+  webhooksPath: schema.preprocess(ensurePathStartsWithSlash, schema.string()).optional(),
   commands: schema.object({
     build: schema.string().optional(),
     dev: schema.string(),
