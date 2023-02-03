@@ -8,7 +8,7 @@ import {
 import {ApplicationToken} from '../../private/node/session/schema.js'
 import {ensureAuthenticated} from '../../private/node/session.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
-import {vi, describe, expect, it, beforeAll} from 'vitest'
+import {vi, describe, expect, it} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)
 
@@ -18,11 +18,9 @@ const partnersToken: ApplicationToken = {
   scopes: ['scope2'],
 }
 
-beforeAll(() => {
-  vi.mock('../../private/node/session.js')
-  vi.mock('../../private/node/session/exchange.js')
-  vi.mock('../../private/node/session/store.js')
-})
+vi.mock('../../private/node/session.js')
+vi.mock('../../private/node/session/exchange.js')
+vi.mock('../../private/node/session/store.js')
 
 describe('ensureAuthenticatedStorefront', () => {
   it('returns only storefront token if success', async () => {

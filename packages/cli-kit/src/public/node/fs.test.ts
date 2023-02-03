@@ -19,12 +19,11 @@ import {
 } from './fs.js'
 import {joinPath} from './path.js'
 import {takeRandomFromArray} from '../common/array.js'
-import {beforeAll, describe, expect, it, test, vi} from 'vitest'
+import {describe, expect, it, test, vi} from 'vitest'
 import FastGlob from 'fast-glob'
 
-beforeAll(() => {
-  vi.mock('../common/array.js')
-})
+vi.mock('../common/array.js')
+vi.mock('fast-glob')
 
 describe('inTemporaryDirectory', () => {
   it('ties the lifecycle of the temporary directory to the lifecycle of the callback', async () => {
@@ -294,9 +293,6 @@ describe('readFileSync', () => {
 
 describe('glob', () => {
   it('calls fastGlob with dot:true if no dot option is passed', async () => {
-    // Given
-    vi.mock('fast-glob')
-
     // When
     await glob('pattern')
 
@@ -305,9 +301,6 @@ describe('glob', () => {
   })
 
   it('calls fastGlob with dot option if passed', async () => {
-    // Given
-    vi.mock('fast-glob')
-
     // When
     await glob('pattern', {dot: false})
 

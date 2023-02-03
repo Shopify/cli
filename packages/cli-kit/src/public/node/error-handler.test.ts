@@ -6,22 +6,24 @@ import {hashString} from '../../public/node/crypto.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const onNotify = vi.fn()
-beforeEach(() => {
-  vi.mock('process')
-  vi.mock('../../private/node/error-handler.js', () => {
-    return {
-      Bugsnag: {
-        notify: (reportedError: any, args: any, callback: any) => {
-          onNotify(reportedError)
-          callback(null)
-        },
-        isStarted: () => true,
+
+vi.mock('process')
+vi.mock('../../private/node/error-handler.js', () => {
+  return {
+    Bugsnag: {
+      notify: (reportedError: any, args: any, callback: any) => {
+        onNotify(reportedError)
+        callback(null)
       },
-    }
-  })
-  vi.mock('./cli.js')
-  vi.mock('./environment/local.js')
-  vi.mock('../../public/node/crypto.js')
+      isStarted: () => true,
+    },
+  }
+})
+vi.mock('./cli.js')
+vi.mock('./environment/local.js')
+vi.mock('../../public/node/crypto.js')
+
+beforeEach(() => {
   vi.mocked(ciPlatform).mockReturnValue({isCI: true, name: 'vitest'})
   vi.mocked(macAddress).mockResolvedValue('macAddress')
   vi.mocked(cloudEnvironment).mockReturnValue({platform: 'spin', editor: false})
