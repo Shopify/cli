@@ -172,21 +172,42 @@ and will be only fullscreen, meaning it won't have the width of the box it's inc
 
 ### Handling user input
 
-`handleCtrlC` and `exitOnCtrlC`
+For input you can use `ink`'s `useInput` callback. One thing to note is that, because using `useInput`
+will set the standard input to raw mode, if you will have to pass `exitOnCtrlC: false` to the `render` function so that
+`ink` won't handle the Ctrl+C input and instead leave that to you. This flag should be used in conjunction with the
+`handleCtrlC` utility function that will take take or handing the `Ctrl+C` input for you.
 
 ### Components that deal with async functions
 
-useAsyncAndUnmount
+React doesn't really allow you to call async functions inside the body of a component as `render` should be pure and all side effects
+should be wrapped in `useEffect`. Because it's very common to pass async functions to components we've added a `useAsyncAndUnmount` hook that will execute your function in a `useEffect` hook and appropiately
+unmount ink if the function resolve or rejects. From the outside, using this hook will make sure that in case of errors `render`
+will first clean up `ink`'s rendering instance and then will reject with the error that the function rejected with.
 
 ### Layout system
 
-3 columns.
-Most of the time it's preferrable to use 2 columns.
-`useLayout`
+One of the great things about using Ink that the output will try to adapt to the user terminal size much like a web page
+will try to adapt the user browser window size.
+
+Still, to make it easier to create components that visually align together, we've added a layout system made of three columns.
+You can call `useLayout` and access these three columns to use as you wish, bearing in mind that most components will
+render taking 2 columns with a few exceptions.
 
 ## Testing components
 
-`sendInputAndWaitForChange`, etc...
+For every component please try to add a corresponding `.test.tsx` file. Depending on what you're component does you can then
+test how it behaves with input and what kind of output it produces.
+
+**Output**
+
+For output you can use `ink-testing-library`'s `render` function which will return a `lastFrame` function that can be called to get
+the last frame rendered by `ink`. This, in conjunction with `vitest`'s `toMatchInlineSnapshot` should be sufficient.
+If you want to wait for a component to finish processing an async function you can wait for the next tick before checking the last
+frame with something like `await new Promise((resolve) => setTimeout(resolve, 0))`
+
+**Input**
+
+
 
 ### My tests are passing locally but not on CI!
 
