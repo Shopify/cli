@@ -86,10 +86,89 @@ The main differece with using React on the web is that (obviously) we don't have
 Ink instead uses [yoga](https://github.com/facebook/yoga) under the hood for its layout system, which will give you access to [most](https://github.com/vadimdemedes/ink/pull/479)
 of the flexbox system properties you've used for the web.
 
-### Text vs Box
+### `Text` vs `Box`
 
-Wrapping Text with `<>` fragments and text wrapping.
-Box cannot be inside `Text`
+**`Box`**
+
+`Box` is the unit of `ink`'s flexbox system. If you need to give text or a certain group of components a flexbox property
+you can wrap it with `Box`. Be aware that `Text` components cannot contain `Box` elements inside.
+
+**`Text`**
+
+`Text` allows you to apply styling to text, for example color or background color. Make sure that the only components nested
+inside `Text` elements are only text elements or you might run in some text wrapping or styling issues.
+For example, avoid putting `<>` fragments inside text as they will mess with the layout and style in unexpected ways.
+
+If you're writing a very simple component that will transform some text, try to return a parent `Text` element only
+and leave the layout responsibility to the parent component. This way it will be easier to compose your component
+with others as it will be possible to embed it inside other `Text` elements. If you return something wrapped in `Box`
+this will not be possible.
+
+### Utility components
+
+On top of what `ink` provides there are a few utility components that are important to our design system.
+
+**`TokenizedText`**
+
+`TokenizedText` is the building block for textual components. For example links, commands, paths, lists are all rendered with `TokenizedText`. Anything simple and textual should be rendered through this component.
+
+If you're building a component and you'd like to accept various different small tokens as an attribute, you should define
+the type of the attribute as `{attribute: TokenItem}` and then include `render(<TokenizedText item={attribute} />` in your component.
+This way, if an user wants to render a link inside your attribute, all they need to do is pass the link token (which is a POJO)
+to your render function. For example:
+
+```
+renderExample({
+  attribute: {
+    link: {
+      label: 'Shopify',
+      url: 'https://shopify.com'
+    }
+  }
+})
+```
+
+As a bonus, users will be able to pass arrays of these object tokens and `TokenizedText` will concatenate them with spaces.
+The only exception is the `char` token which will be concatenated without spaces. This can be useful if you want to add
+punctuation. For example: `['Is this going to add a space after the question', {char: '?'}, 'No.']` will result in:
+`Is this going to add a space after the question? No.`.
+
+**Inline or Block elements**
+
+Tokens are divided in two categories: `inline` and `block`. Inline elements will be wrapped inside `Text` and will behave
+like `span` elements in HTML. Block elements will be wrapped in a `Box` element and will behave more like `div` in HTML,
+adding a line return after the block.
+
+If you wish to force users to use inline elements with certain params, you can use the `TokenItem<InlineToken>` param.
+This will forbit users of the function to pass params that contain block elements. In this case `TokenizedText`
+will not use any `Box` components and will wrap everything with `Text` only.
+As a result you can confidently use `TokenizedText` with such items inside `Text` elements.
+
+**Adding a new token**
+
+If you think that you need a new type of style (for example italics) for the text inside your components you can
+add a new interface named `ItalicToken` in the `TokenizedText` and decide how it's going to be rendered, if inline or block.
+In this example we would use `inline`. But before you go ahead and add a new token, consider if all the users of UI kit
+might need this new token or not. If the answer is no, then a simple regular component will suffice.
+
+**`FullScreen`**
+
+This component is useful if you want to clear the terminal and render something full screen. The benefit is that resizing
+the terminal will cause the interface to refresh and adapt to the new size. `FullScreen` will also create a new buffer
+so once `ink` is unmounted the previous terminal history will be restored. This might be useful if you're rendering
+a very tall UI and don't want `ink` to [delete the history when it renders](https://github.com/vadimdemedes/ink/issues/382).
+
+**`TextAnimation`**
+
+At the moment this component simply animates text with a rainbow effect, however it can be extended to support more animations.
+If you wish to do so you can take a look at how [chalk-animation](https://github.com/bokub/chalk-animation/blob/master/index.js)
+implemented animations and take inspiration from there.
+
+**`TextWithBackground`**
+
+Because backgrounds are inverted space characters, adding background color to `Box` [is not trivial](https://github.com/vadimdemedes/ink/issues/469).
+For this use case we've added a simple `TextWithBackground` component that can render only plain strings (no `TokenItem`)
+and will be only fullscreen, meaning it won't have the width of the box it's included in.
 
 ### Handling user input
 
@@ -115,12 +194,12 @@ Most of the time it's preferrable to use 2 columns.
 
 ## Testing outside of components
 
-What about testing my commands that use `render` functions?
 For commands that use `renderOnce` you can use the already existing `mockOutput` and choose the corresponding property
 (`error`, `info`, etc...) to check.
+
 For commands that use `render` the testing story is not great at the moment, but we're working on it.
 The problem is that we don't want to output things to the terminal during tests, but we still want a way to capture this
 output in a separate stream that we can then check.
-Ideally the `render` function that `ink` uses under the hood should be injectable from the outside so that for tests we
-can swap it for something that will render to a fake `stoud`. We'd then be able to get this fake stream's frames
-and compare them with our expectations. WIP...
+Ideally the `ink` `render` function that our `render` functions use under the hood should be injectable from the outside
+so that for tests we can swap it for something that will render to a fake `stoud`.
+We'd then be able to get this fake stream's frames and compare them with our expectations. This is still WIP.
