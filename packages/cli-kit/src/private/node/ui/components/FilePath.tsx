@@ -9,7 +9,7 @@ interface Props {
  * `FilePath` displays a path to a file.
  */
 const FilePath: React.FC<Props> = ({filePath}: React.PropsWithChildren<Props>): JSX.Element => {
-  return <Text>{filePath}</Text>
+  return <Text italic>{filePath}</Text>
 }
 
 export {FilePath}
