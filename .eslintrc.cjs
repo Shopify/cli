@@ -152,6 +152,8 @@ module.exports = {
     'rulesdir/no-error-factory-functions': 'error',
     'rulesdir/no-process-cwd': 'error',
     'rulesdir/no-trailing-js-in-cli-kit-imports': 'error',
+    'rulesdir/no-vi-manual-mock-clear': 'error',
+    'rulesdir/no-vi-mock-in-callbacks': 'error',
     'no-restricted-syntax': [
       'error',
       {

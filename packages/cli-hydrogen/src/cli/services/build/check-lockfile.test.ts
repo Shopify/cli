@@ -13,7 +13,6 @@ describe('checkLockfileStatus()', () => {
   })
 
   afterEach(() => {
-    vi.restoreAllMocks()
     mockAndCaptureOutput().clear()
   })
 

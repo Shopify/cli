@@ -1,10 +1,8 @@
 import {AbortError, BugError, handler, cleanSingleStackTracePath} from './error.js'
 import {renderFatalError} from './ui.js'
-import {describe, expect, test, vi, beforeEach, it} from 'vitest'
+import {describe, expect, test, vi, it} from 'vitest'
 
-beforeEach(() => {
-  vi.mock('./ui.js')
-})
+vi.mock('./ui.js')
 
 describe('handler', () => {
   test('error output uses same input error instance when the error type is abort', async () => {

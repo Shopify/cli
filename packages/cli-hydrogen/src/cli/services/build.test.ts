@@ -4,7 +4,11 @@ import {describe, it, expect, vi} from 'vitest'
 import {build as viteBuild} from 'vite'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
-vi.mock('vite')
+vi.mock('vite', () => {
+  return {
+    build: vi.fn(),
+  }
+})
 vi.mock('./build/check-lockfile.js', () => {
   return {
     checkLockfileStatus: vi.fn(),

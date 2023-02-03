@@ -1,30 +1,27 @@
 import {runConcurrentHTTPProcessesAndPathForwardTraffic} from './http-reverse-proxy.js'
 import httpProxy from 'http-proxy'
-import {beforeAll, describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 
-beforeAll(() => {
-  vi.mock('@shopify/cli-kit/node/ui')
-  vi.mock('@shopify/cli-kit/node/tcp')
-  vi.mock('http-proxy', () => {
-    return {
-      default: {
-        createProxy: vi.fn(),
-      },
-    }
-  })
-
-  vi.mock('http', () => {
-    return {
-      createServer: () => {
-        return {
-          on: vi.fn(),
-          listen: vi.fn(),
-        }
-      },
-    }
-  })
+vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/tcp')
+vi.mock('http-proxy', () => {
+  return {
+    default: {
+      createProxy: vi.fn(),
+    },
+  }
+})
+vi.mock('http', () => {
+  return {
+    createServer: () => {
+      return {
+        on: vi.fn(),
+        listen: vi.fn(),
+      }
+    },
+  }
 })
 
 describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {

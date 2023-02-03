@@ -30,15 +30,16 @@ const mockedBuildTaskList = vi.fn()
 const mockedUploadDeployment = vi.fn()
 const mockedHealthCheck = vi.fn()
 
+vi.mock('./deploy/config.js')
+vi.mock('./deploy/upload.js')
+vi.mock('./build.js')
+
 beforeEach(() => {
-  vi.mock('./deploy/config.js')
   vi.mocked(validateProject).mockImplementation(mockedValidateProject)
   vi.mocked(fillDeployConfig).mockImplementation(mockedFillDeployConfig)
-  vi.mock('./deploy/upload.js')
   vi.mocked(createDeployment).mockImplementation(mockedCreateDeployment)
   vi.mocked(uploadDeployment).mockImplementation(mockedUploadDeployment)
   vi.mocked(healthCheck).mockImplementation(mockedHealthCheck)
-  vi.mock('./build.js')
   vi.mocked(buildTaskList).mockImplementation(mockedBuildTaskList)
 })
 

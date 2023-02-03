@@ -23,11 +23,12 @@ const simpleGitProperties = {
   checkoutLocalBranch: mockedCheckout,
 }
 
+vi.mock('./environment/local.js')
+vi.mock('./fs.js')
+vi.mock('simple-git')
+
 beforeEach(() => {
-  vi.mock('./environment/local.js')
   vi.mocked(hasGit).mockResolvedValue(true)
-  vi.mock('./fs.js')
-  vi.mock('simple-git')
   vi.mocked<any>(simpleGit).mockReturnValue(simpleGitProperties)
 })
 

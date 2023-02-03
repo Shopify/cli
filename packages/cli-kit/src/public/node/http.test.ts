@@ -1,18 +1,16 @@
 import {fileExists, inTemporaryDirectory, readFile} from './fs.js'
 import {downloadFile} from './http.js'
 import {joinPath} from './path.js'
-import {beforeAll, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 import nodeFetch, {Response} from 'node-fetch'
 import {Readable} from 'stream'
 
-beforeAll(() => {
-  vi.mock('node-fetch', async () => {
-    const actual: any = await vi.importActual('node-fetch')
-    return {
-      ...actual,
-      default: vi.fn(),
-    }
-  })
+vi.mock('node-fetch', async () => {
+  const actual: any = await vi.importActual('node-fetch')
+  return {
+    ...actual,
+    default: vi.fn(),
+  }
 })
 
 describe('downloadFile', () => {

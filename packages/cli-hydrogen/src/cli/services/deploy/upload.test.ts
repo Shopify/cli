@@ -23,13 +23,11 @@ const defaultConfig: ReqDeployConfig = {
   commitRef: 'commitRef',
 }
 
-beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/api/oxygen')
-  vi.mock('@shopify/cli-kit/node/http')
-  vi.mock('@shopify/cli-kit/node/archiver')
-  vi.mock('@shopify/cli-kit/node/fs')
-  vi.mock('fs')
-})
+vi.mock('@shopify/cli-kit/node/api/oxygen')
+vi.mock('@shopify/cli-kit/node/http')
+vi.mock('@shopify/cli-kit/node/archiver')
+vi.mock('@shopify/cli-kit/node/fs')
+vi.mock('fs')
 
 describe('createDeploymentStep()', () => {
   it('makes a call to Oxygen to create the deployment', async () => {

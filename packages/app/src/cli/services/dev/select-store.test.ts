@@ -8,6 +8,14 @@ import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isSpinEnvironment} from '@shopify/cli-kit/node/environment/spin'
 import {firstPartyDev} from '@shopify/cli-kit/node/environment/local'
 
+vi.mock('../../prompts/dev')
+vi.mock('./fetch')
+vi.mock('@shopify/cli-kit/node/environment/local')
+vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/node/environment/spin')
+
 const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
 const STORE1: OrganizationStore = {
   shopId: '1',
@@ -37,14 +45,7 @@ const STORE3: OrganizationStore = {
 }
 
 beforeEach(() => {
-  vi.mock('../../prompts/dev')
-  vi.mock('./fetch')
-  vi.mock('@shopify/cli-kit/node/environment/local')
-  vi.mock('@shopify/cli-kit/node/system')
-  vi.mock('@shopify/cli-kit/node/api/partners')
-  vi.mock('@shopify/cli-kit/node/session')
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-  vi.mock('@shopify/cli-kit/node/environment/spin')
   vi.mocked(isSpinEnvironment).mockReturnValue(false)
 })
 
