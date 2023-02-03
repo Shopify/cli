@@ -235,6 +235,16 @@ describe('SelectPrompt', async () => {
       <SelectPrompt choices={items} onSubmit={onEnter} message="Test question?" submitWithShortcuts />,
     )
 
+    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
+    "?  Test question?
+
+    >  (a) a
+       (b) b
+
+       Press ↑↓ arrows to select, enter or a shortcut to confirm
+    "
+  `)
+
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, 'b')
 

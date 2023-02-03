@@ -93,6 +93,11 @@ function SelectPrompt<T>({
           <SelectInput
             defaultValue={initialValue}
             items={choices}
+            infoMessage={
+              submitWithShortcuts
+                ? `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter or a shortcut to confirm`
+                : undefined
+            }
             onChange={({item, usedShortcut}) => {
               setAnswer(item)
 

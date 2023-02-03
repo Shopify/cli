@@ -24,6 +24,7 @@ export interface Props<T> {
   errorMessage?: string
   hasMorePages?: boolean
   morePagesMessage?: string
+  infoMessage?: string
 }
 
 export interface Item<T> {
@@ -123,6 +124,7 @@ export default function SelectInput<T>({
   errorMessage,
   hasMorePages = false,
   morePagesMessage,
+  infoMessage,
 }: React.PropsWithChildren<Props<T>>): JSX.Element | null {
   const defaultValueIndex = defaultValue ? items.findIndex((item) => item.value === defaultValue.value) : -1
   const initialIndex = defaultValueIndex === -1 ? 0 : defaultValueIndex
@@ -270,8 +272,9 @@ export default function SelectInput<T>({
             </Text>
           )}
           <Text dimColor>
-            Press {figures.arrowUp}
-            {figures.arrowDown} arrows to select, enter to confirm
+            {infoMessage
+              ? infoMessage
+              : `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter to confirm`}
           </Text>
         </Box>
       </Box>
