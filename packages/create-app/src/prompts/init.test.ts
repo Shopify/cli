@@ -19,7 +19,7 @@ describe('init', () => {
 
     // Then
     expect(renderTextPrompt).toHaveBeenCalledWith({
-      message: "Your app's name?",
+      message: 'Your app project name?',
       defaultValue: expect.stringMatching(/^\w+-\w+-app$/),
       validate: expect.any(Function),
     })

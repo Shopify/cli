@@ -1,7 +1,7 @@
 import {renderFatalError} from './ui.js'
 import {OutputMessage, stringifyMessage, TokenizedString} from '../../public/node/output.js'
 import {normalizePath} from '../../public/node/path.js'
-import {TokenItem} from '../../private/node/ui/components/TokenizedText.js'
+import {InlineToken, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 import {Errors} from '@oclif/core'
 
 export {ExtendableError} from 'ts-error'
@@ -21,7 +21,7 @@ export class CancelExecution extends Error {}
 export abstract class FatalError extends Error {
   tryMessage: TokenItem | null
   type: FatalErrorType
-  nextSteps?: TokenItem[]
+  nextSteps?: TokenItem<InlineToken>[]
   /**
    * Creates a new FatalError error.
    *
@@ -36,7 +36,7 @@ export abstract class FatalError extends Error {
     message: OutputMessage,
     type: FatalErrorType,
     tryMessage: TokenItem | OutputMessage | null = null,
-    nextSteps?: TokenItem[],
+    nextSteps?: TokenItem<InlineToken>[],
   ) {
     super(stringifyMessage(message))
 
@@ -60,8 +60,12 @@ export abstract class FatalError extends Error {
  * Those usually represent unexpected scenarios that we can't handle and that usually require some action from the developer.
  */
 export class AbortError extends FatalError {
-  nextSteps?: TokenItem[]
-  constructor(message: OutputMessage, tryMessage: TokenItem | OutputMessage | null = null, nextSteps?: TokenItem[]) {
+  nextSteps?: TokenItem<InlineToken>[]
+  constructor(
+    message: OutputMessage,
+    tryMessage: TokenItem | OutputMessage | null = null,
+    nextSteps?: TokenItem<InlineToken>[],
+  ) {
     super(message, FatalErrorType.Abort, tryMessage, nextSteps)
   }
 }

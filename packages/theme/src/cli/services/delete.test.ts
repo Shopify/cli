@@ -50,7 +50,7 @@ describe('deleteThemes', () => {
     // Then
     expect(deleteTheme).toBeCalledWith(theme1.id, session)
     expect(renderSuccess).toBeCalledWith({
-      headline: ['The theme', 'my theme', {subdued: '(#1)'}, 'was deleted from my-shop.myshopify.com.'],
+      body: ['The theme', 'my theme', {subdued: '(#1)'}, 'was deleted from my-shop.myshopify.com.'],
     })
   })
 
@@ -67,7 +67,7 @@ describe('deleteThemes', () => {
     // Then
     expect(deleteTheme).toBeCalledWith(theme1.id, session)
     expect(renderSuccess).toBeCalledWith({
-      headline: ['The theme', 'my theme', {subdued: '(#1)'}, 'was deleted from my-shop.myshopify.com.'],
+      body: ['The theme', 'my theme', {subdued: '(#1)'}, 'was deleted from my-shop.myshopify.com.'],
     })
   })
 
@@ -85,7 +85,7 @@ describe('deleteThemes', () => {
     expect(deleteTheme).toBeCalledWith(theme1.id, session)
     expect(deleteTheme).toBeCalledWith(theme2.id, session)
     expect(renderSuccess).toBeCalledWith({
-      headline: [
+      body: [
         'The following themes were deleted from my-shop.myshopify.com:',
         {
           list: {
@@ -113,7 +113,7 @@ describe('deleteThemes', () => {
     expect(deleteTheme).toBeCalledWith(theme1.id, session)
     expect(deleteTheme).toBeCalledWith(theme2.id, session)
     expect(renderSuccess).toBeCalledWith({
-      headline: [
+      body: [
         'The following themes were deleted from my-shop.myshopify.com:',
         {
           list: {
@@ -150,8 +150,13 @@ describe('renderDeprecatedArgsWarning', () => {
 
     // Then
     expect(renderWarning).toBeCalledWith({
-      headline: ['Positional arguments are deprecated. Use the', {command: '--theme'}, 'flag instead:'],
-      body: [{command: `$ shopify theme delete --theme 1 2`}, {char: '.'}],
+      body: [
+        'Positional arguments are deprecated. Use the',
+        {command: '--theme'},
+        'flag instead:\n\n',
+        {command: `$ shopify theme delete --theme 1 2`},
+        {char: '.'},
+      ],
     })
   })
 })
