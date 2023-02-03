@@ -233,6 +233,7 @@ describe('ensureDevEnvironment', () => {
     expect(got).toEqual({
       remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
+      remoteAppUpdated: true,
       tunnelPlugin: undefined,
       updateURLs: undefined,
     })
@@ -268,6 +269,7 @@ describe('ensureDevEnvironment', () => {
     expect(got).toEqual({
       remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
+      remoteAppUpdated: false,
       tunnelPlugin: undefined,
       updateURLs: undefined,
     })
@@ -302,6 +304,7 @@ describe('ensureDevEnvironment', () => {
     expect(got).toEqual({
       remoteApp: {...APP2, apiSecret: 'secret2'},
       storeFqdn: STORE1.shopDomain,
+      remoteAppUpdated: true,
       tunnelPlugin: undefined,
       updateURLs: undefined,
     })
