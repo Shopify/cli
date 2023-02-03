@@ -1,12 +1,10 @@
 import KitchenSinkBanners from './banners.js'
 import {banners as bannersService} from '../../services/kitchen-sink/banners.js'
-import {describe, test, vi, expect, beforeEach} from 'vitest'
+import {describe, test, vi, expect} from 'vitest'
+
+vi.mock('../../services/kitchen-sink/banners.js')
 
 describe('kitchen-sink all command', () => {
-  beforeEach(() => {
-    vi.mock('../../services/kitchen-sink/banners.js')
-  })
-
   test('launches service', async () => {
     vi.mocked(bannersService).mockResolvedValue()
 
