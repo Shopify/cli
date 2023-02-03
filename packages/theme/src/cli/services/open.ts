@@ -1,7 +1,7 @@
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
-import {themeEditorUrl, themePreviewUrl} from '../utilities/theme-urls.js'
 import {themeComponent} from '../utilities/theme-ui.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
+import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/theme-urls'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'

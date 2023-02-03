@@ -2,7 +2,7 @@ import {list} from './list.js'
 import {columns} from './list.columns.js'
 import {getDevelopmentTheme} from './conf.js'
 import {fetchStoreThemes} from '../utilities/theme-selector/fetch.js'
-import {Theme} from '../models/theme.js'
+import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {renderTable} from '@shopify/cli-kit/node/ui'
 import {describe, expect, it, vi} from 'vitest'
 

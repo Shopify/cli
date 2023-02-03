@@ -1,14 +1,14 @@
 import {Conf} from '@shopify/cli-kit/node/conf'
 import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
 
-type DevelopmentOrHostThemeId = string
+type DevelopmentThemeId = string
 
 export interface ThemeConfSchema {
   themeStore: string
 }
 
 interface DevelopmentThemeConfSchema {
-  [themeStore: string]: DevelopmentOrHostThemeId
+  [themeStore: string]: DevelopmentThemeId
 }
 
 let _themeConfInstance: Conf<ThemeConfSchema> | undefined

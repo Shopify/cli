@@ -1,19 +1,19 @@
-import {fetchTheme, createTheme} from './themes-api.js'
-import {generateDevelopmentThemeName} from './generate-development-theme-name.js'
-import {DEVELOPMENT_THEME_ROLE, Theme} from '../models/theme.js'
 import {getDevelopmentTheme, setDevelopmentTheme, removeDevelopmentTheme} from '../services/conf.js'
+import {ThemeManager} from '@shopify/cli-kit/node/themes/theme-manager'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 
 export const DEVELOPMENT_THEME_NOT_FOUND = (themeId: string) =>
   `Development theme #${themeId} could not be found. Please create a new development theme.`
 export const NO_DEVELOPMENT_THEME_ID_SET =
   'No development theme ID has been set. Please create a development theme first.'
 
-export class DevelopmentThemeManager {
-  private themeId: string | undefined
+export class DevelopmentThemeManager extends ThemeManager {
+  protected context = 'Development'
 
-  constructor(private adminSession: AdminSession) {
+  constructor(adminSession: AdminSession) {
+    super(adminSession)
     this.themeId = getDevelopmentTheme()
   }
 
@@ -25,39 +25,11 @@ export class DevelopmentThemeManager {
     return theme
   }
 
-  async findOrCreate(): Promise<Theme> {
-    let theme = await this.fetch()
-    if (!theme) {
-      theme = await this.create()
-    }
-    return theme
+  protected setTheme(themeId: string): void {
+    setDevelopmentTheme(themeId)
   }
 
-  private async fetch() {
-    if (!this.themeId) {
-      return
-    }
-    const theme = await fetchTheme(parseInt(this.themeId, 10), this.adminSession)
-    if (!theme) {
-      removeDevelopmentTheme()
-    }
-    return theme
-  }
-
-  private async create() {
-    const name = generateDevelopmentThemeName()
-    const role = DEVELOPMENT_THEME_ROLE
-    const theme = await createTheme(
-      {
-        name,
-        role,
-      },
-      this.adminSession,
-    )
-    if (!theme) {
-      throw new BugError(`Could not create theme with name "${name}" and role "${role}"`)
-    }
-    setDevelopmentTheme(theme.id.toString())
-    return theme
+  protected removeTheme(): void {
+    removeDevelopmentTheme()
   }
 }

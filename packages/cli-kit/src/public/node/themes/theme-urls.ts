@@ -1,4 +1,4 @@
-import {Theme} from '../models/theme.js'
+import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
 export function themePreviewUrl(theme: Theme, session: AdminSession) {

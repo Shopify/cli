@@ -3,12 +3,12 @@ import {
   NO_DEVELOPMENT_THEME_ID_SET,
   DEVELOPMENT_THEME_NOT_FOUND,
 } from './development-theme-manager.js'
-import {createTheme, fetchTheme} from './themes-api.js'
-import {Theme} from '../models/theme.js'
 import {getDevelopmentTheme, setDevelopmentTheme, removeDevelopmentTheme} from '../services/conf.js'
+import {createTheme, fetchTheme} from '@shopify/cli-kit/node/themes/themes-api'
+import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-vi.mock('./themes-api.js')
+vi.mock('@shopify/cli-kit/node/themes/themes-api')
 vi.mock('../services/conf.js')
 
 describe('DevelopmentThemeManager', () => {

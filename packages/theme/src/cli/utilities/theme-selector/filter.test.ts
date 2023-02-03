@@ -1,5 +1,5 @@
 import {Filter, filterThemes} from './filter.js'
-import {Theme} from '../../models/theme.js'
+import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {test, describe, expect} from 'vitest'
 
 const store = 'my-shop.myshopify.com'

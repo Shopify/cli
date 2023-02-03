@@ -1,5 +1,5 @@
-import {fetchThemes} from '../themes-api.js'
-import {Theme} from '../../models/theme.js'
+import {fetchThemes} from '@shopify/cli-kit/node/themes/themes-api'
+import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 

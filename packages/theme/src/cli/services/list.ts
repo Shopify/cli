@@ -31,7 +31,7 @@ export async function list(adminSession: AdminSession, options: Options) {
     let formattedRole = ''
     if (role) {
       formattedRole = `[${role}]`
-      if (`${id}` === developmentTheme) {
+      if ([developmentTheme].includes(`${id}`)) {
         formattedRole += ' [yours]'
       }
     }

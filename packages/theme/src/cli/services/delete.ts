@@ -1,9 +1,9 @@
 import {removeDevelopmentTheme} from './conf.js'
 import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
-import {Theme} from '../models/theme.js'
 import {themeComponent, themesComponent} from '../utilities/theme-ui.js'
-import {deleteTheme} from '../utilities/themes-api.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
+import {deleteTheme} from '@shopify/cli-kit/node/themes/themes-api'
+import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {
   renderConfirmationPrompt,
