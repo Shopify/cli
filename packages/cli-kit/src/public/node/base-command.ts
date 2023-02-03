@@ -150,7 +150,10 @@ function reportEnvironmentApplication<
   for (const [name, value] of Object.entries(flagsWithEnvironments)) {
     const userSpecifiedThisFlag = Object.prototype.hasOwnProperty.call(noDefaultsFlags, name)
     const environmentContainsFlag = Object.prototype.hasOwnProperty.call(environment, name)
-    if (!userSpecifiedThisFlag && environmentContainsFlag) changes[name] = value
+    if (!userSpecifiedThisFlag && environmentContainsFlag) {
+      const valueToReport = name === 'password' ? `********${value.substr(-4)}` : value
+      changes[name] = valueToReport
+    }
   }
   if (Object.keys(changes).length === 0) return
   outputInfo(outputContent`Using applicable flags from the environment ${outputToken.yellow(environmentName)}:

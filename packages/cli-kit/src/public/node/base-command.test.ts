@@ -30,6 +30,7 @@ class MockCommand extends Command {
     someStringWithDefault: Flags.string({
       default: 'default stringy',
     }),
+    password: Flags.string({}),
   }
   /* eslint-enable rulesdir/command-flags-with-env */
 
@@ -82,6 +83,10 @@ const environmentWithDefaultOverride = {
   someStringWithDefault: 'non-default stringy',
 }
 
+const environmentWithPassword = {
+  password: 'password',
+}
+
 const allEnvironments: Environments = {
   validEnvironment,
   validEnvironmentWithIrrelevantFlag,
@@ -91,6 +96,7 @@ const allEnvironments: Environments = {
   environmentWithMultiples,
   environmentMatchingDefault,
   environmentWithDefaultOverride,
+  environmentWithPassword,
 }
 
 describe('applying environments', async () => {
@@ -280,6 +286,23 @@ describe('applying environments', async () => {
       "Using applicable flags from the environment environmentMatchingDefault:
 
       • someStringWithDefault = default stringy\n"
+    `)
+  })
+
+  runTestInTmpDir('reports environment settings with masked passwords', async (tmpDir: string) => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+
+    // When
+    await MockCommand.run(['--path', tmpDir, '--environment', 'environmentWithPassword'])
+
+    // Then
+    expectFlags(tmpDir, 'environmentWithPassword')
+    expect(outputMock.info()).toMatchInlineSnapshot(`
+      "Using applicable flags from the environment environmentWithPassword:
+
+      • password = ********word\n"
     `)
   })
 })
