@@ -8,7 +8,6 @@ import React, {useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {Button} from '@/components/Button'
-import {Tooltip} from '@/components/Tooltip'
 
 interface Props {
   uuid: ExtensionPayload['uuid']
@@ -36,11 +35,9 @@ export function ExtensionRow({uuid}: Props) {
         <PreviewLinks extension={extension} />
       </td>
       <td>
-        <Tooltip text="test">
-          <Button type="button" onClick={() => setShowModal(true)}>
-            {i18n.translate('viewMobile')}
-          </Button>
-        </Tooltip>
+        <Button type="button" onClick={() => setShowModal(true)}>
+          {i18n.translate('viewMobile')}
+        </Button>
         <QRCodeModal
           code={
             showModal
