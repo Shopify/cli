@@ -15,6 +15,7 @@ export interface SelectPromptProps<T> {
   infoTable?: InfoTableProps['table']
   defaultValue?: T
   submitWithShortcuts?: boolean
+  limit?: number
 }
 
 // eslint-disable-next-line react/function-component-definition
@@ -25,12 +26,13 @@ function SelectPrompt<T>({
   onSubmit,
   defaultValue,
   submitWithShortcuts = false,
+  limit,
 }: React.PropsWithChildren<SelectPromptProps<T>>): ReactElement | null {
   if (choices.length === 0) {
     throw new Error('SelectPrompt requires at least one choice')
   }
-  const initialValue = defaultValue ? choices.find((choice) => choice.value === defaultValue) ?? choices[0] : choices[0]
-  const [answer, setAnswer] = useState<SelectItem<T> | undefined>(initialValue)
+  const initialValue = defaultValue ? choices.find((choice) => choice.value === defaultValue) : undefined
+  const [answer, setAnswer] = useState<SelectItem<T> | undefined>(undefined)
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
   const {stdout} = useStdout()
@@ -106,6 +108,7 @@ function SelectPrompt<T>({
                 submitAnswer(item)
               }
             }}
+            limit={limit}
           />
         </Box>
       )}

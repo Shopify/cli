@@ -1,11 +1,17 @@
 import {isEqual} from '../../../../public/common/lang.js'
-import {groupBy, partition} from '../../../../public/common/collection.js'
-import {mapValues} from '../../../../public/common/object.js'
 import React, {useState, useEffect, useRef, useCallback} from 'react'
 import {Box, Key, useInput, Text} from 'ink'
 import {debounce} from '@shopify/cli-kit/common/function'
 import chalk from 'chalk'
 import figures from 'figures'
+import {createRequire} from 'module'
+
+const require = createRequire(import.meta.url)
+
+function rotateArray<T>(array: T[], rotation?: number) {
+  const arrayCopy = array.slice()
+  return arrayCopy.splice(-(rotation ?? 0) % arrayCopy.length).concat(arrayCopy)
+}
 
 interface OnChangeOptions<T> {
   item: Item<T> | undefined
@@ -24,6 +30,7 @@ export interface SelectInputProps<T> {
   hasMorePages?: boolean
   morePagesMessage?: string
   infoMessage?: string
+  limit?: number
 }
 
 export interface Item<T> {
@@ -33,9 +40,8 @@ export interface Item<T> {
   group?: string
 }
 
-interface ItemWithIndex<T> extends Item<T> {
+interface ItemWithKey<T> extends Item<T> {
   key: string
-  index: number
 }
 
 function highlightedLabel(label: string, term: string | undefined) {
@@ -49,72 +55,53 @@ function highlightedLabel(label: string, term: string | undefined) {
   })
 }
 
-function groupItems<T>(items: Item<T>[]): [{[key: string]: ItemWithIndex<T>[]}, ItemWithIndex<T>[]] {
-  let index = 0
-
-  const [withGroup, withoutGroup] = partition(items, 'group')
-
-  const withGroupMapped = mapValues(groupBy(withGroup, 'group'), (groupItems) =>
-    groupItems.map((groupItem) => {
-      const item = {...groupItem, key: groupItem.key ?? (index + 1).toString(), index}
-      index += 1
-      return item
-    }),
-  )
-  const withoutGroupMapped = withoutGroup.map((item) => {
-    const newItem = {...item, key: item.key ?? (index + 1).toString(), index}
-    index += 1
-    return newItem
-  })
-
-  return [withGroupMapped, withoutGroupMapped]
-}
-
-interface SelectItemsGroupProps<T> {
-  title: string | undefined
-  items: ItemWithIndex<T>[]
+interface ItemProps<T> {
+  item: ItemWithKey<T>
+  previousItem: ItemWithKey<T> | undefined
+  items: ItemWithKey<T>[]
   selectedIndex: number
-  hasMarginTop: boolean
-  enableShortcuts: boolean
   highlightedTerm?: string
+  enableShortcuts: boolean
+  hasAnyGroup: boolean
 }
 
 // eslint-disable-next-line react/function-component-definition
-function SelectItemsGroup<T>({
-  title,
-  items,
+function Item<T>({
+  item,
+  previousItem,
   selectedIndex,
-  hasMarginTop,
-  enableShortcuts,
   highlightedTerm,
-}: SelectItemsGroupProps<T>): JSX.Element {
+  enableShortcuts,
+  items,
+  hasAnyGroup,
+}: ItemProps<T>): JSX.Element {
+  const isSelected = items.indexOf(item) === selectedIndex
+  const label = highlightedLabel(item.label, highlightedTerm)
+  let title: string | undefined
+
+  if (typeof previousItem === 'undefined' || item.group !== previousItem.group) {
+    title = item.group ?? (hasAnyGroup ? 'Other' : undefined)
+  }
+
   return (
-    <Box key={title} flexDirection="column" marginTop={hasMarginTop ? 1 : 0}>
+    <Box key={item.key} flexDirection="column" marginTop={items.indexOf(item) !== 0 && title ? 1 : 0}>
       {title ? (
         <Box marginLeft={3}>
           <Text bold>{title}</Text>
         </Box>
       ) : null}
 
-      {items.map((item) => {
-        const isSelected = item.index === selectedIndex
-        const label = highlightedLabel(item.label, highlightedTerm)
-
-        return (
-          <Box key={item.key}>
-            <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
-
-            <Text color={isSelected ? 'cyan' : undefined}>{enableShortcuts ? `(${item.key}) ${label}` : label}</Text>
-          </Box>
-        )
-      })}
+      <Box key={item.key}>
+        <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
+        <Text color={isSelected ? 'cyan' : undefined}>{enableShortcuts ? `(${item.key}) ${label}` : label}</Text>
+      </Box>
     </Box>
   )
 }
 
 // eslint-disable-next-line react/function-component-definition
 function SelectInput<T>({
-  items,
+  items: initialItems,
   onChange,
   enableShortcuts = true,
   focus = true,
@@ -126,23 +113,41 @@ function SelectInput<T>({
   hasMorePages = false,
   morePagesMessage,
   infoMessage,
+  limit,
 }: React.PropsWithChildren<SelectInputProps<T>>): JSX.Element | null {
+  const sortBy = require('lodash/sortBy')
+  const hasAnyGroup = initialItems.some((item) => typeof item.group !== 'undefined')
+  const items = sortBy(initialItems, 'group') as Item<T>[]
+  const itemsWithKeys = items.map((item, index) => ({
+    ...item,
+    key: item.key ?? (index + 1).toString(),
+  })) as ItemWithKey<T>[]
   const defaultValueIndex = defaultValue ? items.findIndex((item) => item.value === defaultValue.value) : -1
   const initialIndex = defaultValueIndex === -1 ? 0 : defaultValueIndex
+  const hasLimit = typeof limit !== 'undefined' && items.length > limit
   const inputStack = useRef<string | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(initialIndex)
-  const [groupedItems, ungroupedItems] = groupItems(items)
-  const groupedItemsValues = [...Object.values(groupedItems).flat(), ...ungroupedItems]
-  const keys = groupedItemsValues.map((item) => item.key)
-  const groupTitles = Object.keys(groupedItems)
-  const previousItems = useRef<Item<T>[]>(items)
+  const [rotateIndex, setRotateIndex] = useState(0)
+  const slicedItemsWithKeys = hasLimit ? rotateArray(itemsWithKeys, rotateIndex).slice(0, limit) : itemsWithKeys
+  const previousItems = useRef<Item<T>[] | undefined>(undefined)
 
   const changeSelection = useCallback(
-    ({index, usedShortcut = false}: {index: number; usedShortcut?: boolean}) => {
-      const groupedItem = groupedItemsValues.find((item) => item.index === index)!
-      setSelectedIndex(index)
+    ({
+      newSelectedIndex,
+      newRotateIndex,
+      usedShortcut = false,
+    }: {
+      newSelectedIndex: number
+      usedShortcut?: boolean
+      newRotateIndex?: number
+    }) => {
+      setSelectedIndex(newSelectedIndex)
+      if (typeof newRotateIndex !== 'undefined') setRotateIndex(newRotateIndex)
+
+      const rotatedItems = hasLimit ? rotateArray(items, newRotateIndex).slice(0, limit) : items
+
       onChange({
-        item: items.find((item) => item.value === groupedItem.value),
+        item: rotatedItems[newSelectedIndex],
         usedShortcut,
       })
     },
@@ -156,14 +161,16 @@ function SelectInput<T>({
         item: undefined,
         usedShortcut: false,
       })
+      // reset index when items change or the first time
+    } else if (!previousItems.current) {
+      changeSelection({newSelectedIndex: initialIndex, newRotateIndex: 0})
     } else if (
-      // reset index when items change
       !isEqual(
         previousItems.current.map((item) => item.value),
         items.map((item) => item.value),
       )
     ) {
-      changeSelection({index: 0})
+      changeSelection({newSelectedIndex: 0, newRotateIndex: 0})
     }
 
     previousItems.current = items
@@ -171,12 +178,21 @@ function SelectInput<T>({
 
   const handleArrows = useCallback(
     (key: Key) => {
-      const lastIndex = items.length - 1
-
       if (key.upArrow) {
-        changeSelection({index: selectedIndex === 0 ? lastIndex : selectedIndex - 1})
+        const lastIndex = items.length - 1
+        const atFirstIndex = selectedIndex === 0
+        const nextIndex = hasLimit ? selectedIndex : lastIndex
+        const nextRotateIndex = atFirstIndex ? rotateIndex + 1 : rotateIndex
+        const nextSelectedIndex = atFirstIndex ? nextIndex : selectedIndex - 1
+
+        changeSelection({newSelectedIndex: nextSelectedIndex, newRotateIndex: nextRotateIndex})
       } else if (key.downArrow) {
-        changeSelection({index: selectedIndex === lastIndex ? 0 : selectedIndex + 1})
+        const atLastIndex = selectedIndex === (hasLimit ? limit : items.length) - 1
+        const nextIndex = hasLimit ? selectedIndex : 0
+        const nextRotateIndex = atLastIndex ? rotateIndex - 1 : rotateIndex
+        const nextSelectedIndex = atLastIndex ? nextIndex : selectedIndex + 1
+
+        changeSelection({newSelectedIndex: nextSelectedIndex, newRotateIndex: nextRotateIndex})
       }
     },
     [selectedIndex, items],
@@ -184,10 +200,13 @@ function SelectInput<T>({
 
   const handleShortcuts = useCallback(
     (input: string) => {
-      if (keys.includes(input)) {
-        const groupedItem = groupedItemsValues.find((item) => item.key === input)
-        if (groupedItem !== undefined) {
-          changeSelection({index: groupedItem.index, usedShortcut: true})
+      if (slicedItemsWithKeys.map((item) => item.key).includes(input)) {
+        const itemWithKey = slicedItemsWithKeys.find((item) => item.key === input)
+        if (itemWithKey !== undefined) {
+          changeSelection({
+            newSelectedIndex: items.findIndex((item) => item.value === itemWithKey.value),
+            usedShortcut: true,
+          })
         }
       }
     },
@@ -219,8 +238,6 @@ function SelectInput<T>({
     {isActive: focus},
   )
 
-  const ungroupedItemsTitle = groupTitles.length > 0 ? 'Other' : undefined
-
   if (loading) {
     return (
       <Box marginLeft={3}>
@@ -242,28 +259,18 @@ function SelectInput<T>({
   } else {
     return (
       <Box flexDirection="column">
-        {groupTitles.map((title, index) => (
-          <SelectItemsGroup
-            title={title}
-            selectedIndex={selectedIndex}
-            items={groupedItems[title]!}
-            key={title}
-            hasMarginTop={index !== 0}
-            enableShortcuts={enableShortcuts}
+        {slicedItemsWithKeys.map((item, index) => (
+          <Item
+            key={item.key}
+            item={item}
+            previousItem={slicedItemsWithKeys[index - 1]}
             highlightedTerm={highlightedTerm}
+            selectedIndex={selectedIndex}
+            items={slicedItemsWithKeys}
+            enableShortcuts={enableShortcuts}
+            hasAnyGroup={hasAnyGroup}
           />
         ))}
-
-        {ungroupedItems.length > 0 && (
-          <SelectItemsGroup
-            title={ungroupedItemsTitle}
-            selectedIndex={selectedIndex}
-            items={ungroupedItems}
-            hasMarginTop={groupTitles.length > 0}
-            enableShortcuts={enableShortcuts}
-            highlightedTerm={highlightedTerm}
-          />
-        )}
 
         <Box marginTop={1} marginLeft={3} flexDirection="column">
           {hasMorePages ? (
