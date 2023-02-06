@@ -44,6 +44,7 @@ export interface DevContextOptions {
 
 interface DevContextOutput {
   remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {apiSecret?: string}
+  remoteAppUpdated: boolean
   storeFqdn: string
   updateURLs: boolean | undefined
   tunnelPlugin: string | undefined
@@ -207,6 +208,7 @@ function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?
       ...app,
       apiSecret: app.apiSecretKeys.length === 0 ? undefined : app.apiSecretKeys[0]!.secret,
     },
+    remoteAppUpdated: app.apiKey !== cachedInfo?.appId,
     storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
     tunnelPlugin: cachedInfo?.tunnelPlugin,

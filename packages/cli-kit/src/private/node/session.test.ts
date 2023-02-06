@@ -16,7 +16,7 @@ import {applicationId} from './session/identity.js'
 import * as fqdnModule from '../../public/node/context/fqdn.js'
 import {useDeviceAuth} from '../../public/node/context/local.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
-import {vi, describe, expect, it, beforeAll, beforeEach} from 'vitest'
+import {vi, describe, expect, it, beforeEach} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)
 
@@ -82,17 +82,15 @@ const invalidSession: Session = {
   },
 }
 
-beforeAll(() => {
-  vi.mock('../../public/node/context/local.js')
-  vi.mock('./session/identity')
-  vi.mock('./session/authorize')
-  vi.mock('./session/exchange')
-  vi.mock('./session/scopes')
-  vi.mock('./session/store')
-  vi.mock('./session/validate')
-  vi.mock('../../public/node/api/partners.js')
-  vi.mock('../../store')
-})
+vi.mock('../../public/node/context/local.js')
+vi.mock('./session/identity')
+vi.mock('./session/authorize')
+vi.mock('./session/exchange')
+vi.mock('./session/scopes')
+vi.mock('./session/store')
+vi.mock('./session/validate')
+vi.mock('../../public/node/api/partners.js')
+vi.mock('../../store')
 
 beforeEach(() => {
   vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue(fqdn)

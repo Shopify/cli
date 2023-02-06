@@ -19,21 +19,21 @@ import {hashString} from '../../public/node/crypto.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {it, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
+vi.mock('./context/local.js')
+vi.mock('./ruby.js')
+vi.mock('./os.js')
+vi.mock('../../store.js')
+vi.mock('../../public/node/crypto.js')
+vi.mock('../../version.js')
+vi.mock('./monorail.js')
+vi.mock('./cli.js')
+
 describe('event tracking', () => {
   const currentDate = new Date(Date.UTC(2022, 1, 1, 10, 0, 0))
   let publishEventMock: MockedFunction<typeof publishMonorailEvent>
 
   beforeEach(() => {
     vi.setSystemTime(currentDate)
-    vi.mock('./context/local.js')
-    vi.mock('./ruby.js')
-    vi.mock('./os.js')
-    vi.mock('../../store.js')
-    vi.mock('../../public/node/crypto.js')
-
-    vi.mock('../../version.js')
-    vi.mock('./monorail.js')
-    vi.mock('./cli.js')
     vi.mocked(isShopify).mockResolvedValue(false)
     vi.mocked(isDevelopment).mockReturnValue(false)
     vi.mocked(analyticsDisabled).mockReturnValue(false)

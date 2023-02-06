@@ -9,15 +9,31 @@ import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
+vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/node/context/local')
+
+vi.mock('../models/app/identifiers.js', async () => {
+  const identifiers: any = await vi.importActual('../models/app/identifiers.js')
+  return {
+    ...identifiers,
+    getAppIdentifiers: vi.fn(),
+  }
+})
+vi.mock('./context.js', async () => {
+  const context: any = await vi.importActual('./context.js')
+  return {
+    ...context,
+    fetchOrganizationAndFetchOrCreateApp: vi.fn(),
+  }
+})
+
 describe('generateSchemaService', () => {
   const token = 'token'
   const request = partnersRequest as MockedFunction<typeof partnersRequest>
 
   beforeEach(() => {
-    vi.mock('@shopify/cli-kit/node/api/partners')
-    vi.mock('@shopify/cli-kit/node/session')
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-    vi.mock('@shopify/cli-kit/node/context/local')
     request.mockImplementation(() => Promise.resolve({definition: 'schema'}))
   })
 
@@ -60,20 +76,6 @@ describe('generateSchemaService', () => {
       >
 
     beforeEach(async () => {
-      vi.mock('../models/app/identifiers.js', async () => {
-        const identifiers: any = await vi.importActual('../models/app/identifiers.js')
-        return {
-          ...identifiers,
-          getAppIdentifiers: vi.fn(),
-        }
-      })
-      vi.mock('./context.js', async () => {
-        const environment: any = await vi.importActual('./context.js')
-        return {
-          ...environment,
-          fetchOrganizationAndFetchOrCreateApp: vi.fn(),
-        }
-      })
       getAppIdentifiers.mockReturnValue({app: identifiersApiKey})
       fetchOrganizationAndFetchOrCreateApp.mockResolvedValue({
         partnersApp: {

@@ -1,4 +1,4 @@
-import Table from './Table.js'
+import {Table} from './Table.js'
 import ScalarDict from './ScalarDict.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'

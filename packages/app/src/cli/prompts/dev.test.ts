@@ -10,7 +10,7 @@ import {
   tunnelConfigurationPrompt,
 } from './dev.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
-import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {describe, it, expect, vi} from 'vitest'
 import {
   renderAutocompletePrompt,
   renderConfirmationPrompt,
@@ -19,9 +19,7 @@ import {
 } from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
-beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/ui')
-})
+vi.mock('@shopify/cli-kit/node/ui')
 
 const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
 const ORG2: Organization = {id: '2', businessName: 'org2', appsNext: false}

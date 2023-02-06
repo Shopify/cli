@@ -3,12 +3,10 @@ import {captureOutput} from './system.js'
 import * as system from './system.js'
 import * as file from './fs.js'
 import {pathConstants} from '../../private/node/constants.js'
-import {beforeAll, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 
-beforeAll(() => {
-  vi.mock('./fs.js')
-  vi.mock('./system')
-})
+vi.mock('./fs.js')
+vi.mock('./system')
 
 describe('execCLI', () => {
   it('throws an exception when Ruby is not installed', async () => {

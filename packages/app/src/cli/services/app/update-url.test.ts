@@ -6,6 +6,11 @@ import {allowedRedirectionURLsPrompt, appUrlPrompt} from '../../prompts/update-u
 import {describe, it, vi, beforeEach, expect} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
+vi.mock('./select-app.js')
+vi.mock('../dev/urls.js')
+vi.mock('../../prompts/update-url.js')
+vi.mock('@shopify/cli-kit/node/session')
+
 const APP1: OrganizationApp = {
   id: '1',
   title: 'app1',
@@ -16,10 +21,6 @@ const APP1: OrganizationApp = {
 }
 
 beforeEach(async () => {
-  vi.mock('./select-app.js')
-  vi.mock('../dev/urls.js')
-  vi.mock('../../prompts/update-url.js')
-  vi.mock('@shopify/cli-kit/node/session')
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 })
 

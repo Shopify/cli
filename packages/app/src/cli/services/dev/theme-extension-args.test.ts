@@ -1,12 +1,10 @@
 import {themeExtensionArgs} from './theme-extension-args.js'
 import {ensureThemeExtensionDevContext} from '../context.js'
 import {testThemeExtensions} from '../../models/app/app.test-data.js'
-import {beforeAll, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 
-beforeAll(() => {
-  vi.mock('../../models/app/app.js')
-  vi.mock('../context.js')
-})
+vi.mock('../../models/app/app.js')
+vi.mock('../context.js')
 
 describe('themeExtensionArgs', async () => {
   it('returns valid theme extension arguments', async () => {

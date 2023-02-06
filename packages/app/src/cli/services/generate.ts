@@ -30,6 +30,7 @@ async function generate(options: GenerateOptions) {
   const token = await ensureAuthenticatedPartners()
   const apiKey = await ensureGenerateContext({...options, token})
   let specifications = await fetchSpecifications({token, apiKey, config: options.config})
+
   const app: AppInterface = await loadApp({directory: options.directory, specifications})
 
   // If the user has specified a type, we need to validate it
@@ -59,7 +60,9 @@ async function generate(options: GenerateOptions) {
       )
     }
   } else {
-    specifications = specifications.filter((spec) => app.extensionsForType(spec).length < spec.registrationLimit)
+    specifications = specifications
+      .filter((spec) => spec.identifier !== 'ui_extension')
+      .filter((spec) => app.extensionsForType(spec).length < spec.registrationLimit)
   }
 
   validateExtensionFlavor(specification, options.template)

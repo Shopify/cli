@@ -1,6 +1,6 @@
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
-interface SampleWebhook {
+export interface SampleWebhook {
   samplePayload: string
   headers: string
   success: boolean

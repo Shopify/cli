@@ -1,4 +1,4 @@
-import ConcurrentOutput from './ConcurrentOutput.js'
+import {ConcurrentOutput} from './ConcurrentOutput.js'
 import {getLastFrameAfterUnmount, waitForInputsToBeReady} from '../../testing/ui.js'
 import {AbortController, AbortSignal} from '../../../../public/node/abort.js'
 import React from 'react'
