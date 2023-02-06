@@ -3,9 +3,9 @@ import {
   ExtensionMigrateToUiExtensionSchema,
   ExtensionMigrateToUiExtensionVariables,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
-import {LocalSource, RemoteSource} from '../environment/identifiers.js'
+import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {getExtensionIds, LocalRemoteSource} from '../environment/id-matching.js'
+import {getExtensionIds, LocalRemoteSource} from '../context/id-matching.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'

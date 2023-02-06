@@ -3,7 +3,7 @@ import {createDeployment, healthCheck, uploadDeployment} from './deploy/upload.j
 import {buildTaskList} from './build.js'
 import {validateProject, fillDeployConfig} from './deploy/config.js'
 import {sleep} from '@shopify/cli-kit/node/system'
-import {isUnitTest} from '@shopify/cli-kit/node/environment/local'
+import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {Task, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
 
 interface TaskContext {

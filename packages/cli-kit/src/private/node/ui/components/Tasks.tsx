@@ -1,7 +1,7 @@
 import {TextAnimation} from './TextAnimation.js'
 import useLayout from '../hooks/use-layout.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
-import {isUnitTest} from '../../../../public/node/environment/local.js'
+import {isUnitTest} from '../../../../public/node/context/local.js'
 import {Box, Text} from 'ink'
 import React, {useRef, useState} from 'react'
 

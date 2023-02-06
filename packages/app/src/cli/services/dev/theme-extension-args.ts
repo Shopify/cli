@@ -1,5 +1,5 @@
 import {ThemeExtension} from '../../models/app/extensions.js'
-import {ensureThemeExtensionDevEnvironment} from '../environment.js'
+import {ensureThemeExtensionDevContext} from '../context.js'
 
 export async function themeExtensionArgs(
   extension: ThemeExtension,
@@ -7,7 +7,7 @@ export async function themeExtensionArgs(
   token: string,
   options: {theme?: string; themeExtensionPort?: number},
 ) {
-  const extensionRegistration = await ensureThemeExtensionDevEnvironment(extension, apiKey, token)
+  const extensionRegistration = await ensureThemeExtensionDevContext(extension, apiKey, token)
   const extensionId = extensionRegistration.id
   const directory = extension.directory
   const extensionTitle = extension.localIdentifier

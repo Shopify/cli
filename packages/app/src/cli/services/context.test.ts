@@ -8,15 +8,15 @@ import {
 } from './dev/fetch.js'
 import {selectOrCreateApp} from './dev/select-app.js'
 import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store.js'
-import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
+import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {
-  DevEnvironmentOptions,
-  ensureDevEnvironment,
-  ensureDeployEnvironment,
-  ensureThemeExtensionDevEnvironment,
-  ensureGenerateEnvironment,
-  DeployEnvironmentOptions,
-} from './environment.js'
+  DevContextOptions,
+  ensureDevContext,
+  ensureDeployContext,
+  ensureThemeExtensionDevContext,
+  ensureGenerateContext,
+  DeployContextOptions,
+} from './context.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './conf.js'
 import {OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -42,7 +42,7 @@ vi.mock('./dev/select-store')
 vi.mock('../prompts/dev')
 vi.mock('../models/app/app')
 vi.mock('../models/app/identifiers')
-vi.mock('./environment/identifiers')
+vi.mock('./context/identifiers')
 vi.mock('../models/app/loader.js')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/node-package-manager.js')
@@ -127,19 +127,19 @@ const EXTENSION_A: UIExtension = {
   hasExtensionPointTarget: () => true,
 }
 
-const INPUT: DevEnvironmentOptions = {
+const INPUT: DevContextOptions = {
   directory: 'app_directory',
   reset: false,
 }
 
-const INPUT_WITH_DATA: DevEnvironmentOptions = {
+const INPUT_WITH_DATA: DevContextOptions = {
   directory: 'app_directory',
   reset: false,
   apiKey: 'key1',
   storeFqdn: 'domain1',
 }
 
-const BAD_INPUT_WITH_DATA: DevEnvironmentOptions = {
+const BAD_INPUT_WITH_DATA: DevContextOptions = {
   directory: 'app_directory',
   reset: false,
   apiKey: 'key1',
@@ -152,7 +152,7 @@ const FETCH_RESPONSE = {
   stores: [STORE1, STORE2],
 }
 
-const options = (app: App): DeployEnvironmentOptions => {
+const options = (app: App): DeployContextOptions => {
   return {
     app,
     reset: false,
@@ -178,7 +178,7 @@ describe('ensureGenerateEnvironment', () => {
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
 
     // When
-    const got = await ensureGenerateEnvironment(input)
+    const got = await ensureGenerateContext(input)
 
     // Then
     expect(got).toEqual(APP2.apiKey)
@@ -190,7 +190,7 @@ describe('ensureGenerateEnvironment', () => {
     vi.mocked(getAppInfo).mockReturnValue(CACHED1)
 
     // When
-    const got = await ensureGenerateEnvironment(input)
+    const got = await ensureGenerateContext(input)
 
     // Then
     expect(got).toEqual(APP2.apiKey)
@@ -203,7 +203,7 @@ describe('ensureGenerateEnvironment', () => {
     vi.mocked(getAppInfo).mockReturnValue(undefined)
 
     // When
-    const got = await ensureGenerateEnvironment(input)
+    const got = await ensureGenerateContext(input)
 
     // Then
     expect(got).toEqual(APP1.apiKey)
@@ -228,7 +228,7 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(getAppInfo).mockReturnValue(undefined)
 
     // When
-    const got = await ensureDevEnvironment(INPUT, 'token')
+    const got = await ensureDevContext(INPUT, 'token')
 
     // Then
     expect(got).toEqual({
@@ -264,7 +264,7 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
     // When
-    const got = await ensureDevEnvironment(INPUT, 'token')
+    const got = await ensureDevContext(INPUT, 'token')
 
     // Then
     expect(got).toEqual({
@@ -299,7 +299,7 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
     // When
-    const got = await ensureDevEnvironment(INPUT_WITH_DATA, 'token')
+    const got = await ensureDevContext(INPUT_WITH_DATA, 'token')
 
     // Then
     expect(got).toEqual({
@@ -329,7 +329,7 @@ describe('ensureDevEnvironment', () => {
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: undefined})
 
     // When
-    const got = ensureDevEnvironment(BAD_INPUT_WITH_DATA, 'token')
+    const got = ensureDevContext(BAD_INPUT_WITH_DATA, 'token')
 
     await expect(got).rejects.toThrow(/Could not find invalid_store_domain/)
   })
@@ -337,7 +337,7 @@ describe('ensureDevEnvironment', () => {
   it('resets cached state if reset is true', async () => {
     // When
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
-    await ensureDevEnvironment({...INPUT, reset: true}, 'token')
+    await ensureDevContext({...INPUT, reset: true}, 'token')
 
     // Then
     expect(clearAppInfo).toHaveBeenCalledWith(BAD_INPUT_WITH_DATA.directory)
@@ -359,7 +359,7 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
     // When
-    const got = await ensureDeployEnvironment({app, reset: false, force: false})
+    const got = await ensureDeployContext({app, reset: false, force: false})
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
@@ -386,7 +386,7 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(reuseDevConfigPrompt).mockResolvedValueOnce(true)
 
     // When
-    const got = await ensureDeployEnvironment(options(app))
+    const got = await ensureDeployContext(options(app))
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
@@ -409,7 +409,7 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     // When
-    const got = await ensureDeployEnvironment(options(app))
+    const got = await ensureDeployContext(options(app))
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')
@@ -437,7 +437,7 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(undefined)
 
     // When
-    await expect(ensureDeployEnvironment(options(app))).rejects.toThrow(/Couldn't find the app with API key key1/)
+    await expect(ensureDeployContext(options(app))).rejects.toThrow(/Couldn't find the app with API key key1/)
   })
 
   test('prompts the user to create or select an app if reset is true', async () => {
@@ -458,7 +458,7 @@ describe('ensureDeployEnvironment', () => {
     opts.reset = true
 
     // When
-    const got = await ensureDeployEnvironment(opts)
+    const got = await ensureDeployContext(opts)
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith('token')
@@ -508,7 +508,7 @@ describe('ensureThemeExtensionDevEnvironment', () => {
     })
 
     // When
-    const got = await ensureThemeExtensionDevEnvironment(extension, apiKey, token)
+    const got = await ensureThemeExtensionDevContext(extension, apiKey, token)
 
     // Then
     expect('existing ID').toEqual(got.id)
@@ -534,7 +534,7 @@ describe('ensureThemeExtensionDevEnvironment', () => {
     })
 
     // When
-    const got = await ensureThemeExtensionDevEnvironment(extension, apiKey, token)
+    const got = await ensureThemeExtensionDevContext(extension, apiKey, token)
 
     // Then
     expect('new ID').toEqual(got.id)

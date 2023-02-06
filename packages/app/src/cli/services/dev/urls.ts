@@ -8,8 +8,8 @@ import {Config} from '@oclif/core'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isValidURL} from '@shopify/cli-kit/common/url'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {isSpin, spinFqdn} from '@shopify/cli-kit/node/environment/spin'
-import {codespaceURL, gitpodURL} from '@shopify/cli-kit/node/environment/local'
+import {isSpin, spinFqdn} from '@shopify/cli-kit/node/context/spin'
+import {codespaceURL, gitpodURL} from '@shopify/cli-kit/node/context/local'
 import {runTunnelPlugin, TunnelPluginError} from '@shopify/cli-kit/node/plugins'
 
 export interface PartnersURLs {

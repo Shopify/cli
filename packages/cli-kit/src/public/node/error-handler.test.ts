@@ -1,5 +1,5 @@
 import {errorHandler, cleanStackFrameFilePath, addBugsnagMetadata, sendErrorToBugsnag} from './error-handler.js'
-import {ciPlatform, cloudEnvironment, isUnitTest, macAddress} from './environment/local.js'
+import {ciPlatform, cloudEnvironment, isUnitTest, macAddress} from './context/local.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import * as error from './error.js'
 import {hashString} from '../../public/node/crypto.js'
@@ -20,7 +20,7 @@ vi.mock('../../private/node/error-handler.js', () => {
   }
 })
 vi.mock('./cli.js')
-vi.mock('./environment/local.js')
+vi.mock('./context/local.js')
 vi.mock('../../public/node/crypto.js')
 
 beforeEach(() => {

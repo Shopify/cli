@@ -1,4 +1,4 @@
-import {normalizeStoreFqdn} from './environment/fqdn.js'
+import {normalizeStoreFqdn} from './context/fqdn.js'
 import {BugError} from './error.js'
 import * as secureStore from '../../private/node/session/store.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'

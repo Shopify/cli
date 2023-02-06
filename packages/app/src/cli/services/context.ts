@@ -10,7 +10,7 @@ import {
   fetchAppExtensionRegistrations,
 } from './dev/fetch.js'
 import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
-import {ensureDeploymentIdsPresence} from './environment/identifiers.js'
+import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension, ExtensionRegistration} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './conf.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
@@ -24,7 +24,7 @@ import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-pack
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
-import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
+import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
@@ -35,14 +35,14 @@ export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   }
 }
 
-export interface DevEnvironmentOptions {
+export interface DevContextOptions {
   directory: string
   apiKey?: string
   storeFqdn?: string
   reset: boolean
 }
 
-interface DevEnvironmentOutput {
+interface DevContextOutput {
   remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {apiSecret?: string}
   remoteAppUpdated: boolean
   storeFqdn: string
@@ -51,7 +51,7 @@ interface DevEnvironmentOutput {
 }
 
 /**
- * Make sure there is a valid environment to execute `generate extension`
+ * Make sure there is a valid context to execute `generate extension`
  *
  * We just need a valid app API key to access the Specifications API.
  * - If the API key is provided via flag, we use it.
@@ -60,7 +60,7 @@ interface DevEnvironmentOutput {
  *
  * The selection is then cached as the "dev" app for the current directory.
  */
-export async function ensureGenerateEnvironment(options: {
+export async function ensureGenerateContext(options: {
   apiKey?: string
   directory: string
   reset: boolean
@@ -109,7 +109,7 @@ export async function ensureGenerateEnvironment(options: {
 }
 
 /**
- * Make sure there is a valid environment to execute `dev`
+ * Make sure there is a valid context to execute `dev`
  * That means we have a valid organization, app and dev store selected.
  *
  * If there are app/store from flags, we check if they are valid. If they are not, throw an error.
@@ -119,13 +119,10 @@ export async function ensureGenerateEnvironment(options: {
  *  - The new selection will be saved as global configuration
  *  - The `shopify.app.toml` file will be updated with the new app apiKey
  *
- * @param options - Current dev environment options
+ * @param options - Current dev context options
  * @returns The selected org, app and dev store
  */
-export async function ensureDevEnvironment(
-  options: DevEnvironmentOptions,
-  token: string,
-): Promise<DevEnvironmentOutput> {
+export async function ensureDevContext(options: DevContextOptions, token: string): Promise<DevContextOutput> {
   const cachedInfo = getAppDevCachedInfo({
     reset: options.reset,
     directory: options.directory,
@@ -201,11 +198,11 @@ export async function ensureDevEnvironment(
   }
 
   const result = buildOutput(selectedApp, selectedStore, cachedInfo)
-  await logMetadataForLoadedDevEnvironment(result)
+  await logMetadataForLoadedDevContext(result)
   return result
 }
 
-function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?: CachedAppInfo): DevEnvironmentOutput {
+function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?: CachedAppInfo): DevContextOutput {
   return {
     remoteApp: {
       ...app,
@@ -218,14 +215,14 @@ function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?
   }
 }
 
-export interface DeployEnvironmentOptions {
+export interface DeployContextOptions {
   app: AppInterface
   apiKey?: string
   reset: boolean
   force: boolean
 }
 
-interface DeployEnvironmentOutput {
+interface DeployContextOutput {
   app: AppInterface
   token: string
   partnersOrganizationId: string
@@ -255,7 +252,7 @@ export async function fetchDevAppAndPrompt(app: AppInterface, token: string): Pr
   return reuse ? partnersResponse : undefined
 }
 
-export async function ensureThemeExtensionDevEnvironment(
+export async function ensureThemeExtensionDevContext(
   extension: ThemeExtension,
   apiKey: string,
   token: string,
@@ -274,7 +271,7 @@ export async function ensureThemeExtensionDevEnvironment(
   return registration
 }
 
-export async function ensureDeployEnvironment(options: DeployEnvironmentOptions): Promise<DeployEnvironmentOutput> {
+export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
   const token = await ensureAuthenticatedPartners()
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
 
@@ -308,7 +305,7 @@ export async function ensureDeployEnvironment(options: DeployEnvironmentOptions)
     token,
   }
 
-  await logMetadataForLoadedDeployEnvironment(result)
+  await logMetadataForLoadedDeployContext(result)
   return result
 }
 
@@ -378,7 +375,7 @@ async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<Fet
  * If any of the inputs is invalid, we must throw an error and stop the execution.
  */
 async function fetchDevDataFromOptions(
-  options: DevEnvironmentOptions,
+  options: DevContextOptions,
   orgId: string,
   token: string,
 ): Promise<{app?: OrganizationApp; store?: OrganizationStore}> {
@@ -497,14 +494,14 @@ function showDevValues(org: string, appName: string) {
   })
 }
 
-async function logMetadataForLoadedDevEnvironment(env: DevEnvironmentOutput) {
+async function logMetadataForLoadedDevContext(env: DevContextOutput) {
   await metadata.addPublicMetadata(() => ({
     partner_id: tryParseInt(env.remoteApp.organizationId),
     api_key: env.remoteApp.apiKey,
   }))
 }
 
-async function logMetadataForLoadedDeployEnvironment(env: DeployEnvironmentOutput) {
+async function logMetadataForLoadedDeployContext(env: DeployContextOutput) {
   await metadata.addPublicMetadata(() => ({
     partner_id: tryParseInt(env.partnersOrganizationId),
     api_key: env.identifiers.app,

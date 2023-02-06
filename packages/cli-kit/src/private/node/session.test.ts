@@ -13,8 +13,8 @@ import {store as secureStore, fetch as secureFetch} from './session/store.js'
 import {ApplicationToken, IdentityToken, Session} from './session/schema.js'
 import {validateSession} from './session/validate.js'
 import {applicationId} from './session/identity.js'
-import * as fqdnModule from '../../public/node/environment/fqdn.js'
-import {useDeviceAuth} from '../../public/node/environment/local.js'
+import * as fqdnModule from '../../public/node/context/fqdn.js'
+import {useDeviceAuth} from '../../public/node/context/local.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {vi, describe, expect, it, beforeEach} from 'vitest'
 
@@ -82,7 +82,7 @@ const invalidSession: Session = {
   },
 }
 
-vi.mock('../../public/node/environment/local.js')
+vi.mock('../../public/node/context/local.js')
 vi.mock('./session/identity')
 vi.mock('./session/authorize')
 vi.mock('./session/exchange')

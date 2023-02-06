@@ -1,11 +1,11 @@
 import {fileExists, readFileSync} from '../fs.js'
-import {isTruthy} from '../../../private/node/environment/utilities.js'
+import {isTruthy} from '../../../private/node/context/utilities.js'
 import {environmentVariables} from '../../../private/node/constants.js'
 import {captureOutput} from '../system.js'
 import {outputContent, outputToken} from '../../../public/node/output.js'
-import {getCachedSpinFqdn, setCachedSpinFqdn} from '../../../private/node/environment/spin-cache.js'
+import {getCachedSpinFqdn, setCachedSpinFqdn} from '../../../private/node/context/spin-cache.js'
 import {AbortError} from '../error.js'
-import {Environment, serviceEnvironment} from '../../../private/node/environment/service.js'
+import {Environment, serviceEnvironment} from '../../../private/node/context/service.js'
 
 const SpinInstanceNotFoundMessages = (spinInstance: string | undefined, error: string) => {
   const errorMessage = outputContent`${outputToken.genericShellCommand(

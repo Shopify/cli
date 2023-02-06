@@ -1,10 +1,10 @@
 import {themeExtensionArgs} from './theme-extension-args.js'
-import {ensureThemeExtensionDevEnvironment} from '../environment.js'
+import {ensureThemeExtensionDevContext} from '../context.js'
 import {testThemeExtensions} from '../../models/app/app.test-data.js'
 import {describe, expect, it, vi} from 'vitest'
 
 vi.mock('../../models/app/app.js')
-vi.mock('../environment.js')
+vi.mock('../context.js')
 
 describe('themeExtensionArgs', async () => {
   it('returns valid theme extension arguments', async () => {
@@ -20,7 +20,7 @@ describe('themeExtensionArgs', async () => {
       title: 'theme app extension',
     }
 
-    vi.mocked(ensureThemeExtensionDevEnvironment).mockReturnValue(Promise.resolve(registration))
+    vi.mocked(ensureThemeExtensionDevContext).mockReturnValue(Promise.resolve(registration))
 
     const args = await themeExtensionArgs(extension, apiKey, token, options)
 

@@ -1,5 +1,5 @@
 import {Flags} from '@oclif/core'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/environment/fqdn'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 
 /**

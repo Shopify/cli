@@ -12,7 +12,7 @@ import {parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
-import {isShopify} from '@shopify/cli-kit/node/environment/local'
+import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {
   addAllToGitFromDirectory,
   createGitCommit,

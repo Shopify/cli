@@ -1,4 +1,4 @@
-import {ensureDevEnvironment} from './environment.js'
+import {ensureDevContext} from './context.js'
 import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
@@ -26,7 +26,7 @@ import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {exec} from '@shopify/cli-kit/node/system'
-import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/environment/spin'
+import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/context/spin'
 import {
   AdminSession,
   ensureAuthenticatedAdmin,
@@ -70,7 +70,7 @@ async function dev(options: DevOptions) {
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
     tunnelPlugin,
-  } = await ensureDevEnvironment(options, token)
+  } = await ensureDevContext(options, token)
 
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})

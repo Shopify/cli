@@ -1,9 +1,9 @@
 import generate from './generate.js'
+import {ensureGenerateContext} from './context.js'
 import {load as loadApp} from '../models/app/loader.js'
 import generateExtensionPrompt from '../prompts/generate/extension.js'
 import generateExtensionService from '../services/generate/extension.js'
 import {testApp, testRemoteSpecifications, testThemeExtensions} from '../models/app/app.test-data.js'
-import {ensureGenerateEnvironment} from '../services/environment.js'
 import {Extension} from '../models/app/extensions.js'
 import {describe, expect, it, vi, beforeAll, afterEach} from 'vitest'
 import {Config} from '@oclif/core'
@@ -16,7 +16,7 @@ vi.mock('../constants.js')
 vi.mock('../models/app/loader.js')
 vi.mock('../prompts/generate/extension.js')
 vi.mock('../services/generate/extension.js')
-vi.mock('../services/environment.js')
+vi.mock('../services/context.js')
 vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('./conf.js')
@@ -148,7 +148,7 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
 
   vi.mocked(loadApp).mockResolvedValue(app)
   vi.mocked(partnersRequest).mockResolvedValueOnce({extensionSpecifications: testRemoteSpecifications})
-  vi.mocked(ensureGenerateEnvironment).mockResolvedValue('api-key')
+  vi.mocked(ensureGenerateContext).mockResolvedValue('api-key')
   vi.mocked(generateExtensionPrompt).mockResolvedValue({name: 'name', extensionType: identifier})
   vi.mocked(generateExtensionService).mockResolvedValue(joinPath('extensions', 'name'))
   return mockAndCaptureOutput()

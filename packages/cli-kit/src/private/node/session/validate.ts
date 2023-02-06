@@ -3,7 +3,7 @@ import {ApplicationToken, IdentityToken} from './schema.js'
 import {validateIdentityToken} from './identity-token-validation.js'
 import {sessionConstants} from '../constants.js'
 import {outputDebug} from '../../../public/node/output.js'
-import {firstPartyDev} from '../../../public/node/environment/local.js'
+import {firstPartyDev} from '../../../public/node/context/local.js'
 import {OAuthApplications} from '../session.js'
 
 type ValidationResult = 'needs_refresh' | 'needs_full_auth' | 'ok'
