@@ -51,7 +51,7 @@ view, similar to what [listr2](https://github.com/cenk1cenk2/listr2) does. The c
 approach, choosing to display only the currently running task without showing any of the writes of this task to `stdout`.
 This was done on purpose so that the interface would flicker less and be visually more calm, much like how the Apple starting interface
 looks compared to Ubuntu's, with all the logs printed out raw at the start. In this case then the `listr2` UI wouldn't fit very well with the design approach we've taken. If you're unsure if what you're going to build will fit the current design system
-feel free to reach out to the @shopify/cli-foundations team for guidance.
+feel free to open an issue in the @shopify/cli repository.
 
 ### Ok ok, but I still want to add a new function
 
