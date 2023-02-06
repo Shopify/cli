@@ -2,12 +2,17 @@ import * as throttler from './themes-api/throttler.js'
 import {apiCallLimit, retryAfter} from './themes-api/headers.js'
 import {retry} from './themes-api/retry.js'
 import {storeAdminUrl} from './theme-urls.js'
-import {Theme} from '../models/theme.js'
+import {Theme} from './models/theme.js'
 import {restRequest, RestResponse} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role'>>
+
+export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
+  const response = await request('GET', `/themes/${id}`, session, undefined, {fields: 'id'})
+  return buildTheme(response.json.theme)
+}
 
 export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
   const response = await request('GET', '/themes', session, undefined, {fields: 'id,name,role'})
@@ -16,7 +21,7 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
 
 export async function createTheme(params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
   const response = await request('POST', '/themes', session, {theme: {...params}})
-  return buildTheme(response.json.theme)
+  return buildTheme({...response.json.theme, createdAtRuntime: true})
 }
 
 export async function updateTheme(id: number, params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
@@ -87,7 +92,7 @@ function buildTheme(themeJson: any): Theme | undefined {
     return undefined
   }
 
-  return new Theme(themeJson.id, themeJson.name, themeJson.role)
+  return new Theme(themeJson.id, themeJson.name, themeJson.role, themeJson.createdAtRuntime)
 }
 
 function handleForbiddenError(session: AdminSession): never {

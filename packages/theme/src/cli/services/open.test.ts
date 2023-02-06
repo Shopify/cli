@@ -1,6 +1,6 @@
 import {open} from './open.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
-import {Theme} from '../models/theme.js'
+import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {test, describe, expect, vi} from 'vitest'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {renderInfo} from '@shopify/cli-kit/node/ui'

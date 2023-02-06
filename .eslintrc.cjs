@@ -190,6 +190,7 @@ module.exports = {
         '**/public/node/plugins/tunnel.ts',
         '**/public/node/environments.ts',
         '**/public/node/result.ts',
+        '**/public/node/themes/**/*',
       ],
       rules: {
         'jsdoc/check-access': 'error',
@@ -251,6 +252,7 @@ module.exports = {
       rules: {
         '@typescript-eslint/explicit-module-boundary-types': 'error',
       },
+      excludedFiles: ['**/public/node/themes/**/*'],
     },
     {
       files: ['src/private/node/ui/components/**/*.tsx'],

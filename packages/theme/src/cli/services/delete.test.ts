@@ -1,13 +1,18 @@
 import {deleteThemes, renderDeprecatedArgsWarning} from './delete.js'
-import {Theme} from '../models/theme.js'
-import {deleteTheme} from '../utilities/themes-api.js'
 import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
+import {deleteTheme} from '@shopify/cli-kit/node/themes/themes-api'
+import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {test, describe, expect, vi} from 'vitest'
 import {renderConfirmationPrompt, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('../utilities/themes-api.js')
+vi.mock('@shopify/cli-kit/node/themes/themes-api')
 vi.mock('../utilities/theme-selector.js')
+vi.mock('../utilities/development-theme-manager.js', () => {
+  const DevelopmentThemeManager = vi.fn()
+  DevelopmentThemeManager.prototype.find = () => theme1
+  return {DevelopmentThemeManager}
+})
 
 const session = {
   token: 'token',

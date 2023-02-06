@@ -1,5 +1,5 @@
 import {storeAdminUrl, themeEditorUrl, themePreviewUrl} from './theme-urls.js'
-import {Theme} from '../models/theme.js'
+import {Theme} from './models/theme.js'
 import {test, describe, expect} from 'vitest'
 
 const session = {token: 'token', storeFqdn: 'my-shop.myshopify.com'}
