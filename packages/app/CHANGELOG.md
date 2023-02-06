@@ -1,5 +1,33 @@
 # @shopify/app
 
+## 3.40.0
+
+### Minor Changes
+
+- cfb4b7f68: Improve output of preview instructions in dev command
+- 9e74a9fc0: Send an app/uninstalled webhook to the app when the user selects a different app, to force the app to clean up the store's database entry
+- 64bcf07c7: Enable Shopify Plus Sandbox stores
+- 48122f791: Add the ability to migrate checkout ui extensions to the new ui extension type
+- af42f22f6: Update Checkout UI template to use the new extension format
+
+### Patch Changes
+
+- 1661f80a2: Various copy improvements
+- 228328a6d: Remove old `ui` module from cli-kit exports
+- c30eb6978: Rename experimental presets feature to environments
+- 3e94c0e0f: Fix the partnersWebIdentifier for the ui_extension specification
+- Updated dependencies [91e15fed4]
+- Updated dependencies [cfb4b7f68]
+- Updated dependencies [9e74a9fc0]
+- Updated dependencies [1661f80a2]
+- Updated dependencies [ae22dfbaf]
+- Updated dependencies [7734a7ed3]
+- Updated dependencies [5ba869fb2]
+- Updated dependencies [228328a6d]
+- Updated dependencies [c30eb6978]
+  - @shopify/cli-kit@3.40.0
+  - @shopify/plugin-ngrok@3.40.0
+
 ## 3.39.0
 
 ### Minor Changes
