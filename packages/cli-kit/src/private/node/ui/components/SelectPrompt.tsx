@@ -3,10 +3,11 @@ import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import {InlineToken, LinkToken, TokenItem, TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import {messageWithPunctuation} from '../utilities.js'
-import React, {ReactElement, useCallback, useState} from 'react'
+import React, {ReactElement, useCallback, useEffect, useState} from 'react'
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
 import figures from 'figures'
 import ansiEscapes from 'ansi-escapes'
+import {uniqBy} from '@shopify/cli-kit/common/array'
 
 export interface SelectPromptProps<T> {
   message: TokenItem<Exclude<InlineToken, LinkToken>>
@@ -15,7 +16,6 @@ export interface SelectPromptProps<T> {
   infoTable?: InfoTableProps['table']
   defaultValue?: T
   submitWithShortcuts?: boolean
-  limit?: number
 }
 
 // eslint-disable-next-line react/function-component-definition
@@ -26,7 +26,6 @@ function SelectPrompt<T>({
   onSubmit,
   defaultValue,
   submitWithShortcuts = false,
-  limit,
 }: React.PropsWithChildren<SelectPromptProps<T>>): ReactElement | null {
   if (choices.length === 0) {
     throw new Error('SelectPrompt requires at least one choice')
@@ -36,25 +35,59 @@ function SelectPrompt<T>({
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
   const {stdout} = useStdout()
-  const [height, setHeight] = useState(0)
+  const [wrapperHeight, setWrapperHeight] = useState(0)
+  const [selectInputHeight, setSelectInputHeight] = useState(0)
+  const [limit, setLimit] = useState(choices.length)
+  const numberOfGroups = uniqBy(
+    choices.filter((choice) => choice.group),
+    'group',
+  ).length
 
-  const measuredRef = useCallback((node) => {
+  const wrapperRef = useCallback((node) => {
     if (node !== null) {
       const {height} = measureElement(node)
-      setHeight(height)
+      setWrapperHeight(height)
     }
   }, [])
 
+  const inputRef = useCallback((node) => {
+    if (node !== null) {
+      const {height} = measureElement(node)
+      setSelectInputHeight(height)
+    }
+  }, [])
+
+  useEffect(() => {
+    function onResize() {
+      const availableSpace = stdout!.rows - (wrapperHeight - selectInputHeight)
+      // rough estimate of the limit needed based on the space available
+      const newLimit = Math.max(2, availableSpace - numberOfGroups * 2 - 6)
+
+      if (newLimit < limit) {
+        stdout!.write(ansiEscapes.clearTerminal)
+      }
+
+      setLimit(Math.min(newLimit, choices.length))
+    }
+
+    onResize()
+
+    stdout!.on('resize', onResize)
+    return () => {
+      stdout!.off('resize', onResize)
+    }
+  }, [wrapperHeight, selectInputHeight, choices.length, stdout!.rows, numberOfGroups])
+
   const submitAnswer = useCallback(
     (answer: SelectItem<T>) => {
-      if (stdout && height >= stdout.rows) {
+      if (stdout && wrapperHeight >= stdout.rows) {
         stdout.write(ansiEscapes.clearTerminal)
       }
       setSubmitted(true)
       unmountInk()
       onSubmit(answer.value)
     },
-    [stdout, stdout?.rows, height, onSubmit],
+    [stdout!.rows, wrapperHeight],
   )
 
   useInput(
@@ -71,7 +104,7 @@ function SelectPrompt<T>({
   )
 
   return (
-    <Box flexDirection="column" marginBottom={1} ref={measuredRef}>
+    <Box flexDirection="column" marginBottom={1} ref={wrapperRef}>
       <Box>
         <Box marginRight={2}>
           <Text>?</Text>
@@ -109,6 +142,7 @@ function SelectPrompt<T>({
               }
             }}
             limit={limit}
+            ref={inputRef}
           />
         </Box>
       )}

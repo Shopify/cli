@@ -1,12 +1,18 @@
 import {isEqual} from '../../../../public/common/lang.js'
-import React, {useState, useEffect, useRef, useCallback} from 'react'
-import {Box, Key, useInput, Text} from 'ink'
+import React, {useState, useEffect, useRef, useCallback, forwardRef} from 'react'
+import {Box, Key, useInput, Text, DOMElement} from 'ink'
 import {debounce} from '@shopify/cli-kit/common/function'
 import chalk from 'chalk'
 import figures from 'figures'
 import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)
+
+declare module 'react' {
+  function forwardRef<T, P>(
+    render: (props: P, ref: React.Ref<T>) => JSX.Element | null,
+  ): (props: P & React.RefAttributes<T>) => JSX.Element | null
+}
 
 function rotateArray<T>(array: T[], rotation?: number) {
   const arrayCopy = array.slice()
@@ -100,21 +106,24 @@ function Item<T>({
 }
 
 // eslint-disable-next-line react/function-component-definition
-function SelectInput<T>({
-  items: initialItems,
-  onChange,
-  enableShortcuts = true,
-  focus = true,
-  emptyMessage = 'No items to select.',
-  defaultValue,
-  highlightedTerm,
-  loading = false,
-  errorMessage,
-  hasMorePages = false,
-  morePagesMessage,
-  infoMessage,
-  limit,
-}: React.PropsWithChildren<SelectInputProps<T>>): JSX.Element | null {
+function SelectInputInner<T>(
+  {
+    items: initialItems,
+    onChange,
+    enableShortcuts = true,
+    focus = true,
+    emptyMessage = 'No items to select.',
+    defaultValue,
+    highlightedTerm,
+    loading = false,
+    errorMessage,
+    hasMorePages = false,
+    morePagesMessage,
+    infoMessage,
+    limit,
+  }: SelectInputProps<T>,
+  ref: React.ForwardedRef<DOMElement>,
+): JSX.Element | null {
   const sortBy = require('lodash/sortBy')
   const hasAnyGroup = initialItems.some((item) => typeof item.group !== 'undefined')
   const items = sortBy(initialItems, 'group') as Item<T>[]
@@ -258,7 +267,7 @@ function SelectInput<T>({
     )
   } else {
     return (
-      <Box flexDirection="column">
+      <Box flexDirection="column" ref={ref}>
         {slicedItemsWithKeys.map((item, index) => (
           <Item
             key={item.key}
@@ -293,4 +302,4 @@ function SelectInput<T>({
   }
 }
 
-export {SelectInput}
+export const SelectInput = forwardRef(SelectInputInner)

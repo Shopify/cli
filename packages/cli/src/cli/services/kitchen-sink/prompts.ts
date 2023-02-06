@@ -22,7 +22,6 @@ export async function prompts() {
       {label: 'tenth', value: 'tenth'},
     ],
     infoTable: {add: ['new-ext'], remove: ['integrated-demand-ext', 'order-discount']},
-    limit: 5,
   })
 
   // renderTextPrompt
