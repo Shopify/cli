@@ -1,12 +1,10 @@
 import {createRuntimeMetadataContainer} from './metadata.js'
 import * as errorHandler from './error-handler.js'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
+
+vi.mock('./error-handler.js')
 
 describe('runtime metadata', () => {
-  beforeEach(() => {
-    vi.mock('./error-handler.js')
-  })
-
   it('can manage data', async () => {
     const container = createRuntimeMetadataContainer<
       {

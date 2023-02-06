@@ -7,11 +7,11 @@ import {Config} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
-beforeEach(() => {
-  vi.mock('../prompts/init')
-  vi.mock('../services/init')
-  vi.mock('@shopify/cli-kit/node/error-handler')
+vi.mock('../prompts/init')
+vi.mock('../services/init')
+vi.mock('@shopify/cli-kit/node/error-handler')
 
+beforeEach(() => {
   vi.mocked(initPrompt).mockResolvedValue({name: 'name', template: 'http://test.es'})
 })
 

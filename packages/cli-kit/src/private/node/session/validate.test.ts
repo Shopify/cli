@@ -67,9 +67,10 @@ const defaultApps: OAuthApplications = {
   storefrontRendererApi: {scopes: []},
 }
 
+vi.mock('./identity-token-validation')
+vi.mock('./identity')
+
 beforeEach(() => {
-  vi.mock('./identity-token-validation')
-  vi.mock('./identity')
   vi.mocked(applicationId).mockImplementation((id: any) => id)
   vi.setSystemTime(currentDate)
   vi.mocked(validateIdentityToken).mockResolvedValue(true)

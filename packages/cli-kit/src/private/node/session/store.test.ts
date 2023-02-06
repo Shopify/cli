@@ -7,20 +7,19 @@ import {describe, expect, vi, it, beforeEach} from 'vitest'
 
 const findCredentials = vi.fn()
 
+vi.mock('../secure-store.js')
+vi.mock('../conf-store.js')
+vi.mock('../../../public/node/os')
+vi.mock('keytar', () => {
+  return {
+    default: {
+      findCredentials,
+    },
+  }
+})
+
 beforeEach(() => {
-  vi.resetAllMocks()
-  vi.clearAllMocks()
-  vi.mock('../secure-store.js')
-  vi.mock('../conf-store.js')
-  vi.mock('../../../public/node/os')
   vi.mocked(platformAndArch).mockReturnValue({platform: 'darwin', arch: 'x64'})
-  vi.mock('keytar', () => {
-    return {
-      default: {
-        findCredentials,
-      },
-    }
-  })
 })
 
 describe('store', () => {

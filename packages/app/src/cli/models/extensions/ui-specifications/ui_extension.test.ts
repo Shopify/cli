@@ -1,4 +1,5 @@
 import {configurationFileNames} from '../../../constants.js'
+
 import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
 import {UIExtensionInstance, UIExtensionSpec} from '../ui.js'
 import {loadLocalExtensionsSpecifications} from '../specifications.js'
@@ -6,11 +7,12 @@ import {describe, expect, test, vi} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {inTemporaryDirectory, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import type {NewExtensionPointSchemaType} from '../../extensions/schemas.js'
 
 describe('ui_extension', async () => {
   interface GetUIExtensionProps {
     directory: string
-    extensionPoints?: {target: string; module: string}[]
+    extensionPoints?: NewExtensionPointSchemaType[]
   }
 
   async function getTestUIExtension({directory, extensionPoints}: GetUIExtensionProps) {
@@ -164,7 +166,7 @@ Please check the configuration in ${tomlPath}`),
   })
 
   describe('deployConfig()', () => {
-    test('returns the deploy config', async () => {
+    test('returns the deploy config, excluding module for extension points', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const localization = {
@@ -178,6 +180,7 @@ Please check the configuration in ${tomlPath}`),
             {
               target: 'EXTENSION::POINT::A',
               module: './src/ExtensionPointA.js',
+              metafields: [{namespace: 'my-namespace', key: 'my-key'}],
             },
           ],
         })
@@ -189,7 +192,12 @@ Please check the configuration in ${tomlPath}`),
         expect(loadLocales.loadLocalesConfig).toBeCalledWith(tmpDir, uiExtension.configuration.type)
         expect(deployConfig).toStrictEqual({
           localization,
-          extension_points: uiExtension.configuration.extensionPoints,
+          extension_points: [
+            {
+              target: 'EXTENSION::POINT::A',
+              metafields: [{namespace: 'my-namespace', key: 'my-key'}],
+            },
+          ],
           capabilities: uiExtension.configuration.capabilities,
           name: uiExtension.configuration.name,
           api_version: uiExtension.configuration.apiVersion,

@@ -1,5 +1,5 @@
 import {previewInWorker} from './preview.js'
-import {describe, it, expect, vi, afterEach} from 'vitest'
+import {describe, it, expect, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import {inTemporaryDirectory, writeFile, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -17,10 +17,6 @@ vi.mock('@shopify/mini-oxygen')
 vi.mock('@shopify/cli-kit/node/system')
 
 describe('hydrogen preview', () => {
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
   describe('worker', () => {
     it('writes a local mini oxygen config file', async () => {
       await inTemporaryDirectory(async (tmpDir) => {

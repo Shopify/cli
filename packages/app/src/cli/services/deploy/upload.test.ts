@@ -6,21 +6,15 @@ import {
   UploadUrlGenerateMutationSchema,
 } from '../../api/graphql/functions/upload_url_generate.js'
 import {AppFunctionSetMutation, AppFunctionSetMutationSchema} from '../../api/graphql/functions/app_function_set.js'
-import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {functionProxyRequest} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-afterEach(() => {
-  vi.restoreAllMocks()
-})
-
-beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/api/partners')
-  vi.mock('@shopify/cli-kit/node/http')
-})
+vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('@shopify/cli-kit/node/http')
 
 describe('uploadFunctionExtensions', () => {
   let extension: FunctionExtension

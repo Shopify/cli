@@ -145,22 +145,23 @@ const options = (uiExtensions: UIExtension[], identifiers: any = {}) => {
   }
 }
 
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('./prompts', async () => {
+  const prompts: any = await vi.importActual('./prompts')
+  return {
+    ...prompts,
+    matchConfirmationPrompt: vi.fn(),
+    deployConfirmationPrompt: vi.fn(),
+    extensionMigrationPrompt: vi.fn(),
+  }
+})
+vi.mock('../dev/create-extension')
+vi.mock('./id-matching')
+vi.mock('./id-manual-matching')
+vi.mock('../dev/migrate-to-ui-extension')
+
 beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/session')
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-  vi.mock('./prompts', async () => {
-    const prompts: any = await vi.importActual('./prompts')
-    return {
-      ...prompts,
-      matchConfirmationPrompt: vi.fn(),
-      deployConfirmationPrompt: vi.fn(),
-      extensionMigrationPrompt: vi.fn(),
-    }
-  })
-  vi.mock('../dev/create-extension')
-  vi.mock('./id-matching')
-  vi.mock('./id-manual-matching')
-  vi.mock('../dev/migrate-to-ui-extension')
   vi.mocked(getExtensionsToMigrate).mockReturnValue([])
 })
 
