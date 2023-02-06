@@ -17,7 +17,9 @@ export function TooltipPopover({targetRef, text}: TooltipPopoverProps) {
   const ref = useRef<HTMLDivElement | null>(null)
 
   const getPositionRelativeToRef = (): Position => {
-    const {x, y, height} = targetRef.current!.getBoundingClientRect()
+    if (!targetRef.current) return {x: 0, y: 0}
+
+    const {x, y, height} = targetRef.current.getBoundingClientRect()
     const {scrollY, scrollX} = window
 
     return {
