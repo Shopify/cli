@@ -1,5 +1,27 @@
 # app
 
+## 3.40.0
+
+### Minor Changes
+
+- 64bcf07c7: Enable Shopify Plus Sandbox stores
+- af42f22f6: Update Checkout UI template to use the new extension format
+
+### Patch Changes
+
+- Updated dependencies [cfb4b7f68]
+- Updated dependencies [9e74a9fc0]
+- Updated dependencies [1661f80a2]
+- Updated dependencies [413980f0b]
+- Updated dependencies [64bcf07c7]
+- Updated dependencies [48122f791]
+- Updated dependencies [af42f22f6]
+- Updated dependencies [228328a6d]
+- Updated dependencies [c30eb6978]
+- Updated dependencies [3e94c0e0f]
+  - @shopify/app@3.40.0
+  - @shopify/cli@3.40.0
+
 ## 3.39.0
 
 ### Patch Changes

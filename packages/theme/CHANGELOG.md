@@ -1,5 +1,28 @@
 # @shopify/theme
 
+## 3.40.0
+
+### Minor Changes
+
+- b69bee85c: Add an alias to the `shopify theme serve` command
+
+### Patch Changes
+
+- 1661f80a2: Various copy improvements
+- 99b88caa7: Fix to include customer JSON templates in `theme package`
+- 5ba869fb2: Extract the ownership of development themes
+- 228328a6d: Remove old `ui` module from cli-kit exports
+- Updated dependencies [91e15fed4]
+- Updated dependencies [cfb4b7f68]
+- Updated dependencies [9e74a9fc0]
+- Updated dependencies [1661f80a2]
+- Updated dependencies [ae22dfbaf]
+- Updated dependencies [7734a7ed3]
+- Updated dependencies [5ba869fb2]
+- Updated dependencies [228328a6d]
+- Updated dependencies [c30eb6978]
+  - @shopify/cli-kit@3.40.0
+
 ## 3.39.0
 
 ### Patch Changes
