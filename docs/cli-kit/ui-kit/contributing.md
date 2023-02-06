@@ -1,5 +1,30 @@
 # Contributing to UI Kit
 
+## Table of Contents
+
+- [What is UI Kit](#what-is-ui-kit)
+- [Principles](#principles)
+- [Adding a new `render` function](#adding-a-new-render-function)
+  - [Extending what is already there](#extending-what-is-already-there)
+  - [Creating something in line with the design system](#creating-something-in-line-with-the-design-system)
+  - [Ok ok, but I still want to add a new function](#ok-ok-but-i-still-want-to-add-a-new-function)
+- [Adding a new component](#adding-a-new-component)
+- [Testing components](#testing-components)
+- [Components overview](#components-overview)
+  - [`Text` vs `Box`](#text-vs-box)
+  - [Utility components](#utility-components)
+    - [`TokenizedText`](#tokenizedtext)
+    - [`FullScreen`](#fullscreen)
+    - [`TextAnimation`](#textanimation)
+    - [`TextWithBackground`](#textwithbackground)
+- [Helpful tips](#helpful-tips)
+  - [Handling user input](#handling-user-input)
+  - [Components that deal with async functions](#components-that-deal-with-async-functions)
+  - [Layout system](#layout-system)
+- [Troubleshooting](#troubleshooting)
+  - [My tests are passing locally but not on CI!](#my-tests-are-passing-locally-but-not-on-ci)
+- [Testing outside of components](#testing-outside-of-components)
+
 ## What is UI Kit
 
 UI Kit is a library that can be used to either ask for input from the user or render output to the terminal.
@@ -92,6 +117,36 @@ The main difference with using React on the web is that (obviously) we don't hav
 Ink instead uses [yoga](https://github.com/facebook/yoga) under the hood for its layout system, which will give you access to [most](https://github.com/vadimdemedes/ink/pull/479)
 of the flexbox system properties you've used for the web.
 
+## Testing components
+
+For every component please try to add a corresponding `.test.tsx` file. Depending on what you're component does you can then
+test how it behaves with input and what kind of output it produces.
+
+**Output**
+
+For output you can use `ink-testing-library`'s `render` function which will return a `lastFrame` function that can be called to get
+the last frame rendered by Ink. This, in conjunction with `vitest`'s `toMatchInlineSnapshot` should be sufficient.
+If you want to wait for a component to finish processing an async function you can wait for the next tick before checking the last
+frame with something like `await new Promise((resolve) => setTimeout(resolve, 0))`
+
+**Input**
+
+After you've rendered a component in a test it won't be ready to accept inputs immediately. This is a known shortcoming of
+Ink that the author is aware of. Lacking a callback or a promise we can await we've added a `waitForInputsToBeReady`
+function that can be awaited and will make sure that the component is ready to accept input.
+
+Input can be sent by writing to the `stdin` of the instance returned by `render`, as so
+
+```
+renderInstance.stdin.write("a")
+```
+
+You typically will want to wait for some change to happen in the component after input has been sent.
+For that we've added a bunch of helper functions to help you test inputs inside `src/private/node/testing/ui.ts`.
+Every function is documented with a comment above so check out that file to know more about them.
+
+## Components overview
+
 ### `Text` vs `Box`
 
 **`Box`**
@@ -176,6 +231,8 @@ Because backgrounds are inverted space characters, adding background color to `B
 For this use case we've added a simple `TextWithBackground` component that can render only plain strings (no `TokenItem`)
 and will be only fullscreen, meaning it won't have the width of the box it's included in.
 
+## Helpful tips
+
 ### Handling user input
 
 For input you can use Ink's `useInput` callback. One thing to note is that, because using `useInput`
@@ -199,33 +256,7 @@ Still, to make it easier to create components that visually align together, we'v
 You can call `useLayout` and access these three columns to use as you wish, bearing in mind that most components will
 render taking 2 columns with a few exceptions.
 
-## Testing components
-
-For every component please try to add a corresponding `.test.tsx` file. Depending on what you're component does you can then
-test how it behaves with input and what kind of output it produces.
-
-**Output**
-
-For output you can use `ink-testing-library`'s `render` function which will return a `lastFrame` function that can be called to get
-the last frame rendered by Ink. This, in conjunction with `vitest`'s `toMatchInlineSnapshot` should be sufficient.
-If you want to wait for a component to finish processing an async function you can wait for the next tick before checking the last
-frame with something like `await new Promise((resolve) => setTimeout(resolve, 0))`
-
-**Input**
-
-After you've rendered a component in a test it won't be ready to accept inputs immediately. This is a known shortcoming of
-Ink that the author is aware of. Lacking a callback or a promise we can await we've added a `waitForInputsToBeReady`
-function that can be awaited and will make sure that the component is ready to accept input.
-
-Input can be sent by writing to the `stdin` of the instance returned by `render`, as so
-
-```
-renderInstance.stdin.write("a")
-```
-
-You typically will want to wait for some change to happen in the component after input has been sent.
-For that we've added a bunch of helper functions to help you test inputs inside `src/private/node/testing/ui.ts`.
-Every function is documented with a comment above so check out that file to know more about them.
+## Troubleshooting
 
 ### My tests are passing locally but not on CI!
 
