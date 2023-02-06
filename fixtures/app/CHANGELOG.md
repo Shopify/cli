@@ -1,5 +1,15 @@
 # app
 
+## 3.40.1
+
+### Patch Changes
+
+- df3f6e629: Revert change to update Checkout UI template to use the new extension format
+- Updated dependencies [df3f6e629]
+- Updated dependencies [3314a972b]
+  - @shopify/app@3.40.1
+  - @shopify/cli@3.40.1
+
 ## 3.40.0
 
 ### Minor Changes

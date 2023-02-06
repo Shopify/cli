@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.40.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.40.1
+
 ## 3.40.0
 
 ### Minor Changes
