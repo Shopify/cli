@@ -28,8 +28,8 @@ These comments include some examples of what the command would output if invoked
 If none of the available functions does what you want, you might want to add a new function to the list,
 but before doing that please consider:
 
-1. Can I extend what is already implemented with new functionality?
-2. Is what I want to add a pattern that fits with the design system?
+1. Can I extend what is already implemented without introducing breaking changes?
+2. Is what I want to add a pattern that fits with the rest of the existing components?
 
 ### Extending what is already there
 
@@ -38,6 +38,11 @@ the user to select one item. Should we create a new `renderMultiSelectPrompt` or
 `renderSelectPrompt`? The answer to this question will depend a lot on how different these two components will be and we'll
 leave this decision to you, but it's still important to consider just passing a new parameter as it will allow you to
 reuse a lot of the features that come with the existing components without having to reimplement them from scratch.
+
+It's also important to keep in mind that changes should be backwards compatible. This means that, for example, we shouldn't
+remove functions from the public `ui.tsx` file and that we should only be adding attributes to the params interfaces,
+without changing the type definition of the existing ones. If we wish to introduce a breaking change we should deprecate
+the functionality first and then remove it only in a major version bump.
 
 ### Creating something in line with the design system
 
