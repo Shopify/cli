@@ -1,7 +1,7 @@
 {
   "name": "@shopify/create-hydrogen",
   "version": "3.39.0",
-  "private": false,
+  "private": true,
   "description": "A CLI tool to create a new Shopify hydrogen app.",
   "keywords": [
     "shopify",
