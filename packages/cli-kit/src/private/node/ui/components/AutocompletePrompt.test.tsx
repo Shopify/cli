@@ -440,7 +440,7 @@ describe('AutocompletePrompt', async () => {
     const onEnter = vi.fn()
 
     const search = async (term: string) => {
-      await new Promise((resolve) => setTimeout(resolve, 300))
+      await new Promise((resolve) => setTimeout(resolve, 500))
       return {
         data: DATABASE.filter((item) => item.label.includes(term)),
       }
