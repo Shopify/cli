@@ -13,7 +13,7 @@ runs:
         git config --global user.name "CLI Foundations"
       shell: bash
     - name: Set Ruby
-      uses: ruby/setup-ruby@ee26e27437bde475b19a6bf8cb73c9fa658876a2 # pin@v1
+      uses: ruby/setup-ruby@8df78e55761745aad83acaf3ff12976382356e6d # pin@v1
       with:
         ruby-version: ${{ env.RUBY_VERSION }}
         bundler-cache: false
