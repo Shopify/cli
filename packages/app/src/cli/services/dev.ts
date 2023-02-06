@@ -18,6 +18,7 @@ import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {buildAppURLForWeb} from '../utilities/app/app-url.js'
+import {HostThemeManager} from '../utilities/host-theme-manager.js'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -162,7 +163,11 @@ async function dev(options: DevOptions) {
     const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
     const storefrontToken = await ensureAuthenticatedStorefront()
     const extension = localApp.extensions.theme[0]!
-    const args = await themeExtensionArgs(extension, apiKey, token, options)
+    const theme = options.theme || (await new HostThemeManager(adminSession).findOrCreate()).id.toString()
+    const args = await themeExtensionArgs(extension, apiKey, token, {
+      ...options,
+      theme,
+    })
     const devExt = await devThemeExtensionTarget(args, adminSession, storefrontToken, token)
     additionalProcesses.push(devExt)
   }
