@@ -65,6 +65,20 @@ describe('setAppInfo', async () => {
       expect(got).toEqual(APP2)
     })
   })
+
+  it('creates new info normalizing the path', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const conf = new Conf<AppConfSchema>({cwd})
+
+      // When
+      setAppInfo({appId: 'app2', directory: '\\app2\\something', storeFqdn: APP2.storeFqdn, orgId: APP2.orgId}, conf)
+      const got = conf.get('/app2/something')
+
+      // Then
+      expect(got.appId).toEqual(APP2.appId)
+    })
+  })
 })
 
 describe('clearAppInfo', async () => {
