@@ -1,5 +1,6 @@
 import styles from './TooltipPopover.module.css'
 import React, {useLayoutEffect, useRef} from 'react'
+import {classNames} from '@/utilities/css'
 
 export interface Position {
   x: number
@@ -11,6 +12,7 @@ export interface TooltipPopoverProps {
   targetRef: React.RefObject<HTMLElement>
 }
 
+const TOOLTIP_MAX_CHAR_WIDTH = 30
 const TOOLTIP_VERTICAL_OFFSET = 10
 
 export function TooltipPopover({targetRef, text}: TooltipPopoverProps) {
@@ -50,7 +52,11 @@ export function TooltipPopover({targetRef, text}: TooltipPopoverProps) {
   }, [])
 
   return (
-    <div className={styles.Popover} role="tooltip" ref={ref}>
+    <div
+      className={classNames(styles.Popover, text.length > TOOLTIP_MAX_CHAR_WIDTH && styles.LongText)}
+      role="tooltip"
+      ref={ref}
+    >
       {text}
     </div>
   )
