@@ -18,14 +18,8 @@ import type {ExtensionFlavor} from './extension.js'
 
 vi.mock('@shopify/cli-kit/node/node-package-manager')
 
-async function loadLocalUIExtensionsSpecificationsWithTemplates() {
-  const allUISpecs = await loadLocalUIExtensionsSpecifications()
-
-  return allUISpecs.filter((spec) => spec.identifier !== 'ui_extension')
-}
-
 describe('initialize a extension', async () => {
-  const allUISpecs = await loadLocalUIExtensionsSpecificationsWithTemplates()
+  const allUISpecs = await loadLocalUIExtensionsSpecifications()
   const allFunctionSpecs = await loadLocalFunctionSpecifications()
   const specifications = await loadLocalExtensionsSpecifications()
 
@@ -314,9 +308,9 @@ describe('initialize a extension', async () => {
 })
 
 describe('getRuntimeDependencies', () => {
-  test('does not include React for flavored Vanilla UI extensions', async () => {
+  test('no not include React for flavored Vanilla UI extensions', async () => {
     // Given
-    const allUISpecs = await loadLocalUIExtensionsSpecificationsWithTemplates()
+    const allUISpecs = await loadLocalUIExtensionsSpecifications()
     const extensionFlavor: ExtensionFlavor = 'vanilla-js'
 
     // When/then
@@ -328,7 +322,7 @@ describe('getRuntimeDependencies', () => {
 
   test('includes React for flavored React UI extensions', async () => {
     // Given
-    const allUISpecs = await loadLocalUIExtensionsSpecificationsWithTemplates()
+    const allUISpecs = await loadLocalUIExtensionsSpecifications()
     const extensionFlavor: ExtensionFlavor = 'react'
 
     // When/then
@@ -340,7 +334,7 @@ describe('getRuntimeDependencies', () => {
 
   test('includes the renderer package for UI extensions', async () => {
     // Given
-    const allUISpecs = await loadLocalUIExtensionsSpecificationsWithTemplates()
+    const allUISpecs = await loadLocalUIExtensionsSpecifications()
 
     // When/then
     allUISpecs.forEach((specification) => {

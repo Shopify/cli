@@ -26,6 +26,7 @@ Initially, your extension will have the following files:
   └── extensions
     └── my-checkout-ui-extension
         ├── src
+        │   └── AdminCheckoutEditorRenderSettings.{{ srcFileExtension }} The source code for the ADMIN::CHECKOUT::EDITOR extension point
         │   └── CheckoutDynamicRender.{{ srcFileExtension }} The source code for the CHECKOUT:DYNAMIC::RENDER extension point
         ├── locales
         │   ├── en.default.json // The default locale for the checkout UI extension. Shared across all extension points.
@@ -34,7 +35,7 @@ Initially, your extension will have the following files:
 
 ```
 
-You can customize your new extension by editing the code in the `src/CheckoutDynamicRender.{{ srcFileExtension }}` file.
+You can customize your new extension by editing the code in the `src/AdminCheckoutEditorRenderSettings.{{ srcFileExtension }}` or `src/CheckoutDynamicRender.{{ srcFileExtension }}` file.
 
 > By default, your extension is configured to target the `Checkout::Dynamic::Render` [extension point](https://shopify.dev/api/checkout-extensions/checkout#extension-points). This extension point does not have a single location in the checkout where it will appear; instead, a merchant installing your extension will configure where *they* want your extension to show up.
 > If you are building an extension that is tied to existing UI element in the checkout, such as the cart lines or shipping method, you can change the extension point so that your UI extension will render in the correct location. Check out the list of [all available extension points](https://shopify.dev/api/checkout-extensions/checkout#extension-points) to get some inspiration for the kinds of content you can provide with checkout UI extensions.
@@ -52,6 +53,7 @@ You would then add a new file at `src/CheckoutCartLinesRenderAfter.{{ srcFileExt
 To shape your extension you have the following collection of tools available:
 
 * [Checkout UI components](https://shopify.dev/api/checkout-extensions/checkout/components), the visual elements you can render in your checkout extension points.
+* Admin UI Extensions for [React](https://github.com/Shopify/ui-extensions/tree/main/packages/admin-ui-extensions-react) & [JavaScript](https://github.com/Shopify/ui-extensions/tree/main/packages/admin-ui-extensions)
 * [Extension APIs](https://shopify.dev/api/checkout-extensions/checkout/extension-points/api), which give you access to read and write data in the checkout.
 
 > If you are using React, there is also a large collection of [React Hooks available](https://shopify.dev/api/checkout-extensions/checkout/extension-points/api#react-hooks) to ease access to these operations, otherwise you'll need to manually subscribe to the subscribable value directly with a callback.

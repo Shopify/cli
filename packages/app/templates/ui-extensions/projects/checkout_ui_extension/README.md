@@ -26,32 +26,22 @@ Initially, your extension will have the following files:
   └── extensions
     └── my-checkout-ui-extension
         ├── src
-        │   └── CheckoutDynamicRender.{{ srcFileExtension }} The source code for the CHECKOUT:DYNAMIC::RENDER extension point
+        │   └── index.jsx OR index.js // The index page of the checkout UI extension
         ├── locales
-        │   ├── en.default.json // The default locale for the checkout UI extension. Shared across all extension points.
-        │   └── fr.json // The locale file for non-regional French translations. Shared across all extension points.
+        │   ├── en.default.json // The default locale for the checkout UI extension
+        │   └── fr.json // The locale file for non-regional French translations
         └── shopify.ui.extension.toml // The config file for the checkout UI extension
 
 ```
 
-You can customize your new extension by editing the code in the `src/CheckoutDynamicRender.{{ srcFileExtension }}` file.
+You can customize your new extension by editing the code in the `src/index.js` or `src/index.jsx` file.
 
 > By default, your extension is configured to target the `Checkout::Dynamic::Render` [extension point](https://shopify.dev/api/checkout-extensions/checkout#extension-points). This extension point does not have a single location in the checkout where it will appear; instead, a merchant installing your extension will configure where *they* want your extension to show up.
 > If you are building an extension that is tied to existing UI element in the checkout, such as the cart lines or shipping method, you can change the extension point so that your UI extension will render in the correct location. Check out the list of [all available extension points](https://shopify.dev/api/checkout-extensions/checkout#extension-points) to get some inspiration for the kinds of content you can provide with checkout UI extensions.
 
-You can add new extension points by adding a new entry point to `src/shopify.ui.extension.toml`, e.g:
-
-```` toml
-[[extension_points]]
-target = "Checkout::CartLines::RenderAfter"
-module = "./src/CheckoutCartLinesRenderAfter.{{ srcFileExtension }}"
-````
-
-You would then add a new file at `src/CheckoutCartLinesRenderAfter.{{ srcFileExtension }}`.
 
 To shape your extension you have the following collection of tools available:
-
-* [Checkout UI components](https://shopify.dev/api/checkout-extensions/checkout/components), the visual elements you can render in your checkout extension points.
+* [UI components](https://shopify.dev/api/checkout-extensions/checkout/components), the visual elements you can render in your extension.
 * [Extension APIs](https://shopify.dev/api/checkout-extensions/checkout/extension-points/api), which give you access to read and write data in the checkout.
 
 > If you are using React, there is also a large collection of [React Hooks available](https://shopify.dev/api/checkout-extensions/checkout/extension-points/api#react-hooks) to ease access to these operations, otherwise you'll need to manually subscribe to the subscribable value directly with a callback.
