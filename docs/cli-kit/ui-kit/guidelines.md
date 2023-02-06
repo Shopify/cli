@@ -1,5 +1,8 @@
 # Content guidelines
 
+It's important to be consistent in how we display content to users of the CLI.
+These guidelines should guide you when choosing your style of communication with the users.
+
 ## General content guidelines
 - Use contractions (ex: can't instead of cannot). It's the easiest way to sound human.
 - Use “we” to refer to Shopify. (This "we" framing acts as a trust signal. In the platform context, Shopify and the developer are building value together. We're not slippery; we're not hiding.)

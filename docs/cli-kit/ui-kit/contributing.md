@@ -77,9 +77,9 @@ long-running async tasks will render until their completion.
 **`renderOnce` instead will render something to the terminal and immediately quit**.
 Only the first frame will be displayed so don't use this with components that have internal state that will change.
 
-Practically speaking `renderOnce` can be thought of as a pure function that given certain parameters will always output
-the same thing to the terminal. It allows us to reuse the React components we've created for their UI,
-but without the reactive part of React. As an example, banners are being rendered with `renderOnce`.
+Practically speaking `renderOnce` should be used for stateless components only.
+It allows us to reuse the React components we've created for their UI, but without the reactive part of React.
+As an example, banners are being rendered with `renderOnce`.
 
 ## Adding a new component
 
@@ -114,7 +114,7 @@ this will not be possible.
 
 On top of what Ink provides there are a few utility components that are important to our design system.
 
-**`TokenizedText`**
+#### `TokenizedText`
 
 `TokenizedText` is the building block for textual components. For example links, commands, paths, lists are all rendered with `TokenizedText`. Anything simple and textual should be rendered through this component.
 
@@ -157,20 +157,20 @@ add a new interface named `ItalicToken` in the `TokenizedText` and decide how it
 In this example we would use `inline`. But before you go ahead and add a new token, consider if all the users of UI kit
 might need this new token or not. If the answer is no, then a simple regular component will suffice.
 
-**`FullScreen`**
+#### `FullScreen`
 
 This component is useful if you want to clear the terminal and render something full-screen. The benefit is that resizing
 the terminal will cause the interface to refresh and adapt to the new size. `FullScreen` will also create a new buffer
 so once Ink is unmounted the previous terminal history will be restored. This might be useful if you're rendering
 a very tall UI and don't want Ink to [delete the history when it renders](https://github.com/vadimdemedes/ink/issues/382).
 
-**`TextAnimation`**
+#### `TextAnimation`
 
 At the moment this component simply animates text with a rainbow effect, however it can be extended to support more animations.
 If you wish to do so you can take a look at how [chalk-animation](https://github.com/bokub/chalk-animation/blob/master/index.js)
 implemented animations and take inspiration from there.
 
-**`TextWithBackground`**
+#### `TextWithBackground`
 
 Because backgrounds are inverted space characters, adding background color to `Box` [is not trivial](https://github.com/vadimdemedes/ink/issues/469).
 For this use case we've added a simple `TextWithBackground` component that can render only plain strings (no `TokenItem`)
