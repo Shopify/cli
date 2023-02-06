@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.40.1
+
+### Patch Changes
+
+- df3f6e629: Revert change to update Checkout UI template to use the new extension format
+- 3314a972b: Fix windows not storing dev selected values correctly
+  - @shopify/cli-kit@3.40.1
+  - @shopify/plugin-ngrok@3.40.1
+
 ## 3.40.0
 
 ### Minor Changes
