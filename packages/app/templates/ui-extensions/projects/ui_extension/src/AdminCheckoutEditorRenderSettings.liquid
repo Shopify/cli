@@ -1,0 +1,34 @@
+{%- if flavor contains "react" -%}
+import React from 'react';
+
+import {
+  extend,
+  render,
+  Text,
+  useExtensionApi,
+} from '@shopify/admin-ui-extensions-react'
+
+extend('Admin::CheckoutEditor::RenderSettings', render(() => <App />));
+
+function App() {
+  const {extensionPoint} = useExtensionApi();
+  return (
+    <Text>
+      {`Welcome to the ${extensionPoint} extension`}
+    </Text>
+  );
+}
+
+{%- else -%}
+import { Text, extend } from "@shopify/admin-ui-extensions";
+
+extend("Admin::CheckoutEditor::RenderSettings", (root, { extensionPoint }) => {
+  root.appendChild(
+    root.createComponent(
+      Text,
+      {},
+      `Welcome to the ${extensionPoint} extension`
+    )
+  );
+});
+{%- endif -%}

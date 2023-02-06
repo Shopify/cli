@@ -136,24 +136,24 @@ importers:
       '@shopify/admin-ui-extensions': 1.0.1
       '@shopify/admin-ui-extensions-react': 1.0.1
       '@shopify/app': 3.40.0
+      '@shopify/checkout-ui-extensions-react': ^0.23.0
       '@shopify/cli': 3.40.0
       '@shopify/customer-account-ui-extensions-react': ^0.0.8
       '@shopify/post-purchase-ui-extensions': ^0.13.3
       '@shopify/post-purchase-ui-extensions-react': ^0.13.3
       '@shopify/retail-ui-extensions': 0.19.0
-      '@shopify/ui-extensions-react': 2022-10
       '@shopify/web-pixels-extension': ^0.1.1
       react: ^17.0.2
     dependencies:
       '@shopify/admin-ui-extensions': 1.0.1
       '@shopify/admin-ui-extensions-react': 1.0.1_react@17.0.2
       '@shopify/app': link:../../packages/app
+      '@shopify/checkout-ui-extensions-react': 0.23.0_react@17.0.2
       '@shopify/cli': link:../../packages/cli
       '@shopify/customer-account-ui-extensions-react': 0.0.8_react@17.0.2
       '@shopify/post-purchase-ui-extensions': 0.13.3
       '@shopify/post-purchase-ui-extensions-react': 0.13.3_react@17.0.2
       '@shopify/retail-ui-extensions': 0.19.0
-      '@shopify/ui-extensions-react': 2022.10.6_react@17.0.2
       '@shopify/web-pixels-extension': 0.1.6
       react: 17.0.2
 
@@ -3634,8 +3634,27 @@ packages:
       react: 17.0.2
     dev: false
 
+  /@shopify/checkout-ui-extensions-react/0.23.0_react@17.0.2:
+    resolution: {integrity: sha512-P8NPHTolXa/Ugb1tCjFsnHEZcI2VZVzAAnYeHHxLsl8eJUFhhEWrextDw1CIznieNBbQBEW6VT+zpqnHppgjVw==}
+    peerDependencies:
+      react: '>=17.0.0 <18.0.0'
+    dependencies:
+      '@remote-ui/async-subscription': 2.1.13
+      '@remote-ui/react': 4.5.13_react@17.0.2
+      '@shopify/checkout-ui-extensions': 0.23.0
+      '@types/react': 16.14.0
+      react: 17.0.2
+    dev: false
+
   /@shopify/checkout-ui-extensions/0.17.1:
     resolution: {integrity: sha512-45Zx2AQpq+rMRkhR8NtH5tyTif/KgjF9m+pTtME2tfoJyTXJUtQU5A1woDFpTLvenwf3e7r4ARauQGRqZS1PAA==}
+    dependencies:
+      '@remote-ui/async-subscription': 2.1.13
+      '@remote-ui/core': 2.1.16
+    dev: false
+
+  /@shopify/checkout-ui-extensions/0.23.0:
+    resolution: {integrity: sha512-7pBbZqeDbIQ9nBdY6gmyQWuUkijHyT2vR9HpRhYHVI2VKo7uOVhweuOdmbG7WtQ9P3Pmz47ODGupvVcQCtsHNA==}
     dependencies:
       '@remote-ui/async-subscription': 2.1.13
       '@remote-ui/core': 2.1.16
@@ -3994,27 +4013,8 @@ packages:
     resolution: {integrity: sha512-RywGBTR+nQyJLxcrUcihPkHPIG3pIQI6i0YwMrM5rs9nWJ0+9A5HKEcboyGPLH+8V08EXGfFQ6H820O9ajyk4A==}
     dev: true
 
-  /@shopify/ui-extensions-react/2022.10.6_react@17.0.2:
-    resolution: {integrity: sha512-oz5OYtIWVLLVoFBruouYpmgW5DMiztH7Onoty4nMnEF4evNmQ52myEa68DU4bPVLHsWkEWbGk9sfQE/bZwK5dQ==}
-    peerDependencies:
-      react: '>=17.0.0 <18.0.0'
-    dependencies:
-      '@remote-ui/async-subscription': 2.1.13
-      '@remote-ui/react': 4.5.13_react@17.0.2
-      '@shopify/ui-extensions': 2022.10.6
-      '@types/react': 16.14.0
-      react: 17.0.2
-    dev: false
-
   /@shopify/ui-extensions/1.0.2:
     resolution: {integrity: sha512-vH6wGbVqfTbatyJmL6N33aHzK/hYry4gWNzZcvh/xdPmeciEyORh+CcZRrtf2yNz2p3hRpDPqbEJgB7BGHEQfA==}
-    dev: false
-
-  /@shopify/ui-extensions/2022.10.6:
-    resolution: {integrity: sha512-cI+YxLl3My9FhJ1tiiwBHAOPmdtkVYOq1sssHrJoJ/DhVPDJ3n0t63MOF68ILkoPnAk+SSBnSfhKpIwy5NH3+w==}
-    dependencies:
-      '@remote-ui/async-subscription': 2.1.13
-      '@remote-ui/core': 2.1.16
     dev: false
 
   /@shopify/useful-types/4.0.3:
