@@ -279,6 +279,9 @@ function SelectInput<T>({
               {morePagesMessage ? `  ${morePagesMessage}` : null}
             </Text>
           ) : null}
+          {hasLimit ? (
+            <Text dimColor>{`Showing ${limit} of ${items.length} items. Keep navigating to see more.`}</Text>
+          ) : null}
           <Text dimColor>
             {infoMessage
               ? infoMessage
