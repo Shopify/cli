@@ -43,10 +43,8 @@ export function TooltipPopover({targetRef, text}: TooltipPopoverProps) {
     }
     // end check
 
-    if (ref.current) {
-      ref.current.style.top = `${y}px`
-      ref.current.style.left = `${x}px`
-    }
+    ref.current.style.top = `${y}px`
+    ref.current.style.left = `${x}px`
   }, [])
 
   return (
