@@ -1,4 +1,4 @@
-import TextWithBackground from './TextWithBackground.js'
+import {TextWithBackground} from './TextWithBackground.js'
 import {OutputProcess} from '../../../../public/node/output.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {AbortController} from '../../../../public/node/abort.js'
@@ -11,7 +11,7 @@ import {Writable} from 'stream'
 
 export type WritableStream = (process: OutputProcess, index: number) => Writable
 
-export interface Props {
+export interface ConcurrentOutputProps {
   processes: OutputProcess[]
   abortController: AbortController
   showTimestamps?: boolean
@@ -61,7 +61,7 @@ interface Chunk {
  *
  * ```
  */
-const ConcurrentOutput: FunctionComponent<Props> = ({
+const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   processes,
   abortController,
   showTimestamps = true,
@@ -129,7 +129,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({
             <Box flexDirection="column" key={index}>
               {chunk.lines.map((line, index) => (
                 <Box key={index} flexDirection="row">
-                  {showTimestamps && (
+                  {showTimestamps ? (
                     <Box>
                       <Box marginRight={1}>
                         <Text color={chunk.color}>
@@ -141,7 +141,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({
                         |
                       </Text>
                     </Box>
-                  )}
+                  ) : null}
 
                   <Box width={prefixColumnSize} marginX={1}>
                     <Text color={chunk.color}>{chunk.prefix}</Text>
@@ -160,20 +160,20 @@ const ConcurrentOutput: FunctionComponent<Props> = ({
           )
         }}
       </Static>
-      {footer && (
+      {footer ? (
         <Box marginY={1} flexDirection="column">
           <Box flexGrow={1}>
             <TextWithBackground text={footer.title} inverse paddingX={2} paddingY={1} />
           </Box>
-          {footer.subTitle && (
+          {footer.subTitle ? (
             <Box marginTop={1} flexGrow={1}>
               <Text>{footer.subTitle}</Text>
             </Box>
-          )}
+          ) : null}
         </Box>
-      )}
+      ) : null}
     </>
   )
 }
 
-export default ConcurrentOutput
+export {ConcurrentOutput}

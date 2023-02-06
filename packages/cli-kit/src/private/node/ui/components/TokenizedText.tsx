@@ -5,7 +5,7 @@ import {UserInput} from './UserInput.js'
 import {FilePath} from './FilePath.js'
 import {Subdued} from './Subdued.js'
 import {Box, Text} from 'ink'
-import React from 'react'
+import React, {FunctionComponent} from 'react'
 
 export interface CommandToken {
   command: string
@@ -136,7 +136,7 @@ const InlineBlocks: React.FC<{blocks: Block[]}> = ({blocks}) => {
   )
 }
 
-interface Props {
+interface TokenizedTextProps {
   item: TokenItem
 }
 
@@ -144,7 +144,7 @@ interface Props {
  * `TokenizedText` renders a text string with tokens that can be either strings,
  * links, and commands.
  */
-const TokenizedText: React.FC<Props> = ({item}) => {
+const TokenizedText: FunctionComponent<TokenizedTextProps> = ({item}) => {
   if (typeof item === 'string') {
     return <Text>{item}</Text>
   } else if ('command' in item) {
