@@ -9,7 +9,7 @@ import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
-const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.23.0'}
+const dependency = {name: '@shopify/ui-extensions-react', version: '2022-10'}
 
 const UIExtensionSchema = BaseUIExtensionSchema.extend({
   settings: schema
@@ -39,7 +39,7 @@ const spec = createUIExtensionSpecification({
   deployConfig: async (config, directory) => {
     return {
       api_version: config.apiVersion,
-      extension_points: config.extensionPoints,
+      extension_points: config.extensionPoints.map(({module, ...rest}) => ({...rest})),
       capabilities: config.capabilities,
       name: config.name,
       settings: config.settings,

@@ -1,6 +1,6 @@
 import useLayout from '../hooks/use-layout.js'
 import {Box, Text} from 'ink'
-import React, {useCallback} from 'react'
+import React, {FunctionComponent, useCallback} from 'react'
 import chalk, {ForegroundColor} from 'chalk'
 
 interface TopBottomPaddingProps {
@@ -10,7 +10,7 @@ interface TopBottomPaddingProps {
   inverse?: boolean
 }
 
-const TopBottomPadding: React.FC<TopBottomPaddingProps> = ({padding, color, width, inverse}) => {
+const TopBottomPadding: FunctionComponent<TopBottomPaddingProps> = ({padding, color, width, inverse}) => {
   return (
     <>
       {[...Array(padding).keys()].map((index) => (
@@ -22,7 +22,7 @@ const TopBottomPadding: React.FC<TopBottomPaddingProps> = ({padding, color, widt
   )
 }
 
-interface Props {
+interface TextWithBackgroundProps {
   text: string
   backgroundColor?: ForegroundColor
   inverse?: boolean
@@ -31,7 +31,14 @@ interface Props {
   paddingY?: number
 }
 
-const TextWithBackground: React.FC<Props> = ({backgroundColor, inverse, padding, paddingX, paddingY, text}) => {
+const TextWithBackground: FunctionComponent<TextWithBackgroundProps> = ({
+  backgroundColor,
+  inverse,
+  padding,
+  paddingX,
+  paddingY,
+  text,
+}) => {
   const pY = (padding ? padding : paddingY) ?? 0
   const pX = (padding ? padding : paddingX) ?? 0
   const color = backgroundColor
@@ -61,15 +68,15 @@ const TextWithBackground: React.FC<Props> = ({backgroundColor, inverse, padding,
 
   return (
     <Box flexDirection="column">
-      {pY && <TopBottomPadding padding={pY} color={color} width={width} inverse={inverse} />}
+      {pY ? <TopBottomPadding padding={pY} color={color} width={width} inverse={inverse} /> : null}
 
       <Box flexGrow={1}>
         <Text>{textTransform(text)}</Text>
       </Box>
 
-      {pY && <TopBottomPadding padding={pY} color={color} width={width} inverse={inverse} />}
+      {pY ? <TopBottomPadding padding={pY} color={color} width={width} inverse={inverse} /> : null}
     </Box>
   )
 }
 
-export default TextWithBackground
+export {TextWithBackground}

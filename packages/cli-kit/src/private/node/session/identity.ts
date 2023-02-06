@@ -1,6 +1,6 @@
 import {API} from '../api.js'
 import {BugError} from '../../../public/node/error.js'
-import {Environment, serviceEnvironment} from '../environment/service.js'
+import {Environment, serviceEnvironment} from '../context/service.js'
 
 export function clientId(): string {
   const environment = serviceEnvironment()

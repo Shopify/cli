@@ -1,17 +1,17 @@
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
-import {loadPresetsFromDirectory} from './presets.js'
-import {isDevelopment} from './environment/local.js'
+import {loadEnvironmentsFromDirectory} from './environments.js'
+import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
 import {cwd} from './path.js'
 import {JsonMap} from '../../private/common/json.js'
 import {outputContent, outputInfo, outputToken} from '../../public/node/output.js'
 import {hashString} from '../../public/node/crypto.js'
-import {isTruthy} from '../../private/node/environment/utilities.js'
+import {isTruthy} from '../../private/node/context/utilities.js'
 import {Command, Interfaces} from '@oclif/core'
 
-interface PresettableFlags {
-  preset?: string
+interface EnvironmentFlags {
+  environment?: string
   path?: string
 }
 
@@ -21,7 +21,7 @@ abstract class BaseCommand extends Command {
   }
 
   async catch(error: Error & {exitCode?: number | undefined}): Promise<void> {
-    await errorHandler(error, this.config)
+    errorHandler(error, this.config)
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -55,12 +55,12 @@ abstract class BaseCommand extends Command {
     argv?: string[],
   ): Promise<Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>> {
     let result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
-    result = await this.resultWithPreset<TFlags, TGlobalFlags, TArgs>(result, options, argv)
+    result = await this.resultWithEnvironment<TFlags, TGlobalFlags, TArgs>(result, options, argv)
     await addFromParsedFlags(result.flags)
     return result
   }
 
-  protected async resultWithPreset<
+  protected async resultWithEnvironment<
     TFlags extends Interfaces.FlagOutput & {path?: string; verbose?: boolean},
     TGlobalFlags extends Interfaces.FlagOutput,
     TArgs extends Interfaces.OutputArgs,
@@ -69,39 +69,46 @@ abstract class BaseCommand extends Command {
     options?: Interfaces.Input<TFlags, TGlobalFlags>,
     argv?: string[],
   ): Promise<Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>> {
-    // If no preset is specified, don't modify the results
-    const flags = originalResult.flags as PresettableFlags
-    if (!flags.preset) return originalResult
+    // If no environment is specified, don't modify the results
+    const flags = originalResult.flags as EnvironmentFlags
+    if (!flags.environment) return originalResult
 
-    // If the specified preset isn't found, don't modify the results
-    const presets = await loadPresetsFromDirectory(await this.presetsPath(flags), {findUp: this.findUpForPresets()})
-    const preset = presets[flags.preset]
-    if (!preset) return originalResult
+    // If the specified environment isn't found, don't modify the results
+    const environments = await loadEnvironmentsFromDirectory(await this.environmentsPath(flags), {
+      findUp: this.findUpForEnvironments(),
+    })
+    const environment = environments[flags.environment]
+    if (!environment) return originalResult
 
     // Parse using noDefaultsOptions to derive a list of flags specified as
     // command-line arguments.
     const noDefaultsResult = await super.parse<TFlags, TGlobalFlags, TArgs>(noDefaultsOptions(options), argv)
 
-    // Add the preset's settings to argv and pass them to `super.parse`. This
+    // Add the environment's settings to argv and pass them to `super.parse`. This
     // invokes oclif's validation system without breaking the oclif black box.
     // Replace the original result with this one.
     const result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, [
-      // Need to specify argv default because we're merging with argsFromPreset.
+      // Need to specify argv default because we're merging with argsFromEnvironment.
       ...(argv || this.argv),
-      ...argsFromPreset<TFlags, TGlobalFlags, TArgs>(preset, options, noDefaultsResult),
+      ...argsFromEnvironment<TFlags, TGlobalFlags, TArgs>(environment, options, noDefaultsResult),
     ])
 
-    // Report successful application of the preset.
-    reportPresetApplication<TFlags, TGlobalFlags, TArgs>(noDefaultsResult.flags, result.flags, flags.preset, preset)
+    // Report successful application of the environment.
+    reportEnvironmentApplication<TFlags, TGlobalFlags, TArgs>(
+      noDefaultsResult.flags,
+      result.flags,
+      flags.environment,
+      environment,
+    )
 
     return result
   }
 
-  protected async presetsPath(rawFlags: {path?: string}): Promise<string> {
+  protected async environmentsPath(rawFlags: {path?: string}): Promise<string> {
     return rawFlags.path || cwd()
   }
 
-  protected findUpForPresets(): boolean {
+  protected findUpForEnvironments(): boolean {
     return true
   }
 }
@@ -118,32 +125,32 @@ export async function addFromParsedFlags(flags: {path?: string; verbose?: boolea
  * Any flag which is:
  *
  * 1. Present in the final set of flags
- * 2. Specified in the preset
+ * 2. Specified in the environment
  * 3. Not specified by the user as a command line argument
  *
  * should be reported.
  *
- * It doesn't matter if the preset flag's value was the same as the default; from
- * the user's perspective, they want to know their preset was applied.
+ * It doesn't matter if the environment flag's value was the same as the default; from
+ * the user's perspective, they want to know their environment was applied.
  */
-function reportPresetApplication<
+function reportEnvironmentApplication<
   TFlags extends Interfaces.FlagOutput,
   TGlobalFlags extends Interfaces.FlagOutput,
   TArgs extends Interfaces.OutputArgs,
 >(
   noDefaultsFlags: Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>['flags'],
-  flagsWithPresets: Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>['flags'],
-  presetName: string,
-  preset: JsonMap,
+  flagsWithEnvironments: Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>['flags'],
+  environmentName: string,
+  environment: JsonMap,
 ): void {
   const changes: JsonMap = {}
-  for (const [name, value] of Object.entries(flagsWithPresets)) {
+  for (const [name, value] of Object.entries(flagsWithEnvironments)) {
     const userSpecifiedThisFlag = Object.prototype.hasOwnProperty.call(noDefaultsFlags, name)
-    const presetContainsFlag = Object.prototype.hasOwnProperty.call(preset, name)
-    if (!userSpecifiedThisFlag && presetContainsFlag) changes[name] = value
+    const environmentContainsFlag = Object.prototype.hasOwnProperty.call(environment, name)
+    if (!userSpecifiedThisFlag && environmentContainsFlag) changes[name] = value
   }
   if (Object.keys(changes).length === 0) return
-  outputInfo(outputContent`Using applicable flags from the preset ${outputToken.yellow(presetName)}:
+  outputInfo(outputContent`Using applicable flags from the environment ${outputToken.yellow(environmentName)}:
 
 ${Object.entries(changes)
   .map(([name, value]) => `• ${name} = ${value}`)
@@ -188,20 +195,20 @@ function noDefaultsOptions<TFlags extends Interfaces.FlagOutput, TGlobalFlags ex
 }
 
 /**
- * Converts the preset's settings to arguments as though passed on the command
+ * Converts the environment's settings to arguments as though passed on the command
  * line, skipping any arguments the user specified on the command line.
  */
-function argsFromPreset<
+function argsFromEnvironment<
   TFlags extends Interfaces.FlagOutput,
   TGlobalFlags extends Interfaces.FlagOutput,
   TArgs extends Interfaces.OutputArgs,
 >(
-  preset: JsonMap,
+  environment: JsonMap,
   options: Interfaces.Input<TFlags, TGlobalFlags> | undefined,
   noDefaultsResult: Interfaces.ParserOutput<TFlags, TArgs>,
 ): string[] {
   const args: string[] = []
-  for (const [label, value] of Object.entries(preset)) {
+  for (const [label, value] of Object.entries(environment)) {
     const flagIsRelevantToCommand = options?.flags && Object.prototype.hasOwnProperty.call(options.flags, label)
     const userSpecifiedThisFlag =
       noDefaultsResult.flags && Object.prototype.hasOwnProperty.call(noDefaultsResult.flags, label)
@@ -211,7 +218,7 @@ function argsFromPreset<
           args.push(`--${label}`)
         } else {
           throw new AbortError(
-            outputContent`Presets can only specify true for boolean flags. Attempted to set ${outputToken.yellow(
+            outputContent`Environments can only specify true for boolean flags. Attempted to set ${outputToken.yellow(
               label,
             )} to false.`,
           )

@@ -66,6 +66,6 @@ export const extensionTypesGroups: {name: string; extensions: string[]}[] = [
   {name: 'Point-of-Sale', extensions: ['pos_ui_extension']},
   {
     name: 'Shopify private',
-    extensions: ['customer_accounts_ui_extension', 'ui_extension', 'order_routing_location_rule'],
+    extensions: ['customer_accounts_ui_extension', 'order_routing_location_rule'],
   },
 ]

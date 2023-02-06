@@ -35,13 +35,13 @@ importers:
       eslint: ^8.12.0
       eslint-config-airbnb: ^19.0.4
       eslint-config-prettier: ^8.5.0
-      eslint-plugin-import: ^2.25.3
+      eslint-plugin-import: ^2.26.0
       eslint-plugin-jest: ^26.4.6
       eslint-plugin-jsdoc: ^39.3.6
       eslint-plugin-jsx-a11y: ^6.5.1
       eslint-plugin-no-catch-all: ^1.1.0
       eslint-plugin-prettier: ^4.0.0
-      eslint-plugin-react: ^7.28.0
+      eslint-plugin-react: ^7.32.2
       eslint-plugin-react-hooks: ^4.3.0
       eslint-plugin-rulesdir: ^0.2.1
       eslint-plugin-tsdoc: ^0.2.17
@@ -94,7 +94,7 @@ importers:
       cross-env: 7.0.3
       esbuild: 0.14.54
       eslint: 8.28.0
-      eslint-config-airbnb: 19.0.4_vt5pco6i6xyxmp2zptq3cuddue
+      eslint-config-airbnb: 19.0.4_hw743xteyayzbx7lxyhu25kqmy
       eslint-config-prettier: 8.5.0_eslint@8.28.0
       eslint-plugin-import: 2.26.0_vbnhqcxlbs7ynbxw44hu2vq7eq
       eslint-plugin-jest: 26.9.0_f2vz4uylpwx7vkkuf4vs26ih3q
@@ -102,7 +102,7 @@ importers:
       eslint-plugin-jsx-a11y: 6.6.1_eslint@8.28.0
       eslint-plugin-no-catch-all: 1.1.0_eslint@8.28.0
       eslint-plugin-prettier: 4.2.1_cwlo2dingkvfydnaculr42urve
-      eslint-plugin-react: 7.31.11_eslint@8.28.0
+      eslint-plugin-react: 7.32.2_eslint@8.28.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.28.0
       eslint-plugin-rulesdir: 0.2.1
       eslint-plugin-tsdoc: 0.2.17
@@ -136,24 +136,24 @@ importers:
       '@shopify/admin-ui-extensions': 1.0.1
       '@shopify/admin-ui-extensions-react': 1.0.1
       '@shopify/app': 3.39.0
-      '@shopify/checkout-ui-extensions-react': ^0.23.0
       '@shopify/cli': 3.39.0
       '@shopify/customer-account-ui-extensions-react': ^0.0.8
       '@shopify/post-purchase-ui-extensions': ^0.13.3
       '@shopify/post-purchase-ui-extensions-react': ^0.13.3
       '@shopify/retail-ui-extensions': 0.19.0
+      '@shopify/ui-extensions-react': 2022-10
       '@shopify/web-pixels-extension': ^0.1.1
       react: ^17.0.2
     dependencies:
       '@shopify/admin-ui-extensions': 1.0.1
       '@shopify/admin-ui-extensions-react': 1.0.1_react@17.0.2
       '@shopify/app': link:../../packages/app
-      '@shopify/checkout-ui-extensions-react': 0.23.0_react@17.0.2
       '@shopify/cli': link:../../packages/cli
       '@shopify/customer-account-ui-extensions-react': 0.0.8_react@17.0.2
       '@shopify/post-purchase-ui-extensions': 0.13.3
       '@shopify/post-purchase-ui-extensions-react': 0.13.3_react@17.0.2
       '@shopify/retail-ui-extensions': 0.19.0
+      '@shopify/ui-extensions-react': registry.npmjs.org/@shopify/ui-extensions-react/2022.10.6_react@17.0.2
       '@shopify/web-pixels-extension': 0.1.6
       react: 17.0.2
 
@@ -279,7 +279,6 @@ importers:
       '@oclif/plugin-help': 5.1.12
       '@oclif/plugin-plugins': 2.1.0
       '@shopify/app': 3.39.0
-      '@shopify/cli-hydrogen': 3.39.0
       '@shopify/cli-kit': 3.39.0
       '@shopify/theme': 3.39.0
       '@types/node': 14.18.36
@@ -294,7 +293,6 @@ importers:
       '@shopify/cli-kit': link:../cli-kit
     devDependencies:
       '@shopify/app': link:../app
-      '@shopify/cli-hydrogen': link:../cli-hydrogen
       '@shopify/theme': link:../theme
       '@types/node': 14.18.36
       '@vitest/coverage-istanbul': 0.26.3
@@ -2278,7 +2276,7 @@ packages:
       lodash.get: 4.4.2
       make-error: 1.3.6
       ts-node: 9.1.1_typescript@4.9.4
-      tslib: 2.4.1
+      tslib: 2.5.0
     transitivePeerDependencies:
       - typescript
     dev: true
@@ -2375,7 +2373,7 @@ packages:
       '@graphql-tools/utils': 9.1.1_graphql@15.8.0
       graphql: 15.8.0
       resolve-from: 5.0.0
-      tslib: 2.4.1
+      tslib: 2.5.0
     dev: true
 
   /@graphql-tools/json-file-loader/6.2.6_graphql@15.8.0:
@@ -2476,7 +2474,7 @@ packages:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
     dependencies:
       graphql: 15.8.0
-      tslib: 2.4.1
+      tslib: 2.5.0
     dev: true
 
   /@graphql-tools/wrap/7.0.8_graphql@15.8.0:
@@ -2985,7 +2983,7 @@ packages:
       ignore: 5.2.1
       nx: 15.3.0
       semver: 7.3.4
-      tslib: 2.4.1
+      tslib: 2.5.0
     transitivePeerDependencies:
       - typescript
     dev: true
@@ -3049,7 +3047,7 @@ packages:
       '@phenomnomnominal/tsquery': 4.1.1_typescript@4.9.4
       eslint: 8.28.0
       tmp: 0.2.1
-      tslib: 2.4.1
+      tslib: 2.5.0
     transitivePeerDependencies:
       - nx
       - typescript
@@ -3115,7 +3113,7 @@ packages:
       chalk: 4.1.2
       strip-ansi: 6.0.1
       supports-color: 8.1.1
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /@oclif/core/1.21.0:
     resolution: {integrity: sha512-B/AKYfHcNRAbb6Xz2kj0FlH9gWEi8aFS4iEr7EzguP3E2DpDk4wcf7eOMOfJYEmhuVd9sOpVWSnI2yP+FL/3Sg==}
@@ -3146,7 +3144,7 @@ packages:
       strip-ansi: 6.0.1
       supports-color: 8.1.1
       supports-hyperlinks: 2.3.0
-      tslib: 2.4.1
+      tslib: 2.5.0
       widest-line: 3.1.0
       wrap-ansi: 7.0.0
 
@@ -3636,27 +3634,8 @@ packages:
       react: 17.0.2
     dev: false
 
-  /@shopify/checkout-ui-extensions-react/0.23.0_react@17.0.2:
-    resolution: {integrity: sha512-P8NPHTolXa/Ugb1tCjFsnHEZcI2VZVzAAnYeHHxLsl8eJUFhhEWrextDw1CIznieNBbQBEW6VT+zpqnHppgjVw==}
-    peerDependencies:
-      react: '>=17.0.0 <18.0.0'
-    dependencies:
-      '@remote-ui/async-subscription': 2.1.13
-      '@remote-ui/react': 4.5.13_react@17.0.2
-      '@shopify/checkout-ui-extensions': 0.23.0
-      '@types/react': 16.14.0
-      react: 17.0.2
-    dev: false
-
   /@shopify/checkout-ui-extensions/0.17.1:
     resolution: {integrity: sha512-45Zx2AQpq+rMRkhR8NtH5tyTif/KgjF9m+pTtME2tfoJyTXJUtQU5A1woDFpTLvenwf3e7r4ARauQGRqZS1PAA==}
-    dependencies:
-      '@remote-ui/async-subscription': 2.1.13
-      '@remote-ui/core': 2.1.16
-    dev: false
-
-  /@shopify/checkout-ui-extensions/0.23.0:
-    resolution: {integrity: sha512-7pBbZqeDbIQ9nBdY6gmyQWuUkijHyT2vR9HpRhYHVI2VKo7uOVhweuOdmbG7WtQ9P3Pmz47ODGupvVcQCtsHNA==}
     dependencies:
       '@remote-ui/async-subscription': 2.1.13
       '@remote-ui/core': 2.1.16
@@ -3718,7 +3697,7 @@ packages:
       eslint-plugin-node: 11.1.0_eslint@8.28.0
       eslint-plugin-prettier: 4.2.1_cwlo2dingkvfydnaculr42urve
       eslint-plugin-promise: 6.1.1_eslint@8.28.0
-      eslint-plugin-react: 7.31.11_eslint@8.28.0
+      eslint-plugin-react: 7.32.2_eslint@8.28.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.28.0
       eslint-plugin-sort-class-members: 1.16.0_eslint@8.28.0
       jsx-ast-utils: 3.3.3
@@ -4692,7 +4671,7 @@ packages:
     engines: {node: '>=14.15.0'}
     dependencies:
       js-yaml: 3.14.1
-      tslib: 2.4.1
+      tslib: 2.5.0
     dev: true
 
   /@zkochan/js-yaml/0.0.6:
@@ -5524,7 +5503,7 @@ packages:
     resolution: {integrity: sha512-gxGWBrTT1JuMx6R+o5PTXMmUnhnVzLQ9SNutD4YqKtI6ap897t3tKECYla6gCWEkplXnlNybEkZg9GEGxKFCgw==}
     dependencies:
       pascal-case: 3.1.2
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /camelcase-keys/6.2.2:
     resolution: {integrity: sha512-YrwaA0vEKazPBkn0ipTiMpSajYDSe+KjQfrjhcBMxJt/znbvlHd8Pw/Vamaz5EB4Wfhs3SUR3Z9mwRu/P3s3Yg==}
@@ -5547,7 +5526,7 @@ packages:
     resolution: {integrity: sha512-ds37W8CytHgwnhGGTi88pcPyR15qoNkOpYwmMMfnWqqWgESapLqvDx6huFjQ5vqWSn2Z06173XNA7LtMOeUh1A==}
     dependencies:
       no-case: 3.0.4
-      tslib: 2.4.1
+      tslib: 2.5.0
       upper-case-first: 2.0.2
 
   /cardinal/2.1.1:
@@ -5635,7 +5614,7 @@ packages:
       path-case: 3.0.4
       sentence-case: 3.0.4
       snake-case: 3.0.4
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /chardet/0.7.0:
     resolution: {integrity: sha512-mT8iDcrh03qDGRRmoA2hmBJnxpllMR+0/0qlzjqZES6NdiWDcZkCNAk4rPFZ9Q85r27unkiNNg8ZOiwZXBHwcA==}
@@ -6083,7 +6062,7 @@ packages:
     resolution: {integrity: sha512-I2hSBi7Vvs7BEuJDr5dDHfzb/Ruj3FyvFyh7KLilAjNQw3Be+xgqUBA2W6scVEcL0hL1dwPRtIqEPVUCKkSsyQ==}
     dependencies:
       no-case: 3.0.4
-      tslib: 2.4.1
+      tslib: 2.5.0
       upper-case: 2.0.2
 
   /content-disposition/0.5.4:
@@ -6678,7 +6657,7 @@ packages:
     resolution: {integrity: sha512-Kv5nKlh6yRrdrGvxeJ2e5y2eRUpkUosIW4A2AS38zwSz27zu7ufDwQPi5Jhs3XAlGNetl3bmnGhQsMtkKJnj3w==}
     dependencies:
       no-case: 3.0.4
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /dot-prop/7.2.0:
     resolution: {integrity: sha512-Ol/IPXUARn9CSbkrdV4VJo7uCy1I3VuSiWCaFSg+8BdUOzF9n3jefIpcgAydvUZbTdEBZs2vEiTiS9m61ssiDA==}
@@ -7350,7 +7329,7 @@ packages:
       semver: 6.3.0
     dev: true
 
-  /eslint-config-airbnb/19.0.4_vt5pco6i6xyxmp2zptq3cuddue:
+  /eslint-config-airbnb/19.0.4_hw743xteyayzbx7lxyhu25kqmy:
     resolution: {integrity: sha512-T75QYQVQX57jiNgpF9r1KegMICE94VYwoFQyMGhrvc+lB8YF2E/M/PYDaQe1AJcWaEgqLE+ErXV1Og/+6Vyzew==}
     engines: {node: ^10.12.0 || ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
@@ -7364,7 +7343,7 @@ packages:
       eslint-config-airbnb-base: 15.0.0_ktrec6dplf4now6nlbc6d67jee
       eslint-plugin-import: 2.26.0_vbnhqcxlbs7ynbxw44hu2vq7eq
       eslint-plugin-jsx-a11y: 6.6.1_eslint@8.28.0
-      eslint-plugin-react: 7.31.11_eslint@8.28.0
+      eslint-plugin-react: 7.32.2_eslint@8.28.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.28.0
       object.assign: 4.1.4
       object.entries: 1.1.6
@@ -7666,8 +7645,8 @@ packages:
       eslint: 8.28.0
     dev: true
 
-  /eslint-plugin-react/7.31.11_eslint@8.28.0:
-    resolution: {integrity: sha512-TTvq5JsT5v56wPa9OYHzsrOlHzKZKjV+aLgS+55NJP/cuzdiQPC7PfYoUjMoxlffKtvijpk7vA/jmuqRb9nohw==}
+  /eslint-plugin-react/7.32.2_eslint@8.28.0:
+    resolution: {integrity: sha512-t2fBMa+XzonrrNkyVirzKlvn5RXzzPwRHtMvLAtVZrt8oxgnTQaYbU6SXTOO1mwQgp1y5+toMSKInnzGr0Knqg==}
     engines: {node: '>=4'}
     peerDependencies:
       eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8
@@ -9046,7 +9025,7 @@ packages:
     resolution: {integrity: sha512-H/vuk5TEEVZwrR0lp2zed9OCo1uAILMlx0JEMgC26rzyJJ3N1v6XkwHHXJQdR2doSjcGPM6OKPYoJgf0plJ11Q==}
     dependencies:
       capital-case: 1.0.4
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /hexoid/1.0.0:
     resolution: {integrity: sha512-QFLV0taWQOZtvIRIAdBChesmogZrtuXvVWsFHZTk2SU+anspqZ2vMnoLg7IE1+Uk16N19APic1BuF8bC8c2m5g==}
@@ -10325,7 +10304,7 @@ packages:
   /lower-case/2.0.2:
     resolution: {integrity: sha512-7fm3l3NAF9WfN6W3JOmf5drwpVqX78JtoGJ3A6W0a6ZnldM41w2fV5D490psKFTpMds8TJse/eHLFFsNHHjHgg==}
     dependencies:
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /lowercase-keys/1.0.0:
     resolution: {integrity: sha512-RPlX0+PHuvxVDZ7xX+EBVAp4RsVxP/TdDSN2mJYdiq1Lc4Hz7EUSjUI7RZrKKlmrIzVhf6Jo2stj7++gVarS0A==}
@@ -10891,7 +10870,7 @@ packages:
     resolution: {integrity: sha512-fgAN3jGAh+RoxUGZHTSOLJIqUc2wmoBwGR4tbpNAKmmovFoWq0OdRkb0VkldReO2a2iBT/OEulG9XSUc10r3zg==}
     dependencies:
       lower-case: 2.0.2
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /node-abi/3.30.0:
     resolution: {integrity: sha512-qWO5l3SCqbwQavymOmtTVuCWZE23++S+rxyoHjXqUmPyzRcaoI4lA2gO55/drddGnedAyjA7sk76SfQ5lfUMnw==}
@@ -11629,7 +11608,7 @@ packages:
     resolution: {integrity: sha512-RXlj7zCYokReqWpOPH9oYivUzLYZ5vAPIfEmCTNViosC78F8F0H9y7T7gG2M39ymgutxF5gcFEsyZQSph9Bp3A==}
     dependencies:
       dot-case: 3.0.4
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /parent-module/1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
@@ -11683,7 +11662,7 @@ packages:
     resolution: {integrity: sha512-uWlGT3YSnK9x3BQJaOdcZwrnV6hPpd8jFH1/ucpiLRPh/2zCVJKS19E4GvYHvaCcACn3foXZ0cLB9Wrx1KGe5g==}
     dependencies:
       no-case: 3.0.4
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /password-prompt/1.1.2:
     resolution: {integrity: sha512-bpuBhROdrhuN3E7G/koAju0WjVw9/uQOG5Co5mokNj0MiOSBVZS1JTwM4zl55hu0WFmIEFvO9cU9sJQiBIYeIA==}
@@ -11700,7 +11679,7 @@ packages:
     resolution: {integrity: sha512-qO4qCFjXqVTrcbPt/hQfhTQ+VhFsqNKOPtytgNKkKxSoEp3XPUQ8ObFuePylOIok5gjn69ry8XiULxCwot3Wfg==}
     dependencies:
       dot-case: 3.0.4
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /path-exists/4.0.0:
     resolution: {integrity: sha512-ak9Qy5Q7jYb2Wwcey5Fpvg2KoAc/ZIhLSLOSBmRmygPsGwkVVt0fZa0qrtMz+m6tJTAHfZQ8FnmB4MG4LWy7/w==}
@@ -12753,7 +12732,7 @@ packages:
   /rxjs/7.5.7:
     resolution: {integrity: sha512-z9MzKh/UcOqB3i20H6rtrlaE/CgjLOvheWK/9ILrbhROGTweAi1BaFsTT9FbwZi5Trr1qNRs+MXkhmR06awzQA==}
     dependencies:
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /safe-buffer/5.1.2:
     resolution: {integrity: sha512-Gd2UZBJDkXlY7GbJxfsE8/nvKkUEU1G38c1siN6QP6a9PT9MmHB8GnpscSmMJSoF8LOIrt8ud/wPtojys4G6+g==}
@@ -12906,7 +12885,7 @@ packages:
     resolution: {integrity: sha512-8LS0JInaQMCRoQ7YUytAo/xUu5W2XnQxV2HI/6uM6U7CITS1RqPElr30V6uIqyMKM9lJGRVFy5/4CuzcixNYSg==}
     dependencies:
       no-case: 3.0.4
-      tslib: 2.4.1
+      tslib: 2.5.0
       upper-case-first: 2.0.2
 
   /seq-queue/0.0.5:
@@ -13083,7 +13062,7 @@ packages:
     resolution: {integrity: sha512-LAOh4z89bGQvl9pFfNF8V146i7o7/CqFPbqzYgP+yYzDIDeS9HaNFtXABamRW+AQzEVODcvE79ljJ+8a9YSdMg==}
     dependencies:
       dot-case: 3.0.4
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /socks-proxy-agent/6.2.1:
     resolution: {integrity: sha512-a6KW9G+6B3nWZ1yB8G7pJwL3ggLy1uTzKAgCb7ttblwqdz9fMGJUuTy3uFzEP48FAs9FLILlmzDlE2JJhVQaXQ==}
@@ -14009,6 +13988,9 @@ packages:
   /tslib/2.4.1:
     resolution: {integrity: sha512-tGyy4dAjRIEwI7BzsB0lynWgOpfqjUdq91XXAlIWD2OwKBH7oCl/GZG/HT4BOHrTlPMOASlMQ7veyTqpmRcrNA==}
 
+  /tslib/2.5.0:
+    resolution: {integrity: sha512-336iVw3rtn2BUK7ORdIAHTyxHGRIHVReokCR3XjbckJMK7ms8FysBfhLR8IXnAgy7T0PTPNBWKiH514FOW/WSg==}
+
   /tsscmp/1.0.6:
     resolution: {integrity: sha512-LxhtAkPDTkVCMQjt2h6eBVY28KCjikZqZfMcC15YBeNjkgUpdCfBu5HoiOTDu86v6smE8yOjyEktJ8hlbANHQA==}
     engines: {node: '>=0.6.x'}
@@ -14289,12 +14271,12 @@ packages:
   /upper-case-first/2.0.2:
     resolution: {integrity: sha512-514ppYHBaKwfJRK/pNC6c/OxfGa0obSnAl106u97Ed0I625Nin96KAjttZF6ZL3e1XLtphxnqrOi9iWgm+u+bg==}
     dependencies:
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /upper-case/2.0.2:
     resolution: {integrity: sha512-KgdgDGJt2TpuwBUIjgG6lzw2GWFRCW9Qkfkiv0DxqHHLYJHmtmdUIKcZd8rHgFSjopVTlw6ggzCm1b8MFQwikg==}
     dependencies:
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /uri-js/4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
@@ -14509,7 +14491,7 @@ packages:
       globrex: 0.1.2
       recrawl-sync: 2.2.3
       tsconfig-paths: 4.1.1
-      vite: 2.9.12
+      vite: 2.9.12_sass@1.56.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -15217,4 +15199,28 @@ packages:
 
   /zod/3.17.3:
     resolution: {integrity: sha512-4oKP5zvG6GGbMlqBkI5FESOAweldEhSOZ6LI6cG+JzUT7ofj1ZOC0PJudpQOpT1iqOFpYYtX5Pw0+o403y4bcg==}
+    dev: false
+
+  registry.npmjs.org/@shopify/ui-extensions-react/2022.10.6_react@17.0.2:
+    resolution: {integrity: sha512-oz5OYtIWVLLVoFBruouYpmgW5DMiztH7Onoty4nMnEF4evNmQ52myEa68DU4bPVLHsWkEWbGk9sfQE/bZwK5dQ==, registry: https://npm.shopify.io/node/, tarball: https://registry.npmjs.org/@shopify/ui-extensions-react/-/ui-extensions-react-2022.10.6.tgz}
+    id: registry.npmjs.org/@shopify/ui-extensions-react/2022.10.6
+    name: '@shopify/ui-extensions-react'
+    version: 2022.10.6
+    peerDependencies:
+      react: '>=17.0.0 <18.0.0'
+    dependencies:
+      '@remote-ui/async-subscription': 2.1.13
+      '@remote-ui/react': 4.5.13_react@17.0.2
+      '@shopify/ui-extensions': registry.npmjs.org/@shopify/ui-extensions/2022.10.6
+      '@types/react': 16.14.0
+      react: 17.0.2
+    dev: false
+
+  registry.npmjs.org/@shopify/ui-extensions/2022.10.6:
+    resolution: {integrity: sha512-cI+YxLl3My9FhJ1tiiwBHAOPmdtkVYOq1sssHrJoJ/DhVPDJ3n0t63MOF68ILkoPnAk+SSBnSfhKpIwy5NH3+w==, registry: https://npm.shopify.io/node/, tarball: https://registry.npmjs.org/@shopify/ui-extensions/-/ui-extensions-2022.10.6.tgz}
+    name: '@shopify/ui-extensions'
+    version: 2022.10.6
+    dependencies:
+      '@remote-ui/async-subscription': 2.1.13
+      '@remote-ui/core': 2.1.16
     dev: false

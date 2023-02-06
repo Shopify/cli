@@ -13,11 +13,9 @@ const aUrlPath = '/a/url/path'
 const anAddress = 'https://example.org'
 const aLocalAddress = `http://localhost:${aPort}${aUrlPath}`
 
-describe('optionsPrompt', () => {
-  beforeEach(async () => {
-    vi.mock('./trigger.js')
-  })
+vi.mock('./trigger.js')
 
+describe('optionsPrompt', () => {
   describe('without params', () => {
     beforeEach(async () => {
       vi.mocked(topicPrompt).mockResolvedValue(aTopic)

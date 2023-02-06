@@ -1,11 +1,10 @@
 /* eslint-disable no-nested-ternary */
-import * as React from 'react'
-import {useEffect, useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import {Text, useInput} from 'ink'
 import chalk from 'chalk'
-import type {FC} from 'react'
+import type {FunctionComponent} from 'react'
 
-interface Props {
+interface TextInputProps {
   defaultValue?: string
   value: string
   onChange: (value: string) => void
@@ -15,7 +14,7 @@ interface Props {
   placeholder?: string
 }
 
-const TextInput: FC<Props> = ({
+const TextInput: FunctionComponent<TextInputProps> = ({
   value: originalValue,
   defaultValue = '',
   onChange,

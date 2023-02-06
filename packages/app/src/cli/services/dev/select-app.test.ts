@@ -8,6 +8,10 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
+vi.mock('../../prompts/dev')
+vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('@shopify/cli-kit/node/session')
+
 const LOCAL_APP: AppInterface = testApp({
   directory: '',
   configurationPath: '/shopify.app.toml',
@@ -51,9 +55,6 @@ const APP_LIST = {
 }
 
 beforeEach(() => {
-  vi.mock('../../prompts/dev')
-  vi.mock('@shopify/cli-kit/node/api/partners')
-  vi.mock('@shopify/cli-kit/node/session')
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 })
 

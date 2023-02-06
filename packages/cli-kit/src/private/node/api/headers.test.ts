@@ -1,14 +1,15 @@
 import {buildHeaders, sanitizedHeadersOutput} from './headers.js'
 import {CLI_KIT_VERSION} from '../../../public/common/version.js'
 import {randomUUID} from '../../../public/node/crypto.js'
-import {firstPartyDev, isUnitTest} from '../../../public/node/environment/local.js'
+import {firstPartyDev, isUnitTest} from '../../../public/node/context/local.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 
+vi.mock('../../../public/node/crypto.js')
+vi.mock('../../../public/node/context/local.js')
+vi.mock('../version')
+
 beforeEach(() => {
-  vi.mock('../../../public/node/crypto.js')
-  vi.mock('../../../public/node/environment/local.js')
   vi.mocked(isUnitTest).mockReturnValue(true)
-  vi.mock('../version')
 })
 
 describe('common API methods', () => {

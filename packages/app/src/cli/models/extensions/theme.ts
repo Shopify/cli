@@ -3,7 +3,7 @@ import {loadThemeSpecifications} from './specifications.js'
 import {GenericSpecification, ThemeExtension} from '../app/extensions.js'
 import {schema} from '@shopify/cli-kit/node/schema'
 import {constantize} from '@shopify/cli-kit/common/string'
-import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
+import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {basename} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 

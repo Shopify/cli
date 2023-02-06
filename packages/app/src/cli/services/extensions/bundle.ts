@@ -1,7 +1,7 @@
 import {buildThemeExtensions, ThemeExtensionBuildOptions} from '../build/extension.js'
 import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {themeBundlingDisabled} from '@shopify/cli-kit/node/environment/local'
+import {themeBundlingDisabled} from '@shopify/cli-kit/node/context/local'
 import {copyFile, glob} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'

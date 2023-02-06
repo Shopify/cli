@@ -19,23 +19,24 @@ import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/erro
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {isSpin, spinFqdn} from '@shopify/cli-kit/node/environment/spin'
-import {codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/node/environment/local'
+import {isSpin, spinFqdn} from '@shopify/cli-kit/node/context/spin'
+import {codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {runTunnelPlugin} from '@shopify/cli-kit/node/plugins'
 
+vi.mock('../conf.js')
+vi.mock('@shopify/cli-kit/node/tcp')
+vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/node/context/spin')
+vi.mock('@shopify/cli-kit/node/context/local')
+vi.mock('@shopify/cli-kit/node/plugins')
+vi.mock('@shopify/cli-kit/node/ui')
+
 beforeEach(() => {
-  vi.mock('../conf.js')
-  vi.mock('@shopify/cli-kit/node/tcp')
   vi.mocked(getAvailableTCPPort).mockResolvedValue(3042)
-  vi.mock('@shopify/cli-kit/node/api/partners')
-  vi.mock('@shopify/cli-kit/node/session')
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-  vi.mock('@shopify/cli-kit/node/environment/spin')
-  vi.mock('@shopify/cli-kit/node/environment/local')
-  vi.mock('@shopify/cli-kit/node/plugins')
   vi.mocked(isUnitTest).mockReturnValue(true)
-  vi.mock('@shopify/cli-kit/node/ui')
 })
 
 describe('generateURL', () => {

@@ -629,7 +629,7 @@ describe('AutocompletePrompt', async () => {
         message="Associate your project with the org Castile Ventures?"
         choices={DATABASE}
         onSubmit={() => {}}
-        hasMorePages={true}
+        hasMorePages
         search={search}
       />,
     )

@@ -1,14 +1,14 @@
 import {Text} from 'ink'
-import React from 'react'
+import React, {FunctionComponent} from 'react'
 
-interface Props {
+interface SubduedProps {
   subdued: string
 }
 
 /**
  * `Subdued` displays some text with subdued colors
  */
-const Subdued: React.FC<Props> = ({subdued}: React.PropsWithChildren<Props>): JSX.Element => {
+const Subdued: FunctionComponent<SubduedProps> = ({subdued}): JSX.Element => {
   return <Text dimColor>{subdued}</Text>
 }
 

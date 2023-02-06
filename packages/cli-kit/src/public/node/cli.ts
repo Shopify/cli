@@ -38,7 +38,7 @@ export async function runCLI(options: RunCLIOptions): Promise<void> {
    * and therefore it has no effect.
    */
   const {errorHandler} = await import('./error-handler.js')
-  const {isDevelopment} = await import('./environment/local.js')
+  const {isDevelopment} = await import('./context/local.js')
   const {run, settings, flush} = await import('@oclif/core')
 
   if (isDevelopment()) {
@@ -73,7 +73,7 @@ export async function runCreateCLI(options: RunCLIOptions): Promise<void> {
 }
 
 export async function useLocalCLIIfDetected(filepath: string): Promise<boolean> {
-  const {isTruthy} = await import('../../private/node/environment/utilities.js')
+  const {isTruthy} = await import('../../private/node/context/utilities.js')
   const {environmentVariables} = await import('../../private/node/constants.js')
   const {joinPath: join} = await import('./path.js')
   const {exec} = await import('./system.js')
@@ -140,10 +140,11 @@ export async function localCliPackage(): Promise<CliPackageInfo | undefined> {
  * are shared across all the commands.
  */
 export const globalFlags = {
-  preset: Flags.string({
+  environment: Flags.string({
     hidden: true,
-    description: 'The preset to apply to the current command.',
-    env: 'SHOPIFY_FLAG_PRESET',
+    description: 'The environment to apply to the current command.',
+    env: 'SHOPIFY_FLAG_ENVIRONMENT',
+    char: 'e',
   }),
   verbose: Flags.boolean({
     hidden: false,

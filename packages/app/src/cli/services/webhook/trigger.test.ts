@@ -12,7 +12,7 @@ import {
 } from '../../prompts/webhook/options-prompt.js'
 import * as output from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const aToken = 'A_TOKEN'
 const samplePayload = '{ "sampleField": "SampleValue" }'
@@ -24,18 +24,12 @@ const aPort = '1234'
 const aUrlPath = '/a/url/path'
 const anAddress = 'https://example.org'
 
-beforeEach(async () => {
-  vi.mock('@shopify/cli-kit/node/session')
-  vi.mock('../../prompts/webhook/options-prompt.js')
-  vi.mock('./request-sample.js')
-  vi.mock('./request-api-versions.js')
-  vi.mock('./request-topics.js')
-  vi.mock('./trigger-local-webhook.js')
-})
-
-afterEach(async () => {
-  vi.clearAllMocks()
-})
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('../../prompts/webhook/options-prompt.js')
+vi.mock('./request-sample.js')
+vi.mock('./request-api-versions.js')
+vi.mock('./request-topics.js')
+vi.mock('./trigger-local-webhook.js')
 
 const emptyJson = '{}'
 const successDirectResponse = {

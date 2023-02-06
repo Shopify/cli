@@ -3,7 +3,7 @@ import {clientId} from './identity.js'
 import {listenRedirect} from './redirect-listener.js'
 import {randomHex, base64URLEncode} from '../../../public/node/crypto.js'
 import {openURL} from '../../../public/node/system.js'
-import {identityFqdn} from '../../../public/node/environment/fqdn.js'
+import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {CancelExecution} from '../../../public/node/error.js'
 import {renderConfirmationPrompt} from '../../../public/node/ui.js'
 import {checkPort} from 'get-port-please'
@@ -15,7 +15,7 @@ vi.mock('../../../public/node/system.js')
 vi.mock('./redirect-listener')
 vi.mock('../../../public/node/crypto.js')
 vi.mock('../../../public/node/ui.js')
-vi.mock('../../../public/node/environment/fqdn.js')
+vi.mock('../../../public/node/context/fqdn.js')
 vi.mock('./identity')
 vi.mock('get-port-please')
 vi.mock('kill-port-process')

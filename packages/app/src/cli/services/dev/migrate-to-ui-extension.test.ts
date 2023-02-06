@@ -1,14 +1,12 @@
 import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from './migrate-to-ui-extension.js'
-import {LocalSource, RemoteSource} from '../environment/identifiers.js'
+import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {ExtensionMigrateToUiExtensionQuery} from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
-beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/api/partners')
-  vi.mock('@shopify/cli-kit/node/session')
-})
+vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('@shopify/cli-kit/node/session')
 
 function getLocalExtension(attributes: Partial<LocalSource> = {}) {
   return {

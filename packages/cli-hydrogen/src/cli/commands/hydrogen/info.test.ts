@@ -1,11 +1,9 @@
 import InfoCommand from './info.js'
 import {HydrogenApp, load as loadApp} from '../../models/hydrogen.js'
-import {describe, expect, vi, it, beforeAll} from 'vitest'
+import {describe, expect, vi, it} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
-beforeAll(() => {
-  vi.mock('../../models/hydrogen')
-})
+vi.mock('../../models/hydrogen')
 
 describe('hydrogen info', () => {
   it('displays the app information', async () => {
