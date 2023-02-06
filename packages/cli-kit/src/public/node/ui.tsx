@@ -1,20 +1,17 @@
 import {AbortSilentError, FatalError as Fatal} from './error.js'
 import {collectLog, consoleError, consoleLog, Logger, LogLevel, outputDebug, outputWhereAppropriate} from './output.js'
 import {isUnitTest} from './environment/local.js'
-import ConcurrentOutput, {Props as ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
+import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
 import {render, renderOnce} from '../../private/node/ui.js'
 import {alert} from '../../private/node/ui/alert.js'
 import {AlertProps, CustomSection} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
 import ScalarDict from '../../private/node/ui/components/Table/ScalarDict.js'
-import Table, {TableColumn, TableProps} from '../../private/node/ui/components/Table/Table.js'
-import {SelectPrompt, Props as SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
+import {Table, TableColumn, TableProps} from '../../private/node/ui/components/Table/Table.js'
+import {SelectPrompt, SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
-import {TextPrompt, Props as TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
-import {
-  Props as AutocompletePromptProps,
-  AutocompletePrompt,
-} from '../../private/node/ui/components/AutocompletePrompt.js'
+import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
+import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
 import {InlineToken, LinkToken, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
@@ -211,6 +208,7 @@ export function renderFatalError(error: Fatal) {
  * ```
  */
 export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit'>): Promise<T> {
+  // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {
     render(<SelectPrompt {...props} onSubmit={(value: T) => resolve(value)} />, {
       exitOnCtrlC: false,
@@ -284,6 +282,7 @@ export function renderAutocompletePrompt<T>(
     ...props,
   }
 
+  // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {
     render(<AutocompletePrompt {...newProps} onSubmit={(value: T) => resolve(value)} />, {
       exitOnCtrlC: false,
@@ -322,6 +321,7 @@ export async function renderTasks<TContext>(tasks: Task<TContext>[]) {
  * ```
  */
 export function renderTextPrompt(props: Omit<TextPromptProps, 'onSubmit'>): Promise<string> {
+  // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {
     render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
       exitOnCtrlC: false,
@@ -330,13 +330,14 @@ export function renderTextPrompt(props: Omit<TextPromptProps, 'onSubmit'>): Prom
 }
 
 interface RenderTextOptions {
+  text: string
   logLevel?: LogLevel
   logger?: Logger
 }
 
 /** Renders a text string to the console.
  * Using this function makes sure that correct spacing is applied among the various components. */
-export function renderText(text: string, {logLevel = 'info', logger = consoleLog}: RenderTextOptions = {}) {
+export function renderText({text, logLevel = 'info', logger = consoleLog}: RenderTextOptions) {
   let textWithLineReturn = text
   if (!text.endsWith('\n')) textWithLineReturn += '\n'
 
@@ -346,6 +347,7 @@ export function renderText(text: string, {logLevel = 'info', logger = consoleLog
 
 /** Waits for any key to be pressed except Ctrl+C which will terminate the process. */
 export const keypress = async () => {
+  // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {
     const handler = (buffer: Buffer) => {
       process.stdin.setRawMode(false)

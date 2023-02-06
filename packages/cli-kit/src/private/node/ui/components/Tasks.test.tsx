@@ -20,7 +20,7 @@ describe('Tasks', () => {
     // When
     const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
     // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await new Promise((resolve) => setTimeout(resolve, 0))
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`

@@ -1,14 +1,14 @@
 import useLayout from '../hooks/use-layout.js'
 import {Box, Text} from 'ink'
-import React from 'react'
+import React, {FunctionComponent} from 'react'
 
 export type BannerType = 'success' | 'error' | 'warning' | 'info' | 'external_error'
 
-interface Props {
+interface BannerProps {
   type: BannerType
 }
 
-function typeToColor(type: Props['type']) {
+function typeToColor(type: BannerProps['type']) {
   return {
     success: 'green',
     error: 'red',
@@ -18,7 +18,7 @@ function typeToColor(type: Props['type']) {
   }[type]
 }
 
-const BoxWithBorder: React.FC<Props> = ({type, children}) => {
+const BoxWithBorder: FunctionComponent<BannerProps> = ({type, children}) => {
   const {twoThirds} = useLayout()
 
   return (
@@ -39,7 +39,7 @@ const BoxWithBorder: React.FC<Props> = ({type, children}) => {
   )
 }
 
-const BoxWithTopBottomLines: React.FC<Props> = ({type, children}) => {
+const BoxWithTopBottomLines: FunctionComponent<BannerProps> = ({type, children}) => {
   const {twoThirds} = useLayout()
 
   return (
@@ -62,7 +62,7 @@ const BoxWithTopBottomLines: React.FC<Props> = ({type, children}) => {
   )
 }
 
-const Banner: React.FC<Props> = ({children, ...props}) => {
+const Banner: FunctionComponent<BannerProps> = ({children, ...props}) => {
   if (props.type === 'external_error') {
     return React.createElement(BoxWithTopBottomLines, props, children)
   } else {

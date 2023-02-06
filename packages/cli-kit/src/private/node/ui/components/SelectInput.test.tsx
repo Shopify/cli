@@ -1,4 +1,4 @@
-import SelectInput from './SelectInput.js'
+import {SelectInput} from './SelectInput.js'
 import {sendInputAndWait, sendInputAndWaitForChange, waitForInputsToBeReady} from '../../testing/ui.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'

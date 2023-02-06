@@ -16,7 +16,7 @@ export interface Task<TContext = unknown> {
   skip?: (ctx: TContext) => boolean
 }
 
-export interface Props<TContext> {
+export interface TasksProps<TContext> {
   tasks: Task<TContext>[]
   silent?: boolean
 }
@@ -51,7 +51,8 @@ async function runTask<TContext>(task: Task<TContext>, ctx: TContext) {
   }
 }
 
-function Tasks<TContext>({tasks, silent = isUnitTest()}: React.PropsWithChildren<Props<TContext>>) {
+// eslint-disable-next-line react/function-component-definition
+function Tasks<TContext>({tasks, silent = isUnitTest()}: React.PropsWithChildren<TasksProps<TContext>>) {
   const {twoThirds} = useLayout()
   const loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)

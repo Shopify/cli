@@ -11,8 +11,7 @@ interface OnChangeOptions<T> {
   item: Item<T> | undefined
   usedShortcut: boolean
 }
-
-export interface Props<T> {
+export interface SelectInputProps<T> {
   items: Item<T>[]
   onChange: ({item, usedShortcut}: OnChangeOptions<T>) => void
   enableShortcuts?: boolean
@@ -80,6 +79,7 @@ interface SelectItemsGroupProps<T> {
   highlightedTerm?: string
 }
 
+// eslint-disable-next-line react/function-component-definition
 function SelectItemsGroup<T>({
   title,
   items,
@@ -90,11 +90,11 @@ function SelectItemsGroup<T>({
 }: SelectItemsGroupProps<T>): JSX.Element {
   return (
     <Box key={title} flexDirection="column" marginTop={hasMarginTop ? 1 : 0}>
-      {title && (
+      {title ? (
         <Box marginLeft={3}>
           <Text bold>{title}</Text>
         </Box>
-      )}
+      ) : null}
 
       {items.map((item) => {
         const isSelected = item.index === selectedIndex
@@ -112,7 +112,8 @@ function SelectItemsGroup<T>({
   )
 }
 
-export default function SelectInput<T>({
+// eslint-disable-next-line react/function-component-definition
+function SelectInput<T>({
   items,
   onChange,
   enableShortcuts = true,
@@ -125,7 +126,7 @@ export default function SelectInput<T>({
   hasMorePages = false,
   morePagesMessage,
   infoMessage,
-}: React.PropsWithChildren<Props<T>>): JSX.Element | null {
+}: React.PropsWithChildren<SelectInputProps<T>>): JSX.Element | null {
   const defaultValueIndex = defaultValue ? items.findIndex((item) => item.value === defaultValue.value) : -1
   const initialIndex = defaultValueIndex === -1 ? 0 : defaultValueIndex
   const inputStack = useRef<string | null>(null)
@@ -250,7 +251,7 @@ export default function SelectInput<T>({
             hasMarginTop={index !== 0}
             enableShortcuts={enableShortcuts}
             highlightedTerm={highlightedTerm}
-          ></SelectItemsGroup>
+          />
         ))}
 
         {ungroupedItems.length > 0 && (
@@ -261,16 +262,16 @@ export default function SelectInput<T>({
             hasMarginTop={groupTitles.length > 0}
             enableShortcuts={enableShortcuts}
             highlightedTerm={highlightedTerm}
-          ></SelectItemsGroup>
+          />
         )}
 
         <Box marginTop={1} marginLeft={3} flexDirection="column">
-          {hasMorePages && (
+          {hasMorePages ? (
             <Text>
               <Text bold>1-{items.length} of many</Text>
               {morePagesMessage ? `  ${morePagesMessage}` : null}
             </Text>
-          )}
+          ) : null}
           <Text dimColor>
             {infoMessage
               ? infoMessage
@@ -281,3 +282,5 @@ export default function SelectInput<T>({
     )
   }
 }
+
+export {SelectInput}
