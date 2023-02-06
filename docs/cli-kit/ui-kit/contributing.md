@@ -3,11 +3,12 @@
 ## What is UI Kit
 
 UI Kit is a library that can be used to either ask for input from the user or render output to the terminal.
-By using UI Kit you're making sure that whatever you're rendering in the terminal will follow our design system.
+By using UI Kit you're making sure that whatever you're rendering in the terminal
+will be consistent with the rest of the output.
 This ensures familiar-feeling interaction patterns for the users and allows you to benefit from design improvements without
 having to change your code too often.
 
-At its core, UI Kit is built with [ink](https://github.com/vadimdemedes/ink) which uses React under the hood.
+At its core, UI Kit is built with [Ink](https://github.com/vadimdemedes/ink) which uses React under the hood.
 If you're familiar with React already that's great! This guide will only cover details that are specific to UI kit,
 so an understanding of [React](https://reactjs.org/docs/getting-started.html) is a prerequisite if you wish to contribute to its components library.
 
@@ -81,7 +82,7 @@ but without the reactive part of React. As an example, banners are being rendere
 - Defined the params interface ✅
 - Chose between `render` and `renderOnce` ✅
 
-It's time to add a new component! Components are built with `ink` so please go to [their readme](https://github.com/vadimdemedes/ink) if you need documentation on the components it exposes. If you know React things will work as you'd expect.
+It's time to add a new component! Components are built with Ink so please go to [their readme](https://github.com/vadimdemedes/ink) if you need documentation on the components it exposes. If you know React things will work as you'd expect.
 The main difference with using React on the web is that (obviously) we don't have access to the dom or CSS for styling.
 Ink instead uses [yoga](https://github.com/facebook/yoga) under the hood for its layout system, which will give you access to [most](https://github.com/vadimdemedes/ink/pull/479)
 of the flexbox system properties you've used for the web.
@@ -90,7 +91,7 @@ of the flexbox system properties you've used for the web.
 
 **`Box`**
 
-`Box` is the unit of `ink`'s flexbox system. If you need to give text or a certain group of components a flexbox property
+`Box` is the unit of Ink's flexbox system. If you need to give text or a certain group of components a flexbox property
 you can wrap it with `Box`. Be aware that `Text` components cannot contain `Box` elements inside.
 
 **`Text`**
@@ -106,7 +107,7 @@ this will not be possible.
 
 ### Utility components
 
-On top of what `ink` provides there are a few utility components that are important to our design system.
+On top of what Ink provides there are a few utility components that are important to our design system.
 
 **`TokenizedText`**
 
@@ -155,8 +156,8 @@ might need this new token or not. If the answer is no, then a simple regular com
 
 This component is useful if you want to clear the terminal and render something full-screen. The benefit is that resizing
 the terminal will cause the interface to refresh and adapt to the new size. `FullScreen` will also create a new buffer
-so once `ink` is unmounted the previous terminal history will be restored. This might be useful if you're rendering
-a very tall UI and don't want `ink` to [delete the history when it renders](https://github.com/vadimdemedes/ink/issues/382).
+so once Ink is unmounted the previous terminal history will be restored. This might be useful if you're rendering
+a very tall UI and don't want Ink to [delete the history when it renders](https://github.com/vadimdemedes/ink/issues/382).
 
 **`TextAnimation`**
 
@@ -172,17 +173,17 @@ and will be only fullscreen, meaning it won't have the width of the box it's inc
 
 ### Handling user input
 
-For input you can use `ink`'s `useInput` callback. One thing to note is that, because using `useInput`
+For input you can use Ink's `useInput` callback. One thing to note is that, because using `useInput`
 will set the standard input to raw mode, if you will have to pass `exitOnCtrlC: false` to the `render` function so that
-`ink` won't handle the Ctrl+C input and instead leave that to you. This flag should be used in conjunction with the
+Ink won't handle the Ctrl+C input and instead leave that to you. This flag should be used in conjunction with the
 `handleCtrlC` utility function that will handle the `Ctrl+C` input for you.
 
 ### Components that deal with async functions
 
 React doesn't really allow you to call async functions inside the body of a component as `render` should be pure and all side effects
 should be wrapped in `useEffect`. Because it's very common to pass async functions to components we've added a `useAsyncAndUnmount` hook that will execute your function in a `useEffect` hook and appropriately
-unmount ink if the function resolves or rejects. From the outside, using this hook will make sure that in case of errors `render`
-will first clean up `ink`'s rendering instance and then will reject with the error that the function rejected with.
+unmount Ink if the function resolves or rejects. From the outside, using this hook will make sure that in case of errors `render`
+will first clean up Ink's rendering instance and then will reject with the error that the function rejected with.
 
 ### Layout system
 
@@ -201,14 +202,14 @@ test how it behaves with input and what kind of output it produces.
 **Output**
 
 For output you can use `ink-testing-library`'s `render` function which will return a `lastFrame` function that can be called to get
-the last frame rendered by `ink`. This, in conjunction with `vitest`'s `toMatchInlineSnapshot` should be sufficient.
+the last frame rendered by Ink. This, in conjunction with `vitest`'s `toMatchInlineSnapshot` should be sufficient.
 If you want to wait for a component to finish processing an async function you can wait for the next tick before checking the last
 frame with something like `await new Promise((resolve) => setTimeout(resolve, 0))`
 
 **Input**
 
 After you've rendered a component in a test it won't be ready to accept inputs immediately. This is a known shortcoming of
-`ink` that the author is aware of. Lacking a callback or a promise we can await we've added a `waitForInputsToBeReady`
+Ink that the author is aware of. Lacking a callback or a promise we can await we've added a `waitForInputsToBeReady`
 function that can be awaited and will make sure that the component is ready to accept input.
 
 Input can be sent by writing to the `stdin` of the instance returned by `render`, as so
@@ -236,6 +237,6 @@ For commands that use `renderOnce` you can use the already existing `mockOutput`
 For commands that use `render` the testing story is not great at the moment, but we're working on it.
 The problem is that we don't want to output things to the terminal during tests, but we still want a way to capture this
 output in a separate stream that we can then check.
-Ideally, the `ink` `render` function that our `render` functions use under the hood should be injectable from the outside
+Ideally, the Ink `render` function that our `render` functions use under the hood should be injectable from the outside
 so that for tests we can swap it for something that will render to a fake `stdout`.
 We'd then be able to get this fake stream's frames and compare them with our expectations. This is still WIP.
