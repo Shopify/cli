@@ -29,7 +29,7 @@ export function TooltipPopover({targetRef, text}: TooltipPopoverProps) {
   }
 
   useLayoutEffect(() => {
-    if (!ref.current || !targetRef) return
+    if (!ref.current || !targetRef?.current) return
 
     // check if ref is still inside the viewport
     let {x, y} = getPositionRelativeToRef()
@@ -37,11 +37,11 @@ export function TooltipPopover({targetRef, text}: TooltipPopoverProps) {
     const {height, width} = ref.current.getBoundingClientRect()
 
     if (x + width > innerWidth) {
-      x -= width - targetRef.current!.getBoundingClientRect().width
+      x -= width - targetRef.current.getBoundingClientRect().width
     }
 
     if (y + height > innerHeight) {
-      y -= height + targetRef.current!.getBoundingClientRect().height + 2 * TOOLTIP_VERTICAL_OFFSET
+      y -= height + targetRef.current.getBoundingClientRect().height + 2 * TOOLTIP_VERTICAL_OFFSET
     }
     // end check
 
