@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.40.2
+
+### Patch Changes
+
+- 7c0b13944: Fix Banner potentially crashing on very narrow terminals
+- 7ca9a667d: Fix Ruby version for running CLI with Homebrew installs
+
 ## 3.40.1
 
 ## 3.40.0

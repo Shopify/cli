@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.40.2
+
+### Patch Changes
+
+- c729e470d: Fix preview banner not showing when there are only UI extensions
+- Updated dependencies [7c0b13944]
+- Updated dependencies [7ca9a667d]
+  - @shopify/cli-kit@3.40.2
+  - @shopify/plugin-ngrok@3.40.2
+
 ## 3.40.1
 
 ### Patch Changes
