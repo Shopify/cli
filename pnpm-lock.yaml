@@ -240,11 +240,12 @@ importers:
       chokidar: 3.5.3
       diff: 5.1.0
       esbuild: 0.15.16
-      function-runner: 3.2.1
+      function-runner: 4.0.0
       graphql: ^16.0.0
       graphql-request: 4.3.0
       graphql-tag: ^2.11.0
       http-proxy: 1.18.1
+      javy-cli: ^0.1.0
       serve-static: 1.15.0
       vite: 2.9.12
       vitest: ^0.26.3
@@ -259,9 +260,10 @@ importers:
       chokidar: 3.5.3
       diff: 5.1.0
       esbuild: 0.15.16
-      function-runner: 3.2.1
+      function-runner: 4.0.0
       graphql-request: 4.3.0_graphql@16.6.0
       http-proxy: 1.18.1
+      javy-cli: 0.1.0
       serve-static: 1.15.0
       ws: 8.8.1
     devDependencies:
@@ -5520,6 +5522,11 @@ packages:
       normalize-url: 6.1.0
       responselike: 2.0.1
 
+  /cachedir/2.3.0:
+    resolution: {integrity: sha512-A+Fezp4zxnit6FanDmv9EqXNAi3vt9DWp51/71UEhXukb7QUuvtv9344h91dyAxuTLoSYJFU299qzR3tzwPAhw==}
+    engines: {node: '>=6'}
+    dev: false
+
   /call-bind/1.0.2:
     resolution: {integrity: sha512-7O+FbCihrB5WGbFYesctwmTKae6rOiIzmz1icreWJ+0aA7LJfuqhEso2T9ncpcFtzMQtzXf2QGGueWJGTYsqrA==}
     dependencies:
@@ -8540,10 +8547,11 @@ packages:
   /function-bind/1.1.1:
     resolution: {integrity: sha512-yIovAzMX49sF8Yl58fSCWJ5svSLuaibPxXQJFLmBObTuCr0Mf1KiPopGM9NiFjiYBCbfaa2Fh6breQ6ANVTI0A==}
 
-  /function-runner/3.2.1:
-    resolution: {integrity: sha512-YnNmiREky4QRwm7j7Ytu9PBH1W1F8Nej3YjbE6WYdmhjVsOqBsuElKXWTWUa5MBBVX1pqWry2LDRi+nIMeKDTQ==}
+  /function-runner/4.0.0:
+    resolution: {integrity: sha512-q3x6knobT7oKGyUTLbXpsygQCQ2qd298Zhf5HJzUefoIVmR+2CDAMq+2ou1oS3YLS0gAxfDc2Nv4lAc2vfuGYA==}
     hasBin: true
     dependencies:
+      cachedir: 2.3.0
       node-fetch: 3.3.0
     dev: false
 
@@ -9821,6 +9829,14 @@ packages:
       chalk: 4.1.2
       filelist: 1.0.4
       minimatch: 3.1.2
+
+  /javy-cli/0.1.0:
+    resolution: {integrity: sha512-p74O/YdXfZyL2aloZMZkK/MN/dVrRH6QGy8/ifRJviH6crxTwdvhFwrLm+gBj0nCsgy+B3bTHbieoU//zq6mhw==}
+    hasBin: true
+    dependencies:
+      cachedir: 2.3.0
+      node-fetch: 3.3.0
+    dev: false
 
   /jest-diff/26.6.2:
     resolution: {integrity: sha512-6m+9Z3Gv9wN0WFVasqjCL/06+EFCMTqDEUl/b87HYK2rAPTyfz4ZIuSlPhY51PIQRWx5TaxeF1qmXKe9gfN3sA==}

@@ -175,7 +175,6 @@ export function getFunctionRuntimeDependencies(
     dependencies.push(
       {name: '@shopify/shopify_function', version: '0.0.3'},
       {name: 'javy', version: '0.0.3'},
-      {name: 'javy-cli', version: '0.0.3'},
     )
   }
   return dependencies
