@@ -172,10 +172,7 @@ export function getFunctionRuntimeDependencies(
 ): DependencyVersion[] {
   const dependencies: DependencyVersion[] = []
   if (templateFlavor === 'javascript') {
-    dependencies.push(
-      {name: '@shopify/shopify_function', version: '0.0.3'},
-      {name: 'javy', version: '0.0.3'},
-    )
+    dependencies.push({name: '@shopify/shopify_function', version: '0.0.3'}, {name: 'javy', version: '0.0.3'})
   }
   return dependencies
 }

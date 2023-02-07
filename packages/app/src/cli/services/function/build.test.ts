@@ -133,7 +133,7 @@ describe('runJavy', () => {
     await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith(
       'npm',
-      ['exec', '--', 'javy', '-o', joinPath(ourFunction.directory, 'dist/index.wasm'), 'dist/function.js'],
+      ['exec', '--', 'javy', 'compile', '-o', joinPath(ourFunction.directory, 'dist/index.wasm'), 'dist/function.js'],
       {
         cwd: ourFunction.directory,
         stderr,

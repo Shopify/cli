@@ -470,7 +470,6 @@ describe('getFunctionRuntimeDependencies', () => {
     allFunctionSpecs.forEach((specification) => {
       const got = getFunctionRuntimeDependencies(specification, templateFlavor)
       expect(got.find((dep) => dep.name === '@shopify/shopify_function')).toBeTruthy()
-      expect(got.find((dep) => dep.name === 'javy-cli')).toBeTruthy()
       expect(got.find((dep) => dep.name === 'javy')).toBeTruthy()
     })
   })
@@ -484,7 +483,6 @@ describe('getFunctionRuntimeDependencies', () => {
     allFunctionSpecs.forEach((specification) => {
       const got = getFunctionRuntimeDependencies(specification, templateFlavor)
       expect(got.find((dep) => dep.name === '@shopify/shopify_function')).toBeFalsy()
-      expect(got.find((dep) => dep.name === 'javy-cli')).toBeFalsy()
       expect(got.find((dep) => dep.name === 'javy')).toBeFalsy()
     })
   })
