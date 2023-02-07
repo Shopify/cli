@@ -9,6 +9,15 @@ export function useExtension(uuid: string) {
   return useMemo(
     () => ({
       extension,
+      setPlacementReference: () => {
+        const placementReference = 'ORDER_SUMMARY1'
+        extensionServer.client.persist('update', {
+          extensions: extensions.map((extension) => ({
+            uuid: extension.uuid,
+            development: {placementReference: extension.uuid === uuid ? placementReference : extension.development.placementReference},
+          })),
+        })
+      },
       hide: () =>
         extensionServer.client.persist('update', {
           extensions: extensions.map((extension) => ({

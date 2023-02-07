@@ -20,7 +20,7 @@ export function ExtensionRow({uuid}: Props) {
     fallback: en,
   })
 
-  const {focus, unfocus, extension, show, hide} = useExtension(uuid)
+  const {focus, unfocus, extension, show, hide, setPlacementReference} = useExtension(uuid)
 
   if (!extension) {
     return null
@@ -56,6 +56,11 @@ export function ExtensionRow({uuid}: Props) {
       </td>
       <td>
         <Status status={extension.development.status} />
+      </td>
+      <td>
+      <Button type="button" onClick={() => setPlacementReference()}>
+          Placement
+        </Button>
       </td>
     </Row>
   )
