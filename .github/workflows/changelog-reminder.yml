@@ -1,7 +1,11 @@
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
-    paths: ["packages/*/src/**", "packages/cli-kit/assets/cli-ruby/**"]
+    types: [ opened, synchronize, reopened, ready_for_review ]
+    paths:
+      [
+        "packages/*/src/**",
+        "packages/cli-kit/assets/cli-ruby/**"
+      ]
 name: Changelog Reminder
 jobs:
   remind:
@@ -10,7 +14,7 @@ jobs:
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository && !github.event.pull_request.draft }}
     steps:
       - uses: actions/checkout@v2
-      - uses: mskelton/changelog-reminder-action@v2
+      - uses: mskelton/changelog-reminder-action@7039cd14fb784c0a2b37f6e7a6ade2c9148c2245 # pin@v2
         with:
           changelogRegex: \.changeset
           message: |
