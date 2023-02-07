@@ -163,18 +163,19 @@ describe('execCLI', () => {
     })
 
     // Then
-    expect(execSpy).toHaveBeenLastCalledWith('/embed/internal/bin/shopify', ['args'], {
+    expect(execSpy).toHaveBeenLastCalledWith('bundle', ['exec', '/embed/internal/bin/shopify', 'args'], {
       stdio: 'inherit',
       cwd: './directory',
       env: {
         ...process.env,
         SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: undefined,
         SHOPIFY_CLI_ADMIN_AUTH_TOKEN: undefined,
-        SHOPIFY_CLI_STORE: undefined,
+        SHOPIFY_SHOP: undefined,
         SHOPIFY_CLI_AUTH_TOKEN: 'token_0000_1111_2222_3333',
         SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
         BUNDLE_GEMFILE: '/embed/internal/Gemfile',
       },
+      signal: undefined,
     })
   })
 })
