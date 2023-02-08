@@ -1,5 +1,9 @@
-import {useExtensionServerContext} from '@shopify/ui-extensions-server-kit'
+import {CheckoutExtensionPlacementReference, useExtensionServerContext} from '@shopify/ui-extensions-server-kit'
 import {useMemo} from 'react'
+
+export interface ExtensionSettings {
+  placementReference: CheckoutExtensionPlacementReference
+}
 
 export function useExtension(uuid: string) {
   const extensionServer = useExtensionServerContext()
@@ -9,12 +13,14 @@ export function useExtension(uuid: string) {
   return useMemo(
     () => ({
       extension,
-      setPlacementReference: () => {
-        const placementReference = 'ORDER_SUMMARY1'
+      setSettings: (settings: ExtensionSettings) => {
         extensionServer.client.persist('update', {
           extensions: extensions.map((extension) => ({
             uuid: extension.uuid,
-            development: {placementReference: extension.uuid === uuid ? placementReference : extension.development.placementReference},
+            development: {
+              placementReference:
+                extension.uuid === uuid ? settings.placementReference : extension.development.placementReference,
+            },
           })),
         })
       },
