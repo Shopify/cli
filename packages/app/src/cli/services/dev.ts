@@ -103,7 +103,7 @@ async function dev(options: DevOptions) {
   const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
 
-  let previewUrl = localApp.extensions.ui.length > 0 ? `${proxyUrl}/extensions/dev-console` : undefined
+  let previewUrl
 
   if ((frontendConfig || backendConfig) && options.update) {
     const currentURLs = await getURLs(apiKey, token)
@@ -117,6 +117,10 @@ async function dev(options: DevOptions) {
     if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
     await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
     previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
+  }
+
+  if (localApp.extensions.ui.length > 0) {
+    previewUrl = `${proxyUrl}/extensions/dev-console`
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
