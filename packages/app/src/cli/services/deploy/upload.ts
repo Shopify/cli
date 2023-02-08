@@ -74,7 +74,7 @@ export async function uploadThemeExtensions(
   )
 }
 
-interface UploadUIExtensionsBundleOptions {
+interface UploadExtensionsBundleOptions {
   /** The application API key */
   apiKey: string
 
@@ -100,11 +100,11 @@ export interface UploadExtensionValidationError {
  * Uploads a bundle.
  * @param options - The upload options
  */
-export async function uploadUIExtensionsBundle(
-  options: UploadUIExtensionsBundleOptions,
+export async function uploadExtensionsBundle(
+  options: UploadExtensionsBundleOptions,
 ): Promise<UploadExtensionValidationError[]> {
   const deploymentUUID = randomUUID()
-  const signedURL = await getUIExtensionUploadURL(options.apiKey, deploymentUUID)
+  const signedURL = await getExtensionUploadURL(options.apiKey, deploymentUUID)
 
   const form = formData()
   const buffer = readFileSync(options.bundlePath)
@@ -144,7 +144,7 @@ export async function uploadUIExtensionsBundle(
  * @param apiKey - The application API key
  * @param deploymentUUID - The unique identifier of the deployment.
  */
-export async function getUIExtensionUploadURL(apiKey: string, deploymentUUID: string) {
+export async function getExtensionUploadURL(apiKey: string, deploymentUUID: string) {
   const mutation = GenerateSignedUploadUrl
   const token = await ensureAuthenticatedPartners()
   const variables: GenerateSignedUploadUrlVariables = {
