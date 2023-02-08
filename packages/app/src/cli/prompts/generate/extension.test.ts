@@ -6,7 +6,7 @@ import {
   loadLocalExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
-import {areJavaScriptFunctionsEnabled, isShopify, isUnitTest} from '@shopify/cli-kit/node/environment/local'
+import {areJavaScriptFunctionsEnabled, isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/context/local')

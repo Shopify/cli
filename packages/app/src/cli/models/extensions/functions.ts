@@ -4,7 +4,7 @@ import {blocks, defaultFunctionsFlavors, withJavaScriptFunctionsFlavors} from '.
 import {ExtensionFlavor} from '../../services/generate/extension.js'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {areJavaScriptFunctionsEnabled} from '@shopify/cli-kit/node/environment/local'
+import {areJavaScriptFunctionsEnabled} from '@shopify/cli-kit/node/context/local'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {schema} from '@shopify/cli-kit/node/schema'
 
