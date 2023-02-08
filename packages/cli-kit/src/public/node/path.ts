@@ -60,5 +60,5 @@ export function moduleDirectory(moduleURL: string | URL): string {
  */
 export function cwd(): string {
   // eslint-disable-next-line rulesdir/no-process-cwd
-  return process.env.INIT_CWD ?? process.cwd()
+  return process.env.INIT_CWD ? normalize(process.env.INIT_CWD) : process.cwd()
 }

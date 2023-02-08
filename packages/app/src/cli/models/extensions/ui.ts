@@ -1,6 +1,7 @@
 import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, UIExtension} from '../app/extensions.js'
-import {blocks, defualtExtensionFlavors} from '../../constants.js'
+import {blocks, defaultExtensionFlavors} from '../../constants.js'
+import {ExtensionFlavor} from '../../services/generate/extension.js'
 import {ok, Result} from '@shopify/cli-kit/node/result'
 import {capitalize, constantize} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -18,7 +19,7 @@ export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = Bas
   surface: string
   singleEntryPath: boolean
   registrationLimit: number
-  supportedFlavors: {name: string; value: string}[]
+  supportedFlavors: {name: string; value: ExtensionFlavor}[]
   gated: boolean
   helpURL?: string
   dependency?: {name: string; version: string}
@@ -222,7 +223,7 @@ export function createUIExtensionSpecification<TConfiguration extends BaseConfig
     gated: false,
     schema: BaseUIExtensionSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
-    supportedFlavors: defualtExtensionFlavors,
+    supportedFlavors: defaultExtensionFlavors,
     category: (): ExtensionCategory => (spec.identifier === 'theme' ? 'theme' : 'ui'),
   }
   return {...defaults, ...spec}

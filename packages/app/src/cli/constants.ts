@@ -1,3 +1,5 @@
+import {ExtensionFlavor} from './services/generate/extension.js'
+
 export const configurationFileNames = {
   app: 'shopify.app.toml',
   extension: {
@@ -34,12 +36,19 @@ export const blocks = {
   },
 } as const
 
-export const defaultFunctionsFlavors = [
+export const defaultFunctionsFlavors: {name: string; value: ExtensionFlavor}[] = [
   {name: 'Wasm', value: 'wasm'},
   {name: 'Rust', value: 'rust'},
 ]
 
-export const defualtExtensionFlavors = [
+export const withJavaScriptFunctionsFlavors: {name: string; value: ExtensionFlavor}[] = [
+  {name: 'JavaScript', value: 'vanilla-js'},
+  {name: 'TypeScript', value: 'typescript'},
+  {name: 'Rust', value: 'rust'},
+  {name: 'Wasm', value: 'wasm'},
+]
+
+export const defaultExtensionFlavors: {name: string; value: ExtensionFlavor}[] = [
   {name: 'TypeScript', value: 'typescript'},
   {name: 'JavaScript', value: 'vanilla-js'},
   {name: 'TypeScript React', value: 'typescript-react'},

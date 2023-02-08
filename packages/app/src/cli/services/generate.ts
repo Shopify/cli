@@ -112,7 +112,7 @@ function findSpecification(type: string | undefined, specifications: GenericSpec
 function validateExtensionFlavor(specification: GenericSpecification | undefined, flavor: string | undefined) {
   if (!flavor || !specification) return
 
-  const possibleFlavors = specification.supportedFlavors.map((flavor) => flavor.value)
+  const possibleFlavors = specification.supportedFlavors.map((flavor) => flavor.value as string)
   if (!possibleFlavors.includes(flavor)) {
     throw new AbortError(
       'Invalid template for extension type',

@@ -3,6 +3,10 @@
  app dev                @shopify/app           
  app env pull           @shopify/app           
  app env show           @shopify/app           
+ app function build     @shopify/app           
+ app function run       @shopify/app           
+ app function schema    @shopify/app           
+ app function typegen   @shopify/app           
  app generate extension @shopify/app           
  app generate schema    @shopify/app           
  app info               @shopify/app           

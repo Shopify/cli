@@ -143,8 +143,12 @@
       "app": {
         "description": "Build Shopify apps."
       },
-      "app env": {
-        "description": "Pull or display app and extensions environment variables."
+      "app:env": {
+        "description": "Manage environment variables."
+      },
+      "app:function": {
+        "description": "Manage Shopify Functions.",
+        "hidden": true
       },
       "auth": {
         "description": "Auth operations."
@@ -152,6 +156,9 @@
       "kitchen-sink": {
         "description": "View the available UI kit components.",
         "hidden": true
+      },
+      "webhook": {
+        "description": "Manage webhooks."
       }
     },
     "additionalHelpFlags": [

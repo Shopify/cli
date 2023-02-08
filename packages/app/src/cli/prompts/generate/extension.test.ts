@@ -6,7 +6,7 @@ import {
   loadLocalExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
-import {isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
+import {areJavaScriptFunctionsEnabled, isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/context/local')
@@ -15,6 +15,7 @@ vi.mock('@shopify/cli-kit/node/ui')
 beforeEach(() => {
   vi.mocked(isShopify).mockResolvedValue(true)
   vi.mocked(isUnitTest).mockResolvedValue(true)
+  vi.mocked(areJavaScriptFunctionsEnabled).mockResolvedValue(false)
 })
 
 describe('extension prompt', async () => {
