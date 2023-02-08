@@ -1,5 +1,11 @@
 # @shopify/plugin-ngrok
 
+## 3.40.3
+
+### Patch Changes
+
+- @shopify/cli-kit@3.40.3
+
 ## 3.40.2
 
 ### Patch Changes
