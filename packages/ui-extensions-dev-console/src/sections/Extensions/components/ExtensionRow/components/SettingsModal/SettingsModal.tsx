@@ -1,5 +1,6 @@
 import en from './translations/en.json'
 
+import * as styles from './SettingsModal.css'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {CheckoutExtensionPlacementReference} from '@shopify/ui-extensions-server-kit'
@@ -29,20 +30,25 @@ export function SettingsModal({setSettings, settings, onClose, open}: Props) {
           onClose()
         }}
       >
-        <div>
-          <label htmlFor="placementReference">Placement reference</label>
-          <select name="placementReference" defaultValue={settings.placementReference}>
-            {Object.values(CheckoutExtensionPlacementReference).map((placementReference) => {
-              return (
-                <option key={placementReference} value={placementReference}>
-                  {placementReference}
-                </option>
-              )
-            })}
-          </select>
+        <div className={styles.SettingsWrapper}>
+          <div>
+            <label htmlFor="placementReference">Extension placement</label>
+          </div>
+          <div>
+            <select name="placementReference" defaultValue={settings.placementReference}>
+              {Object.values(CheckoutExtensionPlacementReference).map((placementReference) => {
+                return (
+                  <option key={placementReference} value={placementReference}>
+                    {placementReference}
+                  </option>
+                )
+              })}
+            </select>
+          </div>
         </div>
-
-        <Button type="submit">Submit</Button>
+        <Button style={{marginTop: '8px'}} type="submit">
+          Save
+        </Button>
       </form>
     </Modal>
   )
