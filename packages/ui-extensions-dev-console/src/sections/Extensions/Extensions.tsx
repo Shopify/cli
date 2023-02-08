@@ -36,6 +36,7 @@ export function Extensions() {
             <th>{i18n.translate('extensionList.mobile')}</th>
             <th>{i18n.translate('extensionList.view')}</th>
             <th>{i18n.translate('extensionList.status')}</th>
+            <th>Settings</th>
           </Row>
         </thead>
         <tbody>

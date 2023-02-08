@@ -45,6 +45,7 @@ export function PostPurchaseRow({uuid}: Props) {
       <td>
         <Status status={extension.development.status} />
       </td>
+      <td></td>
     </Row>
   )
 }

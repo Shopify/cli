@@ -90,6 +90,26 @@ export interface ExtensionPoint {
   root: ResourceURL
 }
 
+export enum CheckoutExtensionPlacementReference {
+  Delivery1 = 'DELIVERY1',
+  Delivery2 = 'DELIVERY2',
+  Information1 = 'INFORMATION1',
+  Information2 = 'INFORMATION2',
+  Information3 = 'INFORMATION3',
+  OrderStatus1 = 'ORDER_STATUS1',
+  OrderStatus2 = 'ORDER_STATUS2',
+  OrderStatus3 = 'ORDER_STATUS3',
+  OrderSummary1 = 'ORDER_SUMMARY1',
+  OrderSummary2 = 'ORDER_SUMMARY2',
+  OrderSummary3 = 'ORDER_SUMMARY3',
+  OrderSummary4 = 'ORDER_SUMMARY4',
+  Payment1 = 'PAYMENT1',
+  Payment2 = 'PAYMENT2',
+  Payment3 = 'PAYMENT3',
+  Payment4 = 'PAYMENT4',
+  Wallets1 = 'WALLETS1',
+}
+
 export type ExtensionPoints = string[] | ExtensionPoint[] | null
 
 export interface ExtensionPayload {
@@ -102,6 +122,7 @@ export interface ExtensionPayload {
     focused?: boolean
     resource: ResourceURL
     root: ResourceURL
+    placementReference: CheckoutExtensionPlacementReference
     renderer: {
       name: string
       version: string

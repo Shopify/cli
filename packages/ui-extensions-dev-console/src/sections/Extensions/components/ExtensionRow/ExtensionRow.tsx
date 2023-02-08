@@ -1,7 +1,7 @@
 import * as styles from './ExtensionRow.module.scss'
 import en from './translations/en.json'
 
-import {PreviewLinks} from './components'
+import {PreviewLinks, SettingsModal} from './components'
 import {QRCodeModal, Row, Status, View} from '..'
 import {useExtension} from '../../hooks/useExtension'
 import React, {useState} from 'react'
@@ -13,14 +13,16 @@ interface Props {
   uuid: ExtensionPayload['uuid']
 }
 
+type ModalType = 'settings' | 'qr'
+
 export function ExtensionRow({uuid}: Props) {
-  const [showModal, setShowModal] = useState(false)
+  const [modalToShow, setModalToShow] = useState<ModalType | null>(null)
   const [i18n] = useI18n({
     id: 'ExtensionRow',
     fallback: en,
   })
 
-  const {focus, unfocus, extension, show, hide, setPlacementReference} = useExtension(uuid)
+  const {focus, unfocus, extension, show, hide, setSettings} = useExtension(uuid)
 
   if (!extension) {
     return null
@@ -35,12 +37,12 @@ export function ExtensionRow({uuid}: Props) {
         <PreviewLinks extension={extension} />
       </td>
       <td>
-        <Button type="button" onClick={() => setShowModal(true)}>
+        <Button type="button" onClick={() => setModalToShow('qr')}>
           {i18n.translate('viewMobile')}
         </Button>
         <QRCodeModal
           code={
-            showModal
+            modalToShow === 'qr'
               ? {
                   url: extension.development.root.url,
                   type: extension.surface,
@@ -48,7 +50,7 @@ export function ExtensionRow({uuid}: Props) {
                 }
               : undefined
           }
-          onClose={() => setShowModal(false)}
+          onClose={() => setModalToShow(null)}
         />
       </td>
       <td>
@@ -58,9 +60,20 @@ export function ExtensionRow({uuid}: Props) {
         <Status status={extension.development.status} />
       </td>
       <td>
-      <Button type="button" onClick={() => setPlacementReference()}>
-          Placement
-        </Button>
+        {extension.type === 'checkout_ui_extension' && (
+          <>
+            <Button type="button" onClick={() => setModalToShow('settings')}>
+              Settings
+            </Button>
+
+            <SettingsModal
+              open={modalToShow === 'settings'}
+              onClose={() => setModalToShow(null)}
+              setSettings={setSettings}
+              settings={{placementReference: extension.development.placementReference}}
+            />
+          </>
+        )}
       </td>
     </Row>
   )
