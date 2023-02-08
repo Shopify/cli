@@ -17,14 +17,14 @@ describe('getWebhookSample', () => {
       apiVersion: 'A_VERSION',
       value: 'A_DELIVERY_METHOD',
       address: 'https://example.org',
-      sharedSecret: 'A_SECRET',
+      clientSecret: 'A_SECRET',
     }
     const requestValues = {
       topic: inputValues.topic,
       api_version: inputValues.apiVersion,
       address: inputValues.address,
       delivery_method: inputValues.value,
-      shared_secret: inputValues.sharedSecret,
+      shared_secret: inputValues.clientSecret,
     }
     const graphQLResult = {
       sendSampleWebhook: {
@@ -46,7 +46,7 @@ describe('getWebhookSample', () => {
       inputValues.apiVersion,
       inputValues.value,
       inputValues.address,
-      inputValues.sharedSecret,
+      inputValues.clientSecret,
     )
 
     // Then
