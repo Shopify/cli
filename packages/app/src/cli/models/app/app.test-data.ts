@@ -41,7 +41,7 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
 
   const configuration = uiExtension?.configuration ?? {
     name: uiExtension?.configuration?.name ?? 'test-ui-extension',
-    type: uiExtension?.configuration?.type ?? 'product_subscription',
+    type: uiExtension?.configuration?.type ?? uiExtension?.type ?? 'product_subscription',
     metafields: [],
     capabilities: {
       block_progress: false,
