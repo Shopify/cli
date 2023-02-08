@@ -7,6 +7,7 @@ import {useExtension} from '../../hooks/useExtension'
 import React, {useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
+import {toast} from 'react-toastify'
 import {Button} from '@/components/Button'
 
 interface Props {
@@ -26,6 +27,11 @@ export function ExtensionRow({uuid}: Props) {
 
   if (!extension) {
     return null
+  }
+
+  const onModalClose = () => {
+    setModalToShow(null)
+    toast('Extension placement saved', {toastId: 'extension-placement-success'})
   }
 
   return (
@@ -68,7 +74,7 @@ export function ExtensionRow({uuid}: Props) {
 
             <SettingsModal
               open={modalToShow === 'settings'}
-              onClose={() => setModalToShow(null)}
+              onClose={onModalClose}
               setSettings={setSettings}
               settings={{placementReference: extension.development.placementReference}}
             />
