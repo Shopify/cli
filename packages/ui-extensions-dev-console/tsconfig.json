@@ -8,6 +8,7 @@
       "@shopify/ui-extensions-server-kit": ["../ui-extensions-server-kit/src"],
       "@shopify/ui-extensions-test-utils": ["../ui-extensions-test-utils/src"]
     },
+    "lib": ["dom"],
     "outDir": "dist",
     "types": ["vitest/globals"],
   },
