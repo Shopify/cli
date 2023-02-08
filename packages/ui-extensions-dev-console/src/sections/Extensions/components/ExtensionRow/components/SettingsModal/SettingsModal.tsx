@@ -23,20 +23,25 @@ export function SettingsModal({setSettings, settings, onClose, open}: Props) {
         onSubmit={(event) => {
           event.preventDefault()
           setSettings({
-            placementReference: event.currentTarget.elements.placementReference.value,
+            placementReference: (event.currentTarget.elements.namedItem('placementReference')! as HTMLSelectElement)
+              .value as CheckoutExtensionPlacementReference,
           })
           onClose()
         }}
       >
-        <select name="placementReference" defaultValue={settings.placementReference}>
-          {Object.values(CheckoutExtensionPlacementReference).map((placementReference) => {
-            return (
-              <option key={placementReference} value={placementReference}>
-                {placementReference}
-              </option>
-            )
-          })}
-        </select>
+        <div>
+          <label htmlFor="placementReference">Placement reference</label>
+          <select name="placementReference" defaultValue={settings.placementReference}>
+            {Object.values(CheckoutExtensionPlacementReference).map((placementReference) => {
+              return (
+                <option key={placementReference} value={placementReference}>
+                  {placementReference}
+                </option>
+              )
+            })}
+          </select>
+        </div>
+
         <Button type="submit">Submit</Button>
       </form>
     </Modal>
