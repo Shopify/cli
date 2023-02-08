@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.41.0
+
+### Minor Changes
+
+- 9d9480341: Add developer experience preview for JavaScript functions
+
 ## 3.40.3
 
 ## 3.40.2

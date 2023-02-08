@@ -1,5 +1,17 @@
 # @shopify/app
 
+## 3.41.0
+
+### Minor Changes
+
+- 9d9480341: Add developer experience preview for JavaScript functions
+
+### Patch Changes
+
+- Updated dependencies [9d9480341]
+  - @shopify/cli-kit@3.41.0
+  - @shopify/plugin-ngrok@3.41.0
+
 ## 3.40.3
 
 ### Patch Changes
