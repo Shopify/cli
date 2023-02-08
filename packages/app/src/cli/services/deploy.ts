@@ -84,7 +84,9 @@ export const deploy = async (options: DeployOptions) => {
     try {
       const bundlePath = joinPath(tmpDir, `bundle.zip`)
       await mkdir(dirname(bundlePath))
-      const bundle = app.extensions.ui.length !== 0
+      const bundleTheme = !themeBundlingDisabled() && app.extensions.theme.length !== 0
+      const bundleUI = app.extensions.ui.length !== 0
+      const bundle = bundleTheme || bundleUI
       await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers, bundle})
 
       const tasks: Task<TasksContext>[] = [
