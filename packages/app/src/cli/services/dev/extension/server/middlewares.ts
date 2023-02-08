@@ -3,7 +3,7 @@ import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {getHTML} from '../templates.js'
 import {fileExists, isDirectory, readFile, findPathUp} from '@shopify/cli-kit/node/fs'
-import {IncomingMessage, ServerResponse, sendRedirect, send} from '@shopify/cli-kit/node/http'
+import {IncomingMessage, ServerResponse, sendRedirect, send, getQuery} from '@shopify/cli-kit/node/http'
 import {joinPath, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
@@ -155,6 +155,8 @@ export function getLogMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
 export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
   return async (request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) => {
     const extensionID = request.context.params.extensionId
+    const previewMode = getQuery(request).previewMode
+
     const extension = devOptions.extensions.find((extension) => extension.devUUID === extensionID)
 
     if (!extension) {
@@ -176,7 +178,7 @@ export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlew
         await send(response.event, body)
         return
       } else {
-        const url = getRedirectUrl(extension, devOptions)
+        const url = getRedirectUrl(extension, devOptions, previewMode)
         await sendRedirect(response.event, url, 307)
         return
       }
@@ -199,7 +201,7 @@ export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlew
           url: new URL('/extensions/dev-console', devOptions.url).toString(),
         },
         store: devOptions.storeFqdn,
-        extension: await getUIExtensionPayload(extension, devOptions),
+        extension: await getUIExtensionPayload(extension, devOptions, previewMode),
       }),
     )
   }
@@ -209,6 +211,7 @@ export function getExtensionPointMiddleware({devOptions}: GetExtensionsMiddlewar
   return async (request: IncomingMessage, response: ServerResponse, _next: (err?: Error) => unknown) => {
     const extensionID = request.context.params.extensionId
     const requestedTarget = request.context.params.extensionPointTarget
+    const previewMode = getQuery(request).previewMode
     const extension = devOptions.extensions.find((extension) => extension.devUUID === extensionID)
 
     if (!extension) {
@@ -225,7 +228,7 @@ export function getExtensionPointMiddleware({devOptions}: GetExtensionsMiddlewar
       })
     }
 
-    const url = getExtensionPointRedirectUrl(requestedTarget, extension, devOptions)
+    const url = getExtensionPointRedirectUrl(requestedTarget, extension, devOptions, previewMode)
     if (!url) {
       return sendError(response, {
         statusCode: 404,

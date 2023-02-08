@@ -46,6 +46,7 @@ export interface DevOptions {
   commandConfig: Config
   skipDependenciesInstallation: boolean
   subscriptionProductUrl?: string
+  checkoutEditorUrl?: string
   checkoutCartUrl?: string
   tunnelUrl?: string
   tunnel: boolean
@@ -146,6 +147,7 @@ async function dev(options: DevOptions) {
       storeFqdn,
       grantedScopes: remoteApp.grantedScopes,
       subscriptionProductUrl: options.subscriptionProductUrl,
+      checkoutEditorUrl: options.checkoutEditorUrl,
       checkoutCartUrl: options.checkoutCartUrl,
     })
     proxyTargets.push(devExt)
@@ -324,6 +326,7 @@ interface DevUIExtensionsTargetOptions {
   grantedScopes: string[]
   id?: string
   subscriptionProductUrl?: string
+  checkoutEditorUrl?: string
   checkoutCartUrl?: string
 }
 
@@ -335,6 +338,7 @@ async function devUIExtensionsTarget({
   storeFqdn,
   grantedScopes,
   subscriptionProductUrl,
+  checkoutEditorUrl,
   checkoutCartUrl,
 }: DevUIExtensionsTargetOptions): Promise<ReverseHTTPProxyTarget> {
   const cartUrl = await buildCartURLIfNeeded(app.extensions.ui, storeFqdn, checkoutCartUrl)
@@ -355,6 +359,7 @@ async function devUIExtensionsTarget({
         apiKey,
         grantedScopes,
         checkoutCartUrl: cartUrl,
+        checkoutEditorUrl: '/admin/settings/checkout/editor',
         subscriptionProductUrl,
       })
     },
