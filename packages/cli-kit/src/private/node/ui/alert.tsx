@@ -25,7 +25,7 @@ export function alert({
   customSections,
   orderedNextSteps = false,
 }: AlertProps) {
-  renderOnce(
+  return renderOnce(
     <Alert
       type={type}
       headline={headline}

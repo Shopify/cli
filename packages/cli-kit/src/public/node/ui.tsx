@@ -1,3 +1,4 @@
+/* eslint-disable tsdoc/syntax */
 import {AbortSilentError, FatalError as Fatal} from './error.js'
 import {collectLog, consoleError, consoleLog, Logger, LogLevel, outputDebug, outputWhereAppropriate} from './output.js'
 import {isUnitTest} from './context/local.js'
@@ -25,6 +26,11 @@ export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps
 
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
+ * @example
+ * Press `p` to open your browser. Press `q` to quit.
+ *
+ *
+ * Preview URL: https://shopify.com
  */
 export async function renderConcurrent({renderOptions = {}, ...props}: RenderConcurrentOptions) {
   const newProps = {
@@ -43,39 +49,34 @@ export type RenderAlertOptions = Omit<AlertProps, 'type'>
 
 /**
  * Renders an information banner to the console.
- *
- * Basic:
- *
- * ```
- * ╭─ info ───────────────────────────────────────────────────╮
- * │                                                          │
- * │  Body                                                    │
- * │                                                          │
- * ╰──────────────────────────────────────────────────────────╯
- * ```
- *
- * Complete:
- * ```
- * ╭─ info ───────────────────────────────────────────────────╮
- * │                                                          │
- * │  Title                                                   │
- * │                                                          │
- * │  Body                                                    │
- * │                                                          │
- * │  Next steps                                              │
- * │    • Run `cd santorini-goods`                            │
- * │    • To preview your project, run `npm app dev`          │
- * │    • To add extensions, run `npm generate extension`     │
- * │                                                          │
- * │  Reference                                               │
- * │    • Run `npm shopify help`                              │
- * │    • Press 'return' to open the dev docs:                │
- * │      https://shopify.dev                                 │
- * │                                                          │
- * │  Link: https://shopify.com                               │
- * │                                                          │
- * ╰──────────────────────────────────────────────────────────╯
- * ```
+ * @example Basic
+ * ╭─ info ──────────────────────────────────────────────────────────────────────────────╮
+ * │                                                                                     │
+ * │  CLI update available                                                               │
+ * │                                                                                     │
+ * │  Run `npm run shopify upgrade`.                                                     │
+ * │                                                                                     │
+ * ╰─────────────────────────────────────────────────────────────────────────────────────╯
+ * @example Complete
+ * ╭─ info ──────────────────────────────────────────────────────────────────────────────╮
+ * │                                                                                     │
+ * │  my-app initialized and ready to build.                                             │
+ * │                                                                                     │
+ * │  Next steps                                                                         │
+ * │    • Run `cd verification-app`                                                      │
+ * │    • To preview your project, run `npm app dev`                                     │
+ * │    • To add extensions, run `npm generate extension`                                │
+ * │                                                                                     │
+ * │  Reference                                                                          │
+ * │    • Run `npm shopify help`                                                         │
+ * │    • Dev docs                                                                       │
+ * │                                                                                     │
+ * │  Custom section                                                                     │
+ * │    • Item 1                                                                         │
+ * │    • Item 2                                                                         │
+ * │    • Item 3                                                                         │
+ * │                                                                                     │
+ * ╰─────────────────────────────────────────────────────────────────────────────────────╯
  */
 export function renderInfo(options: RenderAlertOptions) {
   return alert({...options, type: 'info'})
@@ -83,39 +84,25 @@ export function renderInfo(options: RenderAlertOptions) {
 
 /**
  * Renders a success banner to the console.
- *
- * Basic:
- *
- * ```
- * ╭─ success ────────────────────────────────────────────────╮
- * │                                                          │
- * │  Title                                                   │
- * │                                                          │
- * ╰──────────────────────────────────────────────────────────╯
- * ```
- *
- * Complete:
- * ```
- * ╭─ success ────────────────────────────────────────────────╮
- * │                                                          │
- * │  Title                                                   │
- * │                                                          │
- * │  Body                                                    │
- * │                                                          │
- * │  Next steps                                              │
- * │    • Run `cd santorini-goods`                              │
- * │    • To preview your project, run `npm app dev`            │
- * │    • To add extensions, run `npm generate extension`       │
- * │                                                          │
- * │  Reference                                               │
- * │    • Run `npm shopify help`                                │
- * │    • Press 'return' to open the dev docs:                │
- * │      https://shopify.dev                                 │
- * │                                                          │
- * │  Link: https://shopify.com                               │
- * │                                                          │
- * ╰──────────────────────────────────────────────────────────╯
- * ```
+ * @example Basic
+ * ╭─ success ───────────────────────────────────────────────────────────────────────────╮
+ * │                                                                                     │
+ * │  CLI updated.                                                                       │
+ * │                                                                                     │
+ * │  You are now running version 3.47.                                                  │
+ * │                                                                                     │
+ * ╰─────────────────────────────────────────────────────────────────────────────────────╯
+ * @example Complete
+ * ╭─ success ───────────────────────────────────────────────────────────────────────────╮
+ * │                                                                                     │
+ * │  Deployment successful.                                                             │
+ * │                                                                                     │
+ * │  Your extensions have been uploaded to your Shopify Partners Dashboard.             │
+ * │                                                                                     │
+ * │  Next steps                                                                         │
+ * │    • See your deployment and set it live                                            │
+ * │                                                                                     │
+ * ╰─────────────────────────────────────────────────────────────────────────────────────╯
  */
 export function renderSuccess(options: RenderAlertOptions) {
   return alert({...options, type: 'success'})
@@ -123,39 +110,25 @@ export function renderSuccess(options: RenderAlertOptions) {
 
 /**
  * Renders a warning banner to the console.
- *
- * Basic:
- *
- * ```
- * ╭─ warning ────────────────────────────────────────────────╮
- * │                                                          │
- * │  Title                                                   │
- * │                                                          │
- * ╰──────────────────────────────────────────────────────────╯
- * ```
- *
- * Complete:
- * ```
- * ╭─ warning ────────────────────────────────────────────────╮
- * │                                                          │
- * │  Title                                                   │
- * │                                                          │
- * │  Body                                                    │
- * │                                                          │
- * │  Next steps                                              │
- * │    • Run `cd santorini-goods`                            │
- * │    • To preview your project, run `npm app dev`          │
- * │    • To add extensions, run `npm generate extension`     │
- * │                                                          │
- * │  Reference                                               │
- * │    • Run `npm shopify help`                              │
- * │    • Press 'return' to open the dev docs:                │
- * │      https://shopify.dev                                 │
- * │                                                          │
- * │  Link: https://shopify.com                               │
- * │                                                          │
- * ╰──────────────────────────────────────────────────────────╯
- * ```
+ * @example Basic
+ * ╭─ warning ───────────────────────────────────────────────────────────────────────────╮
+ * │                                                                                     │
+ * │  You have reached your limit of checkout extensions for this app.                   │
+ * │                                                                                     │
+ * │  You can free up space for a new one by deleting an existing one.                   │
+ * │                                                                                     │
+ * ╰─────────────────────────────────────────────────────────────────────────────────────╯
+ * @example Complete
+ * ╭─ warning ───────────────────────────────────────────────────────────────────────────╮
+ * │                                                                                     │
+ * │  Required access scope update.                                                      │
+ * │                                                                                     │
+ * │  The deadline for re-selecting your app scopes is May 1, 2022.                      │
+ * │                                                                                     │
+ * │  Reference                                                                          │
+ * │    • Dev docs                                                                       │
+ * │                                                                                     │
+ * ╰─────────────────────────────────────────────────────────────────────────────────────╯
  */
 export function renderWarning(options: RenderAlertOptions) {
   return alert({...options, type: 'warning'})
@@ -163,16 +136,30 @@ export function renderWarning(options: RenderAlertOptions) {
 
 /**
  * Renders a Fatal error to the console inside a banner.
- *
- * ```
- * ╭─ error ──────────────────────────────────────────────────╮
- * │                                                          │
- * │  Couldn't connect to the Shopify Partner Dashboard.      │
- * │                                                          │
- * │  Check your internet connection and try again.           │
- * │                                                          │
- * ╰──────────────────────────────────────────────────────────╯
- * ```
+ * @example Basic
+ * ╭─ error ─────────────────────────────────────────────────────────────────────────────╮
+ * │                                                                                     │
+ * │  Something went wrong.                                                              │
+ * │                                                                                     │
+ * │  To investigate the issue, examine this stack trace:                                │
+ * │    at _compile (internal/modules/cjs/loader.js:1137)                                │
+ * │    at js (internal/modules/cjs/loader.js:1157)                                      │
+ * │    at load (internal/modules/cjs/loader.js:985)                                     │
+ * │    at _load (internal/modules/cjs/loader.js:878)                                    │
+ * │                                                                                     │
+ * ╰─────────────────────────────────────────────────────────────────────────────────────╯
+ * @example Complete
+ * ╭─ error ─────────────────────────────────────────────────────────────────────────────╮
+ * │                                                                                     │
+ * │  No Organization found                                                              │
+ * │                                                                                     │
+ * │  Next steps                                                                         │
+ * │    • Have you created a Shopify Partners organization?                              │
+ * │    • Have you confirmed your accounts from the emails you received?                 │
+ * │    • Need to connect to a different App or organization? Run the command again      │
+ * │      with `--reset`                                                                 │
+ * │                                                                                     │
+ * ╰─────────────────────────────────────────────────────────────────────────────────────╯
  */
 export function renderFatalError(error: Fatal) {
   return renderOnce(<FatalError error={error} />, 'error', consoleError)
@@ -180,32 +167,8 @@ export function renderFatalError(error: Fatal) {
 
 /**
  * Renders a select prompt to the console.
+ * @example
  *
- * ```
- * ?  Associate your project with the org Castile Ventures?
- *
- *      Add:     • new-ext
- *
- *      Remove:  • integrated-demand-ext
- *               • order-discount
- *
- * \>  (f) first
- *     (s) second
- *     (3) third
- *     (4) fourth
- *     (5) seventh
- *     (6) tenth
- *
- *     Automations
- *     (7) fifth
- *     (8) sixth
- *
- *     Merchant Admin
- *     (9) eighth
- *     (10) ninth
- *
- *     Press ↑↓ arrows to select, enter to confirm
- * ```
  */
 export function renderSelectPrompt<T>(props: Omit<SelectPromptProps<T>, 'onSubmit'>): Promise<T> {
   // eslint-disable-next-line max-params
@@ -223,13 +186,8 @@ export interface RenderConfirmationPromptOptions extends Pick<SelectPromptProps<
 
 /**
  * Renders a confirmation prompt to the console.
+ * @example
  *
- * ?  Do you want to continue?
- *
- * \>  (y) Yes, confirm
- *     (n) No, canccel
- *
- *     Press ↑↓ arrows to select, enter to confirm
  */
 export function renderConfirmationPrompt({
   message,
@@ -260,15 +218,8 @@ export function renderConfirmationPrompt({
 
 /**
  * Renders an autocomplete prompt to the console.
- * ```
- * ?  Select a template  Type to search...
-
- * \>  first
- *     second
- *     third
-
- *  Press ↑↓ arrows to select, enter to confirm
- * ```
+ * @example
+ *
  */
 export function renderAutocompletePrompt<T>(
   props: PartialBy<Omit<AutocompletePromptProps<T>, 'onSubmit'>, 'search'>,
@@ -292,15 +243,12 @@ export function renderAutocompletePrompt<T>(
 
 /**
  * Renders a table to the console.
- *
- * ```
- * name                      role           Identifier
- * ────────────────────────  ─────────────  ──────────
- * Dawn                      [live]         #1361
- * Studio                                   #1363
- * Debut                     [unpublished]  #1374
- * Development (1a23b4-MBP)  [development]  #1368
- * ```
+ * @example
+ * ID  Name        email
+ * ──  ──────────  ─────────────
+ * 1   John Doe    jon@doe.com
+ * 2   Jane Doe    jane@doe.com
+ * 3   John Smith  jon@smith.com
  */
 export function renderTable<T extends ScalarDict>(props: TableProps<T>) {
   return renderOnce(<Table {...props} />)
@@ -308,6 +256,8 @@ export function renderTable<T extends ScalarDict>(props: TableProps<T>) {
 
 /**
  * Runs async tasks and displays their progress to the console.
+ * @example
+ *
  */
 export async function renderTasks<TContext>(tasks: Task<TContext>[]) {
   return render(<Tasks tasks={tasks} />)
@@ -315,10 +265,8 @@ export async function renderTasks<TContext>(tasks: Task<TContext>[]) {
 
 /**
  * Renders a text prompt to the console.
- * ```
- * ?  What is your name?
- * \>  John
- * ```
+ * @example
+ *
  */
 export function renderTextPrompt(props: Omit<TextPromptProps, 'onSubmit'>): Promise<string> {
   // eslint-disable-next-line max-params
@@ -336,13 +284,17 @@ interface RenderTextOptions {
 }
 
 /** Renders a text string to the console.
- * Using this function makes sure that correct spacing is applied among the various components. */
+ * Using this function makes sure that correct spacing is applied among the various components.
+ * @example
+ * Hello world!
+ */
 export function renderText({text, logLevel = 'info', logger = consoleLog}: RenderTextOptions) {
   let textWithLineReturn = text
   if (!text.endsWith('\n')) textWithLineReturn += '\n'
 
   if (isUnitTest()) collectLog(logLevel, textWithLineReturn)
   outputWhereAppropriate(logLevel, logger, textWithLineReturn)
+  return textWithLineReturn
 }
 
 /** Waits for any key to be pressed except Ctrl+C which will terminate the process. */

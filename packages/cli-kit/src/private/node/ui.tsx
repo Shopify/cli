@@ -14,6 +14,8 @@ export function renderOnce(element: JSX.Element, logLevel: LogLevel = 'info', lo
   }
 
   unmount()
+
+  return output
 }
 
 export function render(element: JSX.Element, options?: RenderOptions) {
