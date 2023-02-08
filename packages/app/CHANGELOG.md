@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 3.41.2
+
+### Patch Changes
+
+- dd3d0c846: Update to latest version of javy and function-runner
+  - @shopify/cli-kit@3.41.2
+  - @shopify/plugin-ngrok@3.41.2
+
 ## 3.41.1
 
 ### Patch Changes
