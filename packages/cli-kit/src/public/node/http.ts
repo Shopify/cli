@@ -17,6 +17,7 @@ export {
   sendError,
   sendRedirect,
   H3Error,
+  getQuery,
 } from 'h3'
 
 export {FetchError} from 'node-fetch'

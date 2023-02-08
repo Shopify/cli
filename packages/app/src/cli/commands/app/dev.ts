@@ -53,6 +53,11 @@ export default class Dev extends Command {
       description: 'Resource URL for checkout UI extension. Format: "/cart/{productVariantID}:{productQuantity}"',
       env: 'SHOPIFY_FLAG_CHECKOUT_CART_URL',
     }),
+    'checkout-editor-url': Flags.string({
+      hidden: false,
+      description: 'Resource URL for checkout UI extension in editor.',
+      env: 'SHOPIFY_FLAG_CHECKOUT_EDITOR_URL',
+    }),
     'tunnel-url': Flags.string({
       hidden: false,
       description: 'Override the ngrok tunnel URL. Format: "https://my-tunnel-url:port"',
@@ -107,6 +112,7 @@ export default class Dev extends Command {
       commandConfig,
       subscriptionProductUrl: flags['subscription-product-url'],
       checkoutCartUrl: flags['checkout-cart-url'],
+      checkoutEditorUrl: flags['checkout-editor-url'],
       tunnelUrl: flags['tunnel-url'],
       tunnel: flags.tunnel,
       noTunnel: flags['no-tunnel'],

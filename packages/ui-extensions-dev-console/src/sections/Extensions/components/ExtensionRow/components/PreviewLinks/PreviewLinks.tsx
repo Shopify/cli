@@ -44,6 +44,23 @@ export function PreviewLinks({extension}: Props) {
     )
   }
 
+  if (extension.surface === 'checkout') {
+    return (
+      <span>
+        <PreviewLink
+          rootUrl={extension.development.root.url}
+          resourceUrl={extension.development.resource.url}
+          title={'Checkout'}
+        />
+        <PreviewLink
+          rootUrl={`${extension.development.root.url}?previewMode=editor`}
+          resourceUrl={extension.development.resource.url}
+          title={'Checkout Editor'}
+        />
+      </span>
+    )
+  }
+
   return (
     <PreviewLink
       rootUrl={extension.development.root.url}

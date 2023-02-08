@@ -1,15 +1,17 @@
 interface GetUIExensionResourceURLOptions {
   checkoutCartUrl?: string
   subscriptionProductUrl?: string
+  checkoutEditorUrl?: string
 }
 
 export function getUIExtensionResourceURL(
   uiExtensionType: string,
   options: GetUIExensionResourceURLOptions,
-): {url: string | undefined} {
+  previewMode?: string,
+): {url: string} {
   switch (uiExtensionType) {
     case 'checkout_ui_extension':
-      return {url: options.checkoutCartUrl}
+      return {url: previewMode === 'editor' ? options.checkoutEditorUrl! : options.checkoutCartUrl!}
     case 'product_subscription':
       return {url: options.subscriptionProductUrl ?? ''}
     default:

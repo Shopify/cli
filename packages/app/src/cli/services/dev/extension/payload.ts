@@ -21,6 +21,7 @@ export type GetUIExtensionPayloadOptions = ExtensionDevOptions & {
 export async function getUIExtensionPayload(
   extension: UIExtension,
   options: GetUIExtensionPayloadOptions,
+  previewMode?: string,
 ): Promise<UIExtensionPayload> {
   const url = `${options.url}/extensions/${extension.devUUID}`
   const {localization, status: localizationStatus} = await getLocalization(extension, options)
@@ -41,7 +42,7 @@ export async function getUIExtensionPayload(
     },
     development: {
       ...options.currentDevelopmentPayload,
-      resource: getUIExtensionResourceURL(extension.configuration.type, options),
+      resource: getUIExtensionResourceURL(extension.configuration.type, options, previewMode),
       root: {
         url,
       },

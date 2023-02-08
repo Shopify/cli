@@ -81,6 +81,12 @@ export interface ExtensionDevOptions {
    * If not provided the first product in the store will be used
    */
   subscriptionProductUrl?: string
+
+  /**
+   * Product variant ID, used for UI extensions targeting Checkout Editor
+   * If that extension is present, this is mandatory
+   */
+  checkoutEditorUrl?: string
 }
 
 export async function devUIExtensions(options: ExtensionDevOptions): Promise<void> {
