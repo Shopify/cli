@@ -108,6 +108,7 @@
           "web_pixel_extension",
           "pos_ui_extension",
           "product_discounts",
+          "product_validation",
           "order_discounts",
           "shipping_discounts",
           "payment_customization",

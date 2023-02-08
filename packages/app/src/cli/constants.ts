@@ -60,6 +60,7 @@ export const extensionTypesGroups: {name: string; extensions: string[]}[] = [
       'checkout_ui_extension',
       'checkout_post_purchase',
       'cart_transform',
+      'product_validation',
     ],
   },
   {name: 'Analytics', extensions: ['web_pixel_extension']},
