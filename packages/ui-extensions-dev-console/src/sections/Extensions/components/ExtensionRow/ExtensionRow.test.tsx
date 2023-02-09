@@ -12,11 +12,11 @@ import {Button} from '@/components'
 
 vi.mock('./components', () => ({
   PreviewLinks: () => null,
+  SettingsModal: () => null,
 }))
 
 vi.mock('..', () => ({
   QRCodeModal: () => null,
-  SettingsModal: () => null,
   Row: (props: any) => props.children,
   Status: () => null,
   View: () => null,
@@ -26,15 +26,19 @@ mockI18n(en)
 
 describe('<ExtensionRow/>', () => {
   const extension = mockExtension()
+  const checkoutExtension = mockExtension({type: 'checkout_ui_extension'})
   const defaultProps = {
     uuid: extension.uuid,
   }
   const defaultState = {
     extensions: [extension],
   }
+  const checkoutExtensionProps = {
+    uuid: checkoutExtension.uuid,
+  }
   const stateWithCheckoutExtension = {
     ...defaultState,
-    extensions: [...defaultState.extensions, mockExtension({type: 'checkout_ui_extension'})],
+    extensions: [...defaultState.extensions, checkoutExtension],
   }
 
   test('renders a <QRCodeModal/>, closed by default', () => {
@@ -66,7 +70,7 @@ describe('<ExtensionRow/>', () => {
   })
 
   test('renders a <SettingsModal/> for checkout ui extensions', () => {
-    const container = render(<ExtensionRow {...defaultProps} />, withProviders(DefaultProviders), {
+    const container = render(<ExtensionRow {...checkoutExtensionProps} />, withProviders(DefaultProviders), {
       state: stateWithCheckoutExtension,
     })
 
@@ -74,12 +78,12 @@ describe('<ExtensionRow/>', () => {
   })
 
   test('opens and closes the <SettingsModal/>', () => {
-    const container = render(<ExtensionRow {...defaultProps} />, withProviders(DefaultProviders), {
+    const container = render(<ExtensionRow {...checkoutExtensionProps} />, withProviders(DefaultProviders), {
       state: stateWithCheckoutExtension,
     })
 
     container.act(() => {
-      container.find(Button, {content: 'Settings'})?.trigger('onClick')
+      container.find(Button, {children: 'Settings'})?.trigger('onClick')
     })
 
     expect(container).toContainReactComponent(SettingsModal, {open: true})

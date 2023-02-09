@@ -47,7 +47,7 @@ export function SettingsModal({setSettings, settings, onClose, open}: Props) {
           </div>
         </div>
         <Button style={{marginTop: '8px'}} type="submit">
-          Save
+          {i18n.translate('save')}
         </Button>
       </form>
     </Modal>
