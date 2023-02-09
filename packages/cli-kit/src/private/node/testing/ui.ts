@@ -9,21 +9,13 @@ export class Stdin extends EventEmitter {
     this.emit('data', data)
   }
 
-  setEncoding() {
-    // Do nothing
-  }
+  setEncoding() {}
 
-  setRawMode() {
-    // Do nothing
-  }
+  setRawMode() {}
 
-  resume() {
-    // Do nothing
-  }
+  resume() {}
 
-  pause() {
-    // Do nothing
-  }
+  pause() {}
 }
 
 /**
