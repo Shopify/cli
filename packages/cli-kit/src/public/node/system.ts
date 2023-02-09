@@ -6,6 +6,8 @@ import {execa, ExecaChildProcess} from 'execa'
 import treeKill from 'tree-kill'
 import type {Writable, Readable} from 'stream'
 
+export type Editions = 'editions'
+
 export interface ExecOptions {
   cwd?: string
   env?: {[key: string]: string | undefined}
