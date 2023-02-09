@@ -21,6 +21,9 @@ describe('cwd', () => {
     const path = cwd()
 
     // Then
-    expect(path).toStrictEqual(normalizePath(process.env.INIT_CWD ?? ''))
+    if (process.env.INIT_CWD) {
+      // This env variable is only set when invoking a npm script
+      expect(path).toStrictEqual(normalizePath(process.env.INIT_CWD))
+    }
   })
 })
