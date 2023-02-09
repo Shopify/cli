@@ -1,5 +1,30 @@
 import {isTruthy} from '../context/utilities.js'
 import {render} from 'ink-testing-library'
+import {EventEmitter} from 'events'
+
+export class Stdin extends EventEmitter {
+  isTTY = true
+
+  write = (data: string) => {
+    this.emit('data', data)
+  }
+
+  setEncoding() {
+    // Do nothing
+  }
+
+  setRawMode() {
+    // Do nothing
+  }
+
+  resume() {
+    // Do nothing
+  }
+
+  pause() {
+    // Do nothing
+  }
+}
 
 /**
  * Wait for the component to be ready to accept input.

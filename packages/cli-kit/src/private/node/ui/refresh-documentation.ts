@@ -3,7 +3,7 @@ import {unstyled} from '../../../public/node/output.js'
 import {JSDocTag, Project} from 'ts-morph'
 import isEqual from 'lodash/isEqual.js'
 
-try {
+async function refreshDocumentation(): Promise<void> {
   const project = new Project({
     tsConfigFilePath: 'tsconfig.json',
   })
@@ -65,9 +65,12 @@ try {
   }
 
   await project.save()
+}
+
+try {
+  await refreshDocumentation()
+  process.exit(0)
   // eslint-disable-next-line no-catch-all/no-catch-all
 } catch (error) {
   process.exit(1)
 }
-
-process.exit(0)

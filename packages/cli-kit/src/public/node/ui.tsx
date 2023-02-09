@@ -27,12 +27,12 @@ export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
  * @example
- * 2023-02-09 02:09:06 | backend  | first backend message
- * 2023-02-09 02:09:06 | backend  | second backend message
- * 2023-02-09 02:09:06 | backend  | third backend message
- * 2023-02-09 02:09:06 | frontend | first frontend message
- * 2023-02-09 02:09:06 | frontend | second frontend message
- * 2023-02-09 02:09:06 | frontend | third frontend message
+ * 0000-00-00 00:00:00 | backend  | first backend message
+ * 0000-00-00 00:00:00 | backend  | second backend message
+ * 0000-00-00 00:00:00 | backend  | third backend message
+ * 0000-00-00 00:00:00 | frontend | first frontend message
+ * 0000-00-00 00:00:00 | frontend | second frontend message
+ * 0000-00-00 00:00:00 | frontend | third frontend message
  *
  *
  *   Press `p` to open your browser. Press `q` to quit.

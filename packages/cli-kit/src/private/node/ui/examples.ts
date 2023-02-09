@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   renderAutocompletePrompt,
   renderConcurrent,
@@ -16,7 +17,7 @@ import {unstyled} from '../../../public/node/output.js'
 import {AbortError, BugError} from '../../../public/node/error.js'
 import {AbortSignal} from '../../../public/node/abort.js'
 import {OutputStream} from '../ui.js'
-import {waitFor} from '../testing/ui.js'
+import {Stdin, waitFor} from '../testing/ui.js'
 import {Writable} from 'node:stream'
 
 interface Example {
@@ -74,14 +75,14 @@ export const examples: {[key in string]: Example} = {
           title: 'Press `p` to open your browser. Press `q` to quit.',
           subTitle: `Preview URL: https://shopify.com`,
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         renderOptions: {stdout: stdout as any, debug: true},
       })
 
       // wait for all output to be rendered
       await frontendPromise
 
-      return unstyled(stdout.lastFrame()!)
+      return unstyled(stdout.lastFrame()!.replace(/\d/g, '0'))
     },
   },
   renderInfo: {
@@ -93,7 +94,6 @@ export const examples: {[key in string]: Example} = {
         headline: 'CLI update available',
         body: ['Run', {command: 'npm run shopify upgrade'}, {char: '.'}],
         renderOptions: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           stdout: stdout as any,
         },
       })!
@@ -148,7 +148,6 @@ export const examples: {[key in string]: Example} = {
           },
         ],
         renderOptions: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           stdout: stdout as any,
         },
       })!
@@ -163,7 +162,6 @@ export const examples: {[key in string]: Example} = {
         headline: 'CLI updated.',
         body: 'You are now running version 3.47.',
         renderOptions: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           stdout: stdout as any,
         },
       })!
@@ -183,7 +181,6 @@ export const examples: {[key in string]: Example} = {
           },
         ],
         renderOptions: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           stdout: stdout as any,
         },
       })!
@@ -198,7 +195,6 @@ export const examples: {[key in string]: Example} = {
         headline: 'You have reached your limit of checkout extensions for this app.',
         body: 'You can free up space for a new one by deleting an existing one.',
         renderOptions: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           stdout: stdout as any,
         },
       })!
@@ -218,7 +214,6 @@ export const examples: {[key in string]: Example} = {
           },
         ],
         renderOptions: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           stdout: stdout as any,
         },
       })!
@@ -240,7 +235,6 @@ export const examples: {[key in string]: Example} = {
 
       return renderFatalError(somethingWentWrong, {
         renderOptions: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           stdout: stdout as any,
         },
       })!
@@ -272,7 +266,6 @@ export const examples: {[key in string]: Example} = {
 
       return renderFatalError(new AbortError('No Organization found', undefined, nextSteps), {
         renderOptions: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           stdout: stdout as any,
         },
       })!
@@ -282,6 +275,7 @@ export const examples: {[key in string]: Example} = {
     type: 'prompt',
     basic: async () => {
       const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdin = new Stdin()
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       renderSelectPrompt({
@@ -300,8 +294,8 @@ export const examples: {[key in string]: Example} = {
         ],
         infoTable: {add: ['new-ext'], remove: ['integrated-demand-ext', 'order-discount']},
         renderOptions: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           stdout: stdout as any,
+          stdin: stdin as any,
         },
       })
 
@@ -317,6 +311,7 @@ export const examples: {[key in string]: Example} = {
     type: 'prompt',
     basic: async () => {
       const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdin = new Stdin()
 
       const themes = [
         [
@@ -339,8 +334,8 @@ export const examples: {[key in string]: Example} = {
         confirmationMessage: 'Yes, confirm changes',
         cancellationMessage: 'Cancel',
         renderOptions: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           stdout: stdout as any,
+          stdin: stdin as any,
         },
       }
 
@@ -359,6 +354,7 @@ export const examples: {[key in string]: Example} = {
     type: 'prompt',
     basic: async () => {
       const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdin = new Stdin()
 
       const database = [
         {label: 'first', value: 'first'},
@@ -421,8 +417,8 @@ export const examples: {[key in string]: Example} = {
           return Promise.resolve({data: database.filter((item) => item.label.includes(term))})
         },
         renderOptions: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           stdout: stdout as any,
+          stdin: stdin as any,
         },
       })
 
@@ -469,7 +465,6 @@ export const examples: {[key in string]: Example} = {
           email: {},
         },
         renderOptions: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           stdout: stdout as any,
         },
       })!
@@ -489,12 +484,12 @@ export const examples: {[key in string]: Example} = {
         },
       ]
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       renderTasks(tasks, {renderOptions: {stdout: stdout as any}})
 
       await waitFor(
         () => {},
-        () => stdout.lastFrame()!.includes('Installing dependencies'),
+        () => Boolean(stdout.lastFrame()?.includes('Installing dependencies')),
       )
 
       return stdout.lastFrame()!
@@ -504,6 +499,7 @@ export const examples: {[key in string]: Example} = {
     type: 'prompt',
     basic: async () => {
       const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdin = new Stdin()
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       renderTextPrompt({
@@ -513,8 +509,8 @@ export const examples: {[key in string]: Example} = {
           if (value.includes('shopify')) return 'Can\'t include "shopify" in the name'
         },
         renderOptions: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           stdout: stdout as any,
+          stdin: stdin as any,
         },
       })
 
