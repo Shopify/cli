@@ -1,0 +1,14 @@
+type = "checkout_ui_extension"
+name = "Emoji selection"
+
+extension_points = [
+  'Checkout::Contact::RenderAfter'
+]
+
+# [[metafields]]
+# namespace = "my-namespace"
+# key = "my-key"
+
+# [[metafields]]
+# namespace = "my-namespace"
+# key = "my-key-2"
