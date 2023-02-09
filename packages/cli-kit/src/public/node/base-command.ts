@@ -58,7 +58,6 @@ abstract class BaseCommand extends Command {
     let result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
     result = await this.resultWithEnvironment<TFlags, TGlobalFlags, TArgs>(result, options, argv)
     await addFromParsedFlags(result.flags)
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     return {...result, ...{argv: result.argv as string[]}}
   }
 
