@@ -31,7 +31,7 @@ export function ExtensionRow({uuid}: Props) {
 
   const onModalClose = () => {
     setModalToShow(null)
-    toast('Extension placement saved', {toastId: 'extension-placement-success'})
+    toast(i18n.translate('extensionPlacementSaved'), {toastId: 'extension-placement-success'})
   }
 
   return (

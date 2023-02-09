@@ -1,11 +1,11 @@
 import en from './translations/en.json'
 
 import * as styles from './SettingsModal.css'
+import {ExtensionSettings} from '../../../../hooks/useExtension.js'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {CheckoutExtensionPlacementReference} from '@shopify/ui-extensions-server-kit'
 import {Button, Modal, ModalProps} from '@/components/index'
-import {ExtensionSettings} from '@/sections/Extensions/hooks/useExtension.js'
 
 interface Props extends Pick<ModalProps, 'onClose' | 'open'> {
   settings: ExtensionSettings
