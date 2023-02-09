@@ -130,7 +130,7 @@
         "executor": "nx:run-commands",
         "dependsOn": ["build"],
         "options": {
-          "command": "pnpm ts-node-esm src/private/node/ui/refresh-documentation.ts",
+          "command": "pnpm node dist/private/node/ui/refresh-documentation.js",
           "cwd": "packages/cli-kit"
         }
       }
