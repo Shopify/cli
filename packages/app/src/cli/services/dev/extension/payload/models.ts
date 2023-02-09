@@ -68,10 +68,28 @@ export interface UIExtensionPayload {
   surface: string
   title: string
   approvalScopes: string[]
+  settingsDefinition?: SettingDefinition
 }
 
 export type ExtensionAssetBuildStatus = 'success' | 'error' | ''
 
 export interface Capabilities {
   [key: string]: boolean | undefined
+}
+
+export interface Setting {
+  type: string
+  name: string
+  validations?: unknown
+  description?: string
+  default_value?: unknown
+}
+
+export interface SettingRaw extends Setting {
+  key: string
+}
+
+export interface SettingDefinition {
+  type: 'object'
+  fields: {[key: string]: Setting}
 }

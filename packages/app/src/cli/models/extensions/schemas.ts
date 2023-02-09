@@ -40,6 +40,7 @@ export const BaseUIExtensionSchema = schema.object({
   capabilities: CapabilitiesSchema.optional(),
   metafields: schema.array(MetafieldSchema).optional().default([]),
   categories: schema.array(schema.string()).optional(),
+  settings: schema.any().optional(),
 })
 
 export const ThemeExtensionSchema = schema.object({

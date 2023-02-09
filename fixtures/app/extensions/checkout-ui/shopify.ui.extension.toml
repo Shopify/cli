@@ -13,3 +13,30 @@ extension_points = [
 # [[metafields]]
 # namespace = "my-namespace"
 # key = "my-key-2"
+
+[settings]
+  [[settings.fields]]
+  key = "title"
+  type = "single_line_text_field"
+  name = "Banner title"
+  description = "Enter a title for the banner."
+
+  [[settings.fields]]
+  key = "description"
+  type = "single_line_text_field"
+  name = "Banner description"
+  description = "Enter a description for the banner."
+
+  [[settings.fields]]
+  key = "status"
+  type = "single_line_text_field"
+  name = "Banner status"
+    [[settings.fields.validations]]
+    name = "choices"
+    value = "[\"info\", \"success\", \"warning\", \"critical\"]"
+
+  [[settings.fields]]
+  key = "collapsible"
+  type = "boolean"
+  name = "Show collapsible description."
+  description = "Display controls to expand or collapse the banner description."

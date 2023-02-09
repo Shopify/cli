@@ -1,0 +1,17 @@
+name = "My UI Extension"
+api_version = "2023-01"
+
+[[extension_points]]
+target = "Checkout::Dynamic::Render"
+module = "./src/index.ts"
+
+  [[extension_points.metafields]]
+  namespace = "my_namespace"
+  key = "my_key"
+
+[settings]
+  [[settings.fields]]
+  key = "banner_title"
+  type = "single_line_text_field"
+  name = "Banner title"
+  description = "Enter a title for the banner"

@@ -1,5 +1,11 @@
 import {getLocalization} from './localization.js'
-import {DevNewExtensionPointSchema, UIExtensionPayload} from './payload/models.js'
+import {
+  DevNewExtensionPointSchema,
+  Setting,
+  SettingDefinition,
+  SettingRaw,
+  UIExtensionPayload,
+} from './payload/models.js'
 import {getExtensionPointTargetSurface} from './utilities.js'
 import {getUIExtensionResourceURL} from '../../../utilities/extensions/configuration.js'
 import {ExtensionDevOptions} from '../extension.js'
@@ -62,8 +68,31 @@ export async function getUIExtensionPayload(
     title: extension.configuration.name,
     apiVersion: extension.configuration.apiVersion,
     approvalScopes: options.grantedScopes,
+    settingsDefinition: getExtensionSettingDefinition(extension.configuration.settings),
   }
   return defaultConfig
+}
+
+function getExtensionSettingDefinition(config: {[key: string]: unknown}): SettingDefinition | undefined {
+  if (!config?.fields) return
+  if (!Array.isArray(config.fields)) return
+
+  return {
+    type: 'object',
+    fields: config.fields.reduce((acc: {[key: string]: Setting}, current: SettingRaw) => {
+      if (!current.key || !current.name || !current.type) return acc
+
+      acc[current.key] = {
+        type: current.type,
+        validations: current.validations,
+        description: current.description,
+        default_value: current.default_value,
+        name: current.name,
+      }
+
+      return acc
+    }, {}),
+  }
 }
 
 function getExtensionPoints(extensionPoints: UIExtension['configuration']['extensionPoints'], url: string) {
