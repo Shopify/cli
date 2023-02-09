@@ -12,8 +12,8 @@ function App() {
 
   // Render the banner
   return (
-    <Banner title={title} status={status} collapsible={collapsible}>
-      {description}
+    <Banner title={title ?? 'Default title'} status={status} collapsible={collapsible}>
+      {description ?? 'Default description'}
     </Banner>
   );
 }
