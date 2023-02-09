@@ -101,11 +101,14 @@ export default class Dev extends ThemeCommand {
     let {flags} = await this.parse(Dev)
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password, [], true)
-    const theme = await new DevelopmentThemeManager(adminSession).findOrCreate()
-    flags = {
-      ...flags,
-      theme: theme.id.toString(),
-      'overwrite-json': Boolean(flags['theme-editor-sync']) && theme.createdAtRuntime,
+
+    if (!flags.theme) {
+      const theme = await new DevelopmentThemeManager(adminSession).findOrCreate()
+      flags = {
+        ...flags,
+        theme: theme.id.toString(),
+        'overwrite-json': Boolean(flags['theme-editor-sync']) && theme.createdAtRuntime,
+      }
     }
 
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Dev.cli2Flags})
