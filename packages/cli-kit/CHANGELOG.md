@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.42.0
+
+### Patch Changes
+
+- 2203d4e6f: Fix theme issues with bundler and ruby version managers
+
 ## 3.41.2
 
 ## 3.41.1
