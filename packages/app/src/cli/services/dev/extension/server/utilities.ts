@@ -12,7 +12,7 @@ export function getRedirectUrl(extension: UIExtension, options: ExtensionDevOpti
 
     if (previewMode === 'editor') {
       rawUrl.pathname = 'admin/extensions-dev'
-      rawUrl.searchParams.append('url', getExtensionUrl(extension, options))
+      rawUrl.searchParams.append('url', getExtensionUrl(extension, options, previewMode))
     } else {
       rawUrl.pathname = resourceUrl
       rawUrl.searchParams.append('dev', `${options.url}/extensions`)
