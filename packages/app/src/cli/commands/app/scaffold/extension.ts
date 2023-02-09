@@ -2,7 +2,7 @@ import AppGenerateExtension from '../generate/extension.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 class AppScaffoldExtension extends AppGenerateExtension {
-  static description = 'Scaffold an Extension.'
+  static description = 'Scaffold an extension.'
   static hidden = true
   public async run(): Promise<void> {
     renderWarning({

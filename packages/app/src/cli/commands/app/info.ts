@@ -10,7 +10,7 @@ import {outputInfo} from '@shopify/cli-kit/node/output'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 
 export default class AppInfo extends Command {
-  static description = 'Print basic information about your app and extensions.'
+  static description = 'Display basic information about your app and extensions.'
 
   static flags = {
     ...globalFlags,

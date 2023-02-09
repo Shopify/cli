@@ -7,7 +7,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 
 export default class AppGenerateExtension extends Command {
-  static description = 'Scaffold an Extension.'
+  static description = 'Scaffold an extension.'
   static examples = ['<%= config.bin %> <%= command.id %>']
 
   static flags = {
@@ -22,7 +22,7 @@ export default class AppGenerateExtension extends Command {
     name: Flags.string({
       char: 'n',
       hidden: false,
-      description: 'name of your Extension',
+      description: 'name of your extension',
       env: 'SHOPIFY_FLAG_NAME',
     }),
     'clone-url': Flags.string({

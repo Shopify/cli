@@ -10,7 +10,7 @@ import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Deploy extends Command {
-  static description = 'Deploy your Shopify app.'
+  static description = 'Deploy your app.'
 
   static flags = {
     ...globalFlags,

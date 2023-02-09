@@ -6,7 +6,7 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class FetchSchema extends Command {
-  static description = 'Fetch the latest GraphQL schema for a Function.'
+  static description = 'Fetch the latest GraphQL schema for a function.'
 
   static flags = {
     ...globalFlags,
