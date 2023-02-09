@@ -2,6 +2,7 @@ import {Alert, AlertProps} from './components/Alert.js'
 import {renderOnce} from '../ui.js'
 import {consoleLog, consoleWarn, Logger, LogLevel} from '../../../public/node/output.js'
 import React from 'react'
+import {RenderOptions} from 'ink'
 
 const typeToLogLevel: {[key in AlertProps['type']]: LogLevel} = {
   info: 'info',
@@ -15,6 +16,10 @@ const typeToLogger: {[key in AlertProps['type']]: Logger} = {
   success: consoleLog,
 }
 
+export interface AlertOptions extends AlertProps {
+  renderOptions?: RenderOptions
+}
+
 export function alert({
   type,
   headline,
@@ -24,7 +29,8 @@ export function alert({
   link,
   customSections,
   orderedNextSteps = false,
-}: AlertProps) {
+  renderOptions,
+}: AlertOptions) {
   return renderOnce(
     <Alert
       type={type}
@@ -36,7 +42,6 @@ export function alert({
       orderedNextSteps={orderedNextSteps}
       customSections={customSections}
     />,
-    typeToLogLevel[type],
-    typeToLogger[type],
+    {logLevel: typeToLogLevel[type], logger: typeToLogger[type], renderOptions},
   )
 }

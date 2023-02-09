@@ -1,18 +1,22 @@
 import {
+  renderAutocompletePrompt,
   renderConcurrent,
+  renderConfirmationPrompt,
   renderFatalError,
   renderInfo,
+  renderSelectPrompt,
   renderSuccess,
   renderTable,
+  renderTasks,
   renderText,
+  renderTextPrompt,
   renderWarning,
 } from '../../../public/node/ui.js'
 import {unstyled} from '../../../public/node/output.js'
 import {AbortError, BugError} from '../../../public/node/error.js'
 import {AbortSignal} from '../../../public/node/abort.js'
 import {OutputStream} from '../ui.js'
-import {JSDocTag, Project} from 'ts-morph'
-import isEqual from 'lodash/isEqual.js'
+import {waitFor} from '../testing/ui.js'
 import {Writable} from 'node:stream'
 
 interface Example {
@@ -21,10 +25,14 @@ interface Example {
   complete?: () => Promise<string>
 }
 
-const examples: {[key in string]: Example} = {
+const TERMINAL_WIDTH = 70
+
+export const examples: {[key in string]: Example} = {
   renderConcurrent: {
     type: 'static',
     basic: async () => {
+      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+
       let backendPromiseResolve: () => void
       let frontendPromiseResolve: () => void
 
@@ -60,8 +68,6 @@ const examples: {[key in string]: Example} = {
         },
       }
 
-      const stdout = new OutputStream({columns: 80})
-
       await renderConcurrent({
         processes: [backendProcess, frontendProcess],
         footer: {
@@ -69,7 +75,7 @@ const examples: {[key in string]: Example} = {
           subTitle: `Preview URL: https://shopify.com`,
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        renderOptions: {stdout: stdout as any},
+        renderOptions: {stdout: stdout as any, debug: true},
       })
 
       // wait for all output to be rendered
@@ -81,12 +87,20 @@ const examples: {[key in string]: Example} = {
   renderInfo: {
     type: 'static',
     basic: async () => {
+      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+
       return renderInfo({
         headline: 'CLI update available',
         body: ['Run', {command: 'npm run shopify upgrade'}, {char: '.'}],
+        renderOptions: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          stdout: stdout as any,
+        },
       })!
     },
     complete: async () => {
+      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+
       return renderInfo({
         headline: [{userInput: 'my-app'}, 'initialized and ready to build.'],
         nextSteps: [
@@ -133,18 +147,30 @@ const examples: {[key in string]: Example} = {
             },
           },
         ],
+        renderOptions: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          stdout: stdout as any,
+        },
       })!
     },
   },
   renderSuccess: {
     type: 'static',
     basic: async () => {
+      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+
       return renderSuccess({
         headline: 'CLI updated.',
         body: 'You are now running version 3.47.',
+        renderOptions: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          stdout: stdout as any,
+        },
       })!
     },
     complete: async () => {
+      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+
       return renderSuccess({
         headline: 'Deployment successful.',
         body: 'Your extensions have been uploaded to your Shopify Partners Dashboard.',
@@ -156,18 +182,30 @@ const examples: {[key in string]: Example} = {
             },
           },
         ],
+        renderOptions: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          stdout: stdout as any,
+        },
       })!
     },
   },
   renderWarning: {
     type: 'static',
     basic: async () => {
+      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+
       return renderWarning({
         headline: 'You have reached your limit of checkout extensions for this app.',
         body: 'You can free up space for a new one by deleting an existing one.',
+        renderOptions: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          stdout: stdout as any,
+        },
       })!
     },
     complete: async () => {
+      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+
       return renderWarning({
         headline: 'Required access scope update.',
         body: 'The deadline for re-selecting your app scopes is May 1, 2022.',
@@ -179,12 +217,17 @@ const examples: {[key in string]: Example} = {
             },
           },
         ],
+        renderOptions: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          stdout: stdout as any,
+        },
       })!
     },
   },
   renderFatalError: {
     type: 'static',
     basic: async () => {
+      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
       const somethingWentWrong = new BugError('Something went wrong.')
 
       somethingWentWrong.stack = `
@@ -195,9 +238,16 @@ const examples: {[key in string]: Example} = {
       at Function.Module._load (internal/modules/cjs/loader.js:878:14)
 `
 
-      return renderFatalError(somethingWentWrong)!
+      return renderFatalError(somethingWentWrong, {
+        renderOptions: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          stdout: stdout as any,
+        },
+      })!
     },
     complete: async () => {
+      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+
       const nextSteps = [
         [
           'Have you',
@@ -220,30 +270,175 @@ const examples: {[key in string]: Example} = {
         ],
       ]
 
-      return renderFatalError(new AbortError('No Organization found', undefined, nextSteps))!
+      return renderFatalError(new AbortError('No Organization found', undefined, nextSteps), {
+        renderOptions: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          stdout: stdout as any,
+        },
+      })!
     },
   },
   renderSelectPrompt: {
     type: 'prompt',
     basic: async () => {
-      return ''
+      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      renderSelectPrompt({
+        message: 'Associate your project with the org Castile Ventures?',
+        choices: [
+          {label: 'first', value: 'first', key: 'f'},
+          {label: 'second', value: 'second', key: 's'},
+          {label: 'third', value: 'third'},
+          {label: 'fourth', value: 'fourth'},
+          {label: 'fifth', value: 'fifth', group: 'Automations', key: 'a'},
+          {label: 'sixth', value: 'sixth', group: 'Automations'},
+          {label: 'seventh', value: 'seventh'},
+          {label: 'eighth', value: 'eighth', group: 'Merchant Admin'},
+          {label: 'ninth', value: 'ninth', group: 'Merchant Admin'},
+          {label: 'tenth', value: 'tenth'},
+        ],
+        infoTable: {add: ['new-ext'], remove: ['integrated-demand-ext', 'order-discount']},
+        renderOptions: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          stdout: stdout as any,
+        },
+      })
+
+      await waitFor(
+        () => {},
+        () => stdout.lastFrame()!.includes('Associate your project with the org Castile Ventures?'),
+      )
+
+      return stdout.lastFrame()!
     },
   },
   renderConfirmationPrompt: {
     type: 'prompt',
     basic: async () => {
-      return ''
+      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+
+      const themes = [
+        [
+          'first theme',
+          {
+            subdued: `(#${1})`,
+          },
+        ],
+        [
+          'second theme',
+          {
+            subdued: `(#${2})`,
+          },
+        ],
+      ]
+
+      const options = {
+        message: `Delete the following themes from the store?`,
+        infoTable: {'': themes},
+        confirmationMessage: 'Yes, confirm changes',
+        cancellationMessage: 'Cancel',
+        renderOptions: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          stdout: stdout as any,
+        },
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      renderConfirmationPrompt(options)
+
+      await waitFor(
+        () => {},
+        () => stdout.lastFrame()!.includes('Delete the following themes from the store?'),
+      )
+
+      return stdout.lastFrame()!
     },
   },
   renderAutocompletePrompt: {
     type: 'prompt',
     basic: async () => {
-      return ''
+      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+
+      const database = [
+        {label: 'first', value: 'first'},
+        {label: 'second', value: 'second'},
+        {label: 'third', value: 'third'},
+        {label: 'fourth', value: 'fourth'},
+        {label: 'fifth', value: 'fifth'},
+        {label: 'sixth', value: 'sixth'},
+        {label: 'seventh', value: 'seventh'},
+        {label: 'eighth', value: 'eighth'},
+        {label: 'ninth', value: 'ninth'},
+        {label: 'tenth', value: 'tenth'},
+        {label: 'eleventh', value: 'eleventh'},
+        {label: 'twelfth', value: 'twelfth'},
+        {label: 'thirteenth', value: 'thirteenth'},
+        {label: 'fourteenth', value: 'fourteenth'},
+        {label: 'fifteenth', value: 'fifteenth'},
+        {label: 'sixteenth', value: 'sixteenth'},
+        {label: 'seventeenth', value: 'seventeenth'},
+        {label: 'eighteenth', value: 'eighteenth'},
+        {label: 'nineteenth', value: 'nineteenth'},
+        {label: 'twentieth', value: 'twentieth'},
+        {label: 'twenty-first', value: 'twenty-first'},
+        {label: 'twenty-second', value: 'twenty-second'},
+        {label: 'twenty-third', value: 'twenty-third'},
+        {label: 'twenty-fourth', value: 'twenty-fourth'},
+        {label: 'twenty-fifth', value: 'twenty-fifth'},
+        {label: 'twenty-sixth', value: 'twenty-sixth'},
+        {label: 'twenty-seventh', value: 'twenty-seventh'},
+        {label: 'twenty-eighth', value: 'twenty-eighth'},
+        {label: 'twenty-ninth', value: 'twenty-ninth'},
+        {label: 'thirtieth', value: 'thirtieth'},
+        {label: 'thirty-first', value: 'thirty-first'},
+        {label: 'thirty-second', value: 'thirty-second'},
+        {label: 'thirty-third', value: 'thirty-third'},
+        {label: 'thirty-fourth', value: 'thirty-fourth'},
+        {label: 'thirty-fifth', value: 'thirty-fifth'},
+        {label: 'thirty-sixth', value: 'thirty-sixth'},
+        {label: 'thirty-seventh', value: 'thirty-seventh'},
+        {label: 'thirty-eighth', value: 'thirty-eighth'},
+        {label: 'thirty-ninth', value: 'thirty-ninth'},
+        {label: 'fortieth', value: 'fortieth'},
+        {label: 'forty-first', value: 'forty-first'},
+        {label: 'forty-second', value: 'forty-second'},
+        {label: 'forty-third', value: 'forty-third'},
+        {label: 'forty-fourth', value: 'forty-fourth'},
+        {label: 'forty-fifth', value: 'forty-fifth'},
+        {label: 'forty-sixth', value: 'forty-sixth'},
+        {label: 'forty-seventh', value: 'forty-seventh'},
+        {label: 'forty-eighth', value: 'forty-eighth'},
+        {label: 'forty-ninth', value: 'forty-ninth'},
+        {label: 'fiftieth', value: 'fiftieth'},
+      ]
+
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      renderAutocompletePrompt({
+        message: 'Select a template',
+        choices: database,
+        search(term: string) {
+          return Promise.resolve({data: database.filter((item) => item.label.includes(term))})
+        },
+        renderOptions: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          stdout: stdout as any,
+        },
+      })
+
+      await waitFor(
+        () => {},
+        () => stdout.lastFrame()!.includes('Select a template'),
+      )
+
+      return stdout.lastFrame()!
     },
   },
   renderTable: {
     type: 'static',
     basic: async () => {
+      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+
       return renderTable({
         rows: [
           {
@@ -273,19 +468,62 @@ const examples: {[key in string]: Example} = {
           },
           email: {},
         },
+        renderOptions: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          stdout: stdout as any,
+        },
       })!
     },
   },
   renderTasks: {
     type: 'async',
     basic: async () => {
-      return ''
+      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+
+      const tasks = [
+        {
+          title: 'Installing dependencies',
+          task: async () => {
+            await new Promise((resolve) => setTimeout(resolve, 2000))
+          },
+        },
+      ]
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises
+      renderTasks(tasks, {renderOptions: {stdout: stdout as any}})
+
+      await waitFor(
+        () => {},
+        () => stdout.lastFrame()!.includes('Installing dependencies'),
+      )
+
+      return stdout.lastFrame()!
     },
   },
   renderTextPrompt: {
     type: 'prompt',
     basic: async () => {
-      return ''
+      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      renderTextPrompt({
+        message: 'App project name (can be changed later)',
+        defaultValue: 'expansive commerce app',
+        validate: (value) => {
+          if (value.includes('shopify')) return 'Can\'t include "shopify" in the name'
+        },
+        renderOptions: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          stdout: stdout as any,
+        },
+      })
+
+      await waitFor(
+        () => {},
+        () => stdout.lastFrame()!.includes('App project name (can be changed later)'),
+      )
+
+      return stdout.lastFrame()!
     },
   },
   renderText: {
@@ -295,64 +533,3 @@ const examples: {[key in string]: Example} = {
     },
   },
 }
-
-const project = new Project({
-  tsConfigFilePath: 'tsconfig.json',
-})
-const sourceFile = project.getSourceFileOrThrow('src/public/node/ui.tsx')
-const renderFunctions = sourceFile.getFunctions().filter((func) => func.getNameOrThrow().startsWith('render'))
-const renderFunctionNames = renderFunctions.map((func) => func.getNameOrThrow())
-
-if (!isEqual(renderFunctionNames, Object.keys(examples))) {
-  throw new Error('Every render function must have at least a basic example defined in this file')
-}
-
-const renderFunctionJsDocs = renderFunctions.map((func) => func.getJsDocs())
-
-renderFunctionJsDocs.forEach((jsDocs) => {
-  if (jsDocs.length === 0) {
-    throw new Error('Every render function must have jsdocs')
-  }
-})
-
-const exampleTags: {[key: string]: JSDocTag[]} = renderFunctions.reduce((acc, func) => {
-  acc[func.getNameOrThrow()] = func
-    .getJsDocs()
-    .flatMap((jsDoc) => jsDoc.getTags())
-    .filter((tag) => tag.getTagName() === 'example')
-
-  return acc
-}, {} as {[key: string]: JSDocTag[]})
-
-for (const renderFunctionName of Object.keys(exampleTags)) {
-  const existingTags = exampleTags[renderFunctionName]
-  const hasCompleteExample = typeof examples[renderFunctionName]!.complete !== 'undefined'
-  // eslint-disable-next-line no-await-in-loop
-  const basicExample = await examples[renderFunctionName]!.basic()
-  const tags = [
-    {
-      tagName: 'example',
-      text: unstyled(`${hasCompleteExample ? 'Basic' : ''}\n${basicExample.trim()}`),
-    },
-  ]
-
-  if (hasCompleteExample) {
-    // eslint-disable-next-line no-await-in-loop
-    const completeExample = await examples[renderFunctionName]!.complete!()
-    tags.push({
-      tagName: 'example',
-      text: unstyled(`Complete\n${completeExample.trim()}`),
-    })
-  }
-
-  const functionJsDoc = renderFunctions.find((func) => func.getNameOrThrow() === renderFunctionName)!.getJsDocs()[0]!
-
-  functionJsDoc
-    .getTags()
-    .filter((tag) => tag.getTagName() === 'example')
-    .forEach((tag) => tag.remove())
-
-  functionJsDoc.addTags(tags)
-}
-
-await project.save()

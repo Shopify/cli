@@ -125,6 +125,14 @@
           "command": "pnpm tsc --noEmit",
           "cwd": "packages/cli-kit"
         }
+      },
+      "refresh-documentation": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["build"],
+        "options": {
+          "command": "pnpm ts-node-esm src/private/node/ui/refresh-documentation.ts",
+          "cwd": "packages/cli-kit"
+        }
       }
     }
 }
