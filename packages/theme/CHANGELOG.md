@@ -1,5 +1,13 @@
 # @shopify/theme
 
+## 3.42.0
+
+### Patch Changes
+
+- 3b8951631: Do not overwrite `theme` parameter if present
+- Updated dependencies [2203d4e6f]
+  - @shopify/cli-kit@3.42.0
+
 ## 3.41.2
 
 ### Patch Changes

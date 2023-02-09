@@ -1,5 +1,17 @@
 # @shopify/app
 
+## 3.42.0
+
+### Minor Changes
+
+- 66653aecd: Added the template for the new cart & checkout validation function
+
+### Patch Changes
+
+- Updated dependencies [2203d4e6f]
+  - @shopify/cli-kit@3.42.0
+  - @shopify/plugin-ngrok@3.42.0
+
 ## 3.41.2
 
 ### Patch Changes
