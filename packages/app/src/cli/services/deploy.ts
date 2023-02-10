@@ -15,11 +15,11 @@ import {Extension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {themeBundlingDisabled} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo} from '@shopify/cli-kit/node/output'
+import {useThemebundling} from '@shopify/cli-kit/node/context/local.js'
 import type {AlertCustomSection, Task} from '@shopify/cli-kit/node/ui'
 
 interface DeployOptions {
@@ -64,7 +64,7 @@ export async function deploy(options: DeployOptions) {
       }
     }),
   )
-  if (!themeBundlingDisabled()) {
+  if (useThemebundling()) {
     const themeExtensions = await Promise.all(
       options.app.extensions.theme.map(async (extension) => {
         return {
@@ -84,7 +84,7 @@ export async function deploy(options: DeployOptions) {
     try {
       const bundlePath = joinPath(tmpDir, `bundle.zip`)
       await mkdir(dirname(bundlePath))
-      const bundleTheme = !themeBundlingDisabled() && app.extensions.theme.length !== 0
+      const bundleTheme = useThemebundling() && app.extensions.theme.length !== 0
       const bundleUI = app.extensions.ui.length !== 0
       const bundle = bundleTheme || bundleUI
       await bundleAndBuildExtensions({app, bundlePath, identifiers, bundle})
@@ -108,7 +108,7 @@ export async function deploy(options: DeployOptions) {
               })
             }
 
-            if (themeBundlingDisabled()) {
+            if (!useThemebundling()) {
               await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
             }
 
