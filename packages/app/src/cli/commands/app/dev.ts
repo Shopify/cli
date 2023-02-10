@@ -66,6 +66,13 @@ export default class Dev extends Command {
       default: false,
       exclusive: ['tunnel-url', 'tunnel'],
     }),
+    'no-input': Flags.boolean({
+      hidden: false,
+      description: 'Disables input prompts. Requires setting up your app first before use.',
+      env: 'SHOPIFY_FLAG_NO_INPUT',
+      default: false,
+      exclusive: ['reset'],
+    }),
     tunnel: Flags.boolean({
       hidden: false,
       description: 'Use ngrok to create a tunnel to your service entry point',
@@ -112,6 +119,7 @@ export default class Dev extends Command {
       noTunnel: flags['no-tunnel'],
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
+      noInput: flags['no-input'],
     })
   }
 }

@@ -30,6 +30,7 @@ interface Options {
   portNumber: number | undefined
   proxyTargets: ReverseHTTPProxyTarget[]
   additionalProcesses: OutputProcess[]
+  noInput?: boolean
 }
 
 /**
@@ -46,6 +47,7 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic({
   portNumber = undefined,
   proxyTargets,
   additionalProcesses,
+  noInput,
 }: Options): Promise<void> {
   // Lazy-importing it because it's CJS and we don't want it
   // to block the loading of the ESM module graph.
@@ -106,7 +108,7 @@ ${outputToken.json(JSON.stringify(rules))}
     abortController,
   }
 
-  if (previewUrl) {
+  if (previewUrl && !noInput) {
     renderConcurrentOptions = {
       ...renderConcurrentOptions,
       onInput: (input, _key, exit) => {
@@ -124,7 +126,7 @@ ${outputToken.json(JSON.stringify(rules))}
     }
   }
 
-  await Promise.all([renderConcurrent(renderConcurrentOptions), server.listen(availablePort)])
+  await Promise.all([renderConcurrent({...renderConcurrentOptions}), server.listen(availablePort)])
 }
 
 function match(rules: {[key: string]: string}, req: http.IncomingMessage) {

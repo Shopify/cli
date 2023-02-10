@@ -40,6 +40,7 @@ export interface DevContextOptions {
   apiKey?: string
   storeFqdn?: string
   reset: boolean
+  noInput: boolean
 }
 
 interface DevContextOutput {
@@ -129,6 +130,10 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   })
 
   if (cachedInfo === undefined && !options.reset) {
+    if (options.noInput) {
+      throw new AbortError('--no-input flag may not be used until the app has been setup')
+    }
+
     const explanation =
       `\nLooks like this is the first time you're running dev for this project.\n` +
       'Configure your preferences by answering a few questions.\n'

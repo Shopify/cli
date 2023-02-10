@@ -50,6 +50,7 @@ export interface DevOptions {
   tunnelUrl?: string
   tunnel: boolean
   noTunnel: boolean
+  noInput: boolean
   theme?: string
   themeExtensionPort?: number
 }
@@ -214,6 +215,7 @@ async function dev(options: DevOptions) {
       portNumber: proxyPort,
       proxyTargets,
       additionalProcesses,
+      noInput: options.noInput,
     })
   }
 }
