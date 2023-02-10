@@ -34,8 +34,8 @@ module ShopifyCLI
 
         MSG
 
-        trap("INT") { exit }
-        trap("TERM") { exit }
+        trap("INT") { raise ShopifyCLI::AbortSilent }
+        trap("TERM") { raise ShopifyCLI::AbortSilent }
 
         loop do
           input = Readline.readline("> ", true)
@@ -98,7 +98,7 @@ module ShopifyCLI
 
         if unauthorized?(response) || forbidden?(response)
           ctx.puts("{{red:Session expired.}}")
-          exit
+          raise ShopifyCLI::AbortSilent
         end
 
         response
