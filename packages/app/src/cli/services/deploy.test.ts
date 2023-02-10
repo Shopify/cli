@@ -7,12 +7,14 @@ import {testApp, testThemeExtensions, testUIExtension} from '../models/app/app.t
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
 import {describe, expect, it, vi} from 'vitest'
+import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 
 vi.mock('./context.js')
 vi.mock('./deploy/upload.js')
 vi.mock('./deploy/bundle.js')
 vi.mock('./dev/fetch.js')
 vi.mock('../models/app/identifiers.js')
+vi.mock('@shopify/cli-kit/node/context/local')
 
 describe('deploy', () => {
   it('uploads the extension bundle with 1 UI extension', async () => {
@@ -89,6 +91,7 @@ async function testDeployBundle(app: AppInterface) {
     partnersOrganizationId: '',
     token: 'api-token',
   })
+  vi.mocked(useThemebundling).mockReturnValue(true)
   vi.mocked(uploadFunctionExtensions).mockResolvedValue(identifiers)
   vi.mocked(uploadExtensionsBundle).mockResolvedValue([])
   vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
