@@ -1,5 +1,19 @@
 # @shopify/app
 
+## 3.43.0
+
+### Minor Changes
+
+- 4b0cc57ce: Theme bundling is now an opt-in feature
+
+### Patch Changes
+
+- Updated dependencies [f732207fa]
+- Updated dependencies [4b0cc57ce]
+- Updated dependencies [b6f93cfa7]
+  - @shopify/cli-kit@3.43.0
+  - @shopify/plugin-ngrok@3.43.0
+
 ## 3.42.0
 
 ### Minor Changes
