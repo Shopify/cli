@@ -39,3 +39,4 @@ ext/javy/bin
 .console_history
 TODO.md
 .ruby-version
+Gemfile.lock
