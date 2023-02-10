@@ -41,7 +41,9 @@ interface ExecCLI2Options {
  * @param options - Options to customize the execution of cli2.
  */
 export async function execCLI2(args: string[], options: ExecCLI2Options = {}): Promise<void> {
-  const embedded = (await isShopify()) || isTruthy(process.env.SHOPIFY_CLI_EMBEDDED_THEME_CLI)
+  const embedded =
+    ((await isShopify()) && process.env.SHOPIFY_CLI_EMBEDDED_THEME_CLI === undefined) ||
+    isTruthy(process.env.SHOPIFY_CLI_EMBEDDED_THEME_CLI)
 
   await installCLIDependencies(options.stdout ?? process.stdout, embedded)
   const env: NodeJS.ProcessEnv = {
@@ -254,14 +256,10 @@ async function createThemeCheckCLIWorkingDirectory(): Promise<void> {
  * It creates the Gemfile to install The Ruby CLI and the dependencies.
  */
 async function createShopifyCLIGemfile(): Promise<void> {
-  const gemPath = joinPath(await shopifyCLIDirectory(), 'Gemfile')
-  const gemFileContent = ["source 'https://rubygems.org'", `gem 'shopify-cli', '${RubyCLIVersion}'`]
-  const {platform} = platformAndArch()
-  if (platform === 'windows') {
-    // 'wdm' is required by 'listen', see https://github.com/Shopify/cli/issues/780
-    gemFileContent.push("gem 'wdm', '>= 0.1.0'")
-  }
-  await file.writeFile(gemPath, gemFileContent.join('\n'))
+  const directory = await shopifyCLIDirectory()
+  await addContentToGemfile(directory, "source 'https://rubygems.org'")
+  await addContentToGemfile(directory, `gem 'shopify-cli', '${RubyCLIVersion}'`)
+  await addWindowsDependencies(directory)
 }
 
 /**
@@ -278,7 +276,35 @@ async function createThemeCheckGemfile(): Promise<void> {
  * @param directory - Directory where CLI2 Gemfile is located.
  */
 async function bundleInstallLocalShopifyCLI(directory: string): Promise<void> {
+  await addWindowsDependencies(directory)
   await exec(bundleExecutable(), ['install'], {cwd: directory})
+}
+
+/**
+ * Add Windows dependencies to Gemfile.
+ *
+ * @param directory - Directory where Gemfile is located.
+ */
+async function addWindowsDependencies(directory: string) {
+  if (platformAndArch().platform === 'windows') {
+    // 'wdm' is required by 'listen', see https://github.com/Shopify/cli/issues/780
+    await addContentToGemfile(directory, "gem 'wdm', '>= 0.1.0'")
+  }
+}
+
+/**
+ * Append contente to a Gemfile located in the given directory.
+ *
+ * @param gemfileDirectory - Directory where Gemfile is located.
+ * @param content - Content to append to the Gemfile.
+ */
+async function addContentToGemfile(gemfileDirectory: string, content: string) {
+  const gemfilePath = joinPath(gemfileDirectory, 'Gemfile')
+  if (!(await file.fileExists(gemfilePath))) await file.touchFile(gemfilePath)
+  const gemContent = await file.readFile(gemfilePath, {encoding: 'utf8'})
+  if (!gemContent.includes(content)) {
+    await file.appendFile(gemfilePath, `${content}\n`)
+  }
 }
 
 /**

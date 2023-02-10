@@ -9,7 +9,7 @@ vi.mock('./system')
 
 describe('execCLI', () => {
   it('throws an exception when Ruby is not installed', async () => {
-    vi.mocked(file.fileExists).mockResolvedValue(true)
+    mockGemfileCreation()
     vi.mocked(captureOutput).mockRejectedValue({})
 
     await expect(() => execCLI2(['args'])).rejects.toThrowError('Ruby environment not found')
@@ -17,7 +17,7 @@ describe('execCLI', () => {
 
   it('throws an exception when Ruby version requirement is not met', async () => {
     const rubyVersion = '2.2.0'
-    vi.mocked(file.fileExists).mockResolvedValue(true)
+    mockGemfileCreation()
     vi.mocked(captureOutput).mockResolvedValueOnce(rubyVersion)
 
     await expect(() => execCLI2(['args'])).rejects.toThrowError(
@@ -27,7 +27,7 @@ describe('execCLI', () => {
 
   it('throws an exception when Bundler is not installed', async () => {
     const rubyVersion = '2.7.5'
-    vi.mocked(file.fileExists).mockResolvedValue(true)
+    mockGemfileCreation()
     vi.mocked(captureOutput).mockResolvedValueOnce(rubyVersion)
     vi.mocked(captureOutput).mockRejectedValue({})
 
@@ -37,7 +37,7 @@ describe('execCLI', () => {
   it('throws an exception when Bundler version requirement is not met', async () => {
     const rubyVersion = '2.7.5'
     const bundlerVersion = '2.2.0'
-    vi.mocked(file.fileExists).mockResolvedValue(true)
+    mockGemfileCreation()
     vi.mocked(captureOutput).mockResolvedValueOnce(rubyVersion)
     vi.mocked(captureOutput).mockResolvedValueOnce(bundlerVersion)
 
@@ -53,7 +53,7 @@ describe('execCLI', () => {
     // Given
     const rubyVersion = '2.7.5'
     const bundlerVersion = '2.4.0'
-    vi.mocked(file.fileExists).mockResolvedValue(true)
+    mockGemfileCreation()
     vi.mocked(captureOutput).mockResolvedValueOnce(rubyVersion)
     vi.mocked(captureOutput).mockResolvedValueOnce(bundlerVersion)
     vi.mocked(file.mkdir).mockRejectedValue({message: 'Error'})
@@ -76,7 +76,7 @@ describe('execCLI', () => {
 
     process.env = {...originalEnv, SHOPIFY_CLI_2_0_DIRECTORY: './CLI2', SHOPIFY_RUN_AS_USER: '1'}
 
-    vi.mocked(file.fileExists).mockResolvedValue(true)
+    mockGemfileCreation()
     vi.mocked(captureOutput).mockResolvedValueOnce('2.7.5')
     vi.mocked(captureOutput).mockResolvedValueOnce('2.4.0')
 
@@ -114,7 +114,7 @@ describe('execCLI', () => {
 
     process.env = {...originalEnv, SHOPIFY_CLI_2_0_DIRECTORY: '/manual', SHOPIFY_RUN_AS_USER: '1'}
 
-    vi.mocked(file.fileExists).mockResolvedValue(true)
+    mockGemfileCreation()
     vi.mocked(captureOutput).mockResolvedValueOnce('2.7.5')
     vi.mocked(captureOutput).mockResolvedValueOnce('2.4.0')
 
@@ -151,7 +151,7 @@ describe('execCLI', () => {
     const execSpy = vi.spyOn(system, 'exec')
     process.env = {...originalEnv, SHOPIFY_RUN_AS_USER: '0'}
 
-    vi.mocked(file.fileExists).mockResolvedValue(true)
+    mockGemfileCreation()
     vi.mocked(file.findPathUp).mockResolvedValue('/embed/internal')
     vi.mocked(captureOutput).mockResolvedValueOnce('2.7.5')
     vi.mocked(captureOutput).mockResolvedValueOnce('2.4.0')
@@ -181,4 +181,51 @@ describe('execCLI', () => {
     // Teardown
     process.env = originalEnv
   })
+
+  it('run bundled CLI2 when shopify user but not embedded env variable used', async () => {
+    // Setup
+    const originalEnv = process.env
+
+    // Given
+    const execSpy = vi.spyOn(system, 'exec')
+    process.env = {
+      ...originalEnv,
+      SHOPIFY_CLI_2_0_DIRECTORY: '/manual',
+      SHOPIFY_RUN_AS_USER: '0',
+      SHOPIFY_CLI_EMBEDDED_THEME_CLI: '0',
+    }
+
+    mockGemfileCreation()
+    vi.mocked(captureOutput).mockResolvedValueOnce('2.7.5')
+    vi.mocked(captureOutput).mockResolvedValueOnce('2.4.0')
+
+    // When
+    await execCLI2(['args'], {
+      token: 'token_0000_1111_2222_3333',
+      directory: './directory',
+    })
+
+    // Then
+    expect(execSpy).toHaveBeenLastCalledWith('bundle', ['exec', 'shopify', 'args'], {
+      stdio: 'inherit',
+      cwd: './directory',
+      env: {
+        ...process.env,
+        SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: undefined,
+        SHOPIFY_CLI_ADMIN_AUTH_TOKEN: undefined,
+        SHOPIFY_CLI_STORE: undefined,
+        SHOPIFY_CLI_AUTH_TOKEN: 'token_0000_1111_2222_3333',
+        SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
+        BUNDLE_GEMFILE: `/manual/Gemfile`,
+      },
+    })
+
+    // Teardown
+    process.env = originalEnv
+  })
 })
+
+function mockGemfileCreation() {
+  vi.mocked(file.fileExists).mockResolvedValue(true)
+  vi.mocked(file.readFile).mockResolvedValue('gemfile' as any)
+}
