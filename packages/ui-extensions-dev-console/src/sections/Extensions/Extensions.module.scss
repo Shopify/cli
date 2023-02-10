@@ -18,9 +18,15 @@
     border-collapse: collapse;
   }
 
-  svg {
-    fill: var(--dc-color-white);
+  th {
+    vertical-align: middle;
   }
+}
+
+.WithIcon {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  grid-gap: 6px;
 }
 
 .Empty {
