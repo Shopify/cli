@@ -139,8 +139,8 @@ module ShopifyCLI
       private
 
       def setup_server
-        watcher.start
-        remote_watcher.start if editor_sync
+        watcher&.start
+        remote_watcher&.start if editor_sync
       end
 
       def teardown_server
