@@ -90,6 +90,7 @@ async function testDeployBundle(app: AppInterface) {
     partnersOrganizationId: '',
     token: 'api-token',
   })
+  vi.mock('@shopify/cli-kit/node/context/local')
   vi.mocked(useThemebundling).mockReturnValue(true)
   vi.mocked(uploadFunctionExtensions).mockResolvedValue(identifiers)
   vi.mocked(uploadExtensionsBundle).mockResolvedValue([])
