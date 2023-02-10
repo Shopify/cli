@@ -14,6 +14,7 @@ vi.mock('./deploy/upload.js')
 vi.mock('./deploy/bundle.js')
 vi.mock('./dev/fetch.js')
 vi.mock('../models/app/identifiers.js')
+vi.mock('@shopify/cli-kit/node/context/local')
 
 describe('deploy', () => {
   it('uploads the extension bundle with 1 UI extension', async () => {
@@ -90,7 +91,6 @@ async function testDeployBundle(app: AppInterface) {
     partnersOrganizationId: '',
     token: 'api-token',
   })
-  vi.mock('@shopify/cli-kit/node/context/local')
   vi.mocked(useThemebundling).mockReturnValue(true)
   vi.mocked(uploadFunctionExtensions).mockResolvedValue(identifiers)
   vi.mocked(uploadExtensionsBundle).mockResolvedValue([])
