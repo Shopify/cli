@@ -348,7 +348,15 @@ class AppLoader {
 
       const configuration = await this.parseConfigurationFile(specification.configSchema, configurationPath)
 
-      return new FunctionInstance({configuration, configurationPath, specification, directory})
+      const entryPath = (
+        await Promise.all(
+          ['src/index.js', 'src/index.ts', 'src/main.rs']
+            .map((relativePath) => joinPath(directory, relativePath))
+            .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
+        )
+      ).find((sourcePath) => sourcePath !== undefined)
+
+      return new FunctionInstance({configuration, configurationPath, entryPath, specification, directory})
     })
     const functions = getArrayRejectingUndefined(await Promise.all(allFunctions))
     return {functions, usedCustomLayout: extensionDirectories !== undefined}

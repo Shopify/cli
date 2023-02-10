@@ -1,23 +1,23 @@
 import KitchenSinkAll from './index.js'
 import {asyncTasks as asyncTasksService} from '../../services/kitchen-sink/async.js'
-import {banners as bannersTasksService} from '../../services/kitchen-sink/banners.js'
-import {prompts as promptsTasksService} from '../../services/kitchen-sink/prompts.js'
+import {staticService} from '../../services/kitchen-sink/static.js'
+import {prompts as promptsService} from '../../services/kitchen-sink/prompts.js'
 import {describe, test, vi, expect} from 'vitest'
 
 vi.mock('../../services/kitchen-sink/prompts.js')
-vi.mock('../../services/kitchen-sink/banners.js')
+vi.mock('../../services/kitchen-sink/static.js')
 vi.mock('../../services/kitchen-sink/async.js')
 
 describe('kitchen-sink all command', () => {
   test('launches service', async () => {
     vi.mocked(asyncTasksService).mockResolvedValue()
-    vi.mocked(bannersTasksService).mockResolvedValue()
-    vi.mocked(promptsTasksService).mockResolvedValue()
+    vi.mocked(staticService).mockResolvedValue()
+    vi.mocked(promptsService).mockResolvedValue()
 
     await KitchenSinkAll.run([], import.meta.url)
 
     expect(asyncTasksService).toHaveBeenCalled()
-    expect(bannersTasksService).toHaveBeenCalled()
-    expect(promptsTasksService).toHaveBeenCalled()
+    expect(staticService).toHaveBeenCalled()
+    expect(promptsService).toHaveBeenCalled()
   })
 })

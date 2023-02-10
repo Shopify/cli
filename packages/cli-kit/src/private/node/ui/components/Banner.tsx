@@ -41,6 +41,9 @@ const BoxWithBorder: FunctionComponent<BannerProps> = ({type, children}) => {
 
 const BoxWithTopBottomLines: FunctionComponent<BannerProps> = ({type, children}) => {
   const {twoThirds} = useLayout()
+  // 2 initial dashes + 2 spaces surrounding the type
+  let topLineAfterTypeLength = twoThirds - 2 - type.length - 2
+  if (topLineAfterTypeLength < 0) topLineAfterTypeLength = 0
 
   return (
     <Box flexDirection="column" marginBottom={1}>
@@ -48,8 +51,7 @@ const BoxWithTopBottomLines: FunctionComponent<BannerProps> = ({type, children})
         <Text>
           <Text color={typeToColor(type)}>{'─'.repeat(2)}</Text>
           <Text>{` ${type.replace(/_/g, ' ')} `}</Text>
-          {/* 2 initial dashes + 2 spaces surrounding the type */}
-          <Text color={typeToColor(type)}>{'─'.repeat(twoThirds - 2 - type.length - 2)}</Text>
+          <Text color={typeToColor(type)}>{'─'.repeat(topLineAfterTypeLength)}</Text>
         </Text>
       </Box>
 

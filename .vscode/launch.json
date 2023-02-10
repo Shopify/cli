@@ -114,6 +114,7 @@
           "shipping_rate_presenter",
           "delivery_customization",
           "order_routing_location_rule",
+          "cart_transform",
         ],
         "default": "checkout_ui_extension",
     },

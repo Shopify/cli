@@ -38,3 +38,4 @@ ext/shopify-extensions/shopify-extensions
 ext/javy/bin
 .console_history
 TODO.md
+.ruby-version

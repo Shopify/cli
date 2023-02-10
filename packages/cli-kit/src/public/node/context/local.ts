@@ -123,6 +123,16 @@ export function themeBundlingDisabled(env = process.env): boolean {
 }
 
 /**
+ * Returns true if the CLI enable JavaScript functions.
+ *
+ * @param env - The environment variables from the environment of the current process.
+ * @returns True if SHOPIFY_CLI_FUNCTIONS_JAVASCRIPT is truthy.
+ */
+export function areJavaScriptFunctionsEnabled(env = process.env): boolean {
+  return isTruthy(env[environmentVariables.javascriptFunctions])
+}
+
+/**
  * Return gitpodURL if we are running in gitpod.
  * Https://www.gitpod.io/docs/environment-variables#default-environment-variables.
  *

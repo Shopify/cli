@@ -4,6 +4,7 @@ import {webhookTriggerService} from '../../services/webhook/trigger.js'
 import {deliveryMethodInstructionsAsString} from '../../prompts/webhook/trigger.js'
 import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 export default class WebhookTrigger extends Command {
   static description = 'Trigger delivery of a sample webhook topic payload to a designated address.'
@@ -38,6 +39,12 @@ export default class WebhookTrigger extends Command {
       required: false,
       hidden: false,
       env: 'SHOPIFY_FLAG_SHARED_SECRET',
+      description: `Deprecated. Please use client-secret.`,
+    }),
+    'client-secret': Flags.string({
+      required: false,
+      hidden: false,
+      env: 'SHOPIFY_FLAG_CLIENT_SECRET',
       description: `Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate the origin of the response that you receive.`,
     }),
     address: Flags.string({
@@ -60,7 +67,15 @@ export default class WebhookTrigger extends Command {
       apiVersion: flags['api-version'],
       deliveryMethod: flags['delivery-method'],
       address: flags.address,
-      sharedSecret: flags['shared-secret'],
+      clientSecret: flags['client-secret'] || flags['shared-secret'],
+    }
+    if (flags['shared-secret']) {
+      renderWarning({
+        headline: [
+          'The flag shared-secret has been deprecated in favor of client-secret and will eventually be deleted.',
+        ],
+        body: ['Please use --client-secret instead.'],
+      })
     }
 
     await webhookTriggerService(usedFlags)

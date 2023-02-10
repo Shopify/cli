@@ -1,5 +1,11 @@
 # @shopify/features
 
+## 0.7.1
+
+### Patch Changes
+
+- 9d9480341: Add developer experience preview for JavaScript functions
+
 ## 0.7.0
 
 ### Minor Changes

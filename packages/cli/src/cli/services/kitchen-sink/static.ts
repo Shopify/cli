@@ -1,7 +1,7 @@
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {renderFatalError, renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderFatalError, renderInfo, renderSuccess, renderTable, renderWarning} from '@shopify/cli-kit/node/ui'
 
-export async function banners() {
+export async function staticService() {
   // Banners
   renderInfo({
     headline: 'CLI update available',
@@ -9,11 +9,7 @@ export async function banners() {
   })
 
   renderInfo({
-    headline: [
-      "To connect this project to your shopify store's inventory:",
-      {filePath: '/my-store/hydrogen.config.js'},
-      'with your store ID and Storefront API key.',
-    ],
+    headline: ['To connect this project to your shopify store cd into:', {filePath: '/my-store/hydrogen.config.js'}],
     body: [
       'You can also try the following steps:',
       {
@@ -156,4 +152,35 @@ export async function banners() {
   ]
 
   renderFatalError(new AbortError('No Organization found', undefined, nextSteps))
+
+  renderTable({
+    rows: [
+      {
+        id: '1',
+        name: 'John Doe',
+        email: 'jon@doe.com',
+      },
+      {
+        id: '2',
+        name: 'Jane Doe',
+        email: 'jane@doe.com',
+      },
+      {
+        id: '3',
+        name: 'John Smith',
+        email: 'jon@smith.com',
+      },
+    ],
+    columns: {
+      id: {
+        header: 'ID',
+        color: 'red',
+      },
+      name: {
+        header: 'Name',
+        color: 'dim',
+      },
+      email: {},
+    },
+  })
 }

@@ -7,9 +7,13 @@ import {debounce} from '@shopify/cli-kit/common/function'
 import chalk from 'chalk'
 import figures from 'figures'
 
+interface OnChangeOptions<T> {
+  item: Item<T> | undefined
+  usedShortcut: boolean
+}
 export interface SelectInputProps<T> {
   items: Item<T>[]
-  onChange: (item: Item<T> | undefined) => void
+  onChange: ({item, usedShortcut}: OnChangeOptions<T>) => void
   enableShortcuts?: boolean
   focus?: boolean
   emptyMessage?: string
@@ -19,6 +23,7 @@ export interface SelectInputProps<T> {
   errorMessage?: string
   hasMorePages?: boolean
   morePagesMessage?: string
+  infoMessage?: string
 }
 
 export interface Item<T> {
@@ -120,6 +125,7 @@ function SelectInput<T>({
   errorMessage,
   hasMorePages = false,
   morePagesMessage,
+  infoMessage,
 }: React.PropsWithChildren<SelectInputProps<T>>): JSX.Element | null {
   const defaultValueIndex = defaultValue ? items.findIndex((item) => item.value === defaultValue.value) : -1
   const initialIndex = defaultValueIndex === -1 ? 0 : defaultValueIndex
@@ -132,10 +138,13 @@ function SelectInput<T>({
   const previousItems = useRef<Item<T>[]>(items)
 
   const changeSelection = useCallback(
-    (index: number) => {
+    ({index, usedShortcut = false}: {index: number; usedShortcut?: boolean}) => {
       const groupedItem = groupedItemsValues.find((item) => item.index === index)!
       setSelectedIndex(index)
-      onChange(items.find((item) => item.value === groupedItem.value))
+      onChange({
+        item: items.find((item) => item.value === groupedItem.value),
+        usedShortcut,
+      })
     },
     [items],
   )
@@ -143,7 +152,10 @@ function SelectInput<T>({
   useEffect(() => {
     if (items.length === 0) {
       // reset selection when items are empty
-      onChange(undefined)
+      onChange({
+        item: undefined,
+        usedShortcut: false,
+      })
     } else if (
       // reset index when items change
       !isEqual(
@@ -151,7 +163,7 @@ function SelectInput<T>({
         items.map((item) => item.value),
       )
     ) {
-      changeSelection(0)
+      changeSelection({index: 0})
     }
 
     previousItems.current = items
@@ -162,9 +174,9 @@ function SelectInput<T>({
       const lastIndex = items.length - 1
 
       if (key.upArrow) {
-        changeSelection(selectedIndex === 0 ? lastIndex : selectedIndex - 1)
+        changeSelection({index: selectedIndex === 0 ? lastIndex : selectedIndex - 1})
       } else if (key.downArrow) {
-        changeSelection(selectedIndex === lastIndex ? 0 : selectedIndex + 1)
+        changeSelection({index: selectedIndex === lastIndex ? 0 : selectedIndex + 1})
       }
     },
     [selectedIndex, items],
@@ -175,7 +187,7 @@ function SelectInput<T>({
       if (keys.includes(input)) {
         const groupedItem = groupedItemsValues.find((item) => item.key === input)
         if (groupedItem !== undefined) {
-          changeSelection(groupedItem.index)
+          changeSelection({index: groupedItem.index, usedShortcut: true})
         }
       }
     },
@@ -261,8 +273,9 @@ function SelectInput<T>({
             </Text>
           ) : null}
           <Text dimColor>
-            Press {figures.arrowUp}
-            {figures.arrowDown} arrows to select, enter to confirm
+            {infoMessage
+              ? infoMessage
+              : `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter to confirm`}
           </Text>
         </Box>
       </Box>

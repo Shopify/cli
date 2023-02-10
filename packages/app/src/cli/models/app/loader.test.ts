@@ -552,14 +552,18 @@ scopes = "read_products"
       blockConfiguration,
       name: 'my-function',
     })
+    await mkdir(joinPath(blockPath('my-function'), 'src'))
+    await writeFile(joinPath(blockPath('my-function'), 'src', 'index.js'), '')
 
     // When
     const app = await load({directory: tmpDir, specifications})
+    const myFunction = app.extensions.function[0]!
 
     // Then
-    expect(app.extensions.function[0]!.configuration.name).toBe('my-function')
-    expect(app.extensions.function[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_ID')
-    expect(app.extensions.function[0]!.localIdentifier).toBe('my-function')
+    expect(myFunction.configuration.name).toBe('my-function')
+    expect(myFunction.idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_ID')
+    expect(myFunction.localIdentifier).toBe('my-function')
+    expect(myFunction.entrySourceFilePath).toContain(joinPath(blockPath('my-function'), 'src', 'index.js'))
   })
 
   it('loads the app with several functions that have valid configurations', async () => {
@@ -633,7 +637,7 @@ scopes = "read_products"
     const app = await load({directory: tmpDir, specifications})
 
     // Then
-    expect(app.extensions.function[0]!.buildWasmPath()).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
+    expect(app.extensions.function[0]!.buildWasmPath).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
   })
 
   it(`defaults the function wasm path if not configured`, async () => {
@@ -657,7 +661,7 @@ scopes = "read_products"
     const app = await load({directory: tmpDir, specifications})
 
     // Then
-    expect(app.extensions.function[0]!.buildWasmPath()).toMatch(/.+dist\/index.wasm$/)
+    expect(app.extensions.function[0]!.buildWasmPath).toMatch(/.+dist\/index.wasm$/)
   })
 
   it(`updates metadata after loading`, async () => {

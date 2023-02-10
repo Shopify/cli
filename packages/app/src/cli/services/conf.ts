@@ -1,5 +1,6 @@
 import {Conf} from '@shopify/cli-kit/node/conf'
 import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {normalizePath} from '@shopify/cli-kit/node/path'
 
 export interface CachedAppInfo {
   directory: string
@@ -26,13 +27,15 @@ function appConf() {
 }
 
 export function getAppInfo(directory: string, config: Conf<AppConfSchema> = appConf()): CachedAppInfo | undefined {
-  outputDebug(outputContent`Reading cached app information for directory ${outputToken.path(directory)}...`)
-  return config.get(directory)
+  const normalized = normalizePath(directory)
+  outputDebug(outputContent`Reading cached app information for directory ${outputToken.path(normalized)}...`)
+  return config.get(normalized)
 }
 
 export function clearAppInfo(directory: string, config: Conf<AppConfSchema> = appConf()): void {
-  outputDebug(outputContent`Clearing app information for directory ${outputToken.path(directory)}...`)
-  config.delete(directory)
+  const normalized = normalizePath(directory)
+  outputDebug(outputContent`Clearing app information for directory ${outputToken.path(normalized)}...`)
+  config.delete(normalized)
 }
 
 export function clearAllAppInfo(config: Conf<AppConfSchema> = appConf()): void {
@@ -41,15 +44,14 @@ export function clearAllAppInfo(config: Conf<AppConfSchema> = appConf()): void {
 }
 
 export function setAppInfo(options: CachedAppInfo, config: Conf<AppConfSchema> = appConf()): void {
+  const normalized = normalizePath(options.directory)
   outputDebug(
-    outputContent`Storing app information for directory ${outputToken.path(options.directory)}:${outputToken.json(
-      options,
-    )}`,
+    outputContent`Storing app information for directory ${outputToken.path(normalized)}:${outputToken.json(options)}`,
   )
-  const savedApp = config.get(options.directory)
+  const savedApp = config.get(normalized)
   if (savedApp) {
-    config.set(options.directory, {
-      directory: options.directory,
+    config.set(normalized, {
+      directory: normalized,
       appId: options.appId ?? savedApp.appId,
       title: options.title ?? savedApp.title,
       storeFqdn: options.storeFqdn ?? savedApp.storeFqdn,
@@ -58,6 +60,6 @@ export function setAppInfo(options: CachedAppInfo, config: Conf<AppConfSchema> =
       tunnelPlugin: options.tunnelPlugin ?? savedApp.tunnelPlugin,
     })
   } else {
-    config.set(options.directory, options)
+    config.set(normalized, options)
   }
 }

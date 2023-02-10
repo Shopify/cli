@@ -57,8 +57,9 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
   }
 
   try {
-    const executable = embedded ? await embeddedCLIExecutable() : bundleExecutable()
-    const finalArgs = embedded ? args : ['exec', 'shopify'].concat(args)
+    const executable = bundleExecutable()
+    const shopifyExecutable = embedded ? await embeddedCLIExecutable() : 'shopify'
+    const finalArgs = ['exec', shopifyExecutable, ...args]
 
     await exec(executable, finalArgs, {
       stdio: 'inherit',

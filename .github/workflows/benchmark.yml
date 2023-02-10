@@ -22,8 +22,8 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: ['ubuntu-latest']
-        node: ['18.7.0']
+        os: [ 'ubuntu-latest' ]
+        node: [ '18.7.0' ]
     steps:
       - uses: actions/checkout@v2
         name: Checkout [main]
@@ -39,7 +39,7 @@ jobs:
         working-directory: workspace
         id: benchmark
         run: pnpm nx run benchmark
-      - uses: marocchino/sticky-pull-request-comment@v2.3.1
+      - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # pin@v2.3.1
         with:
           header: Benchmark
           message: ${{ steps.benchmark.outputs.report }}

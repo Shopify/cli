@@ -1,4 +1,4 @@
-import {SelectInput, SelectInputProps, Item as SelectItem, Item} from './SelectInput.js'
+import {SelectInput, SelectInputProps, Item as SelectItem} from './SelectInput.js'
 import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import {TextInput} from './TextInput.js'
 import {TokenizedText} from './TokenizedText.js'
@@ -174,7 +174,7 @@ function AutocompletePrompt<T>({
         <Box marginTop={1}>
           <SelectInput
             items={searchResults}
-            onChange={(item: Item<T> | undefined) => {
+            onChange={({item}) => {
               setAnswer(item)
             }}
             enableShortcuts={false}

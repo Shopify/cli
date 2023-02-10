@@ -1,5 +1,67 @@
 # @shopify/cli-hydrogen
 
+## 3.42.0
+
+### Patch Changes
+
+- Updated dependencies [2203d4e6f]
+  - @shopify/cli-kit@3.42.0
+
+## 3.41.2
+
+### Patch Changes
+
+- @shopify/cli-kit@3.41.2
+
+## 3.41.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.41.1
+
+## 3.41.0
+
+### Patch Changes
+
+- Updated dependencies [9d9480341]
+  - @shopify/cli-kit@3.41.0
+
+## 3.40.3
+
+### Patch Changes
+
+- @shopify/cli-kit@3.40.3
+
+## 3.40.2
+
+### Patch Changes
+
+- Updated dependencies [7c0b13944]
+- Updated dependencies [7ca9a667d]
+  - @shopify/cli-kit@3.40.2
+
+## 3.40.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.40.1
+
+## 3.40.0
+
+### Patch Changes
+
+- 228328a6d: Remove old `ui` module from cli-kit exports
+- Updated dependencies [91e15fed4]
+- Updated dependencies [cfb4b7f68]
+- Updated dependencies [9e74a9fc0]
+- Updated dependencies [1661f80a2]
+- Updated dependencies [ae22dfbaf]
+- Updated dependencies [7734a7ed3]
+- Updated dependencies [5ba869fb2]
+- Updated dependencies [228328a6d]
+- Updated dependencies [c30eb6978]
+  - @shopify/cli-kit@3.40.0
+
 ## 3.39.0
 
 ### Minor Changes
