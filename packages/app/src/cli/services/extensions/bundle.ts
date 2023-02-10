@@ -3,7 +3,7 @@ import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'e
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {copyFile, glob} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
-import {useThemebundling} from '@shopify/cli-kit/node/context/local.js'
+import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
 import type {StdinOptions} from 'esbuild'
