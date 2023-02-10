@@ -53,7 +53,6 @@ module ShopifyCLI
 
         def shutdown
           Thread.new do
-            ##
             # Web server answers the request and shutdown itself
             sleep(1)
 
