@@ -126,7 +126,7 @@ ${outputToken.json(JSON.stringify(rules))}
     }
   }
 
-  await Promise.all([renderConcurrent({...renderConcurrentOptions}), server.listen(availablePort)])
+  await Promise.all([renderConcurrent(renderConcurrentOptions), server.listen(availablePort)])
 }
 
 function match(rules: {[key: string]: string}, req: http.IncomingMessage) {
