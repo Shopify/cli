@@ -241,6 +241,7 @@ describe('ensureDevEnvironment', () => {
     expect(setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
       title: APP1.title,
+      storeFqdn: STORE1.shopDomain,
       directory: INPUT.directory,
       orgId: ORG1.id,
     })
@@ -279,6 +280,7 @@ describe('ensureDevEnvironment', () => {
     expect(setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
       title: APP1.title,
+      storeFqdn: STORE1.shopDomain,
       directory: INPUT.directory,
       orgId: ORG1.id,
     })
