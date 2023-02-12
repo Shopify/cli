@@ -3,6 +3,7 @@ import {firstPartyDev} from '../../../public/node/context/local.js'
 import {randomUUID} from '../../../public/node/crypto.js'
 import {Environment, serviceEnvironment} from '../context/service.js'
 import {ExtendableError} from '../../../public/node/error.js'
+import {memoize} from '../../../public/common/function.js'
 import https from 'https'
 
 export class RequestClientError extends ExtendableError {
@@ -38,6 +39,7 @@ export function buildHeaders(token?: string): {[key: string]: string} {
 
   const headers: {[header: string]: string} = {
     'User-Agent': userAgent,
+    'Keep-Alive': 'timeout=30',
     // 'Sec-CH-UA': secCHUA, This header requires the Git sha.
     'Sec-CH-UA-PLATFORM': process.platform,
     'X-Request-Id': randomUUID(),
@@ -60,9 +62,13 @@ export function buildHeaders(token?: string): {[key: string]: string} {
  * if the service is running in a Spin environment, the attribute "rejectUnauthorized" is
  * set to false
  */
-export async function httpsAgent() {
-  return new https.Agent({rejectUnauthorized: await shouldRejectUnauthorizedRequests()})
+async function _httpsAgent(_id: string = 'default'): Promise<https.Agent> {
+  return new https.Agent({
+    rejectUnauthorized: await shouldRejectUnauthorizedRequests(),
+    keepAlive: true,
+  })
 }
+export const httpsAgent = memoize(_httpsAgent)
 
 /**
  * Spin stores the CA certificate in the keychain and it should be used when sending HTTP

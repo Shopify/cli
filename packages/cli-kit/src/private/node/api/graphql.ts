@@ -20,7 +20,7 @@ export function graphqlRequest<T>(
   const action = async () => {
     const headers = buildHeaders(token)
     debugLogRequest(api, query, variables, headers)
-    const clientOptions = {agent: await httpsAgent(), headers}
+    const clientOptions = {agent: await httpsAgent(api), headers}
     const client = new GraphQLClient(url, clientOptions)
     const t0 = performance.now()
     const response = await client.request<T>(query, variables)
