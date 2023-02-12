@@ -149,10 +149,12 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     return buildOutput(selectedApp, selectedStore, cachedInfo)
   }
 
-  const organization = await fetchOrgFromId(orgId, token)
-  if (!organization) throw new BugError(`Couldn't find Organization with id ${orgId}.`)
-
-  const [_selectedApp, _selectedStore] = await Promise.all([
+  const [organization, _selectedApp, _selectedStore] = await Promise.all([
+    (async (): Promise<Organization> => {
+      const organization = await fetchOrgFromId(orgId, token)
+      if (!organization) throw new BugError(`Couldn't find Organization with id ${orgId}.`)
+      return organization
+    })(),
     (async (): Promise<OrganizationApp | undefined> => {
       if (selectedApp) return selectedApp
       if (cachedInfo?.appId) {
@@ -164,9 +166,9 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     (async (): Promise<OrganizationStore | undefined> => {
       if (selectedStore) return selectedStore
       if (cachedInfo?.storeFqdn) {
-        const result = await fetchStoreByDomain(organization!.id, token, cachedInfo.storeFqdn)
+        const result = await fetchStoreByDomain(orgId, token, cachedInfo.storeFqdn)
         if (result?.store) {
-          await convertToTestStoreIfNeeded(result.store, organization!, token)
+          await convertToTestStoreIfNeeded(result.store, orgId, token)
           return result.store
         } else {
           throw new BugError(`Couldn't find Store with domain ${cachedInfo.storeFqdn}.`)
@@ -415,7 +417,7 @@ async function fetchDevDataFromOptions(
 
   if (options.storeFqdn) {
     selectedStore = orgWithStore!.store
-    await convertToTestStoreIfNeeded(selectedStore, orgWithStore!.organization, token)
+    await convertToTestStoreIfNeeded(selectedStore, orgWithStore!.organization.id, token)
   }
 
   return {app: selectedApp, store: selectedStore}
