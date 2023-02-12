@@ -52,6 +52,26 @@ describe('common API methods', () => {
     })
   })
 
+  test('when using a custom app token, omit Bearer from auth headers', () => {
+    // Given
+    vi.mocked(randomUUID).mockReturnValue('random-uuid')
+    vi.mocked(firstPartyDev).mockReturnValue(false)
+    const token = 'shpat_my_token'
+    // When
+    const headers = buildHeaders(token)
+
+    // Then
+    const version = CLI_KIT_VERSION
+    expect(headers).toEqual({
+      'Content-Type': 'application/json',
+      'X-Shopify-Access-Token': token,
+      'X-Request-Id': 'random-uuid',
+      'User-Agent': `Shopify CLI; v=${version}`,
+      authorization: token,
+      'Sec-CH-UA-PLATFORM': process.platform,
+    })
+  })
+
   test('sanitizedHeadersOutput removes the headers that include the token', () => {
     // Given
     const headers = {
