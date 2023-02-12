@@ -4,7 +4,7 @@ import {shopifyFetch} from '../../../public/node/http.js'
 
 export async function validateIdentityToken(token: string) {
   try {
-    const instrospectionURL = await getInstrospectionEndpoint()
+    const instrospectionURL = await getIntrospectionEndpoint()
     const options = {
       method: 'POST',
       headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
@@ -34,7 +34,7 @@ export async function validateIdentityToken(token: string) {
   }
 }
 
-async function getInstrospectionEndpoint(): Promise<string> {
+async function getIntrospectionEndpoint(): Promise<string> {
   const response = await shopifyFetch(`https://${await identityFqdn()}/.well-known/openid-configuration.json`)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const json: any = await response.json()
