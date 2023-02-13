@@ -1,13 +1,14 @@
 import Config from 'conf'
 
-export class Conf<T extends {[key: string]: unknown}> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export class Conf<T extends {[key: string]: any}> {
   private readonly config: Config<T>
 
   constructor(options: {projectName: string}) {
     this.config = new Config<T>(options)
   }
 
-  get<TKey extends keyof T>(key: TKey): T[TKey] | undefined {
+  get<TKey extends keyof T>(key: TKey): T[TKey] {
     return this.config.get(key)
   }
 
@@ -17,6 +18,10 @@ export class Conf<T extends {[key: string]: unknown}> {
 
   delete<TKey extends keyof T>(key: TKey): void {
     this.config.delete(key)
+  }
+
+  reset<TKey extends keyof T>(key: TKey): void {
+    this.config.reset(key)
   }
 
   clear(): void {

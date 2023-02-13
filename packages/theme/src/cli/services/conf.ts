@@ -50,5 +50,5 @@ export function setDevelopmentTheme(theme: string): void {
 
 export function removeDevelopmentTheme(): void {
   outputDebug(outputContent`Removing development theme...`)
-  developmentThemeConf().reset(getThemeStore())
+  developmentThemeConf().delete(getThemeStore())
 }

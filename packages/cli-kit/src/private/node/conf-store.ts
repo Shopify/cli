@@ -1,7 +1,5 @@
+import {Conf} from '../../public/node/conf.js'
 import {outputContent, outputDebug} from '@shopify/cli-kit/node/output'
-import Conf, {Schema} from 'conf'
-
-export {Conf, Schema}
 
 export interface ConfSchema {
   sessionStore: string
