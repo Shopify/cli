@@ -4,7 +4,7 @@ import Config from 'conf'
 export class Conf<T extends {[key: string]: any}> {
   private readonly config: Config<T>
 
-  constructor(options: {projectName: string}) {
+  constructor(options: {projectName?: string; cwd?: string}) {
     this.config = new Config<T>(options)
   }
 
