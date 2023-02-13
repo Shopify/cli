@@ -21,17 +21,15 @@ async function build(directory, {name}) {
 }
 
 async function report({baselineDirectory, currentDirectory, baselineFiles, currentFiles}) {
-  let newTypeDeclarationsReport = ``
-  let existingTypeDeclarationsReport = ``
-
-  for (const currentFile of currentFiles) {
-    const fileExistsInBaseline = baselineFiles.includes(currentFile)
-    if (fileExistsInBaseline) {
-      const currentContent = (await fs.readFile(path.join(currentDirectory, currentFile))).toString().trim()
-      const baselineContent = (await fs.readFile(path.join(baselineDirectory, currentFile))).toString().trim()
-      if (currentContent !== baselineContent) {
-        existingTypeDeclarationsReport += `
-<details>
+  const contents = await Promise.all(
+    currentFiles.map(async (currentFile) => {
+      const fileExistsInBaseline = baselineFiles.includes(currentFile)
+      if (fileExistsInBaseline) {
+        const currentContent = (await fs.readFile(path.join(currentDirectory, currentFile))).toString().trim()
+        const baselineContent = (await fs.readFile(path.join(baselineDirectory, currentFile))).toString().trim()
+        if (currentContent !== baselineContent) {
+          return {
+            existing: `<details>
 <summary>
 ${currentFile}
 </summary>
@@ -40,10 +38,14 @@ ${currentFile}
 ${gitDiff(baselineContent, currentContent)}
 \`\`\`
 
-</details>`
-      }
-    } else {
-      newTypeDeclarationsReport += `
+</details>`,
+          }
+        } else {
+          return {}
+        }
+      } else {
+        return {
+          new: `
 <details>
 <summary>
 ${currentFile}
@@ -53,9 +55,22 @@ ${currentFile}
 ${await fs.readFile(path.join(currentDirectory, currentFile))}
 \`\`\`
 
-</details>`
+</details>`,
+        }
+      }
+    }),
+  )
+
+  let newTypeDeclarationsReport = ``
+  let existingTypeDeclarationsReport = ``
+  contents.forEach((content) => {
+    if (content.new) {
+      newTypeDeclarationsReport += content.new
+    } else if (content.existing) {
+      existingTypeDeclarationsReport += content.existing
     }
-  }
+  })
+
   if (newTypeDeclarationsReport === '' && existingTypeDeclarationsReport === '') {
     return
   }
