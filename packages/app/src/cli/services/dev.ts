@@ -81,13 +81,6 @@ async function dev(options: DevOptions) {
     localApp = await installAppDependencies(localApp)
   }
 
-  const {frontendUrl, frontendPort, usingLocalhost} = await generateFrontendURL({
-    ...options,
-    app: localApp,
-    cachedTunnelPlugin: tunnelPlugin,
-  })
-
-  const backendPort = await getAvailableTCPPort()
   const frontendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Frontend)
   const backendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Backend)
   const webhooksPath = backendConfig?.configuration?.webhooksPath || '/api/webhooks'
@@ -97,17 +90,32 @@ async function dev(options: DevOptions) {
     outputInfo('Using a different app than last time, sending uninstall webhook to app server')
   }
 
+  const initiateUpdateUrls = (frontendConfig || backendConfig) && options.update
+  let shouldUpdateURLs = false
+
+  const [
+    {frontendUrl, frontendPort, usingLocalhost},
+    backendPort,
+    currentURLs
+  ] = await Promise.all([
+    generateFrontendURL({
+      ...options,
+      app: localApp,
+      cachedTunnelPlugin: tunnelPlugin,
+    }),
+    getAvailableTCPPort(),
+    getURLs(apiKey, token),
+  ])
+
   /** If the app doesn't have web/ the link message is not necessary */
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
-  let shouldUpdateURLs = false
   const proxyTargets: ReverseHTTPProxyTarget[] = []
   const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
 
   let previewUrl
 
-  if ((frontendConfig || backendConfig) && options.update) {
-    const currentURLs = await getURLs(apiKey, token)
+  if (initiateUpdateUrls) {
     const newURLs = generatePartnersURLs(exposedUrl, backendConfig?.configuration.authCallbackPath)
     shouldUpdateURLs = await shouldOrPromptUpdateURLs({
       currentURLs,
