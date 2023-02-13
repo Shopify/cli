@@ -1,4 +1,4 @@
-import {relativizePath, cwd} from './path.js'
+import {relativizePath, normalizePath, cwd} from './path.js'
 import {describe, test, expect} from 'vitest'
 
 describe('relativize', () => {
@@ -16,12 +16,11 @@ describe('relativize', () => {
 })
 
 describe('cwd', () => {
-  test('returns the initial cwd where the command has been called', () => {
+  test.runIf(process.env.INIT_CWD)('returns the initial cwd where the command has been called', () => {
     // Given
     const path = cwd()
 
     // Then
-    // eslint-disable-next-line rulesdir/no-process-cwd
-    expect(path).toStrictEqual(process.cwd())
+    expect(path).toStrictEqual(normalizePath(process.env.INIT_CWD!))
   })
 })
