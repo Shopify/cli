@@ -162,11 +162,15 @@ async function dev(options: DevOptions) {
     const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
     const storefrontToken = await ensureAuthenticatedStorefront()
     const extension = localApp.extensions.theme[0]!
-    const theme = options.theme || (await new HostThemeManager(adminSession).findOrCreate()).id.toString()
-    const args = await themeExtensionArgs(extension, apiKey, token, {
-      ...options,
-      theme,
-    })
+    let optionsToOverwrite = {}
+    if (!options.theme) {
+      const theme = await new HostThemeManager(adminSession).findOrCreate()
+      optionsToOverwrite = {
+        theme: theme.id.toString(),
+        generateTmpTheme: theme.createdAtRuntime,
+      }
+    }
+    const args = await themeExtensionArgs(extension, apiKey, token, {...options, ...optionsToOverwrite})
     const devExt = await devThemeExtensionTarget(args, adminSession, storefrontToken, token)
     additionalProcesses.push(devExt)
   }
