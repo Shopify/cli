@@ -1,19 +1,98 @@
 import commondir from 'commondir'
-import {relative, dirname, join, normalize, resolve, basename, extname, isAbsolute} from 'pathe'
+import {
+  relative,
+  dirname as patheDirname,
+  join,
+  normalize,
+  resolve,
+  basename as basenamePathe,
+  extname as extnamePathe,
+  isAbsolute,
+} from 'pathe'
 import {fileURLToPath} from 'url'
 // eslint-disable-next-line node/prefer-global/url
 import type {URL} from 'url'
 
-// Reexport methods from pathe
-export {
-  join as joinPath,
-  relative as relativePath,
-  normalize as normalizePath,
-  resolve as resolvePath,
-  isAbsolute as isAbsolutePath,
-  dirname,
-  basename,
-  extname,
+/**
+ * Joins a list of paths together.
+ *
+ * @param paths - Paths to join.
+ * @returns Joined path.
+ */
+export function joinPath(...paths: string[]): string {
+  return join(...paths)
+}
+
+/**
+ * Normalizes a path.
+ *
+ * @param path - Path to normalize.
+ * @returns Normalized path.
+ */
+export function normalizePath(path: string): string {
+  return normalize(path)
+}
+
+/**
+ * Resolves a list of paths together.
+ *
+ * @param paths - Paths to resolve.
+ * @returns Resolved path.
+ */
+export function resolvePath(...paths: string[]): string {
+  return resolve(...paths)
+}
+
+/**
+ * Returns the relative path from one path to another.
+ *
+ * @param from - Path to resolve from.
+ * @param to - Path to resolve to.
+ * @returns Relative path.
+ */
+export function relativePath(from: string, to: string): string {
+  return relative(from, to)
+}
+
+/**
+ * Returns whether the path is absolute.
+ *
+ * @param path - Path to check.
+ * @returns Whether the path is absolute.
+ */
+export function isAbsolutePath(path: string): boolean {
+  return isAbsolute(path)
+}
+
+/**
+ * Returns the directory name of a path.
+ *
+ * @param path - Path to get the directory name of.
+ * @returns Directory name.
+ */
+export function dirname(path: string): string {
+  return patheDirname(path)
+}
+
+/**
+ * Returns the base name of a path.
+ *
+ * @param path - Path to get the base name of.
+ * @param ext - Optional extension to remove.
+ * @returns Base name.
+ */
+export function basename(path: string, ext?: string): string {
+  return basenamePathe(path, ext)
+}
+
+/**
+ * Returns the extension of the path.
+ *
+ * @param path - Path to get the extension of.
+ * @returns Extension.
+ */
+export function extname(path: string): string {
+  return extnamePathe(path)
 }
 
 /**
