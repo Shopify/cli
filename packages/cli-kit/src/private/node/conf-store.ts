@@ -72,12 +72,12 @@ export async function cacheFetch<T>(
   const cache: Cache = config.get('cache') || {}
   const cached = cache[key]
 
-  if (cached && (!timeout || Date.now() - cached.timestamp < timeout)) {
+  if (cached && (timeout === undefined || Date.now() - cached.timestamp < timeout)) {
     return cached.value as T
   }
 
   const value = await fn()
   cache[key] = {value, timestamp: Date.now()}
-  cliKitStore().set('cache', cache)
+  config.set('cache', cache)
   return value
 }

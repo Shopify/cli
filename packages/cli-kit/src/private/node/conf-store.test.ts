@@ -64,7 +64,7 @@ describe('cacheFetch', () => {
 
       // Then
       // Uses the prior run to return the cached value
-      expect(got).toEqual('two')
+      expect(got).toEqual(2)
     })
   })
 
@@ -75,8 +75,7 @@ describe('cacheFetch', () => {
 
       // Then
       const got = await cacheFetch('two', async () => 3, 1000, config)
-      // Uses the prior run to return the cached value
-      expect(got).toEqual(2)
+      expect(got).toEqual(3)
     })
   })
 
