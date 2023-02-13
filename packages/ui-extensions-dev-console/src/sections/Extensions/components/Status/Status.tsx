@@ -4,6 +4,7 @@ import en from './translations/en.json'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {Status as StatusProp} from '@shopify/ui-extensions-server-kit'
+import {Tooltip} from '@/components/Tooltip'
 
 interface Props {
   status: StatusProp
@@ -20,7 +21,7 @@ export function Status({status}: Props) {
   return (
     <span className={styles.Status}>
       <span className={statusClass}></span>
-      {i18n.translate(`${status}`)}
+      <Tooltip text={i18n.translate(`${status}.tooltipMessage`)}>{i18n.translate(`${status}.label`)}</Tooltip>
     </span>
   )
 }
