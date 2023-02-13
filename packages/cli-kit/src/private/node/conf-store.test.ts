@@ -57,10 +57,10 @@ describe('cacheFetch', () => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
       // populate the cache
-      await cacheFetch('two', (async () => 2), 1000, config)
+      await cacheFetch('two', async () => 2, 1000, config)
 
       // When
-      const got = await cacheFetch('two', (async () => 3), 1000, config)
+      const got = await cacheFetch('two', async () => 3, 1000, config)
 
       // Then
       // Uses the prior run to return the cached value
@@ -74,7 +74,7 @@ describe('cacheFetch', () => {
       const config = new LocalStorage<ConfSchema>({cwd})
 
       // Then
-      const got = await cacheFetch('two', (async () => 3), 1000, config)
+      const got = await cacheFetch('two', async () => 3, 1000, config)
       // Uses the prior run to return the cached value
       expect(got).toEqual(2)
     })
@@ -87,10 +87,10 @@ describe('cacheFetch', () => {
 
       // When
       // populate the cache
-      await cacheFetch('two', (async () => 2), 1000, config)
+      await cacheFetch('two', async () => 2, 1000, config)
 
       // Then
-      const got = await cacheFetch('two', (async () => 3), 0, config)
+      const got = await cacheFetch('two', async () => 3, 0, config)
       // Fetches a new value because the old one is outdated per the current request
       expect(got).toEqual(3)
     })

@@ -15,7 +15,8 @@ export async function validateIdentityToken(token: string): Promise<boolean> {
     return withIntrospectionURL<boolean>(async (introspectionURL: string) => {
       const options = {
         method: 'POST',
-        headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'}, body: JSON.stringify({token}),
+        headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
+        body: JSON.stringify({token}),
       }
       outputDebug(`Sending Identity Introspection request to URL: ${introspectionURL}`)
 

@@ -3,7 +3,7 @@ import {outputContent, outputDebug} from '@shopify/cli-kit/node/output'
 
 interface Cache {
   [key: string]: {
-    value: any
+    value: unknown
     timestamp: number
   }
 }
@@ -63,9 +63,13 @@ export function removeSession(config: LocalStorage<ConfSchema> = cliKitStore()):
  * @param timeout - The number of milliseconds to cache the value for.
  * @returns The value from the cache or the result of the function.
  */
-export async function cacheFetch<T>(key: string, fn: () => Promise<T>, timeout?: number, config = cliKitStore()): Promise<T> {
-  config = config || cliKitStore()
-  const cache: Cache = config.get("cache") || {}
+export async function cacheFetch<T>(
+  key: string,
+  fn: () => Promise<T>,
+  timeout?: number,
+  config = cliKitStore(),
+): Promise<T> {
+  const cache: Cache = config.get('cache') || {}
   const cached = cache[key]
 
   if (cached && (!timeout || Date.now() - cached.timestamp < timeout)) {
@@ -74,6 +78,6 @@ export async function cacheFetch<T>(key: string, fn: () => Promise<T>, timeout?:
 
   const value = await fn()
   cache[key] = {value, timestamp: Date.now()}
-  cliKitStore().set("cache", cache)
+  cliKitStore().set('cache', cache)
   return value
 }
