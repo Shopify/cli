@@ -78,7 +78,7 @@ export function dirname(path: string): string {
  * Returns the base name of a path.
  *
  * @param path - Path to get the base name of.
- * @param ext - Optional extension to remove.
+ * @param ext - Optional extension to remove from the result.
  * @returns Base name.
  */
 export function basename(path: string, ext?: string): string {
