@@ -26,7 +26,6 @@ describe('common API methods', () => {
       'Content-Type': 'application/json',
       'Keep-Alive': 'timeout=30',
       'X-Shopify-Access-Token': 'Bearer my-token',
-      'X-Request-Id': 'random-uuid',
       'User-Agent': `Shopify CLI; v=${version}`,
       authorization: 'Bearer my-token',
       'Sec-CH-UA-PLATFORM': process.platform,
@@ -47,7 +46,6 @@ describe('common API methods', () => {
       'Content-Type': 'application/json',
       'Keep-Alive': 'timeout=30',
       'X-Shopify-Access-Token': 'Bearer my-token',
-      'X-Request-Id': 'random-uuid',
       'User-Agent': `Shopify CLI; v=${version}`,
       authorization: 'Bearer my-token',
       'Sec-CH-UA-PLATFORM': process.platform,
@@ -68,7 +66,6 @@ describe('common API methods', () => {
       'Content-Type': 'application/json',
       'Keep-Alive': 'timeout=30',
       'X-Shopify-Access-Token': token,
-      'X-Request-Id': 'random-uuid',
       'User-Agent': `Shopify CLI; v=${version}`,
       authorization: token,
       'Sec-CH-UA-PLATFORM': process.platform,
@@ -80,7 +77,6 @@ describe('common API methods', () => {
     const headers = {
       'User-Agent': 'useragent',
       'Keep-Alive': 'timeout=30',
-      'X-Request-Id': 'uuid',
       Authorization: 'token',
       authorization: 'token',
       'Content-Type': 'application/json',
@@ -94,7 +90,6 @@ describe('common API methods', () => {
     expect(got).toMatchInlineSnapshot(`
       " - User-Agent: useragent
        - Keep-Alive: timeout=30
-       - X-Request-Id: uuid
        - Content-Type: application/json"
     `)
   })

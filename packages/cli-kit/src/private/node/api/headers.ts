@@ -41,7 +41,6 @@ export function buildHeaders(token?: string): {[key: string]: string} {
     'Keep-Alive': 'timeout=30',
     // 'Sec-CH-UA': secCHUA, This header requires the Git sha.
     'Sec-CH-UA-PLATFORM': process.platform,
-    'X-Request-Id': randomUUID(),
     'Content-Type': 'application/json',
     ...(firstPartyDev() && {'X-Shopify-Cli-Employee': '1'}),
   }
