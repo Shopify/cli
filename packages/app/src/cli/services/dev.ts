@@ -160,7 +160,6 @@ async function dev(options: DevOptions) {
 
   if (localApp.extensions.theme.length > 0) {
     const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
-    const storefrontToken = await ensureAuthenticatedStorefront()
     const extension = localApp.extensions.theme[0]!
     let optionsToOverwrite = {}
     if (!options.theme) {
@@ -170,8 +169,11 @@ async function dev(options: DevOptions) {
         generateTmpTheme: theme.createdAtRuntime,
       }
     }
-    const args = await themeExtensionArgs(extension, apiKey, token, {...options, ...optionsToOverwrite})
-    const devExt = await devThemeExtensionTarget(args, adminSession, storefrontToken, token)
+    const [storefrontToken, args] = await Promise.all([
+      ensureAuthenticatedStorefront(),
+      themeExtensionArgs(extension, apiKey, token, {...options, ...optionsToOverwrite})
+    ])
+    const devExt = devThemeExtensionTarget(args, adminSession, storefrontToken, token)
     additionalProcesses.push(devExt)
   }
 
