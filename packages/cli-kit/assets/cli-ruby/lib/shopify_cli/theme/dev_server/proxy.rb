@@ -78,6 +78,17 @@ module ShopifyCLI
           [response.code, headers, body]
         end
 
+        def secure_session_id
+          if secure_session_id_expired?
+            @ctx.debug("Refreshing preview _secure_session_id cookie")
+            response = request("HEAD", "/", query: [[:preview_theme_id, theme_id]])
+            @secure_session_id = extract_secure_session_id_from_response_headers(response)
+            @last_session_cookie_refresh = Time.now
+          end
+
+          @secure_session_id
+        end
+
         private
 
         def patch_body(env, body)
@@ -162,17 +173,6 @@ module ShopifyCLI
           return unless headers["set-cookie"]
 
           headers["set-cookie"][SESSION_COOKIE_REGEXP, 1]
-        end
-
-        def secure_session_id
-          if secure_session_id_expired?
-            @ctx.debug("Refreshing preview _secure_session_id cookie")
-            response = request("HEAD", "/", query: [[:preview_theme_id, theme_id]])
-            @secure_session_id = extract_secure_session_id_from_response_headers(response)
-            @last_session_cookie_refresh = Time.now
-          end
-
-          @secure_session_id
         end
 
         def get_response_headers(response, env)

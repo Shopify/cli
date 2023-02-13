@@ -156,12 +156,6 @@ module ShopifyCLI
           end
         end
 
-        private
-
-        def random_name
-          ShopifyCLI::Helpers::Haikunator.haikunate(9999)
-        end
-
         def find(ctx, root, &block)
           _status, body = fetch_themes(ctx)
 
@@ -170,6 +164,12 @@ module ShopifyCLI
             .tap do |attrs|
               break new(ctx, root: root, **allowed_attrs(attrs)) if attrs
             end
+        end
+
+        private
+
+        def random_name
+          ShopifyCLI::Helpers::Haikunator.haikunate(9999)
         end
 
         def allowed_attrs(attrs)

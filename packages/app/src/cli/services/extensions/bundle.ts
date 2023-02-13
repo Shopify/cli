@@ -1,9 +1,9 @@
 import {buildThemeExtensions, ThemeExtensionBuildOptions} from '../build/extension.js'
 import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {themeBundlingDisabled} from '@shopify/cli-kit/node/context/local'
 import {copyFile, glob} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
+import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
 import type {StdinOptions} from 'esbuild'
@@ -64,7 +64,7 @@ export async function bundleThemeExtensions(options: ThemeExtensionBuildOptions)
 
   await buildThemeExtensions(options)
 
-  if (!themeBundlingDisabled()) {
+  if (useThemebundling()) {
     await Promise.all(
       options.extensions.map(async (extension) => {
         options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)

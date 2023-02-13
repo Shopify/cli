@@ -1,5 +1,22 @@
 # @shopify/cli-kit
 
+## 3.43.0
+
+### Minor Changes
+
+- 4b0cc57ce: Theme bundling is now an opt-in feature
+
+### Patch Changes
+
+- f732207fa: Fix embedded Ruby CLI (remove Gemfile.lock)
+- b6f93cfa7: Use bundled Ruby CLI by default
+
+## 3.42.0
+
+### Patch Changes
+
+- 2203d4e6f: Fix theme issues with bundler and ruby version managers
+
 ## 3.41.2
 
 ## 3.41.1
