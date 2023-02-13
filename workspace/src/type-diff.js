@@ -30,7 +30,7 @@ async function report({baselineDirectory, currentDirectory, baselineFiles, curre
       const currentContent = (await fs.readFile(path.join(currentDirectory, currentFile))).toString().trim()
       const baselineContent = (await fs.readFile(path.join(baselineDirectory, currentFile))).toString().trim()
       if (currentContent !== baselineContent) {
-        existingTypeDeclarationsReport = `${existingTypeDeclarationsReport}
+        existingTypeDeclarationsReport += `
 <details>
 <summary>
 ${currentFile}
@@ -43,7 +43,7 @@ ${gitDiff(baselineContent, currentContent)}
 </details>`
       }
     } else {
-      newTypeDeclarationsReport = `${newTypeDeclarationsReport}
+      newTypeDeclarationsReport += `
 <details>
 <summary>
 ${currentFile}
