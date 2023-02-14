@@ -43,6 +43,7 @@ import {
   access as fsAccess,
   rename as fsRename,
 } from 'fs/promises'
+import {pathToFileURL as pathToFile} from 'url'
 import type {Options} from 'prettier'
 import type {Pattern, Options as GlobOptions} from 'fast-glob'
 
@@ -513,8 +514,16 @@ export async function glob(pattern: Pattern | Pattern[], options?: GlobOptions):
   }
   return fastGlob(pattern, overridenOptions)
 }
-export {pathToFileURL} from 'url'
 
+/**
+ * Convert a path to a File URL.
+ *
+ * @param path - Path to convert.
+ * @returns The File URL.
+ */
+export function pathToFileURL(path: string): URL {
+  return pathToFile(path)
+}
 /**
  * Find a file by walking parent directories.
  *
