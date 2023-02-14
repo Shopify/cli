@@ -1,5 +1,6 @@
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {FunctionSpec} from '../../models/extensions/functions.js'
+import {ConfigurationExtensionSpec} from '../../models/extensions/configurations.js'
 import {HookReturnPerExtensionPlugin} from '../../public/plugins/extension.js'
 import {Config} from '@oclif/core'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
@@ -13,6 +14,18 @@ export async function loadUIExtensionSpecificiationsFromPlugins(config: Config):
 
 export async function loadFunctionSpecificationsFromPlugins(config: Config): Promise<FunctionSpec[]> {
   const hooks = await fanoutHooks<HookReturnPerExtensionPlugin, 'function_specs'>(config, 'function_specs', {})
+  const specs = getArrayRejectingUndefined(Object.values(hooks)).flat()
+  return specs
+}
+
+export async function loadConfigurationExtensionSpecificationsFromPlugins(
+  config: Config,
+): Promise<ConfigurationExtensionSpec[]> {
+  const hooks = await fanoutHooks<HookReturnPerExtensionPlugin, 'configuration_extension_specs'>(
+    config,
+    'configuration_extension_specs',
+    {},
+  )
   const specs = getArrayRejectingUndefined(Object.values(hooks)).flat()
   return specs
 }

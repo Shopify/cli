@@ -83,6 +83,11 @@ export const BaseFunctionConfigurationSchema = zod.object({
     .optional(),
 })
 
+export const BaseConfigurationExtensionSchema = zod.object({
+  name: zod.string(),
+  type: zod.string(),
+})
+
 export type NewExtensionPointSchemaType = zod.infer<typeof NewExtensionPointSchema>
 
 // Base config type that all config schemas must extend.

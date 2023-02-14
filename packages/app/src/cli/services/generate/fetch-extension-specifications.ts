@@ -2,9 +2,11 @@ import {
   loadThemeSpecifications,
   loadUIExtensionSpecifications,
   loadFunctionSpecifications,
+  loadConfigurationExtensionSpecifications,
 } from '../../models/extensions/specifications.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
+import {ConfigurationExtensionSpec} from '../../models/extensions/configurations.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {
   ExtensionSpecificationsQuery,
@@ -15,7 +17,7 @@ import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
-type ExtensionSpec = UIExtensionSpec | ThemeExtensionSpec
+type ExtensionSpec = UIExtensionSpec | ThemeExtensionSpec | ConfigurationExtensionSpec
 
 export interface FetchSpecificationsOptions {
   token: string
@@ -65,7 +67,8 @@ export async function fetchSpecifications({
   const ui = await loadUIExtensionSpecifications(config)
   const theme = await loadThemeSpecifications()
   const functions = await loadFunctionSpecifications(config)
-  const local = [...ui, ...theme]
+  const configurations = await loadConfigurationExtensionSpecifications(config)
+  const local = [...ui, ...theme, ...configurations]
 
   const updatedSpecs = mergeLocalAndRemoteSpecs(local, extensionSpecifications)
   return [...updatedSpecs, ...functions]

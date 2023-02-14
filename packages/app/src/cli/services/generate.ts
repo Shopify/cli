@@ -143,6 +143,12 @@ function formatSuccessfulRunMessage(
     ])
   }
 
+  if (specification.category() === 'configuration') {
+    options.nextSteps!.push([
+      'Before deployment, make sure to fill in the required configuration in the shopify.configuration.extension.toml file.',
+    ])
+  }
+
   if (specification.helpURL) {
     options.reference!.push(['For more details, see the', {link: {label: 'docs', url: specification.helpURL}}])
   }

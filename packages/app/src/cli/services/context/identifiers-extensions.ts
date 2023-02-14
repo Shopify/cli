@@ -15,7 +15,11 @@ export async function ensureExtensionsIds(
 ): Promise<Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions}, MatchingError>> {
   let remoteExtensions = initialRemoteExtensions
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
-  const localExtensions = [...options.app.extensions.ui, ...options.app.extensions.theme]
+  const localExtensions = [
+    ...options.app.extensions.ui,
+    ...options.app.extensions.theme,
+    ...options.app.extensions.configurations,
+  ]
   const extensionsToMigrate = getExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
 
   if (extensionsToMigrate.length > 0) {

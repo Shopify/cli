@@ -34,7 +34,7 @@ import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
-interface DeployThemeExtensionOptions {
+interface ExtensionDeploymentOptions {
   /** The application API key */
   apiKey: string
 
@@ -51,7 +51,7 @@ interface DeployThemeExtensionOptions {
  */
 export async function uploadThemeExtensions(
   themeExtensions: ThemeExtension[],
-  options: DeployThemeExtensionOptions,
+  options: ExtensionDeploymentOptions,
 ): Promise<void> {
   const {apiKey, identifiers, token} = options
   await Promise.all(

@@ -6,6 +6,7 @@ import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
 import {ThemeExtensionInstance, ThemeExtensionSpec} from '../extensions/theme.js'
 import {BaseFunctionConfigurationSchema, ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
 import {FunctionInstance} from '../extensions/functions.js'
+import {ConfigurationExtensionInstance, ConfigurationExtensionSpec} from '../extensions/configurations.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -98,6 +99,8 @@ class AppLoader {
     const {themeExtensions, usedCustomLayout: usedCustomLayoutForThemeExtensions} = await this.loadThemeExtensions(
       configuration.extensionDirectories,
     )
+    const {configurationExtensions, usedCustomLayout: usedCustomLayoutForConfigurationExtensions} =
+      await this.loadConfigurationExtensions(configuration.extensionDirectories)
     const packageJSONPath = joinPath(this.appDirectory, 'package.json')
     const name = await loadAppName(this.appDirectory)
     const nodeDependencies = await getDependencies(packageJSONPath)
@@ -117,6 +120,7 @@ class AppLoader {
       uiExtensions,
       themeExtensions,
       functions,
+      configurationExtensions,
       usesWorkspaces,
       dotenv,
     )
@@ -128,6 +132,7 @@ class AppLoader {
       usedCustomLayoutForUIExtensions,
       usedCustomLayoutForFunctionExtensions,
       usedCustomLayoutForThemeExtensions,
+      usedCustomLayoutForConfigurationExtensions,
     })
 
     return appClass
@@ -354,6 +359,38 @@ class AppLoader {
     return {functions, usedCustomLayout: extensionDirectories !== undefined}
   }
 
+  async loadConfigurationExtensions(
+    extensionDirectories?: string[],
+  ): Promise<{configurationExtensions: ConfigurationExtensionInstance[]; usedCustomLayout: boolean}> {
+    const configurationConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
+      return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.configuration}`)
+    })
+    const configPaths = await glob(configurationConfigPaths)
+
+    const allConfigurationExtensions = configPaths.map(async (configurationPath) => {
+      const directory = dirname(configurationPath)
+      const fileContent = await readFile(configurationPath)
+      const obj = decodeToml(fileContent)
+      const {type} = TypeSchema.parse(obj)
+      const specification = this.findSpecificationForType(type) as ConfigurationExtensionSpec | undefined
+      if (!specification) {
+        this.abortOrReport(
+          outputContent`Unknown configuration extension type ${outputToken.yellow(type)} in
+          ${outputToken.path(configurationPath)}`,
+          undefined,
+          configurationPath,
+        )
+        return undefined
+      }
+
+      const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
+
+      return new ConfigurationExtensionInstance({configuration, configurationPath, specification, directory})
+    })
+    const configurationExtensions = getArrayRejectingUndefined(await Promise.all(allConfigurationExtensions))
+    return {configurationExtensions, usedCustomLayout: extensionDirectories !== undefined}
+  }
+
   async loadThemeExtensions(
     extensionDirectories?: string[],
   ): Promise<{themeExtensions: ThemeExtension[]; usedCustomLayout: boolean}> {
@@ -440,6 +477,7 @@ async function logMetadataForLoadedApp(
     usedCustomLayoutForUIExtensions: boolean
     usedCustomLayoutForFunctionExtensions: boolean
     usedCustomLayoutForThemeExtensions: boolean
+    usedCustomLayoutForConfigurationExtensions: boolean
   },
 ) {
   await metadata.addPublicMetadata(async () => {
@@ -448,6 +486,7 @@ async function logMetadataForLoadedApp(
     const extensionFunctionCount = app.extensions.function.length
     const extensionUICount = app.extensions.ui.length
     const extensionThemeCount = app.extensions.theme.length
+    const extensionConfigurationCount = app.extensions.configurations.length
 
     const extensionTotalCount = extensionFunctionCount + extensionUICount + extensionThemeCount
 
@@ -476,7 +515,8 @@ async function logMetadataForLoadedApp(
       app_extensions_custom_layout:
         loadingStrategy.usedCustomLayoutForFunctionExtensions ||
         loadingStrategy.usedCustomLayoutForThemeExtensions ||
-        loadingStrategy.usedCustomLayoutForUIExtensions,
+        loadingStrategy.usedCustomLayoutForUIExtensions ||
+        loadingStrategy.usedCustomLayoutForConfigurationExtensions,
       app_extensions_function_any: extensionFunctionCount > 0,
       app_extensions_function_count: extensionFunctionCount,
       app_extensions_function_custom_layout: loadingStrategy.usedCustomLayoutForFunctionExtensions,
@@ -486,6 +526,9 @@ async function logMetadataForLoadedApp(
       app_extensions_ui_any: extensionUICount > 0,
       app_extensions_ui_count: extensionUICount,
       app_extensions_ui_custom_layout: loadingStrategy.usedCustomLayoutForUIExtensions,
+      app_extensions_configuration_any: extensionConfigurationCount > 0,
+      app_extensions_configuration_count: extensionConfigurationCount,
+      app_extensions_configuration_custom_layout: loadingStrategy.usedCustomLayoutForConfigurationExtensions,
       app_name_hash: hashString(app.name),
       app_path_hash: hashString(app.directory),
       app_scopes: JSON.stringify(

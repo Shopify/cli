@@ -94,6 +94,7 @@ export function getAppIdentifiers(
   app.extensions.ui.forEach(processExtension)
   app.extensions.function.forEach(processExtension)
   app.extensions.theme.forEach(processExtension)
+  app.extensions.configurations.forEach(processExtension)
 
   return {
     app: envVariables[app.idEnvironmentVariableName],

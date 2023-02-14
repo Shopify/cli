@@ -90,6 +90,17 @@ export async function deploy(options: DeployOptions) {
     extensions.push(...themeExtensions)
   }
 
+  const configurationExtensions = await Promise.all(
+    options.app.extensions.configurations.map(async (extension) => {
+      return {
+        uuid: identifiers.extensions[extension.localIdentifier]!,
+        config: JSON.stringify(await extension.deployConfig()),
+        context: '',
+      }
+    }),
+  )
+  extensions.push(...configurationExtensions)
+
   let registrations: AllAppExtensionRegistrationsQuerySchema
   let validationErrors: UploadExtensionValidationError[] = []
   let deploymentId: number
@@ -100,7 +111,8 @@ export async function deploy(options: DeployOptions) {
       await mkdir(dirname(bundlePath))
       const bundleTheme = useThemebundling() && app.extensions.theme.length !== 0
       const bundleUI = app.extensions.ui.length !== 0
-      const bundle = bundleTheme || bundleUI
+      const bundleConfigurations = app.extensions.configurations.length !== 0
+      const bundle = bundleTheme || bundleUI || bundleConfigurations
       await bundleAndBuildExtensions({app, bundlePath, identifiers, bundle})
 
       const tasks: Task<TasksContext>[] = [
@@ -243,18 +255,25 @@ async function outputCompletionMessage({
             ...app.extensions.ui.map(outputDeployedButNotLiveMessage),
             ...app.extensions.theme.map(outputDeployedButNotLiveMessage),
             ...app.extensions.function.map(outputDeployedAndLivedMessage),
+            ...app.extensions.configurations.map(outputDeployedButNotLiveMessage),
           ],
         },
       },
     },
   ]
 
-  if (app.extensions.ui.length !== 0 || app.extensions.theme.length !== 0) {
+  if (
+    app.extensions.ui.length !== 0 ||
+    app.extensions.theme.length !== 0 ||
+    app.extensions.configurations.length !== 0
+  ) {
     customSections.push({
       title: 'Next steps',
       body: {
         list: {
-          items: await Promise.all([...app.extensions.ui, ...app.extensions.theme].map(outputNextStep)),
+          items: await Promise.all(
+            [...app.extensions.ui, ...app.extensions.theme, ...app.extensions.configurations].map(outputNextStep),
+          ),
         },
       },
     })

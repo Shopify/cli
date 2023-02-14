@@ -1,10 +1,16 @@
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {FunctionSpec} from '../../models/extensions/functions.js'
+import {ConfigurationExtensionSpec} from '../../models/extensions/configurations.js'
 import {BaseConfigContents} from '../../models/extensions/schemas.js'
 import {FanoutHookFunction, HookReturnsPerPlugin} from '@shopify/cli-kit/node/plugins'
 
 export {createUIExtensionSpecification, UIExtensionSpec, CreateExtensionSpecType} from '../../models/extensions/ui.js'
 export {createFunctionSpecification, FunctionSpec, CreateFunctionSpecType} from '../../models/extensions/functions.js'
+export {
+  createConfigurationExtensionSpecification,
+  ConfigurationExtensionSpec,
+  CreateConfigurationExtensionSpecType,
+} from '../../models/extensions/configurations.js'
 export {fetchProductVariant} from '../../utilities/extensions/fetch-product-variant.js'
 export {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
 
@@ -28,10 +34,21 @@ export interface HookReturnPerExtensionPlugin extends HookReturnsPerPlugin {
       [pluginName: string]: FunctionSpec[]
     }
   }
+  configuration_extension_specs: {
+    options: {[key: string]: never}
+    pluginReturns: {
+      [pluginName: string]: ConfigurationExtensionSpec[]
+    }
+  }
 }
 
 export type ExtensionSpecsFunction = FanoutHookFunction<'extension_specs', '', HookReturnPerExtensionPlugin>
 export type FunctionSpecsFunction = FanoutHookFunction<'function_specs', '', HookReturnPerExtensionPlugin>
+export type ConfigurationExtensionSpecsFunction = FanoutHookFunction<
+  'configuration_extension_specs',
+  '',
+  HookReturnPerExtensionPlugin
+>
 
 /**
  * A function for plugins to register new UI extension types.
@@ -54,5 +71,18 @@ export const registerUIExtensionSpecifications = <TConfiguration extends BaseCon
  * @example
  */
 export const registerFunctionSpecifications = (specifications: FunctionSpec[]): FunctionSpecsFunction => {
+  return async () => specifications
+}
+
+/**
+ * A function for plugins to register new Configuration extension types.
+ *
+ * @param specifications - The Configuration extension specifications to register.
+ * @returns A function that returns the list of specifications.
+ * @example
+ */
+export const registerConfigurationExtensionSpecifications = (
+  specifications: ConfigurationExtensionSpec[],
+): ConfigurationExtensionSpecsFunction => {
   return async () => specifications
 }
