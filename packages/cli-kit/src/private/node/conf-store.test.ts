@@ -1,4 +1,5 @@
-import {Conf, ConfSchema, getSession, removeSession, setSession} from './conf-store.js'
+import {ConfSchema, getSession, removeSession, setSession} from './conf-store.js'
+import {LocalStorage} from '../../public/node/local-storage.js'
 import {describe, expect, it} from 'vitest'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
@@ -6,7 +7,7 @@ describe('getSession', () => {
   it('returns the content of the SessionStore key', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
-      const config = new Conf<ConfSchema>({cwd})
+      const config = new LocalStorage<ConfSchema>({cwd})
       config.set('sessionStore', 'my-session')
 
       // When
@@ -22,7 +23,7 @@ describe('setSession', () => {
   it('saves the desired content in the SessionStore key', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
-      const config = new Conf<ConfSchema>({cwd})
+      const config = new LocalStorage<ConfSchema>({cwd})
       config.set('sessionStore', 'my-session')
 
       // When
@@ -38,7 +39,7 @@ describe('removeSession', () => {
   it('removes the SessionStore key', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
-      const config = new Conf<ConfSchema>({cwd})
+      const config = new LocalStorage<ConfSchema>({cwd})
       config.set('sessionStore', 'my-session')
 
       // When

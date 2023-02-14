@@ -1,7 +1,7 @@
 import {info} from './info.js'
 import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
 import {selectApp} from './app/select-app.js'
-import {getAppInfo} from './conf.js'
+import {getAppInfo} from './local-storage.js'
 import {AppInterface} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp, testUIExtension} from '../models/app/app.test-data.js'
@@ -12,7 +12,7 @@ import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 
-vi.mock('./conf.js')
+vi.mock('./local-storage.js')
 vi.mock('./dev/fetch.js')
 vi.mock('./app/select-app.js')
 vi.mock('../prompts/dev.js')

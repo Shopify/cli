@@ -1,5 +1,5 @@
 import {columns} from './list.columns.js'
-import {getDevelopmentTheme} from './conf.js'
+import {getDevelopmentTheme} from './local-storage.js'
 import {ALLOWED_ROLES, fetchStoreThemes, Role} from '../utilities/theme-selector/fetch.js'
 import {Filter, FilterProps, filterThemes} from '../utilities/theme-selector/filter.js'
 import {renderTable} from '@shopify/cli-kit/node/ui'
