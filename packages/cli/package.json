@@ -127,6 +127,7 @@
       "@shopify/app",
       "@shopify/theme",
       "@shopify/cli-hydrogen",
+      "@shopify/plugin-did-you-mean",
       "@oclif/plugin-help",
       "@oclif/plugin-plugins",
       "@oclif/plugin-commands"
