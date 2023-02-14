@@ -1,54 +1,54 @@
-import {Conf} from '@shopify/cli-kit/node/conf'
+import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
 
 type DevelopmentThemeId = string
 
-export interface ThemeConfSchema {
+export interface ThemeLocalStorageSchema {
   themeStore: string
 }
 
-interface DevelopmentThemeConfSchema {
+interface DevelopmentThemeLocalStorageSchema {
   [themeStore: string]: DevelopmentThemeId
 }
 
-let _themeConfInstance: Conf<ThemeConfSchema> | undefined
-let _developmentThemeConfInstance: Conf<DevelopmentThemeConfSchema> | undefined
+let _themeLocalStorageInstance: LocalStorage<ThemeLocalStorageSchema> | undefined
+let _developmentThemeLocalStorageInstance: LocalStorage<DevelopmentThemeLocalStorageSchema> | undefined
 
-export function themeConf() {
-  if (!_themeConfInstance) {
-    _themeConfInstance = new Conf<ThemeConfSchema>({projectName: 'shopify-cli-theme-conf'})
+function themeLocalStorage() {
+  if (!_themeLocalStorageInstance) {
+    _themeLocalStorageInstance = new LocalStorage<ThemeLocalStorageSchema>({projectName: 'shopify-cli-theme-conf'})
   }
-  return _themeConfInstance
+  return _themeLocalStorageInstance
 }
 
-export function developmentThemeConf() {
-  if (!_developmentThemeConfInstance) {
-    _developmentThemeConfInstance = new Conf<DevelopmentThemeConfSchema>({
+function developmentThemeLocalStorage() {
+  if (!_developmentThemeLocalStorageInstance) {
+    _developmentThemeLocalStorageInstance = new LocalStorage<DevelopmentThemeLocalStorageSchema>({
       projectName: 'shopify-cli-development-theme-conf',
     })
   }
-  return _developmentThemeConfInstance
+  return _developmentThemeLocalStorageInstance
 }
 
 export function getThemeStore() {
-  return themeConf().get('themeStore')
+  return themeLocalStorage().get('themeStore')
 }
 
 export function setThemeStore(store: string) {
-  themeConf().set('themeStore', store)
+  themeLocalStorage().set('themeStore', store)
 }
 
 export function getDevelopmentTheme(): string | undefined {
   outputDebug(outputContent`Getting development theme...`)
-  return developmentThemeConf().get(getThemeStore())
+  return developmentThemeLocalStorage().get(getThemeStore())
 }
 
 export function setDevelopmentTheme(theme: string): void {
   outputDebug(outputContent`Setting development theme...`)
-  developmentThemeConf().set(getThemeStore(), theme)
+  developmentThemeLocalStorage().set(getThemeStore(), theme)
 }
 
 export function removeDevelopmentTheme(): void {
   outputDebug(outputContent`Removing development theme...`)
-  developmentThemeConf().delete(getThemeStore())
+  developmentThemeLocalStorage().delete(getThemeStore())
 }

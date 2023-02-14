@@ -1,4 +1,4 @@
-import {Conf} from './conf.js'
+import {LocalStorage} from './local-storage.js'
 import {inTemporaryDirectory} from './fs.js'
 import {describe, expect, it} from 'vitest'
 
@@ -6,15 +6,15 @@ interface TestSchema {
   testValue: string
 }
 
-describe('conf', () => {
+describe('storage', () => {
   it('set and returns a value', async () => {
     await inTemporaryDirectory((cwd) => {
       // Given
-      const conf = new Conf<TestSchema>({cwd})
+      const storage = new LocalStorage<TestSchema>({cwd})
 
       // When
-      conf.set('testValue', 'test')
-      const got = conf.get('testValue')
+      storage.set('testValue', 'test')
+      const got = storage.get('testValue')
 
       // Then
       expect(got).toEqual('test')
@@ -24,13 +24,13 @@ describe('conf', () => {
   it('deletes the value if present', async () => {
     await inTemporaryDirectory((cwd) => {
       // Given
-      const conf = new Conf<TestSchema>({cwd})
+      const storage = new LocalStorage<TestSchema>({cwd})
 
       // When
-      conf.set('testValue', 'test')
-      const got = conf.get('testValue')
-      conf.delete('testValue')
-      const got2 = conf.get('testValue')
+      storage.set('testValue', 'test')
+      const got = storage.get('testValue')
+      storage.delete('testValue')
+      const got2 = storage.get('testValue')
 
       // Then
       expect(got).toEqual('test')
@@ -41,13 +41,13 @@ describe('conf', () => {
   it('clears all values', async () => {
     await inTemporaryDirectory((cwd) => {
       // Given
-      const conf = new Conf<TestSchema>({cwd})
+      const storage = new LocalStorage<TestSchema>({cwd})
 
       // When
-      conf.set('testValue', 'test')
-      const got = conf.get('testValue')
-      conf.delete('testValue')
-      const got2 = conf.clear()
+      storage.set('testValue', 'test')
+      const got = storage.get('testValue')
+      storage.delete('testValue')
+      const got2 = storage.clear()
 
       // Then
       expect(got).toEqual('test')

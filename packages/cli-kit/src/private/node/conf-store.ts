@@ -1,11 +1,11 @@
-import {Conf} from '../../public/node/conf.js'
+import {LocalStorage} from '../../public/node/local-storage.js'
 import {outputContent, outputDebug} from '@shopify/cli-kit/node/output'
 
 export interface ConfSchema {
   sessionStore: string
 }
 
-let _instance: Conf<ConfSchema> | undefined
+let _instance: LocalStorage<ConfSchema> | undefined
 
 /**
  * CLIKIT Store.
@@ -14,7 +14,7 @@ let _instance: Conf<ConfSchema> | undefined
  */
 function cliKitStore() {
   if (!_instance) {
-    _instance = new Conf<ConfSchema>({projectName: 'shopify-cli-kit'})
+    _instance = new LocalStorage<ConfSchema>({projectName: 'shopify-cli-kit'})
   }
   return _instance
 }
@@ -24,7 +24,7 @@ function cliKitStore() {
  *
  * @returns Session.
  */
-export function getSession(config: Conf<ConfSchema> = cliKitStore()): string | undefined {
+export function getSession(config: LocalStorage<ConfSchema> = cliKitStore()): string | undefined {
   outputDebug(outputContent`Getting session store...`)
   return config.get('sessionStore')
 }
@@ -34,7 +34,7 @@ export function getSession(config: Conf<ConfSchema> = cliKitStore()): string | u
  *
  * @param session - Session.
  */
-export function setSession(session: string, config: Conf<ConfSchema> = cliKitStore()): void {
+export function setSession(session: string, config: LocalStorage<ConfSchema> = cliKitStore()): void {
   outputDebug(outputContent`Setting session store...`)
   config.set('sessionStore', session)
 }
@@ -42,7 +42,7 @@ export function setSession(session: string, config: Conf<ConfSchema> = cliKitSto
 /**
  * Remove session.
  */
-export function removeSession(config: Conf<ConfSchema> = cliKitStore()): void {
+export function removeSession(config: LocalStorage<ConfSchema> = cliKitStore()): void {
   outputDebug(outputContent`Removing session store...`)
   config.delete('sessionStore')
 }

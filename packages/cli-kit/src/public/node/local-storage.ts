@@ -1,7 +1,7 @@
 import Config from 'conf'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class Conf<T extends {[key: string]: any}> {
+export class LocalStorage<T extends {[key: string]: any}> {
   private readonly config: Config<T>
 
   constructor(options: {projectName?: string; cwd?: string}) {
