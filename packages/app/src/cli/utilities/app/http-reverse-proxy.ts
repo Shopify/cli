@@ -1,7 +1,7 @@
 import {renderConcurrent, RenderConcurrentOptions} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
-import {OutputProcess, outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {OutputProcess, outputDebug, outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 import * as http from 'http'
@@ -75,7 +75,11 @@ ${outputToken.json(JSON.stringify(rules))}
   const proxy = httpProxy.createProxy()
   const server = http.createServer(function (req, res) {
     const target = match(rules, req)
-    if (target) return proxy.web(req, res, {target})
+    if (target) {
+      return proxy.web(req, res, {target}, (err) => {
+        outputWarn(`Error forwarding web request: ${err}`)
+      })
+    }
 
     outputDebug(`
 Reverse HTTP proxy error - Invalid path: ${req.url}
@@ -90,7 +94,11 @@ ${outputToken.json(JSON.stringify(rules))}
   // Capture websocket requests and forward them to the proxy
   server.on('upgrade', function (req, socket, head) {
     const target = match(rules, req)
-    if (target) return proxy.ws(req, socket, head, {target})
+    if (target) {
+      return proxy.ws(req, socket, head, {target}, (err) => {
+        outputWarn(`Error forwarding websocket request: ${err}`)
+      })
+    }
     socket.destroy()
   })
 
