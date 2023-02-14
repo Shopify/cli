@@ -1,6 +1,6 @@
 import {AppHomeRow} from '.'
 import en from './translations/en.json'
-import {QRCodeModal} from '..'
+import {PreviewLink, QRCodeModal} from '..'
 import React from 'react'
 
 import {DefaultProviders} from 'tests/DefaultProviders'
@@ -52,5 +52,41 @@ describe('<AppHomeRow/>', () => {
     })
 
     expect(container).toContainReactComponent(QRCodeModal, {code: undefined})
+  })
+
+  test("renders a <PreviewLink/> with the resource url set to the app's handle if the surface has been set to 'admin'", () => {
+    const appState = {
+      app: {url: 'mock.url', title: 'Mock App Title', handle: 'my-app-handle'},
+    }
+    const container = render(<AppHomeRow />, withProviders(DefaultProviders), {
+      state: appState,
+      client: {options: {surface: 'admin'}},
+    })
+
+    expect(container).toContainReactComponent(PreviewLink, {resourceUrl: '/apps/my-app-handle'})
+  })
+
+  test("renders a <PreviewLink/> with the resource url set to the app's handle if the surface has been set to 'admin'", () => {
+    const appState = {
+      app: {url: 'mock.url', title: 'Mock App Title', handle: 'my-app-handle'},
+    }
+    const container = render(<AppHomeRow />, withProviders(DefaultProviders), {
+      state: appState,
+      client: {options: {surface: 'admin'}},
+    })
+
+    expect(container).toContainReactComponent(PreviewLink, {resourceUrl: '/admin/apps/my-app-handle'})
+  })
+
+  test("renders a <PreviewLink/> without a resource url if the surface has not been set to 'admin'", () => {
+    const appState = {
+      app: {url: 'mock.url', title: 'Mock App Title', handle: 'my-app-handle'},
+    }
+    const container = render(<AppHomeRow />, withProviders(DefaultProviders), {
+      state: appState,
+      client: {options: {surface: 'checkout'}},
+    })
+
+    expect(container).toContainReactComponent(PreviewLink, {resourceUrl: undefined})
   })
 })
