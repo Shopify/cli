@@ -27,7 +27,7 @@ export interface ReverseHTTPProxyTarget {
 
 interface Options {
   previewUrl: string | undefined
-  portNumber: number | undefined
+  portNumber: number
   proxyTargets: ReverseHTTPProxyTarget[]
   additionalProcesses: OutputProcess[]
 }
@@ -43,7 +43,7 @@ interface Options {
  */
 export async function runConcurrentHTTPProcessesAndPathForwardTraffic({
   previewUrl,
-  portNumber = undefined,
+  portNumber,
   proxyTargets,
   additionalProcesses,
 }: Options): Promise<void> {
@@ -66,10 +66,8 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic({
     }),
   )
 
-  const availablePort = portNumber ?? (await getAvailableTCPPort())
-
   outputDebug(outputContent`
-Starting reverse HTTP proxy on port ${outputToken.raw(availablePort.toString())}
+Starting reverse HTTP proxy on port ${outputToken.raw(portNumber.toString())}
 Routing traffic rules:
 ${outputToken.json(JSON.stringify(rules))}
 `)
@@ -124,7 +122,7 @@ ${outputToken.json(JSON.stringify(rules))}
     }
   }
 
-  await Promise.all([renderConcurrent(renderConcurrentOptions), server.listen(availablePort)])
+  await Promise.all([renderConcurrent(renderConcurrentOptions), server.listen(portNumber)])
 }
 
 function match(rules: {[key: string]: string}, req: http.IncomingMessage) {
