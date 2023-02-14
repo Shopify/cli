@@ -1,4 +1,3 @@
-import {coerceSemverVersion} from './semver.js'
 import {AbortSignal} from './abort.js'
 import {platformAndArch} from './os.js'
 import {captureOutput, exec} from './system.js'
@@ -10,6 +9,7 @@ import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
 import {outputContent, outputToken} from '../../public/node/output.js'
 import {isTruthy} from '../../private/node/context/utilities.js'
+import {coerceSemverVersion} from '../../private/node/semver.js'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
 
