@@ -49,6 +49,7 @@ async function fetchApiVersion(session: AdminSession): Promise<string> {
         outputContent`If you're not the owner, create a dev store staff account for yourself`,
       )
     }
+    console.log(error);
     throw new BugError(`Unknown error connecting to your store`)
   }
 }

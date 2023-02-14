@@ -9,19 +9,24 @@ import { GraphQLProvider } from "./components/providers/GraphQLProvider";
 import Routes from "./Routes";
 
 export default function App() {
-  return (
-    <PolarisProvider i18n={translations}>
-      <AppBridgeProvider
-        config={{
-          apiKey: process.env.SHOPIFY_API_KEY,
-          host: new URL(location).searchParams.get("host"),
-          forceRedirect: true,
-        }}
-      >
-        <GraphQLProvider>
-          <Routes />
-        </GraphQLProvider>
-      </AppBridgeProvider>
-    </PolarisProvider>
-  );
+  console.log(location);
+  try {
+    return (
+      <PolarisProvider i18n={translations}>
+        <AppBridgeProvider
+          config={{
+            apiKey: process.env.SHOPIFY_API_KEY,
+            host: new URL(location).searchParams.get("host"),
+            forceRedirect: true,
+          }}
+        >
+          <GraphQLProvider>
+            <Routes />
+          </GraphQLProvider>
+        </AppBridgeProvider>
+      </PolarisProvider>
+    );
+  } catch (err) {
+    console.log("ERR", err);
+  }
 }

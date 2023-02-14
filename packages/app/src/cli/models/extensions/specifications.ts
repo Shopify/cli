@@ -16,6 +16,7 @@ import {fileURLToPath} from 'url'
 
 export async function loadUIExtensionSpecifications(config: Config): Promise<UIExtensionSpec[]> {
   const local = await loadLocalUIExtensionsSpecifications()
+  console.log("local ui specs", local);
   const plugins = await loadUIExtensionSpecificiationsFromPlugins(config)
   return [...local, ...plugins]
 }

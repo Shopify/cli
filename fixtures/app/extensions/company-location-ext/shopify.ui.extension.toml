@@ -1,0 +1,26 @@
+name = "company-location-ext"
+type = "company_location_details"
+
+[capabilities]
+api_access = true
+network_access = true
+
+[[extension_points]]
+target = "Admin::CompanyLocation::Details::Render"
+# module = "./src/CompanyLocationDetailsRender.tsx"
+
+# [[extension_points.metafields]]
+# namespace = "my-namespace"
+# key = "my-key"
+
+# [[extension_points]]
+# target = "Admin::CheckoutEditor::RenderSettings"
+# module = "./src/AdminCheckoutEditorRenderSettings.tsx"
+
+# Read more on extension settings at https://shopify.dev/api/checkout-extensions/checkout/configuration
+# [settings]
+#   [[settings.fields]]
+#   key = "banner_title"
+#   type = "single_line_text_field"
+#   name = "Banner title"
+#   description = "Enter a title for the banner"
