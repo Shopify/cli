@@ -1,15 +1,9 @@
-import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, sharedSecretPrompt, topicPrompt} from './trigger.js'
+import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, clientSecretPrompt, topicPrompt} from './trigger.js'
 import {DELIVERY_METHOD} from '../../services/webhook/trigger-options.js'
-import {describe, it, expect, vi, afterEach, beforeEach} from 'vitest'
+import {describe, it, expect, vi} from 'vitest'
 import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
-beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/ui')
-})
-
-afterEach(async () => {
-  vi.clearAllMocks()
-})
+vi.mock('@shopify/cli-kit/node/ui')
 
 describe('topicPrompt', () => {
   it('asks the user to enter a topic name', async () => {
@@ -90,19 +84,19 @@ describe('addressPrompt', () => {
   })
 })
 
-describe('sharedSecretPrompt', () => {
-  it('asks the user to enter shared_secret', async () => {
+describe('clientSecretPrompt', () => {
+  it('asks the user to enter client_secret', async () => {
     // Given
     vi.mocked(renderTextPrompt).mockResolvedValue('a_secret')
 
     // When
-    const got = await sharedSecretPrompt()
+    const got = await clientSecretPrompt()
 
     // Then
     expect(got).toEqual('a_secret')
     expect(renderTextPrompt).toHaveBeenCalledWith({
       message:
-        'Shared Secret to encode the webhook payload. If you are using the app template, this is your Client Secret, which can be found in the partners dashboard',
+        'Client Secret to encode the webhook payload. If you are using the app template, this can be found in the partners dashboard',
       defaultValue: 'shopify_test',
       validate: expect.any(Function),
     })

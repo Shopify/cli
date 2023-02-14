@@ -5,6 +5,7 @@ import {captureOutput, exec} from './system.js'
 import * as file from './fs.js'
 import {joinPath, dirname, cwd} from './path.js'
 import {AbortError, AbortSilentError} from './error.js'
+import {isShopify} from './context/local.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
 import {outputContent, outputToken} from '../../public/node/output.js'
@@ -40,7 +41,7 @@ interface ExecCLI2Options {
  * @param options - Options to customize the execution of cli2.
  */
 export async function execCLI2(args: string[], options: ExecCLI2Options = {}): Promise<void> {
-  const embedded = !isTruthy(process.env.SHOPIFY_CLI_BUNDLED_THEME_CLI) && !process.env.SHOPIFY_CLI_2_0_DIRECTORY
+  const embedded = (await isShopify()) || isTruthy(process.env.SHOPIFY_CLI_EMBEDDED_THEME_CLI)
 
   await installCLIDependencies(options.stdout ?? process.stdout, embedded)
   const env: NodeJS.ProcessEnv = {
@@ -57,8 +58,9 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
   }
 
   try {
-    const executable = embedded ? await embeddedCLIExecutable() : bundleExecutable()
-    const finalArgs = embedded ? args : ['exec', 'shopify'].concat(args)
+    const executable = bundleExecutable()
+    const shopifyExecutable = embedded ? await embeddedCLIExecutable() : 'shopify'
+    const finalArgs = ['exec', shopifyExecutable, ...args]
 
     await exec(executable, finalArgs, {
       stdio: 'inherit',

@@ -1,5 +1,5 @@
 import {versionService} from './version.js'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 import {
   checkForNewVersion,
   PackageManager,
@@ -7,10 +7,8 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
-beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/node-package-manager')
-  vi.mock('@shopify/cli-kit/common/version', () => ({CLI_KIT_VERSION: '2.2.2'}))
-})
+vi.mock('@shopify/cli-kit/node/node-package-manager')
+vi.mock('@shopify/cli-kit/common/version', () => ({CLI_KIT_VERSION: '2.2.2'}))
 
 afterEach(() => {
   mockAndCaptureOutput().clear()

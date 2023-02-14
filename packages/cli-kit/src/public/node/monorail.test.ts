@@ -3,6 +3,8 @@ import {publishMonorailEvent} from './monorail.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+vi.mock('./http.js')
+
 describe('monorail', () => {
   const currentDate = new Date(Date.UTC(2022, 1, 1, 10, 0, 0))
   const expectedURL = 'https://monorail-edge.shopifysvc.com/v1/produce'
@@ -14,7 +16,6 @@ describe('monorail', () => {
 
   beforeEach(() => {
     vi.setSystemTime(currentDate)
-    vi.mock('./http.js')
     vi.mocked(http.fetch).mockResolvedValue({status: 200} as any)
   })
 

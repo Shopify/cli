@@ -1,5 +1,5 @@
-import SelectInput, {Props as SelectProps, Item as SelectItem, Item} from './SelectInput.js'
-import InfoTable, {Props as InfoTableProps} from './Prompts/InfoTable.js'
+import {SelectInput, SelectInputProps, Item as SelectItem} from './SelectInput.js'
+import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import {TextInput} from './TextInput.js'
 import {TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
@@ -17,9 +17,9 @@ export interface SearchResults<T> {
   }
 }
 
-export interface Props<T> {
+export interface AutocompletePromptProps<T> {
   message: string
-  choices: SelectProps<T>['items']
+  choices: SelectInputProps<T>['items']
   onSubmit: (value: T) => void
   infoTable?: InfoTableProps['table']
   hasMorePages?: boolean
@@ -35,6 +35,7 @@ enum PromptState {
 
 const PAGE_SIZE = 25
 
+// eslint-disable-next-line react/function-component-definition
 function AutocompletePrompt<T>({
   message,
   choices: initialChoices,
@@ -42,7 +43,7 @@ function AutocompletePrompt<T>({
   onSubmit,
   search,
   hasMorePages: initialHasMorePages = false,
-}: React.PropsWithChildren<Props<T>>): ReactElement | null {
+}: React.PropsWithChildren<AutocompletePromptProps<T>>): ReactElement | null {
   const paginatedInitialChoices = initialChoices.slice(0, PAGE_SIZE)
   const [answer, setAnswer] = useState<SelectItem<T> | undefined>(paginatedInitialChoices[0])
   const {exit: unmountInk} = useApp()
@@ -121,7 +122,7 @@ function AutocompletePrompt<T>({
           setPromptState(PromptState.Error)
         })
         .finally(() => {
-          clearTimeout(setLoadingWhenSlow.current!)
+          clearTimeout(setLoadingWhenSlow.current)
         })
     }, 300),
     [],
@@ -134,7 +135,7 @@ function AutocompletePrompt<T>({
           <Text>?</Text>
         </Box>
         <TokenizedText item={messageWithPunctuation(message)} />
-        {promptState !== PromptState.Submitted && canSearch && (
+        {promptState !== PromptState.Submitted && canSearch ? (
           <Box marginLeft={3}>
             <TextInput
               value={searchTerm}
@@ -152,14 +153,14 @@ function AutocompletePrompt<T>({
               placeholder="Type to search..."
             />
           </Box>
-        )}
+        ) : null}
       </Box>
 
-      {infoTable && promptState !== PromptState.Submitted && (
+      {infoTable && promptState !== PromptState.Submitted ? (
         <Box marginLeft={7} marginTop={1}>
           <InfoTable table={infoTable} />
         </Box>
-      )}
+      ) : null}
 
       {promptState === PromptState.Submitted ? (
         <Box>
@@ -173,7 +174,7 @@ function AutocompletePrompt<T>({
         <Box marginTop={1}>
           <SelectInput
             items={searchResults}
-            onChange={(item: Item<T> | undefined) => {
+            onChange={({item}) => {
               setAnswer(item)
             }}
             enableShortcuts={false}

@@ -1,23 +1,21 @@
 import {addESLint} from './eslint.js'
 import {genericConfigurationFileNames} from '../constants.js'
 import {HydrogenApp} from '../models/hydrogen.js'
-import {describe, vi, it, expect, beforeAll} from 'vitest'
+import {describe, vi, it, expect} from 'vitest'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
 import {addRecommendedExtensions, isVSCode} from '@shopify/cli-kit/node/vscode'
 import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
-beforeAll(async () => {
-  vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
-    const actual: any = await vi.importActual('@shopify/cli-kit/node/node-package-manager')
-    return {
-      ...actual,
-      writePackageJSON: vi.fn(),
-      addNPMDependenciesWithoutVersionIfNeeded: vi.fn(),
-    }
-  })
-  vi.mock('@shopify/cli-kit/node/vscode')
+vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
+  const actual: any = await vi.importActual('@shopify/cli-kit/node/node-package-manager')
+  return {
+    ...actual,
+    writePackageJSON: vi.fn(),
+    addNPMDependenciesWithoutVersionIfNeeded: vi.fn(),
+  }
 })
+vi.mock('@shopify/cli-kit/node/vscode')
 
 describe('addEslint', () => {
   const defaultOptions = {

@@ -1,13 +1,19 @@
 import {open} from './open.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
-import {Theme} from '../models/theme.js'
+import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {test, describe, expect, vi} from 'vitest'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 
-vi.mock('@shopify/cli-kit/node/system')
-vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('../utilities/theme-selector.js')
+vi.mock('@shopify/cli-kit/node/system', () => {
+  return {openURL: vi.fn()}
+})
+vi.mock('@shopify/cli-kit/node/ui', () => {
+  return {renderInfo: vi.fn()}
+})
+vi.mock('../utilities/theme-selector.js', () => {
+  return {findOrSelectTheme: vi.fn()}
+})
 
 const session = {
   token: 'token',

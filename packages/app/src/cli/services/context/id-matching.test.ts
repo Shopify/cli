@@ -5,11 +5,12 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('../dev/fetch')
+vi.mock('../dev/create-extension')
+
 beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/session')
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-  vi.mock('../dev/fetch')
-  vi.mock('../dev/create-extension')
 })
 
 const REGISTRATION_A: ExtensionRegistration = {
@@ -247,8 +248,10 @@ const FUNCTION_A: FunctionExtension = {
     configurationUi: false,
     apiVersion: '2022-07',
   },
-  buildWasmPath: () => '/function/dist/index.wasm',
-  inputQueryPath: () => '/function/input.graphql',
+  buildCommand: 'make build',
+  buildWasmPath: '/function/dist/index.wasm',
+  inputQueryPath: '/function/input.graphql',
+  isJavaScript: false,
   externalType: 'function',
   publishURL: (_) => Promise.resolve(''),
 }

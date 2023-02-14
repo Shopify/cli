@@ -1,7 +1,7 @@
 import {Text} from 'ink'
-import React from 'react'
+import React, {FunctionComponent} from 'react'
 
-interface Props {
+interface UserInputProps {
   userInput: string
 }
 
@@ -9,7 +9,7 @@ interface Props {
  * `UserInput` displays some text that represents input from the user.
  * For example an answer to a selection prompt.
  */
-const UserInput: React.FC<Props> = ({userInput}: React.PropsWithChildren<Props>): JSX.Element => {
+const UserInput: FunctionComponent<UserInputProps> = ({userInput}): JSX.Element => {
   return <Text color="cyan">{userInput}</Text>
 }
 

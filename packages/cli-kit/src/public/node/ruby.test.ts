@@ -1,14 +1,11 @@
-import {execCLI2, RubyCLIVersion} from './ruby.js'
+import {execCLI2} from './ruby.js'
 import {captureOutput} from './system.js'
 import * as system from './system.js'
 import * as file from './fs.js'
-import {pathConstants} from '../../private/node/constants.js'
-import {beforeAll, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 
-beforeAll(() => {
-  vi.mock('./fs.js')
-  vi.mock('./system')
-})
+vi.mock('./fs.js')
+vi.mock('./system')
 
 describe('execCLI', () => {
   it('throws an exception when Ruby is not installed', async () => {
@@ -56,15 +53,13 @@ describe('execCLI', () => {
     // Given
     const rubyVersion = '2.7.5'
     const bundlerVersion = '2.4.0'
-
-    process.env = {...originalEnv, SHOPIFY_CLI_BUNDLED_THEME_CLI: '1'}
-
     vi.mocked(file.fileExists).mockResolvedValue(true)
     vi.mocked(captureOutput).mockResolvedValueOnce(rubyVersion)
     vi.mocked(captureOutput).mockResolvedValueOnce(bundlerVersion)
     vi.mocked(file.mkdir).mockRejectedValue({message: 'Error'})
+    process.env = {...originalEnv, SHOPIFY_RUN_AS_USER: '1'}
 
-    // When / Then
+    // When/Then
     await expect(() => execCLI2(['args'])).rejects.toThrowError('Error')
 
     // Teardown
@@ -77,10 +72,9 @@ describe('execCLI', () => {
     const originalEnv = process.env
 
     // Given
-    vi.spyOn(pathConstants.directories.cache.vendor, 'path').mockImplementation(() => '/bundled')
     const execSpy = vi.spyOn(system, 'exec')
 
-    process.env = {...originalEnv, SHOPIFY_CLI_BUNDLED_THEME_CLI: '1'}
+    process.env = {...originalEnv, SHOPIFY_CLI_2_0_DIRECTORY: './CLI2', SHOPIFY_RUN_AS_USER: '1'}
 
     vi.mocked(file.fileExists).mockResolvedValue(true)
     vi.mocked(captureOutput).mockResolvedValueOnce('2.7.5')
@@ -103,7 +97,7 @@ describe('execCLI', () => {
         SHOPIFY_CLI_STORE: undefined,
         SHOPIFY_CLI_AUTH_TOKEN: 'token_0000_1111_2222_3333',
         SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
-        BUNDLE_GEMFILE: `/bundled/ruby-cli/${RubyCLIVersion}/Gemfile`,
+        BUNDLE_GEMFILE: 'CLI2/Gemfile',
       },
     })
 
@@ -118,7 +112,7 @@ describe('execCLI', () => {
     // Given
     const execSpy = vi.spyOn(system, 'exec')
 
-    process.env = {...originalEnv, SHOPIFY_CLI_2_0_DIRECTORY: '/manual'}
+    process.env = {...originalEnv, SHOPIFY_CLI_2_0_DIRECTORY: '/manual', SHOPIFY_RUN_AS_USER: '1'}
 
     vi.mocked(file.fileExists).mockResolvedValue(true)
     vi.mocked(captureOutput).mockResolvedValueOnce('2.7.5')
@@ -149,9 +143,13 @@ describe('execCLI', () => {
     process.env = originalEnv
   })
 
-  it('run embbed CLI2 when active', async () => {
+  it('run embbed CLI2 when shopify user', async () => {
+    // Setup
+    const originalEnv = process.env
+
     // Given
     const execSpy = vi.spyOn(system, 'exec')
+    process.env = {...originalEnv, SHOPIFY_RUN_AS_USER: '0'}
 
     vi.mocked(file.fileExists).mockResolvedValue(true)
     vi.mocked(file.findPathUp).mockResolvedValue('/embed/internal')
@@ -165,18 +163,22 @@ describe('execCLI', () => {
     })
 
     // Then
-    expect(execSpy).toHaveBeenLastCalledWith('/embed/internal/bin/shopify', ['args'], {
+    expect(execSpy).toHaveBeenLastCalledWith('bundle', ['exec', '/embed/internal/bin/shopify', 'args'], {
       stdio: 'inherit',
       cwd: './directory',
       env: {
         ...process.env,
         SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: undefined,
         SHOPIFY_CLI_ADMIN_AUTH_TOKEN: undefined,
-        SHOPIFY_CLI_STORE: undefined,
+        SHOPIFY_SHOP: undefined,
         SHOPIFY_CLI_AUTH_TOKEN: 'token_0000_1111_2222_3333',
         SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
         BUNDLE_GEMFILE: '/embed/internal/Gemfile',
       },
+      signal: undefined,
     })
+
+    // Teardown
+    process.env = originalEnv
   })
 })

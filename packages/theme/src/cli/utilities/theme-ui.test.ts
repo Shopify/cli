@@ -1,5 +1,5 @@
 import {themeComponent, themesComponent} from './theme-ui.js'
-import {Theme} from '../models/theme.js'
+import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {test, describe, expect} from 'vitest'
 
 describe('themeComponent', () => {

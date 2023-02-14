@@ -7,9 +7,13 @@ import {debounce} from '@shopify/cli-kit/common/function'
 import chalk from 'chalk'
 import figures from 'figures'
 
-export interface Props<T> {
+interface OnChangeOptions<T> {
+  item: Item<T> | undefined
+  usedShortcut: boolean
+}
+export interface SelectInputProps<T> {
   items: Item<T>[]
-  onChange: (item: Item<T> | undefined) => void
+  onChange: ({item, usedShortcut}: OnChangeOptions<T>) => void
   enableShortcuts?: boolean
   focus?: boolean
   emptyMessage?: string
@@ -19,6 +23,7 @@ export interface Props<T> {
   errorMessage?: string
   hasMorePages?: boolean
   morePagesMessage?: string
+  infoMessage?: string
 }
 
 export interface Item<T> {
@@ -74,6 +79,7 @@ interface SelectItemsGroupProps<T> {
   highlightedTerm?: string
 }
 
+// eslint-disable-next-line react/function-component-definition
 function SelectItemsGroup<T>({
   title,
   items,
@@ -84,11 +90,11 @@ function SelectItemsGroup<T>({
 }: SelectItemsGroupProps<T>): JSX.Element {
   return (
     <Box key={title} flexDirection="column" marginTop={hasMarginTop ? 1 : 0}>
-      {title && (
+      {title ? (
         <Box marginLeft={3}>
           <Text bold>{title}</Text>
         </Box>
-      )}
+      ) : null}
 
       {items.map((item) => {
         const isSelected = item.index === selectedIndex
@@ -106,7 +112,8 @@ function SelectItemsGroup<T>({
   )
 }
 
-export default function SelectInput<T>({
+// eslint-disable-next-line react/function-component-definition
+function SelectInput<T>({
   items,
   onChange,
   enableShortcuts = true,
@@ -118,7 +125,8 @@ export default function SelectInput<T>({
   errorMessage,
   hasMorePages = false,
   morePagesMessage,
-}: React.PropsWithChildren<Props<T>>): JSX.Element | null {
+  infoMessage,
+}: React.PropsWithChildren<SelectInputProps<T>>): JSX.Element | null {
   const defaultValueIndex = defaultValue ? items.findIndex((item) => item.value === defaultValue.value) : -1
   const initialIndex = defaultValueIndex === -1 ? 0 : defaultValueIndex
   const inputStack = useRef<string | null>(null)
@@ -130,10 +138,13 @@ export default function SelectInput<T>({
   const previousItems = useRef<Item<T>[]>(items)
 
   const changeSelection = useCallback(
-    (index: number) => {
+    ({index, usedShortcut = false}: {index: number; usedShortcut?: boolean}) => {
       const groupedItem = groupedItemsValues.find((item) => item.index === index)!
       setSelectedIndex(index)
-      onChange(items.find((item) => item.value === groupedItem.value))
+      onChange({
+        item: items.find((item) => item.value === groupedItem.value),
+        usedShortcut,
+      })
     },
     [items],
   )
@@ -141,7 +152,10 @@ export default function SelectInput<T>({
   useEffect(() => {
     if (items.length === 0) {
       // reset selection when items are empty
-      onChange(undefined)
+      onChange({
+        item: undefined,
+        usedShortcut: false,
+      })
     } else if (
       // reset index when items change
       !isEqual(
@@ -149,7 +163,7 @@ export default function SelectInput<T>({
         items.map((item) => item.value),
       )
     ) {
-      changeSelection(0)
+      changeSelection({index: 0})
     }
 
     previousItems.current = items
@@ -160,9 +174,9 @@ export default function SelectInput<T>({
       const lastIndex = items.length - 1
 
       if (key.upArrow) {
-        changeSelection(selectedIndex === 0 ? lastIndex : selectedIndex - 1)
+        changeSelection({index: selectedIndex === 0 ? lastIndex : selectedIndex - 1})
       } else if (key.downArrow) {
-        changeSelection(selectedIndex === lastIndex ? 0 : selectedIndex + 1)
+        changeSelection({index: selectedIndex === lastIndex ? 0 : selectedIndex + 1})
       }
     },
     [selectedIndex, items],
@@ -173,7 +187,7 @@ export default function SelectInput<T>({
       if (keys.includes(input)) {
         const groupedItem = groupedItemsValues.find((item) => item.key === input)
         if (groupedItem !== undefined) {
-          changeSelection(groupedItem.index)
+          changeSelection({index: groupedItem.index, usedShortcut: true})
         }
       }
     },
@@ -237,7 +251,7 @@ export default function SelectInput<T>({
             hasMarginTop={index !== 0}
             enableShortcuts={enableShortcuts}
             highlightedTerm={highlightedTerm}
-          ></SelectItemsGroup>
+          />
         ))}
 
         {ungroupedItems.length > 0 && (
@@ -248,22 +262,25 @@ export default function SelectInput<T>({
             hasMarginTop={groupTitles.length > 0}
             enableShortcuts={enableShortcuts}
             highlightedTerm={highlightedTerm}
-          ></SelectItemsGroup>
+          />
         )}
 
         <Box marginTop={1} marginLeft={3} flexDirection="column">
-          {hasMorePages && (
+          {hasMorePages ? (
             <Text>
               <Text bold>1-{items.length} of many</Text>
               {morePagesMessage ? `  ${morePagesMessage}` : null}
             </Text>
-          )}
+          ) : null}
           <Text dimColor>
-            Press {figures.arrowUp}
-            {figures.arrowDown} arrows to select, enter to confirm
+            {infoMessage
+              ? infoMessage
+              : `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter to confirm`}
           </Text>
         </Box>
       </Box>
     )
   }
 }
+
+export {SelectInput}

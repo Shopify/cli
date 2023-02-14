@@ -1,11 +1,12 @@
 import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
+import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
@@ -80,6 +81,7 @@ export default class Dev extends ThemeCommand {
     'live-reload',
     'poll',
     'theme-editor-sync',
+    'overwrite-json',
     'port',
     'theme',
     'only',
@@ -96,12 +98,21 @@ export default class Dev extends ThemeCommand {
    * Every 110 minutes, it will refresh the session token and restart the server.
    */
   async run(): Promise<void> {
-    const {flags} = await this.parse(Dev)
+    let {flags} = await this.parse(Dev)
+    const store = ensureThemeStore(flags)
+    const adminSession = await ensureAuthenticatedThemes(store, flags.password, [], true)
+
+    if (!flags.theme) {
+      const theme = await new DevelopmentThemeManager(adminSession).findOrCreate()
+      flags = {
+        ...flags,
+        theme: theme.id.toString(),
+        'overwrite-json': Boolean(flags['theme-editor-sync']) && theme.createdAtRuntime,
+      }
+    }
 
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Dev.cli2Flags})
     const command = ['theme', 'serve', flags.path, ...flagsToPass]
-
-    const store = ensureThemeStore(flags)
 
     let controller = new AbortController()
 
@@ -110,16 +121,20 @@ export default class Dev extends ThemeCommand {
       controller.abort()
       controller = new AbortController()
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.execute(store, flags.password, command, controller)
+      this.execute(adminSession, flags.password, command, controller)
     }, this.ThemeRefreshTimeoutInMs)
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.execute(store, flags.password, command, controller)
+    this.execute(adminSession, flags.password, command, controller)
   }
 
-  async execute(store: string, password: string | undefined, command: string[], controller: AbortController) {
+  async execute(
+    adminSession: AdminSession,
+    password: string | undefined,
+    command: string[],
+    controller: AbortController,
+  ) {
     await sleep(3)
-    const adminSession = await ensureAuthenticatedThemes(store, password, [], true)
     const storefrontToken = await ensureAuthenticatedStorefront([], password)
     return execCLI2(command, {adminSession, storefrontToken, signal: controller.signal})
   }

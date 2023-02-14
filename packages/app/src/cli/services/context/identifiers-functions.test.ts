@@ -49,8 +49,10 @@ const FUNCTION_A: FunctionExtension = {
     configurationUi: false,
     apiVersion: '2022-07',
   },
-  buildWasmPath: () => '/function/dist/index.wasm',
-  inputQueryPath: () => '/function/input.graphql',
+  buildCommand: 'make build',
+  buildWasmPath: '/function/dist/index.wasm',
+  inputQueryPath: '/function/input.graphql',
+  isJavaScript: false,
   externalType: 'function',
   publishURL: (_) => Promise.resolve(''),
 }
@@ -73,8 +75,10 @@ const FUNCTION_A_2: FunctionExtension = {
     configurationUi: false,
     apiVersion: '2022-07',
   },
-  buildWasmPath: () => '/function/dist/index.wasm',
-  inputQueryPath: () => '/function/input.graphql',
+  buildCommand: 'make build',
+  buildWasmPath: '/function/dist/index.wasm',
+  inputQueryPath: '/function/input.graphql',
+  isJavaScript: false,
   externalType: 'function',
   publishURL: (_) => Promise.resolve(''),
 }
@@ -97,8 +101,10 @@ const FUNCTION_B: FunctionExtension = {
     configurationUi: false,
     apiVersion: '2022-07',
   },
-  buildWasmPath: () => '/function/dist/index.wasm',
-  inputQueryPath: () => '/function/input.graphql',
+  buildCommand: 'make build',
+  buildWasmPath: '/function/dist/index.wasm',
+  inputQueryPath: '/function/input.graphql',
+  isJavaScript: false,
   externalType: 'function',
   publishURL: (_) => Promise.resolve(''),
 }
@@ -124,19 +130,20 @@ const options = (functionExtensions: FunctionExtension[], identifiers: any = {})
   }
 }
 
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('./prompts', async () => {
+  const prompts: any = await vi.importActual('./prompts')
+  return {
+    ...prompts,
+    matchConfirmationPrompt: vi.fn(),
+    deployConfirmationPrompt: vi.fn(),
+  }
+})
+vi.mock('./id-matching')
+vi.mock('./id-manual-matching')
+
 beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/session')
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-  vi.mock('./prompts', async () => {
-    const prompts: any = await vi.importActual('./prompts')
-    return {
-      ...prompts,
-      matchConfirmationPrompt: vi.fn(),
-      deployConfirmationPrompt: vi.fn(),
-    }
-  })
-  vi.mock('./id-matching')
-  vi.mock('./id-manual-matching')
 })
 
 describe('ensureFunctionsIds: matchmaking returns ok with pending manual matches', () => {

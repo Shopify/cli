@@ -45,9 +45,10 @@ export function buildHeaders(token?: string): {[key: string]: string} {
     ...(firstPartyDev() && {'X-Shopify-Cli-Employee': '1'}),
   }
   if (token) {
+    const authString = token.startsWith('shpat') ? token : `Bearer ${token}`
     // eslint-disable-next-line dot-notation
-    headers['authorization'] = `Bearer ${token}`
-    headers['X-Shopify-Access-Token'] = `Bearer ${token}`
+    headers['authorization'] = authString
+    headers['X-Shopify-Access-Token'] = authString
   }
 
   return headers

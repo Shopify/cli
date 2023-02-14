@@ -1,6 +1,6 @@
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
-interface SampleWebhook {
+export interface SampleWebhook {
   samplePayload: string
   headers: string
   success: boolean
@@ -40,7 +40,7 @@ const sendSampleWebhookMutation = `
  * @param apiVersion - Api version for the topic
  * @param deliveryMethod - one of DELIVERY_METHOD
  * @param address - A destination for the webhook notification
- * @param sharedSecret - A secret to generate the HMAC header apps can use to validate the origin
+ * @param clientSecret - A secret to generate the HMAC header apps can use to validate the origin
  * @returns Empty if a remote delivery was requested, payload data if a local delivery was requested
  */
 export async function getWebhookSample(
@@ -49,14 +49,14 @@ export async function getWebhookSample(
   apiVersion: string,
   deliveryMethod: string,
   address: string,
-  sharedSecret: string,
+  clientSecret: string,
 ): Promise<SampleWebhook> {
   const variables = {
     topic,
     api_version: apiVersion,
     address,
     delivery_method: deliveryMethod,
-    shared_secret: sharedSecret,
+    shared_secret: clientSecret,
   }
 
   const {sendSampleWebhook: result}: SamplePayloadSchema = await partnersRequest(

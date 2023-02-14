@@ -14,11 +14,12 @@ const defaultConfig = {
   assumeYes: true,
 }
 
+vi.mock('../../prompts/git-init.js')
+
 describe('validateProject() & initializeGit()', () => {
   describe('User refuses to initialize new repository', () => {
     it.skipIf(isWin)('silent abort since outside git directory', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
-        vi.mock('../../prompts/git-init.js')
         vi.mocked(gitInit).mockResolvedValue(false)
 
         await expect(() => validateProject({...defaultConfig, assumeYes: false, path: tmpDir})).rejects.toThrow(

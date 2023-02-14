@@ -16,7 +16,7 @@ interface BundleOptions {
   bundle: boolean
 }
 
-export async function bundleUIAndBuildFunctionExtensions(options: BundleOptions) {
+export async function bundleAndBuildExtensions(options: BundleOptions) {
   await inTemporaryDirectory(async (tmpDir) => {
     const bundleDirectory = joinPath(tmpDir, 'bundle')
     await mkdirSync(bundleDirectory)

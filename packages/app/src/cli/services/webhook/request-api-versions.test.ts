@@ -1,14 +1,8 @@
 import {requestApiVersions} from './request-api-versions.js'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
-beforeEach(async () => {
-  vi.mock('@shopify/cli-kit/node/api/partners')
-})
-
-afterEach(async () => {
-  vi.clearAllMocks()
-})
+vi.mock('@shopify/cli-kit/node/api/partners')
 
 const aToken = 'A_TOKEN'
 

@@ -104,8 +104,10 @@ const FUNCTION_C: FunctionExtension = {
     configurationUi: false,
     apiVersion: '2022-07',
   },
-  buildWasmPath: () => '/function/dist/index.wasm',
-  inputQueryPath: () => '/function/input.graphql',
+  buildCommand: 'make build',
+  buildWasmPath: '/function/dist/index.wasm',
+  inputQueryPath: '/function/input.graphql',
+  isJavaScript: false,
   externalType: 'function',
   publishURL: (_) => Promise.resolve(''),
 }
@@ -131,12 +133,13 @@ const options = (uiExtensions: UIExtension[], functionExtensions: FunctionExtens
   }
 }
 
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('../dev/fetch')
+vi.mock('./identifiers-extensions')
+vi.mock('./identifiers-functions')
+
 beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/session')
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-  vi.mock('../dev/fetch')
-  vi.mock('./identifiers-extensions')
-  vi.mock('./identifiers-functions')
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
     app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_B], functions: [REGISTRATION_C]},
   })

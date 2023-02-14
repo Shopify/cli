@@ -12,15 +12,16 @@ import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
+vi.mock('../constants.js')
+vi.mock('../models/app/loader.js')
+vi.mock('../prompts/generate/extension.js')
+vi.mock('../services/generate/extension.js')
+vi.mock('../services/context.js')
+vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('./conf.js')
+
 beforeAll(() => {
-  vi.mock('../constants.js')
-  vi.mock('../models/app/loader.js')
-  vi.mock('../prompts/generate/extension.js')
-  vi.mock('../services/generate/extension.js')
-  vi.mock('../services/context.js')
-  vi.mock('@shopify/cli-kit/node/api/partners')
-  vi.mock('@shopify/cli-kit/node/session')
-  vi.mock('./conf.js')
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 })
 

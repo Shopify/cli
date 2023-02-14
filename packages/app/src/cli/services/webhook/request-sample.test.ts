@@ -1,17 +1,11 @@
 import {getWebhookSample} from './request-sample.js'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 const samplePayload = '{ "sampleField": "SampleValue" }'
 const sampleHeaders = '{ "header": "Header Value" }'
 
-beforeEach(async () => {
-  vi.mock('@shopify/cli-kit/node/api/partners')
-})
-
-afterEach(async () => {
-  vi.clearAllMocks()
-})
+vi.mock('@shopify/cli-kit/node/api/partners')
 
 const aToken = 'A_TOKEN'
 
@@ -23,14 +17,14 @@ describe('getWebhookSample', () => {
       apiVersion: 'A_VERSION',
       value: 'A_DELIVERY_METHOD',
       address: 'https://example.org',
-      sharedSecret: 'A_SECRET',
+      clientSecret: 'A_SECRET',
     }
     const requestValues = {
       topic: inputValues.topic,
       api_version: inputValues.apiVersion,
       address: inputValues.address,
       delivery_method: inputValues.value,
-      shared_secret: inputValues.sharedSecret,
+      shared_secret: inputValues.clientSecret,
     }
     const graphQLResult = {
       sendSampleWebhook: {
@@ -52,7 +46,7 @@ describe('getWebhookSample', () => {
       inputValues.apiVersion,
       inputValues.value,
       inputValues.address,
-      inputValues.sharedSecret,
+      inputValues.clientSecret,
     )
 
     // Then

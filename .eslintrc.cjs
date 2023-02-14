@@ -11,7 +11,7 @@ module.exports = {
     project: './tsconfig.json',
     EXPERIMENTAL_useSourceOfProjectReferenceRedirect: true,
   },
-  plugins: ['no-catch-all', 'jest', '@nrwl/nx', 'unused-imports', 'rulesdir', 'eslint-plugin-tsdoc', 'jsdoc'],
+  plugins: ['no-catch-all', 'jest', '@nrwl/nx', 'unused-imports', 'rulesdir', 'eslint-plugin-tsdoc', 'jsdoc', 'import'],
   extends: ['plugin:@shopify/typescript', 'plugin:@shopify/prettier', 'plugin:@shopify/node', 'prettier'],
   rules: {
     'prettier/prettier': ['error'],
@@ -152,6 +152,8 @@ module.exports = {
     'rulesdir/no-error-factory-functions': 'error',
     'rulesdir/no-process-cwd': 'error',
     'rulesdir/no-trailing-js-in-cli-kit-imports': 'error',
+    'rulesdir/no-vi-manual-mock-clear': 'error',
+    'rulesdir/no-vi-mock-in-callbacks': 'error',
     'no-restricted-syntax': [
       'error',
       {
@@ -188,6 +190,7 @@ module.exports = {
         '**/public/node/plugins/tunnel.ts',
         '**/public/node/environments.ts',
         '**/public/node/result.ts',
+        '**/public/node/themes/**/*',
       ],
       rules: {
         'jsdoc/check-access': 'error',
@@ -248,6 +251,79 @@ module.exports = {
       files: ['src/public/**/*.ts'],
       rules: {
         '@typescript-eslint/explicit-module-boundary-types': 'error',
+      },
+      excludedFiles: ['**/public/node/themes/**/*'],
+    },
+    {
+      files: ['src/private/node/ui/components/**/*.tsx'],
+      extends: ['plugin:react/recommended'],
+      rules: {
+        'react/destructuring-assignment': 2,
+        'react/function-component-definition': [
+          'error',
+          {
+            namedComponents: 'arrow-function',
+            unnamedComponents: 'arrow-function',
+          },
+        ],
+        'react/hook-use-state': 2,
+        'react/jsx-boolean-value': 2,
+        'react/jsx-child-element-spacing': 2,
+        'react/jsx-closing-bracket-location': 2,
+        'react/jsx-closing-tag-location': 2,
+        'react/jsx-curly-brace-presence': 2,
+        'react/jsx-curly-spacing': 2,
+        'react/jsx-equals-spacing': 2,
+        'react/jsx-first-prop-new-line': 2,
+        'react/jsx-fragments': 2,
+        'react/jsx-handler-names': 2,
+        'react/jsx-indent': [2, 2, {checkAttributes: true, indentLogicalExpressions: true}],
+        'react/jsx-indent-props': [2, 2],
+        'react/jsx-no-leaked-render': 2,
+        'react/jsx-no-useless-fragment': 2,
+        'react/jsx-pascal-case': 2,
+        'react/jsx-props-no-multi-spaces': 2,
+        'react/jsx-tag-spacing': 2,
+        'react/no-namespace': 2,
+        'react/no-object-type-as-default-prop': 2,
+        'react/self-closing-comp': 2,
+        'react/no-unused-prop-types': 2,
+        'import/no-default-export': 2,
+        'import/no-namespace': 2,
+        'no-restricted-imports': [
+          'error',
+          {
+            paths: [
+              {
+                name: 'react',
+                importNames: ['FC'],
+                message: 'Please use FunctionComponent from react instead.',
+              },
+            ],
+          },
+        ],
+        '@typescript-eslint/naming-convention': [
+          'error',
+          {
+            selector: 'interface',
+            format: ['PascalCase'],
+            custom: {
+              regex: '^Props',
+              match: false,
+            },
+          },
+        ],
+      },
+      settings: {
+        react: {
+          version: 'detect',
+        },
+      },
+    },
+    {
+      files: ['src/public/node/ui.tsx'],
+      rules: {
+        'max-params': ['error', 1],
       },
     },
   ],

@@ -1,10 +1,8 @@
 import {allowedRedirectionURLsPrompt, appUrlPrompt} from './update-url.js'
-import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {describe, it, expect, vi} from 'vitest'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
-beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/ui')
-})
+vi.mock('@shopify/cli-kit/node/ui')
 
 describe('appUrlPrompt', () => {
   it('asks the user to write a URL and returns it', async () => {

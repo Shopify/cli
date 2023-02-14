@@ -52,7 +52,10 @@ export const BaseFunctionConfigurationSchema = schema.object({
   type: schema.string(),
   description: schema.string().optional().default(''),
   build: schema.object({
-    command: schema.string(),
+    command: schema
+      .string()
+      .transform((value) => (value.trim() === '' ? undefined : value))
+      .optional(),
     path: schema.string().optional(),
   }),
   configurationUi: schema.boolean().optional().default(true),

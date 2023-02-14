@@ -5,6 +5,7 @@ import {devUIExtensions} from './dev/extension.js'
 import {outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
+import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -32,7 +33,7 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
-import {OutputProcess} from '@shopify/cli-kit/node/output'
+import {OutputProcess, outputInfo} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 export interface DevOptions {
@@ -63,7 +64,13 @@ interface DevWebOptions {
 
 async function dev(options: DevOptions) {
   const token = await ensureAuthenticatedPartners()
-  const {storeFqdn, remoteApp, updateURLs: cachedUpdateURLs, tunnelPlugin} = await ensureDevContext(options, token)
+  const {
+    storeFqdn,
+    remoteApp,
+    remoteAppUpdated,
+    updateURLs: cachedUpdateURLs,
+    tunnelPlugin,
+  } = await ensureDevContext(options, token)
 
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
@@ -82,6 +89,12 @@ async function dev(options: DevOptions) {
   const backendPort = await getAvailableTCPPort()
   const frontendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Frontend)
   const backendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Backend)
+  const webhooksPath = backendConfig?.configuration?.webhooksPath || '/api/webhooks'
+  const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated
+
+  if (sendUninstallWebhook) {
+    outputInfo('Using a different app than last time, sending uninstall webhook to app server')
+  }
 
   /** If the app doesn't have web/ the link message is not necessary */
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
@@ -103,12 +116,11 @@ async function dev(options: DevOptions) {
     })
     if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
     await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
+    previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
+  }
 
-    if (localApp.extensions.ui.length > 0) {
-      previewUrl = `${proxyUrl}/extensions/dev-console`
-    } else {
-      previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
-    }
+  if (localApp.extensions.ui.length > 0) {
+    previewUrl = `${proxyUrl}/extensions/dev-console`
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
@@ -173,6 +185,21 @@ async function dev(options: DevOptions) {
     } else {
       proxyTargets.push(await devFrontendProxyTarget(frontendOptions))
     }
+  }
+
+  if (sendUninstallWebhook) {
+    additionalProcesses.push({
+      prefix: 'webhooks',
+      action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+        await sendUninstallWebhookToAppServer({
+          stdout,
+          token,
+          address: `http://localhost:${backendOptions.backendPort}${webhooksPath}`,
+          sharedSecret: backendOptions.apiSecret,
+          storeFqdn,
+        })
+      },
+    })
   }
 
   await logMetadataForDev({devOptions: options, tunnelUrl: frontendUrl, shouldUpdateURLs, storeFqdn})

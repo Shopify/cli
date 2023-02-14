@@ -7,27 +7,27 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 
 const port = 1234
 
-beforeEach(async () => {
-  vi.mock('@shopify/ngrok')
-  vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/ngrok')
+vi.mock('@shopify/cli-kit/node/ui')
 
+vi.mock('@shopify/cli-kit/node/error', async () => {
+  const error: any = await vi.importActual('@shopify/cli-kit/node/error')
+  return {
+    ...error,
+    AbortError: vi.fn(),
+  }
+})
+vi.mock('@shopify/cli-kit/node/os', async () => {
+  return {
+    platformAndArch: vi.fn(),
+  }
+})
+
+beforeEach(async () => {
   vi.mocked(ngrok.connect).mockResolvedValue('https://fake.ngrok.io')
   vi.mocked(ngrok.authtoken).mockResolvedValue(undefined)
   vi.mocked(ngrok.validConfig).mockResolvedValue(true)
   vi.mocked(ngrok.upgradeConfig).mockResolvedValue(undefined)
-
-  vi.mock('@shopify/cli-kit/node/error', async () => {
-    const error: any = await vi.importActual('@shopify/cli-kit/node/error')
-    return {
-      ...error,
-      AbortError: vi.fn(),
-    }
-  })
-  vi.mock('@shopify/cli-kit/node/os', async () => {
-    return {
-      platformAndArch: vi.fn(),
-    }
-  })
 })
 
 describe('start', () => {

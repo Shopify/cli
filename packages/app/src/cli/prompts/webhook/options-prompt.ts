@@ -3,7 +3,7 @@ import {
   apiVersionPrompt,
   deliveryMethodInstructions,
   deliveryMethodPrompt,
-  sharedSecretPrompt,
+  clientSecretPrompt,
   topicPrompt,
 } from './trigger.js'
 import {
@@ -21,7 +21,7 @@ export interface WebhookTriggerFlags {
   apiVersion?: string
   deliveryMethod?: string
   address?: string
-  sharedSecret?: string
+  clientSecret?: string
 }
 
 export async function collectApiVersion(apiVersion: string | undefined, availableVersions: string[]): Promise<string> {
@@ -124,8 +124,8 @@ export async function collectAddressAndMethod(
   return [actualMethod, actualAddress]
 }
 
-export async function collectSecret(sharedSecret: string | undefined): Promise<string> {
-  const secret = await useFlagOrPrompt(sharedSecret, sharedSecretPrompt)
+export async function collectSecret(clientSecret: string | undefined): Promise<string> {
+  const secret = await useFlagOrPrompt(clientSecret, clientSecretPrompt)
 
   return secret
 }

@@ -30,10 +30,11 @@ const identityToken: IdentityToken = {
   scopes: data.scope.split(' '),
 }
 
+vi.mock('../../../public/node/http.js')
+vi.mock('../../../public/node/context/fqdn.js')
+vi.mock('./identity')
+
 beforeEach(() => {
-  vi.mock('../../../public/node/http.js')
-  vi.mock('../../../public/node/context/fqdn.js')
-  vi.mock('./identity')
   vi.mocked(clientId).mockReturnValue('clientId')
   vi.setSystemTime(currentDate)
   vi.mocked(applicationId).mockImplementation((api) => api)

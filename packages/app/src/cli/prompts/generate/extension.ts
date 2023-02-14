@@ -48,7 +48,7 @@ const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promi
   if (!extensionType) {
     if (extensionFlavor) {
       allExtensions = allExtensions.filter((spec) =>
-        spec.supportedFlavors.map((elem) => elem.value).includes(extensionFlavor!),
+        spec.supportedFlavors.map((elem) => elem.value as string).includes(extensionFlavor!),
       )
     }
 

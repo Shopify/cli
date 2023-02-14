@@ -1,5 +1,60 @@
 # @shopify/cli-kit
 
+## 3.43.0
+
+### Minor Changes
+
+- 4b0cc57ce: Theme bundling is now an opt-in feature
+
+### Patch Changes
+
+- f732207fa: Fix embedded Ruby CLI (remove Gemfile.lock)
+- b6f93cfa7: Use bundled Ruby CLI by default
+
+## 3.42.0
+
+### Patch Changes
+
+- 2203d4e6f: Fix theme issues with bundler and ruby version managers
+
+## 3.41.2
+
+## 3.41.1
+
+## 3.41.0
+
+### Minor Changes
+
+- 9d9480341: Add developer experience preview for JavaScript functions
+
+## 3.40.3
+
+## 3.40.2
+
+### Patch Changes
+
+- 7c0b13944: Fix Banner potentially crashing on very narrow terminals
+- 7ca9a667d: Fix Ruby version for running CLI with Homebrew installs
+
+## 3.40.1
+
+## 3.40.0
+
+### Minor Changes
+
+- cfb4b7f68: Improve output of preview instructions in dev command
+
+### Patch Changes
+
+- 91e15fed4: UI Kit UX improvements
+- 9e74a9fc0: Send an app/uninstalled webhook to the app when the user selects a different app, to force the app to clean up the store's database entry
+- 1661f80a2: Various copy improvements
+- ae22dfbaf: Theme commands run using embedded CLI2
+- 7734a7ed3: Add contributing guide for UI Kit
+- 5ba869fb2: Extract the ownership of development themes
+- 228328a6d: Remove old `ui` module from cli-kit exports
+- c30eb6978: Rename experimental presets feature to environments
+
 ## 3.39.0
 
 ### Minor Changes

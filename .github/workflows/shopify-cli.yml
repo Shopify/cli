@@ -77,8 +77,8 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['14.20.0', '16.17.0', '18.7.0']
+        os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
+        node: [ '14.20.0', '16.17.0', '18.7.0' ]
     steps:
       - uses: actions/checkout@v2
         name: Checkout [main]
@@ -115,9 +115,9 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: ['ubuntu-latest']
-        node: ["18.7.0"]
-        target: ['build', 'type-check', 'lint']
+        os: [ 'ubuntu-latest' ]
+        node: [ "18.7.0" ]
+        target: [ 'build', 'type-check', 'lint' ]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -161,8 +161,8 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['14.20.0', '16.17.0', '18.7.0']
+        os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
+        node: [ '14.20.0', '16.17.0', '18.7.0' ]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -209,6 +209,6 @@ jobs:
         run: pnpm nx run features:test
       - name: Setup tmate session
         if: ${{ failure() && inputs.debug-enabled }}
-        uses: mxschmitt/action-tmate@v3
+        uses: mxschmitt/action-tmate@1005f9c9db5f1b055a495e72c6e589764984baf6 # pin@v3
         with:
           limit-access-to-actor: true
