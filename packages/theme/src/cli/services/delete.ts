@@ -1,4 +1,4 @@
-import {removeDevelopmentTheme} from './conf.js'
+import {removeDevelopmentTheme} from './local-storage.js'
 import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
 import {themeComponent, themesComponent} from '../utilities/theme-ui.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
