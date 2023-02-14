@@ -23,10 +23,22 @@ export function graphqlRequest<T>(
     const clientOptions = {agent: await httpsAgent(), headers}
     const client = new GraphQLClient(url, clientOptions)
     const t0 = performance.now()
-    const response = await client.request<T>(query, variables)
+    const response = await client.rawRequest<T>(query as string, variables)
     const t1 = performance.now()
-    outputDebug(`Request to ${url.toString()} completed in ${Math.round(t1 - t0)} ms`)
-    return response
+
+    const responseHeaders: {[key: string]: string} = {}
+    const interestingHeaders = new Set(['cache-control', 'content-type', 'etag', 'x-request-id'])
+    response.headers.forEach((value, key) => {
+      if (interestingHeaders.has(key)) responseHeaders[key] = value
+    })
+
+    outputDebug(`Request to ${url.toString()} completed in ${Math.round(t1 - t0)} ms
+
+With headers:
+${sanitizedHeadersOutput(responseHeaders)}
+    `)
+
+    return response.data
   }
 
   if (handleErrors) {
@@ -42,9 +54,8 @@ function debugLogRequest<T>(
   variables?: Variables,
   headers: {[key: string]: string} = {},
 ) {
-  outputDebug(outputContent`
-Sending ${outputToken.json(api)} GraphQL request:
-${outputToken.raw(query.toString())}
+  outputDebug(outputContent`Sending ${outputToken.json(api)} GraphQL request:
+${outputToken.raw(query.toString().trim())}
 
 With variables:
 ${variables ? JSON.stringify(variables, null, 2) : ''}

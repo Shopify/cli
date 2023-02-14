@@ -1,6 +1,5 @@
 import {CLI_KIT_VERSION} from '../../../public/common/version.js'
 import {firstPartyDev} from '../../../public/node/context/local.js'
-import {randomUUID} from '../../../public/node/crypto.js'
 import {Environment, serviceEnvironment} from '../context/service.js'
 import {ExtendableError} from '../../../public/node/error.js'
 import https from 'https'
