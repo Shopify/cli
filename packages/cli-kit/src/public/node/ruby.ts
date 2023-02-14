@@ -41,9 +41,7 @@ interface ExecCLI2Options {
  * @param options - Options to customize the execution of cli2.
  */
 export async function execCLI2(args: string[], options: ExecCLI2Options = {}): Promise<void> {
-  const embedded =
-    ((await isShopify()) && process.env.SHOPIFY_CLI_EMBEDDED_THEME_CLI === undefined) ||
-    isTruthy(process.env.SHOPIFY_CLI_EMBEDDED_THEME_CLI)
+  const embedded = (await isShopify()) || isTruthy(process.env.SHOPIFY_CLI_EMBEDDED_THEME_CLI)
 
   await installCLIDependencies(options.stdout ?? process.stdout, embedded)
   const env: NodeJS.ProcessEnv = {
@@ -257,9 +255,10 @@ async function createThemeCheckCLIWorkingDirectory(): Promise<void> {
  */
 async function createShopifyCLIGemfile(): Promise<void> {
   const directory = await shopifyCLIDirectory()
-  await addContentToGemfile(directory, "source 'https://rubygems.org'")
-  await addContentToGemfile(directory, `gem 'shopify-cli', '${RubyCLIVersion}'`)
-  await addWindowsDependencies(directory)
+  const content = ["source 'https://rubygems.org'", `gem 'shopify-cli', '${RubyCLIVersion}'`].concat(
+    buildWindowsDependencies(),
+  )
+  await addContentToGemfile(directory, content)
 }
 
 /**
@@ -276,20 +275,21 @@ async function createThemeCheckGemfile(): Promise<void> {
  * @param directory - Directory where CLI2 Gemfile is located.
  */
 async function bundleInstallLocalShopifyCLI(directory: string): Promise<void> {
-  await addWindowsDependencies(directory)
+  await addContentToGemfile(directory, buildWindowsDependencies())
   await exec(bundleExecutable(), ['install'], {cwd: directory})
 }
 
 /**
- * Add Windows dependencies to Gemfile.
+ * Build the list of Windows dependencies.
  *
- * @param directory - Directory where Gemfile is located.
+ * @returns List of Windows dependencies.
  */
-async function addWindowsDependencies(directory: string) {
+function buildWindowsDependencies() {
   if (platformAndArch().platform === 'windows') {
     // 'wdm' is required by 'listen', see https://github.com/Shopify/cli/issues/780
-    await addContentToGemfile(directory, "gem 'wdm', '>= 0.1.0'")
+    return ["gem 'wdm', '>= 0.1.0'"]
   }
+  return []
 }
 
 /**
@@ -298,13 +298,12 @@ async function addWindowsDependencies(directory: string) {
  * @param gemfileDirectory - Directory where Gemfile is located.
  * @param content - Content to append to the Gemfile.
  */
-async function addContentToGemfile(gemfileDirectory: string, content: string) {
+async function addContentToGemfile(gemfileDirectory: string, content: string[]) {
   const gemfilePath = joinPath(gemfileDirectory, 'Gemfile')
   if (!(await file.fileExists(gemfilePath))) await file.touchFile(gemfilePath)
   const gemContent = await file.readFile(gemfilePath, {encoding: 'utf8'})
-  if (!gemContent.includes(content)) {
-    await file.appendFile(gemfilePath, `${content}\n`)
-  }
+  const contentNoExisting = content.filter((line) => !gemContent.includes(line)).join('\n')
+  if (contentNoExisting) await file.appendFile(gemfilePath, contentNoExisting.concat('\n'))
 }
 
 /**
