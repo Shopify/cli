@@ -49,8 +49,6 @@ module Theme
         private
 
         def current_directory_confirmed?
-          raise "Current theme directory can't be confirmed during tests" if @ctx.testing?
-
           Forms::ConfirmStore.ask(
             @ctx,
             [],
