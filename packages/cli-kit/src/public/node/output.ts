@@ -21,8 +21,6 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
 import type {Change} from 'diff'
 
-export {default as logUpdate} from 'log-update'
-
 export type Logger = Writable | ((message: string) => void)
 
 export class TokenizedString {
