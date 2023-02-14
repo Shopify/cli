@@ -1,4 +1,4 @@
-import colors from '../../public/node/colors.js'
+import colors from './colors.js'
 import {OutputMessage, stringifyMessage} from '../../public/node/output.js'
 import {relativizePath} from '../../public/node/path.js'
 import terminalLink from 'terminal-link'
