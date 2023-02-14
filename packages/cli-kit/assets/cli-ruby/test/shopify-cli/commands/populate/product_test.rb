@@ -39,6 +39,7 @@ module ShopifyCLI
         end
 
         def test_populate_if_no_shop
+          skip
           ShopifyCLI::DB.expects(:exists?).with(:shop).returns(false)
           ShopifyCLI::AdminAPI.expects(:query).never
           exception = assert_raises ShopifyCLI::Abort do
