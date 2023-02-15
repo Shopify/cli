@@ -15,7 +15,7 @@
   "license": "MIT",
   "author": "Shopify Inc.",
   "dependencies": {
-    "eslint-plugin-rulesdir": "^0.2.1",
+    "eslint-plugin-rulesdir": "0.2.2",
     "@shopify/eslint-plugin": "42.0.3",
     "pathe": "1.0.0"
   },
