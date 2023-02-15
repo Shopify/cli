@@ -240,7 +240,8 @@ module Theme
       end
 
       def test_push_when_syncer_has_an_error_json
-        syncer = stub("Syncer", lock_io!: nil, unlock_io!: nil, has_any_error?: true, standard_reporter: stub(disable!: nil))
+        syncer = stub("Syncer", lock_io!: nil, unlock_io!: nil, has_any_error?: true,
+          standard_reporter: stub(disable!: nil))
 
         ShopifyCLI::Theme::Theme.expects(:find_by_identifier)
           .with(@ctx, root: @root, identifier: 1234)
