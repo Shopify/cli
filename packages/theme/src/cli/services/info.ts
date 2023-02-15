@@ -1,4 +1,4 @@
-import {getDevelopmentTheme, getThemeStore} from './conf.js'
+import {getDevelopmentTheme, getThemeStore} from './local-storage.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {version as rubyVersion} from '@shopify/cli-kit/node/ruby'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'

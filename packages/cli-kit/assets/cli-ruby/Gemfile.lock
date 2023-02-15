@@ -165,7 +165,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  bundler (~> 2.3.11)
+  bundler (>= 2.3.11)
   byebug
   colorize (~> 0.8.1)
   cucumber (~> 7.0)

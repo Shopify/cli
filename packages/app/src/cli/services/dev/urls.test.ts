@@ -11,7 +11,7 @@ import {
 import {testApp} from '../../models/app/app.test-data.js'
 import {UpdateURLsQuery} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery} from '../../api/graphql/get_urls.js'
-import {setAppInfo} from '../conf.js'
+import {setAppInfo} from '../local-storage.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {Config} from '@oclif/core'
 import {err, ok} from '@shopify/cli-kit/node/result'
@@ -24,7 +24,7 @@ import {codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/node/context
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {runTunnelPlugin} from '@shopify/cli-kit/node/plugins'
 
-vi.mock('../conf.js')
+vi.mock('../local-storage.js')
 vi.mock('@shopify/cli-kit/node/tcp')
 vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/session')

@@ -1,4 +1,4 @@
-import {Conf} from '@shopify/cli-kit/node/conf'
+import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {normalizePath} from '@shopify/cli-kit/node/path'
 
@@ -13,37 +13,43 @@ export interface CachedAppInfo {
 }
 
 // We store each app info using the directory as the key
-export interface AppConfSchema {
+export interface AppLocalStorageSchema {
   [key: string]: CachedAppInfo
 }
 
-let _instance: Conf<AppConfSchema> | undefined
+let _instance: LocalStorage<AppLocalStorageSchema> | undefined
 
-function appConf() {
+function appLocalStorage() {
   if (!_instance) {
-    _instance = new Conf<AppConfSchema>({projectName: 'shopify-cli-app'})
+    _instance = new LocalStorage<AppLocalStorageSchema>({projectName: 'shopify-cli-app'})
   }
   return _instance
 }
 
-export function getAppInfo(directory: string, config: Conf<AppConfSchema> = appConf()): CachedAppInfo | undefined {
+export function getAppInfo(
+  directory: string,
+  config: LocalStorage<AppLocalStorageSchema> = appLocalStorage(),
+): CachedAppInfo | undefined {
   const normalized = normalizePath(directory)
   outputDebug(outputContent`Reading cached app information for directory ${outputToken.path(normalized)}...`)
   return config.get(normalized)
 }
 
-export function clearAppInfo(directory: string, config: Conf<AppConfSchema> = appConf()): void {
+export function clearAppInfo(directory: string, config: LocalStorage<AppLocalStorageSchema> = appLocalStorage()): void {
   const normalized = normalizePath(directory)
   outputDebug(outputContent`Clearing app information for directory ${outputToken.path(normalized)}...`)
   config.delete(normalized)
 }
 
-export function clearAllAppInfo(config: Conf<AppConfSchema> = appConf()): void {
+export function clearAllAppInfo(config: LocalStorage<AppLocalStorageSchema> = appLocalStorage()): void {
   outputDebug(outputContent`Clearing all app information...`)
   config.clear()
 }
 
-export function setAppInfo(options: CachedAppInfo, config: Conf<AppConfSchema> = appConf()): void {
+export function setAppInfo(
+  options: CachedAppInfo,
+  config: LocalStorage<AppLocalStorageSchema> = appLocalStorage(),
+): void {
   const normalized = normalizePath(options.directory)
   outputDebug(
     outputContent`Storing app information for directory ${outputToken.path(normalized)}:${outputToken.json(options)}`,
