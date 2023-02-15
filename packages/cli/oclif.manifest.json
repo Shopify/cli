@@ -18,7 +18,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "version": {
       "id": "version",
@@ -29,7 +29,7 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {},
-      "args": []
+      "args": {}
     },
     "auth:logout": {
       "id": "auth:logout",
@@ -40,7 +40,7 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {},
-      "args": []
+      "args": {}
     },
     "kitchen-sink:async": {
       "id": "kitchen-sink:async",
@@ -51,7 +51,7 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {},
-      "args": []
+      "args": {}
     },
     "kitchen-sink": {
       "id": "kitchen-sink",
@@ -65,7 +65,7 @@
         "kitchen-sink all"
       ],
       "flags": {},
-      "args": []
+      "args": {}
     },
     "kitchen-sink:prompts": {
       "id": "kitchen-sink:prompts",
@@ -76,7 +76,7 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {},
-      "args": []
+      "args": {}
     },
     "kitchen-sink:static": {
       "id": "kitchen-sink:static",
@@ -87,7 +87,7 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {},
-      "args": []
+      "args": {}
     }
   }
 }

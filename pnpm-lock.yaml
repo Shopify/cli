@@ -56,7 +56,7 @@ importers:
       liquidjs: ^9.36.0
       node-fetch: ^3.2.4
       nx: ^15.3.0
-      oclif: ^3.4.2
+      oclif: 3.6.4
       octokit-plugin-create-pull-request: ^3.12.2
       pathe: 1.0.0
       pin-github-action: ^1.8.0
@@ -118,7 +118,7 @@ importers:
       liquidjs: 9.43.0
       node-fetch: 3.3.0
       nx: 15.3.0
-      oclif: 3.4.2
+      oclif: 3.6.4
       octokit-plugin-create-pull-request: 3.13.1
       pathe: 1.0.0
       pin-github-action: 1.8.0
@@ -281,9 +281,9 @@ importers:
   packages/cli:
     specifiers:
       '@oclif/core': 2.1.4
-      '@oclif/plugin-commands': 2.2.0
-      '@oclif/plugin-help': 5.1.12
-      '@oclif/plugin-plugins': 2.1.0
+      '@oclif/plugin-commands': 2.2.9
+      '@oclif/plugin-help': 5.2.4
+      '@oclif/plugin-plugins': 2.3.2
       '@shopify/app': 3.43.0
       '@shopify/cli-kit': 3.43.0
       '@shopify/theme': 3.43.0
@@ -293,9 +293,9 @@ importers:
       vitest: ^0.26.3
     dependencies:
       '@oclif/core': 2.1.4
-      '@oclif/plugin-commands': 2.2.0
-      '@oclif/plugin-help': 5.1.12
-      '@oclif/plugin-plugins': 2.1.0
+      '@oclif/plugin-commands': 2.2.9
+      '@oclif/plugin-help': 5.2.4
+      '@oclif/plugin-plugins': 2.3.2
       '@shopify/cli-kit': link:../cli-kit
     devDependencies:
       '@shopify/app': link:../app
@@ -3122,8 +3122,8 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/color/1.0.2:
-    resolution: {integrity: sha512-HqTFeMjfLOZajxqffSkyDWFUB3YqsSLRcsvnvITGRzhO0Ip4Qwp0VHVwh+qe0TjJYEltmOgzoxsR1LZPQIHNBQ==}
+  /@oclif/color/1.0.4:
+    resolution: {integrity: sha512-HEcVnSzpQkjskqWJyVN3tGgR0H0F8GrBmDjgQ1N0ZwwktYa4y9kfV07P/5vt5BjPXNyslXHc4KAO8Bt7gmErCA==}
     engines: {node: '>=12.0.0'}
     dependencies:
       ansi-styles: 4.3.0
@@ -3165,43 +3165,35 @@ packages:
       wordwrap: 1.0.0
       wrap-ansi: 7.0.0
 
-  /@oclif/plugin-commands/2.2.0:
-    resolution: {integrity: sha512-l/iQ+LFd02VXUISY7YcIH9NLPlTaqiqtTK640dorTPag0pJHCH9q0HqiK8apBUhLW7ZfF6c/+wkINJQgz5sgdw==}
+  /@oclif/plugin-commands/2.2.9:
+    resolution: {integrity: sha512-sLhn4wiT/e6j4E9LWvfAidxydQVJZcisgscMguWc38BQF8rTjgVis+ESZqDjoDJlgKVzKjqoAFUtBjgY7VpT8g==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/core': 2.1.4
       lodash: 4.17.21
     dev: false
 
-  /@oclif/plugin-help/5.1.12:
-    resolution: {integrity: sha512-HvH/RubJxqCinP0vUWQLTOboT+SfjfL8h40s+PymkWaldIcXlpoRaJX50vz+SjZIs7uewZwEk8fzLqpF/BWXlg==}
+  /@oclif/plugin-help/5.2.4:
+    resolution: {integrity: sha512-7fVB/M1cslwHJTmyNGGDYBizi54NHcKCxHAbDSD16EbjosKxFwncRylVC/nsMgKZEufMDKZaVYI2lYRY3GHlSQ==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/core': 2.1.4
-    dev: false
-
-  /@oclif/plugin-help/5.1.20:
-    resolution: {integrity: sha512-N8xRxE/isFcdBDI8cobixEZA5toxIK5jbxpwALNTr4s8KNAtBA3ORQrSiY0fWGkcv0sCGMwZw7rJ0Izh18JPsw==}
-    engines: {node: '>=12.0.0'}
-    dependencies:
-      '@oclif/core': 2.1.4
-    dev: true
 
   /@oclif/plugin-not-found/2.3.9:
     resolution: {integrity: sha512-FJXIa5KmNbCgO8kDVJ23C/SkRRuwMYaRTNs5jejwrwKAm5fPp+TnR1+4pBp64ik7FA806nioqMGlotiyEWfMJA==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/color': 1.0.2
+      '@oclif/color': 1.0.4
       '@oclif/core': 2.1.4
       fast-levenshtein: 3.0.0
       lodash: 4.17.21
     dev: true
 
-  /@oclif/plugin-plugins/2.1.0:
-    resolution: {integrity: sha512-Bgt+QpTlX7+Q0HkVgtbUGYQlo/hyzNBAaXH5l16ou9Ji5wfi5T+niV5AzQ14R7JF8ZDOTbUOU/NRBJ2bzLCaZQ==}
+  /@oclif/plugin-plugins/2.3.2:
+    resolution: {integrity: sha512-jq/ik7A7bCO/oQp0/Znnpu8/JBXifAQ2OF2KmswbNYt7EpsLqz2DaI/CvkrXRSb+Edzx4Xx3usEgSyocVN/u2A==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/color': 1.0.2
+      '@oclif/color': 1.0.4
       '@oclif/core': 2.1.4
       chalk: 4.1.2
       debug: 4.3.4
@@ -3210,7 +3202,7 @@ packages:
       load-json-file: 5.3.0
       npm-run-path: 4.0.1
       semver: 7.3.8
-      tslib: 2.4.1
+      tslib: 2.5.0
       yarn: 1.22.19
     transitivePeerDependencies:
       - supports-color
@@ -11360,13 +11352,13 @@ packages:
     resolution: {integrity: sha512-z+pI07qxo4c2CulUHCDf9lcqDlMSo72N/4rLUpRXf6fu+q8vjt8y0xS+Tlf8NTJDdTXHbdeO1n3MlbctwEoXZw==}
     dev: false
 
-  /oclif/3.4.2:
-    resolution: {integrity: sha512-YF7zqHCEWiRvfuXkqyPuQsC4PiEJuXLQWIMXOtdJgOnIKqBh9Sp3e4xFsSal9QheVsCwO5kM3Nhe+G430hk/mA==}
+  /oclif/3.6.4:
+    resolution: {integrity: sha512-RYWmKQM5jammrHTF33DGBfBAaYxdARkc0VvUNpLtg8AFu5x91FxaOHdbOAYwkzPMC168MZ+O/EFi4jM96GxvPA==}
     engines: {node: '>=12.0.0'}
     hasBin: true
     dependencies:
       '@oclif/core': 2.1.4
-      '@oclif/plugin-help': 5.1.20
+      '@oclif/plugin-help': 5.2.4
       '@oclif/plugin-not-found': 2.3.9
       '@oclif/plugin-warn-if-update-available': 2.0.16
       aws-sdk: 2.1272.0
@@ -11379,7 +11371,8 @@ packages:
       lodash: 4.17.21
       normalize-package-data: 3.0.3
       semver: 7.3.8
-      tslib: 2.4.1
+      shelljs: 0.8.5
+      tslib: 2.5.0
       yeoman-environment: 3.13.0
       yeoman-generator: 5.7.0_yeoman-environment@3.13.0
       yosay: 2.0.2

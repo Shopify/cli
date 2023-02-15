@@ -62,7 +62,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "hydrogen:deploy": {
       "id": "hydrogen:deploy",
@@ -149,7 +149,7 @@
           "default": "oxygen-dms.shopifycloud.com"
         }
       },
-      "args": []
+      "args": {}
     },
     "hydrogen:dev": {
       "id": "hydrogen:dev",
@@ -200,7 +200,7 @@
           "allowNo": false
         }
       },
-      "args": []
+      "args": {}
     },
     "hydrogen:info": {
       "id": "hydrogen:info",
@@ -247,7 +247,7 @@
           "allowNo": false
         }
       },
-      "args": []
+      "args": {}
     },
     "hydrogen:preview": {
       "id": "hydrogen:preview",
@@ -308,7 +308,7 @@
           "default": "worker"
         }
       },
-      "args": []
+      "args": {}
     },
     "hydrogen:add:eslint": {
       "id": "hydrogen:add:eslint",
@@ -355,7 +355,7 @@
           "allowNo": false
         }
       },
-      "args": []
+      "args": {}
     },
     "hydrogen:add:tailwind": {
       "id": "hydrogen:add:tailwind",
@@ -402,7 +402,7 @@
           "allowNo": false
         }
       },
-      "args": []
+      "args": {}
     }
   }
 }
