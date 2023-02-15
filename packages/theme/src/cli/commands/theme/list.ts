@@ -2,11 +2,12 @@ import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {list} from '../../services/list.js'
 import {ALLOWED_ROLES, Role} from '../../utilities/theme-selector/fetch.js'
 import {themeFlags} from '../../flags.js'
-import {Flags, Command} from '@oclif/core'
+import ThemeCommand from '../../utilities/theme-command.js'
+import {Flags} from '@oclif/core'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
-export default class List extends Command {
+export default class List extends ThemeCommand {
   static description = 'Lists your remote themes.'
 
   static flags = {
