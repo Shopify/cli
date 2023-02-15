@@ -3,7 +3,7 @@ lockfileVersion: 5.4
 overrides:
   '@types/react': 16.14.0
   vite: 2.9.12
-  '@oclif/core': 2.0.9
+  '@oclif/core': 2.1.4
 
 importers:
 
@@ -252,7 +252,7 @@ importers:
       ws: 8.8.1
     dependencies:
       '@luckycatfactory/esbuild-graphql-loader': 3.7.0_zocmegas3pxcp3oct7zmymwekm
-      '@oclif/core': 2.0.9
+      '@oclif/core': 2.1.4
       '@shopify/cli-kit': link:../cli-kit
       '@shopify/plugin-ngrok': link:../plugin-ngrok
       '@shopify/shopify-cli-extensions': 3.21.0_graphql-tag@2.12.6
@@ -280,7 +280,7 @@ importers:
 
   packages/cli:
     specifiers:
-      '@oclif/core': 2.0.9
+      '@oclif/core': 2.1.4
       '@oclif/plugin-commands': 2.2.0
       '@oclif/plugin-help': 5.1.12
       '@oclif/plugin-plugins': 2.1.0
@@ -292,7 +292,7 @@ importers:
       vite: 2.9.12
       vitest: ^0.26.3
     dependencies:
-      '@oclif/core': 2.0.9
+      '@oclif/core': 2.1.4
       '@oclif/plugin-commands': 2.2.0
       '@oclif/plugin-help': 5.1.12
       '@oclif/plugin-plugins': 2.1.0
@@ -326,7 +326,7 @@ importers:
       vite: 2.9.12
       vitest: ^0.26.3
     dependencies:
-      '@oclif/core': 2.0.9
+      '@oclif/core': 2.1.4
       '@shopify/cli-kit': link:../cli-kit
       '@shopify/hydrogen': 0.26.0_3lg4s6v7nk6rhmut4pzd7jpatu
       '@shopify/mini-oxygen': 0.2.0
@@ -350,7 +350,7 @@ importers:
     specifiers:
       '@bugsnag/js': 7.16.7
       '@iarna/toml': 2.2.5
-      '@oclif/core': 2.0.9
+      '@oclif/core': 2.1.4
       '@types/archiver': 5.3.1
       '@types/commondir': ^1.0.0
       '@types/cross-zip': ^4.0.0
@@ -424,7 +424,7 @@ importers:
     dependencies:
       '@bugsnag/js': 7.16.7
       '@iarna/toml': 2.2.5
-      '@oclif/core': 2.0.9
+      '@oclif/core': 2.1.4
       '@types/archiver': 5.3.1
       abort-controller: 3.0.0
       ansi-escapes: 6.0.0
@@ -505,7 +505,7 @@ importers:
       vite: 2.9.12
       vitest: ^0.26.3
     dependencies:
-      '@oclif/core': 2.0.9
+      '@oclif/core': 2.1.4
       '@shopify/cli-kit': link:../cli-kit
     devDependencies:
       '@types/node': 14.18.36
@@ -522,7 +522,7 @@ importers:
       vite: 2.9.12
       vitest: ^0.26.3
     dependencies:
-      '@oclif/core': 2.0.9
+      '@oclif/core': 2.1.4
       '@shopify/cli-kit': link:../cli-kit
       download: 8.0.0
     devDependencies:
@@ -570,7 +570,7 @@ importers:
       vite: 2.9.12
       vitest: ^0.26.3
     dependencies:
-      '@oclif/core': 2.0.9
+      '@oclif/core': 2.1.4
       '@shopify/cli-kit': link:../cli-kit
       '@shopify/ngrok': 4.3.2
     devDependencies:
@@ -587,7 +587,7 @@ importers:
       vite: 2.9.12
       vitest: ^0.26.3
     dependencies:
-      '@oclif/core': 2.0.9
+      '@oclif/core': 2.1.4
       '@shopify/cli-kit': link:../cli-kit
     devDependencies:
       '@types/node': 14.18.36
@@ -3132,8 +3132,8 @@ packages:
       supports-color: 8.1.1
       tslib: 2.5.0
 
-  /@oclif/core/2.0.9:
-    resolution: {integrity: sha512-SLwSQa1No4br0D9cLY8lleXvcs3K/YpSQdo0md6z8AHx3P+l0/fv9dtIlYYD8MqsRUcNPxshJ3ZkN2sNNM5VjQ==}
+  /@oclif/core/2.1.4:
+    resolution: {integrity: sha512-8rPS/gsjLgWp//nraRs5/yf7EkueFHBLRTMUli3yTu88XrQ2czbXIP2HsF2rxmtCqUUfXUTllHfr8OzqBs0Dcw==}
     engines: {node: '>=14.0.0'}
     dependencies:
       '@types/cli-progress': 3.11.0
@@ -3169,7 +3169,7 @@ packages:
     resolution: {integrity: sha512-l/iQ+LFd02VXUISY7YcIH9NLPlTaqiqtTK640dorTPag0pJHCH9q0HqiK8apBUhLW7ZfF6c/+wkINJQgz5sgdw==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.0.9
+      '@oclif/core': 2.1.4
       lodash: 4.17.21
     dev: false
 
@@ -3177,14 +3177,14 @@ packages:
     resolution: {integrity: sha512-HvH/RubJxqCinP0vUWQLTOboT+SfjfL8h40s+PymkWaldIcXlpoRaJX50vz+SjZIs7uewZwEk8fzLqpF/BWXlg==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.0.9
+      '@oclif/core': 2.1.4
     dev: false
 
   /@oclif/plugin-help/5.1.20:
     resolution: {integrity: sha512-N8xRxE/isFcdBDI8cobixEZA5toxIK5jbxpwALNTr4s8KNAtBA3ORQrSiY0fWGkcv0sCGMwZw7rJ0Izh18JPsw==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.0.9
+      '@oclif/core': 2.1.4
     dev: true
 
   /@oclif/plugin-not-found/2.3.9:
@@ -3192,7 +3192,7 @@ packages:
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/color': 1.0.2
-      '@oclif/core': 2.0.9
+      '@oclif/core': 2.1.4
       fast-levenshtein: 3.0.0
       lodash: 4.17.21
     dev: true
@@ -3202,7 +3202,7 @@ packages:
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/color': 1.0.2
-      '@oclif/core': 2.0.9
+      '@oclif/core': 2.1.4
       chalk: 4.1.2
       debug: 4.3.4
       fs-extra: 9.1.0
@@ -3220,7 +3220,7 @@ packages:
     resolution: {integrity: sha512-jLe+yIwyMqUwdHTKLviAUqJbX0+QEj63LPDWCWqLZnuo6BSoIvJl6vRGzIDoxhWG/4nileBgwPv8ivSo6BEr0w==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.0.9
+      '@oclif/core': 2.1.4
       chalk: 4.1.2
       debug: 4.3.4
       fs-extra: 9.1.0
@@ -11365,7 +11365,7 @@ packages:
     engines: {node: '>=12.0.0'}
     hasBin: true
     dependencies:
-      '@oclif/core': 2.0.9
+      '@oclif/core': 2.1.4
       '@oclif/plugin-help': 5.1.20
       '@oclif/plugin-not-found': 2.3.9
       '@oclif/plugin-warn-if-update-available': 2.0.16
