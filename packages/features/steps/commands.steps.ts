@@ -1,8 +1,26 @@
 import {executables} from '../lib/constants'
 import {exec} from '../lib/system'
+import {World} from '../world/index.js'
 import {When, Then} from '@cucumber/cucumber'
+import fg from 'fast-glob'
 import * as fs from 'fs/promises'
 import {strict as assert} from 'assert'
+
+When(/I import the commands/, async function (this: World) {
+  const oclifManifestPaths = await fg('packages/*/oclif.manifest.json', {cwd: this.rootDirectory, absolute: true})
+  const commands = (
+    await Promise.all(
+      oclifManifestPaths.map(async (oclifManifestPath) => {
+        const {commands} = JSON.parse(await (await fs.readFile(oclifManifestPath)).toString())
+        return commands
+      }),
+    )
+  ).flatMap((commands) => commands)
+  const commandsWithDuplicatedFlags: {command: string; flag: string}[] = []
+  commands.forEach((command) => {
+    const flags = Object.entries(command.flags).map()
+  })
+})
 
 const errorMessage = `
 SNAPSHOT TEST FAILED!

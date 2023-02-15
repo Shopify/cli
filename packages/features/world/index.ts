@@ -1,6 +1,7 @@
 import {executables} from '../lib/constants'
 import {exec} from '../lib/system'
 import {setWorldConstructor} from '@cucumber/cucumber'
+import {join as joinPath} from 'pathe'
 
 export interface WorldConstructorParams {
   temporaryDirectory: string
@@ -10,9 +11,11 @@ export class World {
   public temporaryDirectory: string
   public temporaryEnv: {[key: string]: string} | undefined
   public appDirectory: string | undefined
+  public rootDirectory: string
 
   constructor({temporaryDirectory}: WorldConstructorParams) {
     this.temporaryDirectory = temporaryDirectory
+    this.rootDirectory = joinPath(__dirname, '../../../')
   }
 
   public async appInfo() {

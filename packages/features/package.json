@@ -24,6 +24,7 @@
     }
   },
   "devDependencies": {
+    "fast-glob": "^3.2.11",
     "@cucumber/cucumber": "^8.2.2",
     "@cucumber/messages": "20.0.0",
     "@cucumber/pretty-formatter": "1.0.0",
