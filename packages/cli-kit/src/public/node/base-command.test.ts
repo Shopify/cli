@@ -10,7 +10,6 @@ import {Flags} from '@oclif/core'
 
 let testResult: {[flag: string]: unknown} = {}
 let testError: Error | undefined
-let disableFindUpEnvironments = true
 
 class MockCommand extends Command {
   /* eslint-disable rulesdir/command-flags-with-env */
@@ -88,15 +87,17 @@ const environmentWithPassword = {
 }
 
 const allEnvironments: Environments = {
-  validEnvironment,
-  validEnvironmentWithIrrelevantFlag,
-  environmentWithIncorrectType,
-  environmentWithExclusiveArguments,
-  environmentWithNegativeBoolean,
-  environmentWithMultiples,
-  environmentMatchingDefault,
-  environmentWithDefaultOverride,
-  environmentWithPassword,
+  environments: {
+    validEnvironment,
+    validEnvironmentWithIrrelevantFlag,
+    environmentWithIncorrectType,
+    environmentWithExclusiveArguments,
+    environmentWithNegativeBoolean,
+    environmentWithMultiples,
+    environmentMatchingDefault,
+    environmentWithDefaultOverride,
+    environmentWithPassword,
+  },
 }
 
 describe('applying environments', async () => {
@@ -104,7 +105,6 @@ describe('applying environments', async () => {
     test(testName, async () => {
       testResult = {}
       testError = undefined
-      disableFindUpEnvironments = false
 
       await inTemporaryDirectory(async (tmpDir) => {
         await writeFile(joinPath(tmpDir, 'shopify.environments.toml'), encodeTOML(allEnvironments as any))
@@ -114,11 +114,12 @@ describe('applying environments', async () => {
   }
 
   function expectFlags(path: string, environment: keyof typeof allEnvironments) {
+    const envFlags = allEnvironments.environments && (allEnvironments.environments[environment] as Environments)
     expect(testResult).toEqual({
       path: resolvePath(path),
       someStringWithDefault: 'default stringy',
       environment,
-      ...allEnvironments[environment],
+      ...envFlags,
     })
   }
 

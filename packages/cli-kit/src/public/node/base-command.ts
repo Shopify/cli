@@ -3,8 +3,6 @@ import {loadEnvironment} from './environments.js'
 import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
-import {findPathUp} from './fs.js'
-import {cwd} from './path.js'
 import {renderInfo} from './ui.js'
 import {JsonMap} from '../../private/common/json.js'
 import {outputContent, outputInfo, outputToken} from '../../public/node/output.js'
@@ -73,11 +71,11 @@ abstract class BaseCommand extends Command {
   ): Promise<Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>> {
     // If no environment is specified, don't modify the results
     const flags = originalResult.flags as EnvironmentFlags
-    if (!flags.environment) return originalResult
+    const environmentsFileName = this.environmentsFilename()
+    if (!flags.environment || !environmentsFileName) return originalResult
 
     // If the specified environment isn't found, don't modify the results
-    const environmentsFile = await this.environmentsFilePath(flags)
-    const environment = await loadEnvironment(flags.environment, environmentsFile)
+    const environment = await loadEnvironment(flags.environment, environmentsFileName, {from: flags.path})
     if (!environment) return originalResult
 
     // Parse using noDefaultsOptions to derive a list of flags specified as
@@ -104,16 +102,9 @@ abstract class BaseCommand extends Command {
     return result
   }
 
-  protected async environmentsFilePath(rawFlags: {path?: string}): Promise<string | undefined> {
-    const basePath = rawFlags.path && rawFlags.path !== '.' ? rawFlags.path : cwd()
-    return findPathUp(this.environmentsFilename(), {
-      cwd: basePath,
-      type: 'file',
-    })
-  }
-
-  protected environmentsFilename(): string {
-    throw new Error('Not implemented')
+  protected environmentsFilename(): string | undefined {
+    // To be re-implemented if needed
+    return undefined
   }
 }
 

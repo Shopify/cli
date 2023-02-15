@@ -1,10 +1,15 @@
 import {decodeToml} from './toml.js'
-import {fileExists, readFile} from './fs.js'
+import {findPathUp, readFile} from './fs.js'
 import {outputWarn} from './output.js'
+import {cwd} from './path.js'
 import {JsonMap} from '../../private/common/json.js'
 
 export interface Environments {
   [name: string]: JsonMap
+}
+
+interface LoadEnvironmentOptions {
+  from?: string
 }
 /**
  * Loads environments from a file.
@@ -13,9 +18,15 @@ export interface Environments {
  */
 export async function loadEnvironment(
   environmentName: string,
-  filePath: string | undefined,
+  fileName: string,
+  options?: LoadEnvironmentOptions,
 ): Promise<JsonMap | undefined> {
-  if (!filePath || !(await fileExists(filePath))) {
+  const basePath = options?.from && options?.from !== '.' ? options.from : cwd()
+  const filePath = await findPathUp(fileName, {
+    cwd: basePath,
+    type: 'file',
+  })
+  if (!filePath) {
     outputWarn(`Environment file not found`)
     return undefined
   }
