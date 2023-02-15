@@ -89,10 +89,10 @@ export function instance(env = process.env): string | undefined {
 }
 
 /**
- * Returns true if the CLI is running in a Spin environment.
+ * Returns true if the service environment is a Spin environment.
  *
  * @param env - Environment variables.
- * @returns True if the CLI is running in a Spin environment.
+ * @returns True if the service environment is a Spin environment.
  */
 export function isSpinEnvironment(env = process.env): boolean {
   return serviceEnvironment(env) === Environment.Spin
