@@ -18,7 +18,7 @@ import {
   DeployContextOptions,
 } from './context.js'
 import {createExtension} from './dev/create-extension.js'
-import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './conf.js'
+import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
 import {OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {UIExtension} from '../models/app/extensions.js'
@@ -34,7 +34,7 @@ import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
-vi.mock('./conf.js')
+vi.mock('./local-storage.js')
 vi.mock('./dev/fetch')
 vi.mock('./dev/create-extension')
 vi.mock('./dev/select-app')

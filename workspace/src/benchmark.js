@@ -9,29 +9,8 @@ import {temporaryDirectoryTask} from 'tempy'
 import git from 'simple-git'
 import {setOutput} from '@actions/core'
 import {promises as fs, existsSync} from 'fs'
-
-const require = createRequire(import.meta.url)
-const colors = require('ansi-colors')
-
-function logSection(title) {
-  console.info(colors.green.bold(title))
-}
-
-function logMessage(message) {
-  console.info(colors.gray(`  ${message}`))
-}
-
-async function cloneCLIRepository(tmpDir) {
-  logSection('Setting up baseline: main branch')
-  const directory = path.join(tmpDir, 'cli')
-  logMessage('Cloning repository')
-  await git().clone('https://github.com/Shopify/cli.git', directory)
-  logMessage('Installing dependencies')
-  await execa('pnpm', ['install'], {cwd: directory})
-  logMessage('Building the project')
-  await execa('pnpm', ['build'], {cwd: directory})
-  return directory
-}
+import {cloneCLIRepository} from './utils/git.js'
+import {logMessage, logSection} from './utils/log.js'
 
 async function benchmark(directory, results = {}, times = 5, {name}) {
   logSection(`Benchmarking ${name}. ${times} remaining`)

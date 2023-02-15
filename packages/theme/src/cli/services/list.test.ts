@@ -1,6 +1,6 @@
 import {list} from './list.js'
 import {columns} from './list.columns.js'
-import {getDevelopmentTheme} from './conf.js'
+import {getDevelopmentTheme} from './local-storage.js'
 import {fetchStoreThemes} from '../utilities/theme-selector/fetch.js'
 import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {renderTable} from '@shopify/cli-kit/node/ui'
@@ -11,6 +11,7 @@ vi.mock('../utilities/theme-selector/fetch.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/themes/conf')
 vi.mock('./conf.js')
+vi.mock('./local-storage.js')
 
 const session = {
   token: 'token',

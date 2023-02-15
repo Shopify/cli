@@ -1,5 +1,5 @@
 import {themeFlags} from '../flags.js'
-import {getThemeStore, setThemeStore} from '../services/conf.js'
+import {getThemeStore, setThemeStore} from '../services/local-storage.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 

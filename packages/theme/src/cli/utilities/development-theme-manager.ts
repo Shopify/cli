@@ -1,4 +1,4 @@
-import {getDevelopmentTheme, setDevelopmentTheme, removeDevelopmentTheme} from '../services/conf.js'
+import {getDevelopmentTheme, setDevelopmentTheme, removeDevelopmentTheme} from '../services/local-storage.js'
 import {ThemeManager} from '@shopify/cli-kit/node/themes/theme-manager'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
