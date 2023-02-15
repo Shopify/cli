@@ -5,7 +5,7 @@ export async function themeExtensionArgs(
   extension: ThemeExtension,
   apiKey: string,
   token: string,
-  options: {theme?: string; themeExtensionPort?: number},
+  options: {theme?: string; themeExtensionPort?: number; generateTmpTheme?: boolean},
 ) {
   const extensionRegistration = await ensureThemeExtensionDevContext(extension, apiKey, token)
   const extensionId = extensionRegistration.id
@@ -31,6 +31,10 @@ export async function themeExtensionArgs(
 
   if (options.themeExtensionPort) {
     args.push('--port', options.themeExtensionPort.toString())
+  }
+
+  if (options.generateTmpTheme) {
+    args.push('--generate-tmp-theme')
   }
 
   return args

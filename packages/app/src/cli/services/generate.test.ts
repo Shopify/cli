@@ -19,7 +19,7 @@ vi.mock('../services/generate/extension.js')
 vi.mock('../services/context.js')
 vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/session')
-vi.mock('./conf.js')
+vi.mock('./local-storage.js')
 
 beforeAll(() => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
