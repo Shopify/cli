@@ -10,7 +10,6 @@ import {getHostTheme} from '@shopify/cli-kit/node/themes/conf'
 vi.mock('../utilities/theme-selector/fetch.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/themes/conf')
-vi.mock('./conf.js')
 vi.mock('./local-storage.js')
 
 const session = {
@@ -31,7 +30,6 @@ describe('list', () => {
     ] as Theme[])
     vi.mocked(getDevelopmentTheme).mockReturnValue(developmentThemeId.toString())
     vi.mocked(getHostTheme).mockReturnValue(hostThemeId.toString())
-    vi.mocked(getDevelopmentTheme).mockReturnValue(developmentThemeId.toString())
 
     await list(session, {})
 
