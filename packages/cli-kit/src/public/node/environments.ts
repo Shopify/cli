@@ -15,13 +15,17 @@ export async function loadEnvironment(
   environmentName: string,
   filePath: string | undefined,
 ): Promise<JsonMap | undefined> {
-  if (filePath && (await fileExists(filePath))) {
-    const environments = decodeToml(await readFile(filePath)) as Environments
-    const environment = environments[environmentName]
-    if (!environment) outputWarn(`Environment ${environmentName} not found`)
-    return environment
-  } else {
+  if (!filePath || !(await fileExists(filePath))) {
     outputWarn(`Environment file not found`)
     return undefined
   }
+  const environmentsJson = decodeToml(await readFile(filePath)) as Environments
+  const environments = environmentsJson.environments
+  if (!environments) {
+    outputWarn(`No environments found in ${filePath}`)
+    return undefined
+  }
+  const environment = environments[environmentName] as JsonMap
+  if (!environment) outputWarn(`Environment ${environmentName} not found`)
+  return environment
 }

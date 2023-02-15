@@ -1,6 +1,6 @@
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {resolvePath} from '@shopify/cli-kit/node/path'
+import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 
 /**
  * An object that contains the flags that
@@ -12,7 +12,7 @@ export const themeFlags = {
     description: 'The path to your theme directory.',
     parse: (input, _) => Promise.resolve(resolvePath(input)),
     env: 'SHOPIFY_FLAG_PATH',
-    default: '.',
+    default: cwd(),
   }),
   password: Flags.string({
     hidden: false,
