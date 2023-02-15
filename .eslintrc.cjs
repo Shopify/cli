@@ -327,4 +327,5 @@ module.exports = {
       },
     },
   ],
+  ignorePatterns: ['assets/cli-ruby/lib/shopify_cli/theme/dev_server/hot_reload/resources/*.js'],
 }
