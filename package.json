@@ -15,6 +15,8 @@
     "lint:fix": "nx run-many --target=lint:fix --all --skip-nx-cache",
     "lint:fix:affected": "nx affected --target=lint:fix --all",
     "test": "nx run-many --target=test --all --skip-nx-cache",
+    "test:unit": "nx run-many --target=test --all --skip-nx-cache --exclude=features",
+    "test:features": "pnpm nx run features:test",
     "test:affected": "nx affected --target=test --all",
     "test:regenerate-snapshots": "nx build cli && packages/features/snapshots/regenerate.sh",
     "type-check": "nx run-many --target=type-check --all --skip-nx-cache",
