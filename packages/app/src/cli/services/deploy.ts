@@ -3,11 +3,11 @@ import {
   UploadExtensionValidationError,
   uploadFunctionExtensions,
   uploadThemeExtensions,
-  uploadUIExtensionsBundle,
+  uploadExtensionsBundle,
 } from './deploy/upload.js'
 
 import {ensureDeployContext} from './context.js'
-import {bundleUIAndBuildFunctionExtensions} from './deploy/bundle.js'
+import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
@@ -15,11 +15,11 @@ import {Extension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {themeBundlingDisabled} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo} from '@shopify/cli-kit/node/output'
+import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import type {AlertCustomSection, Task} from '@shopify/cli-kit/node/ui'
 
 interface DeployOptions {
@@ -41,7 +41,7 @@ interface TasksContext {
   bundle?: boolean
 }
 
-export const deploy = async (options: DeployOptions) => {
+export async function deploy(options: DeployOptions) {
   if (!options.app.hasExtensions()) {
     renderInfo({headline: 'No extensions to deploy to Shopify Partners yet.'})
     return
@@ -64,7 +64,7 @@ export const deploy = async (options: DeployOptions) => {
       }
     }),
   )
-  if (!themeBundlingDisabled()) {
+  if (useThemebundling()) {
     const themeExtensions = await Promise.all(
       options.app.extensions.theme.map(async (extension) => {
         return {
@@ -84,8 +84,10 @@ export const deploy = async (options: DeployOptions) => {
     try {
       const bundlePath = joinPath(tmpDir, `bundle.zip`)
       await mkdir(dirname(bundlePath))
-      const bundle = app.extensions.ui.length !== 0
-      await bundleUIAndBuildFunctionExtensions({app, bundlePath, identifiers, bundle})
+      const bundleTheme = useThemebundling() && app.extensions.theme.length !== 0
+      const bundleUI = app.extensions.ui.length !== 0
+      const bundle = bundleTheme || bundleUI
+      await bundleAndBuildExtensions({app, bundlePath, identifiers, bundle})
 
       const tasks: Task<TasksContext>[] = [
         {
@@ -98,11 +100,7 @@ export const deploy = async (options: DeployOptions) => {
           title: 'Pushing your code to Shopify',
           task: async () => {
             if (bundle) {
-              /**
-               * The bundles only support UI extensions for now so we only need bundle and upload
-               * the bundle if the app has UI extensions.
-               */
-              validationErrors = await uploadUIExtensionsBundle({
+              validationErrors = await uploadExtensionsBundle({
                 apiKey,
                 bundlePath,
                 extensions,
@@ -110,7 +108,7 @@ export const deploy = async (options: DeployOptions) => {
               })
             }
 
-            if (themeBundlingDisabled()) {
+            if (!useThemebundling()) {
               await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
             }
 

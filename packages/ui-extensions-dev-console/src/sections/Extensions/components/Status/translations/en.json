@@ -1,5 +1,14 @@
 {
-  "success": "Connected",
-  "disconnected": "Disconnected",
-  "error": "Build Error"
+  "success": {
+    "label": "Connected",
+    "tooltipMessage": "No connection issues detected."
+  },
+  "disconnected": {
+    "label": "Disconnected",
+    "tooltipMessage": "Extension not available. Return to the CLI and run the 'dev' command again."
+  },
+  "error": {
+    "label": "Build Error",
+    "tooltipMessage": "Check the CLI logs about an error in your source code."
+  }
 }

@@ -1,5 +1,47 @@
 # @shopify/app
 
+## 3.43.0
+
+### Minor Changes
+
+- 4b0cc57ce: Theme bundling is now an opt-in feature
+
+### Patch Changes
+
+- Updated dependencies [f732207fa]
+- Updated dependencies [4b0cc57ce]
+- Updated dependencies [b6f93cfa7]
+  - @shopify/cli-kit@3.43.0
+  - @shopify/plugin-ngrok@3.43.0
+
+## 3.42.0
+
+### Minor Changes
+
+- 66653aecd: Added the template for the new cart & checkout validation function
+
+### Patch Changes
+
+- Updated dependencies [2203d4e6f]
+  - @shopify/cli-kit@3.42.0
+  - @shopify/plugin-ngrok@3.42.0
+
+## 3.41.2
+
+### Patch Changes
+
+- dd3d0c846: Update to latest version of javy and function-runner
+  - @shopify/cli-kit@3.41.2
+  - @shopify/plugin-ngrok@3.41.2
+
+## 3.41.1
+
+### Patch Changes
+
+- 830617a4d: Fix bug when deploying apps that contain only theme app extensions
+  - @shopify/cli-kit@3.41.1
+  - @shopify/plugin-ngrok@3.41.1
+
 ## 3.41.0
 
 ### Minor Changes

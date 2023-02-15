@@ -19,6 +19,7 @@ jobs:
   test:
     name: Tests with Ruby ${{ matrix.version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     strategy:
       matrix:
         version:
@@ -40,6 +41,7 @@ jobs:
         uses: ruby/setup-ruby@8df78e55761745aad83acaf3ff12976382356e6d # pin@v1
         with:
           ruby-version: ${{ matrix.version }}
+          bundler: 'latest'
           bundler-cache: true
 
       - name: Install Dependencies
@@ -51,6 +53,7 @@ jobs:
   rubocop:
     name: Rubocop
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     strategy:
       matrix:
         version:
@@ -64,6 +67,7 @@ jobs:
         uses: ruby/setup-ruby@8df78e55761745aad83acaf3ff12976382356e6d # pin@v1
         with:
           ruby-version: ${{ matrix.version }}
+          bundler: 'latest'
           bundler-cache: true
 
       - name: Install Dependencies

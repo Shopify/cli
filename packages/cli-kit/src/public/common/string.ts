@@ -1,6 +1,7 @@
 import {takeRandomFromArray} from './array.js'
 import {unstyled} from '../../public/node/output.js'
 import {Token, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
+import {camelCase, constantCase, paramCase, snakeCase} from 'change-case'
 
 const SAFE_RANDOM_BUSINESS_ADJECTIVES = [
   'commercial',
@@ -234,20 +235,40 @@ export function escapeRegExp(str: string): string {
 
 /**
  * Transform a string to camelCase.
+ *
+ * @param input - String to escape.
+ * @returns The escaped string.
  */
-export {camelCase as camelize} from 'change-case'
+export function camelize(input: string): string {
+  return camelCase(input)
+}
 
 /**
  * Transform a string to param-case.
+ *
+ * @param input - String to transform.
+ * @returns The transformed string.
  */
-export {paramCase as hyphenate} from 'change-case'
+export function hyphenate(input: string): string {
+  return paramCase(input)
+}
 
 /**
  * Transform a string to snake_case.
+ *
+ * @param input - String to transform.
+ * @returns The transformed string.
  */
-export {snakeCase as underscore} from 'change-case'
+export function underscore(input: string): string {
+  return snakeCase(input)
+}
 
 /**
  * Transform a string to CONSTANT_CASE.
+ *
+ * @param input - String to transform.
+ * @returns The transformed string.
  */
-export {constantCase as constantize} from 'change-case'
+export function constantize(input: string): string {
+  return constantCase(input)
+}

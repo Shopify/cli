@@ -3,13 +3,13 @@ import {
   NO_DEVELOPMENT_THEME_ID_SET,
   DEVELOPMENT_THEME_NOT_FOUND,
 } from './development-theme-manager.js'
-import {getDevelopmentTheme, setDevelopmentTheme, removeDevelopmentTheme} from '../services/conf.js'
+import {getDevelopmentTheme, setDevelopmentTheme, removeDevelopmentTheme} from '../services/local-storage.js'
 import {createTheme, fetchTheme} from '@shopify/cli-kit/node/themes/themes-api'
 import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/themes/themes-api')
-vi.mock('../services/conf.js')
+vi.mock('../services/local-storage.js')
 
 describe('DevelopmentThemeManager', () => {
   const storeFqdn = 'mystore.myshopify.com'

@@ -7,7 +7,7 @@ export interface IconButtonProps extends React.HTMLProps<HTMLButtonElement>, Ico
   type: 'button' | 'submit' | 'reset' | undefined
 }
 
-export function IconButton({className, selected, source, accessibilityLabel, ...props}: ButtonProps) {
+export function IconButton({className, selected, source, accessibilityLabel, ...props}: IconButtonProps) {
   return (
     <button {...props} className={classNames(className, styles.IconButton)} aria-pressed={selected}>
       <span className={styles.Icon}>

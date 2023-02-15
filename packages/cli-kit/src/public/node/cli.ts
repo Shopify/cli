@@ -144,7 +144,6 @@ export const globalFlags = {
     hidden: true,
     description: 'The environment to apply to the current command.',
     env: 'SHOPIFY_FLAG_ENVIRONMENT',
-    char: 'e',
   }),
   verbose: Flags.boolean({
     hidden: false,

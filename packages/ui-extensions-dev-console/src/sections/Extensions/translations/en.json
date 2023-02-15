@@ -9,6 +9,9 @@
     "refresh": "Refresh",
     "delete": "Delete"
   },
+  "tooltips": {
+    "viewColumnHeader": "Hide your local extensions to view what's in production."
+  },
   "bulkActions": {
     "show": "Show",
     "hide": "Hide",

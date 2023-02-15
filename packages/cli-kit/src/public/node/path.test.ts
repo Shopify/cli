@@ -1,4 +1,4 @@
-import {relativizePath, cwd, normalizePath} from './path.js'
+import {relativizePath, normalizePath, cwd} from './path.js'
 import {describe, test, expect} from 'vitest'
 
 describe('relativize', () => {
@@ -16,14 +16,11 @@ describe('relativize', () => {
 })
 
 describe('cwd', () => {
-  test('returns the initial cwd where the command has been called', () => {
+  test.runIf(process.env.INIT_CWD)('returns the initial cwd where the command has been called', () => {
     // Given
     const path = cwd()
 
     // Then
-    if (process.env.INIT_CWD) {
-      // This env variable is only set when invoking a npm script
-      expect(path).toStrictEqual(normalizePath(process.env.INIT_CWD))
-    }
+    expect(path).toStrictEqual(normalizePath(process.env.INIT_CWD!))
   })
 })
