@@ -21,6 +21,22 @@
           "cwd": "packages/cli-kit"
         }
       },
+      "docs:generate": {
+        "executor": "nx:run-commands",
+        "outputs": ["docs"],
+        "options": {
+          "command": "pnpm typedoc --out docs $(find ./src/public/**/{*.ts,*.tsx} | grep -v .test.ts)",
+          "cwd": "packages/cli-kit"
+        }
+      },
+      "docs:open": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["docs:generate"],
+        "options": {
+          "command": "open docs/index.html",
+          "cwd": "packages/cli-kit"
+        }
+      },
       "lint": {
         "executor": "nx:run-commands",
         "dependsOn": ["lint:js"],

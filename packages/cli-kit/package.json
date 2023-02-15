@@ -44,6 +44,8 @@
   "scripts": {
     "build": "nx build",
     "clean": "nx clean",
+    "docs:generate": "nx docs:generate",
+    "docs:open": "nx docs:open",
     "lint": "nx lint",
     "lint:ruby": "nx lint:ruby",
     "lint:js": "nx lint:js",
