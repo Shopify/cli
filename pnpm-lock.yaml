@@ -534,11 +534,11 @@ importers:
   packages/eslint-plugin-cli:
     specifiers:
       '@shopify/eslint-plugin': 42.0.3
-      eslint-plugin-rulesdir: ^0.2.1
+      eslint-plugin-rulesdir: 0.2.2
       pathe: 1.0.0
     dependencies:
       '@shopify/eslint-plugin': registry.npmjs.org/@shopify/eslint-plugin/42.0.3
-      eslint-plugin-rulesdir: 0.2.1
+      eslint-plugin-rulesdir: 0.2.2
       pathe: 1.0.0
 
   packages/features:
@@ -8064,6 +8064,12 @@ packages:
   /eslint-plugin-rulesdir/0.2.1:
     resolution: {integrity: sha512-t7rQvEyfE4JZJu6dPl4/uVr6Fr0fxopBhzVbtq3isfOHMKdlIe9xW/5CtIaWZI0E1U+wzAk0lEnZC8laCD5YLA==}
     engines: {node: '>=4.0.0'}
+    dev: true
+
+  /eslint-plugin-rulesdir/0.2.2:
+    resolution: {integrity: sha512-qhBtmrWgehAIQeMDJ+Q+PnOz1DWUZMPeVrI0wE9NZtnpIMFUfh3aPKFYt2saeMSemZRrvUtjWfYwepsC8X+mjQ==}
+    engines: {node: '>=4.0.0'}
+    dev: false
 
   /eslint-plugin-sort-class-members/1.16.0:
     resolution: {integrity: sha512-8l0IqUmoupk9PvO5D4I5zJqirVe9sax5Hpfv9xQmnrSpLYkc8BSYGnUjuHGMSSe4jKuC73NIr38kQv1tPbO+Xg==}
