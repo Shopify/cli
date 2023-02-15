@@ -115,6 +115,7 @@
           "delivery_customization",
           "order_routing_location_rule",
           "cart_transform",
+          "completion_target",
         ],
         "default": "checkout_ui_extension",
     },
