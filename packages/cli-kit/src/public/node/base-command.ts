@@ -105,7 +105,7 @@ abstract class BaseCommand extends Command {
   }
 
   protected async environmentsFilePath(rawFlags: {path?: string}): Promise<string | undefined> {
-    const basePath = rawFlags.path || cwd()
+    const basePath = rawFlags.path && rawFlags.path !== '.' ? rawFlags.path : cwd()
     return findPathUp(this.environmentsFilename(), {
       cwd: basePath,
       type: 'file',
