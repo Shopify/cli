@@ -54,7 +54,7 @@ const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promi
       )
     }
 
-    outputWarn(`You've reached the limit for these type of extensions: ${options.unavailableExtensions.join(', ')}\n`)
+    outputWarn(`You've reached the limit for these types of extensions: ${options.unavailableExtensions.join(', ')}\n`)
     // eslint-disable-next-line require-atomic-updates
     extensionType = await renderSelectPrompt({
       message: 'Type of extension?',
