@@ -56,6 +56,14 @@ export async function bundleExtension(options: BundleOptions) {
       }
     })
   }
+
+  // TEMPORARY - hack the built javascript bundle by adding a try/catch around the entire script.
+  // This ensures that any unexpected error that may occur gets output to console log and not
+  // swallowed by our web worker.
+  const fs = require('fs');
+  const mainJs = fs.readFileSync(esbuildOptions.outfile, 'utf8')
+  const safeJs = `try{${mainJs}}catch(e){console.log('Unexpected Error Loading Script',e,e.stack)}`
+  fs.writeFileSync(esbuildOptions.outfile, safeJs, { encoding: 'utf8' })
   onResult(result, options)
 }
 
