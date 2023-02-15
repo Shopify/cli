@@ -1,7 +1,7 @@
 {
   "name": "@shopify/eslint-plugin-cli",
   "version": "1.0.0",
-  "description": "Shopify CLI's ESLint rules and configs.",
+  "description": "Shopify CLI's ESLint rules and configs",
   "keywords": [
     "eslint",
     "eslintconfig",
