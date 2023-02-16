@@ -75,7 +75,7 @@
     "liquidjs": "^9.36.0",
     "node-fetch": "^3.2.4",
     "nx": "^15.3.0",
-    "oclif": "^3.4.2",
+    "oclif": "3.6.4",
     "octokit-plugin-create-pull-request": "^3.12.2",
     "pathe": "1.0.0",
     "pin-github-action": "^1.8.0",
@@ -109,6 +109,6 @@
   "resolutions": {
     "@types/react": "16.14.0",
     "vite": "2.9.12",
-    "@oclif/core": "1.21.0"
+    "@oclif/core": "2.1.4"
   }
 }

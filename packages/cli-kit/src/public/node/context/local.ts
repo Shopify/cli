@@ -1,4 +1,4 @@
-import {isSpin} from './spin.js'
+import {isSpin, isSpinEnvironment} from './spin.js'
 import {isTruthy, isSet} from '../../../private/node/context/utilities.js'
 import {environmentVariables, pathConstants} from '../../../private/node/constants.js'
 import {fileExists} from '../fs.js'
@@ -99,7 +99,7 @@ export function alwaysLogAnalytics(env = process.env): boolean {
  * @returns True if SHOPIFY_CLI_1P is truthy.
  */
 export function firstPartyDev(env = process.env): boolean {
-  return isTruthy(env[environmentVariables.firstPartyDev])
+  return isSpin(env) || isSpinEnvironment(env) || isTruthy(env[environmentVariables.firstPartyDev])
 }
 
 /**

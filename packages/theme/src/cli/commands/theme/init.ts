@@ -1,7 +1,7 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {cloneRepoAndCheckoutLatestTag, cloneRepo} from '../../services/init.js'
-import {Flags} from '@oclif/core'
+import {Args, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
@@ -10,13 +10,13 @@ import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 export default class Init extends ThemeCommand {
   static description = 'Clones a Git repository to use as a starting point for building a new theme.'
 
-  static args = [
-    {
+  static args = {
+    name: Args.string({
       name: 'name',
       description: 'Name of the new theme',
       required: false,
-    },
-  ]
+    }),
+  }
 
   static flags = {
     ...globalFlags,
