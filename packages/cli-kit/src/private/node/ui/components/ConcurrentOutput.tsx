@@ -51,7 +51,6 @@ interface Chunk {
  * 2022-10-10 13:11:03 | frontend   | > cross-env NODE_ENV=development node vite-server.js
  * 2022-10-10 13:11:03 | frontend   |
  * 2022-10-10 13:11:03 | frontend   |
- * 2022-10-10 13:11:03 | backend    | [nodemon] 2.0.19
  * 2022-10-10 13:11:03 | backend    |
  * 2022-10-10 13:11:03 | backend    | [nodemon] to restart at any time, enter `rs`
  * 2022-10-10 13:11:03 | backend    | [nodemon] watching path(s): backend/
