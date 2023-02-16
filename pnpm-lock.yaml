@@ -286,6 +286,7 @@ importers:
       '@oclif/plugin-plugins': 2.3.2
       '@shopify/app': 3.43.0
       '@shopify/cli-kit': 3.43.0
+      '@shopify/plugin-did-you-mean': 0.2.0
       '@shopify/theme': 3.43.0
       '@types/node': 14.18.36
       '@vitest/coverage-istanbul': ^0.26.3
@@ -297,6 +298,7 @@ importers:
       '@oclif/plugin-help': 5.2.4
       '@oclif/plugin-plugins': 2.3.2
       '@shopify/cli-kit': link:../cli-kit
+      '@shopify/plugin-did-you-mean': link:../plugin-did-you-mean
     devDependencies:
       '@shopify/app': link:../app
       '@shopify/theme': link:../theme

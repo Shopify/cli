@@ -97,7 +97,9 @@
     "@oclif/plugin-commands": "2.2.9",
     "@oclif/plugin-help": "5.2.4",
     "@oclif/plugin-plugins": "2.3.2",
-    "@shopify/cli-kit": "3.43.0"
+    "@shopify/cli-kit": "3.43.0",
+    "@shopify/plugin-did-you-mean": "0.2.0"
+
   },
   "devDependencies": {
     "@shopify/app": "3.43.0",
