@@ -12,10 +12,10 @@ import {promises as fs, existsSync} from 'fs'
 import {cloneCLIRepository} from './utils/git.js'
 import {logMessage, logSection} from './utils/log.js'
 
-const TOTAL_RUNS = 5
+const TOTAL_TIMES = 5
 
 async function benchmark(directory, results = {}, time = 1, {name}) {
-  logSection(`Benchmarking ${name}. ${times} remaining`)
+  logSection(`Benchmarking ${name}. Time ${time}`)
 
   for (const pluginName of ['app', 'theme']) {
     const oclifManifestPath = path.join(directory, 'packages', pluginName, 'oclif.manifest.json')
@@ -46,8 +46,8 @@ async function benchmark(directory, results = {}, time = 1, {name}) {
     }
   }
 
-  if (times < TOTAL_RUNS) {
-    return benchmark(directory, results, times + 1, {name})
+  if (time < TOTAL_TIMES) {
+    return benchmark(directory, results, time + 1, {name})
   } else {
     return results
   }
