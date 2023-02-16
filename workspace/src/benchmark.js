@@ -12,7 +12,9 @@ import {promises as fs, existsSync} from 'fs'
 import {cloneCLIRepository} from './utils/git.js'
 import {logMessage, logSection} from './utils/log.js'
 
-async function benchmark(directory, results = {}, times = 5, {name}) {
+const TOTAL_RUNS = 5
+
+async function benchmark(directory, results = {}, time = 1, {name}) {
   logSection(`Benchmarking ${name}. ${times} remaining`)
 
   for (const pluginName of ['app', 'theme']) {
@@ -33,12 +35,19 @@ async function benchmark(directory, results = {}, times = 5, {name}) {
       const diff = endTimestamp - startTimestamp
       const commandId = command.join(' ')
       logMessage(`${commandId}: ${diff} ms`)
-      results[commandId] = [...(results[commandId] ?? []), diff]
+
+      /**
+       * We don't collect the results from the first and treat them
+       * as a cache-warming run.
+       */
+      if (time !== 1) {
+        results[commandId] = [...(results[commandId] ?? []), diff]
+      }
     }
   }
 
-  if (times > 1) {
-    return benchmark(directory, results, times - 1, {name})
+  if (times < TOTAL_RUNS) {
+    return benchmark(directory, results, times + 1, {name})
   } else {
     return results
   }
