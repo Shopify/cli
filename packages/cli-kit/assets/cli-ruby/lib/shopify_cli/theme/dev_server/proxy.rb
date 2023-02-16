@@ -184,7 +184,8 @@ module ShopifyCLI
           # (Taken from Rack::Proxy)
           response_headers.reject! { |k| HOP_BY_HOP_HEADERS.include?(k.downcase) }
 
-          if response_headers["location"]&.include?("myshopify.com") || response_headers["location"]&.include?("spin.dev")
+          if response_headers["location"]&.include?("myshopify.com")
+            || response_headers["location"]&.include?("spin.dev")
             response_headers["location"].gsub!(%r{(https://#{shop})}, "http://#{host(env)}")
           end
 
