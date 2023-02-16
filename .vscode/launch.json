@@ -115,7 +115,7 @@
           "delivery_customization",
           "order_routing_location_rule",
           "cart_transform",
-          "tax_calculations",
+          "tax_calculation",
         ],
         "default": "checkout_ui_extension",
     },
