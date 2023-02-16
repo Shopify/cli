@@ -44,6 +44,8 @@
   "scripts": {
     "build": "nx build",
     "clean": "nx clean",
+    "docs:generate": "nx docs:generate",
+    "docs:open": "nx docs:open",
     "lint": "nx lint",
     "lint:ruby": "nx lint:ruby",
     "lint:js": "nx lint:js",
@@ -165,6 +167,8 @@
     "@vitest/coverage-istanbul": "^0.26.3",
     "ink-testing-library": "^2.1.0",
     "node-stream-zip": "^1.15.0",
+    "typedoc": "^0.23.25",
+    "typescript": "4.9.4",
     "vite": "^2.9.13",
     "vitest": "^0.26.3"
   },
