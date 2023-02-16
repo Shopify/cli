@@ -7,16 +7,16 @@
   "license": "MIT",
   "author": "Shopify",
   "type": "module",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "/dist",
+    "/oclif.manifest.json"
   ],
 
   "scripts": {
-    "shopify": "nx build cli && node packages/cli/bin/dev.js",
-    "clean": "nx clean",
     "build": "nx build",
+    "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
