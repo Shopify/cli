@@ -2,6 +2,7 @@ import {execCLI2} from './ruby.js'
 import {captureOutput} from './system.js'
 import * as system from './system.js'
 import * as file from './fs.js'
+import * as spin from './context/spin.js'
 import {describe, expect, it, vi} from 'vitest'
 
 vi.mock('./fs.js')
@@ -181,4 +182,76 @@ describe('execCLI', () => {
     // Teardown
     process.env = originalEnv
   })
+})
+
+it('when it run with spin then the it passes spin configuration to the CLI2', async () => {
+  // Setup
+  const originalEnv = process.env
+
+  // Given
+  const execSpy = vi.spyOn(system, 'exec')
+
+  process.env = {...originalEnv, SHOPIFY_CLI_2_0_DIRECTORY: './CLI2', SHOPIFY_RUN_AS_USER: '1'}
+
+  vi.mocked(file.fileExists).mockResolvedValue(true)
+  vi.mocked(captureOutput).mockResolvedValueOnce('2.7.5')
+  vi.mocked(captureOutput).mockResolvedValueOnce('2.4.0')
+  vi.spyOn(spin, 'isSpinEnvironment').mockReturnValue(true)
+  vi.spyOn(spin, 'spinFqdn').mockResolvedValue('workspace.namespace.host.to.com')
+
+  // When
+  await execCLI2(['args'], {
+    token: 'token_0000_1111_2222_3333',
+    directory: './directory',
+  })
+
+  // Then
+  expect(execSpy).toHaveBeenLastCalledWith('bundle', ['exec', 'shopify', 'args'], {
+    stdio: 'inherit',
+    cwd: './directory',
+    env: {
+      ...process.env,
+      SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: undefined,
+      SHOPIFY_CLI_ADMIN_AUTH_TOKEN: undefined,
+      SHOPIFY_CLI_STORE: undefined,
+      SHOPIFY_CLI_AUTH_TOKEN: 'token_0000_1111_2222_3333',
+      SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
+      BUNDLE_GEMFILE: 'CLI2/Gemfile',
+      SPIN: '1',
+      SPIN_WORKSPACE: 'workspace',
+      SPIN_NAMESPACE: 'namespace',
+      SPIN_HOST: 'host.to.com',
+    },
+  })
+
+  // Teardown
+  process.env = originalEnv
+})
+
+it('when it run with spin and fqdn has a wrong format then it throws an exception', async () => {
+  // Setup
+  const originalEnv = process.env
+
+  // Given
+  const execSpy = vi.spyOn(system, 'exec')
+
+  process.env = {...originalEnv, SHOPIFY_CLI_2_0_DIRECTORY: './CLI2', SHOPIFY_RUN_AS_USER: '1'}
+
+  vi.mocked(file.fileExists).mockResolvedValue(true)
+  vi.mocked(captureOutput).mockResolvedValueOnce('2.7.5')
+  vi.mocked(captureOutput).mockResolvedValueOnce('2.4.0')
+  vi.spyOn(spin, 'isSpinEnvironment').mockReturnValue(true)
+  vi.spyOn(spin, 'spinFqdn').mockResolvedValue('malformed.fqdn')
+
+  // When / Then
+  await expect(() =>
+    execCLI2(['args'], {
+      token: 'token_0000_1111_2222_3333',
+      directory: './directory',
+    }),
+  ).rejects.toThrowError('Invalid Spin fqdn: malformed.fqdn')
+
+  // Teardown
+  // eslint-disable-next-line require-atomic-updates
+  process.env = originalEnv
 })

@@ -6,6 +6,7 @@ import * as file from './fs.js'
 import {joinPath, dirname, cwd} from './path.js'
 import {AbortError, AbortSilentError} from './error.js'
 import {isShopify} from './context/local.js'
+import {isSpinEnvironment, spinFqdn} from './context/spin.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
 import {outputContent, outputToken} from '../../public/node/output.js'
@@ -55,6 +56,7 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
     // environment. We use this to specify our own Gemfile for CLI2, which exists
     // outside the user's project directory.
     BUNDLE_GEMFILE: joinPath(await shopifyCLIDirectory(embedded), 'Gemfile'),
+    ...(await addSpinParameters()),
   }
 
   try {
@@ -386,4 +388,24 @@ function gemExecutable(): string {
 async function embeddedCLIExecutable(): Promise<string> {
   const cliDirectory = await shopifyCLIDirectory(true)
   return joinPath(cliDirectory, 'bin', 'shopify')
+}
+
+/**
+ * Set environment variables in case the CLI is running in a Spin environment.
+ *
+ * @returns The environment variables to set.
+ */
+async function addSpinParameters() {
+  if (!isSpinEnvironment()) return {}
+
+  const fqdn = await spinFqdn()
+  const fqdnTokens = fqdn.split('.')
+  if (fqdnTokens.length < 3) throw new AbortError(`Invalid Spin fqdn: ${fqdn}`)
+
+  return {
+    SPIN_WORKSPACE: fqdnTokens[0],
+    SPIN_NAMESPACE: fqdnTokens[1],
+    SPIN_HOST: fqdnTokens.slice(2).join('.'),
+    SPIN: '1',
+  }
 }
