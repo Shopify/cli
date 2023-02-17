@@ -286,6 +286,7 @@ importers:
       '@oclif/plugin-plugins': 2.3.2
       '@shopify/app': 3.43.0
       '@shopify/cli-kit': 3.43.0
+      '@shopify/plugin-did-you-mean': 0.2.0
       '@shopify/theme': 3.43.0
       '@types/node': 14.18.36
       '@vitest/coverage-istanbul': ^0.26.3
@@ -297,6 +298,7 @@ importers:
       '@oclif/plugin-help': 5.2.4
       '@oclif/plugin-plugins': 2.3.2
       '@shopify/cli-kit': link:../cli-kit
+      '@shopify/plugin-did-you-mean': link:../plugin-did-you-mean
     devDependencies:
       '@shopify/app': link:../app
       '@shopify/theme': link:../theme
@@ -562,6 +564,21 @@ importers:
       pathe: 1.0.0
       rimraf: 3.0.2
       tempy: 1.0.1
+
+  packages/plugin-did-you-mean:
+    specifiers:
+      '@oclif/core': 2.1.4
+      '@shopify/cli-kit': 3.43.0
+      n-gram: 2.0.2
+      vite: 2.9.12
+      vitest: ^0.26.3
+    dependencies:
+      '@oclif/core': 2.1.4
+      '@shopify/cli-kit': link:../cli-kit
+      n-gram: 2.0.2
+    devDependencies:
+      vite: 2.9.12
+      vitest: 0.26.3
 
   packages/plugin-ngrok:
     specifiers:
@@ -4673,21 +4690,21 @@ packages:
     resolution: {integrity: sha512-LcDAiYWRtwAoSOArfk7cuYvFXytxfVrdX7yxoUmK7pPITLk5jYh2F8knCwS7LjgYL8u1eidPlKKV6Ikqq0ODqQ==}
     engines: {node: '>=8'}
     dependencies:
-      tslib: 2.4.1
+      tslib: 2.5.0
     dev: true
 
   /@wry/equality/0.5.3:
     resolution: {integrity: sha512-avR+UXdSrsF2v8vIqIgmeTY0UR91UT+IyablCyKe/uk22uOJ8fusKZnH9JH9e1/EtLeNJBtagNmL3eJdnOV53g==}
     engines: {node: '>=8'}
     dependencies:
-      tslib: 2.4.1
+      tslib: 2.5.0
     dev: true
 
   /@wry/trie/0.3.2:
     resolution: {integrity: sha512-yRTyhWSls2OY/pYLfwff867r8ekooZ4UI+/gxot5Wj8EFwSf2rG+n+Mo/6LoLQm1TKA4GRj2+LCpbfS937dClQ==}
     engines: {node: '>=8'}
     dependencies:
-      tslib: 2.4.1
+      tslib: 2.5.0
     dev: true
 
   /@yarnpkg/lockfile/1.1.0:
@@ -10891,6 +10908,10 @@ packages:
       thenify-all: 1.6.0
     dev: true
 
+  /n-gram/2.0.2:
+    resolution: {integrity: sha512-S24aGsn+HLBxUGVAUFOwGpKs7LBcG4RudKU//eWzt/mQ97/NMKQxDWHyHx63UNWk/OOdihgmzoETn1tf5nQDzQ==}
+    dev: false
+
   /named-placeholders/1.1.2:
     resolution: {integrity: sha512-wiFWqxoLL3PGVReSZpjLVxyJ1bRqe+KKJVbr4hGs1KWfTZTQyezHFBbuKj9hsizHyGV2ne7EMjHdxEGAybD5SA==}
     engines: {node: '>=6.0.0'}
@@ -13952,7 +13973,7 @@ packages:
     resolution: {integrity: sha512-uivwYcQaxAucv1CzRp2n/QdYPo4ILf9VXgH19zEIjFx2EJufV16P0JtJVpYHy89DItG6Kwj2oIUjrcK5au+4tQ==}
     engines: {node: '>=8'}
     dependencies:
-      tslib: 2.4.1
+      tslib: 2.5.0
     dev: true
 
   /ts-node/10.9.1_ocil65wecyuhsmrrocoajouipe:

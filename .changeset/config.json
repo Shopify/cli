@@ -12,6 +12,7 @@
     "@shopify/theme",
     "@shopify/ui-extensions-dev-console-app",
     "@shopify/plugin-ngrok",
+    "@shopify/plugin-did-you-mean",
     "@shopify/cli-hydrogen",
     "@shopify/create-hydrogen"
   ]],
