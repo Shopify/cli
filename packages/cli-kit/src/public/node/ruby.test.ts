@@ -11,9 +11,6 @@ import {describe, expect, it, SpyInstance, vi} from 'vitest'
 vi.mock('./system')
 vi.mock('./os')
 
-const isBundled = true
-const isWindows = true
-
 describe('execCLI', () => {
   it('throws an exception when Ruby is not installed', async () => {
     vi.spyOn(local, 'isShopify').mockResolvedValue(false)
@@ -69,7 +66,7 @@ describe('execCLI', () => {
   it('when run bundled CLI2 in non windows then gemfile content is correct and bundle runs with correct params', async () => {
     await file.inTemporaryDirectory(async (cli2Directory) => {
       // Given
-      const execSpy = mockBundledCLI2(cli2Directory, !isWindows)
+      const execSpy = mockBundledCLI2(cli2Directory, {windows: false})
       const gemfilePath = joinPath(cli2Directory, 'ruby-cli', RubyCLIVersion, 'Gemfile')
 
       // When
@@ -80,14 +77,14 @@ describe('execCLI', () => {
 
       // Then
       validateBudleExec(execSpy, gemfilePath)
-      await validateGemFileContent(gemfilePath, isBundled, !isWindows)
+      await validateGemFileContent(gemfilePath, {bundled: true, windows: false})
     })
   })
 
   it('when run bundled CLI2 in windows then gemfile content should be correct and bundle runs with correct params', async () => {
     await file.inTemporaryDirectory(async (cli2Directory) => {
       // Given
-      const execSpy = mockBundledCLI2(cli2Directory, isWindows)
+      const execSpy = mockBundledCLI2(cli2Directory, {windows: true})
       const gemfilePath = joinPath(cli2Directory, 'ruby-cli', RubyCLIVersion, 'Gemfile')
 
       // When
@@ -98,14 +95,14 @@ describe('execCLI', () => {
 
       // Then
       validateBudleExec(execSpy, gemfilePath)
-      await validateGemFileContent(gemfilePath, isBundled, isWindows)
+      await validateGemFileContent(gemfilePath, {bundled: true, windows: true})
     })
   })
 
   it('when run embedded CLI2 in non windows then gemfile content should be correct and bundle runs with correct params', async () => {
     await file.inTemporaryDirectory(async (cli2Directory) => {
       // Given
-      const execSpy = await mockEmbeddedCLI2(cli2Directory, !isWindows)
+      const execSpy = await mockEmbeddedCLI2(cli2Directory, {windows: false, existingWindowsDependency: false})
       const gemfilePath = joinPath(cli2Directory, 'Gemfile')
 
       // When
@@ -116,15 +113,14 @@ describe('execCLI', () => {
 
       // Then
       validateBudleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'))
-      await validateGemFileContent(gemfilePath, !isBundled, !isWindows)
+      await validateGemFileContent(gemfilePath, {bundled: false, windows: false})
     })
   })
 
   it('when run embedded CLI2 in windows without dependency then gemfile content should be correct and bundle runs with correct params', async () => {
     await file.inTemporaryDirectory(async (cli2Directory) => {
       // Given
-      const existingWindowsDependency = true
-      const execSpy = await mockEmbeddedCLI2(cli2Directory, isWindows, !existingWindowsDependency)
+      const execSpy = await mockEmbeddedCLI2(cli2Directory, {windows: true, existingWindowsDependency: false})
       const gemfilePath = joinPath(cli2Directory, 'Gemfile')
 
       // When
@@ -135,7 +131,7 @@ describe('execCLI', () => {
 
       // Then
       validateBudleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'))
-      await validateGemFileContent(gemfilePath, !isBundled, isWindows)
+      await validateGemFileContent(gemfilePath, {bundled: false, windows: true})
     })
   })
 
@@ -143,7 +139,7 @@ describe('execCLI', () => {
     await file.inTemporaryDirectory(async (cli2Directory) => {
       // Given
       const existingWindowsDependency = true
-      const execSpy = await mockEmbeddedCLI2(cli2Directory, isWindows, existingWindowsDependency)
+      const execSpy = await mockEmbeddedCLI2(cli2Directory, {windows: true, existingWindowsDependency: true})
       const gemfilePath = joinPath(cli2Directory, 'Gemfile')
 
       // When
@@ -154,12 +150,12 @@ describe('execCLI', () => {
 
       // Then
       validateBudleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'))
-      await validateGemFileContent(gemfilePath, !isBundled, isWindows)
+      await validateGemFileContent(gemfilePath, {bundled: false, windows: true})
     })
   })
 })
 
-function mockBundledCLI2(cli2Directory: string, windows: boolean) {
+function mockBundledCLI2(cli2Directory: string, {windows}: {windows: boolean}) {
   vi.spyOn(local, 'isShopify').mockResolvedValue(false)
   vi.spyOn(pathConstants.directories.cache.vendor, 'path').mockReturnValue(cli2Directory)
   mockRubyEnvironment()
@@ -167,7 +163,10 @@ function mockBundledCLI2(cli2Directory: string, windows: boolean) {
   return vi.spyOn(system, 'exec')
 }
 
-async function mockEmbeddedCLI2(cli2Directory: string, windows: boolean, existingWindowsDependency = false) {
+async function mockEmbeddedCLI2(
+  cli2Directory: string,
+  {windows, existingWindowsDependency}: {windows: boolean; existingWindowsDependency: boolean},
+) {
   vi.spyOn(local, 'isShopify').mockResolvedValue(true)
   vi.spyOn(file, 'findPathUp').mockResolvedValue(cli2Directory)
   mockRubyEnvironment()
@@ -213,7 +212,7 @@ function validateBudleExec(execSpy: SpyInstance, gemFilePath: string, execPath =
   })
 }
 
-async function validateGemFileContent(gemfilePath: string, bundled: boolean, windows: boolean) {
+async function validateGemFileContent(gemfilePath: string, {bundled, windows}: {bundled: boolean; windows: boolean}) {
   expect(file.fileExists(gemfilePath)).toBeTruthy()
   const gemContent = await file.readFile(gemfilePath, {encoding: 'utf8'})
   expect(gemContent).toContain("source 'https://rubygems.org'")
