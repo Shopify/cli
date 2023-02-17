@@ -524,7 +524,7 @@ describe('generateFrontendURL', () => {
       usingLocalhost: false,
     })
     expect(setAppInfo).not.toBeCalled()
-    expect(prompt).not.toBeCalled()
+    expect(renderSelectPrompt).not.toBeCalled()
   })
 
   it('Returns a custom tunnel url if we are in a spin environment but a custom tunnel option is active', async () => {

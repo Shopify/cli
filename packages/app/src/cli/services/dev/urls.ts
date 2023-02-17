@@ -68,8 +68,11 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   }
 
   if (isSpin() && !options.tunnelUrl) {
-    frontendPort = appPort() ?? frontendPort
-    frontendUrl = appHost() ? `https://${appHost()}` : `https://cli.${await spinFqdn()}`
+    frontendUrl = `https://cli.${await spinFqdn()}`
+    if (appPort() !== undefined) {
+      frontendPort = appPort() ?? frontendPort
+      frontendUrl = `https://${appHost()}`
+    }
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 
