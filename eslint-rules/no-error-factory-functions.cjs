@@ -49,7 +49,6 @@ module.exports = {
 const shitlist = {
   'packages/cli-kit/src/api/admin.ts': 1663587282910,
   'packages/app/src/cli/commands/app/generate/extension.ts': 1665628286000,
-  'packages/cli-hydrogen/src/cli/services/deploy/error.ts': 1665628286000,
   'packages/cli-kit/src/context/spin.ts': 1665057109000,
   'packages/cli-kit/src/git.ts': 1665628286000,
   'packages/app/src/cli/services/deploy.ts': 1665628286000,

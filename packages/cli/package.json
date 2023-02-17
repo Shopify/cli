@@ -127,8 +127,8 @@
     "plugins": [
       "@shopify/app",
       "@shopify/theme",
-      "@shopify/cli-hydrogen",
       "@shopify/plugin-did-you-mean",
+      "@shopify/cli-hydrogen",
       "@oclif/plugin-help",
       "@oclif/plugin-plugins",
       "@oclif/plugin-commands"
@@ -136,9 +136,6 @@
     "scope": "shopify",
     "topicSeparator": " ",
     "topics": {
-      "hydrogen": {
-        "description": "Build Hydrogen storefronts."
-      },
       "theme": {
         "description": "Build Liquid themes."
       },
