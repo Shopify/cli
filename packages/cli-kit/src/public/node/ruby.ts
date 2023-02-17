@@ -255,10 +255,8 @@ async function createThemeCheckCLIWorkingDirectory(): Promise<void> {
  */
 async function createShopifyCLIGemfile(): Promise<void> {
   const directory = await shopifyCLIDirectory()
-  const content = ["source 'https://rubygems.org'", `gem 'shopify-cli', '${RubyCLIVersion}'`].concat(
-    buildWindowsDependencies(),
-  )
-  await addContentToGemfile(directory, content)
+  const gemfileContent = getBaseGemfileContent().concat(getWindowsDependencies())
+  await addContentToGemfile(directory, gemfileContent)
 }
 
 /**
@@ -275,8 +273,17 @@ async function createThemeCheckGemfile(): Promise<void> {
  * @param directory - Directory where CLI2 Gemfile is located.
  */
 async function bundleInstallLocalShopifyCLI(directory: string): Promise<void> {
-  await addContentToGemfile(directory, buildWindowsDependencies())
+  await addContentToGemfile(directory, getWindowsDependencies())
   await exec(bundleExecutable(), ['install'], {cwd: directory})
+}
+
+/**
+ * Build the list of lines with the base content of the Gemfile.
+ *
+ * @returns List of lines with base content.
+ */
+function getBaseGemfileContent() {
+  return ["source 'https://rubygems.org'", `gem 'shopify-cli', '${RubyCLIVersion}'`]
 }
 
 /**
@@ -284,7 +291,7 @@ async function bundleInstallLocalShopifyCLI(directory: string): Promise<void> {
  *
  * @returns List of Windows dependencies.
  */
-function buildWindowsDependencies() {
+function getWindowsDependencies() {
   if (platformAndArch().platform === 'windows') {
     // 'wdm' is required by 'listen', see https://github.com/Shopify/cli/issues/780
     return ["gem 'wdm', '>= 0.1.0'"]
