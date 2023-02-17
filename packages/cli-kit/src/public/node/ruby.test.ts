@@ -2,11 +2,20 @@ import {execCLI2} from './ruby.js'
 import {captureOutput} from './system.js'
 import * as system from './system.js'
 import * as file from './fs.js'
-import * as spin from './context/spin.js'
-import {describe, expect, it, vi} from 'vitest'
+import {isShopify} from './context/local.js'
+import {getEnvironmentVariables} from './environment.js'
+import {isSpinEnvironment, spinFqdn} from './context/spin.js'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 vi.mock('./fs.js')
 vi.mock('./system')
+vi.mock('./context/local.js')
+vi.mock('./context/spin.js')
+vi.mock('./environment')
+
+beforeEach(() => {
+  vi.mocked(getEnvironmentVariables).mockReturnValue({})
+})
 
 describe('execCLI', () => {
   it('throws an exception when Ruby is not installed', async () => {
@@ -48,9 +57,6 @@ describe('execCLI', () => {
   })
 
   it('throws an exception when creating CLI working directory', async () => {
-    // Setup
-    const originalEnv = process.env
-
     // Given
     const rubyVersion = '2.7.5'
     const bundlerVersion = '2.4.0'
@@ -58,28 +64,21 @@ describe('execCLI', () => {
     vi.mocked(captureOutput).mockResolvedValueOnce(rubyVersion)
     vi.mocked(captureOutput).mockResolvedValueOnce(bundlerVersion)
     vi.mocked(file.mkdir).mockRejectedValue({message: 'Error'})
-    process.env = {...originalEnv, SHOPIFY_RUN_AS_USER: '1'}
+    vi.mocked(isShopify).mockResolvedValue(false)
 
     // When/Then
     await expect(() => execCLI2(['args'])).rejects.toThrowError('Error')
-
-    // Teardown
-    // eslint-disable-next-line require-atomic-updates
-    process.env = originalEnv
   })
 
   it('passes token to the CLI2', async () => {
-    // Setup
-    const originalEnv = process.env
-
     // Given
     const execSpy = vi.spyOn(system, 'exec')
-
-    process.env = {...originalEnv, SHOPIFY_CLI_2_0_DIRECTORY: './CLI2', SHOPIFY_RUN_AS_USER: '1'}
 
     vi.mocked(file.fileExists).mockResolvedValue(true)
     vi.mocked(captureOutput).mockResolvedValueOnce('2.7.5')
     vi.mocked(captureOutput).mockResolvedValueOnce('2.4.0')
+    vi.mocked(isShopify).mockResolvedValue(false)
+    vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_2_0_DIRECTORY: './CLI2'})
 
     // When
     await execCLI2(['args'], {
@@ -92,7 +91,7 @@ describe('execCLI', () => {
       stdio: 'inherit',
       cwd: './directory',
       env: {
-        ...process.env,
+        ...getEnvironmentVariables(),
         SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: undefined,
         SHOPIFY_CLI_ADMIN_AUTH_TOKEN: undefined,
         SHOPIFY_CLI_STORE: undefined,
@@ -101,23 +100,17 @@ describe('execCLI', () => {
         BUNDLE_GEMFILE: 'CLI2/Gemfile',
       },
     })
-
-    // Teardown
-    process.env = originalEnv
   })
 
   it('run the CLI2 stored at a manual path', async () => {
-    // Setup
-    const originalEnv = process.env
-
     // Given
     const execSpy = vi.spyOn(system, 'exec')
-
-    process.env = {...originalEnv, SHOPIFY_CLI_2_0_DIRECTORY: '/manual', SHOPIFY_RUN_AS_USER: '1'}
 
     vi.mocked(file.fileExists).mockResolvedValue(true)
     vi.mocked(captureOutput).mockResolvedValueOnce('2.7.5')
     vi.mocked(captureOutput).mockResolvedValueOnce('2.4.0')
+    vi.mocked(isShopify).mockResolvedValue(false)
+    vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_2_0_DIRECTORY: '/manual'})
 
     // When
     await execCLI2(['args'], {
@@ -130,7 +123,7 @@ describe('execCLI', () => {
       stdio: 'inherit',
       cwd: './directory',
       env: {
-        ...process.env,
+        ...getEnvironmentVariables(),
         SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: undefined,
         SHOPIFY_CLI_ADMIN_AUTH_TOKEN: undefined,
         SHOPIFY_CLI_STORE: undefined,
@@ -139,23 +132,17 @@ describe('execCLI', () => {
         BUNDLE_GEMFILE: `/manual/Gemfile`,
       },
     })
-
-    // Teardown
-    process.env = originalEnv
   })
 
   it('run embbed CLI2 when shopify user', async () => {
-    // Setup
-    const originalEnv = process.env
-
     // Given
     const execSpy = vi.spyOn(system, 'exec')
-    process.env = {...originalEnv, SHOPIFY_RUN_AS_USER: '0'}
 
     vi.mocked(file.fileExists).mockResolvedValue(true)
     vi.mocked(file.findPathUp).mockResolvedValue('/embed/internal')
     vi.mocked(captureOutput).mockResolvedValueOnce('2.7.5')
     vi.mocked(captureOutput).mockResolvedValueOnce('2.4.0')
+    vi.mocked(isShopify).mockResolvedValue(true)
 
     // When
     await execCLI2(['args'], {
@@ -168,7 +155,7 @@ describe('execCLI', () => {
       stdio: 'inherit',
       cwd: './directory',
       env: {
-        ...process.env,
+        ...getEnvironmentVariables(),
         SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: undefined,
         SHOPIFY_CLI_ADMIN_AUTH_TOKEN: undefined,
         SHOPIFY_SHOP: undefined,
@@ -178,26 +165,20 @@ describe('execCLI', () => {
       },
       signal: undefined,
     })
-
-    // Teardown
-    process.env = originalEnv
   })
 })
 
-it('when it run with spin then the it passes spin configuration to the CLI2', async () => {
-  // Setup
-  const originalEnv = process.env
-
+it('when it run with spin then it passes spin configuration to the CLI2', async () => {
   // Given
   const execSpy = vi.spyOn(system, 'exec')
-
-  process.env = {...originalEnv, SHOPIFY_CLI_2_0_DIRECTORY: './CLI2', SHOPIFY_RUN_AS_USER: '1'}
 
   vi.mocked(file.fileExists).mockResolvedValue(true)
   vi.mocked(captureOutput).mockResolvedValueOnce('2.7.5')
   vi.mocked(captureOutput).mockResolvedValueOnce('2.4.0')
-  vi.spyOn(spin, 'isSpinEnvironment').mockReturnValue(true)
-  vi.spyOn(spin, 'spinFqdn').mockResolvedValue('workspace.namespace.host.to.com')
+  vi.mocked(isSpinEnvironment).mockReturnValue(true)
+  vi.mocked(spinFqdn).mockResolvedValue('workspace.namespace.host.to.com')
+  vi.mocked(isShopify).mockResolvedValue(false)
+  vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_2_0_DIRECTORY: './CLI2'})
 
   // When
   await execCLI2(['args'], {
@@ -210,7 +191,7 @@ it('when it run with spin then the it passes spin configuration to the CLI2', as
     stdio: 'inherit',
     cwd: './directory',
     env: {
-      ...process.env,
+      ...getEnvironmentVariables(),
       SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: undefined,
       SHOPIFY_CLI_ADMIN_AUTH_TOKEN: undefined,
       SHOPIFY_CLI_STORE: undefined,
@@ -223,25 +204,17 @@ it('when it run with spin then the it passes spin configuration to the CLI2', as
       SPIN_HOST: 'host.to.com',
     },
   })
-
-  // Teardown
-  process.env = originalEnv
 })
 
 it('when it run with spin and fqdn has a wrong format then it throws an exception', async () => {
-  // Setup
-  const originalEnv = process.env
-
   // Given
-  const execSpy = vi.spyOn(system, 'exec')
-
-  process.env = {...originalEnv, SHOPIFY_CLI_2_0_DIRECTORY: './CLI2', SHOPIFY_RUN_AS_USER: '1'}
-
   vi.mocked(file.fileExists).mockResolvedValue(true)
   vi.mocked(captureOutput).mockResolvedValueOnce('2.7.5')
   vi.mocked(captureOutput).mockResolvedValueOnce('2.4.0')
-  vi.spyOn(spin, 'isSpinEnvironment').mockReturnValue(true)
-  vi.spyOn(spin, 'spinFqdn').mockResolvedValue('malformed.fqdn')
+  vi.mocked(isSpinEnvironment).mockReturnValue(true)
+  vi.mocked(spinFqdn).mockResolvedValue('malformed.fqdn')
+  vi.mocked(isShopify).mockResolvedValue(true)
+  vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_2_0_DIRECTORY: './CLI2'})
 
   // When / Then
   await expect(() =>
@@ -250,8 +223,4 @@ it('when it run with spin and fqdn has a wrong format then it throws an exceptio
       directory: './directory',
     }),
   ).rejects.toThrowError('Invalid Spin fqdn: malformed.fqdn')
-
-  // Teardown
-  // eslint-disable-next-line require-atomic-updates
-  process.env = originalEnv
 })

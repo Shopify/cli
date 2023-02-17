@@ -7,6 +7,7 @@ import {joinPath, dirname, cwd} from './path.js'
 import {AbortError, AbortSilentError} from './error.js'
 import {isShopify} from './context/local.js'
 import {isSpinEnvironment, spinFqdn} from './context/spin.js'
+import {getEnvironmentVariables} from './environment.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
 import {outputContent, outputToken} from '../../public/node/output.js'
@@ -42,11 +43,11 @@ interface ExecCLI2Options {
  * @param options - Options to customize the execution of cli2.
  */
 export async function execCLI2(args: string[], options: ExecCLI2Options = {}): Promise<void> {
-  const embedded = (await isShopify()) || isTruthy(process.env.SHOPIFY_CLI_EMBEDDED_THEME_CLI)
+  const embedded = (await isShopify()) || isTruthy(getEnvironmentVariables().SHOPIFY_CLI_EMBEDDED_THEME_CLI)
 
   await installCLIDependencies(options.stdout ?? process.stdout, embedded)
   const env: NodeJS.ProcessEnv = {
-    ...process.env,
+    ...getEnvironmentVariables(),
     SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: options.storefrontToken,
     SHOPIFY_CLI_ADMIN_AUTH_TOKEN: options.adminSession?.token,
     SHOPIFY_SHOP: options.adminSession?.storeFqdn,
@@ -56,7 +57,7 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
     // environment. We use this to specify our own Gemfile for CLI2, which exists
     // outside the user's project directory.
     BUNDLE_GEMFILE: joinPath(await shopifyCLIDirectory(embedded), 'Gemfile'),
-    ...(await addSpinParameters()),
+    ...(await getSpinEnvironmentVariables()),
   }
 
   try {
@@ -157,7 +158,7 @@ async function installCLIDependencies(stdout: Writable, embedded = false) {
   const exists = await file.fileExists(localCLI)
 
   if (!exists) stdout.write('Installing theme dependencies...')
-  const usingLocalCLI2 = embedded || isTruthy(process.env.SHOPIFY_CLI_2_0_DIRECTORY)
+  const usingLocalCLI2 = embedded || isTruthy(getEnvironmentVariables().SHOPIFY_CLI_2_0_DIRECTORY)
   await validateRubyEnv()
   if (usingLocalCLI2) {
     await bundleInstallLocalShopifyCLI(localCLI)
@@ -317,7 +318,7 @@ async function shopifyCLIDirectory(embedded = false): Promise<string> {
   })) as string
   const bundledDirectory = joinPath(pathConstants.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
 
-  return embedded ? embeddedDirectory : process.env.SHOPIFY_CLI_2_0_DIRECTORY ?? bundledDirectory
+  return embedded ? embeddedDirectory : getEnvironmentVariables().SHOPIFY_CLI_2_0_DIRECTORY ?? bundledDirectory
 }
 
 /**
@@ -347,7 +348,7 @@ export async function version(): Promise<string | undefined> {
  * @returns The value of the environment variable.
  */
 function getRubyBinDir(): string | undefined {
-  return process.env.SHOPIFY_RUBY_BINDIR
+  return getEnvironmentVariables().SHOPIFY_RUBY_BINDIR
 }
 
 /**
@@ -391,11 +392,11 @@ async function embeddedCLIExecutable(): Promise<string> {
 }
 
 /**
- * Set environment variables in case the CLI is running in a Spin environment.
+ * Get environment variables required by the CLI2 in case the CLI3 is running in a Spin environment.
  *
  * @returns The environment variables to set.
  */
-async function addSpinParameters() {
+async function getSpinEnvironmentVariables() {
   if (!isSpinEnvironment()) return {}
 
   const fqdn = await spinFqdn()
