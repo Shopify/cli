@@ -30,13 +30,13 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "1.21.0",
+    "@oclif/core": "2.1.4",
     "@shopify/cli-kit": "3.43.0",
     "n-gram": "2.0.2"
   },
   "devDependencies": {
-    "vitest": "^0.26.3",
-    "vite": "2.9.12"
+    "vite": "^2.9.13",
+    "vitest": "^0.26.3"
   },
   "engines": {
     "node": ">=14.17.0"
@@ -55,7 +55,7 @@
     "commands": "dist/commands",
     "topics": {
       "config:autocorrect": {
-        "description": "Configure autocorrect feature"
+        "description": "Configure autocorrect feature."
       }
     },
     "hooks": {

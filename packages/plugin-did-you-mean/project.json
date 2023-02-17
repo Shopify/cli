@@ -43,7 +43,7 @@
         "cwd": "packages/plugin-did-you-mean"
       }
     },
-    "test-watch": {
+    "test:watch": {
       "executor": "nx:run-commands",
       "dependsOn": ["^build"],
       "options": {
