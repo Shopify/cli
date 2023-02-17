@@ -42,6 +42,7 @@ jobs:
       - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # pin@v2.3.1
         with:
           header: Benchmark
+          if: steps.benchmark.outputs.report != ''
           message: ${{ steps.benchmark.outputs.report }}
           recreate: true
   type-diff:
