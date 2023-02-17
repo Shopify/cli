@@ -12,36 +12,43 @@ import {promises as fs, existsSync} from 'fs'
 import {cloneCLIRepository} from './utils/git.js'
 import {logMessage, logSection} from './utils/log.js'
 
-async function benchmark(directory, results = {}, times = 5, {name}) {
-  logSection(`Benchmarking ${name}. ${times} remaining`)
+const TOTAL_TIMES = 5
 
-  for (const pluginName of ['app', 'theme']) {
-    const oclifManifestPath = path.join(directory, 'packages', pluginName, 'oclif.manifest.json')
-    const oclifManifest = JSON.parse(await fs.readFile(oclifManifestPath))
-    const commands = Object.keys(oclifManifest.commands).map((command) => command.split(':'))
-    for (const command of commands) {
-      const startTimestamp = Date.now()
-      const {stdout} = await execa(path.join(directory, 'packages/cli/bin/dev.js'), command, {
-        env: {SHOPIFY_CLI_ENV_STARTUP_PERFORMANCE_RUN: '1'},
-        cwd: directory,
-        stdout: 'pipe',
-        stderr: 'pipe',
-      })
-      const endTimestamp = JSON.parse(
-        stdout.replace('SHOPIFY_CLI_TIMESTAMP_START', '').replace('SHOPIFY_CLI_TIMESTAMP_END', ''),
-      ).timestamp
-      const diff = endTimestamp - startTimestamp
-      const commandId = command.join(' ')
-      logMessage(`${commandId}: ${diff} ms`)
-      results[commandId] = [...(results[commandId] ?? []), diff]
+async function benchmark(directory, {name}) {
+  const results = {}
+  for (let time = 1; time < TOTAL_TIMES; time++) {
+    logSection(`Benchmarking ${name}. Time ${time}`)
+
+    for (const pluginName of ['app', 'theme']) {
+      const oclifManifestPath = path.join(directory, 'packages', pluginName, 'oclif.manifest.json')
+      const oclifManifest = JSON.parse(await fs.readFile(oclifManifestPath))
+      const commands = Object.keys(oclifManifest.commands).map((command) => command.split(':'))
+      for (const command of commands) {
+        const startTimestamp = Date.now()
+        const {stdout} = await execa(path.join(directory, 'packages/cli/bin/dev.js'), command, {
+          env: {SHOPIFY_CLI_ENV_STARTUP_PERFORMANCE_RUN: '1'},
+          cwd: directory,
+          stdout: 'pipe',
+          stderr: 'pipe',
+        })
+        const endTimestamp = JSON.parse(
+          stdout.replace('SHOPIFY_CLI_TIMESTAMP_START', '').replace('SHOPIFY_CLI_TIMESTAMP_END', ''),
+        ).timestamp
+        const diff = endTimestamp - startTimestamp
+        const commandId = command.join(' ')
+        logMessage(`${commandId}: ${diff} ms`)
+
+        /**
+         * We don't collect the results from the first and treat them
+         * as a cache-warming run.
+         */
+        if (time > 1) {
+          results[commandId] = [...(results[commandId] ?? []), diff]
+        }
+      }
     }
   }
-
-  if (times > 1) {
-    return benchmark(directory, results, times - 1, {name})
-  } else {
-    return results
-  }
+  return results
 }
 
 async function report(currentBenchmark, baselineBenchmark) {
@@ -91,7 +98,7 @@ ${markdownTable}
 await temporaryDirectoryTask(async (tmpDir) => {
   const baselineDirectory = await cloneCLIRepository(tmpDir)
   const currentDirectory = path.join(url.fileURLToPath(new URL('.', import.meta.url)), '../..')
-  const baselineBenchmark = await benchmark(baselineDirectory, {}, 3, {name: 'baseline'})
-  const currentBenchmark = await benchmark(currentDirectory, {}, 3, {name: 'current'})
+  const baselineBenchmark = await benchmark(baselineDirectory, {}, {name: 'baseline'})
+  const currentBenchmark = await benchmark(currentDirectory, {}, {name: 'current'})
   await report(currentBenchmark, baselineBenchmark)
 })
