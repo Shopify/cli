@@ -1,5 +1,5 @@
 // https://eslint.org/docs/developer-guide/working-with-rules
-const VALID_FLAGS = ['SHOPIFY_FLAG_', 'SHOPIFY_HYDROGEN_FLAG_']
+const VALID_FLAGS = ['SHOPIFY_FLAG_']
 
 module.exports = {
   meta: {
