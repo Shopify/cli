@@ -9,8 +9,14 @@ import fs from 'fs'
 // the error stack and manually call exit so that the cleanup code is called. This
 // makes sure that there are no lingering ngrok processes.
 process.on('uncaughtException', (err) => {
-  fs.writeSync(process.stderr.fd, `${err.stack}\n\n`)
+  fs.writeSync(process.stderr.fd, `${err.stack}\n`)
   process.exit(1)
+})
+const signals = ['SIGINT', 'SIGTERM', 'SIGQUIT']
+signals.forEach((signal) => {
+  process.on(signal, () => {
+    process.exit(1)
+  })
 })
 
 interface RunShopifyCLIOptions {
