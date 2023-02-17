@@ -295,6 +295,8 @@ function getBaseGemfileContent() {
 function getWindowsDependencies() {
   if (platformAndArch().platform === 'windows') {
     // 'wdm' is required by 'listen', see https://github.com/Shopify/cli/issues/780
+    // Because it's a Windows-only dependency, it's not included in the `.gemspec`.
+    // Otherwise it'd install it in non-Windows environments, which is not needed.
     return [`gem 'wdm', '>= ${MinWdmWindowsVersion}'`]
   }
   return []
