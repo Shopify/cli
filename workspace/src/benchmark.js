@@ -66,33 +66,32 @@ async function report(currentBenchmark, baselineBenchmark) {
 
       const diff = round((currentAverageTime / baselineAverageTime - 1) * 100)
       let icon = '⚪️'
-      if (diff < 8) {
-        icon = '🟢'
-      } else if (diff < 10) {
-        icon = '🟡'
-      } else {
-        icon = '🔴'
+      if (diff > 10) {
+        rows.push([
+          '🔴',
+          `\`${command}\``,
+          `${round(baselineAverageTime)} ms`,
+          `${round(currentAverageTime)} ms`,
+          `${diff} %`,
+        ])
       }
-      rows.push([
-        icon,
-        `\`${command}\``,
-        `${round(baselineAverageTime)} ms`,
-        `${round(currentAverageTime)} ms`,
-        `${diff} %`,
-      ])
     }
   }
-  const markdownTable = `| Status | Command | Baseline (avg) | Current (avg) | Diff |
+  if (rows.length !== 0) {
+    const markdownTable = `| Status | Command | Baseline (avg) | Current (avg) | Diff |
 | ------- | -------- | ------- | ----- | ---- |
 ${rows.map((row) => `| ${row.join(' | ')} |`).join('\n')}
 `
-  setOutput(
-    'report',
-    `## Benchmark report
-The following table contains a summary of the startup time for all commands.
+    setOutput(
+      'report',
+      `## Benchmark report
+We detected a significant variation of startup time in the following commands.
+Note that it might be related to external factors that influence the benchmarking.
+If you believe that's the case, feel free to ignore the table below.
 ${markdownTable}
 `,
-  )
+    )
+  }
 }
 
 await temporaryDirectoryTask(async (tmpDir) => {

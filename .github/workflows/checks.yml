@@ -40,6 +40,7 @@ jobs:
         id: benchmark
         run: pnpm nx run benchmark
       - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # pin@v2.3.1
+        if: steps.benchmark.outputs.report != ''
         with:
           header: Benchmark
           message: ${{ steps.benchmark.outputs.report }}
