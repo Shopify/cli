@@ -1,4 +1,4 @@
-import {execCLI2, RubyCLIVersion} from './ruby.js'
+import {execCLI2, MinWdmWindowsVersion, RubyCLIVersion} from './ruby.js'
 import {captureOutput} from './system.js'
 import * as system from './system.js'
 import * as file from './fs.js'
@@ -191,7 +191,7 @@ function mockPlatformAndArch({windows}: {windows: boolean}) {
 async function createGemFile(cli2Directory: string, existingWindowsDependency: boolean) {
   const gemfilePath = joinPath(cli2Directory, 'Gemfile')
   let content = "source 'https://rubygems.org'\n"
-  if (existingWindowsDependency) content = content.concat("gem 'wdm', '>= 0.1.0'")
+  if (existingWindowsDependency) content = content.concat(`gem 'wdm', '>= ${MinWdmWindowsVersion}'`)
   await file.touchFile(gemfilePath)
   await file.appendFile(gemfilePath, content.concat('\n'))
 }
@@ -217,7 +217,7 @@ async function validateGemFileContent(gemfilePath: string, {bundled, windows}: {
   const gemContent = await file.readFile(gemfilePath, {encoding: 'utf8'})
   expect(gemContent).toContain("source 'https://rubygems.org'")
   if (bundled) expect(gemContent).toContain(`gem 'shopify-cli', '${RubyCLIVersion}'`)
-  const windowsDepency = "gem 'wdm', '>= 0.1.0'"
+  const windowsDepency = `gem 'wdm', '>= ${MinWdmWindowsVersion}'`
   if (windows) {
     expect(gemContent).toContain(windowsDepency)
     const notDuplicated = gemContent.indexOf(windowsDepency) === gemContent.lastIndexOf(windowsDepency)

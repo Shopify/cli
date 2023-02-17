@@ -17,6 +17,7 @@ export const RubyCLIVersion = '2.34.0'
 const ThemeCheckVersion = '1.14.0'
 const MinBundlerVersion = '2.3.8'
 const MinRubyVersion = '2.7.5'
+export const MinWdmWindowsVersion = '0.1.0'
 
 interface ExecCLI2Options {
   // Contains token and store to pass to CLI 2.0, which will be set as environment variables
@@ -294,7 +295,7 @@ function getBaseGemfileContent() {
 function getWindowsDependencies() {
   if (platformAndArch().platform === 'windows') {
     // 'wdm' is required by 'listen', see https://github.com/Shopify/cli/issues/780
-    return ["gem 'wdm', '>= 0.1.0'"]
+    return [`gem 'wdm', '>= ${MinWdmWindowsVersion}'`]
   }
   return []
 }
