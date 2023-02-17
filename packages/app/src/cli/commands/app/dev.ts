@@ -2,13 +2,16 @@ import {appFlags} from '../../flags.js'
 import dev from '../../services/dev.js'
 import Command from '../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
-import {path, string, cli, metadata} from '@shopify/cli-kit'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
+import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Dev extends Command {
-  static description = 'Run the app'
+  static description = 'Run the app.'
 
   static flags = {
-    ...cli.globalFlags,
+    ...globalFlags,
     ...appFlags,
     'api-key': Flags.string({
       hidden: false,
@@ -18,9 +21,9 @@ export default class Dev extends Command {
     store: Flags.string({
       hidden: false,
       char: 's',
-      description: 'Development store URL. Must be an existing development store.',
+      description: 'Store URL. Must be an existing development or Shopify Plus sandbox store.',
       env: 'SHOPIFY_FLAG_STORE',
-      parse: (input, _) => Promise.resolve(string.normalizeStoreName(input)),
+      parse: (input, _) => Promise.resolve(normalizeStoreFqdn(input)),
     }),
     reset: Flags.boolean({
       hidden: false,
@@ -47,7 +50,7 @@ export default class Dev extends Command {
     }),
     'checkout-cart-url': Flags.string({
       hidden: false,
-      description: 'Resource URL for checkeout UI extension. Format: "/cart/{productVariantID}:{productQuantity}"',
+      description: 'Resource URL for checkout UI extension. Format: "/cart/{productVariantID}:{productQuantity}"',
       env: 'SHOPIFY_FLAG_CHECKOUT_CART_URL',
     }),
     'tunnel-url': Flags.string({
@@ -86,12 +89,12 @@ export default class Dev extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
 
-    await metadata.addPublic(() => ({
+    await addPublicMetadata(() => ({
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
       cmd_app_reset_used: flags.reset,
     }))
 
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
+    const directory = flags.path ? resolvePath(flags.path) : cwd()
     const commandConfig = this.config
 
     await dev({

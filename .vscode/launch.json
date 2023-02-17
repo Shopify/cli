@@ -7,6 +7,18 @@
       {
         "type": "node",
         "request": "launch",
+        "name": "shopify theme {command}",
+        "cwd": "${workspaceFolder}",
+        "runtimeExecutable": "pnpm",
+        "runtimeArgs": [
+          "shopify",
+          "theme",
+          "${input:command}",
+        ],
+      },
+      {
+        "type": "node",
+        "request": "launch",
         "name": "shopify app build",
         "cwd": "${workspaceFolder}",
         "runtimeExecutable": "pnpm",
@@ -75,6 +87,11 @@
         "default": ".",
       },
       {
+        "id": "command",
+        "type": "promptString",
+        "description": "Command: ",
+      },
+      {
         "id": "extensionName",
         "type": "promptString",
         "description": "Extension Name: ",
@@ -97,6 +114,7 @@
           "shipping_rate_presenter",
           "delivery_customization",
           "order_routing_location_rule",
+          "cart_transform",
         ],
         "default": "checkout_ui_extension",
     },

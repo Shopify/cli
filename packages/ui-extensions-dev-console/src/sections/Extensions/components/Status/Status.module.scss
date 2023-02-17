@@ -1,0 +1,29 @@
+.Status {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  white-space: nowrap;
+  font-weight: var(--dc-font-weight-500);
+  color: var(--dc-color-grey-400)
+}
+
+.success,
+.disconnected,
+.error {
+  display: inline-block;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+}
+
+.success {
+  background: var(--dc-color-green);
+}
+
+.disconnected {
+  background: var(--dc-color-red);
+}
+
+.error {
+  background: var(--dc-color-red);
+}

@@ -1,5 +1,153 @@
 # @shopify/cli-kit
 
+## 3.43.0
+
+### Minor Changes
+
+- 4b0cc57ce: Theme bundling is now an opt-in feature
+
+### Patch Changes
+
+- f732207fa: Fix embedded Ruby CLI (remove Gemfile.lock)
+- b6f93cfa7: Use bundled Ruby CLI by default
+
+## 3.42.0
+
+### Patch Changes
+
+- 2203d4e6f: Fix theme issues with bundler and ruby version managers
+
+## 3.41.2
+
+## 3.41.1
+
+## 3.41.0
+
+### Minor Changes
+
+- 9d9480341: Add developer experience preview for JavaScript functions
+
+## 3.40.3
+
+## 3.40.2
+
+### Patch Changes
+
+- 7c0b13944: Fix Banner potentially crashing on very narrow terminals
+- 7ca9a667d: Fix Ruby version for running CLI with Homebrew installs
+
+## 3.40.1
+
+## 3.40.0
+
+### Minor Changes
+
+- cfb4b7f68: Improve output of preview instructions in dev command
+
+### Patch Changes
+
+- 91e15fed4: UI Kit UX improvements
+- 9e74a9fc0: Send an app/uninstalled webhook to the app when the user selects a different app, to force the app to clean up the store's database entry
+- 1661f80a2: Various copy improvements
+- ae22dfbaf: Theme commands run using embedded CLI2
+- 7734a7ed3: Add contributing guide for UI Kit
+- 5ba869fb2: Extract the ownership of development themes
+- 228328a6d: Remove old `ui` module from cli-kit exports
+- c30eb6978: Rename experimental presets feature to environments
+
+## 3.39.0
+
+### Minor Changes
+
+- f4d5fb1a8: Replace the UI of all tasks renderers and remove listr2 as a dependency
+
+### Patch Changes
+
+- afe541577: Adopt the CLI UI kit in the `shopify theme package` command
+- 91a44020b: Warn the user if there are more than 25 apps in app selection prompt
+
+## 3.38.0
+
+## 3.37.0
+
+### Patch Changes
+
+- a5224543b: Fix issue with CLI2 task output not being rendered correctly inside the output from the dev command
+
+## 3.36.2
+
+### Patch Changes
+
+- 3ddd21dba: Add better TypeScript support when formating files with the fs module by explicitly setting the parser to "typescript" in the prettier config. Fixes issues where the babel parser was not able to process JSX in TypeScript files.
+
+## 3.36.1
+
+### Patch Changes
+
+- d81271abd: Fix performance import for Node 14
+
+## 3.36.0
+
+### Minor Changes
+
+- c2a7c17e0: Refresh command UIs with newly implemented Ink components
+
+## 3.35.0
+
+### Minor Changes
+
+- 50c0b2cd3: - Adopt CLI UI kit on `shopify theme delete` command
+  - Introduce the `pluralize` API on `@shopify/cli-kit/common/string`
+- a4f78e95f: Update 'pathe' to 1.0.0
+
+### Patch Changes
+
+- 2aa5c07aa: Fix output for pnpm commands with parameters
+- 1a482191a: Improve the DX of the `shopify theme list` command, by adopting the CLI UI kit
+
+## 3.34.0
+
+## 3.33.0
+
+### Minor Changes
+
+- 9eb807bf7: Add confirmation summary when deploying your app to Shopify. This will show new extensions, updated extensions and extensions which are missing locally. You can pass `--force` to the deploy command to skip this prompt.
+
+### Patch Changes
+
+- eee1293ef: - Introduce REST Admin API client on `@shopify/cli-kit`
+  - Improve the DX of the `shopify theme open` command, by adopting the CLI UI kit
+- 5e7474fab: CLI2 version pumped to 2.34.0
+
+## 3.32.1
+
+### Patch Changes
+
+- 39315c3d0: Bump theme-check to version 1.14.0
+
+## 3.32.0
+
+### Patch Changes
+
+- a8489366: Bumped CLI2 to 2.33.1.
+- 00de42e8: Add Text Prompt component
+
+## 3.31.1
+
+## 3.31.0
+
+### Patch Changes
+
+- 80c6638c: Add Tasks component that displays a loading bar while async tasks are running
+- dcf53ece: Add support in spin to set the flag store with only the store name
+
+## 3.30.2
+
+### Patch Changes
+
+- ba91a2da: Fix terminal links adding a zero-width character
+- 23b1cc84: Add timing information to verbose logs
+
 ## 3.30.1
 
 ### Patch Changes

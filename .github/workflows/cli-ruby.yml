@@ -1,0 +1,77 @@
+name: cli-ruby
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+
+concurrency:
+  group: shopify-${{ github.head_ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: ./packages/cli-kit/assets/cli-ruby
+
+jobs:
+  test:
+    name: Tests with Ruby ${{ matrix.version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        version:
+          - 3.1.0
+          - 3.0.2
+          - 2.7.5
+        os:
+          - macos-11
+          - ubuntu-20.04
+          - ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set Git configuration
+        run: |
+          git config --global user.email "development-lifecycle@shopify.com"
+          git config --global user.name "Development Lifecycle"
+
+      - name: Set up Ruby ${{ matrix.version }}
+        uses: ruby/setup-ruby@8df78e55761745aad83acaf3ff12976382356e6d # pin@v1
+        with:
+          ruby-version: ${{ matrix.version }}
+          bundler: 'latest'
+          bundler-cache: true
+
+      - name: Install Dependencies
+        run: bundle install
+
+      - name: Run Tests
+        run: bundle exec rake test
+
+  rubocop:
+    name: Rubocop
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        version:
+          - 3.1.0
+        os:
+          - macos-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Ruby ${{ matrix.version }}
+        uses: ruby/setup-ruby@8df78e55761745aad83acaf3ff12976382356e6d # pin@v1
+        with:
+          ruby-version: ${{ matrix.version }}
+          bundler: 'latest'
+          bundler-cache: true
+
+      - name: Install Dependencies
+        run: bundle install
+
+      - name: Rubocop
+        run: bundle exec rake rubocop

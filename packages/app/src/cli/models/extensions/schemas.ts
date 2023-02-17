@@ -1,71 +1,89 @@
-import {schema} from '@shopify/cli-kit'
+import {schema} from '@shopify/cli-kit/node/schema'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ZodSchemaType<T> = schema.define.ZodType<T, any, any>
+export type ZodSchemaType<T> = schema.ZodType<T, any, any>
 
-export const MetafieldSchema = schema.define.object({
-  namespace: schema.define.string(),
-  key: schema.define.string(),
+export const MetafieldSchema = schema.object({
+  namespace: schema.string(),
+  key: schema.string(),
 })
 
-export const CapabilitiesSchema = schema.define.object({
-  network_access: schema.define.boolean().optional(),
-  block_progress: schema.define.boolean().optional(),
-  api_access: schema.define.boolean().optional(),
+export const CapabilitiesSchema = schema.object({
+  network_access: schema.boolean().optional(),
+  block_progress: schema.boolean().optional(),
+  api_access: schema.boolean().optional(),
 })
 
-export const TypeSchema = schema.define.object({
-  type: schema.define.string().default('ui_extension'),
+export const TypeSchema = schema.object({
+  type: schema.string().default('ui_extension'),
 })
 
-export const NewExtensionPointSchema = schema.define.object({
-  target: schema.define.string(),
-  module: schema.define.string(),
-  metafields: schema.define.array(MetafieldSchema).optional(),
+export const NewExtensionPointSchema = schema.object({
+  target: schema.string(),
+  module: schema.string(),
+  metafields: schema.array(MetafieldSchema).optional(),
 })
 
-export const OldExtensionPointsSchema = schema.define.array(schema.define.string()).default([])
-export const NewExtensionPointsSchema = schema.define.array(NewExtensionPointSchema)
-export const ExtensionPointSchema = schema.define.union([OldExtensionPointsSchema, NewExtensionPointsSchema])
+export const OldExtensionPointsSchema = schema.array(schema.string()).default([])
+export const NewExtensionPointsSchema = schema.array(NewExtensionPointSchema)
+export const ExtensionPointSchema = schema.union([OldExtensionPointsSchema, NewExtensionPointsSchema])
+export const ApiVersionSchema = schema.string()
 
-export const BaseUIExtensionSchema = schema.define.object({
-  name: schema.define.string(),
-  type: schema.define.string().default('ui_extension'),
-  extensionPoints: schema.define.any().optional(),
+export type ApiVersionSchemaType = schema.infer<typeof ApiVersionSchema>
+
+export const BaseUIExtensionSchema = schema.object({
+  name: schema.string(),
+  description: schema.string().optional(),
+  type: schema.string().default('ui_extension'),
+  apiVersion: ApiVersionSchema.optional(),
+  extensionPoints: schema.any().optional(),
   capabilities: CapabilitiesSchema.optional(),
-  metafields: schema.define.array(MetafieldSchema).optional().default([]),
-  categories: schema.define.array(schema.define.string()).optional(),
+  metafields: schema.array(MetafieldSchema).optional().default([]),
+  categories: schema.array(schema.string()).optional(),
 })
 
-export const ThemeExtensionSchema = schema.define.object({
-  name: schema.define.string(),
-  type: schema.define.literal('theme'),
+export const ThemeExtensionSchema = schema.object({
+  name: schema.string(),
+  type: schema.literal('theme'),
 })
 
-export const BaseFunctionConfigurationSchema = schema.define.object({
-  name: schema.define.string(),
-  type: schema.define.string(),
-  description: schema.define.string().optional().default(''),
-  build: schema.define.object({
-    command: schema.define.string(),
-    path: schema.define.string().optional(),
+export const BaseFunctionConfigurationSchema = schema.object({
+  name: schema.string(),
+  type: schema.string(),
+  description: schema.string().optional().default(''),
+  build: schema.object({
+    command: schema
+      .string()
+      .transform((value) => (value.trim() === '' ? undefined : value))
+      .optional(),
+    path: schema.string().optional(),
   }),
-  configurationUi: schema.define.boolean().optional().default(true),
-  ui: schema.define
+  configurationUi: schema.boolean().optional().default(true),
+  ui: schema
     .object({
-      enable_create: schema.define.boolean().optional(),
-      paths: schema.define
+      enable_create: schema.boolean().optional(),
+      paths: schema
         .object({
-          create: schema.define.string(),
-          details: schema.define.string(),
+          create: schema.string(),
+          details: schema.string(),
         })
         .optional(),
     })
     .optional(),
-  apiVersion: schema.define.string(),
+  apiVersion: schema.string(),
+  input: schema
+    .object({
+      variables: schema
+        .object({
+          namespace: schema.string(),
+          key: schema.string(),
+        })
+        .optional(),
+    })
+    .optional(),
 })
 
-export type NewExtensionPointSchemaType = schema.define.infer<typeof NewExtensionPointSchema>
+export type NewExtensionPointSchemaType = schema.infer<typeof NewExtensionPointSchema>
 
 // Base config type that all config schemas must extend.
-export type BaseConfigContents = schema.define.infer<typeof BaseUIExtensionSchema>
+export type BaseConfigContents = schema.infer<typeof BaseUIExtensionSchema>

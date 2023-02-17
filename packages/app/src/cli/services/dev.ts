@@ -1,10 +1,11 @@
-import {ensureDevEnvironment} from './environment.js'
+import {ensureDevContext} from './context.js'
 import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
-import {outputAppURL, outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
+import {outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
+import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -15,12 +16,26 @@ import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
-import {analytics, output, system, session, abort, string, environment} from '@shopify/cli-kit'
+import {getAnalyticsTunnelType} from '../utilities/analytics.js'
+import {buildAppURLForWeb} from '../utilities/app/app-url.js'
+import {HostThemeManager} from '../utilities/host-theme-manager.js'
 import {Config} from '@oclif/core'
+import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
-import {Writable} from 'node:stream'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {hashString} from '@shopify/cli-kit/node/crypto'
+import {exec} from '@shopify/cli-kit/node/system'
+import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/context/spin'
+import {
+  AdminSession,
+  ensureAuthenticatedAdmin,
+  ensureAuthenticatedPartners,
+  ensureAuthenticatedStorefront,
+} from '@shopify/cli-kit/node/session'
+import {OutputProcess, outputInfo} from '@shopify/cli-kit/node/output'
+import {Writable} from 'stream'
 
 export interface DevOptions {
   directory: string
@@ -49,8 +64,14 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
-  const token = await session.ensureAuthenticatedPartners()
-  const {storeFqdn, remoteApp, updateURLs: cachedUpdateURLs, tunnelPlugin} = await ensureDevEnvironment(options, token)
+  const token = await ensureAuthenticatedPartners()
+  const {
+    storeFqdn,
+    remoteApp,
+    remoteAppUpdated,
+    updateURLs: cachedUpdateURLs,
+    tunnelPlugin,
+  } = await ensureDevContext(options, token)
 
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
@@ -67,13 +88,24 @@ async function dev(options: DevOptions) {
   })
 
   const backendPort = await getAvailableTCPPort()
-
   const frontendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Frontend)
   const backendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Backend)
+  const webhooksPath = backendConfig?.configuration?.webhooksPath || '/api/webhooks'
+  const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated
+
+  if (sendUninstallWebhook) {
+    outputInfo('Using a different app than last time, sending uninstall webhook to app server')
+  }
 
   /** If the app doesn't have web/ the link message is not necessary */
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
   let shouldUpdateURLs = false
+  const proxyTargets: ReverseHTTPProxyTarget[] = []
+  const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
+  const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
+
+  let previewUrl
+
   if ((frontendConfig || backendConfig) && options.update) {
     const currentURLs = await getURLs(apiKey, token)
     const newURLs = generatePartnersURLs(exposedUrl, backendConfig?.configuration.authCallbackPath)
@@ -85,7 +117,11 @@ async function dev(options: DevOptions) {
     })
     if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
     await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
-    outputAppURL(storeFqdn, exposedUrl)
+    previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
+  }
+
+  if (localApp.extensions.ui.length > 0) {
+    previewUrl = `${proxyUrl}/extensions/dev-console`
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
@@ -102,10 +138,6 @@ async function dev(options: DevOptions) {
     hostname: exposedUrl,
   }
 
-  const proxyTargets: ReverseHTTPProxyTarget[] = []
-  const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
-  const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
-
   if (localApp.extensions.ui.length > 0) {
     const devExt = await devUIExtensionsTarget({
       app: localApp,
@@ -120,15 +152,25 @@ async function dev(options: DevOptions) {
     proxyTargets.push(devExt)
   }
 
-  outputExtensionsMessages(localApp, storeFqdn, proxyUrl)
+  // Remove this once theme app extensions and functions are displayed
+  // by the dev console
+  outputExtensionsMessages(localApp)
 
-  const additionalProcesses: output.OutputProcess[] = []
+  const additionalProcesses: OutputProcess[] = []
 
   if (localApp.extensions.theme.length > 0) {
-    const adminSession = await session.ensureAuthenticatedAdmin(storeFqdn)
-    const storefrontToken = await session.ensureAuthenticatedStorefront()
+    const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
+    const storefrontToken = await ensureAuthenticatedStorefront()
     const extension = localApp.extensions.theme[0]!
-    const args = await themeExtensionArgs(extension, apiKey, token, options)
+    let optionsToOverwrite = {}
+    if (!options.theme) {
+      const theme = await new HostThemeManager(adminSession).findOrCreate()
+      optionsToOverwrite = {
+        theme: theme.id.toString(),
+        generateTmpTheme: theme.createdAtRuntime,
+      }
+    }
+    const args = await themeExtensionArgs(extension, apiKey, token, {...options, ...optionsToOverwrite})
     const devExt = await devThemeExtensionTarget(args, adminSession, storefrontToken, token)
     additionalProcesses.push(devExt)
   }
@@ -154,14 +196,34 @@ async function dev(options: DevOptions) {
     }
   }
 
+  if (sendUninstallWebhook) {
+    additionalProcesses.push({
+      prefix: 'webhooks',
+      action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+        await sendUninstallWebhookToAppServer({
+          stdout,
+          token,
+          address: `http://localhost:${backendOptions.backendPort}${webhooksPath}`,
+          sharedSecret: backendOptions.apiSecret,
+          storeFqdn,
+        })
+      },
+    })
+  }
+
   await logMetadataForDev({devOptions: options, tunnelUrl: frontendUrl, shouldUpdateURLs, storeFqdn})
 
-  await analytics.reportEvent({config: options.commandConfig})
+  await reportAnalyticsEvent({config: options.commandConfig})
 
   if (proxyTargets.length === 0) {
     await renderConcurrent({processes: additionalProcesses})
   } else {
-    await runConcurrentHTTPProcessesAndPathForwardTraffic(proxyPort, proxyTargets, additionalProcesses)
+    await runConcurrentHTTPProcessesAndPathForwardTraffic({
+      previewUrl,
+      portNumber: proxyPort,
+      proxyTargets,
+      additionalProcesses,
+    })
   }
 }
 
@@ -170,14 +232,11 @@ interface DevFrontendTargetOptions extends DevWebOptions {
   backendPort: number
 }
 
-async function devFrontendNonProxyTarget(
-  options: DevFrontendTargetOptions,
-  port: number,
-): Promise<output.OutputProcess> {
+async function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: number): Promise<OutputProcess> {
   const devFrontend = await devFrontendProxyTarget(options)
   return {
     prefix: devFrontend.logPrefix,
-    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
       await devFrontend.action(stdout, stderr, signal, port)
     },
   }
@@ -185,14 +244,14 @@ async function devFrontendNonProxyTarget(
 
 function devThemeExtensionTarget(
   args: string[],
-  adminSession: session.AdminSession,
+  adminSession: AdminSession,
   storefrontToken: string,
   token: string,
-): output.OutputProcess {
+): OutputProcess {
   return {
     prefix: 'extensions',
-    action: async (_stdout: Writable, _stderr: Writable, _signal: abort.Signal) => {
-      await execCLI2(['extension', 'serve', ...args], {adminSession, storefrontToken, token})
+    action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+      await execCLI2(['extension', 'serve', ...args], {adminSession, storefrontToken, token, stdout})
     },
   }
 }
@@ -203,8 +262,8 @@ async function devFrontendProxyTarget(options: DevFrontendTargetOptions): Promis
 
   return {
     logPrefix: options.web.configuration.type,
-    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal, port: number) => {
-      await system.exec(cmd!, args, {
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
+      await exec(cmd!, args, {
         cwd: options.web.directory,
         stdout,
         stderr,
@@ -232,13 +291,13 @@ async function getDevEnvironmentVariables(options: DevWebOptions) {
     HOST: options.hostname,
     SCOPES: options.scopes,
     NODE_ENV: `development`,
-    ...(environment.service.isSpinEnvironment() && {
-      SHOP_CUSTOM_DOMAIN: `shopify.${await environment.spin.fqdn()}`,
+    ...(isSpinEnvironment() && {
+      SHOP_CUSTOM_DOMAIN: `shopify.${await spinFqdn()}`,
     }),
   }
 }
 
-async function devBackendTarget(web: Web, options: DevWebOptions): Promise<output.OutputProcess> {
+async function devBackendTarget(web: Web, options: DevWebOptions): Promise<OutputProcess> {
   const {commands} = web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
   const env = {
@@ -251,8 +310,8 @@ async function devBackendTarget(web: Web, options: DevWebOptions): Promise<outpu
 
   return {
     prefix: web.configuration.type,
-    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal) => {
-      await system.exec(cmd!, args, {
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+      await exec(cmd!, args, {
         cwd: web.directory,
         stdout,
         stderr,
@@ -291,7 +350,7 @@ async function devUIExtensionsTarget({
   return {
     logPrefix: 'extensions',
     pathPrefix: '/extensions',
-    action: async (stdout: Writable, stderr: Writable, signal: abort.Signal, port: number) => {
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
       await devUIExtensions({
         app,
         id,
@@ -330,17 +389,17 @@ async function logMetadataForDev(options: {
   shouldUpdateURLs: boolean
   storeFqdn: string
 }) {
-  const tunnelType = await analytics.getAnalyticsTunnelType(options.devOptions.commandConfig, options.tunnelUrl)
-  await metadata.addPublic(() => ({
+  const tunnelType = await getAnalyticsTunnelType(options.devOptions.commandConfig, options.tunnelUrl)
+  await metadata.addPublicMetadata(() => ({
     cmd_dev_tunnel_type: tunnelType,
-    cmd_dev_tunnel_custom_hash: tunnelType === 'custom' ? string.hashString(options.tunnelUrl) : undefined,
+    cmd_dev_tunnel_custom_hash: tunnelType === 'custom' ? hashString(options.tunnelUrl) : undefined,
     cmd_dev_urls_updated: options.shouldUpdateURLs,
-    store_fqdn_hash: string.hashString(options.storeFqdn),
+    store_fqdn_hash: hashString(options.storeFqdn),
     cmd_app_dependency_installation_skipped: options.devOptions.skipDependenciesInstallation,
     cmd_app_reset_used: options.devOptions.reset,
   }))
 
-  await metadata.addSensitive(() => ({
+  await metadata.addSensitiveMetadata(() => ({
     store_fqdn: options.storeFqdn,
     cmd_dev_tunnel_custom: tunnelType === 'custom' ? options.tunnelUrl : undefined,
   }))

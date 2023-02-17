@@ -1,21 +1,25 @@
-import {OutputProcess} from '../../../../output.js'
-import {isTruthy} from '../../../../environment/utilities.js'
-import React, {FunctionComponent, useEffect, useState} from 'react'
-import {Box, Static, Text, useApp} from 'ink'
+import {TextWithBackground} from './TextWithBackground.js'
+import {OutputProcess} from '../../../../public/node/output.js'
+import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
+import {AbortController} from '../../../../public/node/abort.js'
+import {handleCtrlC} from '../../ui.js'
+import React, {FunctionComponent, useCallback, useState} from 'react'
+import {Box, Key, Static, Text, useInput} from 'ink'
 import stripAnsi from 'strip-ansi'
-import AbortController from 'abort-controller'
-import {Writable} from 'node:stream'
+import treeKill from 'tree-kill'
+import {Writable} from 'stream'
 
 export type WritableStream = (process: OutputProcess, index: number) => Writable
-export type RunProcesses = (
-  writableStream: WritableStream,
-  unmountInk: (error?: Error | undefined) => void,
-) => Promise<void>
 
-interface Props {
+export interface ConcurrentOutputProps {
   processes: OutputProcess[]
   abortController: AbortController
   showTimestamps?: boolean
+  onInput?: (input: string, key: Key, exit: () => void) => void
+  footer?: {
+    title: string
+    subTitle?: string
+  }
 }
 interface Chunk {
   color: string
@@ -47,7 +51,6 @@ interface Chunk {
  * 2022-10-10 13:11:03 | frontend   | > cross-env NODE_ENV=development node vite-server.js
  * 2022-10-10 13:11:03 | frontend   |
  * 2022-10-10 13:11:03 | frontend   |
- * 2022-10-10 13:11:03 | backend    | [nodemon] 2.0.19
  * 2022-10-10 13:11:03 | backend    |
  * 2022-10-10 13:11:03 | backend    | [nodemon] to restart at any time, enter `rs`
  * 2022-10-10 13:11:03 | backend    | [nodemon] watching path(s): backend/
@@ -57,11 +60,16 @@ interface Chunk {
  *
  * ```
  */
-const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController, showTimestamps = true}) => {
+const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
+  processes,
+  abortController,
+  showTimestamps = true,
+  onInput,
+  footer,
+}) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const concurrentColors = ['yellow', 'cyan', 'magenta', 'green', 'blue']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
-  const {exit: unmountInk} = useApp()
 
   function lineColor(index: number) {
     const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
@@ -87,8 +95,8 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
     })
   }
 
-  const runProcesses = async () => {
-    await Promise.all(
+  const runProcesses = () => {
+    return Promise.all(
       processes.map(async (process, index) => {
         const stdout = writableStream(process, index)
         const stderr = writableStream(process, index)
@@ -96,56 +104,75 @@ const ConcurrentOutput: FunctionComponent<Props> = ({processes, abortController,
         await process.action(stdout, stderr, abortController.signal)
       }),
     )
-
-    // This is a workaround needed because Ink behaves differently in CI when
-    // unmounting. See https://github.com/vadimdemedes/ink/pull/266
-    if (!isTruthy(process.env.CI)) unmountInk()
   }
 
-  useEffect(() => {
-    runProcesses().catch((error) => {
-      abortController.abort()
-      unmountInk(error)
-    })
-  }, [])
+  if (onInput) {
+    useInput(
+      useCallback(
+        (input, key) => {
+          handleCtrlC(input, key)
+          onInput(input, key, () => treeKill(process.pid, 'SIGINT'))
+        },
+        [onInput],
+      ),
+    )
+  }
+
+  useAsyncAndUnmount(runProcesses, {onRejected: () => abortController.abort()})
 
   return (
-    <Static items={processOutput}>
-      {(chunk, index) => {
-        return (
-          <Box flexDirection="column" key={index}>
-            {chunk.lines.map((line, index) => (
-              <Box key={index} flexDirection="row">
-                {showTimestamps && (
-                  <Box>
-                    <Box marginRight={1}>
-                      <Text color={chunk.color}>{new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}</Text>
+    <>
+      <Static items={processOutput}>
+        {(chunk, index) => {
+          return (
+            <Box flexDirection="column" key={index}>
+              {chunk.lines.map((line, index) => (
+                <Box key={index} flexDirection="row">
+                  {showTimestamps ? (
+                    <Box>
+                      <Box marginRight={1}>
+                        <Text color={chunk.color}>
+                          {new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}
+                        </Text>
+                      </Box>
+
+                      <Text bold color={chunk.color}>
+                        |
+                      </Text>
                     </Box>
+                  ) : null}
 
-                    <Text bold color={chunk.color}>
-                      |
-                    </Text>
+                  <Box width={prefixColumnSize} marginX={1}>
+                    <Text color={chunk.color}>{chunk.prefix}</Text>
                   </Box>
-                )}
 
-                <Box width={prefixColumnSize} marginX={1}>
-                  <Text color={chunk.color}>{chunk.prefix}</Text>
+                  <Text bold color={chunk.color}>
+                    |
+                  </Text>
+
+                  <Box flexGrow={1} paddingLeft={1}>
+                    <Text color={chunk.color}>{line}</Text>
+                  </Box>
                 </Box>
-
-                <Text bold color={chunk.color}>
-                  |
-                </Text>
-
-                <Box flexGrow={1} paddingLeft={1}>
-                  <Text color={chunk.color}>{line}</Text>
-                </Box>
-              </Box>
-            ))}
+              ))}
+            </Box>
+          )
+        }}
+      </Static>
+      {footer ? (
+        <Box marginY={1} flexDirection="column">
+          <Box flexGrow={1}>
+            <TextWithBackground text={footer.title} inverse paddingX={2} paddingY={1} />
           </Box>
-        )
-      }}
-    </Static>
+          {footer.subTitle ? (
+            <Box marginTop={1} flexGrow={1}>
+              <Text>{footer.subTitle}</Text>
+            </Box>
+          ) : null}
+        </Box>
+      ) : null}
+    </>
   )
 }
 
-export default ConcurrentOutput
+export {ConcurrentOutput}

@@ -1,12 +1,13 @@
-import {api, session} from '@shopify/cli-kit'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
+export interface SampleWebhook {
+  samplePayload: string
+  headers: string
+  success: boolean
+  userErrors: UserErrors[]
+}
 export interface SamplePayloadSchema {
-  sendSampleWebhook: {
-    samplePayload: string
-    headers: string
-    success: boolean
-    userErrors: UserErrors[]
-  }
+  sendSampleWebhook: SampleWebhook
 }
 
 export interface UserErrors {
@@ -34,31 +35,31 @@ const sendSampleWebhookMutation = `
  * In all the other cases, core creates a job that sends the request to Captain-Hook. Captain-Hook will be in
  * charge of delivering the webhook payload to the requested destination.
  *
+ * @param token - Partners session token
  * @param topic - A webhook topic (eg: orders/create)
  * @param apiVersion - Api version for the topic
  * @param deliveryMethod - one of DELIVERY_METHOD
  * @param address - A destination for the webhook notification
- * @param sharedSecret - A secret to generate the HMAC header apps can use to validate the origin
+ * @param clientSecret - A secret to generate the HMAC header apps can use to validate the origin
  * @returns Empty if a remote delivery was requested, payload data if a local delivery was requested
  */
 export async function getWebhookSample(
+  token: string,
   topic: string,
   apiVersion: string,
   deliveryMethod: string,
   address: string,
-  sharedSecret: string,
-) {
-  const token = await session.ensureAuthenticatedPartners()
-
+  clientSecret: string,
+): Promise<SampleWebhook> {
   const variables = {
     topic,
     api_version: apiVersion,
     address,
     delivery_method: deliveryMethod,
-    shared_secret: sharedSecret,
+    shared_secret: clientSecret,
   }
 
-  const {sendSampleWebhook: result}: SamplePayloadSchema = await api.partners.request(
+  const {sendSampleWebhook: result}: SamplePayloadSchema = await partnersRequest(
     sendSampleWebhookMutation,
     token,
     variables,

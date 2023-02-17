@@ -1,5 +1,261 @@
 # @shopify/app
 
+## 3.43.0
+
+### Minor Changes
+
+- 4b0cc57ce: Theme bundling is now an opt-in feature
+
+### Patch Changes
+
+- Updated dependencies [f732207fa]
+- Updated dependencies [4b0cc57ce]
+- Updated dependencies [b6f93cfa7]
+  - @shopify/cli-kit@3.43.0
+  - @shopify/plugin-ngrok@3.43.0
+
+## 3.42.0
+
+### Minor Changes
+
+- 66653aecd: Added the template for the new cart & checkout validation function
+
+### Patch Changes
+
+- Updated dependencies [2203d4e6f]
+  - @shopify/cli-kit@3.42.0
+  - @shopify/plugin-ngrok@3.42.0
+
+## 3.41.2
+
+### Patch Changes
+
+- dd3d0c846: Update to latest version of javy and function-runner
+  - @shopify/cli-kit@3.41.2
+  - @shopify/plugin-ngrok@3.41.2
+
+## 3.41.1
+
+### Patch Changes
+
+- 830617a4d: Fix bug when deploying apps that contain only theme app extensions
+  - @shopify/cli-kit@3.41.1
+  - @shopify/plugin-ngrok@3.41.1
+
+## 3.41.0
+
+### Minor Changes
+
+- 9d9480341: Add developer experience preview for JavaScript functions
+
+### Patch Changes
+
+- Updated dependencies [9d9480341]
+  - @shopify/cli-kit@3.41.0
+  - @shopify/plugin-ngrok@3.41.0
+
+## 3.40.3
+
+### Patch Changes
+
+- 9e7e226dd: Fix dev console link not appearing
+  - @shopify/cli-kit@3.40.3
+  - @shopify/plugin-ngrok@3.40.3
+
+## 3.40.2
+
+### Patch Changes
+
+- c729e470d: Fix preview banner not showing when there are only UI extensions
+- Updated dependencies [7c0b13944]
+- Updated dependencies [7ca9a667d]
+  - @shopify/cli-kit@3.40.2
+  - @shopify/plugin-ngrok@3.40.2
+
+## 3.40.1
+
+### Patch Changes
+
+- df3f6e629: Revert change to update Checkout UI template to use the new extension format
+- 3314a972b: Fix windows not storing dev selected values correctly
+  - @shopify/cli-kit@3.40.1
+  - @shopify/plugin-ngrok@3.40.1
+
+## 3.40.0
+
+### Minor Changes
+
+- cfb4b7f68: Improve output of preview instructions in dev command
+- 9e74a9fc0: Send an app/uninstalled webhook to the app when the user selects a different app, to force the app to clean up the store's database entry
+- 64bcf07c7: Enable Shopify Plus Sandbox stores
+- 48122f791: Add the ability to migrate checkout ui extensions to the new ui extension type
+- af42f22f6: Update Checkout UI template to use the new extension format
+
+### Patch Changes
+
+- 1661f80a2: Various copy improvements
+- 228328a6d: Remove old `ui` module from cli-kit exports
+- c30eb6978: Rename experimental presets feature to environments
+- 3e94c0e0f: Fix the partnersWebIdentifier for the ui_extension specification
+- Updated dependencies [91e15fed4]
+- Updated dependencies [cfb4b7f68]
+- Updated dependencies [9e74a9fc0]
+- Updated dependencies [1661f80a2]
+- Updated dependencies [ae22dfbaf]
+- Updated dependencies [7734a7ed3]
+- Updated dependencies [5ba869fb2]
+- Updated dependencies [228328a6d]
+- Updated dependencies [c30eb6978]
+  - @shopify/cli-kit@3.40.0
+  - @shopify/plugin-ngrok@3.40.0
+
+## 3.39.0
+
+### Minor Changes
+
+- 11f6fbec6: Add description configuration to POS UI Extension
+
+### Patch Changes
+
+- afe541577: Adopt the CLI UI kit in the `shopify theme package` command
+- b8a96a215: Fix next steps in deploy success banner
+- 91a44020b: Warn the user if there are more than 25 apps in app selection prompt
+- Updated dependencies [afe541577]
+- Updated dependencies [f4d5fb1a8]
+- Updated dependencies [91a44020b]
+  - @shopify/cli-kit@3.39.0
+  - @shopify/plugin-ngrok@3.39.0
+
+## 3.38.0
+
+### Patch Changes
+
+- da8c87a9f: Fix an issue with CLI2 not printing to the right stdout
+  - @shopify/cli-kit@3.38.0
+  - @shopify/plugin-ngrok@3.38.0
+
+## 3.37.0
+
+### Patch Changes
+
+- Updated dependencies [a5224543b]
+  - @shopify/cli-kit@3.37.0
+  - @shopify/plugin-ngrok@3.37.0
+
+## 3.36.2
+
+### Patch Changes
+
+- Updated dependencies [3ddd21dba]
+  - @shopify/cli-kit@3.36.2
+  - @shopify/plugin-ngrok@3.36.2
+
+## 3.36.1
+
+### Patch Changes
+
+- Updated dependencies [d81271abd]
+  - @shopify/cli-kit@3.36.1
+  - @shopify/plugin-ngrok@3.36.1
+
+## 3.36.0
+
+### Minor Changes
+
+- c2a7c17e0: Refresh command UIs with newly implemented Ink components
+- 335a96a24: Improved dev console with new UX & functionality. New functionality: Preview app link and QRCode, better post purchase extension instructions, copy button for all preview links, support for upcoming UI extension changes
+
+### Patch Changes
+
+- Updated dependencies [c2a7c17e0]
+  - @shopify/cli-kit@3.36.0
+  - @shopify/plugin-ngrok@3.36.0
+
+## 3.35.0
+
+### Patch Changes
+
+- Updated dependencies [50c0b2cd3]
+- Updated dependencies [2aa5c07aa]
+- Updated dependencies [1a482191a]
+- Updated dependencies [a4f78e95f]
+  - @shopify/cli-kit@3.35.0
+  - @shopify/plugin-ngrok@3.35.0
+
+## 3.34.0
+
+### Minor Changes
+
+- 39d6bcae8: Update to app_function_set: Adds new feature Input Query Variables - adds optional inqut query varialbes, updates schema + tests
+
+### Patch Changes
+
+- @shopify/cli-kit@3.34.0
+- @shopify/plugin-ngrok@3.34.0
+
+## 3.33.0
+
+### Minor Changes
+
+- d7b582cb1: Add the @shopify/ngrok plugin to the @shopify/app package
+- 9eb807bf7: Add confirmation summary when deploying your app to Shopify. This will show new extensions, updated extensions and extensions which are missing locally. You can pass `--force` to the deploy command to skip this prompt.
+
+### Patch Changes
+
+- Updated dependencies [eee1293ef]
+- Updated dependencies [5e7474fab]
+- Updated dependencies [9eb807bf7]
+  - @shopify/cli-kit@3.33.0
+  - @shopify/plugin-ngrok@3.33.0
+
+## 3.32.1
+
+### Patch Changes
+
+- Updated dependencies [39315c3d0]
+  - @shopify/cli-kit@3.32.1
+
+## 3.32.0
+
+### Minor Changes
+
+- aaa9730d: New update-url command
+
+### Patch Changes
+
+- Updated dependencies [a8489366]
+- Updated dependencies [00de42e8]
+  - @shopify/cli-kit@3.32.0
+
+## 3.31.1
+
+### Patch Changes
+
+- 21a15024: Fix loading function specifications
+  - @shopify/cli-kit@3.31.1
+
+## 3.31.0
+
+### Minor Changes
+
+- 49f8f895: Add support for multiple custom OAuth callback paths by setting auth_callback_path to an array in shopify.web.toml
+
+### Patch Changes
+
+- a786f371: Fix bug in functions using a custom template repository
+- b37ace4c: Fix extension generate not accepting some template values
+- Updated dependencies [80c6638c]
+- Updated dependencies [dcf53ece]
+  - @shopify/cli-kit@3.31.0
+
+## 3.30.2
+
+### Patch Changes
+
+- Updated dependencies [ba91a2da]
+- Updated dependencies [23b1cc84]
+  - @shopify/cli-kit@3.30.2
+
 ## 3.30.1
 
 ### Patch Changes

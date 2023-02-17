@@ -1,29 +1,12 @@
 {
   "name": "@shopify/features",
-  "version": "0.6.0",
+  "version": "0.7.1",
   "private": true,
   "scripts": {
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "test": "nx run features:test",
     "type-check": "nx type-check"
-  },
-  "devDependencies": {
-    "@cucumber/messages": "20.0.0",
-    "fs-extra": "^9.1.0",
-    "@types/fs-extra": "^9.0.13",
-    "@types/cucumber": "^7.0.0",
-    "@cucumber/cucumber": "^8.2.2",
-    "@cucumber/pretty-formatter": "1.0.0",
-    "pathe": "0.2.0",
-    "ansi-colors": "^4.1.1",
-    "execa": "^5.1.1",
-    "tempy": "^1.0.1",
-    "@types/rimraf": "^3.0.2",
-    "rimraf": "^3.0.2"
-  },
-  "engines": {
-    "node": ">=14.17.0"
   },
   "eslintConfig": {
     "extends": [
@@ -39,5 +22,23 @@
         }
       ]
     }
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^8.2.2",
+    "@cucumber/messages": "20.0.0",
+    "@cucumber/pretty-formatter": "1.0.0",
+    "@types/cucumber": "^7.0.0",
+    "@types/fs-extra": "^9.0.13",
+    "@types/node": "14.18.36",
+    "@types/rimraf": "^3.0.2",
+    "ansi-colors": "^4.1.1",
+    "execa": "^5.1.1",
+    "fs-extra": "^9.1.0",
+    "pathe": "1.0.0",
+    "rimraf": "^3.0.2",
+    "tempy": "^1.0.1"
+  },
+  "engines": {
+    "node": ">=14.17.0"
   }
 }

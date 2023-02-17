@@ -8,9 +8,10 @@ on:
 jobs:
   remind:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - name: comment PR
-        uses: unsplash/comment-on-pr@v1.3.0
+        uses: unsplash/comment-on-pr@ffe8f97ccc63ce12c3c23c6885b169db67958d3b # pin@v1.3.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

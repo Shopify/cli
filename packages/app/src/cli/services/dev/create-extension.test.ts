@@ -1,6 +1,9 @@
 import {createExtension} from './create-extension.js'
-import {api} from '@shopify/cli-kit'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {ExtensionCreateQuery} from '../../api/graphql/extension_create.js'
+import {describe, expect, it, vi} from 'vitest'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+
+vi.mock('@shopify/cli-kit/node/api/partners')
 
 const EXTENSION = {
   id: '1',
@@ -19,25 +22,10 @@ const EXTENSION = {
   },
 }
 
-beforeEach(() => {
-  vi.mock('@shopify/cli-kit', async () => {
-    const cliKit: any = await vi.importActual('@shopify/cli-kit')
-    return {
-      ...cliKit,
-      api: {
-        partners: {
-          request: vi.fn(),
-        },
-        graphql: cliKit.api.graphql,
-      },
-    }
-  })
-})
-
 describe('createApp', () => {
   it('sends request to create extension and returns it', async () => {
     // Given
-    vi.mocked(api.partners.request).mockResolvedValueOnce({
+    vi.mocked(partnersRequest).mockResolvedValueOnce({
       extensionCreate: {extensionRegistration: EXTENSION, userErrors: null},
     })
 
@@ -54,6 +42,6 @@ describe('createApp', () => {
 
     // Then
     expect(got).toEqual(EXTENSION)
-    expect(api.partners.request).toHaveBeenCalledWith(api.graphql.ExtensionCreateQuery, 'token', variables)
+    expect(partnersRequest).toHaveBeenCalledWith(ExtensionCreateQuery, 'token', variables)
   })
 })

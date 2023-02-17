@@ -1,6 +1,6 @@
 import {ExtensionsPayloadStore} from '../payload/store.js'
 import {ExtensionDevOptions} from '../../extension.js'
-import {Server} from 'node:http'
+import {Server} from 'http'
 
 export enum EventType {
   Update = 'update',

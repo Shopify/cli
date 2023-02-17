@@ -1,5 +1,186 @@
 # @shopify/create-app
 
+## 3.43.0
+
+### Patch Changes
+
+- Updated dependencies [f732207fa]
+- Updated dependencies [4b0cc57ce]
+- Updated dependencies [b6f93cfa7]
+  - @shopify/cli-kit@3.43.0
+
+## 3.42.0
+
+### Patch Changes
+
+- Updated dependencies [2203d4e6f]
+  - @shopify/cli-kit@3.42.0
+
+## 3.41.2
+
+### Patch Changes
+
+- @shopify/cli-kit@3.41.2
+
+## 3.41.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.41.1
+
+## 3.41.0
+
+### Patch Changes
+
+- Updated dependencies [9d9480341]
+  - @shopify/cli-kit@3.41.0
+
+## 3.40.3
+
+### Patch Changes
+
+- @shopify/cli-kit@3.40.3
+
+## 3.40.2
+
+### Patch Changes
+
+- Updated dependencies [7c0b13944]
+- Updated dependencies [7ca9a667d]
+  - @shopify/cli-kit@3.40.2
+
+## 3.40.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.40.1
+
+## 3.40.0
+
+### Patch Changes
+
+- 1661f80a2: Various copy improvements
+- 228328a6d: Remove old `ui` module from cli-kit exports
+- Updated dependencies [91e15fed4]
+- Updated dependencies [cfb4b7f68]
+- Updated dependencies [9e74a9fc0]
+- Updated dependencies [1661f80a2]
+- Updated dependencies [ae22dfbaf]
+- Updated dependencies [7734a7ed3]
+- Updated dependencies [5ba869fb2]
+- Updated dependencies [228328a6d]
+- Updated dependencies [c30eb6978]
+  - @shopify/cli-kit@3.40.0
+
+## 3.39.0
+
+### Patch Changes
+
+- Updated dependencies [afe541577]
+- Updated dependencies [f4d5fb1a8]
+- Updated dependencies [91a44020b]
+  - @shopify/cli-kit@3.39.0
+
+## 3.38.0
+
+### Patch Changes
+
+- @shopify/cli-kit@3.38.0
+
+## 3.37.0
+
+### Patch Changes
+
+- Updated dependencies [a5224543b]
+  - @shopify/cli-kit@3.37.0
+
+## 3.36.2
+
+### Patch Changes
+
+- Updated dependencies [3ddd21dba]
+  - @shopify/cli-kit@3.36.2
+
+## 3.36.1
+
+### Patch Changes
+
+- Updated dependencies [d81271abd]
+  - @shopify/cli-kit@3.36.1
+
+## 3.36.0
+
+### Minor Changes
+
+- c2a7c17e0: Refresh command UIs with newly implemented Ink components
+
+### Patch Changes
+
+- Updated dependencies [c2a7c17e0]
+  - @shopify/cli-kit@3.36.0
+
+## 3.35.0
+
+### Patch Changes
+
+- Updated dependencies [50c0b2cd3]
+- Updated dependencies [2aa5c07aa]
+- Updated dependencies [1a482191a]
+- Updated dependencies [a4f78e95f]
+  - @shopify/cli-kit@3.35.0
+
+## 3.34.0
+
+### Patch Changes
+
+- @shopify/cli-kit@3.34.0
+
+## 3.33.0
+
+### Patch Changes
+
+- Updated dependencies [eee1293ef]
+- Updated dependencies [5e7474fab]
+- Updated dependencies [9eb807bf7]
+  - @shopify/cli-kit@3.33.0
+
+## 3.32.1
+
+### Patch Changes
+
+- Updated dependencies [39315c3d0]
+  - @shopify/cli-kit@3.32.1
+
+## 3.32.0
+
+### Patch Changes
+
+- Updated dependencies [a8489366]
+- Updated dependencies [00de42e8]
+  - @shopify/cli-kit@3.32.0
+
+## 3.31.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.31.1
+
+## 3.31.0
+
+### Patch Changes
+
+- Updated dependencies [80c6638c]
+- Updated dependencies [dcf53ece]
+  - @shopify/cli-kit@3.31.0
+
+## 3.30.2
+
+### Patch Changes
+
+- Updated dependencies [ba91a2da]
+- Updated dependencies [23b1cc84]
+  - @shopify/cli-kit@3.30.2
+
 ## 3.30.1
 
 ### Patch Changes

@@ -21,21 +21,83 @@
           "cwd": "packages/cli-kit"
         }
       },
+      "docs:generate": {
+        "executor": "nx:run-commands",
+        "outputs": ["docs"],
+        "options": {
+          "command": "pnpm typedoc --out docs $(find ./src/public/**/{*.ts,*.tsx} | grep -v .test.ts)",
+          "cwd": "packages/cli-kit"
+        }
+      },
+      "docs:open": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["docs:generate"],
+        "options": {
+          "command": "open docs/index.html",
+          "cwd": "packages/cli-kit"
+        }
+      },
       "lint": {
         "executor": "nx:run-commands",
+        "dependsOn": ["lint:js"],
         "options": {
-          "command": "pnpm eslint \"src/**/*.ts\"",
+          "cwd": "packages/cli-kit",
+          "commands": []
+        }
+      },
+      "lint:ruby": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "bundle exec rake rubocop",
+          "cwd": "packages/cli-kit/assets/cli-ruby"
+        }
+      },
+      "lint:js": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "pnpm eslint \"src/**/*.{ts,tsx}\"",
           "cwd": "packages/cli-kit"
         }
       },
       "lint:fix": {
         "executor": "nx:run-commands",
+        "dependsOn": ["lint:js:fix"],
         "options": {
-          "command": "pnpm eslint 'src/**/*.ts' --fix",
+          "cwd": "packages/cli-kit",
+          "commands": []
+        }
+      },
+      "lint:js:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "pnpm eslint 'src/**/*.{ts,tsx}' --fix",
           "cwd": "packages/cli-kit"
         }
       },
+      "lint:ruby:fix": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "bundle exec rake rubocop -a",
+          "cwd": "packages/cli-kit/assets/cli-ruby"
+        }
+      },
       "test": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["test:js"],
+        "options": {
+          "commands": [],
+          "cwd": "packages/cli-kit"
+        }
+      },
+      "test:ruby": {
+        "executor": "nx:run-commands",
+        "dependsOn": [],
+        "options": {
+          "command": "bundle exec rake test",
+          "cwd": "packages/cli-kit/assets/cli-ruby"
+        }
+      },
+      "test:js": {
         "executor": "nx:run-commands",
         "dependsOn": ["build"],
         "options": {

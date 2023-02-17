@@ -1,14 +1,40 @@
-import {string, path, error, file, output, os, ui, npm, environment, template, git, constants} from '@shopify/cli-kit'
+import {username} from '@shopify/cli-kit/node/os'
 import {
-  findPackageVersionUp,
+  findUpAndReadPackageJson,
   installNodeModules,
+  PackageJson,
   packageManager,
   PackageManager,
   packageManagerUsedForCreating,
+  writePackageJSON,
 } from '@shopify/cli-kit/node/node-package-manager'
-
 import {parseGitHubRepositoryURL} from '@shopify/cli-kit/node/github'
-import {Writable} from 'stream'
+import {hyphenate} from '@shopify/cli-kit/common/string'
+import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {isShopify} from '@shopify/cli-kit/node/context/local'
+import {
+  addAllToGitFromDirectory,
+  createGitCommit,
+  downloadGitRepository,
+  initializeGitRepository,
+} from '@shopify/cli-kit/node/git'
+import {
+  appendFile,
+  fileExists,
+  inTemporaryDirectory,
+  mkdir,
+  moveFile,
+  rmdir,
+  touchFile,
+  glob,
+  findPathUp,
+  removeFile,
+} from '@shopify/cli-kit/node/fs'
+import {joinPath, relativizePath} from '@shopify/cli-kit/node/path'
+import {AbortError, CancelExecution} from '@shopify/cli-kit/node/error'
+import {outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {Task, renderTasks, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 interface InitOptions {
   name: string
@@ -16,7 +42,6 @@ interface InitOptions {
   directory: string
   packageManager?: string
   shopifyCliVersion?: string
-  cliHydrogenPackageVersion?: string
   hydrogenVersion?: string
   local: boolean
 }
@@ -28,104 +53,90 @@ Help us make Hydrogen better by reporting this error so we can improve this mess
 `
 
 async function init(options: InitOptions) {
-  const hydrogenVersion = await findPackageVersionUp({fromModuleURL: import.meta.url})
-  const user = (await os.username()) ?? ''
-  const cliPackageVersion = options.shopifyCliVersion ?? (await constants.versions.cliKit())
-  const cliHydrogenPackageVersion = options.cliHydrogenPackageVersion ?? hydrogenVersion
+  const user = (await username()) ?? ''
+  const cliVersion = options.shopifyCliVersion ?? CLI_KIT_VERSION
   const hydrogenPackageVersion = options.hydrogenVersion
   const packageManager = inferPackageManager(options.packageManager)
-  const hyphenizedName = string.hyphenize(options.name)
-  const outputDirectory = path.join(options.directory, hyphenizedName)
+  const hyphenizedName = hyphenate(options.name)
+  const outputDirectory = joinPath(options.directory, hyphenizedName)
 
-  await ui.nonEmptyDirectoryPrompt(outputDirectory)
+  await nonEmptyDirectoryPrompt(outputDirectory)
 
-  await file.inTemporaryDirectory(async (tmpDir) => {
-    const templateDownloadDir = path.join(tmpDir, 'download')
-    const templateScaffoldDir = path.join(tmpDir, 'app')
+  await inTemporaryDirectory(async (tmpDir) => {
+    const templateDownloadDir = joinPath(tmpDir, 'download')
+    const templateScaffoldDir = joinPath(tmpDir, 'app')
 
-    await file.mkdir(templateDownloadDir)
-    await file.mkdir(templateScaffoldDir)
-
-    let tasks: ui.ListrTasks = []
+    await mkdir(templateDownloadDir)
+    await mkdir(templateScaffoldDir)
 
     const templateInfo = await parseGitHubRepositoryURL(options.template).valueOrAbort()
     const branch = templateInfo.ref ? `#${templateInfo.ref}` : ''
     const templatePath = templateInfo.subDirectory
-      ? path.join(templateDownloadDir, templateInfo.subDirectory)
+      ? joinPath(templateDownloadDir, templateInfo.subDirectory)
       : templateDownloadDir
 
     const repoUrl = `${templateInfo.http}${branch}`
-    await ui.task({
-      title: `Downloading template from ${repoUrl}`,
-      task: async () => {
-        await git.downloadRepository({
-          repoUrl,
-          destination: templateDownloadDir,
-          shallow: true,
-        })
-        if (!(await file.exists(path.join(templatePath, 'package.json')))) {
-          throw new error.Abort(`The template ${templatePath} was not found.`, suggestHydrogenSupport())
-        }
-        return {successMessage: `Downloaded template from ${repoUrl}`}
-      },
-    })
 
-    tasks = tasks.concat([
+    let tasks: Task[] = [
       {
-        title: `Initializing your app ${hyphenizedName}`,
-        task: async (_, parentTask) => {
-          return parentTask.newListr(
-            [
-              {
-                title: 'Parsing template files',
-                task: async (_, task) => {
-                  const templateData = {
-                    name: hyphenizedName,
-                    shopify_cli_version: cliPackageVersion,
-                    hydrogen_version: hydrogenPackageVersion,
-                    author: user,
-                    dependency_manager: options.packageManager,
-                  }
-                  await template.recursiveDirectoryCopy(templatePath, templateScaffoldDir, templateData)
-
-                  task.title = 'Template files parsed'
-                },
-              },
-              {
-                title: 'Updating package.json',
-                task: async (_, task) => {
-                  const packageJSON = await npm.readPackageJSON(templateScaffoldDir)
-                  const cliVersion = await constants.versions.cliKit()
-                  await npm.updateAppData(packageJSON, hyphenizedName)
-                  await updateCLIDependencies(packageJSON, options.local, {
-                    dependencies: {
-                      '@shopify/hydrogen': hydrogenPackageVersion,
-                    },
-                    devDependencies: {
-                      '@shopify/cli-hydrogen': cliHydrogenPackageVersion,
-                      '@shopify/cli': cliVersion,
-                    },
-                  })
-                  await updateCLIScripts(packageJSON)
-                  await npm.writePackageJSON(templateScaffoldDir, packageJSON)
-
-                  task.title = 'Package.json updated'
-                  parentTask.title = 'App initialized'
-                },
-              },
-            ],
-            {concurrent: false},
-          )
+        title: `Downloading template from ${repoUrl}`,
+        task: async () => {
+          await downloadGitRepository({
+            repoUrl,
+            destination: templateDownloadDir,
+            shallow: true,
+          })
+          if (!(await fileExists(joinPath(templatePath, 'package.json')))) {
+            throw new AbortError(`The template ${templatePath} was not found.`, suggestHydrogenSupport())
+          }
         },
       },
-    ])
+      {
+        title: `Initializing your app ${hyphenizedName}`,
+        task: async () => {
+          return [
+            {
+              title: 'Parsing template files',
+              task: async () => {
+                const templateData = {
+                  name: hyphenizedName,
+                  shopify_cli_version: cliVersion,
+                  hydrogen_version: hydrogenPackageVersion,
+                  author: user,
+                  dependency_manager: options.packageManager,
+                }
+                await recursiveLiquidTemplateCopy(templatePath, templateScaffoldDir, templateData)
+              },
+            },
+            {
+              title: 'Updating package.json',
+              task: async () => {
+                const packageJSON = (await findUpAndReadPackageJson(templateScaffoldDir)).content
+                packageJSON.name = hyphenizedName
+                packageJSON.author = (await username()) ?? ''
+                await updateCLIDependencies(packageJSON, options.local, {
+                  dependencies: {
+                    '@shopify/hydrogen': hydrogenPackageVersion,
+                  },
+                  devDependencies: {
+                    '@shopify/cli-hydrogen': cliVersion,
+                    '@shopify/cli': cliVersion,
+                  },
+                })
+                await updateCLIScripts(packageJSON)
+                await writePackageJSON(templateScaffoldDir, packageJSON)
+              },
+            },
+          ]
+        },
+      },
+    ]
 
-    if (await environment.local.isShopify()) {
+    if (await isShopify()) {
       tasks.push({
         title: "[Shopifolks-only] Configuring the project's NPM registry",
-        task: async (_, task) => {
+        task: async () => {
           await writeToNpmrc(templateScaffoldDir, `@shopify:registry=https://registry.npmjs.org`)
-          task.title = "[Shopifolks-only] Project's NPM registry configured."
         },
       })
     }
@@ -133,59 +144,44 @@ async function init(options: InitOptions) {
     tasks = tasks.concat([
       {
         title: `Installing dependencies with ${packageManager}`,
-        task: async (_, task) => {
-          const stdout = new Writable({
-            write(chunk, encoding, next) {
-              task.output = chunk.toString()
-              next()
-            },
-          })
-          await installDependencies(templateScaffoldDir, packageManager, stdout)
+        task: async () => {
+          await installDependencies(templateScaffoldDir, packageManager)
         },
       },
       {
         title: 'Cleaning up',
-        task: async (_, task) => {
+        task: async () => {
           await cleanup(templateScaffoldDir)
-
-          task.title = 'Completed clean up'
         },
       },
       {
         title: 'Initializing a Git repository...',
-        task: async (_, task) => {
-          await git.initializeRepository(templateScaffoldDir)
-          await git.addAll(templateScaffoldDir)
-          await git.commit('Initial commit generated by Hydrogen', {directory: templateScaffoldDir})
-          task.title = 'Git repository initialized'
+        task: async () => {
+          await initializeGitRepository(templateScaffoldDir)
+          await addAllToGitFromDirectory(templateScaffoldDir)
+          await createGitCommit('Initial commit generated by Hydrogen', {directory: templateScaffoldDir})
         },
       },
     ])
 
-    const list = ui.newListr(tasks, {
-      concurrent: false,
-      rendererOptions: {collapse: false},
-      rendererSilent: environment.local.isUnitTest(),
-    })
+    await renderTasks(tasks)
 
-    await list.run()
-
-    await file.move(templateScaffoldDir, outputDirectory)
+    await moveFile(templateScaffoldDir, outputDirectory)
   })
 
-  output.info(output.content`
+  outputInfo(outputContent`
 ✨ ${hyphenizedName} is ready to build!
-🚀 Run ${output.token.packagejsonScript(
+🚀 Run ${outputToken.packagejsonScript(
     packageManager,
     'dev',
   )} to start your local development server and start building.
 
-📚 Docs: ${output.token.link('Quick start guide', 'https://shopify.dev/custom-storefronts/hydrogen')}`)
+📚 Docs: ${outputToken.link('Quick start guide', 'https://shopify.dev/custom-storefronts/hydrogen')}`)
 
-  output.info(output.content`
+  outputInfo(outputContent`
 👋 Note: your project will display inventory from the Hydrogen Demo Store.\
  To connect this project to your Shopify store’s inventory instead,\
- update ${output.token.yellow(`${hyphenizedName}/hydrogen.config.js`)} with your\
+ update ${outputToken.yellow(`${hyphenizedName}/hydrogen.config.js`)} with your\
  store ID and Storefront API key.\n`)
 }
 
@@ -204,34 +200,35 @@ interface PackageDependencies {
   dependencies: {[key: string]: string | undefined}
 }
 
-async function updateCLIScripts(packageJSON: npm.PackageJSON): Promise<npm.PackageJSON> {
+async function updateCLIScripts(packageJSON: PackageJson): Promise<PackageJson> {
+  packageJSON.scripts = packageJSON.scripts || {}
   packageJSON.scripts.dev = `shopify hydrogen dev`
 
   return packageJSON
 }
 
 async function updateCLIDependencies(
-  packageJSON: npm.PackageJSON,
+  packageJSON: PackageJson,
   local: boolean,
   packageDependencies: PackageDependencies,
-): Promise<npm.PackageJSON> {
+): Promise<PackageJson> {
   const {devDependencies, dependencies} = packageDependencies
 
   packageJSON.devDependencies = packageJSON.devDependencies || {}
   packageJSON.dependencies = packageJSON.dependencies || {}
 
   Object.keys(devDependencies).forEach((key) => {
-    packageJSON.devDependencies[key] = devDependencies[key] || packageJSON.devDependencies[key]!
+    packageJSON.devDependencies![key] = devDependencies[key] || packageJSON.devDependencies![key]!
   })
 
   Object.keys(dependencies).forEach((key) => {
-    packageJSON.dependencies[key] = dependencies[key] || packageJSON.dependencies[key]!
+    packageJSON.dependencies![key] = dependencies[key] || packageJSON.dependencies![key]!
   })
 
   if (local) {
     const devDependencyOverrides = {
-      '@shopify/cli': `file:${(await path.findUp('packages/cli-main', {type: 'directory'})) as string}`,
-      '@shopify/cli-hydrogen': `file:${(await path.findUp('packages/cli-hydrogen', {type: 'directory'})) as string}`,
+      '@shopify/cli': `file:${(await findPathUp('packages/cli', {type: 'directory'})) as string}`,
+      '@shopify/cli-hydrogen': `file:${(await findPathUp('packages/cli-hydrogen', {type: 'directory'})) as string}`,
     }
 
     packageJSON.overrides = packageJSON.overrides
@@ -246,29 +243,29 @@ async function updateCLIDependencies(
   return packageJSON
 }
 
-async function installDependencies(directory: string, packageManager: PackageManager, stdout: Writable): Promise<void> {
+async function installDependencies(directory: string, packageManager: PackageManager): Promise<void> {
   if (packageManager === 'pnpm') {
     await writeToNpmrc(directory, 'auto-install-peers = true')
   }
-  await installNodeModules({directory, packageManager, stdout, args: []})
+  await installNodeModules({directory, packageManager, args: []})
 }
 
 async function writeToNpmrc(directory: string, content: string) {
-  const npmrcPath = path.join(directory, '.npmrc')
+  const npmrcPath = joinPath(directory, '.npmrc')
   const npmrcContent = `${content}\n`
-  if (!(await file.exists(npmrcPath))) {
-    await file.touch(npmrcPath)
+  if (!(await fileExists(npmrcPath))) {
+    await touchFile(npmrcPath)
   }
-  await file.appendFile(npmrcPath, npmrcContent)
+  await appendFile(npmrcPath, npmrcContent)
 }
 
 async function cleanup(webOutputDirectory: string) {
-  const gitPaths = await path.glob(
+  const gitPaths = await glob(
     [
-      path.join(webOutputDirectory, '**', '.git'),
-      path.join(webOutputDirectory, '**', '.github'),
-      path.join(webOutputDirectory, '**', '.gitmodules'),
-      path.join(webOutputDirectory, '.stackblitzrc'),
+      joinPath(webOutputDirectory, '**', '.git'),
+      joinPath(webOutputDirectory, '**', '.github'),
+      joinPath(webOutputDirectory, '**', '.gitmodules'),
+      joinPath(webOutputDirectory, '.stackblitzrc'),
     ],
     {
       dot: true,
@@ -278,5 +275,23 @@ async function cleanup(webOutputDirectory: string) {
     },
   )
 
-  return Promise.all(gitPaths.map((path) => file.rmdir(path, {force: true}))).then(() => {})
+  return Promise.all(gitPaths.map((path) => rmdir(path, {force: true}))).then(() => {})
+}
+
+async function nonEmptyDirectoryPrompt(directory: string) {
+  if (await fileExists(directory)) {
+    const relativeDirectory = relativizePath(directory)
+
+    const choice = await renderConfirmationPrompt({
+      message: `${relativeDirectory} is not an empty directory. Do you want to delete the existing files and continue?`,
+      confirmationMessage: 'Yes, delete the files',
+      cancellationMessage: 'No, don’t delete the files',
+    })
+
+    if (!choice) {
+      throw new CancelExecution()
+    }
+
+    await removeFile(directory)
+  }
 }

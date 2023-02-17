@@ -1,13 +1,15 @@
 import {Extension, FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {AppErrors} from './loader.js'
-import {path, schema, file} from '@shopify/cli-kit'
+import {schema} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
+import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
+import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 
-export const AppConfigurationSchema = schema.define.object({
-  scopes: schema.define.string().default(''),
-  extensionDirectories: schema.define.array(schema.define.string()).optional(),
-  webDirectories: schema.define.array(schema.define.string()).optional(),
+export const AppConfigurationSchema = schema.object({
+  scopes: schema.string().default(''),
+  extensionDirectories: schema.array(schema.string()).optional(),
+  webDirectories: schema.array(schema.string()).optional(),
 })
 
 export enum WebType {
@@ -15,19 +17,24 @@ export enum WebType {
   Backend = 'backend',
 }
 
-export const WebConfigurationSchema = schema.define.object({
-  type: schema.define.enum([WebType.Frontend, WebType.Backend]),
-  authCallbackPath: schema.define
-    .preprocess((arg) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg), schema.define.string())
+const ensurePathStartsWithSlash = (arg: unknown) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg)
+
+const WebConfigurationAuthCallbackPathSchema = schema.preprocess(ensurePathStartsWithSlash, schema.string())
+
+export const WebConfigurationSchema = schema.object({
+  type: schema.enum([WebType.Frontend, WebType.Backend]),
+  authCallbackPath: schema
+    .union([WebConfigurationAuthCallbackPathSchema, WebConfigurationAuthCallbackPathSchema.array()])
     .optional(),
-  commands: schema.define.object({
-    build: schema.define.string().optional(),
-    dev: schema.define.string(),
+  webhooksPath: schema.preprocess(ensurePathStartsWithSlash, schema.string()).optional(),
+  commands: schema.object({
+    build: schema.string().optional(),
+    dev: schema.string(),
   }),
 })
 
-export type AppConfiguration = schema.define.infer<typeof AppConfigurationSchema>
-export type WebConfiguration = schema.define.infer<typeof WebConfigurationSchema>
+export type AppConfiguration = schema.infer<typeof AppConfigurationSchema>
+export type WebConfiguration = schema.infer<typeof WebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
 
 export interface Web {
@@ -113,7 +120,7 @@ export class App implements AppInterface {
   }
 
   async updateDependencies() {
-    const nodeDependencies = await getDependencies(path.join(this.directory, 'package.json'))
+    const nodeDependencies = await getDependencies(joinPath(this.directory, 'package.json'))
     this.nodeDependencies = nodeDependencies
   }
 
@@ -164,8 +171,8 @@ export async function getDependencyVersion(dependency: string, directory: string
    */
   if (isReact) {
     const dependencyName = dependency.split('/')
-    const pattern = path.join('node_modules', dependencyName[0]!, dependencyName[1]!, 'package.json')
-    const reactPackageJsonPath = await path.findUp(pattern, {
+    const pattern = joinPath('node_modules', dependencyName[0]!, dependencyName[1]!, 'package.json')
+    const reactPackageJsonPath = await findPathUp(pattern, {
       type: 'file',
       cwd: directory,
       allowSymlinks: true,
@@ -173,20 +180,20 @@ export async function getDependencyVersion(dependency: string, directory: string
     if (!reactPackageJsonPath) {
       return 'not_found'
     }
-    cwd = await file.realpath(path.dirname(reactPackageJsonPath))
+    cwd = await fileRealPath(dirname(reactPackageJsonPath))
   }
 
   // Split the dependency name to avoid using "/" in windows
   const dependencyName = dependency.replace('-react', '').split('/')
-  const pattern = path.join('node_modules', dependencyName[0]!, dependencyName[1]!, 'package.json')
+  const pattern = joinPath('node_modules', dependencyName[0]!, dependencyName[1]!, 'package.json')
 
-  let packagePath = await path.findUp(pattern, {
+  let packagePath = await findPathUp(pattern, {
     cwd,
     type: 'file',
     allowSymlinks: true,
   })
   if (!packagePath) return 'not_found'
-  packagePath = await file.realpath(packagePath)
+  packagePath = await fileRealPath(packagePath)
 
   // Load the package.json and extract the version
   const packageContent = await readAndParsePackageJson(packagePath)

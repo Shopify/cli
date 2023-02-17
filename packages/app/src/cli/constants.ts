@@ -1,3 +1,5 @@
+import {ExtensionFlavor} from './services/generate/extension.js'
+
 export const configurationFileNames = {
   app: 'shopify.app.toml',
   extension: {
@@ -34,12 +36,19 @@ export const blocks = {
   },
 } as const
 
-export const defaultFunctionsFlavors = [
+export const defaultFunctionsFlavors: {name: string; value: ExtensionFlavor}[] = [
   {name: 'Wasm', value: 'wasm'},
   {name: 'Rust', value: 'rust'},
 ]
 
-export const defualtExtensionFlavors = [
+export const withJavaScriptFunctionsFlavors: {name: string; value: ExtensionFlavor}[] = [
+  {name: 'JavaScript', value: 'vanilla-js'},
+  {name: 'TypeScript', value: 'typescript'},
+  {name: 'Rust', value: 'rust'},
+  {name: 'Wasm', value: 'wasm'},
+]
+
+export const defaultExtensionFlavors: {name: string; value: ExtensionFlavor}[] = [
   {name: 'TypeScript', value: 'typescript'},
   {name: 'JavaScript', value: 'vanilla-js'},
   {name: 'TypeScript React', value: 'typescript-react'},
@@ -55,8 +64,12 @@ export const extensionTypesGroups: {name: string; extensions: string[]}[] = [
       'product_discounts',
       'order_discounts',
       'shipping_discounts',
+      'payment_customization',
+      'delivery_customization',
       'checkout_ui_extension',
+      'cart_checkout_validation',
       'checkout_post_purchase',
+      'cart_transform',
     ],
   },
   {name: 'Analytics', extensions: ['web_pixel_extension']},
@@ -64,13 +77,6 @@ export const extensionTypesGroups: {name: string; extensions: string[]}[] = [
   {name: 'Point-of-Sale', extensions: ['pos_ui_extension']},
   {
     name: 'Shopify private',
-    extensions: [
-      'customer_accounts_ui_extension',
-      'payment_customization',
-      'delivery_customization',
-      'shipping_rate_presenter',
-      'ui_extension',
-      'order_routing_location_rule',
-    ],
+    extensions: ['customer_accounts_ui_extension', 'ui_extension', 'order_routing_location_rule'],
   },
 ]

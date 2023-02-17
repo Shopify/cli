@@ -1,11 +1,11 @@
 import {App, AppInterface} from './app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
-import {FunctionInstance, FunctionSpec} from '../extensions/functions.js'
+import {FunctionConfigType, FunctionInstance, FunctionSpec} from '../extensions/functions.js'
 import {ThemeExtensionInstance} from '../extensions/theme.js'
 import themeSpec from '../extensions/theme-specifications/theme.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js'
-import {api} from '@shopify/cli-kit'
+import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -41,7 +41,7 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
 
   const configuration = uiExtension?.configuration ?? {
     name: uiExtension?.configuration?.name ?? 'test-ui-extension',
-    type: uiExtension?.configuration?.type ?? 'product_subscription',
+    type: uiExtension?.configuration?.type ?? uiExtension?.type ?? 'product_subscription',
     metafields: [],
     capabilities: {
       block_progress: false,
@@ -61,7 +61,6 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
     entryPath: entrySourceFilePath,
     directory,
     specification,
-    remoteSpecification: undefined,
   })
   extension.devUUID = uiExtension?.devUUID ?? 'test-ui-extension-uuid'
   return extension
@@ -77,13 +76,13 @@ export async function testThemeExtensions(): Promise<ThemeExtension> {
     configuration,
     configurationPath: '',
     directory: './my-extension',
-    remoteSpecification: undefined,
     specification: themeSpec,
+    outputBundlePath: './my-extension',
   })
 }
 
-export async function testFunctionExtension(): Promise<FunctionExtension> {
-  const configuration = {
+function defaultFunctionConfiguration(): FunctionConfigType {
+  return {
     name: 'test function extension',
     description: 'description',
     type: 'product_discounts',
@@ -93,6 +92,16 @@ export async function testFunctionExtension(): Promise<FunctionExtension> {
     apiVersion: '2022-07',
     configurationUi: true,
   }
+}
+
+interface TestFunctionExtensionOptions {
+  dir?: string
+  config?: FunctionConfigType
+}
+
+export async function testFunctionExtension(opts: TestFunctionExtensionOptions = {}): Promise<FunctionExtension> {
+  const directory = opts.dir ?? '/tmp/project/extensions/my-function'
+  const configuration = opts.config ?? defaultFunctionConfiguration()
 
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === configuration.type) as FunctionSpec
@@ -101,16 +110,16 @@ export async function testFunctionExtension(): Promise<FunctionExtension> {
     configuration,
     configurationPath: '',
     specification,
-    directory: './my-extension',
+    directory,
   })
 }
 
-export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
+export const testRemoteSpecifications: RemoteSpecification[] = [
   {
     name: 'Checkout Post Purchase',
     externalName: 'Post-purchase UI',
     identifier: 'checkout_post_purchase',
-    externalIdentifier: 'post_purchase_ui',
+    externalIdentifier: 'checkout_post_purchase_external',
     gated: false,
     options: {
       managementExperience: 'cli',
@@ -126,7 +135,7 @@ export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
     name: 'Online Store - App Theme Extension',
     externalName: 'Theme App Extension',
     identifier: 'theme',
-    externalIdentifier: 'theme_app_extension',
+    externalIdentifier: 'theme_external',
     gated: false,
     options: {
       managementExperience: 'cli',
@@ -137,7 +146,7 @@ export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
     name: 'Product Subscription',
     externalName: 'Subscription UI',
     identifier: 'product_subscription',
-    externalIdentifier: 'subscription_ui',
+    externalIdentifier: 'product_subscription_external',
     gated: false,
     options: {
       managementExperience: 'cli',
@@ -153,7 +162,7 @@ export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
     name: 'UI Extension',
     externalName: 'UI Extension',
     identifier: 'ui_extension',
-    externalIdentifier: 'ui_extension',
+    externalIdentifier: 'ui_extension_external',
     gated: false,
     options: {
       managementExperience: 'cli',
@@ -169,7 +178,7 @@ export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
     name: 'Customer Accounts',
     externalName: 'Customer Accounts',
     identifier: 'customer_accounts_ui_extension',
-    externalIdentifier: 'customer_accounts_ui_extension',
+    externalIdentifier: 'customer_accounts_ui_extension_external',
     gated: false,
     options: {
       managementExperience: 'cli',
@@ -185,7 +194,7 @@ export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
     name: 'Checkout Extension',
     externalName: 'Checkout UI',
     identifier: 'checkout_ui_extension',
-    externalIdentifier: 'checkout_ui',
+    externalIdentifier: 'checkout_ui_extension_external',
     gated: false,
     options: {
       managementExperience: 'cli',
@@ -200,8 +209,10 @@ export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
   {
     name: 'Product Subscription',
     externalName: 'Subscription UI',
+    // we are going to replace this to 'product_subscription' because we
+    // started using it before relying on the extension specification identifier
     identifier: 'subscription_management',
-    externalIdentifier: 'subscription_ui',
+    externalIdentifier: 'product_subscription_external',
     gated: false,
     options: {
       managementExperience: 'cli',
@@ -217,7 +228,7 @@ export const testRemoteSpecifications: api.graphql.RemoteSpecification[] = [
     name: 'Marketing Activity',
     externalName: 'Marketing Activity',
     identifier: 'marketing_activity_extension',
-    externalIdentifier: 'marketing_activity_extension',
+    externalIdentifier: 'marketing_activity_extension_external',
     gated: false,
     options: {
       managementExperience: 'dashboard',

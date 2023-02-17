@@ -1,7 +1,10 @@
 import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {Organization, OrganizationApp, MinimalOrganizationApp} from '../../models/organization.js'
 import {fetchAppFromApiKey} from '../dev/fetch.js'
-import {api, error, output} from '@shopify/cli-kit'
+import {CreateAppQuery, CreateAppQuerySchema, CreateAppQueryVariables} from '../../api/graphql/create_app.js'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 /**
  * Select an app from env, list or create a new one:
@@ -16,20 +19,20 @@ import {api, error, output} from '@shopify/cli-kit'
  */
 export async function selectOrCreateApp(
   localAppName: string,
-  apps: MinimalOrganizationApp[],
+  apps: {pageInfo: {hasNextPage: boolean}; nodes: MinimalOrganizationApp[]},
   org: Organization,
   token: string,
 ): Promise<OrganizationApp> {
-  let createNewApp = apps.length === 0
+  let createNewApp = apps.nodes.length === 0
   if (!createNewApp) {
-    output.info(`\nBefore you preview your work, it needs to be associated with an app.\n`)
+    outputInfo(`\nBefore you preview your work, it needs to be associated with an app.\n`)
     createNewApp = await createAsNewAppPrompt()
   }
   if (createNewApp) {
     return createApp(org, localAppName, token)
   } else {
-    const selectedApp = await selectAppPrompt(apps, org.id, token)
-    const fullSelectedApp = await fetchAppFromApiKey(selectedApp.apiKey, token)
+    const selectedAppApiKey = await selectAppPrompt(apps, org.id, token)
+    const fullSelectedApp = await fetchAppFromApiKey(selectedAppApiKey, token)
     return fullSelectedApp!
   }
 }
@@ -38,7 +41,7 @@ export async function createApp(org: Organization, appName: string, token: strin
   const name = await appNamePrompt(appName)
 
   const type = org.appsNext ? 'undecided' : await appTypePrompt()
-  const variables: api.graphql.CreateAppQueryVariables = {
+  const variables: CreateAppQueryVariables = {
     org: parseInt(org.id, 10),
     title: `${name}`,
     appUrl: 'https://example.com',
@@ -46,14 +49,13 @@ export async function createApp(org: Organization, appName: string, token: strin
     type,
   }
 
-  const query = api.graphql.CreateAppQuery
-  const result: api.graphql.CreateAppQuerySchema = await api.partners.request(query, token, variables)
+  const query = CreateAppQuery
+  const result: CreateAppQuerySchema = await partnersRequest(query, token, variables)
   if (result.appCreate.userErrors.length > 0) {
     const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
-    throw new error.Abort(errors)
+    throw new AbortError(errors)
   }
 
-  output.success(`${result.appCreate.app.title} has been created on your Partners account`)
   const createdApp: OrganizationApp = result.appCreate.app
   createdApp.organizationId = org.id
   createdApp.newApp = true

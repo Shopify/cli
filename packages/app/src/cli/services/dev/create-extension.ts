@@ -1,4 +1,10 @@
-import {api, error} from '@shopify/cli-kit'
+import {
+  ExtensionCreateQuery,
+  ExtensionCreateSchema,
+  ExtensionCreateVariables,
+} from '../../api/graphql/extension_create.js'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export interface ExtensionRegistration {
   id: string
@@ -21,19 +27,19 @@ export async function createExtension(
   name: string,
   token: string,
 ): Promise<ExtensionRegistration> {
-  const query = api.graphql.ExtensionCreateQuery
-  const variables: api.graphql.ExtensionCreateVariables = {
+  const query = ExtensionCreateQuery
+  const variables: ExtensionCreateVariables = {
     apiKey,
     type: graphQLType,
     title: name,
     config: JSON.stringify({}),
     context: null,
   }
-  const result: api.graphql.ExtensionCreateSchema = await api.partners.request(query, token, variables)
+  const result: ExtensionCreateSchema = await partnersRequest(query, token, variables)
 
   if (result.extensionCreate.userErrors?.length > 0) {
     const errors = result.extensionCreate.userErrors.map((error) => error.message).join(', ')
-    throw new error.Abort(errors)
+    throw new AbortError(errors)
   }
 
   return result.extensionCreate.extensionRegistration

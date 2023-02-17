@@ -1,8 +1,8 @@
 import {List} from './List.js'
-import {renderString} from '../../ui.js'
-import {unstyled} from '../../../../output.js'
+import {unstyled} from '../../../../public/node/output.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
+import {render} from 'ink-testing-library'
 
 describe('List', async () => {
   test('renders unordered items', async () => {
@@ -12,9 +12,9 @@ describe('List', async () => {
       ordered: false,
     }
 
-    const {output} = renderString(<List {...options} />)
+    const {lastFrame} = render(<List {...options} />)
 
-    expect(unstyled(output!)).toMatchInlineSnapshot(`
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "List title
         • Item 1
         • Item 2
@@ -28,9 +28,9 @@ describe('List', async () => {
       ordered: true,
     }
 
-    const {output} = renderString(<List {...options} />)
+    const {lastFrame} = render(<List {...options} />)
 
-    expect(unstyled(output!)).toMatchInlineSnapshot(`
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "  1. Item 1
         2. Item 2
         3. Item 3"

@@ -2,7 +2,7 @@
   "version": 2,
   "projects": {
     "workspace": "workspace",
-    "cli-main": "packages/cli-main",
+    "cli": "packages/cli",
     "cli-kit": "packages/cli-kit",
     "app": "packages/app",
     "cli-hydrogen": "packages/cli-hydrogen",

@@ -1,10 +1,22 @@
 import {fetchAllDevStores} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
-import {error, output, api, system, ui, environment} from '@shopify/cli-kit'
+import {
+  ConvertDevToTestStoreQuery,
+  ConvertDevToTestStoreSchema,
+  ConvertDevToTestStoreVariables,
+} from '../../api/graphql/convert_dev_to_test_store.js'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {sleep} from '@shopify/cli-kit/node/system'
+import {renderTasks} from '@shopify/cli-kit/node/ui'
+import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
+import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
+import {AbortError, BugError, CancelExecution} from '@shopify/cli-kit/node/error'
+import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
 
 const CreateStoreLink = async (orgId: string) => {
-  const url = `https://${await environment.fqdn.partners()}/${orgId}/stores/new?store_type=dev_store`
+  const url = `https://${await partnersFqdn()}/${orgId}/stores/new?store_type=dev_store`
   return (
     `Looks like you don't have a dev store in the Partners org you selected. ` +
     `Keep going — create a dev store on Shopify Partners:\n${url}\n`
@@ -32,12 +44,12 @@ export async function selectStore(
     return store
   }
 
-  output.info(`\n${await CreateStoreLink(org.id)}`)
-  await system.sleep(5)
+  outputInfo(`\n${await CreateStoreLink(org.id)}`)
+  await sleep(5)
 
   const reload = await reloadStoreListPrompt(org)
   if (!reload) {
-    throw new error.CancelExecution()
+    throw new CancelExecution()
   }
 
   const data = await waitForCreatedStore(org.id, token)
@@ -55,27 +67,24 @@ async function waitForCreatedStore(orgId: string, token: string): Promise<Organi
   const retries = 10
   const secondsToWait = 3
   let data = [] as OrganizationStore[]
-  const list = ui.newListr(
-    [
-      {
-        title: 'Fetching organization data',
-        task: async () => {
-          for (let i = 0; i < retries; i++) {
-            // eslint-disable-next-line no-await-in-loop
-            const stores = await fetchAllDevStores(orgId, token)
-            if (stores.length > 0) {
-              data = stores
-              return
-            }
-            // eslint-disable-next-line no-await-in-loop
-            await system.sleep(secondsToWait)
+  const tasks = [
+    {
+      title: 'Fetching organization data',
+      task: async () => {
+        for (let i = 0; i < retries; i++) {
+          // eslint-disable-next-line no-await-in-loop
+          const stores = await fetchAllDevStores(orgId, token)
+          if (stores.length > 0) {
+            data = stores
+            return
           }
-        },
+          // eslint-disable-next-line no-await-in-loop
+          await sleep(secondsToWait)
+        }
       },
-    ],
-    {rendererSilent: environment.local.isUnitTest()},
-  )
-  await list.run()
+    },
+  ]
+  await renderTasks(tasks)
 
   return data
 }
@@ -98,9 +107,9 @@ export async function convertToTestStoreIfNeeded(
   /**
    * Is not possible to convert stores to dev ones in spin environmets. Should be created directly as development.
    */
-  if (environment.service.isSpinEnvironment() && environment.local.firstPartyDev()) return
+  if (isSpinEnvironment() && firstPartyDev()) return
   if (!store.transferDisabled && !store.convertableToPartnerTest) {
-    throw new error.Abort(
+    throw new AbortError(
       `The store you specified (${store.shopDomain}) is not a dev store`,
       'Run dev --reset and select an eligible dev store.',
     )
@@ -116,20 +125,20 @@ export async function convertToTestStoreIfNeeded(
  * @param token - Token to access partners API
  */
 export async function convertStoreToTest(store: OrganizationStore, orgId: string, token: string) {
-  const query = api.graphql.ConvertDevToTestStoreQuery
-  const variables: api.graphql.ConvertDevToTestStoreVariables = {
+  const query = ConvertDevToTestStoreQuery
+  const variables: ConvertDevToTestStoreVariables = {
     input: {
       organizationID: parseInt(orgId, 10),
       shopId: store.shopId,
     },
   }
-  const result: api.graphql.ConvertDevToTestStoreSchema = await api.partners.request(query, token, variables)
+  const result: ConvertDevToTestStoreSchema = await partnersRequest(query, token, variables)
   if (!result.convertDevToTestStore.convertedToTestStore) {
     const errors = result.convertDevToTestStore.userErrors.map((error) => error.message).join(', ')
-    throw new error.Bug(
+    throw new BugError(
       `Error converting store ${store.shopDomain} to a Test store: ${errors}`,
       'This store might not be compatible with draft apps, please try a different store',
     )
   }
-  output.success(`Converted ${store.shopDomain} to a Test store`)
+  outputSuccess(`Converted ${store.shopDomain} to a Test store`)
 }

@@ -1,18 +1,11 @@
 import {cloneRepoAndCheckoutLatestTag, cloneRepo} from './init.js'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {git} from '@shopify/cli-kit'
+import {describe, expect, it, vi} from 'vitest'
+import {downloadGitRepository} from '@shopify/cli-kit/node/git'
 
-beforeEach(async () => {
-  vi.mock('@shopify/cli-kit', async () => {
-    const actualCliKit = await vi.importActual<typeof import('@shopify/cli-kit')>('@shopify/cli-kit')
-
-    return {
-      ...actualCliKit,
-      git: {
-        downloadRepository: vi.fn(),
-      },
-    }
-  })
+vi.mock('@shopify/cli-kit/node/git', () => {
+  return {
+    downloadGitRepository: vi.fn(),
+  }
 })
 
 describe('cloneRepoAndCheckoutLatestTag()', async () => {
@@ -21,13 +14,12 @@ describe('cloneRepoAndCheckoutLatestTag()', async () => {
     const repoUrl = 'https://github.com/Shopify/dawn.git'
     const destination = 'destination'
     const latestTag = true
-    const downloadRepositorySpy = vi.spyOn(git, 'downloadRepository')
 
     // When
     await cloneRepoAndCheckoutLatestTag(repoUrl, destination)
 
     // Then
-    expect(downloadRepositorySpy).toHaveBeenCalledWith({repoUrl, destination, latestTag})
+    expect(downloadGitRepository).toHaveBeenCalledWith({repoUrl, destination, latestTag})
   })
 })
 
@@ -36,12 +28,11 @@ describe('cloneRepo()', async () => {
     // Given
     const repoUrl = 'https://github.com/Shopify/dawn.git'
     const destination = 'destination'
-    const downloadRepositorySpy = vi.spyOn(git, 'downloadRepository')
 
     // When
     await cloneRepo(repoUrl, destination)
 
     // Then
-    expect(downloadRepositorySpy).toHaveBeenCalledWith({repoUrl, destination})
+    expect(downloadGitRepository).toHaveBeenCalledWith({repoUrl, destination})
   })
 })

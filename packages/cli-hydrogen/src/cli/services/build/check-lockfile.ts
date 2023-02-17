@@ -1,6 +1,8 @@
-import {file, git, path} from '@shopify/cli-kit'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {lockfiles} from '@shopify/cli-kit/node/node-package-manager'
+import {fileExists} from '@shopify/cli-kit/node/fs'
+import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 import type {Lockfile} from '@shopify/cli-kit/node/node-package-manager'
 
 function missingLockfileWarning() {
@@ -63,8 +65,8 @@ type LockFileStatus = 'missing' | 'multiple' | 'ignored' | 'ok'
 
 export async function checkLockfileStatus(directory: string): Promise<LockFileStatus> {
   const availableLockfiles = await lockfiles.reduce(async (acc, lockFileName) => {
-    const lockfilePath = path.resolve(directory, lockFileName)
-    if (await file.exists(lockfilePath)) {
+    const lockfilePath = resolvePath(directory, lockFileName)
+    if (await fileExists(lockfilePath)) {
       return (await acc).concat(lockFileName)
     } else {
       return acc
@@ -81,9 +83,8 @@ export async function checkLockfileStatus(directory: string): Promise<LockFileSt
     return 'multiple'
   }
 
-  const repo = git.factory(directory)
   const lockfile = availableLockfiles[0]!
-  const ignoredLockfile = await repo.checkIgnore([lockfile])
+  const ignoredLockfile = await checkIfIgnoredInGitRepository(directory, [lockfile])
 
   if (ignoredLockfile.length) {
     lockfileIgnoredWarning(lockfile)

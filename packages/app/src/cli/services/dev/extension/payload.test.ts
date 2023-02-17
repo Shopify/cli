@@ -4,16 +4,17 @@ import {ExtensionDevOptions} from '../extension.js'
 import {testApp, testUIExtension} from '../../../models/app/app.test-data.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
-import {file, path} from '@shopify/cli-kit'
+import {inTemporaryDirectory, touchFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('../../../models/app/app.js')
 
 describe('getUIExtensionPayload', () => {
   test('returns the right payload', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const outputBundlePath = path.join(tmpDir, 'main.js')
-      await file.touch(outputBundlePath)
+      const outputBundlePath = joinPath(tmpDir, 'main.js')
+      await touchFile(outputBundlePath)
       const signal: any = vi.fn()
       const stdout: any = vi.fn()
       const stderr: any = vi.fn()
@@ -92,7 +93,7 @@ describe('getUIExtensionPayload', () => {
         },
         categories: null,
         extensionPoints: ['CUSTOM_EXTENSION_POINT'],
-        externalType: 'checkout_ui',
+        externalType: 'checkout_ui_extension_external',
         localization: null,
         metafields: null,
         surface: 'checkout',
@@ -106,7 +107,7 @@ describe('getUIExtensionPayload', () => {
   })
 
   test('default values', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uiExtension = await testUIExtension({directory: tmpDir})
       const options: ExtensionDevOptions = {} as ExtensionDevOptions
@@ -132,8 +133,8 @@ describe('getUIExtensionPayload', () => {
     })
   })
 
-  test('adds root.url and surface to extensionPoints[n] when extensionPoints[n] is an object', async () => {
-    await file.inTemporaryDirectory(async (tmpDir) => {
+  test('adds root.url, resource.url and surface to extensionPoints[n] when extensionPoints[n] is an object', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uiExtension = await testUIExtension({
         devUUID: 'devUUID',
@@ -178,6 +179,9 @@ describe('getUIExtensionPayload', () => {
           root: {
             url: 'http://tunnel-url.com/extensions/devUUID/Admin::Checkout::Editor::Settings',
           },
+          resource: {
+            url: '',
+          },
         },
         {
           target: 'Checkout::ShippingMethods::RenderAfter',
@@ -186,8 +190,51 @@ describe('getUIExtensionPayload', () => {
           root: {
             url: 'http://tunnel-url.com/extensions/devUUID/Checkout::ShippingMethods::RenderAfter',
           },
+          resource: {
+            url: '',
+          },
         },
       ])
+    })
+  })
+
+  test('adds apiVersion when present in the configuration', async () => {
+    await inTemporaryDirectory(async () => {
+      // Given
+      const apiVersion = '2023-01'
+      const uiExtension = await testUIExtension({
+        devUUID: 'devUUID',
+        configuration: {
+          name: 'UI Extension',
+          type: 'ui_extension',
+          apiVersion,
+          metafields: [],
+          capabilities: {
+            block_progress: false,
+            network_access: false,
+            api_access: false,
+          },
+          extensionPoints: [
+            {
+              target: 'Admin::Checkout::Editor::Settings',
+              module: './src/AdminCheckoutEditorSettings.js',
+            },
+          ],
+        },
+      })
+
+      const options: ExtensionDevOptions = {} as ExtensionDevOptions
+      const development: Partial<UIExtensionPayload['development']> = {}
+
+      // When
+      const got = await getUIExtensionPayload(uiExtension, {
+        ...options,
+        currentDevelopmentPayload: development,
+        url: 'http://tunnel-url.com',
+      })
+
+      // Then
+      expect(got).toHaveProperty('apiVersion', apiVersion)
     })
   })
 })

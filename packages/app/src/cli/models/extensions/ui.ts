@@ -1,8 +1,13 @@
 import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, UIExtension} from '../app/extensions.js'
-import {blocks, defualtExtensionFlavors} from '../../constants.js'
-import {id, path, api, output, environment, string} from '@shopify/cli-kit'
+import {blocks, defaultExtensionFlavors} from '../../constants.js'
+import {ExtensionFlavor} from '../../services/generate/extension.js'
 import {ok, Result} from '@shopify/cli-kit/node/result'
+import {capitalize, constantize} from '@shopify/cli-kit/common/string'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {joinPath, basename} from '@shopify/cli-kit/node/path'
+import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -10,13 +15,11 @@ import {ok, Result} from '@shopify/cli-kit/node/result'
 export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>
   extends GenericSpecification {
   identifier: string
-  externalIdentifier: string
-  externalName: string
   partnersWebIdentifier: string
   surface: string
   singleEntryPath: boolean
   registrationLimit: number
-  supportedFlavors: {name: string; value: string}[]
+  supportedFlavors: {name: string; value: ExtensionFlavor}[]
   gated: boolean
   helpURL?: string
   dependency?: {name: string; version: string}
@@ -33,7 +36,7 @@ export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = Bas
     uuid: string,
     config: TConfiguration,
     storeFqdn: string,
-  ) => output.TokenizedString | undefined
+  ) => TokenizedString | undefined
   shouldFetchCartUrl?(config: TConfiguration): boolean
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
 }
@@ -63,7 +66,6 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
   configurationPath: string
 
   private specification: UIExtensionSpec
-  private remoteSpecification?: api.graphql.RemoteSpecification
 
   get graphQLType() {
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
@@ -78,7 +80,7 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
   }
 
   get humanName() {
-    return this.remoteSpecification?.externalName ?? this.specification.externalName
+    return this.specification.externalName
   }
 
   get name() {
@@ -90,7 +92,7 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
   }
 
   get externalType() {
-    return this.remoteSpecification?.externalIdentifier ?? this.specification.externalIdentifier
+    return this.specification.externalIdentifier
   }
 
   get surface() {
@@ -103,18 +105,16 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
     entryPath: string
     directory: string
     specification: UIExtensionSpec
-    remoteSpecification?: api.graphql.RemoteSpecification
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
     this.entrySourceFilePath = options.entryPath
     this.directory = options.directory
     this.specification = options.specification
-    this.remoteSpecification = options.remoteSpecification
-    this.outputBundlePath = path.join(options.directory, 'dist/main.js')
-    this.devUUID = `dev-${id.generateRandomUUID()}`
-    this.localIdentifier = path.basename(options.directory)
-    this.idEnvironmentVariableName = `SHOPIFY_${string.constantize(path.basename(this.directory))}_ID`
+    this.outputBundlePath = joinPath(options.directory, 'dist/main.js')
+    this.devUUID = `dev-${randomUUID()}`
+    this.localIdentifier = basename(options.directory)
+    this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
   }
 
   deployConfig(): Promise<{[key: string]: unknown}> {
@@ -132,14 +132,14 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
   }
 
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
-    const partnersFqdn = await environment.fqdn.partners()
+    const fqdn = await partnersFqdn()
     const parnersPath = this.specification.partnersWebIdentifier
-    return `https://${partnersFqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
+    return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }
 
   previewMessage(url: string, storeFqdn: string) {
-    const heading = output.token.heading(`${this.name} (${this.humanName})`)
-    let message = output.content`Preview link: ${url}/extensions/${this.devUUID}`
+    const heading = outputToken.heading(`${this.name} (${this.humanName})`)
+    let message = outputContent`Preview link: ${url}/extensions/${this.devUUID}`
 
     if (this.specification.previewMessage) {
       const customMessage = this.specification.previewMessage(url, this.devUUID, this.configuration, storeFqdn)
@@ -147,7 +147,7 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
       message = customMessage
     }
 
-    return output.content`${heading}\n${message.value}\n`
+    return outputContent`${heading}\n${message.value}\n`
   }
 
   getBundleExtensionStdinContent() {
@@ -168,10 +168,19 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
 }
 
 /**
+ * These fields are forbidden when creating a new ExtensionSpec
+ * They belong to the ExtensionSpec interface, but the values are obtained from the API
+ * and should not be set by the user locally
+ *
+ * WARNING: 'surface' should be included here but is not yet compatible with the extension server
+ */
+export type ForbiddenFields = 'registrationLimit' | 'category' | 'externalIdentifier' | 'externalName' | 'name'
+
+/**
  * Partial ExtensionSpec type used when creating a new ExtensionSpec, the only mandatory field is the identifier
  */
 export interface CreateExtensionSpecType<TConfiguration extends BaseConfigContents = BaseConfigContents>
-  extends Partial<Omit<UIExtensionSpec<TConfiguration>, 'registrationLimit' | 'category'>> {
+  extends Partial<Omit<UIExtensionSpec<TConfiguration>, ForbiddenFields>> {
   identifier: string
 }
 
@@ -204,15 +213,17 @@ export function createUIExtensionSpecification<TConfiguration extends BaseConfig
   spec: CreateExtensionSpecType<TConfiguration>,
 ): UIExtensionSpec<TConfiguration> {
   const defaults = {
-    externalIdentifier: spec.identifier,
-    externalName: spec.identifier,
+    // these two fields are going to be overridden by the extension specification API response,
+    // but we need them to have a default value for tests
+    externalIdentifier: `${spec.identifier}_external`,
+    externalName: capitalize(spec.identifier.replace(/_/g, ' ')),
     surface: 'unknown',
     partnersWebIdentifier: spec.identifier,
     singleEntryPath: true,
     gated: false,
     schema: BaseUIExtensionSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
-    supportedFlavors: defualtExtensionFlavors,
+    supportedFlavors: defaultExtensionFlavors,
     category: (): ExtensionCategory => (spec.identifier === 'theme' ? 'theme' : 'ui'),
   }
   return {...defaults, ...spec}

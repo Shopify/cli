@@ -4,7 +4,7 @@ import {websocketUpgradeHandler, getPayloadUpdateHandler} from './websocket/hand
 import {ExtensionDevOptions} from '../extension.js'
 import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 import {WebSocketServer} from 'ws'
-import {Server} from 'node:https'
+import {Server} from 'https'
 
 vi.mock('./websocket/handlers.js')
 vi.mock('ws')

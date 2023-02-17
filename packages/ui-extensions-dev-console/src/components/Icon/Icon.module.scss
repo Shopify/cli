@@ -1,0 +1,20 @@
+.Icon {
+  display: block;
+  height: 2rem;
+  width: 2rem;
+  max-height: 100%;
+  max-width: 100%;
+}
+
+svg {
+  position: relative;
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  fill: var(--dc-color-white);
+  margin: 0 auto;
+}
+
+.Muted {
+  fill: var(--dc-color-grey-500);
+}

@@ -144,7 +144,7 @@ declare global {
   }
 }
 
-export const AVAILABLE_SURFACES = ['admin', 'checkout', 'post-checkout', 'pos', 'customer-accounts'] as const
+export const AVAILABLE_SURFACES = ['admin', 'checkout', 'post-checkout', 'point_of_sale', 'customer-accounts'] as const
 
 export type Surface = typeof AVAILABLE_SURFACES[number]
 

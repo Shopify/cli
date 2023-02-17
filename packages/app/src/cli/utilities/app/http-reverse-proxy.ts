@@ -1,8 +1,8 @@
-import {output, abort} from '@shopify/cli-kit'
-import httpProxy from 'http-proxy'
-import {renderConcurrent} from '@shopify/cli-kit/node/ui'
-import {AbortController} from 'abort-controller'
+import {renderConcurrent, RenderConcurrentOptions} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
+import {OutputProcess, outputDebug, outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
+import {openURL} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 import * as http from 'http'
 
@@ -22,7 +22,14 @@ export interface ReverseHTTPProxyTarget {
    * to send standard output and error data that gets formatted with the
    * right prefix.
    */
-  action: (stdout: Writable, stderr: Writable, signal: abort.Signal, port: number) => Promise<void> | void
+  action: (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => Promise<void> | void
+}
+
+interface Options {
+  previewUrl: string | undefined
+  portNumber: number
+  proxyTargets: ReverseHTTPProxyTarget[]
+  additionalProcesses: OutputProcess[]
 }
 
 /**
@@ -34,15 +41,20 @@ export interface ReverseHTTPProxyTarget {
  * @param additionalProcesses - Additional processes to run. The proxy won't forward traffic to these processes.
  * @returns A promise that resolves with an interface to get the port of the proxy and stop it.
  */
-export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
-  portNumber: number | undefined = undefined,
-  proxyTargets: ReverseHTTPProxyTarget[],
-  additionalProcesses: output.OutputProcess[],
-): Promise<void> {
+export async function runConcurrentHTTPProcessesAndPathForwardTraffic({
+  previewUrl,
+  portNumber,
+  proxyTargets,
+  additionalProcesses,
+}: Options): Promise<void> {
+  // Lazy-importing it because it's CJS and we don't want it
+  // to block the loading of the ESM module graph.
+  const {default: httpProxy} = await import('http-proxy')
+
   const rules: {[key: string]: string} = {}
 
   const processes = await Promise.all(
-    proxyTargets.map(async (target): Promise<output.OutputProcess> => {
+    proxyTargets.map(async (target): Promise<OutputProcess> => {
       const targetPort = await getAvailableTCPPort()
       rules[target.pathPrefix ?? '/'] = `http://localhost:${targetPort}`
       return {
@@ -54,23 +66,25 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic(
     }),
   )
 
-  const availablePort = portNumber ?? (await getAvailableTCPPort())
-
-  output.debug(output.content`
-Starting reverse HTTP proxy on port ${output.token.raw(availablePort.toString())}
+  outputDebug(outputContent`
+Starting reverse HTTP proxy on port ${outputToken.raw(portNumber.toString())}
 Routing traffic rules:
-${output.token.json(JSON.stringify(rules))}
+${outputToken.json(JSON.stringify(rules))}
 `)
 
   const proxy = httpProxy.createProxy()
   const server = http.createServer(function (req, res) {
     const target = match(rules, req)
-    if (target) return proxy.web(req, res, {target})
+    if (target) {
+      return proxy.web(req, res, {target}, (err) => {
+        outputWarn(`Error forwarding web request: ${err}`)
+      })
+    }
 
-    output.debug(`
+    outputDebug(`
 Reverse HTTP proxy error - Invalid path: ${req.url}
 These are the allowed paths:
-${output.token.json(JSON.stringify(rules))}
+${outputToken.json(JSON.stringify(rules))}
 `)
 
     res.statusCode = 500
@@ -80,7 +94,11 @@ ${output.token.json(JSON.stringify(rules))}
   // Capture websocket requests and forward them to the proxy
   server.on('upgrade', function (req, socket, head) {
     const target = match(rules, req)
-    if (target) return proxy.ws(req, socket, head, {target})
+    if (target) {
+      return proxy.ws(req, socket, head, {target}, (err) => {
+        outputWarn(`Error forwarding websocket request: ${err}`)
+      })
+    }
     socket.destroy()
   })
 
@@ -88,13 +106,31 @@ ${output.token.json(JSON.stringify(rules))}
   abortController.signal.addEventListener('abort', () => {
     server.close()
   })
-  await Promise.all([
-    renderConcurrent({
-      processes: [...processes, ...additionalProcesses],
-      abortController,
-    }),
-    server.listen(availablePort),
-  ])
+
+  let renderConcurrentOptions: RenderConcurrentOptions = {
+    processes: [...processes, ...additionalProcesses],
+    abortController,
+  }
+
+  if (previewUrl) {
+    renderConcurrentOptions = {
+      ...renderConcurrentOptions,
+      onInput: (input, _key, exit) => {
+        if (input === 'p' && previewUrl) {
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          openURL(previewUrl)
+        } else if (input === 'q') {
+          exit()
+        }
+      },
+      footer: {
+        title: 'Press `p` to open your browser. Press `q` to quit.',
+        subTitle: `Preview URL: ${previewUrl}`,
+      },
+    }
+  }
+
+  await Promise.all([renderConcurrent(renderConcurrentOptions), server.listen(portNumber)])
 }
 
 function match(rules: {[key: string]: string}, req: http.IncomingMessage) {

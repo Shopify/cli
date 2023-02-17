@@ -2,7 +2,7 @@ import {UIExtension} from '../../../../models/app/extensions.js'
 import {getUIExtensionResourceURL} from '../../../../utilities/extensions/configuration.js'
 import {ExtensionDevOptions} from '../../extension.js'
 import {getExtensionPointTargetSurface} from '../utilities.js'
-import {http} from '@shopify/cli-kit'
+import * as http from '@shopify/cli-kit/node/http'
 
 export function getRedirectUrl(extension: UIExtension, options: ExtensionDevOptions): string {
   const {url: resourceUrl} = getUIExtensionResourceURL(extension.configuration.type, options)
@@ -40,6 +40,7 @@ export function getExtensionPointRedirectUrl(
     case 'admin':
       rawUrl.pathname = 'admin/extensions-dev'
       rawUrl.searchParams.append('url', getExtensionUrl(extension, options))
+      rawUrl.searchParams.append('target', requestedTarget)
       break
     default:
       return undefined

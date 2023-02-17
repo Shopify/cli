@@ -1,14 +1,14 @@
 import {Alert} from './Alert.js'
-import {renderString} from '../../ui.js'
-import {unstyled} from '../../../../output.js'
+import {unstyled} from '../../../../public/node/output.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
+import {render} from 'ink-testing-library'
 
 describe('Alert', async () => {
   test('renders correctly with all the options', async () => {
     const options = {
       headline: [{userInput: 'my-app'}, 'initialized and ready to build.'],
-      body: ['You can find the build files in the ', {filePath: 'dist'}, 'folder.'],
+      body: ['You can find the build files in the', {filePath: 'dist'}, 'folder.'],
       nextSteps: [
         [
           'Run',
@@ -51,17 +51,34 @@ describe('Alert', async () => {
         label: 'Link',
         url: 'https://shopify.com',
       },
+      customSections: [
+        {
+          title: 'Custom section',
+          body: {
+            list: {
+              items: ['Item 1', 'Item 2', 'Item 3'],
+            },
+          },
+        },
+        {
+          title: 'Custom section 2',
+          body: {
+            list: {
+              items: ['Item 1', 'Item 2', 'Item 3'],
+            },
+          },
+        },
+      ],
     }
 
-    const {output} = renderString(<Alert type="info" {...options} />)
+    const {lastFrame} = render(<Alert type="info" {...options} />)
 
-    expect(unstyled(output!)).toMatchInlineSnapshot(`
-      "
-      ╭─ info ───────────────────────────────────────────────────────────────────────╮
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  my-app initialized and ready to build.                                      │
       │                                                                              │
-      │  You can find the build files in the  \\"dist\\" folder.                         │
+      │  You can find the build files in the dist folder.                            │
       │                                                                              │
       │  Next steps                                                                  │
       │    • Run \`cd santorini-goods\`                                                │
@@ -70,30 +87,56 @@ describe('Alert', async () => {
       │                                                                              │
       │  Reference                                                                   │
       │    • Run \`npm shopify help\`                                                  │
-      │    • Press 'return' to open the really amazing and clean dev docs            │
-      │      (https://shopify.dev)                                                   │
+      │    • Press 'return' to open the really amazing and clean dev docs (          │
+      │      https://shopify.dev )                                                   │
       │                                                                              │
-      │  Link (https://shopify.com)                                                  │
+      │  Link ( https://shopify.com )                                                │
+      │                                                                              │
+      │  Custom section                                                              │
+      │    • Item 1                                                                  │
+      │    • Item 2                                                                  │
+      │    • Item 3                                                                  │
+      │                                                                              │
+      │  Custom section 2                                                            │
+      │    • Item 1                                                                  │
+      │    • Item 2                                                                  │
+      │    • Item 3                                                                  │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
     `)
   })
 
-  test('renders correctly with only required options', async () => {
+  test('allows passing just a body', async () => {
     const options = {
-      headline: 'Title',
+      body: 'Title',
     }
 
-    const {output} = renderString(<Alert type="info" {...options} />)
+    const {lastFrame} = render(<Alert type="info" {...options} />)
 
-    expect(unstyled(output!)).toMatchInlineSnapshot(`
-      "
-      ╭─ info ───────────────────────────────────────────────────────────────────────╮
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Title                                                                       │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
+  })
+
+  test('has the headline in bold', async () => {
+    const options = {
+      headline: 'Title',
+    }
+
+    const {lastFrame} = render(<Alert type="info" {...options} />)
+
+    expect(lastFrame()).toMatchInlineSnapshot(`
+      "[2m╭─[22m info [2m───────────────────────────────────────────────────────────────────────╮[22m
+      [2m│[22m                                                                              [2m│[22m
+      [2m│[22m  [1mTitle[22m                                                                       [2m│[22m
+      [2m│[22m                                                                              [2m│[22m
+      [2m╰──────────────────────────────────────────────────────────────────────────────╯[22m
       "
     `)
   })

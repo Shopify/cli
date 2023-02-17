@@ -1,5 +1,10 @@
-.Hidden {
-  visibility: hidden;
+
+.Intro {
+  height: 5.6rem;
+  padding: 2.2rem 1.8rem 1.5rem;
+  line-height: 1.6rem;
+  color: 1px solid var(--dc-color-grey-100);
+  border-bottom: 1px solid var(--dc-color-grey-600);
 }
 
 .ExtensionList {
@@ -13,26 +18,15 @@
     border-collapse: collapse;
   }
 
-  hr {
-    color: var(--dc-subdued);
-  }
-
-  tr {
-    line-height: 3rem;
-    border-bottom: 1px solid var(--dc-dark);
-  }
-
   th {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    padding: 1rem;
-    background: var(--dc-background);
+    vertical-align: middle;
   }
+}
 
-  svg {
-    fill: var(--dc-subdued);
-  }
+.WithIcon {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  grid-gap: 6px;
 }
 
 .Empty {

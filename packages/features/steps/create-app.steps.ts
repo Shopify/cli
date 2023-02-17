@@ -1,7 +1,7 @@
 import {executables} from '../lib/constants'
 import {exec} from '../lib/system'
 import {When, Then} from '@cucumber/cucumber'
-import path from 'pathe'
+import * as path from 'pathe'
 import fs from 'fs-extra'
 import {strict as assert} from 'assert'
 
@@ -30,9 +30,9 @@ When(
         '--template',
         'https://github.com/Shopify/shopify-app-template-node#richard/frontend-via-submodules-toml-updates',
       ],
-      {env: {...process.env, ...this.temporaryEnv}},
+      {env: {...process.env, ...this.temporaryEnv, FORCE_COLOR: '0'}},
     )
-    const hyphenatedAppName = stdout.match(/Initializing your app ([\w-]+)/)[1]
+    const hyphenatedAppName = stdout.match(/([\w-]+) is ready for you to build!/)[1]
     this.appDirectory = path.join(this.temporaryDirectory, hyphenatedAppName)
   },
 )

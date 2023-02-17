@@ -1,6 +1,8 @@
 import {AbortError} from './error.js'
-import {exists, read as readFile, write as writeFile} from '../../file.js'
-import {debug, content as outputContent, token} from '../../output.js'
+import {fileExists, readFile, writeFile} from './fs.js'
+import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import {parse, stringify} from 'envfile'
 
 /**
@@ -32,8 +34,8 @@ export interface DotEnvFile {
  * @returns An in-memory representation of the .env file.
  */
 export async function readAndParseDotEnv(path: string): Promise<DotEnvFile> {
-  debug(outputContent`Reading the .env file at ${token.path(path)}`)
-  if (!(await exists(path))) {
+  outputDebug(outputContent`Reading the .env file at ${outputToken.path(path)}`)
+  if (!(await fileExists(path))) {
     throw DotEnvNotFoundError(path)
   }
   const content = await readFile(path)

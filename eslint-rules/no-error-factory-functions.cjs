@@ -1,6 +1,6 @@
 // https://eslint.org/docs/developer-guide/working-with-rules
 const path = require('pathe')
-const file = require('node:fs')
+const file = require('fs')
 const execa = require('execa')
 
 const errors = ['Abort', 'AbortSilent', 'Bug', 'BugSilent']
@@ -50,16 +50,15 @@ const shitlist = {
   'packages/cli-kit/src/api/admin.ts': 1663587282910,
   'packages/app/src/cli/commands/app/generate/extension.ts': 1665628286000,
   'packages/cli-hydrogen/src/cli/services/deploy/error.ts': 1665628286000,
-  'packages/cli-kit/src/environment/spin.ts': 1665057109000,
+  'packages/cli-kit/src/context/spin.ts': 1665057109000,
   'packages/cli-kit/src/git.ts': 1665628286000,
   'packages/app/src/cli/services/deploy.ts': 1665628286000,
   'packages/app/src/cli/services/dev/fetch.ts': 1668421747000,
-  'packages/cli-kit/src/node/checksum.ts': 1665628286000,
   'packages/cli-kit/src/node/dot-env.ts': 1665628286000,
   'packages/app/src/cli/services/dev/select-store.ts': 1668421747000,
   'packages/cli-kit/src/node/node-package-manager.ts': 1665628286000,
-  'packages/app/src/cli/services/environment/identifiers.ts': 1663587282903,
-  'packages/app/src/cli/services/environment.ts': 1668421747000,
+  'packages/app/src/cli/services/context/identifiers.ts': 1663587282903,
+  'packages/app/src/cli/services/context.ts': 1668421747000,
   'packages/cli-kit/src/session/device-authorization.ts': 1665628286000,
   'packages/cli-kit/src/session/exchange.ts': 1665628286000,
   'packages/app/src/cli/utilities/extensions/binary.ts': 1661507113211,

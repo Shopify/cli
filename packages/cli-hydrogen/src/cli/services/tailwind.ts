@@ -1,7 +1,11 @@
 import {HydrogenApp} from '../models/hydrogen.js'
-import {ui, vscode, system, path, file, error} from '@shopify/cli-kit'
 import {addNPMDependenciesWithoutVersionIfNeeded} from '@shopify/cli-kit/node/node-package-manager'
-import stream from 'node:stream'
+import {addRecommendedExtensions} from '@shopify/cli-kit/node/vscode'
+import {exec} from '@shopify/cli-kit/node/system'
+import {writeFile, fileExists, removeFile, fileContentPrettyFormat, readFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {renderTasks, Task} from '@shopify/cli-kit/node/ui'
 
 interface AddTailwindOptions {
   app: HydrogenApp
@@ -20,71 +24,56 @@ const tailwindImportsExist = (indexCSS: string) =>
   tailwindImports.map((el) => new RegExp(el)).every((tailwindDirective) => tailwindDirective.test(indexCSS))
 
 export async function addTailwind({app, force, install, directory}: AddTailwindOptions) {
-  const list = ui.newListr([
+  const tasks: Task[] = [
     {
-      title: 'Installing additional dependencies',
+      title: 'Installing dependencies',
       skip: () => !install,
-      task: async (_, task) => {
+      task: async () => {
         const requiredDependencies = ['postcss', 'postcss-loader', 'tailwindcss', 'autoprefixer']
         await addNPMDependenciesWithoutVersionIfNeeded(requiredDependencies, {
           packageManager: app.packageManager,
           type: 'prod',
           directory: app.directory,
-          stderr: new stream.Writable({
-            write(chunk, encoding, next) {
-              task.output = chunk.toString()
-              next()
-            },
-          }),
-          stdout: new stream.Writable({
-            write(chunk, encoding, next) {
-              task.output = chunk.toString()
-              next()
-            },
-          }),
         })
-        task.title = 'Dependencies installed'
       },
     },
 
     {
       title: 'Adding PostCSS configuration',
-      task: async (_, task) => {
-        const postCSSConfiguration = path.join(directory, 'postcss.config.js')
+      task: async () => {
+        const postCSSConfiguration = joinPath(directory, 'postcss.config.js')
 
-        if (await file.exists(postCSSConfiguration)) {
+        if (await fileExists(postCSSConfiguration)) {
           if (force) {
-            await file.remove(postCSSConfiguration)
+            await removeFile(postCSSConfiguration)
           } else {
-            throw new error.Abort('PostCSS config already exists.\nUse --force to override existing config.')
+            throw new AbortError('PostCSS config already exists.\nUse --force to override existing config.')
           }
         }
 
-        const postCSSConfig = await file.format(
+        const postCSSConfig = await fileContentPrettyFormat(
           ['module.exports = {', 'plugins: {', 'tailwindcss: {},', 'autoprefixer: {},', '},', ' };'].join('\n'),
           {path: 'postcss.config.js'},
         )
 
-        await file.write(postCSSConfiguration, postCSSConfig)
-
-        task.title = 'PostCSS configuration added'
+        await writeFile(postCSSConfiguration, postCSSConfig)
       },
     },
 
     {
       title: 'Initializing Tailwind CSS...',
-      task: async (_, task) => {
-        const tailwindConfigurationPath = path.join(directory, 'tailwind.config.js')
+      task: async () => {
+        const tailwindConfigurationPath = joinPath(directory, 'tailwind.config.js')
 
-        if (await file.exists(tailwindConfigurationPath)) {
+        if (await fileExists(tailwindConfigurationPath)) {
           if (force) {
-            await file.remove(tailwindConfigurationPath)
+            await removeFile(tailwindConfigurationPath)
           } else {
-            throw new error.Abort('Tailwind config already exists.\nUse --force to override existing config.')
+            throw new AbortError('Tailwind config already exists.\nUse --force to override existing config.')
           }
         }
 
-        await system.exec(app.packageManager, ['tailwindcss', 'init', tailwindConfigurationPath], {
+        await exec(app.packageManager, ['tailwindcss', 'init', tailwindConfigurationPath], {
           cwd: directory,
         })
 
@@ -93,40 +82,34 @@ export async function addTailwind({app, force, install, directory}: AddTailwindO
           "content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}']",
           tailwindConfigurationPath,
         )
-
-        task.title = 'Tailwind configuration added'
       },
     },
     {
       title: 'Importing Tailwind CSS in index.css',
       task: async (_ctx, task) => {
-        const indexCSSPath = path.join(directory, 'src', 'index.css')
-        const indexCSS = await file.read(indexCSSPath)
+        const indexCSSPath = joinPath(directory, 'src', 'index.css')
+        const indexCSS = await readFile(indexCSSPath)
 
-        if (tailwindImportsExist(indexCSS)) {
-          task.skip('Imports already exist in index.css')
-        } else {
+        if (!tailwindImportsExist(indexCSS)) {
           const newIndexCSS = tailwindImports.join('\n') + indexCSS
 
-          await file.write(indexCSSPath, newIndexCSS)
+          await writeFile(indexCSSPath, newIndexCSS)
         }
-
-        task.title = 'Tailwind imports added'
       },
     },
     {
       title: 'Adding editor plugin recommendations',
-      task: async (_, task) => {
-        await vscode.addRecommendedExtensions(directory, ['csstools.postcss', 'bradlc.vscode-tailwindcss'])
-        task.title = 'Editor plugin recommendations added'
+      task: async () => {
+        await addRecommendedExtensions(directory, ['csstools.postcss', 'bradlc.vscode-tailwindcss'])
       },
     },
-  ])
-  await list.run()
+  ]
+
+  await renderTasks(tasks)
 }
 
 async function replace(find: string | RegExp, replace: string, filepath: string) {
-  const original = await file.read(filepath)
+  const original = await readFile(filepath)
   const modified = original.replace(find, replace)
-  await file.write(filepath, modified)
+  await writeFile(filepath, modified)
 }

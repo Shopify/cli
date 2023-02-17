@@ -1,0 +1,16 @@
+.BodyWrapper {
+  display: flex;
+  flex-grow: 1;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 2.6rem 2.4rem;
+
+  button {
+    background-color: var(--dc-color-grey-600);
+  }
+
+  button:hover,
+  button:focus {
+    background-color: var(--dc-color-grey-500);
+  }
+}

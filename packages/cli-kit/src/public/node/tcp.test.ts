@@ -1,12 +1,10 @@
 import {getAvailableTCPPort} from './tcp.js'
-import {Abort} from '../../error.js'
-import * as System from '../../system.js'
+import * as system from './system.js'
+import {AbortError} from './error.js'
 import * as port from 'get-port-please'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 
-beforeEach(() => {
-  vi.mock('get-port-please')
-})
+vi.mock('get-port-please')
 
 const errorMessage = 'Unable to generate random port'
 
@@ -15,7 +13,7 @@ describe('getAvailableTCPPort', () => {
     // Given
     vi.mocked(port.getRandomPort).mockRejectedValueOnce(new Error(errorMessage))
     vi.mocked(port.getRandomPort).mockResolvedValue(5)
-    const debugError = vi.spyOn(System, 'sleep')
+    const debugError = vi.spyOn(system, 'sleep')
 
     // When
     const got = await getAvailableTCPPort()
@@ -33,6 +31,6 @@ describe('getAvailableTCPPort', () => {
     }
 
     // When/Then
-    await expect(() => getAvailableTCPPort()).rejects.toThrowError(new Abort(errorMessage))
+    await expect(() => getAvailableTCPPort()).rejects.toThrowError(new AbortError(errorMessage))
   })
 })

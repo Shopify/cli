@@ -1,10 +1,16 @@
 {
+  "intro": "See code changes reflected live. Share preview links with teammates or clients.",
   "extensionList": {
     "name": "Name",
-    "type": "Type",
+    "preview": "Preview link",
+    "mobile": "Mobile",
+    "view": "View",
     "status": "Status",
     "refresh": "Refresh",
     "delete": "Delete"
+  },
+  "tooltips": {
+    "viewColumnHeader": "Hide your local extensions to view what's in production."
   },
   "bulkActions": {
     "show": "Show",

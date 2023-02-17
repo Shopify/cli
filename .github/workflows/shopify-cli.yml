@@ -50,6 +50,7 @@ env:
   RUBY_VERSION: "3.1.2"
   BUNDLER_VERSION: "2.3.18"
   PNPM_VERSION: "7.18.1"
+  BUNDLE_GEMFILE: ${{ github.workspace }}/packages/cli-kit/assets/cli-ruby/Gemfile
 
 jobs:
   fixture:
@@ -76,8 +77,8 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['14.20.0', '16.17.0', '18.7.0']
+        os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
+        node: [ '14.20.0', '16.17.0', '18.7.0' ]
     steps:
       - uses: actions/checkout@v2
         name: Checkout [main]
@@ -106,11 +107,6 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
         with:
           branch-name: main
-      - name: Run and save benchmark
-        uses: ./.github/actions/run-and-save-benchmark
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
-        with:
-          branch-name: main
 
   pr-platform-agnostic:
     name: ${{ matrix.target }} with Node ${{ matrix.node }} in ${{ matrix.os }}
@@ -119,9 +115,9 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: ['ubuntu-latest']
-        node: ["18.7.0"]
-        target: ['build', 'type-check', 'lint']
+        os: [ 'ubuntu-latest' ]
+        node: [ "18.7.0" ]
+        target: [ 'build', 'type-check', 'lint' ]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -158,15 +154,15 @@ jobs:
         run: 'test -z "$(git status --porcelain "**/oclif.manifest.json" )" || { echo -e "Run pnpm refresh-manifests before pushing new commands or flags. Diff here:\n\n$(git diff)" ; exit 1; }'
 
   pr-platform-dependent:
-    name: Testing with Node ${{ matrix.node }} in ${{ matrix.os }}
+    name: test with Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: pr-platform-agnostic
     if: ${{ github.event_name == 'pull_request' }}
     timeout-minutes: 30
     strategy:
       matrix:
-        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['14.20.0', '16.17.0', '18.7.0']
+        os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
+        node: [ '14.20.0', '16.17.0', '18.7.0' ]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -184,27 +180,17 @@ jobs:
         run: pnpm nx run features:test
       - name: Run and save test coverage
         uses: ./.github/actions/run-and-save-test-coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository && matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
         with:
           branch-name: "${{ github.head_ref }}"
       - name: Download and publish test coverage
         uses: ./.github/actions/download-and-publish-test-coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
-        with:
-          base-branch-name: "${{ github.base_ref }}"
-      - name: Run and save benchmark
-        uses: ./.github/actions/run-and-save-benchmark
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
-        with:
-          branch-name: "${{ github.head_ref }}"
-      - name: Download and publish benchmark
-        uses: ./.github/actions/download-and-publish-benchmark
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository && matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
         with:
           base-branch-name: "${{ github.base_ref }}"
 
   manually-triggered:
-    name: Testing with Node ${{ inputs.node-version }} in ${{ inputs.os }}
+    name: test with Node ${{ inputs.node-version }} in ${{ inputs.os }}
     runs-on: ${{ inputs.os }}
     if: ${{ github.event_name == 'workflow_dispatch' }}
     timeout-minutes: 60
@@ -223,6 +209,6 @@ jobs:
         run: pnpm nx run features:test
       - name: Setup tmate session
         if: ${{ failure() && inputs.debug-enabled }}
-        uses: mxschmitt/action-tmate@v3
+        uses: mxschmitt/action-tmate@1005f9c9db5f1b055a495e72c6e589764984baf6 # pin@v3
         with:
           limit-access-to-actor: true

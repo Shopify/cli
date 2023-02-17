@@ -3,15 +3,18 @@ import {BaseUIExtensionSchema, NewExtensionPointSchemaType, NewExtensionPointsSc
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
-import {file, output, path, schema} from '@shopify/cli-kit'
+import {schema} from '@shopify/cli-kit/node/schema'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
+import {fileExists} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
-const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.21.2'}
+const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.24.0'}
 
 const UIExtensionSchema = BaseUIExtensionSchema.extend({
-  settings: schema.define
+  settings: schema
     .object({
-      fields: schema.define.any().optional(),
+      fields: schema.any().optional(),
     })
     .optional(),
   extensionPoints: NewExtensionPointsSchema,
@@ -19,11 +22,9 @@ const UIExtensionSchema = BaseUIExtensionSchema.extend({
 
 const spec = createUIExtensionSpecification({
   identifier: 'ui_extension',
-  externalIdentifier: 'ui_extension',
-  externalName: 'UI Extension',
   surface: 'all',
   dependency,
-  partnersWebIdentifier: 'checkout_ui_extension',
+  partnersWebIdentifier: 'ui_extension',
   singleEntryPath: false,
   schema: UIExtensionSchema,
   validate: async (config, directory) => {
@@ -33,10 +34,11 @@ const spec = createUIExtensionSpecification({
     const links = config.extensionPoints.map(
       ({target}) => `${target} preview link: ${host}/extensions/${uuid}/${target}`,
     )
-    return output.content`${links.join('\n')}`
+    return outputContent`${links.join('\n')}`
   },
   deployConfig: async (config, directory) => {
     return {
+      api_version: config.apiVersion,
       extension_points: config.extensionPoints,
       capabilities: config.capabilities,
       name: config.name,
@@ -72,14 +74,14 @@ async function validateUIExtensionPointConfig(
   const duplicateTargets: string[] = []
 
   for await (const {module, target} of extensionPoints) {
-    const fullPath = path.join(directory, module)
-    const fileExists = await file.exists(fullPath)
+    const fullPath = joinPath(directory, module)
+    const exists = await fileExists(fullPath)
 
-    if (!fileExists) {
-      const notFoundPath = output.token.path(path.join(directory, module))
+    if (!exists) {
+      const notFoundPath = outputToken.path(joinPath(directory, module))
 
       errors.push(
-        output.content`Couldn't find ${notFoundPath}
+        outputContent`Couldn't find ${notFoundPath}
 Please check the module path for ${target}`.value,
       )
     }
@@ -96,7 +98,7 @@ Please check the module path for ${target}`.value,
   }
 
   if (errors.length) {
-    const tomlPath = path.join(directory, configurationFileNames.extension.ui)
+    const tomlPath = joinPath(directory, configurationFileNames.extension.ui)
 
     errors.push(`Please check the configuration in ${tomlPath}`)
     return err(errors.join('\n\n'))

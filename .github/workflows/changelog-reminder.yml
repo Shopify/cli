@@ -1,18 +1,22 @@
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
-    paths: ["packages/*/src/**"]
+    types: [ opened, synchronize, reopened, ready_for_review ]
+    paths:
+      [
+        "packages/*/src/**",
+        "packages/cli-kit/assets/cli-ruby/**"
+      ]
 name: Changelog Reminder
 jobs:
   remind:
     name: Changelog Reminder
     runs-on: ubuntu-latest
-    if: ${{ !github.event.pull_request.draft }}
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && !github.event.pull_request.draft }}
     steps:
       - uses: actions/checkout@v2
-      - uses: mskelton/changelog-reminder-action@v2
+      - uses: mskelton/changelog-reminder-action@7039cd14fb784c0a2b37f6e7a6ade2c9148c2245 # pin@v2
         with:
           changelogRegex: \.changeset
           message: |
-            We detected some changes at packages/*/src and there are no updates in the .changeset.
+            We detected some changes at either packages/*/src or packages/cli-kit/assets/cli-ruby/** and there are no updates in the .changeset.
             If the changes are user-facing, run "yarn changeset add" to track your changes and include them in the next release CHANGELOG.

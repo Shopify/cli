@@ -1,0 +1,172 @@
+{
+  "name": "@shopify/cli",
+  "version": "3.43.0",
+  "private": false,
+  "description": "A CLI tool to build for the Shopify platform",
+  "keywords": [
+    "shopify",
+    "shopify-cli",
+    "shopify-partners"
+  ],
+  "homepage": "https://github.com/shopify/cli#readme",
+  "bugs": {
+    "url": "https://github.com/Shopify/cli/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli/edit/main/packages/cli"
+  },
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "src/index.js",
+  "module": "src/index.js",
+  "bin": {
+    "shopify": "./bin/run.js"
+  },
+  "files": [
+    "/bin/run.cmd",
+    "/bin/run.js",
+    "/dist",
+    "/oclif.manifest.json"
+  ],
+  "scripts": {
+    "build": "nx build",
+    "clean": "nx clean",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
+    "test": "nx run cli:test",
+    "test:coverage": "nx test:coverage",
+    "test:watch": "nx test:watch",
+    "type-check": "nx type-check"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../.eslintrc.cjs"
+    ],
+    "overrides": [
+      {
+        "files": [
+          "**/bin/*.js"
+        ],
+        "parser": "espree",
+        "rules": {
+          "@typescript-eslint/naming-convention": "off",
+          "@typescript-eslint/no-floating-promises": "off",
+          "@typescript-eslint/no-misused-promises": "off",
+          "@typescript-eslint/no-unnecessary-type-assertion": "off",
+          "@typescript-eslint/switch-exhaustiveness-check": "off",
+          "import/first": "off",
+          "import/no-unresolved": "off",
+          "node/shebang": "off",
+          "rulesdir/specific-imports-in-bootstrap-code": [
+            "error",
+            {
+              "static": [
+                "../dist/index.js"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "files": [
+          "src/index.ts"
+        ],
+        "rules": {
+          "rulesdir/specific-imports-in-bootstrap-code": [
+            "error",
+            {
+              "static": [
+                "@shopify/cli-kit/node/cli"
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "dependencies": {
+    "@oclif/core": "2.1.4",
+    "@oclif/plugin-commands": "2.2.9",
+    "@oclif/plugin-help": "5.2.4",
+    "@oclif/plugin-plugins": "2.3.2",
+    "@shopify/cli-kit": "3.43.0"
+  },
+  "devDependencies": {
+    "@shopify/app": "3.43.0",
+    "@shopify/theme": "3.43.0",
+    "@types/node": "14.18.36",
+    "@vitest/coverage-istanbul": "^0.26.3",
+    "vite": "^2.9.13",
+    "vitest": "^0.26.3"
+  },
+  "engines": {
+    "node": ">=14.17.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "publishConfig": {
+    "@shopify:registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "engine-strict": true,
+  "oclif": {
+    "bin": "shopify",
+    "commands": "dist/cli/commands",
+    "plugins": [
+      "@shopify/app",
+      "@shopify/theme",
+      "@shopify/cli-hydrogen",
+      "@oclif/plugin-help",
+      "@oclif/plugin-plugins",
+      "@oclif/plugin-commands"
+    ],
+    "scope": "shopify",
+    "topicSeparator": " ",
+    "topics": {
+      "hydrogen": {
+        "description": "Build Hydrogen storefronts."
+      },
+      "theme": {
+        "description": "Build Liquid themes."
+      },
+      "app": {
+        "description": "Build Shopify apps."
+      },
+      "app:env": {
+        "description": "Manage environment variables."
+      },
+      "app:function": {
+        "description": "Manage Shopify Functions.",
+        "hidden": true
+      },
+      "auth": {
+        "description": "Auth operations."
+      },
+      "kitchen-sink": {
+        "description": "View the available UI kit components.",
+        "hidden": true
+      },
+      "webhook": {
+        "description": "Manage webhooks."
+      }
+    },
+    "additionalHelpFlags": [
+      "-h"
+    ],
+    "hooks": {
+      "prerun": "./dist/hooks/prerun.js",
+      "postrun": "./dist/hooks/postrun.js"
+    }
+  }
+}

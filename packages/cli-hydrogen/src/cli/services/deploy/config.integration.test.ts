@@ -1,7 +1,9 @@
 import {validateProject, fillDeployConfig} from './config.js'
 import {gitInit} from '../../prompts/git-init.js'
 import {describe, it, expect, vi} from 'vitest'
-import {error, file, git} from '@shopify/cli-kit'
+import {getLatestGitCommit} from '@shopify/cli-kit/node/git'
+import {fileExists, inTemporaryDirectory, touchFile} from '@shopify/cli-kit/node/fs'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 const isWin = process.platform === 'win32'
 
@@ -12,15 +14,16 @@ const defaultConfig = {
   assumeYes: true,
 }
 
+vi.mock('../../prompts/git-init.js')
+
 describe('validateProject() & initializeGit()', () => {
   describe('User refuses to initialize new repository', () => {
     it.skipIf(isWin)('silent abort since outside git directory', async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
-        vi.mock('../../prompts/git-init.js')
+      await inTemporaryDirectory(async (tmpDir) => {
         vi.mocked(gitInit).mockResolvedValue(false)
 
         await expect(() => validateProject({...defaultConfig, assumeYes: false, path: tmpDir})).rejects.toThrow(
-          new error.AbortSilent(),
+          new AbortSilentError(),
         )
       })
     })
@@ -29,13 +32,13 @@ describe('validateProject() & initializeGit()', () => {
     it.skipIf(isWin)(
       'initializes new git repository',
       async () => {
-        await file.inTemporaryDirectory(async (tmpDir) => {
-          await file.touch(`${tmpDir}/integration.txt`)
+        await inTemporaryDirectory(async (tmpDir) => {
+          await touchFile(`${tmpDir}/integration.txt`)
 
           await validateProject({...defaultConfig, path: tmpDir})
 
-          await expect(file.exists(`${tmpDir}/.gitignore`)).resolves.toBeTruthy()
-          await expect(git.getLatestCommit(tmpDir)).resolves.toBeDefined()
+          await expect(fileExists(`${tmpDir}/.gitignore`)).resolves.toBeTruthy()
+          await expect(getLatestGitCommit(tmpDir)).resolves.toBeDefined()
         })
       },
       10 * 1000,
@@ -47,7 +50,7 @@ describe('getDeployConfig()', () => {
   it.skipIf(isWin)(
     'extract basic information from git',
     async () => {
-      await file.inTemporaryDirectory(async (tmpDir) => {
+      await inTemporaryDirectory(async (tmpDir) => {
         await validateProject({...defaultConfig, path: tmpDir})
 
         const config = await fillDeployConfig({...defaultConfig, path: tmpDir})
