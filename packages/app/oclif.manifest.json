@@ -46,7 +46,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "app:deploy": {
       "id": "app:deploy",
@@ -101,7 +101,7 @@
           "allowNo": false
         }
       },
-      "args": []
+      "args": {}
     },
     "app:dev": {
       "id": "app:dev",
@@ -232,7 +232,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "app:info": {
       "id": "app:info",
@@ -279,7 +279,7 @@
           "allowNo": false
         }
       },
-      "args": []
+      "args": {}
     },
     "app:update-url": {
       "id": "app:update-url",
@@ -326,7 +326,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "webhook:trigger": {
       "id": "webhook:trigger",
@@ -399,7 +399,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "app:env:pull": {
       "id": "app:env:pull",
@@ -440,7 +440,7 @@
           "default": ".env"
         }
       },
-      "args": []
+      "args": {}
     },
     "app:env:show": {
       "id": "app:env:show",
@@ -473,7 +473,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "app:function:build": {
       "id": "app:function:build",
@@ -506,7 +506,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "app:function:run": {
       "id": "app:function:run",
@@ -539,7 +539,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "app:function:schema": {
       "id": "app:function:schema",
@@ -579,7 +579,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "app:function:typegen": {
       "id": "app:function:typegen",
@@ -612,7 +612,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "app:generate:extension": {
       "id": "app:generate:extension",
@@ -701,11 +701,11 @@
           "multiple": false
         }
       },
-      "args": [
-        {
+      "args": {
+        "file": {
           "name": "file"
         }
-      ]
+      }
     },
     "app:generate:schema": {
       "id": "app:generate:schema",
@@ -745,7 +745,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "app:scaffold:extension": {
       "id": "app:scaffold:extension",
@@ -835,11 +835,11 @@
           "multiple": false
         }
       },
-      "args": [
-        {
+      "args": {
+        "file": {
           "name": "file"
         }
-      ]
+      }
     }
   }
 }

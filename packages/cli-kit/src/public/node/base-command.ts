@@ -8,7 +8,8 @@ import {JsonMap} from '../../private/common/json.js'
 import {outputContent, outputInfo, outputToken} from '../../public/node/output.js'
 import {hashString} from '../../public/node/crypto.js'
 import {isTruthy} from '../../private/node/context/utilities.js'
-import {Command, Interfaces} from '@oclif/core'
+import {Command} from '@oclif/core'
+import {FlagOutput, Input, ParserOutput, FlagInput, ArgOutput} from '@oclif/core/lib/interfaces/parser.js'
 
 interface EnvironmentFlags {
   environment?: string
@@ -47,28 +48,28 @@ abstract class BaseCommand extends Command {
   }
 
   protected async parse<
-    TFlags extends Interfaces.FlagOutput & {path?: string; verbose?: boolean},
-    TGlobalFlags extends Interfaces.FlagOutput,
-    TArgs extends Interfaces.OutputArgs,
+    TFlags extends FlagOutput & {path?: string; verbose?: boolean},
+    TGlobalFlags extends FlagOutput,
+    TArgs extends ArgOutput,
   >(
-    options?: Interfaces.Input<TFlags, TGlobalFlags>,
+    options?: Input<TFlags, TGlobalFlags, TArgs>,
     argv?: string[],
-  ): Promise<Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>> {
+  ): Promise<ParserOutput<TFlags, TGlobalFlags, TArgs> & {argv: string[]}> {
     let result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
     result = await this.resultWithEnvironment<TFlags, TGlobalFlags, TArgs>(result, options, argv)
     await addFromParsedFlags(result.flags)
-    return result
+    return {...result, ...{argv: result.argv as string[]}}
   }
 
   protected async resultWithEnvironment<
-    TFlags extends Interfaces.FlagOutput & {path?: string; verbose?: boolean},
-    TGlobalFlags extends Interfaces.FlagOutput,
-    TArgs extends Interfaces.OutputArgs,
+    TFlags extends FlagOutput & {path?: string; verbose?: boolean},
+    TGlobalFlags extends FlagOutput,
+    TArgs extends ArgOutput,
   >(
-    originalResult: Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>,
-    options?: Interfaces.Input<TFlags, TGlobalFlags>,
+    originalResult: ParserOutput<TFlags, TGlobalFlags, TArgs>,
+    options?: Input<TFlags, TGlobalFlags, TArgs>,
     argv?: string[],
-  ): Promise<Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>> {
+  ): Promise<ParserOutput<TFlags, TGlobalFlags, TArgs>> {
     // If no environment is specified, don't modify the results
     const flags = originalResult.flags as EnvironmentFlags
     if (!flags.environment) return originalResult
@@ -134,12 +135,12 @@ export async function addFromParsedFlags(flags: {path?: string; verbose?: boolea
  * the user's perspective, they want to know their environment was applied.
  */
 function reportEnvironmentApplication<
-  TFlags extends Interfaces.FlagOutput,
-  TGlobalFlags extends Interfaces.FlagOutput,
-  TArgs extends Interfaces.OutputArgs,
+  TFlags extends FlagOutput,
+  TGlobalFlags extends FlagOutput,
+  TArgs extends ArgOutput,
 >(
-  noDefaultsFlags: Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>['flags'],
-  flagsWithEnvironments: Interfaces.ParserOutput<TFlags, TGlobalFlags, TArgs>['flags'],
+  noDefaultsFlags: ParserOutput<TFlags, TGlobalFlags, TArgs>['flags'],
+  flagsWithEnvironments: ParserOutput<TFlags, TGlobalFlags, TArgs>['flags'],
   environmentName: string,
   environment: JsonMap,
 ): void {
@@ -178,9 +179,9 @@ ${Object.entries(changes)
  * If we parse using this configuration, the only specified flags will be those
  * the user actually passed on the command line.
  */
-function noDefaultsOptions<TFlags extends Interfaces.FlagOutput, TGlobalFlags extends Interfaces.FlagOutput>(
-  options: Interfaces.Input<TFlags, TGlobalFlags> | undefined,
-): Interfaces.Input<TFlags, TGlobalFlags> | undefined {
+function noDefaultsOptions<TFlags extends FlagOutput, TGlobalFlags extends FlagOutput, TArgs extends ArgOutput>(
+  options: Input<TFlags, TGlobalFlags, TArgs> | undefined,
+): Input<TFlags, TGlobalFlags, TArgs> | undefined {
   if (!options?.flags) return options
   return {
     ...options,
@@ -190,7 +191,7 @@ function noDefaultsOptions<TFlags extends Interfaces.FlagOutput, TGlobalFlags ex
         delete copiedSettings.default
         return [label, copiedSettings]
       }),
-    ) as Interfaces.FlagInput<TFlags>,
+    ) as FlagInput<TFlags>,
   }
 }
 
@@ -198,14 +199,10 @@ function noDefaultsOptions<TFlags extends Interfaces.FlagOutput, TGlobalFlags ex
  * Converts the environment's settings to arguments as though passed on the command
  * line, skipping any arguments the user specified on the command line.
  */
-function argsFromEnvironment<
-  TFlags extends Interfaces.FlagOutput,
-  TGlobalFlags extends Interfaces.FlagOutput,
-  TArgs extends Interfaces.OutputArgs,
->(
+function argsFromEnvironment<TFlags extends FlagOutput, TGlobalFlags extends FlagOutput, TArgs extends ArgOutput>(
   environment: JsonMap,
-  options: Interfaces.Input<TFlags, TGlobalFlags> | undefined,
-  noDefaultsResult: Interfaces.ParserOutput<TFlags, TArgs>,
+  options: Input<TFlags, TGlobalFlags, TArgs> | undefined,
+  noDefaultsResult: ParserOutput<TFlags, TArgs>,
 ): string[] {
   const args: string[] = []
   for (const [label, value] of Object.entries(environment)) {
