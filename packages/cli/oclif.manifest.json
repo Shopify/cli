@@ -10,6 +10,27 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "path": {
           "name": "path",
           "type": "option",
@@ -28,7 +49,29 @@
       "pluginAlias": "@shopify/cli",
       "pluginType": "core",
       "aliases": [],
-      "flags": {},
+      "flags": {
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        }
+      },
       "args": {}
     },
     "auth:logout": {

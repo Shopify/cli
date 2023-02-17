@@ -1,5 +1,5 @@
 import {TextWithBackground} from './TextWithBackground.js'
-import {OutputProcess} from '../../../../public/node/output.js'
+import {OutputProcess, shouldDisplayColors} from '../../../../public/node/output.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {AbortController} from '../../../../public/node/abort.js'
 import {handleCtrlC} from '../../ui.js'
@@ -72,6 +72,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
 
   function lineColor(index: number) {
+    if (!shouldDisplayColors()) return 'black'
     const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
     return concurrentColors[colorIndex]!
   }

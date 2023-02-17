@@ -25,6 +25,13 @@
           "hidden": false,
           "allowNo": false
         },
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "name": {
           "name": "name",
           "type": "option",

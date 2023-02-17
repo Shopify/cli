@@ -6,6 +6,7 @@ import {BugError, cleanSingleStackTracePath, ExternalError, FatalError as Fatal}
 import {Box, Text} from 'ink'
 import React, {FunctionComponent} from 'react'
 import StackTracey from 'stacktracey'
+import {COLORS} from '@shopify/cli-kit/node/output'
 
 export interface FatalErrorProps {
   error: Fatal
@@ -70,7 +71,7 @@ const FatalError: FunctionComponent<FatalErrorProps> = ({error}) => {
           {stack.items.map((item, index) => (
             <Box flexDirection="column" key={index} paddingLeft={2}>
               <Text>
-                at{item.calleeShort ? <Text color="yellow">{` ${item.calleeShort}`}</Text> : null}
+                at{item.calleeShort ? <Text color={COLORS.yellow}>{` ${item.calleeShort}`}</Text> : null}
                 {item.fileShort ? ` (${item.fileShort}:${item.line})` : null}
               </Text>
               <Box paddingLeft={2}>

@@ -3,11 +3,13 @@ import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class Upgrade extends Command {
   static description = 'Upgrade the Shopify CLI.'
 
   static flags = {
+    ...globalFlags,
     path: Flags.string({
       hidden: false,
       description: 'The path to your project directory.',

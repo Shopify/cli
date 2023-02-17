@@ -9,6 +9,7 @@ import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
 import figures from 'figures'
 import {debounce} from '@shopify/cli-kit/common/function'
 import ansiEscapes from 'ansi-escapes'
+import {COLORS} from '@shopify/cli-kit/node/output'
 
 export interface SearchResults<T> {
   data: SelectItem<T>[]
@@ -165,10 +166,10 @@ function AutocompletePrompt<T>({
       {promptState === PromptState.Submitted ? (
         <Box>
           <Box marginRight={2}>
-            <Text color="cyan">{figures.tick}</Text>
+            <Text color={COLORS.cyan}>{figures.tick}</Text>
           </Box>
 
-          <Text color="cyan">{answer!.label}</Text>
+          <Text color={COLORS.cyan}>{answer!.label}</Text>
         </Box>
       ) : (
         <Box marginTop={1}>

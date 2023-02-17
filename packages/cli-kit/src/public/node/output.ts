@@ -16,6 +16,8 @@ import {
   RawContentToken,
   SubHeadingContentToken,
 } from '../../private/node/content-tokens.js'
+import {isTruthy} from '../../private/node/context/utilities.js'
+import {environmentVariables} from '../../private/node/constants.js'
 import stripAnsi from 'strip-ansi'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
@@ -410,12 +412,28 @@ export function unstyled(message: string): string {
 }
 
 /**
- * Checks if the console outputs should display colors or not.
+ * Checks if the console outputs should display colors or not, based on different environment variables.
+ * Inspired by https://clig.dev/#output.
  *
+ * @param env - The environment variables from the environment of the current process.
  * @returns True if the console outputs should display colors, false otherwise.
  */
-export function shouldDisplayColors(): boolean {
-  return Boolean(process.stdout.isTTY || process.env.FORCE_COLOR)
+export function shouldDisplayColors(env = process.env): boolean {
+  if (
+    isTruthy(env[environmentVariables.noColor]) ||
+    isTruthy(env[environmentVariables.shopifyNoColor]) ||
+    process.argv.includes('--no-color') ||
+    env[environmentVariables.term] === 'dumb'
+  ) {
+    return false
+  }
+  return Boolean(process.stdout.isTTY || isTruthy(env[environmentVariables.forceColor]))
+}
+
+export const COLORS = {
+  cyan: shouldDisplayColors() ? 'cyan' : 'black',
+  red: shouldDisplayColors() ? 'red' : 'black',
+  yellow: shouldDisplayColors() ? 'yellow' : 'black',
 }
 
 /**

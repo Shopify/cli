@@ -6,6 +6,7 @@ import {Box, Key, useInput, Text} from 'ink'
 import {debounce} from '@shopify/cli-kit/common/function'
 import chalk from 'chalk'
 import figures from 'figures'
+import {COLORS} from '@shopify/cli-kit/node/output'
 
 interface OnChangeOptions<T> {
   item: Item<T> | undefined
@@ -102,9 +103,11 @@ function SelectItemsGroup<T>({
 
         return (
           <Box key={item.key}>
-            <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
+            <Box marginRight={2}>{isSelected ? <Text color={COLORS.cyan}>{`>`}</Text> : <Text> </Text>}</Box>
 
-            <Text color={isSelected ? 'cyan' : undefined}>{enableShortcuts ? `(${item.key}) ${label}` : label}</Text>
+            <Text color={isSelected ? COLORS.cyan : undefined}>
+              {enableShortcuts ? `(${item.key}) ${label}` : label}
+            </Text>
           </Box>
         )
       })}
@@ -230,7 +233,7 @@ function SelectInput<T>({
   } else if (errorMessage && errorMessage.length > 0) {
     return (
       <Box marginLeft={3}>
-        <Text color="red">{errorMessage}</Text>
+        <Text color={COLORS.red}>{errorMessage}</Text>
       </Box>
     )
   } else if (items.length === 0) {

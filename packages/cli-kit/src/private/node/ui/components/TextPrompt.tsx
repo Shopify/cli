@@ -6,6 +6,7 @@ import {messageWithPunctuation} from '../utilities.js'
 import React, {FunctionComponent, useCallback, useState} from 'react'
 import {Box, useApp, useInput, Text} from 'ink'
 import figures from 'figures'
+import {COLORS} from '@shopify/cli-kit/node/output'
 
 export interface TextPromptProps {
   message: string
@@ -42,7 +43,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | undefined>(undefined)
   const shouldShowError = submitted && error
-  const color = shouldShowError ? 'red' : 'cyan'
+  const color = shouldShowError ? COLORS.red : COLORS.cyan
   const underline = new Array(oneThird - 3).fill('▔')
 
   useInput(
@@ -76,11 +77,11 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
       {submitted && !error ? (
         <Box>
           <Box marginRight={2}>
-            <Text color="cyan">{figures.tick}</Text>
+            <Text color={COLORS.cyan}>{figures.tick}</Text>
           </Box>
 
           <Box flexGrow={1}>
-            <Text color="cyan">{password ? '*'.repeat(answer.length) : answerOrDefault}</Text>
+            <Text color={COLORS.cyan}>{password ? '*'.repeat(answer.length) : answerOrDefault}</Text>
           </Box>
         </Box>
       ) : (

@@ -2,6 +2,7 @@
 import React, {useEffect, useState} from 'react'
 import {Text, useInput} from 'ink'
 import chalk from 'chalk'
+import {COLORS} from '@shopify/cli-kit/node/output'
 import type {FunctionComponent} from 'react'
 
 interface TextInputProps {
@@ -19,7 +20,7 @@ const TextInput: FunctionComponent<TextInputProps> = ({
   defaultValue = '',
   onChange,
   placeholder = '',
-  color = 'cyan',
+  color = COLORS.cyan,
   password = false,
   focus = true,
 }) => {

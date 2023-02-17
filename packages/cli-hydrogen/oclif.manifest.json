@@ -24,6 +24,13 @@
           "hidden": false,
           "allowNo": false
         },
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "path": {
           "name": "path",
           "type": "option",
@@ -85,6 +92,13 @@
           "name": "verbose",
           "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
           "hidden": false,
           "allowNo": false
         },
@@ -174,6 +188,13 @@
           "hidden": false,
           "allowNo": false
         },
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "path": {
           "name": "path",
           "type": "option",
@@ -225,6 +246,13 @@
           "hidden": false,
           "allowNo": false
         },
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "path": {
           "name": "path",
           "type": "option",
@@ -269,6 +297,13 @@
           "name": "verbose",
           "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
           "hidden": false,
           "allowNo": false
         },
@@ -332,6 +367,13 @@
           "hidden": false,
           "allowNo": false
         },
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "path": {
           "name": "path",
           "type": "option",
@@ -376,6 +418,13 @@
           "name": "verbose",
           "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
           "hidden": false,
           "allowNo": false
         },
