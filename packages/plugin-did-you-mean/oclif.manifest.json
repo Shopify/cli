@@ -3,7 +3,7 @@
   "commands": {
     "config:autocorrect:off": {
       "id": "config:autocorrect:off",
-      "description": "Disable autocorrect",
+      "description": "Disable autocorrect.",
       "strict": true,
       "pluginName": "@shopify/plugin-did-you-mean",
       "pluginAlias": "@shopify/plugin-did-you-mean",
@@ -14,7 +14,7 @@
     },
     "config:autocorrect:on": {
       "id": "config:autocorrect:on",
-      "description": "Enable autocorrect",
+      "description": "Enable autocorrect.",
       "strict": true,
       "pluginName": "@shopify/plugin-did-you-mean",
       "pluginAlias": "@shopify/plugin-did-you-mean",
@@ -25,7 +25,7 @@
     },
     "config:autocorrect:status": {
       "id": "config:autocorrect:status",
-      "description": "Check autocorrect current status",
+      "description": "Check autocorrect current status.",
       "strict": true,
       "pluginName": "@shopify/plugin-did-you-mean",
       "pluginAlias": "@shopify/plugin-did-you-mean",
