@@ -16,7 +16,7 @@ const TOTAL_TIMES = 5
 
 async function benchmark(directory, {name}) {
   const results = {}
-  for (let time = 1; time < 5; time++) {
+  for (let time = 1; time < TOTAL_TIMES; time++) {
     logSection(`Benchmarking ${name}. Time ${time}`)
 
     for (const pluginName of ['app', 'theme']) {
