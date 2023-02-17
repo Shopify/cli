@@ -159,7 +159,7 @@ function mockBundledCLI2(cli2Directory: string, {windows}: {windows: boolean}) {
   vi.spyOn(local, 'isShopify').mockResolvedValue(false)
   vi.spyOn(pathConstants.directories.cache.vendor, 'path').mockReturnValue(cli2Directory)
   mockRubyEnvironment()
-  mockPlatformAndArch(windows)
+  mockPlatformAndArch({windows})
   return vi.spyOn(system, 'exec')
 }
 
@@ -170,7 +170,7 @@ async function mockEmbeddedCLI2(
   vi.spyOn(local, 'isShopify').mockResolvedValue(true)
   vi.spyOn(file, 'findPathUp').mockResolvedValue(cli2Directory)
   mockRubyEnvironment()
-  mockPlatformAndArch(windows)
+  mockPlatformAndArch({windows})
   await createGemFile(cli2Directory, existingWindowsDependency)
   return vi.spyOn(system, 'exec')
 }
@@ -180,7 +180,7 @@ function mockRubyEnvironment() {
   vi.mocked(captureOutput).mockResolvedValueOnce('2.4.0')
 }
 
-function mockPlatformAndArch(windows: boolean) {
+function mockPlatformAndArch({windows}: {windows: boolean}) {
   if (windows) {
     vi.mocked(platformAndArch).mockReturnValue({platform: 'windows', arch: 'x64'})
   } else {
