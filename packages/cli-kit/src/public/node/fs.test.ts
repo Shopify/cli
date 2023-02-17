@@ -10,7 +10,6 @@ import {
   chmod,
   removeFile,
   stripUpPath,
-  fileContentPrettyFormat,
   touchFile,
   appendFile,
   generateRandomNameForSubdirectory,
@@ -179,68 +178,6 @@ describe('stripUp', () => {
     await expect(newFilePath1).toEqual('b/c/d/e')
     await expect(newFilePath2).toEqual('c/d/e')
     await expect(newFilePath3).toEqual('d/e')
-  })
-})
-
-describe('format', () => {
-  it('formats JavaScript file content', async () => {
-    // Given
-    const unformatedContent = 'const foo = "bar"'
-
-    // When
-    const formattedContent = await fileContentPrettyFormat(unformatedContent, {path: 'someFile.js'})
-
-    // Then
-    await expect(formattedContent).toEqual(`const foo = 'bar';\n`)
-  })
-
-  it('formats TypeScript file content', async () => {
-    // Given
-    const unformatedContent = 'const array: string[] = ["bar", "baz",]'
-
-    // When
-    const formattedContent = await fileContentPrettyFormat(unformatedContent, {path: 'someFile.ts'})
-
-    // Then
-    await expect(formattedContent).toEqual("const array: string[] = ['bar', 'baz'];\n")
-  })
-
-  it('formats TypeScript file content with JSX', async () => {
-    // Given
-    const unformatedContent = 'const C = (p: any) => <>{ p.foo }</>'
-
-    // When
-    const formattedContent = await fileContentPrettyFormat(unformatedContent, {path: 'someFile.tsx'})
-
-    // Then
-    await expect(formattedContent).toEqual('const C = (p: any) => <>{p.foo}</>;\n')
-  })
-
-  it('formats CSS file content', async () => {
-    // Given
-    const unformatedContent = 'body { color: red; }'
-
-    // When
-    const formattedContent = await fileContentPrettyFormat(unformatedContent, {path: 'someFile.css'})
-
-    // Then
-    await expect(formattedContent).toEqual(
-      `body {
-  color: red;
-}
-`,
-    )
-  })
-
-  it('formats HTML file content', async () => {
-    // Given
-    const unformatedContent = `<div      >much extra space</div>`
-
-    // When
-    const formattedContent = await fileContentPrettyFormat(unformatedContent, {path: 'someFile.html'})
-
-    // Then
-    await expect(formattedContent).toEqual('<div>much extra space</div>\n')
   })
 })
 
