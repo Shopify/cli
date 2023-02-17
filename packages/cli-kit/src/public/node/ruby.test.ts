@@ -1,19 +1,21 @@
 import {execCLI2, MinWdmWindowsVersion, RubyCLIVersion} from './ruby.js'
 import {captureOutput} from './system.js'
 import * as system from './system.js'
-import * as file from './fs.js'
-import * as local from './context/local.js'
 import {platformAndArch} from './os.js'
 import {joinPath} from './path.js'
+import {isShopify} from './context/local.js'
+import {inTemporaryDirectory, mkdir, findPathUp, touchFile, appendFile, fileExists, readFile} from './fs.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {describe, expect, it, SpyInstance, vi} from 'vitest'
 
 vi.mock('./system')
+vi.mock('./fs')
 vi.mock('./os')
+vi.mock('./context/local.js')
 
 describe('execCLI', () => {
   it('throws an exception when Ruby is not installed', async () => {
-    vi.spyOn(local, 'isShopify').mockResolvedValue(false)
+    vi.mocked(isShopify).mockResolvedValue(false)
     vi.mocked(captureOutput).mockRejectedValue({})
 
     await expect(() => execCLI2(['args'])).rejects.toThrowError('Ruby environment not found')
@@ -21,7 +23,7 @@ describe('execCLI', () => {
 
   it('throws an exception when Ruby version requirement is not met', async () => {
     const rubyVersion = '2.2.0'
-    vi.spyOn(local, 'isShopify').mockResolvedValue(false)
+    vi.mocked(isShopify).mockResolvedValue(false)
     vi.mocked(captureOutput).mockResolvedValueOnce(rubyVersion)
 
     await expect(() => execCLI2(['args'])).rejects.toThrowError(
@@ -31,7 +33,7 @@ describe('execCLI', () => {
 
   it('throws an exception when Bundler is not installed', async () => {
     const rubyVersion = '2.7.5'
-    vi.spyOn(local, 'isShopify').mockResolvedValue(false)
+    vi.mocked(isShopify).mockResolvedValue(false)
     vi.mocked(captureOutput).mockResolvedValueOnce(rubyVersion)
     vi.mocked(captureOutput).mockRejectedValue({})
 
@@ -41,7 +43,7 @@ describe('execCLI', () => {
   it('throws an exception when Bundler version requirement is not met', async () => {
     const rubyVersion = '2.7.5'
     const bundlerVersion = '2.2.0'
-    vi.spyOn(local, 'isShopify').mockResolvedValue(false)
+    vi.mocked(isShopify).mockResolvedValue(false)
     vi.mocked(captureOutput).mockResolvedValueOnce(rubyVersion)
     vi.mocked(captureOutput).mockResolvedValueOnce(bundlerVersion)
 
@@ -54,17 +56,17 @@ describe('execCLI', () => {
     // Given
     const rubyVersion = '2.7.5'
     const bundlerVersion = '2.4.0'
-    vi.spyOn(local, 'isShopify').mockResolvedValue(false)
+    vi.mocked(isShopify).mockResolvedValue(false)
     vi.mocked(captureOutput).mockResolvedValueOnce(rubyVersion)
     vi.mocked(captureOutput).mockResolvedValueOnce(bundlerVersion)
-    vi.spyOn(file, 'mkdir').mockRejectedValue({message: 'Error'})
+    vi.mocked(mkdir).mockRejectedValue({message: 'Error'})
 
     // When/Then
     await expect(() => execCLI2(['args'])).rejects.toThrowError('Error')
   })
 
   it('when run bundled CLI2 in non windows then gemfile content is correct and bundle runs with correct params', async () => {
-    await file.inTemporaryDirectory(async (cli2Directory) => {
+    await inTemporaryDirectory(async (cli2Directory) => {
       // Given
       const execSpy = mockBundledCLI2(cli2Directory, {windows: false})
       const gemfilePath = joinPath(cli2Directory, 'ruby-cli', RubyCLIVersion, 'Gemfile')
@@ -82,7 +84,7 @@ describe('execCLI', () => {
   })
 
   it('when run bundled CLI2 in windows then gemfile content should be correct and bundle runs with correct params', async () => {
-    await file.inTemporaryDirectory(async (cli2Directory) => {
+    await inTemporaryDirectory(async (cli2Directory) => {
       // Given
       const execSpy = mockBundledCLI2(cli2Directory, {windows: true})
       const gemfilePath = joinPath(cli2Directory, 'ruby-cli', RubyCLIVersion, 'Gemfile')
@@ -100,7 +102,7 @@ describe('execCLI', () => {
   })
 
   it('when run embedded CLI2 in non windows then gemfile content should be correct and bundle runs with correct params', async () => {
-    await file.inTemporaryDirectory(async (cli2Directory) => {
+    await inTemporaryDirectory(async (cli2Directory) => {
       // Given
       const execSpy = await mockEmbeddedCLI2(cli2Directory, {windows: false, existingWindowsDependency: false})
       const gemfilePath = joinPath(cli2Directory, 'Gemfile')
@@ -118,7 +120,7 @@ describe('execCLI', () => {
   })
 
   it('when run embedded CLI2 in windows without dependency then gemfile content should be correct and bundle runs with correct params', async () => {
-    await file.inTemporaryDirectory(async (cli2Directory) => {
+    await inTemporaryDirectory(async (cli2Directory) => {
       // Given
       const execSpy = await mockEmbeddedCLI2(cli2Directory, {windows: true, existingWindowsDependency: false})
       const gemfilePath = joinPath(cli2Directory, 'Gemfile')
@@ -136,7 +138,7 @@ describe('execCLI', () => {
   })
 
   it('when run embedded CLI2 in windows with existing dependency then gemfile content should be correct and bundle runs with correct params', async () => {
-    await file.inTemporaryDirectory(async (cli2Directory) => {
+    await inTemporaryDirectory(async (cli2Directory) => {
       // Given
       const existingWindowsDependency = true
       const execSpy = await mockEmbeddedCLI2(cli2Directory, {windows: true, existingWindowsDependency: true})
@@ -156,7 +158,7 @@ describe('execCLI', () => {
 })
 
 function mockBundledCLI2(cli2Directory: string, {windows}: {windows: boolean}) {
-  vi.spyOn(local, 'isShopify').mockResolvedValue(false)
+  vi.mocked(isShopify).mockResolvedValue(false)
   vi.spyOn(pathConstants.directories.cache.vendor, 'path').mockReturnValue(cli2Directory)
   mockRubyEnvironment()
   mockPlatformAndArch({windows})
@@ -167,8 +169,8 @@ async function mockEmbeddedCLI2(
   cli2Directory: string,
   {windows, existingWindowsDependency}: {windows: boolean; existingWindowsDependency: boolean},
 ) {
-  vi.spyOn(local, 'isShopify').mockResolvedValue(true)
-  vi.spyOn(file, 'findPathUp').mockResolvedValue(cli2Directory)
+  vi.mocked(isShopify).mockResolvedValue(true)
+  vi.mocked(findPathUp).mockResolvedValue(cli2Directory)
   mockRubyEnvironment()
   mockPlatformAndArch({windows})
   await createGemFile(cli2Directory, existingWindowsDependency)
@@ -192,8 +194,8 @@ async function createGemFile(cli2Directory: string, existingWindowsDependency: b
   const gemfilePath = joinPath(cli2Directory, 'Gemfile')
   let content = "source 'https://rubygems.org'\n"
   if (existingWindowsDependency) content = content.concat(`gem 'wdm', '>= ${MinWdmWindowsVersion}'`)
-  await file.touchFile(gemfilePath)
-  await file.appendFile(gemfilePath, content.concat('\n'))
+  await touchFile(gemfilePath)
+  await appendFile(gemfilePath, content.concat('\n'))
 }
 
 function validateBudleExec(execSpy: SpyInstance, gemFilePath: string, execPath = 'shopify') {
@@ -213,8 +215,8 @@ function validateBudleExec(execSpy: SpyInstance, gemFilePath: string, execPath =
 }
 
 async function validateGemFileContent(gemfilePath: string, {bundled, windows}: {bundled: boolean; windows: boolean}) {
-  expect(file.fileExists(gemfilePath)).toBeTruthy()
-  const gemContent = await file.readFile(gemfilePath, {encoding: 'utf8'})
+  expect(fileExists(gemfilePath)).toBeTruthy()
+  const gemContent = await readFile(gemfilePath, {encoding: 'utf8'})
   expect(gemContent).toContain("source 'https://rubygems.org'")
   if (bundled) expect(gemContent).toContain(`gem 'shopify-cli', '${RubyCLIVersion}'`)
   const windowsDepency = `gem 'wdm', '>= ${MinWdmWindowsVersion}'`
