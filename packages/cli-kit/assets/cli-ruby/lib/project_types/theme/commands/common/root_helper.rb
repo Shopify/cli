@@ -52,7 +52,7 @@ module Theme
           message = @ctx.message("theme.current_directory_is_not_theme_directory")
           @ctx.abort(message) unless ShopifyCLI::Environment.interactive?
 
-          message += " " + @ctx.message("theme.confirm_current_directory")
+          message += " \n#{@ctx.message("theme.confirm_current_directory")}"
           Forms::ConfirmStore.ask(
             @ctx,
             [],
