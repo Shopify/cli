@@ -5,7 +5,7 @@ import {captureOutput, exec} from './system.js'
 import * as file from './fs.js'
 import {joinPath, dirname, cwd} from './path.js'
 import {AbortError, AbortSilentError} from './error.js'
-import {isShopify} from './context/local.js'
+import {getEnvironmentVariables} from './environment.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
 import {outputContent, outputToken} from '../../public/node/output.js'
@@ -42,11 +42,12 @@ interface ExecCLI2Options {
  * @param options - Options to customize the execution of cli2.
  */
 export async function execCLI2(args: string[], options: ExecCLI2Options = {}): Promise<void> {
-  const embedded = (await isShopify()) || isTruthy(process.env.SHOPIFY_CLI_EMBEDDED_THEME_CLI)
+  const currentEnv = getEnvironmentVariables()
+  const embedded = !isTruthy(currentEnv.SHOPIFY_CLI_BUNDLED_THEME_CLI) && !currentEnv.SHOPIFY_CLI_2_0_DIRECTORY
 
   await installCLIDependencies(options.stdout ?? process.stdout, embedded)
   const env: NodeJS.ProcessEnv = {
-    ...process.env,
+    ...currentEnv,
     SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: options.storefrontToken,
     SHOPIFY_CLI_ADMIN_AUTH_TOKEN: options.adminSession?.token,
     SHOPIFY_SHOP: options.adminSession?.storeFqdn,
@@ -156,7 +157,7 @@ async function installCLIDependencies(stdout: Writable, embedded = false) {
   const exists = await file.fileExists(localCLI)
 
   if (!exists) stdout.write('Installing theme dependencies...')
-  const usingLocalCLI2 = embedded || isTruthy(process.env.SHOPIFY_CLI_2_0_DIRECTORY)
+  const usingLocalCLI2 = embedded || isTruthy(getEnvironmentVariables().SHOPIFY_CLI_2_0_DIRECTORY)
   await validateRubyEnv()
   if (usingLocalCLI2) {
     await bundleInstallLocalShopifyCLI(localCLI)
@@ -350,7 +351,7 @@ async function shopifyCLIDirectory(embedded = false): Promise<string> {
   })) as string
   const bundledDirectory = joinPath(pathConstants.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
 
-  return embedded ? embeddedDirectory : process.env.SHOPIFY_CLI_2_0_DIRECTORY ?? bundledDirectory
+  return embedded ? embeddedDirectory : getEnvironmentVariables().SHOPIFY_CLI_2_0_DIRECTORY ?? bundledDirectory
 }
 
 /**
@@ -380,7 +381,7 @@ export async function version(): Promise<string | undefined> {
  * @returns The value of the environment variable.
  */
 function getRubyBinDir(): string | undefined {
-  return process.env.SHOPIFY_RUBY_BINDIR
+  return getEnvironmentVariables().SHOPIFY_RUBY_BINDIR
 }
 
 /**
