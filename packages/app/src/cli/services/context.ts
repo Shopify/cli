@@ -150,32 +150,11 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   }
 
   const [organization, _selectedApp, _selectedStore] = await Promise.all([
-    (async (): Promise<Organization> => {
-      const organization = await fetchOrgFromId(orgId, token)
-      if (!organization) throw new BugError(`Couldn't find Organization with id ${orgId}.`)
-      return organization
-    })(),
-    (async (): Promise<OrganizationApp | undefined> => {
-      if (selectedApp) return selectedApp
-      if (cachedInfo?.appId) {
-        const app = await fetchAppFromApiKey(cachedInfo.appId, token)
-        if (!app) throw new BugError(`Couldn't find App with apiKey ${cachedInfo.appId}.`)
-        return app
-      }
-    })(),
-    (async (): Promise<OrganizationStore | undefined> => {
-      if (selectedStore) return selectedStore
-      if (cachedInfo?.storeFqdn) {
-        const result = await fetchStoreByDomain(orgId, token, cachedInfo.storeFqdn)
-        if (result?.store) {
-          await convertToTestStoreIfNeeded(result.store, orgId, token)
-          return result.store
-        } else {
-          throw new BugError(`Couldn't find Store with domain ${cachedInfo.storeFqdn}.`)
-        }
-      }
-    })(),
+    organizationFromId(orgId, token),
+    selectedApp ? selectedApp : appFromId(cachedInfo?.appId, token),
+    selectedStore ? selectedStore : storeFromFqdn(cachedInfo?.storeFqdn, orgId, token)
   ])
+
   if (_selectedApp) {
     selectedApp = _selectedApp
   } else {
@@ -183,6 +162,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     const localAppName = await loadAppName(options.directory)
     selectedApp = await selectOrCreateApp(localAppName, apps, organization!, token)
   }
+
   if (_selectedStore) {
     selectedStore = _selectedStore
   } else {
@@ -206,6 +186,30 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   const result = buildOutput(selectedApp, selectedStore, cachedInfo)
   await logMetadataForLoadedDevContext(result)
   return result
+}
+
+const organizationFromId = async (orgId: string, token: string): Promise<Organization> => {
+  const organization = await fetchOrgFromId(orgId, token)
+  if (!organization) throw new BugError(`Couldn't find Organization with id ${orgId}.`)
+  return organization
+}
+
+const appFromId = async (appId: string | undefined, token: string): Promise<OrganizationApp | undefined> => {
+  if (!appId) return
+  const app = await fetchAppFromApiKey(appId, token)
+  if (!app) throw new BugError(`Couldn't find App with apiKey ${appId}.`)
+  return app
+}
+
+const storeFromFqdn = async (storeFqdn: string | undefined, orgId: string, token: string): Promise<OrganizationStore | undefined> => {
+  if (!storeFqdn) return
+  const result = await fetchStoreByDomain(orgId, token, storeFqdn)
+  if (result?.store) {
+    await convertToTestStoreIfNeeded(result.store, orgId, token)
+    return result.store
+  } else {
+    throw new BugError(`Couldn't find Store with domain ${storeFqdn}.`)
+  }
 }
 
 function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?: CachedAppInfo): DevContextOutput {
