@@ -25,6 +25,12 @@ function setupEnvironmentVariables(options: Pick<RunCLIOptions, 'development'>) 
   }
 }
 
+function forceNoColor() {
+  if (process.argv.includes('--no-color') || process.env.NO_COLOR || process.env.TERM === 'dumb') {
+    process.env.FORCE_COLOR = '0'
+  }
+}
+
 /**
  * A function that abstracts away setting up the environment and running
  * a CLI
@@ -32,6 +38,7 @@ function setupEnvironmentVariables(options: Pick<RunCLIOptions, 'development'>) 
  */
 export async function runCLI(options: RunCLIOptions): Promise<void> {
   setupEnvironmentVariables(options)
+  forceNoColor()
   /**
    * These imports need to be dynamic because if they are static
    * they are loaded before we set the DEBUG=* environment variable
@@ -140,6 +147,11 @@ export async function localCliPackage(): Promise<CliPackageInfo | undefined> {
  * are shared across all the commands.
  */
 export const globalFlags = {
+  'no-color': Flags.boolean({
+    hidden: false,
+    description: 'Disable color output.',
+    env: 'SHOPIFY_FLAG_NO_COLOR',
+  }),
   verbose: Flags.boolean({
     hidden: false,
     description: 'Increase the verbosity of the logs.',
