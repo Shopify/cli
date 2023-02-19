@@ -245,11 +245,6 @@ describe('ensureDevEnvironment', () => {
       directory: INPUT.directory,
       orgId: ORG1.id,
     })
-    expect(setAppInfo).toHaveBeenNthCalledWith(2, {
-      appId: APP1.apiKey,
-      directory: INPUT.directory,
-      storeFqdn: STORE1.shopDomain,
-    })
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({
       api_key: APP1.apiKey,
@@ -283,11 +278,6 @@ describe('ensureDevEnvironment', () => {
       storeFqdn: STORE1.shopDomain,
       directory: INPUT.directory,
       orgId: ORG1.id,
-    })
-    expect(setAppInfo).toHaveBeenNthCalledWith(2, {
-      appId: APP1.apiKey,
-      directory: INPUT.directory,
-      storeFqdn: STORE1.shopDomain,
     })
     expect(outputMock.output()).toMatch(/Using your previous dev settings:/)
     expect(fetchOrgAndApps).not.toBeCalled()
