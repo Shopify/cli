@@ -200,9 +200,9 @@ async function dev(options: DevOptions) {
     }
 
     if (usingLocalhost) {
-      additionalProcesses.push(await devFrontendNonProxyTarget(frontendOptions, frontendPort))
+      additionalProcesses.push(devFrontendNonProxyTarget(frontendOptions, frontendPort))
     } else {
-      proxyTargets.push(await devFrontendProxyTarget(frontendOptions))
+      proxyTargets.push(devFrontendProxyTarget(frontendOptions))
     }
   }
 
@@ -242,8 +242,8 @@ interface DevFrontendTargetOptions extends DevWebOptions {
   backendPort: number
 }
 
-async function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: number): Promise<OutputProcess> {
-  const devFrontend = await devFrontendProxyTarget(options)
+function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: number): OutputProcess {
+  const devFrontend = devFrontendProxyTarget(options)
   return {
     prefix: devFrontend.logPrefix,
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
@@ -266,7 +266,7 @@ function devThemeExtensionTarget(
   }
 }
 
-async function devFrontendProxyTarget(options: DevFrontendTargetOptions): Promise<ReverseHTTPProxyTarget> {
+function devFrontendProxyTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyTarget {
   const {commands} = options.web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
 
