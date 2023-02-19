@@ -1,7 +1,7 @@
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {outputDebug} from '../../../public/node/output.js'
 import {shopifyFetch} from '../../../public/node/http.js'
-import {cacheFetch} from '../conf-store.js'
+import {cacheRetrieveOrRepopulate} from '../conf-store.js'
 import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError} from '../../../public/node/error.js'
 
@@ -42,10 +42,10 @@ export async function validateIdentityToken(token: string): Promise<boolean> {
 
 async function withIntrospectionURL<T>(fn: (introspectionUrl: string) => Promise<Result<T, AbortError>>): Promise<T> {
   const week = 7 * 24 * 60 * 60 * 1000
-  const introspectionURL = await cacheFetch('identity-introspection-url', getIntrospectionURL, week)
+  const introspectionURL = await cacheRetrieveOrRepopulate('identity-introspection-url', getIntrospectionURL, week)
   let result: Result<T, AbortError> = await fn(introspectionURL)
   if (result.isErr()) {
-    await cacheFetch('identity-introspection-url', getIntrospectionURL, 0)
+    await cacheRetrieveOrRepopulate('identity-introspection-url', getIntrospectionURL, 0)
     result = await fn(introspectionURL)
   }
   if (result.isErr()) {

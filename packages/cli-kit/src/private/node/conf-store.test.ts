@@ -1,4 +1,4 @@
-import {ConfSchema, cacheFetch, getSession, removeSession, setSession} from './conf-store.js'
+import {ConfSchema, cacheRetrieveOrRepopulate, getSession, removeSession, setSession} from './conf-store.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
 import {describe, expect, it} from 'vitest'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -51,16 +51,16 @@ describe('removeSession', () => {
   })
 })
 
-describe('cacheFetch', () => {
+describe('cacheRetrieveOrRepopulate', () => {
   it('returns the cached contents when they exist', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
       // populate the cache
-      await cacheFetch('identity-introspection-url', async () => 'URL1', 1000, config)
+      await cacheRetrieveOrRepopulate('identity-introspection-url', async () => 'URL1', 1000, config)
 
       // When
-      const got = await cacheFetch('identity-introspection-url', async () => 'URL2', 1000, config)
+      const got = await cacheRetrieveOrRepopulate('identity-introspection-url', async () => 'URL2', 1000, config)
 
       // Then
       // Uses the prior run to return the cached value
@@ -74,7 +74,7 @@ describe('cacheFetch', () => {
       const config = new LocalStorage<ConfSchema>({cwd})
 
       // Then
-      const got = await cacheFetch('identity-introspection-url', async () => 'URL1', 1000, config)
+      const got = await cacheRetrieveOrRepopulate('identity-introspection-url', async () => 'URL1', 1000, config)
       expect(got).toEqual('URL1')
     })
   })
@@ -86,10 +86,10 @@ describe('cacheFetch', () => {
 
       // When
       // populate the cache
-      await cacheFetch('identity-introspection-url', async () => 'URL1', 1000, config)
+      await cacheRetrieveOrRepopulate('identity-introspection-url', async () => 'URL1', 1000, config)
 
       // Then
-      const got = await cacheFetch('identity-introspection-url', async () => 'URL2', 0, config)
+      const got = await cacheRetrieveOrRepopulate('identity-introspection-url', async () => 'URL2', 0, config)
       // Fetches a new value because the old one is outdated per the current request
       expect(got).toEqual('URL2')
     })
