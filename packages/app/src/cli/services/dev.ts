@@ -133,7 +133,7 @@ async function dev(options: DevOptions) {
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
-  const prodEnvIdentifiers = await getAppIdentifiers({app: localApp})
+  const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
   const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
   localApp.extensions.ui.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
