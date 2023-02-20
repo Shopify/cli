@@ -6,8 +6,10 @@ interface CacheValue<T> {
   timestamp: number
 }
 
+export type IntrospectionUrlKey = `identity-introspection-url-${string}`
+
 interface Cache {
-  'identity-introspection-url'?: CacheValue<string>
+  [introspectionUrlKey: IntrospectionUrlKey]: CacheValue<string>
 }
 
 export interface ConfSchema {
