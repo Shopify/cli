@@ -22,8 +22,10 @@ export async function validateIdentityToken(token: string): Promise<boolean> {
         const json: any = await response.json()
         outputDebug(`The identity token is valid: ${json.valid}`)
         return ok(json.valid)
-      } else if (response.status === 404) {
-        return err(new AbortError(`The introspection endpoint returned a 404: ${introspectionURL}`))
+      } else if (response.status === 404 || response.status > 500) {
+        // If the status is 404 or 5xx, most likely the introspection endpoint
+        // has changed. We should invalidate the cache and try again.
+        return err(new AbortError(`The introspection endpoint returned a ${response.status}: ${introspectionURL}`))
       } else {
         const text = await response.text()
         outputDebug(`The Introspection request failed with:
