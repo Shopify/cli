@@ -26,7 +26,7 @@ The steps are:
 
 ### Creating a new pre-release version
 
-This should be done once weekly.
+This should be done once a week.
 
 1. Wait until the commit for **Version Packages - main** becomes <font color="green">green</font> in [CLI Production Shipit](https://shipit.shopify.io/shopify/cli/production) and push the _Deploy_ button.
 2. Push again on the _Create deploy_ button to start the deployment. This will publish the CLI packages to the [NPM registry](https://www.npmjs.com/package/@shopify/cli). If there are failures (as it can be flaky), rerun the deployment and the missing packages should be published.
