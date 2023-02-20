@@ -25,7 +25,7 @@
         "executor": "nx:run-commands",
         "outputs": ["docs"],
         "options": {
-          "command": "pnpm typedoc --out ../../docs/api/cli-kit $(find ./src/public/**/{*.ts,*.tsx} | grep -v .test.ts) --excludeExternals",
+          "command": "node ./scripts/generate-docs.js",
           "cwd": "packages/cli-kit"
         }
       },
