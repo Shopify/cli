@@ -109,6 +109,10 @@ module ShopifyCLI
     end
 
     def self.spin_url_override(env_variables: ENV)
+      return env_variables[Constants::EnvironmentVariables::SPIN_FQDN] if env_variables.key?(
+        Constants::EnvironmentVariables::SPIN_FQDN
+      )
+
       tokens = SPIN_OVERRIDE_ENV_NAMES.map do |name|
         env_variables[name]
       end

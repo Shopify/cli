@@ -227,6 +227,20 @@ module ShopifyCLI
       assert_equal "partners.shopify.com", got
     end
 
+    def test_spin_url_returns_fqdn
+      # Given
+      env_variables = {
+        Constants::EnvironmentVariables::SPIN.to_s => "1",
+        Constants::EnvironmentVariables::SPIN_FQDN.to_s => "abcd.namespace.host",
+      }
+
+      # When
+      got = Environment.partners_domain(env_variables: env_variables)
+
+      # Then
+      assert_equal "partners.abcd.namespace.host", got
+    end
+
     def test_spin_url_returns_complete_override
       # Given
       env_variables = {

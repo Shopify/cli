@@ -399,14 +399,8 @@ async function embeddedCLIExecutable(): Promise<string> {
 async function getSpinEnvironmentVariables() {
   if (!isSpinEnvironment()) return {}
 
-  const fqdn = await spinFqdn()
-  const fqdnTokens = fqdn.split('.')
-  if (fqdnTokens.length < 3) throw new AbortError(`Invalid Spin fqdn: ${fqdn}`)
-
   return {
-    SPIN_WORKSPACE: fqdnTokens[0],
-    SPIN_NAMESPACE: fqdnTokens[1],
-    SPIN_HOST: fqdnTokens.slice(2).join('.'),
+    SPIN_FQDN: await spinFqdn(),
     SPIN: '1',
   }
 }

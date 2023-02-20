@@ -199,28 +199,7 @@ it('when it run with spin then it passes spin configuration to the CLI2', async 
       SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
       BUNDLE_GEMFILE: 'CLI2/Gemfile',
       SPIN: '1',
-      SPIN_WORKSPACE: 'workspace',
-      SPIN_NAMESPACE: 'namespace',
-      SPIN_HOST: 'host.to.com',
+      SPIN_FQDN: 'workspace.namespace.host.to.com',
     },
   })
-})
-
-it('when it run with spin and fqdn has a wrong format then it throws an exception', async () => {
-  // Given
-  vi.mocked(file.fileExists).mockResolvedValue(true)
-  vi.mocked(captureOutput).mockResolvedValueOnce('2.7.5')
-  vi.mocked(captureOutput).mockResolvedValueOnce('2.4.0')
-  vi.mocked(isSpinEnvironment).mockReturnValue(true)
-  vi.mocked(spinFqdn).mockResolvedValue('malformed.fqdn')
-  vi.mocked(isShopify).mockResolvedValue(true)
-  vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_2_0_DIRECTORY: './CLI2'})
-
-  // When / Then
-  await expect(() =>
-    execCLI2(['args'], {
-      token: 'token_0000_1111_2222_3333',
-      directory: './directory',
-    }),
-  ).rejects.toThrowError('Invalid Spin fqdn: malformed.fqdn')
 })
