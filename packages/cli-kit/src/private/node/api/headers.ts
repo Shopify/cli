@@ -3,7 +3,6 @@ import {firstPartyDev} from '../../../public/node/context/local.js'
 import {randomUUID} from '../../../public/node/crypto.js'
 import {Environment, serviceEnvironment} from '../context/service.js'
 import {ExtendableError} from '../../../public/node/error.js'
-import {memoize} from '../../../public/common/function.js'
 import https from 'https'
 
 export class RequestClientError extends ExtendableError {
@@ -62,13 +61,12 @@ export function buildHeaders(token?: string): {[key: string]: string} {
  * if the service is running in a Spin environment, the attribute "rejectUnauthorized" is
  * set to false
  */
-async function _httpsAgent(_id = 'default'): Promise<https.Agent> {
+export async function httpsAgent(): Promise<https.Agent> {
   return new https.Agent({
     rejectUnauthorized: await shouldRejectUnauthorizedRequests(),
     keepAlive: true,
   })
 }
-export const httpsAgent = memoize(_httpsAgent)
 
 /**
  * Spin stores the CA certificate in the keychain and it should be used when sending HTTP
