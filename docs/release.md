@@ -50,10 +50,11 @@ Next, cut the release:
 
 Now return to prerelease mode:
 
-1. Pull the latest `main`, check out a branch, and run `pnpm changeset pre enter`.
-2. Open a PR to `main`, get approval.
-3. Merge!
-4. Announce in `#shopify-cli` and `#cli-foundations-team` that the release as been cut, and merges are permitted.
+1. Pull the latest `main`, check out a branch, and run `pnpm changeset pre enter`. Commit.
+2. Move the contents from `release_notes_draft.md` to a new file, `RELEASE_NOTES/3.x.md`, replacing `3.x` with the actual minor version number. Be sure to leave the comments where they are! Commit.
+3. Open a PR to `main`, get approval.
+4. Merge!
+5. Announce in `#shopify-cli` and `#cli-foundations-team` that the release has been cut, and merges are permitted.
 
 You've designated a commit as releasable. Now time to publish via Shipit:
 
