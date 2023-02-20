@@ -152,7 +152,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   const [organization, _selectedApp, _selectedStore] = await Promise.all([
     organizationFromId(orgId, token),
     selectedApp ? selectedApp : appFromId(cachedInfo?.appId, token),
-    selectedStore ? selectedStore : storeFromFqdn(cachedInfo?.storeFqdn, orgId, token)
+    selectedStore ? selectedStore : storeFromFqdn(cachedInfo?.storeFqdn, orgId, token),
   ])
 
   if (_selectedApp) {
@@ -160,14 +160,14 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   } else {
     const {apps} = await fetchOrgAndApps(orgId, token)
     const localAppName = await loadAppName(options.directory)
-    selectedApp = await selectOrCreateApp(localAppName, apps, organization!, token)
+    selectedApp = await selectOrCreateApp(localAppName, apps, organization, token)
   }
 
   if (_selectedStore) {
     selectedStore = _selectedStore
   } else {
     const allStores = await fetchAllDevStores(orgId, token)
-    selectedStore = await selectStore(allStores, organization!, token)
+    selectedStore = await selectStore(allStores, organization, token)
   }
 
   setAppInfo({
@@ -201,7 +201,11 @@ const appFromId = async (appId: string | undefined, token: string): Promise<Orga
   return app
 }
 
-const storeFromFqdn = async (storeFqdn: string | undefined, orgId: string, token: string): Promise<OrganizationStore | undefined> => {
+const storeFromFqdn = async (
+  storeFqdn: string | undefined,
+  orgId: string,
+  token: string,
+): Promise<OrganizationStore | undefined> => {
   if (!storeFqdn) return
   const result = await fetchStoreByDomain(orgId, token, storeFqdn)
   if (result?.store) {

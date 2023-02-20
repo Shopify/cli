@@ -93,11 +93,7 @@ async function dev(options: DevOptions) {
   const initiateUpdateUrls = (frontendConfig || backendConfig) && options.update
   let shouldUpdateURLs = false
 
-  const [
-    {frontendUrl, frontendPort, usingLocalhost},
-    backendPort,
-    currentURLs
-  ] = await Promise.all([
+  const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, currentURLs] = await Promise.all([
     generateFrontendURL({
       ...options,
       app: localApp,
@@ -179,7 +175,7 @@ async function dev(options: DevOptions) {
     }
     const [storefrontToken, args] = await Promise.all([
       ensureAuthenticatedStorefront(),
-      themeExtensionArgs(extension, apiKey, token, {...options, ...optionsToOverwrite})
+      themeExtensionArgs(extension, apiKey, token, {...options, ...optionsToOverwrite}),
     ])
     const devExt = devThemeExtensionTarget(args, adminSession, storefrontToken, token)
     additionalProcesses.push(devExt)

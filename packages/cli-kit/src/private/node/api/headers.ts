@@ -62,7 +62,7 @@ export function buildHeaders(token?: string): {[key: string]: string} {
  * if the service is running in a Spin environment, the attribute "rejectUnauthorized" is
  * set to false
  */
-async function _httpsAgent(_id: string = 'default'): Promise<https.Agent> {
+async function _httpsAgent(_id = 'default'): Promise<https.Agent> {
   return new https.Agent({
     rejectUnauthorized: await shouldRejectUnauthorizedRequests(),
     keepAlive: true,
