@@ -57,10 +57,15 @@ describe('cacheRetrieveOrRepopulate', () => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
       // populate the cache
-      await cacheRetrieveOrRepopulate('identity-introspection-url', async () => 'URL1', 1000, config)
+      await cacheRetrieveOrRepopulate('identity-introspection-url-IDENTITYURL', async () => 'URL1', 1000, config)
 
       // When
-      const got = await cacheRetrieveOrRepopulate('identity-introspection-url', async () => 'URL2', 1000, config)
+      const got = await cacheRetrieveOrRepopulate(
+        'identity-introspection-url-IDENTITYURL',
+        async () => 'URL2',
+        1000,
+        config,
+      )
 
       // Then
       // Uses the prior run to return the cached value
@@ -74,7 +79,12 @@ describe('cacheRetrieveOrRepopulate', () => {
       const config = new LocalStorage<ConfSchema>({cwd})
 
       // Then
-      const got = await cacheRetrieveOrRepopulate('identity-introspection-url', async () => 'URL1', 1000, config)
+      const got = await cacheRetrieveOrRepopulate(
+        'identity-introspection-url-IDENTITYURL',
+        async () => 'URL1',
+        1000,
+        config,
+      )
       expect(got).toEqual('URL1')
     })
   })
@@ -86,10 +96,15 @@ describe('cacheRetrieveOrRepopulate', () => {
 
       // When
       // populate the cache
-      await cacheRetrieveOrRepopulate('identity-introspection-url', async () => 'URL1', 1000, config)
+      await cacheRetrieveOrRepopulate('identity-introspection-url-IDENTITYURL', async () => 'URL1', 1000, config)
 
       // Then
-      const got = await cacheRetrieveOrRepopulate('identity-introspection-url', async () => 'URL2', 0, config)
+      const got = await cacheRetrieveOrRepopulate(
+        'identity-introspection-url-IDENTITYURL',
+        async () => 'URL2',
+        0,
+        config,
+      )
       // Fetches a new value because the old one is outdated per the current request
       expect(got).toEqual('URL2')
     })
