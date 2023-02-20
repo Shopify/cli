@@ -13,7 +13,7 @@ CI will give a warning.
 ### Creating a new patch version
 The steps are:
 1. Locate the [opened PR](https://github.com/Shopify/cli/pulls?q=is%3Apr+is%3Aopen+in%3Atitle+%22Version+Packages%22) named **Version Packages - 3.x**. This PR is automatically created with the first merge in a stable branch after a previous release is published. _Changesets_ will automatically detect changes with each merge and update automatically the PR and consequently the `package.json`s and the dependencies between them
-2. Verify that the correct version is updated in every `package.json`, <ins>paying special attention that there is no **major** bump</ins>. Approve and merge the **Version Packages** PR when all checks have passed
+2. Verify that the correct version is updated in every `package.json`, <ins>paying special attention that there is no **major** or **minor** bump</ins>. Approve and merge the **Version Packages** PR when all checks have passed
 3. Wait until the commit for **Version Packages** becomes <font color="green">green</font> in [the Shipit stack for your branch](https://shipit.shopify.io/shopify/cli) and push the _Deploy_ button.
 4. Push again on the _Create deploy_ button to start the deployment. This will publish the CLI packages to the [NPM registry](https://www.npmjs.com/package/@shopify/cli). If there are failures (as it can be flaky), rerun the deployment and the missing packages should be published.
 5. Create a new tag with the new version: `git tag 3.x.x && git push --tags`
@@ -30,7 +30,9 @@ This should be done once weekly.
 
 1. Wait until the commit for **Version Packages - main** becomes <font color="green">green</font> in [CLI Production Shipit](https://shipit.shopify.io/shopify/cli/production) and push the _Deploy_ button.
 2. Push again on the _Create deploy_ button to start the deployment. This will publish the CLI packages to the [NPM registry](https://www.npmjs.com/package/@shopify/cli). If there are failures (as it can be flaky), rerun the deployment and the missing packages should be published.
-3. Go through all the [PRs labeled with `includes-post-release-steps`](https://github.com/Shopify/cli/issues?q=label%3Aincludes-post-release-steps+is%3Aclosed) and follow the post-release steps described in those PRs. Delete the labels afterward.
+3. Go through all the [PRs labeled with `includes-post-release-steps`](https://github.com/Shopify/cli/issues?q=label%3Aincludes-post-release-steps+is%3Aclosed) and if the steps can be applied now:
+  1. Follow the post-release steps described in those PRs.
+  2. Delete the labels afterward.
 
 ### Creating a new minor version
 
@@ -64,6 +66,9 @@ You've designated a commit as releasable. Now time to publish via Shipit:
     * Release title: "3.x.x"
     * Description: summary of the most important changes from Version Packages PR
     * Click "Publish release"
+6. Go through all the [PRs labeled with `includes-post-release-steps`](https://github.com/Shopify/cli/issues?q=label%3Aincludes-post-release-steps+is%3Aclosed) and:
+  1. Follow the post-release steps described in those PRs.
+  2. Delete the labels afterward.
 
 Finally, it's time to do a bit of manual shuffling, as we welcome a stable version and deprecate another:
 
