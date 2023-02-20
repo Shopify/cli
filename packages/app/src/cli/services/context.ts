@@ -149,47 +149,33 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     return buildOutput(selectedApp, selectedStore, cachedInfo)
   }
 
-  const organization = await fetchOrgFromId(orgId, token)
-  if (!organization) throw new BugError(`Couldn't find Organization with id ${orgId}.`)
+  const [organization, _selectedApp, _selectedStore] = await Promise.all([
+    organizationFromId(orgId, token),
+    selectedApp ? selectedApp : appFromId(cachedInfo?.appId, token),
+    selectedStore ? selectedStore : storeFromFqdn(cachedInfo?.storeFqdn, orgId, token),
+  ])
 
-  if (!selectedApp) {
-    if (cachedInfo?.appId) {
-      const app = await fetchAppFromApiKey(cachedInfo.appId, token)
-      if (!app) throw new BugError(`Couldn't find App with apiKey ${cachedInfo.appId}.`)
-      selectedApp = app
-    } else {
-      const {apps} = await fetchOrgAndApps(orgId, token)
-      const localAppName = await loadAppName(options.directory)
-      selectedApp = await selectOrCreateApp(localAppName, apps, organization, token)
-    }
+  if (_selectedApp) {
+    selectedApp = _selectedApp
+  } else {
+    const {apps} = await fetchOrgAndApps(orgId, token)
+    const localAppName = await loadAppName(options.directory)
+    selectedApp = await selectOrCreateApp(localAppName, apps, organization, token)
+  }
+
+  if (_selectedStore) {
+    selectedStore = _selectedStore
+  } else {
+    const allStores = await fetchAllDevStores(orgId, token)
+    selectedStore = await selectStore(allStores, organization, token)
   }
 
   setAppInfo({
     appId: selectedApp.apiKey,
     title: selectedApp.title,
     directory: options.directory,
-    orgId,
-  })
-
-  if (!selectedStore) {
-    if (cachedInfo?.storeFqdn) {
-      const result = await fetchStoreByDomain(organization.id, token, cachedInfo.storeFqdn)
-      if (result?.store) {
-        await convertToTestStoreIfNeeded(result.store, organization, token)
-        selectedStore = result.store
-      } else {
-        throw new BugError(`Couldn't find Store with domain ${cachedInfo.storeFqdn}.`)
-      }
-    } else {
-      const allStores = await fetchAllDevStores(orgId, token)
-      selectedStore = await selectStore(allStores, organization, token)
-    }
-  }
-
-  setAppInfo({
-    appId: selectedApp.apiKey,
-    directory: options.directory,
     storeFqdn: selectedStore?.shopDomain,
+    orgId,
   })
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
@@ -200,6 +186,34 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   const result = buildOutput(selectedApp, selectedStore, cachedInfo)
   await logMetadataForLoadedDevContext(result)
   return result
+}
+
+const organizationFromId = async (orgId: string, token: string): Promise<Organization> => {
+  const organization = await fetchOrgFromId(orgId, token)
+  if (!organization) throw new BugError(`Couldn't find Organization with id ${orgId}.`)
+  return organization
+}
+
+const appFromId = async (appId: string | undefined, token: string): Promise<OrganizationApp | undefined> => {
+  if (!appId) return
+  const app = await fetchAppFromApiKey(appId, token)
+  if (!app) throw new BugError(`Couldn't find App with apiKey ${appId}.`)
+  return app
+}
+
+const storeFromFqdn = async (
+  storeFqdn: string | undefined,
+  orgId: string,
+  token: string,
+): Promise<OrganizationStore | undefined> => {
+  if (!storeFqdn) return
+  const result = await fetchStoreByDomain(orgId, token, storeFqdn)
+  if (result?.store) {
+    await convertToTestStoreIfNeeded(result.store, orgId, token)
+    return result.store
+  } else {
+    throw new BugError(`Couldn't find Store with domain ${storeFqdn}.`)
+  }
 }
 
 function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?: CachedAppInfo): DevContextOutput {
@@ -379,30 +393,39 @@ async function fetchDevDataFromOptions(
   orgId: string,
   token: string,
 ): Promise<{app?: OrganizationApp; store?: OrganizationStore}> {
-  let selectedApp: OrganizationApp | undefined
+  const [selectedApp, orgWithStore] = await Promise.all([
+    (async () => {
+      let selectedApp: OrganizationApp | undefined
+      if (options.apiKey) {
+        selectedApp = await fetchAppFromApiKey(options.apiKey, token)
+        if (!selectedApp) {
+          const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
+          throw new AbortError(errorMessage.message, errorMessage.tryMessage)
+        }
+        return selectedApp
+      }
+    })(),
+    (async () => {
+      if (options.storeFqdn) {
+        const orgWithStore = await fetchStoreByDomain(orgId, token, options.storeFqdn)
+        if (!orgWithStore) throw new BugError(`Could not find Organization for id ${orgId}.`)
+        if (!orgWithStore.store) {
+          const partners = await partnersFqdn()
+          const org = orgWithStore.organization
+          throw new BugError(
+            `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid store.`,
+            `Visit https://${partners}/${org.id}/stores to create a new development or Shopify Plus sandbox store in your organization`,
+          )
+        }
+        return orgWithStore as {store: OrganizationStore; organization: Organization}
+      }
+    })(),
+  ])
   let selectedStore: OrganizationStore | undefined
 
-  if (options.apiKey) {
-    selectedApp = await fetchAppFromApiKey(options.apiKey, token)
-    if (!selectedApp) {
-      const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
-      throw new AbortError(errorMessage.message, errorMessage.tryMessage)
-    }
-  }
-
   if (options.storeFqdn) {
-    const orgWithStore = await fetchStoreByDomain(orgId, token, options.storeFqdn)
-    if (!orgWithStore) throw new BugError(`Could not find Organization for id ${orgId}.`)
-    if (!orgWithStore.store) {
-      const partners = await partnersFqdn()
-      const org = orgWithStore.organization
-      throw new BugError(
-        `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid store.`,
-        `Visit https://${partners}/${org.id}/stores to create a new development or Shopify Plus sandbox store in your organization`,
-      )
-    }
-    await convertToTestStoreIfNeeded(orgWithStore.store, orgWithStore.organization, token)
-    selectedStore = orgWithStore.store
+    selectedStore = orgWithStore!.store
+    await convertToTestStoreIfNeeded(selectedStore, orgWithStore!.organization.id, token)
   }
 
   return {app: selectedApp, store: selectedStore}

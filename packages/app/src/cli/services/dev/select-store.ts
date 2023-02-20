@@ -40,7 +40,7 @@ export async function selectStore(
 ): Promise<OrganizationStore> {
   const store = await selectStorePrompt(stores)
   if (store) {
-    await convertToTestStoreIfNeeded(store, org, token)
+    await convertToTestStoreIfNeeded(store, org.id, token)
     return store
   }
 
@@ -101,7 +101,7 @@ async function waitForCreatedStore(orgId: string, token: string): Promise<Organi
  */
 export async function convertToTestStoreIfNeeded(
   store: OrganizationStore,
-  org: Organization,
+  orgId: string,
   token: string,
 ): Promise<void> {
   /**
@@ -114,7 +114,7 @@ export async function convertToTestStoreIfNeeded(
       'Run dev --reset and select an eligible dev store.',
     )
   }
-  if (!store.transferDisabled) await convertStoreToTest(store, org.id, token)
+  if (!store.transferDisabled) await convertStoreToTest(store, orgId, token)
 }
 
 /**
