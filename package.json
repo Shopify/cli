@@ -9,6 +9,7 @@
     "shopify:run": "node packages/cli/bin/dev.js",
     "create-app": "nx build create-app && node packages/create-app/bin/dev.js",
     "clean": "nx run-many --target=clean --all --skip-nx-cache && nx reset",
+    "docs:generate": "nx run-many --target=docs:generate --all --skip-nx-cache",
     "lint": "nx run-many --target=lint --all --skip-nx-cache",
     "lint:affected": "nx affected --target=lint --all",
     "lint:fix": "nx run-many --target=lint:fix --all --skip-nx-cache",

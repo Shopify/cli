@@ -32,6 +32,9 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
+        # Updated documentation should be generated with each release
+      - name: Generate documentation
+        run: pnpm docs:generate
       - name: Create Release Pull Request
         uses: changesets/action@e9cc34b540dd3ad1b030c57fd97269e8f6ad905a # pin@v1
         with:

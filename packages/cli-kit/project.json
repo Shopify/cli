@@ -25,7 +25,7 @@
         "executor": "nx:run-commands",
         "outputs": ["docs"],
         "options": {
-          "command": "pnpm typedoc --out docs $(find ./src/public/**/{*.ts,*.tsx} | grep -v .test.ts)",
+          "command": "pnpm typedoc --out ../../docs/api/cli-kit $(find ./src/public/**/{*.ts,*.tsx} | grep -v .test.ts) --excludeExternals",
           "cwd": "packages/cli-kit"
         }
       },
@@ -33,7 +33,7 @@
         "executor": "nx:run-commands",
         "dependsOn": ["docs:generate"],
         "options": {
-          "command": "open docs/index.html",
+          "command": "open ../../docs/api/cli-kit/index.html",
           "cwd": "packages/cli-kit"
         }
       },
