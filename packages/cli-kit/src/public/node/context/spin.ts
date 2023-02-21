@@ -89,11 +89,32 @@ export function instance(env = process.env): string | undefined {
 }
 
 /**
- * Returns true if the service environment is a Spin environment.
+ * Returns true if the CLI is running in a Spin environment.
  *
  * @param env - Environment variables.
- * @returns True if the service environment is a Spin environment.
+ * @returns True if the CLI is running in a Spin environment.
  */
 export function isSpinEnvironment(env = process.env): boolean {
   return serviceEnvironment(env) === Environment.Spin
+}
+
+/**
+ * Returns the value of the SERVER_PORT environment variable.
+ *
+ * @param env - Environment variables.
+ * @returns The value of the SERVER_PORT environment variable.
+ */
+export function appPort(env = process.env): number | undefined {
+  const port = Number(env[environmentVariables.spinAppPort])
+  return (!isNaN(port) && port) || undefined
+}
+
+/**
+ * Returns the value of the SPIN_APP_HOST environment variable.
+ *
+ * @param env - Environment variables.
+ * @returns The value of the SPIN_APP_HOST environment variable.
+ */
+export function appHost(env = process.env): string | undefined {
+  return env[environmentVariables.spinAppHost]
 }

@@ -1,0 +1,65 @@
+{
+  "name": "@shopify/plugin-did-you-mean",
+  "version": "0.2.0",
+  "bugs": {
+    "url": "https://github.com/Shopify/cli/issues"
+  },
+  "license": "MIT",
+  "author": "Shopify",
+  "type": "module",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "/dist",
+    "/oclif.manifest.json"
+  ],
+
+  "scripts": {
+    "build": "nx build",
+    "clean": "nx clean",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
+    "test": "nx run plugin-did-you-mean:test",
+    "test:watch": "nx test:watch",
+    "type-check": "nx type-check"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../.eslintrc.cjs"
+    ]
+  },
+  "dependencies": {
+    "@oclif/core": "2.1.4",
+    "@shopify/cli-kit": "3.43.0",
+    "n-gram": "2.0.2"
+  },
+  "devDependencies": {
+    "vite": "^2.9.13",
+    "vitest": "^0.26.3"
+  },
+  "engines": {
+    "node": ">=14.17.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "publishConfig": {
+    "@shopify:registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "engine-strict": true,
+  "oclif": {
+    "commands": "dist/commands",
+    "topics": {
+      "config:autocorrect": {
+        "description": "Configure autocorrect feature."
+      }
+    },
+    "hooks": {
+      "command_not_found": "dist/index"
+    }
+  }
+}

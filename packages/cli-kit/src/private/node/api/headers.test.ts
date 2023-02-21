@@ -24,6 +24,7 @@ describe('common API methods', () => {
     const version = CLI_KIT_VERSION
     expect(headers).toEqual({
       'Content-Type': 'application/json',
+      'Keep-Alive': 'timeout=30',
       'X-Shopify-Access-Token': 'Bearer my-token',
       'X-Request-Id': 'random-uuid',
       'User-Agent': `Shopify CLI; v=${version}`,
@@ -44,6 +45,7 @@ describe('common API methods', () => {
     const version = CLI_KIT_VERSION
     expect(headers).toEqual({
       'Content-Type': 'application/json',
+      'Keep-Alive': 'timeout=30',
       'X-Shopify-Access-Token': 'Bearer my-token',
       'X-Request-Id': 'random-uuid',
       'User-Agent': `Shopify CLI; v=${version}`,
@@ -64,6 +66,7 @@ describe('common API methods', () => {
     const version = CLI_KIT_VERSION
     expect(headers).toEqual({
       'Content-Type': 'application/json',
+      'Keep-Alive': 'timeout=30',
       'X-Shopify-Access-Token': token,
       'X-Request-Id': 'random-uuid',
       'User-Agent': `Shopify CLI; v=${version}`,
@@ -76,6 +79,7 @@ describe('common API methods', () => {
     // Given
     const headers = {
       'User-Agent': 'useragent',
+      'Keep-Alive': 'timeout=30',
       'X-Request-Id': 'uuid',
       Authorization: 'token',
       authorization: 'token',
@@ -89,6 +93,7 @@ describe('common API methods', () => {
     // Then
     expect(got).toMatchInlineSnapshot(`
       " - User-Agent: useragent
+       - Keep-Alive: timeout=30
        - X-Request-Id: uuid
        - Content-Type: application/json"
     `)

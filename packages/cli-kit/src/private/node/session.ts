@@ -134,7 +134,8 @@ ${outputToken.json(applications)}
   }
 
   const completeSession: Session = {...currentSession, ...newSession}
-  await secureStore.store(completeSession)
+  // Save the new session info if it has changed
+  if (Object.keys(newSession).length > 0) await secureStore.store(completeSession)
   const tokens = await tokensFor(applications, completeSession, fqdn)
 
   // Overwrite partners token if using a custom CLI Token

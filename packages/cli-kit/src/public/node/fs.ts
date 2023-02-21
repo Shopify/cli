@@ -14,7 +14,7 @@ import {
 } from 'fs-extra/esm'
 
 import {temporaryDirectoryTask} from 'tempy'
-import {sep, join, extname} from 'pathe'
+import {sep, join} from 'pathe'
 import {findUp as internalFindUp} from 'find-up'
 import {
   mkdirSync as fsMkdirSync,
@@ -43,15 +43,8 @@ import {
   access as fsAccess,
   rename as fsRename,
 } from 'fs/promises'
-import type {Options} from 'prettier'
+import {pathToFileURL as pathToFile} from 'url'
 import type {Pattern, Options as GlobOptions} from 'fast-glob'
-
-const DEFAULT_PRETTIER_CONFIG: Options = {
-  arrowParens: 'always',
-  singleQuote: true,
-  bracketSpacing: false,
-  trailingComma: 'all',
-}
 
 /**
  * Strip the first `strip` parts of the path.
@@ -436,38 +429,6 @@ interface FileOptions {
   path: string
 }
 
-/**
- * Format a string using prettier. Return the formatted content.
- *
- * @param content - Content to be formatted.
- * @param options - Options to format the content with.
- * @returns The formatted content.
- */
-export async function fileContentPrettyFormat(content: string, options: FileOptions): Promise<string> {
-  const {default: prettier} = await import('prettier')
-
-  const ext = extname(options.path)
-  const prettierConfig: Options = {
-    ...DEFAULT_PRETTIER_CONFIG,
-    parser: 'babel',
-  }
-
-  switch (ext) {
-    case '.html':
-    case '.css':
-      prettierConfig.parser = ext.slice(1)
-      break
-    case '.ts':
-    case '.tsx':
-      prettierConfig.parser = 'typescript'
-      break
-  }
-
-  const formattedContent = await prettier.format(content, prettierConfig)
-
-  return formattedContent
-}
-
 interface GenerateRandomDirectoryOptions {
   /** Suffix to include in the randomly generated directory name. */
   suffix: string
@@ -513,8 +474,16 @@ export async function glob(pattern: Pattern | Pattern[], options?: GlobOptions):
   }
   return fastGlob(pattern, overridenOptions)
 }
-export {pathToFileURL} from 'url'
 
+/**
+ * Convert a path to a File URL.
+ *
+ * @param path - Path to convert.
+ * @returns The File URL.
+ */
+export function pathToFileURL(path: string): URL {
+  return pathToFile(path)
+}
 /**
  * Find a file by walking parent directories.
  *

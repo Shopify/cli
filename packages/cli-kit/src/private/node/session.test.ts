@@ -173,7 +173,6 @@ describe('when existing session is valid', () => {
     expect(exchangeCodeForAccessToken).not.toBeCalled()
     expect(exchangeAccessForApplicationTokens).not.toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
-    expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(validTokens)
   })
 
@@ -192,7 +191,6 @@ describe('when existing session is valid', () => {
     expect(exchangeCodeForAccessToken).not.toBeCalled()
     expect(exchangeAccessForApplicationTokens).not.toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
-    expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(expected)
   })
 

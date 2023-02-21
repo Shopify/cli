@@ -9,7 +9,7 @@ const spec = createUIExtensionSpecification({
   surface: 'post_purchase',
   dependency,
   partnersWebIdentifier: 'post_purchase',
-  helpURL: 'https://shopify.dev/apps/checkout/post-purchase',
+  helpURL: 'https://shopify.dev/docs/apps/checkout/post-purchase',
   schema: BaseUIExtensionSchema,
   deployConfig: async (config, _) => {
     return {metafields: config.metafields}
