@@ -17,6 +17,7 @@ export const RubyCLIVersion = '2.34.0'
 const ThemeCheckVersion = '1.14.0'
 const MinBundlerVersion = '2.3.8'
 const MinRubyVersion = '2.7.5'
+export const MinWdmWindowsVersion = '0.1.0'
 
 interface ExecCLI2Options {
   // Contains token and store to pass to CLI 2.0, which will be set as environment variables
@@ -254,14 +255,9 @@ async function createThemeCheckCLIWorkingDirectory(): Promise<void> {
  * It creates the Gemfile to install The Ruby CLI and the dependencies.
  */
 async function createShopifyCLIGemfile(): Promise<void> {
-  const gemPath = joinPath(await shopifyCLIDirectory(), 'Gemfile')
-  const gemFileContent = ["source 'https://rubygems.org'", `gem 'shopify-cli', '${RubyCLIVersion}'`]
-  const {platform} = platformAndArch()
-  if (platform === 'windows') {
-    // 'wdm' is required by 'listen', see https://github.com/Shopify/cli/issues/780
-    gemFileContent.push("gem 'wdm', '>= 0.1.0'")
-  }
-  await file.writeFile(gemPath, gemFileContent.join('\n'))
+  const directory = await shopifyCLIDirectory()
+  const gemfileContent = getBaseGemfileContent().concat(getWindowsDependencies())
+  await addContentToGemfile(directory, gemfileContent)
 }
 
 /**
@@ -278,7 +274,46 @@ async function createThemeCheckGemfile(): Promise<void> {
  * @param directory - Directory where CLI2 Gemfile is located.
  */
 async function bundleInstallLocalShopifyCLI(directory: string): Promise<void> {
+  await addContentToGemfile(directory, getWindowsDependencies())
   await exec(bundleExecutable(), ['install'], {cwd: directory})
+}
+
+/**
+ * Build the list of lines with the base content of the Gemfile.
+ *
+ * @returns List of lines with base content.
+ */
+function getBaseGemfileContent() {
+  return ["source 'https://rubygems.org'", `gem 'shopify-cli', '${RubyCLIVersion}'`]
+}
+
+/**
+ * Build the list of Windows dependencies.
+ *
+ * @returns List of Windows dependencies.
+ */
+function getWindowsDependencies() {
+  if (platformAndArch().platform === 'windows') {
+    // 'wdm' is required by 'listen', see https://github.com/Shopify/cli/issues/780
+    // Because it's a Windows-only dependency, it's not included in the `.gemspec`.
+    // Otherwise it'd install it in non-Windows environments, which is not needed.
+    return [`gem 'wdm', '>= ${MinWdmWindowsVersion}'`]
+  }
+  return []
+}
+
+/**
+ * Append contente to a Gemfile located in the given directory.
+ *
+ * @param gemfileDirectory - Directory where Gemfile is located.
+ * @param content - Content to append to the Gemfile.
+ */
+async function addContentToGemfile(gemfileDirectory: string, content: string[]) {
+  const gemfilePath = joinPath(gemfileDirectory, 'Gemfile')
+  if (!(await file.fileExists(gemfilePath))) await file.touchFile(gemfilePath)
+  const gemContent = await file.readFile(gemfilePath, {encoding: 'utf8'})
+  const contentNoExisting = content.filter((line) => !gemContent.includes(line)).join('\n')
+  if (contentNoExisting) await file.appendFile(gemfilePath, contentNoExisting.concat('\n'))
 }
 
 /**

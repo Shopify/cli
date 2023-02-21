@@ -38,6 +38,7 @@ export function buildHeaders(token?: string): {[key: string]: string} {
 
   const headers: {[header: string]: string} = {
     'User-Agent': userAgent,
+    'Keep-Alive': 'timeout=30',
     // 'Sec-CH-UA': secCHUA, This header requires the Git sha.
     'Sec-CH-UA-PLATFORM': process.platform,
     'X-Request-Id': randomUUID(),
@@ -60,8 +61,11 @@ export function buildHeaders(token?: string): {[key: string]: string} {
  * if the service is running in a Spin environment, the attribute "rejectUnauthorized" is
  * set to false
  */
-export async function httpsAgent() {
-  return new https.Agent({rejectUnauthorized: await shouldRejectUnauthorizedRequests()})
+export async function httpsAgent(): Promise<https.Agent> {
+  return new https.Agent({
+    rejectUnauthorized: await shouldRejectUnauthorizedRequests(),
+    keepAlive: true,
+  })
 }
 
 /**

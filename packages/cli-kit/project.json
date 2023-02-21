@@ -21,6 +21,22 @@
           "cwd": "packages/cli-kit"
         }
       },
+      "docs:generate": {
+        "executor": "nx:run-commands",
+        "outputs": ["docs"],
+        "options": {
+          "command": "node ./scripts/generate-docs.js",
+          "cwd": "packages/cli-kit"
+        }
+      },
+      "docs:open": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["docs:generate"],
+        "options": {
+          "command": "open ../../docs/api/cli-kit/index.html",
+          "cwd": "packages/cli-kit"
+        }
+      },
       "lint": {
         "executor": "nx:run-commands",
         "dependsOn": ["lint:js"],
