@@ -1,4 +1,4 @@
-import {show, isSpin, spinFqdn, instance, isSpinEnvironment} from './spin.js'
+import {show, isSpin, spinFqdn, instance, isSpinEnvironment, appPort, appHost} from './spin.js'
 import {getCachedSpinFqdn, setCachedSpinFqdn} from '../../../private/node/context/spin-cache.js'
 import {captureOutput} from '../system.js'
 import {describe, test, expect, vi, it} from 'vitest'
@@ -167,5 +167,67 @@ describe('isSpinEnvironment', () => {
 
     // Then
     expect(got).toBe(false)
+  })
+})
+
+describe('appPort', () => {
+  test('returns the value of SERVER_PORT', () => {
+    // Given
+    const port = '1234'
+    const env = {SERVER_PORT: port}
+
+    // When
+    const got = appPort(env)
+
+    // Then
+    expect(got).toBe(1234)
+  })
+
+  test('returns undefined value when SERVER_PORT is not defined', () => {
+    // Given
+    const env = {}
+
+    // When
+    const got = appPort(env)
+
+    // Then
+    expect(got).toBeUndefined()
+  })
+
+  test('returns undefined value when SERVER_PORT is malformed', () => {
+    // Given
+    const port = 'invalid-port-number'
+    const env = {SERVER_PORT: port}
+
+    // When
+    const got = appPort(env)
+
+    // Then
+    expect(got).toBeUndefined()
+  })
+})
+
+describe('appHost', () => {
+  test('returns the value of SPIN_APP_HOST', () => {
+    // Given
+    const host = '1p-app-host.spin.domain.dev'
+    const env = {SPIN_APP_HOST: host}
+
+    // When
+    const got = appHost(env)
+
+    // Then
+    expect(got).toBe(host)
+  })
+
+  test('returns undefined value when SPIN_APP_HOST is not defined', () => {
+    // Given
+    const env = {}
+
+    // When
+    const got = appHost(env)
+
+    // Then
+    expect(got).toBeUndefined()
   })
 })
