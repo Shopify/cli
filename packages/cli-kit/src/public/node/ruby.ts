@@ -15,7 +15,7 @@ import {fileURLToPath} from 'url'
 
 export const RubyCLIVersion = '2.34.0'
 const ThemeCheckVersion = '1.14.0'
-const MinBundlerVersion = '2.3.8'
+const MinBundlerVersion = '2.3.11'
 const MinRubyVersion = '2.7.5'
 export const MinWdmWindowsVersion = '0.1.0'
 
@@ -295,7 +295,7 @@ function getBaseGemfileContent() {
 function getWindowsDependencies() {
   if (platformAndArch().platform === 'windows') {
     // 'wdm' is required by 'listen', see https://github.com/Shopify/cli/issues/780
-    // Because it's a Windows-only dependency, it's not included in the `.gemspec`.
+    // Because it's a Windows-only dependency, it's not included in the `.gemspec` or `Gemfile`.
     // Otherwise it'd install it in non-Windows environments, which is not needed.
     return [`gem 'wdm', '>= ${MinWdmWindowsVersion}'`]
   }

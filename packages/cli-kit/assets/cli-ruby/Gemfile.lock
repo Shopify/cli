@@ -1,11 +1,3 @@
-PATH
-  remote: .
-  specs:
-    shopify-cli (2.34.0)
-      bugsnag (~> 6.22)
-      listen (~> 3.7.0)
-      theme-check (~> 1.14.0)
-
 GEM
   remote: https://rubygems.org/
   specs:
@@ -120,7 +112,7 @@ GEM
     racc (1.6.2)
     rack (2.2.3.1)
     rainbow (3.1.1)
-    rake (13.0.6)
+    rake (12.3.3)
     rb-fsevent (0.11.1)
     rb-inotify (0.10.1)
       ffi (~> 1.0)
@@ -165,24 +157,26 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  bugsnag (~> 6.22)
   bundler (>= 2.3.11)
   byebug
   colorize (~> 0.8.1)
   cucumber (~> 7.0)
   fakefs (>= 1.0)
   iniparse (~> 1.5)
-  minitest (>= 5.0.0)
+  listen (~> 3.7.0)
+  minitest (~> 5.0)
   minitest-fail-fast
   minitest-reporters
   mocha
   octokit (~> 4.0)
   pry-byebug
   rack
-  rake
+  rake (~> 12.3, >= 12.3.3)
   rubocop-minitest
   rubocop-rake
   rubocop-shopify
-  shopify-cli!
+  theme-check (~> 1.14.0)
   timecop
   webmock
 
