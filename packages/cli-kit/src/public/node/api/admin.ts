@@ -1,10 +1,11 @@
 import {AdminSession} from '../session.js'
-import {outputContent, outputToken} from '../../../public/node/output.js'
+import {outputContent, outputDebug, outputToken} from '../../../public/node/output.js'
 import {BugError, AbortError} from '../error.js'
 import {graphqlRequest, GraphQLVariables} from '../../../private/node/api/graphql.js'
 import {restRequestBody, restRequestHeaders, restRequestUrl} from '../../../private/node/api/rest.js'
 import {fetch} from '../http.js'
 import {ClientError, gql} from 'graphql-request'
+import {performance} from 'perf_hooks'
 
 /**
  * Executes a GraphQL query against the Admin API.
@@ -108,6 +109,7 @@ export async function restRequest<T>(
   const body = restRequestBody<T>(requestBody)
 
   const headers = restRequestHeaders(session)
+  const t0 = performance.now()
   const response = await fetch(url, {
     headers,
     method,
@@ -115,6 +117,8 @@ export async function restRequest<T>(
   })
 
   const json = await response.json().catch(() => ({}))
+  const t1 = performance.now()
+  outputDebug(`Request to ${url.toString()} completed in ${Math.round(t1 - t0)} ms`)
 
   return {
     json,

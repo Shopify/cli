@@ -119,7 +119,7 @@
           "allowNo": false
         }
       },
-      "args": [],
+      "args": {},
       "cli2Flags": [
         "auto-correct",
         "category",
@@ -172,7 +172,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "theme:delete": {
       "id": "theme:delete",
@@ -240,7 +240,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "theme:dev": {
       "id": "theme:dev",
@@ -361,7 +361,7 @@
           "multiple": false
         }
       },
-      "args": [],
+      "args": {},
       "cli2Flags": [
         "host",
         "live-reload",
@@ -407,7 +407,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "theme:info": {
       "id": "theme:info",
@@ -433,7 +433,7 @@
           "allowNo": false
         }
       },
-      "args": []
+      "args": {}
     },
     "theme:init": {
       "id": "theme:init",
@@ -482,13 +482,13 @@
           "allowNo": false
         }
       },
-      "args": [
-        {
+      "args": {
+        "name": {
           "name": "name",
           "description": "Name of the new theme",
           "required": false
         }
-      ]
+      }
     },
     "theme:language-server": {
       "id": "theme:language-server",
@@ -514,7 +514,7 @@
           "allowNo": false
         }
       },
-      "args": []
+      "args": {}
     },
     "theme:list": {
       "id": "theme:list",
@@ -557,7 +557,6 @@
           "name": "role",
           "type": "option",
           "description": "Only list themes with the given role.",
-          "helpValue": "(live|unpublished|development)",
           "multiple": false,
           "options": [
             "live",
@@ -578,7 +577,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "theme:open": {
       "id": "theme:open",
@@ -646,7 +645,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "theme:package": {
       "id": "theme:package",
@@ -680,7 +679,7 @@
           "default": "."
         }
       },
-      "args": []
+      "args": {}
     },
     "theme:publish": {
       "id": "theme:publish",
@@ -734,7 +733,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "theme:pull": {
       "id": "theme:pull",
@@ -832,7 +831,7 @@
           "allowNo": false
         }
       },
-      "args": [],
+      "args": {},
       "cli2Flags": [
         "theme",
         "development",
@@ -974,7 +973,7 @@
           "allowNo": false
         }
       },
-      "args": [],
+      "args": {},
       "cli2Flags": [
         "theme",
         "development",
@@ -1110,7 +1109,7 @@
           "multiple": false
         }
       },
-      "args": []
+      "args": {}
     },
     "theme:share": {
       "id": "theme:share",
@@ -1166,7 +1165,7 @@
           "allowNo": false
         }
       },
-      "args": [],
+      "args": {},
       "cli2Flags": [
         "force"
       ]

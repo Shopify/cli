@@ -14,7 +14,7 @@ import {
 } from 'fs-extra/esm'
 
 import {temporaryDirectoryTask} from 'tempy'
-import {sep, join, extname} from 'pathe'
+import {sep, join} from 'pathe'
 import {findUp as internalFindUp} from 'find-up'
 import {
   mkdirSync as fsMkdirSync,
@@ -44,15 +44,7 @@ import {
   rename as fsRename,
 } from 'fs/promises'
 import {pathToFileURL as pathToFile} from 'url'
-import type {Options} from 'prettier'
 import type {Pattern, Options as GlobOptions} from 'fast-glob'
-
-const DEFAULT_PRETTIER_CONFIG: Options = {
-  arrowParens: 'always',
-  singleQuote: true,
-  bracketSpacing: false,
-  trailingComma: 'all',
-}
 
 /**
  * Strip the first `strip` parts of the path.
@@ -435,38 +427,6 @@ export function fileExistsSync(path: string): boolean {
 
 interface FileOptions {
   path: string
-}
-
-/**
- * Format a string using prettier. Return the formatted content.
- *
- * @param content - Content to be formatted.
- * @param options - Options to format the content with.
- * @returns The formatted content.
- */
-export async function fileContentPrettyFormat(content: string, options: FileOptions): Promise<string> {
-  const {default: prettier} = await import('prettier')
-
-  const ext = extname(options.path)
-  const prettierConfig: Options = {
-    ...DEFAULT_PRETTIER_CONFIG,
-    parser: 'babel',
-  }
-
-  switch (ext) {
-    case '.html':
-    case '.css':
-      prettierConfig.parser = ext.slice(1)
-      break
-    case '.ts':
-    case '.tsx':
-      prettierConfig.parser = 'typescript'
-      break
-  }
-
-  const formattedContent = await prettier.format(content, prettierConfig)
-
-  return formattedContent
 }
 
 interface GenerateRandomDirectoryOptions {

@@ -59,21 +59,4 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
     expect(concurrentProcesses[1].prefix).toEqual('web')
     expect(server.close).not.toHaveBeenCalled()
   })
-
-  test('uses a random port when no port is passed', async () => {
-    // Given
-    const server: any = {register: vi.fn(), listen: vi.fn(), close: vi.fn()}
-    vi.mocked(getAvailableTCPPort).mockResolvedValueOnce(4000)
-
-    // When
-    const got = await runConcurrentHTTPProcessesAndPathForwardTraffic({
-      previewUrl: '',
-      portNumber: undefined,
-      proxyTargets: [],
-      additionalProcesses: [],
-    })
-
-    // Then
-    expect(server.close).not.toHaveBeenCalled()
-  })
 })

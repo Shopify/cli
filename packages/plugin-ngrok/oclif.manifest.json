@@ -10,11 +10,12 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {},
-      "args": [
-        {
-          "name": "token"
+      "args": {
+        "token": {
+          "name": "token",
+          "required": true
         }
-      ]
+      }
     }
   }
 }

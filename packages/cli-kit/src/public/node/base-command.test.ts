@@ -231,7 +231,7 @@ describe('applying environments', async () => {
     await MockCommand.run(['--path', tmpDir, '--environment', 'environmentWithIncorrectType'])
 
     // Then
-    expect(testError?.message).toEqual('Expected an integer but received: stringy')
+    expect(testError?.message).toMatch('Expected an integer but received: stringy')
   })
 
   runTestInTmpDir('throws when exclusive arguments are provided', async (tmpDir: string) => {

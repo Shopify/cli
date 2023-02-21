@@ -24,7 +24,6 @@ You can run the CLIs through the following `package.json` scripts:
 
 - `pnpm shopify`: Builds and runs the Shopify CLI.
 - `pnpm create-app`: Builds and runs the create-app CLI.
-- `pnpm create-hydrogen`: Builds and runs the create-hydrogen CLI.
 
 All commands support the `--path` argument, so you can run any command pointing to your app. For example, `pnpm shopify app build --path /path/to/project`
 
