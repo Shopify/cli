@@ -4,7 +4,7 @@ const spec = createFunctionSpecification({
   identifier: 'product_discounts',
   externalIdentifier: 'product_discount',
   externalName: 'Function - Product discount',
-  helpURL: 'https://shopify.dev/apps/subscriptions/discounts',
+  helpURL: 'https://shopify.dev/docs/apps/discounts',
   templatePath: (lang) => `discounts/${lang}/product-discounts/default`,
 })
 

@@ -90,7 +90,7 @@ describe('after extension command finishes correctly', () => {
       │                                                                              │
       │  Reference                                                                   │
       │    • For more details, see the docs (                                        │
-      │      https://shopify.dev/apps/subscriptions/discounts )                      │
+      │      https://shopify.dev/docs/apps/discounts )                               │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
