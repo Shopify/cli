@@ -1,8 +1,8 @@
 import {buildHeaders, httpsAgent, RequestClientError, sanitizedHeadersOutput} from './headers.js'
 import {stringifyMessage, outputContent, outputToken, outputDebug} from '../../../public/node/output.js'
 import {AbortError} from '../../../public/node/error.js'
+import {debugLogResponseInfo} from '../api.js'
 import {ClientError, GraphQLClient, RequestDocument, Variables} from 'graphql-request'
-import {performance} from 'perf_hooks'
 
 export interface GraphQLVariables {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -19,25 +19,10 @@ export function graphqlRequest<T>(
 ): Promise<T> {
   const action = async () => {
     const headers = buildHeaders(token)
-    debugLogRequest(api, query, variables, headers)
+    debugLogRequestInfo(api, query, variables, headers)
     const clientOptions = {agent: await httpsAgent(), headers}
     const client = new GraphQLClient(url, clientOptions)
-    const t0 = performance.now()
-    const response = await client.rawRequest<T>(query as string, variables)
-    const t1 = performance.now()
-
-    const responseHeaders: {[key: string]: string} = {}
-    const interestingHeaders = new Set(['cache-control', 'content-type', 'etag', 'x-request-id'])
-    response.headers.forEach((value, key) => {
-      if (interestingHeaders.has(key)) responseHeaders[key] = value
-    })
-
-    outputDebug(`Request to ${url.toString()} completed in ${Math.round(t1 - t0)} ms
-
-With headers:
-${sanitizedHeadersOutput(responseHeaders)}
-    `)
-
+    const response = await debugLogResponseInfo({request: client.rawRequest<T>(query as string, variables), url})
     return response.data
   }
 
@@ -48,7 +33,7 @@ ${sanitizedHeadersOutput(responseHeaders)}
   }
 }
 
-function debugLogRequest<T>(
+function debugLogRequestInfo<T>(
   api: string,
   query: RequestDocument,
   variables?: Variables,
@@ -60,7 +45,7 @@ ${outputToken.raw(query.toString().trim())}
 With variables:
 ${variables ? JSON.stringify(variables, null, 2) : ''}
 
-And headers:
+And request headers:
 ${sanitizedHeadersOutput(headers)}
 `)
 }
