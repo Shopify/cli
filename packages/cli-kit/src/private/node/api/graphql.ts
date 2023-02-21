@@ -40,12 +40,9 @@ function debugLogRequestInfo<T>(
   headers: {[key: string]: string} = {},
 ) {
   outputDebug(outputContent`Sending ${outputToken.json(api)} GraphQL request:
-${outputToken.raw(query.toString().trim())}
-
-With variables:
-${variables ? JSON.stringify(variables, null, 2) : ''}
-
-And request headers:
+  ${outputToken.raw(query.toString().trim())}
+${variables ? `\nWith variables:\n${JSON.stringify(variables, null, 2)}\n` : ''}
+With request headers:
 ${sanitizedHeadersOutput(headers)}
 `)
 }
