@@ -20,7 +20,7 @@ export abstract class ThemeManager {
     return theme
   }
 
-  protected async fetch() {
+  async fetch() {
     if (!this.themeId) {
       return
     }
