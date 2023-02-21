@@ -9,5 +9,5 @@
  * @returns Current process environment variables.
  */
 export function getEnvironmentVariables(): NodeJS.ProcessEnv {
-  return {...process.env}
+  return process.env
 }
