@@ -45,7 +45,6 @@
     "@oclif/core": "2.1.4",
     "@shopify/cli-kit": "3.44.0",
     "@shopify/plugin-ngrok": "3.44.0",
-    "@shopify/shopify-cli-extensions": "3.21.0",
     "abort-controller": "3.0.0",
     "chokidar": "3.5.3",
     "diff": "5.1.0",
