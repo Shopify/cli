@@ -13,7 +13,7 @@ import {coerceSemverVersion} from '../../private/node/semver.js'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
 
-export const RubyCLIVersion = '2.34.0'
+export const RubyCLIVersion = '2.35.0'
 const ThemeCheckVersion = '1.14.0'
 const MinBundlerVersion = '2.3.11'
 const MinRubyVersion = '2.7.5'
