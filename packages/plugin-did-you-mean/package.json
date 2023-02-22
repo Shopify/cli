@@ -1,6 +1,6 @@
 {
   "name": "@shopify/plugin-did-you-mean",
-  "version": "0.2.0",
+  "version": "3.44.0",
   "bugs": {
     "url": "https://github.com/Shopify/cli/issues"
   },
@@ -13,7 +13,6 @@
     "/dist",
     "/oclif.manifest.json"
   ],
-
   "scripts": {
     "build": "nx build",
     "clean": "nx clean",
@@ -31,7 +30,7 @@
   },
   "dependencies": {
     "@oclif/core": "2.1.4",
-    "@shopify/cli-kit": "3.43.0",
+    "@shopify/cli-kit": "3.44.0",
     "n-gram": "2.0.2"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 {
   "name": "@shopify/features",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "private": true,
   "scripts": {
     "lint": "nx lint",
