@@ -1,5 +1,28 @@
 # @shopify/theme
 
+## 3.44.0
+
+### Minor Changes
+
+- 84284bd27: Introduce the hidden/beta `shopify theme console` command
+- 8b7c94940: Fix: The CLI should not report IO messages when the `--json` flag is passed
+
+### Patch Changes
+
+- 7925a40b2: Fix loading JS functions when there are UI extensions. Improve theme dev loading time.
+- d2adeb5ec: Extract the ownership of host themes to the CLI3
+- Updated dependencies [999a2fc79]
+- Updated dependencies [b61c5972c]
+- Updated dependencies [d44250676]
+- Updated dependencies [c8e75ac24]
+- Updated dependencies [fb22cb013]
+- Updated dependencies [159df5d07]
+- Updated dependencies [2def6f113]
+- Updated dependencies [ef3846d91]
+- Updated dependencies [3a75ed0a7]
+- Updated dependencies [d2adeb5ec]
+  - @shopify/cli-kit@3.44.0
+
 ## 3.43.0
 
 ### Patch Changes
