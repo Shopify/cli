@@ -170,7 +170,7 @@ async function dev(options: DevOptions) {
       const theme = await new HostThemeManager(adminSession).findOrCreate()
       optionsToOverwrite = {
         theme: theme.id.toString(),
-        generateTmpTheme: theme.createdAtRuntime,
+        generateTmpTheme: true,
       }
     }
     const [storefrontToken, args] = await Promise.all([
