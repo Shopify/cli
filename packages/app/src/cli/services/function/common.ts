@@ -1,7 +1,7 @@
 import {FunctionExtension} from '../../models/app/extensions.js'
 import {App, AppInterface} from '../../models/app/app.js'
-import {loadFunctionSpecifications} from '../../models/extensions/specifications.js'
 import {load as loadApp} from '../../models/app/loader.js'
+import {loadExtensionsSpecifications} from '../../models/extensions/specifications.js'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -23,7 +23,7 @@ export async function inFunctionContext(
 ) {
   const directory = path ? resolvePath(path) : cwd()
 
-  const specifications = await loadFunctionSpecifications(config)
+  const specifications = await loadExtensionsSpecifications(config)
   const app: AppInterface = await loadApp({directory, specifications})
 
   const ourFunction = app.extensions.function.find((fun) => fun.directory === directory)

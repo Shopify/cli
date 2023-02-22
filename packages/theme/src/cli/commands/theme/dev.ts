@@ -121,11 +121,11 @@ export default class Dev extends ThemeCommand {
       controller.abort()
       controller = new AbortController()
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.execute(adminSession, flags.password, command, controller)
+      this.execute(adminSession, flags.password, command, controller, true)
     }, this.ThemeRefreshTimeoutInMs)
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.execute(adminSession, flags.password, command, controller)
+    this.execute(adminSession, flags.password, command, controller, false)
   }
 
   async execute(
@@ -133,8 +133,9 @@ export default class Dev extends ThemeCommand {
     password: string | undefined,
     command: string[],
     controller: AbortController,
+    shouldWait: boolean,
   ) {
-    await sleep(3)
+    if (shouldWait) await sleep(3)
     const storefrontToken = await ensureAuthenticatedStorefront([], password)
     return execCLI2(command, {adminSession, storefrontToken, signal: controller.signal})
   }
