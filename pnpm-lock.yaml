@@ -156,7 +156,6 @@ importers:
       '@shopify/post-purchase-ui-extensions': 0.13.3
       '@shopify/post-purchase-ui-extensions-react': 0.13.3_react@17.0.2
       '@shopify/retail-ui-extensions': 0.19.0
-      '@shopify/retail-ui-extensions-react': 0.42.0_react@17.0.2
       '@shopify/web-pixels-extension': 0.1.6
       react: 17.0.2
 
@@ -3720,25 +3719,10 @@ packages:
       react-reconciler: 0.26.2_react@17.0.2
     dev: true
 
-  /@shopify/retail-ui-extensions-react/0.42.0_react@17.0.2:
-    resolution: {integrity: sha512-e9Lk91F1Nnzq6quZm4VNudyD6X14ruhfObmIlO1NhmMjzWTqL5Fw3g1zGGghCvAqgWlZLHnuvEHmrlVsGM1Qvw==, registry: https://npm.shopify.io/node/}
-    peerDependencies:
-      react: '>=17.0.0 <18.0.0'
-    dependencies:
-      '@remote-ui/react': 4.5.13_react@17.0.2
-      '@shopify/retail-ui-extensions': 0.42.0
-      '@types/react': 16.14.0
-      react: 17.0.2
-    dev: false
-
   /@shopify/retail-ui-extensions/0.19.0:
     resolution: {integrity: sha512-gYGzrGzWVZ4Ns3B9UkM6Xi+JkJ7e6OttfRitjbxuDVj7bnBuBm28bQn0qaFqPVh1V4CM8rQ7MwxutEitA8Pr0g==}
     dependencies:
       '@remote-ui/core': 2.1.16
-    dev: false
-
-  /@shopify/retail-ui-extensions/0.42.0:
-    resolution: {integrity: sha512-zsU7ywtVxqPFeqptQuAY3K/7el2QvSTYLeyfkBFK9202nlGoETpwrFVT9wcvRZh0+RFNmvlmRfDX47f6Mi210w==, registry: https://npm.shopify.io/node/}
     dev: false
 
   /@shopify/shopify-api/3.1.3:
@@ -9637,14 +9621,6 @@ packages:
       is-unicode-supported: 0.1.0
     dev: true
 
-  /log-symbols/5.1.0:
-    resolution: {integrity: sha512-l0x2DvrW294C9uDCoQe1VSU4gf529FkSZ6leBl4TiqZH/e+0R7hSfHQBNut2mNygDgHwvYHfFLn6Oxb3VWj2rA==}
-    engines: {node: '>=12'}
-    dependencies:
-      chalk: 5.1.2
-      is-unicode-supported: 1.3.0
-    dev: false
-
   /loglevel/1.8.1:
     resolution: {integrity: sha512-tCRIJM51SHjAayKwC+QAg8hT8vg6z7GSgLJKGvzuPb1Wc+hLzqtuVLxp6/HzSPOozuK+8ErAhy7U/sVzw8Dgfg==}
     engines: {node: '>= 0.6.0'}
@@ -13452,7 +13428,7 @@ packages:
       globrex: 0.1.2
       recrawl-sync: 2.2.3
       tsconfig-paths: 4.1.1
-      vite: 2.9.12
+      vite: 2.9.12_sass@1.56.1
     transitivePeerDependencies:
       - supports-color
     dev: true
