@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - stable/3.*
 
 concurrency:
   group: changeset-${{ github.head_ref }}
@@ -41,3 +42,4 @@ jobs:
           attempt_delay: 2000
           with: |
             version: pnpm changeset-manifests
+            title: Version Packages - ${{ github.ref_name }}
