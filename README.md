@@ -32,7 +32,7 @@ Learn more in the docs: [Create an app](https://shopify.dev/apps/getting-started
 
 ## Developing Hydrogen custom storefronts with Shopify CLI ##
 
-When you’re building a custom storefront, use Hydrogen, Shopify’s React-based framework optimized for headless commerce. Initialize a new Hydrogen app with a fully-featured Demo Store template, or start from scratch with the minimal Hello World template. Shopify Plus stores can deploy their Hydrogen apps to Oxygen, Shopify’s global hosting solution, at no extra cost.
+When you’re building a custom storefront, use Hydrogen, Shopify’s React-based framework optimized for headless commerce. Initialize a new Hydrogen app with a fully-featured Demo Store template, or start from scratch with the minimal Hello World template. All Shopify plans except Starter can deploy their Hydrogen apps to Oxygen, Shopify’s global hosting solution, at no extra cost.
 
 Get started using one of the following commands:
 - `npm init @shopify/hydrogen@latest`
