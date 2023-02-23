@@ -1,5 +1,5 @@
 {
-  "version": "3.44.0",
+  "version": "3.44.1",
   "commands": {
     "app:build": {
       "id": "app:build",
