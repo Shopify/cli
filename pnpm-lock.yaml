@@ -200,7 +200,7 @@ importers:
       cross-env: ^7.0.3
       express: ^4.17.3
       graphql: ^16.3.0
-      graphql-request: ^4.2.0
+      graphql-request: next
       prettier: ^2.6.1
       react: ^17.0.2
       react-dom: ^17.0.2
@@ -216,7 +216,7 @@ importers:
       cross-env: 7.0.3
       express: 4.18.2
       graphql: 16.6.0
-      graphql-request: 4.3.0_graphql@16.6.0
+      graphql-request: 5.2.0-next.4_graphql@16.6.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       react-query: 3.39.2_sfoxds7t5ydpegc3knd667wn6m
@@ -8284,19 +8284,6 @@ packages:
       - typescript
       - utf-8-validate
     dev: true
-
-  /graphql-request/4.3.0_graphql@16.6.0:
-    resolution: {integrity: sha512-2v6hQViJvSsifK606AliqiNiijb1uwWp6Re7o0RTyH+uRTv/u7Uqm2g4Fjq/LgZIzARB38RZEvVBFOQOVdlBow==}
-    peerDependencies:
-      graphql: 14 - 16
-    dependencies:
-      cross-fetch: 3.1.5
-      extract-files: 9.0.0
-      form-data: 3.0.1
-      graphql: 16.6.0
-    transitivePeerDependencies:
-      - encoding
-    dev: false
 
   /graphql-request/5.2.0-next.4_graphql@16.4.0:
     resolution: {integrity: sha512-Nylg6X3QO6ecOkhXV6O9ZO8djOjvV0aNTmRm2dSDg83KeEX8/s3c9j+ojVdmIora81sNeL3KtXXHOPzXhOTRAQ==}
