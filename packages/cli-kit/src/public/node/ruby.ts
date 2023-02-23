@@ -275,6 +275,9 @@ async function createThemeCheckGemfile(): Promise<void> {
  */
 async function bundleInstallLocalShopifyCLI(directory: string): Promise<void> {
   await addContentToGemfile(directory, getWindowsDependencies())
+  await exec(bundleExecutable(), ['config', 'set', '--local', 'path', directory], {
+    cwd: directory,
+  })
   await exec(bundleExecutable(), ['install'], {cwd: directory})
 }
 
