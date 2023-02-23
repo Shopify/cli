@@ -21,6 +21,7 @@ export async function updateCLIDependencies({packageJSON, local}: UpdateCLIDepen
     const appPath = await packagePath('app')
     const cliKitPath = await packagePath('cli-kit')
     const pluginNgrokPath = await packagePath('plugin-ngrok')
+    const didYouMeanPath = await packagePath('plugin-did-you-mean')
 
     // eslint-disable-next-line require-atomic-updates
     packageJSON.dependencies['@shopify/cli'] = cliPath
@@ -32,6 +33,7 @@ export async function updateCLIDependencies({packageJSON, local}: UpdateCLIDepen
       '@shopify/app': appPath,
       '@shopify/cli-kit': cliKitPath,
       '@shopify/plugin-ngrok': pluginNgrokPath,
+      '@shopify/plugin-did-you-mean': didYouMeanPath,
     }
 
     packageJSON.overrides = packageJSON.overrides

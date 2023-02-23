@@ -1,5 +1,28 @@
 # @shopify/app
 
+## 3.44.0
+
+### Patch Changes
+
+- b61c5972c: Speed up app dev by running web requests in parallel
+- 2def6f113: Use app host for frontend url in spin when available
+- 7925a40b2: Fix loading JS functions when there are UI extensions. Improve theme dev loading time.
+- 6802b0876: Always populate host theme
+- 26bee3526: Fix proxy crashing with ECONNREFUSED/ECONNRESET when a process isn't ready to receive packets.
+- d2adeb5ec: Extract the ownership of host themes to the CLI3
+- Updated dependencies [999a2fc79]
+- Updated dependencies [b61c5972c]
+- Updated dependencies [d44250676]
+- Updated dependencies [c8e75ac24]
+- Updated dependencies [fb22cb013]
+- Updated dependencies [159df5d07]
+- Updated dependencies [2def6f113]
+- Updated dependencies [ef3846d91]
+- Updated dependencies [3a75ed0a7]
+- Updated dependencies [d2adeb5ec]
+  - @shopify/cli-kit@3.44.0
+  - @shopify/plugin-ngrok@3.44.0
+
 ## 3.43.0
 
 ### Minor Changes

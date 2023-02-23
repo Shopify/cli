@@ -3,19 +3,24 @@ import {captureOutput} from './system.js'
 import * as system from './system.js'
 import {platformAndArch} from './os.js'
 import {joinPath} from './path.js'
-import {isShopify} from './context/local.js'
 import {inTemporaryDirectory, mkdir, findPathUp, touchFile, appendFile, fileExists, readFile} from './fs.js'
+import {getEnvironmentVariables} from './environment.js'
 import {pathConstants} from '../../private/node/constants.js'
-import {describe, expect, it, SpyInstance, vi} from 'vitest'
+import {beforeEach, describe, expect, it, SpyInstance, vi} from 'vitest'
 
 vi.mock('./system')
+vi.mock('./environment')
 vi.mock('./fs')
 vi.mock('./os')
-vi.mock('./context/local.js')
+vi.mock('../../private/node/constants.js')
+
+beforeEach(() => {
+  vi.mocked(getEnvironmentVariables).mockReturnValue({})
+})
 
 describe('execCLI', () => {
   it('throws an exception when Ruby is not installed', async () => {
-    vi.mocked(isShopify).mockResolvedValue(false)
+    vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_BUNDLED_THEME_CLI: '1'})
     vi.mocked(captureOutput).mockRejectedValue({})
 
     await expect(() => execCLI2(['args'])).rejects.toThrowError('Ruby environment not found')
@@ -23,7 +28,7 @@ describe('execCLI', () => {
 
   it('throws an exception when Ruby version requirement is not met', async () => {
     const rubyVersion = '2.2.0'
-    vi.mocked(isShopify).mockResolvedValue(false)
+    vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_BUNDLED_THEME_CLI: '1'})
     vi.mocked(captureOutput).mockResolvedValueOnce(rubyVersion)
 
     await expect(() => execCLI2(['args'])).rejects.toThrowError(
@@ -33,7 +38,7 @@ describe('execCLI', () => {
 
   it('throws an exception when Bundler is not installed', async () => {
     const rubyVersion = '2.7.5'
-    vi.mocked(isShopify).mockResolvedValue(false)
+    vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_BUNDLED_THEME_CLI: '1'})
     vi.mocked(captureOutput).mockResolvedValueOnce(rubyVersion)
     vi.mocked(captureOutput).mockRejectedValue({})
 
@@ -43,7 +48,7 @@ describe('execCLI', () => {
   it('throws an exception when Bundler version requirement is not met', async () => {
     const rubyVersion = '2.7.5'
     const bundlerVersion = '2.2.0'
-    vi.mocked(isShopify).mockResolvedValue(false)
+    vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_BUNDLED_THEME_CLI: '1'})
     vi.mocked(captureOutput).mockResolvedValueOnce(rubyVersion)
     vi.mocked(captureOutput).mockResolvedValueOnce(bundlerVersion)
 
@@ -56,7 +61,7 @@ describe('execCLI', () => {
     // Given
     const rubyVersion = '2.7.5'
     const bundlerVersion = '2.4.0'
-    vi.mocked(isShopify).mockResolvedValue(false)
+    vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_BUNDLED_THEME_CLI: '1'})
     vi.mocked(captureOutput).mockResolvedValueOnce(rubyVersion)
     vi.mocked(captureOutput).mockResolvedValueOnce(bundlerVersion)
     vi.mocked(mkdir).mockRejectedValue({message: 'Error'})
@@ -158,8 +163,8 @@ describe('execCLI', () => {
 })
 
 function mockBundledCLI2(cli2Directory: string, {windows}: {windows: boolean}) {
-  vi.mocked(isShopify).mockResolvedValue(false)
-  vi.spyOn(pathConstants.directories.cache.vendor, 'path').mockReturnValue(cli2Directory)
+  vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_BUNDLED_THEME_CLI: '1'})
+  vi.mocked(pathConstants.directories.cache.vendor.path).mockReturnValue(cli2Directory)
   mockRubyEnvironment()
   mockPlatformAndArch({windows})
   return vi.spyOn(system, 'exec')
@@ -169,7 +174,6 @@ async function mockEmbeddedCLI2(
   cli2Directory: string,
   {windows, existingWindowsDependency}: {windows: boolean; existingWindowsDependency: boolean},
 ) {
-  vi.mocked(isShopify).mockResolvedValue(true)
   vi.mocked(findPathUp).mockResolvedValue(cli2Directory)
   mockRubyEnvironment()
   mockPlatformAndArch({windows})

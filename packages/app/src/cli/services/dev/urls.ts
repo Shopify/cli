@@ -8,7 +8,7 @@ import {Config} from '@oclif/core'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isValidURL} from '@shopify/cli-kit/common/url'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {isSpin, spinFqdn} from '@shopify/cli-kit/node/context/spin'
+import {appHost, appPort, isSpin, spinFqdn} from '@shopify/cli-kit/node/context/spin'
 import {codespaceURL, gitpodURL} from '@shopify/cli-kit/node/context/local'
 import {runTunnelPlugin, TunnelPluginError} from '@shopify/cli-kit/node/plugins'
 
@@ -69,6 +69,10 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
 
   if (isSpin() && !options.tunnelUrl) {
     frontendUrl = `https://cli.${await spinFqdn()}`
+    if (appPort() !== undefined) {
+      frontendPort = appPort() ?? frontendPort
+      frontendUrl = `https://${appHost()}`
+    }
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 

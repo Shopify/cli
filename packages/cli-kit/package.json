@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.43.0",
+  "version": "3.44.0",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -132,7 +132,6 @@
     "latest-version": "7.0.0",
     "liquidjs": "10.5.0",
     "lodash": "4.17.21",
-    "log-update": "4.0.0",
     "macaddress": "0.5.3",
     "node-abort-controller": "3.0.1",
     "node-fetch": "3.2.4",

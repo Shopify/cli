@@ -14,6 +14,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {RenderAlertOptions, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {groupBy} from '@shopify/cli-kit/common/collection'
 
 export interface GenerateOptions {
   directory: string
@@ -29,7 +30,7 @@ export interface GenerateOptions {
 async function generate(options: GenerateOptions) {
   const token = await ensureAuthenticatedPartners()
   const apiKey = await ensureGenerateContext({...options, token})
-  let specifications = await fetchSpecifications({token, apiKey, config: options.config})
+  const specifications = await fetchSpecifications({token, apiKey, config: options.config})
   const app: AppInterface = await loadApp({directory: options.directory, specifications})
 
   // If the user has specified a type, we need to validate it
@@ -58,9 +59,11 @@ async function generate(options: GenerateOptions) {
         `You can only generate ${limit} extension(s) of type ${specification.externalIdentifier} per app`,
       )
     }
-  } else {
-    specifications = specifications.filter((spec) => app.extensionsForType(spec).length < spec.registrationLimit)
   }
+
+  const {validSpecifications, overlimit} = groupBy(specifications, (spec) =>
+    app.extensionsForType(spec).length < spec.registrationLimit ? 'validSpecifications' : 'overlimit',
+  )
 
   validateExtensionFlavor(specification, options.template)
 
@@ -70,7 +73,8 @@ async function generate(options: GenerateOptions) {
     extensionFlavor: options.template,
     directory: joinPath(options.directory, 'extensions'),
     app,
-    extensionSpecifications: specifications,
+    extensionSpecifications: validSpecifications ?? [],
+    unavailableExtensions: overlimit?.map((spec) => spec.externalName) ?? [],
     reset: options.reset,
   })
 
