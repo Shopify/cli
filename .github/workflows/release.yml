@@ -28,7 +28,7 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
       - name: Set Node.js
-        uses: actions/setup-node@master
+        uses: actions/setup-node@v3
         with:
           node-version: '16'
           cache: 'pnpm'
