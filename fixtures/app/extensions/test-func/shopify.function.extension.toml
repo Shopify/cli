@@ -1,0 +1,11 @@
+name = "test-func"
+type = "cart_checkout_validation"
+api_version = "unstable"
+
+[build]
+command = "cargo wasi build --release"
+path = "target/wasm32-wasi/release/test-func.wasm"
+
+[ui.paths]
+create = "/"
+details = "/"

@@ -1,6 +1,0 @@
-type = "product_subscription"
-name = "ext-01"
-
-[capabilities]
-network_access = true
-api_access = true

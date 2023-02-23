@@ -1,6 +1,0 @@
-type = "customer_accounts_ui_extension"
-name = "customer-account-extension"
-
-extension_points = [
-  'CustomerAccount::FullPage::RenderWithin',
-]
