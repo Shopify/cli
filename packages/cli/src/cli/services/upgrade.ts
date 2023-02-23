@@ -93,6 +93,7 @@ async function upgradeGlobalViaHomebrew(homebrewPackage: HomebrewPackageName): P
       'brew upgrade',
     )}...`,
   )
+  await exec('brew', ['update'], {stdio: 'inherit'})
   await exec('brew', ['upgrade', homebrewPackage], {stdio: 'inherit'})
 }
 
