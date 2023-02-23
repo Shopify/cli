@@ -229,7 +229,6 @@ importers:
       '@oclif/core': 2.1.4
       '@shopify/cli-kit': 3.44.0
       '@shopify/plugin-ngrok': 3.44.0
-      '@shopify/shopify-cli-extensions': 3.21.0
       '@types/diff': ^5.0.2
       '@types/http-proxy': ^1.17.9
       '@types/lodash-es': ^4.17.6
@@ -255,7 +254,6 @@ importers:
       '@oclif/core': 2.1.4
       '@shopify/cli-kit': link:../cli-kit
       '@shopify/plugin-ngrok': link:../plugin-ngrok
-      '@shopify/shopify-cli-extensions': 3.21.0_graphql-tag@2.12.6
       abort-controller: 3.0.0
       chokidar: 3.5.3
       diff: 5.1.0
@@ -2569,16 +2567,6 @@ packages:
   /@kwsites/promise-deferred/1.1.1:
     resolution: {integrity: sha512-GaHYm+c0O9MjZRu0ongGBRbinu8gVAMd2UZjji6jVmqKtZluZnptXGWhz1E8j8D2HJ3f/yMxKAUC0b+57wncIw==}
 
-  /@luckycatfactory/esbuild-graphql-loader/3.7.0_kch4gnksbukf3l4unj7iuquebq:
-    resolution: {integrity: sha512-5IMQvIa2bCMASsdAsY+5xeLWCWULE6HBw5TeA7lsdfBUTs1qFuXbdvxnZhxLxiF8x7biokjCWKzb2WWNa1wthQ==}
-    peerDependencies:
-      esbuild: '>=0.8.26'
-      graphql-tag: ^2.11.0
-    dependencies:
-      esbuild: 0.12.29
-      graphql-tag: 2.12.6_graphql@16.6.0
-    dev: false
-
   /@luckycatfactory/esbuild-graphql-loader/3.7.0_zocmegas3pxcp3oct7zmymwekm:
     resolution: {integrity: sha512-5IMQvIa2bCMASsdAsY+5xeLWCWULE6HBw5TeA7lsdfBUTs1qFuXbdvxnZhxLxiF8x7biokjCWKzb2WWNa1wthQ==}
     peerDependencies:
@@ -3748,17 +3736,6 @@ packages:
       - encoding
       - pg-native
       - supports-color
-    dev: false
-
-  /@shopify/shopify-cli-extensions/3.21.0_graphql-tag@2.12.6:
-    resolution: {integrity: sha512-jCWASUgPoA7RgI/7TvR4fN4wvc9QcPRNkaYDlkdQuuHj+YO35RuR3c/P+Rdbcxo4sNTPVbeXCzQWxkI27wG0TQ==}
-    hasBin: true
-    dependencies:
-      '@luckycatfactory/esbuild-graphql-loader': 3.7.0_kch4gnksbukf3l4unj7iuquebq
-      esbuild: 0.12.29
-      js-yaml: 4.1.0
-    transitivePeerDependencies:
-      - graphql-tag
     dev: false
 
   /@shopify/typescript-configs/5.1.0:
@@ -6752,12 +6729,6 @@ packages:
     requiresBuild: true
     dev: false
     optional: true
-
-  /esbuild/0.12.29:
-    resolution: {integrity: sha512-w/XuoBCSwepyiZtIRsKsetiLDUVGPVw1E/R3VTFSecIy8UR7Cq3SOtwKHJMFoVqqVG36aGkzh4e8BvpO1Fdc7g==}
-    hasBin: true
-    requiresBuild: true
-    dev: false
 
   /esbuild/0.14.54:
     resolution: {integrity: sha512-Cy9llcy8DvET5uznocPyqL3BFRrFXSVqbgpMJ9Wz8oVjZlh/zUSNbPRbov0VX7VxN2JH1Oa0uNxZ7eLRb62pJA==}
