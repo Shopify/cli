@@ -123,8 +123,8 @@ describe('initialize a extension', async () => {
 
   type FileExtension = 'js' | 'jsx' | 'ts' | 'tsx'
 
-  it.each(allUISpecs.map((specification) => [specification]))(
-    'adds dependencies for "%s" extension when extension flavor is "typescript-react"',
+  it.each(allUISpecs)(
+    `adds deps for $identifier extension when extension flavor is 'typescript-react'`,
 
     async (specification) => {
       await withTemporaryApp(async (tmpDir: string) => {
@@ -148,22 +148,22 @@ describe('initialize a extension', async () => {
 
   it.each(
     allUISpecs.reduce((accumulator, specification) => {
-      accumulator.push([specification, 'vanilla-js'])
-      accumulator.push([specification, 'react'])
-      accumulator.push([specification, 'typescript'])
+      accumulator.push({specification, flavor: 'vanilla-js'})
+      accumulator.push({specification, flavor: 'react'})
+      accumulator.push({specification, flavor: 'typescript'})
 
       return accumulator
-    }, [] as [GenericSpecification, ExtensionFlavor][]),
+    }, [] as {specification: GenericSpecification; flavor: ExtensionFlavor}[]),
   )(
-    'does not add dependencies for "%s" extension when extension flavor is "%s"',
+    `doesn't add deps for $specification.identifier extension when flavor is $flavor`,
 
-    async (specification, extensionFlavor) => {
+    async ({specification, flavor}) => {
       await withTemporaryApp(async (tmpDir: string) => {
         const addResolutionOrOverrideMock = vi.mocked(addResolutionOrOverride)
 
         await createFromTemplate({
           specification,
-          extensionFlavor,
+          extensionFlavor: flavor,
           appDirectory: tmpDir,
           name: 'extension-name',
           specifications,
@@ -174,26 +174,26 @@ describe('initialize a extension', async () => {
     },
   )
 
-  it.each(
-    allUISpecs.reduce((accumulator, specification) => {
-      accumulator.push([specification, 'vanilla-js', 'js'])
-      accumulator.push([specification, 'react', 'jsx'])
-      accumulator.push([specification, 'typescript', 'ts'])
-      accumulator.push([specification, 'typescript-react', 'tsx'])
+  const allUISpecsWithAllFlavors = allUISpecs.reduce((accumulator, specification) => {
+    accumulator.push({specification, flavor: 'vanilla-js', ext: 'js'})
+    accumulator.push({specification, flavor: 'react', ext: 'jsx'})
+    accumulator.push({specification, flavor: 'typescript', ext: 'ts'})
+    accumulator.push({specification, flavor: 'typescript-react', ext: 'tsx'})
 
-      return accumulator
-    }, [] as [GenericSpecification, ExtensionFlavor, FileExtension][]),
-  )(
-    'creates "%s" for "%s" with ".%s" src files',
+    return accumulator
+  }, [] as {specification: GenericSpecification; flavor: ExtensionFlavor; ext: FileExtension}[])
 
-    async (specification, extensionFlavor, fileExtension) => {
+  it.each(allUISpecsWithAllFlavors)(
+    'creates $specification.identifier for $flavor with .$ext files',
+
+    async ({specification, flavor, ext}) => {
       await withTemporaryApp(async (tmpDir: string) => {
         const name = 'extension-name'
 
         await createFromTemplate({
           name,
           specification,
-          extensionFlavor,
+          extensionFlavor: flavor,
           appDirectory: tmpDir,
           specifications,
         })
@@ -203,25 +203,16 @@ describe('initialize a extension', async () => {
         expect(srcFiles.length).toBeGreaterThan(0)
 
         srcFiles.forEach((filePath) => {
-          expect(filePath.endsWith(`.${fileExtension}`)).toBe(true)
+          expect(filePath.endsWith(`.${ext}`)).toBe(true)
         })
       })
     },
   )
 
-  it.each(
-    allUISpecs.reduce((accumulator, specification) => {
-      accumulator.push([specification, 'vanilla-js', 'js'])
-      accumulator.push([specification, 'react', 'jsx'])
-      accumulator.push([specification, 'typescript', 'ts'])
-      accumulator.push([specification, 'typescript-react', 'tsx'])
+  it.each(allUISpecsWithAllFlavors)(
+    'copies liquid templates with type $specification.identifier for $flavor with .$ext files',
 
-      return accumulator
-    }, [] as [GenericSpecification, ExtensionFlavor, FileExtension][]),
-  )(
-    'calls recursiveLiquidTemplateCopy with type "%s", flavor "%s", liquidFlavor "%s" and fileExtension "%s"',
-
-    async (specification, extensionFlavor, srcFileExtension) => {
+    async ({specification, flavor, ext}) => {
       await withTemporaryApp(async (tmpDir: string) => {
         vi.spyOn(file, 'moveFile').mockResolvedValue()
 
@@ -231,15 +222,15 @@ describe('initialize a extension', async () => {
         await createFromTemplate({
           name,
           specification,
-          extensionFlavor,
+          extensionFlavor: flavor,
           appDirectory: tmpDir,
           specifications,
         })
 
         expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
           type: specification.identifier,
-          flavor: extensionFlavor,
-          srcFileExtension,
+          flavor,
+          srcFileExtension: ext,
           name,
         })
       })
