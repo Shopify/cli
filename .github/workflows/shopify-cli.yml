@@ -175,10 +175,10 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Unit tests
-        run: pnpm nx run-many --all --skip-nx-cache --target=test --exclude=features
+        run: pnpm test:unit --output-style=stream
       - name: Acceptance tests
         if: ${{ matrix.node == '18.7.0' }}
-        run: pnpm nx run features:test
+        run: pnpm test:features
       - name: Run and save test coverage
         uses: ./.github/actions/run-and-save-test-coverage
         if: ${{ github.event.pull_request.head.repo.full_name == github.repository && matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
@@ -205,9 +205,9 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
       - name: Unit tests
-        run: pnpm nx run-many --all --skip-nx-cache --target=test --exclude=features
+        run: pnpm test:unit --output-style=stream
       - name: Acceptance tests
-        run: pnpm nx run features:test
+        run: pnpm test:features
       - name: Setup tmate session
         if: ${{ failure() && inputs.debug-enabled }}
         uses: mxschmitt/action-tmate@1005f9c9db5f1b055a495e72c6e589764984baf6 # pin@v3
