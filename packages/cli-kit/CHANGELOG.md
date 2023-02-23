@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.44.1
+
+### Patch Changes
+
+- d91e45352: Fix: Run ruby with shopify bin file as an argument
+
 ## 3.44.0
 
 ### Patch Changes
