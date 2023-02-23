@@ -43,6 +43,7 @@ module ShopifyCLI
       SPIN_WORKSPACE = "SPIN_WORKSPACE"
       SPIN_NAMESPACE = "SPIN_NAMESPACE"
       SPIN_HOST = "SPIN_HOST"
+      SPIN_FQDN = "SPIN_FQDN"
 
       # Deprecated, equivalent to using SPIN=1
       SPIN_PARTNERS = "SHOPIFY_APP_CLI_SPIN_PARTNERS"
