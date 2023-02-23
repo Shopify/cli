@@ -62,11 +62,8 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
   }
 
   try {
-    const executable = bundleExecutable()
     const shopifyExecutable = embedded ? [rubyExecutable(), await embeddedCLIExecutable()] : ['shopify']
-    const finalArgs = ['exec', ...shopifyExecutable, ...args]
-
-    await exec(executable, finalArgs, {
+    await exec(bundleExecutable(), ['exec', ...shopifyExecutable, ...args], {
       stdio: 'inherit',
       cwd: options.directory ?? cwd(),
       env,
