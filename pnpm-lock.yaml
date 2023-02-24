@@ -507,7 +507,7 @@ importers:
     specifiers:
       '@oclif/core': 2.1.4
       '@shopify/cli-kit': 3.44.0
-      node-fetch: ^3.3.0
+      node-fetch: 3.3.0
       vitest: ^0.22.1
     dependencies:
       '@oclif/core': 2.1.4
