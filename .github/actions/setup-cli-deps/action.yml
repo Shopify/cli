@@ -33,12 +33,6 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
         cache: 'pnpm'
-    - name: Install yarn
-      run: npm install --global yarn@${{ env.YARN_VERSION }}
-      shell: bash
-    - name: Increase yarn timeout
-      run: yarn config set network-timeout 300000
-      shell: bash
     - name: Install dependencies
       run: pnpm install
       shell: bash
