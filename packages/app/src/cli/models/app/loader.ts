@@ -4,8 +4,8 @@ import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
 import {ThemeExtensionInstance, ThemeExtensionSpec} from '../extensions/theme.js'
-import {ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
-import {FunctionInstance, FunctionSpec} from '../extensions/functions.js'
+import {BaseFunctionConfigurationSchema, ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
+import {FunctionInstance} from '../extensions/functions.js'
 import {schema} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -333,20 +333,7 @@ class AppLoader {
 
     const allFunctions = configPaths.map(async (configurationPath) => {
       const directory = dirname(configurationPath)
-      const fileContent = await readFile(configurationPath)
-      const obj = decodeToml(fileContent)
-      const {type} = TypeSchema.parse(obj)
-      const specification = this.findSpecificationForType(type) as FunctionSpec | undefined
-      if (!specification) {
-        this.abortOrReport(
-          outputContent`Unknown function type ${outputToken.yellow(type)} in ${outputToken.path(configurationPath)}`,
-          undefined,
-          configurationPath,
-        )
-        return undefined
-      }
-
-      const configuration = await this.parseConfigurationFile(specification.configSchema, configurationPath)
+      const configuration = await this.parseConfigurationFile(BaseFunctionConfigurationSchema, configurationPath)
 
       const entryPath = (
         await Promise.all(
@@ -356,7 +343,12 @@ class AppLoader {
         )
       ).find((sourcePath) => sourcePath !== undefined)
 
-      return new FunctionInstance({configuration, configurationPath, entryPath, specification, directory})
+      return new FunctionInstance({
+        configuration,
+        configurationPath,
+        entryPath,
+        directory,
+      })
     })
     const functions = getArrayRejectingUndefined(await Promise.all(allFunctions))
     return {functions, usedCustomLayout: extensionDirectories !== undefined}
