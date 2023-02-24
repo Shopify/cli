@@ -1,0 +1,67 @@
+{
+  "name": "@shopify/plugin-cloudflare",
+  "version": "3.44.0",
+  "description": "Enables the creation of Cloudflare tunnels from `shopify app dev`, allowing previews from any device",
+  "keywords": [
+    "shopify",
+    "shopify-cli",
+    "shopify-partners"
+  ],
+  "bugs": {
+    "url": "https://github.com/Shopify/cli/issues"
+  },
+  "license": "MIT",
+  "author": "Shopify",
+  "type": "module",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist",
+    "/scripts",
+    "/oclif.manifest.json"
+  ],
+  "scripts": {
+    "build": "nx build",
+    "clean": "nx clean",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
+    "test": "nx run plugin-cloudflare:test",
+    "test:watch": "nx test:watch",
+    "type-check": "nx type-check",
+    "postinstall": "node scripts/postinstall.js"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../.eslintrc.cjs"
+    ]
+  },
+  "dependencies": {
+    "@oclif/core": "1.21.0",
+    "@shopify/cli-kit": "3.44.0",
+    "node-fetch": "3.3.0"
+  },
+  "devDependencies": {
+    "vitest": "^0.22.1"
+  },
+  "engines": {
+    "node": ">=14.17.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "publishConfig": {
+    "@shopify:registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "engine-strict": true,
+  "oclif": {
+    "commands": "dist/commands",
+    "hooks": {
+      "tunnel_start": "dist/tunnel",
+      "tunnel_provider": "dist/provider"
+    }
+  }
+}

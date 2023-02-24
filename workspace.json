@@ -12,6 +12,7 @@
     "ui-extensions-server-kit": "packages/ui-extensions-server-kit",
     "ui-extensions-test-utils": "packages/ui-extensions-test-utils",
     "plugin-ngrok": "packages/plugin-ngrok",
+    "plugin-cloudflare": "packages/plugin-cloudflare",
     "plugin-did-you-mean": "packages/plugin-did-you-mean"
   }
 }

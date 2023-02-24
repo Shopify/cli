@@ -230,6 +230,7 @@ importers:
       '@luckycatfactory/esbuild-graphql-loader': 3.7.0
       '@oclif/core': 2.1.4
       '@shopify/cli-kit': 3.44.0
+      '@shopify/plugin-cloudflare': 3.44.0
       '@shopify/plugin-ngrok': 3.44.0
       '@types/diff': ^5.0.2
       '@types/http-proxy': ^1.17.9
@@ -255,6 +256,7 @@ importers:
       '@luckycatfactory/esbuild-graphql-loader': 3.7.0_zocmegas3pxcp3oct7zmymwekm
       '@oclif/core': 2.1.4
       '@shopify/cli-kit': link:../cli-kit
+      '@shopify/plugin-cloudflare': link:../plugin-cloudflare
       '@shopify/plugin-ngrok': link:../plugin-ngrok
       abort-controller: 3.0.0
       chokidar: 3.5.3
@@ -500,6 +502,19 @@ importers:
       pathe: 1.0.0
       rimraf: 3.0.2
       tempy: 1.0.1
+
+  packages/plugin-cloudflare:
+    specifiers:
+      '@oclif/core': 2.1.4
+      '@shopify/cli-kit': 3.44.0
+      node-fetch: ^3.3.0
+      vitest: ^0.22.1
+    dependencies:
+      '@oclif/core': 2.1.4
+      '@shopify/cli-kit': link:../cli-kit
+      node-fetch: 3.3.0
+    devDependencies:
+      vitest: 0.22.1
 
   packages/plugin-did-you-mean:
     specifiers:
@@ -12739,6 +12754,11 @@ packages:
       tinycolor2: 1.4.2
     dev: false
 
+  /tinypool/0.2.4:
+    resolution: {integrity: sha512-Vs3rhkUH6Qq1t5bqtb816oT+HeJTXfwt2cbPH17sWHIYKTotQIFPk3tf2fgqRrVyMDVOc1EnPgzIxfIulXVzwQ==}
+    engines: {node: '>=14.0.0'}
+    dev: true
+
   /tinypool/0.3.0:
     resolution: {integrity: sha512-NX5KeqHOBZU6Bc0xj9Vr5Szbb1j8tUHIeD18s41aDJaPeC5QTdEhK0SpdpUrZlj2nv5cctNcSjaKNanXlfcVEQ==}
     engines: {node: '>=14.0.0'}
@@ -13436,6 +13456,44 @@ packages:
       sass: 1.56.1
     optionalDependencies:
       fsevents: 2.3.2
+    dev: true
+
+  /vitest/0.22.1:
+    resolution: {integrity: sha512-+x28YTnSLth4KbXg7MCzoDAzPJlJex7YgiZbUh6YLp0/4PqVZ7q7/zyfdL0OaPtKTpNiQFPpMC8Y2MSzk8F7dw==}
+    engines: {node: '>=v14.16.0'}
+    hasBin: true
+    peerDependencies:
+      '@edge-runtime/vm': '*'
+      '@vitest/browser': '*'
+      '@vitest/ui': '*'
+      happy-dom: '*'
+      jsdom: '*'
+    peerDependenciesMeta:
+      '@edge-runtime/vm':
+        optional: true
+      '@vitest/browser':
+        optional: true
+      '@vitest/ui':
+        optional: true
+      happy-dom:
+        optional: true
+      jsdom:
+        optional: true
+    dependencies:
+      '@types/chai': 4.3.4
+      '@types/chai-subset': 1.3.3
+      '@types/node': 18.11.18
+      chai: 4.3.7
+      debug: 4.3.4
+      local-pkg: 0.4.2
+      tinypool: 0.2.4
+      tinyspy: 1.0.2
+      vite: 2.9.12
+    transitivePeerDependencies:
+      - less
+      - sass
+      - stylus
+      - supports-color
     dev: true
 
   /vitest/0.26.3:
