@@ -38,7 +38,7 @@ jobs:
           git config --global user.name "Development Lifecycle"
 
       - name: Set up Ruby ${{ matrix.version }}
-        uses: ruby/setup-ruby@8df78e55761745aad83acaf3ff12976382356e6d # pin@v1
+        uses: ruby/setup-ruby@d3c9825d67b0d8720afdfdde5af56c79fdb38d16 # pin@v1
         with:
           ruby-version: ${{ matrix.version }}
           bundler: 'latest'
@@ -64,7 +64,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Set up Ruby ${{ matrix.version }}
-        uses: ruby/setup-ruby@8df78e55761745aad83acaf3ff12976382356e6d # pin@v1
+        uses: ruby/setup-ruby@d3c9825d67b0d8720afdfdde5af56c79fdb38d16 # pin@v1
         with:
           ruby-version: ${{ matrix.version }}
           bundler: 'latest'
