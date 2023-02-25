@@ -28,29 +28,25 @@ describe('initialize a extension', async () => {
   const allFunctionSpecs = await loadLocalFunctionSpecifications()
   const specifications = await loadLocalExtensionsSpecifications()
 
-  it(
-    'successfully generates the extension when no other extensions exist',
-    async () => {
-      await withTemporaryApp(async (tmpDir) => {
-        vi.spyOn(output, 'outputInfo').mockImplementation(() => {})
-        const name = 'my-ext-1'
-        const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
-        const extensionFlavor = 'vanilla-js'
-        const extensionDir = await createFromTemplate({
-          name,
-          specification,
-          extensionFlavor,
-          appDirectory: tmpDir,
-          specifications,
-        })
-        const generatedExtension = (await loadApp({directory: tmpDir, specifications})).extensions.ui[0]!
-
-        expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
-        expect(generatedExtension.configuration.name).toBe(name)
+  it('successfully generates the extension when no other extensions exist', async () => {
+    await withTemporaryApp(async (tmpDir) => {
+      vi.spyOn(output, 'outputInfo').mockImplementation(() => {})
+      const name = 'my-ext-1'
+      const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
+      const extensionFlavor = 'vanilla-js'
+      const extensionDir = await createFromTemplate({
+        name,
+        specification,
+        extensionFlavor,
+        appDirectory: tmpDir,
+        specifications,
       })
-    },
-    30 * 1000,
-  )
+      const generatedExtension = (await loadApp({directory: tmpDir, specifications})).extensions.ui[0]!
+
+      expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
+      expect(generatedExtension.configuration.name).toBe(name)
+    })
+  })
 
   it('successfully generates the extension when another extension exists', async () => {
     await withTemporaryApp(async (tmpDir) => {
