@@ -175,7 +175,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Unit tests
-        run: pnpm test:unit --output-style=stream
+        run: pnpm test:unit
       - name: Acceptance tests
         if: ${{ matrix.node == '18.7.0' }}
         run: pnpm test:features
@@ -205,7 +205,7 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
       - name: Unit tests
-        run: pnpm test:unit --output-style=stream
+        run: pnpm test:unit
       - name: Acceptance tests
         run: pnpm test:features
       - name: Setup tmate session
