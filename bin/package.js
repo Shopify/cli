@@ -145,7 +145,8 @@ async function getSha256ForTarball(url) {
 async function recursiveDirectoryCopy(from, to, data) {
   console.log(`Generating the formula into ${to}`)
 
-  const engine = new Liquid({root: from})
+  // Must go up to `packaging` dir so nightly and pre can find the primary formula template
+  const engine = new Liquid({root: path.join(from, '../..')})
   const templateFiles = await glob(path.join(from, '**/*'), {dot: true})
 
   if (await pathExists(to)) {
