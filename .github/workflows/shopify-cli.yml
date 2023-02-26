@@ -34,6 +34,7 @@ on:
   push:
     branches:
       - main
+      - stable/3.*
   pull_request:
     paths-ignore:
       - '**.md'
@@ -60,7 +61,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v2
-        name: Checkout [main]
+        name: Checkout [${{ github.ref_name }}]
         with:
           fetch-depth: 0
       - name: Setup deps
@@ -81,7 +82,7 @@ jobs:
         node: [ '14.20.0', '16.17.0', '18.7.0' ]
     steps:
       - uses: actions/checkout@v2
-        name: Checkout [main]
+        name: Checkout [${{ github.ref_name }}]
         with:
           fetch-depth: 0
       - name: Setup deps
@@ -106,7 +107,7 @@ jobs:
         uses: ./.github/actions/run-and-save-test-coverage
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
         with:
-          branch-name: main
+          branch-name: ${{ github.ref_name }}
 
   pr-platform-agnostic:
     name: ${{ matrix.target }} with Node ${{ matrix.node }} in ${{ matrix.os }}
