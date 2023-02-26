@@ -19,7 +19,7 @@ jobs:
   test:
     name: Tests with Ruby ${{ matrix.version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 5
     strategy:
       matrix:
         version:
@@ -53,7 +53,7 @@ jobs:
   rubocop:
     name: Rubocop
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 5
     strategy:
       matrix:
         version:
