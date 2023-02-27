@@ -1,17 +1,17 @@
-name: "Download and publish test coverage"
-description: "Downloads test coverage stats from the base branch, publishes a comment with a summary"
+name: 'Download and publish test coverage'
+description: 'Downloads test coverage stats from the base branch, publishes a comment with a summary'
 inputs:
   base-branch-name:
     required: true
-    description: "Name of the branch to compare coverage with"
+    description: 'Name of the branch to compare coverage with'
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     # Strips forward slashes and dots as not supported by artifact commands
     - name: Clean base ref name
       shell: bash
       env:
-        SAFE_BASE_REF_NAME: "${{ inputs.base-branch-name }}"
+        SAFE_BASE_REF_NAME: '${{ inputs.base-branch-name }}'
       run: |
         SAFE_BASE_REF_NAME=${{ env.SAFE_BASE_REF_NAME }}
         SAFE_BASE_REF_NAME=${SAFE_BASE_REF_NAME//[\/.]/}
@@ -27,13 +27,13 @@ runs:
         branch: ${{ inputs.base-branch-name }}
         name: ${{ env.SAFE_BASE_REF_NAME }}--coverage-report
         if_no_artifact_found: ignore
-    - uses: ArtiomTr/jest-coverage-report-action@9f733792c44d05327cb371766bf78a5261e43936 # pin@v2.1.2
+    - uses: ArtiomTr/jest-coverage-report-action@df2b025553c31d68f84be6337843e277e2576844 # pin@v2.2.1
       id: coverage
       with:
         annotations: none
         output: report-markdown
-        coverage-file: "./report.json"
-        base-coverage-file: "./baseline-report.json"
+        coverage-file: './report.json'
+        base-coverage-file: './baseline-report.json'
         threshold: 0
     - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # pin@v2.3.1
       with:
