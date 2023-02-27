@@ -44,14 +44,14 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DEBUG: "1"
+  DEBUG: '1'
   SHOPIFY_CLI_ENV: development
   SHOPIFY_CONFIG: debug
-  RUBY_VERSION: "3.1.2"
-  BUNDLER_VERSION: "2.3.18"
-  PNPM_VERSION: "7.18.1"
+  RUBY_VERSION: '3.1.2'
+  BUNDLER_VERSION: '2.3.18'
+  PNPM_VERSION: '7.18.1'
   BUNDLE_GEMFILE: ${{ github.workspace }}/packages/cli-kit/assets/cli-ruby/Gemfile
-  BUNDLE_WITHOUT: "test:development"
+  BUNDLE_WITHOUT: 'test:development'
 
 jobs:
   fixture:
@@ -60,7 +60,7 @@ jobs:
     if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         name: Checkout [${{ github.ref_name }}]
         with:
           fetch-depth: 0
@@ -78,10 +78,10 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
-        node: [ '14.20.0', '16.17.0', '18.7.0' ]
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+        node: ['14.20.0', '16.17.0', '18.7.0']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         name: Checkout [${{ github.ref_name }}]
         with:
           fetch-depth: 0
@@ -116,11 +116,11 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: [ 'ubuntu-latest' ]
-        node: [ "18.7.0" ]
-        target: [ 'build', 'type-check', 'lint' ]
+        os: ['ubuntu-latest']
+        node: ['18.7.0']
+        target: ['build', 'type-check', 'lint']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.ref }}
@@ -138,7 +138,7 @@ jobs:
     if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.ref }}
@@ -162,10 +162,10 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
-        node: [ '14.20.0', '16.17.0', '18.7.0' ]
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+        node: ['14.20.0', '16.17.0', '18.7.0']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.ref }}
@@ -183,12 +183,12 @@ jobs:
         uses: ./.github/actions/run-and-save-test-coverage
         if: ${{ github.event.pull_request.head.repo.full_name == github.repository && matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
         with:
-          branch-name: "${{ github.head_ref }}"
+          branch-name: '${{ github.head_ref }}'
       - name: Download and publish test coverage
         uses: ./.github/actions/download-and-publish-test-coverage
         if: ${{ github.event.pull_request.head.repo.full_name == github.repository && matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
         with:
-          base-branch-name: "${{ github.base_ref }}"
+          base-branch-name: '${{ github.base_ref }}'
 
   manually-triggered:
     name: test with Node ${{ inputs.node-version }} in ${{ inputs.os }}
@@ -196,7 +196,7 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' }}
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: ${{ inputs.branch-name }}
           fetch-depth: 0

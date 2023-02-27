@@ -6,12 +6,12 @@ on:
       - '**.md'
 
 env:
-  DEBUG: "1"
+  DEBUG: '1'
   SHOPIFY_CLI_ENV: development
   SHOPIFY_CONFIG: debug
-  PNPM_VERSION: "7.18.1"
-  RUBY_VERSION: "3.1.2"
-  BUNDLER_VERSION: "2.3.18"
+  PNPM_VERSION: '7.18.1'
+  RUBY_VERSION: '3.1.2'
+  BUNDLER_VERSION: '2.3.18'
 
 jobs:
   benchmark:
@@ -21,10 +21,10 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: [ 'ubuntu-latest' ]
-        node: [ '18.7.0' ]
+        os: ['ubuntu-latest']
+        node: ['18.7.0']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         name: Checkout [main]
         with:
           fetch-depth: 0
@@ -51,10 +51,10 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: [ 'ubuntu-latest' ]
-        node: [ '18.7.0' ]
+        os: ['ubuntu-latest']
+        node: ['18.7.0']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         name: Checkout [main]
         with:
           fetch-depth: 0
