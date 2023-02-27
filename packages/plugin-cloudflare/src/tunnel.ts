@@ -29,7 +29,7 @@ async function tunnel(options: {port: number}): Promise<{url: string}> {
    *
    * In the future we'll explore a way to allow users to use their own cloudflare account.
    */
-  const args: string[] = ['tunnel', '--url', `http://localhost:${options.port}`, '--config', '""']
+  const args: string[] = ['tunnel', '--url', `http://localhost:${options.port}`]
 
   let connected = false
   let resolved = false

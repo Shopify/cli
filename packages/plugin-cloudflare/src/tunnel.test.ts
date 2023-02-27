@@ -6,13 +6,7 @@ import {TunnelError} from '@shopify/cli-kit/node/plugins/tunnel'
 import {Writable} from 'stream'
 
 const port = 1234
-vi.mock('@shopify/cli-kit/node/system', async () => {
-  const actual: any = await vi.importActual('@shopify/cli-kit/node/system')
-  return {
-    ...actual,
-    exec: vi.fn(),
-  }
-})
+vi.mock('@shopify/cli-kit/node/system')
 
 describe('hookStart', () => {
   it('returns a url if cloudflare prints a URL and a connection is established', async () => {
@@ -47,6 +41,8 @@ describe('hookStart', () => {
 describe('cloudflared binary', () => {
   it('binary has been installed and works', async () => {
     // When
+    // eslint-disable-next-line rulesdir/no-vi-manual-mock-clear
+    vi.restoreAllMocks()
     const result = await cloudflareVersion()
 
     // Then
