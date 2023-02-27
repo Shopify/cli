@@ -22,7 +22,7 @@ const LINUX_URL = {
   },
   x64: {
     filename: 'cloudflared-linux-amd64',
-    checksum: '7e7cb13d200a9a6f516e9edc82ee1aa7a21fd52640edca71daa59f2bc629cec6',
+    checksum: '41fa4fc3f43214c2121d1006d4cfffa9dc3b952b6cde3a79440d799de658d138',
   },
   ia32: {
     filename: 'cloudflared-linux-386',
