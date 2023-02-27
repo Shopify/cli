@@ -22,13 +22,6 @@ export async function hookStart(port: number): ReturnType {
 }
 
 async function tunnel(options: {port: number}): Promise<{url: string}> {
-  /**
-   * We append an empty config (--config "") to the command to prevent
-   * cloudflared from reading the config file from the user home directory.
-   * We want to use the free tier plugins, which is not compatible with custom configurations.
-   *
-   * In the future we'll explore a way to allow users to use their own cloudflare account.
-   */
   const args: string[] = ['tunnel', '--url', `http://localhost:${options.port}`]
 
   let connected = false
