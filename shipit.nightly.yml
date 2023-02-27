@@ -16,6 +16,10 @@ deploy:
     - |-
       bash -i -c 'echo -e "---\n'"'@shopify/cli'"': patch\n---" > .changeset/force-nightly-build.md'
     - bash -i -c "npm_config_loglevel=verbose pnpm clean"
+    # Nightly snapshots can't be made from prerelease mode, so exit prerelease
+    # mode. But don't attempt to exit if we're in regular mode, when exiting
+    # will fail.
+    - bash -i -c "if [ -f '.changeset/pre.json' ]; then npm_config_loglevel=verbose pnpm changeset pre exit; fi"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset version --snapshot nightly"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset-manifests"
     - bash -i -c "npm_config_loglevel=verbose pnpm nx run cli-kit:build"
