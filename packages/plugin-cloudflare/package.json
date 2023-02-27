@@ -42,7 +42,8 @@
     "node-fetch": "3.3.0"
   },
   "devDependencies": {
-    "vitest": "^0.22.1"
+    "vite": "^2.9.13",
+    "vitest": "^0.26.3"
   },
   "engines": {
     "node": ">=14.17.0"
