@@ -46,6 +46,6 @@ describe('cloudflared binary', () => {
     const result = await cloudflareVersion()
 
     // Then
-    expect(result).toMatch(/cloudflared version 2023.1.0/)
+    expect(result).toMatch(/cloudflared version 2023.2.1/)
   })
 })
