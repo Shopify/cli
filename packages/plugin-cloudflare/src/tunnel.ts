@@ -22,7 +22,7 @@ export async function hookStart(port: number): ReturnType {
 }
 
 async function tunnel(options: {port: number}): Promise<{url: string}> {
-  const args: string[] = ['tunnel', '--url', `http://localhost:${options.port}`]
+  const args: string[] = ['tunnel', '--url', `http://localhost:${options.port}`, '--no-autoupdate']
 
   let connected = false
   let resolved = false
