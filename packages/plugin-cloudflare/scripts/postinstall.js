@@ -6,49 +6,49 @@ import {pipeline} from 'stream'
 import {execSync} from 'child_process'
 import {createHash} from 'node:crypto'
 import {chmodSync, existsSync, mkdirSync, renameSync, unlinkSync, createWriteStream, readFileSync} from 'fs'
-import fetch from "node-fetch"
+import fetch from 'node-fetch'
 
-const CLOUDFLARE_VERSION = '2023.1.0'
+const CLOUDFLARE_VERSION = '2023.2.1'
 const CLOUDFLARE_REPO = `https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARE_VERSION}/`
 
 const LINUX_URL = {
   arm64: {
     filename: 'cloudflared-linux-arm64',
-    checksum: '38011f9a6b28b358c75cfff5eb72ed5209c6882ae5084eabad8f01c11a79946c',
+    checksum: '03e8f22ad61465834154ccb8656d20eaf0a73789173e3c70fcabddb7f1b67fd1',
   },
   arm: {
     filename: 'cloudflared-linux-arm',
-    checksum: '072e8dd4565837b8185ce9017a07bbc781a2c26d343ac556c916b9ce2b533e82',
+    checksum: '2fbe0c2eb438ffa8d0f459e7f41b2cf8c8f1bbe88a7362dd15b63380fd2777b5',
   },
   x64: {
     filename: 'cloudflared-linux-amd64',
-    checksum: '7a12458b56e52d750a2d506b9e4de0035829898a6d80bab147d4964d784d9108',
+    checksum: '7e7cb13d200a9a6f516e9edc82ee1aa7a21fd52640edca71daa59f2bc629cec6',
   },
   ia32: {
     filename: 'cloudflared-linux-386',
-    checksum: '1374ce7fb565cc5c2b0f9edae998fc88904db60b5ae7da646d289bda44b31b3f',
+    checksum: '38208ff59b6fc1b356b51ce4a0041f71abe739b89ccf7d7676e4b941f958f7ca',
   },
 }
 
 const MACOS_URL = {
   arm64: {
     filename: 'cloudflared-darwin-amd64.tgz',
-    checksum: '521ea7bd1a27f52316d2966da87b8f164636b69a0481072c03965eb07afaaf76',
+    checksum: 'c58a66da2f153592c366262f5100539f54d3db9d0fd90262afc01f73be5f18f1',
   },
   x64: {
     filename: 'cloudflared-darwin-amd64.tgz',
-    checksum: '521ea7bd1a27f52316d2966da87b8f164636b69a0481072c03965eb07afaaf76',
+    checksum: 'c58a66da2f153592c366262f5100539f54d3db9d0fd90262afc01f73be5f18f1',
   },
 }
 
 const WINDOWS_URL = {
   x64: {
     filename: 'cloudflared-windows-amd64.exe',
-    checksum: '19074674c6fbdaa573b3081745e5e26144fdf7a086d14e0e220d1814f1f13078',
+    checksum: 'd3a0e1a79158f3985cd49607ebe0cdfcc49cb9af96b8f43aefd0cdfe2f22e663',
   },
   ia32: {
     filename: 'cloudflared-windows-386.exe',
-    checksum: '2fbbfc8299537ff80cadf9d0e27c223fe0ccb9052bf9d8763ad717bbfa521c77',
+    checksum: 'd14c52d9220b606f428a8fe9f7c108b0d6f14cf71e7384749e98e6a95962e68f',
   },
 }
 
