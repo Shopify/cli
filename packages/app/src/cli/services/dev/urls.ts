@@ -19,7 +19,7 @@ export interface PartnersURLs {
 
 export interface FrontendURLOptions {
   app: AppInterface
-  tunnel: boolean
+  tunnelProvider: string
   noTunnel: boolean
   tunnelUrl?: string
   cachedTunnelPlugin?: string
@@ -54,7 +54,7 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   let usingLocalhost = false
   const hasExtensions = options.app.hasUIExtensions()
 
-  const needsTunnel = (hasExtensions || options.tunnel || options.cachedTunnelPlugin) && !options.noTunnel
+  const needsTunnel = (hasExtensions || options.cachedTunnelPlugin) && !options.noTunnel
 
   if (codespaceURL()) {
     frontendUrl = `https://${codespaceURL()}-${frontendPort}.githubpreview.dev`
@@ -88,7 +88,7 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
 
   if (needsTunnel) {
     frontendPort = await getAvailableTCPPort()
-    frontendUrl = await generateURL(options.commandConfig, frontendPort)
+    frontendUrl = await generateURL(options.commandConfig, options.tunnelProvider, frontendPort)
   } else {
     frontendPort = await getAvailableTCPPort()
     frontendUrl = 'http://localhost'
@@ -98,11 +98,8 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   return {frontendUrl, frontendPort, usingLocalhost}
 }
 
-export async function generateURL(config: Config, frontendPort: number): Promise<string> {
-  // For the moment we assume to always have ngrok, this will change in a future PR
-  // and will need to use "getListOfTunnelPlugins" to find the available tunnel plugins
-  const provider = 'cloudflare'
-  return (await runTunnelPlugin(config, frontendPort, provider)).mapError(mapRunTunnelPluginError).valueOrAbort()
+export async function generateURL(config: Config, tunnelProvider: string, frontendPort: number): Promise<string> {
+  return (await runTunnelPlugin(config, frontendPort, tunnelProvider)).mapError(mapRunTunnelPluginError).valueOrAbort()
 }
 
 export function generatePartnersURLs(baseURL: string, authCallbackPath?: string | string[]): PartnersURLs {

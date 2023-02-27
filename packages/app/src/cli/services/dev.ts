@@ -37,6 +37,8 @@ import {
 import {OutputProcess, outputInfo} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
+export type TunnelProviders = 'ngrok' | 'cloudflare' | 'none'
+
 export interface DevOptions {
   directory: string
   id?: number
@@ -49,7 +51,7 @@ export interface DevOptions {
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
   tunnelUrl?: string
-  tunnel: boolean
+  tunnelProvider: string
   noTunnel: boolean
   theme?: string
   themeExtensionPort?: number

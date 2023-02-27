@@ -66,11 +66,12 @@ export default class Dev extends Command {
       default: false,
       exclusive: ['tunnel-url', 'tunnel'],
     }),
-    tunnel: Flags.boolean({
+    tunnel: Flags.string({
       hidden: false,
-      description: 'Use ngrok to create a tunnel to your service entry point',
+      description: 'Select the tunnel provider',
       env: 'SHOPIFY_FLAG_TUNNEL',
-      default: true,
+      options: ['cloudflare', 'ngrok'],
+      default: 'cloudflare',
       exclusive: ['tunnel-url', 'no-tunnel'],
     }),
     theme: Flags.string({
@@ -108,7 +109,7 @@ export default class Dev extends Command {
       subscriptionProductUrl: flags['subscription-product-url'],
       checkoutCartUrl: flags['checkout-cart-url'],
       tunnelUrl: flags['tunnel-url'],
-      tunnel: flags.tunnel,
+      tunnelProvider: flags.tunnel,
       noTunnel: flags['no-tunnel'],
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
