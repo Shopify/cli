@@ -37,4 +37,4 @@ runs:
       run: pnpm install --frozen-lockfile
       shell: bash
     - name: Derive appropriate SHAs for base and head for `nx affected` commands
-      uses: nrwl/nx-set-shas@526caa9cb6b172df606cd33b7a3544bf1bc49c2e # pin@v2.2.5
+      uses: nrwl/nx-set-shas@177b48373c6dc583ce0d9257ffb484bdd232fedf # pin@v3.0.2
