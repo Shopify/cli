@@ -67,10 +67,11 @@ async function refreshDocumentation(): Promise<void> {
   await project.save()
 }
 
-try {
-  await refreshDocumentation()
-  process.exit(0)
-  // eslint-disable-next-line no-catch-all/no-catch-all
-} catch (error) {
-  process.exit(1)
-}
+refreshDocumentation()
+  .then(() => {
+    process.exit(0)
+  })
+  // eslint-disable-next-line node/handle-callback-err
+  .catch((_error) => {
+    process.exit(1)
+  })
