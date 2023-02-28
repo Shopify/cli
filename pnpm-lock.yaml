@@ -135,28 +135,30 @@ importers:
 
   fixtures/app:
     specifiers:
-      '@shopify/admin-ui-extensions': 1.0.1
-      '@shopify/admin-ui-extensions-react': 1.0.1
+      '@shopify/admin-ui-extensions': 1.1.0
+      '@shopify/admin-ui-extensions-react': 1.1.0
       '@shopify/app': 3.44.0
-      '@shopify/checkout-ui-extensions-react': ^0.24.0
+      '@shopify/checkout-ui-extensions-react': 0.24.0
       '@shopify/cli': 3.44.0
-      '@shopify/customer-account-ui-extensions-react': ^0.0.8
-      '@shopify/post-purchase-ui-extensions': ^0.13.3
-      '@shopify/post-purchase-ui-extensions-react': ^0.13.3
-      '@shopify/retail-ui-extensions': 0.19.0
-      '@shopify/web-pixels-extension': ^0.1.1
+      '@shopify/customer-account-ui-extensions-react': 0.0.34
+      '@shopify/post-purchase-ui-extensions': 0.13.4
+      '@shopify/post-purchase-ui-extensions-react': 0.13.4
+      '@shopify/retail-ui-extensions': 0.43.0
+      '@shopify/retail-ui-extensions-react': 0.43.0
+      '@shopify/web-pixels-extension': 0.3.0
       react: ^17.0.2
     dependencies:
-      '@shopify/admin-ui-extensions': 1.0.1
-      '@shopify/admin-ui-extensions-react': 1.0.1_react@17.0.2
+      '@shopify/admin-ui-extensions': 1.1.0
+      '@shopify/admin-ui-extensions-react': 1.1.0_react@17.0.2
       '@shopify/app': link:../../packages/app
       '@shopify/checkout-ui-extensions-react': 0.24.0_react@17.0.2
       '@shopify/cli': link:../../packages/cli
-      '@shopify/customer-account-ui-extensions-react': 0.0.8_react@17.0.2
-      '@shopify/post-purchase-ui-extensions': 0.13.3
-      '@shopify/post-purchase-ui-extensions-react': 0.13.3_react@17.0.2
-      '@shopify/retail-ui-extensions': 0.19.0
-      '@shopify/web-pixels-extension': 0.1.6
+      '@shopify/customer-account-ui-extensions-react': 0.0.34_react@17.0.2
+      '@shopify/post-purchase-ui-extensions': 0.13.4
+      '@shopify/post-purchase-ui-extensions-react': 0.13.4_react@17.0.2
+      '@shopify/retail-ui-extensions': 0.43.0
+      '@shopify/retail-ui-extensions-react': 0.43.0_react@17.0.2
+      '@shopify/web-pixels-extension': 0.3.0
       react: 17.0.2
 
   fixtures/app/web:
@@ -172,7 +174,7 @@ importers:
       serve-static: ^1.14.1
       supertest: ^6.2.2
       vite: 2.9.12
-      vitest: ^0.26.3
+      vitest: ^0.28.5
     dependencies:
       '@shopify/shopify-api': 3.1.3
       compression: 1.7.4
@@ -186,7 +188,7 @@ importers:
       pretty-quick: 3.1.3_prettier@2.8.0
       supertest: 6.3.1
       vite: 2.9.12
-      vitest: 0.26.3
+      vitest: 0.28.5
 
   fixtures/app/web/frontend:
     specifiers:
@@ -229,7 +231,6 @@ importers:
       '@oclif/core': 2.1.4
       '@shopify/cli-kit': 3.44.0
       '@shopify/plugin-ngrok': 3.44.0
-      '@shopify/shopify-cli-extensions': 3.21.0
       '@types/diff': ^5.0.2
       '@types/http-proxy': ^1.17.9
       '@types/lodash-es': ^4.17.6
@@ -248,14 +249,13 @@ importers:
       javy-cli: 0.1.2
       serve-static: 1.15.0
       vite: 2.9.12
-      vitest: ^0.26.3
+      vitest: ^0.28.5
       ws: 8.8.1
     dependencies:
       '@luckycatfactory/esbuild-graphql-loader': 3.7.0_zocmegas3pxcp3oct7zmymwekm
       '@oclif/core': 2.1.4
       '@shopify/cli-kit': link:../cli-kit
       '@shopify/plugin-ngrok': link:../plugin-ngrok
-      '@shopify/shopify-cli-extensions': 3.21.0_graphql-tag@2.12.6
       abort-controller: 3.0.0
       chokidar: 3.5.3
       diff: 5.1.0
@@ -276,7 +276,7 @@ importers:
       graphql: 16.6.0
       graphql-tag: 2.12.6_graphql@16.6.0
       vite: 2.9.12
-      vitest: 0.26.3
+      vitest: 0.28.5
 
   packages/cli:
     specifiers:
@@ -289,9 +289,9 @@ importers:
       '@shopify/plugin-did-you-mean': 3.44.0
       '@shopify/theme': 3.44.0
       '@types/node': 14.18.36
-      '@vitest/coverage-istanbul': ^0.26.3
+      '@vitest/coverage-istanbul': ^0.28.5
       vite: 2.9.12
-      vitest: ^0.26.3
+      vitest: ^0.28.5
     dependencies:
       '@oclif/core': 2.1.4
       '@oclif/plugin-commands': 2.2.9
@@ -303,9 +303,9 @@ importers:
       '@shopify/app': link:../app
       '@shopify/theme': link:../theme
       '@types/node': 14.18.36
-      '@vitest/coverage-istanbul': 0.26.3
+      '@vitest/coverage-istanbul': 0.28.5
       vite: 2.9.12
-      vitest: 0.26.3
+      vitest: 0.28.5
 
   packages/cli-kit:
     specifiers:
@@ -322,7 +322,7 @@ importers:
       '@types/node': 14.18.36
       '@types/react': 16.14.0
       '@types/semver': ^7.3.9
-      '@vitest/coverage-istanbul': ^0.26.3
+      '@vitest/coverage-istanbul': ^0.28.5
       abort-controller: 3.0.0
       ansi-escapes: 6.0.0
       archiver: 5.3.1
@@ -379,7 +379,7 @@ importers:
       typescript: 4.9.4
       unique-string: 3.0.0
       vite: 2.9.12
-      vitest: ^0.26.3
+      vitest: ^0.28.5
       zod: 3.17.3
     dependencies:
       '@bugsnag/js': 7.16.7
@@ -448,13 +448,13 @@ importers:
       '@types/node': 14.18.36
       '@types/react': 16.14.0
       '@types/semver': 7.3.13
-      '@vitest/coverage-istanbul': 0.26.3
+      '@vitest/coverage-istanbul': 0.28.5
       ink-testing-library: 2.1.0_@types+react@16.14.0
       node-stream-zip: 1.15.0
       typedoc: 0.23.25_typescript@4.9.4
       typescript: 4.9.4
       vite: 2.9.12
-      vitest: 0.26.3
+      vitest: 0.28.5
 
   packages/create-app:
     specifiers:
@@ -462,14 +462,14 @@ importers:
       '@shopify/cli-kit': 3.44.0
       '@types/node': 14.18.36
       vite: 2.9.12
-      vitest: ^0.26.3
+      vitest: ^0.28.5
     dependencies:
       '@oclif/core': 2.1.4
       '@shopify/cli-kit': link:../cli-kit
     devDependencies:
       '@types/node': 14.18.36
       vite: 2.9.12
-      vitest: 0.26.3
+      vitest: 0.28.5
 
   packages/features:
     specifiers:
@@ -507,14 +507,14 @@ importers:
       '@shopify/cli-kit': 3.44.0
       n-gram: 2.0.2
       vite: 2.9.12
-      vitest: ^0.26.3
+      vitest: ^0.28.5
     dependencies:
       '@oclif/core': 2.1.4
       '@shopify/cli-kit': link:../cli-kit
       n-gram: 2.0.2
     devDependencies:
       vite: 2.9.12
-      vitest: 0.26.3
+      vitest: 0.28.5
 
   packages/plugin-ngrok:
     specifiers:
@@ -523,7 +523,7 @@ importers:
       '@shopify/ngrok': 4.3.2
       '@types/node': 14.18.36
       vite: 2.9.12
-      vitest: ^0.26.3
+      vitest: ^0.28.5
     dependencies:
       '@oclif/core': 2.1.4
       '@shopify/cli-kit': link:../cli-kit
@@ -531,7 +531,7 @@ importers:
     devDependencies:
       '@types/node': 14.18.36
       vite: 2.9.12
-      vitest: 0.26.3
+      vitest: 0.28.5
 
   packages/theme:
     specifiers:
@@ -540,7 +540,7 @@ importers:
       '@types/node': 14.18.36
       node-stream-zip: ^1.15.0
       vite: 2.9.12
-      vitest: ^0.26.3
+      vitest: ^0.28.5
     dependencies:
       '@oclif/core': 2.1.4
       '@shopify/cli-kit': link:../cli-kit
@@ -548,7 +548,7 @@ importers:
       '@types/node': 14.18.36
       node-stream-zip: 1.15.0
       vite: 2.9.12
-      vitest: 0.26.3
+      vitest: 0.28.5
 
   packages/ui-extensions-dev-console:
     specifiers:
@@ -575,7 +575,7 @@ importers:
       typescript: 4.9.4
       vite: 2.9.12
       vite-tsconfig-paths: ^3.3.14
-      vitest: ^0.26.3
+      vitest: ^0.28.5
     dependencies:
       '@shopify/polaris-icons': 4.23.0
       '@shopify/react-i18n': 6.4.0_sfoxds7t5ydpegc3knd667wn6m
@@ -601,7 +601,7 @@ importers:
       typescript: 4.9.4
       vite: 2.9.12_sass@1.56.1
       vite-tsconfig-paths: 3.6.0_vite@2.9.12
-      vitest: 0.26.3_sass@1.56.1
+      vitest: 0.28.5_sass@1.56.1
 
   packages/ui-extensions-server-kit:
     specifiers:
@@ -621,7 +621,7 @@ importers:
       vi-fetch: ^0.8.0
       vite: 2.9.12
       vite-tsconfig-paths: ^3.3.14
-      vitest: ^0.26.3
+      vitest: ^0.28.5
     devDependencies:
       '@shopify/react-testing': 3.3.10_sfoxds7t5ydpegc3knd667wn6m
       '@shopify/ui-extensions-test-utils': link:../ui-extensions-test-utils
@@ -639,7 +639,7 @@ importers:
       vi-fetch: 0.8.0
       vite: 2.9.12
       vite-tsconfig-paths: 3.6.0_vite@2.9.12
-      vitest: 0.26.3_jsdom@20.0.3
+      vitest: 0.28.5_jsdom@20.0.3
 
   packages/ui-extensions-test-utils:
     specifiers:
@@ -2569,16 +2569,6 @@ packages:
   /@kwsites/promise-deferred/1.1.1:
     resolution: {integrity: sha512-GaHYm+c0O9MjZRu0ongGBRbinu8gVAMd2UZjji6jVmqKtZluZnptXGWhz1E8j8D2HJ3f/yMxKAUC0b+57wncIw==}
 
-  /@luckycatfactory/esbuild-graphql-loader/3.7.0_kch4gnksbukf3l4unj7iuquebq:
-    resolution: {integrity: sha512-5IMQvIa2bCMASsdAsY+5xeLWCWULE6HBw5TeA7lsdfBUTs1qFuXbdvxnZhxLxiF8x7biokjCWKzb2WWNa1wthQ==}
-    peerDependencies:
-      esbuild: '>=0.8.26'
-      graphql-tag: ^2.11.0
-    dependencies:
-      esbuild: 0.12.29
-      graphql-tag: 2.12.6_graphql@16.6.0
-    dev: false
-
   /@luckycatfactory/esbuild-graphql-loader/3.7.0_zocmegas3pxcp3oct7zmymwekm:
     resolution: {integrity: sha512-5IMQvIa2bCMASsdAsY+5xeLWCWULE6HBw5TeA7lsdfBUTs1qFuXbdvxnZhxLxiF8x7biokjCWKzb2WWNa1wthQ==}
     peerDependencies:
@@ -3414,26 +3404,19 @@ packages:
       estree-walker: 2.0.2
       picomatch: 2.3.1
 
-  /@shopify/admin-ui-extensions-react/1.0.1_react@17.0.2:
-    resolution: {integrity: sha512-UiwGs9QNzoA2bgxNoC0M3U1NkcLzPp77MP7No0GxdHU4DklrYeiOJNFSNG/BbQNUeh9ou1l/xZ+LINN3gpqTtg==}
+  /@shopify/admin-ui-extensions-react/1.1.0_react@17.0.2:
+    resolution: {integrity: sha512-dg1GgLzWevKhVrp8hrB/SxikvzFnetOKddAOyHHSNq7g4A6YNqBfHYRFC2wIAXjAmAN6tl11tkjkuUfEgRI5Dw==}
     peerDependencies:
       react: '>=17.0.0 <18.0.0'
     dependencies:
       '@remote-ui/react': 4.5.13_react@17.0.2
-      '@shopify/admin-ui-extensions': 1.0.4
+      '@shopify/admin-ui-extensions': 1.1.0
       '@types/react': 16.14.0
       react: 17.0.2
     dev: false
 
-  /@shopify/admin-ui-extensions/1.0.1:
-    resolution: {integrity: sha512-L7hZdshRUb7/CvCCP8oRqzc1jeuNz6Q2ZJXEBJ46UR2fBc2o9I1ouUkFtviyZgfOLZkcbbfvedPm4EofckrFGg==}
-    dependencies:
-      '@remote-ui/core': 2.1.16
-      '@shopify/ui-extensions': 1.0.2
-    dev: false
-
-  /@shopify/admin-ui-extensions/1.0.4:
-    resolution: {integrity: sha512-SnF9eoF+jd0YOT5NvyPZRbDoh3TOrCfumQjjxvijBjNUnem6ASzVYGTTHj5XEm324G7zH08+6ndPTFlSolTWlw==}
+  /@shopify/admin-ui-extensions/1.1.0:
+    resolution: {integrity: sha512-fBTo7HZPCqWSJ25ttiz+BpCcBHCBy8p/oT7No/OSY4j73yA1yyxifud92dlMcoL7gLR0nRDpgvBLHYhEEGPiHg==}
     dependencies:
       '@remote-ui/core': 2.1.16
     dev: false
@@ -3460,18 +3443,6 @@ packages:
       web-vitals: 3.1.0
     dev: false
 
-  /@shopify/checkout-ui-extensions-react/0.17.1_react@17.0.2:
-    resolution: {integrity: sha512-TiGSVLwJ4Azod2MAzon7+bLKdh88AWkcPUxNK34U0tm01zXEaRFZOhagY+nkmWEAw1rCa9PsHVruxLU9qiOMpQ==}
-    peerDependencies:
-      react: '>=17.0.0 <18.0.0'
-    dependencies:
-      '@remote-ui/async-subscription': 2.1.13
-      '@remote-ui/react': 4.5.13_react@17.0.2
-      '@shopify/checkout-ui-extensions': 0.17.1
-      '@types/react': 16.14.0
-      react: 17.0.2
-    dev: false
-
   /@shopify/checkout-ui-extensions-react/0.24.0_react@17.0.2:
     resolution: {integrity: sha512-Bf0+or6kRrRKlnECugIYYVGiGwUsWVmQmjjEXhqanU/XmhaVXvW0SXjGJTkUcBu1gu4CxJL1L5BuxZhZhDK5OQ==}
     peerDependencies:
@@ -3484,13 +3455,6 @@ packages:
       react: 17.0.2
     dev: false
 
-  /@shopify/checkout-ui-extensions/0.17.1:
-    resolution: {integrity: sha512-45Zx2AQpq+rMRkhR8NtH5tyTif/KgjF9m+pTtME2tfoJyTXJUtQU5A1woDFpTLvenwf3e7r4ARauQGRqZS1PAA==}
-    dependencies:
-      '@remote-ui/async-subscription': 2.1.13
-      '@remote-ui/core': 2.1.16
-    dev: false
-
   /@shopify/checkout-ui-extensions/0.24.0:
     resolution: {integrity: sha512-WsnKS+n6ycrZpjkuRf4WZYeoxWHsyIih2I9RSKWC64eOvZ+mv3Qjzms8JQLOSrvAiw54ECNUnKuwaQCqjFYNzg==}
     dependencies:
@@ -3498,22 +3462,24 @@ packages:
       '@remote-ui/core': 2.1.16
     dev: false
 
-  /@shopify/customer-account-ui-extensions-react/0.0.8_react@17.0.2:
-    resolution: {integrity: sha512-JvEfPEwgAY5bk7g2LoY98GPjw5o6f8OvoYubxYsohU7ed6rcVsF08e8RJNqmWRMhSH9WE9BNIktS6zuuKWRWfA==}
+  /@shopify/customer-account-ui-extensions-react/0.0.34_react@17.0.2:
+    resolution: {integrity: sha512-d8PkepHD8ZCdnstLBqP7OgxUTV9h9ZC+TwEy42MBisqp4QebgI23ocfjJYiNVXx1YTCH0iD6hxUKnOAZ5lQWkw==}
     peerDependencies:
       react: '>=17.0.0 <18.0.0'
     dependencies:
+      '@remote-ui/async-subscription': 2.1.13
       '@remote-ui/react': 4.5.13_react@17.0.2
-      '@shopify/checkout-ui-extensions-react': 0.17.1_react@17.0.2
-      '@shopify/customer-account-ui-extensions': 0.0.8
+      '@shopify/checkout-ui-extensions-react': 0.24.0_react@17.0.2
+      '@shopify/customer-account-ui-extensions': 0.0.33
       react: 17.0.2
     dev: false
 
-  /@shopify/customer-account-ui-extensions/0.0.8:
-    resolution: {integrity: sha512-cAwyPY9Hrz3Il/h4kMZWX264dZnu+cKtq0Opygsv+aIx9wBs0+kmcdcCHw41NfFDgAz9F46nzuhRrvhQweGWkw==}
+  /@shopify/customer-account-ui-extensions/0.0.33:
+    resolution: {integrity: sha512-t8MtJLYN8V0mzM8/cWYRvcixkdkIC6LBR13mKyWSff+pR9syOX3E+w7Lc9fZ9c01Xz2lyeSRKiN00mibknNryg==}
     dependencies:
+      '@remote-ui/async-subscription': 2.1.13
       '@remote-ui/core': 2.1.16
-      '@shopify/checkout-ui-extensions': 0.17.1
+      '@shopify/checkout-ui-extensions': 0.24.0
     dev: false
 
   /@shopify/dates/1.1.5:
@@ -3637,19 +3603,19 @@ packages:
       react-transition-group: 4.4.5_sfoxds7t5ydpegc3knd667wn6m
     dev: false
 
-  /@shopify/post-purchase-ui-extensions-react/0.13.3_react@17.0.2:
-    resolution: {integrity: sha512-TJfFADnBmQ48gKIiirj+Eq670HoCdBaEIKeiSyBd9SXYOxMOZ0K/wdPBpaqAhaRb8r/GYSkXxwtQg/KAeDWWFA==}
+  /@shopify/post-purchase-ui-extensions-react/0.13.4_react@17.0.2:
+    resolution: {integrity: sha512-39SbHNaMFzeI2OzVqYSPogin6berSDseWI3DcJSGi/0GXD5xj1h3BSCwiYeNQUonFPzny49YDxTSEt9OE7pLqQ==}
     peerDependencies:
       react: '>=17.0.0 <18.0.0'
     dependencies:
       '@remote-ui/react': 4.5.13_react@17.0.2
-      '@shopify/post-purchase-ui-extensions': 0.13.3
+      '@shopify/post-purchase-ui-extensions': 0.13.4
       '@types/react': 16.14.0
       react: 17.0.2
     dev: false
 
-  /@shopify/post-purchase-ui-extensions/0.13.3:
-    resolution: {integrity: sha512-Vun08ZdDF+59B4aM3PNk0Zg0kaycjZQtJyV9PwiF04lw+AAPdTGAbHgGiZDsBUoEQXayJP6aJsDJELt36ff6OQ==}
+  /@shopify/post-purchase-ui-extensions/0.13.4:
+    resolution: {integrity: sha512-0fqnK7U9sNQe1brcR7gjydBd+UOTIuID6FiGGJzxqFPcK+poqjCxFOm3VaFJsYxcPsdJz8H0jiecnV09YXdQBg==}
     dependencies:
       '@remote-ui/core': 2.1.16
     dev: false
@@ -3719,9 +3685,21 @@ packages:
       react-reconciler: 0.26.2_react@17.0.2
     dev: true
 
-  /@shopify/retail-ui-extensions/0.19.0:
-    resolution: {integrity: sha512-gYGzrGzWVZ4Ns3B9UkM6Xi+JkJ7e6OttfRitjbxuDVj7bnBuBm28bQn0qaFqPVh1V4CM8rQ7MwxutEitA8Pr0g==}
+  /@shopify/retail-ui-extensions-react/0.43.0_react@17.0.2:
+    resolution: {integrity: sha512-o7DwVOcLtaTAmp1Vr84dOPYQ9cj4fBuChXwmDbsMb7cpflSmuZYtjLCEK8BkO9xtJHxI8sLIo4mkgaU97gWGnQ==}
+    peerDependencies:
+      react: '>=17.0.0 <18.0.0'
     dependencies:
+      '@remote-ui/react': 4.5.13_react@17.0.2
+      '@shopify/retail-ui-extensions': 0.43.0
+      '@types/react': 16.14.0
+      react: 17.0.2
+    dev: false
+
+  /@shopify/retail-ui-extensions/0.43.0:
+    resolution: {integrity: sha512-uA1KQKMRy59zcTwzFDwDOFlW+gQ3KZcTeZVfCyZtqGFyZz3bUvokjrucov5ccJ7VANlWJrNtsy5SJjqbwwutJA==}
+    dependencies:
+      '@remote-ui/async-subscription': 2.1.13
       '@remote-ui/core': 2.1.16
     dev: false
 
@@ -3750,24 +3728,9 @@ packages:
       - supports-color
     dev: false
 
-  /@shopify/shopify-cli-extensions/3.21.0_graphql-tag@2.12.6:
-    resolution: {integrity: sha512-jCWASUgPoA7RgI/7TvR4fN4wvc9QcPRNkaYDlkdQuuHj+YO35RuR3c/P+Rdbcxo4sNTPVbeXCzQWxkI27wG0TQ==}
-    hasBin: true
-    dependencies:
-      '@luckycatfactory/esbuild-graphql-loader': 3.7.0_kch4gnksbukf3l4unj7iuquebq
-      esbuild: 0.12.29
-      js-yaml: 4.1.0
-    transitivePeerDependencies:
-      - graphql-tag
-    dev: false
-
   /@shopify/typescript-configs/5.1.0:
     resolution: {integrity: sha512-RywGBTR+nQyJLxcrUcihPkHPIG3pIQI6i0YwMrM5rs9nWJ0+9A5HKEcboyGPLH+8V08EXGfFQ6H820O9ajyk4A==}
     dev: true
-
-  /@shopify/ui-extensions/1.0.2:
-    resolution: {integrity: sha512-vH6wGbVqfTbatyJmL6N33aHzK/hYry4gWNzZcvh/xdPmeciEyORh+CcZRrtf2yNz2p3hRpDPqbEJgB7BGHEQfA==}
-    dev: false
 
   /@shopify/useful-types/4.0.3:
     resolution: {integrity: sha512-vT48uKFSTfI3HPqtNI3lahWRDncFuuzBVfj2eUxEpQO//3Sn+IIo4zRPT9W4EHBiVWJyBeW5CTzVtvGhQma4EA==}
@@ -3777,8 +3740,8 @@ packages:
     resolution: {integrity: sha512-r1RKI4BsyYKuNtNoAlBZoQaMgOAra5WpzkQ1EQnuUKV9df9LFBQu30oZumt9iAUzMYeX8v80uvUoYvZYH2DcDg==}
     dev: true
 
-  /@shopify/web-pixels-extension/0.1.6:
-    resolution: {integrity: sha512-ejc/cnn+g1xYBCI3kAPkDIahvbm5EjDIedpZSiSHfPcvYMVTkj0bRHstQnPYkhItWpme5LRM/CN9iYrZwe4DtQ==}
+  /@shopify/web-pixels-extension/0.3.0:
+    resolution: {integrity: sha512-CtNOPH9SvTDA/MCVAr5YNww542cNwwvV5A53fTplmZ956ImW0T7gxY7I8x4GITpBCtFaBsbkn/SEgh74YLcSxA==}
     dev: false
 
   /@sinclair/typebox/0.24.51:
@@ -4357,8 +4320,8 @@ packages:
       - supports-color
     dev: false
 
-  /@vitest/coverage-istanbul/0.26.3:
-    resolution: {integrity: sha512-pJRxb+mGy11WdYiam6iW6N4CyhaBbpne+CGPqYGid74SplcR8N07JT3ETDoHKqh5vJCX5UnEIYIreanvFjgLHg==}
+  /@vitest/coverage-istanbul/0.28.5:
+    resolution: {integrity: sha512-na1pkr3AVrdFflzuBXsBh1MvBfhSMrv4nfd4N8rm0HEJlvlbQc+GiqNwtwzfO8TPsXxcjNphSIMp5wvCy+0xrQ==}
     dependencies:
       istanbul-lib-coverage: 3.2.0
       istanbul-lib-instrument: 5.2.1
@@ -4366,7 +4329,7 @@ packages:
       istanbul-lib-source-maps: 4.0.1
       istanbul-reports: 3.1.5
       test-exclude: 6.0.0
-      vitest: 0.26.3
+      vitest: 0.28.5
     transitivePeerDependencies:
       - '@edge-runtime/vm'
       - '@vitest/browser'
@@ -4377,6 +4340,38 @@ packages:
       - sass
       - stylus
       - supports-color
+    dev: true
+
+  /@vitest/expect/0.28.5:
+    resolution: {integrity: sha512-gqTZwoUTwepwGIatnw4UKpQfnoyV0Z9Czn9+Lo2/jLIt4/AXLTn+oVZxlQ7Ng8bzcNkR+3DqLJ08kNr8jRmdNQ==}
+    dependencies:
+      '@vitest/spy': 0.28.5
+      '@vitest/utils': 0.28.5
+      chai: 4.3.7
+    dev: true
+
+  /@vitest/runner/0.28.5:
+    resolution: {integrity: sha512-NKkHtLB+FGjpp5KmneQjTcPLWPTDfB7ie+MmF1PnUBf/tGe2OjGxWyB62ySYZ25EYp9krR5Bw0YPLS/VWh1QiA==}
+    dependencies:
+      '@vitest/utils': 0.28.5
+      p-limit: 4.0.0
+      pathe: 1.1.0
+    dev: true
+
+  /@vitest/spy/0.28.5:
+    resolution: {integrity: sha512-7if6rsHQr9zbmvxN7h+gGh2L9eIIErgf8nSKYDlg07HHimCxp4H6I/X/DPXktVPPLQfiZ1Cw2cbDIx9fSqDjGw==}
+    dependencies:
+      tinyspy: 1.0.2
+    dev: true
+
+  /@vitest/utils/0.28.5:
+    resolution: {integrity: sha512-UyZdYwdULlOa4LTUSwZ+Paz7nBHGTT72jKwdFSV4IjHF1xsokp+CabMdhjvVhYwkLfO88ylJT46YMilnkSARZA==}
+    dependencies:
+      cli-truncate: 3.1.0
+      diff: 5.1.0
+      loupe: 2.3.6
+      picocolors: 1.0.0
+      pretty-format: 27.5.1
     dev: true
 
   /@wry/context/0.7.0:
@@ -4462,6 +4457,12 @@ packages:
 
   /acorn/8.8.1:
     resolution: {integrity: sha512-7zFpHzhnqYKrkYdUjF1HI1bzd0VygEGX8lFk4k5zVMqHEoES+P+7TKI+EvLO9WVMJ8eekdO0aDEK044xTXwPPA==}
+    engines: {node: '>=0.4.0'}
+    hasBin: true
+    dev: true
+
+  /acorn/8.8.2:
+    resolution: {integrity: sha512-xjIYgE8HBrkpd/sJqOGNspf8uHG+NOHGOw6a/Urj8taM2EXfdNAH2oFcPeIFfsv3+kz/mJrS5VuMqbNLjCa2vw==}
     engines: {node: '>=0.4.0'}
     hasBin: true
     dev: true
@@ -4569,7 +4570,6 @@ packages:
   /ansi-regex/6.0.1:
     resolution: {integrity: sha512-n5M855fKb2SsfMIiFFoVrABHJC8QtHwVx+mHWP3QcEqBHYienj5dHSgjbxtC0WEZXYt4wcD6zrQElDPhFuZgfA==}
     engines: {node: '>=12'}
-    dev: false
 
   /ansi-sequence-parser/1.1.0:
     resolution: {integrity: sha512-lEm8mt52to2fT8GhciPCGeCXACSz2UwIN4X2e2LJSnZ5uAbn2/dsYdOmUXq0AtWS5cpAupysIneExOgH0Vd2TQ==}
@@ -4595,6 +4595,11 @@ packages:
   /ansi-styles/5.2.0:
     resolution: {integrity: sha512-Cxwpt2SfTzTtXcfOlzGEee8O+c+MmUgGrNiBcXnuWxuFJHe6a5Hz7qwhwe5OgaSYI0IJvkLqWX1ASG+cJOkEiA==}
     engines: {node: '>=10'}
+    dev: true
+
+  /ansi-styles/6.2.1:
+    resolution: {integrity: sha512-bN798gFfQX+viw3R7yrGWRqnrN2oRkEkUjjl4JNn4E8GxxbjtG3FbrEIIY3l8/hrwUwIeCZvi4QuOTP4MErVug==}
+    engines: {node: '>=12'}
     dev: true
 
   /ansicolors/0.3.2:
@@ -5053,6 +5058,11 @@ packages:
     engines: {node: '>= 0.8'}
     dev: false
 
+  /cac/6.7.14:
+    resolution: {integrity: sha512-b6Ilus+c3RrdDk+JhLKUAQfzzgLEPy6wcXqS7f/xe1EETvsDP6GORG7SFuOs6cID5YkqchW/LXZbX5bc8j7ZcQ==}
+    engines: {node: '>=8'}
+    dev: true
+
   /cacache/15.3.0:
     resolution: {integrity: sha512-VVdYzXEn+cnbXpFgWs5hTT7OScegHVmLhJIR8Ufqk3iFD6A6j5iSX1KuBTfNEv4tdJWE2PzA6IVFtcLC7fN9wQ==}
     engines: {node: '>= 10'}
@@ -5377,6 +5387,14 @@ packages:
       slice-ansi: 3.0.0
       string-width: 4.2.3
     dev: false
+
+  /cli-truncate/3.1.0:
+    resolution: {integrity: sha512-wfOBkjXteqSnI59oPcJkcPl/ZmwvMMOj340qUIY1SKZCv0B9Cf4D4fAucRkIKQmsIuYK3x1rrgU7MeGRruiuiA==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    dependencies:
+      slice-ansi: 5.0.0
+      string-width: 5.1.2
+    dev: true
 
   /cli-width/3.0.0:
     resolution: {integrity: sha512-FxqpkPPwu1HjuN93Omfm4h8uIanXofW0RxVEW3k5RKx+mJJYSthzNhp32Kzxxy3YAEZ/Dc/EWN1vZRY0+kOhbw==}
@@ -6255,6 +6273,10 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
+  /eastasianwidth/0.2.0:
+    resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
+    dev: true
+
   /ecdsa-sig-formatter/1.0.11:
     resolution: {integrity: sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==}
     dependencies:
@@ -6752,12 +6774,6 @@ packages:
     requiresBuild: true
     dev: false
     optional: true
-
-  /esbuild/0.12.29:
-    resolution: {integrity: sha512-w/XuoBCSwepyiZtIRsKsetiLDUVGPVw1E/R3VTFSecIy8UR7Cq3SOtwKHJMFoVqqVG36aGkzh4e8BvpO1Fdc7g==}
-    hasBin: true
-    requiresBuild: true
-    dev: false
 
   /esbuild/0.14.54:
     resolution: {integrity: sha512-Cy9llcy8DvET5uznocPyqL3BFRrFXSVqbgpMJ9Wz8oVjZlh/zUSNbPRbov0VX7VxN2JH1Oa0uNxZ7eLRb62pJA==}
@@ -8876,6 +8892,11 @@ packages:
     resolution: {integrity: sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg==}
     engines: {node: '>=8'}
 
+  /is-fullwidth-code-point/4.0.0:
+    resolution: {integrity: sha512-O4L094N2/dZ7xqVdrXhh9r1KODPJpFms8B5sGdJLPy664AgvXsreZUyCQQNItZRDlYug4xStLjNp/sz3HvBowQ==}
+    engines: {node: '>=12'}
+    dev: true
+
   /is-generator-function/1.0.10:
     resolution: {integrity: sha512-jsEjy9l3yiXEQ+PsXdmBwEPcOxaXWLspKdplFUVI9vq1iZgIekeC0L167qeu86czQaxed3q/Uzuw0swL0irL8A==}
     engines: {node: '>= 0.4'}
@@ -10040,13 +10061,13 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
-  /mlly/1.0.0:
-    resolution: {integrity: sha512-QL108Hwt+u9bXdWgOI0dhzZfACovn5Aen4Xvc8Jasd9ouRH4NjnrXEiyP3nVvJo91zPlYjVRckta0Nt2zfoR6g==}
+  /mlly/1.1.1:
+    resolution: {integrity: sha512-Jnlh4W/aI4GySPo6+DyTN17Q75KKbLTyFK8BrGhjNP4rxuUjbRWhE6gHg3bs33URWAF44FRm7gdQA348i3XxRw==}
     dependencies:
-      acorn: 8.8.1
-      pathe: 1.0.0
+      acorn: 8.8.2
+      pathe: 1.1.0
       pkg-types: 1.0.1
-      ufo: 1.0.1
+      ufo: 1.1.0
     dev: true
 
   /mock-socket/9.1.5:
@@ -10962,12 +10983,12 @@ packages:
     resolution: {integrity: sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==}
     engines: {node: '>=8'}
 
-  /pathe/0.2.0:
-    resolution: {integrity: sha512-sTitTPYnn23esFR3RlqYBWn4c45WGeLcsKzQiUpXJAyfcWkolvlYpV8FLo7JishK946oQwMFUCHXQ9AjGPKExw==}
-    dev: true
-
   /pathe/1.0.0:
     resolution: {integrity: sha512-nPdMG0Pd09HuSsr7QOKUXO2Jr9eqaDiZvDwdyIhNG5SHYujkQHYKDfGQkulBxvbDHz8oHLsTgKN86LSwYzSHAg==}
+
+  /pathe/1.1.0:
+    resolution: {integrity: sha512-ODbEPR0KKHqECXW1GoxdDb+AZvULmXjVPy4rt+pGo2+TnjJTIPJQSVS6N63n8T2Ip+syHhbn52OewKicV0373w==}
+    dev: true
 
   /pathval/1.1.1:
     resolution: {integrity: sha512-Dp6zGqpTdETdR63lehJYPeIOqpiNBNtc7BpWSLrOje7UaIsE5aY92r/AunQA7rsXvet3lrJ3JnZX29UPTKXyKQ==}
@@ -11111,8 +11132,8 @@ packages:
     resolution: {integrity: sha512-jHv9HB+Ho7dj6ItwppRDDl0iZRYBD0jsakHXtFgoLr+cHSF6xC+QL54sJmWxyGxOLYSHm0afhXhXcQDQqH9z8g==}
     dependencies:
       jsonc-parser: 3.2.0
-      mlly: 1.0.0
-      pathe: 1.0.0
+      mlly: 1.1.1
+      pathe: 1.1.0
     dev: true
 
   /pluralize/8.0.0:
@@ -11200,6 +11221,15 @@ packages:
       '@jest/types': 26.6.2
       ansi-regex: 5.0.1
       ansi-styles: 4.3.0
+      react-is: 17.0.2
+    dev: true
+
+  /pretty-format/27.5.1:
+    resolution: {integrity: sha512-Qb1gy5OrP5+zDf2Bvnzdl3jsTf1qXVMazbvCoKhtKqVs4/YK4ozX4gKQJJVyNe+cajNPn0KoC0MC3FUmaHWEmQ==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    dependencies:
+      ansi-regex: 5.0.1
+      ansi-styles: 5.2.0
       react-is: 17.0.2
     dev: true
 
@@ -12088,6 +12118,10 @@ packages:
       get-intrinsic: 1.1.3
       object-inspect: 1.12.2
 
+  /siginfo/2.0.0:
+    resolution: {integrity: sha512-ybx0WO1/8bSBLEWXZvEd7gMW3Sn3JFlW3TvX1nREbDLRNQNaeNN8WK0meBwPdAaOI7TtRRRJn/Es1zhrrCHu7g==}
+    dev: true
+
   /signal-exit/3.0.7:
     resolution: {integrity: sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==}
 
@@ -12130,6 +12164,14 @@ packages:
       astral-regex: 2.0.0
       is-fullwidth-code-point: 3.0.0
     dev: false
+
+  /slice-ansi/5.0.0:
+    resolution: {integrity: sha512-FC+lgizVPfie0kkhqUScwRu1O/lF6NOgJmlCgK+/LYxDCTk8sGelYaHDhFcDN+Sn3Cv+3VSa4Byeo+IMCzpMgQ==}
+    engines: {node: '>=12'}
+    dependencies:
+      ansi-styles: 6.2.1
+      is-fullwidth-code-point: 4.0.0
+    dev: true
 
   /smart-buffer/4.2.0:
     resolution: {integrity: sha512-94hK0Hh8rPqQl2xXc3HsaBoOXKV20MToPkcXvwbISWLEs+64sBq5kFgn2kJDHb1Pry9yrP0dxrCI9RRci7RXKg==}
@@ -12318,6 +12360,10 @@ packages:
       escape-string-regexp: 2.0.0
     dev: false
 
+  /stackback/0.0.2:
+    resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
+    dev: true
+
   /stackframe/1.3.4:
     resolution: {integrity: sha512-oeVtt7eWQS+Na6F//S4kJ2K2VbRlS9D43mAlMyVpVWovy9o+jfgH8O9agzANzaiLjclA0oYzUXEM4PurhSUChw==}
 
@@ -12332,6 +12378,10 @@ packages:
     resolution: {integrity: sha512-RwNA9Z/7PrK06rYLIzFMlaF+l73iwpzsqRIFgbMLbTcLD6cOao82TaWefPXQvB2fOC4AjuYSEndS7N/mTCbkdQ==}
     engines: {node: '>= 0.8'}
     dev: false
+
+  /std-env/3.3.2:
+    resolution: {integrity: sha512-uUZI65yrV2Qva5gqE0+A7uVAvO40iPo6jGhs7s8keRfHCmtg+uB2X6EiLGCI9IgL1J17xGhvoOqSz79lzICPTA==}
+    dev: true
 
   /stream-transform/2.1.3:
     resolution: {integrity: sha512-9GHUiM5hMiCi6Y03jD2ARC1ettBXkQBoQAe7nJsPknnI0ow10aXjTnew8QtYQmLjzn974BnmWEAJgCY6ZP1DeQ==}
@@ -12381,6 +12431,15 @@ packages:
       emoji-regex: 8.0.0
       is-fullwidth-code-point: 3.0.0
       strip-ansi: 6.0.1
+
+  /string-width/5.1.2:
+    resolution: {integrity: sha512-HnLOCR3vjcY8beoNLtcjZ5/nxn2afmME6lhrDrebokqMap+XbeW8n9TXpPDOqdGK5qcI3oT0GKTW6wC7EMiVqA==}
+    engines: {node: '>=12'}
+    dependencies:
+      eastasianwidth: 0.2.0
+      emoji-regex: 9.2.2
+      strip-ansi: 7.0.1
+    dev: true
 
   /string.prototype.matchall/4.0.8:
     resolution: {integrity: sha512-6zOCOcJ+RJAQshcTvXPHoxoQGONa3e/Lqx90wUA+wEzX78sg5Bo+1tQo4N0pohS0erG9qtCqJDjNCQBjeWVxyg==}
@@ -12446,7 +12505,6 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       ansi-regex: 6.0.1
-    dev: false
 
   /strip-bom-buf/1.0.0:
     resolution: {integrity: sha512-1sUIL1jck0T1mhOLP2c696BIznzT525Lkub+n4jjMHjhjhoAQA6Ye659DxdlZBr0aLDMQoTxKIpnlqxgtwjsuQ==}
@@ -12782,8 +12840,8 @@ packages:
       tinycolor2: 1.4.2
     dev: false
 
-  /tinypool/0.3.0:
-    resolution: {integrity: sha512-NX5KeqHOBZU6Bc0xj9Vr5Szbb1j8tUHIeD18s41aDJaPeC5QTdEhK0SpdpUrZlj2nv5cctNcSjaKNanXlfcVEQ==}
+  /tinypool/0.3.1:
+    resolution: {integrity: sha512-zLA1ZXlstbU2rlpA4CIeVaqvWq41MTWqLY3FfsAXgC8+f7Pk7zroaJQxDgxn1xNudKW6Kmj4808rPFShUlIRmQ==}
     engines: {node: '>=14.0.0'}
     dev: true
 
@@ -13138,8 +13196,8 @@ packages:
     resolution: {integrity: sha512-fk6CmUgwKCfX79EzcDQQpSCMxrHstvbLswFChHS0Vump+kFkw7nJBfTZoC1j0bOGoY9I7R3n2DGek5ajbcYnOw==}
     dev: false
 
-  /ufo/1.0.1:
-    resolution: {integrity: sha512-boAm74ubXHY7KJQZLlXrtMz52qFvpsbOxDcZOnw/Wf+LS4Mmyu7JxmzD4tDLtUQtmZECypJ0FrCz4QIe6dvKRA==}
+  /ufo/1.1.0:
+    resolution: {integrity: sha512-LQc2s/ZDMaCN3QLpa+uzHUOQ7SdV0qgv3VBXOolQGXTaaZpIur6PwUclF5nN2hNkiTRcUugXd1zFOW3FLJ135Q==}
     dev: true
 
   /unbox-primitive/1.0.2:
@@ -13383,14 +13441,16 @@ packages:
       replace-ext: 1.0.1
     dev: true
 
-  /vite-node/0.26.3:
-    resolution: {integrity: sha512-Te2bq0Bfvq6XiO718I+1EinMjpNYKws6SNHKOmVbILAQimKoZKDd+IZLlkaYcBXPpK3HFe2U80k8Zw+m3w/a2w==}
+  /vite-node/0.28.5:
+    resolution: {integrity: sha512-LmXb9saMGlrMZbXTvOveJKwMTBTNUH66c8rJnQ0ZPNX+myPEol64+szRzXtV5ORb0Hb/91yq+/D3oERoyAt6LA==}
     engines: {node: '>=v14.16.0'}
     hasBin: true
     dependencies:
+      cac: 6.7.14
       debug: 4.3.4
-      mlly: 1.0.0
-      pathe: 0.2.0
+      mlly: 1.1.1
+      pathe: 1.1.0
+      picocolors: 1.0.0
       source-map: 0.6.1
       source-map-support: 0.5.21
       vite: 2.9.12
@@ -13401,14 +13461,16 @@ packages:
       - supports-color
     dev: true
 
-  /vite-node/0.26.3_sass@1.56.1:
-    resolution: {integrity: sha512-Te2bq0Bfvq6XiO718I+1EinMjpNYKws6SNHKOmVbILAQimKoZKDd+IZLlkaYcBXPpK3HFe2U80k8Zw+m3w/a2w==}
+  /vite-node/0.28.5_sass@1.56.1:
+    resolution: {integrity: sha512-LmXb9saMGlrMZbXTvOveJKwMTBTNUH66c8rJnQ0ZPNX+myPEol64+szRzXtV5ORb0Hb/91yq+/D3oERoyAt6LA==}
     engines: {node: '>=v14.16.0'}
     hasBin: true
     dependencies:
+      cac: 6.7.14
       debug: 4.3.4
-      mlly: 1.0.0
-      pathe: 0.2.0
+      mlly: 1.1.1
+      pathe: 1.1.0
+      picocolors: 1.0.0
       source-map: 0.6.1
       source-map-support: 0.5.21
       vite: 2.9.12_sass@1.56.1
@@ -13481,8 +13543,8 @@ packages:
       fsevents: 2.3.2
     dev: true
 
-  /vitest/0.26.3:
-    resolution: {integrity: sha512-FmHxU9aUCxTi23keF3vxb/Qp0lYXaaJ+jRLGOUmMS3qVTOJvgGE+f1VArupA6pEhaG2Ans4X+zV9dqM5WISMbg==}
+  /vitest/0.28.5:
+    resolution: {integrity: sha512-pyCQ+wcAOX7mKMcBNkzDwEHRGqQvHUl0XnoHR+3Pb1hytAHISgSxv9h0gUiSiYtISXUU3rMrKiKzFYDrI6ZIHA==}
     engines: {node: '>=v14.16.0'}
     hasBin: true
     peerDependencies:
@@ -13506,18 +13568,27 @@ packages:
       '@types/chai': 4.3.4
       '@types/chai-subset': 1.3.3
       '@types/node': 18.11.18
+      '@vitest/expect': 0.28.5
+      '@vitest/runner': 0.28.5
+      '@vitest/spy': 0.28.5
+      '@vitest/utils': 0.28.5
       acorn: 8.8.1
       acorn-walk: 8.2.0
+      cac: 6.7.14
       chai: 4.3.7
       debug: 4.3.4
       local-pkg: 0.4.2
+      pathe: 1.1.0
+      picocolors: 1.0.0
       source-map: 0.6.1
+      std-env: 3.3.2
       strip-literal: 1.0.0
       tinybench: 2.3.1
-      tinypool: 0.3.0
+      tinypool: 0.3.1
       tinyspy: 1.0.2
       vite: 2.9.12
-      vite-node: 0.26.3
+      vite-node: 0.28.5
+      why-is-node-running: 2.2.2
     transitivePeerDependencies:
       - less
       - sass
@@ -13525,8 +13596,8 @@ packages:
       - supports-color
     dev: true
 
-  /vitest/0.26.3_jsdom@20.0.3:
-    resolution: {integrity: sha512-FmHxU9aUCxTi23keF3vxb/Qp0lYXaaJ+jRLGOUmMS3qVTOJvgGE+f1VArupA6pEhaG2Ans4X+zV9dqM5WISMbg==}
+  /vitest/0.28.5_jsdom@20.0.3:
+    resolution: {integrity: sha512-pyCQ+wcAOX7mKMcBNkzDwEHRGqQvHUl0XnoHR+3Pb1hytAHISgSxv9h0gUiSiYtISXUU3rMrKiKzFYDrI6ZIHA==}
     engines: {node: '>=v14.16.0'}
     hasBin: true
     peerDependencies:
@@ -13550,19 +13621,28 @@ packages:
       '@types/chai': 4.3.4
       '@types/chai-subset': 1.3.3
       '@types/node': 18.11.18
+      '@vitest/expect': 0.28.5
+      '@vitest/runner': 0.28.5
+      '@vitest/spy': 0.28.5
+      '@vitest/utils': 0.28.5
       acorn: 8.8.1
       acorn-walk: 8.2.0
+      cac: 6.7.14
       chai: 4.3.7
       debug: 4.3.4
       jsdom: 20.0.3
       local-pkg: 0.4.2
+      pathe: 1.1.0
+      picocolors: 1.0.0
       source-map: 0.6.1
+      std-env: 3.3.2
       strip-literal: 1.0.0
       tinybench: 2.3.1
-      tinypool: 0.3.0
+      tinypool: 0.3.1
       tinyspy: 1.0.2
       vite: 2.9.12
-      vite-node: 0.26.3
+      vite-node: 0.28.5
+      why-is-node-running: 2.2.2
     transitivePeerDependencies:
       - less
       - sass
@@ -13570,8 +13650,8 @@ packages:
       - supports-color
     dev: true
 
-  /vitest/0.26.3_sass@1.56.1:
-    resolution: {integrity: sha512-FmHxU9aUCxTi23keF3vxb/Qp0lYXaaJ+jRLGOUmMS3qVTOJvgGE+f1VArupA6pEhaG2Ans4X+zV9dqM5WISMbg==}
+  /vitest/0.28.5_sass@1.56.1:
+    resolution: {integrity: sha512-pyCQ+wcAOX7mKMcBNkzDwEHRGqQvHUl0XnoHR+3Pb1hytAHISgSxv9h0gUiSiYtISXUU3rMrKiKzFYDrI6ZIHA==}
     engines: {node: '>=v14.16.0'}
     hasBin: true
     peerDependencies:
@@ -13595,18 +13675,27 @@ packages:
       '@types/chai': 4.3.4
       '@types/chai-subset': 1.3.3
       '@types/node': 18.11.18
+      '@vitest/expect': 0.28.5
+      '@vitest/runner': 0.28.5
+      '@vitest/spy': 0.28.5
+      '@vitest/utils': 0.28.5
       acorn: 8.8.1
       acorn-walk: 8.2.0
+      cac: 6.7.14
       chai: 4.3.7
       debug: 4.3.4
       local-pkg: 0.4.2
+      pathe: 1.1.0
+      picocolors: 1.0.0
       source-map: 0.6.1
+      std-env: 3.3.2
       strip-literal: 1.0.0
       tinybench: 2.3.1
-      tinypool: 0.3.0
+      tinypool: 0.3.1
       tinyspy: 1.0.2
       vite: 2.9.12_sass@1.56.1
-      vite-node: 0.26.3_sass@1.56.1
+      vite-node: 0.28.5_sass@1.56.1
+      why-is-node-running: 2.2.2
     transitivePeerDependencies:
       - less
       - sass
@@ -13729,6 +13818,15 @@ packages:
     hasBin: true
     dependencies:
       isexe: 2.0.0
+
+  /why-is-node-running/2.2.2:
+    resolution: {integrity: sha512-6tSwToZxTOcotxHeA+qGCq1mVzKR3CwcJGmVcY+QE8SHy6TnpFnh8PAvPNHYr7EcuVeG0QSMxtYCuO1ta/G/oA==}
+    engines: {node: '>=8'}
+    hasBin: true
+    dependencies:
+      siginfo: 2.0.0
+      stackback: 0.0.2
+    dev: true
 
   /wide-align/1.1.5:
     resolution: {integrity: sha512-eDMORYaPNZ4sQIuuYPDHdQvf4gyCF9rEEV/yPxGfwPkRodwEgiMUUXTx/dex+Me0wxx53S+NgUHaP7y3MGlDmg==}

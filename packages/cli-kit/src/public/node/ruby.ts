@@ -5,6 +5,7 @@ import * as file from './fs.js'
 import {joinPath, dirname, cwd} from './path.js'
 import {AbortError, AbortSilentError} from './error.js'
 import {getEnvironmentVariables} from './environment.js'
+import {isSpinEnvironment, spinFqdn} from './context/spin.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
 import {outputContent, outputToken} from '../../public/node/output.js'
@@ -57,14 +58,12 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
     // environment. We use this to specify our own Gemfile for CLI2, which exists
     // outside the user's project directory.
     BUNDLE_GEMFILE: joinPath(await shopifyCLIDirectory(embedded), 'Gemfile'),
+    ...(await getSpinEnvironmentVariables()),
   }
 
   try {
-    const executable = bundleExecutable()
-    const shopifyExecutable = embedded ? await embeddedCLIExecutable() : 'shopify'
-    const finalArgs = ['exec', shopifyExecutable, ...args]
-
-    await exec(executable, finalArgs, {
+    const shopifyExecutable = embedded ? [rubyExecutable(), await embeddedCLIExecutable()] : ['shopify']
+    await exec(bundleExecutable(), ['exec', ...shopifyExecutable, ...args], {
       stdio: 'inherit',
       cwd: options.directory ?? cwd(),
       env,
@@ -276,7 +275,7 @@ async function createThemeCheckGemfile(): Promise<void> {
  */
 async function bundleInstallLocalShopifyCLI(directory: string): Promise<void> {
   await addContentToGemfile(directory, getWindowsDependencies())
-  await exec(bundleExecutable(), ['install'], {cwd: directory})
+  await localBundleInstall(directory)
 }
 
 /**
@@ -297,7 +296,7 @@ function getWindowsDependencies() {
   if (platformAndArch().platform === 'windows') {
     // 'wdm' is required by 'listen', see https://github.com/Shopify/cli/issues/780
     // Because it's a Windows-only dependency, it's not included in the `.gemspec` or `Gemfile`.
-    // Otherwise it'd install it in non-Windows environments, which is not needed.
+    // Otherwise it would be installed in non-Windows environments too, where it is not needed.
     return [`gem 'wdm', '>= ${MinWdmWindowsVersion}'`]
   }
   return []
@@ -321,21 +320,14 @@ async function addContentToGemfile(gemfileDirectory: string, content: string[]) 
  * It runs bundle install for the CLI-managed copy of the Ruby CLI.
  */
 async function bundleInstallShopifyCLI() {
-  const cliDirectory = await shopifyCLIDirectory()
-  await exec(bundleExecutable(), ['config', 'set', '--local', 'path', cliDirectory], {
-    cwd: cliDirectory,
-  })
-  await exec(bundleExecutable(), ['install'], {cwd: cliDirectory})
+  await localBundleInstall(await shopifyCLIDirectory())
 }
 
 /**
  * It runs bundle install for the CLI-managed copy of theme-check.
  */
 async function bundleInstallThemeCheck() {
-  await exec(bundleExecutable(), ['config', 'set', '--local', 'path', themeCheckDirectory()], {
-    cwd: themeCheckDirectory(),
-  })
-  await exec(bundleExecutable(), ['install'], {cwd: themeCheckDirectory()})
+  await localBundleInstall(themeCheckDirectory())
 }
 
 /**
@@ -422,4 +414,32 @@ function gemExecutable(): string {
 async function embeddedCLIExecutable(): Promise<string> {
   const cliDirectory = await shopifyCLIDirectory(true)
   return joinPath(cliDirectory, 'bin', 'shopify')
+}
+
+/**
+ * Get environment variables required by the CLI2 in case the CLI3 is running in a Spin environment.
+ *
+ * @returns The environment variables to set.
+ */
+async function getSpinEnvironmentVariables() {
+  if (!isSpinEnvironment()) return {}
+
+  return {
+    SPIN_FQDN: await spinFqdn(),
+    SPIN: '1',
+  }
+}
+
+/**
+ * It sets bundler's path to the given directory and runs bundle install.
+ * This is desirable because the gems will be isolated from the system gems.
+ *
+ * @param directory - Directory where the Gemfile is located.
+ */
+async function localBundleInstall(directory: string): Promise<void> {
+  const bundle = bundleExecutable()
+  await exec(bundle, ['config', 'set', '--local', 'path', directory], {
+    cwd: directory,
+  })
+  await exec(bundle, ['install', '--without', 'development', 'test'], {cwd: directory})
 }

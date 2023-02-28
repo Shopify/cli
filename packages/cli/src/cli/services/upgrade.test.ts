@@ -87,6 +87,9 @@ describe('upgrade global CLI', () => {
         await upgrade(tmpDir, oldCliVersion)
 
         // Then
+        expect(vi.mocked(exec)).toHaveBeenCalledWith('brew', ['update'], {
+          stdio: 'inherit',
+        })
         expect(vi.mocked(exec)).toHaveBeenCalledWith('brew', ['upgrade', homebrewPackageName], {
           stdio: 'inherit',
         })

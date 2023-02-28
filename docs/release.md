@@ -50,7 +50,7 @@ Next, cut the release:
 
 Now return to prerelease mode:
 
-1. Pull the latest `main`, check out a branch, and run `pnpm changeset pre enter`. Commit.
+1. Pull the latest `main`, check out a branch, and run `pnpm changeset pre enter pre`. Commit.
 2. Move the contents from `release_notes_draft.md` to a new file, `RELEASE_NOTES/3.x.md`, replacing `3.x` with the actual minor version number. Be sure to leave the comments where they are! Commit.
 3. Open a PR to `main`, get approval.
 4. Merge!

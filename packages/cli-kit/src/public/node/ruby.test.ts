@@ -5,6 +5,7 @@ import {platformAndArch} from './os.js'
 import {joinPath} from './path.js'
 import {inTemporaryDirectory, mkdir, findPathUp, touchFile, appendFile, fileExists, readFile} from './fs.js'
 import {getEnvironmentVariables} from './environment.js'
+import {isSpinEnvironment, spinFqdn} from './context/spin.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {beforeEach, describe, expect, it, SpyInstance, vi} from 'vitest'
 
@@ -13,6 +14,7 @@ vi.mock('./environment')
 vi.mock('./fs')
 vi.mock('./os')
 vi.mock('../../private/node/constants.js')
+vi.mock('./context/spin.js')
 
 beforeEach(() => {
   vi.mocked(getEnvironmentVariables).mockReturnValue({})
@@ -83,7 +85,7 @@ describe('execCLI', () => {
       })
 
       // Then
-      validateBudleExec(execSpy, gemfilePath)
+      validateBundleExec(execSpy, gemfilePath)
       await validateGemFileContent(gemfilePath, {bundled: true, windows: false})
     })
   })
@@ -101,7 +103,7 @@ describe('execCLI', () => {
       })
 
       // Then
-      validateBudleExec(execSpy, gemfilePath)
+      validateBundleExec(execSpy, gemfilePath)
       await validateGemFileContent(gemfilePath, {bundled: true, windows: true})
     })
   })
@@ -119,7 +121,7 @@ describe('execCLI', () => {
       })
 
       // Then
-      validateBudleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'))
+      validateBundleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'))
       await validateGemFileContent(gemfilePath, {bundled: false, windows: false})
     })
   })
@@ -137,7 +139,7 @@ describe('execCLI', () => {
       })
 
       // Then
-      validateBudleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'))
+      validateBundleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'))
       await validateGemFileContent(gemfilePath, {bundled: false, windows: true})
     })
   })
@@ -145,7 +147,6 @@ describe('execCLI', () => {
   it('when run embedded CLI2 in windows with existing dependency then gemfile content should be correct and bundle runs with correct params', async () => {
     await inTemporaryDirectory(async (cli2Directory) => {
       // Given
-      const existingWindowsDependency = true
       const execSpy = await mockEmbeddedCLI2(cli2Directory, {windows: true, existingWindowsDependency: true})
       const gemfilePath = joinPath(cli2Directory, 'Gemfile')
 
@@ -156,7 +157,28 @@ describe('execCLI', () => {
       })
 
       // Then
-      validateBudleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'))
+      validateBundleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'))
+      await validateGemFileContent(gemfilePath, {bundled: false, windows: true})
+    })
+  })
+
+  it('when run CLI2 in spin then bundle runs with correct params', async () => {
+    await inTemporaryDirectory(async (cli2Directory) => {
+      // Given
+      const fqdn = 'workspace.namespace.eu.spin.dev'
+      const execSpy = await mockEmbeddedCLI2(cli2Directory, {windows: true, existingWindowsDependency: true})
+      const gemfilePath = joinPath(cli2Directory, 'Gemfile')
+      vi.mocked(isSpinEnvironment).mockReturnValue(true)
+      vi.mocked(spinFqdn).mockResolvedValue(fqdn)
+
+      // When
+      await execCLI2(['args'], {
+        token: 'token_0000_1111_2222_3333',
+        directory: './directory',
+      })
+
+      // Then
+      validateBundleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'), fqdn)
       await validateGemFileContent(gemfilePath, {bundled: false, windows: true})
     })
   })
@@ -202,7 +224,7 @@ async function createGemFile(cli2Directory: string, existingWindowsDependency: b
   await appendFile(gemfilePath, content.concat('\n'))
 }
 
-function validateBudleExec(execSpy: SpyInstance, gemFilePath: string, execPath = 'shopify') {
+function validateBundleExec(execSpy: SpyInstance, gemFilePath: string, execPath = 'shopify', spinFqdn?: string) {
   expect(execSpy).toHaveBeenLastCalledWith('bundle', ['exec', execPath, 'args'], {
     stdio: 'inherit',
     cwd: './directory',
@@ -214,6 +236,7 @@ function validateBudleExec(execSpy: SpyInstance, gemFilePath: string, execPath =
       SHOPIFY_CLI_AUTH_TOKEN: 'token_0000_1111_2222_3333',
       SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
       BUNDLE_GEMFILE: gemFilePath,
+      ...(spinFqdn && {SPIN_FQDN: spinFqdn, SPIN: 1}),
     },
   })
 }

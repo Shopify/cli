@@ -10,7 +10,6 @@
       {"path": "./packages/ui-extensions-server-kit"},
       {"path": "./packages/ui-extensions-test-utils"},
       {"path": "./packages/plugin-ngrok"},
-      {"path": "./packages/plugin-did-you-mean"},
-      {"path": "./workspace"}
+      {"path": "./packages/plugin-did-you-mean"}
     ]
 }

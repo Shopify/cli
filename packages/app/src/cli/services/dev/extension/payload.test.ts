@@ -153,6 +153,10 @@ describe('getUIExtensionPayload', () => {
               module: './src/AdminCheckoutEditorSettings.js',
             },
             {
+              target: 'admin.checkout.editor.settings',
+              module: './src/AdminCheckoutEditorSettings.js',
+            },
+            {
               target: 'Checkout::ShippingMethods::RenderAfter',
               module: './src/CheckoutShippingMethodsRenderAfter.js',
             },
@@ -178,6 +182,17 @@ describe('getUIExtensionPayload', () => {
           surface: 'admin',
           root: {
             url: 'http://tunnel-url.com/extensions/devUUID/Admin::Checkout::Editor::Settings',
+          },
+          resource: {
+            url: '',
+          },
+        },
+        {
+          target: 'admin.checkout.editor.settings',
+          module: './src/AdminCheckoutEditorSettings.js',
+          surface: 'admin',
+          root: {
+            url: 'http://tunnel-url.com/extensions/devUUID/admin.checkout.editor.settings',
           },
           resource: {
             url: '',
