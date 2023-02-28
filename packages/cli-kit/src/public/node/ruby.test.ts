@@ -85,7 +85,7 @@ describe('execCLI', () => {
       })
 
       // Then
-      validateBudleExec(execSpy, gemfilePath)
+      validateBundleExec(execSpy, gemfilePath)
       await validateGemFileContent(gemfilePath, {bundled: true, windows: false})
     })
   })
@@ -103,7 +103,7 @@ describe('execCLI', () => {
       })
 
       // Then
-      validateBudleExec(execSpy, gemfilePath)
+      validateBundleExec(execSpy, gemfilePath)
       await validateGemFileContent(gemfilePath, {bundled: true, windows: true})
     })
   })
@@ -121,7 +121,7 @@ describe('execCLI', () => {
       })
 
       // Then
-      validateBudleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'))
+      validateBundleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'))
       await validateGemFileContent(gemfilePath, {bundled: false, windows: false})
     })
   })
@@ -139,7 +139,7 @@ describe('execCLI', () => {
       })
 
       // Then
-      validateBudleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'))
+      validateBundleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'))
       await validateGemFileContent(gemfilePath, {bundled: false, windows: true})
     })
   })
@@ -157,7 +157,7 @@ describe('execCLI', () => {
       })
 
       // Then
-      validateBudleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'))
+      validateBundleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'))
       await validateGemFileContent(gemfilePath, {bundled: false, windows: true})
     })
   })
@@ -178,7 +178,7 @@ describe('execCLI', () => {
       })
 
       // Then
-      validateBudleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'), fqdn)
+      validateBundleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'), fqdn)
       await validateGemFileContent(gemfilePath, {bundled: false, windows: true})
     })
   })
@@ -224,7 +224,7 @@ async function createGemFile(cli2Directory: string, existingWindowsDependency: b
   await appendFile(gemfilePath, content.concat('\n'))
 }
 
-function validateBudleExec(execSpy: SpyInstance, gemFilePath: string, execPath = 'shopify', spinFqdn?: string) {
+function validateBundleExec(execSpy: SpyInstance, gemFilePath: string, execPath = 'shopify', spinFqdn?: string) {
   expect(execSpy).toHaveBeenLastCalledWith('bundle', ['exec', execPath, 'args'], {
     stdio: 'inherit',
     cwd: './directory',

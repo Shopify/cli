@@ -191,13 +191,29 @@ export function validatePartnersURLs(urls: PartnersURLs): void {
 }
 
 function mapRunTunnelPluginError(tunnelPluginError: TunnelPluginError) {
+  const alternative = tunnelPluginError.provider === 'cloudflare' ? 'ngrok' : 'cloudflare'
   switch (tunnelPluginError.type) {
     case 'no-provider':
       return new BugError(`We couldn't find the ${tunnelPluginError.provider} tunnel plugin`)
     case 'multiple-urls':
-      return new BugError('Multiple tunnel plugins for ngrok found')
+      return new BugError(`Multiple tunnel plugins for ${tunnelPluginError.provider} found`)
     case 'unknown':
-      return new BugError(`${tunnelPluginError.provider} failed to start the tunnel.\n${tunnelPluginError.message}`)
+      return new AbortError(`${tunnelPluginError.provider} failed to start the tunnel.\n${tunnelPluginError.message}`, [
+        'What to try:',
+        {
+          list: {
+            items: [
+              ['Try to run the command again'],
+              [
+                'Add the flag',
+                {command: `--tunnel ${alternative}`},
+                `to use ${alternative} as the tunnel provider instead of ${tunnelPluginError.provider}`,
+              ],
+              ['Add the flag', {command: '--tunnel-url {URL}'}, 'to use a custom tunnel URL'],
+            ],
+          },
+        },
+      ])
     default:
       return new AbortSilentError()
   }

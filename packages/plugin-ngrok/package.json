@@ -1,6 +1,6 @@
 {
   "name": "@shopify/plugin-ngrok",
-  "version": "3.44.0",
+  "version": "3.44.1-pre.0",
   "description": "Enables the creation of ngrok tunnels from `shopify app dev`, allowing previews from any device",
   "keywords": [
     "shopify",
@@ -36,13 +36,13 @@
   },
   "dependencies": {
     "@oclif/core": "2.1.4",
-    "@shopify/cli-kit": "3.44.0",
+    "@shopify/cli-kit": "3.44.1-pre.0",
     "@shopify/ngrok": "4.3.2"
   },
   "devDependencies": {
     "@types/node": "14.18.36",
     "vite": "^2.9.13",
-    "vitest": "^0.26.3"
+    "vitest": "^0.28.5"
   },
   "engines": {
     "node": ">=14.17.0"

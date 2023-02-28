@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PNPM_VERSION: "7.18.1"
+  PNPM_VERSION: '7.18.1'
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
@@ -20,15 +20,15 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
         # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
         with:
           fetch-depth: 0
-      - uses: pnpm/action-setup@646cdf48217256a3d0b80361c5a50727664284f2 # pin@v2.0.1
+      - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # pin@v2.2.4
         with:
           version: ${{ env.PNPM_VERSION }}
       - name: Set Node.js
-        uses: actions/setup-node@master
+        uses: actions/setup-node@v3
         with:
           node-version: '16'
           cache: 'pnpm'
