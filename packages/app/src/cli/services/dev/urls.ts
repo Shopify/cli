@@ -101,7 +101,7 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
 export async function generateURL(config: Config, frontendPort: number): Promise<string> {
   // For the moment we assume to always have ngrok, this will change in a future PR
   // and will need to use "getListOfTunnelPlugins" to find the available tunnel plugins
-  const provider = 'ngrok'
+  const provider = 'cloudflare'
   return (await runTunnelPlugin(config, frontendPort, provider)).mapError(mapRunTunnelPluginError).valueOrAbort()
 }
 
@@ -194,13 +194,29 @@ export function validatePartnersURLs(urls: PartnersURLs): void {
 }
 
 function mapRunTunnelPluginError(tunnelPluginError: TunnelPluginError) {
+  const alternative = tunnelPluginError.provider === 'cloudflare' ? 'ngrok' : 'cloudflare'
   switch (tunnelPluginError.type) {
     case 'no-provider':
       return new BugError(`We couldn't find the ${tunnelPluginError.provider} tunnel plugin`)
     case 'multiple-urls':
       return new BugError('Multiple tunnel plugins for ngrok found')
     case 'unknown':
-      return new BugError(`${tunnelPluginError.provider} failed to start the tunnel.\n${tunnelPluginError.message}`)
+      return new AbortError(`${tunnelPluginError.provider} failed to start the tunnel.\n${tunnelPluginError.message}`, [
+        'What to try:',
+        {
+          list: {
+            items: [
+              ['Try to run the command again'],
+              [
+                'Use',
+                {command: `--tunnel ${alternative}`},
+                `to use ${alternative} instead of ${tunnelPluginError.provider} Tunnel`,
+              ],
+              ['Use', {command: '--tunnel-url {URL}'}, 'to use a custom tunnel URL'],
+            ],
+          },
+        },
+      ])
     default:
       return new AbortSilentError()
   }

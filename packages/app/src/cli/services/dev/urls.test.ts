@@ -87,8 +87,8 @@ describe('generateURL', () => {
     const got = generateURL(config, 3456)
 
     // Then
-    await expect(got).rejects.toThrow(BugError)
-    await expect(got).rejects.toThrow(/message/)
+    await expect(got).rejects.toThrow(AbortError)
+    await expect(got).rejects.toThrow(/ngrok failed to start the tunnel/)
   })
 
   it('throws error if there are no tunnel urls', async () => {
