@@ -160,12 +160,12 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         }}
       </Static>
       {footer ? (
-        <Box marginY={1} flexDirection="column">
+        <Box marginY={1} flexDirection="column" flexGrow={1}>
           <Box flexGrow={1}>
             <TextWithBackground text={footer.title} inverse paddingX={2} paddingY={1} />
           </Box>
           {footer.subTitle ? (
-            <Box marginTop={1} flexGrow={1}>
+            <Box flexGrow={1} marginTop={1}>
               <Text>{footer.subTitle}</Text>
             </Box>
           ) : null}

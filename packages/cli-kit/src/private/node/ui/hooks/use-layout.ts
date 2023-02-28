@@ -1,4 +1,5 @@
 import {useStdout} from 'ink'
+import {useEffect, useState} from 'react'
 
 const MIN_FULL_WIDTH = 20
 const MIN_FRACTION_WIDTH = 80
@@ -11,7 +12,28 @@ interface Layout {
 
 export default function useLayout(): Layout {
   const {stdout} = useStdout()
+  const [layout, setLayout] = useState(calculateLayout(stdout))
 
+  useEffect(() => {
+    if (!stdout) {
+      return
+    }
+
+    function onResize() {
+      setLayout(calculateLayout(stdout))
+    }
+
+    stdout.on('resize', onResize)
+
+    return () => {
+      stdout.off('resize', onResize)
+    }
+  }, [])
+
+  return layout
+}
+
+function calculateLayout(stdout: NodeJS.WriteStream | undefined) {
   let fullWidth = stdout?.columns ?? MIN_FRACTION_WIDTH
   let oneThird = fullWidth
   let twoThirds = fullWidth
@@ -26,9 +48,9 @@ export default function useLayout(): Layout {
   }
 
   return {
-    twoThirds,
-    oneThird,
     fullWidth,
+    oneThird,
+    twoThirds,
   }
 }
 
