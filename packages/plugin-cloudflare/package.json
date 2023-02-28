@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "vite": "^2.9.13",
-    "vitest": "^0.26.3"
+    "vitest": "^0.28.5"
   },
   "engines": {
     "node": ">=14.17.0"
