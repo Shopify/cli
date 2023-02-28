@@ -1,5 +1,14 @@
 # @shopify/plugin-ngrok
 
+## 3.44.1-pre.0
+
+### Patch Changes
+
+- Updated dependencies [25fc42ae2]
+- Updated dependencies [b2e066fc0]
+- Updated dependencies [657593b1a]
+  - @shopify/cli-kit@3.44.1-pre.0
+
 ## 3.44.0
 
 ### Patch Changes
