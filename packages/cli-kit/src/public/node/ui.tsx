@@ -377,7 +377,10 @@ interface RenderTasksOptions {
  */
 // eslint-disable-next-line max-params
 export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOptions}: RenderTasksOptions = {}) {
-  return render(<Tasks tasks={tasks} />, renderOptions)
+  return render(<Tasks tasks={tasks} />, {
+    ...renderOptions,
+    exitOnCtrlC: false,
+  })
 }
 
 export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit'> {

@@ -2,7 +2,8 @@ import {TextAnimation} from './TextAnimation.js'
 import useLayout from '../hooks/use-layout.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {isUnitTest} from '../../../../public/node/context/local.js'
-import {Box, Text} from 'ink'
+import {handleCtrlC} from '../../ui.js'
+import {Box, Text, useInput} from 'ink'
 import React, {useRef, useState} from 'react'
 
 const loadingBarChar = '▀'
@@ -80,6 +81,14 @@ function Tasks<TContext>({tasks, silent = isUnitTest()}: React.PropsWithChildren
   useAsyncAndUnmount(runTasks, {
     onFulfilled: () => setState(TasksState.Success),
     onRejected: () => setState(TasksState.Failure),
+  })
+
+  useInput((input, key) => {
+    handleCtrlC(input, key)
+
+    if (key.return) {
+      return null
+    }
   })
 
   if (silent) {
