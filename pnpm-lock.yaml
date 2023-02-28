@@ -357,7 +357,7 @@ importers:
       kill-port-process: 3.1.0
       latest-version: 7.0.0
       liquidjs: 10.5.0
-      lodash: 4.17.21
+      lodash-es: 4.17.21
       macaddress: 0.5.3
       node-abort-controller: 3.0.1
       node-fetch: 3.2.4
@@ -419,7 +419,7 @@ importers:
       kill-port-process: 3.1.0
       latest-version: 7.0.0
       liquidjs: 10.5.0
-      lodash: 4.17.21
+      lodash-es: 4.17.21
       macaddress: 0.5.3
       node-abort-controller: 3.0.1
       node-fetch: 3.2.4
@@ -9559,7 +9559,6 @@ packages:
 
   /lodash-es/4.17.21:
     resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
-    dev: true
 
   /lodash.camelcase/4.3.0:
     resolution: {integrity: sha512-TwuEnCnxbc3rAvhf/LbG7tJUDzhqXyFnv3dtzLOPgCG/hODL7WFnsbwktkD7yUV0RrreP/l1PALq/YSg6VvjlA==}
