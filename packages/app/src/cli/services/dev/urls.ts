@@ -101,7 +101,7 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
 export async function generateURL(config: Config, frontendPort: number): Promise<string> {
   // For the moment we assume to always have ngrok, this will change in a future PR
   // and will need to use "getListOfTunnelPlugins" to find the available tunnel plugins
-  const provider = 'cloudflare'
+  const provider = 'ngrok'
   return (await runTunnelPlugin(config, frontendPort, provider)).mapError(mapRunTunnelPluginError).valueOrAbort()
 }
 
