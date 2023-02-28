@@ -2,3 +2,5 @@ package.json
 !test/fixtures/**/*
 .byebug_history
 .tmp/**/*
+.bundle
+ruby/
