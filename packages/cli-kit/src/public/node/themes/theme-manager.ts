@@ -1,6 +1,6 @@
 import {fetchTheme, createTheme} from './themes-api.js'
 import {DEVELOPMENT_THEME_ROLE, Theme} from './models/theme.js'
-import {generateThemeName} from './generate-theme-name.js'
+import {generateThemeName} from '../../../private/node/themes/generate-theme-name.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {BugError} from '@shopify/cli-kit/node/error'
 

@@ -96,7 +96,7 @@ describe('fetchExtensionSpecifications', () => {
           identifier: 'order_discounts',
           externalIdentifier: 'order_discount',
           registrationLimit: 10,
-          helpURL: 'https://shopify.dev/apps/subscriptions/discounts',
+          helpURL: 'https://shopify.dev/docs/apps/discounts',
         }),
       ]),
     )

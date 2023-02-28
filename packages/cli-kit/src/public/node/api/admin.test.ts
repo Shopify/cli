@@ -63,7 +63,7 @@ describe('admin-rest-api', () => {
     // Given
     const json = () => Promise.resolve({result: true})
     const status = 200
-    const headers = {'x-request-id': 123}
+    const headers = {'some-header': 123}
 
     vi.spyOn(http, 'fetch').mockResolvedValue({
       json,
@@ -77,7 +77,7 @@ describe('admin-rest-api', () => {
     // Then
     expect(result.json).toEqual({result: true})
     expect(result.status).toEqual(200)
-    expect(result.headers).toEqual({'x-request-id': 123})
+    expect(result.headers).toEqual({'some-header': 123})
   })
 
   test('fetch is called with correct parameters', async () => {

@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli",
-  "version": "3.43.0",
+  "version": "3.44.1-pre.0",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
   "keywords": [
@@ -97,15 +97,16 @@
     "@oclif/plugin-commands": "2.2.9",
     "@oclif/plugin-help": "5.2.4",
     "@oclif/plugin-plugins": "2.3.2",
-    "@shopify/cli-kit": "3.43.0"
+    "@shopify/cli-kit": "3.44.1-pre.0",
+    "@shopify/plugin-did-you-mean": "3.44.1-pre.0"
   },
   "devDependencies": {
-    "@shopify/app": "3.43.0",
-    "@shopify/theme": "3.43.0",
+    "@shopify/app": "3.44.1-pre.0",
+    "@shopify/theme": "3.44.1-pre.0",
     "@types/node": "14.18.36",
-    "@vitest/coverage-istanbul": "^0.26.3",
+    "@vitest/coverage-istanbul": "^0.28.5",
     "vite": "^2.9.13",
-    "vitest": "^0.26.3"
+    "vitest": "^0.28.5"
   },
   "engines": {
     "node": ">=14.17.0"
@@ -126,6 +127,7 @@
     "plugins": [
       "@shopify/app",
       "@shopify/theme",
+      "@shopify/plugin-did-you-mean",
       "@shopify/cli-hydrogen",
       "@oclif/plugin-help",
       "@oclif/plugin-plugins",
@@ -134,9 +136,6 @@
     "scope": "shopify",
     "topicSeparator": " ",
     "topics": {
-      "hydrogen": {
-        "description": "Build Hydrogen storefronts."
-      },
       "theme": {
         "description": "Build Liquid themes."
       },

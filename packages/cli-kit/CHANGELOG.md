@@ -1,5 +1,28 @@
 # @shopify/cli-kit
 
+## 3.44.1-pre.0
+
+### Patch Changes
+
+- 25fc42ae2: Fix: Run ruby with shopify bin file as an argument
+- b2e066fc0: Fix error by installing gems in local folder instead of system folder
+- 657593b1a: Fix run dev with theme app extension and spin
+
+## 3.44.0
+
+### Patch Changes
+
+- 999a2fc79: For the embedded cli-ruby the dependencies were moved from the gemspec to the Gemfile
+- b61c5972c: Speed up app dev by running web requests in parallel
+- d44250676: Fixed problem with theme app extension server in spin
+- c8e75ac24: Added windows gem depencies to embedded cli-ruby
+- fb22cb013: Remove theme directory confirmation during tests and make confirmation dialogue respect `SHOPIFY_CLI_TTY`.
+- 159df5d07: Embedded cli-ruby opt-in by default. Use SHOPIFY_CLI_BUNDLED_THEME_CLI=1 in case of problems with the embedded version.
+- 2def6f113: Use app host for frontend url in spin when available
+- ef3846d91: Do not inject hot-reload code into web-pixels-manager sandbox
+- 3a75ed0a7: Remove `e` shortcut to environments flag to avoid conflicts
+- d2adeb5ec: Extract the ownership of host themes to the CLI3
+
 ## 3.43.0
 
 ### Minor Changes

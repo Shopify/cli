@@ -3,8 +3,9 @@ import en from './translations/en.json'
 
 import {NotApplicable, PreviewLink, QRCodeModal, Row} from '..'
 import {useApp} from '../../hooks/useApp'
-import React, {useState} from 'react'
+import {useExtensionServerOptions} from '../../hooks/useExtensionServerOptions.js'
 import {useI18n} from '@shopify/react-i18n'
+import React, {useState} from 'react'
 import {Button} from '@/components'
 
 export function AppHomeRow() {
@@ -14,11 +15,14 @@ export function AppHomeRow() {
     fallback: en,
   })
 
+  const {surface} = useExtensionServerOptions()
   const {app} = useApp()
 
   if (!app) {
     return null
   }
+
+  const resourceUrl = surface === 'admin' && app.handle ? `/admin/apps/${app.handle}` : undefined
 
   return (
     <Row>
@@ -26,7 +30,7 @@ export function AppHomeRow() {
         <span className={styles.Title}>{app.title}</span>
       </td>
       <td>
-        <PreviewLink rootUrl={app.url} title={'App home'} />
+        <PreviewLink resourceUrl={resourceUrl} rootUrl={app.url} title={'App home'} />
       </td>
       <td>
         <Button type="button" onClick={() => setShowModal(true)}>

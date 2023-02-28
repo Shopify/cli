@@ -1,0 +1,69 @@
+{
+  "name": "plugin-cloudflare",
+  "root": "packages/plugin-cloudflare",
+  "sourceRoot": "packages/plugin-cloudflare/src",
+  "projectType": "library",
+  "tags": ["scope:plugin"],
+  "targets": {
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm rimraf dist/",
+        "cwd": "packages/plugin-cloudflare"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["dist"],
+      "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json"],
+      "options": {
+        "command": "pnpm tsc -b ./tsconfig.build.json",
+        "cwd": "packages/plugin-cloudflare"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm eslint \"src/**/*.ts\"",
+        "cwd": "packages/plugin-cloudflare"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm eslint 'src/**/*.ts' --fix",
+        "cwd": "packages/plugin-cloudflare"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["^build"],
+      "options": {
+        "command": "pnpm vitest run",
+        "cwd": "packages/plugin-cloudflare"
+      }
+    },
+    "test:watch": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["^build"],
+      "options": {
+        "command": "pnpm vitest watch",
+        "cwd": "packages/plugin-cloudflare"
+      }
+    },
+    "type-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm tsc --noEmit",
+        "cwd": "packages/plugin-cloudflare"
+      }
+    },
+    "refresh-manifests": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm oclif manifest",
+        "cwd": "packages/plugin-cloudflare"
+      }
+    }
+  }
+}

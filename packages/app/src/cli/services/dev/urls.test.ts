@@ -19,7 +19,7 @@ import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/erro
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {isSpin, spinFqdn} from '@shopify/cli-kit/node/context/spin'
+import {isSpin, spinFqdn, appPort, appHost} from '@shopify/cli-kit/node/context/spin'
 import {codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {runTunnelPlugin} from '@shopify/cli-kit/node/plugins'
@@ -87,8 +87,8 @@ describe('generateURL', () => {
     const got = generateURL(config, 3456)
 
     // Then
-    await expect(got).rejects.toThrow(BugError)
-    await expect(got).rejects.toThrow(/message/)
+    await expect(got).rejects.toThrow(AbortError)
+    await expect(got).rejects.toThrow(/ngrok failed to start the tunnel/)
   })
 
   it('throws error if there are no tunnel urls', async () => {
@@ -476,10 +476,12 @@ describe('generateFrontendURL', () => {
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
-  it('Returns a spin url if we are in a spin environment', async () => {
+  it('Returns a cli spin url if we are in a spin environment running a non 1p app', async () => {
     // Given
     vi.mocked(isSpin).mockReturnValue(true)
     vi.mocked(spinFqdn).mockResolvedValue('spin.domain.dev')
+    vi.mocked(appPort).mockReturnValue(undefined)
+    vi.mocked(appHost).mockReturnValue(undefined)
     const options = {
       app: testApp({hasUIExtensions: () => false}),
       tunnel: false,
@@ -494,6 +496,31 @@ describe('generateFrontendURL', () => {
     expect(got).toEqual({
       frontendUrl: 'https://cli.spin.domain.dev',
       frontendPort: 4040,
+      usingLocalhost: false,
+    })
+    expect(setAppInfo).not.toBeCalled()
+    expect(renderSelectPrompt).not.toBeCalled()
+  })
+
+  it('Returns a 1p app spin url if we are in a spin environment running a 1p app', async () => {
+    // Given
+    vi.mocked(isSpin).mockReturnValue(true)
+    vi.mocked(appPort).mockReturnValue(1234)
+    vi.mocked(appHost).mockReturnValue('1p-app-host.spin.domain.dev')
+    const options = {
+      app: testApp({hasUIExtensions: () => false}),
+      tunnel: false,
+      noTunnel: false,
+      commandConfig: new Config({root: ''}),
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(got).toEqual({
+      frontendUrl: 'https://1p-app-host.spin.domain.dev',
+      frontendPort: 1234,
       usingLocalhost: false,
     })
     expect(setAppInfo).not.toBeCalled()

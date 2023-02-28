@@ -1,0 +1,38 @@
+{
+  "version": "3.44.1-pre.0",
+  "commands": {
+    "config:autocorrect:off": {
+      "id": "config:autocorrect:off",
+      "description": "Disable autocorrect.",
+      "strict": true,
+      "pluginName": "@shopify/plugin-did-you-mean",
+      "pluginAlias": "@shopify/plugin-did-you-mean",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    },
+    "config:autocorrect:on": {
+      "id": "config:autocorrect:on",
+      "description": "Enable autocorrect.",
+      "strict": true,
+      "pluginName": "@shopify/plugin-did-you-mean",
+      "pluginAlias": "@shopify/plugin-did-you-mean",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    },
+    "config:autocorrect:status": {
+      "id": "config:autocorrect:status",
+      "description": "Check autocorrect current status.",
+      "strict": true,
+      "pluginName": "@shopify/plugin-did-you-mean",
+      "pluginAlias": "@shopify/plugin-did-you-mean",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    }
+  }
+}

@@ -8,7 +8,7 @@ import {Config} from '@oclif/core'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isValidURL} from '@shopify/cli-kit/common/url'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {isSpin, spinFqdn} from '@shopify/cli-kit/node/context/spin'
+import {appHost, appPort, isSpin, spinFqdn} from '@shopify/cli-kit/node/context/spin'
 import {codespaceURL, gitpodURL} from '@shopify/cli-kit/node/context/local'
 import {runTunnelPlugin, TunnelPluginError} from '@shopify/cli-kit/node/plugins'
 
@@ -69,6 +69,10 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
 
   if (isSpin() && !options.tunnelUrl) {
     frontendUrl = `https://cli.${await spinFqdn()}`
+    if (appPort() !== undefined) {
+      frontendPort = appPort() ?? frontendPort
+      frontendUrl = `https://${appHost()}`
+    }
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 
@@ -190,13 +194,29 @@ export function validatePartnersURLs(urls: PartnersURLs): void {
 }
 
 function mapRunTunnelPluginError(tunnelPluginError: TunnelPluginError) {
+  const alternative = tunnelPluginError.provider === 'cloudflare' ? 'ngrok' : 'cloudflare'
   switch (tunnelPluginError.type) {
     case 'no-provider':
       return new BugError(`We couldn't find the ${tunnelPluginError.provider} tunnel plugin`)
     case 'multiple-urls':
-      return new BugError('Multiple tunnel plugins for ngrok found')
+      return new BugError(`Multiple tunnel plugins for ${tunnelPluginError.provider} found`)
     case 'unknown':
-      return new BugError(`${tunnelPluginError.provider} failed to start the tunnel.\n${tunnelPluginError.message}`)
+      return new AbortError(`${tunnelPluginError.provider} failed to start the tunnel.\n${tunnelPluginError.message}`, [
+        'What to try:',
+        {
+          list: {
+            items: [
+              ['Try to run the command again'],
+              [
+                'Add the flag',
+                {command: `--tunnel ${alternative}`},
+                `to use ${alternative} as the tunnel provider instead of ${tunnelPluginError.provider}`,
+              ],
+              ['Add the flag', {command: '--tunnel-url {URL}'}, 'to use a custom tunnel URL'],
+            ],
+          },
+        },
+      ])
     default:
       return new AbortSilentError()
   }

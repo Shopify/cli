@@ -1,8 +1,8 @@
 import {buildHeaders, httpsAgent, RequestClientError, sanitizedHeadersOutput} from './headers.js'
 import {stringifyMessage, outputContent, outputToken, outputDebug} from '../../../public/node/output.js'
 import {AbortError} from '../../../public/node/error.js'
+import {debugLogResponseInfo} from '../api.js'
 import {ClientError, GraphQLClient, RequestDocument, Variables} from 'graphql-request'
-import {performance} from 'perf_hooks'
 
 export interface GraphQLVariables {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -19,14 +19,11 @@ export function graphqlRequest<T>(
 ): Promise<T> {
   const action = async () => {
     const headers = buildHeaders(token)
-    debugLogRequest(api, query, variables, headers)
+    debugLogRequestInfo(api, query, variables, headers)
     const clientOptions = {agent: await httpsAgent(), headers}
     const client = new GraphQLClient(url, clientOptions)
-    const t0 = performance.now()
-    const response = await client.request<T>(query, variables)
-    const t1 = performance.now()
-    outputDebug(`Request to ${url.toString()} completed in ${Math.round(t1 - t0)} ms`)
-    return response
+    const response = await debugLogResponseInfo({request: client.rawRequest<T>(query as string, variables), url})
+    return response.data
   }
 
   if (handleErrors) {
@@ -36,20 +33,16 @@ export function graphqlRequest<T>(
   }
 }
 
-function debugLogRequest<T>(
+function debugLogRequestInfo<T>(
   api: string,
   query: RequestDocument,
   variables?: Variables,
   headers: {[key: string]: string} = {},
 ) {
-  outputDebug(outputContent`
-Sending ${outputToken.json(api)} GraphQL request:
-${outputToken.raw(query.toString())}
-
-With variables:
-${variables ? JSON.stringify(variables, null, 2) : ''}
-
-And headers:
+  outputDebug(outputContent`Sending ${outputToken.json(api)} GraphQL request:
+  ${outputToken.raw(query.toString().trim())}
+${variables ? `\nWith variables:\n${JSON.stringify(variables, null, 2)}\n` : ''}
+With request headers:
 ${sanitizedHeadersOutput(headers)}
 `)
 }

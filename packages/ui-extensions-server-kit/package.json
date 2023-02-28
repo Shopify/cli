@@ -63,7 +63,7 @@
     "vi-fetch": "^0.8.0",
     "vite": "^2.9.13",
     "vite-tsconfig-paths": "^3.3.14",
-    "vitest": "^0.26.3"
+    "vitest": "^0.28.5"
   },
   "peerDependencies": {
     "react": "^17.0.2"

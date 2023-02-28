@@ -6,13 +6,12 @@ on:
       - '**.md'
 
 env:
-  DEBUG: "1"
+  DEBUG: '1'
   SHOPIFY_CLI_ENV: development
   SHOPIFY_CONFIG: debug
-  YARN_VERSION: "1.22.19"
-  PNPM_VERSION: "7.18.1"
-  RUBY_VERSION: "3.1.2"
-  BUNDLER_VERSION: "2.3.18"
+  PNPM_VERSION: '7.18.1'
+  RUBY_VERSION: '3.1.2'
+  BUNDLER_VERSION: '2.3.18'
 
 jobs:
   benchmark:
@@ -22,10 +21,10 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: [ 'ubuntu-latest' ]
-        node: [ '18.7.0' ]
+        os: ['ubuntu-latest']
+        node: ['18.7.0']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         name: Checkout [main]
         with:
           fetch-depth: 0
@@ -40,6 +39,7 @@ jobs:
         id: benchmark
         run: pnpm nx run benchmark
       - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # pin@v2.3.1
+        if: steps.benchmark.outputs.report != ''
         with:
           header: Benchmark
           message: ${{ steps.benchmark.outputs.report }}
@@ -51,10 +51,10 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: [ 'ubuntu-latest' ]
-        node: [ '18.7.0' ]
+        os: ['ubuntu-latest']
+        node: ['18.7.0']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         name: Checkout [main]
         with:
           fetch-depth: 0

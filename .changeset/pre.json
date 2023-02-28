@@ -1,0 +1,28 @@
+{
+  "mode": "pre",
+  "tag": "pre",
+  "initialVersions": {
+    "@shopify/fixtures-app": "3.44.0",
+    "shopify-app-template-node": "0.1.0",
+    "starter-react-frontend-app": "0.1.0",
+    "@shopify/app": "3.44.0",
+    "@shopify/cli": "3.44.0",
+    "@shopify/cli-kit": "3.44.0",
+    "@shopify/create-app": "3.44.0",
+    "@shopify/features": "0.7.2",
+    "@shopify/plugin-did-you-mean": "3.44.0",
+    "@shopify/plugin-ngrok": "3.44.0",
+    "@shopify/theme": "3.44.0",
+    "@shopify/ui-extensions-dev-console-app": "3.44.0",
+    "@shopify/ui-extensions-server-kit": "4.1.0",
+    "@shopify/ui-extensions-test-utils": "3.25.0",
+    "@shopify/workspace": "0.1.0"
+  },
+  "changesets": [
+    "clean-guests-poke",
+    "large-geese-drum",
+    "neat-avocados-peel",
+    "ninety-chefs-teach",
+    "strong-ducks-share"
+  ]
+}

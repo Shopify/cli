@@ -81,13 +81,6 @@ async function dev(options: DevOptions) {
     localApp = await installAppDependencies(localApp)
   }
 
-  const {frontendUrl, frontendPort, usingLocalhost} = await generateFrontendURL({
-    ...options,
-    app: localApp,
-    cachedTunnelPlugin: tunnelPlugin,
-  })
-
-  const backendPort = await getAvailableTCPPort()
   const frontendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Frontend)
   const backendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Backend)
   const webhooksPath = backendConfig?.configuration?.webhooksPath || '/api/webhooks'
@@ -97,17 +90,28 @@ async function dev(options: DevOptions) {
     outputInfo('Using a different app than last time, sending uninstall webhook to app server')
   }
 
+  const initiateUpdateUrls = (frontendConfig || backendConfig) && options.update
+  let shouldUpdateURLs = false
+
+  const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, currentURLs] = await Promise.all([
+    generateFrontendURL({
+      ...options,
+      app: localApp,
+      cachedTunnelPlugin: tunnelPlugin,
+    }),
+    getAvailableTCPPort(),
+    getURLs(apiKey, token),
+  ])
+
   /** If the app doesn't have web/ the link message is not necessary */
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
-  let shouldUpdateURLs = false
   const proxyTargets: ReverseHTTPProxyTarget[] = []
   const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
 
   let previewUrl
 
-  if ((frontendConfig || backendConfig) && options.update) {
-    const currentURLs = await getURLs(apiKey, token)
+  if (initiateUpdateUrls) {
     const newURLs = generatePartnersURLs(exposedUrl, backendConfig?.configuration.authCallbackPath)
     shouldUpdateURLs = await shouldOrPromptUpdateURLs({
       currentURLs,
@@ -125,7 +129,7 @@ async function dev(options: DevOptions) {
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
-  const prodEnvIdentifiers = await getAppIdentifiers({app: localApp})
+  const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
   const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
   localApp.extensions.ui.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
@@ -160,18 +164,20 @@ async function dev(options: DevOptions) {
 
   if (localApp.extensions.theme.length > 0) {
     const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
-    const storefrontToken = await ensureAuthenticatedStorefront()
     const extension = localApp.extensions.theme[0]!
     let optionsToOverwrite = {}
     if (!options.theme) {
       const theme = await new HostThemeManager(adminSession).findOrCreate()
       optionsToOverwrite = {
         theme: theme.id.toString(),
-        generateTmpTheme: theme.createdAtRuntime,
+        generateTmpTheme: true,
       }
     }
-    const args = await themeExtensionArgs(extension, apiKey, token, {...options, ...optionsToOverwrite})
-    const devExt = await devThemeExtensionTarget(args, adminSession, storefrontToken, token)
+    const [storefrontToken, args] = await Promise.all([
+      ensureAuthenticatedStorefront(),
+      themeExtensionArgs(extension, apiKey, token, {...options, ...optionsToOverwrite}),
+    ])
+    const devExt = devThemeExtensionTarget(args, adminSession, storefrontToken, token)
     additionalProcesses.push(devExt)
   }
 
@@ -190,9 +196,9 @@ async function dev(options: DevOptions) {
     }
 
     if (usingLocalhost) {
-      additionalProcesses.push(await devFrontendNonProxyTarget(frontendOptions, frontendPort))
+      additionalProcesses.push(devFrontendNonProxyTarget(frontendOptions, frontendPort))
     } else {
-      proxyTargets.push(await devFrontendProxyTarget(frontendOptions))
+      proxyTargets.push(devFrontendProxyTarget(frontendOptions))
     }
   }
 
@@ -232,8 +238,8 @@ interface DevFrontendTargetOptions extends DevWebOptions {
   backendPort: number
 }
 
-async function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: number): Promise<OutputProcess> {
-  const devFrontend = await devFrontendProxyTarget(options)
+function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: number): OutputProcess {
+  const devFrontend = devFrontendProxyTarget(options)
   return {
     prefix: devFrontend.logPrefix,
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
@@ -256,7 +262,7 @@ function devThemeExtensionTarget(
   }
 }
 
-async function devFrontendProxyTarget(options: DevFrontendTargetOptions): Promise<ReverseHTTPProxyTarget> {
+function devFrontendProxyTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyTarget {
   const {commands} = options.web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
 

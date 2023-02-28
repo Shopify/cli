@@ -5,14 +5,14 @@
     "cli": "packages/cli",
     "cli-kit": "packages/cli-kit",
     "app": "packages/app",
-    "cli-hydrogen": "packages/cli-hydrogen",
     "theme": "packages/theme",
     "features": "packages/features",
     "create-app": "packages/create-app",
-    "create-hydrogen": "packages/create-hydrogen",
     "ui-extensions-dev-console": "packages/ui-extensions-dev-console",
     "ui-extensions-server-kit": "packages/ui-extensions-server-kit",
     "ui-extensions-test-utils": "packages/ui-extensions-test-utils",
-    "plugin-ngrok": "packages/plugin-ngrok"
+    "plugin-ngrok": "packages/plugin-ngrok",
+    "plugin-cloudflare": "packages/plugin-cloudflare",
+    "plugin-did-you-mean": "packages/plugin-did-you-mean"
   }
 }
