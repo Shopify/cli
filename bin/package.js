@@ -79,7 +79,7 @@ program
             },
           ],
         })
-      if (["pre", "nightly"].includes(version)) {
+      if (["pre", "nightly"].includes(templateVersion)) {
         // Merge the PR immediately if we're releasing a pre or nightly version
         octokit.request("PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge", {
           owner: "Shopify",
