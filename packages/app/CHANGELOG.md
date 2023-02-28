@@ -1,5 +1,17 @@
 # @shopify/app
 
+## 3.44.1-pre.0
+
+### Patch Changes
+
+- da6a3bdf8: Adding support for the new naming convention of extension points
+- b895bb5e9: Fix template for ui_extension to not contain unsupported extensions points
+- Updated dependencies [25fc42ae2]
+- Updated dependencies [b2e066fc0]
+- Updated dependencies [657593b1a]
+  - @shopify/cli-kit@3.44.1-pre.0
+  - @shopify/plugin-ngrok@3.44.1-pre.0
+
 ## 3.44.0
 
 ### Patch Changes

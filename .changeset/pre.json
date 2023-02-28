@@ -18,5 +18,11 @@
     "@shopify/ui-extensions-test-utils": "3.25.0",
     "@shopify/workspace": "0.1.0"
   },
-  "changesets": []
+  "changesets": [
+    "clean-guests-poke",
+    "large-geese-drum",
+    "neat-avocados-peel",
+    "ninety-chefs-teach",
+    "strong-ducks-share"
+  ]
 }
