@@ -16,7 +16,7 @@ export async function hookStart(port: number): ReturnType {
     return ok({url})
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    const tunnelError = new TunnelError('unknown', "Couldn't start tunnel")
+    const tunnelError = new TunnelError('unknown')
     return err(tunnelError)
   }
 }
