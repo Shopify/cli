@@ -38,6 +38,23 @@ describe('getRedirectURL()', () => {
 
     expect(result).toBe('https://example.myshopify.com/mock/cart/url?dev=https%3A%2F%2Flocalhost%3A8081%2Fextensions')
   })
+
+  it('returns a URL with a origin param if the surface is customer_accounts', async () => {
+    const extension = await testUIExtension({
+      configuration: {type: 'customer_accounts_ui_extension', name: 'test', metafields: []},
+    })
+
+    const options = {
+      storeFqdn: 'example.myshopify.com',
+      url: 'https://localhost:8081',
+    } as unknown as ExtensionDevOptions
+
+    const result = getRedirectUrl(extension, options)
+
+    expect(result).toBe(
+      'https://example.account.myshopify.com/extensions-development?origin=https%3A%2F%2Flocalhost%3A8081%2Fextensions&extensionId=test-ui-extension-uuid',
+    )
+  })
 })
 
 describe('getExtensionPointRedirectUrl()', () => {
