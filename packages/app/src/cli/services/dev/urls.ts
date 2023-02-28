@@ -208,11 +208,11 @@ function mapRunTunnelPluginError(tunnelPluginError: TunnelPluginError) {
             items: [
               ['Try to run the command again'],
               [
-                'Use',
+                'Add the flag',
                 {command: `--tunnel ${alternative}`},
-                `to use ${alternative} instead of ${tunnelPluginError.provider} Tunnel`,
+                `to use ${alternative} as the tunnel provider instead of ${tunnelPluginError.provider}`,
               ],
-              ['Use', {command: '--tunnel-url {URL}'}, 'to use a custom tunnel URL'],
+              ['Add the flag', {command: '--tunnel-url {URL}'}, 'to use a custom tunnel URL'],
             ],
           },
         },
