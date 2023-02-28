@@ -1,7 +1,5 @@
-import {createRequire} from 'module'
+import {memoize as lodashMemoize, debounce as lodashDebounce} from 'lodash'
 import type {DebouncedFunc, DebounceSettings} from 'lodash'
-
-const require = createRequire(import.meta.url)
 
 /**
  * Creates a function that memoizes the result of func. If resolver is provided it determines the cache key for
@@ -15,8 +13,7 @@ const require = createRequire(import.meta.url)
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function memoize<T extends (...args: any) => any>(func: T, resolver?: (...args: Parameters<T>) => unknown): T {
-  const memoize = require('lodash/memoize')
-  return memoize(func, resolver)
+  return lodashMemoize(func, resolver)
 }
 
 /**
@@ -42,6 +39,5 @@ export function debounce<T extends (...args: any) => any>(
   wait?: number,
   options?: DebounceSettings,
 ): DebouncedFunc<T> {
-  const lodashDebounce = require('lodash/debounce')
   return lodashDebounce(func, wait, options)
 }
