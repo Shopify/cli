@@ -42,7 +42,7 @@ program
       console.log(`Opening a PR in shopify/homebrew-shopify to update the formula ${version}`)
 
       const files = {}
-      switch (version) {
+      switch (templateVersion) {
         case "3":
           files["shopify-cli.rb"] = (await readFile(path.join(outputDirectory, "shopify-cli.rb"))).toString()
           files["shopify-cli@3.rb"] = (await readFile(path.join(outputDirectory, "shopify-cli@3.rb"))).toString()
@@ -53,6 +53,8 @@ program
         case "nightly":
           files["shopify-cli-nightly.rb"] = (await readFile(path.join(outputDirectory, "shopify-cli-nightly.rb"))).toString()
           break
+        default:
+          throw new Error(`Unrecognized template version string ${templateVersion}`)
       }
 
       const OctokitWithPlugin = Octokit.plugin(createPullRequest)
@@ -77,7 +79,7 @@ program
             },
           ],
         })
-      if (["pre", "nightly"].includes(version)) {
+      if (["pre", "nightly"].includes(templateVersion)) {
         // Merge the PR immediately if we're releasing a pre or nightly version
         octokit.request("PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge", {
           owner: "Shopify",
