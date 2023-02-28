@@ -199,7 +199,7 @@ function mapRunTunnelPluginError(tunnelPluginError: TunnelPluginError) {
     case 'no-provider':
       return new BugError(`We couldn't find the ${tunnelPluginError.provider} tunnel plugin`)
     case 'multiple-urls':
-      return new BugError('Multiple tunnel plugins for ngrok found')
+      return new BugError(`Multiple tunnel plugins for ${tunnelPluginError.provider} found`)
     case 'unknown':
       return new AbortError(`${tunnelPluginError.provider} failed to start the tunnel.\n${tunnelPluginError.message}`, [
         'What to try:',
