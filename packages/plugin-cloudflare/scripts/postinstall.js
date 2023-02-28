@@ -87,6 +87,10 @@ export default async function install() {
   }
 
   const binTarget = getBinPathTarget()
+  if (existsSync(binTarget)) {
+    console.log('cloudflared already installed, skipping')
+    return
+  }
 
   if (process.platform === 'linux') {
     await installLinux(fileUrlPath, binTarget)
