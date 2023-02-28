@@ -56,7 +56,7 @@ export async function cloudflareVersion(): Promise<string> {
 }
 
 function findUrl(data: Buffer): string | undefined {
-  const match = data.toString().match(/\|\s+(https?:\/\/[^\s]+)/) ?? undefined
+  const match = data.toString().match(/(https?:\/\/[^\s]+trycloudflare\.com)/) ?? undefined
   return match && match[1]
 }
 
