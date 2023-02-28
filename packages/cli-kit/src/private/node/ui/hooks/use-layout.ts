@@ -33,7 +33,7 @@ export default function useLayout(): Layout {
   return layout
 }
 
-function calculateLayout(stdout: NodeJS.WriteStream | undefined) {
+export function calculateLayout(stdout: NodeJS.WriteStream | undefined) {
   let fullWidth = stdout?.columns ?? MIN_FRACTION_WIDTH
   let oneThird = fullWidth
   let twoThirds = fullWidth
