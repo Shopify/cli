@@ -200,7 +200,7 @@ importers:
       cross-env: ^7.0.3
       express: ^4.17.3
       graphql: ^16.3.0
-      graphql-request: next
+      graphql-request: 5.2.0
       prettier: ^2.6.1
       react: ^17.0.2
       react-dom: ^17.0.2
@@ -216,7 +216,7 @@ importers:
       cross-env: 7.0.3
       express: 4.18.2
       graphql: 16.6.0
-      graphql-request: 5.2.0-next.4_graphql@16.6.0
+      graphql-request: 5.2.0_graphql@16.6.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       react-query: 3.39.2_sfoxds7t5ydpegc3knd667wn6m
@@ -243,7 +243,7 @@ importers:
       esbuild: 0.15.16
       function-runner: 4.0.2
       graphql: ^16.0.0
-      graphql-request: next
+      graphql-request: 5.2.0
       graphql-tag: ^2.11.0
       http-proxy: 1.18.1
       javy-cli: 0.1.2
@@ -261,7 +261,7 @@ importers:
       diff: 5.1.0
       esbuild: 0.15.16
       function-runner: 4.0.2
-      graphql-request: 5.2.0-next.4_graphql@16.6.0
+      graphql-request: 5.2.0_graphql@16.6.0
       http-proxy: 1.18.1
       javy-cli: 0.1.2
       serve-static: 1.15.0
@@ -348,7 +348,7 @@ importers:
       get-port-please: 3.0.1
       gradient-string: 2.0.2
       graphql: 16.4.0
-      graphql-request: next
+      graphql-request: 5.2.0
       h3: 0.7.21
       ink: 3.2.0
       ink-testing-library: ^2.1.0
@@ -411,7 +411,7 @@ importers:
       get-port-please: 3.0.1
       gradient-string: 2.0.2
       graphql: 16.4.0
-      graphql-request: 5.2.0-next.4_graphql@16.4.0
+      graphql-request: 5.2.0_graphql@16.4.0
       h3: 0.7.21
       ink: 3.2.0_hw3ykagcixqw57etxpo4kpffqq
       is-interactive: 2.0.0
@@ -8285,8 +8285,8 @@ packages:
       - utf-8-validate
     dev: true
 
-  /graphql-request/5.2.0-next.4_graphql@16.4.0:
-    resolution: {integrity: sha512-Nylg6X3QO6ecOkhXV6O9ZO8djOjvV0aNTmRm2dSDg83KeEX8/s3c9j+ojVdmIora81sNeL3KtXXHOPzXhOTRAQ==}
+  /graphql-request/5.2.0_graphql@16.4.0:
+    resolution: {integrity: sha512-pLhKIvnMyBERL0dtFI3medKqWOz/RhHdcgbZ+hMMIb32mEPa5MJSzS4AuXxfI4sRAu6JVVk5tvXuGfCWl9JYWQ==}
     peerDependencies:
       graphql: 14 - 16
     dependencies:
@@ -8299,8 +8299,8 @@ packages:
       - encoding
     dev: false
 
-  /graphql-request/5.2.0-next.4_graphql@16.6.0:
-    resolution: {integrity: sha512-Nylg6X3QO6ecOkhXV6O9ZO8djOjvV0aNTmRm2dSDg83KeEX8/s3c9j+ojVdmIora81sNeL3KtXXHOPzXhOTRAQ==}
+  /graphql-request/5.2.0_graphql@16.6.0:
+    resolution: {integrity: sha512-pLhKIvnMyBERL0dtFI3medKqWOz/RhHdcgbZ+hMMIb32mEPa5MJSzS4AuXxfI4sRAu6JVVk5tvXuGfCWl9JYWQ==}
     peerDependencies:
       graphql: 14 - 16
     dependencies:

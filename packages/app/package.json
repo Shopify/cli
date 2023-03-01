@@ -50,7 +50,7 @@
     "diff": "5.1.0",
     "esbuild": "0.15.16",
     "function-runner": "4.0.2",
-    "graphql-request": "next",
+    "graphql-request": "5.2.0",
     "http-proxy": "1.18.1",
     "javy-cli": "0.1.2",
     "serve-static": "1.15.0",
