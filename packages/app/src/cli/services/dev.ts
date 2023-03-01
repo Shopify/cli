@@ -37,8 +37,6 @@ import {
 import {OutputProcess, outputInfo} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
-export type TunnelProviders = 'ngrok' | 'cloudflare' | 'none'
-
 export interface DevOptions {
   directory: string
   id?: number

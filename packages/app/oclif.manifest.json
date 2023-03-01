@@ -207,14 +207,19 @@
         },
         "tunnel": {
           "name": "tunnel",
-          "type": "boolean",
-          "description": "Use ngrok to create a tunnel to your service entry point",
+          "type": "option",
+          "description": "Select the tunnel provider",
           "hidden": false,
-          "allowNo": false,
+          "multiple": false,
+          "options": [
+            "cloudflare",
+            "ngrok"
+          ],
           "exclusive": [
             "tunnel-url",
             "no-tunnel"
-          ]
+          ],
+          "default": "cloudflare"
         },
         "theme": {
           "name": "theme",
