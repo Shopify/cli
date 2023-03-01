@@ -22,7 +22,7 @@ export default class Dev extends Command {
       char: 's',
       description: 'Store URL. Must be an existing development or Shopify Plus sandbox store.',
       env: 'SHOPIFY_FLAG_STORE',
-      parse: (input, _) => Promise.resolve(normalizeStoreFqdn(input)),
+      parse: async (input) => normalizeStoreFqdn(input),
     }),
     reset: Flags.boolean({
       hidden: false,
