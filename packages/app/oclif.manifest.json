@@ -186,7 +186,7 @@
         "tunnel-url": {
           "name": "tunnel-url",
           "type": "option",
-          "description": "Override the ngrok tunnel URL. Format: \"https://my-tunnel-url:port\"",
+          "description": "Use a custom tunnel, it must be running before executing dev. Format: \"https://my-tunnel-url:port\".",
           "hidden": false,
           "multiple": false,
           "exclusive": [

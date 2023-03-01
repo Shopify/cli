@@ -55,7 +55,8 @@ export default class Dev extends Command {
     }),
     'tunnel-url': Flags.string({
       hidden: false,
-      description: 'Override the ngrok tunnel URL. Format: "https://my-tunnel-url:port"',
+      description:
+        'Use a custom tunnel, it must be running before executing dev. Format: "https://my-tunnel-url:port".',
       env: 'SHOPIFY_FLAG_TUNNEL_URL',
       exclusive: ['no-tunnel', 'tunnel'],
     }),
