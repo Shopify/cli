@@ -135,7 +135,7 @@
     "macaddress": "0.5.3",
     "node-abort-controller": "3.0.1",
     "node-fetch": "3.2.4",
-    "open": "8.4.0",
+    "open": "8.4.2",
     "pathe": "1.0.0",
     "react": "17.0.2",
     "semver": "7.3.6",
