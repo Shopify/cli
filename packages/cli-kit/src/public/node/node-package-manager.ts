@@ -539,7 +539,7 @@ export async function addResolutionOrOverride(directory: string, dependencies: {
  * @param name - The name of the NPM package.
  * @returns A promise to get the latest available version of a package.
  */
-async function getLatestNPMPackageVersion(name: string) {
+export async function getLatestNPMPackageVersion(name: string) {
   outputDebug(outputContent`Getting the latest version of NPM package: ${outputToken.raw(name)}`)
   return latestVersion(name)
 }

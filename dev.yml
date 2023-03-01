@@ -38,6 +38,9 @@ commands:
   create-app:
     desc: 'Runs the create-app CLI'
     run: pnpm create-app
+  create-shop-mini:
+    desc: 'Runs the create-shop-mini CLI'
+    run: pnpm create-shop-mini
   clean:
     desc: 'Clean the packages'
     run: pnpm run clean

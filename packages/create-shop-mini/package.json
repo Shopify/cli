@@ -1,0 +1,67 @@
+{
+  "name": "@shopify/create-shop-mini",
+  "version": "3.44.1-pre.0",
+  "homepage": "https://cloudsmith.io/~shopify/repos/node/packages/detail/npm/@shopify%252Fcreate-shop-mini/",
+  "scripts": {
+    "build": "nx build",
+    "clean": "nx clean",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
+    "test": "nx run create-app:test",
+    "test:watch": "nx test:watch",
+    "type-check": "nx type-check"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../.eslintrc.cjs"
+    ]
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "bin": {
+    "create-app": "./bin/run.js"
+  },
+  "files": [
+    "/bin/run.js",
+    "/bin/run.cmd",
+    "/dist",
+    "/oclif.manifest.json"
+  ],
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@types/node": "14.18.36",
+    "@oclif/core": "2.1.4",
+    "@shopify/cli-kit": "3.44.1-pre.0",
+    "replace-in-file": "^6.3.5"
+  },
+  "devDependencies": {
+    "vitest": "^0.22.1"
+  },
+  "oclif": {
+    "bin": "create-app",
+    "commands": "./dist/commands",
+    "additionalHelpFlags": [
+      "-h"
+    ],
+    "hooks": {
+      "prerun": "./dist/hooks/prerun.js",
+      "postrun": "./dist/hooks/postrun.js"
+    }
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../.eslintrc.cjs"
+    ]
+  }
+}
