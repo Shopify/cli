@@ -1,0 +1,6 @@
+{
+  "name": "@shopify/eslint-plugin-cli",
+  "root": "packages/eslint-plugin-cli",
+  "projectType": "library",
+  "tags": ["scope:plugin"]
+}

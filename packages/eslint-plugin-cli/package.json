@@ -1,6 +1,6 @@
 {
   "name": "@shopify/eslint-plugin-cli",
-  "version": "1.0.0",
+  "version": "3.44.0",
   "description": "Shopify CLI's ESLint rules and configs.",
   "keywords": [
     "eslint",
@@ -15,12 +15,10 @@
   "license": "MIT",
   "author": "Shopify Inc.",
   "dependencies": {
-    "eslint-plugin-rulesdir": "0.2.2",
-    "@shopify/eslint-plugin": "42.0.3",
-    "pathe": "1.0.0"
+    "@shopify/eslint-plugin": "42.0.3"
   },
   "peerDependencies": {
-    "eslint": "8.12.0"
+    "eslint": "^8.12.0"
   },
   "publishConfig": {
     "@shopify:registry": "https://registry.npmjs.org",

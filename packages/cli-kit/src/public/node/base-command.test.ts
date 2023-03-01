@@ -13,7 +13,7 @@ let testError: Error | undefined
 let disableFindUpEnvironments = true
 
 class MockCommand extends Command {
-  /* eslint-disable rulesdir/command-flags-with-env */
+  /* eslint-disable @shopify/cli/command-flags-with-env */
   static flags = {
     ...globalFlags,
     path: Flags.string({
@@ -31,7 +31,7 @@ class MockCommand extends Command {
       default: 'default stringy',
     }),
   }
-  /* eslint-enable rulesdir/command-flags-with-env */
+  /* eslint-enable @shopify/cli/command-flags-with-env */
 
   async run(): Promise<void> {
     const {flags} = await this.parse(MockCommand)

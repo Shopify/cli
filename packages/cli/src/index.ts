@@ -1,5 +1,5 @@
 import {runCLI, useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
-// eslint-disable-next-line rulesdir/specific-imports-in-bootstrap-code
+// eslint-disable-next-line @shopify/cli/specific-imports-in-bootstrap-code
 import fs from 'fs'
 
 // In some cases (for example when we boot the proxy server), when an exception is

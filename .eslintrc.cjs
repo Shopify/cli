@@ -6,7 +6,7 @@ module.exports = {
     EXPERIMENTAL_useSourceOfProjectReferenceRedirect: true,
   },
   // WARNING: If you want to add new rules/plugins, you need to add them to the eslint-plugin-cli package.
-  extends: ['./packages/eslint-plugin-cli/index.js'],
+  extends: ['plugin:@shopify/cli/configs'],
   overrides: [
     {
       files: ['**/public/**/*.ts'],

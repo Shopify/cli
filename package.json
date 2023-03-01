@@ -39,6 +39,7 @@
     "@octokit/core": "^4.0.5",
     "@octokit/rest": "^19.0.4",
     "@shopify/eslint-plugin": "^41.3.0",
+    "@shopify/eslint-plugin-cli": "3.44.0",
     "@shopify/typescript-configs": "^5.1.0",
     "@shopify/web-pixels-extension": "0.1.4",
     "@types/node": "14.18.36",
