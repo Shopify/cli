@@ -41,7 +41,7 @@ async function refreshDocumentation(): Promise<void> {
     const tags = [
       {
         tagName: 'example',
-        text: unstyled(`${hasCompleteExample ? 'Basic' : ''}\n${removeTrainlingSpaces(basicExample)}`),
+        text: unstyled(`${hasCompleteExample ? 'Basic' : ''}\n${removeTrailingSpaces(basicExample)}`),
       },
     ]
 
@@ -50,7 +50,7 @@ async function refreshDocumentation(): Promise<void> {
       const completeExample = await examples[renderFunctionName]!.complete!()
       tags.push({
         tagName: 'example',
-        text: unstyled(`Complete\n${removeTrainlingSpaces(completeExample)}`),
+        text: unstyled(`Complete\n${removeTrailingSpaces(completeExample)}`),
       })
     }
 
