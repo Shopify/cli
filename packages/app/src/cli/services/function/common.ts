@@ -11,22 +11,21 @@ export const functionFlags = {
   path: Flags.string({
     hidden: false,
     description: 'The path to your function directory.',
-    parse: (input, _) => Promise.resolve(resolvePath(input)),
+    parse: async (input) => resolvePath(input),
+    default: async () => cwd(),
     env: 'SHOPIFY_FLAG_PATH',
   }),
 }
 
 export async function inFunctionContext(
   config: Config,
-  path: string | undefined,
+  path: string,
   callback: (app: App, ourFunction: FunctionExtension) => Promise<void>,
 ) {
-  const directory = path ? resolvePath(path) : cwd()
-
   const specifications = await loadExtensionsSpecifications(config)
-  const app: AppInterface = await loadApp({directory, specifications})
+  const app: AppInterface = await loadApp({specifications, directory: path})
 
-  const ourFunction = app.extensions.function.find((fun) => fun.directory === directory)
+  const ourFunction = app.extensions.function.find((fun) => fun.directory === path)
   if (ourFunction) {
     return callback(app, ourFunction)
   } else {
