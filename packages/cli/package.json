@@ -95,7 +95,7 @@
   "dependencies": {
     "@oclif/core": "2.1.4",
     "@oclif/plugin-commands": "2.2.9",
-    "@oclif/plugin-help": "5.2.4",
+    "@oclif/plugin-help": "5.2.6",
     "@oclif/plugin-plugins": "2.3.2",
     "@shopify/cli-kit": "3.44.1-pre.0",
     "@shopify/plugin-did-you-mean": "3.44.1-pre.0"
