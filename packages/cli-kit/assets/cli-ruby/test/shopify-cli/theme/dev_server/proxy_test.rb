@@ -49,6 +49,39 @@ module ShopifyCLI
           request.get("/")
         end
 
+        def test_monorail_requests_are_ignored
+          path = "/cli/sfr/.well-known/shopify/monorail/unstable/produce_batch?_fd=0&pb=0"
+          stub_session_id_request
+
+          request.post(path)
+
+          assert_requested(:post,
+            "https://dev-theme-server-store.myshopify.com#{path}",
+            times: 0)
+        end
+
+        def test_miniprofiler_requests_are_ignored
+          path = "cli/sfr/mini-profiler-resources/includes.js"
+          stub_session_id_request
+
+          request.get(path)
+
+          assert_requested(:get,
+            "https://dev-theme-server-store.myshopify.com#{path}",
+            times: 0)
+        end
+
+        def test_webpixels_requests_are_ignored
+          path = "cli/sfr/web-pixels-manager@0.0.225@487839awab38cc13pfd6bd3d2m9a3137/sandbox/?_fd=0&pb=0"
+          stub_session_id_request
+
+          request.get(path)
+
+          assert_requested(:get,
+            "https://dev-theme-server-store.myshopify.com#{path}",
+            times: 0)
+        end
+
         def test_get_is_proxied_to_theme_access_api_when_password_is_provided
           Environment.stubs(:theme_access_password?).returns(true)
           Environment.stubs(:store).returns("https://dev-theme-server-store.myshopify.com")
