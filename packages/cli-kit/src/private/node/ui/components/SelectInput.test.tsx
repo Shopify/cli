@@ -458,6 +458,7 @@ describe('SelectInput', async () => {
          [1mOther[22m
          (f) first
 
+         [2mShowing 5 of 10 items.[22m
          [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
 
@@ -476,6 +477,7 @@ describe('SelectInput', async () => {
          (3) eighth
          (4) ninth
 
+         [2mShowing 5 of 10 items.[22m
          [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
 
@@ -498,6 +500,7 @@ describe('SelectInput', async () => {
          (f) first
       [36m>[39m  [36m(s) second[39m
 
+         [2mShowing 5 of 10 items.[22m
          [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
   })
