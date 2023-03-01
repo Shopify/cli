@@ -94,6 +94,7 @@ export default class Dev extends Command {
     await addPublicMetadata(() => ({
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
       cmd_app_reset_used: flags.reset,
+      cmd_dev_tunnel_type: flags['tunnel-url'] ? 'custom' : flags.tunnel,
     }))
 
     const directory = flags.path ? resolvePath(flags.path) : cwd()
