@@ -160,7 +160,7 @@
     "@types/lodash": "4.14.191",
     "@types/node": "14.18.36",
     "@types/react": "17.0.2",
-    "@types/semver": "^7.3.9",
+    "@types/semver": "^7.3.13",
     "@vitest/coverage-istanbul": "^0.28.5",
     "ink-testing-library": "^2.1.0",
     "node-stream-zip": "^1.15.0",
