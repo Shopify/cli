@@ -69,7 +69,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Build the fixture app
-        run: pnpm run shopify app build --path ./fixtures/app --skip-dependencies-installation
+        run: pnpm fixtures:build
 
   main:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
