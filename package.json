@@ -31,7 +31,7 @@
     "@apollo/client": "^3.4.8",
     "@babel/core": "^7.11.0",
     "@bugsnag/source-maps": "^2.3.0",
-    "@changesets/cli": "2.25.2",
+    "@changesets/cli": "2.26.0",
     "@nrwl/eslint-plugin-nx": "^15.3.0",
     "@nrwl/js": "^15.3.0",
     "@nrwl/tao": "^15.3.0",
