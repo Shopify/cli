@@ -35,7 +35,7 @@
     "@nrwl/eslint-plugin-nx": "^15.3.0",
     "@nrwl/js": "^15.3.0",
     "@nrwl/tao": "^15.3.0",
-    "@nrwl/workspace": "^15.3.0",
+    "@nrwl/workspace": "^15.8.1",
     "@octokit/core": "^4.0.5",
     "@octokit/rest": "^19.0.4",
     "@shopify/eslint-plugin": "^41.3.0",
