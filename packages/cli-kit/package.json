@@ -115,7 +115,7 @@
     "fast-glob": "3.2.11",
     "figures": "5.0.0",
     "find-process": "1.4.7",
-    "find-up": "6.2.0",
+    "find-up": "6.3.0",
     "find-versions": "5.0.0",
     "form-data": "4.0.0",
     "fs-extra": "11.1.0",
