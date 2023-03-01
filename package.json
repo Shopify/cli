@@ -71,7 +71,7 @@
     "find-up": "^6.2.0",
     "fs-extra": "^11.1.0",
     "graphql": "^15.5.1",
-    "graphql-tag": "^2.12.4",
+    "graphql-tag": "^2.12.6",
     "liquidjs": "^10.5.0",
     "node-fetch": "^3.2.4",
     "nx": "^15.3.0",

@@ -65,7 +65,7 @@
     "@types/serve-static": "^1.15.0",
     "@types/ws": "^8.5.3",
     "graphql": "^16.0.0",
-    "graphql-tag": "^2.11.0",
+    "graphql-tag": "^2.12.6",
     "vite": "^2.9.13",
     "vitest": "^0.28.5"
   },
