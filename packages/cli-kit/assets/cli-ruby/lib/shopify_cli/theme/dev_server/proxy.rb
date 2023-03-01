@@ -28,6 +28,7 @@ module ShopifyCLI
         SESSION_COOKIE_NAME = "_secure_session_id"
         SESSION_COOKIE_REGEXP = /#{SESSION_COOKIE_NAME}=(\h+)/
         SESSION_COOKIE_MAX_AGE = 60 * 60 * 23 # 1 day - leeway of 1h
+        IGNORED_ENDPOINTS = ['shopify/monorail', 'mini-profiler-resources', 'web-pixels-manager']
 
         def initialize(ctx, theme, param_builder)
           @ctx = ctx
@@ -40,6 +41,8 @@ module ShopifyCLI
         end
 
         def call(env)
+          return [204, {}, []] if IGNORED_ENDPOINTS.any? { |endpoint| env["PATH_INFO"].include?(endpoint) }
+
           headers = extract_http_request_headers(env)
           headers["Host"] = shop
           headers["Cookie"] = add_session_cookie(headers["Cookie"])
