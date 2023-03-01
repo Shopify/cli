@@ -1,6 +1,7 @@
 import {useStdout} from 'ink'
 
-const MIN_WIDTH = 80
+const MIN_FULL_WIDTH = 20
+const MIN_FRACTION_WIDTH = 80
 
 interface Layout {
   twoThirds: number
@@ -11,16 +12,15 @@ interface Layout {
 export default function useLayout(): Layout {
   const {stdout} = useStdout()
 
-  const fullWidth = stdout?.columns ?? MIN_WIDTH
-  let oneThird
-  let twoThirds
+  let fullWidth = stdout?.columns ?? MIN_FRACTION_WIDTH
+  let oneThird = fullWidth
+  let twoThirds = fullWidth
 
-  if (fullWidth <= MIN_WIDTH) {
-    oneThird = fullWidth
-    twoThirds = fullWidth
-  } else {
-    oneThird = column({fullWidth, fraction: [1, 3], minWidth: MIN_WIDTH})
-    twoThirds = column({fullWidth, fraction: [2, 3], minWidth: MIN_WIDTH})
+  if (fullWidth <= MIN_FULL_WIDTH) {
+    fullWidth = MIN_FULL_WIDTH
+  } else if (fullWidth > MIN_FRACTION_WIDTH) {
+    oneThird = column({fullWidth, fraction: [1, 3], minWidth: MIN_FRACTION_WIDTH})
+    twoThirds = column({fullWidth, fraction: [2, 3], minWidth: MIN_FRACTION_WIDTH})
   }
 
   return {
