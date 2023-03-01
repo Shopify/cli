@@ -1,20 +1,12 @@
 import {webhookTriggerService} from './trigger.js'
 import {getWebhookSample} from './request-sample.js'
 import {requestApiVersions} from './request-api-versions.js'
-import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {requestTopics} from './request-topics.js'
-import {findInEnv, findApiKey, requestAppInfo} from './find-app-info.js'
-import {
-  collectAddressAndMethod,
-  collectApiVersion,
-  collectSecret,
-  collectTopic,
-  WebhookTriggerFlags,
-} from '../../prompts/webhook/options-prompt.js'
-import {outputInfo, outputSuccess, consoleError} from '@shopify/cli-kit/node/output'
+import {WebhookTriggerFlags} from './trigger-flags.js'
+import {triggerLocalWebhook} from './trigger-local-webhook.js'
+import {outputSuccess, consoleError} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 const aToken = 'A_TOKEN'
 const samplePayload = '{ "sampleField": "SampleValue" }'
@@ -68,7 +60,7 @@ describe('webhookTriggerService', () => {
         {message: '["Another error"]', fields: ['field2']},
       ],
     }
-    mockParams(aVersion, aTopic, 'http', anAddress, aSecret)
+    mockLists(aVersion, aTopic)
 
     vi.mocked(getWebhookSample).mockResolvedValue(response)
 
@@ -91,7 +83,7 @@ describe('webhookTriggerService', () => {
         {message: 'Another invalid JSON', fields: ['field2']},
       ],
     }
-    mockParams(aVersion, aTopic, 'http', anAddress, aSecret)
+    mockLists(aVersion, aTopic)
 
     vi.mocked(getWebhookSample).mockResolvedValue(response)
 
@@ -105,7 +97,7 @@ describe('webhookTriggerService', () => {
 
   it('notifies about real delivery being sent', async () => {
     // Given
-    mockParams(aVersion, aTopic, 'http', anAddress, aSecret)
+    mockLists(aVersion, aTopic)
 
     vi.mocked(triggerLocalWebhook)
     vi.mocked(getWebhookSample).mockResolvedValue(successEmptyResponse)
@@ -123,13 +115,13 @@ describe('webhookTriggerService', () => {
   describe('Localhost delivery', () => {
     it('delivers to localhost', async () => {
       // Given
-      mockParams(aVersion, aTopic, 'localhost', aFullLocalAddress, aSecret)
+      mockLists(aVersion, aTopic)
 
       vi.mocked(triggerLocalWebhook).mockResolvedValue(true)
       vi.mocked(getWebhookSample).mockResolvedValue(successDirectResponse)
 
       // When
-      await webhookTriggerService(sampleFlags())
+      await webhookTriggerService(sampleLocalhostFlags())
 
       // Then
       expectCalls(aVersion)
@@ -140,13 +132,13 @@ describe('webhookTriggerService', () => {
 
     it('shows an error if localhost is not ready', async () => {
       // Given
-      mockParams(aVersion, aTopic, 'localhost', aFullLocalAddress, aSecret)
+      mockLists(aVersion, aTopic)
 
       vi.mocked(triggerLocalWebhook).mockResolvedValue(false)
       vi.mocked(getWebhookSample).mockResolvedValue(successDirectResponse)
 
       // When
-      await webhookTriggerService(sampleFlags())
+      await webhookTriggerService(sampleLocalhostFlags())
 
       // Then
       expectCalls(aVersion)
@@ -156,119 +148,9 @@ describe('webhookTriggerService', () => {
     })
   })
 
-  describe('Shared secret choices', () => {
-    beforeEach(async () => {
-      vi.mocked(requestApiVersions).mockResolvedValue([aVersion])
-      vi.mocked(collectApiVersion).mockResolvedValue(aVersion)
-      vi.mocked(requestTopics).mockResolvedValue([aTopic])
-      vi.mocked(collectTopic).mockResolvedValue(aTopic)
-      vi.mocked(collectAddressAndMethod).mockResolvedValue(['localhost', aFullLocalAddress])
-
-      vi.mocked(triggerLocalWebhook).mockResolvedValue(true)
-      vi.mocked(getWebhookSample).mockResolvedValue(successDirectResponse)
-    })
-
-    it('manual', async () => {
-      // Given
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
-      vi.mocked(collectSecret).mockResolvedValue(aSecret)
-
-      // When
-      await webhookTriggerService(noSecretSampleFlags())
-
-      // Then
-      expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
-      expect(collectSecret).toHaveBeenCalledOnce()
-    })
-
-    it('uses .env credentials', async () => {
-      // Given
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-      vi.mocked(findInEnv).mockResolvedValue({clientSecret: aSecret})
-
-      // When
-      await webhookTriggerService(noSecretSampleFlags())
-
-      // Then
-      expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
-      expect(collectSecret).toHaveBeenCalledTimes(0)
-      expect(requestAppInfo).toHaveBeenCalledTimes(0)
-      expect(outputInfo).toHaveBeenCalledWith('Reading client-secret from .env file')
-    })
-
-    it('no remote apiKey found', async () => {
-      // Given
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-      vi.mocked(findInEnv).mockResolvedValue({})
-      vi.mocked(findApiKey).mockResolvedValue(undefined)
-
-      // When
-      await webhookTriggerService(noSecretSampleFlags())
-
-      // Then
-      expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
-      expect(collectSecret).toHaveBeenCalledOnce()
-      expect(requestAppInfo).toHaveBeenCalledTimes(0)
-    })
-
-    it('remote apiKey found', async () => {
-      // Given
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-      vi.mocked(findInEnv).mockResolvedValue({})
-      vi.mocked(findApiKey).mockResolvedValue('API_KEY')
-      vi.mocked(requestAppInfo).mockResolvedValue({clientSecret: aSecret, apiKey: 'API_KEY', clientId: 'Id'})
-
-      // When
-      await webhookTriggerService(noSecretSampleFlags())
-
-      // Then
-      expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
-      expect(collectSecret).toHaveBeenCalledTimes(0)
-      expect(outputInfo).toHaveBeenCalledWith('Reading client-secret from app settings in Partners')
-      expect(requestAppInfo).toHaveBeenCalledWith(aToken, 'API_KEY')
-    })
-
-    it('remote apiKey found', async () => {
-      // Given
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-      vi.mocked(findInEnv).mockResolvedValue({})
-      vi.mocked(findApiKey).mockResolvedValue('API_KEY')
-      vi.mocked(requestAppInfo).mockResolvedValue({clientSecret: aSecret, apiKey: 'API_KEY', clientId: 'Id'})
-
-      // When
-      await webhookTriggerService(noSecretSampleFlags())
-
-      // Then
-      expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
-      expect(collectSecret).toHaveBeenCalledTimes(0)
-      expect(outputInfo).toHaveBeenCalledWith('Reading client-secret from app settings in Partners')
-      expect(requestAppInfo).toHaveBeenCalledWith(aToken, 'API_KEY')
-    })
-
-    it('remote apiKey found but no app info', async () => {
-      // Given
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-      vi.mocked(findInEnv).mockResolvedValue({})
-      vi.mocked(findApiKey).mockResolvedValue('API_KEY')
-      vi.mocked(requestAppInfo).mockResolvedValue({})
-
-      // When
-      await webhookTriggerService(noSecretSampleFlags())
-
-      // Then
-      expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
-      expect(collectSecret).toHaveBeenCalledOnce()
-      expect(requestAppInfo).toHaveBeenCalledWith(aToken, 'API_KEY')
-    })
-  })
-
-  function mockParams(version: string, topic: string, method: string, address: string, secret: string) {
+  function mockLists(version: string, topic: string) {
     vi.mocked(requestApiVersions).mockResolvedValue([version])
-    vi.mocked(collectApiVersion).mockResolvedValue(version)
     vi.mocked(requestTopics).mockResolvedValue([topic])
-    vi.mocked(collectTopic).mockResolvedValue(topic)
-    vi.mocked(collectAddressAndMethod).mockResolvedValue([method, address])
-    vi.mocked(collectSecret).mockResolvedValue(secret)
   }
 
   function expectCalls(version: string) {
@@ -280,9 +162,21 @@ describe('webhookTriggerService', () => {
     const flags: WebhookTriggerFlags = {
       topic: aTopic,
       apiVersion: aVersion,
-      deliveryMethod: 'event-bridge',
+      deliveryMethod: 'http',
       clientSecret: aSecret,
-      address: '',
+      address: anAddress,
+    }
+
+    return flags
+  }
+
+  function sampleLocalhostFlags(): WebhookTriggerFlags {
+    const flags: WebhookTriggerFlags = {
+      topic: aTopic,
+      apiVersion: aVersion,
+      deliveryMethod: 'http',
+      clientSecret: aSecret,
+      address: aFullLocalAddress,
     }
 
     return flags
