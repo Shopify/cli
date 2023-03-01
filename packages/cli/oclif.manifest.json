@@ -15,7 +15,8 @@
           "type": "option",
           "description": "The path to your project directory.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "default": "."
         }
       },
       "args": {}
