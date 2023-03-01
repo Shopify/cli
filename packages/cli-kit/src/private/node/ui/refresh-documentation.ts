@@ -32,7 +32,7 @@ async function refreshDocumentation(): Promise<void> {
     return acc
   }, {} as {[key: string]: JSDocTag[]})
 
-  const removeTrainlingSpaces = (text: string) => text.replace(/ +$/gm, '')
+  const removeTrailingSpaces = (text: string) => text.replace(/ +$/gm, '')
 
   for (const renderFunctionName of Object.keys(exampleTags)) {
     const hasCompleteExample = typeof examples[renderFunctionName]!.complete !== 'undefined'
