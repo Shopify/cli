@@ -58,6 +58,16 @@ describe('useLayout', async () => {
       const {twoThirds} = useLayout()
       expect(twoThirds).toBe(80)
     })
+
+    test('it returns 20 if the stdout width is less than 20', async () => {
+      vi.mocked(useStdout).mockReturnValue({
+        stdout: new OutputStream({columns: 10}) as any,
+        write: () => {},
+      })
+
+      const {twoThirds} = useLayout()
+      expect(twoThirds).toBe(20)
+    })
   })
 
   describe('oneThird', async () => {
@@ -89,6 +99,16 @@ describe('useLayout', async () => {
 
       const {oneThird} = useLayout()
       expect(oneThird).toBe(100)
+    })
+
+    test('it returns 20 if the stdout width is less than 20', async () => {
+      vi.mocked(useStdout).mockReturnValue({
+        stdout: new OutputStream({columns: 10}) as any,
+        write: () => {},
+      })
+
+      const {oneThird} = useLayout()
+      expect(oneThird).toBe(20)
     })
   })
 })
