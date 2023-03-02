@@ -6,6 +6,28 @@ import {useStdout} from 'ink'
 vi.mock('ink')
 
 describe('useLayout', async () => {
+  describe('fullWidth', async () => {
+    test('it returns 20 if the stdout width is less than 20', async () => {
+      vi.mocked(useStdout).mockReturnValue({
+        stdout: new OutputStream({columns: 10}) as any,
+        write: () => {},
+      })
+
+      const {fullWidth} = useLayout()
+      expect(fullWidth).toBe(20)
+    })
+
+    test('it returns the stdout width if that is more than 20', async () => {
+      vi.mocked(useStdout).mockReturnValue({
+        stdout: new OutputStream({columns: 200}) as any,
+        write: () => {},
+      })
+
+      const {fullWidth} = useLayout()
+      expect(fullWidth).toBe(200)
+    })
+  })
+
   describe('twoThirds', async () => {
     test('it returns 2/3rds of the width if that is more than the min width of 80', async () => {
       vi.mocked(useStdout).mockReturnValue({
@@ -35,6 +57,16 @@ describe('useLayout', async () => {
 
       const {twoThirds} = useLayout()
       expect(twoThirds).toBe(80)
+    })
+
+    test('it returns 20 if the stdout width is less than 20', async () => {
+      vi.mocked(useStdout).mockReturnValue({
+        stdout: new OutputStream({columns: 10}) as any,
+        write: () => {},
+      })
+
+      const {twoThirds} = useLayout()
+      expect(twoThirds).toBe(20)
     })
   })
 
@@ -67,6 +99,16 @@ describe('useLayout', async () => {
 
       const {oneThird} = useLayout()
       expect(oneThird).toBe(100)
+    })
+
+    test('it returns 20 if the stdout width is less than 20', async () => {
+      vi.mocked(useStdout).mockReturnValue({
+        stdout: new OutputStream({columns: 10}) as any,
+        write: () => {},
+      })
+
+      const {oneThird} = useLayout()
+      expect(oneThird).toBe(20)
     })
   })
 })
