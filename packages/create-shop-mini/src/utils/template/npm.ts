@@ -28,6 +28,15 @@ export async function getDeepInstallNPMTasks({
      * Reported issue: https://github.com/yarnpkg/yarn/issues/7212
      */
     const args = platform() === 'win32' && packageManager === 'yarn' ? ['--network-concurrency', '1'] : []
+
+    // Yarn is ignoring the `resolutions` when you install
+    // via `yarn create @shopify/shop-mini` so use `--ignore-engines` to work around the
+    // problem with `@apollo/federation`
+    // npm fails to install for a similar reason on node 15 but runs fine so we will
+    // use `--force` to get everything installed
+    if (packageManager === 'yarn') args.push('--ignore-engines')
+    if (packageManager === 'npm') args.push('--force')
+
     const title = titlePath === '' ? 'Installing dependencies' : `Installing dependencies in ${titlePath}`
     return {
       title,
