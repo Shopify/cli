@@ -37,7 +37,7 @@ export type DependencyType = 'dev' | 'prod' | 'peer'
  * A union that represents the package managers available.
  */
 export const packageManager = ['yarn', 'npm', 'pnpm'] as const
-export type PackageManager = typeof packageManager[number]
+export type PackageManager = (typeof packageManager)[number]
 
 /**
  * Returns an abort error that's thrown when a directory that's expected to have
