@@ -441,5 +441,8 @@ async function localBundleInstall(directory: string): Promise<void> {
   await exec(bundle, ['config', 'set', '--local', 'path', directory], {
     cwd: directory,
   })
-  await exec(bundle, ['install', '--without', 'development', 'test'], {cwd: directory})
+  await exec(bundle, ['config', 'set', '--local', 'without', 'development:test'], {
+    cwd: directory,
+  })
+  await exec(bundle, ['install'], {cwd: directory})
 }
