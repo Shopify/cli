@@ -39,6 +39,12 @@ export function outputExtensionsMessages(app: AppInterface) {
   outputThemeExtensionsMessage(app.extensions.theme)
 }
 
+export function outputAppURL(url: string) {
+  const title = url.includes('localhost') ? 'App URL' : 'Shareable app URL'
+  const heading = outputToken.heading(title)
+  outputInfo(outputContent`\n\n${heading}\n\n  ${url}\n`)
+}
+
 function outputFunctionsMessage(extensions: FunctionExtension[]) {
   if (extensions.length === 0) return
   const names = extensions.map((ext) => ext.configuration.name)

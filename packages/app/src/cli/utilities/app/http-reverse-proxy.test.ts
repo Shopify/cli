@@ -47,6 +47,7 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
         },
       ],
       additionalProcesses: [],
+      footer: true,
     })
 
     // Then

@@ -161,8 +161,8 @@ async function dev(options: DevOptions) {
   outputExtensionsMessages(localApp)
 
   const additionalProcesses: OutputProcess[] = []
-
-  if (localApp.extensions.theme.length > 0) {
+  const hasThemeExtension = localApp.extensions.theme.length > 0
+  if (hasThemeExtension) {
     const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
     const extension = localApp.extensions.theme[0]!
     let optionsToOverwrite = {}
@@ -229,6 +229,7 @@ async function dev(options: DevOptions) {
       portNumber: proxyPort,
       proxyTargets,
       additionalProcesses,
+      footer: !hasThemeExtension,
     })
   }
 }

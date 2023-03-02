@@ -1,3 +1,4 @@
+import {outputAppURL} from '../../services/dev/output.js'
 import {renderConcurrent, RenderConcurrentOptions} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -27,6 +28,7 @@ export interface ReverseHTTPProxyTarget {
 
 interface Options {
   previewUrl: string | undefined
+  footer: boolean
   portNumber: number
   proxyTargets: ReverseHTTPProxyTarget[]
   additionalProcesses: OutputProcess[]
@@ -43,6 +45,7 @@ interface Options {
  */
 export async function runConcurrentHTTPProcessesAndPathForwardTraffic({
   previewUrl,
+  footer,
   portNumber,
   proxyTargets,
   additionalProcesses,
@@ -113,20 +116,24 @@ ${outputToken.json(JSON.stringify(rules))}
   }
 
   if (previewUrl) {
-    renderConcurrentOptions = {
-      ...renderConcurrentOptions,
-      onInput: (input, _key, exit) => {
-        if (input === 'p' && previewUrl) {
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
-          openURL(previewUrl)
-        } else if (input === 'q') {
-          exit()
-        }
-      },
-      footer: {
-        title: 'Press `p` to open your browser. Press `q` to quit.',
-        subTitle: `Preview URL: ${previewUrl}`,
-      },
+    if (footer) {
+      renderConcurrentOptions = {
+        ...renderConcurrentOptions,
+        onInput: (input, _key, exit) => {
+          if (input === 'p' && previewUrl) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            openURL(previewUrl)
+          } else if (input === 'q') {
+            exit()
+          }
+        },
+        footer: {
+          title: 'Press `p` to open your browser. Press `q` to quit.',
+          subTitle: `Preview URL: ${previewUrl}`,
+        },
+      }
+    } else {
+      outputAppURL(previewUrl)
     }
   }
 
