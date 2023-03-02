@@ -162,7 +162,7 @@ async function dev(options: DevOptions) {
 
   const additionalProcesses: OutputProcess[] = []
 
-  if (localApp.extensions.theme.length > 0) {
+  if (localApp.extensions.theme.length > 0 && !isSpinEnvironment()) {
     const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
     const extension = localApp.extensions.theme[0]!
     let optionsToOverwrite = {}
