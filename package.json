@@ -31,7 +31,7 @@
     "fixtures:deploy": "pnpm shopify app deploy --path fixtures/app"
   },
   "devDependencies": {
-    "@apollo/client": "^3.4.8",
+    "@apollo/client": "^3.7.9",
     "@babel/core": "^7.11.0",
     "@bugsnag/source-maps": "^2.3.0",
     "@changesets/cli": "2.25.2",
