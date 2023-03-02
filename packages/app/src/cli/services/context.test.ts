@@ -71,13 +71,13 @@ const APP2: OrganizationApp = {
 const ORG1: AllOrganizationsQuerySchemaOrganization = {
   id: '1',
   businessName: 'org1',
-  appsNext: true,
+  betas: {appUiDeployments: true},
   website: '',
 }
 const ORG2: AllOrganizationsQuerySchemaOrganization = {
   id: '2',
   businessName: 'org2',
-  appsNext: false,
+  betas: {appUiDeployments: false},
   website: '',
 }
 

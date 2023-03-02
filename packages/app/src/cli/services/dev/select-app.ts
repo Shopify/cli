@@ -40,7 +40,7 @@ export async function selectOrCreateApp(
 export async function createApp(org: Organization, appName: string, token: string): Promise<OrganizationApp> {
   const name = await appNamePrompt(appName)
 
-  const type = org.appsNext ? 'undecided' : await appTypePrompt()
+  const type = await appTypePrompt()
   const variables: CreateAppQueryVariables = {
     org: parseInt(org.id, 10),
     title: `${name}`,
