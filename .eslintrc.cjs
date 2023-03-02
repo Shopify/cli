@@ -121,7 +121,7 @@ module.exports = {
     },
     {
       files: ['src/private/node/ui/components/**/*.tsx'],
-      extends: ['plugin:react/recommended'],
+      extends: ['plugin:react/recommended', 'plugin:react-hooks/recommended'],
       rules: {
         'react/destructuring-assignment': 2,
         'react/function-component-definition': [

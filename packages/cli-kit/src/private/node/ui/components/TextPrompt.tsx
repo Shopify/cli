@@ -26,15 +26,19 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
     throw new Error("Can't use defaultValue with password")
   }
 
-  const validateAnswer = (value: string): string | undefined => {
-    if (validate) {
-      return validate(value)
-    }
+  const validateAnswer = useCallback(
+    (value: string): string | undefined => {
+      if (validate) {
+        return validate(value)
+      }
 
-    if (value.length === 0) return 'Type an answer to the prompt.'
+      if (value.length === 0) return 'Type an answer to the prompt.'
 
-    return undefined
-  }
+      return undefined
+    },
+    [validate],
+  )
+
   const {oneThird} = useLayout()
   const [answer, setAnswer] = useState<string>('')
   const answerOrDefault = answer.length > 0 ? answer : defaultValue
@@ -61,7 +65,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
           }
         }
       },
-      [answerOrDefault, onSubmit],
+      [answerOrDefault, onSubmit, unmountInk, validateAnswer],
     ),
   )
 

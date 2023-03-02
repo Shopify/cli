@@ -52,7 +52,7 @@ function SelectPrompt<T>({
       unmountInk()
       onSubmit(answer.value)
     },
-    [stdout, stdout?.rows, height, onSubmit],
+    [stdout, height, unmountInk, onSubmit],
   )
 
   useInput(

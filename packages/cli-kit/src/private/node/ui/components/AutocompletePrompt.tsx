@@ -55,21 +55,21 @@ function AutocompletePrompt<T>({
   const canSearch = initialChoices.length >= PAGE_SIZE
   const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
 
-  const paginatedSearch = useCallback(async (term: string) => {
-    const results = await search(term)
-    results.data = results.data.slice(0, PAGE_SIZE)
-    return results
-  }, [])
-
-  const measuredRef = useCallback(
-    (node) => {
-      if (node !== null) {
-        const {height} = measureElement(node)
-        setHeight(height)
-      }
+  const paginatedSearch = useCallback(
+    async (term: string) => {
+      const results = await search(term)
+      results.data = results.data.slice(0, PAGE_SIZE)
+      return results
     },
-    [searchResults, promptState],
+    [search],
   )
+
+  const measuredRef = useCallback((node) => {
+    if (node !== null) {
+      const {height} = measureElement(node)
+      setHeight(height)
+    }
+  }, [])
 
   useInput(
     useCallback(
@@ -87,7 +87,7 @@ function AutocompletePrompt<T>({
           onSubmit(answer.value)
         }
       },
-      [answer, onSubmit, height, promptState],
+      [promptState, answer, stdout, height, unmountInk, onSubmit],
     ),
   )
 
@@ -98,6 +98,8 @@ function AutocompletePrompt<T>({
   const searchTermRef = useRef('')
   searchTermRef.current = searchTerm
 
+  // disable exhaustive-deps because we want to memoize the debounce function itself
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debounceSearch = useCallback(
     debounce((term) => {
       setLoadingWhenSlow.current = setTimeout(() => {
@@ -125,7 +127,7 @@ function AutocompletePrompt<T>({
           clearTimeout(setLoadingWhenSlow.current)
         })
     }, 300),
-    [],
+    [initialHasMorePages, paginatedInitialChoices, paginatedSearch],
   )
 
   return (

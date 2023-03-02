@@ -1,7 +1,7 @@
 import {isEqual} from '../../../../public/common/lang.js'
 import {groupBy, partition} from '../../../../public/common/collection.js'
 import {mapValues} from '../../../../public/common/object.js'
-import React, {useState, useEffect, useRef, useCallback} from 'react'
+import React, {useState, useEffect, useRef, useCallback, useMemo} from 'react'
 import {Box, Key, useInput, Text} from 'ink'
 import {debounce} from '@shopify/cli-kit/common/function'
 import chalk from 'chalk'
@@ -132,7 +132,10 @@ function SelectInput<T>({
   const inputStack = useRef<string | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(initialIndex)
   const [groupedItems, ungroupedItems] = groupItems(items)
-  const groupedItemsValues = [...Object.values(groupedItems).flat(), ...ungroupedItems]
+  const groupedItemsValues = useMemo(
+    () => [...Object.values(groupedItems).flat(), ...ungroupedItems],
+    [groupedItems, ungroupedItems],
+  )
   const keys = groupedItemsValues.map((item) => item.key)
   const groupTitles = Object.keys(groupedItems)
   const previousItems = useRef<Item<T>[]>(items)
@@ -146,7 +149,7 @@ function SelectInput<T>({
         usedShortcut,
       })
     },
-    [items],
+    [groupedItemsValues, items, onChange],
   )
 
   useEffect(() => {
@@ -167,7 +170,7 @@ function SelectInput<T>({
     }
 
     previousItems.current = items
-  }, [items])
+  }, [changeSelection, items, onChange])
 
   const handleArrows = useCallback(
     (key: Key) => {
@@ -179,7 +182,7 @@ function SelectInput<T>({
         changeSelection({index: selectedIndex === lastIndex ? 0 : selectedIndex + 1})
       }
     },
-    [selectedIndex, items],
+    [items.length, changeSelection, selectedIndex],
   )
 
   const handleShortcuts = useCallback(
@@ -191,15 +194,17 @@ function SelectInput<T>({
         }
       }
     },
-    [items],
+    [changeSelection, groupedItemsValues, keys],
   )
 
+  // disable exhaustive-deps because we want to memoize the debounce function itself
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debounceHandleShortcuts = useCallback(
     debounce((newInputStack) => {
       handleShortcuts(newInputStack)
       inputStack.current = null
     }, 300),
-    [],
+    [handleShortcuts],
   )
 
   useInput(

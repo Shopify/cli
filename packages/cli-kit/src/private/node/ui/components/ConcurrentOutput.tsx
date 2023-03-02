@@ -110,17 +110,17 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     )
   }
 
-  if (onInput) {
-    useInput(
-      useCallback(
-        (input, key) => {
-          handleCtrlC(input, key)
-          onInput(input, key, () => treeKill(process.pid, 'SIGINT'))
-        },
-        [onInput],
-      ),
-    )
-  }
+  useInput(
+    useCallback(
+      (input, key) => {
+        handleCtrlC(input, key)
+
+        onInput!(input, key, () => treeKill(process.pid, 'SIGINT'))
+      },
+      [onInput],
+    ),
+    {isActive: typeof onInput !== 'undefined'},
+  )
 
   useAsyncAndUnmount(runProcesses, {onRejected: () => abortController.abort()})
 
