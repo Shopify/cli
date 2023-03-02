@@ -79,12 +79,12 @@ describe('bundleExtension()', () => {
       'process.env.NODE_ENV': JSON.stringify('production'),
     })
     expect(vi.mocked(stdout.write).calls[0][0]).toMatchInlineSnapshot(`
-      "▲ [WARNING] warning text [plugin plugin]
+      "▲ [WARNING] [plugin plugin] warning text
 
       "
     `)
     expect(vi.mocked(stdout.write).calls[0][0]).toMatchInlineSnapshot(`
-      "▲ [WARNING] warning text [plugin plugin]
+      "▲ [WARNING] [plugin plugin] warning text
 
       "
     `)
@@ -193,12 +193,12 @@ describe('bundleExtension()', () => {
     const onRebuild = (options.watch as any).onRebuild as NonNullable<WatchMode['onRebuild']>
     onRebuild(null, esbuildResultFixture())
     expect(vi.mocked(stdout.write).calls[0][0]).toMatchInlineSnapshot(`
-      "▲ [WARNING] warning text [plugin plugin]
+      "▲ [WARNING] [plugin plugin] warning text
 
       "
     `)
     expect(vi.mocked(stdout.write).calls[0][0]).toMatchInlineSnapshot(`
-      "▲ [WARNING] warning text [plugin plugin]
+      "▲ [WARNING] [plugin plugin] warning text
 
       "
     `)
