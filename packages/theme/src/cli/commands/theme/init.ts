@@ -4,8 +4,8 @@ import {cloneRepoAndCheckoutLatestTag, cloneRepo} from '../../services/init.js'
 import {Args, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
-import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 export default class Init extends ThemeCommand {
   static description = 'Clones a Git repository to use as a starting point for building a new theme.'
@@ -37,10 +37,9 @@ export default class Init extends ThemeCommand {
 
   async run(): Promise<void> {
     const {args, flags} = await this.parse(Init)
-    const directory = flags.path ? resolvePath(flags.path) : cwd()
-    const name = args.name || (await this.promptName(directory))
-    const destination = resolvePath(flags.path, name)
+    const name = args.name || (await this.promptName(flags.path))
     const repoUrl = flags['clone-url']
+    const destination = joinPath(flags.path, name)
 
     if (flags.latest) {
       await cloneRepoAndCheckoutLatestTag(repoUrl, destination)

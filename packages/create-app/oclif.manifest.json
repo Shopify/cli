@@ -37,7 +37,8 @@
           "type": "option",
           "char": "p",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "default": "."
         },
         "template": {
           "name": "template",

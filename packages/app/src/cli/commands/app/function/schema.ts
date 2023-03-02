@@ -21,9 +21,8 @@ export default class FetchSchema extends Command {
 
   public async run(): Promise<void> {
     const {flags, args} = await this.parse(FetchSchema)
-    const apiKey = flags['api-key']
     await inFunctionContext(this.config, flags.path, async (app, ourFunction) => {
-      outputInfo(await generateSchemaService({app, extension: ourFunction, apiKey}))
+      outputInfo(await generateSchemaService({app, extension: ourFunction, apiKey: flags['api-key']}))
     })
   }
 }

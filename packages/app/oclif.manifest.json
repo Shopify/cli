@@ -29,7 +29,8 @@
           "type": "option",
           "description": "The path to your app directory.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "default": "."
         },
         "skip-dependencies-installation": {
           "name": "skip-dependencies-installation",
@@ -76,7 +77,8 @@
           "type": "option",
           "description": "The path to your app directory.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "default": "."
         },
         "api-key": {
           "name": "api-key",
@@ -131,7 +133,8 @@
           "type": "option",
           "description": "The path to your app directory.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "default": "."
         },
         "api-key": {
           "name": "api-key",
@@ -262,7 +265,8 @@
           "type": "option",
           "description": "The path to your app directory.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "default": "."
         },
         "json": {
           "name": "json",
@@ -429,7 +433,8 @@
           "type": "option",
           "description": "The path to your app directory.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "default": "."
         },
         "env-file": {
           "name": "env-file",
@@ -470,7 +475,8 @@
           "type": "option",
           "description": "The path to your app directory.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "default": "."
         }
       },
       "args": {}
@@ -503,7 +509,8 @@
           "type": "option",
           "description": "The path to your function directory.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "default": "."
         }
       },
       "args": {}
@@ -536,7 +543,8 @@
           "type": "option",
           "description": "The path to your function directory.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "default": "."
         }
       },
       "args": {}
@@ -569,7 +577,8 @@
           "type": "option",
           "description": "The path to your function directory.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "default": "."
         },
         "api-key": {
           "name": "api-key",
@@ -609,7 +618,8 @@
           "type": "option",
           "description": "The path to your function directory.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "default": "."
         }
       },
       "args": {}
@@ -645,7 +655,8 @@
           "type": "option",
           "description": "The path to your app directory.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "default": "."
         },
         "type": {
           "name": "type",
@@ -735,7 +746,8 @@
           "type": "option",
           "description": "The path to your function directory.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "default": "."
         },
         "api-key": {
           "name": "api-key",
@@ -779,7 +791,8 @@
           "type": "option",
           "description": "The path to your app directory.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "default": "."
         },
         "type": {
           "name": "type",
