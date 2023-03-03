@@ -1,6 +1,7 @@
 import {ConcurrentOutput} from './ConcurrentOutput.js'
 import {getLastFrameAfterUnmount, waitForInputsToBeReady} from '../../testing/ui.js'
 import {AbortController, AbortSignal} from '../../../../public/node/abort.js'
+import {unstyled} from '../../../../public/node/output.js'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'ink-testing-library'
@@ -50,7 +51,16 @@ describe('ConcurrentOutput', () => {
         processes={[backendProcess, frontendProcess]}
         abortController={new AbortController()}
         footer={{
-          title: 'Press `p` to open your browser. Press `q` to quit.',
+          shortcuts: [
+            {
+              key: 'p',
+              action: 'open your browser',
+            },
+            {
+              key: 'q',
+              action: 'quit',
+            },
+          ],
           subTitle: `Preview URL: https://shopify.com`,
         }}
       />,
@@ -60,17 +70,16 @@ describe('ConcurrentOutput', () => {
     await frontendPromise
 
     // Then
-    expect(getLastFrameAfterUnmount(renderInstance)!.replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "[00m0000-00-00 00:00:00[00m [0m[00m|[00m[00m [00mbackend[00m  [0m[00m|[00m[00m [00mfirst backend message[00m
-      [00m0000-00-00 00:00:00[00m [0m[00m|[00m[00m [00mbackend[00m  [0m[00m|[00m[00m [00msecond backend message[00m
-      [00m0000-00-00 00:00:00[00m [0m[00m|[00m[00m [00mbackend[00m  [0m[00m|[00m[00m [00mthird backend message[00m
-      [00m0000-00-00 00:00:00[00m [0m[00m|[00m[00m [00mfrontend[00m [0m[00m|[00m[00m [00mfirst frontend message[00m
-      [00m0000-00-00 00:00:00[00m [0m[00m|[00m[00m [00mfrontend[00m [0m[00m|[00m[00m [00msecond frontend message[00m
-      [00m0000-00-00 00:00:00[00m [0m[00m|[00m[00m [00mfrontend[00m [0m[00m|[00m[00m [00mthird frontend message[00m
+    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
+      "0000-00-00 00:00:00 | backend  | first backend message
+      0000-00-00 00:00:00 | backend  | second backend message
+      0000-00-00 00:00:00 | backend  | third backend message
+      0000-00-00 00:00:00 | frontend | first frontend message
+      0000-00-00 00:00:00 | frontend | second frontend message
+      0000-00-00 00:00:00 | frontend | third frontend message
 
-      [0m                                                                                                    [00m
-      [0m  Press \`p\` to open your browser. Press \`q\` to quit.                                                [00m
-      [0m                                                                                                    [00m
+      › Press p | open your browser
+      › Press q | quit
 
       Preview URL: https://shopify.com
       "
