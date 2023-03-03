@@ -65,7 +65,7 @@
           "import/first": "off",
           "import/no-unresolved": "off",
           "node/shebang": "off",
-          "rulesdir/specific-imports-in-bootstrap-code": [
+          "@shopify/cli/specific-imports-in-bootstrap-code": [
             "error",
             {
               "static": [
@@ -80,7 +80,7 @@
           "src/index.ts"
         ],
         "rules": {
-          "rulesdir/specific-imports-in-bootstrap-code": [
+          "@shopify/cli/specific-imports-in-bootstrap-code": [
             "error",
             {
               "static": [
