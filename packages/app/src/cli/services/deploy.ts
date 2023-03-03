@@ -15,7 +15,7 @@ import {Extension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderSuccess, renderTasks, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo} from '@shopify/cli-kit/node/output'
@@ -51,6 +51,15 @@ export async function deploy(options: DeployOptions) {
   let {app, identifiers, partnersApp, partnersOrganizationId, token, organization} = await ensureDeployContext(options)
   const apiKey = identifiers.app
 
+  let label: string | undefined
+
+  if (organization.betas.appUiDeployments) {
+    label = await renderTextPrompt({
+      message: 'Deployment label',
+      defaultValue: 'Deployed from CLI',
+    })
+  }
+
   outputNewline()
   outputInfo(`Deploying your work to Shopify Partners. It will be part of ${partnersApp.title}`)
   outputNewline()
@@ -79,6 +88,7 @@ export async function deploy(options: DeployOptions) {
 
   let registrations: AllAppExtensionRegistrationsQuerySchema
   let validationErrors: UploadExtensionValidationError[] = []
+  let deploymentId: number | undefined
 
   await inTemporaryDirectory(async (tmpDir) => {
     try {
@@ -100,12 +110,13 @@ export async function deploy(options: DeployOptions) {
           title: 'Pushing your code to Shopify',
           task: async () => {
             if (bundle) {
-              validationErrors = await uploadExtensionsBundle({
+              ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
                 apiKey,
                 bundlePath,
                 extensions,
                 token,
-              })
+                label,
+              }))
             }
 
             if (!useThemebundling()) {
@@ -128,6 +139,7 @@ export async function deploy(options: DeployOptions) {
         identifiers,
         registrations,
         validationErrors,
+        deploymentId,
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -149,6 +161,7 @@ async function outputCompletionMessage({
   identifiers,
   registrations,
   validationErrors,
+  deploymentId,
 }: {
   app: AppInterface
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
@@ -156,7 +169,21 @@ async function outputCompletionMessage({
   identifiers: Identifiers
   registrations: AllAppExtensionRegistrationsQuerySchema
   validationErrors: UploadExtensionValidationError[]
+  deploymentId?: number
 }) {
+  if (deploymentId) {
+    return renderSuccess({
+      headline: 'Deployment created',
+      body: {
+        link: {
+          url: `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/deployments/${deploymentId}`,
+          label: `Deployment ${deploymentId}`,
+        },
+      },
+      nextSteps: ['Publish your deployment to make your changes go live for merchants'],
+    })
+  }
+
   let headline: string
 
   if (validationErrors.length > 0) {
