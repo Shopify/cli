@@ -839,7 +839,8 @@
         "nodelete",
         "only",
         "ignore",
-        "force"
+        "force",
+        "development-theme-id"
       ]
     },
     "theme:push": {
@@ -986,7 +987,8 @@
         "allow-live",
         "publish",
         "stable",
-        "force"
+        "force",
+        "development-theme-id"
       ]
     },
     "theme:serve": {
