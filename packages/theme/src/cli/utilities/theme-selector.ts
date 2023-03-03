@@ -8,13 +8,17 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
  *
  * @param session - Current Admin session
  * @param options - Options to select a theme:
- *  - header: the header presented when users select a theme
- *  - filter: the filter ({@link FilterProps}) applied in the list
- *            of themes in the store
+ *  - header:           the header presented when users select a theme
+ *  - filter:           the filter ({@link FilterProps}) applied in the list
+ *                      of themes in the store
+ *  - developmentTheme: ID of current development theme, so that it can be tagged as [yours]
  *
  * @returns the selected {@link Theme}
  */
-export async function findOrSelectTheme(session: AdminSession, options: {header: string; filter: FilterProps}) {
+export async function findOrSelectTheme(
+  session: AdminSession,
+  options: {header: string; filter: FilterProps; developmentTheme?: number},
+) {
   const themes = await fetchStoreThemes(session)
   const filter = new Filter(options.filter)
   const store = session.storeFqdn
@@ -26,9 +30,10 @@ export async function findOrSelectTheme(session: AdminSession, options: {header:
   return renderSelectPrompt({
     message: options.header,
     choices: themes.map((theme) => {
+      const yoursLabel = theme.id === options.developmentTheme ? ' [yours]' : ''
       return {
         value: theme,
-        label: `${theme.name} [${theme.role}]`,
+        label: `${theme.name} [${theme.role}]${yoursLabel}`,
       }
     }),
   })
