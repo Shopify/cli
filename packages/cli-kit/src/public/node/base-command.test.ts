@@ -3,7 +3,7 @@ import {Environments, environmentsFilename} from './environments.js'
 import {encodeToml as encodeTOML} from './toml.js'
 import {globalFlags} from './cli.js'
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
-import {joinPath, resolvePath} from './path.js'
+import {joinPath, resolvePath, cwd} from './path.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {describe, expect, test} from 'vitest'
 import {Flags} from '@oclif/core'
@@ -17,8 +17,8 @@ class MockCommand extends Command {
   static flags = {
     ...globalFlags,
     path: Flags.string({
-      parse: (input, _) => Promise.resolve(resolvePath(input)),
-      default: '.',
+      parse: async (input) => resolvePath(input),
+      default: async () => cwd(),
     }),
     someString: Flags.string({}),
     someInteger: Flags.integer({}),

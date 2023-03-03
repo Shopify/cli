@@ -1,5 +1,15 @@
 # @shopify/theme
 
+## 3.44.1-pre.0
+
+### Patch Changes
+
+- 25fc42ae2: Fix: Run ruby with shopify bin file as an argument
+- Updated dependencies [25fc42ae2]
+- Updated dependencies [b2e066fc0]
+- Updated dependencies [657593b1a]
+  - @shopify/cli-kit@3.44.1-pre.0
+
 ## 3.44.0
 
 ### Minor Changes

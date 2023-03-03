@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.44.0",
+  "version": "3.44.1-pre.0",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -123,7 +123,7 @@
     "get-port-please": "3.0.1",
     "gradient-string": "2.0.2",
     "graphql": "16.4.0",
-    "graphql-request": "4.3.0",
+    "graphql-request": "5.2.0",
     "h3": "0.7.21",
     "ink": "3.2.0",
     "is-interactive": "2.0.0",

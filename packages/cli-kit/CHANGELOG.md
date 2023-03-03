@@ -1,5 +1,13 @@
 # @shopify/cli-kit
 
+## 3.44.1-pre.0
+
+### Patch Changes
+
+- 25fc42ae2: Fix: Run ruby with shopify bin file as an argument
+- b2e066fc0: Fix error by installing gems in local folder instead of system folder
+- 657593b1a: Fix run dev with theme app extension and spin
+
 ## 3.44.0
 
 ### Patch Changes

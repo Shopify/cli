@@ -1,4 +1,3 @@
-import {TextWithBackground} from './TextWithBackground.js'
 import {OutputProcess} from '../../../../public/node/output.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {AbortController} from '../../../../public/node/abort.js'
@@ -7,17 +6,22 @@ import React, {FunctionComponent, useCallback, useState} from 'react'
 import {Box, Key, Static, Text, useInput} from 'ink'
 import stripAnsi from 'strip-ansi'
 import treeKill from 'tree-kill'
+import figures from 'figures'
 import {Writable} from 'stream'
 
 export type WritableStream = (process: OutputProcess, index: number) => Writable
 
+interface Shortcut {
+  key: string
+  action: string
+}
 export interface ConcurrentOutputProps {
   processes: OutputProcess[]
   abortController: AbortController
   showTimestamps?: boolean
   onInput?: (input: string, key: Key, exit: () => void) => void
   footer?: {
-    title: string
+    shortcuts: Shortcut[]
     subTitle?: string
   }
 }
@@ -79,7 +83,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   const writableStream = (process: OutputProcess, index: number) => {
     return new Writable({
       write(chunk, _encoding, next) {
-        const lines = stripAnsi(chunk.toString('ascii').replace(/(\n)$/, '')).split(/\n/)
+        const lines = stripAnsi(chunk.toString('utf8').replace(/(\n)$/, '')).split(/\n/)
 
         setProcessOutput((previousProcessOutput) => [
           ...previousProcessOutput,
@@ -160,12 +164,16 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         }}
       </Static>
       {footer ? (
-        <Box marginY={1} flexDirection="column">
-          <Box flexGrow={1}>
-            <TextWithBackground text={footer.title} inverse paddingX={2} paddingY={1} />
+        <Box marginY={1} flexDirection="column" flexGrow={1}>
+          <Box flexDirection="column">
+            {footer.shortcuts.map((shortcut, index) => (
+              <Text key={index}>
+                {figures.pointerSmall} Press <Text bold>{shortcut.key}</Text> | {shortcut.action}
+              </Text>
+            ))}
           </Box>
           {footer.subTitle ? (
-            <Box marginTop={1} flexGrow={1}>
+            <Box marginTop={1}>
               <Text>{footer.subTitle}</Text>
             </Box>
           ) : null}
