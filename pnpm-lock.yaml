@@ -291,7 +291,7 @@ importers:
       '@shopify/plugin-did-you-mean': 3.44.1-pre.0
       '@shopify/theme': 3.44.1-pre.0
       '@types/node': 14.18.36
-      '@vitest/coverage-istanbul': ^0.29.2
+      '@vitest/coverage-istanbul': 0.28.5
       vite: 2.9.12
       vitest: ^0.28.5
     dependencies:
@@ -305,7 +305,7 @@ importers:
       '@shopify/app': link:../app
       '@shopify/theme': link:../theme
       '@types/node': 14.18.36
-      '@vitest/coverage-istanbul': 0.29.2_vitest@0.28.5
+      '@vitest/coverage-istanbul': 0.28.5
       vite: 2.9.12
       vitest: 0.28.5
 
@@ -324,7 +324,7 @@ importers:
       '@types/node': 14.18.36
       '@types/react': 16.14.0
       '@types/semver': ^7.3.13
-      '@vitest/coverage-istanbul': ^0.29.2
+      '@vitest/coverage-istanbul': 0.28.5
       abort-controller: 3.0.0
       ansi-escapes: 6.0.0
       archiver: 5.3.1
@@ -450,7 +450,7 @@ importers:
       '@types/node': 14.18.36
       '@types/react': 16.14.0
       '@types/semver': 7.3.13
-      '@vitest/coverage-istanbul': 0.29.2_vitest@0.28.5
+      '@vitest/coverage-istanbul': 0.28.5
       ink-testing-library: 2.1.0_@types+react@16.14.0
       node-stream-zip: 1.15.0
       typedoc: 0.23.26_typescript@4.9.5
@@ -4545,10 +4545,8 @@ packages:
       - supports-color
     dev: false
 
-  /@vitest/coverage-istanbul/0.29.2_vitest@0.28.5:
-    resolution: {integrity: sha512-Wf0WOqviYRqP0nrD0oq12u+W5PqGKER1WSz22sOLSaKeU97R0DcMIqs6CSUdp4Jvd8YGrxHodt7d+RMC65ckCA==}
-    peerDependencies:
-      vitest: '>=0.28.0 <1'
+  /@vitest/coverage-istanbul/0.28.5:
+    resolution: {integrity: sha512-na1pkr3AVrdFflzuBXsBh1MvBfhSMrv4nfd4N8rm0HEJlvlbQc+GiqNwtwzfO8TPsXxcjNphSIMp5wvCy+0xrQ==}
     dependencies:
       istanbul-lib-coverage: 3.2.0
       istanbul-lib-instrument: 5.2.1
@@ -4558,6 +4556,14 @@ packages:
       test-exclude: 6.0.0
       vitest: 0.28.5
     transitivePeerDependencies:
+      - '@edge-runtime/vm'
+      - '@vitest/browser'
+      - '@vitest/ui'
+      - happy-dom
+      - jsdom
+      - less
+      - sass
+      - stylus
       - supports-color
     dev: true
 
