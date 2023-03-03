@@ -5,7 +5,7 @@ import {load as loadApp} from '../models/app/loader.js'
 import {GenericSpecification} from '../models/app/extensions.js'
 import generateExtensionPrompt from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
-import generateExtensionService, {ExtensionFlavor} from '../services/generate/extension.js'
+import generateExtensionService, {ExtensionFlavorValue} from '../services/generate/extension.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -94,7 +94,7 @@ async function generate(options: GenerateOptions) {
 
   const extensionDirectory = await generateExtensionService({
     name,
-    extensionFlavor: extensionFlavor as ExtensionFlavor,
+    extensionFlavor: extensionFlavor as ExtensionFlavorValue,
     specification: selectedSpecification,
     app,
     extensionType: selectedSpecification.identifier,

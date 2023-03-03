@@ -1,7 +1,6 @@
 import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
-import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
+import {ExtensionCategory, GenericSpecification, FunctionExtension, ExtensionFlavor} from '../app/extensions.js'
 import {blocks, defaultFunctionsFlavors} from '../../constants.js'
-import {ExtensionFlavor} from '../../services/generate/extension.js'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
@@ -21,7 +20,7 @@ export interface FunctionSpec<TConfiguration extends FunctionConfigType = Functi
   helpURL?: string
   gated: boolean
   templateURL: string
-  supportedFlavors: {name: string; value: ExtensionFlavor}[]
+  supportedFlavors: ExtensionFlavor[]
   configSchema: ZodSchemaType<TConfiguration>
   registrationLimit: number
   templatePath: (lang: string) => string

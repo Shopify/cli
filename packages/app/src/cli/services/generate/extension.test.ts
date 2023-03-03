@@ -20,7 +20,7 @@ import * as template from '@shopify/cli-kit/node/liquid'
 import * as file from '@shopify/cli-kit/node/fs'
 import * as git from '@shopify/cli-kit/node/git'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import type {ExtensionFlavor} from './extension.js'
+import type {ExtensionFlavorValue} from './extension.js'
 
 vi.mock('@shopify/cli-kit/node/node-package-manager')
 
@@ -150,7 +150,7 @@ describe('initialize a extension', async () => {
       accumulator.push({specification, flavor: 'typescript'})
 
       return accumulator
-    }, [] as {specification: GenericSpecification; flavor: ExtensionFlavor}[]),
+    }, [] as {specification: GenericSpecification; flavor: ExtensionFlavorValue}[]),
   )(
     `doesn't add deps for $specification.identifier extension when flavor is $flavor`,
 
@@ -178,7 +178,7 @@ describe('initialize a extension', async () => {
     accumulator.push({specification, flavor: 'typescript-react', ext: 'tsx'})
 
     return accumulator
-  }, [] as {specification: GenericSpecification; flavor: ExtensionFlavor; ext: FileExtension}[])
+  }, [] as {specification: GenericSpecification; flavor: ExtensionFlavorValue; ext: FileExtension}[])
 
   it.each(allUISpecsWithAllFlavors)(
     'creates $specification.identifier for $flavor with .$ext files',
@@ -395,7 +395,7 @@ describe('getExtensionRuntimeDependencies', () => {
   it('no not include React for flavored Vanilla UI extensions', async () => {
     // Given
     const allUISpecs = await loadLocalUIExtensionsSpecifications()
-    const extensionFlavor: ExtensionFlavor = 'vanilla-js'
+    const extensionFlavor: ExtensionFlavorValue = 'vanilla-js'
 
     // When/then
     allUISpecs.forEach((specification) => {
@@ -407,7 +407,7 @@ describe('getExtensionRuntimeDependencies', () => {
   it('includes React for flavored React UI extensions', async () => {
     // Given
     const allUISpecs = await loadLocalUIExtensionsSpecifications()
-    const extensionFlavor: ExtensionFlavor = 'react'
+    const extensionFlavor: ExtensionFlavorValue = 'react'
 
     // When/then
     allUISpecs.forEach((specification) => {
@@ -435,7 +435,7 @@ interface CreateFromTemplateOptions {
   name: string
   specification: GenericSpecification
   appDirectory: string
-  extensionFlavor: ExtensionFlavor
+  extensionFlavor: ExtensionFlavorValue
   specifications: GenericSpecification[]
 }
 async function createFromTemplate({

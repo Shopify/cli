@@ -36,7 +36,7 @@ interface ExtensionInitOptions<TSpec extends GenericSpecification = GenericSpeci
   name: string
   app: AppInterface
   cloneUrl?: string
-  extensionFlavor?: ExtensionFlavor
+  extensionFlavor?: ExtensionFlavorValue
   specification: TSpec
   extensionType: string
 }
@@ -46,17 +46,17 @@ interface ExtensionDirectory {
 }
 
 interface FunctionFlavor {
-  extensionFlavor: ExtensionFlavor
+  extensionFlavor: ExtensionFlavorValue
 }
 
-export type ExtensionFlavor = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react' | 'rust' | 'wasm'
+export type ExtensionFlavorValue = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react' | 'rust' | 'wasm'
 
 type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionSpec> & ExtensionDirectory & FunctionFlavor
 type UIExtensionInitOptions = ExtensionInitOptions<UIExtensionSpec> & ExtensionDirectory
 type ThemeExtensionInitOptions = ExtensionInitOptions<ThemeExtensionSpec> & ExtensionDirectory
 
 export type TemplateFlavor = 'javascript' | 'rust' | 'wasm'
-function getTemplateFlavor(flavor: ExtensionFlavor): TemplateFlavor {
+function getTemplateFlavor(flavor: ExtensionFlavorValue): TemplateFlavor {
   switch (flavor) {
     case 'vanilla-js':
     case 'react':
@@ -143,8 +143,8 @@ async function uiExtensionInit({
 }
 
 type SrcFileExtension = 'ts' | 'tsx' | 'js' | 'jsx' | 'rs' | 'wasm'
-function getSrcFileExtension(extensionFlavor: ExtensionFlavor): SrcFileExtension {
-  const flavorToSrcFileExtension: {[key in ExtensionFlavor]: SrcFileExtension} = {
+function getSrcFileExtension(extensionFlavor: ExtensionFlavorValue): SrcFileExtension {
+  const flavorToSrcFileExtension: {[key in ExtensionFlavorValue]: SrcFileExtension} = {
     'vanilla-js': 'js',
     react: 'jsx',
     typescript: 'ts',
@@ -193,7 +193,7 @@ async function changeIndexFileExtension(extensionDirectory: string, fileExtensio
   await Promise.all(srcFileExensionsToChange)
 }
 
-async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, extensionFlavor: ExtensionFlavor) {
+async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, extensionFlavor: ExtensionFlavorValue) {
   // tsconfig.json file is only needed in extension folder to inform the IDE
   // About the `react-jsx` tsconfig option, so IDE don't complain about missing react import
   if (extensionFlavor !== 'typescript-react') {
@@ -286,7 +286,7 @@ async function ensureExtensionDirectoryExists({name, app}: {name: string; app: A
   return extensionDirectory
 }
 
-async function addResolutionOrOverrideIfNeeded(directory: string, extensionFlavor?: ExtensionFlavor) {
+async function addResolutionOrOverrideIfNeeded(directory: string, extensionFlavor?: ExtensionFlavorValue) {
   if (extensionFlavor === 'typescript-react') {
     await addResolutionOrOverride(directory, {'@types/react': versions.reactTypes})
   }
