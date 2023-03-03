@@ -1,15 +1,6 @@
 module.exports = {
   settings: {},
-  plugins: [
-    'no-catch-all',
-    'jest',
-    '@nrwl/nx',
-    'unused-imports',
-    'eslint-plugin-tsdoc',
-    'jsdoc',
-    'import',
-    '@shopify/cli',
-  ],
+  plugins: ['no-catch-all', 'jest', 'unused-imports', 'eslint-plugin-tsdoc', 'jsdoc', 'import', '@shopify/cli'],
   extends: ['plugin:@shopify/typescript', 'plugin:@shopify/prettier', 'plugin:@shopify/node', 'prettier'],
   rules: {
     'prettier/prettier': ['error'],
@@ -120,30 +111,6 @@ module.exports = {
     ],
     'jest/no-disabled-tests': 'error',
     'jest/prefer-expect-resolves': 'error',
-    '@nrwl/nx/enforce-module-boundaries': [
-      'error',
-      {
-        allow: [],
-        depConstraints: [
-          {
-            sourceTag: 'scope:feature',
-            onlyDependOnLibsWithTargs: ['scope:foundation'],
-          },
-          {
-            sourceTag: 'scope:plugin',
-            onlyDependOnLibsWithTargs: ['scope:foundation'],
-          },
-          {
-            sourceTag: 'scope:cli',
-            onlyDependOnLibsWithTargs: ['scope:foundation', 'scope:feature'],
-          },
-          {
-            sourceTag: 'scope:create-cli',
-            onlyDependOnLibsWithTargs: ['scope:foundation'],
-          },
-        ],
-      },
-    ],
     '@shopify/cli/command-flags-with-env': 'error',
     '@shopify/cli/command-conventional-flag-env': 'error',
     '@shopify/cli/command-reserved-flags': 'error',

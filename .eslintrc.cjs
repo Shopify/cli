@@ -5,8 +5,35 @@ module.exports = {
     project: './tsconfig.json',
     EXPERIMENTAL_useSourceOfProjectReferenceRedirect: true,
   },
+  plugins: ['@nrwl/nx']
   // WARNING: If you want to add new rules/plugins, you need to add them to the eslint-plugin-cli package.
   extends: ['plugin:@shopify/cli/configs'],
+  rules: {
+    '@nrwl/nx/enforce-module-boundaries': [
+      'error',
+      {
+        allow: [],
+        depConstraints: [
+          {
+            sourceTag: 'scope:feature',
+            onlyDependOnLibsWithTargs: ['scope:foundation'],
+          },
+          {
+            sourceTag: 'scope:plugin',
+            onlyDependOnLibsWithTargs: ['scope:foundation'],
+          },
+          {
+            sourceTag: 'scope:cli',
+            onlyDependOnLibsWithTargs: ['scope:foundation', 'scope:feature'],
+          },
+          {
+            sourceTag: 'scope:create-cli',
+            onlyDependOnLibsWithTargs: ['scope:foundation'],
+          },
+        ],
+      },
+    ],
+  },
   overrides: [
     {
       files: ['**/public/**/*.ts'],
