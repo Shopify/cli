@@ -8,6 +8,7 @@ import {
   fetchStoreByDomain,
   FetchResponse,
   fetchAppExtensionRegistrations,
+  OrganizationAppsResponse,
 } from './dev/fetch.js'
 import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
@@ -244,6 +245,7 @@ interface DeployContextOutput {
   partnersOrganizationId: string
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   identifiers: Identifiers
+  organization: Organization
 }
 
 /**
@@ -289,7 +291,7 @@ export async function ensureThemeExtensionDevContext(
 
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
   const token = await ensureAuthenticatedPartners()
-  const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
+  const [partnersApp, envIdentifiers, organization] = await fetchAppAndIdentifiers(options, token)
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
 
@@ -319,6 +321,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     partnersOrganizationId: partnersApp.organizationId,
     identifiers,
     token,
+    organization,
   }
 
   await logMetadataForLoadedDeployContext(result)
@@ -328,9 +331,10 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
 export async function fetchOrganizationAndFetchOrCreateApp(
   app: AppInterface,
   token: string,
+  orgAndApps?: {organization: Organization; apps: OrganizationAppsResponse},
 ): Promise<{partnersApp: OrganizationApp; orgId: string}> {
   const orgId = await selectOrg(token)
-  const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
+  const {organization, apps} = orgAndApps ?? (await fetchOrgsAppsAndStores(orgId, token))
   const partnersApp = await selectOrCreateApp(app.name, apps, organization, token)
   return {orgId, partnersApp}
 }
@@ -338,10 +342,14 @@ export async function fetchOrganizationAndFetchOrCreateApp(
 export async function fetchAppAndIdentifiers(
   options: {app: AppInterface; reset: boolean; packageManager?: PackageManager; apiKey?: string},
   token: string,
-): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
-  let envIdentifiers = await getAppIdentifiers({app: options.app})
+): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>, Organization]> {
+  let envIdentifiers = getAppIdentifiers({app: options.app})
 
   let partnersApp: OrganizationApp | undefined
+
+  // needed to know if the org has access to certain flags
+  const orgId = await selectOrg(token)
+  const {organization, apps} = await fetchOrgAndApps(orgId, token)
 
   if (options.reset) {
     envIdentifiers = {app: undefined, extensions: {}}
@@ -361,11 +369,11 @@ export async function fetchAppAndIdentifiers(
   }
 
   if (!partnersApp) {
-    const result = await fetchOrganizationAndFetchOrCreateApp(options.app, token)
+    const result = await fetchOrganizationAndFetchOrCreateApp(options.app, token, {organization, apps})
     partnersApp = result.partnersApp
   }
 
-  return [partnersApp, envIdentifiers]
+  return [partnersApp, envIdentifiers, organization]
 }
 
 async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {

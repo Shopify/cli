@@ -1,6 +1,6 @@
 import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {Organization, OrganizationApp, MinimalOrganizationApp} from '../../models/organization.js'
-import {fetchAppFromApiKey} from '../dev/fetch.js'
+import {Organization, OrganizationApp} from '../../models/organization.js'
+import {fetchAppFromApiKey, OrganizationAppsResponse} from '../dev/fetch.js'
 import {CreateAppQuery, CreateAppQuerySchema, CreateAppQueryVariables} from '../../api/graphql/create_app.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -19,7 +19,7 @@ import {outputInfo} from '@shopify/cli-kit/node/output'
  */
 export async function selectOrCreateApp(
   localAppName: string,
-  apps: {pageInfo: {hasNextPage: boolean}; nodes: MinimalOrganizationApp[]},
+  apps: OrganizationAppsResponse,
   org: Organization,
   token: string,
 ): Promise<OrganizationApp> {

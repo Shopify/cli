@@ -48,7 +48,7 @@ export async function deploy(options: DeployOptions) {
   }
 
   // eslint-disable-next-line prefer-const
-  let {app, identifiers, partnersApp, partnersOrganizationId, token} = await ensureDeployContext(options)
+  let {app, identifiers, partnersApp, partnersOrganizationId, token, organization} = await ensureDeployContext(options)
   const apiKey = identifiers.app
 
   outputNewline()

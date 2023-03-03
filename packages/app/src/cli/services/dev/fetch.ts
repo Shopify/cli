@@ -1,4 +1,4 @@
-import {Organization, OrganizationApp, MinimalOrganizationApp, OrganizationStore} from '../../models/organization.js'
+import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {
   AllAppExtensionRegistrationsQuery,
   AllAppExtensionRegistrationsQuerySchema,
@@ -48,14 +48,16 @@ export const NoOrgError = (organizationId?: string) => {
   return new AbortError(`No Organization found`, undefined, nextSteps)
 }
 
+export interface OrganizationAppsResponse {
+  pageInfo: {
+    hasNextPage: boolean
+  }
+  nodes: MinimalOrganizationApp[]
+}
+
 export interface FetchResponse {
   organization: Organization
-  apps: {
-    pageInfo: {
-      hasNextPage: boolean
-    }
-    nodes: MinimalOrganizationApp[]
-  }
+  apps: OrganizationAppsResponse
   stores: OrganizationStore[]
 }
 
