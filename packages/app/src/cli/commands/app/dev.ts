@@ -4,7 +4,6 @@ import Command from '../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Dev extends Command {
@@ -23,7 +22,7 @@ export default class Dev extends Command {
       char: 's',
       description: 'Store URL. Must be an existing development or Shopify Plus sandbox store.',
       env: 'SHOPIFY_FLAG_STORE',
-      parse: (input, _) => Promise.resolve(normalizeStoreFqdn(input)),
+      parse: async (input) => normalizeStoreFqdn(input),
     }),
     reset: Flags.boolean({
       hidden: false,
@@ -94,11 +93,10 @@ export default class Dev extends Command {
       cmd_app_reset_used: flags.reset,
     }))
 
-    const directory = flags.path ? resolvePath(flags.path) : cwd()
     const commandConfig = this.config
 
     await dev({
-      directory,
+      directory: flags.path,
       apiKey: flags['api-key'],
       storeFqdn: flags.store,
       reset: flags.reset,

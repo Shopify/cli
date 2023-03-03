@@ -124,7 +124,7 @@ importers:
       tempy: 3.0.0
       tmp: 0.2.1
       ts-node: 10.9.1_ocil65wecyuhsmrrocoajouipe
-      tslib: 2.4.1
+      tslib: 2.5.0
       typescript: 4.9.4
 
   fixtures/app:
@@ -194,7 +194,7 @@ importers:
       cross-env: ^7.0.3
       express: ^4.17.3
       graphql: ^16.3.0
-      graphql-request: ^4.2.0
+      graphql-request: 5.2.0
       prettier: ^2.6.1
       react: ^17.0.2
       react-dom: ^17.0.2
@@ -210,7 +210,7 @@ importers:
       cross-env: 7.0.3
       express: 4.18.2
       graphql: 16.6.0
-      graphql-request: 4.3.0_graphql@16.6.0
+      graphql-request: 5.2.0_graphql@16.6.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       react-query: 3.39.2_sfoxds7t5ydpegc3knd667wn6m
@@ -238,7 +238,7 @@ importers:
       esbuild: 0.15.16
       function-runner: 4.0.2
       graphql: ^16.0.0
-      graphql-request: 4.3.0
+      graphql-request: 5.2.0
       graphql-tag: ^2.11.0
       http-proxy: 1.18.1
       javy-cli: 0.1.2
@@ -257,7 +257,7 @@ importers:
       diff: 5.1.0
       esbuild: 0.15.16
       function-runner: 4.0.2
-      graphql-request: 4.3.0_graphql@16.6.0
+      graphql-request: 5.2.0_graphql@16.6.0
       http-proxy: 1.18.1
       javy-cli: 0.1.2
       serve-static: 1.15.0
@@ -344,7 +344,7 @@ importers:
       get-port-please: 3.0.1
       gradient-string: 2.0.2
       graphql: 16.4.0
-      graphql-request: 4.3.0
+      graphql-request: 5.2.0
       h3: 0.7.21
       ink: 3.2.0
       ink-testing-library: ^2.1.0
@@ -407,7 +407,7 @@ importers:
       get-port-please: 3.0.1
       gradient-string: 2.0.2
       graphql: 16.4.0
-      graphql-request: 4.3.0_graphql@16.4.0
+      graphql-request: 5.2.0_graphql@16.4.0
       h3: 0.7.21
       ink: 3.2.0_hw3ykagcixqw57etxpo4kpffqq
       is-interactive: 2.0.0
@@ -751,7 +751,7 @@ packages:
       response-iterator: 0.2.6
       symbol-observable: 4.0.0
       ts-invariant: 0.10.3
-      tslib: 2.4.1
+      tslib: 2.5.0
       zen-observable-ts: 1.2.5
     dev: true
 
@@ -2298,6 +2298,22 @@ packages:
       graphql: 15.8.0
     dev: true
 
+  /@graphql-typed-document-node/core/3.1.1_graphql@16.4.0:
+    resolution: {integrity: sha512-NQ17ii0rK1b34VZonlmT2QMJFI70m0TRwbknO/ihlbatXyaktDhN/98vBiUU6kNBPljqGqyIrl2T4nY2RpFANg==}
+    peerDependencies:
+      graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
+    dependencies:
+      graphql: 16.4.0
+    dev: false
+
+  /@graphql-typed-document-node/core/3.1.1_graphql@16.6.0:
+    resolution: {integrity: sha512-NQ17ii0rK1b34VZonlmT2QMJFI70m0TRwbknO/ihlbatXyaktDhN/98vBiUU6kNBPljqGqyIrl2T4nY2RpFANg==}
+    peerDependencies:
+      graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
+    dependencies:
+      graphql: 16.6.0
+    dev: false
+
   /@humanwhocodes/config-array/0.11.7:
     resolution: {integrity: sha512-kBbPWzN8oVMLb0hOUYXhmxggL/1cJE6ydvjDIGi9EnAGUyA7cLVKQg+d/Dsm+KZwx2czGHrCmMVLiyg8s5JPKw==}
     engines: {node: '>=10.10.0'}
@@ -2766,7 +2782,7 @@ packages:
       rxjs: 6.6.7
       semver: 7.3.4
       tmp: 0.2.1
-      tslib: 2.4.1
+      tslib: 2.5.0
       yargs: 17.6.2
       yargs-parser: 21.1.1
     transitivePeerDependencies:
@@ -3497,7 +3513,7 @@ packages:
       pg: 8.8.0
       redis: 4.5.1
       sqlite3: 5.1.2
-      tslib: 2.4.1
+      tslib: 2.5.0
       uuid: 8.3.2
     transitivePeerDependencies:
       - aws-crt
@@ -8128,11 +8144,38 @@ packages:
     resolution: {integrity: sha512-bzh50DW9kTPM00T8y4o8vQg89Di9oLJVLW/KaOGIXJWP/iqCN6WKYkbNOF04vFLJhwcpYUh9ydh/+5vpOqV4YQ==}
     dev: true
 
-  /graphql-request/4.3.0_graphql@16.4.0:
-    resolution: {integrity: sha512-2v6hQViJvSsifK606AliqiNiijb1uwWp6Re7o0RTyH+uRTv/u7Uqm2g4Fjq/LgZIzARB38RZEvVBFOQOVdlBow==}
+  /graphql-config/3.4.1_f5f33advzlsfhshr7usu3gvosi:
+    resolution: {integrity: sha512-g9WyK4JZl1Ko++FSyE5Ir2g66njfxGzrDDhBOwnkoWf/t3TnnZG6BBkWP+pkqVJ5pqMJGPKHNrbew8jRxStjhw==}
+    engines: {node: '>= 10.0.0'}
+    peerDependencies:
+      graphql: ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0
+    dependencies:
+      '@endemolshinegroup/cosmiconfig-typescript-loader': 3.0.2_zujpnpxkl4z7yqcjoyqfwgzdgu
+      '@graphql-tools/graphql-file-loader': 6.2.7_graphql@15.8.0
+      '@graphql-tools/json-file-loader': 6.2.6_graphql@15.8.0
+      '@graphql-tools/load': 6.2.8_graphql@15.8.0
+      '@graphql-tools/merge': 6.2.14_graphql@15.8.0
+      '@graphql-tools/url-loader': 6.10.1_qajhxsyh4z27ur52xwwod6iuj4
+      '@graphql-tools/utils': 7.10.0_graphql@15.8.0
+      cosmiconfig: 7.0.0
+      cosmiconfig-toml-loader: 1.0.0
+      graphql: 15.8.0
+      minimatch: 3.0.4
+      string-env-interpolation: 1.0.1
+    transitivePeerDependencies:
+      - '@types/node'
+      - bufferutil
+      - encoding
+      - typescript
+      - utf-8-validate
+    dev: true
+
+  /graphql-request/5.2.0_graphql@16.4.0:
+    resolution: {integrity: sha512-pLhKIvnMyBERL0dtFI3medKqWOz/RhHdcgbZ+hMMIb32mEPa5MJSzS4AuXxfI4sRAu6JVVk5tvXuGfCWl9JYWQ==}
     peerDependencies:
       graphql: 14 - 16
     dependencies:
+      '@graphql-typed-document-node/core': 3.1.1_graphql@16.4.0
       cross-fetch: 3.1.5
       extract-files: 9.0.0
       form-data: 3.0.1
@@ -8141,11 +8184,12 @@ packages:
       - encoding
     dev: false
 
-  /graphql-request/4.3.0_graphql@16.6.0:
-    resolution: {integrity: sha512-2v6hQViJvSsifK606AliqiNiijb1uwWp6Re7o0RTyH+uRTv/u7Uqm2g4Fjq/LgZIzARB38RZEvVBFOQOVdlBow==}
+  /graphql-request/5.2.0_graphql@16.6.0:
+    resolution: {integrity: sha512-pLhKIvnMyBERL0dtFI3medKqWOz/RhHdcgbZ+hMMIb32mEPa5MJSzS4AuXxfI4sRAu6JVVk5tvXuGfCWl9JYWQ==}
     peerDependencies:
       graphql: 14 - 16
     dependencies:
+      '@graphql-typed-document-node/core': 3.1.1_graphql@16.6.0
       cross-fetch: 3.1.5
       extract-files: 9.0.0
       form-data: 3.0.1
@@ -8161,7 +8205,7 @@ packages:
       graphql: ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
     dependencies:
       graphql: 15.8.0
-      tslib: 2.4.1
+      tslib: 2.5.0
     dev: true
 
   /graphql-tag/2.12.6_graphql@16.6.0:
@@ -8171,7 +8215,7 @@ packages:
       graphql: ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
     dependencies:
       graphql: 16.6.0
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /graphql/15.8.0:
     resolution: {integrity: sha512-5gghUc24tP9HRznNpV2+FIoq3xKkj5dTQqf4v0CpdPbFVwFkWoxOM+o+2OC9ZSvjEMTjfmG9QT+gcvggTwW1zw==}
@@ -10216,7 +10260,7 @@ packages:
       tar-stream: 2.2.0
       tmp: 0.2.1
       tsconfig-paths: 3.14.1
-      tslib: 2.4.1
+      tslib: 2.5.0
       v8-compile-cache: 2.3.0
       yargs: 17.6.2
       yargs-parser: 21.1.1
@@ -10832,8 +10876,8 @@ packages:
     engines: {node: '>=4'}
     dev: false
 
-  /postcss/8.4.19:
-    resolution: {integrity: sha512-h+pbPsyhlYj6N2ozBmHhHrs9DzGmbaarbLvWipMRO7RLS+v4onj26MPFXA5OBYFxyqYhUJK456SwDcY9H2/zsA==}
+  /postcss/8.4.21:
+    resolution: {integrity: sha512-tP7u/Sn/dVxK2NnruI4H9BG+x+Wxz6oeZ1cJ8P6G/PZY0IKk4k/63TDsQf2kQq3+qoJeLm2kIBUNlZe3zgb4Zg==}
     engines: {node: ^10 || ^12 || >=14}
     dependencies:
       nanoid: 3.3.4
@@ -12640,8 +12684,17 @@ packages:
   /tslib/1.14.1:
     resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
 
-  /tslib/2.4.1:
-    resolution: {integrity: sha512-tGyy4dAjRIEwI7BzsB0lynWgOpfqjUdq91XXAlIWD2OwKBH7oCl/GZG/HT4BOHrTlPMOASlMQ7veyTqpmRcrNA==}
+  /tslib/2.0.3:
+    resolution: {integrity: sha512-uZtkfKblCEQtZKBF6EBXVZeQNl82yqtDQdv+eck8u7tdPxjLu2/lp5/uPW+um2tpuxINHWy3GhiccY7QgEaVHQ==}
+    dev: true
+
+  /tslib/2.1.0:
+    resolution: {integrity: sha512-hcVC3wYEziELGGmEEXue7D75zbwIIVUMWAVbHItGPx0ziyXxrOMQx4rQEVEV45Ut/1IotuEvwqPopzIOkDMf0A==}
+    dev: true
+
+  /tslib/2.2.0:
+    resolution: {integrity: sha512-gS9GVHRU+RGn5KQM2rllAlR3dU6m7AcpJKdtH8gFvQiC4Otgk98XnmMU+nZenHt/+VhnBPWwgrJsyrdcw6i23w==}
+    dev: true
 
   /tslib/2.5.0:
     resolution: {integrity: sha512-336iVw3rtn2BUK7ORdIAHTyxHGRIHVReokCR3XjbckJMK7ms8FysBfhLR8IXnAgy7T0PTPNBWKiH514FOW/WSg==}
@@ -13119,7 +13172,7 @@ packages:
         optional: true
     dependencies:
       esbuild: 0.14.54
-      postcss: 8.4.19
+      postcss: 8.4.21
       resolve: 1.22.1
       rollup: 2.79.1
     optionalDependencies:
@@ -13142,7 +13195,7 @@ packages:
         optional: true
     dependencies:
       esbuild: 0.14.54
-      postcss: 8.4.19
+      postcss: 8.4.21
       resolve: 1.22.1
       rollup: 2.79.1
       sass: 1.56.1

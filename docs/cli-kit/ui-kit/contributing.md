@@ -15,7 +15,6 @@
     - [`TokenizedText`](#tokenizedtext)
     - [`FullScreen`](#fullscreen)
     - [`TextAnimation`](#textanimation)
-    - [`TextWithBackground`](#textwithbackground)
 - [Helpful tips](#helpful-tips)
   - [Handling user input](#handling-user-input)
   - [Components that deal with async functions](#components-that-deal-with-async-functions)
@@ -196,12 +195,6 @@ a very tall UI and don't want Ink to [delete the history when it renders](https:
 At the moment this component simply animates text with a rainbow effect, however it can be extended to support more animations.
 If you wish to do so you can take a look at how [chalk-animation](https://github.com/bokub/chalk-animation/blob/master/index.js)
 implemented animations and take inspiration from there.
-
-#### `TextWithBackground`
-
-Because backgrounds are inverted space characters, adding background color to `Box` [is not trivial](https://github.com/vadimdemedes/ink/issues/469).
-For this use case we've added a simple `TextWithBackground` component that can render only plain strings (no `TokenItem`)
-and will be only fullscreen, meaning it won't have the width of the box it's included in.
 
 ## Helpful tips
 

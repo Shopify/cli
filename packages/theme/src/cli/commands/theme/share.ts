@@ -5,7 +5,6 @@ import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 
 export default class Share extends ThemeCommand {
   static description =
@@ -26,12 +25,11 @@ export default class Share extends ThemeCommand {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Share)
-    const directory = flags.path ? resolvePath(flags.path) : cwd()
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Share.cli2Flags})
 
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
-    await execCLI2(['theme', 'share', directory, ...flagsToPass], {adminSession})
+    await execCLI2(['theme', 'share', flags.path, ...flagsToPass], {adminSession})
   }
 }

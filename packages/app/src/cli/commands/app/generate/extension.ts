@@ -4,7 +4,6 @@ import Command from '../../../utilities/app-command.js'
 import generate from '../../../services/generate.js'
 import {Args, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 
 export default class AppGenerateExtension extends Command {
   static description = 'Scaffold an Extension.'
@@ -68,10 +67,8 @@ export default class AppGenerateExtension extends Command {
       cmd_scaffold_type_owner: '@shopify/app',
     }))
 
-    const directory = flags.path ? resolvePath(flags.path) : cwd()
-
     await generate({
-      directory,
+      directory: flags.path,
       reset: flags.reset,
       apiKey: flags['api-key'],
       type: flags.type,

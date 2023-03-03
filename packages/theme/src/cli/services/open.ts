@@ -10,17 +10,16 @@ export async function open(
   adminSession: AdminSession,
   options: {development: boolean; live: boolean; editor: boolean; theme: string | undefined},
 ) {
-  let themeId = options.theme
-  if (options.development) {
-    const theme = await new DevelopmentThemeManager(adminSession).find()
-    themeId = theme.id.toString()
-  }
-
+  const developmentThemeManager = new DevelopmentThemeManager(adminSession)
+  const developmentTheme = (
+    await (options.development ? developmentThemeManager.find() : developmentThemeManager.fetch())
+  )?.id
   const theme = await findOrSelectTheme(adminSession, {
     header: 'Select a theme to open',
+    developmentTheme,
     filter: {
       live: options.live,
-      theme: themeId,
+      theme: options.development ? `${developmentTheme}` : options.theme,
     },
   })
 

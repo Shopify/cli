@@ -124,7 +124,16 @@ ${outputToken.json(JSON.stringify(rules))}
         }
       },
       footer: {
-        title: 'Press `p` to open your browser. Press `q` to quit.',
+        shortcuts: [
+          {
+            key: 'p',
+            action: 'open your browser',
+          },
+          {
+            key: 'q',
+            action: 'quit',
+          },
+        ],
         subTitle: `Preview URL: ${previewUrl}`,
       },
     }
