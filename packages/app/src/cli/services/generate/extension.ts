@@ -82,7 +82,8 @@ async function extensionInit(options: ExtensionInitOptions): Promise<string> {
       await uiExtensionInit({...(options as UIExtensionInitOptions), extensionDirectory})
       break
     case 'template': {
-      throw new Error('Not implemented yet: "template" case')
+      await functionExtensionInit({...(options as FunctionExtensionInitOptions), extensionDirectory})
+      break
     }
   }
   return relativizePath(extensionDirectory)

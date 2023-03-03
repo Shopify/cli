@@ -24,19 +24,12 @@ interface GenerateExtensionOutput {
 
 export function buildChoices(specifications: GenericSpecification[]) {
   return specifications
-    .map((type) => {
-      const choiceWithoutGroup = {
-        label: type.externalName,
-        value: type.identifier,
+    .map((spec) => {
+      return {
+        label: spec.externalName,
+        value: spec.identifier,
+        group: spec.group || extensionTypesGroups.find((group) => includes(group.extensions, spec.identifier))?.name,
       }
-      const group = extensionTypesGroups.find((group) => includes(group.extensions, type.identifier))
-      if (group) {
-        return {
-          ...choiceWithoutGroup,
-          group: group.name,
-        }
-      }
-      return choiceWithoutGroup
     })
     .sort((c1, c2) => c1.label.localeCompare(c2.label))
 }
