@@ -3,8 +3,7 @@ import useLayout from '../hooks/use-layout.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {isUnitTest} from '../../../../public/node/context/local.js'
 import {handleCtrlC} from '../../ui.js'
-import {isTruthy} from '../../context/utilities.js'
-import {Box, Text, useInput} from 'ink'
+import {Box, Text, useInput, useStdin} from 'ink'
 import React, {useRef, useState} from 'react'
 
 const loadingBarChar = '▀'
@@ -60,6 +59,7 @@ function Tasks<TContext>({tasks, silent = isUnitTest()}: React.PropsWithChildren
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
   const [state, setState] = useState<TasksState>(TasksState.Loading)
   const ctx = useRef<TContext>({} as TContext)
+  const {isRawModeSupported} = useStdin()
 
   const runTasks = async () => {
     for (const task of tasks) {
@@ -92,7 +92,7 @@ function Tasks<TContext>({tasks, silent = isUnitTest()}: React.PropsWithChildren
         return null
       }
     },
-    {isActive: !isUnitTest() || !isTruthy(process.env.CI)},
+    {isActive: isRawModeSupported},
   )
 
   if (silent) {
