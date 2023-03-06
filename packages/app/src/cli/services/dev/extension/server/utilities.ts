@@ -2,7 +2,7 @@ import {UIExtension} from '../../../../models/app/extensions.js'
 import {getUIExtensionResourceURL} from '../../../../utilities/extensions/configuration.js'
 import {ExtensionDevOptions} from '../../extension.js'
 import {getExtensionPointTargetSurface} from '../utilities.js'
-import * as http from '@shopify/cli-kit/node/http'
+import {createError, H3Error, ServerResponse, sendError as h3SendError} from 'h3'
 
 export function getRedirectUrl(extension: UIExtension, options: ExtensionDevOptions): string {
   const {url: resourceUrl} = getUIExtensionResourceURL(extension.configuration.type, options)
@@ -65,6 +65,6 @@ export function getExtensionUrl(extension: UIExtension, options: ExtensionDevOpt
   return extensionUrl.toString()
 }
 
-export function sendError(response: http.ServerResponse, error: Partial<http.H3Error>) {
-  http.sendError(response.event, http.createError(error))
+export function sendError(response: ServerResponse, error: Partial<H3Error>) {
+  h3SendError(response.event, createError(error))
 }

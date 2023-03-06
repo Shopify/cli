@@ -15,7 +15,7 @@ import {UIExtensionPayload} from '../payload/models.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
 import {describe, expect, it, vi} from 'vitest'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
-import * as http from '@shopify/cli-kit/node/http'
+import * as http from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 function getMockRequest({context = {}, headers = {}}) {

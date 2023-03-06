@@ -3,7 +3,7 @@ import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {getHTML} from '../templates.js'
 import {fileExists, isDirectory, readFile, findPathUp} from '@shopify/cli-kit/node/fs'
-import {IncomingMessage, ServerResponse, sendRedirect, send} from '@shopify/cli-kit/node/http'
+import {IncomingMessage, ServerResponse, sendRedirect, send} from 'h3'
 import {joinPath, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
