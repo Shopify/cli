@@ -1,15 +1,15 @@
 import {Text} from 'ink'
-import React from 'react'
+import React, {FunctionComponent} from 'react'
 
-interface Props {
+interface FilePathProps {
   filePath: string
 }
 
 /**
  * `FilePath` displays a path to a file.
  */
-const FilePath: React.FC<Props> = ({filePath}: React.PropsWithChildren<Props>): JSX.Element => {
-  return <Text>{filePath}</Text>
+const FilePath: FunctionComponent<FilePathProps> = ({filePath}): JSX.Element => {
+  return <Text italic>{filePath}</Text>
 }
 
 export {FilePath}

@@ -1,12 +1,21 @@
 import {collectLog, consoleLog, Logger, LogLevel, outputWhereAppropriate} from '../../public/node/output.js'
-import {isUnitTest} from '../../public/node/environment/local.js'
+import {isUnitTest} from '../../public/node/context/local.js'
 import {ReactElement} from 'react'
 import {Key, render as inkRender, RenderOptions} from 'ink'
 import treeKill from 'tree-kill'
 import {EventEmitter} from 'events'
 
-export function renderOnce(element: JSX.Element, logLevel: LogLevel = 'info', logger: Logger = consoleLog) {
-  const {output, unmount} = renderString(element)
+interface RenderOnceOptions {
+  logLevel?: LogLevel
+  logger?: Logger
+  renderOptions?: RenderOptions
+}
+
+export function renderOnce(
+  element: JSX.Element,
+  {logLevel = 'info', logger = consoleLog, renderOptions}: RenderOnceOptions,
+) {
+  const {output, unmount} = renderString(element, renderOptions)
 
   if (output) {
     if (isUnitTest()) collectLog(logLevel, output)
@@ -14,6 +23,8 @@ export function renderOnce(element: JSX.Element, logLevel: LogLevel = 'info', lo
   }
 
   unmount()
+
+  return output
 }
 
 export function render(element: JSX.Element, options?: RenderOptions) {
@@ -28,6 +39,7 @@ interface Instance {
 
 export class OutputStream extends EventEmitter {
   columns: number
+  readonly frames: string[] = []
   private _lastFrame?: string
 
   constructor(options: {columns: number}) {
@@ -36,6 +48,7 @@ export class OutputStream extends EventEmitter {
   }
 
   write = (frame: string) => {
+    this.frames.push(frame)
     this._lastFrame = frame
   }
 
@@ -44,15 +57,16 @@ export class OutputStream extends EventEmitter {
   }
 }
 
-export const renderString = (element: ReactElement): Instance => {
-  const stdout = new OutputStream({columns: process.stdout.columns})
-  const stderr = new OutputStream({columns: process.stderr.columns})
+export const renderString = (element: ReactElement, renderOptions?: RenderOptions): Instance => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const stdout = (renderOptions?.stdout as any) ?? new OutputStream({columns: process.stdout.columns})
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const stderr = (renderOptions?.stderr as any) ?? new OutputStream({columns: process.stderr.columns})
 
   const instance = inkRender(element, {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    stdout: stdout as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    stderr: stderr as any,
+    stdout,
+
+    stderr,
     debug: true,
     exitOnCtrlC: false,
     patchConsole: false,

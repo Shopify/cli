@@ -1,0 +1,13 @@
+.Tooltip {
+  display: inline-block;
+}
+
+.Tooltip:hover {
+   cursor: help;
+}
+
+.TooltipUnderline {
+  text-align: baseline;
+  border-bottom: 1px dotted var(--dc-color-grey-500);
+  margin-bottom: -1px;
+}

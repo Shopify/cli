@@ -2,9 +2,9 @@ import {dirname} from './path.js'
 import {createFileWriteStream, fileExistsSync, mkdirSync, unlinkFileSync} from './fs.js'
 import {buildHeaders, httpsAgent, sanitizedHeadersOutput} from '../../private/node/api/headers.js'
 import {outputContent, outputDebug} from '../../public/node/output.js'
+import {debugLogResponseInfo} from '../../private/node/api.js'
 import FormData from 'form-data'
 import nodeFetch, {RequestInfo, RequestInit} from 'node-fetch'
-import {performance} from 'perf_hooks'
 
 export {
   createApp,
@@ -18,6 +18,8 @@ export {
   sendRedirect,
   H3Error,
 } from 'h3'
+
+export {FetchError} from 'node-fetch'
 
 /**
  * Create a new FormData object.
@@ -43,8 +45,7 @@ export type Response = ReturnType<typeof nodeFetch>
  * @returns A promise that resolves with the response.
  */
 export async function fetch(url: RequestInfo, init?: RequestInit): Response {
-  const response = await nodeFetch(url, init)
-  return response
+  return debugLogResponseInfo({url: url.toString(), request: nodeFetch(url, init)})
 }
 
 /**
@@ -65,15 +66,11 @@ export async function shopifyFetch(url: RequestInfo, init?: RequestInit): Respon
     },
   }
 
-  outputDebug(outputContent`
-Sending ${options.method ?? 'GET'} request to URL ${url.toString()} and headers:
+  outputDebug(outputContent`Sending ${options.method ?? 'GET'} request to URL ${url.toString()}
+With request headers:
 ${sanitizedHeadersOutput((options?.headers ?? {}) as {[header: string]: string})}
 `)
-  const t0 = performance.now()
-  const response = await nodeFetch(url, {...init, agent: await httpsAgent()})
-  const t1 = performance.now()
-  outputDebug(`Request to ${url.toString()} completed with status ${response.status} in ${Math.round(t1 - t0)} ms`)
-  return response
+  return debugLogResponseInfo({url: url.toString(), request: nodeFetch(url, {...init, agent: await httpsAgent()})})
 }
 
 /**

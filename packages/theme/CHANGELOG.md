@@ -1,5 +1,117 @@
 # @shopify/theme
 
+## 3.44.1-pre.0
+
+### Patch Changes
+
+- 25fc42ae2: Fix: Run ruby with shopify bin file as an argument
+- Updated dependencies [25fc42ae2]
+- Updated dependencies [b2e066fc0]
+- Updated dependencies [657593b1a]
+  - @shopify/cli-kit@3.44.1-pre.0
+
+## 3.44.0
+
+### Minor Changes
+
+- 84284bd27: Introduce the hidden/beta `shopify theme console` command
+- 8b7c94940: Fix: The CLI should not report IO messages when the `--json` flag is passed
+
+### Patch Changes
+
+- 7925a40b2: Fix loading JS functions when there are UI extensions. Improve theme dev loading time.
+- d2adeb5ec: Extract the ownership of host themes to the CLI3
+- Updated dependencies [999a2fc79]
+- Updated dependencies [b61c5972c]
+- Updated dependencies [d44250676]
+- Updated dependencies [c8e75ac24]
+- Updated dependencies [fb22cb013]
+- Updated dependencies [159df5d07]
+- Updated dependencies [2def6f113]
+- Updated dependencies [ef3846d91]
+- Updated dependencies [3a75ed0a7]
+- Updated dependencies [d2adeb5ec]
+  - @shopify/cli-kit@3.44.0
+
+## 3.43.0
+
+### Patch Changes
+
+- Updated dependencies [f732207fa]
+- Updated dependencies [4b0cc57ce]
+- Updated dependencies [b6f93cfa7]
+  - @shopify/cli-kit@3.43.0
+
+## 3.42.0
+
+### Patch Changes
+
+- 3b8951631: Do not overwrite `theme` parameter if present
+- Updated dependencies [2203d4e6f]
+  - @shopify/cli-kit@3.42.0
+
+## 3.41.2
+
+### Patch Changes
+
+- @shopify/cli-kit@3.41.2
+
+## 3.41.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.41.1
+
+## 3.41.0
+
+### Patch Changes
+
+- Updated dependencies [9d9480341]
+  - @shopify/cli-kit@3.41.0
+
+## 3.40.3
+
+### Patch Changes
+
+- @shopify/cli-kit@3.40.3
+
+## 3.40.2
+
+### Patch Changes
+
+- Updated dependencies [7c0b13944]
+- Updated dependencies [7ca9a667d]
+  - @shopify/cli-kit@3.40.2
+
+## 3.40.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.40.1
+
+## 3.40.0
+
+### Minor Changes
+
+- b69bee85c: Add an alias to the `shopify theme serve` command
+
+### Patch Changes
+
+- 1661f80a2: Various copy improvements
+- 99b88caa7: Fix to include customer JSON templates in `theme package`
+- 5ba869fb2: Extract the ownership of development themes
+- 228328a6d: Remove old `ui` module from cli-kit exports
+- Updated dependencies [91e15fed4]
+- Updated dependencies [cfb4b7f68]
+- Updated dependencies [9e74a9fc0]
+- Updated dependencies [1661f80a2]
+- Updated dependencies [ae22dfbaf]
+- Updated dependencies [7734a7ed3]
+- Updated dependencies [5ba869fb2]
+- Updated dependencies [228328a6d]
+- Updated dependencies [c30eb6978]
+  - @shopify/cli-kit@3.40.0
+
 ## 3.39.0
 
 ### Patch Changes

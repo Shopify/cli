@@ -1,15 +1,13 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from './npm.js'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 import {installNodeModules, PackageJson, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, moduleDirectory, normalizePath} from '@shopify/cli-kit/node/path'
 import {platform} from 'os'
 
-beforeEach(async () => {
-  vi.mock('os')
-  vi.mock('@shopify/cli-kit/node/node-package-manager')
-  vi.mock('@shopify/cli-kit/common/version', () => ({CLI_KIT_VERSION: '1.2.3'}))
-})
+vi.mock('os')
+vi.mock('@shopify/cli-kit/node/node-package-manager')
+vi.mock('@shopify/cli-kit/common/version', () => ({CLI_KIT_VERSION: '1.2.3'}))
 
 describe('updateCLIDependencies', () => {
   it('updates the @shopify/cli and @shopify/app dependency version', async () => {

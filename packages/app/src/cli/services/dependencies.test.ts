@@ -1,14 +1,12 @@
 import {installAppDependencies} from './dependencies.js'
 import {AppInterface} from '../models/app/app.js'
 import {testApp} from '../models/app/app.test-data.js'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {installNPMDependenciesRecursively} from '@shopify/cli-kit/node/node-package-manager'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 
-beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/node-package-manager')
-  vi.mock('@shopify/cli-kit/node/ui')
-})
+vi.mock('@shopify/cli-kit/node/node-package-manager')
+vi.mock('@shopify/cli-kit/node/ui')
 
 describe('installAppDependencies', () => {
   test('installs dependencies recursively', async () => {

@@ -1,4 +1,3 @@
-import TextWithBackground from './TextWithBackground.js'
 import {OutputProcess} from '../../../../public/node/output.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {AbortController} from '../../../../public/node/abort.js'
@@ -7,17 +6,22 @@ import React, {FunctionComponent, useCallback, useState} from 'react'
 import {Box, Key, Static, Text, useInput} from 'ink'
 import stripAnsi from 'strip-ansi'
 import treeKill from 'tree-kill'
+import figures from 'figures'
 import {Writable} from 'stream'
 
 export type WritableStream = (process: OutputProcess, index: number) => Writable
 
-export interface Props {
+interface Shortcut {
+  key: string
+  action: string
+}
+export interface ConcurrentOutputProps {
   processes: OutputProcess[]
   abortController: AbortController
   showTimestamps?: boolean
   onInput?: (input: string, key: Key, exit: () => void) => void
   footer?: {
-    title: string
+    shortcuts: Shortcut[]
     subTitle?: string
   }
 }
@@ -51,7 +55,6 @@ interface Chunk {
  * 2022-10-10 13:11:03 | frontend   | > cross-env NODE_ENV=development node vite-server.js
  * 2022-10-10 13:11:03 | frontend   |
  * 2022-10-10 13:11:03 | frontend   |
- * 2022-10-10 13:11:03 | backend    | [nodemon] 2.0.19
  * 2022-10-10 13:11:03 | backend    |
  * 2022-10-10 13:11:03 | backend    | [nodemon] to restart at any time, enter `rs`
  * 2022-10-10 13:11:03 | backend    | [nodemon] watching path(s): backend/
@@ -61,7 +64,7 @@ interface Chunk {
  *
  * ```
  */
-const ConcurrentOutput: FunctionComponent<Props> = ({
+const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   processes,
   abortController,
   showTimestamps = true,
@@ -80,7 +83,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({
   const writableStream = (process: OutputProcess, index: number) => {
     return new Writable({
       write(chunk, _encoding, next) {
-        const lines = stripAnsi(chunk.toString('ascii').replace(/(\n)$/, '')).split(/\n/)
+        const lines = stripAnsi(chunk.toString('utf8').replace(/(\n)$/, '')).split(/\n/)
 
         setProcessOutput((previousProcessOutput) => [
           ...previousProcessOutput,
@@ -129,7 +132,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({
             <Box flexDirection="column" key={index}>
               {chunk.lines.map((line, index) => (
                 <Box key={index} flexDirection="row">
-                  {showTimestamps && (
+                  {showTimestamps ? (
                     <Box>
                       <Box marginRight={1}>
                         <Text color={chunk.color}>
@@ -141,7 +144,7 @@ const ConcurrentOutput: FunctionComponent<Props> = ({
                         |
                       </Text>
                     </Box>
-                  )}
+                  ) : null}
 
                   <Box width={prefixColumnSize} marginX={1}>
                     <Text color={chunk.color}>{chunk.prefix}</Text>
@@ -160,20 +163,24 @@ const ConcurrentOutput: FunctionComponent<Props> = ({
           )
         }}
       </Static>
-      {footer && (
-        <Box marginY={1} flexDirection="column">
-          <Box flexGrow={1}>
-            <TextWithBackground text={footer.title} inverse paddingX={2} paddingY={1} />
+      {footer ? (
+        <Box marginY={1} flexDirection="column" flexGrow={1}>
+          <Box flexDirection="column">
+            {footer.shortcuts.map((shortcut, index) => (
+              <Text key={index}>
+                {figures.pointerSmall} Press <Text bold>{shortcut.key}</Text> | {shortcut.action}
+              </Text>
+            ))}
           </Box>
-          {footer.subTitle && (
-            <Box marginTop={1} flexGrow={1}>
+          {footer.subTitle ? (
+            <Box marginTop={1}>
               <Text>{footer.subTitle}</Text>
             </Box>
-          )}
+          ) : null}
         </Box>
-      )}
+      ) : null}
     </>
   )
 }
 
-export default ConcurrentOutput
+export {ConcurrentOutput}

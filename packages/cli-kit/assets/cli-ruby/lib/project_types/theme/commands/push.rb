@@ -40,11 +40,17 @@ module Theme
           flags[:ignores] |= pattern
         end
         parser.on("-f", "--force") { flags[:force] = true }
+        parser.on("--development-theme-id=DEVELOPMENT_THEME_ID") do |development_theme_id|
+          flags[:development_theme_id] = development_theme_id.to_i
+        end
       end
 
       def call(_args, name)
         root = root_value(options, name)
         return unless valid_theme_directory?(root)
+
+        development_theme_id = options.flags[:development_theme_id]
+        ShopifyCLI::DB.set(development_theme_id: development_theme_id) unless development_theme_id.nil?
 
         delete = !options.flags[:nodelete]
         theme = find_theme(root, **options.flags)
@@ -67,6 +73,7 @@ module Theme
         begin
           syncer.start_threads
           if options.flags[:json]
+            syncer.standard_reporter.disable!
             syncer.upload_theme!(delete: delete)
           else
             CLI::UI::Frame.open(@ctx.message("theme.push.info.pushing", theme.name, theme.id, theme.shop)) do

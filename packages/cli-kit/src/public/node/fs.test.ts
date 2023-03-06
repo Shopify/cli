@@ -10,7 +10,6 @@ import {
   chmod,
   removeFile,
   stripUpPath,
-  fileContentPrettyFormat,
   touchFile,
   appendFile,
   generateRandomNameForSubdirectory,
@@ -19,12 +18,11 @@ import {
 } from './fs.js'
 import {joinPath} from './path.js'
 import {takeRandomFromArray} from '../common/array.js'
-import {beforeAll, describe, expect, it, test, vi} from 'vitest'
+import {describe, expect, it, test, vi} from 'vitest'
 import FastGlob from 'fast-glob'
 
-beforeAll(() => {
-  vi.mock('../common/array.js')
-})
+vi.mock('../common/array.js')
+vi.mock('fast-glob')
 
 describe('inTemporaryDirectory', () => {
   it('ties the lifecycle of the temporary directory to the lifecycle of the callback', async () => {
@@ -183,68 +181,6 @@ describe('stripUp', () => {
   })
 })
 
-describe('format', () => {
-  it('formats JavaScript file content', async () => {
-    // Given
-    const unformatedContent = 'const foo = "bar"'
-
-    // When
-    const formattedContent = await fileContentPrettyFormat(unformatedContent, {path: 'someFile.js'})
-
-    // Then
-    await expect(formattedContent).toEqual(`const foo = 'bar';\n`)
-  })
-
-  it('formats TypeScript file content', async () => {
-    // Given
-    const unformatedContent = 'const array: string[] = ["bar", "baz",]'
-
-    // When
-    const formattedContent = await fileContentPrettyFormat(unformatedContent, {path: 'someFile.ts'})
-
-    // Then
-    await expect(formattedContent).toEqual("const array: string[] = ['bar', 'baz'];\n")
-  })
-
-  it('formats TypeScript file content with JSX', async () => {
-    // Given
-    const unformatedContent = 'const C = (p: any) => <>{ p.foo }</>'
-
-    // When
-    const formattedContent = await fileContentPrettyFormat(unformatedContent, {path: 'someFile.tsx'})
-
-    // Then
-    await expect(formattedContent).toEqual('const C = (p: any) => <>{p.foo}</>;\n')
-  })
-
-  it('formats CSS file content', async () => {
-    // Given
-    const unformatedContent = 'body { color: red; }'
-
-    // When
-    const formattedContent = await fileContentPrettyFormat(unformatedContent, {path: 'someFile.css'})
-
-    // Then
-    await expect(formattedContent).toEqual(
-      `body {
-  color: red;
-}
-`,
-    )
-  })
-
-  it('formats HTML file content', async () => {
-    // Given
-    const unformatedContent = `<div      >much extra space</div>`
-
-    // When
-    const formattedContent = await fileContentPrettyFormat(unformatedContent, {path: 'someFile.html'})
-
-    // Then
-    await expect(formattedContent).toEqual('<div>much extra space</div>\n')
-  })
-})
-
 describe('appendFile', () => {
   test('it appends content to an existing file', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
@@ -294,9 +230,6 @@ describe('readFileSync', () => {
 
 describe('glob', () => {
   it('calls fastGlob with dot:true if no dot option is passed', async () => {
-    // Given
-    vi.mock('fast-glob')
-
     // When
     await glob('pattern')
 
@@ -305,9 +238,6 @@ describe('glob', () => {
   })
 
   it('calls fastGlob with dot option if passed', async () => {
-    // Given
-    vi.mock('fast-glob')
-
     // When
     await glob('pattern', {dot: false})
 

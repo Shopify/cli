@@ -1,0 +1,76 @@
+name: Checks
+
+on:
+  pull_request:
+    paths-ignore:
+      - '**.md'
+
+env:
+  DEBUG: '1'
+  SHOPIFY_CLI_ENV: development
+  SHOPIFY_CONFIG: debug
+  PNPM_VERSION: '7.18.1'
+  RUBY_VERSION: '3.1.2'
+  BUNDLER_VERSION: '2.3.18'
+
+jobs:
+  benchmark:
+    name: benchmark with Node ${{ matrix.node }} in ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: ['ubuntu-latest']
+        node: ['18.7.0']
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout [main]
+        with:
+          fetch-depth: 0
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Build
+        run: pnpm nx run-many --all --skip-nx-cache --target=build --exclude=features
+      - name: Benchmark
+        working-directory: workspace
+        id: benchmark
+        run: pnpm nx run benchmark
+      - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # pin@v2.3.1
+        if: steps.benchmark.outputs.report != ''
+        with:
+          header: Benchmark
+          message: ${{ steps.benchmark.outputs.report }}
+          recreate: true
+  type-diff:
+    name: Type-diff with Node ${{ matrix.node }} in ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: ['ubuntu-latest']
+        node: ['18.7.0']
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout [main]
+        with:
+          fetch-depth: 0
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Build
+        run: pnpm nx run-many --all --skip-nx-cache --target=build --exclude=features
+      - name: Type-diff
+        working-directory: workspace
+        id: type-diff
+        run: pnpm nx run type-diff
+      - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # pin@v2.3.1
+        if: steps.type-diff.outputs.report != ''
+        with:
+          header: Type-diff
+          message: ${{ steps.type-diff.outputs.report }}
+          recreate: true

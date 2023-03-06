@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
-import {isUnitTest, isVerbose} from './environment/local.js'
+import {isUnitTest, isVerbose} from './context/local.js'
 import {PackageManager} from './node-package-manager.js'
-import colors from './colors.js'
+import colors from '../../private/node/colors.js'
 import {
   ColorContentToken,
   CommandContentToken,
@@ -20,8 +20,6 @@ import stripAnsi from 'strip-ansi'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
 import type {Change} from 'diff'
-
-export {default as logUpdate} from 'log-update'
 
 export type Logger = Writable | ((message: string) => void)
 

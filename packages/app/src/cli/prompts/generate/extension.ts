@@ -3,6 +3,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {outputWarn} from '@shopify/cli-kit/node/output'
 
 interface GenerateExtensionOptions {
   name?: string
@@ -11,6 +12,7 @@ interface GenerateExtensionOptions {
   directory: string
   app: AppInterface
   extensionSpecifications: GenericSpecification[]
+  unavailableExtensions: string[]
   reset: boolean
 }
 
@@ -48,10 +50,11 @@ const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promi
   if (!extensionType) {
     if (extensionFlavor) {
       allExtensions = allExtensions.filter((spec) =>
-        spec.supportedFlavors.map((elem) => elem.value).includes(extensionFlavor!),
+        spec.supportedFlavors.map((elem) => elem.value as string).includes(extensionFlavor!),
       )
     }
 
+    outputWarn(`You've reached the limit for these types of extensions: ${options.unavailableExtensions.join(', ')}\n`)
     // eslint-disable-next-line require-atomic-updates
     extensionType = await renderSelectPrompt({
       message: 'Type of extension?',

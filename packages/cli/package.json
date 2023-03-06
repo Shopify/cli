@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli",
-  "version": "3.39.0",
+  "version": "3.44.1-pre.0",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
   "keywords": [
@@ -65,7 +65,7 @@
           "import/first": "off",
           "import/no-unresolved": "off",
           "node/shebang": "off",
-          "rulesdir/specific-imports-in-bootstrap-code": [
+          "@shopify/cli/specific-imports-in-bootstrap-code": [
             "error",
             {
               "static": [
@@ -80,7 +80,7 @@
           "src/index.ts"
         ],
         "rules": {
-          "rulesdir/specific-imports-in-bootstrap-code": [
+          "@shopify/cli/specific-imports-in-bootstrap-code": [
             "error",
             {
               "static": [
@@ -93,20 +93,20 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "1.21.0",
-    "@oclif/plugin-commands": "2.2.0",
-    "@oclif/plugin-help": "5.1.12",
-    "@oclif/plugin-plugins": "2.1.0",
-    "@shopify/cli-kit": "3.39.0"
+    "@oclif/core": "2.1.4",
+    "@oclif/plugin-commands": "2.2.10",
+    "@oclif/plugin-help": "5.2.6",
+    "@oclif/plugin-plugins": "2.3.2",
+    "@shopify/cli-kit": "3.44.1-pre.0",
+    "@shopify/plugin-did-you-mean": "3.44.1-pre.0"
   },
   "devDependencies": {
-    "@shopify/app": "3.39.0",
-    "@shopify/cli-hydrogen": "3.39.0",
-    "@shopify/theme": "3.39.0",
+    "@shopify/app": "3.44.1-pre.0",
+    "@shopify/theme": "3.44.1-pre.0",
     "@types/node": "14.18.36",
-    "@vitest/coverage-istanbul": "^0.26.3",
+    "@vitest/coverage-istanbul": "0.28.5",
     "vite": "^2.9.13",
-    "vitest": "^0.26.3"
+    "vitest": "^0.28.5"
   },
   "engines": {
     "node": ">=14.17.0"
@@ -127,6 +127,7 @@
     "plugins": [
       "@shopify/app",
       "@shopify/theme",
+      "@shopify/plugin-did-you-mean",
       "@shopify/cli-hydrogen",
       "@oclif/plugin-help",
       "@oclif/plugin-plugins",
@@ -135,17 +136,18 @@
     "scope": "shopify",
     "topicSeparator": " ",
     "topics": {
-      "hydrogen": {
-        "description": "Build Hydrogen storefronts."
-      },
       "theme": {
         "description": "Build Liquid themes."
       },
       "app": {
         "description": "Build Shopify apps."
       },
-      "app env": {
-        "description": "Pull or display app and extensions environment variables."
+      "app:env": {
+        "description": "Manage environment variables."
+      },
+      "app:function": {
+        "description": "Manage Shopify Functions.",
+        "hidden": true
       },
       "auth": {
         "description": "Auth operations."
@@ -153,14 +155,17 @@
       "kitchen-sink": {
         "description": "View the available UI kit components.",
         "hidden": true
+      },
+      "webhook": {
+        "description": "Manage webhooks."
       }
     },
     "additionalHelpFlags": [
       "-h"
     ],
     "hooks": {
-      "prerun": "@shopify/cli-kit/node/hooks/prerun",
-      "postrun": "@shopify/cli-kit/node/hooks/postrun"
+      "prerun": "./dist/hooks/prerun.js",
+      "postrun": "./dist/hooks/postrun.js"
     }
   }
 }

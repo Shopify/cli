@@ -11,15 +11,14 @@ export default class Upgrade extends Command {
     path: Flags.string({
       hidden: false,
       description: 'The path to your project directory.',
-      parse: (input, _) => Promise.resolve(resolvePath(input)),
       env: 'SHOPIFY_FLAG_PATH',
+      parse: async (input) => resolvePath(input),
+      default: async () => cwd(),
     }),
   }
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Upgrade)
-    const directory = flags.path ? resolvePath(flags.path) : cwd()
-    const currentVersion = CLI_KIT_VERSION
-    await upgrade(directory, currentVersion)
+    await upgrade(flags.path, CLI_KIT_VERSION)
   }
 }

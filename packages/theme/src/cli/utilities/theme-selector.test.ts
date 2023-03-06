@@ -1,6 +1,6 @@
 import {fetchStoreThemes} from './theme-selector/fetch.js'
 import {findOrSelectTheme, findThemes} from './theme-selector.js'
-import {Theme} from '../models/theme.js'
+import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {test, describe, vi, expect} from 'vitest'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 
@@ -38,6 +38,30 @@ describe('findOrSelectTheme', () => {
 
     // Then
     expect(theme).toBe(selectedTheme)
+  })
+
+  test('flags development theme as [yours]', async () => {
+    // Given
+    const header = 'Select a theme to open'
+    const themes = [theme(7, 'development'), theme(8, 'development')]
+    vi.mocked(fetchStoreThemes).mockResolvedValue(themes)
+    vi.mocked(renderSelectPrompt).mockResolvedValue(themes[0])
+
+    // When
+    await findOrSelectTheme(session, {
+      header,
+      developmentTheme: themes[0]!.id,
+      filter: {},
+    })
+
+    // Then
+    expect(renderSelectPrompt).toHaveBeenCalledWith({
+      message: header,
+      choices: [
+        {label: 'theme 7 [development] [yours]', value: themes[0]},
+        {label: 'theme 8 [development]', value: themes[1]},
+      ],
+    })
   })
 
   test('returns selected theme when filter is specified', async () => {

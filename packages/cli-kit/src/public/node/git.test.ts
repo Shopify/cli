@@ -1,6 +1,6 @@
 import * as git from './git.js'
 import {appendFileSync} from './fs.js'
-import {hasGit} from './environment/local.js'
+import {hasGit} from './context/local.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import simpleGit from 'simple-git'
 
@@ -23,11 +23,12 @@ const simpleGitProperties = {
   checkoutLocalBranch: mockedCheckout,
 }
 
+vi.mock('./context/local.js')
+vi.mock('./fs.js')
+vi.mock('simple-git')
+
 beforeEach(() => {
-  vi.mock('./environment/local.js')
   vi.mocked(hasGit).mockResolvedValue(true)
-  vi.mock('./fs.js')
-  vi.mock('simple-git')
   vi.mocked<any>(simpleGit).mockReturnValue(simpleGitProperties)
 })
 

@@ -22,7 +22,8 @@ export default class Init extends Command {
     path: Flags.string({
       char: 'p',
       env: 'SHOPIFY_FLAG_PATH',
-      parse: (input, _) => Promise.resolve(resolvePath(input)),
+      parse: async (input) => resolvePath(input),
+      default: async () => cwd(),
       hidden: false,
     }),
     template: Flags.string({
@@ -47,14 +48,13 @@ export default class Init extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Init)
-    const directory = flags.path ? resolvePath(flags.path) : cwd()
 
     this.validateTemplateValue(flags.template)
 
     const promptAnswers = await initPrompt({
       name: flags.name,
       template: flags.template,
-      directory,
+      directory: flags.path,
     })
 
     await initService({
@@ -62,7 +62,7 @@ export default class Init extends Command {
       packageManager: flags['package-manager'],
       template: promptAnswers.template,
       local: flags.local,
-      directory,
+      directory: flags.path,
     })
   }
 

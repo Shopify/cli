@@ -1,13 +1,21 @@
 import {open} from './open.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
-import {Theme} from '../models/theme.js'
-import {test, describe, expect, vi} from 'vitest'
+import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
+import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
+import {test, describe, expect, vi, beforeEach} from 'vitest'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 
-vi.mock('@shopify/cli-kit/node/system')
-vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('../utilities/theme-selector.js')
+vi.mock('@shopify/cli-kit/node/system', () => {
+  return {openURL: vi.fn()}
+})
+vi.mock('@shopify/cli-kit/node/ui', () => {
+  return {renderInfo: vi.fn()}
+})
+vi.mock('../utilities/development-theme-manager.js')
+vi.mock('../utilities/theme-selector.js', () => {
+  return {findOrSelectTheme: vi.fn()}
+})
 
 const session = {
   token: 'token',
@@ -17,6 +25,11 @@ const session = {
 const theme = {
   id: 1,
   name: 'my theme',
+} as Theme
+
+const developmentTheme = {
+  id: 2,
+  name: 'development theme',
 } as Theme
 
 const options = {
@@ -51,6 +64,7 @@ describe('open', () => {
 
   test('renders the theme links', async () => {
     // Given
+    vi.spyOn(DevelopmentThemeManager.prototype, 'fetch').mockResolvedValue(theme)
     vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
 
     // When
@@ -82,6 +96,60 @@ describe('open', () => {
           },
         },
       ],
+    })
+  })
+
+  describe('findOrSelectTheme', () => {
+    const header = 'Select a theme to open'
+    const live = options.live
+
+    beforeEach(() => {
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+    })
+
+    test('should call with no development theme and no theme to filter', async () => {
+      vi.spyOn(DevelopmentThemeManager.prototype, 'fetch').mockResolvedValue(undefined)
+
+      await open(session, {...options, theme: undefined})
+
+      expect(findOrSelectTheme).toHaveBeenCalledWith(session, {
+        header,
+        developmentTheme: undefined,
+        filter: {
+          live,
+          theme: undefined,
+        },
+      })
+    })
+
+    test('should call with development theme and theme to filter', async () => {
+      vi.spyOn(DevelopmentThemeManager.prototype, 'fetch').mockResolvedValue(developmentTheme)
+
+      await open(session, options)
+
+      expect(findOrSelectTheme).toHaveBeenCalledWith(session, {
+        header,
+        developmentTheme: developmentTheme.id,
+        filter: {
+          live,
+          theme: options.theme,
+        },
+      })
+    })
+
+    test('should call with development theme to filter', async () => {
+      vi.spyOn(DevelopmentThemeManager.prototype, 'find').mockResolvedValue(developmentTheme)
+
+      await open(session, {...options, development: true})
+
+      expect(findOrSelectTheme).toHaveBeenCalledWith(session, {
+        header,
+        developmentTheme: developmentTheme.id,
+        filter: {
+          live,
+          theme: developmentTheme.id.toString(),
+        },
+      })
     })
   })
 })

@@ -1,7 +1,9 @@
 import {createExtension} from './create-extension.js'
 import {ExtensionCreateQuery} from '../../api/graphql/extension_create.js'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+
+vi.mock('@shopify/cli-kit/node/api/partners')
 
 const EXTENSION = {
   id: '1',
@@ -19,10 +21,6 @@ const EXTENSION = {
     ],
   },
 }
-
-beforeEach(() => {
-  vi.mock('@shopify/cli-kit/node/api/partners')
-})
 
 describe('createApp', () => {
   it('sends request to create extension and returns it', async () => {

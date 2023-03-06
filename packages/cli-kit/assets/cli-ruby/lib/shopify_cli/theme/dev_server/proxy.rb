@@ -28,6 +28,7 @@ module ShopifyCLI
         SESSION_COOKIE_NAME = "_secure_session_id"
         SESSION_COOKIE_REGEXP = /#{SESSION_COOKIE_NAME}=(\h+)/
         SESSION_COOKIE_MAX_AGE = 60 * 60 * 23 # 1 day - leeway of 1h
+        IGNORED_ENDPOINTS = ["shopify/monorail", "mini-profiler-resources", "web-pixels-manager"]
 
         def initialize(ctx, theme, param_builder)
           @ctx = ctx
@@ -40,6 +41,8 @@ module ShopifyCLI
         end
 
         def call(env)
+          return [204, {}, []] if IGNORED_ENDPOINTS.any? { |endpoint| env["PATH_INFO"].include?(endpoint) }
+
           headers = extract_http_request_headers(env)
           headers["Host"] = shop
           headers["Cookie"] = add_session_cookie(headers["Cookie"])
@@ -76,6 +79,17 @@ module ShopifyCLI
           body = patch_body(env, response.body)
           body = [body] unless body.respond_to?(:each)
           [response.code, headers, body]
+        end
+
+        def secure_session_id
+          if secure_session_id_expired?
+            @ctx.debug("Refreshing preview _secure_session_id cookie")
+            response = request("HEAD", "/", query: [[:preview_theme_id, theme_id]])
+            @secure_session_id = extract_secure_session_id_from_response_headers(response)
+            @last_session_cookie_refresh = Time.now
+          end
+
+          @secure_session_id
         end
 
         private
@@ -164,17 +178,6 @@ module ShopifyCLI
           headers["set-cookie"][SESSION_COOKIE_REGEXP, 1]
         end
 
-        def secure_session_id
-          if secure_session_id_expired?
-            @ctx.debug("Refreshing preview _secure_session_id cookie")
-            response = request("HEAD", "/", query: [[:preview_theme_id, theme_id]])
-            @secure_session_id = extract_secure_session_id_from_response_headers(response)
-            @last_session_cookie_refresh = Time.now
-          end
-
-          @secure_session_id
-        end
-
         def get_response_headers(response, env)
           response_headers = normalize_headers(
             response.respond_to?(:headers) ? response.headers : response.to_hash,
@@ -184,7 +187,8 @@ module ShopifyCLI
           # (Taken from Rack::Proxy)
           response_headers.reject! { |k| HOP_BY_HOP_HEADERS.include?(k.downcase) }
 
-          if response_headers["location"]&.include?("myshopify.com")
+          if response_headers["location"]&.include?("myshopify.com") ||
+            response_headers["location"]&.include?("spin.dev")
             response_headers["location"].gsub!(%r{(https://#{shop})}, "http://#{host(env)}")
           end
 

@@ -1,5 +1,5 @@
-import SelectInput, {Props as SelectProps, Item as SelectItem, Item} from './SelectInput.js'
-import InfoTable, {Props as InfoTableProps} from './Prompts/InfoTable.js'
+import {SelectInput, SelectInputProps, Item as SelectItem} from './SelectInput.js'
+import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import {InlineToken, LinkToken, TokenItem, TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import {messageWithPunctuation} from '../utilities.js'
@@ -8,21 +8,24 @@ import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
 import figures from 'figures'
 import ansiEscapes from 'ansi-escapes'
 
-export interface Props<T> {
+export interface SelectPromptProps<T> {
   message: TokenItem<Exclude<InlineToken, LinkToken>>
-  choices: SelectProps<T>['items']
+  choices: SelectInputProps<T>['items']
   onSubmit: (value: T) => void
   infoTable?: InfoTableProps['table']
   defaultValue?: T
+  submitWithShortcuts?: boolean
 }
 
+// eslint-disable-next-line react/function-component-definition
 function SelectPrompt<T>({
   message,
   choices,
   infoTable,
   onSubmit,
   defaultValue,
-}: React.PropsWithChildren<Props<T>>): ReactElement | null {
+  submitWithShortcuts = false,
+}: React.PropsWithChildren<SelectPromptProps<T>>): ReactElement | null {
   if (choices.length === 0) {
     throw new Error('SelectPrompt requires at least one choice')
   }
@@ -40,21 +43,28 @@ function SelectPrompt<T>({
     }
   }, [])
 
+  const submitAnswer = useCallback(
+    (answer: SelectItem<T>) => {
+      if (stdout && height >= stdout.rows) {
+        stdout.write(ansiEscapes.clearTerminal)
+      }
+      setSubmitted(true)
+      unmountInk()
+      onSubmit(answer.value)
+    },
+    [stdout, stdout?.rows, height, onSubmit],
+  )
+
   useInput(
     useCallback(
       (input, key) => {
         handleCtrlC(input, key)
 
         if (key.return && answer) {
-          if (stdout && height >= stdout.rows) {
-            stdout.write(ansiEscapes.clearTerminal)
-          }
-          setSubmitted(true)
-          unmountInk()
-          onSubmit(answer.value)
+          submitAnswer(answer)
         }
       },
-      [answer, onSubmit, height],
+      [answer, submitAnswer],
     ),
   )
 
@@ -66,11 +76,11 @@ function SelectPrompt<T>({
         </Box>
         <TokenizedText item={messageWithPunctuation(message)} />
       </Box>
-      {infoTable && !submitted && (
+      {infoTable && !submitted ? (
         <Box marginLeft={7} marginTop={1}>
           <InfoTable table={infoTable} />
         </Box>
-      )}
+      ) : null}
       {submitted ? (
         <Box>
           <Box marginRight={2}>
@@ -84,8 +94,17 @@ function SelectPrompt<T>({
           <SelectInput
             defaultValue={initialValue}
             items={choices}
-            onChange={(item: Item<T> | undefined) => {
+            infoMessage={
+              submitWithShortcuts
+                ? `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter or a shortcut to confirm`
+                : undefined
+            }
+            onChange={({item, usedShortcut}) => {
               setAnswer(item)
+
+              if (submitWithShortcuts && usedShortcut && item) {
+                submitAnswer(item)
+              }
             }}
           />
         </Box>

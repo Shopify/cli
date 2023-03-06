@@ -4,15 +4,15 @@ import BaseCommand from '../../public/node/base-command.js'
 import {CommandContent} from '../../public/node/hooks/prerun.js'
 import * as metadata from '../../public/node/metadata.js'
 import {platformAndArch} from '../../public/node/os.js'
-import {Interfaces} from '@oclif/core'
-import {ciPlatform, cloudEnvironment, macAddress} from '@shopify/cli-kit/node/environment/local'
+import {Command, Interfaces} from '@oclif/core'
+import {ciPlatform, cloudEnvironment, macAddress} from '@shopify/cli-kit/node/context/local'
 import {cwd} from '@shopify/cli-kit/node/path'
 
 interface StartOptions {
   commandContent: CommandContent
   args: string[]
   currentTime?: number
-  commandClass?: Interfaces.Command.Class | typeof BaseCommand
+  commandClass?: Command.Class | typeof BaseCommand
 }
 
 export async function startAnalytics({

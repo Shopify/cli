@@ -18,12 +18,9 @@ module ShopifyCLI
           ShopifyCLI::DB.stubs(:exists?).with(:shop).returns(true)
           ShopifyCLI::DB
             .stubs(:get)
-            .with(:shop)
-            .returns("dev-theme-server-store.myshopify.com")
-          ShopifyCLI::DB
-            .stubs(:get)
             .with(:development_theme_id)
             .returns("123456789")
+          stub_shop
 
           root = ShopifyCLI::ROOT + "/test/fixtures/theme"
 
@@ -50,6 +47,39 @@ module ShopifyCLI
           stub_session_id_request
 
           request.get("/")
+        end
+
+        def test_monorail_requests_are_ignored
+          path = "/cli/sfr/.well-known/shopify/monorail/unstable/produce_batch?_fd=0&pb=0"
+          stub_session_id_request
+
+          request.post(path)
+
+          assert_requested(:post,
+            "https://dev-theme-server-store.myshopify.com#{path}",
+            times: 0)
+        end
+
+        def test_miniprofiler_requests_are_ignored
+          path = "cli/sfr/mini-profiler-resources/includes.js"
+          stub_session_id_request
+
+          request.get(path)
+
+          assert_requested(:get,
+            "https://dev-theme-server-store.myshopify.com#{path}",
+            times: 0)
+        end
+
+        def test_webpixels_requests_are_ignored
+          path = "cli/sfr/web-pixels-manager@0.0.225@487839awab38cc13pfd6bd3d2m9a3137/sandbox/?_fd=0&pb=0"
+          stub_session_id_request
+
+          request.get(path)
+
+          assert_requested(:get,
+            "https://dev-theme-server-store.myshopify.com#{path}",
+            times: 0)
         end
 
         def test_get_is_proxied_to_theme_access_api_when_password_is_provided
@@ -201,6 +231,21 @@ module ShopifyCLI
           @proxy.stubs(:host).returns("127.0.0.1:8282")
 
           stub_session_id_request
+          response = request.get("/")
+
+          assert_equal("http://127.0.0.1:8282/password", response.headers["Location"])
+        end
+
+        def test_storefront_with_spin_redirect_headers_are_rewritten
+          stub_shop("eu.spin.dev")
+          stub_request(:get, "https://dev-theme-server-store.eu.spin.dev/?_fd=0&pb=0")
+            .with(headers: default_proxy_headers("eu.spin.dev"))
+            .to_return(status: 302, headers: {
+              "Location" => "https://dev-theme-server-store.eu.spin.dev/password",
+            })
+          @proxy.stubs(:host).returns("127.0.0.1:8282")
+
+          stub_session_id_request("eu.spin.dev")
           response = request.get("/")
 
           assert_equal("http://127.0.0.1:8282/password", response.headers["Location"])
@@ -440,21 +485,21 @@ module ShopifyCLI
           Rack::MockRequest.new(@proxy)
         end
 
-        def default_proxy_headers
+        def default_proxy_headers(domain = "myshopify.com")
           {
             "Accept-Encoding" => "none",
             "Cookie" => "_secure_session_id=#{SECURE_SESSION_ID}",
-            "Host" => "dev-theme-server-store.myshopify.com",
+            "Host" => "dev-theme-server-store.#{domain}",
             "X-Forwarded-For" => "",
             "User-Agent" => "Shopify CLI",
           }
         end
 
-        def stub_session_id_request
-          stub_request(:head, "https://dev-theme-server-store.myshopify.com/?_fd=0&pb=0&preview_theme_id=123456789")
+        def stub_session_id_request(domain = "myshopify.com")
+          stub_request(:head, "https://dev-theme-server-store.#{domain}/?_fd=0&pb=0&preview_theme_id=123456789")
             .with(
               headers: {
-                "Host" => "dev-theme-server-store.myshopify.com",
+                "Host" => "dev-theme-server-store.#{domain}",
               },
             )
             .to_return(
@@ -463,6 +508,13 @@ module ShopifyCLI
                 "Set-Cookie" => "_secure_session_id=#{SECURE_SESSION_ID}",
               },
             )
+        end
+
+        def stub_shop(domain = "myshopify.com")
+          ShopifyCLI::DB
+            .stubs(:get)
+            .with(:shop)
+            .returns("dev-theme-server-store.#{domain}")
         end
       end
     end

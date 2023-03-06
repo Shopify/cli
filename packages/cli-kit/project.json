@@ -21,6 +21,22 @@
           "cwd": "packages/cli-kit"
         }
       },
+      "docs:generate": {
+        "executor": "nx:run-commands",
+        "outputs": ["docs"],
+        "options": {
+          "command": "node ./scripts/generate-docs.js",
+          "cwd": "packages/cli-kit"
+        }
+      },
+      "docs:open": {
+        "executor": "nx:run-commands",
+        "dependsOn": ["docs:generate"],
+        "options": {
+          "command": "open ../../docs/api/cli-kit/index.html",
+          "cwd": "packages/cli-kit"
+        }
+      },
       "lint": {
         "executor": "nx:run-commands",
         "dependsOn": ["lint:js"],
@@ -39,7 +55,7 @@
       "lint:js": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm eslint \"src/**/*.ts\"",
+          "command": "pnpm eslint \"src/**/*.{ts,tsx}\"",
           "cwd": "packages/cli-kit"
         }
       },
@@ -54,7 +70,7 @@
       "lint:js:fix": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm eslint 'src/**/*.ts' --fix",
+          "command": "pnpm eslint 'src/**/*.{ts,tsx}' --fix",
           "cwd": "packages/cli-kit"
         }
       },
@@ -83,7 +99,6 @@
       },
       "test:js": {
         "executor": "nx:run-commands",
-        "dependsOn": ["build"],
         "options": {
           "command": "pnpm vitest run",
           "cwd": "packages/cli-kit"
@@ -99,7 +114,6 @@
       },
       "test:watch": {
         "executor": "nx:run-commands",
-        "dependsOn": ["build"],
         "options": {
           "command": "pnpm vitest watch",
           "cwd": "packages/cli-kit"
@@ -109,6 +123,13 @@
         "executor": "nx:run-commands",
         "options": {
           "command": "pnpm tsc --noEmit",
+          "cwd": "packages/cli-kit"
+        }
+      },
+      "refresh-documentation": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "FORCE_HYPERLINK=0 pnpm ts-node-esm ./bin/refresh-documentation.ts",
           "cwd": "packages/cli-kit"
         }
       }

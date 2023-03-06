@@ -4,6 +4,7 @@ import {FunctionSpec} from '../../models/extensions/functions.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
+import {buildGraphqlTypes} from '../function/build.js'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
@@ -43,11 +44,25 @@ interface ExtensionDirectory {
   extensionDirectory: string
 }
 
-export type ExtensionFlavor = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react' | string
+export type ExtensionFlavor = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react' | 'rust' | 'wasm'
 
 type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionSpec> & ExtensionDirectory
 type UIExtensionInitOptions = ExtensionInitOptions<UIExtensionSpec> & ExtensionDirectory
 type ThemeExtensionInitOptions = ExtensionInitOptions<ThemeExtensionSpec> & ExtensionDirectory
+
+export type TemplateFlavor = 'javascript' | 'rust' | 'wasm'
+function getTemplateFlavor(flavor: ExtensionFlavor): TemplateFlavor {
+  switch (flavor) {
+    case 'vanilla-js':
+    case 'react':
+    case 'typescript':
+    case 'typescript-react':
+      return 'javascript'
+    case 'rust':
+    case 'wasm':
+      return flavor
+  }
+}
 
 async function extensionInit(options: ExtensionInitOptions): Promise<string> {
   const extensionDirectory = await ensureExtensionDirectoryExists({app: options.app, name: options.name})
@@ -82,7 +97,7 @@ async function uiExtensionInit({
       title: 'Installing dependencies',
       task: async () => {
         await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor)
-        const requiredDependencies = getRuntimeDependencies({specification, extensionFlavor})
+        const requiredDependencies = getExtensionRuntimeDependencies({specification, extensionFlavor})
         await addNPMDependenciesIfNeeded(requiredDependencies, {
           packageManager: app.packageManager,
           type: 'prod',
@@ -122,19 +137,21 @@ async function uiExtensionInit({
   await renderTasks(tasks)
 }
 
-type SrcFileExtension = 'ts' | 'tsx' | 'js' | 'jsx'
+type SrcFileExtension = 'ts' | 'tsx' | 'js' | 'jsx' | 'rs' | 'wasm'
 function getSrcFileExtension(extensionFlavor: ExtensionFlavor): SrcFileExtension {
   const flavorToSrcFileExtension: {[key in ExtensionFlavor]: SrcFileExtension} = {
     'vanilla-js': 'js',
     react: 'jsx',
     typescript: 'ts',
     'typescript-react': 'tsx',
+    rust: 'rs',
+    wasm: 'wasm',
   }
 
   return flavorToSrcFileExtension[extensionFlavor] ?? 'js'
 }
 
-export function getRuntimeDependencies({
+export function getExtensionRuntimeDependencies({
   specification,
   extensionFlavor,
 }: Pick<UIExtensionInitOptions, 'specification' | 'extensionFlavor'>): DependencyVersion[] {
@@ -145,6 +162,17 @@ export function getRuntimeDependencies({
   const rendererDependency = specification.dependency
   if (rendererDependency) {
     dependencies.push(rendererDependency)
+  }
+  return dependencies
+}
+
+export function getFunctionRuntimeDependencies(
+  specification: FunctionSpec,
+  templateFlavor: string,
+): DependencyVersion[] {
+  const dependencies: DependencyVersion[] = []
+  if (templateFlavor === 'javascript') {
+    dependencies.push({name: '@shopify/shopify_function', version: '0.0.3'}, {name: 'javy', version: '0.0.3'})
   }
   return dependencies
 }
@@ -170,30 +198,71 @@ async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, 
 
 async function functionExtensionInit(options: FunctionExtensionInitOptions) {
   const url = options.cloneUrl || options.specification.templateURL
-  const spec = options.specification
+  const specification = options.specification
+
   await inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = joinPath(tmpDir, 'download')
+    const extensionFlavor = options.extensionFlavor
+    const templateFlavor = extensionFlavor && getTemplateFlavor(extensionFlavor)
+    const taskList = []
 
-    await renderTasks([
-      {
-        title: `Generating ${spec.externalName} extension...`,
+    if (templateFlavor === 'javascript') {
+      taskList.push({
+        title: 'Installing additional dependencies',
         task: async () => {
-          await mkdir(templateDownloadDir)
-          await downloadGitRepository({
-            repoUrl: url,
-            destination: templateDownloadDir,
-            shallow: true,
+          const requiredDependencies = getFunctionRuntimeDependencies(specification, templateFlavor)
+          await addNPMDependenciesIfNeeded(requiredDependencies, {
+            packageManager: options.app.packageManager,
+            type: 'prod',
+            directory: options.app.directory,
           })
-          const templatePath = spec.templatePath(options.extensionFlavor ?? blocks.functions.defaultLanguage)
-          const origin = joinPath(templateDownloadDir, templatePath)
-          await recursiveLiquidTemplateCopy(origin, options.extensionDirectory, options)
-          const configYamlPath = joinPath(options.extensionDirectory, 'script.config.yml')
-          if (await fileExists(configYamlPath)) {
-            await removeFile(configYamlPath)
-          }
         },
+      })
+    }
+
+    taskList.push({
+      title: `Generating ${specification.externalName} extension`,
+      task: async () => {
+        await mkdir(templateDownloadDir)
+        await downloadGitRepository({
+          repoUrl: url,
+          destination: templateDownloadDir,
+          shallow: true,
+        })
+        const templatePath = specification.templatePath(templateFlavor ?? blocks.functions.defaultLanguage)
+        const origin = joinPath(templateDownloadDir, templatePath)
+        await recursiveLiquidTemplateCopy(origin, options.extensionDirectory, {
+          flavor: extensionFlavor ?? '',
+          ...options,
+        })
+
+        if (templateFlavor === 'javascript') {
+          const srcFileExtension = getSrcFileExtension(extensionFlavor ?? 'vanilla-js')
+          if (extensionFlavor) {
+            await changeIndexFileExtension(options.extensionDirectory, srcFileExtension)
+          }
+        }
+
+        const configYamlPath = joinPath(options.extensionDirectory, 'script.config.yml')
+        if (await fileExists(configYamlPath)) {
+          await removeFile(configYamlPath)
+        }
       },
-    ])
+    })
+
+    if (templateFlavor === 'javascript') {
+      taskList.push({
+        title: `Building ${specification.externalName} graphql types`,
+        task: async () => {
+          await buildGraphqlTypes(
+            {directory: options.extensionDirectory, isJavaScript: true},
+            {stdout: process.stdout, stderr: process.stderr},
+          )
+        },
+      })
+    }
+
+    await renderTasks(taskList)
   })
 }
 

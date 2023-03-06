@@ -1,21 +1,24 @@
-import {coerceSemverVersion} from './semver.js'
 import {AbortSignal} from './abort.js'
 import {platformAndArch} from './os.js'
 import {captureOutput, exec} from './system.js'
 import * as file from './fs.js'
 import {joinPath, dirname, cwd} from './path.js'
 import {AbortError, AbortSilentError} from './error.js'
+import {getEnvironmentVariables} from './environment.js'
+import {isSpinEnvironment, spinFqdn} from './context/spin.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
 import {outputContent, outputToken} from '../../public/node/output.js'
-import {isTruthy} from '../../private/node/environment/utilities.js'
+import {isTruthy} from '../../private/node/context/utilities.js'
+import {coerceSemverVersion} from '../../private/node/semver.js'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
 
-export const RubyCLIVersion = '2.34.0'
+export const RubyCLIVersion = '2.35.0'
 const ThemeCheckVersion = '1.14.0'
-const MinBundlerVersion = '2.3.8'
+const MinBundlerVersion = '2.3.11'
 const MinRubyVersion = '2.7.5'
+export const MinWdmWindowsVersion = '0.1.0'
 
 interface ExecCLI2Options {
   // Contains token and store to pass to CLI 2.0, which will be set as environment variables
@@ -40,11 +43,12 @@ interface ExecCLI2Options {
  * @param options - Options to customize the execution of cli2.
  */
 export async function execCLI2(args: string[], options: ExecCLI2Options = {}): Promise<void> {
-  const embedded = !isTruthy(process.env.SHOPIFY_CLI_BUNDLED_THEME_CLI) && !process.env.SHOPIFY_CLI_2_0_DIRECTORY
+  const currentEnv = getEnvironmentVariables()
+  const embedded = !isTruthy(currentEnv.SHOPIFY_CLI_BUNDLED_THEME_CLI) && !currentEnv.SHOPIFY_CLI_2_0_DIRECTORY
 
   await installCLIDependencies(options.stdout ?? process.stdout, embedded)
   const env: NodeJS.ProcessEnv = {
-    ...process.env,
+    ...currentEnv,
     SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: options.storefrontToken,
     SHOPIFY_CLI_ADMIN_AUTH_TOKEN: options.adminSession?.token,
     SHOPIFY_SHOP: options.adminSession?.storeFqdn,
@@ -54,13 +58,12 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
     // environment. We use this to specify our own Gemfile for CLI2, which exists
     // outside the user's project directory.
     BUNDLE_GEMFILE: joinPath(await shopifyCLIDirectory(embedded), 'Gemfile'),
+    ...(await getSpinEnvironmentVariables()),
   }
 
   try {
-    const executable = embedded ? await embeddedCLIExecutable() : bundleExecutable()
-    const finalArgs = embedded ? args : ['exec', 'shopify'].concat(args)
-
-    await exec(executable, finalArgs, {
+    const shopifyExecutable = embedded ? [rubyExecutable(), await embeddedCLIExecutable()] : ['shopify']
+    await exec(bundleExecutable(), ['exec', ...shopifyExecutable, ...args], {
       stdio: 'inherit',
       cwd: options.directory ?? cwd(),
       env,
@@ -153,7 +156,7 @@ async function installCLIDependencies(stdout: Writable, embedded = false) {
   const exists = await file.fileExists(localCLI)
 
   if (!exists) stdout.write('Installing theme dependencies...')
-  const usingLocalCLI2 = embedded || isTruthy(process.env.SHOPIFY_CLI_2_0_DIRECTORY)
+  const usingLocalCLI2 = embedded || isTruthy(getEnvironmentVariables().SHOPIFY_CLI_2_0_DIRECTORY)
   await validateRubyEnv()
   if (usingLocalCLI2) {
     await bundleInstallLocalShopifyCLI(localCLI)
@@ -252,14 +255,9 @@ async function createThemeCheckCLIWorkingDirectory(): Promise<void> {
  * It creates the Gemfile to install The Ruby CLI and the dependencies.
  */
 async function createShopifyCLIGemfile(): Promise<void> {
-  const gemPath = joinPath(await shopifyCLIDirectory(), 'Gemfile')
-  const gemFileContent = ["source 'https://rubygems.org'", `gem 'shopify-cli', '${RubyCLIVersion}'`]
-  const {platform} = platformAndArch()
-  if (platform === 'windows') {
-    // 'wdm' is required by 'listen', see https://github.com/Shopify/cli/issues/780
-    gemFileContent.push("gem 'wdm', '>= 0.1.0'")
-  }
-  await file.writeFile(gemPath, gemFileContent.join('\n'))
+  const directory = await shopifyCLIDirectory()
+  const gemfileContent = getBaseGemfileContent().concat(getWindowsDependencies())
+  await addContentToGemfile(directory, gemfileContent)
 }
 
 /**
@@ -276,28 +274,60 @@ async function createThemeCheckGemfile(): Promise<void> {
  * @param directory - Directory where CLI2 Gemfile is located.
  */
 async function bundleInstallLocalShopifyCLI(directory: string): Promise<void> {
-  await exec(bundleExecutable(), ['install'], {cwd: directory})
+  await addContentToGemfile(directory, getWindowsDependencies())
+  await localBundleInstall(directory)
+}
+
+/**
+ * Build the list of lines with the base content of the Gemfile.
+ *
+ * @returns List of lines with base content.
+ */
+function getBaseGemfileContent() {
+  return ["source 'https://rubygems.org'", `gem 'shopify-cli', '${RubyCLIVersion}'`]
+}
+
+/**
+ * Build the list of Windows dependencies.
+ *
+ * @returns List of Windows dependencies.
+ */
+function getWindowsDependencies() {
+  if (platformAndArch().platform === 'windows') {
+    // 'wdm' is required by 'listen', see https://github.com/Shopify/cli/issues/780
+    // Because it's a Windows-only dependency, it's not included in the `.gemspec` or `Gemfile`.
+    // Otherwise it would be installed in non-Windows environments too, where it is not needed.
+    return [`gem 'wdm', '>= ${MinWdmWindowsVersion}'`]
+  }
+  return []
+}
+
+/**
+ * Append contente to a Gemfile located in the given directory.
+ *
+ * @param gemfileDirectory - Directory where Gemfile is located.
+ * @param content - Content to append to the Gemfile.
+ */
+async function addContentToGemfile(gemfileDirectory: string, content: string[]) {
+  const gemfilePath = joinPath(gemfileDirectory, 'Gemfile')
+  if (!(await file.fileExists(gemfilePath))) await file.touchFile(gemfilePath)
+  const gemContent = await file.readFile(gemfilePath, {encoding: 'utf8'})
+  const contentNoExisting = content.filter((line) => !gemContent.includes(line)).join('\n')
+  if (contentNoExisting) await file.appendFile(gemfilePath, contentNoExisting.concat('\n'))
 }
 
 /**
  * It runs bundle install for the CLI-managed copy of the Ruby CLI.
  */
 async function bundleInstallShopifyCLI() {
-  const cliDirectory = await shopifyCLIDirectory()
-  await exec(bundleExecutable(), ['config', 'set', '--local', 'path', cliDirectory], {
-    cwd: cliDirectory,
-  })
-  await exec(bundleExecutable(), ['install'], {cwd: cliDirectory})
+  await localBundleInstall(await shopifyCLIDirectory())
 }
 
 /**
  * It runs bundle install for the CLI-managed copy of theme-check.
  */
 async function bundleInstallThemeCheck() {
-  await exec(bundleExecutable(), ['config', 'set', '--local', 'path', themeCheckDirectory()], {
-    cwd: themeCheckDirectory(),
-  })
-  await exec(bundleExecutable(), ['install'], {cwd: themeCheckDirectory()})
+  await localBundleInstall(themeCheckDirectory())
 }
 
 /**
@@ -313,7 +343,7 @@ async function shopifyCLIDirectory(embedded = false): Promise<string> {
   })) as string
   const bundledDirectory = joinPath(pathConstants.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
 
-  return embedded ? embeddedDirectory : process.env.SHOPIFY_CLI_2_0_DIRECTORY ?? bundledDirectory
+  return embedded ? embeddedDirectory : getEnvironmentVariables().SHOPIFY_CLI_2_0_DIRECTORY ?? bundledDirectory
 }
 
 /**
@@ -343,7 +373,7 @@ export async function version(): Promise<string | undefined> {
  * @returns The value of the environment variable.
  */
 function getRubyBinDir(): string | undefined {
-  return process.env.SHOPIFY_RUBY_BINDIR
+  return getEnvironmentVariables().SHOPIFY_RUBY_BINDIR
 }
 
 /**
@@ -384,4 +414,32 @@ function gemExecutable(): string {
 async function embeddedCLIExecutable(): Promise<string> {
   const cliDirectory = await shopifyCLIDirectory(true)
   return joinPath(cliDirectory, 'bin', 'shopify')
+}
+
+/**
+ * Get environment variables required by the CLI2 in case the CLI3 is running in a Spin environment.
+ *
+ * @returns The environment variables to set.
+ */
+async function getSpinEnvironmentVariables() {
+  if (!isSpinEnvironment()) return {}
+
+  return {
+    SPIN_FQDN: await spinFqdn(),
+    SPIN: '1',
+  }
+}
+
+/**
+ * It sets bundler's path to the given directory and runs bundle install.
+ * This is desirable because the gems will be isolated from the system gems.
+ *
+ * @param directory - Directory where the Gemfile is located.
+ */
+async function localBundleInstall(directory: string): Promise<void> {
+  const bundle = bundleExecutable()
+  await exec(bundle, ['config', 'set', '--local', 'path', directory], {
+    cwd: directory,
+  })
+  await exec(bundle, ['install', '--without', 'development', 'test'], {cwd: directory})
 }

@@ -6,15 +6,16 @@ import {
   loadLocalExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
 import {describe, it, expect, vi, beforeEach} from 'vitest'
-import {isShopify, isUnitTest} from '@shopify/cli-kit/node/environment/local'
+import {areJavaScriptFunctionsEnabled, isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
-vi.mock('@shopify/cli-kit/node/environment/local')
+vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/ui')
 
 beforeEach(() => {
   vi.mocked(isShopify).mockResolvedValue(true)
   vi.mocked(isUnitTest).mockResolvedValue(true)
+  vi.mocked(areJavaScriptFunctionsEnabled).mockResolvedValue(false)
 })
 
 describe('extension prompt', async () => {
@@ -34,7 +35,13 @@ describe('extension prompt', async () => {
 
   it('when name is not passed', async () => {
     const answers = {name: 'ext', extensionType: 'ui_extension'}
-    const options = {directory: '/', app: testApp(), reset: false, extensionSpecifications: allUISpecs}
+    const options = {
+      directory: '/',
+      app: testApp(),
+      reset: false,
+      extensionSpecifications: allUISpecs,
+      unavailableExtensions: [],
+    }
 
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionType)
@@ -57,6 +64,7 @@ describe('extension prompt', async () => {
       app: testApp(),
       reset: false,
       extensionSpecifications: allUISpecs,
+      unavailableExtensions: [],
     }
 
     // Given
@@ -80,6 +88,7 @@ describe('extension prompt', async () => {
       app: testApp(),
       reset: false,
       extensionSpecifications: allUISpecs,
+      unavailableExtensions: [],
     }
 
     // Given
@@ -107,6 +116,7 @@ describe('extension prompt', async () => {
       app: testApp(),
       reset: false,
       extensionSpecifications: allSpecs,
+      unavailableExtensions: [],
     }
 
     // When
@@ -127,6 +137,7 @@ describe('extension prompt', async () => {
       app: testApp(),
       reset: false,
       extensionSpecifications: allFunctionSpecs,
+      unavailableExtensions: [],
     }
 
     // Given
@@ -157,6 +168,7 @@ describe('extension prompt', async () => {
       reset: false,
       extensionFlavor: 'rust',
       extensionSpecifications: [...allFunctionSpecs, ...allUISpecs],
+      unavailableExtensions: [],
     }
 
     // only function types should be shown if flavor is rust

@@ -11,13 +11,14 @@ concurrency:
   cancel-in-progress: true
 
 defaults:
- run:
-  working-directory: ./packages/cli-kit/assets/cli-ruby
+  run:
+    working-directory: ./packages/cli-kit/assets/cli-ruby
 
 jobs:
   test:
     name: Tests with Ruby ${{ matrix.version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     strategy:
       matrix:
         version:
@@ -29,16 +30,17 @@ jobs:
           - ubuntu-20.04
           - ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set Git configuration
         run: |
-          git config --global user.email "development-lifecycle@shopify.com"
-          git config --global user.name "Development Lifecycle"
+          git config --global user.email "cli-foundations@shopify.com"
+          git config --global user.name "CLI Foundations"
 
       - name: Set up Ruby ${{ matrix.version }}
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@d3c9825d67b0d8720afdfdde5af56c79fdb38d16 # pin@v1
         with:
           ruby-version: ${{ matrix.version }}
+          bundler: 'latest'
           bundler-cache: true
 
       - name: Install Dependencies
@@ -50,6 +52,7 @@ jobs:
   rubocop:
     name: Rubocop
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     strategy:
       matrix:
         version:
@@ -57,12 +60,13 @@ jobs:
         os:
           - macos-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Ruby ${{ matrix.version }}
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@d3c9825d67b0d8720afdfdde5af56c79fdb38d16 # pin@v1
         with:
           ruby-version: ${{ matrix.version }}
+          bundler: 'latest'
           bundler-cache: true
 
       - name: Install Dependencies

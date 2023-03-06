@@ -1,5 +1,149 @@
 # @shopify/app
 
+## 3.44.1-pre.0
+
+### Patch Changes
+
+- da6a3bdf8: Adding support for the new naming convention of extension points
+- b895bb5e9: Fix template for ui_extension to not contain unsupported extensions points
+- Updated dependencies [25fc42ae2]
+- Updated dependencies [b2e066fc0]
+- Updated dependencies [657593b1a]
+  - @shopify/cli-kit@3.44.1-pre.0
+  - @shopify/plugin-ngrok@3.44.1-pre.0
+
+## 3.44.0
+
+### Patch Changes
+
+- b61c5972c: Speed up app dev by running web requests in parallel
+- 2def6f113: Use app host for frontend url in spin when available
+- 7925a40b2: Fix loading JS functions when there are UI extensions. Improve theme dev loading time.
+- 6802b0876: Always populate host theme
+- 26bee3526: Fix proxy crashing with ECONNREFUSED/ECONNRESET when a process isn't ready to receive packets.
+- d2adeb5ec: Extract the ownership of host themes to the CLI3
+- Updated dependencies [999a2fc79]
+- Updated dependencies [b61c5972c]
+- Updated dependencies [d44250676]
+- Updated dependencies [c8e75ac24]
+- Updated dependencies [fb22cb013]
+- Updated dependencies [159df5d07]
+- Updated dependencies [2def6f113]
+- Updated dependencies [ef3846d91]
+- Updated dependencies [3a75ed0a7]
+- Updated dependencies [d2adeb5ec]
+  - @shopify/cli-kit@3.44.0
+  - @shopify/plugin-ngrok@3.44.0
+
+## 3.43.0
+
+### Minor Changes
+
+- 4b0cc57ce: Theme bundling is now an opt-in feature
+
+### Patch Changes
+
+- Updated dependencies [f732207fa]
+- Updated dependencies [4b0cc57ce]
+- Updated dependencies [b6f93cfa7]
+  - @shopify/cli-kit@3.43.0
+  - @shopify/plugin-ngrok@3.43.0
+
+## 3.42.0
+
+### Minor Changes
+
+- 66653aecd: Added the template for the new cart & checkout validation function
+
+### Patch Changes
+
+- Updated dependencies [2203d4e6f]
+  - @shopify/cli-kit@3.42.0
+  - @shopify/plugin-ngrok@3.42.0
+
+## 3.41.2
+
+### Patch Changes
+
+- dd3d0c846: Update to latest version of javy and function-runner
+  - @shopify/cli-kit@3.41.2
+  - @shopify/plugin-ngrok@3.41.2
+
+## 3.41.1
+
+### Patch Changes
+
+- 830617a4d: Fix bug when deploying apps that contain only theme app extensions
+  - @shopify/cli-kit@3.41.1
+  - @shopify/plugin-ngrok@3.41.1
+
+## 3.41.0
+
+### Minor Changes
+
+- 9d9480341: Add developer experience preview for JavaScript functions
+
+### Patch Changes
+
+- Updated dependencies [9d9480341]
+  - @shopify/cli-kit@3.41.0
+  - @shopify/plugin-ngrok@3.41.0
+
+## 3.40.3
+
+### Patch Changes
+
+- 9e7e226dd: Fix dev console link not appearing
+  - @shopify/cli-kit@3.40.3
+  - @shopify/plugin-ngrok@3.40.3
+
+## 3.40.2
+
+### Patch Changes
+
+- c729e470d: Fix preview banner not showing when there are only UI extensions
+- Updated dependencies [7c0b13944]
+- Updated dependencies [7ca9a667d]
+  - @shopify/cli-kit@3.40.2
+  - @shopify/plugin-ngrok@3.40.2
+
+## 3.40.1
+
+### Patch Changes
+
+- df3f6e629: Revert change to update Checkout UI template to use the new extension format
+- 3314a972b: Fix windows not storing dev selected values correctly
+  - @shopify/cli-kit@3.40.1
+  - @shopify/plugin-ngrok@3.40.1
+
+## 3.40.0
+
+### Minor Changes
+
+- cfb4b7f68: Improve output of preview instructions in dev command
+- 9e74a9fc0: Send an app/uninstalled webhook to the app when the user selects a different app, to force the app to clean up the store's database entry
+- 64bcf07c7: Enable Shopify Plus Sandbox stores
+- 48122f791: Add the ability to migrate checkout ui extensions to the new ui extension type
+- af42f22f6: Update Checkout UI template to use the new extension format
+
+### Patch Changes
+
+- 1661f80a2: Various copy improvements
+- 228328a6d: Remove old `ui` module from cli-kit exports
+- c30eb6978: Rename experimental presets feature to environments
+- 3e94c0e0f: Fix the partnersWebIdentifier for the ui_extension specification
+- Updated dependencies [91e15fed4]
+- Updated dependencies [cfb4b7f68]
+- Updated dependencies [9e74a9fc0]
+- Updated dependencies [1661f80a2]
+- Updated dependencies [ae22dfbaf]
+- Updated dependencies [7734a7ed3]
+- Updated dependencies [5ba869fb2]
+- Updated dependencies [228328a6d]
+- Updated dependencies [c30eb6978]
+  - @shopify/cli-kit@3.40.0
+  - @shopify/plugin-ngrok@3.40.0
+
 ## 3.39.0
 
 ### Minor Changes

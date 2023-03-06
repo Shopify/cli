@@ -1,13 +1,13 @@
 import {ThemeExtension} from '../../models/app/extensions.js'
-import {ensureThemeExtensionDevEnvironment} from '../environment.js'
+import {ensureThemeExtensionDevContext} from '../context.js'
 
 export async function themeExtensionArgs(
   extension: ThemeExtension,
   apiKey: string,
   token: string,
-  options: {theme?: string; themeExtensionPort?: number},
+  options: {theme?: string; themeExtensionPort?: number; generateTmpTheme?: boolean},
 ) {
-  const extensionRegistration = await ensureThemeExtensionDevEnvironment(extension, apiKey, token)
+  const extensionRegistration = await ensureThemeExtensionDevContext(extension, apiKey, token)
   const extensionId = extensionRegistration.id
   const directory = extension.directory
   const extensionTitle = extension.localIdentifier
@@ -31,6 +31,10 @@ export async function themeExtensionArgs(
 
   if (options.themeExtensionPort) {
     args.push('--port', options.themeExtensionPort.toString())
+  }
+
+  if (options.generateTmpTheme) {
+    args.push('--generate-tmp-theme')
   }
 
   return args

@@ -1,0 +1,20 @@
+:root {
+  --tooltip-popover-max-width: 250px;
+}
+
+.Popover {
+  position: fixed;
+  background-color: var(--dc-color-grey-600);
+  color: var(--dc-color-white);
+  font-weight: 400;
+  padding: 1rem;
+  border-radius: 4px;
+  width: max-content;
+  max-width: var(--tooltip-popover-max-width);
+  white-space: pre-wrap;
+  word-break: break-word;
+  word-wrap: break-word;
+  z-index: 9999;
+  box-shadow: 0px 3px 6px -3px rgba(23, 24, 24, 0.08),
+    0px 8px 20px -4px rgba(23, 24, 24, 0.12);
+}

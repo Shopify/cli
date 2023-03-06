@@ -20,34 +20,47 @@ const { createPullRequest } = require("octokit-plugin-create-pull-request");
 const colors = require('ansi-colors')
 
 const packagingDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../packaging")
-const defaultOutputDirectory = path.join(packagingDirectory, "dist")
 
 program
   .description('Packages the CLI for distribution through package managers')
-  .requiredOption('-o, --output <string>', 'the directory where the distribution artifacts will be exported into', defaultOutputDirectory)
   .requiredOption('-p, --open-pr', 'when passed it opens a PR in the https://github.com/shopify/homebrew-shopify repository', true)
   .action(async (options) => {
     // Constants
     const version = await versionToRelease()
+    const templateVersion = getTemplateVersion(version)
     console.log(`${colors.green(colors.bold("Version to package:"))} ${version}`)
-    const outputDirectory = path.resolve(options.output)
+    const outputDirectory = path.join(packagingDirectory, templateVersion, "dist")
     console.log(`${colors.green(colors.bold("Output directory:"))} ${outputDirectory}`)
     const homebrewVariables = await getHomebrewVariables(version)
     console.log(`We'll populate the Homebrew formula with the following content:`)
     console.log(homebrewVariables)
 
     // Create formulas
-    await recursiveDirectoryCopy(path.join(packagingDirectory, "src"), outputDirectory, homebrewVariables)
+    await recursiveDirectoryCopy(path.join(packagingDirectory, templateVersion, "src"), outputDirectory, homebrewVariables)
 
     if (options.openPr) {
       console.log(`Opening a PR in shopify/homebrew-shopify to update the formula ${version}`)
+
+      const files = {}
+      switch (templateVersion) {
+        case "3":
+          files["shopify-cli.rb"] = (await readFile(path.join(outputDirectory, "shopify-cli.rb"))).toString()
+          files["shopify-cli@3.rb"] = (await readFile(path.join(outputDirectory, "shopify-cli@3.rb"))).toString()
+          break
+        case "pre":
+          files["shopify-cli-pre.rb"] = (await readFile(path.join(outputDirectory, "shopify-cli-pre.rb"))).toString()
+          break
+        case "nightly":
+          files["shopify-cli-nightly.rb"] = (await readFile(path.join(outputDirectory, "shopify-cli-nightly.rb"))).toString()
+          break
+        default:
+          throw new Error(`Unrecognized template version string ${templateVersion}`)
+      }
 
       const OctokitWithPlugin = Octokit.plugin(createPullRequest)
       const octokit = new OctokitWithPlugin({
         auth: process.env.GITHUB_TOKEN,
       });
-      const content = (await readFile(path.join(outputDirectory, `shopify-cli.rb`))).toString()
-      const content3 = (await readFile(path.join(outputDirectory, `shopify-cli@3.rb`))).toString()
 
       const response = await octokit
         .createPullRequest({
@@ -61,15 +74,22 @@ program
           forceFork: false,
           changes: [
             {
-              files: {
-                "shopify-cli.rb": content,
-                "shopify-cli@3.rb": content3,
-              },
+              files,
               commit: `Update Shopify CLI 3 formula to install the version ${version}`,
             },
           ],
         })
-      console.log(`${colors.green(colors.bold("PR opened:"))} ${response.data.html_url}`)
+      if (["pre", "nightly"].includes(templateVersion)) {
+        // Merge the PR immediately if we're releasing a pre or nightly version
+        octokit.request("PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge", {
+          owner: "Shopify",
+          repo: "homebrew-shopify",
+          pull_number: response.data.number,
+        })
+      } else {
+        // When releasing a minor version, mandate a manual review of the PR before merge
+        console.log(`${colors.green(colors.bold("PR opened:"))} ${response.data.html_url}`)
+      }
     }
   })
 
@@ -78,6 +98,13 @@ program.parse()
 async function versionToRelease() {
   const cliKitPackageJsonPath = await findUp("packages/cli-kit/package.json", {type: "file"})
   return JSON.parse(await readFile(cliKitPackageJsonPath)).version
+}
+
+function getTemplateVersion(version) {
+  if (version.includes("pre")) return "pre"
+  if (version.includes("nightly")) return "nightly"
+  if (version.match(/^3\.\d+\.\d+$/)) return "3"
+  throw `Unrecognized version string ${version}`
 }
 
 async function getHomebrewVariables(cliVersion) {
@@ -120,7 +147,8 @@ async function getSha256ForTarball(url) {
 async function recursiveDirectoryCopy(from, to, data) {
   console.log(`Generating the formula into ${to}`)
 
-  const engine = new Liquid({root: from})
+  // Must go up to `packaging` dir so nightly and pre can find the primary formula template
+  const engine = new Liquid({root: path.join(from, '../..')})
   const templateFiles = await glob(path.join(from, '**/*'), {dot: true})
 
   if (await pathExists(to)) {

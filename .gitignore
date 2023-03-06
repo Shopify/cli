@@ -113,6 +113,9 @@ fixtures/app/extensions/*/build
 # Docusaurus cache and generated files
 .docusaurus
 
+# Typedocs
+packages/*/docs/
+
 # Serverless directories
 .serverless/
 
@@ -148,3 +151,5 @@ fixtures/app/extensions/*/build
 
 packaging/dist
 !./.shadowenv.d/yarn.lisp
+
+cloudflared

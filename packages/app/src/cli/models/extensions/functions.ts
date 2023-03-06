@@ -1,14 +1,12 @@
 import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
-import {blocks, defaultFunctionsFlavors} from '../../constants.js'
-import {schema} from '@shopify/cli-kit/node/schema'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {blocks, defaultFunctionsFlavors, withJavaScriptFunctionsFlavors} from '../../constants.js'
+import {ExtensionFlavor} from '../../services/generate/extension.js'
 import {constantize} from '@shopify/cli-kit/common/string'
-import {exec} from '@shopify/cli-kit/node/system'
-import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
+import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {areJavaScriptFunctionsEnabled} from '@shopify/cli-kit/node/context/local'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
-import {Writable} from 'stream'
+import {schema} from '@shopify/cli-kit/node/schema'
 
 // Base config type that all config schemas must extend
 export type FunctionConfigType = schema.infer<typeof BaseFunctionConfigurationSchema>
@@ -24,7 +22,7 @@ export interface FunctionSpec<TConfiguration extends FunctionConfigType = Functi
   helpURL?: string
   gated: boolean
   templateURL: string
-  supportedFlavors: {name: string; value: string}[]
+  supportedFlavors: {name: string; value: ExtensionFlavor}[]
   configSchema: ZodSchemaType<TConfiguration>
   registrationLimit: number
   templatePath: (lang: string) => string
@@ -45,6 +43,7 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
   idEnvironmentVariableName: string
   localIdentifier: string
   directory: string
+  entrySourceFilePath?: string
   configuration: TConfiguration
   configurationPath: string
 
@@ -55,11 +54,13 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
     configurationPath: string
     specification: FunctionSpec<TConfiguration>
     directory: string
+    entryPath?: string
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
     this.specification = options.specification
     this.directory = options.directory
+    this.entrySourceFilePath = options.entryPath
     this.localIdentifier = basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
   }
@@ -84,37 +85,21 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
     return this.configuration.name
   }
 
-  inputQueryPath() {
+  get buildCommand() {
+    return this.configuration.build.command
+  }
+
+  get inputQueryPath() {
     return joinPath(this.directory, 'input.graphql')
   }
 
-  buildWasmPath() {
+  get buildWasmPath() {
     const relativePath = this.configuration.build.path ?? joinPath('dist', 'index.wasm')
     return joinPath(this.directory, relativePath)
   }
 
-  async build(stdout: Writable, stderr: Writable, signal: AbortSignal) {
-    const buildCommand = this.configuration.build.command
-    if (!buildCommand || buildCommand.trim() === '') {
-      stderr.write(`The function extension ${this.localIdentifier} doesn't have a build command or it's empty`)
-      stderr.write(`
-      Edit the shopify.function.extension.toml configuration file and set how to build the extension.
-
-      [build]
-      command = "{COMMAND}"
-
-      Note that the command must output a dist/index.wasm file.
-      `)
-      throw new AbortSilentError()
-    }
-    const buildCommandComponents = buildCommand.split(' ')
-    stdout.write(`Building function ${this.localIdentifier}...`)
-    await exec(buildCommandComponents[0]!, buildCommandComponents.slice(1), {
-      stdout,
-      stderr,
-      cwd: this.directory,
-      signal,
-    })
+  get isJavaScript() {
+    return Boolean(this.entrySourceFilePath?.endsWith('.js') || this.entrySourceFilePath?.endsWith('.ts'))
   }
 
   async publishURL(options: {orgId: string; appId: string}) {
@@ -156,7 +141,7 @@ export function createFunctionSpecification<TConfiguration extends FunctionConfi
     templateURL: 'https://github.com/Shopify/function-examples',
     externalIdentifier: spec.identifier,
     externalName: spec.identifier,
-    supportedFlavors: defaultFunctionsFlavors,
+    supportedFlavors: areJavaScriptFunctionsEnabled() ? withJavaScriptFunctionsFlavors : defaultFunctionsFlavors,
     configSchema: BaseFunctionConfigurationSchema,
     gated: false,
     registrationLimit: spec.registrationLimit ?? blocks.functions.defaultRegistrationLimit,

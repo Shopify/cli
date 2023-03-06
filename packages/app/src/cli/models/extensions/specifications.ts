@@ -9,7 +9,7 @@ import {
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {memoize} from '@shopify/cli-kit/common/function'
 import {Config} from '@oclif/core'
-import {isShopify} from '@shopify/cli-kit/node/environment/local'
+import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {fileURLToPath} from 'url'

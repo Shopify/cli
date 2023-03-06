@@ -45,7 +45,7 @@ export function pickBy<T, S extends T>(
  * invoked with three arguments: (value, key, object).
  *
  * @param source - The object to iterate over.
- * @param callback -  The function invoked per iteration.
+ * @param callback - The function invoked per iteration.
  * @returns Returns the new mapped object.
  */
 export function mapValues<T extends object, TResult>(

@@ -1,7 +1,6 @@
 import {CLI_KIT_VERSION} from '../../../public/common/version.js'
-import {firstPartyDev} from '../../../public/node/environment/local.js'
-import {randomUUID} from '../../../public/node/crypto.js'
-import {Environment, serviceEnvironment} from '../environment/service.js'
+import {firstPartyDev} from '../../../public/node/context/local.js'
+import {Environment, serviceEnvironment} from '../context/service.js'
 import {ExtendableError} from '../../../public/node/error.js'
 import https from 'https'
 
@@ -38,16 +37,17 @@ export function buildHeaders(token?: string): {[key: string]: string} {
 
   const headers: {[header: string]: string} = {
     'User-Agent': userAgent,
+    'Keep-Alive': 'timeout=30',
     // 'Sec-CH-UA': secCHUA, This header requires the Git sha.
     'Sec-CH-UA-PLATFORM': process.platform,
-    'X-Request-Id': randomUUID(),
     'Content-Type': 'application/json',
     ...(firstPartyDev() && {'X-Shopify-Cli-Employee': '1'}),
   }
   if (token) {
+    const authString = token.startsWith('shpat') ? token : `Bearer ${token}`
     // eslint-disable-next-line dot-notation
-    headers['authorization'] = `Bearer ${token}`
-    headers['X-Shopify-Access-Token'] = `Bearer ${token}`
+    headers['authorization'] = authString
+    headers['X-Shopify-Access-Token'] = authString
   }
 
   return headers
@@ -59,8 +59,11 @@ export function buildHeaders(token?: string): {[key: string]: string} {
  * if the service is running in a Spin environment, the attribute "rejectUnauthorized" is
  * set to false
  */
-export async function httpsAgent() {
-  return new https.Agent({rejectUnauthorized: await shouldRejectUnauthorizedRequests()})
+export async function httpsAgent(): Promise<https.Agent> {
+  return new https.Agent({
+    rejectUnauthorized: await shouldRejectUnauthorizedRequests(),
+    keepAlive: true,
+  })
 }
 
 /**

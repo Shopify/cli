@@ -1,5 +1,5 @@
 import {createUIExtensionSpecification} from '../ui.js'
-import {defualtExtensionFlavors} from '../../../constants.js'
+import {defaultExtensionFlavors} from '../../../constants.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
 import {schema} from '@shopify/cli-kit/node/schema'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -18,7 +18,7 @@ const spec = createUIExtensionSpecification({
   surface: 'unknown',
   dependency,
   partnersWebIdentifier: 'web_pixel',
-  supportedFlavors: defualtExtensionFlavors.filter((flavor) => !flavor.value.includes('react')),
+  supportedFlavors: defaultExtensionFlavors.filter((flavor) => !flavor.value.includes('react')),
   schema: WebPixelSchema,
   deployConfig: async (config, _) => {
     return {

@@ -1,4 +1,4 @@
-import {ensureGenerateEnvironment} from './environment.js'
+import {ensureGenerateContext} from './context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {AppInterface} from '../models/app/app.js'
 import {load as loadApp} from '../models/app/loader.js'
@@ -9,11 +9,12 @@ import generateExtensionService, {ExtensionFlavor} from '../services/generate/ex
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {isShopify} from '@shopify/cli-kit/node/environment/local'
+import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {RenderAlertOptions, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {groupBy} from '@shopify/cli-kit/common/collection'
 
 export interface GenerateOptions {
   directory: string
@@ -28,8 +29,8 @@ export interface GenerateOptions {
 
 async function generate(options: GenerateOptions) {
   const token = await ensureAuthenticatedPartners()
-  const apiKey = await ensureGenerateEnvironment({...options, token})
-  let specifications = await fetchSpecifications({token, apiKey, config: options.config})
+  const apiKey = await ensureGenerateContext({...options, token})
+  const specifications = await fetchSpecifications({token, apiKey, config: options.config})
   const app: AppInterface = await loadApp({directory: options.directory, specifications})
 
   // If the user has specified a type, we need to validate it
@@ -58,9 +59,11 @@ async function generate(options: GenerateOptions) {
         `You can only generate ${limit} extension(s) of type ${specification.externalIdentifier} per app`,
       )
     }
-  } else {
-    specifications = specifications.filter((spec) => app.extensionsForType(spec).length < spec.registrationLimit)
   }
+
+  const {validSpecifications, overlimit} = groupBy(specifications, (spec) =>
+    app.extensionsForType(spec).length < spec.registrationLimit ? 'validSpecifications' : 'overlimit',
+  )
 
   validateExtensionFlavor(specification, options.template)
 
@@ -70,7 +73,8 @@ async function generate(options: GenerateOptions) {
     extensionFlavor: options.template,
     directory: joinPath(options.directory, 'extensions'),
     app,
-    extensionSpecifications: specifications,
+    extensionSpecifications: validSpecifications ?? [],
+    unavailableExtensions: overlimit?.map((spec) => spec.externalName) ?? [],
     reset: options.reset,
   })
 
@@ -112,7 +116,7 @@ function findSpecification(type: string | undefined, specifications: GenericSpec
 function validateExtensionFlavor(specification: GenericSpecification | undefined, flavor: string | undefined) {
   if (!flavor || !specification) return
 
-  const possibleFlavors = specification.supportedFlavors.map((flavor) => flavor.value)
+  const possibleFlavors = specification.supportedFlavors.map((flavor) => flavor.value as string)
   if (!possibleFlavors.includes(flavor)) {
     throw new AbortError(
       'Invalid template for extension type',

@@ -1,7 +1,7 @@
 import {renderConcurrent, RenderConcurrentOptions} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
-import {OutputProcess, outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {OutputProcess, outputDebug, outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 import * as http from 'http'
@@ -27,7 +27,7 @@ export interface ReverseHTTPProxyTarget {
 
 interface Options {
   previewUrl: string | undefined
-  portNumber: number | undefined
+  portNumber: number
   proxyTargets: ReverseHTTPProxyTarget[]
   additionalProcesses: OutputProcess[]
 }
@@ -43,7 +43,7 @@ interface Options {
  */
 export async function runConcurrentHTTPProcessesAndPathForwardTraffic({
   previewUrl,
-  portNumber = undefined,
+  portNumber,
   proxyTargets,
   additionalProcesses,
 }: Options): Promise<void> {
@@ -66,10 +66,8 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic({
     }),
   )
 
-  const availablePort = portNumber ?? (await getAvailableTCPPort())
-
   outputDebug(outputContent`
-Starting reverse HTTP proxy on port ${outputToken.raw(availablePort.toString())}
+Starting reverse HTTP proxy on port ${outputToken.raw(portNumber.toString())}
 Routing traffic rules:
 ${outputToken.json(JSON.stringify(rules))}
 `)
@@ -77,7 +75,11 @@ ${outputToken.json(JSON.stringify(rules))}
   const proxy = httpProxy.createProxy()
   const server = http.createServer(function (req, res) {
     const target = match(rules, req)
-    if (target) return proxy.web(req, res, {target})
+    if (target) {
+      return proxy.web(req, res, {target}, (err) => {
+        outputWarn(`Error forwarding web request: ${err}`)
+      })
+    }
 
     outputDebug(`
 Reverse HTTP proxy error - Invalid path: ${req.url}
@@ -92,7 +94,11 @@ ${outputToken.json(JSON.stringify(rules))}
   // Capture websocket requests and forward them to the proxy
   server.on('upgrade', function (req, socket, head) {
     const target = match(rules, req)
-    if (target) return proxy.ws(req, socket, head, {target})
+    if (target) {
+      return proxy.ws(req, socket, head, {target}, (err) => {
+        outputWarn(`Error forwarding websocket request: ${err}`)
+      })
+    }
     socket.destroy()
   })
 
@@ -118,13 +124,22 @@ ${outputToken.json(JSON.stringify(rules))}
         }
       },
       footer: {
-        title: 'Press `p` to open your browser. Press `q` to quit.',
+        shortcuts: [
+          {
+            key: 'p',
+            action: 'open your browser',
+          },
+          {
+            key: 'q',
+            action: 'quit',
+          },
+        ],
         subTitle: `Preview URL: ${previewUrl}`,
       },
     }
   }
 
-  await Promise.all([renderConcurrent(renderConcurrentOptions), server.listen(availablePort)])
+  await Promise.all([renderConcurrent(renderConcurrentOptions), server.listen(portNumber)])
 }
 
 function match(rules: {[key: string]: string}, req: http.IncomingMessage) {

@@ -1,14 +1,15 @@
 import {buildHeaders, sanitizedHeadersOutput} from './headers.js'
 import {CLI_KIT_VERSION} from '../../../public/common/version.js'
 import {randomUUID} from '../../../public/node/crypto.js'
-import {firstPartyDev, isUnitTest} from '../../../public/node/environment/local.js'
+import {firstPartyDev, isUnitTest} from '../../../public/node/context/local.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 
+vi.mock('../../../public/node/crypto.js')
+vi.mock('../../../public/node/context/local.js')
+vi.mock('../version')
+
 beforeEach(() => {
-  vi.mock('../../../public/node/crypto.js')
-  vi.mock('../../../public/node/environment/local.js')
   vi.mocked(isUnitTest).mockReturnValue(true)
-  vi.mock('../version')
 })
 
 describe('common API methods', () => {
@@ -23,8 +24,8 @@ describe('common API methods', () => {
     const version = CLI_KIT_VERSION
     expect(headers).toEqual({
       'Content-Type': 'application/json',
+      'Keep-Alive': 'timeout=30',
       'X-Shopify-Access-Token': 'Bearer my-token',
-      'X-Request-Id': 'random-uuid',
       'User-Agent': `Shopify CLI; v=${version}`,
       authorization: 'Bearer my-token',
       'Sec-CH-UA-PLATFORM': process.platform,
@@ -43,10 +44,30 @@ describe('common API methods', () => {
     const version = CLI_KIT_VERSION
     expect(headers).toEqual({
       'Content-Type': 'application/json',
+      'Keep-Alive': 'timeout=30',
       'X-Shopify-Access-Token': 'Bearer my-token',
-      'X-Request-Id': 'random-uuid',
       'User-Agent': `Shopify CLI; v=${version}`,
       authorization: 'Bearer my-token',
+      'Sec-CH-UA-PLATFORM': process.platform,
+    })
+  })
+
+  test('when using a custom app token, omit Bearer from auth headers', () => {
+    // Given
+    vi.mocked(randomUUID).mockReturnValue('random-uuid')
+    vi.mocked(firstPartyDev).mockReturnValue(false)
+    const token = 'shpat_my_token'
+    // When
+    const headers = buildHeaders(token)
+
+    // Then
+    const version = CLI_KIT_VERSION
+    expect(headers).toEqual({
+      'Content-Type': 'application/json',
+      'Keep-Alive': 'timeout=30',
+      'X-Shopify-Access-Token': token,
+      'User-Agent': `Shopify CLI; v=${version}`,
+      authorization: token,
       'Sec-CH-UA-PLATFORM': process.platform,
     })
   })
@@ -55,7 +76,7 @@ describe('common API methods', () => {
     // Given
     const headers = {
       'User-Agent': 'useragent',
-      'X-Request-Id': 'uuid',
+      'Keep-Alive': 'timeout=30',
       Authorization: 'token',
       authorization: 'token',
       'Content-Type': 'application/json',
@@ -68,7 +89,7 @@ describe('common API methods', () => {
     // Then
     expect(got).toMatchInlineSnapshot(`
       " - User-Agent: useragent
-       - X-Request-Id: uuid
+       - Keep-Alive: timeout=30
        - Content-Type: application/json"
     `)
   })

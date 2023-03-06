@@ -1,4 +1,4 @@
-import SelectInput from './SelectInput.js'
+import {SelectInput} from './SelectInput.js'
 import {sendInputAndWait, sendInputAndWaitForChange, waitForInputsToBeReady} from '../../testing/ui.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
@@ -38,7 +38,7 @@ describe('SelectInput', async () => {
 
          [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
-    expect(onChange).toHaveBeenCalledWith(items[2]!)
+    expect(onChange).toHaveBeenCalledWith({item: items[2]!, usedShortcut: false})
   })
 
   test('move down with down arrow key', async () => {
@@ -71,7 +71,40 @@ describe('SelectInput', async () => {
 
          [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
-    expect(onChange).toHaveBeenCalledWith(items[1]!)
+    expect(onChange).toHaveBeenCalledWith({item: items[1]!, usedShortcut: false})
+  })
+
+  test('handles single digit numeric shortcuts', async () => {
+    const onChange = vi.fn()
+
+    const items = [
+      {
+        label: 'First',
+        value: 'first',
+      },
+      {
+        label: 'Second',
+        value: 'second',
+      },
+      {
+        label: 'Third',
+        value: 'third',
+      },
+    ]
+
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, '2')
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "   (1) First
+      [36m>[39m  [36m(2) Second[39m
+         (3) Third
+
+         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+    `)
+    expect(onChange).toHaveBeenCalledWith({item: items[1]!, usedShortcut: true})
   })
 
   test('handles keys with multiple digits', async () => {
@@ -104,7 +137,7 @@ describe('SelectInput', async () => {
 
          [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
-    expect(onChange).toHaveBeenCalledWith(items[2]!)
+    expect(onChange).toHaveBeenCalledWith({item: items[2]!, usedShortcut: true})
   })
 
   test('handles pressing non existing keys', async () => {
@@ -170,7 +203,7 @@ describe('SelectInput', async () => {
 
          [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
-    expect(onChange).toHaveBeenCalledWith(items[2]!)
+    expect(onChange).toHaveBeenCalledWith({item: items[2]!, usedShortcut: true})
   })
 
   test('rotate after reaching the end of the list', async () => {
@@ -204,7 +237,7 @@ describe('SelectInput', async () => {
 
          [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
-    expect(onChange).toHaveBeenCalledWith(items[0]!)
+    expect(onChange).toHaveBeenCalledWith({item: items[0]!, usedShortcut: false})
   })
 
   test('support groups', async () => {
@@ -267,7 +300,7 @@ describe('SelectInput', async () => {
 
          [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
-    expect(onChange).toHaveBeenCalledWith(items[4]!)
+    expect(onChange).toHaveBeenCalledWith({item: items[4]!, usedShortcut: true})
 
     await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
     await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
@@ -291,7 +324,7 @@ describe('SelectInput', async () => {
 
          [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
-    expect(onChange).toHaveBeenCalledWith(items[6]!)
+    expect(onChange).toHaveBeenCalledWith({item: items[6]!, usedShortcut: false})
   })
 
   test('allows disabling shortcuts', async () => {

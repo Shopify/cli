@@ -1,10 +1,10 @@
 import {AbortError, BugError} from './error.js'
-import {Version} from './semver.js'
 import {AbortController, AbortSignal} from './abort.js'
 import {exec} from './system.js'
 import {fileExists, readFile, writeFile, findPathUp, glob} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
+import {Version} from '../../private/node/semver.js'
 import latestVersion from 'latest-version'
 import type {Writable} from 'stream'
 import type {ExecOptions} from './system.js'
@@ -37,7 +37,7 @@ export type DependencyType = 'dev' | 'prod' | 'peer'
  * A union that represents the package managers available.
  */
 export const packageManager = ['yarn', 'npm', 'pnpm'] as const
-export type PackageManager = typeof packageManager[number]
+export type PackageManager = (typeof packageManager)[number]
 
 /**
  * Returns an abort error that's thrown when a directory that's expected to have

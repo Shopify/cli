@@ -20,7 +20,7 @@ import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {camelize} from '@shopify/cli-kit/common/string'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
-import {isShopify} from '@shopify/cli-kit/node/environment/local'
+import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
@@ -348,7 +348,15 @@ class AppLoader {
 
       const configuration = await this.parseConfigurationFile(specification.configSchema, configurationPath)
 
-      return new FunctionInstance({configuration, configurationPath, specification, directory})
+      const entryPath = (
+        await Promise.all(
+          ['src/index.js', 'src/index.ts', 'src/main.rs']
+            .map((relativePath) => joinPath(directory, relativePath))
+            .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
+        )
+      ).find((sourcePath) => sourcePath !== undefined)
+
+      return new FunctionInstance({configuration, configurationPath, entryPath, specification, directory})
     })
     const functions = getArrayRejectingUndefined(await Promise.all(allFunctions))
     return {functions, usedCustomLayout: extensionDirectories !== undefined}

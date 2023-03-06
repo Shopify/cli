@@ -2,11 +2,9 @@ import {getAvailableTCPPort} from './tcp.js'
 import * as system from './system.js'
 import {AbortError} from './error.js'
 import * as port from 'get-port-please'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 
-beforeEach(() => {
-  vi.mock('get-port-please')
-})
+vi.mock('get-port-please')
 
 const errorMessage = 'Unable to generate random port'
 

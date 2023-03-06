@@ -23,7 +23,7 @@ runs:
     - name: Clean ref name
       shell: bash
       env:
-          SAFE_REF_NAME: "${{ inputs.branch-name }}"
+        SAFE_REF_NAME: "${{ inputs.branch-name }}"
       run: |
         SAFE_REF_NAME=${{ env.SAFE_REF_NAME }}
         SAFE_REF_NAME=${SAFE_REF_NAME//[\/.]/}

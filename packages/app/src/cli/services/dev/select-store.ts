@@ -9,9 +9,9 @@ import {
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
-import {isSpinEnvironment} from '@shopify/cli-kit/node/environment/spin'
-import {partnersFqdn} from '@shopify/cli-kit/node/environment/fqdn'
-import {firstPartyDev} from '@shopify/cli-kit/node/environment/local'
+import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
+import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError, CancelExecution} from '@shopify/cli-kit/node/error'
 import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
 
@@ -40,7 +40,7 @@ export async function selectStore(
 ): Promise<OrganizationStore> {
   const store = await selectStorePrompt(stores)
   if (store) {
-    await convertToTestStoreIfNeeded(store, org, token)
+    await convertToTestStoreIfNeeded(store, org.id, token)
     return store
   }
 
@@ -101,7 +101,7 @@ async function waitForCreatedStore(orgId: string, token: string): Promise<Organi
  */
 export async function convertToTestStoreIfNeeded(
   store: OrganizationStore,
-  org: Organization,
+  orgId: string,
   token: string,
 ): Promise<void> {
   /**
@@ -114,7 +114,7 @@ export async function convertToTestStoreIfNeeded(
       'Run dev --reset and select an eligible dev store.',
     )
   }
-  if (!store.transferDisabled) await convertStoreToTest(store, org.id, token)
+  if (!store.transferDisabled) await convertStoreToTest(store, orgId, token)
 }
 
 /**

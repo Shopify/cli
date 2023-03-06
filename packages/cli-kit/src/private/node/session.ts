@@ -17,10 +17,10 @@ import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/
 import {RequestClientError} from './api/headers.js'
 import {environmentVariables} from './constants.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
-import {firstPartyDev, useDeviceAuth} from '../../public/node/environment/local.js'
+import {firstPartyDev, useDeviceAuth} from '../../public/node/context/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
-import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/environment/fqdn.js'
+import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
 import {openURL} from '../../public/node/system.js'
 import {keypress} from '../../public/node/ui.js'
 import {gql} from 'graphql-request'
@@ -134,7 +134,8 @@ ${outputToken.json(applications)}
   }
 
   const completeSession: Session = {...currentSession, ...newSession}
-  await secureStore.store(completeSession)
+  // Save the new session info if it has changed
+  if (Object.keys(newSession).length > 0) await secureStore.store(completeSession)
   const tokens = await tokensFor(applications, completeSession, fqdn)
 
   // Overwrite partners token if using a custom CLI Token
@@ -225,6 +226,16 @@ async function ensureUserHasPartnerAccount(partnersToken: string) {
   }
 }
 
+const getFirstOrganization = gql`
+  {
+    organizations(first: 1) {
+      nodes {
+        id
+      }
+    }
+  }
+`
+
 /**
  * Validate if the current token is valid for partners API.
  *
@@ -233,18 +244,7 @@ async function ensureUserHasPartnerAccount(partnersToken: string) {
  */
 async function hasPartnerAccount(partnersToken: string): Promise<boolean> {
   try {
-    await partnersRequest(
-      gql`
-        {
-          organizations(first: 1) {
-            nodes {
-              id
-            }
-          }
-        }
-      `,
-      partnersToken,
-    )
+    await partnersRequest(getFirstOrganization, partnersToken)
     return true
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {

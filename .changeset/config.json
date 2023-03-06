@@ -6,19 +6,18 @@
   "fixed": [[
     "@shopify/cli",
     "@shopify/app",
-    "@shopify/cli-hydrogen",
     "@shopify/create-app",
-    "@shopify/create-hydrogen",
     "@shopify/cli-kit",
     "@shopify/fixtures-app",
     "@shopify/theme",
     "@shopify/ui-extensions-dev-console-app",
-    "@shopify/plugin-ngrok"
+    "@shopify/plugin-ngrok",
+    "@shopify/plugin-cloudflare",
+    "@shopify/plugin-did-you-mean"
   ]],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": [],
   "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
     "onlyUpdatePeerDependentsWhenOutOfRange": true
   }

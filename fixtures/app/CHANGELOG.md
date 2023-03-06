@@ -1,5 +1,116 @@
 # app
 
+## 3.44.1-pre.0
+
+### Patch Changes
+
+- Updated dependencies [da6a3bdf8]
+- Updated dependencies [b895bb5e9]
+  - @shopify/app@3.44.1-pre.0
+  - @shopify/cli@3.44.1-pre.0
+
+## 3.44.0
+
+### Patch Changes
+
+- Updated dependencies [82a06e7e2]
+- Updated dependencies [b61c5972c]
+- Updated dependencies [2def6f113]
+- Updated dependencies [7925a40b2]
+- Updated dependencies [6802b0876]
+- Updated dependencies [26bee3526]
+- Updated dependencies [d2adeb5ec]
+  - @shopify/cli@3.44.0
+  - @shopify/app@3.44.0
+
+## 3.43.0
+
+### Patch Changes
+
+- Updated dependencies [4b0cc57ce]
+  - @shopify/app@3.43.0
+  - @shopify/cli@3.43.0
+
+## 3.42.0
+
+### Patch Changes
+
+- Updated dependencies [66653aecd]
+  - @shopify/app@3.42.0
+  - @shopify/cli@3.42.0
+
+## 3.41.2
+
+### Patch Changes
+
+- Updated dependencies [dd3d0c846]
+  - @shopify/app@3.41.2
+  - @shopify/cli@3.41.2
+
+## 3.41.1
+
+### Patch Changes
+
+- Updated dependencies [830617a4d]
+  - @shopify/app@3.41.1
+  - @shopify/cli@3.41.1
+
+## 3.41.0
+
+### Patch Changes
+
+- Updated dependencies [9d9480341]
+  - @shopify/app@3.41.0
+  - @shopify/cli@3.41.0
+
+## 3.40.3
+
+### Patch Changes
+
+- Updated dependencies [9e7e226dd]
+  - @shopify/app@3.40.3
+  - @shopify/cli@3.40.3
+
+## 3.40.2
+
+### Patch Changes
+
+- Updated dependencies [c729e470d]
+  - @shopify/app@3.40.2
+  - @shopify/cli@3.40.2
+
+## 3.40.1
+
+### Patch Changes
+
+- df3f6e629: Revert change to update Checkout UI template to use the new extension format
+- Updated dependencies [df3f6e629]
+- Updated dependencies [3314a972b]
+  - @shopify/app@3.40.1
+  - @shopify/cli@3.40.1
+
+## 3.40.0
+
+### Minor Changes
+
+- 64bcf07c7: Enable Shopify Plus Sandbox stores
+- af42f22f6: Update Checkout UI template to use the new extension format
+
+### Patch Changes
+
+- Updated dependencies [cfb4b7f68]
+- Updated dependencies [9e74a9fc0]
+- Updated dependencies [1661f80a2]
+- Updated dependencies [413980f0b]
+- Updated dependencies [64bcf07c7]
+- Updated dependencies [48122f791]
+- Updated dependencies [af42f22f6]
+- Updated dependencies [228328a6d]
+- Updated dependencies [c30eb6978]
+- Updated dependencies [3e94c0e0f]
+  - @shopify/app@3.40.0
+  - @shopify/cli@3.40.0
+
 ## 3.39.0
 
 ### Patch Changes

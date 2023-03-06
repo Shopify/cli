@@ -1,4 +1,4 @@
-import {DELIVERY_METHOD, isAddressAllowedForDeliveryMethod} from '../../services/webhook/trigger-options.js'
+import {DELIVERY_METHOD, isAddressAllowedForDeliveryMethod} from '../../services/webhook/trigger-flags.js'
 import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {stringifyMessage} from '@shopify/cli-kit/node/output'
 
@@ -48,14 +48,14 @@ export async function addressPrompt(deliveryMethod: string): Promise<string> {
   return input.trim()
 }
 
-export async function sharedSecretPrompt(): Promise<string> {
+export async function clientSecretPrompt(): Promise<string> {
   return renderTextPrompt({
     message:
-      'Shared Secret to encode the webhook payload. If you are using the app template, this is your Client Secret, which can be found in the partners dashboard',
+      'Client Secret to encode the webhook payload. If you are using the app template, this can be found in the partners dashboard',
     defaultValue: 'shopify_test',
     validate: (value: string) => {
       if (value.length === 0) {
-        return "Shared Secret can't be empty"
+        return "Client Secret can't be empty"
       }
     },
   })

@@ -1,5 +1,5 @@
 import {version as rubyVersion} from './ruby.js'
-import {alwaysLogAnalytics, analyticsDisabled, isShopify} from './environment/local.js'
+import {alwaysLogAnalytics, analyticsDisabled, isShopify} from './context/local.js'
 import * as metadata from './metadata.js'
 import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {fanoutHooks} from './plugins.js'

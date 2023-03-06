@@ -24,6 +24,16 @@
         ],
         "cwd": "workspace"
       }
+    },
+    "type-diff": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["^build"],
+      "options": {
+        "commands": [
+          "node src/type-diff.js"
+        ],
+        "cwd": "workspace"
+      }
     }
   }
 }

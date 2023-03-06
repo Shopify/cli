@@ -9,60 +9,46 @@ import {temporaryDirectoryTask} from 'tempy'
 import git from 'simple-git'
 import {setOutput} from '@actions/core'
 import {promises as fs, existsSync} from 'fs'
+import {cloneCLIRepository} from './utils/git.js'
+import {logMessage, logSection} from './utils/log.js'
 
-const require = createRequire(import.meta.url)
-const colors = require('ansi-colors')
+const TOTAL_TIMES = 5
 
-function logSection(title) {
-  console.info(colors.green.bold(title))
-}
+async function benchmark(directory, {name}) {
+  const results = {}
+  for (let time = 1; time < TOTAL_TIMES; time++) {
+    logSection(`Benchmarking ${name}. Time ${time}`)
 
-function logMessage(message) {
-  console.info(colors.gray(`  ${message}`))
-}
+    for (const pluginName of ['app', 'theme']) {
+      const oclifManifestPath = path.join(directory, 'packages', pluginName, 'oclif.manifest.json')
+      const oclifManifest = JSON.parse(await fs.readFile(oclifManifestPath))
+      const commands = Object.keys(oclifManifest.commands).map((command) => command.split(':'))
+      for (const command of commands) {
+        const startTimestamp = Date.now()
+        const {stdout} = await execa(path.join(directory, 'packages/cli/bin/dev.js'), command, {
+          env: {SHOPIFY_CLI_ENV_STARTUP_PERFORMANCE_RUN: '1'},
+          cwd: directory,
+          stdout: 'pipe',
+          stderr: 'pipe',
+        })
+        const endTimestamp = JSON.parse(
+          stdout.replace('SHOPIFY_CLI_TIMESTAMP_START', '').replace('SHOPIFY_CLI_TIMESTAMP_END', ''),
+        ).timestamp
+        const diff = endTimestamp - startTimestamp
+        const commandId = command.join(' ')
+        logMessage(`${commandId}: ${diff} ms`)
 
-async function cloneCLIRepository(tmpDir) {
-  logSection('Setting up baseline: main branch')
-  const directory = path.join(tmpDir, 'cli')
-  logMessage('Cloning repository')
-  await git().clone('https://github.com/Shopify/cli.git', directory)
-  logMessage('Installing dependencies')
-  await execa('pnpm', ['install'], {cwd: directory})
-  logMessage('Building the project')
-  await execa('pnpm', ['build'], {cwd: directory})
-  return directory
-}
-
-async function benchmark(directory, results = {}, times = 5, {name}) {
-  logSection(`Benchmarking ${name}. ${times} remaining`)
-
-  for (const pluginName of ['app', 'theme']) {
-    const oclifManifestPath = path.join(directory, 'packages', pluginName, 'oclif.manifest.json')
-    const oclifManifest = JSON.parse(await fs.readFile(oclifManifestPath))
-    const commands = Object.keys(oclifManifest.commands).map((command) => command.split(':'))
-    for (const command of commands) {
-      const startTimestamp = Date.now()
-      const {stdout} = await execa(path.join(directory, 'packages/cli/bin/dev.js'), command, {
-        env: {SHOPIFY_CLI_ENV_STARTUP_PERFORMANCE_RUN: '1'},
-        cwd: directory,
-        stdout: 'pipe',
-        stderr: 'pipe',
-      })
-      const endTimestamp = JSON.parse(
-        stdout.replace('SHOPIFY_CLI_TIMESTAMP_START', '').replace('SHOPIFY_CLI_TIMESTAMP_END', ''),
-      ).timestamp
-      const diff = endTimestamp - startTimestamp
-      const commandId = command.join(' ')
-      logMessage(`${commandId}: ${diff} ms`)
-      results[commandId] = [...(results[commandId] ?? []), diff]
+        /**
+         * We don't collect the results from the first and treat them
+         * as a cache-warming run.
+         */
+        if (time > 1) {
+          results[commandId] = [...(results[commandId] ?? []), diff]
+        }
+      }
     }
   }
-
-  if (times > 1) {
-    return benchmark(directory, results, times - 1, {name})
-  } else {
-    return results
-  }
+  return results
 }
 
 async function report(currentBenchmark, baselineBenchmark) {
@@ -80,39 +66,38 @@ async function report(currentBenchmark, baselineBenchmark) {
 
       const diff = round((currentAverageTime / baselineAverageTime - 1) * 100)
       let icon = '⚪️'
-      if (diff < 8) {
-        icon = '🟢'
-      } else if (diff < 10) {
-        icon = '🟡'
-      } else {
-        icon = '🔴'
+      if (diff > 10) {
+        rows.push([
+          '🔴',
+          `\`${command}\``,
+          `${round(baselineAverageTime)} ms`,
+          `${round(currentAverageTime)} ms`,
+          `${diff} %`,
+        ])
       }
-      rows.push([
-        icon,
-        `\`${command}\``,
-        `${round(baselineAverageTime)} ms`,
-        `${round(currentAverageTime)} ms`,
-        `${diff} %`,
-      ])
     }
   }
-  const markdownTable = `| Status | Command | Baseline (avg) | Current (avg) | Diff |
+  if (rows.length !== 0) {
+    const markdownTable = `| Status | Command | Baseline (avg) | Current (avg) | Diff |
 | ------- | -------- | ------- | ----- | ---- |
 ${rows.map((row) => `| ${row.join(' | ')} |`).join('\n')}
 `
-  setOutput(
-    'report',
-    `## Benchmark report
-The following table contains a summary of the startup time for all commands.
+    setOutput(
+      'report',
+      `## Benchmark report
+We detected a significant variation of startup time in the following commands.
+Note that it might be related to external factors that influence the benchmarking.
+If you believe that's the case, feel free to ignore the table below.
 ${markdownTable}
 `,
-  )
+    )
+  }
 }
 
 await temporaryDirectoryTask(async (tmpDir) => {
   const baselineDirectory = await cloneCLIRepository(tmpDir)
   const currentDirectory = path.join(url.fileURLToPath(new URL('.', import.meta.url)), '../..')
-  const baselineBenchmark = await benchmark(baselineDirectory, {}, 3, {name: 'baseline'})
-  const currentBenchmark = await benchmark(currentDirectory, {}, 3, {name: 'current'})
+  const baselineBenchmark = await benchmark(baselineDirectory, {}, {name: 'baseline'})
+  const currentBenchmark = await benchmark(currentDirectory, {}, {name: 'current'})
   await report(currentBenchmark, baselineBenchmark)
 })

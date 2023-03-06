@@ -2,13 +2,19 @@ import ScalarDict from './ScalarDict.js'
 import {Row} from './Row.js'
 import React from 'react'
 import {Box} from 'ink'
+import {ForegroundColor} from 'chalk'
+
+export type TableColumn<T> = {
+  [column in keyof T]: {header?: string; color?: ForegroundColor | 'dim'}
+}
 
 export interface TableProps<T extends ScalarDict> {
   rows: T[]
-  columns: {[column in keyof T]: {header?: string; color?: string}}
+  columns: TableColumn<T>
 }
 
-export default function Table<T extends ScalarDict>({rows, columns: columnsConfiguration}: TableProps<T>) {
+// eslint-disable-next-line react/function-component-definition
+function Table<T extends ScalarDict>({rows, columns: columnsConfiguration}: TableProps<T>) {
   const columns = Object.entries(columnsConfiguration).map(([key, {header, color}]) => {
     const headerWidth = String(header || key).length
     const columnWidths = rows.map((row) => {
@@ -48,3 +54,5 @@ export default function Table<T extends ScalarDict>({rows, columns: columnsConfi
     </Box>
   )
 }
+
+export {Table}

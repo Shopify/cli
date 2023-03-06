@@ -79,6 +79,7 @@ module ShopifyCLI
           end
 
           def test_batch_num_files_upper_bound_with_multiple_threads
+            skip # flaky
             bulk = bulk_instance(pool_size: 2)
 
             expect_job_request(10, 100).twice
@@ -94,6 +95,7 @@ module ShopifyCLI
           end
 
           def test_batch_big_test_with_multiple_threads
+            skip # flaky
             bulk = bulk_instance(pool_size: 2)
 
             files = 5

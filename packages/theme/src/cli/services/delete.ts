@@ -1,7 +1,9 @@
+import {removeDevelopmentTheme} from './local-storage.js'
 import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
-import {Theme} from '../models/theme.js'
 import {themeComponent, themesComponent} from '../utilities/theme-ui.js'
-import {deleteTheme} from '../utilities/themes-api.js'
+import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
+import {deleteTheme} from '@shopify/cli-kit/node/themes/themes-api'
+import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {
   renderConfirmationPrompt,
@@ -21,14 +23,25 @@ export interface DeleteOptions {
 }
 
 export async function deleteThemes(adminSession: AdminSession, options: DeleteOptions) {
+  let themeIds = options.themes
+  if (options.development) {
+    const theme = await new DevelopmentThemeManager(adminSession).find()
+    themeIds = [theme.id.toString()]
+  }
+
   const store = adminSession.storeFqdn
-  const themes = await findThemesByDeleteOptions(adminSession, options)
+  const themes = await findThemesByDeleteOptions(adminSession, {...options, themes: themeIds, development: false})
 
   if (!options.force && !(await isConfirmed(themes, store))) {
     return
   }
 
-  themes.map((theme) => deleteTheme(theme.id, adminSession))
+  themes.map((theme) => {
+    if (theme.hasDevelopmentRole) {
+      removeDevelopmentTheme()
+    }
+    return deleteTheme(theme.id, adminSession)
+  })
 
   renderSuccess({
     body: pluralize(
@@ -40,7 +53,7 @@ export async function deleteThemes(adminSession: AdminSession, options: DeleteOp
 }
 
 async function findThemesByDeleteOptions(adminSession: AdminSession, options: DeleteOptions) {
-  const isSingleThemeSelection = options.selectTheme || options.development || options.themes.length <= 1
+  const isSingleThemeSelection = options.selectTheme || options.themes.length <= 1
 
   if (!isSingleThemeSelection) {
     return findThemes(adminSession, options)

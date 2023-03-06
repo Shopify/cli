@@ -1,4 +1,4 @@
-import Table from './Table.js'
+import {Table, TableColumn} from './Table.js'
 import ScalarDict from './ScalarDict.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
@@ -17,7 +17,7 @@ describe('Table', async () => {
       },
     ]
     const color = 'grey'
-    const columns = {
+    const columns: TableColumn<{[key in 'name' | 'role' | 'id']: string}> = {
       name: {},
       role: {
         color,

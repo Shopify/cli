@@ -14,13 +14,14 @@ const currentCliVersion = '3.10.0'
 
 const OLD_ENV = {...process.env}
 
+vi.mock('@shopify/cli-kit/node/os', async () => {
+  return {
+    platformAndArch: vi.fn(),
+  }
+})
+vi.mock('@shopify/cli-kit/node/system')
+
 beforeEach(async () => {
-  vi.mock('@shopify/cli-kit/node/os', async () => {
-    return {
-      platformAndArch: vi.fn(),
-    }
-  })
-  vi.mock('@shopify/cli-kit/node/system')
   vi.mocked(platformAndArch).mockReturnValue({platform: 'windows', arch: 'amd64'})
 })
 afterEach(() => {
@@ -86,6 +87,9 @@ describe('upgrade global CLI', () => {
         await upgrade(tmpDir, oldCliVersion)
 
         // Then
+        expect(vi.mocked(exec)).toHaveBeenCalledWith('brew', ['update'], {
+          stdio: 'inherit',
+        })
         expect(vi.mocked(exec)).toHaveBeenCalledWith('brew', ['upgrade', homebrewPackageName], {
           stdio: 'inherit',
         })

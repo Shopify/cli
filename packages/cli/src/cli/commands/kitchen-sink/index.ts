@@ -1,5 +1,5 @@
 import {asyncTasks} from '../../services/kitchen-sink/async.js'
-import {banners} from '../../services/kitchen-sink/banners.js'
+import {staticService} from '../../services/kitchen-sink/static.js'
 import {prompts} from '../../services/kitchen-sink/prompts.js'
 import Command from '@shopify/cli-kit/node/base-command'
 
@@ -14,7 +14,7 @@ export default class KitchenSinkAll extends Command {
   static hidden = true
 
   async run(): Promise<void> {
-    await banners()
+    await staticService()
     await prompts()
     await asyncTasks()
   }

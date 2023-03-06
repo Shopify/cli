@@ -1,5 +1,5 @@
 import {Filter, filterThemes} from './filter.js'
-import {Theme} from '../../models/theme.js'
+import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {test, describe, expect} from 'vitest'
 
 const store = 'my-shop.myshopify.com'
@@ -30,21 +30,7 @@ describe('filterThemes', () => {
     expect(filtered[0]!.name).toBe('theme (3)')
   })
 
-  test('filters the development theme', async () => {
-    /**
-     * TODO: Return _your_ development theme.
-     *
-     * CLI2 creates the development theme and persists the ID
-     * on a PStore file. Thus, only the CLI2 can differentiate
-     * between _your_ development theme and the others.
-     *
-     * Currently, this filter just returns all development
-     * themes, but it should only return _yours_.
-     *
-     * As soon as the development gets created at the CLI3 level
-     * this issue must be fixed.
-     */
-
+  test('filters by role', async () => {
     // Given
     const filter = new Filter({
       development: true,

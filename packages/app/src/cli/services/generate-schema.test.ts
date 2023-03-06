@@ -1,23 +1,39 @@
 import {generateSchemaService} from './generate-schema.js'
-import * as localEnvironment from './environment.js'
+import * as localEnvironment from './context.js'
 import * as identifiers from '../models/app/identifiers.js'
 import {testApp, testFunctionExtension} from '../models/app/app.test-data.js'
 import {ApiSchemaDefinitionQuery} from '../api/graphql/functions/api_schema_definition.js'
 import {beforeEach, describe, expect, it, MockedFunction, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {isTerminalInteractive} from '@shopify/cli-kit/node/environment/local'
+import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
+
+vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/node/context/local')
+
+vi.mock('../models/app/identifiers.js', async () => {
+  const identifiers: any = await vi.importActual('../models/app/identifiers.js')
+  return {
+    ...identifiers,
+    getAppIdentifiers: vi.fn(),
+  }
+})
+vi.mock('./context.js', async () => {
+  const context: any = await vi.importActual('./context.js')
+  return {
+    ...context,
+    fetchOrganizationAndFetchOrCreateApp: vi.fn(),
+  }
+})
 
 describe('generateSchemaService', () => {
   const token = 'token'
   const request = partnersRequest as MockedFunction<typeof partnersRequest>
 
   beforeEach(() => {
-    vi.mock('@shopify/cli-kit/node/api/partners')
-    vi.mock('@shopify/cli-kit/node/session')
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-    vi.mock('@shopify/cli-kit/node/environment/local')
     request.mockImplementation(() => Promise.resolve({definition: 'schema'}))
   })
 
@@ -60,20 +76,6 @@ describe('generateSchemaService', () => {
       >
 
     beforeEach(async () => {
-      vi.mock('../models/app/identifiers.js', async () => {
-        const identifiers: any = await vi.importActual('../models/app/identifiers.js')
-        return {
-          ...identifiers,
-          getAppIdentifiers: vi.fn(),
-        }
-      })
-      vi.mock('./environment.js', async () => {
-        const environment: any = await vi.importActual('./environment.js')
-        return {
-          ...environment,
-          fetchOrganizationAndFetchOrCreateApp: vi.fn(),
-        }
-      })
       getAppIdentifiers.mockReturnValue({app: identifiersApiKey})
       fetchOrganizationAndFetchOrCreateApp.mockResolvedValue({
         partnersApp: {
