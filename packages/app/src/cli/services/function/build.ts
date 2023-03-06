@@ -65,7 +65,7 @@ export async function buildGraphqlTypes(
     throw new Error('GraphQL types can only be built for JavaScript functions')
   }
 
-  return exec('npm', ['exec', '--', 'graphql-code-generator'], {
+  return exec('npm', ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
     cwd: fun.directory,
     stderr: options.stderr,
     signal: options.signal,
