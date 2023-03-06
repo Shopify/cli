@@ -181,6 +181,8 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: 18.7.0
+      - name: Build
+        run: pnpm build
       - name: Refresh documentation
         run: pnpm refresh-documentation
       - name: Check if there are changes
