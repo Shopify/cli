@@ -5,6 +5,7 @@ import {isUnitTest} from '../../../../public/node/context/local.js'
 import {handleCtrlC} from '../../ui.js'
 import {Box, Text, useInput} from 'ink'
 import React, {useRef, useState} from 'react'
+import { isTruthy } from '../../context/utilities.js'
 
 const loadingBarChar = '▀'
 
@@ -89,7 +90,7 @@ function Tasks<TContext>({tasks, silent = isUnitTest()}: React.PropsWithChildren
     if (key.return) {
       return null
     }
-  })
+  }, {isActive: !isUnitTest() || !isTruthy(process.env.CI)})
 
   if (silent) {
     return null
