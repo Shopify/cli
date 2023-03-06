@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-floating-promises */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   renderAutocompletePrompt,
@@ -12,12 +13,12 @@ import {
   renderText,
   renderTextPrompt,
   renderWarning,
-} from '../../../public/node/ui.js'
-import {unstyled} from '../../../public/node/output.js'
-import {AbortError, BugError} from '../../../public/node/error.js'
-import {AbortSignal} from '../../../public/node/abort.js'
-import {OutputStream} from '../ui.js'
-import {Stdin, waitFor} from '../testing/ui.js'
+} from '../../src/public/node/ui.js'
+import {unstyled} from '../../src/public/node/output.js'
+import {AbortError, BugError} from '../../src/public/node/error.js'
+import {AbortSignal} from '../../src/public/node/abort.js'
+import {OutputStream} from '../../src/private/node/ui.js'
+import {Stdin, waitFor} from '../../src/private/node/testing/ui.js'
 import {Writable} from 'node:stream'
 
 interface Example {
@@ -277,7 +278,6 @@ export const examples: {[key in string]: Example} = {
       const stdout = new OutputStream({columns: TERMINAL_WIDTH})
       const stdin = new Stdin()
 
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       renderSelectPrompt({
         message: 'Associate your project with the org Castile Ventures?',
         choices: [
@@ -339,7 +339,6 @@ export const examples: {[key in string]: Example} = {
         },
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       renderConfirmationPrompt(options)
 
       await waitFor(
@@ -409,7 +408,6 @@ export const examples: {[key in string]: Example} = {
         {label: 'fiftieth', value: 'fiftieth'},
       ]
 
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       renderAutocompletePrompt({
         message: 'Select a template',
         choices: database,
@@ -484,7 +482,6 @@ export const examples: {[key in string]: Example} = {
         },
       ]
 
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       renderTasks(tasks, {renderOptions: {stdout: stdout as any}})
 
       await waitFor(
@@ -501,7 +498,6 @@ export const examples: {[key in string]: Example} = {
       const stdout = new OutputStream({columns: TERMINAL_WIDTH})
       const stdin = new Stdin()
 
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       renderTextPrompt({
         message: 'App project name (can be changed later)',
         defaultValue: 'expansive commerce app',

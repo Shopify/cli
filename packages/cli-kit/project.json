@@ -128,9 +128,8 @@
       },
       "refresh-documentation": {
         "executor": "nx:run-commands",
-        "dependsOn": ["build"],
         "options": {
-          "command": "pnpm node dist/private/node/ui/refresh-documentation.js",
+          "command": "FORCE_HYPERLINK=0 pnpm ts-node-esm ./bin/refresh-documentation.ts",
           "cwd": "packages/cli-kit"
         }
       }

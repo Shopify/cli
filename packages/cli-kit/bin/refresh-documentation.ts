@@ -1,27 +1,28 @@
-import {examples} from './examples.js'
-import {unstyled} from '../../../public/node/output.js'
-import {JSDocTag, Project} from 'ts-morph'
-import isEqual from 'lodash/isEqual.js'
+import {examples} from './documentation/examples.js'
+import {unstyled} from '../src/public/node/output.js'
+import {renderFatalError} from '../src/public/node/ui.js'
+import {AbortError} from '../src/public/node/error.js'
+import {FunctionDeclaration, JSDocTag, Project} from 'ts-morph'
+import difference from 'lodash/difference.js'
 
 async function refreshDocumentation(): Promise<void> {
+  const validationErrors: {message: string}[] = []
   const project = new Project({
     tsConfigFilePath: 'tsconfig.json',
   })
   const sourceFile = project.getSourceFileOrThrow('src/public/node/ui.tsx')
   const renderFunctions = sourceFile.getFunctions().filter((func) => func.getNameOrThrow().startsWith('render'))
-  const renderFunctionNames = renderFunctions.map((func) => func.getNameOrThrow())
 
-  if (!isEqual(renderFunctionNames, Object.keys(examples))) {
-    throw new Error('Every render function must have at least a basic example defined in this file')
+  validateMissingExamples(renderFunctions, validationErrors)
+  validateMissingDocs(renderFunctions, validationErrors)
+
+  if (validationErrors.length > 0) {
+    renderFatalError(
+      new AbortError('Refreshing the documentation failed', {
+        list: {items: validationErrors.map((error) => error.message)},
+      }),
+    )
   }
-
-  const renderFunctionJsDocs = renderFunctions.map((func) => func.getJsDocs())
-
-  renderFunctionJsDocs.forEach((jsDocs) => {
-    if (jsDocs.length === 0) {
-      throw new Error('Every render function must have jsdocs')
-    }
-  })
 
   const exampleTags: {[key: string]: JSDocTag[]} = renderFunctions.reduce((acc, func) => {
     acc[func.getNameOrThrow()] = func
@@ -65,6 +66,25 @@ async function refreshDocumentation(): Promise<void> {
   }
 
   await project.save()
+}
+
+function validateMissingExamples(renderFunctions: FunctionDeclaration[], validationErrors: {message: string}[]): void {
+  const renderFunctionNames = renderFunctions.map((func) => func.getNameOrThrow())
+
+  difference(renderFunctionNames, Object.keys(examples)).forEach((name) => {
+    validationErrors.push({message: `${name} function must have at least a basic example defined in the examples file`})
+  })
+}
+
+function validateMissingDocs(renderFunctions: FunctionDeclaration[], validationErrors: {message: string}[]): void {
+  renderFunctions.forEach((renderFunction) => {
+    const jsDocs = renderFunction.getJsDocs()
+    const name = renderFunction.getNameOrThrow()
+
+    if (jsDocs.length === 0) {
+      validationErrors.push({message: `${name} function must have jsdocs`})
+    }
+  })
 }
 
 refreshDocumentation()
