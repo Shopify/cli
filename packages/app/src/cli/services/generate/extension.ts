@@ -5,6 +5,7 @@ import {GenericSpecification} from '../../models/app/extensions.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
 import {buildGraphqlTypes} from '../function/build.js'
+import {ensureFunctionExtensionFlavorExists} from '../function/common.js'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
@@ -202,7 +203,7 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
 
   await inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = joinPath(tmpDir, 'download')
-    const extensionFlavor = options.extensionFlavor
+    const extensionFlavor = options.extensionFlavor ?? blocks.functions.defaultLanguage
     const templateFlavor = extensionFlavor && getTemplateFlavor(extensionFlavor)
     const taskList = []
 
@@ -229,8 +230,13 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
           destination: templateDownloadDir,
           shallow: true,
         })
-        const templatePath = specification.templatePath(templateFlavor ?? blocks.functions.defaultLanguage)
-        const origin = joinPath(templateDownloadDir, templatePath)
+        const origin = await ensureFunctionExtensionFlavorExists(
+          specification,
+          extensionFlavor,
+          templateFlavor,
+          templateDownloadDir,
+        )
+
         await recursiveLiquidTemplateCopy(origin, options.extensionDirectory, {
           flavor: extensionFlavor ?? '',
           ...options,
