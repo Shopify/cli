@@ -8,7 +8,6 @@ import {
   fetchStoreByDomain,
   FetchResponse,
   fetchAppExtensionRegistrations,
-  OrganizationAppsResponse,
 } from './dev/fetch.js'
 import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
@@ -237,12 +236,12 @@ export interface DeployContextOptions {
   apiKey?: string
   reset: boolean
   force: boolean
+  directory: string
 }
 
 interface DeployContextOutput {
   app: AppInterface
   token: string
-  partnersOrganizationId: string
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   identifiers: Identifiers
   organization: Organization
@@ -256,14 +255,18 @@ interface DeployContextOutput {
  * OrganizationApp if a cached value is valid.
  * undefined if there is no cached value or the user doesn't want to use it.
  */
-export async function fetchDevAppAndPrompt(app: AppInterface, token: string): Promise<OrganizationApp | undefined> {
+export async function fetchDevAppAndPrompt(
+  app: AppInterface,
+  token: string,
+  organization?: Organization,
+): Promise<OrganizationApp | undefined> {
   const devAppId = getAppInfo(app.directory)?.appId
   if (!devAppId) return undefined
 
   const partnersResponse = await fetchAppFromApiKey(devAppId, token)
   if (!partnersResponse) return undefined
 
-  const org: Organization | undefined = await fetchOrgFromId(partnersResponse.organizationId, token)
+  const org: Organization | undefined = organization ?? (await fetchOrgFromId(partnersResponse.organizationId, token))
 
   showDevValues(org?.businessName ?? 'unknown', partnersResponse.title)
   const reuse = await reuseDevConfigPrompt()
@@ -291,7 +294,11 @@ export async function ensureThemeExtensionDevContext(
 
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
   const token = await ensureAuthenticatedPartners()
-  const [partnersApp, envIdentifiers, organization] = await fetchAppAndIdentifiers(options, token)
+  const cachedInfo = getAppDevCachedInfo({reset: options.reset, directory: options.directory})
+  // needed to know if the org has access to certain flags
+  const orgId = cachedInfo?.orgId ?? (await selectOrg(token))
+  const organization = await fetchOrgFromId(orgId, token)
+  const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
 
@@ -318,7 +325,6 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
       organizationId: partnersApp.organizationId,
       grantedScopes: partnersApp.grantedScopes,
     },
-    partnersOrganizationId: partnersApp.organizationId,
     identifiers,
     token,
     organization,
@@ -331,25 +337,26 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
 export async function fetchOrganizationAndFetchOrCreateApp(
   app: AppInterface,
   token: string,
-  orgAndApps?: {organization: Organization; apps: OrganizationAppsResponse},
+  organizationId?: string,
 ): Promise<{partnersApp: OrganizationApp; orgId: string}> {
-  const orgId = await selectOrg(token)
-  const {organization, apps} = orgAndApps ?? (await fetchOrgsAppsAndStores(orgId, token))
+  const orgId = organizationId ?? (await selectOrg(token))
+  const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
   const partnersApp = await selectOrCreateApp(app.name, apps, organization, token)
   return {orgId, partnersApp}
 }
 
 export async function fetchAppAndIdentifiers(
-  options: {app: AppInterface; reset: boolean; packageManager?: PackageManager; apiKey?: string},
+  options: {
+    app: AppInterface
+    reset: boolean
+    packageManager?: PackageManager
+    apiKey?: string
+    organization?: Organization
+  },
   token: string,
-): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>, Organization]> {
+): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
   let envIdentifiers = getAppIdentifiers({app: options.app})
-
   let partnersApp: OrganizationApp | undefined
-
-  // needed to know if the org has access to certain flags
-  const orgId = await selectOrg(token)
-  const {organization, apps} = await fetchOrgAndApps(orgId, token)
 
   if (options.reset) {
     envIdentifiers = {app: undefined, extensions: {}}
@@ -365,15 +372,15 @@ export async function fetchAppAndIdentifiers(
       )
     }
   } else {
-    partnersApp = await fetchDevAppAndPrompt(options.app, token)
+    partnersApp = await fetchDevAppAndPrompt(options.app, token, options.organization)
   }
 
   if (!partnersApp) {
-    const result = await fetchOrganizationAndFetchOrCreateApp(options.app, token, {organization, apps})
+    const result = await fetchOrganizationAndFetchOrCreateApp(options.app, token, options.organization?.id)
     partnersApp = result.partnersApp
   }
 
-  return [partnersApp, envIdentifiers, organization]
+  return [partnersApp, envIdentifiers]
 }
 
 async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
@@ -536,7 +543,7 @@ async function logMetadataForLoadedDevContext(env: DevContextOutput) {
 
 async function logMetadataForLoadedDeployContext(env: DeployContextOutput) {
   await metadata.addPublicMetadata(() => ({
-    partner_id: tryParseInt(env.partnersOrganizationId),
+    partner_id: tryParseInt(env.organization.id),
     api_key: env.identifiers.app,
   }))
 }

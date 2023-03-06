@@ -113,10 +113,12 @@ export async function fetchAppFromApiKey(apiKey: string, token: string): Promise
   return res.app
 }
 
-export async function fetchOrgFromId(id: string, token: string): Promise<Organization | undefined> {
+export async function fetchOrgFromId(id: string, token: string): Promise<Organization> {
   const query = FindOrganizationBasicQuery
   const res: FindOrganizationBasicQuerySchema = await partnersRequest(query, token, {id})
-  return res.organizations.nodes[0]
+  const org = res.organizations.nodes[0]
+  if (!org) throw NoOrgError(id)
+  return org
 }
 
 export async function fetchAllDevStores(orgId: string, token: string): Promise<OrganizationStore[]> {

@@ -34,6 +34,9 @@ interface DeployOptions {
 
   /** If true, proceed with deploy without asking for confirmation */
   force: boolean
+
+  /** The app directory path */
+  directory: string
 }
 
 interface TasksContext {
@@ -48,7 +51,7 @@ export async function deploy(options: DeployOptions) {
   }
 
   // eslint-disable-next-line prefer-const
-  let {app, identifiers, partnersApp, partnersOrganizationId, token, organization} = await ensureDeployContext(options)
+  let {app, identifiers, partnersApp, token, organization} = await ensureDeployContext(options)
   const apiKey = identifiers.app
 
   let label: string | undefined
@@ -107,7 +110,7 @@ export async function deploy(options: DeployOptions) {
           },
         },
         {
-          title: 'Pushing your code to Shopify',
+          title: organization.betas.appUiDeployments ? 'Creating deployment' : 'Pushing your code to Shopify',
           task: async () => {
             if (bundle) {
               ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
@@ -135,7 +138,7 @@ export async function deploy(options: DeployOptions) {
       await outputCompletionMessage({
         app,
         partnersApp,
-        partnersOrganizationId,
+        partnersOrganizationId: organization.id,
         identifiers,
         registrations,
         validationErrors,

@@ -88,8 +88,8 @@ async function testDeployBundle(app: AppInterface) {
     app,
     identifiers,
     partnersApp: {id: 'app-id', organizationId: 'org-id', title: 'app-title', grantedScopes: []},
-    partnersOrganizationId: '',
     token: 'api-token',
+    organization: {id: 'org-id', businessName: 'org-name', betas: {appUiDeployments: false}},
   })
   vi.mocked(useThemebundling).mockReturnValue(true)
   vi.mocked(uploadFunctionExtensions).mockResolvedValue(identifiers)

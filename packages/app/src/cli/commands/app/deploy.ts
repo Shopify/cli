@@ -43,6 +43,6 @@ export default class Deploy extends Command {
 
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path})
-    await deploy({app, apiKey: flags['api-key'], reset: flags.reset, force: flags.force})
+    await deploy({app, apiKey: flags['api-key'], reset: flags.reset, force: flags.force, directory: flags.path})
   }
 }
