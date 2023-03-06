@@ -1,89 +1,89 @@
-import {schema} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ZodSchemaType<T> = schema.ZodType<T, any, any>
+export type ZodSchemaType<T> = zod.ZodType<T, any, any>
 
-export const MetafieldSchema = schema.object({
-  namespace: schema.string(),
-  key: schema.string(),
+export const MetafieldSchema = zod.object({
+  namespace: zod.string(),
+  key: zod.string(),
 })
 
-export const CapabilitiesSchema = schema.object({
-  network_access: schema.boolean().optional(),
-  block_progress: schema.boolean().optional(),
-  api_access: schema.boolean().optional(),
+export const CapabilitiesSchema = zod.object({
+  network_access: zod.boolean().optional(),
+  block_progress: zod.boolean().optional(),
+  api_access: zod.boolean().optional(),
 })
 
-export const TypeSchema = schema.object({
-  type: schema.string().default('ui_extension'),
+export const TypeSchema = zod.object({
+  type: zod.string().default('ui_extension'),
 })
 
-export const NewExtensionPointSchema = schema.object({
-  target: schema.string(),
-  module: schema.string(),
-  metafields: schema.array(MetafieldSchema).optional(),
+export const NewExtensionPointSchema = zod.object({
+  target: zod.string(),
+  module: zod.string(),
+  metafields: zod.array(MetafieldSchema).optional(),
 })
 
-export const OldExtensionPointsSchema = schema.array(schema.string()).default([])
-export const NewExtensionPointsSchema = schema.array(NewExtensionPointSchema)
-export const ExtensionPointSchema = schema.union([OldExtensionPointsSchema, NewExtensionPointsSchema])
-export const ApiVersionSchema = schema.string()
+export const OldExtensionPointsSchema = zod.array(zod.string()).default([])
+export const NewExtensionPointsSchema = zod.array(NewExtensionPointSchema)
+export const ExtensionPointSchema = zod.union([OldExtensionPointsSchema, NewExtensionPointsSchema])
+export const ApiVersionSchema = zod.string()
 
-export type ApiVersionSchemaType = schema.infer<typeof ApiVersionSchema>
+export type ApiVersionSchemaType = zod.infer<typeof ApiVersionSchema>
 
-export const BaseUIExtensionSchema = schema.object({
-  name: schema.string(),
-  description: schema.string().optional(),
-  type: schema.string().default('ui_extension'),
+export const BaseUIExtensionSchema = zod.object({
+  name: zod.string(),
+  description: zod.string().optional(),
+  type: zod.string().default('ui_extension'),
   apiVersion: ApiVersionSchema.optional(),
-  extensionPoints: schema.any().optional(),
+  extensionPoints: zod.any().optional(),
   capabilities: CapabilitiesSchema.optional(),
-  metafields: schema.array(MetafieldSchema).optional().default([]),
-  categories: schema.array(schema.string()).optional(),
+  metafields: zod.array(MetafieldSchema).optional().default([]),
+  categories: zod.array(zod.string()).optional(),
 })
 
-export const ThemeExtensionSchema = schema.object({
-  name: schema.string(),
-  type: schema.literal('theme'),
+export const ThemeExtensionSchema = zod.object({
+  name: zod.string(),
+  type: zod.literal('theme'),
 })
 
-export const BaseFunctionConfigurationSchema = schema.object({
-  name: schema.string(),
-  type: schema.string(),
-  description: schema.string().optional().default(''),
-  build: schema.object({
-    command: schema
+export const BaseFunctionConfigurationSchema = zod.object({
+  name: zod.string(),
+  type: zod.string(),
+  description: zod.string().optional().default(''),
+  build: zod.object({
+    command: zod
       .string()
       .transform((value) => (value.trim() === '' ? undefined : value))
       .optional(),
-    path: schema.string().optional(),
+    path: zod.string().optional(),
   }),
-  configurationUi: schema.boolean().optional().default(true),
-  ui: schema
+  configurationUi: zod.boolean().optional().default(true),
+  ui: zod
     .object({
-      enable_create: schema.boolean().optional(),
-      paths: schema
+      enable_create: zod.boolean().optional(),
+      paths: zod
         .object({
-          create: schema.string(),
-          details: schema.string(),
+          create: zod.string(),
+          details: zod.string(),
         })
         .optional(),
     })
     .optional(),
-  apiVersion: schema.string(),
-  input: schema
+  apiVersion: zod.string(),
+  input: zod
     .object({
-      variables: schema
+      variables: zod
         .object({
-          namespace: schema.string(),
-          key: schema.string(),
+          namespace: zod.string(),
+          key: zod.string(),
         })
         .optional(),
     })
     .optional(),
 })
 
-export type NewExtensionPointSchemaType = schema.infer<typeof NewExtensionPointSchema>
+export type NewExtensionPointSchemaType = zod.infer<typeof NewExtensionPointSchema>
 
 // Base config type that all config schemas must extend.
-export type BaseConfigContents = schema.infer<typeof BaseUIExtensionSchema>
+export type BaseConfigContents = zod.infer<typeof BaseUIExtensionSchema>

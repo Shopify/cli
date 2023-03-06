@@ -6,10 +6,10 @@ import {constantize} from '@shopify/cli-kit/common/string'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {areJavaScriptFunctionsEnabled} from '@shopify/cli-kit/node/context/local'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
-import {schema} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 // Base config type that all config schemas must extend
-export type FunctionConfigType = schema.infer<typeof BaseFunctionConfigurationSchema>
+export type FunctionConfigType = zod.infer<typeof BaseFunctionConfigurationSchema>
 
 /**
  * Specification with all the needed properties and methods to load a function.
