@@ -1,9 +1,9 @@
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
-import {loadEnvironmentsFromDirectory} from './environments.js'
+import {loadEnvironment} from './environments.js'
 import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
-import {cwd} from './path.js'
+import {renderInfo} from './ui.js'
 import {JsonMap} from '../../private/common/json.js'
 import {outputContent, outputInfo, outputToken} from '../../public/node/output.js'
 import {hashString} from '../../public/node/crypto.js'
@@ -72,13 +72,11 @@ abstract class BaseCommand extends Command {
   ): Promise<ParserOutput<TFlags, TGlobalFlags, TArgs>> {
     // If no environment is specified, don't modify the results
     const flags = originalResult.flags as EnvironmentFlags
-    if (!flags.environment) return originalResult
+    const environmentsFileName = this.environmentsFilename()
+    if (!flags.environment || !environmentsFileName) return originalResult
 
     // If the specified environment isn't found, don't modify the results
-    const environments = await loadEnvironmentsFromDirectory(await this.environmentsPath(flags), {
-      findUp: this.findUpForEnvironments(),
-    })
-    const environment = environments[flags.environment]
+    const environment = await loadEnvironment(flags.environment, environmentsFileName, {from: flags.path})
     if (!environment) return originalResult
 
     // Parse using noDefaultsOptions to derive a list of flags specified as
@@ -105,12 +103,9 @@ abstract class BaseCommand extends Command {
     return result
   }
 
-  protected async environmentsPath(rawFlags: {path?: string}): Promise<string> {
-    return rawFlags.path || cwd()
-  }
-
-  protected findUpForEnvironments(): boolean {
-    return true
+  protected environmentsFilename(): string | undefined {
+    // To be re-implemented if needed
+    return undefined
   }
 }
 
@@ -148,14 +143,18 @@ function reportEnvironmentApplication<
   for (const [name, value] of Object.entries(flagsWithEnvironments)) {
     const userSpecifiedThisFlag = Object.prototype.hasOwnProperty.call(noDefaultsFlags, name)
     const environmentContainsFlag = Object.prototype.hasOwnProperty.call(environment, name)
-    if (!userSpecifiedThisFlag && environmentContainsFlag) changes[name] = value
+    if (!userSpecifiedThisFlag && environmentContainsFlag) {
+      const valueToReport = name === 'password' ? `********${value.substr(-4)}` : value
+      changes[name] = valueToReport
+    }
   }
   if (Object.keys(changes).length === 0) return
-  outputInfo(outputContent`Using applicable flags from the environment ${outputToken.yellow(environmentName)}:
 
-${Object.entries(changes)
-  .map(([name, value]) => `• ${name} = ${value}`)
-  .join('\n')}\n`)
+  const items = Object.entries(changes).map(([name, value]) => `${name}: ${value}`)
+  renderInfo({
+    headline: ['Using applicable flags from', {userInput: environmentName}, 'environment:'],
+    body: [{list: {items}}],
+  })
 }
 
 /**

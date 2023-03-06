@@ -8,6 +8,7 @@ export const configurationFileNames = {
     function: 'shopify.function.extension.toml',
   },
   web: 'shopify.web.toml',
+  appEnvironments: 'shopify.environments.toml',
 } as const
 
 export const dotEnvFileNames = {
