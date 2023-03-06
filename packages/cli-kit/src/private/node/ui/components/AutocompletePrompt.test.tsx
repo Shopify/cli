@@ -221,7 +221,7 @@ describe('AutocompletePrompt', async () => {
     // prompt doesn't change when enter is pressed
     await sendInputAndWait(renderInstance, 100, ENTER)
 
-    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?   [36ma[7m [27m[39m
 
          [2mNo results found.[22m
@@ -255,7 +255,7 @@ describe('AutocompletePrompt', async () => {
     // prompt doesn't change when enter is pressed
     await sendInputAndWait(renderInstance, 100, ENTER)
 
-    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?   [36ma[7m [27m[39m
 
          [2mLoading...[22m
