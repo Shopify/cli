@@ -3,9 +3,9 @@ import useLayout from '../hooks/use-layout.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {isUnitTest} from '../../../../public/node/context/local.js'
 import {handleCtrlC} from '../../ui.js'
+import {isTruthy} from '../../context/utilities.js'
 import {Box, Text, useInput} from 'ink'
 import React, {useRef, useState} from 'react'
-import { isTruthy } from '../../context/utilities.js'
 
 const loadingBarChar = '▀'
 
@@ -84,13 +84,16 @@ function Tasks<TContext>({tasks, silent = isUnitTest()}: React.PropsWithChildren
     onRejected: () => setState(TasksState.Failure),
   })
 
-  useInput((input, key) => {
-    handleCtrlC(input, key)
+  useInput(
+    (input, key) => {
+      handleCtrlC(input, key)
 
-    if (key.return) {
-      return null
-    }
-  }, {isActive: !isUnitTest() || !isTruthy(process.env.CI)})
+      if (key.return) {
+        return null
+      }
+    },
+    {isActive: !isUnitTest() || !isTruthy(process.env.CI)},
+  )
 
   if (silent) {
     return null
