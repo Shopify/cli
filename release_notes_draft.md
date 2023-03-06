@@ -15,3 +15,7 @@ now do a different and much cooler thing.
 
 * *Another cool thing.* You get the idea by now.
 -->
+
+# App
+
+* Adapt the height of select prompts to the height of the terminal so that prompts won't be cut off in shorter terminals.
