@@ -15,8 +15,17 @@ import {UIExtensionPayload} from '../payload/models.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
 import {describe, expect, it, vi} from 'vitest'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
-import * as http from 'h3'
+import * as h3 from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
+
+vi.mock('h3', async () => {
+  const actual: any = await vi.importActual('h3')
+  return {
+    ...actual,
+    send: vi.fn(),
+    sendRedirect: vi.fn(),
+  }
+})
 
 function getMockRequest({context = {}, headers = {}}) {
   const request = {
@@ -24,7 +33,7 @@ function getMockRequest({context = {}, headers = {}}) {
     headers,
   }
 
-  return request as unknown as http.IncomingMessage
+  return request as unknown as h3.IncomingMessage
 }
 
 function getMockResponse() {
@@ -46,7 +55,7 @@ function getMockResponse() {
     },
   }
 
-  return response as unknown as http.ServerResponse
+  return response as unknown as h3.ServerResponse
 }
 
 function getMockNext() {
@@ -82,13 +91,11 @@ describe('noCacheMiddleware()', () => {
 
 describe('redirectToDevConsoleMiddleware()', () => {
   it('redirects to /extensions/dev-console', async () => {
-    vi.spyOn(http, 'sendRedirect')
-
     const response = getMockResponse()
 
     await redirectToDevConsoleMiddleware(getMockRequest({}), response, getMockNext())
 
-    expect(http.sendRedirect).toHaveBeenCalledWith(response.event, '/extensions/dev-console', 307)
+    expect(h3.sendRedirect).toHaveBeenCalledWith(response.event, '/extensions/dev-console', 307)
   })
 })
 
@@ -305,7 +312,6 @@ describe('getExtensionPayloadMiddleware()', () => {
 
   describe('if the accept header starts with text/html', () => {
     it('returns html if the extension surface is post_purchase', async () => {
-      vi.spyOn(http, 'send')
       vi.spyOn(templates, 'getHTML').mockResolvedValue('mock html')
       vi.spyOn(utilities, 'getExtensionUrl').mockReturnValue('http://www.mock.com/extension/url')
 
@@ -348,11 +354,10 @@ describe('getExtensionPayloadMiddleware()', () => {
         extensionSurface: 'post_purchase',
       })
 
-      expect(http.send).toHaveBeenCalledWith(response.event, 'mock html')
+      expect(h3.send).toHaveBeenCalledWith(response.event, 'mock html')
     })
 
     it('returns the redirect URL if the extension surface is not post_purchase', async () => {
-      vi.spyOn(http, 'sendRedirect')
       vi.spyOn(utilities, 'getRedirectUrl').mockReturnValue('http://www.mock.com/redirect/url')
 
       const extensionId = '123abc'
@@ -391,7 +396,7 @@ describe('getExtensionPayloadMiddleware()', () => {
         getMockNext(),
       )
 
-      expect(http.sendRedirect).toHaveBeenCalledWith(response.event, 'http://www.mock.com/redirect/url', 307)
+      expect(h3.sendRedirect).toHaveBeenCalledWith(response.event, 'http://www.mock.com/redirect/url', 307)
     })
   })
 
@@ -591,7 +596,6 @@ describe('getExtensionPointMiddleware()', () => {
   })
 
   it('returns the redirect URL if the requested extension point target is configured', async () => {
-    vi.spyOn(http, 'sendRedirect')
     vi.spyOn(utilities, 'getRedirectUrl').mockReturnValue('http://www.mock.com/redirect/url')
 
     const extensionId = '123abc'
@@ -637,6 +641,6 @@ describe('getExtensionPointMiddleware()', () => {
       getMockNext(),
     )
 
-    expect(http.sendRedirect).toHaveBeenCalledWith(response.event, 'http://www.mock.com/redirect/url', 307)
+    expect(h3.sendRedirect).toHaveBeenCalledWith(response.event, 'http://www.mock.com/redirect/url', 307)
   })
 })
