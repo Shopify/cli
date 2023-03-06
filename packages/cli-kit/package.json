@@ -58,7 +58,8 @@
     "test:js": "nx test:js",
     "test:coverage": "nx test:coverage",
     "test:watch": "nx test:watch",
-    "type-check": "nx type-check"
+    "type-check": "nx type-check",
+    "refresh-documentation": "nx refresh-documentation"
   },
   "eslintConfig": {
     "extends": [
@@ -166,6 +167,7 @@
     "node-stream-zip": "^1.15.0",
     "typedoc": "^0.23.26",
     "typescript": "4.9.5",
+    "ts-morph": "^17.0.1",
     "vite": "^2.9.13",
     "vitest": "^0.28.5"
   },

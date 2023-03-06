@@ -28,7 +28,8 @@
     "changeset-manifests": "changeset version && pnpm install --no-frozen-lockfile && pnpm refresh-manifests && bin/update-cli-kit-version.js && pnpm docs:generate",
     "fixtures:build": "pnpm shopify app build --path fixtures/app --skip-dependencies-installation",
     "fixtures:dev": "pnpm shopify app dev --path fixtures/app --skip-dependencies-installation",
-    "fixtures:deploy": "pnpm shopify app deploy --path fixtures/app"
+    "fixtures:deploy": "pnpm shopify app deploy --path fixtures/app",
+    "refresh-documentation": "nx run-many --target=refresh-documentation --all --skip-nx-cache"
   },
   "devDependencies": {
     "@apollo/client": "^3.7.9",
