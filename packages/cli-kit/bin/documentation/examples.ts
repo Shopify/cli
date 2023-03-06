@@ -27,7 +27,7 @@ interface Example {
   complete?: () => Promise<string>
 }
 
-const TERMINAL_WIDTH = 70
+const TERMINAL_WIDTH = 60
 
 export const examples: {[key in string]: Example} = {
   renderConcurrent: {

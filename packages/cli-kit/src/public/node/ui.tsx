@@ -59,34 +59,34 @@ export type RenderAlertOptions = Omit<AlertOptions, 'type'>
 /**
  * Renders an information banner to the console.
  * @example Basic
- * ╭─ info ─────────────────────────────────────────────────────────────╮
- * │                                                                    │
- * │  CLI update available                                              │
- * │                                                                    │
- * │  Run `npm run shopify upgrade`.                                    │
- * │                                                                    │
- * ╰────────────────────────────────────────────────────────────────────╯
+ * ╭─ info ───────────────────────────────────────────────────╮
+ * │                                                          │
+ * │  CLI update available                                    │
+ * │                                                          │
+ * │  Run `npm run shopify upgrade`.                          │
+ * │                                                          │
+ * ╰──────────────────────────────────────────────────────────╯
  *
  * @example Complete
- * ╭─ info ─────────────────────────────────────────────────────────────╮
- * │                                                                    │
- * │  my-app initialized and ready to build.                            │
- * │                                                                    │
- * │  Next steps                                                        │
- * │    • Run `cd verification-app`                                     │
- * │    • To preview your project, run `npm app dev`                    │
- * │    • To add extensions, run `npm generate extension`               │
- * │                                                                    │
- * │  Reference                                                         │
- * │    • Run `npm shopify help`                                        │
- * │    • Dev docs ( https://shopify.dev )                              │
- * │                                                                    │
- * │  Custom section                                                    │
- * │    • Item 1                                                        │
- * │    • Item 2                                                        │
- * │    • Item 3                                                        │
- * │                                                                    │
- * ╰────────────────────────────────────────────────────────────────────╯
+ * ╭─ info ───────────────────────────────────────────────────╮
+ * │                                                          │
+ * │  my-app initialized and ready to build.                  │
+ * │                                                          │
+ * │  Next steps                                              │
+ * │    • Run `cd verification-app`                           │
+ * │    • To preview your project, run `npm app dev`          │
+ * │    • To add extensions, run `npm generate extension`     │
+ * │                                                          │
+ * │  Reference                                               │
+ * │    • Run `npm shopify help`                              │
+ * │    • Dev docs ( https://shopify.dev )                    │
+ * │                                                          │
+ * │  Custom section                                          │
+ * │    • Item 1                                              │
+ * │    • Item 2                                              │
+ * │    • Item 3                                              │
+ * │                                                          │
+ * ╰──────────────────────────────────────────────────────────╯
  *
  */
 export function renderInfo(options: RenderAlertOptions) {
@@ -96,27 +96,28 @@ export function renderInfo(options: RenderAlertOptions) {
 /**
  * Renders a success banner to the console.
  * @example Basic
- * ╭─ success ──────────────────────────────────────────────────────────╮
- * │                                                                    │
- * │  CLI updated.                                                      │
- * │                                                                    │
- * │  You are now running version 3.47.                                 │
- * │                                                                    │
- * ╰────────────────────────────────────────────────────────────────────╯
+ * ╭─ success ────────────────────────────────────────────────╮
+ * │                                                          │
+ * │  CLI updated.                                            │
+ * │                                                          │
+ * │  You are now running version 3.47.                       │
+ * │                                                          │
+ * ╰──────────────────────────────────────────────────────────╯
  *
  * @example Complete
- * ╭─ success ──────────────────────────────────────────────────────────╮
- * │                                                                    │
- * │  Deployment successful.                                            │
- * │                                                                    │
- * │  Your extensions have been uploaded to your Shopify Partners       │
- * │  Dashboard.                                                        │
- * │                                                                    │
- * │  Next steps                                                        │
- * │    • See your deployment and set it live ( https://partners.shopi  │
- * │      fy.com/1797046/apps/4523695/deployments )                     │
- * │                                                                    │
- * ╰────────────────────────────────────────────────────────────────────╯
+ * ╭─ success ────────────────────────────────────────────────╮
+ * │                                                          │
+ * │  Deployment successful.                                  │
+ * │                                                          │
+ * │  Your extensions have been uploaded to your Shopify      │
+ * │  Partners Dashboard.                                     │
+ * │                                                          │
+ * │  Next steps                                              │
+ * │    • See your deployment and set it live ( https://part  │
+ * │      ners.shopify.com/1797046/apps/4523695/deployments   │
+ * │      )                                                   │
+ * │                                                          │
+ * ╰──────────────────────────────────────────────────────────╯
  *
  */
 export function renderSuccess(options: RenderAlertOptions) {
@@ -126,25 +127,28 @@ export function renderSuccess(options: RenderAlertOptions) {
 /**
  * Renders a warning banner to the console.
  * @example Basic
- * ╭─ warning ──────────────────────────────────────────────────────────╮
- * │                                                                    │
- * │  You have reached your limit of checkout extensions for this app.  │
- * │                                                                    │
- * │  You can free up space for a new one by deleting an existing one.  │
- * │                                                                    │
- * ╰────────────────────────────────────────────────────────────────────╯
+ * ╭─ warning ────────────────────────────────────────────────╮
+ * │                                                          │
+ * │  You have reached your limit of checkout extensions for  │
+ * │   this app.                                              │
+ * │                                                          │
+ * │  You can free up space for a new one by deleting an      │
+ * │  existing one.                                           │
+ * │                                                          │
+ * ╰──────────────────────────────────────────────────────────╯
  *
  * @example Complete
- * ╭─ warning ──────────────────────────────────────────────────────────╮
- * │                                                                    │
- * │  Required access scope update.                                     │
- * │                                                                    │
- * │  The deadline for re-selecting your app scopes is May 1, 2022.     │
- * │                                                                    │
- * │  Reference                                                         │
- * │    • Dev docs ( https://shopify.dev/app/scopes )                   │
- * │                                                                    │
- * ╰────────────────────────────────────────────────────────────────────╯
+ * ╭─ warning ────────────────────────────────────────────────╮
+ * │                                                          │
+ * │  Required access scope update.                           │
+ * │                                                          │
+ * │  The deadline for re-selecting your app scopes is May    │
+ * │  1, 2022.                                                │
+ * │                                                          │
+ * │  Reference                                               │
+ * │    • Dev docs ( https://shopify.dev/app/scopes )         │
+ * │                                                          │
+ * ╰──────────────────────────────────────────────────────────╯
  *
  */
 export function renderWarning(options: RenderAlertOptions) {
@@ -158,32 +162,32 @@ interface RenderFatalErrorOptions {
 /**
  * Renders a Fatal error to the console inside a banner.
  * @example Basic
- * ╭─ error ────────────────────────────────────────────────────────────╮
- * │                                                                    │
- * │  Something went wrong.                                             │
- * │                                                                    │
- * │  To investigate the issue, examine this stack trace:               │
- * │    at _compile (internal/modules/cjs/loader.js:1137)               │
- * │    at js (internal/modules/cjs/loader.js:1157)                     │
- * │    at load (internal/modules/cjs/loader.js:985)                    │
- * │    at _load (internal/modules/cjs/loader.js:878)                   │
- * │                                                                    │
- * ╰────────────────────────────────────────────────────────────────────╯
+ * ╭─ error ──────────────────────────────────────────────────╮
+ * │                                                          │
+ * │  Something went wrong.                                   │
+ * │                                                          │
+ * │  To investigate the issue, examine this stack trace:     │
+ * │    at _compile (internal/modules/cjs/loader.js:1137)     │
+ * │    at js (internal/modules/cjs/loader.js:1157)           │
+ * │    at load (internal/modules/cjs/loader.js:985)          │
+ * │    at _load (internal/modules/cjs/loader.js:878)         │
+ * │                                                          │
+ * ╰──────────────────────────────────────────────────────────╯
  *
  * @example Complete
- * ╭─ error ────────────────────────────────────────────────────────────╮
- * │                                                                    │
- * │  No Organization found                                             │
- * │                                                                    │
- * │  Next steps                                                        │
- * │    • Have you created a Shopify Partners organization (            │
- * │      https://partners.shopify.com/signup )?                        │
- * │    • Have you confirmed your accounts from the emails you          │
- * │      received?                                                     │
- * │    • Need to connect to a different App or organization? Run the   │
- * │      command again with `--reset`                                  │
- * │                                                                    │
- * ╰────────────────────────────────────────────────────────────────────╯
+ * ╭─ error ──────────────────────────────────────────────────╮
+ * │                                                          │
+ * │  No Organization found                                   │
+ * │                                                          │
+ * │  Next steps                                              │
+ * │    • Have you created a Shopify Partners organization (  │
+ * │       https://partners.shopify.com/signup )?             │
+ * │    • Have you confirmed your accounts from the emails    │
+ * │      you received?                                       │
+ * │    • Need to connect to a different App or               │
+ * │      organization? Run the command again with `--reset`  │
+ * │                                                          │
+ * ╰──────────────────────────────────────────────────────────╯
  *
  */
 // eslint-disable-next-line max-params
@@ -368,7 +372,7 @@ interface RenderTasksOptions {
 /**
  * Runs async tasks and displays their progress to the console.
  * @example
- * ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+ * ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
  * Installing dependencies ...
  *
  */
@@ -386,7 +390,7 @@ export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit
  * @example
  * ?  App project name (can be changed later):
  * >  expansive commerce app
- *    ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+ *    ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
  *
  *
  */
