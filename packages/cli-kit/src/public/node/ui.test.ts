@@ -333,7 +333,7 @@ describe('renderTasks', async () => {
     }
 
     try {
-      await renderTasks([throwingTask])
+      await renderTasks([throwingTask], {renderOptions: {patchConsole: false}})
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error: any) {
       renderWarning({headline: error.message})
