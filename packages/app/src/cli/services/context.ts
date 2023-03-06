@@ -298,6 +298,12 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   // needed to know if the org has access to certain flags
   const orgId = cachedInfo?.orgId ?? (await selectOrg(token))
   const organization = await fetchOrgFromId(orgId, token)
+
+  setAppInfo({
+    directory: options.directory,
+    orgId,
+  })
+
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
