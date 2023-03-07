@@ -488,7 +488,7 @@ export const examples: {[key in string]: Example} = {
         },
       ]
 
-      renderTasks(tasks, {renderOptions: {stdout: stdout as any, patchConsole: false}})
+      renderTasks(tasks, {renderOptions: {stdout: stdout as any}})
 
       await waitFor(
         () => {},
