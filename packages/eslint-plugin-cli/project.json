@@ -1,6 +1,6 @@
 {
-  "name": "@shopify/eslint-plugin-cli",
-  "root": "packages/eslint-plugin-cli",
+  "name": "eslint-plugin-cli",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "tags": ["scope:plugin"]
 }

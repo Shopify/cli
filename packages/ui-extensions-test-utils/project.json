@@ -2,6 +2,7 @@
     "name": "ui-extensions-test-utils",
     "root": "packages/ui-extensions-test-utils",
     "sourceRoot": "packages/ui-extensions-test-utils/src",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "projectType": "library",
     "tags": ["scope:feature", "scope:ui-extensions"],
     "targets": {

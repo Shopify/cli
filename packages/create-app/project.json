@@ -1,6 +1,7 @@
 {
     "name": "create-app",
     "root": "packages/create-app",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "packages/create-app/src",
     "projectType": "library",
     "tags": ["scope:create-cli"],
