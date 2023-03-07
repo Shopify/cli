@@ -363,6 +363,32 @@ describe('initialize a extension', async () => {
       expect(buildGraphqlTypesSpy).toHaveBeenCalledOnce()
     })
   })
+
+  it('throws an error if there is no folder for selected flavor', async () => {
+    await withTemporaryApp(async (tmpDir) => {
+      // Given
+      const name = 'my-fun-1'
+      const specification = allFunctionSpecs.find((spec) => spec.identifier === 'order_discounts')!
+      const extensionFlavor = 'vanilla-js'
+
+      vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
+      vi.spyOn(functionCommon, 'ensureFunctionExtensionFlavorExists').mockImplementationOnce(async () => {
+        throw new Error('No folder for selected flavor')
+      })
+
+      // When
+      const got = createFromTemplate({
+        name,
+        specification,
+        extensionFlavor,
+        appDirectory: tmpDir,
+        specifications,
+      })
+
+      // Then
+      await expect(got).rejects.toThrowErrorMatchingInlineSnapshot('"No folder for selected flavor"')
+    })
+  })
 })
 
 describe('getExtensionRuntimeDependencies', () => {
