@@ -157,6 +157,7 @@ const options = (app: App): DeployContextOptions => {
     app,
     reset: false,
     force: false,
+    directory: '/',
   }
 }
 
@@ -351,7 +352,7 @@ describe('ensureDeployEnvironment', () => {
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
     // When
-    const got = await ensureDeployContext({app, reset: false, force: false})
+    const got = await ensureDeployContext({app, reset: false, force: false, directory: '/'})
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()

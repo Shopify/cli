@@ -95,7 +95,7 @@ export async function deploy(options: DeployOptions) {
 
   let registrations: AllAppExtensionRegistrationsQuerySchema
   let validationErrors: UploadExtensionValidationError[] = []
-  let deploymentId: number | undefined
+  let deploymentId: number
 
   await inTemporaryDirectory(async (tmpDir) => {
     try {
@@ -178,7 +178,7 @@ async function outputCompletionMessage({
   identifiers: Identifiers
   registrations: AllAppExtensionRegistrationsQuerySchema
   validationErrors: UploadExtensionValidationError[]
-  deploymentId?: number
+  deploymentId: number
   unifiedDeployment: boolean
 }) {
   if (unifiedDeployment) {

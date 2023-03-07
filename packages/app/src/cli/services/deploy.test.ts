@@ -93,7 +93,7 @@ async function testDeployBundle(app: AppInterface) {
   })
   vi.mocked(useThemebundling).mockReturnValue(true)
   vi.mocked(uploadFunctionExtensions).mockResolvedValue(identifiers)
-  vi.mocked(uploadExtensionsBundle).mockResolvedValue([])
+  vi.mocked(uploadExtensionsBundle).mockResolvedValue({validationErrors: [], deploymentId: 1})
   vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({app: {extensionRegistrations: [], functions: []}})
 
@@ -102,6 +102,7 @@ async function testDeployBundle(app: AppInterface) {
     app,
     reset: false,
     force: true,
+    directory: '/',
   })
 
   // Then

@@ -105,7 +105,7 @@ export interface UploadExtensionValidationError {
  */
 export async function uploadExtensionsBundle(
   options: UploadExtensionsBundleOptions,
-): Promise<{validationErrors: UploadExtensionValidationError[]; deploymentId: number | undefined}> {
+): Promise<{validationErrors: UploadExtensionValidationError[]; deploymentId: number}> {
   const deploymentUUID = randomUUID()
   const signedURL = await getExtensionUploadURL(options.apiKey, deploymentUUID)
 
