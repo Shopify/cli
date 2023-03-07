@@ -36,7 +36,7 @@ describe('buildGraphqlTypes', () => {
 
     // Then
     await expect(got).resolves.toBeUndefined()
-    expect(exec).toHaveBeenCalledWith('npm', ['exec', '--', 'graphql-code-generator'], {
+    expect(exec).toHaveBeenCalledWith('npm', ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
       cwd: ourFunction.directory,
       stderr,
       signal,
