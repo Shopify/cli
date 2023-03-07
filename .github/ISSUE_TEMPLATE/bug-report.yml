@@ -61,7 +61,7 @@ body:
       description: Rerun the command with `--verbose` and paste the output here
       render: shell
     validations:
-      required: false
+      required: true
   - type: textarea
     id: repro_steps
     attributes:
