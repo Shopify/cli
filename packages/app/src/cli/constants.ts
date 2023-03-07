@@ -38,13 +38,8 @@ export const blocks = {
 } as const
 
 export const defaultFunctionsFlavors: {name: string; value: ExtensionFlavor}[] = [
-  {name: 'Wasm', value: 'wasm'},
-  {name: 'Rust', value: 'rust'},
-]
-
-export const withJavaScriptFunctionsFlavors: {name: string; value: ExtensionFlavor}[] = [
-  {name: 'JavaScript', value: 'vanilla-js'},
-  {name: 'TypeScript', value: 'typescript'},
+  {name: 'JavaScript (developer preview)', value: 'vanilla-js'},
+  {name: 'TypeScript (developer preview)', value: 'typescript'},
   {name: 'Rust', value: 'rust'},
   {name: 'Wasm', value: 'wasm'},
 ]

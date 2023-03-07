@@ -1,10 +1,9 @@
 import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
 import {ExtensionCategory, GenericSpecification, FunctionExtension} from '../app/extensions.js'
-import {blocks, defaultFunctionsFlavors, withJavaScriptFunctionsFlavors} from '../../constants.js'
+import {blocks, defaultFunctionsFlavors} from '../../constants.js'
 import {ExtensionFlavor} from '../../services/generate/extension.js'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {areJavaScriptFunctionsEnabled} from '@shopify/cli-kit/node/context/local'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {schema} from '@shopify/cli-kit/node/schema'
 
@@ -137,7 +136,7 @@ export function createFunctionSpecification<TConfiguration extends FunctionConfi
     templateURL: 'https://github.com/Shopify/function-examples',
     externalIdentifier: spec.identifier,
     externalName: spec.identifier,
-    supportedFlavors: areJavaScriptFunctionsEnabled() ? withJavaScriptFunctionsFlavors : defaultFunctionsFlavors,
+    supportedFlavors: defaultFunctionsFlavors,
     configSchema: BaseFunctionConfigurationSchema,
     gated: false,
     registrationLimit: spec.registrationLimit ?? blocks.functions.defaultRegistrationLimit,
