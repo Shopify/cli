@@ -1,5 +1,4 @@
 {
-  "name": "cli-workspace",
   "private": true,
   "type": "module",
   "scripts": {
