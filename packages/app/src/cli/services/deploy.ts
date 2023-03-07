@@ -59,8 +59,12 @@ export async function deploy(options: DeployOptions) {
   if (organization.betas.appUiDeployments) {
     label = await renderTextPrompt({
       message: 'Deployment label',
-      defaultValue: 'Deployed from CLI',
+      validate: () => {
+        return undefined
+      },
     })
+
+    label.length === 0 && (label = undefined)
   }
 
   outputNewline()
@@ -143,6 +147,7 @@ export async function deploy(options: DeployOptions) {
         registrations,
         validationErrors,
         deploymentId,
+        unifiedDeployment: organization.betas.appUiDeployments,
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -165,6 +170,7 @@ async function outputCompletionMessage({
   registrations,
   validationErrors,
   deploymentId,
+  unifiedDeployment,
 }: {
   app: AppInterface
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
@@ -173,8 +179,9 @@ async function outputCompletionMessage({
   registrations: AllAppExtensionRegistrationsQuerySchema
   validationErrors: UploadExtensionValidationError[]
   deploymentId?: number
+  unifiedDeployment: boolean
 }) {
-  if (deploymentId) {
+  if (unifiedDeployment) {
     return renderSuccess({
       headline: 'Deployment created',
       body: {

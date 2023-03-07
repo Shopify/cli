@@ -304,7 +304,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     orgId,
   })
 
-  const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
+  const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token, organization)
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
 
@@ -357,9 +357,9 @@ export async function fetchAppAndIdentifiers(
     reset: boolean
     packageManager?: PackageManager
     apiKey?: string
-    organization?: Organization
   },
   token: string,
+  organization?: Organization,
 ): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
   let envIdentifiers = getAppIdentifiers({app: options.app})
   let partnersApp: OrganizationApp | undefined
@@ -378,11 +378,11 @@ export async function fetchAppAndIdentifiers(
       )
     }
   } else {
-    partnersApp = await fetchDevAppAndPrompt(options.app, token, options.organization)
+    partnersApp = await fetchDevAppAndPrompt(options.app, token, organization)
   }
 
   if (!partnersApp) {
-    const result = await fetchOrganizationAndFetchOrCreateApp(options.app, token, options.organization?.id)
+    const result = await fetchOrganizationAndFetchOrCreateApp(options.app, token, organization?.id)
     partnersApp = result.partnersApp
   }
 
