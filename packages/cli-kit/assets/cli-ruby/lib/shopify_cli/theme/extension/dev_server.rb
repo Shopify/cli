@@ -119,9 +119,9 @@ module ShopifyCLI
         end
 
         def setup_server
-          CLI::UI::Frame.open(frame_title, color: :magenta, timing: nil) do
-            ctx.puts(preview_message)
-          end
+          ctx.puts("\n--------- #{frame_title}")
+          ctx.puts(preview_message)
+          ctx.puts("------------------\n")
 
           watcher.start
           syncer.start

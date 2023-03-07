@@ -4,7 +4,7 @@ require "fileutils"
 require_relative "../syncer"
 require_relative "../development_theme"
 require "shopify_cli/git"
-require "shopify_cli/theme/extension/ui/host_theme_progress_bar"
+require "shopify_cli/theme/extension/ui/host_theme_raw_progress_bar"
 require "tmpdir"
 
 require "shopify_cli/git"
@@ -77,9 +77,9 @@ module ShopifyCLI
 
             begin
               syncer.start_threads
-              ::CLI::UI::Frame.open(ctx.message("theme.push.info.pushing", name, id, shop)) do
-                UI::HostThemeProgressBar.new(syncer, dir).progress(:upload_theme!, delete: false)
-              end
+              ctx.puts("\n--------- #{ctx.message("theme.push.info.pushing", name, id, shop)}")
+              UI::HostThemeRawProgressBar.new(syncer, dir).progress(:upload_theme!, delete: false)
+              ctx.puts("------------------\n")
             rescue Errno::ENOENT => e
               ctx.debug(e.message)
             ensure
