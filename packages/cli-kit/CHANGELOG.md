@@ -1,5 +1,19 @@
 # @shopify/cli-kit
 
+## 3.45.0-pre.1
+
+### Minor Changes
+
+- 1dd35b0b2: Enable environments for themes
+
+### Patch Changes
+
+- db5981a1e: Clean errors related to metrics requests on theme dev
+- fe32fb789: Fix issue with dev footer and resizing the terminal
+- 4d5cff225: Fix issue with unicode characters not being displayed correctly in log output
+- c3d5ce5e6: Fix layout width for very narrow terminals
+- 067199cf6: Pass development theme from CLI 3’s to CLI 2’s local storage
+
 ## 3.44.1-pre.0
 
 ### Patch Changes
