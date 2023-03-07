@@ -53,20 +53,21 @@ export default class Pull extends ThemeCommand {
     }),
   }
 
-  static cli2Flags = ['theme', 'development', 'live', 'nodelete', 'only', 'ignore', 'force']
+  static cli2Flags = ['theme', 'development', 'live', 'nodelete', 'only', 'ignore', 'force', 'development-theme-id']
 
   async run(): Promise<void> {
-    let {flags} = await this.parse(Pull)
+    const {flags} = await this.parse(Pull)
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
-    if (flags.development) {
-      const theme = await new DevelopmentThemeManager(adminSession).find()
-      flags = {
-        ...flags,
-        development: false,
-        theme: theme.id.toString(),
+    const developmentThemeManager = new DevelopmentThemeManager(adminSession)
+    const theme = await (flags.development ? developmentThemeManager.find() : developmentThemeManager.fetch())
+    if (theme) {
+      if (flags.development) {
+        flags.theme = `${theme.id}`
+        flags.development = false
       }
+      flags['development-theme-id'] = theme.id
     }
 
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Pull.cli2Flags})

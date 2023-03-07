@@ -68,7 +68,6 @@ if (!fs.existsSync(path.join(appPath, 'extensions', 'prod-discount-fun'))) {
   await appExec(
     'pnpm',
     ['generate', 'extension', '--type=product_discounts', '--name=prod-discount-fun', '--template=typescript'],
-    {env: {SHOPIFY_CLI_FUNCTIONS_JAVASCRIPT: '1'}},
   )
   await appExec('pnpm', ['build'], {cwd: functionDir})
   const previewProcess = execa('pnpm', ['preview'], {cwd: functionDir, stdout: 'inherit'})

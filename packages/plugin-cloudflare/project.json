@@ -1,6 +1,7 @@
 {
   "name": "plugin-cloudflare",
   "root": "packages/plugin-cloudflare",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/plugin-cloudflare/src",
   "projectType": "library",
   "tags": ["scope:plugin"],

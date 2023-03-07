@@ -1,5 +1,6 @@
 {
-  "root": "workspace",
+  "name": "workspace",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "workspace/",
   "projectType": "library",
   "implicitDependencies": ["cli"],
@@ -9,9 +10,7 @@
       "executor": "nx:run-commands",
       "dependsOn": [],
       "options": {
-        "commands": [
-          "node src/lint.js"
-        ],
+        "commands": ["node src/lint.js"],
         "cwd": "workspace"
       }
     },
@@ -19,9 +18,7 @@
       "executor": "nx:run-commands",
       "dependsOn": ["^build"],
       "options": {
-        "commands": [
-          "node src/benchmark.js"
-        ],
+        "commands": ["node src/benchmark.js"],
         "cwd": "workspace"
       }
     },
@@ -29,9 +26,7 @@
       "executor": "nx:run-commands",
       "dependsOn": ["^build"],
       "options": {
-        "commands": [
-          "node src/type-diff.js"
-        ],
+        "commands": ["node src/type-diff.js"],
         "cwd": "workspace"
       }
     }

@@ -1,36 +1,42 @@
 import {decodeToml} from './toml.js'
-import {fileExists, readFile, findPathUp} from './fs.js'
-import {joinPath} from './path.js'
+import {findPathUp, readFile} from './fs.js'
+import {outputWarn} from './output.js'
+import {cwd} from './path.js'
 import {JsonMap} from '../../private/common/json.js'
-
-export const environmentsFilename = 'shopify.environments.toml'
 
 export interface Environments {
   [name: string]: JsonMap
 }
+
+interface LoadEnvironmentOptions {
+  from?: string
+}
 /**
- * Loads environments from a directory.
- * @param dir - The directory to load environments from.
- * @param opts - Options for loading environments, including:
- * - findUp: whether to search upwards for an environments file.
+ * Loads environments from a file.
+ * @param dir - The file path to load environments from.
  * @returns The loaded environments.
  */
-export async function loadEnvironmentsFromDirectory(dir: string, opts?: {findUp: boolean}): Promise<Environments> {
-  let environmentsFilePath: string | undefined
-  if (opts?.findUp) {
-    environmentsFilePath = await findPathUp(environmentsFilename, {
-      cwd: dir,
-      type: 'file',
-    })
-  } else {
-    const allowedEnvironmentsFilePath = joinPath(dir, environmentsFilename)
-    if (await fileExists(allowedEnvironmentsFilePath)) {
-      environmentsFilePath = allowedEnvironmentsFilePath
-    }
+export async function loadEnvironment(
+  environmentName: string,
+  fileName: string,
+  options?: LoadEnvironmentOptions,
+): Promise<JsonMap | undefined> {
+  const basePath = options?.from && options?.from !== '.' ? options.from : cwd()
+  const filePath = await findPathUp(fileName, {
+    cwd: basePath,
+    type: 'file',
+  })
+  if (!filePath) {
+    outputWarn(`Environment file not found`)
+    return undefined
   }
-  if (environmentsFilePath) {
-    return decodeToml(await readFile(environmentsFilePath)) as Environments
-  } else {
-    return {}
+  const environmentsJson = decodeToml(await readFile(filePath)) as Environments
+  const environments = environmentsJson.environments
+  if (!environments) {
+    outputWarn(`No environments found in ${filePath}`)
+    return undefined
   }
+  const environment = environments[environmentName] as JsonMap
+  if (!environment) outputWarn(`Environment ${environmentName} not found`)
+  return environment
 }

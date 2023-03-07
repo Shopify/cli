@@ -2,6 +2,7 @@
     "name": "theme",
     "root": "packages/theme",
     "sourceRoot": "packages/theme/src",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "projectType": "library",
     "tags": ["scope:feature"],
     "targets": {

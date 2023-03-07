@@ -1,3 +1,4 @@
+import {configurationFileName} from '../constants.js'
 import Command from '@shopify/cli-kit/node/base-command'
 
 interface FlagValues {
@@ -23,5 +24,9 @@ export default abstract class ThemeCommand extends Command {
       }
     }
     return passThroughFlags
+  }
+
+  environmentsFilename(): string {
+    return configurationFileName
   }
 }

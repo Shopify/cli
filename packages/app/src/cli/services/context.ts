@@ -188,16 +188,18 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   return result
 }
 
+const resetHelpMessage = 'You can pass `--reset` to your command to reset your config.'
+
 const organizationFromId = async (orgId: string, token: string): Promise<Organization> => {
   const organization = await fetchOrgFromId(orgId, token)
-  if (!organization) throw new BugError(`Couldn't find Organization with id ${orgId}.`)
+  if (!organization) throw new BugError(`Couldn't find the organization with id ${orgId}. ${resetHelpMessage}`)
   return organization
 }
 
 const appFromId = async (appId: string | undefined, token: string): Promise<OrganizationApp | undefined> => {
   if (!appId) return
   const app = await fetchAppFromApiKey(appId, token)
-  if (!app) throw new BugError(`Couldn't find App with apiKey ${appId}.`)
+  if (!app) throw new BugError(`Couldn't find the app with API key "${appId}". ${resetHelpMessage}`)
   return app
 }
 
@@ -212,7 +214,7 @@ const storeFromFqdn = async (
     await convertToTestStoreIfNeeded(result.store, orgId, token)
     return result.store
   } else {
-    throw new BugError(`Couldn't find Store with domain ${storeFqdn}.`)
+    throw new BugError(`Couldn't find the store with domain "${storeFqdn}". ${resetHelpMessage}`)
   }
 }
 

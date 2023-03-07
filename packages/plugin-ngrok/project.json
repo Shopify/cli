@@ -2,6 +2,7 @@
     "name": "plugin-ngrok",
     "root": "packages/plugin-ngrok",
     "sourceRoot": "packages/plugin-ngrok/src",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "projectType": "library",
     "tags": ["scope:plugin"],
     "targets": {

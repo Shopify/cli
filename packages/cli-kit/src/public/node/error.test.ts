@@ -8,7 +8,7 @@ describe('handler', () => {
   test('error output uses same input error instance when the error type is abort', async () => {
     // Given
     const abortError = new AbortError('error message', 'try message')
-    vi.mocked(renderFatalError).mockResolvedValue()
+    vi.mocked(renderFatalError).mockResolvedValue('')
 
     // When
     await handler(abortError)
@@ -20,7 +20,7 @@ describe('handler', () => {
   test('error output uses same input error instance when the error type is bug', async () => {
     // Given
     const bugError = new BugError('error message', 'try message')
-    vi.mocked(renderFatalError).mockResolvedValue()
+    vi.mocked(renderFatalError).mockResolvedValue('')
 
     // When
     await handler(bugError)
@@ -32,7 +32,7 @@ describe('handler', () => {
   test('error output uses a BugError instance instance when the error type not extends from fatal', async () => {
     // Given
     const unknownError = new Error('Unknown')
-    vi.mocked(renderFatalError).mockResolvedValue()
+    vi.mocked(renderFatalError).mockResolvedValue('')
 
     // When
     await handler(unknownError)
