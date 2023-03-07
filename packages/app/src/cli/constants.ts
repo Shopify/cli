@@ -28,7 +28,6 @@ export const blocks = {
   },
   functions: {
     defaultUrl: 'https://github.com/Shopify/function-examples',
-    defaultLanguage: 'wasm',
     defaultRegistrationLimit: 10,
   },
   web: {

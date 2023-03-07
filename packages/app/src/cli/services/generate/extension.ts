@@ -45,9 +45,13 @@ interface ExtensionDirectory {
   extensionDirectory: string
 }
 
+interface FunctionFlavor {
+  extensionFlavor: ExtensionFlavor
+}
+
 export type ExtensionFlavor = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react' | 'rust' | 'wasm'
 
-type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionSpec> & ExtensionDirectory
+type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionSpec> & ExtensionDirectory & FunctionFlavor
 type UIExtensionInitOptions = ExtensionInitOptions<UIExtensionSpec> & ExtensionDirectory
 type ThemeExtensionInitOptions = ExtensionInitOptions<ThemeExtensionSpec> & ExtensionDirectory
 
@@ -203,8 +207,8 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
 
   await inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = joinPath(tmpDir, 'download')
-    const extensionFlavor = options.extensionFlavor ?? blocks.functions.defaultLanguage
-    const templateFlavor = extensionFlavor && getTemplateFlavor(extensionFlavor)
+    const extensionFlavor = options.extensionFlavor
+    const templateFlavor = getTemplateFlavor(extensionFlavor)
     const taskList = []
 
     if (templateFlavor === 'javascript') {
@@ -238,15 +242,13 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
         )
 
         await recursiveLiquidTemplateCopy(origin, options.extensionDirectory, {
-          flavor: extensionFlavor ?? '',
+          flavor: extensionFlavor,
           ...options,
         })
 
         if (templateFlavor === 'javascript') {
-          const srcFileExtension = getSrcFileExtension(extensionFlavor ?? 'vanilla-js')
-          if (extensionFlavor) {
-            await changeIndexFileExtension(options.extensionDirectory, srcFileExtension)
-          }
+          const srcFileExtension = getSrcFileExtension(extensionFlavor)
+          await changeIndexFileExtension(options.extensionDirectory, srcFileExtension)
         }
 
         const configYamlPath = joinPath(options.extensionDirectory, 'script.config.yml')
