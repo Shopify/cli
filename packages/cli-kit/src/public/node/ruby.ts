@@ -66,10 +66,10 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
   try {
     const shopifyExecutable = embedded ? [rubyExecutable(), await embeddedCLIExecutable()] : ['shopify']
     await exec(bundleExecutable(), ['exec', ...shopifyExecutable, ...args], {
+      ...(options.stdout === undefined && {stdio: 'inherit'}),
       cwd: options.directory ?? cwd(),
       env,
-      stdout: options.stdout,
-      stderr: options.stderr,
+      ...(options.stdout !== undefined && {stdout: options.stdout, stderr: options.stderr}),
       signal: options.signal,
     })
   } catch (error) {
