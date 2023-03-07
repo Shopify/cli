@@ -1,6 +1,7 @@
 {
   "name": "plugin-did-you-mean",
   "root": "packages/plugin-did-you-mean",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/plugin-did-you-mean/src",
   "projectType": "library",
   "tags": ["scope:plugin"],
