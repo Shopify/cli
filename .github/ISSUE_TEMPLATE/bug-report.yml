@@ -55,10 +55,10 @@ body:
     validations:
       required: true
   - type: textarea
-    id: stack_trace
+    id: verbose_output
     attributes:
-      label: Stack trace
-      description: Paste in a stack trace if you've got one!
+      label: Verbose output
+      description: Rerun the command with `--verbose` and paste the output here
       render: shell
     validations:
       required: false
