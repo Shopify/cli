@@ -19,7 +19,7 @@ importers:
       '@nrwl/workspace': 15.8.3
       '@octokit/core': ^4.0.5
       '@octokit/rest': ^19.0.7
-      '@shopify/eslint-plugin-cli': 3.44.1-pre.0
+      '@shopify/eslint-plugin-cli': file:packages/eslint-plugin-cli
       '@shopify/typescript-configs': ^5.1.0
       '@shopify/web-pixels-extension': 0.1.4
       '@types/node': 14.18.36
@@ -66,7 +66,7 @@ importers:
       '@nrwl/workspace': 15.8.3_amdpr7nu3dr3td3nbvtvqs2bti
       '@octokit/core': 4.1.0
       '@octokit/rest': 19.0.7
-      '@shopify/eslint-plugin-cli': link:packages/eslint-plugin-cli
+      '@shopify/eslint-plugin-cli': file:packages/eslint-plugin-cli_eslint@8.28.0
       '@shopify/typescript-configs': 5.1.0
       '@shopify/web-pixels-extension': 0.1.4
       '@types/node': 14.18.36
@@ -347,6 +347,7 @@ importers:
       terminal-link: 3.0.0
       tree-kill: 1.2.2
       ts-error: 1.0.6
+      ts-morph: ^17.0.1
       typedoc: ^0.23.26
       typescript: 4.9.5
       unique-string: 3.0.0
@@ -423,6 +424,7 @@ importers:
       '@vitest/coverage-istanbul': 0.28.5
       ink-testing-library: 2.1.0_@types+react@16.14.0
       node-stream-zip: 1.15.0
+      ts-morph: 17.0.1
       typedoc: 0.23.26_typescript@4.9.5
       typescript: 4.9.5
       vite: 2.9.12
@@ -4923,6 +4925,15 @@ packages:
     engines: {node: '>= 10'}
     dev: true
 
+  /@ts-morph/common/0.18.1:
+    resolution: {integrity: sha512-RVE+zSRICWRsfrkAw5qCAK+4ZH9kwEFv5h0+/YeHTLieWP7F4wWq4JsKFuNWG+fYh/KF+8rAtgdj5zb2mm+DVA==}
+    dependencies:
+      fast-glob: 3.2.12
+      minimatch: 5.1.1
+      mkdirp: 1.0.4
+      path-browserify: 1.0.1
+    dev: true
+
   /@tsconfig/node10/1.0.9:
     resolution: {integrity: sha512-jNsYVVxU8v5g43Erja32laIDHXeoNvFEpX33OK4d6hljo3jDhCBDhx5dhCCTMWUojscpAagGiRkBKxpdl9fxqA==}
     dev: true
@@ -6724,6 +6735,10 @@ packages:
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     dependencies:
       mkdirp-infer-owner: 2.0.0
+    dev: true
+
+  /code-block-writer/11.0.3:
+    resolution: {integrity: sha512-NiujjUFB4SwScJq2bwbYUtXbZhBSlY6vYzm++3Q6oC+U+injTqfPYFK8wS9COOmb2lueqp0ZRB4nK1VYeHgNyw==}
     dev: true
 
   /code-excerpt/3.0.0:
@@ -11973,6 +11988,10 @@ packages:
     engines: {node: '>=10'}
     dev: false
 
+  /path-browserify/1.0.1:
+    resolution: {integrity: sha512-b7uo2UCUOYZcnF/3ID0lulOJi/bafxa1xPe7ZPsammBSpjSWQkjNxlt635YGS2MiR9GjvuXCtz2emr3jbsz98g==}
+    dev: true
+
   /path-case/3.0.4:
     resolution: {integrity: sha512-qO4qCFjXqVTrcbPt/hQfhTQ+VhFsqNKOPtytgNKkKxSoEp3XPUQ8ObFuePylOIok5gjn69ry8XiULxCwot3Wfg==}
     dependencies:
@@ -13972,6 +13991,13 @@ packages:
       tslib: 2.5.0
     dev: true
 
+  /ts-morph/17.0.1:
+    resolution: {integrity: sha512-10PkHyXmrtsTvZSL+cqtJLTgFXkU43Gd0JCc0Rw6GchWbqKe0Rwgt1v3ouobTZwQzF1mGhDeAlWYBMGRV7y+3g==}
+    dependencies:
+      '@ts-morph/common': 0.18.1
+      code-block-writer: 11.0.3
+    dev: true
+
   /ts-node/10.9.1_7iyetdgfmqiorh7qupktbe7tm4:
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
     hasBin: true
@@ -15197,6 +15223,17 @@ packages:
   /zod/3.17.3:
     resolution: {integrity: sha512-4oKP5zvG6GGbMlqBkI5FESOAweldEhSOZ6LI6cG+JzUT7ofj1ZOC0PJudpQOpT1iqOFpYYtX5Pw0+o403y4bcg==}
     dev: false
+
+  file:packages/eslint-plugin-cli_eslint@8.28.0:
+    resolution: {directory: packages/eslint-plugin-cli, type: directory}
+    id: file:packages/eslint-plugin-cli
+    name: '@shopify/eslint-plugin-cli'
+    version: 3.44.1-pre.0
+    peerDependencies:
+      eslint: ^8.12.0
+    dependencies:
+      eslint: 8.28.0
+    dev: true
 
   registry.npmjs.org/@shopify/eslint-plugin/42.0.3_uojo4vpcnuctsxxyhb7d4e62du:
     resolution: {integrity: sha512-Vve7bpv3qeiDSIViHx1v0oJ6jDSiwqFzUlJZXIcgU/AcQTMEVYHozhxnNO02XTVeN1CJS3hiMjq2ruZdBiKWPw==, registry: https://npm.shopify.io/node/, tarball: https://registry.npmjs.org/@shopify/eslint-plugin/-/eslint-plugin-42.0.3.tgz}

@@ -1,4 +1,5 @@
 {
+  "name": "cli-workspace",
   "private": true,
   "type": "module",
   "scripts": {
@@ -28,7 +29,8 @@
     "changeset-manifests": "changeset version && pnpm install --no-frozen-lockfile && pnpm refresh-manifests && bin/update-cli-kit-version.js && pnpm docs:generate",
     "fixtures:build": "pnpm shopify app build --path fixtures/app --skip-dependencies-installation",
     "fixtures:dev": "pnpm shopify app dev --path fixtures/app --skip-dependencies-installation",
-    "fixtures:deploy": "pnpm shopify app deploy --path fixtures/app"
+    "fixtures:deploy": "pnpm shopify app deploy --path fixtures/app",
+    "refresh-documentation": "nx run-many --target=refresh-documentation --all --skip-nx-cache"
   },
   "devDependencies": {
     "@apollo/client": "^3.7.9",
@@ -41,7 +43,7 @@
     "@nrwl/workspace": "15.8.3",
     "@octokit/core": "^4.0.5",
     "@octokit/rest": "^19.0.7",
-    "@shopify/eslint-plugin-cli": "3.44.1-pre.0",
+    "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
     "@shopify/typescript-configs": "^5.1.0",
     "@shopify/web-pixels-extension": "0.1.4",
     "@types/node": "14.18.36",
