@@ -9,7 +9,7 @@ export interface GraphQLVariables {
   [key: string]: any
 }
 
-export function graphqlRequest<T>(
+export async function graphqlRequest<T>(
   query: RequestDocument,
   api: string,
   url: string,
@@ -17,17 +17,15 @@ export function graphqlRequest<T>(
   variables?: Variables,
   handleErrors = true,
 ): Promise<T> {
-  return (async () => {
-    const headers = buildHeaders(token)
-    debugLogRequestInfo(api, query, variables, headers)
-    const clientOptions = {agent: await httpsAgent(), headers}
-    const client = new GraphQLClient(url, clientOptions)
-    const response = await debugLogResponseInfo(
-      {request: client.rawRequest<T>(query as string, variables), url},
-      handleErrors ? errorHandler(api) : undefined,
-    )
-    return response.data
-  })()
+  const headers = buildHeaders(token)
+  debugLogRequestInfo(api, query, variables, headers)
+  const clientOptions = {agent: await httpsAgent(), headers}
+  const client = new GraphQLClient(url, clientOptions)
+  const response = await debugLogResponseInfo(
+    {request: client.rawRequest<T>(query as string, variables), url},
+    handleErrors ? errorHandler(api) : undefined,
+  )
+  return response.data
 }
 
 function debugLogRequestInfo<T>(
