@@ -51,7 +51,7 @@ export interface CreateDeploymentSchema {
   deploymentCreate: {
     deployment: {
       uuid: string
-      id?: number
+      id: number
       deployedVersions: {
         extensionVersion: {
           uuid: string
