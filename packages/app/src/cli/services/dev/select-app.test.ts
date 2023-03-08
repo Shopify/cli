@@ -115,13 +115,14 @@ describe('selectOrCreateApp', () => {
     // Given
     vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
+    vi.mocked(appTypePrompt).mockResolvedValue('custom')
     vi.mocked(partnersRequest).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
     const variables = {
       org: 1,
       title: 'app-name',
       appUrl: 'https://example.com',
       redir: ['https://example.com/api/auth'],
-      type: 'undecided',
+      type: 'custom',
     }
 
     // When
@@ -129,7 +130,6 @@ describe('selectOrCreateApp', () => {
 
     // Then
     expect(got).toEqual(APP1)
-    expect(appTypePrompt).not.toBeCalled()
     expect(appNamePrompt).toHaveBeenCalledWith(LOCAL_APP.name)
     expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables)
   })
