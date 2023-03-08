@@ -1,6 +1,6 @@
 {
   "name": "@shopify/app",
-  "version": "3.44.1-pre.0",
+  "version": "3.45.0-pre.1",
   "description": "Utilities for loading, building, and publishing apps.",
   "homepage": "https://github.com/shopify/cli#readme",
   "bugs": {
@@ -43,29 +43,29 @@
   "dependencies": {
     "@luckycatfactory/esbuild-graphql-loader": "3.7.0",
     "@oclif/core": "2.1.4",
-    "@shopify/cli-kit": "3.44.1-pre.0",
-    "@shopify/plugin-ngrok": "3.44.1-pre.0",
-    "@shopify/plugin-cloudflare": "3.44.1-pre.0",
+    "@shopify/cli-kit": "3.45.0-pre.1",
+    "@shopify/plugin-ngrok": "3.45.0-pre.1",
+    "@shopify/plugin-cloudflare": "3.45.0-pre.1",
     "abort-controller": "3.0.0",
     "chokidar": "3.5.3",
     "diff": "5.1.0",
     "esbuild": "0.15.16",
     "function-runner": "4.0.2",
-    "graphql-request": "4.3.0",
+    "graphql-request": "5.2.0",
     "http-proxy": "1.18.1",
     "javy-cli": "0.1.2",
     "serve-static": "1.15.0",
-    "ws": "8.8.1"
+    "ws": "8.12.1"
   },
   "devDependencies": {
     "@types/diff": "^5.0.2",
     "@types/http-proxy": "^1.17.9",
     "@types/lodash-es": "^4.17.6",
     "@types/node": "14.18.36",
-    "@types/serve-static": "^1.15.0",
-    "@types/ws": "^8.5.3",
+    "@types/serve-static": "^1.15.1",
+    "@types/ws": "^8.5.4",
     "graphql": "^16.0.0",
-    "graphql-tag": "^2.11.0",
+    "graphql-tag": "^2.12.6",
     "vite": "^2.9.13",
     "vitest": "^0.28.5"
   },

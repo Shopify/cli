@@ -2,7 +2,8 @@ import {TextAnimation} from './TextAnimation.js'
 import useLayout from '../hooks/use-layout.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {isUnitTest} from '../../../../public/node/context/local.js'
-import {Box, Text} from 'ink'
+import {handleCtrlC} from '../../ui.js'
+import {Box, Text, useInput, useStdin} from 'ink'
 import React, {useRef, useState} from 'react'
 
 const loadingBarChar = '▀'
@@ -58,6 +59,7 @@ function Tasks<TContext>({tasks, silent = isUnitTest()}: React.PropsWithChildren
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
   const [state, setState] = useState<TasksState>(TasksState.Loading)
   const ctx = useRef<TContext>({} as TContext)
+  const {isRawModeSupported} = useStdin()
 
   const runTasks = async () => {
     for (const task of tasks) {
@@ -81,6 +83,17 @@ function Tasks<TContext>({tasks, silent = isUnitTest()}: React.PropsWithChildren
     onFulfilled: () => setState(TasksState.Success),
     onRejected: () => setState(TasksState.Failure),
   })
+
+  useInput(
+    (input, key) => {
+      handleCtrlC(input, key)
+
+      if (key.return) {
+        return null
+      }
+    },
+    {isActive: Boolean(isRawModeSupported)},
+  )
 
   if (silent) {
     return null

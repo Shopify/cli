@@ -4,12 +4,22 @@ import {
   sendInputAndWait,
   sendInputAndWaitForChange,
   sendInputAndWaitForContent,
-  waitForContent,
   waitForInputsToBeReady,
 } from '../../testing/ui.js'
-import {describe, expect, test, vi} from 'vitest'
+import {OutputStream} from '../../ui.js'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {render} from 'ink-testing-library'
+import {useStdout} from 'ink'
+
+vi.mock('ink', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const original: any = await vi.importActual('ink')
+  return {
+    ...original,
+    useStdout: vi.fn(),
+  }
+})
 
 const ARROW_DOWN = '\u001B[B'
 const ENTER = '\r'
@@ -67,6 +77,17 @@ const DATABASE = [
   {label: 'forty-ninth', value: 'forty-ninth'},
   {label: 'fiftieth', value: 'fiftieth'},
 ]
+
+beforeEach(() => {
+  vi.mocked(useStdout).mockReturnValue({
+    stdout: new OutputStream({
+      columns: 80,
+      rows: 80,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    }) as any,
+    write: () => {},
+  })
+})
 
 describe('AutocompletePrompt', async () => {
   test('choose an answer', async () => {
@@ -220,9 +241,10 @@ describe('AutocompletePrompt', async () => {
     await waitForInputsToBeReady()
     await sendInputAndWaitForContent(renderInstance, 'No results found', 'a')
     // prompt doesn't change when enter is pressed
+    await new Promise((resolve) => setTimeout(resolve, 100))
     await sendInputAndWait(renderInstance, 100, ENTER)
 
-    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?   [36ma[7m [27m[39m
 
          [2mNo results found.[22m
@@ -254,9 +276,10 @@ describe('AutocompletePrompt', async () => {
     await waitForInputsToBeReady()
     await sendInputAndWaitForContent(renderInstance, 'Loading...', 'a')
     // prompt doesn't change when enter is pressed
+    await new Promise((resolve) => setTimeout(resolve, 100))
     await sendInputAndWait(renderInstance, 100, ENTER)
 
-    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?   [36ma[7m [27m[39m
 
          [2mLoading...[22m
@@ -436,11 +459,11 @@ describe('AutocompletePrompt', async () => {
     expect(onEnter).toHaveBeenCalledWith('fifth')
   })
 
-  test('allows selecting the first item after searching and triggering the loading state', async () => {
+  test('allows selecting the first item after searching', async () => {
     const onEnter = vi.fn()
 
     const search = async (term: string) => {
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      await new Promise((resolve) => setTimeout(resolve, 300))
       return {
         data: DATABASE.filter((item) => item.label.includes(term)),
       }
@@ -456,37 +479,12 @@ describe('AutocompletePrompt', async () => {
     )
 
     await waitForInputsToBeReady()
-    await sendInputAndWaitForContent(renderInstance, 'Loading...', 'e')
-    await waitForContent(renderInstance, 'Press ↑↓ arrows to select, enter to confirm')
+    await sendInputAndWaitForContent(renderInstance, '[1mfiftieth[22m', 'fiftieth')
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "?  Associate your project with the org Castile Ventures?   [36me[7m [27m[39m
+      "?  Associate your project with the org Castile Ventures?   [36mfiftieth[7m [27m[39m
 
-      [36m>[39m  [36ms[1me[22mcond[39m
-         s[1me[22mventh
-         [1me[22mighth
-         t[1me[22mnth
-         [1me[22mleventh
-         tw[1me[22mlfth
-         thirt[1me[22menth
-         fourt[1me[22menth
-         fift[1me[22menth
-         sixt[1me[22menth
-         s[1me[22mventeenth
-         [1me[22mighteenth
-         nin[1me[22mteenth
-         tw[1me[22mntieth
-         tw[1me[22mnty-first
-         tw[1me[22mnty-second
-         tw[1me[22mnty-third
-         tw[1me[22mnty-fourth
-         tw[1me[22mnty-fifth
-         tw[1me[22mnty-sixth
-         tw[1me[22mnty-seventh
-         tw[1me[22mnty-eighth
-         tw[1me[22mnty-ninth
-         thirti[1me[22mth
-         thirty-s[1me[22mcond
+      [36m>[39m  [36m[1mfiftieth[22m[39m
 
          [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
@@ -496,11 +494,11 @@ describe('AutocompletePrompt', async () => {
 
     expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
-      [36m✔[39m  [36msecond[39m
+      [36m✔[39m  [36mfiftieth[39m
       "
     `)
 
-    expect(onEnter).toHaveBeenCalledWith('second')
+    expect(onEnter).toHaveBeenCalledWith('fiftieth')
   })
 
   test('displays an error message if the search fails', async () => {
@@ -664,6 +662,42 @@ describe('AutocompletePrompt', async () => {
          twenty-fifth
 
          [1m1-25 of many[22m  Find what you're looking for by typing its name.
+         [2mPress ↑↓ arrows to select, enter to confirm[22m
+      "
+    `)
+  })
+
+  test('adapts to the height of the container', async () => {
+    vi.mocked(useStdout).mockReturnValue({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      stdout: new OutputStream({rows: 10}) as any,
+      write: () => {},
+    })
+
+    const renderInstance = render(
+      <AutocompletePrompt
+        message="Associate your project with the org Castile Ventures?"
+        choices={DATABASE}
+        onSubmit={() => {}}
+        hasMorePages
+        search={() =>
+          Promise.resolve({
+            data: DATABASE,
+          } as SearchResults<string>)
+        }
+      />,
+    )
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "?  Associate your project with the org Castile Ventures?   [36m[7mT[27m[2mype to search...[22m[39m
+
+      [36m>[39m  [36mfirst[39m
+         second
+         third
+         fourth
+
+         [1m1-25 of many[22m  Find what you're looking for by typing its name.
+         [2mShowing 4 of 25 items.[22m
          [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)

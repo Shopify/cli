@@ -1,5 +1,5 @@
 {
-  "version": "3.44.1-pre.0",
+  "version": "3.45.0-pre.1",
   "commands": {
     "theme:check": {
       "id": "theme:check",
@@ -839,7 +839,8 @@
         "nodelete",
         "only",
         "ignore",
-        "force"
+        "force",
+        "development-theme-id"
       ]
     },
     "theme:push": {
@@ -986,7 +987,8 @@
         "allow-live",
         "publish",
         "stable",
-        "force"
+        "force",
+        "development-theme-id"
       ]
     },
     "theme:serve": {

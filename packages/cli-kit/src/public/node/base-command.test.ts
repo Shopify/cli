@@ -1,24 +1,23 @@
 import Command from './base-command.js'
-import {Environments, environmentsFilename} from './environments.js'
+import {Environments} from './environments.js'
 import {encodeToml as encodeTOML} from './toml.js'
 import {globalFlags} from './cli.js'
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
-import {joinPath, resolvePath} from './path.js'
+import {joinPath, resolvePath, cwd} from './path.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {describe, expect, test} from 'vitest'
 import {Flags} from '@oclif/core'
 
 let testResult: {[flag: string]: unknown} = {}
 let testError: Error | undefined
-let disableFindUpEnvironments = true
 
 class MockCommand extends Command {
-  /* eslint-disable rulesdir/command-flags-with-env */
+  /* eslint-disable @shopify/cli/command-flags-with-env */
   static flags = {
     ...globalFlags,
     path: Flags.string({
-      parse: (input, _) => Promise.resolve(resolvePath(input)),
-      default: '.',
+      parse: async (input) => resolvePath(input),
+      default: async () => cwd(),
     }),
     someString: Flags.string({}),
     someInteger: Flags.integer({}),
@@ -30,8 +29,9 @@ class MockCommand extends Command {
     someStringWithDefault: Flags.string({
       default: 'default stringy',
     }),
+    password: Flags.string({}),
   }
-  /* eslint-enable rulesdir/command-flags-with-env */
+  /* eslint-enable @shopify/cli/command-flags-with-env */
 
   async run(): Promise<void> {
     const {flags} = await this.parse(MockCommand)
@@ -42,9 +42,8 @@ class MockCommand extends Command {
     testError = error
   }
 
-  findUpForEnvironments() {
-    if (disableFindUpEnvironments) return false
-    return super.findUpForEnvironments()
+  environmentsFilename(): string {
+    return 'shopify.environments.toml'
   }
 }
 
@@ -83,15 +82,22 @@ const environmentWithDefaultOverride = {
   someStringWithDefault: 'non-default stringy',
 }
 
+const environmentWithPassword = {
+  password: 'password',
+}
+
 const allEnvironments: Environments = {
-  validEnvironment,
-  validEnvironmentWithIrrelevantFlag,
-  environmentWithIncorrectType,
-  environmentWithExclusiveArguments,
-  environmentWithNegativeBoolean,
-  environmentWithMultiples,
-  environmentMatchingDefault,
-  environmentWithDefaultOverride,
+  environments: {
+    validEnvironment,
+    validEnvironmentWithIrrelevantFlag,
+    environmentWithIncorrectType,
+    environmentWithExclusiveArguments,
+    environmentWithNegativeBoolean,
+    environmentWithMultiples,
+    environmentMatchingDefault,
+    environmentWithDefaultOverride,
+    environmentWithPassword,
+  },
 }
 
 describe('applying environments', async () => {
@@ -99,21 +105,21 @@ describe('applying environments', async () => {
     test(testName, async () => {
       testResult = {}
       testError = undefined
-      disableFindUpEnvironments = false
 
       await inTemporaryDirectory(async (tmpDir) => {
-        await writeFile(joinPath(tmpDir, environmentsFilename), encodeTOML(allEnvironments as any))
+        await writeFile(joinPath(tmpDir, 'shopify.environments.toml'), encodeTOML(allEnvironments as any))
         await testFunc(tmpDir)
       })
     })
   }
 
   function expectFlags(path: string, environment: keyof typeof allEnvironments) {
+    const envFlags = allEnvironments.environments && (allEnvironments.environments[environment] as Environments)
     expect(testResult).toEqual({
       path: resolvePath(path),
       someStringWithDefault: 'default stringy',
       environment,
-      ...allEnvironments[environment],
+      ...envFlags,
     })
   }
 
@@ -144,10 +150,15 @@ describe('applying environments', async () => {
     // Then
     expectFlags(tmpDir, 'validEnvironment')
     expect(outputMock.info()).toMatchInlineSnapshot(`
-      "Using applicable flags from the environment validEnvironment:
-
-      • someString = stringy
-      • someBoolean = true\n"
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Using applicable flags from validEnvironment environment:                   │
+      │                                                                              │
+      │    • someString: stringy                                                     │
+      │    • someBoolean: true                                                       │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 
@@ -163,27 +174,6 @@ describe('applying environments', async () => {
     expectFlags(subdir, 'validEnvironment')
   })
 
-  runTestInTmpDir(
-    'searches only in the current directory when recursive search is disabled',
-    async (tmpDir: string) => {
-      // Given
-      const subdir = joinPath(tmpDir, 'somedir')
-      await mkdir(subdir)
-      disableFindUpEnvironments = true
-
-      // When
-      await MockCommand.run(['--path', subdir, '--environment', 'validEnvironment'])
-
-      // Then
-      expect(testResult).toEqual({
-        path: resolvePath(subdir),
-        environment: 'validEnvironment',
-        // no flags applied from the environment
-        someStringWithDefault: 'default stringy',
-      })
-    },
-  )
-
   runTestInTmpDir('prefers command line arguments to environment settings', async (tmpDir: string) => {
     // Given
     const outputMock = mockAndCaptureOutput()
@@ -195,9 +185,14 @@ describe('applying environments', async () => {
     // Then
     expect(testResult.someString).toEqual('cheesy')
     expect(outputMock.info()).toMatchInlineSnapshot(`
-      "Using applicable flags from the environment validEnvironment:
-
-      • someBoolean = true\n"
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Using applicable flags from validEnvironment environment:                   │
+      │                                                                              │
+      │    • someBoolean: true                                                       │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 
@@ -282,9 +277,14 @@ describe('applying environments', async () => {
     // Then
     expectFlags(tmpDir, 'environmentWithDefaultOverride')
     expect(outputMock.info()).toMatchInlineSnapshot(`
-      "Using applicable flags from the environment environmentWithDefaultOverride:
-
-      • someStringWithDefault = non-default stringy\n"
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Using applicable flags from environmentWithDefaultOverride environment:     │
+      │                                                                              │
+      │    • someStringWithDefault: non-default stringy                              │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 
@@ -299,9 +299,36 @@ describe('applying environments', async () => {
     // Then
     expectFlags(tmpDir, 'environmentMatchingDefault')
     expect(outputMock.info()).toMatchInlineSnapshot(`
-      "Using applicable flags from the environment environmentMatchingDefault:
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Using applicable flags from environmentMatchingDefault environment:         │
+      │                                                                              │
+      │    • someStringWithDefault: default stringy                                  │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
+  })
 
-      • someStringWithDefault = default stringy\n"
+  runTestInTmpDir('reports environment settings with masked passwords', async (tmpDir: string) => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+
+    // When
+    await MockCommand.run(['--path', tmpDir, '--environment', 'environmentWithPassword'])
+
+    // Then
+    expectFlags(tmpDir, 'environmentWithPassword')
+    expect(outputMock.info()).toMatchInlineSnapshot(`
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Using applicable flags from environmentWithPassword environment:            │
+      │                                                                              │
+      │    • password: ********word                                                  │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
     `)
   })
 })

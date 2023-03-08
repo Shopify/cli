@@ -13,6 +13,16 @@ export function getRedirectUrl(extension: UIExtension, options: ExtensionDevOpti
     rawUrl.searchParams.append('dev', `${options.url}/extensions`)
 
     return rawUrl.toString()
+  } else if (extension.surface === 'customer_accounts') {
+    const [storeName, ...storeDomainParts] = options.storeFqdn.split('.')
+    const accountsUrl = `${storeName}.account.${storeDomainParts.join('.')}`
+    const origin = `${options.url}/extensions`
+
+    const rawUrl = new URL(`https://${accountsUrl}/extensions-development`)
+    rawUrl.searchParams.append('origin', origin)
+    rawUrl.searchParams.append('extensionId', extension.devUUID)
+
+    return rawUrl.toString()
   } else {
     const rawUrl = new URL(`https://${options.storeFqdn}/`)
     rawUrl.pathname = 'admin/extensions-dev'

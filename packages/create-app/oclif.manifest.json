@@ -1,5 +1,5 @@
 {
-  "version": "3.44.1-pre.0",
+  "version": "3.45.0-pre.1",
   "commands": {
     "init": {
       "id": "init",
@@ -37,7 +37,8 @@
           "type": "option",
           "char": "p",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "default": "."
         },
         "template": {
           "name": "template",

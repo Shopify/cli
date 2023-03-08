@@ -1,7 +1,7 @@
 import {App, AppInterface} from './app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
-import {FunctionConfigType, FunctionInstance, FunctionSpec} from '../extensions/functions.js'
+import {FunctionConfigType, FunctionInstance} from '../extensions/functions.js'
 import {ThemeExtensionInstance} from '../extensions/theme.js'
 import themeSpec from '../extensions/theme-specifications/theme.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js'
@@ -103,13 +103,9 @@ export async function testFunctionExtension(opts: TestFunctionExtensionOptions =
   const directory = opts.dir ?? '/tmp/project/extensions/my-function'
   const configuration = opts.config ?? defaultFunctionConfiguration()
 
-  const allSpecs = await loadLocalExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === configuration.type) as FunctionSpec
-
   return new FunctionInstance({
     configuration,
     configurationPath: '',
-    specification,
     directory,
   })
 }

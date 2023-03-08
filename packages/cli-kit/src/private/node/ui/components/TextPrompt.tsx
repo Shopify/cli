@@ -26,15 +26,19 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
     throw new Error("Can't use defaultValue with password")
   }
 
-  const validateAnswer = (value: string): string | undefined => {
-    if (validate) {
-      return validate(value)
-    }
+  const validateAnswer = useCallback(
+    (value: string): string | undefined => {
+      if (validate) {
+        return validate(value)
+      }
 
-    if (value.length === 0) return 'Type an answer to the prompt.'
+      if (value.length === 0) return 'Type an answer to the prompt.'
 
-    return undefined
-  }
+      return undefined
+    },
+    [validate],
+  )
+
   const {oneThird} = useLayout()
   const [answer, setAnswer] = useState<string>('')
   const answerOrDefault = answer.length > 0 ? answer : defaultValue
@@ -45,25 +49,20 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   const color = shouldShowError ? 'red' : 'cyan'
   const underline = new Array(oneThird - 3).fill('▔')
 
-  useInput(
-    useCallback(
-      (input, key) => {
-        handleCtrlC(input, key)
+  useInput((input, key) => {
+    handleCtrlC(input, key)
 
-        if (key.return) {
-          setSubmitted(true)
-          const error = validateAnswer(answerOrDefault)
-          setError(error)
+    if (key.return) {
+      setSubmitted(true)
+      const error = validateAnswer(answerOrDefault)
+      setError(error)
 
-          if (!error) {
-            onSubmit(answerOrDefault)
-            unmountInk()
-          }
-        }
-      },
-      [answerOrDefault, onSubmit],
-    ),
-  )
+      if (!error) {
+        onSubmit(answerOrDefault)
+        unmountInk()
+      }
+    }
+  })
 
   return (
     <Box flexDirection="column" marginBottom={1} width={oneThird}>

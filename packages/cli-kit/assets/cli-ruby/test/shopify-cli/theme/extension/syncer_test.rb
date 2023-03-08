@@ -40,7 +40,7 @@ module ShopifyCLI
           ShopifyCLI::PartnersAPI.expects(:query).returns(graphql_success)
           ::Extension::Tasks::Converters::VersionConverter.stubs(:from_hash).returns({})
           @ctx.expects(:puts)
-            .with("12:30:59 {{green:Pushed}} {{>}} {{blue:'#{@extension_title}'}} to a draft").once
+            .with("{{green:Pushed}} {{>}} {{blue:'#{@extension_title}'}} to a draft").once
 
           files.each do |f|
             @ctx.expects(:puts)
@@ -70,7 +70,7 @@ module ShopifyCLI
           }
           ShopifyCLI::PartnersAPI.expects(:query).returns(graphql_error)
           @ctx.expects(:puts)
-            .with("12:30:59 {{red:Error}}  {{>}} {{blue:'#{@extension_title}'}} could not be pushed:").once
+            .with("{{red:Error}}  {{>}} {{blue:'#{@extension_title}'}} could not be pushed:").once
           Syncer::ExtensionServeJob.any_instance.expects(:print_file_error)
             .with(files[0], error_msg).once
           Syncer::ExtensionServeJob.any_instance.expects(:print_file_success)

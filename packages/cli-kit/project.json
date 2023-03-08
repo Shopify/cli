@@ -1,6 +1,7 @@
 {
     "name": "cli-kit",
     "root": "packages/cli-kit",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "packages/cli-kit/src",
     "projectType": "library",
     "tags": ["scope:foundation"],
@@ -123,6 +124,13 @@
         "executor": "nx:run-commands",
         "options": {
           "command": "pnpm tsc --noEmit",
+          "cwd": "packages/cli-kit"
+        }
+      },
+      "refresh-documentation": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "FORCE_HYPERLINK=0 pnpm ts-node-esm ./bin/refresh-documentation.ts",
           "cwd": "packages/cli-kit"
         }
       }

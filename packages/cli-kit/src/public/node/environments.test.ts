@@ -1,10 +1,10 @@
 import * as environments from './environments.js'
-import {environmentsFilename} from './environments.js'
 import {encodeToml as tomlEncode} from './toml.js'
-import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
+import {inTemporaryDirectory, writeFile} from './fs.js'
 import {joinPath} from './path.js'
 import {describe, expect, test} from 'vitest'
 
+const fileName = 'shopify.environments.toml'
 const environment1 = {
   flag1: 'value',
   flag2: true,
@@ -19,69 +19,55 @@ const environment2 = {
 }
 
 describe('loading environments', async () => {
-  test('returns an empty object when no environments file exists', async () => {
+  test('returns undefined when no environments file exists', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      // When
-      const loaded = await environments.loadEnvironmentsFromDirectory(tmpDir)
+      // Given / When
+      const loaded = await environments.loadEnvironment('environment1', fileName, {from: tmpDir})
 
       // Then
-      expect(loaded).toEqual({})
+      expect(loaded).toBeUndefined()
     })
   })
 
-  test('returns an empty object when an empty environments file exists', async () => {
+  test('returns undefined when an empty environments file exists', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      await writeFile(joinPath(tmpDir, environmentsFilename), '# no content')
+      const filePath = joinPath(tmpDir, fileName)
+      await writeFile(filePath, '# no content')
 
       // When
-      const loaded = await environments.loadEnvironmentsFromDirectory(tmpDir)
+      const loaded = await environments.loadEnvironment('environment1', fileName, {from: tmpDir})
 
       // Then
-      expect(loaded).toEqual({})
+      expect(loaded).toBeUndefined()
     })
   })
 
-  test('returns available environments when they exist', async () => {
+  test('returns undefined when the environment does not exist', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      await writeFile(joinPath(tmpDir, 'shopify.environments.toml'), tomlEncode({environment1, environment2}))
+      const filePath = joinPath(tmpDir, fileName)
+      await writeFile(filePath, tomlEncode({environments: {environment1, environment2}}))
 
       // When
-      const loaded = await environments.loadEnvironmentsFromDirectory(tmpDir)
+      const loaded = await environments.loadEnvironment('wrong', fileName, {from: tmpDir})
 
       // Then
-      expect(loaded).toEqual({environment1, environment2})
+      expect(loaded).toBeUndefined()
     })
   })
 
-  test('does not search upwards for environments when no file exists and searching up is disabled', async () => {
+  test('returns the environment when it exists', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      await writeFile(`${tmpDir}/shopify.environments.toml`, tomlEncode({environment1}))
-      const subdir = joinPath(tmpDir, 'subdir')
-      await mkdir(subdir)
+      const filePath = joinPath(tmpDir, fileName)
+      await writeFile(filePath, tomlEncode({environments: {environment1, environment2}}))
 
       // When
-      const loaded = await environments.loadEnvironmentsFromDirectory(subdir)
+      const loaded = await environments.loadEnvironment('environment1', fileName, {from: tmpDir})
 
       // Then
-      expect(loaded).toEqual({})
-    })
-  })
-
-  test('searches upwards for environments when no file exists and searching up is enabled', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      await writeFile(`${tmpDir}/shopify.environments.toml`, tomlEncode({environment1}))
-      const subdir = joinPath(tmpDir, 'subdir')
-      await mkdir(subdir)
-
-      // When
-      const loaded = await environments.loadEnvironmentsFromDirectory(subdir, {findUp: true})
-
-      // Then
-      expect(loaded).toEqual({environment1})
+      expect(loaded).toEqual(environment1)
     })
   })
 })

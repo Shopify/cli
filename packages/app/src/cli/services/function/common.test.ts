@@ -18,7 +18,7 @@ beforeEach(async () => {
   ourFunction = await testFunctionExtension()
   app = testApp({extensions: {ui: [], theme: [], function: [ourFunction]}})
   vi.mocked(loadApp).mockResolvedValue(app)
-  vi.mocked(renderFatalError).mockReturnValue()
+  vi.mocked(renderFatalError).mockReturnValue('')
 })
 
 describe('ensure we are within a function context', () => {

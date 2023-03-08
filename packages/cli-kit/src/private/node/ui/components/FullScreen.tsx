@@ -31,7 +31,7 @@ const FullScreen: FunctionComponent = ({children}): JSX.Element => {
       // switch back to the main buffer
       standardOutput.write('\u001B[?1049l')
     }
-  }, [])
+  }, [standardOutput])
 
   return (
     <Box width={size.columns} height={size.rows}>

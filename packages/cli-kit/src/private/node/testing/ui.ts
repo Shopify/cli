@@ -1,5 +1,22 @@
 import {isTruthy} from '../context/utilities.js'
 import {render} from 'ink-testing-library'
+import {EventEmitter} from 'events'
+
+export class Stdin extends EventEmitter {
+  isTTY = true
+
+  write = (data: string) => {
+    this.emit('data', data)
+  }
+
+  setEncoding() {}
+
+  setRawMode() {}
+
+  resume() {}
+
+  pause() {}
+}
 
 /**
  * Wait for the component to be ready to accept input.
@@ -26,7 +43,7 @@ export function waitForChange(func: () => void, getChangingValue: () => string |
   })
 }
 
-function waitFor(func: () => void, condition: () => boolean) {
+export function waitFor(func: () => void, condition: () => boolean) {
   return new Promise<void>((resolve) => {
     func()
 
