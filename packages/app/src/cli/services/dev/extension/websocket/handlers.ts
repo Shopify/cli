@@ -6,8 +6,8 @@ import {
   SetupWebSocketConnectionOptions,
 } from './models.js'
 import {RawData, WebSocket, WebSocketServer} from 'ws'
-import {IncomingMessage} from '@shopify/cli-kit/node/http'
 import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {IncomingMessage} from 'http'
 import {Duplex} from 'stream'
 
 export function websocketUpgradeHandler(

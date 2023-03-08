@@ -6,19 +6,6 @@ import {debugLogResponseInfo} from '../../private/node/api.js'
 import FormData from 'form-data'
 import nodeFetch, {RequestInfo, RequestInit} from 'node-fetch'
 
-export {
-  createApp,
-  createRouter,
-  IncomingMessage,
-  ServerResponse,
-  CompatibilityEvent,
-  createError,
-  send,
-  sendError,
-  sendRedirect,
-  H3Error,
-} from 'h3'
-
 export {FetchError} from 'node-fetch'
 
 /**
