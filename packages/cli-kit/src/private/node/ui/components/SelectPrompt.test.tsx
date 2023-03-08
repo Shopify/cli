@@ -1,12 +1,34 @@
 import {SelectPrompt} from './SelectPrompt.js'
 import {getLastFrameAfterUnmount, sendInputAndWaitForChange, waitForInputsToBeReady} from '../../testing/ui.js'
 import {unstyled} from '../../../../public/node/output.js'
-import {describe, expect, test, vi} from 'vitest'
+import {OutputStream} from '../../ui.js'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {render} from 'ink-testing-library'
+import {useStdout} from 'ink'
+
+vi.mock('ink', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const original: any = await vi.importActual('ink')
+  return {
+    ...original,
+    useStdout: vi.fn(),
+  }
+})
 
 const ARROW_DOWN = '\u001B[B'
 const ENTER = '\r'
+
+beforeEach(() => {
+  vi.mocked(useStdout).mockReturnValue({
+    stdout: new OutputStream({
+      columns: 80,
+      rows: 80,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    }) as any,
+    write: () => {},
+  })
+})
 
 describe('SelectPrompt', async () => {
   test('choose an answer', async () => {
@@ -254,5 +276,46 @@ describe('SelectPrompt', async () => {
       "
     `)
     expect(onEnter).toHaveBeenCalledWith(items[1]!.value)
+  })
+
+  test('adapts to the height of the container', async () => {
+    vi.mocked(useStdout).mockReturnValue({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      stdout: new OutputStream({rows: 10}) as any,
+      write: () => {},
+    })
+
+    const items = [
+      {label: 'first', value: 'first', group: 'Automations', key: 'f'},
+      {label: 'second', value: 'second', group: 'Automations', key: 's'},
+      {label: 'third', value: 'third', group: 'Merchant Admin'},
+      {label: 'fourth', value: 'fourth', group: 'Merchant Admin'},
+      {label: 'fifth', value: 'fifth', key: 'a'},
+      {label: 'sixth', value: 'sixth'},
+      {label: 'seventh', value: 'seventh'},
+      {label: 'eighth', value: 'eighth'},
+      {label: 'ninth', value: 'ninth'},
+      {label: 'tenth', value: 'tenth'},
+    ]
+
+    const renderInstance = render(
+      <SelectPrompt
+        message="Associate your project with the org Castile Ventures?"
+        choices={items}
+        onSubmit={() => {}}
+      />,
+    )
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "?  Associate your project with the org Castile Ventures?
+
+         [1mAutomations[22m
+      [36m>[39m  [36m(f) first[39m
+         (s) second
+
+         [2mShowing 2 of 10 items.[22m
+         [2mPress ↑↓ arrows to select, enter to confirm[22m
+      "
+    `)
   })
 })
