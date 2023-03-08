@@ -28,7 +28,7 @@ const LOCAL_APP: AppInterface = testApp({
   name: 'my-app',
 })
 
-const ORG1: Organization = {id: '1', businessName: 'org1', betas: {appUiDeployments: true}}
+const ORG1: Organization = {id: '1', businessName: 'org1', betas: {appUiDeployments: false}}
 const ORG2: Organization = {id: '2', businessName: 'org2', betas: {appUiDeployments: false}}
 const APP1: OrganizationApp = {
   id: '1',

@@ -71,7 +71,7 @@ const APP2: OrganizationApp = {
 const ORG1: AllOrganizationsQuerySchemaOrganization = {
   id: '1',
   businessName: 'org1',
-  betas: {appUiDeployments: true},
+  betas: {appUiDeployments: false},
   website: '',
 }
 const ORG2: AllOrganizationsQuerySchemaOrganization = {
@@ -338,8 +338,8 @@ describe('ensureDevEnvironment', () => {
   })
 })
 
-describe('ensureDeployEnvironment', () => {
-  test("fetches the app from the partners' API and returns it alongside the id when identifiers are available locally and the app has no extensions", async () => {
+describe('ensureDeployContext', () => {
+  test.only("fetches the app from the partners' API and returns it alongside the id when identifiers are available locally and the app has no extensions", async () => {
     // Given
     const app = testApp()
     const identifiers = {

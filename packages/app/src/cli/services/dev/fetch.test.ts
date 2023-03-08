@@ -17,7 +17,7 @@ import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
-const ORG1: Organization = {id: '1', businessName: 'org1', betas: {appUiDeployments: true}}
+const ORG1: Organization = {id: '1', businessName: 'org1', betas: {appUiDeployments: false}}
 const ORG2: Organization = {id: '2', businessName: 'org2', betas: {appUiDeployments: false}}
 const APP1: OrganizationApp = {
   id: '1',
