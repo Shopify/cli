@@ -39,12 +39,14 @@ interface Instance {
 
 export class OutputStream extends EventEmitter {
   columns: number
+  rows: number
   readonly frames: string[] = []
   private _lastFrame?: string
 
-  constructor(options: {columns: number}) {
+  constructor(options: {columns?: number; rows?: number}) {
     super()
-    this.columns = options.columns
+    this.columns = options.columns ?? 80
+    this.rows = options.rows ?? 80
   }
 
   write = (frame: string) => {
@@ -65,7 +67,6 @@ export const renderString = (element: ReactElement, renderOptions?: RenderOption
 
   const instance = inkRender(element, {
     stdout,
-
     stderr,
     debug: true,
     exitOnCtrlC: false,

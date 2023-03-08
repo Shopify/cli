@@ -1,6 +1,7 @@
 {
     "name": "cli-kit",
     "root": "packages/cli-kit",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "packages/cli-kit/src",
     "projectType": "library",
     "tags": ["scope:foundation"],

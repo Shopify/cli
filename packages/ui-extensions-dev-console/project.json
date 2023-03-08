@@ -1,6 +1,7 @@
 {
     "name": "ui-extensions-dev-console",
     "root": "packages/ui-extensions-dev-console",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "packages/ui-extensions-dev-console/src",
     "projectType": "library",
     "implicitDependencies": ["ui-extensions-server-kit","ui-extensions-test-utils"],
