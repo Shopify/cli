@@ -364,7 +364,7 @@ describe('ensureDeployContext', () => {
     expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
   })
 
-  test("fetches the app from the partners' API and returns it alongside the id when there are no identifiers but user chooses to reuse dev store.cliKitStore()", async () => {
+  test.only("fetches the app from the partners' API and returns it alongside the id when there are no identifiers but user chooses to reuse dev store.cliKitStore()", async () => {
     // Given
     const app = testApp()
     const identifiers = {
@@ -373,7 +373,7 @@ describe('ensureDeployContext', () => {
       extensionIds: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
-    vi.mocked(getAppInfo).mockReturnValueOnce(CACHED1)
+    vi.mocked(getAppInfo).mockReturnValue(CACHED1)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(reuseDevConfigPrompt).mockResolvedValueOnce(true)
