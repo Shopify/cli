@@ -69,24 +69,26 @@ function getTemplateFlavor(flavor: ExtensionFlavorValue): TemplateFlavor {
   }
 }
 
-async function extensionInit(options: ExtensionInitOptions): Promise<string> {
-  const extensionDirectory = await ensureExtensionDirectoryExists({app: options.app, name: options.name})
-  switch (options.specification.category()) {
-    case 'theme':
-      await themeExtensionInit({...(options as ThemeExtensionInitOptions), extensionDirectory})
-      break
-    case 'function':
-      await functionExtensionInit({...(options as FunctionExtensionInitOptions), extensionDirectory})
-      break
-    case 'ui':
-      await uiExtensionInit({...(options as UIExtensionInitOptions), extensionDirectory})
-      break
-    case 'template': {
-      await functionExtensionInit({...(options as FunctionExtensionInitOptions), extensionDirectory})
-      break
-    }
-  }
-  return relativizePath(extensionDirectory)
+async function extensionInit(
+  extensionOptions: ExtensionInitOptions[],
+): Promise<{directory: string; specification: GenericSpecification}[]> {
+  return Promise.all(
+    extensionOptions.flatMap(async (options) => {
+      const extensionDirectory = await ensureExtensionDirectoryExists({app: options.app, name: options.name})
+      switch (options.specification.category()) {
+        case 'theme':
+          await themeExtensionInit({...(options as ThemeExtensionInitOptions), extensionDirectory})
+          break
+        case 'function':
+          await functionExtensionInit({...(options as FunctionExtensionInitOptions), extensionDirectory})
+          break
+        case 'ui':
+          await uiExtensionInit({...(options as UIExtensionInitOptions), extensionDirectory})
+          break
+      }
+      return {directory: relativizePath(extensionDirectory), specification: options.specification}
+    }),
+  )
 }
 
 async function themeExtensionInit({name, app, specification, extensionDirectory}: ThemeExtensionInitOptions) {

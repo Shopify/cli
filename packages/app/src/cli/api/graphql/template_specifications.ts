@@ -6,14 +6,15 @@ export const TemplateSpecificationsQuery = gql`
     templateSpecifications {
       identifier
       name
-      category
+      group
       supportLinks
       url
       types {
         type
         extensionPoints
         supportedFlavors {
-          type
+          name
+          value
           path
         }
       }
@@ -30,7 +31,7 @@ export interface TemplateType {
 export interface TemplateSpecification {
   identifier: string
   name: string
-  category: string
+  group: string
   supportLinks: string[]
   url: string
   types: TemplateType[]

@@ -7,7 +7,7 @@ import {TokenizedString} from '@shopify/cli-kit/node/output'
 import {Result} from '@shopify/cli-kit/node/result'
 import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 
-export type ExtensionCategory = 'ui' | 'function' | 'theme' | 'template'
+export type ExtensionCategory = 'ui' | 'function' | 'theme'
 
 /**
  * Common interface for ExtensionSpec and FunctionSpec
