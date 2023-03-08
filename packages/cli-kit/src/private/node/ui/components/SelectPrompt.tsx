@@ -3,11 +3,11 @@ import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import {InlineToken, LinkToken, TokenItem, TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import {messageWithPunctuation} from '../utilities.js'
+import {uniqBy} from '../../../../public/common/array.js'
 import React, {ReactElement, useCallback, useEffect, useState} from 'react'
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
 import figures from 'figures'
 import ansiEscapes from 'ansi-escapes'
-import {uniqBy} from '@shopify/cli-kit/common/array'
 
 export interface SelectPromptProps<T> {
   message: TokenItem<Exclude<InlineToken, LinkToken>>

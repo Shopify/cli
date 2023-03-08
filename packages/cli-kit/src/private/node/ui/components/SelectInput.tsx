@@ -1,7 +1,7 @@
 import {isEqual} from '../../../../public/common/lang.js'
+import {debounce} from '../../../../public/common/function.js'
 import React, {useState, useEffect, useRef, useCallback, forwardRef} from 'react'
 import {Box, Key, useInput, Text, DOMElement} from 'ink'
-import {debounce} from '@shopify/cli-kit/common/function'
 import chalk from 'chalk'
 import figures from 'figures'
 import {createRequire} from 'module'
