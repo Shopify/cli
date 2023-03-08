@@ -30,6 +30,8 @@ module ShopifyCLI
 
             @job_in_progress = false
             @job_in_progress_mutex = Mutex.new
+
+            $stdout.sync = true
           end
 
           def perform!
@@ -81,16 +83,12 @@ module ShopifyCLI
             Time.now - @syncer.latest_sync < PUSH_INTERVAL
           end
 
-          def timestamp
-            Time.now.strftime("%T")
-          end
-
           def success_message(project)
-            "#{timestamp} {{green:Pushed}} {{>}} {{blue:'#{project}'}} to a draft"
+            "{{green:Pushed}} {{>}} {{blue:'#{project}'}} to a draft"
           end
 
           def error_message(project)
-            "#{timestamp} {{red:Error}}  {{>}} {{blue:'#{project}'}} could not be pushed:"
+            "{{red:Error}}  {{>}} {{blue:'#{project}'}} could not be pushed:"
           end
 
           def print_file_success(file)

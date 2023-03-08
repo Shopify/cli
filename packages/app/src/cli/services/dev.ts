@@ -256,8 +256,8 @@ function devThemeExtensionTarget(
 ): OutputProcess {
   return {
     prefix: 'extensions',
-    action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
-      await execCLI2(['extension', 'serve', ...args], {adminSession, storefrontToken, token, stdout})
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+      await execCLI2(['extension', 'serve', ...args], {adminSession, storefrontToken, token, stdout, stderr, signal})
     },
   }
 }

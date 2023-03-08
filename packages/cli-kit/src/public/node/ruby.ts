@@ -33,6 +33,8 @@ interface ExecCLI2Options {
   signal?: AbortSignal
   // Stream to pipe the command's stdout to.
   stdout?: Writable
+  // Stream to pipe the command's stdout to.
+  stderr?: Writable
 }
 /**
  * Execute CLI 2.0 commands.
@@ -64,9 +66,10 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
   try {
     const shopifyExecutable = embedded ? [rubyExecutable(), await embeddedCLIExecutable()] : ['shopify']
     await exec(bundleExecutable(), ['exec', ...shopifyExecutable, ...args], {
-      stdio: 'inherit',
+      ...(options.stdout === undefined && {stdio: 'inherit'}),
       cwd: options.directory ?? cwd(),
       env,
+      ...(options.stdout !== undefined && {stdout: options.stdout, stderr: options.stderr}),
       signal: options.signal,
     })
   } catch (error) {
