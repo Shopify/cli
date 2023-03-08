@@ -102,7 +102,7 @@ async function testDeployBundle(app: AppInterface) {
     app,
     reset: false,
     force: true,
-    directory: '/',
+    directory: '/tmp/project',
   })
 
   // Then

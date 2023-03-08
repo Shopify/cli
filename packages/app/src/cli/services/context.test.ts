@@ -157,12 +157,12 @@ const options = (app: App): DeployContextOptions => {
     app,
     reset: false,
     force: false,
-    directory: '/',
+    directory: '/tmp/project',
   }
 }
 
 beforeEach(async () => {
-  vi.mocked(getAppIdentifiers).mockResolvedValue({app: undefined})
+  vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
   vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
   vi.mocked(selectOrCreateApp).mockResolvedValue(APP1)
   vi.mocked(selectStore).mockResolvedValue(STORE1)
@@ -339,7 +339,7 @@ describe('ensureDevEnvironment', () => {
 })
 
 describe('ensureDeployContext', () => {
-  test.only("fetches the app from the partners' API and returns it alongside the id when identifiers are available locally and the app has no extensions", async () => {
+  test("fetches the app from the partners' API and returns it alongside the id when identifiers are available locally and the app has no extensions", async () => {
     // Given
     const app = testApp()
     const identifiers = {
@@ -347,12 +347,12 @@ describe('ensureDeployContext', () => {
       extensions: {},
       extensionIds: {},
     }
-    vi.mocked(getAppIdentifiers).mockResolvedValue({app: APP2.apiKey})
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
     // When
-    const got = await ensureDeployContext({app, reset: false, force: false, directory: '/'})
+    const got = await ensureDeployContext(options(app))
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
@@ -372,7 +372,7 @@ describe('ensureDeployContext', () => {
       extensions: {},
       extensionIds: {},
     }
-    vi.mocked(getAppIdentifiers).mockResolvedValue({app: undefined})
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(getAppInfo).mockReturnValueOnce(CACHED1)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
@@ -398,7 +398,7 @@ describe('ensureDeployContext', () => {
       extensions: {},
       extensionIds: {},
     }
-    vi.mocked(getAppIdentifiers).mockResolvedValue({app: undefined})
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     // When
@@ -426,7 +426,7 @@ describe('ensureDeployContext', () => {
   test("throws an app not found error if the app with the API key doesn't exist", async () => {
     // Given
     const app = testApp()
-    vi.mocked(getAppIdentifiers).mockResolvedValue({app: APP1.apiKey})
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP1.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(undefined)
 
     // When
@@ -443,7 +443,7 @@ describe('ensureDeployContext', () => {
     }
 
     // There is a cached app but it will be ignored
-    vi.mocked(getAppIdentifiers).mockResolvedValue({app: APP2.apiKey})
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
