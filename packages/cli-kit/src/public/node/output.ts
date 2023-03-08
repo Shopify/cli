@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import {isUnitTest, isVerbose} from './context/local.js'
 import {PackageManager} from './node-package-manager.js'
+import {AbortSignal} from './abort.js'
 import colors from '../../private/node/colors.js'
 import {
   ColorContentToken,
@@ -17,7 +18,6 @@ import {
   SubHeadingContentToken,
 } from '../../private/node/content-tokens.js'
 import stripAnsi from 'strip-ansi'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
 import type {Change} from 'diff'
 

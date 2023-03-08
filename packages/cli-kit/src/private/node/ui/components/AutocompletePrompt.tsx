@@ -4,10 +4,10 @@ import {TextInput} from './TextInput.js'
 import {TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import {messageWithPunctuation} from '../utilities.js'
+import {debounce} from '../../../../public/common/function.js'
 import React, {ReactElement, useCallback, useEffect, useRef, useState} from 'react'
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
 import figures from 'figures'
-import {debounce} from '@shopify/cli-kit/common/function'
 import ansiEscapes from 'ansi-escapes'
 
 export interface SearchResults<T> {
@@ -126,7 +126,7 @@ function AutocompletePrompt<T>({
   // disable exhaustive-deps because we want to memoize the debounce function itself
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debounceSearch = useCallback(
-    debounce((term) => {
+    debounce((term: string) => {
       setLoadingWhenSlow.current = setTimeout(() => {
         setPromptState(PromptState.Loading)
       }, 100)
