@@ -1,7 +1,7 @@
-import {findApiKey, findInEnv, requestAppInfo} from './find-app-info.js'
+import {AppCredentials, findApiKey, findInEnv, requestAppInfo} from './find-app-info.js'
 import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
-import {parseAddressFlag, parseTopicFlag} from './trigger-flags.js'
+import {DELIVERY_METHOD, parseAddressFlag, parseTopicFlag} from './trigger-flags.js'
 import {isValueSet} from './trigger.js'
 import {
   addressPrompt,
@@ -12,11 +12,12 @@ import {
 } from '../../prompts/webhook/trigger.js'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 /**
- * Collects a secret using a fallback mechanism:
- *  - Use if passed as flag
- *  - If manual: prompt and use
+ * Collects a secret/api-key pair using a fallback mechanism:
+ *  - Use secret if passed as flag
+ *  - If manual: prompt and use. Return only secret
  *  - If automatic:
  *    - Get from .env
  *    - Get from Partners (possible prompts for organization and app)
@@ -24,11 +25,12 @@ import {outputInfo} from '@shopify/cli-kit/node/output'
  *
  * @param token - Partners session token
  * @param secret - secret flag
- * @returns client-secret
+ * @returns a pair with client-secret, api-key (possibly empty)
  */
-export async function collectSecret(token: string, secret: string | undefined): Promise<string> {
+export async function collectCredentials(token: string, secret: string | undefined): Promise<AppCredentials> {
   if (isValueSet(secret)) {
-    return secret as string
+    const credentials: AppCredentials = {clientSecret: secret as string}
+    return credentials
   }
 
   const automatic = await renderConfirmationPrompt({
@@ -39,19 +41,21 @@ export async function collectSecret(token: string, secret: string | undefined): 
 
   if (!automatic) {
     const manualSecret = await clientSecretPrompt()
-    return manualSecret
+    const credentials: AppCredentials = {clientSecret: manualSecret}
+    return credentials
   }
 
   const localCredentials = await findInEnv()
   if (isValueSet(localCredentials.clientSecret)) {
     outputInfo('Reading client-secret from .env file')
-    return localCredentials.clientSecret as string
+    return localCredentials
   }
 
   const apiKey = await findApiKey(token)
   if (apiKey === undefined) {
-    localCredentials.clientSecret = await clientSecretPrompt()
-    return localCredentials.clientSecret
+    const manualSecret = await clientSecretPrompt()
+    const credentials: AppCredentials = {clientSecret: manualSecret}
+    return credentials
   }
 
   const appCredentials = await requestAppInfo(token, apiKey)
@@ -59,9 +63,38 @@ export async function collectSecret(token: string, secret: string | undefined): 
     outputInfo('Reading client-secret from app settings in Partners')
   } else {
     appCredentials.clientSecret = await clientSecretPrompt()
+    appCredentials.apiKey = apiKey
   }
 
-  return appCredentials.clientSecret as string
+  return appCredentials
+}
+
+/**
+ * Collects api-key using a fallback mechanism:
+ *  - Get from .env
+ *  - Get from Partners (possible prompts for organization and app)
+ *
+ * @param token - Partners session token
+ * @returns a api-key
+ * @throws AbortError if none found
+ */
+export async function collectApiKey(token: string): Promise<string> {
+  const localCredentials = await findInEnv()
+  if (isValueSet(localCredentials.apiKey)) {
+    outputInfo('Using api-key from .env file')
+    return localCredentials.apiKey as string
+  }
+
+  const apiKey = await findApiKey(token)
+  if (apiKey === undefined) {
+    throw new AbortError(
+      'No app configuration found in Partners or .env file',
+      `You need an app to be able to use ${DELIVERY_METHOD.EVENTBRIDGE} delivery method.`,
+    )
+  }
+  outputInfo('Using api-key from app settings in Partners')
+
+  return apiKey
 }
 
 /**

@@ -4,9 +4,11 @@ import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
 import {WebhookTriggerFlags} from './trigger-flags.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
-import {outputSuccess, consoleError} from '@shopify/cli-kit/node/output'
+import {findApiKey, findInEnv} from './find-app-info.js'
+import {outputSuccess, consoleError, outputInfo} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 const aToken = 'A_TOKEN'
 const samplePayload = '{ "sampleField": "SampleValue" }'
@@ -14,9 +16,11 @@ const sampleHeaders = '{ "header": "Header Value" }'
 const aTopic = 'A_TOPIC'
 const aVersion = 'A_VERSION'
 const aSecret = 'A_SECRET'
+const anApiKey = 'AN_API_KEY'
 const aPort = '1234'
 const aUrlPath = '/a/url/path'
 const anAddress = 'https://example.org'
+const anEventBridgeAddress = 'arn:aws:events:us-east-3::event-source/aws.partner/shopify.com/12/source'
 
 vi.mock('@shopify/cli-kit')
 vi.mock('@shopify/cli-kit/node/output')
@@ -61,7 +65,6 @@ describe('webhookTriggerService', () => {
       ],
     }
     mockLists(aVersion, aTopic)
-
     vi.mocked(getWebhookSample).mockResolvedValue(response)
 
     // When
@@ -110,6 +113,41 @@ describe('webhookTriggerService', () => {
     expect(getWebhookSample).toHaveBeenCalledWith(aToken, aTopic, aVersion, 'http', anAddress, aSecret)
     expect(triggerLocalWebhook).toHaveBeenCalledTimes(0)
     expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
+  })
+
+  it("won't send to event-bridge if api-key not found", async () => {
+    // Given
+    mockLists(aVersion, aTopic)
+    vi.mocked(findInEnv).mockResolvedValue({})
+    vi.mocked(findApiKey).mockResolvedValue(undefined)
+
+    // When
+    await expect(webhookTriggerService(eventBridgeFlags())).rejects.toThrow(AbortError)
+  })
+
+  it('notifies about real event-bridge delivery being sent', async () => {
+    // Given
+    mockLists(aVersion, aTopic)
+    vi.mocked(findInEnv).mockResolvedValue({})
+    vi.mocked(findApiKey).mockResolvedValue(anApiKey)
+    vi.mocked(getWebhookSample).mockResolvedValue(successEmptyResponse)
+
+    // When
+    await webhookTriggerService(eventBridgeFlags())
+
+    // Then
+    expectCalls(aVersion)
+    expect(getWebhookSample).toHaveBeenCalledWith(
+      aToken,
+      aTopic,
+      aVersion,
+      'event-bridge',
+      anEventBridgeAddress,
+      aSecret,
+      anApiKey,
+    )
+    expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
+    expect(outputInfo).toHaveBeenCalledWith('Using api-key from app settings in Partners')
   })
 
   describe('Localhost delivery', () => {
@@ -170,23 +208,24 @@ describe('webhookTriggerService', () => {
     return flags
   }
 
+  function eventBridgeFlags(): WebhookTriggerFlags {
+    const flags: WebhookTriggerFlags = {
+      topic: aTopic,
+      apiVersion: aVersion,
+      deliveryMethod: 'event-bridge',
+      clientSecret: aSecret,
+      address: anEventBridgeAddress,
+    }
+
+    return flags
+  }
+
   function sampleLocalhostFlags(): WebhookTriggerFlags {
     const flags: WebhookTriggerFlags = {
       topic: aTopic,
       apiVersion: aVersion,
       deliveryMethod: 'http',
       clientSecret: aSecret,
-      address: aFullLocalAddress,
-    }
-
-    return flags
-  }
-
-  function noSecretSampleFlags(): WebhookTriggerFlags {
-    const flags: WebhookTriggerFlags = {
-      topic: aTopic,
-      apiVersion: aVersion,
-      deliveryMethod: 'localhost',
       address: aFullLocalAddress,
     }
 
