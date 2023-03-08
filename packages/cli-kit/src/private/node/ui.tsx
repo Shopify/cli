@@ -65,7 +65,6 @@ export const renderString = (element: ReactElement, renderOptions?: RenderOption
 
   const instance = inkRender(element, {
     stdout,
-
     stderr,
     debug: true,
     exitOnCtrlC: false,

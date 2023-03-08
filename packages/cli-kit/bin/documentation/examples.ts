@@ -36,14 +36,9 @@ export const examples: {[key in string]: Example} = {
       const stdout = new OutputStream({columns: TERMINAL_WIDTH})
 
       let backendPromiseResolve: () => void
-      let frontendPromiseResolve: () => void
 
       const backendPromise = new Promise<void>(function (resolve, _reject) {
         backendPromiseResolve = resolve
-      })
-
-      const frontendPromise = new Promise<void>(function (resolve, _reject) {
-        frontendPromiseResolve = resolve
       })
 
       const backendProcess = {
@@ -65,8 +60,6 @@ export const examples: {[key in string]: Example} = {
           stdout.write('first frontend message')
           stdout.write('second frontend message')
           stdout.write('third frontend message')
-
-          frontendPromiseResolve()
         },
       }
 
@@ -86,10 +79,12 @@ export const examples: {[key in string]: Example} = {
         renderOptions: {stdout: stdout as any, debug: true},
       })
 
-      // wait for all output to be rendered
-      await frontendPromise
+      await waitFor(
+        () => {},
+        () => Boolean((stdout.frames ?? []).some(frame => unstyled(frame).includes('third frontend message')))
+      )
 
-      return unstyled(stdout.lastFrame()!.replace(/\d/g, '0'))
+      return stdout.frames.find(frame => unstyled(frame).includes('third frontend message'))!.replace(/\d/g, '0')
     },
   },
   renderInfo: {
@@ -302,12 +297,13 @@ export const examples: {[key in string]: Example} = {
         renderOptions: {
           stdout: stdout as any,
           stdin: stdin as any,
+          debug: true
         },
       })
 
       await waitFor(
         () => {},
-        () => stdout.lastFrame()!.includes('Associate your project with the org Castile Ventures?'),
+        () => Boolean(stdout.lastFrame()?.includes('Associate your project with the org Castile Ventures?')),
       )
 
       return stdout.lastFrame()!
@@ -342,6 +338,7 @@ export const examples: {[key in string]: Example} = {
         renderOptions: {
           stdout: stdout as any,
           stdin: stdin as any,
+          debug: true
         },
       }
 
@@ -349,7 +346,7 @@ export const examples: {[key in string]: Example} = {
 
       await waitFor(
         () => {},
-        () => stdout.lastFrame()!.includes('Delete the following themes from the store?'),
+        () => Boolean(stdout.lastFrame()?.includes('Delete the following themes from the store?')),
       )
 
       return stdout.lastFrame()!
@@ -423,12 +420,13 @@ export const examples: {[key in string]: Example} = {
         renderOptions: {
           stdout: stdout as any,
           stdin: stdin as any,
+          debug: true
         },
       })
 
       await waitFor(
         () => {},
-        () => stdout.lastFrame()!.includes('Select a template'),
+        () => Boolean(stdout.lastFrame()?.includes('Select a template')),
       )
 
       return stdout.lastFrame()!
@@ -488,7 +486,7 @@ export const examples: {[key in string]: Example} = {
         },
       ]
 
-      renderTasks(tasks, {renderOptions: {stdout: stdout as any}})
+      renderTasks(tasks, {renderOptions: {stdout: stdout as any, debug: true}})
 
       await waitFor(
         () => {},
@@ -513,12 +511,13 @@ export const examples: {[key in string]: Example} = {
         renderOptions: {
           stdout: stdout as any,
           stdin: stdin as any,
+          debug: true
         },
       })
 
       await waitFor(
         () => {},
-        () => stdout.lastFrame()!.includes('App project name (can be changed later)'),
+        () => Boolean(stdout.lastFrame()?.includes('App project name (can be changed later)')),
       )
 
       return stdout.lastFrame()!
