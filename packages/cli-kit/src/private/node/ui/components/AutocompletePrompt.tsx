@@ -57,31 +57,28 @@ function AutocompletePrompt<T>({
   const [selectInputHeight, setSelectInputHeight] = useState(0)
   const [limit, setLimit] = useState(searchResults.length)
 
-  const paginatedSearch = useCallback(async (term: string) => {
-    const results = await search(term)
-    results.data = results.data.slice(0, PAGE_SIZE)
-    return results
+  const paginatedSearch = useCallback(
+    async (term: string) => {
+      const results = await search(term)
+      results.data = results.data.slice(0, PAGE_SIZE)
+      return results
+    },
+    [search],
+  )
+
+  const wrapperRef = useCallback((node) => {
+    if (node !== null) {
+      const {height} = measureElement(node)
+      setWrapperHeight(height)
+    }
   }, [])
 
-  const wrapperRef = useCallback(
-    (node) => {
-      if (node !== null) {
-        const {height} = measureElement(node)
-        setWrapperHeight(height)
-      }
-    },
-    [searchResults, promptState],
-  )
-
-  const inputRef = useCallback(
-    (node) => {
-      if (node !== null) {
-        const {height} = measureElement(node)
-        setSelectInputHeight(height)
-      }
-    },
-    [searchResults, promptState],
-  )
+  const inputRef = useCallback((node) => {
+    if (node !== null) {
+      const {height} = measureElement(node)
+      setSelectInputHeight(height)
+    }
+  }, [])
 
   useEffect(() => {
     function onResize() {
@@ -102,27 +99,22 @@ function AutocompletePrompt<T>({
     return () => {
       stdout!.off('resize', onResize)
     }
-  }, [wrapperHeight, selectInputHeight, searchResults.length, stdout!.rows])
+  }, [wrapperHeight, selectInputHeight, searchResults.length, stdout, limit])
 
-  useInput(
-    useCallback(
-      (input, key) => {
-        handleCtrlC(input, key)
+  useInput((input, key) => {
+    handleCtrlC(input, key)
 
-        if (key.return && promptState === PromptState.Idle && answer) {
-          // -1 is for the last row with the terminal cursor
-          if (stdout && wrapperHeight >= stdout.rows - 1) {
-            stdout.write(ansiEscapes.clearTerminal)
-          }
-          setPromptState(PromptState.Submitted)
-          setSearchTerm('')
-          unmountInk()
-          onSubmit(answer.value)
-        }
-      },
-      [answer, onSubmit, wrapperHeight, promptState],
-    ),
-  )
+    if (key.return && promptState === PromptState.Idle && answer) {
+      // -1 is for the last row with the terminal cursor
+      if (stdout && wrapperHeight >= stdout.rows - 1) {
+        stdout.write(ansiEscapes.clearTerminal)
+      }
+      setPromptState(PromptState.Submitted)
+      setSearchTerm('')
+      unmountInk()
+      onSubmit(answer.value)
+    }
+  })
 
   const setLoadingWhenSlow = useRef<NodeJS.Timeout>()
 
@@ -131,6 +123,8 @@ function AutocompletePrompt<T>({
   const searchTermRef = useRef('')
   searchTermRef.current = searchTerm
 
+  // disable exhaustive-deps because we want to memoize the debounce function itself
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debounceSearch = useCallback(
     debounce((term) => {
       setLoadingWhenSlow.current = setTimeout(() => {
@@ -158,7 +152,7 @@ function AutocompletePrompt<T>({
           clearTimeout(setLoadingWhenSlow.current)
         })
     }, 300),
-    [],
+    [initialHasMorePages, paginatedInitialChoices, paginatedSearch],
   )
 
   return (

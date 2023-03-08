@@ -87,21 +87,16 @@ function SelectPrompt<T>({
       unmountInk()
       onSubmit(answer.value)
     },
-    [stdout!.rows, wrapperHeight],
+    [stdout, wrapperHeight, unmountInk, onSubmit],
   )
 
-  useInput(
-    useCallback(
-      (input, key) => {
-        handleCtrlC(input, key)
+  useInput((input, key) => {
+    handleCtrlC(input, key)
 
-        if (key.return && answer) {
-          submitAnswer(answer)
-        }
-      },
-      [answer, submitAnswer],
-    ),
-  )
+    if (key.return && answer) {
+      submitAnswer(answer)
+    }
+  })
 
   return (
     <Box flexDirection="column" marginBottom={1} ref={wrapperRef}>

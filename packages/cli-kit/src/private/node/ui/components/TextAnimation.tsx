@@ -1,6 +1,6 @@
 /* eslint-disable id-length */
 import {Text} from 'ink'
-import React, {FunctionComponent, useEffect, useRef, useState} from 'react'
+import React, {FunctionComponent, useCallback, useEffect, useRef, useState} from 'react'
 import gradient from 'gradient-string'
 
 interface TextAnimationProps {
@@ -22,7 +22,7 @@ const TextAnimation: FunctionComponent<TextAnimationProps> = ({text}): JSX.Eleme
   const [renderedFrame, setRenderedFrame] = useState(text)
   const timeout = useRef<NodeJS.Timeout>()
 
-  const renderAnimation = () => {
+  const renderAnimation = useCallback(() => {
     const newFrame = frame.current + 1
     frame.current = newFrame
 
@@ -31,7 +31,7 @@ const TextAnimation: FunctionComponent<TextAnimationProps> = ({text}): JSX.Eleme
     timeout.current = setTimeout(() => {
       renderAnimation()
     }, 35)
-  }
+  }, [text])
 
   useEffect(() => {
     renderAnimation()
@@ -39,7 +39,7 @@ const TextAnimation: FunctionComponent<TextAnimationProps> = ({text}): JSX.Eleme
     return () => {
       clearTimeout(timeout.current)
     }
-  }, [])
+  }, [renderAnimation])
 
   return <Text>{renderedFrame}</Text>
 }

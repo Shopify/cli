@@ -160,7 +160,7 @@ function SelectInputInner<T>(
         usedShortcut,
       })
     },
-    [items],
+    [hasLimit, items, limit, onChange],
   )
 
   useEffect(() => {
@@ -183,29 +183,26 @@ function SelectInputInner<T>(
     }
 
     previousItems.current = items
-  }, [items])
+  }, [changeSelection, initialIndex, items, onChange])
 
-  const handleArrows = useCallback(
-    (key: Key) => {
-      if (key.upArrow) {
-        const lastIndex = items.length - 1
-        const atFirstIndex = selectedIndex === 0
-        const nextIndex = hasLimit ? selectedIndex : lastIndex
-        const nextRotateIndex = atFirstIndex ? rotateIndex + 1 : rotateIndex
-        const nextSelectedIndex = atFirstIndex ? nextIndex : selectedIndex - 1
+  const handleArrows = (key: Key) => {
+    if (key.upArrow) {
+      const lastIndex = items.length - 1
+      const atFirstIndex = selectedIndex === 0
+      const nextIndex = hasLimit ? selectedIndex : lastIndex
+      const nextRotateIndex = atFirstIndex ? rotateIndex + 1 : rotateIndex
+      const nextSelectedIndex = atFirstIndex ? nextIndex : selectedIndex - 1
 
-        changeSelection({newSelectedIndex: nextSelectedIndex, newRotateIndex: nextRotateIndex})
-      } else if (key.downArrow) {
-        const atLastIndex = selectedIndex === (hasLimit ? limit : items.length) - 1
-        const nextIndex = hasLimit ? selectedIndex : 0
-        const nextRotateIndex = atLastIndex ? rotateIndex - 1 : rotateIndex
-        const nextSelectedIndex = atLastIndex ? nextIndex : selectedIndex + 1
+      changeSelection({newSelectedIndex: nextSelectedIndex, newRotateIndex: nextRotateIndex})
+    } else if (key.downArrow) {
+      const atLastIndex = selectedIndex === (hasLimit ? limit : items.length) - 1
+      const nextIndex = hasLimit ? selectedIndex : 0
+      const nextRotateIndex = atLastIndex ? rotateIndex - 1 : rotateIndex
+      const nextSelectedIndex = atLastIndex ? nextIndex : selectedIndex + 1
 
-        changeSelection({newSelectedIndex: nextSelectedIndex, newRotateIndex: nextRotateIndex})
-      }
-    },
-    [selectedIndex, items],
-  )
+      changeSelection({newSelectedIndex: nextSelectedIndex, newRotateIndex: nextRotateIndex})
+    }
+  }
 
   const handleShortcuts = useCallback(
     (input: string) => {
@@ -219,15 +216,17 @@ function SelectInputInner<T>(
         }
       }
     },
-    [items],
+    [changeSelection, items, slicedItemsWithKeys],
   )
 
+  // disable exhaustive-deps because we want to memoize the debounce function itself
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debounceHandleShortcuts = useCallback(
     debounce((newInputStack) => {
       handleShortcuts(newInputStack)
       inputStack.current = null
     }, 300),
-    [],
+    [handleShortcuts],
   )
 
   useInput(
