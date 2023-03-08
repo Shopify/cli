@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.45.0-pre.2
+
+### Patch Changes
+
+- Updated dependencies [9c253511e]
+  - @shopify/cli-kit@3.45.0-pre.2
+  - @shopify/plugin-cloudflare@3.45.0-pre.2
+  - @shopify/plugin-ngrok@3.45.0-pre.2
+
 ## 3.45.0-pre.1
 
 ### Minor Changes
