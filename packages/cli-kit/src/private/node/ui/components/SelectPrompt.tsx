@@ -55,18 +55,13 @@ function SelectPrompt<T>({
     [stdout, height, unmountInk, onSubmit],
   )
 
-  useInput(
-    useCallback(
-      (input, key) => {
-        handleCtrlC(input, key)
+  useInput((input, key) => {
+    handleCtrlC(input, key)
 
-        if (key.return && answer) {
-          submitAnswer(answer)
-        }
-      },
-      [answer, submitAnswer],
-    ),
-  )
+    if (key.return && answer) {
+      submitAnswer(answer)
+    }
+  })
 
   return (
     <Box flexDirection="column" marginBottom={1} ref={measuredRef}>

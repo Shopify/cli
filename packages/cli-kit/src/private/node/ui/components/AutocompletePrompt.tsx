@@ -71,25 +71,20 @@ function AutocompletePrompt<T>({
     }
   }, [])
 
-  useInput(
-    useCallback(
-      (input, key) => {
-        handleCtrlC(input, key)
+  useInput((input, key) => {
+    handleCtrlC(input, key)
 
-        if (key.return && promptState === PromptState.Idle && answer) {
-          // -1 is for the last row with the terminal cursor
-          if (stdout && height >= stdout.rows - 1) {
-            stdout.write(ansiEscapes.clearTerminal)
-          }
-          setPromptState(PromptState.Submitted)
-          setSearchTerm('')
-          unmountInk()
-          onSubmit(answer.value)
-        }
-      },
-      [promptState, answer, stdout, height, unmountInk, onSubmit],
-    ),
-  )
+    if (key.return && promptState === PromptState.Idle && answer) {
+      // -1 is for the last row with the terminal cursor
+      if (stdout && height >= stdout.rows - 1) {
+        stdout.write(ansiEscapes.clearTerminal)
+      }
+      setPromptState(PromptState.Submitted)
+      setSearchTerm('')
+      unmountInk()
+      onSubmit(answer.value)
+    }
+  })
 
   const setLoadingWhenSlow = useRef<NodeJS.Timeout>()
 

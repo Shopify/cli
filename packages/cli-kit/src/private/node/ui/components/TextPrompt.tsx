@@ -49,25 +49,20 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   const color = shouldShowError ? 'red' : 'cyan'
   const underline = new Array(oneThird - 3).fill('▔')
 
-  useInput(
-    useCallback(
-      (input, key) => {
-        handleCtrlC(input, key)
+  useInput((input, key) => {
+    handleCtrlC(input, key)
 
-        if (key.return) {
-          setSubmitted(true)
-          const error = validateAnswer(answerOrDefault)
-          setError(error)
+    if (key.return) {
+      setSubmitted(true)
+      const error = validateAnswer(answerOrDefault)
+      setError(error)
 
-          if (!error) {
-            onSubmit(answerOrDefault)
-            unmountInk()
-          }
-        }
-      },
-      [answerOrDefault, onSubmit, unmountInk, validateAnswer],
-    ),
-  )
+      if (!error) {
+        onSubmit(answerOrDefault)
+        unmountInk()
+      }
+    }
+  })
 
   return (
     <Box flexDirection="column" marginBottom={1} width={oneThird}>

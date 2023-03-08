@@ -2,7 +2,7 @@ import {OutputProcess} from '../../../../public/node/output.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {AbortController} from '../../../../public/node/abort.js'
 import {handleCtrlC} from '../../ui.js'
-import React, {FunctionComponent, useCallback, useState} from 'react'
+import React, {FunctionComponent, useState} from 'react'
 import {Box, Key, Static, Text, useInput} from 'ink'
 import stripAnsi from 'strip-ansi'
 import treeKill from 'tree-kill'
@@ -111,14 +111,11 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   }
 
   useInput(
-    useCallback(
-      (input, key) => {
-        handleCtrlC(input, key)
+    (input, key) => {
+      handleCtrlC(input, key)
 
-        onInput!(input, key, () => treeKill(process.pid, 'SIGINT'))
-      },
-      [onInput],
-    ),
+      onInput!(input, key, () => treeKill(process.pid, 'SIGINT'))
+    },
     {isActive: typeof onInput !== 'undefined'},
   )
 
