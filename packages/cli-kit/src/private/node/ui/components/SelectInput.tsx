@@ -172,18 +172,15 @@ function SelectInput<T>({
     previousItems.current = items
   }, [changeSelection, items, onChange])
 
-  const handleArrows = useCallback(
-    (key: Key) => {
-      const lastIndex = items.length - 1
+  const handleArrows = (key: Key) => {
+    const lastIndex = items.length - 1
 
-      if (key.upArrow) {
-        changeSelection({index: selectedIndex === 0 ? lastIndex : selectedIndex - 1})
-      } else if (key.downArrow) {
-        changeSelection({index: selectedIndex === lastIndex ? 0 : selectedIndex + 1})
-      }
-    },
-    [items.length, changeSelection, selectedIndex],
-  )
+    if (key.upArrow) {
+      changeSelection({index: selectedIndex === 0 ? lastIndex : selectedIndex - 1})
+    } else if (key.downArrow) {
+      changeSelection({index: selectedIndex === lastIndex ? 0 : selectedIndex + 1})
+    }
+  }
 
   const handleShortcuts = useCallback(
     (input: string) => {
