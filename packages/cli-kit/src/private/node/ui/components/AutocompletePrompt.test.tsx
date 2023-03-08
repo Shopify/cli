@@ -6,9 +6,20 @@ import {
   sendInputAndWaitForContent,
   waitForInputsToBeReady,
 } from '../../testing/ui.js'
-import {describe, expect, test, vi} from 'vitest'
+import {OutputStream} from '../../ui.js'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {render} from 'ink-testing-library'
+import {useStdout} from 'ink'
+
+vi.mock('ink', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const original: any = await vi.importActual('ink')
+  return {
+    ...original,
+    useStdout: vi.fn(),
+  }
+})
 
 const ARROW_DOWN = '\u001B[B'
 const ENTER = '\r'
@@ -66,6 +77,17 @@ const DATABASE = [
   {label: 'forty-ninth', value: 'forty-ninth'},
   {label: 'fiftieth', value: 'fiftieth'},
 ]
+
+beforeEach(() => {
+  vi.mocked(useStdout).mockReturnValue({
+    stdout: new OutputStream({
+      columns: 80,
+      rows: 80,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    }) as any,
+    write: () => {},
+  })
+})
 
 describe('AutocompletePrompt', async () => {
   test('choose an answer', async () => {
@@ -640,6 +662,42 @@ describe('AutocompletePrompt', async () => {
          twenty-fifth
 
          [1m1-25 of many[22m  Find what you're looking for by typing its name.
+         [2mPress ↑↓ arrows to select, enter to confirm[22m
+      "
+    `)
+  })
+
+  test('adapts to the height of the container', async () => {
+    vi.mocked(useStdout).mockReturnValue({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      stdout: new OutputStream({rows: 10}) as any,
+      write: () => {},
+    })
+
+    const renderInstance = render(
+      <AutocompletePrompt
+        message="Associate your project with the org Castile Ventures?"
+        choices={DATABASE}
+        onSubmit={() => {}}
+        hasMorePages
+        search={() =>
+          Promise.resolve({
+            data: DATABASE,
+          } as SearchResults<string>)
+        }
+      />,
+    )
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "?  Associate your project with the org Castile Ventures?   [36m[7mT[27m[2mype to search...[22m[39m
+
+      [36m>[39m  [36mfirst[39m
+         second
+         third
+         fourth
+
+         [1m1-25 of many[22m  Find what you're looking for by typing its name.
+         [2mShowing 4 of 25 items.[22m
          [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)

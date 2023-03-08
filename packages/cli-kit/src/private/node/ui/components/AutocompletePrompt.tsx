@@ -4,7 +4,7 @@ import {TextInput} from './TextInput.js'
 import {TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import {messageWithPunctuation} from '../utilities.js'
-import React, {ReactElement, useCallback, useRef, useState} from 'react'
+import React, {ReactElement, useCallback, useEffect, useRef, useState} from 'react'
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
 import figures from 'figures'
 import {debounce} from '@shopify/cli-kit/common/function'
@@ -51,9 +51,11 @@ function AutocompletePrompt<T>({
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(paginatedInitialChoices.slice(0, PAGE_SIZE))
   const {stdout} = useStdout()
-  const [height, setHeight] = useState(0)
   const canSearch = initialChoices.length >= PAGE_SIZE
   const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
+  const [wrapperHeight, setWrapperHeight] = useState(0)
+  const [selectInputHeight, setSelectInputHeight] = useState(0)
+  const [limit, setLimit] = useState(searchResults.length)
 
   const paginatedSearch = useCallback(
     async (term: string) => {
@@ -64,19 +66,47 @@ function AutocompletePrompt<T>({
     [search],
   )
 
-  const measuredRef = useCallback((node) => {
+  const wrapperRef = useCallback((node) => {
     if (node !== null) {
       const {height} = measureElement(node)
-      setHeight(height)
+      setWrapperHeight(height)
     }
   }, [])
+
+  const inputRef = useCallback((node) => {
+    if (node !== null) {
+      const {height} = measureElement(node)
+      setSelectInputHeight(height)
+    }
+  }, [])
+
+  useEffect(() => {
+    function onResize() {
+      const availableSpace = stdout!.rows - (wrapperHeight - selectInputHeight)
+      // rough estimate of the limit needed based on the space available
+      const newLimit = Math.max(2, availableSpace - 6)
+
+      if (newLimit < limit) {
+        stdout!.write(ansiEscapes.clearTerminal)
+      }
+
+      setLimit(Math.min(newLimit, searchResults.length))
+    }
+
+    onResize()
+
+    stdout!.on('resize', onResize)
+    return () => {
+      stdout!.off('resize', onResize)
+    }
+  }, [wrapperHeight, selectInputHeight, searchResults.length, stdout, limit])
 
   useInput((input, key) => {
     handleCtrlC(input, key)
 
     if (key.return && promptState === PromptState.Idle && answer) {
       // -1 is for the last row with the terminal cursor
-      if (stdout && height >= stdout.rows - 1) {
+      if (stdout && wrapperHeight >= stdout.rows - 1) {
         stdout.write(ansiEscapes.clearTerminal)
       }
       setPromptState(PromptState.Submitted)
@@ -126,7 +156,7 @@ function AutocompletePrompt<T>({
   )
 
   return (
-    <Box flexDirection="column" marginBottom={1} ref={measuredRef}>
+    <Box flexDirection="column" marginBottom={1} ref={wrapperRef}>
       <Box>
         <Box marginRight={2}>
           <Text>?</Text>
@@ -185,6 +215,8 @@ function AutocompletePrompt<T>({
             }
             hasMorePages={hasMorePages}
             morePagesMessage="Find what you're looking for by typing its name."
+            ref={inputRef}
+            limit={limit}
           />
         </Box>
       )}
