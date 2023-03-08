@@ -16,7 +16,7 @@ const interestingResponseHeaders = new Set(['cache-control', 'content-type', 'et
 
 export async function debugLogResponseInfo<T extends {headers: Headers; status: number}>(
   {request, url}: RequestOptions<T>,
-  errorHandler?: (error: unknown) => void,
+  errorHandler?: (error: unknown) => Error | unknown,
 ): Promise<T> {
   const t0 = performance.now()
   let headers: Headers = new Headers()
