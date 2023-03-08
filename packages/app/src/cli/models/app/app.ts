@@ -1,15 +1,15 @@
 import {Extension, FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {AppErrors} from './loader.js'
-import {schema} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 
-export const AppConfigurationSchema = schema.object({
-  scopes: schema.string().default(''),
-  extensionDirectories: schema.array(schema.string()).optional(),
-  webDirectories: schema.array(schema.string()).optional(),
+export const AppConfigurationSchema = zod.object({
+  scopes: zod.string().default(''),
+  extensionDirectories: zod.array(zod.string()).optional(),
+  webDirectories: zod.array(zod.string()).optional(),
 })
 
 export enum WebType {
@@ -19,22 +19,22 @@ export enum WebType {
 
 const ensurePathStartsWithSlash = (arg: unknown) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg)
 
-const WebConfigurationAuthCallbackPathSchema = schema.preprocess(ensurePathStartsWithSlash, schema.string())
+const WebConfigurationAuthCallbackPathSchema = zod.preprocess(ensurePathStartsWithSlash, zod.string())
 
-export const WebConfigurationSchema = schema.object({
-  type: schema.enum([WebType.Frontend, WebType.Backend]),
-  authCallbackPath: schema
+export const WebConfigurationSchema = zod.object({
+  type: zod.enum([WebType.Frontend, WebType.Backend]),
+  authCallbackPath: zod
     .union([WebConfigurationAuthCallbackPathSchema, WebConfigurationAuthCallbackPathSchema.array()])
     .optional(),
-  webhooksPath: schema.preprocess(ensurePathStartsWithSlash, schema.string()).optional(),
-  commands: schema.object({
-    build: schema.string().optional(),
-    dev: schema.string(),
+  webhooksPath: zod.preprocess(ensurePathStartsWithSlash, zod.string()).optional(),
+  commands: zod.object({
+    build: zod.string().optional(),
+    dev: zod.string(),
   }),
 })
 
-export type AppConfiguration = schema.infer<typeof AppConfigurationSchema>
-export type WebConfiguration = schema.infer<typeof WebConfigurationSchema>
+export type AppConfiguration = zod.infer<typeof AppConfigurationSchema>
+export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
 
 export interface Web {

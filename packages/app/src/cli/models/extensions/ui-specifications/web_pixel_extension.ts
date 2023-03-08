@@ -1,16 +1,16 @@
 import {createUIExtensionSpecification} from '../ui.js'
 import {defaultExtensionFlavors} from '../../../constants.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
-import {schema} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/node/schema'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 const dependency = {name: '@shopify/web-pixels-extension', version: '^0.1.1'}
 
 const WebPixelSchema = BaseUIExtensionSchema.extend({
-  runtimeContext: schema.string(),
-  version: schema.string().optional(),
-  configuration: schema.any(),
-  settings: schema.any(),
+  runtimeContext: zod.string(),
+  version: zod.string().optional(),
+  configuration: zod.any(),
+  settings: zod.any(),
 })
 
 const spec = createUIExtensionSpecification({
