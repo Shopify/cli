@@ -9,7 +9,7 @@ export interface GraphQLVariables {
   [key: string]: any
 }
 
-export function graphqlRequest<T>(
+export async function graphqlRequest<T>(
   query: RequestDocument,
   api: string,
   url: string,
@@ -17,20 +17,15 @@ export function graphqlRequest<T>(
   variables?: Variables,
   handleErrors = true,
 ): Promise<T> {
-  const action = async () => {
-    const headers = buildHeaders(token)
-    debugLogRequestInfo(api, query, variables, headers)
-    const clientOptions = {agent: await httpsAgent(), headers}
-    const client = new GraphQLClient(url, clientOptions)
-    const response = await debugLogResponseInfo({request: client.rawRequest<T>(query as string, variables), url})
-    return response.data
-  }
-
-  if (handleErrors) {
-    return handlingErrors(api, action)
-  } else {
-    return action()
-  }
+  const headers = buildHeaders(token)
+  debugLogRequestInfo(api, query, variables, headers)
+  const clientOptions = {agent: await httpsAgent(), headers}
+  const client = new GraphQLClient(url, clientOptions)
+  const response = await debugLogResponseInfo(
+    {request: client.rawRequest<T>(query as string, variables), url},
+    handleErrors ? errorHandler(api) : undefined,
+  )
+  return response.data
 }
 
 function debugLogRequestInfo<T>(
@@ -47,10 +42,8 @@ ${sanitizedHeadersOutput(headers)}
 `)
 }
 
-async function handlingErrors<T>(api: string, action: () => Promise<T>): Promise<T> {
-  try {
-    return await action()
-  } catch (error) {
+function errorHandler<T>(api: string): (error: unknown) => Error | unknown {
+  return (error: unknown) => {
     if (error instanceof ClientError) {
       const errorMessage = stringifyMessage(outputContent`
   The ${outputToken.raw(
@@ -66,9 +59,9 @@ async function handlingErrors<T>(api: string, action: () => Promise<T>): Promise
         mappedError = new AbortError(errorMessage)
       }
       mappedError.stack = error.stack
-      throw mappedError
+      return mappedError
     } else {
-      throw error
+      return error
     }
   }
 }
