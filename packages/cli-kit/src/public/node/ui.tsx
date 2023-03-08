@@ -226,7 +226,6 @@ export interface RenderSeletPromptOptions<T> extends Omit<SelectPromptProps<T>, 
  *
  *    Press ↑↓ arrows to select, enter to confirm
  *
- *
  */
 export function renderSelectPrompt<T>({renderOptions, ...props}: RenderSeletPromptOptions<T>): Promise<T> {
   // eslint-disable-next-line max-params
@@ -256,7 +255,6 @@ export interface RenderConfirmationPromptOptions extends Pick<SelectPromptProps<
  *    (n) Cancel
  *
  *    Press ↑↓ arrows to select, enter or a shortcut to confirm
- *
  *
  */
 export function renderConfirmationPrompt({
@@ -326,7 +324,6 @@ export interface RenderAutocompleteOptions<T>
  *
  *    Press ↑↓ arrows to select, enter to confirm
  *
- *
  */
 export function renderAutocompletePrompt<T>({renderOptions, ...props}: RenderAutocompleteOptions<T>): Promise<T> {
   const newProps = {
@@ -392,7 +389,6 @@ export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit
  * ?  App project name (can be changed later):
  * >  expansive commerce app
  *    ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
- *
  *
  */
 export function renderTextPrompt({renderOptions, ...props}: RenderTextPromptOptions): Promise<string> {

@@ -92,7 +92,7 @@ function Tasks<TContext>({tasks, silent = isUnitTest()}: React.PropsWithChildren
         return null
       }
     },
-    {isActive: isRawModeSupported},
+    {isActive: Boolean(isRawModeSupported)},
   )
 
   if (silent) {
