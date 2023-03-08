@@ -172,7 +172,7 @@ beforeEach(async () => {
   vi.mocked(getPackageManager).mockResolvedValue('npm')
 })
 
-describe('ensureGenerateEnvironment', () => {
+describe('ensureGenerateContext', () => {
   it('returns the provided app apiKey if valid, without cached state', async () => {
     // Given
     const input = {apiKey: 'key2', directory: '/app', reset: false, token: 'token'}
@@ -223,7 +223,7 @@ describe('ensureGenerateEnvironment', () => {
   })
 })
 
-describe('ensureDevEnvironment', () => {
+describe('ensureDevContext', () => {
   it('returns selected data and updates internal state, without cached state', async () => {
     // Given
     vi.mocked(getAppInfo).mockReturnValue(undefined)
@@ -473,7 +473,7 @@ describe('ensureDeployContext', () => {
   })
 })
 
-describe('ensureThemeExtensionDevEnvironment', () => {
+describe('ensureThemeExtensionDevContext', () => {
   test('fetches theme extension when it exists', async () => {
     // Given
     const token = 'token'
