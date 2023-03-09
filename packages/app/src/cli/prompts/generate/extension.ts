@@ -6,6 +6,9 @@ import {getExtensionSpecificationsFromTemplate} from '../../models/extensions/te
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputWarn} from '@shopify/cli-kit/node/output'
+import {createRequire} from 'module'
+
+const require = createRequire(import.meta.url)
 
 interface GenerateExtensionOptions {
   name?: string
@@ -74,7 +77,7 @@ const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promi
     })
   }
 
-  let specifications = []
+  let specifications: GenericSpecification[] = []
   if (selection?.template) {
     const templateSpecification = options.templateSpecifications.find((spec) => spec.identifier === selection?.id)!
     specifications = getExtensionSpecificationsFromTemplate(templateSpecification)
@@ -82,7 +85,11 @@ const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promi
     specifications = [options.extensionSpecifications.find((spec) => spec.identifier === selection?.id)!]
   }
 
-  const nameAndFlavors = await Promise.all(specifications.map((spec) => promptNameAndFlavor(options, spec)))
+  // UI components don't support concurrency, so we need to serialize the prompts
+  const throat = require('throat')
+  const nameAndFlavors: {name: string; flavor: string; specification: GenericSpecification}[] = await Promise.all(
+    specifications.map(throat(1, (spec: GenericSpecification) => promptNameAndFlavor(options, spec))),
+  )
 
   return {
     name: selection?.name ?? '',

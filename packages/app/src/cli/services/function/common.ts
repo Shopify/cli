@@ -44,7 +44,8 @@ export async function ensureFunctionExtensionFlavorExists(
   templateFlavor: TemplateFlavor,
   templateDownloadDir: string,
 ): Promise<string> {
-  const templatePath = specification.templatePath(templateFlavor)
+  // Extensions resolves the template path from template flavor, but templates use extension flavor
+  const templatePath = specification.templatePath(templateFlavor) ?? specification.templatePath(extensionFlavor)
   const origin = joinPath(templateDownloadDir, templatePath)
   if (!(await fileExists(origin))) {
     throw new AbortError(`\nExtension '${specification.externalName}' is not available for ${extensionFlavor}`)
