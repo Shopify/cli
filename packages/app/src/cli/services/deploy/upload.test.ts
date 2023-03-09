@@ -724,7 +724,7 @@ describe('uploadExtensionsBundle', () => {
           },
         })
       const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
-      vi.mocked(formData).mockReturnValue(mockedFormData)
+      vi.mocked<any>(formData).mockReturnValue(mockedFormData)
       vi.mocked(randomUUID).mockReturnValue('random-uuid')
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
