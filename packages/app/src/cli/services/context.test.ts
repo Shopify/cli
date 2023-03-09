@@ -356,10 +356,12 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
+    expect(fetchOrgFromId).toHaveBeenCalledWith(ORG1.id, 'token')
     expect(got.partnersApp.id).toEqual(APP2.id)
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
+    expect(got.organization.id).toEqual(ORG1.id)
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
   })
@@ -385,10 +387,12 @@ describe('ensureDeployContext', () => {
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).toHaveBeenCalled()
+    expect(fetchOrgFromId).toHaveBeenCalledWith(ORG1.id, 'token')
     expect(got.partnersApp.id).toEqual(APP2.id)
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
+    expect(got.organization.id).toEqual(ORG1.id)
   })
 
   test('prompts the user to create or select an app and returns it with its id when the app has no extensions', async () => {
@@ -418,10 +422,12 @@ describe('ensureDeployContext', () => {
       identifiers,
       command: 'deploy',
     })
+    expect(fetchOrgFromId).not.toHaveBeenCalled()
     expect(got.partnersApp.id).toEqual(APP1.id)
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
+    expect(got.organization.id).toEqual(ORG1.id)
   })
 
   test("throws an app not found error if the app with the API key doesn't exist", async () => {
@@ -471,6 +477,7 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
+    expect(got.organization.id).toEqual(ORG1.id)
   })
 })
 

@@ -64,7 +64,9 @@ export async function deploy(options: DeployOptions) {
       },
     })
 
-    label.length === 0 && (label = undefined)
+    if (label.length === 0) {
+      label = undefined
+    }
   }
 
   outputNewline()
