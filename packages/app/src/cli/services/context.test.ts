@@ -377,6 +377,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(reuseDevConfigPrompt).mockResolvedValueOnce(true)
+    vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG1)
 
     // When
     const got = await ensureDeployContext(options(app))

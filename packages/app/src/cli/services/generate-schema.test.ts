@@ -86,7 +86,11 @@ describe('generateSchemaService', () => {
           apiSecretKeys: [],
           grantedScopes: [],
         },
-        orgId: '1',
+        organization: {
+          id: '1',
+          businessName: 'businessName',
+          betas: {appUiDeployments: false},
+        },
       })
       vi.mocked(isTerminalInteractive).mockReturnValue(true)
     })
