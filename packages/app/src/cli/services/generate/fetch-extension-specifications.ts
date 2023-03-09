@@ -1,7 +1,7 @@
 import {loadThemeSpecifications, loadUIExtensionSpecifications} from '../../models/extensions/specifications.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
-import {ExtensionCategory, GenericSpecification} from '../../models/app/extensions.js'
+import {GenericSpecification} from '../../models/app/extensions.js'
 import {
   ExtensionSpecificationsQuery,
   ExtensionSpecificationsQuerySchema,
@@ -12,8 +12,6 @@ import {
   TemplateSpecificationsQuery,
   TemplateSpecificationsQuerySchema,
 } from '../../api/graphql/template_specifications.js'
-import {BaseFunctionConfigurationSchema, ZodSchemaType} from '../../models/extensions/schemas.js'
-import {FunctionConfigType} from '../../models/extensions/functions.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -93,47 +91,5 @@ export async function fetchTemplateSpecifications(token: string): Promise<Templa
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return []
-  }
-}
-
-export function getExtensionSpecificationsFromTemplates(
-  templateSpecifications: TemplateSpecification[],
-): GenericSpecification[] {
-  return templateSpecifications.flatMap(getExtensionSpecificationsFromTemplate)
-}
-
-export function getExtensionSpecificationsFromTemplate(
-  templateSpecification: TemplateSpecification,
-): GenericSpecification[] {
-  return templateSpecification.types.flatMap((extension) => {
-    const extensionCustoms = resolveExtensionCustoms(extension.type)
-    return {
-      ...templateSpecification,
-      externalIdentifier: templateSpecification.identifier,
-      externalName: templateSpecification.name,
-      gated: false,
-      registrationLimit: 10,
-      supportedFlavors: extension.supportedFlavors,
-      group: templateSpecification.group,
-      category: () => extensionCustoms.category,
-      configSchema: BaseFunctionConfigurationSchema,
-      templateURL: templateSpecification.url,
-      templatePath: (flavor: string) => {
-        const supportedFlavor = extension.supportedFlavors.find((supportedFlavor) => supportedFlavor.value === flavor)
-        if (!supportedFlavor) return undefined
-        return supportedFlavor.path
-      },
-    }
-  })
-}
-
-function resolveExtensionCustoms(_type: string): {
-  category: ExtensionCategory
-  configSchema?: ZodSchemaType<FunctionConfigType>
-} {
-  // There should be another api with the extensions specifications. Right now templates only support functions
-  return {
-    category: 'function',
-    configSchema: BaseFunctionConfigurationSchema,
   }
 }

@@ -1,9 +1,5 @@
 import {ensureGenerateContext} from './context.js'
-import {
-  fetchSpecifications,
-  fetchTemplateSpecifications,
-  getExtensionSpecificationsFromTemplates,
-} from './generate/fetch-extension-specifications.js'
+import {fetchSpecifications, fetchTemplateSpecifications} from './generate/fetch-extension-specifications.js'
 import {AppInterface} from '../models/app/app.js'
 import {load as loadApp} from '../models/app/loader.js'
 import {GenericSpecification} from '../models/app/extensions.js'
@@ -11,6 +7,7 @@ import generateExtensionPrompt from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
 import generateExtensionService, {ExtensionFlavorValue} from '../services/generate/extension.js'
 import {loadFunctionSpecifications} from '../models/extensions/specifications.js'
+import {getExtensionSpecificationsFromTemplates} from '../models/extensions/templates.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
