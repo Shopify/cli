@@ -152,7 +152,7 @@ const task = {
 try {
   await renderTasks([task])
 } catch {
-  console.log(task.errors.map(e => e.message))
+  console.log(task.errors.map(e => e.message).join('\n'))
   // something went wrong0
   // something went wrong1
   // something went wrong2
