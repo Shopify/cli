@@ -16,8 +16,8 @@ export interface UserErrors {
 }
 
 const sendSampleWebhookMutation = `
-  mutation samplePayload($topic: String!, $api_version: String!, $address: String!, $delivery_method: String!, $shared_secret: String!) {
-    sendSampleWebhook(input: {topic: $topic, apiVersion: $api_version, address: $address, deliveryMethod: $delivery_method, sharedSecret: $shared_secret}) {
+  mutation samplePayload($topic: String!, $api_version: String!, $address: String!, $delivery_method: String!, $shared_secret: String!, $api_key: String) {
+    sendSampleWebhook(input: {topic: $topic, apiVersion: $api_version, address: $address, deliveryMethod: $delivery_method, sharedSecret: $shared_secret, apiKey: $api_key}) {
         samplePayload
         success
         headers
@@ -41,6 +41,7 @@ const sendSampleWebhookMutation = `
  * @param deliveryMethod - one of DELIVERY_METHOD
  * @param address - A destination for the webhook notification
  * @param clientSecret - A secret to generate the HMAC header apps can use to validate the origin
+ * @param apiKey - Client Api Key required to validate Event-Bridge addresses
  * @returns Empty if a remote delivery was requested, payload data if a local delivery was requested
  */
 export async function getWebhookSample(
@@ -50,6 +51,7 @@ export async function getWebhookSample(
   deliveryMethod: string,
   address: string,
   clientSecret: string,
+  apiKey?: string,
 ): Promise<SampleWebhook> {
   const variables = {
     topic,
@@ -57,6 +59,7 @@ export async function getWebhookSample(
     address,
     delivery_method: deliveryMethod,
     shared_secret: clientSecret,
+    api_key: apiKey,
   }
 
   const {sendSampleWebhook: result}: SamplePayloadSchema = await partnersRequest(
