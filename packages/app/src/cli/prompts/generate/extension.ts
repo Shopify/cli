@@ -54,6 +54,7 @@ export function buildChoices(specifications: GenericSpecification[], templateSpe
 
 const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promise<GenerateExtensionOutput> => {
   let allExtensions = options.extensionSpecifications
+  let templateSpecifications = options.templateSpecifications
   const extensionType = options.extensionType
   const templateType = options.templateType
   const name = options.name
@@ -67,6 +68,9 @@ const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promi
       allExtensions = allExtensions.filter((spec) =>
         spec.supportedFlavors.map((elem) => elem.value as string).includes(extensionFlavor),
       )
+      templateSpecifications = templateSpecifications.filter((spec) =>
+        spec.types[0]?.supportedFlavors.map((elem) => elem.value as string).includes(extensionFlavor),
+      )
     }
 
     if (options.unavailableExtensions.length > 0) {
@@ -77,13 +81,13 @@ const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promi
 
     selection = await renderSelectPrompt({
       message: 'Type of extension?',
-      choices: buildChoices(allExtensions, options.templateSpecifications),
+      choices: buildChoices(allExtensions, templateSpecifications),
     })
   }
 
   let specifications: GenericSpecification[] = []
   if (selection?.template) {
-    const templateSpecification = options.templateSpecifications.find((spec) => spec.identifier === selection?.id)!
+    const templateSpecification = templateSpecifications.find((spec) => spec.identifier === selection?.id)!
     specifications = getExtensionSpecificationsFromTemplate(templateSpecification)
   } else {
     specifications = [options.extensionSpecifications.find((spec) => spec.identifier === selection?.id)!]

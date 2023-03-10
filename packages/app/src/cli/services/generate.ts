@@ -66,7 +66,7 @@ async function generate(options: GenerateOptions) {
     app.extensionsForType(spec).length < spec.registrationLimit ? 'validSpecifications' : 'overlimit',
   )
 
-  validateExtensionFlavor(specification, options.template)
+  validateExtensionFlavor(specification, templateSpecification, options.template)
 
   const promptAnswers = await generateExtensionPrompt({
     extensionType: specification?.identifier,
@@ -124,15 +124,29 @@ function findTemplateSpecification(type: string | undefined, specifications: Tem
   return specifications.find((spec) => spec.identifier === type)
 }
 
-function validateExtensionFlavor(specification: GenericSpecification | undefined, flavor: string | undefined) {
-  if (!flavor || !specification) return
-
-  const possibleFlavors = specification.supportedFlavors.map((flavor) => flavor.value as string)
-  if (!possibleFlavors.includes(flavor)) {
-    throw new AbortError(
-      'Invalid template for extension type',
-      `Expected template to be one of the following: ${possibleFlavors.join(', ')}.`,
-    )
+function validateExtensionFlavor(
+  specification: GenericSpecification | undefined,
+  templateSpecification: TemplateSpecification | undefined,
+  flavor: string | undefined,
+) {
+  if (!flavor) return
+  if (specification) {
+    const possibleFlavors = specification.supportedFlavors.map((flavor) => flavor.value as string)
+    if (!possibleFlavors.includes(flavor)) {
+      throw new AbortError(
+        'Invalid template for extension type',
+        `Expected template to be one of the following: ${possibleFlavors.join(', ')}.`,
+      )
+    }
+  } else if (templateSpecification) {
+    const firstType = templateSpecification.types[0]
+    const possibleFlavors = firstType?.supportedFlavors.map((flavor) => flavor.value as string)
+    if (!possibleFlavors?.includes(flavor)) {
+      throw new AbortError(
+        'Invalid template for extension type',
+        `Expected template to be one of the following: ${possibleFlavors?.join(', ')}.`,
+      )
+    }
   }
 }
 
