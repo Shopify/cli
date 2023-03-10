@@ -28,6 +28,7 @@ The [`@shopify/cli-kit`](https://www.npmjs.com/package/@shopify/cli-kit) NPM pac
 - [Errors](cli-kit/errors.md)
 - [Command Guidelines](cli-kit/command-guidelines.md)
 - [UI Guidelines](cli-kit/ui-kit/guidelines.md)
+- [Using UI Kit](cli-kit/ui-kit/readme.md)
 - [Contributing to UI Kit](cli-kit/ui-kit/contributing.md)
 
 ## Plugins
