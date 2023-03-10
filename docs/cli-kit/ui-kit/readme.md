@@ -4,9 +4,15 @@
 - [Principles](#principles)
 - [API](#api)
   - [Static output](#static-output)
+    - [`renderInfo` / `renderWarning` / `renderSuccess`](#renderinfo--renderwarning--rendersuccess)
+    - [Errors](#errors)
+    - [`renderText`](#rendertext)
   - [Prompts](#prompts)
+    - [`renderSelectPrompt`](#renderselectprompt)
+    - [`renderConfirmationPrompt`](#renderconfirmationprompt)
+    - [`renderAutocompletePrompt`](#renderautocompleteprompt)
+    - [`renderTextPrompt`](#rendertextprompt)
   - [Async tasks](#async-tasks)
-  - [Errors](#errors)
 
 # Using UI Kit
 
@@ -30,7 +36,7 @@ restructure and upgrade the underlying React components without causing API brea
 
 The public interface can be roughly divided in three categories that answer different needs:
 
-- Output some static output to the user, be it some useful information, an error, or a success message
+- Output something static, be it some useful information, an error, or a success message
 - Ask the user for input
 - Display progress of asynchronous tasks
 
@@ -38,21 +44,79 @@ The public interface can be roughly divided in three categories that answer diff
 
 > Run `shopify kitchen-sink static` to see some examples
 
+Static output is usually displayed in the form of banners with appropiate titles and border colors.
 
+#### `renderInfo` / `renderWarning` / `renderSuccess`
 
-### Prompts
+All these functions take the same params. What changes is the color and the title of the box in the output. None of the params is required so you can choose to compose your banners however you prefer. Most banners will need a `headline`, which will be highlighted in **bold**, and a body containing some details. Check out the `simple` and `complete` examples above those functions to see how they can be used.
 
-> Run `shopify kitchen-sink prompts` to see some examples
+Some default sections like `nextSteps`, `reference` and `link` are provided and should be used whenever possible, but if none of these suit your needs you can pass a `customSections` param which allows you to customize the title of the sections.
 
-### Async tasks
+All banners (including errors) are rendereded with a width of 2/3 of the full width, unless the terminal is less than a certain minimum size, in which case they take the full width.
 
-> Run `shopify kitchen-sink async` to see some examples
-
-
-### Errors
+#### Errors
 
 If you're using the `cli-kit`'s `runCLI` function to wrap your CLI, you can throw `AbortError` and let the runner display the exception properly. More on what `AbortError` accepts [here](../errors.md#aborting-the-execution-using-errors).
 
 If you're using your own custom errors or you're not using `runCLI` then you can use the `renderFatalError` function.
 Make sure that your error extends the `cli-kit` class `FatalError` (`AbortError` already does) and pass it to `renderFatalError`
 when you want to display it to the terminal, for example in your exception handler.
+
+#### `renderText`
+
+This function is very simple, it accepts a strings and it prints it in the terminal while respecting the design system spacing rules. Try to use it instead of `console.log` so that all output is properly aligned.
+
+### Prompts
+
+> Run `shopify kitchen-sink prompts` to see some examples
+
+Prompts interrupt the flow of commands to ask the user for some information. There are two main types of prompts: selects and textual prompts. They all take a `message` property which will be displayed as the title of the prompt to the user and is usually in the form of a question. If you forget to use punctuaction at the end of `message` we'll add `?` for you.
+
+For select prompts, if the terminal is not tall enough to render all the options the prompt will resize to fit the terminal window and a message will appear warning the user that only a fraction of the items is being displayed. The user can then cycle through the items, including the hidden ones, by using the arrow keys.
+
+#### `renderSelectPrompt`
+
+This is an async function that will resolve with the value selected by the user. `choices` need to be passed as an array of `Item` which is defined as:
+
+```ts
+export interface Item<T> {
+  label: string
+  value: T
+  key?: string
+  group?: string
+}
+```
+
+As you can tell from the interface, selects support grouping and a shortcut keys (the `key` attribute) that can be used to jump straight to the item. Because keys can be made of multiple characters, the input is debounced slightly so that we can keep capturing keys pressed fast enough and chain them before we select the appropriate item.
+
+Once the user presses either `Enter` or a shortcut (if `submitWithShortcuts` is `true`) the function will resolve with the value of the `value` key.
+
+If you need to add some more context to help the user make a decision you can pass an `infoTable` to show to the user right below the question .
+
+If you want to have an item other than the first selected when the prompt initially renders, you can pass a `defaultValue` argument as well.
+
+#### `renderConfirmationPrompt`
+
+A simplified version of `renderSelectPrompt` where there are only two options and they can be selected immediately by pressing `y` or `n` to confirm or cancel. You can customize the confirmation and cancellation messages with `confirmationMessage` and `cancellationMessage`.
+
+#### `renderAutocompletePrompt`
+
+Very similar to `renderSelectPrompt` with the difference that you can provide a `search` function which takes the input of a text field rendered next to the prompt and should return an array of items, with a fixed length limit. If there are more pages to show you can pass the `hasMorePages` param to tell the user that there are more items to display if they keep refining their search term.
+
+#### `renderTextPrompt`
+
+Shows a text field and waits for the user to input something and press `Enter` to submit.
+
+Unless `allowEmpty` is set to `true` the user will see a validation error if they attempt to press `Enter` without having typed anything. If `allowEmpty` is `true` then an empty string will be returned in case they immediately press `Enter`. This can be useful for optional fields.
+
+`defaultValue` can be used to show a default value with a dimmed text style. The user can either press `Enter` immediately if they wish to submit the default value or start typing in order to override it.
+
+The validation logic can also be customized by passing the `validate` function which has to return either a `string` in case of error or `undefined` in case validation passed.
+
+Finally, if you want to mask the user input with asterisks you can  set the `password` param to `true`. This can be useful for sensitive inputs that the user might not want to reveal while typing.
+
+### Async tasks
+
+> Run `shopify kitchen-sink async` to see some examples
+
+
