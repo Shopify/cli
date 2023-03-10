@@ -34,6 +34,8 @@ We chose this API design so that you wouldn't have to worry about the underlying
 and could focus on simple data structures to pass into these `render` functions. This will also make it easier for us to
 restructure and upgrade the underlying React components without causing API breakage.
 
+All public functions have been documented via comments above the function themselves. So if you want to see some examples of their output you can check them out.
+
 ## API
 
 The public interface can be roughly divided in three categories that answer different needs:
