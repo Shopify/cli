@@ -135,28 +135,27 @@ function findTemplateSpecification(type: string | undefined, specifications: Tem
 }
 
 function validateExtensionFlavor(
-  specification: GenericSpecification | undefined,
-  templateSpecification: TemplateSpecification | undefined,
-  flavor: string | undefined,
+  specification?: GenericSpecification,
+  templateSpecification?: TemplateSpecification,
+  flavor?: string,
 ) {
   if (!flavor) return
+
+  let possibleFlavors: string[] = []
+
   if (specification) {
-    const possibleFlavors = specification.supportedFlavors.map((flavor) => flavor.value as string)
-    if (!possibleFlavors.includes(flavor)) {
-      throw new AbortError(
-        'Invalid template for extension type',
-        `Expected template to be one of the following: ${possibleFlavors.join(', ')}.`,
-      )
-    }
-  } else if (templateSpecification) {
-    const firstType = templateSpecification.types[0]
-    const possibleFlavors = firstType?.supportedFlavors.map((flavor) => flavor.value as string)
-    if (!possibleFlavors?.includes(flavor)) {
-      throw new AbortError(
-        'Invalid template for extension type',
-        `Expected template to be one of the following: ${possibleFlavors?.join(', ')}.`,
-      )
-    }
+    possibleFlavors = specification.supportedFlavors.map((flavor) => flavor.value as string)
+  }
+
+  if (templateSpecification) {
+    possibleFlavors = templateSpecification.types[0]!.supportedFlavors.map((flavor) => flavor.value as string)
+  }
+
+  if (!possibleFlavors.includes(flavor)) {
+    throw new AbortError(
+      'Invalid template for extension type',
+      `Expected template to be one of the following: ${possibleFlavors.join(', ')}.`,
+    )
   }
 }
 
