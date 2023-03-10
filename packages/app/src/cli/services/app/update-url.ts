@@ -8,12 +8,14 @@ export interface UpdateURLOptions {
   apiKey?: string
   appURL?: string
   redirectURLs?: string[]
+  proxyUrl?: string
+  proxySubPath?: string
 }
 
 export default async function updateURL(options: UpdateURLOptions): Promise<void> {
   const token = await ensureAuthenticatedPartners()
   const apiKey = options.apiKey || (await selectApp()).apiKey
-  const newURLs = await getNewURLs(token, apiKey, {appURL: options.appURL, redirectURLs: options.redirectURLs})
+  const newURLs = await getNewURLs(token, apiKey, options)
   await updateURLs(newURLs, apiKey, token)
   printResult(newURLs)
 }
@@ -24,6 +26,8 @@ async function getNewURLs(token: string, apiKey: string, options: UpdateURLOptio
     applicationUrl: options.appURL || (await appUrlPrompt(currentURLs.applicationUrl)),
     redirectUrlWhitelist:
       options.redirectURLs || (await allowedRedirectionURLsPrompt(currentURLs.redirectUrlWhitelist.join(','))),
+    proxyUrl: options.proxyUrl || currentURLs.proxyUrl,
+    proxySubPath: options.proxySubPath || currentURLs.proxySubPath,
   }
   validatePartnersURLs(newURLs)
   return newURLs
@@ -35,6 +39,7 @@ function printResult(urls: PartnersURLs): void {
     customSections: [
       {title: 'App URL', body: {list: {items: [urls.applicationUrl]}}},
       {title: 'Allowed redirection URL(s)', body: {list: {items: urls.redirectUrlWhitelist}}},
+      {title: 'App Proxy', body: {list: {items: [`URL: ${urls.proxyUrl}`, `Path: ${urls.proxySubPath}`]}}},
     ],
   })
 }

@@ -23,6 +23,16 @@ export default class UpdateURL extends Command {
       description: 'Comma separated list of allowed URLs where merchants are redirected after the app is installed',
       env: 'SHOPIFY_FLAG_REDIRECT_URLS',
     }),
+    'proxy-url': Flags.string({
+      hidden: false,
+      description: 'URL through which merchants will access your app.',
+      env: 'SHOPIFY_FLAG_PROXY_URL',
+    }),
+    'proxy-path': Flags.string({
+      hidden: false,
+      description: 'URL through which merchants will access your app.',
+      env: 'SHOPIFY_FLAG_PROXY_PATH',
+    }),
   }
 
   public async run(): Promise<void> {
@@ -31,6 +41,8 @@ export default class UpdateURL extends Command {
       apiKey: flags['api-key'],
       appURL: flags['app-url'],
       redirectURLs: flags['redirect-urls']?.split(','),
+      proxyUrl: flags['proxy-url'],
+      proxySubPath: flags['proxy-path'],
     }
     await updateURL(options)
   }

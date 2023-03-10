@@ -15,6 +15,8 @@ import {runTunnelPlugin, TunnelPluginError} from '@shopify/cli-kit/node/plugins'
 export interface PartnersURLs {
   applicationUrl: string
   redirectUrlWhitelist: string[]
+  proxyUrl?: string
+  proxySubPath?: string
 }
 
 export interface FrontendURLOptions {
@@ -143,7 +145,12 @@ export async function getURLs(apiKey: string, token: string): Promise<PartnersUR
   const variables: GetURLsQueryVariables = {apiKey}
   const query = GetURLsQuery
   const result: GetURLsQuerySchema = await partnersRequest(query, token, variables)
-  return {applicationUrl: result.app.applicationUrl, redirectUrlWhitelist: result.app.redirectUrlWhitelist}
+  return {
+    applicationUrl: result.app.applicationUrl,
+    redirectUrlWhitelist: result.app.redirectUrlWhitelist,
+    proxyUrl: result.app.appProxy?.url,
+    proxySubPath: result.app.appProxy?.subPath,
+  }
 }
 
 export interface ShouldOrPromptUpdateURLsOptions {
