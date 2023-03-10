@@ -66,6 +66,16 @@ async function generate(options: GenerateOptions) {
     app.extensionsForType(spec).length < spec.registrationLimit ? 'validSpecifications' : 'overlimit',
   )
 
+  const {validTemplateSpecifications, templatesOverlimit} = groupBy(templateSpecifications, (spec) => {
+    const extensions = getExtensionSpecificationsFromTemplate(spec)
+    return extensions.every((extension) => app.extensionsForType(extension).length < extension.registrationLimit)
+      ? 'validTemplateSpecifications'
+      : 'templatesOverlimit'
+  })
+  const unavailableExtensions = (overlimit?.map((spec) => spec.externalName) ?? []).concat(
+    templatesOverlimit?.map((spec) => spec.name) ?? [],
+  )
+
   validateExtensionFlavor(specification, templateSpecification, options.template)
 
   const promptAnswers = await generateExtensionPrompt({
@@ -76,8 +86,8 @@ async function generate(options: GenerateOptions) {
     directory: joinPath(options.directory, 'extensions'),
     app,
     extensionSpecifications: validSpecifications ?? [],
-    templateSpecifications: templateSpecifications ?? [],
-    unavailableExtensions: overlimit?.map((spec) => spec.externalName) ?? [],
+    templateSpecifications: validTemplateSpecifications ?? [],
+    unavailableExtensions,
     reset: options.reset,
   })
 
