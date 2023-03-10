@@ -59,9 +59,7 @@ export async function deploy(options: DeployOptions) {
   if (organization.betas.appUiDeployments) {
     label = await renderTextPrompt({
       message: 'Deployment label',
-      validate: () => {
-        return undefined
-      },
+      allowEmpty: true,
     })
 
     if (label.length === 0) {
