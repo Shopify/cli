@@ -1,7 +1,7 @@
 import {createApp, selectOrCreateApp} from './select-app.js'
 import {AppInterface, WebType} from '../../models/app/app.js'
 import {Organization, OrganizationApp} from '../../models/organization.js'
-import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
+import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {CreateAppQuery} from '../../api/graphql/create_app.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
@@ -62,14 +62,13 @@ describe('createApp', () => {
   it('sends request to create app and returns it', async () => {
     // Given
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
-    vi.mocked(appTypePrompt).mockResolvedValue('custom')
     vi.mocked(partnersRequest).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
     const variables = {
       org: 2,
       title: 'app-name',
       appUrl: 'https://example.com',
       redir: ['https://example.com/api/auth'],
-      type: 'custom',
+      type: 'undecided',
     }
 
     // When
@@ -83,7 +82,6 @@ describe('createApp', () => {
   it('throws error if requests has a user error', async () => {
     // Given
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
-    vi.mocked(appTypePrompt).mockResolvedValue('custom')
     vi.mocked(partnersRequest).mockResolvedValueOnce({
       appCreate: {app: {}, userErrors: [{message: 'some-error'}]},
     })
@@ -115,14 +113,13 @@ describe('selectOrCreateApp', () => {
     // Given
     vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
-    vi.mocked(appTypePrompt).mockResolvedValue('custom')
     vi.mocked(partnersRequest).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
     const variables = {
       org: 1,
       title: 'app-name',
       appUrl: 'https://example.com',
       redir: ['https://example.com/api/auth'],
-      type: 'custom',
+      type: 'undecided',
     }
 
     // When

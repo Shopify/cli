@@ -1,4 +1,4 @@
-import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
+import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {Organization, OrganizationApp} from '../../models/organization.js'
 import {fetchAppFromApiKey, OrganizationAppsResponse} from '../dev/fetch.js'
 import {CreateAppQuery, CreateAppQuerySchema, CreateAppQueryVariables} from '../../api/graphql/create_app.js'
@@ -40,13 +40,12 @@ export async function selectOrCreateApp(
 export async function createApp(org: Organization, appName: string, token: string): Promise<OrganizationApp> {
   const name = await appNamePrompt(appName)
 
-  const type = await appTypePrompt()
   const variables: CreateAppQueryVariables = {
     org: parseInt(org.id, 10),
     title: `${name}`,
     appUrl: 'https://example.com',
     redir: ['https://example.com/api/auth'],
-    type,
+    type: 'undecided',
   }
 
   const query = CreateAppQuery

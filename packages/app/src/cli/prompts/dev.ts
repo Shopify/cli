@@ -56,16 +56,6 @@ export async function selectStorePrompt(stores: OrganizationStore[]): Promise<Or
   return stores.find((store) => store.shopId === id)
 }
 
-export async function appTypePrompt(): Promise<'public' | 'custom'> {
-  return renderSelectPrompt({
-    message: 'What type of app are you building?',
-    choices: [
-      {label: 'Public: An app built for a wide merchant audience.', value: 'public'},
-      {label: 'Custom: An app custom built for a single client.', value: 'custom'},
-    ],
-  })
-}
-
 export async function appNamePrompt(currentName: string): Promise<string> {
   return renderTextPrompt({
     message: 'App name',
