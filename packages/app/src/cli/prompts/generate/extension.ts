@@ -13,6 +13,7 @@ const require = createRequire(import.meta.url)
 interface GenerateExtensionOptions {
   name?: string
   extensionType?: string
+  templateType?: string
   extensionFlavor?: string
   directory: string
   app: AppInterface
@@ -54,11 +55,14 @@ export function buildChoices(specifications: GenericSpecification[], templateSpe
 const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promise<GenerateExtensionOutput> => {
   let allExtensions = options.extensionSpecifications
   const extensionType = options.extensionType
+  const templateType = options.templateType
   const name = options.name
   const extensionFlavor = options.extensionFlavor
-  let selection: {id: string; template: boolean; name: string} | undefined
+  let selection: {id?: string; template: boolean; name: string} = extensionType
+    ? {id: extensionType, template: false, name: ''}
+    : {id: templateType, template: true, name: ''}
 
-  if (!extensionType) {
+  if (!extensionType && !templateType) {
     if (extensionFlavor) {
       allExtensions = allExtensions.filter((spec) =>
         spec.supportedFlavors.map((elem) => elem.value as string).includes(extensionFlavor),

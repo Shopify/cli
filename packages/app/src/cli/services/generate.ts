@@ -7,7 +7,11 @@ import generateExtensionPrompt from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
 import generateExtensionService, {ExtensionFlavorValue} from '../services/generate/extension.js'
 import {loadFunctionSpecifications} from '../models/extensions/specifications.js'
-import {getExtensionSpecificationsFromTemplates} from '../models/extensions/templates.js'
+import {
+  getExtensionSpecificationsFromTemplate,
+  getExtensionSpecificationsFromTemplates,
+} from '../models/extensions/templates.js'
+import {TemplateSpecification} from '../api/graphql/template_specifications.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -51,33 +55,12 @@ async function generate(options: GenerateOptions) {
     specifications,
   })
 
-  // If the user has specified a type, we need to validate it
-  const specification = findSpecification(options.type, specificationsWithoutTemplates)
-  const allExternalTypes = specificationsWithoutTemplates.map((spec) => spec.externalIdentifier)
-
-  if (options.type && !specification) {
-    const isShopifolk = await isShopify()
-    const tryMsg = isShopifolk ? 'You might need to enable some beta flags on your Organization or App' : undefined
-    throw new AbortError(
-      `Unknown extension type: ${options.type}.\nThe following extension types are supported: ${allExternalTypes.join(
-        ', ',
-      )}`,
-      tryMsg,
-    )
-  }
-
-  // Validate limits for selected type.
-  // If no type is selected, filter out any types that have reached their limit
-  if (specification) {
-    const existing = app.extensionsForType(specification)
-    const limit = specification.registrationLimit
-    if (existing.length >= limit) {
-      throw new AbortError(
-        'Invalid extension type',
-        `You can only generate ${limit} extension(s) of type ${specification.externalIdentifier} per app`,
-      )
-    }
-  }
+  const {specification, templateSpecification} = await handleTypeParameter(
+    options.type,
+    app,
+    specificationsWithoutTemplates,
+    templateSpecifications,
+  )
 
   const {validSpecifications, overlimit} = groupBy(specificationsWithoutTemplates, (spec) =>
     app.extensionsForType(spec).length < spec.registrationLimit ? 'validSpecifications' : 'overlimit',
@@ -86,7 +69,8 @@ async function generate(options: GenerateOptions) {
   validateExtensionFlavor(specification, options.template)
 
   const promptAnswers = await generateExtensionPrompt({
-    extensionType: specification?.identifier || options.type,
+    extensionType: specification?.identifier,
+    templateType: templateSpecification?.identifier,
     name: options.name,
     extensionFlavor: options.template,
     directory: joinPath(options.directory, 'extensions'),
@@ -136,6 +120,10 @@ function findSpecification(type: string | undefined, specifications: GenericSpec
   return specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
 }
 
+function findTemplateSpecification(type: string | undefined, specifications: TemplateSpecification[]) {
+  return specifications.find((spec) => spec.identifier === type)
+}
+
 function validateExtensionFlavor(specification: GenericSpecification | undefined, flavor: string | undefined) {
   if (!flavor || !specification) return
 
@@ -171,6 +159,48 @@ function formatSuccessfulRunMessage(
   }
 
   return options
+}
+
+async function handleTypeParameter(
+  type: string | undefined,
+  app: AppInterface,
+  specifications: GenericSpecification[],
+  templateSpecifications: TemplateSpecification[],
+): Promise<{specification?: GenericSpecification; templateSpecification?: TemplateSpecification}> {
+  if (!type) return {}
+
+  // If the user has specified a type, we need to validate it
+  const specification = findSpecification(type, specifications)
+  const templateSpecification = findTemplateSpecification(type, templateSpecifications)
+
+  if (!specification && !templateSpecification) {
+    const isShopifolk = await isShopify()
+    const allExternalTypes = specifications
+      .map((spec) => spec.externalIdentifier)
+      .concat(templateSpecifications.map((spec) => spec.identifier))
+    const tryMsg = isShopifolk ? 'You might need to enable some beta flags on your Organization or App' : undefined
+    throw new AbortError(
+      `Unknown extension type: ${type}.\nThe following extension types are supported: ${allExternalTypes.join(', ')}`,
+      tryMsg,
+    )
+  }
+
+  // Validate limits for selected type.
+  // If no type is selected, filter out any types that have reached their limit
+  getExtensionSpecificationsFromTemplate(templateSpecification)
+    .concat(specification ?? [])
+    .forEach((spec) => {
+      const existing = app.extensionsForType(spec)
+      const limit = spec.registrationLimit
+      if (existing.length >= limit) {
+        throw new AbortError(
+          'Invalid extension type',
+          `You can only generate ${limit} extension(s) of type ${spec.externalIdentifier} per app`,
+        )
+      }
+    })
+
+  return {specification, templateSpecification}
 }
 
 export default generate

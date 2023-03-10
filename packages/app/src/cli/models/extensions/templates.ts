@@ -10,8 +10,9 @@ export function getExtensionSpecificationsFromTemplates(
 }
 
 export function getExtensionSpecificationsFromTemplate(
-  templateSpecification: TemplateSpecification,
+  templateSpecification?: TemplateSpecification,
 ): GenericSpecification[] {
+  if (!templateSpecification) return []
   return templateSpecification.types.map((extension) => {
     const extensionCustoms = resolveExtensionCustoms(extension.type)
     return {
