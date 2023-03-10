@@ -85,11 +85,11 @@ const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promi
     specifications = [options.extensionSpecifications.find((spec) => spec.identifier === selection?.id)!]
   }
 
-  // UI components don't support concurrency, so we need to serialize the prompts
-  const throat = require('throat')
-  const nameAndFlavors: {name: string; flavor: string; specification: GenericSpecification}[] = await Promise.all(
-    specifications.map(throat(1, (spec: GenericSpecification) => promptNameAndFlavor(options, spec))),
-  )
+  const nameAndFlavors: {name: string; flavor: string; specification: GenericSpecification}[] = []
+  for (const spec of specifications) {
+    // eslint-disable-next-line no-await-in-loop
+    nameAndFlavors.push(await promptNameAndFlavor(options, spec))
+  }
 
   return {
     name: selection?.name ?? '',
