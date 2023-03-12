@@ -7,11 +7,7 @@ import {
   ExtensionSpecificationsQuerySchema,
   FlattenedRemoteSpecification,
 } from '../../api/graphql/extension_specifications.js'
-import {
-  TemplateSpecification,
-  TemplateSpecificationsQuery,
-  TemplateSpecificationsQuerySchema,
-} from '../../api/graphql/template_specifications.js'
+
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -82,14 +78,4 @@ function mergeLocalAndRemoteSpecs(
   })
 
   return getArrayRejectingUndefined<GenericSpecification>(updated)
-}
-
-export async function fetchTemplateSpecifications(token: string): Promise<TemplateSpecification[]> {
-  try {
-    const result: TemplateSpecificationsQuerySchema = await partnersRequest(TemplateSpecificationsQuery, token)
-    return result.templateSpecifications
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    return []
-  }
 }

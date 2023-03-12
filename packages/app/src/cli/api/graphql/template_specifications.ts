@@ -1,7 +1,7 @@
 import {ExtensionFlavor} from '../../models/app/extensions.js'
 import {gql} from 'graphql-request'
 
-export const TemplateSpecificationsQuery = gql`
+export const RemoteTemplateSpecificationsQuery = gql`
   query {
     templateSpecifications {
       identifier
@@ -28,7 +28,7 @@ export interface TemplateType {
   supportedFlavors: ExtensionFlavor[]
 }
 
-export interface TemplateSpecification {
+export interface RemoteTemplateSpecification {
   identifier: string
   name: string
   group: string
@@ -37,6 +37,6 @@ export interface TemplateSpecification {
   types: TemplateType[]
 }
 
-export interface TemplateSpecificationsQuerySchema {
-  templateSpecifications: TemplateSpecification[]
+export interface RemoteTemplateSpecificationsQuerySchema {
+  templateSpecifications: RemoteTemplateSpecification[]
 }

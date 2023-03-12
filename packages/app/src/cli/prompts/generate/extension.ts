@@ -1,8 +1,6 @@
-import {extensionTypesGroups} from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
-import {TemplateSpecification} from '../../api/graphql/template_specifications.js'
-import {getExtensionSpecificationsFromTemplate} from '../../models/extensions/templates.js'
+import {TemplateSpecification} from '../../models/app/template.js'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputWarn} from '@shopify/cli-kit/node/output'
@@ -12,12 +10,10 @@ const require = createRequire(import.meta.url)
 
 interface GenerateExtensionOptions {
   name?: string
-  extensionType?: string
   templateType?: string
   extensionFlavor?: string
   directory: string
   app: AppInterface
-  extensionSpecifications: GenericSpecification[]
   templateSpecifications: TemplateSpecification[]
   unavailableExtensions: string[]
   reset: boolean
@@ -25,7 +21,6 @@ interface GenerateExtensionOptions {
 
 interface GenerateExtensionOutput {
   name: string
-  template: boolean
   extensionContent: GenerateExtensionContentOutput[]
 }
 interface GenerateExtensionContentOutput {
@@ -34,40 +29,24 @@ interface GenerateExtensionContentOutput {
   extensionFlavor?: string
 }
 
-export function buildChoices(specifications: GenericSpecification[], templateSpecifications: TemplateSpecification[]) {
-  const extensionsSpecChoices = specifications.map((spec) => {
-    return {
-      label: spec.externalName,
-      value: {id: spec.identifier, template: false, name: spec.externalIdentifier},
-      group: spec.group || extensionTypesGroups.find((group) => includes(group.extensions, spec.identifier))?.name,
-    }
-  })
+export function buildChoices(templateSpecifications: TemplateSpecification[]) {
   const templateSpecChoices = templateSpecifications.map((spec) => {
     return {
       label: spec.name,
-      value: {id: spec.identifier, template: true, name: spec.name},
-      group: spec.group || extensionTypesGroups.find((group) => includes(group.extensions, spec.identifier))?.name,
+      value: spec.identifier,
+      group: spec.group,
     }
   })
-  return extensionsSpecChoices.concat(templateSpecChoices).sort((c1, c2) => c1.label.localeCompare(c2.label))
+  return templateSpecChoices.sort((c1, c2) => c1.label.localeCompare(c2.label))
 }
 
 const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promise<GenerateExtensionOutput> => {
-  let allExtensions = options.extensionSpecifications
   let templateSpecifications = options.templateSpecifications
-  const extensionType = options.extensionType
-  const templateType = options.templateType
-  const name = options.name
+  let templateType = options.templateType
   const extensionFlavor = options.extensionFlavor
-  let selection: {id?: string; template: boolean; name: string} = extensionType
-    ? {id: extensionType, template: false, name: ''}
-    : {id: templateType, template: true, name: ''}
 
-  if (!extensionType && !templateType) {
+  if (!templateType) {
     if (extensionFlavor) {
-      allExtensions = allExtensions.filter((spec) =>
-        spec.supportedFlavors.map((elem) => elem.value as string).includes(extensionFlavor),
-      )
       templateSpecifications = templateSpecifications.filter((spec) =>
         spec.types[0]?.supportedFlavors.map((elem) => elem.value as string).includes(extensionFlavor),
       )
@@ -79,29 +58,23 @@ const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promi
       )
     }
 
-    selection = await renderSelectPrompt({
+    // eslint-disable-next-line require-atomic-updates
+    templateType = await renderSelectPrompt({
       message: 'Type of extension?',
-      choices: buildChoices(allExtensions, templateSpecifications),
+      choices: buildChoices(templateSpecifications),
     })
   }
 
-  let specifications: GenericSpecification[] = []
-  if (selection?.template) {
-    const templateSpecification = templateSpecifications.find((spec) => spec.identifier === selection?.id)!
-    specifications = getExtensionSpecificationsFromTemplate(templateSpecification)
-  } else {
-    specifications = [options.extensionSpecifications.find((spec) => spec.identifier === selection?.id)!]
-  }
+  const templateSpecification = templateSpecifications.find((spec) => spec.identifier === templateType)!
 
   const nameAndFlavors: {name: string; flavor: string; specification: GenericSpecification}[] = []
-  for (const spec of specifications) {
+  for (const spec of templateSpecification.types) {
     // eslint-disable-next-line no-await-in-loop
     nameAndFlavors.push(await promptNameAndFlavor(options, spec))
   }
 
   return {
-    name: selection?.name ?? '',
-    template: selection?.template ?? false,
+    name: templateSpecification?.name ?? '',
     extensionContent: nameAndFlavors.map((nameAndFlavor) => {
       return {
         ...options,
@@ -141,10 +114,6 @@ async function promptNameAndFlavor(
     })
   }
   return result
-}
-
-function includes<TNarrow extends TWide, TWide>(coll: ReadonlyArray<TNarrow>, el: TWide): el is TNarrow {
-  return coll.includes(el as TNarrow)
 }
 
 export default generateExtensionPrompt
