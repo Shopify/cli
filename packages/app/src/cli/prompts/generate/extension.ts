@@ -67,7 +67,7 @@ const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promi
 
   const templateSpecification = templateSpecifications.find((spec) => spec.identifier === templateType)!
 
-  const nameAndFlavors: {name: string; flavor: string; specification: GenericSpecification}[] = []
+  const nameAndFlavors: {name: string; flavor?: string; specification: GenericSpecification}[] = []
   for (const spec of templateSpecification.types) {
     // eslint-disable-next-line no-await-in-loop
     nameAndFlavors.push(await promptNameAndFlavor(options, spec))
@@ -77,7 +77,6 @@ const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promi
     name: templateSpecification?.name ?? '',
     extensionContent: nameAndFlavors.map((nameAndFlavor) => {
       return {
-        ...options,
         name: nameAndFlavor.name,
         specification: nameAndFlavor.specification,
         extensionFlavor: nameAndFlavor.flavor,
@@ -89,10 +88,10 @@ const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promi
 async function promptNameAndFlavor(
   options: GenerateExtensionOptions,
   specification: GenericSpecification,
-): Promise<{name: string; flavor: string; specification: GenericSpecification}> {
+): Promise<{name: string; flavor?: string; specification: GenericSpecification}> {
   const result = {
     name: options.name ?? '',
-    flavor: options.extensionFlavor ?? specification.supportedFlavors[0]?.value ?? '',
+    flavor: options.extensionFlavor ?? specification.supportedFlavors[0]?.value,
     specification,
   }
   if (!options.name) {

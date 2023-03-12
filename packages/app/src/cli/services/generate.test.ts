@@ -3,8 +3,13 @@ import {ensureGenerateContext} from './context.js'
 import {load as loadApp} from '../models/app/loader.js'
 import generateExtensionPrompt from '../prompts/generate/extension.js'
 import generateExtensionService from '../services/generate/extension.js'
-import {testApp, testRemoteSpecifications, testThemeExtensions} from '../models/app/app.test-data.js'
-import {Extension} from '../models/app/extensions.js'
+import {
+  testApp,
+  testRemoteSpecifications,
+  testRemoteTemplateSpecifications,
+  testThemeExtensions,
+} from '../models/app/app.test-data.js'
+import {Extension, GenericSpecification} from '../models/app/extensions.js'
 import {describe, expect, it, vi, beforeAll, afterEach} from 'vitest'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -143,13 +148,22 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
   const app = testApp({
     directory: appRoot,
     configurationPath: joinPath(appRoot, 'shopify.app.toml'),
-    extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => existingExtensions,
+    extensionsForType: (_spec: {identifier: string; externalIdentifier: string}) => existingExtensions,
   })
+  const specification = {
+    ...testRemoteSpecifications[0],
+    ...{category: () => (identifier === 'product_discounts' ? 'function' : 'ui')},
+    ...(identifier === 'product_discounts' && {helpURL: 'https://shopify.dev/docs/apps/discounts'}),
+  } as GenericSpecification
 
   vi.mocked(loadApp).mockResolvedValue(app)
   vi.mocked(partnersRequest).mockResolvedValueOnce({extensionSpecifications: testRemoteSpecifications})
+  vi.mocked(partnersRequest).mockResolvedValueOnce({templateSpecifications: testRemoteTemplateSpecifications})
   vi.mocked(ensureGenerateContext).mockResolvedValue('api-key')
-  vi.mocked(generateExtensionPrompt).mockResolvedValue({name: 'name', extensionType: identifier})
-  vi.mocked(generateExtensionService).mockResolvedValue(joinPath('extensions', 'name'))
+  vi.mocked(generateExtensionPrompt).mockResolvedValue({
+    name: 'name',
+    extensionContent: [{name: 'name', specification}],
+  })
+  vi.mocked(generateExtensionService).mockResolvedValue([{directory: joinPath('extensions', 'name'), specification}])
   return mockAndCaptureOutput()
 }

@@ -445,13 +445,17 @@ async function createFromTemplate({
   extensionFlavor,
   specifications,
 }: CreateFromTemplateOptions): Promise<string> {
-  return extensionInit({
-    name,
-    specification,
-    app: await loadApp({directory: appDirectory, specifications}),
-    extensionFlavor,
-    extensionType: specification.identifier,
-  })
+  return (
+    await extensionInit([
+      {
+        name,
+        specification,
+        app: await loadApp({directory: appDirectory, specifications}),
+        extensionFlavor,
+        extensionType: specification.identifier,
+      },
+    ])
+  )[0]!.directory
 }
 async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | void) {
   await file.inTemporaryDirectory(async (tmpDir) => {

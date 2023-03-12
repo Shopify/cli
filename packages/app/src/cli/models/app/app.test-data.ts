@@ -6,6 +6,7 @@ import {ThemeExtensionInstance} from '../extensions/theme.js'
 import themeSpec from '../extensions/theme-specifications/theme.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
+import {RemoteTemplateSpecification} from '../../api/graphql/template_specifications.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -230,5 +231,314 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
       managementExperience: 'dashboard',
       registrationLimit: 100,
     },
+  },
+]
+
+export const testRemoteTemplateSpecifications: RemoteTemplateSpecification[] = [
+  {
+    identifier: 'order_discount',
+    name: 'Function - Order discount',
+    group: 'Discounts and checkout',
+    supportLinks: ['https://shopify.dev/docs/apps/discounts'],
+    url: 'https://github.com/Shopify/function-examples',
+    types: [
+      {
+        type: 'order_discount',
+        extensionPoints: [],
+        supportedFlavors: [
+          {
+            name: 'Javascript (developer preview)',
+            value: 'vanilla-js',
+            path: 'discounts/javascript/order-discounts/default',
+          },
+          {
+            name: 'Typescript (developer preview)',
+            value: 'typescript',
+            path: 'discounts/javascript/order-discounts/default',
+          },
+          {
+            name: 'Rust',
+            value: 'rust',
+            path: 'discounts/rust/order-discounts/default',
+          },
+          {
+            name: 'Wasm',
+            value: 'wasm',
+            path: 'discounts/wasm/order-discounts/default',
+          },
+        ],
+      },
+      {
+        type: 'order_discount',
+        extensionPoints: [],
+        supportedFlavors: [
+          {
+            name: 'Javascript (developer preview)',
+            value: 'vanilla-js',
+            path: 'discounts/javascript/order-discounts/default',
+          },
+          {
+            name: 'Typescript (developer preview)',
+            value: 'typescript',
+            path: 'discounts/javascript/order-discounts/default',
+          },
+          {
+            name: 'Rust',
+            value: 'rust',
+            path: 'discounts/rust/order-discounts/default',
+          },
+          {
+            name: 'Wasm',
+            value: 'wasm',
+            path: 'discounts/wasm/order-discounts/default',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    identifier: 'cart_checkout_validation',
+    name: 'Function - Cart and Checkout Validation',
+    group: 'Discounts and checkout',
+    supportLinks: ['https://shopify.dev/docs/api/functions/reference/cart-checkout-validation'],
+    url: 'https://github.com/Shopify/function-examples',
+    types: [
+      {
+        type: 'cart_checkout_validation',
+        extensionPoints: [],
+        supportedFlavors: [
+          {
+            name: 'Javascript (developer preview)',
+            value: 'vanilla-js',
+            path: 'checkout/javascript/cart-checkout-validation/default',
+          },
+          {
+            name: 'Typescript (developer preview)',
+            value: 'typescript',
+            path: 'checkout/javascript/cart-checkout-validation/default',
+          },
+          {
+            name: 'Rust',
+            value: 'rust',
+            path: 'checkout/rust/cart-checkout-validation/default',
+          },
+          {
+            name: 'Wasm',
+            value: 'wasm',
+            path: 'checkout/wasm/cart-checkout-validation/default',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    identifier: 'cart_transform',
+    name: 'Function - Cart transformer',
+    group: 'Discounts and checkout',
+    supportLinks: [],
+    url: 'https://github.com/Shopify/function-examples',
+    types: [
+      {
+        type: 'cart_transform',
+        extensionPoints: [],
+        supportedFlavors: [
+          {
+            name: 'Javascript (developer preview)',
+            value: 'vanilla-js',
+            path: 'checkout/javascript/cart-transform/bundles',
+          },
+          {
+            name: 'Typescript (developer preview)',
+            value: 'typescript',
+            path: 'checkout/javascript/cart-transform/bundles',
+          },
+          {
+            name: 'Rust',
+            value: 'rust',
+            path: 'checkout/rust/cart-transform/bundles',
+          },
+          {
+            name: 'Wasm',
+            value: 'wasm',
+            path: 'checkout/wasm/cart-transform/bundles',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    identifier: 'delivery_customization',
+    name: 'Function - Delivery customization',
+    group: 'Discounts and checkout',
+    supportLinks: [],
+    url: 'https://github.com/Shopify/function-examples',
+    types: [
+      {
+        type: 'delivery_customization',
+        extensionPoints: [],
+        supportedFlavors: [
+          {
+            name: 'Javascript (developer preview)',
+            value: 'vanilla-js',
+            path: 'checkout/javascript/delivery-customization/default',
+          },
+          {
+            name: 'Wasm',
+            value: 'wasm',
+            path: 'checkout/wasm/delivery-customization/default',
+          },
+          {
+            name: 'Rust',
+            value: 'rust',
+            path: 'checkout/rust/delivery-customization/default',
+          },
+          {
+            name: 'Wasm',
+            value: 'wasm',
+            path: 'checkout/wasm/delivery-customization/default',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    identifier: 'payment_customization',
+    name: 'Function - Payment customization',
+    group: 'Discounts and checkout',
+    supportLinks: [],
+    url: 'https://github.com/Shopify/function-examples',
+    types: [
+      {
+        type: 'payment_customization',
+        extensionPoints: [],
+        supportedFlavors: [
+          {
+            name: 'Javascript (developer preview)',
+            value: 'vanilla-js',
+            path: 'checkout/javascript/payment-customization/default',
+          },
+          {
+            name: 'Typescript (developer preview)',
+            value: 'typescript',
+            path: 'checkout/javascript/payment-customization/default',
+          },
+          {
+            name: 'Rust',
+            value: 'rust',
+            path: 'checkout/rust/payment-customization/default',
+          },
+          {
+            name: 'Wasm',
+            value: 'wasm',
+            path: 'checkout/wasm/payment-customization/default',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    identifier: 'product_discounts',
+    name: 'Function - Product discount',
+    group: 'Discounts and checkout',
+    supportLinks: ['https://shopify.dev/docs/apps/discounts'],
+    url: 'https://github.com/Shopify/function-examples',
+    types: [
+      {
+        type: 'product_discounts',
+        extensionPoints: [],
+        supportedFlavors: [
+          {
+            name: 'Javascript (developer preview)',
+            value: 'vanilla-js',
+            path: 'discounts/javascript/product-discounts/default',
+          },
+          {
+            name: 'Typescript (developer preview)',
+            value: 'typescript',
+            path: 'discounts/javascript/product-discounts/default',
+          },
+          {
+            name: 'Rust',
+            value: 'rust',
+            path: 'discounts/rust/product-discounts/default',
+          },
+          {
+            name: 'Wasm',
+            value: 'wasm',
+            path: 'discounts/wasm/product-discounts/default',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    identifier: 'shipping_discounts',
+    name: 'Function - Shipping discount',
+    group: 'Discounts and checkout',
+    supportLinks: ['https://shopify.dev/docs/apps/discounts'],
+    url: 'https://github.com/Shopify/function-examples',
+    types: [
+      {
+        type: 'shipping_discounts',
+        extensionPoints: [],
+        supportedFlavors: [
+          {
+            name: 'Javascript (developer preview)',
+            value: 'vanilla-js',
+            path: 'discounts/javascript/shipping-discounts/default',
+          },
+          {
+            name: 'Typescript (developer preview)',
+            value: 'typescript',
+            path: 'discounts/javascript/shipping-discounts/default',
+          },
+          {
+            name: 'Rust',
+            value: 'rust',
+            path: 'discounts/rust/shipping-discounts/default',
+          },
+          {
+            name: 'Wasm',
+            value: 'wasm',
+            path: 'discounts/wasm/shipping-discounts/default',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    identifier: 'order_routing_location_rule',
+    name: 'Function - Order routing location rule',
+    group: 'Shopify private',
+    supportLinks: [],
+    url: 'https://github.com/Shopify/function-examples',
+    types: [
+      {
+        type: 'order_routing_location_rule',
+        extensionPoints: [],
+        supportedFlavors: [
+          {
+            name: 'Javascript (developer preview)',
+            value: 'vanilla-js',
+            path: 'order-routing/javascript/rankers/default',
+          },
+          {
+            name: 'Typescript (developer preview)',
+            value: 'typescript',
+            path: 'order-routing/javascript/rankers/default',
+          },
+          {
+            name: 'Rust',
+            value: 'rust',
+            path: 'order-routing/rust/rankers/default',
+          },
+          {
+            name: 'Wasm',
+            value: 'wasm',
+            path: 'order-routing/wasm/rankers/default',
+          },
+        ],
+      },
+    ],
   },
 ]
