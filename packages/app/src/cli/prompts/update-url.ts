@@ -1,5 +1,5 @@
 import {isValidURL} from '@shopify/cli-kit/common/url'
-import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 export async function appUrlPrompt(defaultValue: string): Promise<string> {
   return renderTextPrompt({
@@ -20,4 +20,28 @@ export async function allowedRedirectionURLsPrompt(defaultValue: string): Promis
     },
   })
   return urls.split(',')
+}
+
+export async function addProxyPrompt(): Promise<boolean> {
+  return renderConfirmationPrompt({message: 'Do you want to create an app proxy?'})
+}
+
+export async function appProxyUrlPrompt(defaultValue: string): Promise<string> {
+  return renderTextPrompt({
+    message: 'App Proxy URL',
+    defaultValue,
+    validate: (value: string) => {
+      if (!isValidURL(value)) return 'Invalid URL'
+    },
+  })
+}
+
+export async function appProxyPathPrompt(defaultValue: string): Promise<string> {
+  return renderTextPrompt({
+    message: 'App Proxy Path',
+    defaultValue,
+    validate: (value: string) => {
+      if (value.length === 0) return 'Invalid URL'
+    },
+  })
 }

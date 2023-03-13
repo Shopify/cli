@@ -1,6 +1,12 @@
 import {selectApp} from './select-app.js'
 import {getURLs, PartnersURLs, updateURLs, validatePartnersURLs} from '../dev/urls.js'
-import {allowedRedirectionURLsPrompt, appUrlPrompt} from '../../prompts/update-url.js'
+import {
+  addProxyPrompt,
+  allowedRedirectionURLsPrompt,
+  appProxyPathPrompt,
+  appProxyUrlPrompt,
+  appUrlPrompt,
+} from '../../prompts/update-url.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
@@ -22,13 +28,18 @@ export default async function updateURL(options: UpdateURLOptions): Promise<void
 
 async function getNewURLs(token: string, apiKey: string, options: UpdateURLOptions): Promise<PartnersURLs> {
   const currentURLs: PartnersURLs = await getURLs(apiKey, token)
-  const newURLs: PartnersURLs = {
-    applicationUrl: options.appURL || (await appUrlPrompt(currentURLs.applicationUrl)),
-    redirectUrlWhitelist:
-      options.redirectURLs || (await allowedRedirectionURLsPrompt(currentURLs.redirectUrlWhitelist.join(','))),
-    proxyUrl: options.proxyUrl || currentURLs.proxyUrl,
-    proxySubPath: options.proxySubPath || currentURLs.proxySubPath,
+  const hasProxy = currentURLs.proxyUrl !== null
+  const applicationUrl = options.appURL || (await appUrlPrompt(currentURLs.applicationUrl))
+  const redirectUrlWhitelist =
+    options.redirectURLs || (await allowedRedirectionURLsPrompt(currentURLs.redirectUrlWhitelist.join(',')))
+  const updateProxy = hasProxy || (await addProxyPrompt())
+  let proxyUrl = currentURLs.proxyUrl
+  let proxySubPath = currentURLs.proxySubPath
+  if (updateProxy) {
+    proxyUrl = options.proxyUrl || (await appProxyUrlPrompt(currentURLs.proxyUrl ?? ''))
+    proxySubPath = options.proxySubPath || (await appProxyPathPrompt(currentURLs.proxySubPath ?? ''))
   }
+  const newURLs: PartnersURLs = {applicationUrl, redirectUrlWhitelist, proxyUrl, proxySubPath}
   validatePartnersURLs(newURLs)
   return newURLs
 }
