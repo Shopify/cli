@@ -1,10 +1,12 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
 import {fetchOrgAndApps} from '../services/dev/fetch.js'
 import {
+  InlineToken,
   renderAutocompletePrompt,
   renderConfirmationPrompt,
   renderSelectPrompt,
   renderTextPrompt,
+  TokenItem,
 } from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 
@@ -112,7 +114,19 @@ export async function reuseDevConfigPrompt(): Promise<boolean> {
   })
 }
 
-export function updateURLsPrompt(currentAppUrl: string, currentRedirectUrls: string[]): Promise<string> {
+export function updateURLsPrompt(
+  currentAppUrl: string,
+  currentRedirectUrls: string[],
+  currentAppProxyUrl?: string,
+): Promise<string> {
+  const infoTable: {[key: string]: TokenItem<InlineToken>[]} = {
+    'Current app URL': [currentAppUrl],
+    'Current redirect URLs': currentRedirectUrls,
+  }
+  if (currentAppProxyUrl !== undefined) {
+    infoTable['Current app proxy URL'] = [currentAppProxyUrl]
+  }
+
   return renderSelectPrompt({
     message: `Have Shopify automatically update your app's URL in order to create a preview experience?`,
     choices: [
@@ -121,10 +135,7 @@ export function updateURLsPrompt(currentAppUrl: string, currentRedirectUrls: str
       {label: 'No, not now', value: 'no'},
       {label: `Never, don't ask again`, value: 'never'},
     ],
-    infoTable: {
-      'Current app URL': [currentAppUrl],
-      'Current redirect URLs': currentRedirectUrls,
-    },
+    infoTable,
   })
 }
 

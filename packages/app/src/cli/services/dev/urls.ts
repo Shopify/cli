@@ -107,7 +107,11 @@ export async function generateURL(config: Config, frontendPort: number): Promise
   return (await runTunnelPlugin(config, frontendPort, provider)).mapError(mapRunTunnelPluginError).valueOrAbort()
 }
 
-export function generatePartnersURLs(baseURL: string, authCallbackPath?: string | string[]): PartnersURLs {
+export function generatePartnersURLs(
+  baseURL: string,
+  authCallbackPath?: string | string[],
+  proxyPath?: string,
+): PartnersURLs {
   let redirectUrlWhitelist: string[]
   if (authCallbackPath && authCallbackPath.length > 0) {
     const authCallbackPaths = Array.isArray(authCallbackPath) ? authCallbackPath : [authCallbackPath]
@@ -125,10 +129,20 @@ export function generatePartnersURLs(baseURL: string, authCallbackPath?: string 
     ]
   }
 
-  return {
+  let newUrls: PartnersURLs = {
     applicationUrl: baseURL,
     redirectUrlWhitelist,
   }
+
+  if (proxyPath) {
+    newUrls = {
+      ...newUrls,
+      proxyUrl: baseURL,
+      proxySubPath: proxyPath,
+    }
+  }
+
+  return newUrls
 }
 
 export async function updateURLs(urls: PartnersURLs, apiKey: string, token: string): Promise<void> {
@@ -167,6 +181,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
     const response = await updateURLsPrompt(
       options.currentURLs.applicationUrl,
       options.currentURLs.redirectUrlWhitelist,
+      options.currentURLs.proxyUrl,
     )
     let newUpdateURLs: boolean | undefined
     /* eslint-disable no-fallthrough */
