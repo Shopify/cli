@@ -1,6 +1,6 @@
 ## Table of Contents
 
-- [What is UI Kit](#what-is-ui-kit)
+- [What's the CLI UI Kit?](#whats-the-cli-ui-kit)
 - [Principles](#principles)
 - [API](#api)
   - [Static output](#static-output)
@@ -18,11 +18,11 @@
 
 # Using UI Kit
 
-## What is UI Kit
+## What's the CLI UI Kit?
 
-UI Kit is a library that can be used to either ask for input from the user or render output to the terminal.
+UI Kit is a set of modules in the `@shopify/cli-kit` package that can be used to either ask for input from the user or render output to the terminal.
 By using UI Kit you're making sure that whatever you're rendering in the terminal
-will be consistent with the rest of the output.
+will be consistent with the rest of the output and across Shopify.
 This ensures familiar-feeling interaction patterns for the users and allows you to benefit from design improvements without
 having to change your code too often.
 
@@ -40,9 +40,13 @@ All public functions have been documented via comments above the function themse
 
 The public interface can be roughly divided in three categories that answer different needs:
 
-- Output something static, be it some useful information, an error, or a success message
-- Ask the user for input
-- Display progress of asynchronous tasks
+- Static output
+- Prompts
+- Async tasks
+
+Static output gets printed only once and is backed by stateless components. Functions that render static output are not promises and you can call them in succession without awaiting them.
+
+Prompts and async tasks, on the other hand, return promises that must be awaited. You cannot call two of these in succession without awaiting as this will instantiate two React rendering instances behind the scenes and create rendering conflicts.
 
 ### Static output
 
@@ -132,8 +136,6 @@ Runs `processes` in parallel and displays their logs with timestamps. If you wan
 It's also possible to show a footer at the end of the logs that will stick to the bottom of the terminal while the logs keep running. In this footer you can include the description of shortcuts, but the actual implementation of these `shortcuts` needs to be passed as the `onInput` callback.
 
 #### `renderTasks`
-
-This function replaced `listr2` so if you're familiar with that library `renderTasks` should be familiar.
 
 The only param is an array of `Task`s that will be run in sequence.
 Each task carries forward a Context (`ctx`) that is the first param of the `task` async function and that can be used to store some data to be consumed by the succeeding tasks.
