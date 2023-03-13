@@ -200,6 +200,7 @@ importers:
       '@luckycatfactory/esbuild-graphql-loader': 3.7.0
       '@oclif/core': 2.1.4
       '@shopify/cli-kit': 3.45.0-pre.3
+      '@shopify/function-runner': 4.0.2
       '@shopify/plugin-cloudflare': 3.45.0-pre.3
       '@shopify/plugin-ngrok': 3.45.0-pre.3
       '@types/diff': ^5.0.2
@@ -212,7 +213,6 @@ importers:
       chokidar: 3.5.3
       diff: 5.1.0
       esbuild: 0.15.16
-      function-runner: 4.0.2
       graphql: ^16.0.0
       graphql-request: 5.2.0
       graphql-tag: ^2.12.6
@@ -227,13 +227,13 @@ importers:
       '@luckycatfactory/esbuild-graphql-loader': 3.7.0_zocmegas3pxcp3oct7zmymwekm
       '@oclif/core': 2.1.4
       '@shopify/cli-kit': link:../cli-kit
+      '@shopify/function-runner': 4.0.2
       '@shopify/plugin-cloudflare': link:../plugin-cloudflare
       '@shopify/plugin-ngrok': link:../plugin-ngrok
       abort-controller: 3.0.0
       chokidar: 3.5.3
       diff: 5.1.0
       esbuild: 0.15.16
-      function-runner: 4.0.2
       graphql-request: 5.2.0_graphql@16.6.0
       h3: 0.7.21
       http-proxy: 1.18.1
@@ -4728,6 +4728,14 @@ packages:
     engines: {node: '>=12.14.0'}
     dev: false
 
+  /@shopify/function-runner/4.0.2:
+    resolution: {integrity: sha512-ymfDpzwgrkyNfXA1kXA2zBSyJlaOfbCmkxYJmmcLSWDE4YSKJv9D6FwyughPL4F6ZZlkU10GxSyxkquuOLlYiA==}
+    hasBin: true
+    dependencies:
+      cachedir: 2.3.0
+      node-fetch: 3.3.0
+    dev: false
+
   /@shopify/i18n/1.0.9:
     resolution: {integrity: sha512-ZxoIB8UTmWHvRig6E4zvYJt3fAa24iJGYTQLHsjZBV3cmqi/AiSet9Qys7GkqzKcYV/4xukZIfpeWXVjef3v7A==}
     engines: {node: '>=12.14.0'}
@@ -9153,14 +9161,6 @@ packages:
 
   /function-bind/1.1.1:
     resolution: {integrity: sha512-yIovAzMX49sF8Yl58fSCWJ5svSLuaibPxXQJFLmBObTuCr0Mf1KiPopGM9NiFjiYBCbfaa2Fh6breQ6ANVTI0A==}
-
-  /function-runner/4.0.2:
-    resolution: {integrity: sha512-rMUUjOalIDmWizyk1FxIwkvrSO7Q4rh4OjxFDyRlThDxJk8I+jgguN2FBdyXGVZFAK09FNyS8p3mkFsHy9gQxQ==}
-    hasBin: true
-    dependencies:
-      cachedir: 2.3.0
-      node-fetch: 3.3.0
-    dev: false
 
   /function.prototype.name/1.1.5:
     resolution: {integrity: sha512-uN7m/BzVKQnCUF/iW8jYea67v++2u7m5UgENbHRtdDVclOUP+FMPlCNdmk0h/ysGyo2tavMJEDqJAkJdRa1vMA==}
@@ -14578,7 +14578,7 @@ packages:
       globrex: 0.1.2
       recrawl-sync: 2.2.3
       tsconfig-paths: 4.1.1
-      vite: 2.9.12_sass@1.56.1
+      vite: 2.9.12
     transitivePeerDependencies:
       - supports-color
     dev: true
