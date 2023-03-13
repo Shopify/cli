@@ -6,7 +6,7 @@ import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
 import {ThemeExtensionInstance, ThemeExtensionSpec} from '../extensions/theme.js'
 import {BaseFunctionConfigurationSchema, ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
 import {FunctionInstance} from '../extensions/functions.js'
-import {schema} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
@@ -226,13 +226,13 @@ class AppLoader {
     }
   }
 
-  async parseConfigurationFile<TSchema extends schema.ZodType>(
+  async parseConfigurationFile<TSchema extends zod.ZodType>(
     schema: TSchema,
     filepath: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     decode: (input: any) => any = decodeToml,
-  ): Promise<schema.TypeOf<TSchema>> {
-    const fallbackOutput = {} as schema.TypeOf<TSchema>
+  ): Promise<zod.TypeOf<TSchema>> {
+    const fallbackOutput = {} as zod.TypeOf<TSchema>
 
     const configurationObject = await this.loadConfigurationFile(filepath, decode)
     if (!configurationObject) return fallbackOutput

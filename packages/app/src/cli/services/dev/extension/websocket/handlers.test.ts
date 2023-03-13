@@ -8,7 +8,7 @@ import {SetupWebSocketConnectionOptions} from './models.js'
 import {ExtensionsEndpointPayload} from '../payload/models.js'
 import {vi, describe, test, expect} from 'vitest'
 import WebSocket, {RawData, WebSocketServer} from 'ws'
-import {IncomingMessage} from '@shopify/cli-kit/node/http'
+import {IncomingMessage} from 'h3'
 import {Duplex} from 'stream'
 
 function getMockRequest() {

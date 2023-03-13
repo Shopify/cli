@@ -12,9 +12,8 @@ import {
 } from './post-auth.js'
 import {AbortError, BugError} from '../../../public/node/error.js'
 import {outputContent, outputInfo, outputToken} from '../../../public/node/output.js'
-import {createApp, IncomingMessage, ServerResponse} from 'h3'
 import url from 'url'
-import {createServer, Server} from 'http'
+import {createServer, Server, IncomingMessage, ServerResponse} from 'http'
 
 const ResponseTimeoutSeconds = 10
 const ServerStopDelaySeconds = 0.5
@@ -42,7 +41,7 @@ interface RedirectListenerOptions {
  */
 export class RedirectListener {
   private static createServer(callback: RedirectCallback): Server {
-    const app = createApp().use('*', async (request: IncomingMessage, response: ServerResponse) => {
+    const app = async (request: IncomingMessage, response: ServerResponse) => {
       const requestUrl = request.url
       if (requestUrl?.includes('favicon')) {
         const faviconFile = await getFavicon()
@@ -97,7 +96,7 @@ export class RedirectListener {
 
       const file = await getSuccessHTML()
       return respond(file, undefined, `${queryObject.code}`, `${queryObject.state}`)
-    })
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     return createServer(app)

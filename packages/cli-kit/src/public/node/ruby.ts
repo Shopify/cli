@@ -56,6 +56,7 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
     SHOPIFY_SHOP: options.adminSession?.storeFqdn,
     SHOPIFY_CLI_AUTH_TOKEN: options.token,
     SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
+    SHOPIFY_CLI_RUBY_BIN: rubyExecutable(),
     // Bundler uses this Gemfile to understand which gems are available in the
     // environment. We use this to specify our own Gemfile for CLI2, which exists
     // outside the user's project directory.
@@ -444,5 +445,8 @@ async function localBundleInstall(directory: string): Promise<void> {
   await exec(bundle, ['config', 'set', '--local', 'path', directory], {
     cwd: directory,
   })
-  await exec(bundle, ['install', '--without', 'development', 'test'], {cwd: directory})
+  await exec(bundle, ['config', 'set', '--local', 'without', 'development:test'], {
+    cwd: directory,
+  })
+  await exec(bundle, ['install'], {cwd: directory})
 }

@@ -1,27 +1,27 @@
-import {schema} from '../../../public/node/schema.js'
+import {zod} from '../../../public/node/schema.js'
 
-const DateSchema = schema.preprocess((arg) => {
+const DateSchema = zod.preprocess((arg) => {
   if (typeof arg === 'string' || arg instanceof Date) return new Date(arg)
   return null
-}, schema.date())
+}, zod.date())
 
 /**
  * The schema represents an Identity token.
  */
-const IdentityTokenSchema = schema.object({
-  accessToken: schema.string(),
-  refreshToken: schema.string(),
+const IdentityTokenSchema = zod.object({
+  accessToken: zod.string(),
+  refreshToken: zod.string(),
   expiresAt: DateSchema,
-  scopes: schema.array(schema.string()),
+  scopes: zod.array(zod.string()),
 })
 
 /**
  * The schema represents an application token.
  */
-const ApplicationTokenSchema = schema.object({
-  accessToken: schema.string(),
+const ApplicationTokenSchema = zod.object({
+  accessToken: zod.string(),
   expiresAt: DateSchema,
-  scopes: schema.array(schema.string()),
+  scopes: zod.array(zod.string()),
 })
 
 /**
@@ -47,8 +47,8 @@ const ApplicationTokenSchema = schema.object({
  * }
  * ```
  */
-export const SessionSchema = schema.object({}).catchall(
-  schema.object({
+export const SessionSchema = zod.object({}).catchall(
+  zod.object({
     /**
      * It contains the identity token. Before usint it, we exchange it
      * to get a token that we can use with different applications. The exchanged
@@ -59,10 +59,10 @@ export const SessionSchema = schema.object({}).catchall(
      * It contains exchanged tokens for the applications the CLI
      * authenticates with. Tokens are scoped under the fqdn of the applications.
      */
-    applications: schema.object({}).catchall(ApplicationTokenSchema),
+    applications: zod.object({}).catchall(ApplicationTokenSchema),
   }),
 )
 
-export type Session = schema.infer<typeof SessionSchema>
-export type IdentityToken = schema.infer<typeof IdentityTokenSchema>
-export type ApplicationToken = schema.infer<typeof ApplicationTokenSchema>
+export type Session = zod.infer<typeof SessionSchema>
+export type IdentityToken = zod.infer<typeof IdentityTokenSchema>
+export type ApplicationToken = zod.infer<typeof ApplicationTokenSchema>

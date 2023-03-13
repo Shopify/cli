@@ -12,7 +12,7 @@ import {
 } from './server/middlewares.js'
 import {ExtensionsPayloadStore} from './payload/store.js'
 import {ExtensionDevOptions} from '../extension.js'
-import {createApp, createRouter} from '@shopify/cli-kit/node/http'
+import {createApp, createRouter} from 'h3'
 import {createServer} from 'http'
 
 interface SetupHTTPServerOptions {

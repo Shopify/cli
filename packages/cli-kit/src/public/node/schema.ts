@@ -1,1 +1,1 @@
-export {z as schema} from 'zod'
+export {z as zod} from 'zod'

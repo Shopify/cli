@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.45.0-pre.2
+
+### Patch Changes
+
+- 9c253511e: Do not inject hot-reload code into web-pixels-manager sandbox
+
 ## 3.45.0-pre.1
 
 ### Minor Changes

@@ -19,14 +19,20 @@ export async function debugLogResponseInfo<T extends {headers: Headers; status: 
   errorHandler?: (error: unknown) => Error | unknown,
 ): Promise<T> {
   const t0 = performance.now()
-  let headers: Headers = new Headers()
+  const responseHeaders: {[key: string]: string} = {}
   let response: T = {} as T
   try {
     response = await request
-    headers = response.headers
+    response.headers.forEach((value, key) => {
+      if (interestingResponseHeaders.has(key)) responseHeaders[key] = value
+    })
   } catch (err) {
     if (err instanceof ClientError) {
-      headers = err.response?.headers as Headers
+      if (err.response?.headers) {
+        for (const [key, value] of err.response?.headers as Iterable<[string, string]>) {
+          if (interestingResponseHeaders.has(key)) responseHeaders[key] = value
+        }
+      }
     }
     if (errorHandler) {
       throw errorHandler(err)
@@ -35,10 +41,6 @@ export async function debugLogResponseInfo<T extends {headers: Headers; status: 
     }
   } finally {
     const t1 = performance.now()
-    const responseHeaders: {[key: string]: string} = {}
-    headers.forEach((value, key) => {
-      if (interestingResponseHeaders.has(key)) responseHeaders[key] = value
-    })
     outputDebug(`Request to ${url} completed in ${Math.round(t1 - t0)} ms
 With response headers:
 ${sanitizedHeadersOutput(responseHeaders)}
