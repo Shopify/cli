@@ -16,7 +16,7 @@
     - [`renderConcurrent`](#renderconcurrent)
     - [`renderTasks`](#rendertasks)
 
-# Using UI Kit
+# Using the CLI UI Kit
 
 ## What's the CLI UI Kit?
 
