@@ -28,6 +28,26 @@ module ShopifyCLI
       assert_equal error.message, expected_error
     end
 
+    def test_ruby_version_when_provided_ruby_bin
+      # Given
+      env_variables = {
+        Constants::EnvironmentVariables::RUBY_BIN.to_s => "other-ruby",
+      }
+
+      context = TestHelpers::FakeContext.new
+      stat = mock("success", success?: true)
+      out = "ruby 3.0.3p157 (2021-11-24 revision 3fb7d2cadc) [x86_64-darwin21]"
+      context.expects(:capture2e)
+        .with("other-ruby", "--version")
+        .returns([out, stat])
+
+      # When
+      got = Environment.ruby_version(context: context, env_variables: env_variables)
+
+      # Then
+      assert_equal ::Semantic::Version.new("3.0.3"), got
+    end
+
     def test_ruby_version
       # Given
       context = TestHelpers::FakeContext.new

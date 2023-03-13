@@ -13,8 +13,9 @@ module ShopifyCLI
     # https://github.com/Shopify/themekit-access/blob/4c3c917d78443160dcf24376a8b5ac6b9bef0bcd/app/models/password_token.rb#L8
     THEME_ACCESS_PASSWORD_PREFIX = "shptka_"
 
-    def self.ruby_version(context: Context.new)
-      output, status = context.capture2e("ruby", "--version")
+    def self.ruby_version(context: Context.new, env_variables: ENV)
+      ruby_bin = env_variables[Constants::EnvironmentVariables::RUBY_BIN] || "ruby"
+      output, status = context.capture2e(ruby_bin, "--version")
       raise ShopifyCLI::Abort, context.message("core.errors.missing_ruby") unless status.success?
       version = output.match(/ruby (\d+\.\d+\.\d+)/)[1]
       ::Semantic::Version.new(version)

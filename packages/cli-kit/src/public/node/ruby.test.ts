@@ -235,6 +235,7 @@ function validateBundleExec(execSpy: SpyInstance, gemFilePath: string, execPath 
       SHOPIFY_CLI_STORE: undefined,
       SHOPIFY_CLI_AUTH_TOKEN: 'token_0000_1111_2222_3333',
       SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
+      SHOPIFY_CLI_RUBY_BIN: 'ruby',
       BUNDLE_GEMFILE: gemFilePath,
       ...(spinFqdn && {SPIN_FQDN: spinFqdn, SPIN: 1}),
     },
