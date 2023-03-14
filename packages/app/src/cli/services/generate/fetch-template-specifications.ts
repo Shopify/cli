@@ -7,6 +7,7 @@ import {TemplateSpecification} from '../../models/app/template.js'
 import {BaseFunctionConfigurationSchema, ZodSchemaType} from '../../models/extensions/schemas.js'
 import {ExtensionCategory} from '../../models/app/extensions.js'
 import {FunctionConfigType} from '../../models/extensions/functions.js'
+import {blocks} from '../../constants.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export async function fetchTemplateSpecifications(token: string): Promise<TemplateSpecification[]> {
@@ -37,7 +38,7 @@ export function mapRemoteTemplateSpecification(
         externalIdentifier: extension.type,
         externalName: extension.type,
         gated: false,
-        registrationLimit: 10,
+        registrationLimit: registrationLimit(extension.type),
         supportedFlavors: extension.supportedFlavors,
         group: remoteTemplateSpecification.group,
         category: () => extensionCustoms.category,
@@ -62,5 +63,14 @@ function resolveExtensionCustoms(_type: string): {
   return {
     category: 'function',
     configSchema: BaseFunctionConfigurationSchema,
+  }
+}
+
+// There should be another api with the extensions specifications. Right now templates only support functions
+function registrationLimit(identifier: string) {
+  if (identifier === 'cart_transform') {
+    return 1
+  } else {
+    return blocks.functions.defaultRegistrationLimit
   }
 }
