@@ -52,7 +52,15 @@ program
         }
         break
       case 'npm-global':
-        log('Installing @shopify/cli and @shopify/theme nightly via npm...')
+        try {
+          const {stdout} = await execa('which', ['shopify'])
+          if (stdout !== '') {
+            log(`Found existing global shopify: ${stdout}. Please uninstall and try again.`)
+            process.exit(1)
+          }
+        } catch (error) {}
+
+        log('Installing @shopify/cli@nightly and @shopify/theme@nightly via npm...')
         await execa('npm', ['install', '-g', '@shopify/cli@nightly', '@shopify/theme@nightly'], defaultOpts)
         shopifyExec = (args, path = themePath) => {
           const pathOpts = path ? {cwd: path} : {}
@@ -73,7 +81,7 @@ program
 
     log(`Serving your theme on store ${options.store}...`)
     const devProcess = shopifyExec(['theme', 'dev', '--store', options.store])
-    process.on('SIGINT', function() {
+    process.on('SIGINT', function () {
       devProcess.cancel()
     })
     try {
