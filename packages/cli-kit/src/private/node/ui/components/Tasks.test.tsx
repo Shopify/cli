@@ -409,18 +409,18 @@ describe('Tasks', () => {
 
   test('has an onComplete function that is called with the context', async () => {
     // Given
-    const firstTaskFunction = vi.fn(async (ctx) => {
+    const taskFunction = vi.fn(async (ctx) => {
       ctx.foo = 'bar'
     })
 
-    const firstTask: Task<{foo: string}> = {
+    const task: Task<{foo: string}> = {
       title: 'task 1',
-      task: firstTaskFunction,
+      task: taskFunction,
     }
 
     // When
     const context = await new Promise((resolve, _reject) => {
-      render(<Tasks tasks={[firstTask]} silent={false} onComplete={resolve} />)
+      render(<Tasks tasks={[task]} silent={false} onComplete={resolve} />)
     })
 
     // Then

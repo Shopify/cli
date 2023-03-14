@@ -88,8 +88,8 @@ function Tasks<TContext>({
 
   useAsyncAndUnmount(runTasks, {
     onFulfilled: () => {
-      onComplete(ctx.current)
       setState(TasksState.Success)
+      onComplete(ctx.current)
     },
     onRejected: () => setState(TasksState.Failure),
   })
