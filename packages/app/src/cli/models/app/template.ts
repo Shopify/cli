@@ -14,8 +14,7 @@ export function convertSpecificationsToTemplate(specifications: GenericSpecifica
     return {
       identifier: spec.identifier,
       name: spec.externalName,
-      group:
-        spec.group || extensionTypesGroups.find((group) => includes(group.extensions, spec.identifier))?.name || '',
+      group: spec.group || extensionTypesGroups.find((group) => group.extensions.includes(spec.identifier))?.name || '',
       supportLinks: spec.helpURL ? [spec.helpURL] : [],
       types: [spec],
     }
@@ -28,7 +27,4 @@ export function getTypesExternalIdentitifier(templates: TemplateSpecification[])
 
 export function getTypesExternalName(templates: TemplateSpecification[]): string[] {
   return templates.flatMap((template) => template.types.map((type) => type.externalName))
-}
-function includes<TNarrow extends TWide, TWide>(coll: ReadonlyArray<TNarrow>, el: TWide): el is TNarrow {
-  return coll.includes(el as TNarrow)
 }
