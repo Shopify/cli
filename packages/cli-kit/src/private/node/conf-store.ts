@@ -1,5 +1,6 @@
 import {LocalStorage} from '../../public/node/local-storage.js'
 import {outputContent, outputDebug} from '@shopify/cli-kit/node/output'
+import {Deprecation} from './api/graphql.js'
 
 interface CacheValue<T> {
   value: T
@@ -15,6 +16,7 @@ interface Cache {
 export interface ConfSchema {
   sessionStore: string
   cache?: Cache
+  deprecationDates?: string[]
 }
 
 let _instance: LocalStorage<ConfSchema> | undefined
@@ -29,6 +31,37 @@ function cliKitStore() {
     _instance = new LocalStorage<ConfSchema>({projectName: 'shopify-cli-kit'})
   }
   return _instance
+}
+
+/**
+ * Get deprecationDate.
+ *
+ * @returns string[].
+ */
+export function getDeprecations(config: LocalStorage<ConfSchema> = cliKitStore()): string[] {
+  outputDebug(outputContent`Getting deprecations...`)
+  const deprecationDates = config.get('deprecationDates')
+  return deprecationDates?.length ? deprecationDates : []
+}
+
+/**
+ * Add deprecation.
+ *
+ * @param deprecation - Deprecation.
+ */
+export function addDeprecation(deprecation: Deprecation, config: LocalStorage<ConfSchema> = cliKitStore()): void {
+  outputDebug(outputContent`Adding deprecation...`)
+  const deprecationDates = new Set(getDeprecations())
+  deprecationDates.add(deprecation.supportedUntilDate.toString())
+  config.set('deprecationDates', [...deprecationDates])
+}
+
+/**
+ * Clear deprecationDates.
+ */
+export function clearDeprecations(config: LocalStorage<ConfSchema> = cliKitStore()): void {
+  outputDebug(outputContent`Clearing deprecations...`)
+  config.delete('deprecationDates')
 }
 
 /**
