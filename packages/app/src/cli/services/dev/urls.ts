@@ -174,6 +174,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
       options.currentURLs.applicationUrl,
       options.currentURLs.redirectUrlWhitelist,
       options.currentURLs.proxyUrl,
+      options.currentURLs.proxySubPath,
     )
     let newUpdateURLs: boolean | undefined
     /* eslint-disable no-fallthrough */

@@ -8,7 +8,6 @@ export const GetURLsQuery = gql`
       appProxy {
         url
         subPath
-        subPathPrefix
       }
     }
   }
@@ -25,7 +24,6 @@ export interface GetURLsQuerySchema {
     appProxy?: {
       url: string
       subPath: string
-      subPathPrefix: string
     }
   }
 }

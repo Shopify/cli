@@ -118,13 +118,14 @@ export function updateURLsPrompt(
   currentAppUrl: string,
   currentRedirectUrls: string[],
   currentAppProxyUrl?: string,
+  currentAppProxyPath?: string,
 ): Promise<string> {
   const infoTable: {[key: string]: TokenItem<InlineToken>[]} = {
     'Current app URL': [currentAppUrl],
     'Current redirect URLs': currentRedirectUrls,
   }
-  if (currentAppProxyUrl !== undefined) {
-    infoTable['Current app proxy URL'] = [currentAppProxyUrl]
+  if (currentAppProxyUrl !== undefined && currentAppProxyPath !== undefined) {
+    infoTable['Current app Proxy'] = [`URL: ${currentAppProxyUrl}`, `Path: ${currentAppProxyPath}`]
   }
 
   return renderSelectPrompt({

@@ -26,7 +26,14 @@ export const WebConfigurationSchema = zod.object({
   authCallbackPath: zod
     .union([WebConfigurationAuthCallbackPathSchema, WebConfigurationAuthCallbackPathSchema.array()])
     .optional(),
-  proxyPath: zod.string().optional(),
+  proxyPath: zod
+    .string({
+      errorMap: () => {
+        return {message: 'Proxy Path can only contain letters, numbers, underscores or hyphens'}
+      },
+    })
+    .regex(/^[0-9a-z_-]+$/)
+    .optional(),
   webhooksPath: zod.preprocess(ensurePathStartsWithSlash, zod.string()).optional(),
   commands: zod.object({
     build: zod.string().optional(),

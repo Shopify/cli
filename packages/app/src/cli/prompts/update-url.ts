@@ -41,6 +41,7 @@ export async function appProxyPathPrompt(defaultValue: string): Promise<string> 
     message: 'App Proxy Path',
     defaultValue,
     validate: (value: string) => {
+      if (!value.match(/^[0-9a-z_-]+$/)) return 'Proxy Path can only contain letters, numbers, underscores or hyphens'
       if (value.length === 0) return 'Invalid URL'
     },
   })

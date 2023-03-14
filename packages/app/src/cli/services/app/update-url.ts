@@ -28,7 +28,7 @@ export default async function updateURL(options: UpdateURLOptions): Promise<void
 
 async function getNewURLs(token: string, apiKey: string, options: UpdateURLOptions): Promise<PartnersURLs> {
   const currentURLs: PartnersURLs = await getURLs(apiKey, token)
-  const hasProxy = currentURLs.proxyUrl !== null
+  const hasProxy = currentURLs.proxyUrl !== undefined
   const applicationUrl = options.appURL || (await appUrlPrompt(currentURLs.applicationUrl))
   const redirectUrlWhitelist =
     options.redirectURLs || (await allowedRedirectionURLsPrompt(currentURLs.redirectUrlWhitelist.join(',')))
