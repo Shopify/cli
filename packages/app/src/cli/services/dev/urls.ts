@@ -129,20 +129,12 @@ export function generatePartnersURLs(
     ]
   }
 
-  let newUrls: PartnersURLs = {
+  return {
     applicationUrl: baseURL,
     redirectUrlWhitelist,
+    proxyUrl: baseURL,
+    proxySubPath: proxyPath,
   }
-
-  if (proxyPath) {
-    newUrls = {
-      ...newUrls,
-      proxyUrl: baseURL,
-      proxySubPath: proxyPath,
-    }
-  }
-
-  return newUrls
 }
 
 export async function updateURLs(urls: PartnersURLs, apiKey: string, token: string): Promise<void> {
