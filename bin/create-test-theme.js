@@ -28,6 +28,9 @@ program
     let shopifyExec
     let defaultOpts = {stdio: 'inherit'}
 
+    delete process.env.GEM_HOME
+    delete process.env.GEM_PATH
+
     switch (options.install) {
       case 'homebrew':
         log('Updating homebrew...')
