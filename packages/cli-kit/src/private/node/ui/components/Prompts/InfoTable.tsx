@@ -6,7 +6,7 @@ import React, {FunctionComponent} from 'react'
 
 type Items = TokenItem<InlineToken>[]
 
-interface TableSection {
+export interface InfoTableSection {
   color?: TextProps['color']
   header: string
   helperMessage?: string
@@ -18,7 +18,7 @@ export interface InfoTableProps {
     | {
         [header: string]: Items
       }
-    | TableSection[]
+    | InfoTableSection[]
 }
 
 const InfoTable: FunctionComponent<InfoTableProps> = ({table}) => {
@@ -30,16 +30,22 @@ const InfoTable: FunctionComponent<InfoTableProps> = ({table}) => {
   return (
     <Box flexDirection="column">
       {sections.map((section, index) => (
-        <Box key={index} marginBottom={index === sections.length - 1 ? 0 : 1}>
-          {section.header.length > 0 && (
-            <Box width={headerColumnWidth + 1} flexDirection="column">
-              <Text color={section.color}>{capitalize(section.header)}:</Text>
-              {section.helperMessage ? <Text color={section.color}>{section.helperMessage}</Text> : null}
+        <Box key={index} marginBottom={index === sections.length - 1 ? 0 : 1} flexDirection="column">
+          <Box>
+            {section.header.length > 0 && (
+              <Box width={headerColumnWidth + 1}>
+                <Text color={section.color}>{capitalize(section.header)}:</Text>
+              </Box>
+            )}
+            <Box marginLeft={section.header.length > 0 ? 2 : 0} flexGrow={1}>
+              <List margin={false} items={section.items} color={section.color} />
             </Box>
-          )}
-          <Box marginLeft={sections.length > 0 ? 2 : 0} flexGrow={1}>
-            <List margin={false} items={section.items} color={section.color} />
           </Box>
+          {section.helperMessage ? (
+            <Box marginTop={1}>
+              <Text color={section.color}>{section.helperMessage}</Text>
+            </Box>
+          ) : null}
         </Box>
       ))}
     </Box>
