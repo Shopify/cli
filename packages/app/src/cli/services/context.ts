@@ -150,7 +150,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   }
 
   const [organization, _selectedApp, _selectedStore] = await Promise.all([
-    organizationFromId(orgId, token),
+    fetchOrgFromId(orgId, token),
     selectedApp ? selectedApp : appFromId(cachedInfo?.appId, token),
     selectedStore ? selectedStore : storeFromFqdn(cachedInfo?.storeFqdn, orgId, token),
   ])
@@ -189,12 +189,6 @@ export async function ensureDevContext(options: DevContextOptions, token: string
 }
 
 const resetHelpMessage = 'You can pass `--reset` to your command to reset your config.'
-
-const organizationFromId = async (orgId: string, token: string): Promise<Organization> => {
-  const organization = await fetchOrgFromId(orgId, token)
-  if (!organization) throw new BugError(`Couldn't find the organization with id ${orgId}. ${resetHelpMessage}`)
-  return organization
-}
 
 const appFromId = async (appId: string | undefined, token: string): Promise<OrganizationApp | undefined> => {
   if (!appId) return
@@ -261,9 +255,9 @@ export async function fetchDevAppAndPrompt(app: AppInterface, token: string): Pr
   const partnersResponse = await fetchAppFromApiKey(devAppId, token)
   if (!partnersResponse) return undefined
 
-  const org: Organization | undefined = await fetchOrgFromId(partnersResponse.organizationId, token)
+  const org = await fetchOrgFromId(partnersResponse.organizationId, token)
 
-  showDevValues(org?.businessName ?? 'unknown', partnersResponse.title)
+  showDevValues(org.businessName ?? 'unknown', partnersResponse.title)
   const reuse = await reuseDevConfigPrompt()
   return reuse ? partnersResponse : undefined
 }
