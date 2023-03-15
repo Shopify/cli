@@ -33,6 +33,7 @@ export default class Init extends ThemeCommand {
       description: 'Downloads the latest release of the `clone-url`',
       env: 'SHOPIFY_FLAG_LATEST',
     }),
+    environment: themeFlags.environment,
   }
 
   async run(): Promise<void> {

@@ -33,6 +33,7 @@ export default class Open extends ThemeCommand {
       env: 'SHOPIFY_FLAG_THEME_ID',
     }),
     store: themeFlags.store,
+    environment: themeFlags.environment,
   }
 
   async run(): Promise<void> {

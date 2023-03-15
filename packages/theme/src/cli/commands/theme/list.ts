@@ -27,6 +27,7 @@ export default class List extends ThemeCommand {
       description: 'Only list theme with the given ID.',
       env: 'SHOPIFY_FLAG_ID',
     }),
+    environment: themeFlags.environment,
   }
 
   async run(): Promise<void> {

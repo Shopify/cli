@@ -10,13 +10,6 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -28,9 +21,16 @@
           "name": "path",
           "type": "option",
           "description": "The path to your app directory.",
-          "hidden": false,
           "multiple": false,
           "default": "."
+        },
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
         },
         "skip-dependencies-installation": {
           "name": "skip-dependencies-installation",
@@ -58,13 +58,6 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -76,9 +69,16 @@
           "name": "path",
           "type": "option",
           "description": "The path to your app directory.",
-          "hidden": false,
           "multiple": false,
           "default": "."
+        },
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
         },
         "api-key": {
           "name": "api-key",
@@ -114,13 +114,6 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -132,9 +125,16 @@
           "name": "path",
           "type": "option",
           "description": "The path to your app directory.",
-          "hidden": false,
           "multiple": false,
           "default": "."
+        },
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
         },
         "api-key": {
           "name": "api-key",
@@ -246,13 +246,6 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -264,9 +257,16 @@
           "name": "path",
           "type": "option",
           "description": "The path to your app directory.",
-          "hidden": false,
           "multiple": false,
           "default": "."
+        },
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
         },
         "json": {
           "name": "json",
@@ -294,13 +294,6 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -414,13 +407,6 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -432,9 +418,16 @@
           "name": "path",
           "type": "option",
           "description": "The path to your app directory.",
-          "hidden": false,
           "multiple": false,
           "default": "."
+        },
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
         },
         "env-file": {
           "name": "env-file",
@@ -456,13 +449,6 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -474,9 +460,16 @@
           "name": "path",
           "type": "option",
           "description": "The path to your app directory.",
-          "hidden": false,
           "multiple": false,
           "default": "."
+        },
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
         }
       },
       "args": {}
@@ -490,13 +483,6 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -524,13 +510,6 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -558,13 +537,6 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -599,13 +571,6 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -636,13 +601,6 @@
         "<%= config.bin %> <%= command.id %>"
       ],
       "flags": {
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -654,9 +612,16 @@
           "name": "path",
           "type": "option",
           "description": "The path to your app directory.",
-          "hidden": false,
           "multiple": false,
           "default": "."
+        },
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
         },
         "type": {
           "name": "type",
@@ -727,13 +692,6 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -772,13 +730,6 @@
         "<%= config.bin %> <%= command.id %>"
       ],
       "flags": {
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -790,9 +741,16 @@
           "name": "path",
           "type": "option",
           "description": "The path to your app directory.",
-          "hidden": false,
           "multiple": false,
           "default": "."
+        },
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
         },
         "type": {
           "name": "type",

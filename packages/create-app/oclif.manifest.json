@@ -11,13 +11,6 @@
         "create-app"
       ],
       "flags": {
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
