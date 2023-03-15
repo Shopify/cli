@@ -1,5 +1,5 @@
 import {partnersFqdn} from '../context/fqdn.js'
-import {graphqlRequest, GraphQLVariables} from '../../../private/node/api/graphql.js'
+import {graphqlRequest, handleDeprecations, GraphQLVariables} from '../../../private/node/api/graphql.js'
 import {gql} from 'graphql-request'
 
 /**
@@ -44,9 +44,11 @@ export async function functionProxyRequest<T>(
     variables: JSON.stringify(variables) || '{}',
   }
   const proxyQuery = ScriptServiceProxyQuery
-  const res: ProxyResponse = await partnersRequest(proxyQuery, token, proxyVariables)
-  const json = JSON.parse(res.scriptServiceProxy)
-  return json as T
+  const proxyResponse: ProxyResponse = await partnersRequest(proxyQuery, token, proxyVariables)
+  const scriptServiceResponse = JSON.parse(proxyResponse.scriptServiceProxy)
+  handleDeprecations(scriptServiceResponse)
+
+  return scriptServiceResponse as T
 }
 
 const ScriptServiceProxyQuery = gql`
@@ -54,7 +56,3 @@ const ScriptServiceProxyQuery = gql`
     scriptServiceProxy(apiKey: $api_key, query: $query, variables: $variables)
   }
 `
-
-interface ScriptServiceProxyQuerySchema {
-  scriptServiceProxy: unknown
-}

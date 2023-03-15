@@ -10,15 +10,13 @@ export interface GraphQLVariables {
   [key: string]: any
 }
 
-type GraphQLResponse<T> = Awaited<ReturnType<typeof rawRequest<T>>>
-
-type Extensions = {[key: string]: any}
+export type GraphQLResponse<T> = Awaited<ReturnType<typeof rawRequest<T>>>
 
 interface Deprecation {
   supportedUntilDate: string
 }
 
-interface WithDeprecations extends Extensions {
+interface WithDeprecations {
   deprecations?: Deprecation[]
 }
 
