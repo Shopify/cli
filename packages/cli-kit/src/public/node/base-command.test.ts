@@ -30,6 +30,7 @@ class MockCommand extends Command {
       default: 'default stringy',
     }),
     password: Flags.string({}),
+    environment: Flags.string({}),
   }
   /* eslint-enable @shopify/cli/command-flags-with-env */
 
