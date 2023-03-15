@@ -36,20 +36,25 @@ interface SourceSummary {
 }
 
 export async function deployConfirmationPrompt(summary: SourceSummary): Promise<boolean> {
-  const infoTable: {[key: string]: string[]} = {}
+  const infoTable = []
 
   if (summary.toCreate.length > 0) {
-    infoTable.add = summary.toCreate.map((source) => source.localIdentifier)
+    infoTable.push({header: 'add', items: summary.toCreate.map((source) => source.localIdentifier)})
   }
 
   const toUpdate = Object.keys(summary.identifiers)
 
   if (toUpdate.length > 0) {
-    infoTable.update = toUpdate
+    infoTable.push({header: 'update', items: toUpdate})
   }
 
   if (summary.onlyRemote.length > 0) {
-    infoTable['missing locally'] = summary.onlyRemote.map((source) => source.title)
+    infoTable.push({
+      header: 'missing locally',
+      items: summary.onlyRemote.map((source) => source.title),
+      color: 'red',
+      helperText: 'These extensions will be deleted from the app.',
+    })
   }
 
   if (Object.keys(infoTable).length === 0) {
