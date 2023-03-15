@@ -1,6 +1,5 @@
 import {LocalStorage} from '../../public/node/local-storage.js'
 import {outputContent, outputDebug} from '@shopify/cli-kit/node/output'
-import {Deprecation} from './api/graphql.js'
 
 interface CacheValue<T> {
   value: T
@@ -16,7 +15,7 @@ interface Cache {
 export interface ConfSchema {
   sessionStore: string
   cache?: Cache
-  deprecationDates?: string[]
+  nextDeprecationDate?: string
 }
 
 let _instance: LocalStorage<ConfSchema> | undefined
@@ -34,34 +33,45 @@ function cliKitStore() {
 }
 
 /**
- * Get deprecationDate.
+ * Get the earliest deprecation date in the future.
  *
- * @returns string[].
+ * @returns nextDeprecationDate.
  */
-export function getDeprecations(config: LocalStorage<ConfSchema> = cliKitStore()): string[] {
-  outputDebug(outputContent`Getting deprecations...`)
-  const deprecationDates = config.get('deprecationDates')
-  return deprecationDates?.length ? deprecationDates : []
+export function getNextDeprecationDate(config: LocalStorage<ConfSchema> = cliKitStore()): Date | undefined {
+  outputDebug(outputContent`Getting the next deprecation date...`)
+  const dateString = config.get('nextDeprecationDate')
+  return dateString ? new Date(dateString) : undefined
 }
 
 /**
- * Add deprecation.
+ * Set next deprecation date.
  *
- * @param deprecation - Deprecation.
+ * @param deprecations - Deprecations.
  */
-export function addDeprecation(deprecation: Deprecation, config: LocalStorage<ConfSchema> = cliKitStore()): void {
-  outputDebug(outputContent`Adding deprecation...`)
-  const deprecationDates = new Set(getDeprecations())
-  deprecationDates.add(deprecation.supportedUntilDate.toString())
-  config.set('deprecationDates', [...deprecationDates])
+export function setNextDeprecationDate(
+  deprecationDates: Date[],
+  config: LocalStorage<ConfSchema> = cliKitStore(),
+): void {
+  if (deprecationDates.length < 1) return
+
+  const now = Date.now()
+  const dateTimes = deprecationDates.map((date) => date.getTime())
+  const earliestFutureDateTime = dateTimes.sort().find((dateTime) => dateTime >= now)
+  if (!earliestFutureDateTime) return
+
+  const nextDeprecationDate = getNextDeprecationDate()
+  if (!nextDeprecationDate || earliestFutureDateTime < nextDeprecationDate.getTime()) {
+    outputDebug(outputContent`Setting the next deprecation date...`)
+    config.set('nextDeprecationDate', new Date(earliestFutureDateTime).toISOString())
+  }
 }
 
 /**
- * Clear deprecationDates.
+ * Clear nextDeprecationDate.
  */
-export function clearDeprecations(config: LocalStorage<ConfSchema> = cliKitStore()): void {
-  outputDebug(outputContent`Clearing deprecations...`)
-  config.delete('deprecationDates')
+export function clearNextDeprecationDate(config: LocalStorage<ConfSchema> = cliKitStore()): void {
+  outputDebug(outputContent`Clearing next deprecation date...`)
+  config.delete('nextDeprecationDate')
 }
 
 /**

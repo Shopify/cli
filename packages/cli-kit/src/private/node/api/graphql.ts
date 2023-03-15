@@ -2,8 +2,8 @@ import {buildHeaders, httpsAgent, RequestClientError, sanitizedHeadersOutput} fr
 import {stringifyMessage, outputContent, outputToken, outputDebug} from '../../../public/node/output.js'
 import {AbortError} from '../../../public/node/error.js'
 import {debugLogResponseInfo} from '../api.js'
+import {setNextDeprecationDate} from '../conf-store.js'
 import {ClientError, GraphQLClient, RequestDocument, Variables, rawRequest} from 'graphql-request'
-import {addDeprecation} from '../conf-store.js'
 
 export interface GraphQLVariables {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -14,8 +14,8 @@ type GraphQLResponse<T> = Awaited<ReturnType<typeof rawRequest<T>>>
 
 type Extensions = {[key: string]: any}
 
-export interface Deprecation {
-  supportedUntilDate: Date
+interface Deprecation {
+  supportedUntilDate: string
 }
 
 interface WithDeprecations extends Extensions {
@@ -39,12 +39,7 @@ export async function graphqlRequest<T>(
     handleErrors ? errorHandler(api) : undefined,
   )
 
-  const deprecations = (response.extensions as WithDeprecations)?.deprecations || [
-    {supportedUntilDate: new Date(2023, 6, 31)},
-  ]
-  if (deprecations) {
-    deprecations.forEach((deprecation) => addDeprecation(deprecation))
-  }
+  handleDeprecations(response)
 
   return response.data
 }
@@ -84,5 +79,13 @@ function errorHandler<T>(api: string): (error: unknown) => Error | unknown {
     } else {
       return error
     }
+  }
+}
+
+export function handleDeprecations<T>(response: GraphQLResponse<T>) {
+  const deprecations = (response.extensions as WithDeprecations)?.deprecations
+  if (deprecations) {
+    const deprecationDates = deprecations.map(({supportedUntilDate}) => new Date(supportedUntilDate))
+    setNextDeprecationDate(deprecationDates)
   }
 }
