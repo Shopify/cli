@@ -4,8 +4,8 @@ export const CreateDeployment = gql`
   mutation CreateDeployment(
     $apiKey: String!
     $uuid: String!
-    $bundleUrl: String!
-    $extensions: [ExtensionSettings!]!
+    $bundleUrl: String
+    $extensions: [ExtensionSettings!]
     $label: String
   ) {
     deploymentCreate(
@@ -42,8 +42,8 @@ export interface ExtensionSettings {
 export interface CreateDeploymentVariables {
   apiKey: string
   uuid: string
-  bundleUrl: string
-  extensions: ExtensionSettings[]
+  bundleUrl?: string
+  extensions?: ExtensionSettings[]
   label?: string
 }
 
