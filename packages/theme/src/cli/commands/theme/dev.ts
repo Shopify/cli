@@ -2,6 +2,7 @@ import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
+import {showDeprecationWarnings} from '../../services/dev.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -98,6 +99,7 @@ export default class Dev extends ThemeCommand {
    * Every 110 minutes, it will refresh the session token and restart the server.
    */
   async run(): Promise<void> {
+    showDeprecationWarnings(this.argv)
     let {flags} = await this.parse(Dev)
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password, [], true)
