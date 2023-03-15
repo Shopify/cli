@@ -236,7 +236,6 @@ export interface DeployContextOptions {
   apiKey?: string
   reset: boolean
   force: boolean
-  directory: string
 }
 
 interface DeployContextOutput {

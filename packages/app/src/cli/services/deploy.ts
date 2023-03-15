@@ -34,9 +34,6 @@ interface DeployOptions {
 
   /** If true, proceed with deploy without asking for confirmation */
   force: boolean
-
-  /** The app directory path */
-  directory: string
 }
 
 interface TasksContext {
