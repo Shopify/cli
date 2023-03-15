@@ -1,4 +1,4 @@
-import {generateThemeName} from './generate-theme-name.js'
+import {API_NAME_LIMIT, generateThemeName} from './generate-theme-name.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {hostname} from 'os'
 import {randomBytes} from 'crypto'
@@ -20,6 +20,8 @@ describe('generateThemeName', () => {
 
   it('should truncate if the theme name is above the API limit', () => {
     vi.mocked(hostname).mockReturnValue('theme-dev-lan-very-long-name-that-will-be-truncated')
-    expect(generateThemeName(context)).toEqual('Development (010203-theme-dev-lan-very-long-name-t)')
+    const themeName = generateThemeName(context)
+    expect(themeName.length).toBe(API_NAME_LIMIT)
+    expect(themeName).toEqual('Development (010203-theme-dev-lan-very-long-name-)')
   })
 })

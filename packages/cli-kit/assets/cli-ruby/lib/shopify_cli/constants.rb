@@ -32,6 +32,7 @@ module ShopifyCLI
       STACKTRACE = "SHOPIFY_CLI_STACKTRACE"
       TTY = "SHOPIFY_CLI_TTY"
       RUN_AS_SUBPROCESS = "SHOPIFY_CLI_RUN_AS_SUBPROCESS"
+      RUBY_BIN = "SHOPIFY_CLI_RUBY_BIN"
 
       # When true the CLI points to a local instance of
       # the partners dashboard and identity.
@@ -67,7 +68,7 @@ module ShopifyCLI
     module SupportedVersions
       module Ruby
         FROM = "2.7.5"
-        TO = "3.2.0"
+        TO = "3.2.10"
       end
 
       module Node

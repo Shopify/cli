@@ -9,6 +9,7 @@ module Extension
       end
 
       def test_package_is_returned_if_found
+        skip # not used anymore
         File.expects(:read).returns(mock_package_json)
         package = Tasks::FindPackageFromJson.call("@shopify/admin-ui-extensions", context: @context)
         assert_equal("@shopify/admin-ui-extensions", package.name)
@@ -17,6 +18,7 @@ module Extension
       end
 
       def test_error_is_raised_if_package_not_found
+        skip # not used anymore
         error = assert_raises ShopifyCLI::Abort do
           Tasks::FindPackageFromJson.call("does-not-exist", context: @context)
         end

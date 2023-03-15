@@ -16,13 +16,32 @@
     "@shopify/ui-extensions-dev-console-app": "3.44.0",
     "@shopify/ui-extensions-server-kit": "4.1.0",
     "@shopify/ui-extensions-test-utils": "3.25.0",
-    "@shopify/workspace": "0.1.0"
+    "@shopify/workspace": "0.1.0",
+    "@shopify/eslint-plugin-cli": "3.44.1-pre.0",
+    "@shopify/plugin-cloudflare": "3.44.1-pre.0"
   },
   "changesets": [
+    "beige-experts-deliver",
+    "blue-jokes-worry",
+    "brown-carrots-cry",
     "clean-guests-poke",
+    "clean-toys-sleep",
+    "dirty-spies-walk",
+    "dull-jeans-melt",
+    "fair-tomatoes-bathe",
+    "fresh-islands-bow",
+    "great-games-remain",
+    "great-guests-yell",
     "large-geese-drum",
+    "mighty-rings-teach",
     "neat-avocados-peel",
     "ninety-chefs-teach",
-    "strong-ducks-share"
+    "pretty-dryers-drop",
+    "rotten-birds-count",
+    "silver-insects-develop",
+    "spicy-icons-protect",
+    "strong-ducks-share",
+    "sweet-nails-peel",
+    "tricky-impalas-complain"
   ]
 }

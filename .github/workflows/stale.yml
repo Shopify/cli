@@ -30,6 +30,8 @@ jobs:
             This issue seems inactive. If it's still relevant, please add a comment saying so. Otherwise, take no action.
             → If there's no activity within a week, then a bot will automatically close this.
             Thanks for helping to improve Shopify's dev tooling and experience.
+
+            P.S. You can learn more about why we stale issues [here](https://github.com/Shopify/cli/blob/main/docs/decision-record/2023_02-Stale-action.md).
           stale-pr-message: |-
             This PR seems inactive. If it's still relevant, please add a comment saying so. Otherwise, take no action.
             → If there's no activity within a week, then a bot will automatically close this.

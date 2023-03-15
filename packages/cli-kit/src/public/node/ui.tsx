@@ -2,6 +2,7 @@
 import {AbortSilentError, FatalError as Fatal} from './error.js'
 import {collectLog, consoleError, consoleLog, Logger, LogLevel, outputDebug, outputWhereAppropriate} from './output.js'
 import {isUnitTest} from './context/local.js'
+import {AbortController} from './abort.js'
 import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
 import {render, renderOnce} from '../../private/node/ui.js'
 import {alert, AlertOptions} from '../../private/node/ui/alert.js'
@@ -16,7 +17,6 @@ import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui
 import {InlineToken, LinkToken, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
-import {AbortController} from '@shopify/cli-kit/node/abort'
 
 type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>
 
@@ -373,9 +373,12 @@ interface RenderTasksOptions {
  */
 // eslint-disable-next-line max-params
 export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOptions}: RenderTasksOptions = {}) {
-  return render(<Tasks tasks={tasks} />, {
-    ...renderOptions,
-    exitOnCtrlC: false,
+  // eslint-disable-next-line max-params
+  return new Promise<TContext>((resolve, reject) => {
+    render(<Tasks tasks={tasks} onComplete={resolve} />, {
+      ...renderOptions,
+      exitOnCtrlC: false,
+    }).catch(reject)
   })
 }
 

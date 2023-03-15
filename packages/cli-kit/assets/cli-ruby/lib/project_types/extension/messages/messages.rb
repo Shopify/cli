@@ -125,8 +125,6 @@ module Extension
 
           Preview your theme app extension:
           {{green:%s}}
-
-          (Use Ctrl-C to stop)
         PREVIEW_MESSAGE
       },
       tunnel: {

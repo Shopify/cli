@@ -2,8 +2,7 @@
 
 ## Table of Contents
 
-- [What is UI Kit](#what-is-ui-kit)
-- [Principles](#principles)
+- [Intro](#intro)
 - [Adding a new `render` function](#adding-a-new-render-function)
   - [Extending what is already there](#extending-what-is-already-there)
   - [Creating something in line with the design system](#creating-something-in-line-with-the-design-system)
@@ -24,28 +23,11 @@
   - [My tests are passing locally but not on CI!](#my-tests-are-passing-locally-but-not-on-ci)
 - [Testing outside of components](#testing-outside-of-components)
 
-## What is UI Kit
-
-UI Kit is a library that can be used to either ask for input from the user or render output to the terminal.
-By using UI Kit you're making sure that whatever you're rendering in the terminal
-will be consistent with the rest of the output.
-This ensures familiar-feeling interaction patterns for the users and allows you to benefit from design improvements without
-having to change your code too often.
+## Intro
 
 At its core, UI Kit is built with [Ink](https://github.com/vadimdemedes/ink) which uses React under the hood.
 If you're familiar with React already that's great! This guide will only cover details that are specific to UI kit,
 so an understanding of [React](https://reactjs.org/docs/getting-started.html) is a prerequisite if you wish to contribute to its components library.
-
-## Principles
-
-UI Kit defines all its available functions inside the `public/node/ui.tsx` file.
-These functions take simple JavaScript objects as params and output something to the terminal, be it a prompt or a banner.
-We chose this API design so that you wouldn't have to worry about the underlying React implementation when implementing commands,
-and could focus on simple data structures to pass into these `render` functions. This will also make it easier for us to
-restructure and upgrade the underlying React components without causing API breakage.
-
-The public functions have all been documented via comments above the function themselves.
-These comments include some examples of what the command would output if invoked.
 
 ## Adding a new `render` function
 

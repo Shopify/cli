@@ -1,11 +1,15 @@
 import {DELIVERY_METHOD, parseAddressAndMethod, parseVersionAndTopic, WebhookTriggerFlags} from './trigger-flags.js'
 import {getWebhookSample, UserErrors} from './request-sample.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
-import {collectAddressAndMethod, collectApiVersion, collectSecret, collectTopic} from './trigger-options.js'
-import {AppCredentials, findApiKey, findInEnv, requestAppInfo} from './find-app-info.js'
+import {
+  collectAddressAndMethod,
+  collectApiKey,
+  collectApiVersion,
+  collectCredentials,
+  collectTopic,
+} from './trigger-options.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {consoleError, outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
-import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {consoleError, outputSuccess} from '@shopify/cli-kit/node/output'
 
 interface WebhookTriggerOptions {
   topic: string
@@ -13,6 +17,7 @@ interface WebhookTriggerOptions {
   deliveryMethod: string
   address: string
   clientSecret: string
+  apiKey?: string
 }
 
 /**
@@ -47,10 +52,10 @@ async function validatedFlags(flags: WebhookTriggerFlags): Promise<[string, Webh
   return [
     token,
     {
+      topic,
+      apiVersion,
       deliveryMethod,
       address,
-      apiVersion,
-      topic,
       clientSecret,
     },
   ]
@@ -63,14 +68,22 @@ async function collectMissingFlags(token: string, flags: WebhookTriggerFlags): P
 
   const [deliveryMethod, address] = await collectAddressAndMethod(flags.deliveryMethod, flags.address)
 
-  const clientSecret = await collectSecret(token, flags.clientSecret)
+  const clientCredentials = await collectCredentials(token, flags.clientSecret)
 
   const options: WebhookTriggerOptions = {
-    apiVersion,
     topic,
+    apiVersion,
     deliveryMethod,
     address,
-    clientSecret,
+    clientSecret: clientCredentials.clientSecret as string,
+  }
+
+  if (deliveryMethod === DELIVERY_METHOD.EVENTBRIDGE) {
+    if (isValueSet(clientCredentials.apiKey)) {
+      options.apiKey = clientCredentials.apiKey
+    } else {
+      options.apiKey = await collectApiKey(token)
+    }
   }
 
   return options
@@ -85,14 +98,27 @@ export function isValueSet(value: string | undefined): boolean {
 }
 
 async function sendSample(token: string, options: WebhookTriggerOptions) {
-  const sample = await getWebhookSample(
-    token,
-    options.topic,
-    options.apiVersion,
-    options.deliveryMethod,
-    options.address,
-    options.clientSecret,
-  )
+  let sample
+  if (options.apiKey === undefined) {
+    sample = await getWebhookSample(
+      token,
+      options.topic,
+      options.apiVersion,
+      options.deliveryMethod,
+      options.address,
+      options.clientSecret,
+    )
+  } else {
+    sample = await getWebhookSample(
+      token,
+      options.topic,
+      options.apiVersion,
+      options.deliveryMethod,
+      options.address,
+      options.clientSecret,
+      options.apiKey,
+    )
+  }
 
   if (!sample.success) {
     consoleError(`Request errors:\n${formatErrors(sample.userErrors)}`)
@@ -129,53 +155,4 @@ function formatErrors(errors: UserErrors[]): string {
   } catch (err) {
     return JSON.stringify(errors)
   }
-}
-
-async function getSecret(token: string, clientSecretFlag: string | undefined): Promise<AppCredentials> {
-  if (valueSet(clientSecretFlag)) {
-    // Flag overwrites any other secret
-    const credentials: AppCredentials = {clientSecret: clientSecretFlag}
-    return credentials
-  }
-
-  const automatic = await renderConfirmationPrompt({
-    message: `Should we automatically populate the client-secret for you using app settings?`,
-    confirmationMessage: `Yes, try to get it from the configuration`,
-    cancellationMessage: "No, I'll type it myself",
-  })
-
-  if (!automatic) {
-    const credentials: AppCredentials = {}
-    credentials.clientSecret = await collectSecret(token, clientSecretFlag)
-    return credentials
-  }
-
-  const localCredentials = await findInEnv()
-  if (valueSet(localCredentials.clientSecret)) {
-    outputInfo('Reading client-secret from .env file')
-    return localCredentials
-  }
-
-  const apiKey = await findApiKey(token)
-  if (apiKey === undefined) {
-    localCredentials.clientSecret = await collectSecret(token, clientSecretFlag)
-    return localCredentials
-  }
-
-  const appCredentials = await requestAppInfo(token, apiKey)
-  if (valueSet(appCredentials.clientSecret)) {
-    outputInfo('Reading client-secret from app settings in Partners')
-  } else {
-    appCredentials.clientSecret = await collectSecret(token, clientSecretFlag)
-  }
-
-  return appCredentials
-}
-
-function valueSet(value: string | undefined): boolean {
-  if (value === undefined) {
-    return false
-  }
-
-  return value.length > 0
 }

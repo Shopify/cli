@@ -107,9 +107,9 @@ importers:
     specifiers:
       '@shopify/admin-ui-extensions': 1.1.0
       '@shopify/admin-ui-extensions-react': 1.1.0
-      '@shopify/app': 3.44.1-pre.0
+      '@shopify/app': 3.45.0-pre.3
       '@shopify/checkout-ui-extensions-react': 0.24.0
-      '@shopify/cli': 3.44.1-pre.0
+      '@shopify/cli': 3.45.0-pre.3
       '@shopify/customer-account-ui-extensions-react': 0.0.34
       '@shopify/post-purchase-ui-extensions': 0.13.4
       '@shopify/post-purchase-ui-extensions-react': 0.13.4
@@ -199,9 +199,10 @@ importers:
     specifiers:
       '@luckycatfactory/esbuild-graphql-loader': 3.7.0
       '@oclif/core': 2.1.4
-      '@shopify/cli-kit': 3.44.1-pre.0
-      '@shopify/plugin-cloudflare': 3.44.1-pre.0
-      '@shopify/plugin-ngrok': 3.44.1-pre.0
+      '@shopify/cli-kit': 3.45.0-pre.3
+      '@shopify/function-runner': 4.0.2
+      '@shopify/plugin-cloudflare': 3.45.0-pre.3
+      '@shopify/plugin-ngrok': 3.45.0-pre.3
       '@types/diff': ^5.0.2
       '@types/http-proxy': ^1.17.9
       '@types/lodash-es': ^4.17.6
@@ -212,12 +213,12 @@ importers:
       chokidar: 3.5.3
       diff: 5.1.0
       esbuild: 0.15.16
-      function-runner: 4.0.2
       graphql: ^16.0.0
       graphql-request: 5.2.0
       graphql-tag: ^2.12.6
+      h3: 0.7.21
       http-proxy: 1.18.1
-      javy-cli: 0.1.2
+      javy-cli: 0.1.4
       serve-static: 1.15.0
       vite: 2.9.12
       vitest: ^0.28.5
@@ -226,16 +227,17 @@ importers:
       '@luckycatfactory/esbuild-graphql-loader': 3.7.0_zocmegas3pxcp3oct7zmymwekm
       '@oclif/core': 2.1.4
       '@shopify/cli-kit': link:../cli-kit
+      '@shopify/function-runner': 4.0.2
       '@shopify/plugin-cloudflare': link:../plugin-cloudflare
       '@shopify/plugin-ngrok': link:../plugin-ngrok
       abort-controller: 3.0.0
       chokidar: 3.5.3
       diff: 5.1.0
       esbuild: 0.15.16
-      function-runner: 4.0.2
       graphql-request: 5.2.0_graphql@16.6.0
+      h3: 0.7.21
       http-proxy: 1.18.1
-      javy-cli: 0.1.2
+      javy-cli: 0.1.4
       serve-static: 1.15.0
       ws: 8.12.1
     devDependencies:
@@ -256,10 +258,10 @@ importers:
       '@oclif/plugin-commands': 2.2.10
       '@oclif/plugin-help': 5.2.6
       '@oclif/plugin-plugins': 2.3.2
-      '@shopify/app': 3.44.1-pre.0
-      '@shopify/cli-kit': 3.44.1-pre.0
-      '@shopify/plugin-did-you-mean': 3.44.1-pre.0
-      '@shopify/theme': 3.44.1-pre.0
+      '@shopify/app': 3.45.0-pre.3
+      '@shopify/cli-kit': 3.45.0-pre.3
+      '@shopify/plugin-did-you-mean': 3.45.0-pre.3
+      '@shopify/theme': 3.45.0-pre.3
       '@types/node': 14.18.36
       '@vitest/coverage-istanbul': 0.28.5
       vite: 2.9.12
@@ -321,7 +323,6 @@ importers:
       gradient-string: 2.0.2
       graphql: 16.4.0
       graphql-request: 5.2.0
-      h3: 0.7.21
       ink: 3.2.0
       ink-testing-library: ^2.1.0
       is-interactive: 2.0.0
@@ -385,7 +386,6 @@ importers:
       gradient-string: 2.0.2
       graphql: 16.4.0
       graphql-request: 5.2.0_graphql@16.4.0
-      h3: 0.7.21
       ink: 3.2.0_hw3ykagcixqw57etxpo4kpffqq
       is-interactive: 2.0.0
       js-yaml: 4.1.0
@@ -433,7 +433,7 @@ importers:
   packages/create-app:
     specifiers:
       '@oclif/core': 2.1.4
-      '@shopify/cli-kit': 3.44.1-pre.0
+      '@shopify/cli-kit': 3.45.0-pre.3
       '@types/node': 14.18.36
       vite: 2.9.12
       vitest: ^0.28.5
@@ -467,7 +467,7 @@ importers:
       typescript: 4.9.5
     devDependencies:
       '@babel/core': 7.21.0
-      '@shopify/eslint-plugin': registry.npmjs.org/@shopify/eslint-plugin/42.0.3_uojo4vpcnuctsxxyhb7d4e62du
+      '@shopify/eslint-plugin': 42.0.3_uojo4vpcnuctsxxyhb7d4e62du
       '@typescript-eslint/eslint-plugin': 5.54.0_b5t7h5icc5sgu66nrn62jmjpfy
       '@typescript-eslint/parser': 5.54.0_pku7h6lsbnh7tcsfjudlqd5qce
       eslint: 8.28.0
@@ -518,7 +518,7 @@ importers:
   packages/plugin-cloudflare:
     specifiers:
       '@oclif/core': 2.1.4
-      '@shopify/cli-kit': 3.44.1-pre.0
+      '@shopify/cli-kit': 3.45.0-pre.3
       node-fetch: 3.3.0
       vite: 2.9.12
       vitest: ^0.28.5
@@ -533,7 +533,7 @@ importers:
   packages/plugin-did-you-mean:
     specifiers:
       '@oclif/core': 2.1.4
-      '@shopify/cli-kit': 3.44.1-pre.0
+      '@shopify/cli-kit': 3.45.0-pre.3
       n-gram: 2.0.2
       vite: 2.9.12
       vitest: ^0.28.5
@@ -548,7 +548,7 @@ importers:
   packages/plugin-ngrok:
     specifiers:
       '@oclif/core': 2.1.4
-      '@shopify/cli-kit': 3.44.1-pre.0
+      '@shopify/cli-kit': 3.45.0-pre.3
       '@shopify/ngrok': 4.3.2
       '@types/node': 14.18.36
       vite: 2.9.12
@@ -565,7 +565,7 @@ importers:
   packages/theme:
     specifiers:
       '@oclif/core': 2.1.4
-      '@shopify/cli-kit': 3.44.1-pre.0
+      '@shopify/cli-kit': 3.45.0-pre.3
       '@types/node': 14.18.36
       node-stream-zip: ^1.15.0
       vite: 2.9.12
@@ -4683,9 +4683,57 @@ packages:
       '@shopify/function-enhancers': 2.0.8
     dev: false
 
+  /@shopify/eslint-plugin/42.0.3_uojo4vpcnuctsxxyhb7d4e62du:
+    resolution: {integrity: sha512-Vve7bpv3qeiDSIViHx1v0oJ6jDSiwqFzUlJZXIcgU/AcQTMEVYHozhxnNO02XTVeN1CJS3hiMjq2ruZdBiKWPw==}
+    peerDependencies:
+      eslint: ^8.3.0
+    dependencies:
+      '@babel/eslint-parser': 7.19.1_wjlnxrioldhfhhmoyxwvyz6c3u
+      '@babel/eslint-plugin': 7.19.1_qo7nbvejrlukndoriyrzp32xfy
+      '@typescript-eslint/eslint-plugin': 5.54.0_b5t7h5icc5sgu66nrn62jmjpfy
+      '@typescript-eslint/parser': 5.54.0_pku7h6lsbnh7tcsfjudlqd5qce
+      change-case: 4.1.2
+      common-tags: 1.8.2
+      doctrine: 2.1.0
+      eslint: 8.28.0
+      eslint-config-prettier: 8.5.0_eslint@8.28.0
+      eslint-module-utils: 2.7.4_43ib274i5lujux4y3je47fgcna
+      eslint-plugin-eslint-comments: 3.2.0_eslint@8.28.0
+      eslint-plugin-import: 2.27.5_43ib274i5lujux4y3je47fgcna
+      eslint-plugin-jest: 25.7.0_zwchrddfmowy2djxhvygsdkrn4
+      eslint-plugin-jest-formatting: 3.1.0_eslint@8.28.0
+      eslint-plugin-jsx-a11y: 6.6.1_eslint@8.28.0
+      eslint-plugin-node: 11.1.0_eslint@8.28.0
+      eslint-plugin-prettier: 4.2.1_wu6sbpjwlmhzr6hyelitt25ipy
+      eslint-plugin-promise: 6.1.1_eslint@8.28.0
+      eslint-plugin-react: 7.32.2_eslint@8.28.0
+      eslint-plugin-react-hooks: 4.6.0_eslint@8.28.0
+      eslint-plugin-sort-class-members: 1.16.0_eslint@8.28.0
+      jsx-ast-utils: 3.3.3
+      pkg-dir: 5.0.0
+      pluralize: 8.0.0
+    transitivePeerDependencies:
+      - '@babel/core'
+      - eslint-import-resolver-node
+      - eslint-import-resolver-typescript
+      - eslint-import-resolver-webpack
+      - jest
+      - prettier
+      - supports-color
+      - typescript
+    dev: true
+
   /@shopify/function-enhancers/2.0.8:
     resolution: {integrity: sha512-/nv59+ycOVV2ZKixl6V1d+xJmfMN40qUEmpFgbXhCnNjAE/vz3nJPal70Esp4Li2NR3GzKVJklZk3Y3pG+W1vw==}
     engines: {node: '>=12.14.0'}
+    dev: false
+
+  /@shopify/function-runner/4.0.2:
+    resolution: {integrity: sha512-ymfDpzwgrkyNfXA1kXA2zBSyJlaOfbCmkxYJmmcLSWDE4YSKJv9D6FwyughPL4F6ZZlkU10GxSyxkquuOLlYiA==}
+    hasBin: true
+    dependencies:
+      cachedir: 2.3.0
+      node-fetch: 3.3.0
     dev: false
 
   /@shopify/i18n/1.0.9:
@@ -7409,8 +7457,8 @@ packages:
     resolution: {integrity: sha512-xmHIy4F3scKVwMsQ4WnVaS8bHOx0DmVwRywosKhaILI0ywMDWPtBSku2HNxRvF7jtwDRsoEwYQSfbxj8b7RlJQ==}
     dev: true
 
-  /destr/1.2.1:
-    resolution: {integrity: sha512-ud8w0qMLlci6iFG7CNgeRr8OcbUWMsbfjtWft1eJ5Luqrz/M8Ebqk/KCzne8rKUlIQWWfLv0wD6QHrqOf4GshA==}
+  /destr/1.2.2:
+    resolution: {integrity: sha512-lrbCJwD9saUQrqUfXvl6qoM+QN3W7tLV5pAOs+OqOmopCCz/JkE05MHedJR1xfk4IAnZuJXPVuN5+7jNA2ZCiA==}
     dev: false
 
   /destroy/1.2.0:
@@ -9114,14 +9162,6 @@ packages:
   /function-bind/1.1.1:
     resolution: {integrity: sha512-yIovAzMX49sF8Yl58fSCWJ5svSLuaibPxXQJFLmBObTuCr0Mf1KiPopGM9NiFjiYBCbfaa2Fh6breQ6ANVTI0A==}
 
-  /function-runner/4.0.2:
-    resolution: {integrity: sha512-rMUUjOalIDmWizyk1FxIwkvrSO7Q4rh4OjxFDyRlThDxJk8I+jgguN2FBdyXGVZFAK09FNyS8p3mkFsHy9gQxQ==}
-    hasBin: true
-    dependencies:
-      cachedir: 2.3.0
-      node-fetch: 3.3.0
-    dev: false
-
   /function.prototype.name/1.1.5:
     resolution: {integrity: sha512-uN7m/BzVKQnCUF/iW8jYea67v++2u7m5UgENbHRtdDVclOUP+FMPlCNdmk0h/ysGyo2tavMJEDqJAkJdRa1vMA==}
     engines: {node: '>= 0.4'}
@@ -9487,7 +9527,7 @@ packages:
     resolution: {integrity: sha512-F/qdr3JKh8zBLiZyiprH5kuzG6vjoTK3nFnIYFUIQPLsw755GI5JezAFc3HJxbgYlzawcGeJlmsw4xu2t/0n/Q==}
     dependencies:
       cookie-es: 0.5.0
-      destr: 1.2.1
+      destr: 1.2.2
       radix3: 0.1.2
       ufo: 0.8.6
     dev: false
@@ -10218,8 +10258,8 @@ packages:
       filelist: 1.0.4
       minimatch: 3.1.2
 
-  /javy-cli/0.1.2:
-    resolution: {integrity: sha512-xiUnZsuvvzcHSv4PMTEyMLONnN+EPmitdj3g5rqId3vgTmS99EU1tTI1fLArsKyYGZ/gfwsNdM5qpJzcK0ebGg==}
+  /javy-cli/0.1.4:
+    resolution: {integrity: sha512-cSafsb8gXP4BnwjpogfU04ZUnbJ/uxPLzIc2dz6VeG70JB3yqdOhlf1r4cXlK7aloijs5vgz70ty4ogC0YEqpw==}
     hasBin: true
     dependencies:
       cachedir: 2.3.0
@@ -14538,7 +14578,7 @@ packages:
       globrex: 0.1.2
       recrawl-sync: 2.2.3
       tsconfig-paths: 4.1.1
-      vite: 2.9.12_sass@1.56.1
+      vite: 2.9.12
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -15228,52 +15268,9 @@ packages:
     resolution: {directory: packages/eslint-plugin-cli, type: directory}
     id: file:packages/eslint-plugin-cli
     name: '@shopify/eslint-plugin-cli'
-    version: 3.44.1-pre.0
+    version: 3.45.0-pre.1
     peerDependencies:
       eslint: ^8.12.0
     dependencies:
       eslint: 8.28.0
-    dev: true
-
-  registry.npmjs.org/@shopify/eslint-plugin/42.0.3_uojo4vpcnuctsxxyhb7d4e62du:
-    resolution: {integrity: sha512-Vve7bpv3qeiDSIViHx1v0oJ6jDSiwqFzUlJZXIcgU/AcQTMEVYHozhxnNO02XTVeN1CJS3hiMjq2ruZdBiKWPw==, registry: https://npm.shopify.io/node/, tarball: https://registry.npmjs.org/@shopify/eslint-plugin/-/eslint-plugin-42.0.3.tgz}
-    id: registry.npmjs.org/@shopify/eslint-plugin/42.0.3
-    name: '@shopify/eslint-plugin'
-    version: 42.0.3
-    peerDependencies:
-      eslint: ^8.3.0
-    dependencies:
-      '@babel/eslint-parser': 7.19.1_wjlnxrioldhfhhmoyxwvyz6c3u
-      '@babel/eslint-plugin': 7.19.1_qo7nbvejrlukndoriyrzp32xfy
-      '@typescript-eslint/eslint-plugin': 5.54.0_b5t7h5icc5sgu66nrn62jmjpfy
-      '@typescript-eslint/parser': 5.54.0_pku7h6lsbnh7tcsfjudlqd5qce
-      change-case: 4.1.2
-      common-tags: 1.8.2
-      doctrine: 2.1.0
-      eslint: 8.28.0
-      eslint-config-prettier: 8.5.0_eslint@8.28.0
-      eslint-module-utils: 2.7.4_43ib274i5lujux4y3je47fgcna
-      eslint-plugin-eslint-comments: 3.2.0_eslint@8.28.0
-      eslint-plugin-import: 2.27.5_43ib274i5lujux4y3je47fgcna
-      eslint-plugin-jest: 25.7.0_zwchrddfmowy2djxhvygsdkrn4
-      eslint-plugin-jest-formatting: 3.1.0_eslint@8.28.0
-      eslint-plugin-jsx-a11y: 6.6.1_eslint@8.28.0
-      eslint-plugin-node: 11.1.0_eslint@8.28.0
-      eslint-plugin-prettier: 4.2.1_wu6sbpjwlmhzr6hyelitt25ipy
-      eslint-plugin-promise: 6.1.1_eslint@8.28.0
-      eslint-plugin-react: 7.32.2_eslint@8.28.0
-      eslint-plugin-react-hooks: 4.6.0_eslint@8.28.0
-      eslint-plugin-sort-class-members: 1.16.0_eslint@8.28.0
-      jsx-ast-utils: 3.3.3
-      pkg-dir: 5.0.0
-      pluralize: 8.0.0
-    transitivePeerDependencies:
-      - '@babel/core'
-      - eslint-import-resolver-node
-      - eslint-import-resolver-typescript
-      - eslint-import-resolver-webpack
-      - jest
-      - prettier
-      - supports-color
-      - typescript
     dev: true
