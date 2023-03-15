@@ -157,7 +157,6 @@ const options = (app: App): DeployContextOptions => {
     app,
     reset: false,
     force: false,
-    directory: '/tmp/project',
   }
 }
 

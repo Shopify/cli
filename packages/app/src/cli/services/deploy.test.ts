@@ -198,7 +198,6 @@ async function testDeployBundle(app: AppInterface, organization?: Organization) 
     app,
     reset: false,
     force: true,
-    directory: '/tmp/project',
   })
 
   // Then
