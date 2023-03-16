@@ -9,6 +9,7 @@ Moreover, you should think about scenarios other than the happy path and build f
 ## Aborting the execution using errors
 
 If your logic needs to abort the execution, throw instantiating any of the errors exported by `@shopify/cli-kit`:
+You can pass an array of [TokenItem](./ui-kit/contributing.md#tokenizedtext)s as the second param, the `tryMessage`, to format it properly.
 
 ```ts
 import {
@@ -19,7 +20,7 @@ import {
 
 throw new AbortError(
   "The project doesn't exist",
-  "Make sure the command is executed from a project's directory"
+  ["Make sure the command", {command: "npm install"}, "is executed from a project's directory"]
 )
 ```
 

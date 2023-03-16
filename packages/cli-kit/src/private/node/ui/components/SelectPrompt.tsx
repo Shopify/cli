@@ -76,7 +76,7 @@ function SelectPrompt<T>({
     return () => {
       stdout!.off('resize', onResize)
     }
-  }, [wrapperHeight, selectInputHeight, choices.length, stdout!.rows, numberOfGroups])
+  }, [wrapperHeight, selectInputHeight, choices.length, numberOfGroups, stdout, limit])
 
   const submitAnswer = useCallback(
     (answer: SelectItem<T>) => {

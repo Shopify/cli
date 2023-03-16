@@ -373,9 +373,12 @@ interface RenderTasksOptions {
  */
 // eslint-disable-next-line max-params
 export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOptions}: RenderTasksOptions = {}) {
-  return render(<Tasks tasks={tasks} />, {
-    ...renderOptions,
-    exitOnCtrlC: false,
+  // eslint-disable-next-line max-params
+  return new Promise<TContext>((resolve, reject) => {
+    render(<Tasks tasks={tasks} onComplete={resolve} />, {
+      ...renderOptions,
+      exitOnCtrlC: false,
+    }).catch(reject)
   })
 }
 

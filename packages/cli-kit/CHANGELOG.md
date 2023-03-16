@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.45.0-pre.3
+
+### Patch Changes
+
+- ddb967914: Fix log from api responses for node version that donnot support Headers type
+- 7153dff92: Cut long host names for development theme naming
+
 ## 3.45.0-pre.2
 
 ### Patch Changes

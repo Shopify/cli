@@ -1,5 +1,12 @@
 # app
 
+## 3.45.0-pre.3
+
+### Patch Changes
+
+- @shopify/app@3.45.0-pre.3
+- @shopify/cli@3.45.0-pre.3
+
 ## 3.45.0-pre.2
 
 ### Patch Changes
