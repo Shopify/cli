@@ -1,0 +1,10 @@
+[environments.env1]
+output = "json"
+theme-editor-sync = true
+allow-live = true
+
+[environments.env2]
+output = "text"
+version = true
+live-reload = "full-page"
+poll = true
