@@ -6,13 +6,6 @@ module ShopifyCLI
       class Operation
         attr_accessor :method, :file
 
-        COLOR_BY_STATUS = {
-          error: :red,
-          synced: :green,
-          warning: :yellow,
-          fixed: :cyan,
-        }
-
         def initialize(ctx, method, file)
           @ctx = ctx
           @method = method
@@ -27,8 +20,8 @@ module ShopifyCLI
           as_message_with(status: :error)
         end
 
-        def as_synced_message(color: :green)
-          as_message_with(status: :synced, color: color)
+        def as_synced_message
+          as_message_with(status: :synced)
         end
 
         def as_fix_message
@@ -41,11 +34,10 @@ module ShopifyCLI
 
         private
 
-        def as_message_with(status:, color: nil)
-          color ||= COLOR_BY_STATUS[status]
+        def as_message_with(status:)
           text = @ctx.message("theme.serve.operation.status.#{status}").ljust(6)
 
-          "#{timestamp} {{#{color}:#{text}}} {{>}} {{blue:#{self}}}"
+          "{{gray:  • #{timestamp}}} #{text} {{>}} {{gray:#{self}}}"
         end
 
         def timestamp

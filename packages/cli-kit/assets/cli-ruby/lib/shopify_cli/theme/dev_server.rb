@@ -170,21 +170,13 @@ module ShopifyCLI
       end
 
       def sync_theme
-        CLI::UI::Frame.open(viewing_theme_message) do
-          ctx.print_task(syncing_theme_message)
-          syncer.start_threads
+        ctx.print_task(syncing_theme_message)
+        syncer.start_threads
 
-          if block
-            block.call(syncer)
-          else
-            syncer.upload_theme!(delay_low_priority_files: true)
-          end
-
-          return if stopped
-
-          ctx.puts(serving_theme_message)
-          ctx.open_url!(address)
-          ctx.puts(preview_message)
+        if block
+          block.call(syncer)
+        else
+          syncer.upload_theme!(delay_low_priority_files: true)
         end
       end
 

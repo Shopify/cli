@@ -2,6 +2,7 @@ import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
+import {currentDirectoryConfirmed, renderLinks, validThemeDirectory} from '../../services/dev.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -114,6 +115,10 @@ export default class Dev extends ThemeCommand {
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Dev.cli2Flags})
     const command = ['theme', 'serve', flags.path, ...flagsToPass]
 
+    if (!(await validThemeDirectory(flags.path)) && !(await currentDirectoryConfirmed(flags.force))) {
+      return
+    }
+
     let controller = new AbortController()
 
     setInterval(() => {
@@ -123,6 +128,8 @@ export default class Dev extends ThemeCommand {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.execute(adminSession, flags.password, command, controller, true)
     }, this.ThemeRefreshTimeoutInMs)
+
+    renderLinks(store, flags.theme!)
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.execute(adminSession, flags.password, command, controller, false)

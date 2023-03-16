@@ -275,7 +275,7 @@ module ShopifyCLI
 
         if file.warnings.any?
           warning_message =
-            operation.as_synced_message(color: :yellow) +
+            operation.as_synced_message +
             UnsupportedScriptWarning.new(@ctx, file).to_s
 
           return @error_reporter.report(warning_message)
