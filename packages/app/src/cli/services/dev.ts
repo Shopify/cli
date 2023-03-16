@@ -99,7 +99,7 @@ async function dev(options: DevOptions) {
       app: localApp,
       cachedTunnelPlugin: tunnelPlugin,
     }),
-    getAvailableTCPPort(),
+    backendConfig?.configuration.port || getAvailableTCPPort(),
     getURLs(apiKey, token),
   ])
 
@@ -268,6 +268,7 @@ function devFrontendProxyTarget(options: DevFrontendTargetOptions): ReverseHTTPP
 
   return {
     logPrefix: options.web.configuration.type,
+    customPort: options.web.configuration.port,
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
       await exec(cmd!, args, {
         cwd: options.web.directory,
