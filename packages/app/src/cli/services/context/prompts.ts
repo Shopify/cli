@@ -58,7 +58,7 @@ export async function deployConfirmationPrompt(summary: SourceSummary): Promise<
       header: 'Missing locally',
       items: summary.onlyRemote.map((source) => source.title),
       color: 'red',
-      helperMessage: 'These extensions will be deleted from the app',
+      helperMessage: 'Extensions missing locally will be deleted when you publish this deployment',
     })
   }
 
