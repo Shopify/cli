@@ -15,7 +15,6 @@ interface Cache {
 export interface ConfSchema {
   sessionStore: string
   cache?: Cache
-  nextDeprecationDate?: string
 }
 
 let _instance: LocalStorage<ConfSchema> | undefined
@@ -30,48 +29,6 @@ function cliKitStore() {
     _instance = new LocalStorage<ConfSchema>({projectName: 'shopify-cli-kit'})
   }
   return _instance
-}
-
-/**
- * Get the earliest deprecation date in the future.
- *
- * @returns nextDeprecationDate.
- */
-export function getNextDeprecationDate(config: LocalStorage<ConfSchema> = cliKitStore()): Date | undefined {
-  outputDebug(outputContent`Getting the next deprecation date...`)
-  const dateString = config.get('nextDeprecationDate')
-  return dateString ? new Date(dateString) : undefined
-}
-
-/**
- * Set next deprecation date.
- *
- * @param deprecations - Deprecations.
- */
-export function setNextDeprecationDate(
-  deprecationDates: Date[],
-  config: LocalStorage<ConfSchema> = cliKitStore(),
-): void {
-  if (deprecationDates.length < 1) return
-
-  const now = Date.now()
-  const dateTimes = deprecationDates.map((date) => date.getTime())
-  const earliestFutureDateTime = dateTimes.sort().find((dateTime) => dateTime >= now)
-  if (!earliestFutureDateTime) return
-
-  const nextDeprecationDate = getNextDeprecationDate()
-  if (!nextDeprecationDate || earliestFutureDateTime < nextDeprecationDate.getTime()) {
-    outputDebug(outputContent`Setting the next deprecation date...`)
-    config.set('nextDeprecationDate', new Date(earliestFutureDateTime).toISOString())
-  }
-}
-
-/**
- * Clear nextDeprecationDate.
- */
-export function clearNextDeprecationDate(config: LocalStorage<ConfSchema> = cliKitStore()): void {
-  outputDebug(outputContent`Clearing next deprecation date...`)
-  config.delete('nextDeprecationDate')
 }
 
 /**

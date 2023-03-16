@@ -86,6 +86,7 @@
   "oclif": {
     "commands": "dist/cli/commands",
     "hooks": {
+      "postrun": "./dist/cli/hooks/postrun",
       "public_command_metadata": "./dist/cli/hooks/public_metadata",
       "sensitive_command_metadata": "./dist/cli/hooks/sensitive_metadata"
     },

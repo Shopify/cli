@@ -18,9 +18,7 @@ export async function graphqlRequest<T>(
   token: string,
   variables?: Variables,
   handleErrors = true,
-  options?: {
-    deprecationsHandler?: (response: GraphQLResponse<T>) => void
-  },
+  onResponse?: (response: GraphQLResponse<T>) => void,
 ): Promise<T> {
   const headers = buildHeaders(token)
   debugLogRequestInfo(api, query, variables, headers)
@@ -31,8 +29,8 @@ export async function graphqlRequest<T>(
     handleErrors ? errorHandler(api) : undefined,
   )
 
-  if (options?.deprecationsHandler) {
-    options.deprecationsHandler(response)
+  if (onResponse) {
+    onResponse(response)
   }
 
   return response.data

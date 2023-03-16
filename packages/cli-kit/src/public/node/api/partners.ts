@@ -1,7 +1,6 @@
 import {partnersFqdn} from '../context/fqdn.js'
 import {graphqlRequest, GraphQLResponse, GraphQLVariables} from '../../../private/node/api/graphql.js'
 import {gql} from 'graphql-request'
-import {setNextDeprecationDate} from '../../../private/node/conf-store.js'
 
 /**
  * Executes a GraphQL query against the Partners API.
@@ -9,14 +8,20 @@ import {setNextDeprecationDate} from '../../../private/node/conf-store.js'
  * @param query - GraphQL query to execute.
  * @param token - Partners token.
  * @param variables - GraphQL variables to pass to the query.
+ * @param onResponse - Optional callback for the GraphQL response.
  * @returns The response of the query of generic type <T>.
  */
-export async function partnersRequest<T>(query: string, token: string, variables?: GraphQLVariables): Promise<T> {
+export async function partnersRequest<T>(
+  query: string,
+  token: string,
+  variables?: GraphQLVariables,
+  onResponse?: (response: GraphQLResponse<T>) => void,
+): Promise<T> {
   const api = 'Partners'
   const fqdn = await partnersFqdn()
   const url = `https://${fqdn}/api/cli/graphql`
   const handleErrors = true
-  return graphqlRequest(query, api, url, token, variables, handleErrors, {deprecationsHandler})
+  return graphqlRequest(query, api, url, token, variables, handleErrors, onResponse)
 }
 
 interface ProxyResponse {
@@ -39,6 +44,7 @@ export async function functionProxyRequest<T>(
   query: unknown,
   token: string,
   variables?: unknown,
+  onResponse?: (response: GraphQLResponse<T>) => void,
 ): Promise<T> {
   const proxyVariables = {
     api_key: apiKey,
@@ -48,7 +54,10 @@ export async function functionProxyRequest<T>(
   const proxyQuery = ScriptServiceProxyQuery
   const proxyResponse: ProxyResponse = await partnersRequest(proxyQuery, token, proxyVariables)
   const scriptServiceResponse = JSON.parse(proxyResponse.scriptServiceProxy)
-  deprecationsHandler(scriptServiceResponse)
+
+  if (onResponse) {
+    onResponse(scriptServiceResponse)
+  }
 
   return scriptServiceResponse as T
 }
@@ -58,19 +67,3 @@ const ScriptServiceProxyQuery = gql`
     scriptServiceProxy(apiKey: $api_key, query: $query, variables: $variables)
   }
 `
-
-interface Deprecation {
-  supportedUntilDate: string
-}
-
-interface WithDeprecations {
-  deprecations: Deprecation[]
-}
-
-function deprecationsHandler<T>(response: GraphQLResponse<T>) {
-  const deprecations = (response.extensions as WithDeprecations)?.deprecations
-  if (deprecations) {
-    const deprecationDates = deprecations.map(({supportedUntilDate}) => new Date(supportedUntilDate))
-    setNextDeprecationDate(deprecationDates)
-  }
-}
