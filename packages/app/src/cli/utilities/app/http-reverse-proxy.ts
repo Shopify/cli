@@ -12,6 +12,9 @@ export interface ReverseHTTPProxyTarget {
    */
   logPrefix: string
 
+  /**
+   * The port to use for the target HTTP server. When undefined, a random port is automatically assigned.
+   */
   customPort?: number
 
   /**
