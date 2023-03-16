@@ -2,7 +2,12 @@ import updateURL, {UpdateURLOptions} from './update-url.js'
 import {selectApp} from './select-app.js'
 import {getURLs, updateURLs} from '../dev/urls.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {allowedRedirectionURLsPrompt, appUrlPrompt} from '../../prompts/update-url.js'
+import {
+  allowedRedirectionURLsPrompt,
+  appProxyPathPrompt,
+  appProxyUrlPrompt,
+  appUrlPrompt,
+} from '../../prompts/update-url.js'
 import {describe, it, vi, beforeEach, expect} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
@@ -27,10 +32,13 @@ beforeEach(async () => {
 describe('update-url', () => {
   it('updates the URLs provided as flags', async () => {
     // Given
+    vi.mocked(getURLs).mockResolvedValue({applicationUrl: '', redirectUrlWhitelist: []})
     const options: UpdateURLOptions = {
       apiKey: 'api-key-from-flag',
       appURL: 'https://example.com',
       redirectURLs: ['https://example.com/callback'],
+      proxyUrl: 'https://example.com/proxy',
+      proxySubPath: '/proxy',
     }
 
     // When
@@ -41,6 +49,8 @@ describe('update-url', () => {
       {
         applicationUrl: 'https://example.com',
         redirectUrlWhitelist: ['https://example.com/callback'],
+        proxyUrl: 'https://example.com/proxy',
+        proxySubPath: '/proxy',
       },
       'api-key-from-flag',
       'token',
@@ -50,6 +60,7 @@ describe('update-url', () => {
   it('asks for the application when the api key is not provided', async () => {
     // Given
     vi.mocked(selectApp).mockResolvedValue(APP1)
+    vi.mocked(getURLs).mockResolvedValue({applicationUrl: '', redirectUrlWhitelist: []})
     const options: UpdateURLOptions = {
       appURL: 'https://example.com',
       redirectURLs: ['https://example.com/callback'],
@@ -112,6 +123,97 @@ describe('update-url', () => {
       {
         applicationUrl: 'https://example.com',
         redirectUrlWhitelist: ['https://example.com/callback1', 'https://example.com/callback2'],
+      },
+      'api-key-from-flag',
+      'token',
+    )
+  })
+
+  it('doesnt ask for the proxy urls if a proxy doesnt exist', async () => {
+    // Given
+    vi.mocked(getURLs).mockResolvedValue({applicationUrl: '', redirectUrlWhitelist: []})
+    const options: UpdateURLOptions = {
+      apiKey: 'api-key-from-flag',
+      appURL: 'https://example.com',
+      redirectURLs: ['https://example.com/callback'],
+    }
+
+    // When
+    await updateURL(options)
+
+    // Then
+    expect(appProxyUrlPrompt).not.toBeCalled()
+    expect(appProxyPathPrompt).not.toBeCalled()
+    expect(updateURLs).toHaveBeenCalledWith(
+      {
+        applicationUrl: 'https://example.com',
+        redirectUrlWhitelist: ['https://example.com/callback'],
+      },
+      'api-key-from-flag',
+      'token',
+    )
+  })
+
+  it('doesnt asks for the proxy urls if a proxy exist and values are provided via flags', async () => {
+    // Given
+    vi.mocked(getURLs).mockResolvedValue({
+      applicationUrl: '',
+      redirectUrlWhitelist: [],
+      proxyUrl: 'https://existing.url',
+      proxySubPath: '/existing-path',
+    })
+    const options: UpdateURLOptions = {
+      apiKey: 'api-key-from-flag',
+      appURL: 'https://example.com',
+      redirectURLs: ['https://example.com/callback'],
+      proxyUrl: 'https://new.url',
+      proxySubPath: '/new-path',
+    }
+
+    // When
+    await updateURL(options)
+
+    // Then
+    expect(appProxyUrlPrompt).not.toBeCalled()
+    expect(appProxyPathPrompt).not.toBeCalled()
+    expect(updateURLs).toHaveBeenCalledWith(
+      {
+        applicationUrl: 'https://example.com',
+        redirectUrlWhitelist: ['https://example.com/callback'],
+        proxyUrl: 'https://new.url',
+        proxySubPath: '/new-path',
+      },
+      'api-key-from-flag',
+      'token',
+    )
+  })
+
+  it('asks for the proxy urls if a proxy exist and values are not provided via flags', async () => {
+    // Given
+    vi.mocked(getURLs).mockResolvedValue({
+      applicationUrl: '',
+      redirectUrlWhitelist: [],
+      proxyUrl: 'https://existing.url',
+      proxySubPath: '/existing-path',
+    })
+    vi.mocked(appProxyUrlPrompt).mockResolvedValue('https://new.url')
+    vi.mocked(appProxyPathPrompt).mockResolvedValue('/new-path')
+    const options: UpdateURLOptions = {
+      apiKey: 'api-key-from-flag',
+      appURL: 'https://example.com',
+      redirectURLs: ['https://example.com/callback'],
+    }
+
+    // When
+    await updateURL(options)
+
+    // Then
+    expect(updateURLs).toHaveBeenCalledWith(
+      {
+        applicationUrl: 'https://example.com',
+        redirectUrlWhitelist: ['https://example.com/callback'],
+        proxyUrl: 'https://new.url',
+        proxySubPath: '/new-path',
       },
       'api-key-from-flag',
       'token',

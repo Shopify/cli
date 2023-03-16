@@ -35,7 +35,7 @@ async function getNewURLs(token: string, apiKey: string, options: UpdateURLOptio
   let proxyUrl = currentURLs.proxyUrl
   let proxySubPath = currentURLs.proxySubPath
   if (updateProxy) {
-    proxyUrl = options.proxyUrl || (await appProxyUrlPrompt(currentURLs.proxyUrl ?? ''))
+    proxyUrl = options.proxyUrl || (await appProxyUrlPrompt(applicationUrl ?? ''))
     proxySubPath = options.proxySubPath || (await appProxyPathPrompt(currentURLs.proxySubPath ?? ''))
   }
   const newURLs: PartnersURLs = {applicationUrl, redirectUrlWhitelist, proxyUrl, proxySubPath}
