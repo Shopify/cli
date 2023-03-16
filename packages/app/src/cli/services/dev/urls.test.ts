@@ -148,7 +148,12 @@ describe('getURLs', () => {
   it('sends a request to get the URLs', async () => {
     // Given
     vi.mocked(partnersRequest).mockResolvedValueOnce({
-      app: {applicationUrl: 'https://example.com', redirectUrlWhitelist: []},
+      app: {
+        applicationUrl: 'https://example.com',
+        redirectUrlWhitelist: [],
+        proxyUrl: 'https://example.com/proxy',
+        proxySubPat: 'proxy',
+      },
     })
     const expectedVariables = {apiKey: 'apiKey'}
 
@@ -552,13 +557,15 @@ describe('generatePartnersURLs', () => {
 
     const got = generatePartnersURLs(applicationUrl)
 
-    expect(got).toMatchObject({
+    expect(got).toStrictEqual({
       applicationUrl,
       redirectUrlWhitelist: [
         `${applicationUrl}/auth/callback`,
         `${applicationUrl}/auth/shopify/callback`,
         `${applicationUrl}/api/auth/callback`,
       ],
+      proxyUrl: 'http://my-base-url',
+      proxySubPath: undefined,
     })
   })
 
@@ -568,9 +575,11 @@ describe('generatePartnersURLs', () => {
 
     const got = generatePartnersURLs(applicationUrl, overridePath)
 
-    expect(got).toMatchObject({
+    expect(got).toStrictEqual({
       applicationUrl,
       redirectUrlWhitelist: [`${applicationUrl}${overridePath}`],
+      proxyUrl: 'http://my-base-url',
+      proxySubPath: undefined,
     })
   })
 
@@ -580,9 +589,28 @@ describe('generatePartnersURLs', () => {
 
     const got = generatePartnersURLs(applicationUrl, overridePath)
 
-    expect(got).toMatchObject({
+    expect(got).toStrictEqual({
       applicationUrl,
       redirectUrlWhitelist: [`${applicationUrl}${overridePath[0]}`, `${applicationUrl}${overridePath[1]}`],
+      proxyUrl: 'http://my-base-url',
+      proxySubPath: undefined,
+    })
+  })
+
+  it('Returns subPath if provided', () => {
+    const applicationUrl = 'http://my-base-url'
+
+    const got = generatePartnersURLs(applicationUrl, undefined, 'custom-path')
+
+    expect(got).toStrictEqual({
+      applicationUrl,
+      redirectUrlWhitelist: [
+        `${applicationUrl}/auth/callback`,
+        `${applicationUrl}/auth/shopify/callback`,
+        `${applicationUrl}/api/auth/callback`,
+      ],
+      proxyUrl: 'http://my-base-url',
+      proxySubPath: 'custom-path',
     })
   })
 })
