@@ -19,3 +19,4 @@ now do a different and much cooler thing.
 # App
 
 * Adapt the height of select prompts to the height of the terminal so that prompts won't be cut off in shorter terminals.
+* You can now define custom ports for the frontend or backend processes of the app.
