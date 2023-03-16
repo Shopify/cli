@@ -20,6 +20,7 @@ export interface Schemas {
       app_name?: Optional<string>
       metadata?: Optional<string>
       store_fqdn?: Optional<string>
+      cmd_all_environment_flags?: Optional<string>
 
       // Dev related commands
       cmd_dev_tunnel_custom?: Optional<string>

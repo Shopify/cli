@@ -45,7 +45,7 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
 }
 
 async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions) {
-  const {commandStartOptions, ...sensitiveMetadata} = metadata.getAllSensitiveMetadata()
+  const {commandStartOptions, environmentFlags, ...sensitiveMetadata} = metadata.getAllSensitiveMetadata()
   if (commandStartOptions === undefined) {
     outputDebug('Unable to log analytics event - no information on executed command')
     return
@@ -80,6 +80,7 @@ async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions)
     },
     sensitive: {
       args: startArgs.join(' '),
+      cmd_all_environment_flags: environmentFlags,
       error_message: errorMessage,
       ...appSensitive,
       ...sensitiveEnvironmentData,

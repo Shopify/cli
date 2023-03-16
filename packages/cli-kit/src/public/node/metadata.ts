@@ -29,7 +29,10 @@ function getMetadataErrorHandlingStrategy(): 'mute-and-report' | 'bubble' {
 export interface RuntimeMetadataManager<TPublic extends AnyJson, TSensitive extends AnyJson> {
   /** Add some public metadata -- this should not contain any PII. */
   addPublicMetadata: (getData: ProvideMetadata<TPublic>, onError?: MetadataErrorHandling) => Promise<void>
-  /** Add some potentially sensitive metadata -- this may include PII, but unnecessary data should never be tracked (this is a good fit for command args for instance). */
+  /**
+   * Add some potentially sensitive metadata -- this may include PII, but unnecessary data should never be tracked
+   * (this is a good fit for command args for instance).
+   */
   addSensitiveMetadata: (getData: ProvideMetadata<TSensitive>, onError?: MetadataErrorHandling) => Promise<void>
   /** Get a snapshot of the tracked public data. */
   getAllPublicMetadata: () => Partial<TPublic>
@@ -114,7 +117,7 @@ const coreData = createRuntimeMetadataContainer<
       startTopic?: string
       startArgs: string[]
     }
-  }
+  } & {environmentFlags: string}
 >()
 
 export const {getAllPublicMetadata, getAllSensitiveMetadata, addPublicMetadata, addSensitiveMetadata} = coreData
