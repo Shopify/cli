@@ -1,8 +1,8 @@
 import {requestApiVersions} from './request-api-versions.js'
+import {partnersRequest} from '../app/partners-request.js'
 import {describe, expect, it, vi} from 'vitest'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
-vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('../app/partners-request.js')
 
 const aToken = 'A_TOKEN'
 

@@ -1,11 +1,11 @@
 import {sendUninstallWebhookToAppServer} from './send-app-uninstalled-webhook.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
+import {partnersRequest} from '../app/partners-request.js'
 import {describe, expect, it, vi} from 'vitest'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {FetchError} from '@shopify/cli-kit/node/http'
 import {Writable} from 'stream'
 
-vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('../app/partners-request.js')
 vi.mock('./trigger-local-webhook.js')
 vi.mock('@shopify/cli-kit/node/system')
 

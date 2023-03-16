@@ -26,7 +26,7 @@ import {
   AppFunctionSetMutationSchema,
   AppFunctionSetVariables,
 } from '../../api/graphql/functions/app_function_set.js'
-import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {functionProxyRequest, partnersRequest} from '../app/partners-request.js'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {fileExists, readFile, readFileSync} from '@shopify/cli-kit/node/fs'

@@ -5,9 +5,9 @@ import generateExtensionPrompt from '../prompts/generate/extension.js'
 import generateExtensionService from '../services/generate/extension.js'
 import {testApp, testRemoteSpecifications, testThemeExtensions} from '../models/app/app.test-data.js'
 import {Extension} from '../models/app/extensions.js'
+import {partnersRequest} from '../services/app/partners-request.js'
 import {describe, expect, it, vi, beforeAll, afterEach} from 'vitest'
 import {Config} from '@oclif/core'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -15,9 +15,9 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 vi.mock('../constants.js')
 vi.mock('../models/app/loader.js')
 vi.mock('../prompts/generate/extension.js')
+vi.mock('../services/app/partners-request.js')
 vi.mock('../services/generate/extension.js')
 vi.mock('../services/context.js')
-vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('./local-storage.js')
 

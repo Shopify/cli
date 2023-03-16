@@ -3,7 +3,7 @@ import {
   ExtensionCreateSchema,
   ExtensionCreateVariables,
 } from '../../api/graphql/extension_create.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {partnersRequest} from '../app/partners-request.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export interface ExtensionRegistration {

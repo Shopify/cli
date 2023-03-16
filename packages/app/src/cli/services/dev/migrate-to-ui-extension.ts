@@ -6,7 +6,7 @@ import {
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getExtensionIds, LocalRemoteSource} from '../context/id-matching.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {partnersRequest} from '../app/partners-request.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 

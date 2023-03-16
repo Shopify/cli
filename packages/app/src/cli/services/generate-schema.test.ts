@@ -3,13 +3,13 @@ import * as localEnvironment from './context.js'
 import * as identifiers from '../models/app/identifiers.js'
 import {testApp, testFunctionExtension} from '../models/app/app.test-data.js'
 import {ApiSchemaDefinitionQuery} from '../api/graphql/functions/api_schema_definition.js'
+import {partnersRequest} from '../services/app/partners-request.js'
 import {beforeEach, describe, expect, it, MockedFunction, vi} from 'vitest'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('../services/app/partners-request.js')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/context/local')
 

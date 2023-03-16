@@ -1,11 +1,11 @@
 import {getWebhookSample} from './request-sample.js'
+import {partnersRequest} from '../app/partners-request.js'
 import {describe, expect, it, vi} from 'vitest'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 const samplePayload = '{ "sampleField": "SampleValue" }'
 const sampleHeaders = '{ "header": "Header Value" }'
 
-vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('../app/partners-request.js')
 
 const aToken = 'A_TOKEN'
 const anApiKey = 'AN_API_KEY'

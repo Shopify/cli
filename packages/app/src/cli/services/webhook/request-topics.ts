@@ -1,4 +1,4 @@
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {partnersRequest} from '../app/partners-request.js'
 
 export interface WebhookTopicsSchema {
   webhookTopics: string[]

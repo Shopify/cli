@@ -12,7 +12,7 @@ import {
   AllDevStoresByOrganizationSchema,
 } from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainQuery, FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {partnersRequest} from '../app/partners-request.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export const NoOrgError = (organizationId?: string) => {

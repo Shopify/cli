@@ -12,9 +12,9 @@ import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
 import {AllDevStoresByOrganizationQuery} from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainQuery} from '../../api/graphql/find_store_by_domain.js'
 import {AllAppExtensionRegistrationsQuery} from '../../api/graphql/all_app_extension_registrations.js'
+import {partnersRequest} from '../app/partners-request.js'
 import {describe, expect, it, test, vi} from 'vitest'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
@@ -70,7 +70,7 @@ const FETCH_STORE_RESPONSE_VALUE = {
   },
 }
 
-vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('../app/partners-request.js')
 
 describe('fetchOrganizations', async () => {
   it('returns fetched organizations', async () => {

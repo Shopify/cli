@@ -4,12 +4,12 @@ import {Organization, OrganizationApp} from '../../models/organization.js'
 import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {CreateAppQuery} from '../../api/graphql/create_app.js'
+import {partnersRequest} from '../app/partners-request.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 vi.mock('../../prompts/dev')
-vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('../app/partners-request.js')
 vi.mock('@shopify/cli-kit/node/session')
 
 const LOCAL_APP: AppInterface = testApp({

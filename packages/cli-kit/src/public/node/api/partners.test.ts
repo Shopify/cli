@@ -25,6 +25,16 @@ describe('partners-api', () => {
     await partnersApi.partnersRequest('query', mockedToken, {variables: 'variables'})
 
     // Then
-    expect(graphqlRequest).toHaveBeenLastCalledWith('query', 'Partners', url, mockedToken, {variables: 'variables'})
+    const handleErrors = true
+    const onResponse = undefined
+    expect(graphqlRequest).toHaveBeenLastCalledWith(
+      'query',
+      'Partners',
+      url,
+      mockedToken,
+      {variables: 'variables'},
+      handleErrors,
+      onResponse,
+    )
   })
 })

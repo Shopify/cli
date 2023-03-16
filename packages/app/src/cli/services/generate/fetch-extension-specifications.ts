@@ -11,9 +11,9 @@ import {
   ExtensionSpecificationsQuerySchema,
   FlattenedRemoteSpecification,
 } from '../../api/graphql/extension_specifications.js'
+import {partnersRequest} from '../app/partners-request.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Config} from '@oclif/core'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 type ExtensionSpec = UIExtensionSpec | ThemeExtensionSpec
 

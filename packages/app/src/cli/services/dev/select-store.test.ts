@@ -2,17 +2,17 @@ import {selectStore} from './select-store.js'
 import {fetchAllDevStores} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
+import {partnersRequest} from '../app/partners-request.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 
 vi.mock('../../prompts/dev')
+vi.mock('../app/partners-request.js')
 vi.mock('./fetch')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/system')
-vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/context/spin')
 
