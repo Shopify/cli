@@ -1,7 +1,6 @@
 import {selectApp} from './select-app.js'
 import {getURLs, PartnersURLs, updateURLs, validatePartnersURLs} from '../dev/urls.js'
 import {
-  addProxyPrompt,
   allowedRedirectionURLsPrompt,
   appProxyPathPrompt,
   appProxyUrlPrompt,
@@ -32,7 +31,7 @@ async function getNewURLs(token: string, apiKey: string, options: UpdateURLOptio
   const applicationUrl = options.appURL || (await appUrlPrompt(currentURLs.applicationUrl))
   const redirectUrlWhitelist =
     options.redirectURLs || (await allowedRedirectionURLsPrompt(currentURLs.redirectUrlWhitelist.join(',')))
-  const updateProxy = hasProxy || (await addProxyPrompt())
+  const updateProxy = hasProxy || (options.proxyUrl && options.proxySubPath)
   let proxyUrl = currentURLs.proxyUrl
   let proxySubPath = currentURLs.proxySubPath
   if (updateProxy) {
@@ -50,7 +49,9 @@ function printResult(urls: PartnersURLs): void {
     customSections: [
       {title: 'App URL', body: {list: {items: [urls.applicationUrl]}}},
       {title: 'Allowed redirection URL(s)', body: {list: {items: urls.redirectUrlWhitelist}}},
-      {title: 'App Proxy', body: {list: {items: [`URL: ${urls.proxyUrl}`, `Path: ${urls.proxySubPath}`]}}},
+      urls.proxyUrl
+        ? {title: 'App Proxy', body: {list: {items: [`URL: ${urls.proxyUrl}`, `Path: ${urls.proxySubPath}`]}}}
+        : {title: 'App Proxy', body: 'Not set'},
     ],
   })
 }
