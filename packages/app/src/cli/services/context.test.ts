@@ -21,7 +21,6 @@ import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
 import {OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
-import {UIExtension} from '../models/app/extensions.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
@@ -29,7 +28,6 @@ import {loadAppName} from '../models/app/loader.js'
 import {App} from '../models/app/app.js'
 import {AllOrganizationsQuerySchemaOrganization} from '../api/graphql/all_orgs.js'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
-import {ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
@@ -99,34 +97,6 @@ const STORE2: OrganizationStore = {
   convertableToPartnerTest: false,
 }
 
-const EXTENSION_A: UIExtension = {
-  idEnvironmentVariableName: 'EXTENSION_A_ID',
-  localIdentifier: 'EXTENSION_A',
-  configurationPath: '',
-  directory: '',
-  type: 'checkout_post_purchase',
-  graphQLType: 'CHECKOUT_POST_PURCHASE',
-  configuration: {
-    name: '',
-    type: 'checkout_post_purchase',
-    metafields: [],
-    capabilities: {block_progress: false, network_access: false, api_access: false},
-  },
-  entrySourceFilePath: '',
-  outputBundlePath: '',
-  devUUID: 'devUUID',
-  externalType: 'checkout_ui',
-  surface: 'surface',
-  preDeployValidation: () => Promise.resolve(),
-  deployConfig: () => Promise.resolve({}),
-  previewMessage: (_) => undefined,
-  publishURL: (_) => Promise.resolve(''),
-  validate: () => Promise.resolve(ok({})),
-  getBundleExtensionStdinContent: () => '',
-  shouldFetchCartUrl: () => true,
-  hasExtensionPointTarget: () => true,
-}
-
 const INPUT: DevContextOptions = {
   directory: 'app_directory',
   reset: false,
@@ -171,7 +141,7 @@ beforeEach(async () => {
   vi.mocked(getPackageManager).mockResolvedValue('npm')
 })
 
-describe('ensureGenerateEnvironment', () => {
+describe('ensureGenerateContext', () => {
   it('returns the provided app apiKey if valid, without cached state', async () => {
     // Given
     const input = {apiKey: 'key2', directory: '/app', reset: false, token: 'token'}
@@ -222,7 +192,7 @@ describe('ensureGenerateEnvironment', () => {
   })
 })
 
-describe('ensureDevEnvironment', () => {
+describe('ensureDevContext', () => {
   it('returns selected data and updates internal state, without cached state', async () => {
     // Given
     vi.mocked(getAppInfo).mockReturnValue(undefined)
@@ -234,7 +204,7 @@ describe('ensureDevEnvironment', () => {
     expect(got).toEqual({
       remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
-      remoteAppUpdated: true,
+      remoteAppUpdated: false,
       tunnelPlugin: undefined,
       updateURLs: undefined,
     })
@@ -297,7 +267,7 @@ describe('ensureDevEnvironment', () => {
     expect(got).toEqual({
       remoteApp: {...APP2, apiSecret: 'secret2'},
       storeFqdn: STORE1.shopDomain,
-      remoteAppUpdated: true,
+      remoteAppUpdated: false,
       tunnelPlugin: undefined,
       updateURLs: undefined,
     })
@@ -335,9 +305,28 @@ describe('ensureDevEnvironment', () => {
     expect(clearAppInfo).toHaveBeenCalledWith(BAD_INPUT_WITH_DATA.directory)
     expect(fetchOrgAndApps).toBeCalled()
   })
+
+  it('returns sets remoteAppUpdated to true when the selected app is different from the cached app', async () => {
+    // Given
+    vi.mocked(getAppInfo).mockReturnValue(CACHED1)
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+
+    // When
+    const got = await ensureDevContext(INPUT, 'token')
+
+    // Then
+    expect(got).toEqual({
+      remoteApp: {...APP2, apiSecret: 'secret2'},
+      storeFqdn: STORE1.shopDomain,
+      remoteAppUpdated: true,
+      tunnelPlugin: undefined,
+      updateURLs: undefined,
+    })
+  })
 })
 
-describe('ensureDeployEnvironment', () => {
+describe('ensureDeployContext', () => {
   test("fetches the app from the partners' API and returns it alongside the id when identifiers are available locally and the app has no extensions", async () => {
     // Given
     const app = testApp()
@@ -472,7 +461,7 @@ describe('ensureDeployEnvironment', () => {
   })
 })
 
-describe('ensureThemeExtensionDevEnvironment', () => {
+describe('ensureThemeExtensionDevContext', () => {
   test('fetches theme extension when it exists', async () => {
     // Given
     const token = 'token'

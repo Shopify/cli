@@ -224,7 +224,7 @@ function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?
       ...app,
       apiSecret: app.apiSecretKeys.length === 0 ? undefined : app.apiSecretKeys[0]!.secret,
     },
-    remoteAppUpdated: app.apiKey !== cachedInfo?.appId,
+    remoteAppUpdated: Boolean(cachedInfo?.appId) && app.apiKey !== cachedInfo?.appId,
     storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
     tunnelPlugin: cachedInfo?.tunnelPlugin,
