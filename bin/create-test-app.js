@@ -51,6 +51,12 @@ program
           ],
           defaultOpts
         )
+
+        // there is a bug with pnpm and local references on windows:
+        // https://github.com/pnpm/pnpm/issues/5510
+        if (os.platform() == "win32") {
+          fs.rmSync(path.join(appPath, "pnpm-lock.yaml"))
+        }
         break
       case "nightly":
         log(`Creating new app in ${appPath}...`)
@@ -168,6 +174,6 @@ async function appExec(command, args, options = {}) {
 
 async function pnpmDev() {
   try {
-    await appExec(`cd ${appPath} && pnpm run dev`, [], { shell: true })
+    await appExec("pnpm", ["run", "dev"])
   } catch (error) {}
 }

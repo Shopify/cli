@@ -442,9 +442,12 @@ async function getSpinEnvironmentVariables() {
  */
 async function localBundleInstall(directory: string): Promise<void> {
   const bundle = bundleExecutable()
-  await exec(bundle, ['config', 'set', '--local', 'path', directory], {
-    cwd: directory,
-  })
+  // setting the bundle path in Windows causes 'bundle install' to fail
+  if (platformAndArch().platform !== 'windows') {
+    await exec(bundle, ['config', 'set', '--local', 'path', directory], {
+      cwd: directory,
+    })
+  }
   await exec(bundle, ['config', 'set', '--local', 'without', 'development:test'], {
     cwd: directory,
   })
