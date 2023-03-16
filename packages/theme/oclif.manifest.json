@@ -452,13 +452,6 @@
           "char": "l",
           "description": "Downloads the latest release of the `clone-url`",
           "allowNo": false
-        },
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "multiple": false
         }
       },
       "args": {
