@@ -30,22 +30,20 @@ const InfoTable: FunctionComponent<InfoTableProps> = ({table}) => {
   return (
     <Box flexDirection="column">
       {sections.map((section, index) => (
-        <Box key={index} marginBottom={index === sections.length - 1 ? 0 : 1} flexDirection="column">
-          <Box>
-            {section.header.length > 0 && (
-              <Box width={headerColumnWidth + 1}>
-                <Text color={section.color}>{capitalize(section.header)}:</Text>
+        <Box key={index} marginBottom={index === sections.length - 1 ? 0 : 1}>
+          {section.header.length > 0 && (
+            <Box width={headerColumnWidth + 1}>
+              <Text color={section.color}>{capitalize(section.header)}:</Text>
+            </Box>
+          )}
+          <Box marginLeft={section.header.length > 0 ? 2 : 0} flexGrow={1} flexDirection="column">
+            <List margin={false} items={section.items} color={section.color} />
+            {section.helperMessage ? (
+              <Box marginTop={1}>
+                <Text color={section.color}>{section.helperMessage}</Text>
               </Box>
-            )}
-            <Box marginLeft={section.header.length > 0 ? 2 : 0} flexGrow={1}>
-              <List margin={false} items={section.items} color={section.color} />
-            </Box>
+            ) : null}
           </Box>
-          {section.helperMessage ? (
-            <Box marginTop={1}>
-              <Text color={section.color}>{section.helperMessage}</Text>
-            </Box>
-          ) : null}
         </Box>
       ))}
     </Box>
