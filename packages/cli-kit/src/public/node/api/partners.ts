@@ -1,5 +1,6 @@
 import {partnersFqdn} from '../context/fqdn.js'
-import {graphqlRequest, GraphQLVariables} from '../../../private/node/api/graphql.js'
+import {graphqlRequest, GraphQLVariables, GraphQLResponse} from '../../../private/node/api/graphql.js'
+import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {gql} from 'graphql-request'
 
 /**
@@ -14,7 +15,7 @@ export async function partnersRequest<T>(query: string, token: string, variables
   const api = 'Partners'
   const fqdn = await partnersFqdn()
   const url = `https://${fqdn}/api/cli/graphql`
-  return graphqlRequest(query, api, url, token, variables)
+  return graphqlRequest(query, api, url, token, variables, {onResponse: handleDeprecations})
 }
 
 interface ProxyResponse {
@@ -46,6 +47,7 @@ export async function functionProxyRequest<T>(
   const proxyQuery = ScriptServiceProxyQuery
   const res: ProxyResponse = await partnersRequest(proxyQuery, token, proxyVariables)
   const json = JSON.parse(res.scriptServiceProxy)
+  handleDeprecations(json)
   return json as T
 }
 
@@ -55,6 +57,28 @@ const ScriptServiceProxyQuery = gql`
   }
 `
 
-interface ScriptServiceProxyQuerySchema {
-  scriptServiceProxy: unknown
+interface Deprecation {
+  supportedUntilDate?: string
+}
+
+interface WithDeprecations {
+  deprecations: Deprecation[]
+}
+
+/**
+ * Sets the next deprecation date if response extensions contain deprecation dates.
+ *
+ * @param response - The response of the query.
+ */
+export function handleDeprecations<T>(response: GraphQLResponse<T>): void {
+  if (!response.extensions) return
+
+  const deprecationDates: Date[] = []
+  for (const deprecation of (response.extensions as WithDeprecations).deprecations) {
+    if (deprecation.supportedUntilDate) {
+      deprecationDates.push(new Date(deprecation.supportedUntilDate))
+    }
+  }
+
+  setNextDeprecationDate(deprecationDates)
 }
