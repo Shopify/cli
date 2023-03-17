@@ -15,7 +15,9 @@ export async function graphqlRequest<T>(
   url: string,
   token: string,
   variables?: Variables,
-  handleErrors = true,
+  options?: {
+    handleErrors?: boolean
+  },
 ): Promise<T> {
   const headers = buildHeaders(token)
   debugLogRequestInfo(api, query, variables, headers)
@@ -23,8 +25,9 @@ export async function graphqlRequest<T>(
   const client = new GraphQLClient(url, clientOptions)
   const response = await debugLogResponseInfo(
     {request: client.rawRequest<T>(query as string, variables), url},
-    handleErrors ? errorHandler(api) : undefined,
+    options?.handleErrors === false ? undefined : errorHandler(api),
   )
+
   return response.data
 }
 
