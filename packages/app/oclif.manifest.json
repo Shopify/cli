@@ -328,6 +328,20 @@
           "description": "Comma separated list of allowed URLs where merchants are redirected after the app is installed",
           "hidden": false,
           "multiple": false
+        },
+        "proxy-url": {
+          "name": "proxy-url",
+          "type": "option",
+          "description": "URL through which merchants will access your app.",
+          "hidden": false,
+          "multiple": false
+        },
+        "proxy-path": {
+          "name": "proxy-path",
+          "type": "option",
+          "description": "URL through which merchants will access your app.",
+          "hidden": false,
+          "multiple": false
         }
       },
       "args": {}
