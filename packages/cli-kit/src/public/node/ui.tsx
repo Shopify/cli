@@ -16,7 +16,7 @@ import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/Text
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
 import {InlineToken, LinkToken, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 import React from 'react'
-import {Key as InkKey, RenderOptions} from 'ink'
+import {RenderOptions} from 'ink'
 
 type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>
 
@@ -456,5 +456,4 @@ export const keypress = async () => {
   })
 }
 
-export type Key = InkKey
 export {Task, TokenItem, InlineToken, LinkToken, TableColumn}
