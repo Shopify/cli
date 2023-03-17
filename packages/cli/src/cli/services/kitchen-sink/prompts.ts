@@ -33,6 +33,11 @@ export async function prompts() {
     },
   })
 
+  await renderTextPrompt({
+    message: 'Description',
+    multiline: true,
+  })
+
   // renderAutocompletePrompt
   const database = [
     {label: 'first', value: 'first'},

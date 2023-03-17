@@ -3,9 +3,45 @@ import {TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {messageWithPunctuation} from '../utilities.js'
-import React, {FunctionComponent, useCallback, useState} from 'react'
-import {Box, useApp, useInput, Text} from 'ink'
+import React, {FunctionComponent, useCallback, useEffect, useState} from 'react'
+import {Box, useApp, Text, useStdin, Key} from 'ink'
 import figures from 'figures'
+import readline from 'readline'
+
+interface Data {
+  ctrl: boolean
+  meta: boolean
+  shift: boolean
+  name: string
+  sequence: string
+}
+
+type Handler = (key: string, data: Data) => void
+
+const useInput = (inputHandler: Handler) => {
+  const {stdin, setRawMode} = useStdin()
+
+  useEffect(() => {
+    readline.emitKeypressEvents(stdin)
+    setRawMode(true)
+
+    return () => {
+      setRawMode(false)
+    }
+  }, [setRawMode, stdin])
+
+  useEffect(() => {
+    const handleData: Handler = (key, data) => {
+      inputHandler(key, data)
+    }
+
+    stdin.on('keypress', handleData)
+
+    return () => {
+      stdin.off('keypress', handleData)
+    }
+  }, [stdin, inputHandler])
+}
 
 export interface TextPromptProps {
   message: string
@@ -14,6 +50,7 @@ export interface TextPromptProps {
   password?: boolean
   validate?: (value: string) => string | undefined
   allowEmpty?: boolean
+  multiline?: boolean
 }
 
 const TextPrompt: FunctionComponent<TextPromptProps> = ({
@@ -23,6 +60,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   defaultValue = '',
   password = false,
   allowEmpty = false,
+  multiline = false,
 }) => {
   if (password && defaultValue) {
     throw new Error("Can't use defaultValue with password")
@@ -51,10 +89,10 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   const color = shouldShowError ? 'red' : 'cyan'
   const underline = new Array(oneThird - 3).fill('▔')
 
-  useInput((input, key) => {
-    handleCtrlC(input, key)
+  useInput((_key, data) => {
+    handleCtrlC(data.name, data as unknown as Key)
 
-    if (key.return) {
+    if (multiline && data.shift && data.name === 'return') {
       setSubmitted(true)
       const error = validateAnswer(answerOrDefault)
       setError(error)
@@ -62,6 +100,21 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
       if (!error) {
         onSubmit(answerOrDefault)
         unmountInk()
+      }
+    }
+
+    if (data.name === 'return') {
+      if (multiline) {
+        setAnswer((answer) => `${answer}\n`)
+      } else {
+        setSubmitted(true)
+        const error = validateAnswer(answerOrDefault)
+        setError(error)
+
+        if (!error) {
+          onSubmit(answerOrDefault)
+          unmountInk()
+        }
       }
     }
   })
