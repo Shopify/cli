@@ -2,11 +2,18 @@ import {buildHeaders, httpsAgent, RequestClientError, sanitizedHeadersOutput} fr
 import {stringifyMessage, outputContent, outputToken, outputDebug} from '../../../public/node/output.js'
 import {AbortError} from '../../../public/node/error.js'
 import {debugLogResponseInfo} from '../api.js'
-import {ClientError, GraphQLClient, RequestDocument, Variables} from 'graphql-request'
+import {ClientError, GraphQLClient, rawRequest, RequestDocument, Variables} from 'graphql-request'
 
 export interface GraphQLVariables {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any
+}
+
+export type GraphQLResponse<T> = Awaited<ReturnType<typeof rawRequest<T>>>
+
+export interface GraphQLResponseOptions<T> {
+  handleErrors?: boolean
+  onResponse?: (response: GraphQLResponse<T>) => void
 }
 
 export async function graphqlRequest<T>(
@@ -15,9 +22,7 @@ export async function graphqlRequest<T>(
   url: string,
   token: string,
   variables?: Variables,
-  options?: {
-    handleErrors?: boolean
-  },
+  options?: GraphQLResponseOptions<T>,
 ): Promise<T> {
   const headers = buildHeaders(token)
   debugLogRequestInfo(api, query, variables, headers)
@@ -27,6 +32,10 @@ export async function graphqlRequest<T>(
     {request: client.rawRequest<T>(query as string, variables), url},
     options?.handleErrors === false ? undefined : errorHandler(api),
   )
+
+  if (options?.onResponse) {
+    options.onResponse(response)
+  }
 
   return response.data
 }
