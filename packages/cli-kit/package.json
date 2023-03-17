@@ -143,7 +143,7 @@
     "source-map-support": "0.5.21",
     "stacktracey": "2.1.8",
     "strip-ansi": "7.0.1",
-    "supports-hyperlinks": "^3.0.0",
+    "supports-hyperlinks": "3.0.0",
     "tempy": "3.0.0",
     "term-size": "3.0.2",
     "terminal-link": "3.0.0",
