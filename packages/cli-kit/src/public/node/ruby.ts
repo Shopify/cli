@@ -11,6 +11,7 @@ import {AdminSession} from '../../public/node/session.js'
 import {outputContent, outputToken} from '../../public/node/output.js'
 import {isTruthy} from '../../private/node/context/utilities.js'
 import {coerceSemverVersion} from '../../private/node/semver.js'
+import envPaths from 'env-paths'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
 
@@ -19,6 +20,7 @@ const ThemeCheckVersion = '1.14.0'
 const MinBundlerVersion = '2.3.11'
 const MinRubyVersion = '2.7.5'
 export const MinWdmWindowsVersion = '0.1.0'
+const shopifyGems = envPaths('shopify-gems')
 
 interface ExecCLI2Options {
   // Contains token and store to pass to CLI 2.0, which will be set as environment variables
@@ -279,7 +281,7 @@ async function createThemeCheckGemfile(): Promise<void> {
  */
 async function bundleInstallLocalShopifyCLI(directory: string): Promise<void> {
   await addContentToGemfile(directory, getWindowsDependencies())
-  await localBundleInstall(directory)
+  await shopifyBundleInstall(directory)
 }
 
 /**
@@ -324,14 +326,14 @@ async function addContentToGemfile(gemfileDirectory: string, content: string[]) 
  * It runs bundle install for the CLI-managed copy of the Ruby CLI.
  */
 async function bundleInstallShopifyCLI() {
-  await localBundleInstall(await shopifyCLIDirectory())
+  await shopifyBundleInstall(await shopifyCLIDirectory())
 }
 
 /**
  * It runs bundle install for the CLI-managed copy of theme-check.
  */
 async function bundleInstallThemeCheck() {
-  await localBundleInstall(themeCheckDirectory())
+  await shopifyBundleInstall(themeCheckDirectory())
 }
 
 /**
@@ -435,19 +437,19 @@ async function getSpinEnvironmentVariables() {
 }
 
 /**
- * It sets bundler's path to the given directory and runs bundle install.
- * This is desirable because the gems will be isolated from the system gems.
+ * It sets bundler's path to a directory dedicated to shopify gems and runs bundle install.
+ * This is desirable because these gems will be isolated from the system gems.
  *
  * @param directory - Directory where the Gemfile is located.
  */
-async function localBundleInstall(directory: string): Promise<void> {
+async function shopifyBundleInstall(directory: string): Promise<void> {
   const bundle = bundleExecutable()
-  // setting the bundle path in Windows causes 'bundle install' to fail
-  if (platformAndArch().platform !== 'windows') {
-    await exec(bundle, ['config', 'set', '--local', 'path', directory], {
-      cwd: directory,
-    })
-  }
+  const shopifyGemsPath = shopifyGems.data
+
+  await exec(bundle, ['config', 'set', '--local', 'path', shopifyGemsPath], {
+    cwd: directory,
+  })
+
   await exec(bundle, ['config', 'set', '--local', 'without', 'development:test'], {
     cwd: directory,
   })
