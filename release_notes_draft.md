@@ -19,3 +19,4 @@ now do a different and much cooler thing.
 # App
 
 * Adapt the height of select prompts to the height of the terminal so that prompts won't be cut off in shorter terminals.
+* Update your app proxy configuration using the `update-url` command or by providing a `proxy-path` value in your shopify.web.toml file.
