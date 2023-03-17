@@ -138,7 +138,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
                       </Box>
 
                       <Text bold color={chunk.color}>
-                        |
+                        {figures.lineVertical}
                       </Text>
                     </Box>
                   ) : null}
@@ -148,7 +148,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
                   </Box>
 
                   <Text bold color={chunk.color}>
-                    |
+                    {figures.lineVertical}
                   </Text>
 
                   <Box flexGrow={1} paddingLeft={1}>
@@ -165,7 +165,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
           <Box flexDirection="column">
             {footer.shortcuts.map((shortcut, index) => (
               <Text key={index}>
-                {figures.pointerSmall} Press <Text bold>{shortcut.key}</Text> | {shortcut.action}
+                {figures.pointerSmall} Press <Text bold>{shortcut.key}</Text> {figures.lineVertical} {shortcut.action}
               </Text>
             ))}
           </Box>
