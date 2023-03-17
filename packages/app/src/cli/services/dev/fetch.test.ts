@@ -204,15 +204,16 @@ describe('NoOrgError', () => {
       │  No Organization found                                                       │
       │                                                                              │
       │  Next steps                                                                  │
-      │    • Have you created a Shopify Partners organization (                      │
-      │      https://partners.shopify.com/signup )?                                  │
+      │    • Have you created a Shopify Partners organization [1]?                   │
       │    • Have you confirmed your accounts from the emails you received?          │
       │    • Need to connect to a different App or organization? Run the command     │
       │      again with \`--reset\`                                                    │
       │    • Do you have access to the right Shopify Partners organization? The CLI  │
-      │       is loading this organization ( https://partner.shopify.com/3 )         │
+      │       is loading this organization [2]                                       │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
+      [1] https://partners.shopify.com/signup
+      [2] https://partner.shopify.com/3
       "
     `)
   })
