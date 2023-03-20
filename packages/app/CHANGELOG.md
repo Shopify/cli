@@ -1,5 +1,21 @@
 # @shopify/app
 
+## 3.45.0-pre.4
+
+### Minor Changes
+
+- 04f67f727: [Internal] Implement new unified deployment flow for organizations with the right beta flag
+
+### Patch Changes
+
+- b650d2234: Update the cart_transform templatePath to point to checkout/${lang}/cart-transform/default
+- 7b409222e: Allow to specify a custom port in toml for frontend/backend processes
+- Updated dependencies [ce1457036]
+- Updated dependencies [2ca5b35d8]
+  - @shopify/cli-kit@3.45.0-pre.4
+  - @shopify/plugin-cloudflare@3.45.0-pre.4
+  - @shopify/plugin-ngrok@3.45.0-pre.4
+
 ## 3.45.0-pre.3
 
 ### Patch Changes
