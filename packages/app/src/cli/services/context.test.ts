@@ -71,13 +71,13 @@ const APP2: OrganizationApp = {
 const ORG1: AllOrganizationsQuerySchemaOrganization = {
   id: '1',
   businessName: 'org1',
-  appsNext: true,
+  betas: {appUiDeployments: false},
   website: '',
 }
 const ORG2: AllOrganizationsQuerySchemaOrganization = {
   id: '2',
   businessName: 'org2',
-  appsNext: false,
+  betas: {appUiDeployments: false},
   website: '',
 }
 
@@ -161,7 +161,7 @@ const options = (app: App): DeployContextOptions => {
 }
 
 beforeEach(async () => {
-  vi.mocked(getAppIdentifiers).mockResolvedValue({app: undefined})
+  vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
   vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
   vi.mocked(selectOrCreateApp).mockResolvedValue(APP1)
   vi.mocked(selectStore).mockResolvedValue(STORE1)
@@ -171,7 +171,7 @@ beforeEach(async () => {
   vi.mocked(getPackageManager).mockResolvedValue('npm')
 })
 
-describe('ensureGenerateEnvironment', () => {
+describe('ensureGenerateContext', () => {
   it('returns the provided app apiKey if valid, without cached state', async () => {
     // Given
     const input = {apiKey: 'key2', directory: '/app', reset: false, token: 'token'}
@@ -222,7 +222,7 @@ describe('ensureGenerateEnvironment', () => {
   })
 })
 
-describe('ensureDevEnvironment', () => {
+describe('ensureDevContext', () => {
   it('returns selected data and updates internal state, without cached state', async () => {
     // Given
     vi.mocked(getAppInfo).mockReturnValue(undefined)
@@ -337,7 +337,7 @@ describe('ensureDevEnvironment', () => {
   })
 })
 
-describe('ensureDeployEnvironment', () => {
+describe('ensureDeployContext', () => {
   test("fetches the app from the partners' API and returns it alongside the id when identifiers are available locally and the app has no extensions", async () => {
     // Given
     const app = testApp()
@@ -346,19 +346,21 @@ describe('ensureDeployEnvironment', () => {
       extensions: {},
       extensionIds: {},
     }
-    vi.mocked(getAppIdentifiers).mockResolvedValue({app: APP2.apiKey})
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
     // When
-    const got = await ensureDeployContext({app, reset: false, force: false})
+    const got = await ensureDeployContext(options(app))
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
+    expect(fetchOrgFromId).toHaveBeenCalledWith(ORG1.id, 'token')
     expect(got.partnersApp.id).toEqual(APP2.id)
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
+    expect(got.organization.id).toEqual(ORG1.id)
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
   })
@@ -371,11 +373,12 @@ describe('ensureDeployEnvironment', () => {
       extensions: {},
       extensionIds: {},
     }
-    vi.mocked(getAppIdentifiers).mockResolvedValue({app: undefined})
-    vi.mocked(getAppInfo).mockReturnValueOnce(CACHED1)
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
+    vi.mocked(getAppInfo).mockReturnValue(CACHED1)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(reuseDevConfigPrompt).mockResolvedValueOnce(true)
+    vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG1)
 
     // When
     const got = await ensureDeployContext(options(app))
@@ -383,10 +386,12 @@ describe('ensureDeployEnvironment', () => {
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).toHaveBeenCalled()
+    expect(fetchOrgFromId).toHaveBeenCalledWith(ORG1.id, 'token')
     expect(got.partnersApp.id).toEqual(APP2.id)
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
+    expect(got.organization.id).toEqual(ORG1.id)
   })
 
   test('prompts the user to create or select an app and returns it with its id when the app has no extensions', async () => {
@@ -397,7 +402,7 @@ describe('ensureDeployEnvironment', () => {
       extensions: {},
       extensionIds: {},
     }
-    vi.mocked(getAppIdentifiers).mockResolvedValue({app: undefined})
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     // When
@@ -416,16 +421,18 @@ describe('ensureDeployEnvironment', () => {
       identifiers,
       command: 'deploy',
     })
+    expect(fetchOrgFromId).not.toHaveBeenCalled()
     expect(got.partnersApp.id).toEqual(APP1.id)
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
+    expect(got.organization.id).toEqual(ORG1.id)
   })
 
   test("throws an app not found error if the app with the API key doesn't exist", async () => {
     // Given
     const app = testApp()
-    vi.mocked(getAppIdentifiers).mockResolvedValue({app: APP1.apiKey})
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP1.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(undefined)
 
     // When
@@ -442,7 +449,7 @@ describe('ensureDeployEnvironment', () => {
     }
 
     // There is a cached app but it will be ignored
-    vi.mocked(getAppIdentifiers).mockResolvedValue({app: APP2.apiKey})
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
@@ -469,10 +476,11 @@ describe('ensureDeployEnvironment', () => {
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
+    expect(got.organization.id).toEqual(ORG1.id)
   })
 })
 
-describe('ensureThemeExtensionDevEnvironment', () => {
+describe('ensureThemeExtensionDevContext', () => {
   test('fetches theme extension when it exists', async () => {
     // Given
     const token = 'token'

@@ -15,7 +15,7 @@ import {Extension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderSuccess, renderTasks, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo} from '@shopify/cli-kit/node/output'
@@ -48,8 +48,21 @@ export async function deploy(options: DeployOptions) {
   }
 
   // eslint-disable-next-line prefer-const
-  let {app, identifiers, partnersApp, partnersOrganizationId, token} = await ensureDeployContext(options)
+  let {app, identifiers, partnersApp, token, organization} = await ensureDeployContext(options)
   const apiKey = identifiers.app
+
+  let label: string | undefined
+
+  if (organization.betas.appUiDeployments) {
+    label = await renderTextPrompt({
+      message: 'Deployment label',
+      allowEmpty: true,
+    })
+
+    if (label.length === 0) {
+      label = undefined
+    }
+  }
 
   outputNewline()
   outputInfo(`Deploying your work to Shopify Partners. It will be part of ${partnersApp.title}`)
@@ -79,6 +92,7 @@ export async function deploy(options: DeployOptions) {
 
   let registrations: AllAppExtensionRegistrationsQuerySchema
   let validationErrors: UploadExtensionValidationError[] = []
+  let deploymentId: number
 
   await inTemporaryDirectory(async (tmpDir) => {
     try {
@@ -97,15 +111,16 @@ export async function deploy(options: DeployOptions) {
           },
         },
         {
-          title: 'Pushing your code to Shopify',
+          title: organization.betas.appUiDeployments ? 'Creating deployment' : 'Pushing your code to Shopify',
           task: async () => {
             if (bundle) {
-              validationErrors = await uploadExtensionsBundle({
+              ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
                 apiKey,
                 bundlePath,
                 extensions,
                 token,
-              })
+                label,
+              }))
             }
 
             if (!useThemebundling()) {
@@ -124,10 +139,12 @@ export async function deploy(options: DeployOptions) {
       await outputCompletionMessage({
         app,
         partnersApp,
-        partnersOrganizationId,
+        partnersOrganizationId: organization.id,
         identifiers,
         registrations,
         validationErrors,
+        deploymentId,
+        unifiedDeployment: organization.betas.appUiDeployments,
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -149,6 +166,8 @@ async function outputCompletionMessage({
   identifiers,
   registrations,
   validationErrors,
+  deploymentId,
+  unifiedDeployment,
 }: {
   app: AppInterface
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
@@ -156,7 +175,22 @@ async function outputCompletionMessage({
   identifiers: Identifiers
   registrations: AllAppExtensionRegistrationsQuerySchema
   validationErrors: UploadExtensionValidationError[]
+  deploymentId: number
+  unifiedDeployment: boolean
 }) {
+  if (unifiedDeployment) {
+    return renderSuccess({
+      headline: 'Deployment created',
+      body: {
+        link: {
+          url: `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/deployments/${deploymentId}`,
+          label: `Deployment ${deploymentId}`,
+        },
+      },
+      nextSteps: ['Publish your deployment to make your changes go live for merchants'],
+    })
+  }
+
   let headline: string
 
   if (validationErrors.length > 0) {

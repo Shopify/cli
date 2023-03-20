@@ -1,6 +1,7 @@
 import useLayout from '../hooks/use-layout.js'
+import {Link, LinksContext} from '../contexts/LinksContext.js'
 import {Box, Text} from 'ink'
-import React, {FunctionComponent} from 'react'
+import React, {FunctionComponent, useContext, useRef} from 'react'
 
 export type BannerType = 'success' | 'error' | 'warning' | 'info' | 'external_error'
 
@@ -18,24 +19,63 @@ function typeToColor(type: BannerProps['type']) {
   }[type]
 }
 
+const Footnotes = () => {
+  const linksContext = useContext(LinksContext)
+
+  if (linksContext === null || linksContext.links.current === null) {
+    return null
+  }
+
+  const links = linksContext.links.current
+  const linkIds = Object.keys(links)
+
+  return linkIds.length > 0 ? (
+    <Box marginBottom={1} marginTop={-1} flexDirection="column">
+      {linkIds.map((id) => (
+        <Text key={id}>{`[${id}] ${links[id]?.url}`}</Text>
+      ))}
+    </Box>
+  ) : null
+}
+
 const BoxWithBorder: FunctionComponent<BannerProps> = ({type, children}) => {
   const {twoThirds} = useLayout()
+  const links = useRef<{[key: string]: Link}>({})
 
   return (
-    <Box
-      width={twoThirds}
-      paddingY={1}
-      paddingX={2}
-      marginBottom={1}
-      borderStyle="round"
-      flexDirection="column"
-      borderColor={typeToColor(type)}
+    <LinksContext.Provider
+      value={{
+        links,
+        addLink: (label, url) => {
+          const id: string | undefined = Object.keys(links.current).find((id) => links.current[id]!.url === url)
+          if (id) {
+            return id
+          }
+          const newId = (Object.keys(links.current).length + 1).toString()
+          links.current = {
+            ...links.current,
+            [newId]: {label, url},
+          }
+          return newId
+        },
+      }}
     >
-      <Box marginTop={-2} marginBottom={1} marginLeft={-1}>
-        <Text>{` ${type.replace(/_/g, ' ')} `}</Text>
+      <Box
+        width={twoThirds}
+        paddingY={1}
+        paddingX={2}
+        marginBottom={1}
+        borderStyle="round"
+        flexDirection="column"
+        borderColor={typeToColor(type)}
+      >
+        <Box marginTop={-2} marginBottom={1} marginLeft={-1}>
+          <Text>{` ${type.replace(/_/g, ' ')} `}</Text>
+        </Box>
+        {children}
       </Box>
-      {children}
-    </Box>
+      <Footnotes />
+    </LinksContext.Provider>
   )
 }
 
