@@ -50,6 +50,7 @@ async function mockApp(): Promise<AppInterface> {
       ui: [uiExtension],
       theme: [themeExtension],
       function: [functionExtension],
+      configurations: [],
     },
   })
 }

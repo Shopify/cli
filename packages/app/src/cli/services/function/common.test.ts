@@ -16,7 +16,7 @@ let ourFunction: FunctionExtension
 
 beforeEach(async () => {
   ourFunction = await testFunctionExtension()
-  app = testApp({extensions: {ui: [], theme: [], function: [ourFunction]}})
+  app = testApp({extensions: {ui: [], theme: [], function: [ourFunction], configurations: []}})
   vi.mocked(loadApp).mockResolvedValue(app)
   vi.mocked(renderFatalError).mockReturnValue('')
 })

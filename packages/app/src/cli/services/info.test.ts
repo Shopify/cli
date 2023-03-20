@@ -199,6 +199,7 @@ describe('info', () => {
         ui: [uiExtension1, uiExtension2],
         theme: [],
         function: [],
+        configurations: [],
       },
     })
     const organization = {

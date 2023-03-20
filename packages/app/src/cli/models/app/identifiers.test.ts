@@ -16,6 +16,7 @@ describe('updateAppIdentifiers', () => {
           ui: [uiExtension],
           function: [],
           theme: [],
+          configurations: [],
         },
       })
 
@@ -50,6 +51,7 @@ describe('updateAppIdentifiers', () => {
           ui: [uiExtension],
           function: [],
           theme: [],
+          configurations: [],
         },
       })
 
@@ -98,6 +100,7 @@ describe('getAppIdentifiers', () => {
           ui: [uiExtension],
           function: [],
           theme: [],
+          configurations: [],
         },
       })
 
@@ -126,6 +129,7 @@ describe('getAppIdentifiers', () => {
           ui: [uiExtension],
           function: [],
           theme: [],
+          configurations: [],
         },
       })
 

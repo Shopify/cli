@@ -34,6 +34,7 @@ describe('bundleExtension()', () => {
         ui: [extension],
         theme: [],
         function: [],
+        configurations: [],
       },
     })
     vi.mocked(esBuild).mockResolvedValue(esbuildResultFixture())
@@ -107,6 +108,7 @@ describe('bundleExtension()', () => {
         ui: [extension],
         theme: [],
         function: [],
+        configurations: [],
       },
     })
     const stdout: any = {
@@ -160,6 +162,7 @@ describe('bundleExtension()', () => {
         ui: [extension],
         theme: [],
         function: [],
+        configurations: [],
       },
     })
     const stdout: any = {

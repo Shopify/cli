@@ -35,7 +35,7 @@ describe('deploy', () => {
   it('uploads the extension bundle with 1 UI extension', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})
+    const app = testApp({extensions: {ui: [uiExtension], theme: [], function: [], configurations: []}})
 
     // When
     await testDeployBundle(app)
@@ -52,7 +52,7 @@ describe('deploy', () => {
   it('uploads the extension bundle with 1 theme extension', async () => {
     // Given
     const themeExtension = await testThemeExtensions()
-    const app = testApp({extensions: {ui: [], theme: [themeExtension], function: []}})
+    const app = testApp({extensions: {ui: [], theme: [themeExtension], function: [], configurations: []}})
 
     // When
     await testDeployBundle(app)
@@ -70,7 +70,7 @@ describe('deploy', () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const themeExtension = await testThemeExtensions()
-    const app = testApp({extensions: {ui: [uiExtension], theme: [themeExtension], function: []}})
+    const app = testApp({extensions: {ui: [uiExtension], theme: [themeExtension], function: [], configurations: []}})
 
     // When
     await testDeployBundle(app)
@@ -90,7 +90,7 @@ describe('deploy', () => {
   it('passes a label to the deployment mutation', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})
+    const app = testApp({extensions: {ui: [uiExtension], theme: [], function: [], configurations: []}})
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
@@ -107,7 +107,7 @@ describe('deploy', () => {
   it('shows a success message', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})
+    const app = testApp({extensions: {ui: [uiExtension], theme: [], function: [], configurations: []}})
 
     // When
     await testDeployBundle(app, {id: 'org-id', businessName: 'org-name', betas: {appUiDeployments: false}})
@@ -149,7 +149,7 @@ describe('deploy', () => {
   it('shows a specific success message when deploying using the unified app deployment flow', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})
+    const app = testApp({extensions: {ui: [uiExtension], theme: [], function: [], configurations: []}})
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When

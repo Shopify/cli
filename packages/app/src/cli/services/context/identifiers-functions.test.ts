@@ -115,7 +115,7 @@ const LOCAL_APP = (functionExtensions: FunctionExtension[]): AppInterface => {
     directory: '/app',
     configurationPath: '/shopify.app.toml',
     configuration: {scopes: 'read_products', extensionDirectories: ['extensions/*']},
-    extensions: {ui: [], theme: [], function: functionExtensions},
+    extensions: {ui: [], theme: [], function: functionExtensions, configurations: []},
   })
 }
 
