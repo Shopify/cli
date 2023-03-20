@@ -7,7 +7,6 @@ import {GenericSpecification} from '../models/app/extensions.js'
 import generateExtensionPrompt from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
 import generateExtensionService, {ExtensionFlavorValue} from '../services/generate/extension.js'
-import {loadFunctionSpecifications} from '../models/extensions/specifications.js'
 import {
   convertSpecificationsToTemplate,
   getTypesExternalIdentitifier,
@@ -183,16 +182,9 @@ async function getTemplateSpecifications(options: GenerateOptions): Promise<Temp
   const token = await ensureAuthenticatedPartners()
   const apiKey = await ensureGenerateContext({...options, token})
   const specifications = await fetchSpecifications({token, apiKey, config: options.config})
-  let templateSpecifications = convertSpecificationsToTemplate(specifications)
+  const localTemplateSpecifications = convertSpecificationsToTemplate(specifications)
   const remoteTemplateSpecifications = await fetchTemplateSpecifications(token)
-  templateSpecifications = templateSpecifications.concat(remoteTemplateSpecifications)
-  // If for any reason the remote template specifications API with the functions is not available, we will load the
-  // local functions specifications
-  if (remoteTemplateSpecifications.length === 0) {
-    const functions = await loadFunctionSpecifications(options.config)
-    templateSpecifications = templateSpecifications.concat(convertSpecificationsToTemplate(functions))
-  }
-  return templateSpecifications
+  return localTemplateSpecifications.concat(remoteTemplateSpecifications)
 }
 
 export default generate

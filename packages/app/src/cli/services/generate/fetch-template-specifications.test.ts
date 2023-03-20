@@ -69,6 +69,87 @@ describe('fetchTemplateSpecifications', () => {
                   value: 'wasm',
                   path: 'checkout/wasm/cart-transform/bundles',
                 },
+                {
+                  name: 'Rust',
+                  value: 'rust',
+                  path: 'checkout/rust/cart-transform/bundles',
+                },
+              ],
+              group: 'Discounts and checkout',
+              category: expect.any(Function),
+              configSchema: BaseFunctionConfigurationSchema,
+              templateURL: 'https://github.com/Shopify/function-examples',
+              helpURL: undefined,
+              templatePath: expect.any(Function),
+            },
+          ],
+        },
+      ]),
+    )
+
+    expect(got).toEqual(
+      expect.arrayContaining([
+        {
+          identifier: 'product_discounts',
+          name: 'Function - Product discounts',
+          group: 'Discounts and checkout',
+          supportLinks: [],
+          types: [
+            {
+              identifier: 'product_discounts',
+              externalIdentifier: 'product_discounts',
+              externalName: 'product_discounts',
+              gated: false,
+              registrationLimit: 10,
+              supportedFlavors: [
+                {
+                  name: 'Wasm',
+                  value: 'wasm',
+                  path: 'checkout/wasm/product_discounts/default',
+                },
+                {
+                  name: 'Rust',
+                  value: 'rust',
+                  path: 'checkout/rust/product_discounts/default',
+                },
+              ],
+              group: 'Discounts and checkout',
+              category: expect.any(Function),
+              configSchema: BaseFunctionConfigurationSchema,
+              templateURL: 'https://github.com/Shopify/function-examples',
+              helpURL: undefined,
+              templatePath: expect.any(Function),
+            },
+          ],
+        },
+      ]),
+    )
+
+    expect(got).toEqual(
+      expect.arrayContaining([
+        {
+          identifier: 'order_discounts',
+          name: 'Function - Order discounts',
+          group: 'Discounts and checkout',
+          supportLinks: [],
+          types: [
+            {
+              identifier: 'order_discounts',
+              externalIdentifier: 'order_discounts',
+              externalName: 'order_discounts',
+              gated: false,
+              registrationLimit: 10,
+              supportedFlavors: [
+                {
+                  name: 'Wasm',
+                  value: 'wasm',
+                  path: 'checkout/wasm/order_discounts/default',
+                },
+                {
+                  name: 'Rust',
+                  value: 'rust',
+                  path: 'checkout/rust/order_discounts/default',
+                },
               ],
               group: 'Discounts and checkout',
               category: expect.any(Function),

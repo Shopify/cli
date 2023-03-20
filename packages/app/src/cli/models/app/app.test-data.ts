@@ -271,6 +271,61 @@ export const testRemoteTemplateSpecifications: RemoteTemplateSpecification[] = [
             value: 'wasm',
             path: 'checkout/wasm/cart-transform/bundles',
           },
+          {
+            name: 'Rust',
+            value: 'rust',
+            path: 'checkout/rust/cart-transform/bundles',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    identifier: 'product_discounts',
+    name: 'Function - Product discounts',
+    group: 'Discounts and checkout',
+    supportLinks: [],
+    url: 'https://github.com/Shopify/function-examples',
+    types: [
+      {
+        type: 'product_discounts',
+        extensionPoints: [],
+        supportedFlavors: [
+          {
+            name: 'Wasm',
+            value: 'wasm',
+            path: 'checkout/wasm/product_discounts/default',
+          },
+          {
+            name: 'Rust',
+            value: 'rust',
+            path: 'checkout/rust/product_discounts/default',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    identifier: 'order_discounts',
+    name: 'Function - Order discounts',
+    group: 'Discounts and checkout',
+    supportLinks: [],
+    url: 'https://github.com/Shopify/function-examples',
+    types: [
+      {
+        type: 'order_discounts',
+        extensionPoints: [],
+        supportedFlavors: [
+          {
+            name: 'Wasm',
+            value: 'wasm',
+            path: 'checkout/wasm/order_discounts/default',
+          },
+          {
+            name: 'Rust',
+            value: 'rust',
+            path: 'checkout/rust/order_discounts/default',
+          },
         ],
       },
     ],

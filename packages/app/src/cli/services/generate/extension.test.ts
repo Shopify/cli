@@ -3,16 +3,18 @@ import extensionInit, {
   getFunctionRuntimeDependencies,
   TemplateFlavor,
 } from './extension.js'
+import {mapRemoteTemplateSpecification} from './fetch-template-specifications.js'
 import {blocks, configurationFileNames} from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {
   loadLocalExtensionsSpecifications,
-  loadLocalFunctionSpecifications,
   loadLocalUIExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
 import * as functionBuild from '../function/build.js'
 import * as functionCommon from '../function/common.js'
+import {testRemoteTemplateSpecifications} from '../../models/app/app.test-data.js'
+import {FunctionSpec} from '../../models/extensions/functions.js'
 import {describe, it, expect, vi} from 'vitest'
 import * as output from '@shopify/cli-kit/node/output'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
@@ -26,7 +28,10 @@ vi.mock('@shopify/cli-kit/node/node-package-manager')
 
 describe('initialize a extension', async () => {
   const allUISpecs = await loadLocalUIExtensionsSpecifications()
-  const allFunctionSpecs = await loadLocalFunctionSpecifications()
+  const allFunctionSpecs = testRemoteTemplateSpecifications
+    .map(mapRemoteTemplateSpecification)
+    .map((template) => template.types as FunctionSpec[])
+    .flat()
   const specifications = await loadLocalExtensionsSpecifications()
 
   it('successfully generates the extension when no other extensions exist', async () => {
@@ -482,9 +487,13 @@ async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | vo
 }
 
 describe('getFunctionRuntimeDependencies', () => {
+  const allFunctionSpecs = testRemoteTemplateSpecifications
+    .map(mapRemoteTemplateSpecification)
+    .map((template) => template.types as FunctionSpec[])
+    .flat()
+
   it('adds dependencies for JS functions', async () => {
     // Given
-    const allFunctionSpecs = await loadLocalFunctionSpecifications()
     const templateFlavor: TemplateFlavor = 'javascript'
 
     // When/then
@@ -497,7 +506,6 @@ describe('getFunctionRuntimeDependencies', () => {
 
   it('no-ops for non-JS functions', async () => {
     // Given
-    const allFunctionSpecs = await loadLocalFunctionSpecifications()
     const templateFlavor: TemplateFlavor = 'rust'
 
     // When/then
