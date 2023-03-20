@@ -23,7 +23,7 @@ import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
-import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -35,6 +35,7 @@ import {
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
 import {OutputProcess, outputInfo} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 
 export interface DevOptions {
@@ -92,6 +93,8 @@ async function dev(options: DevOptions) {
 
   const initiateUpdateUrls = (frontendConfig || backendConfig) && options.update
   let shouldUpdateURLs = false
+
+  await validateCustomPorts(backendConfig, frontendConfig)
 
   const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, currentURLs] = await Promise.all([
     generateFrontendURL({
@@ -410,6 +413,28 @@ async function logMetadataForDev(options: {
     store_fqdn: options.storeFqdn,
     cmd_dev_tunnel_custom: tunnelType === 'custom' ? options.tunnelUrl : undefined,
   }))
+}
+
+async function validateCustomPorts(backendConfig?: Web, frontendConfig?: Web) {
+  const backendPort = backendConfig?.configuration.port
+  const frontendPort = frontendConfig?.configuration.port
+  if (backendPort && frontendPort && backendPort === frontendPort) {
+    throw new AbortError(`Backend and frontend ports must be different. Found ${backendPort} for both.`)
+  }
+
+  if (backendPort) {
+    const portAvailable = await checkPortAvailability(backendPort)
+    if (!portAvailable) {
+      throw new AbortError(`Backend port ${backendPort} is not available, please choose a different one.`)
+    }
+  }
+
+  if (frontendPort) {
+    const portAvailable = await checkPortAvailability(frontendPort)
+    if (!portAvailable) {
+      throw new AbortError(`Frontend port ${frontendPort} is not available, please choose a different one.`)
+    }
+  }
 }
 
 export default dev
