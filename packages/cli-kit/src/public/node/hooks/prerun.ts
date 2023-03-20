@@ -1,4 +1,3 @@
-import {prerun as deprecationsHook} from './deprecations.js'
 import {startAnalytics} from '../../../private/node/analytics.js'
 import {outputDebug} from '../../../public/node/output.js'
 import Command from '../../../public/node/base-command.js'
@@ -19,7 +18,6 @@ export const hook: Hook.Prerun = async (options) => {
   const args = options.argv
   outputDebug(`Running command ${commandContent.command}`)
   await startAnalytics({commandContent, args, commandClass: options.Command as unknown as typeof Command})
-  deprecationsHook()
 }
 
 export function parseCommandContent(cmdInfo: {id: string; aliases: string[]; pluginAlias?: string}): CommandContent {

@@ -1,18 +1,9 @@
-import {clearNextDeprecationDate, getNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
+import {getNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {Command} from '@oclif/core'
 
 /**
- * Before a command run, clears the `nextDeprecationDate`
- * in case it was set on a previously failed run.
- */
-export const prerun = (): void => {
-  clearNextDeprecationDate()
-}
-
-/**
- * After a successful command run, if `nextDeprecationDate` is present,
- * renders an upgrade warning, and clears the `nextDeprecationDate`.
+ * After a successful command run, renders an upgrade warning if `nextDeprecationDate` is present.
  *
  * @param Command - The class of the command that was run.
  */
@@ -21,7 +12,6 @@ export const postrun = (Command: Command.Class): void => {
   if (nextDeprecationDate) {
     const forThemes = Command?.id?.includes('theme')
     renderUpgradeWarning(nextDeprecationDate, forThemes)
-    clearNextDeprecationDate()
   }
 }
 

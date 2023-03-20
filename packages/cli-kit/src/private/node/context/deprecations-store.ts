@@ -13,13 +13,6 @@ const globalWithDeprecationsStore: GlobalWithDeprecationsStore = {
   },
 }
 
-/*
- * Clear the next deprecation date.
- */
-export function clearNextDeprecationDate(): void {
-  globalWithDeprecationsStore.deprecationsStore.nextDeprecationDate = undefined
-}
-
 /**
  * Get the earliest date in the future when deprecations will no longer be supported, if any.
  *
