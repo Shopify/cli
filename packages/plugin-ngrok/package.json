@@ -62,11 +62,6 @@
     "hooks": {
       "tunnel_start": "dist/tunnel",
       "tunnel_provider": "dist/provider"
-    },
-    "topics": {
-      "ngrok": {
-        "description": "Manage ngrok tunnels."
-      }
     }
   }
 }

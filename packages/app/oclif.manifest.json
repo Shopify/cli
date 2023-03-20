@@ -212,7 +212,7 @@
           "name": "tunnel",
           "type": "option",
           "description": "Select the tunnel provider",
-          "hidden": false,
+          "hidden": true,
           "multiple": false,
           "options": [
             "cloudflare",

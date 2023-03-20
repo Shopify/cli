@@ -8,6 +8,7 @@
       "pluginName": "@shopify/plugin-ngrok",
       "pluginAlias": "@shopify/plugin-ngrok",
       "pluginType": "core",
+      "hidden": true,
       "aliases": [],
       "flags": {},
       "args": {
