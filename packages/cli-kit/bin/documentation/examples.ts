@@ -144,7 +144,7 @@ export const examples: {[key in string]: Example} = {
             title: 'Custom section',
             body: {
               list: {
-                items: ['Item 1', 'Item 2', 'Item 3'],
+                items: [{link: {label: 'Item 1', url: 'https://www.google.com/search?q=jh56t9l34kpo35tw8s28hn7s9s2xvzla01d8cn6j7yq&rlz=1C1GCEU_enUS832US832&oq=jh56t9l34kpo35tw8s28hn7s9s2xvzla01d8cn6j7yq&aqs=chrome.0.35i39l2j0l4j46j69i60.2711j0j7&sourceid=chrome&ie=UTF-8'}}, 'Item 2', {link: {label: 'Item 3', url: 'https://shopify.com'}}],
               },
             },
           },
