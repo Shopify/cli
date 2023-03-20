@@ -406,4 +406,24 @@ describe('Tasks', () => {
     `)
     expect(thirdTaskFunction).toHaveBeenCalled()
   })
+
+  test('has an onComplete function that is called with the context', async () => {
+    // Given
+    const taskFunction = vi.fn(async (ctx) => {
+      ctx.foo = 'bar'
+    })
+
+    const task: Task<{foo: string}> = {
+      title: 'task 1',
+      task: taskFunction,
+    }
+
+    // When
+    const context = await new Promise((resolve, _reject) => {
+      render(<Tasks tasks={[task]} silent={false} onComplete={resolve} />)
+    })
+
+    // Then
+    expect(context).toEqual({foo: 'bar'})
+  })
 })

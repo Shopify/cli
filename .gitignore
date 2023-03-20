@@ -152,4 +152,4 @@ packages/*/docs/
 packaging/dist
 !./.shadowenv.d/yarn.lisp
 
-cloudflared
+cloudflared*
