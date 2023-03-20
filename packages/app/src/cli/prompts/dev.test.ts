@@ -1,7 +1,6 @@
 import {
   appNamePrompt,
   createAsNewAppPrompt,
-  appTypePrompt,
   reloadStoreListPrompt,
   selectAppPrompt,
   selectOrganizationPrompt,
@@ -21,8 +20,8 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
-const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
-const ORG2: Organization = {id: '2', businessName: 'org2', appsNext: false}
+const ORG1: Organization = {id: '1', businessName: 'org1', betas: {appUiDeployments: false}}
+const ORG2: Organization = {id: '2', businessName: 'org2', betas: {appUiDeployments: false}}
 const APP1: OrganizationApp = {
   id: '1',
   title: 'app1',
@@ -153,26 +152,6 @@ describe('selectStore', () => {
       choices: [
         {label: 'store1', value: '1'},
         {label: 'store2', value: '2'},
-      ],
-    })
-  })
-})
-
-describe('appType', () => {
-  it('asks the user to select a type and returns it', async () => {
-    // Given
-    vi.mocked(renderSelectPrompt).mockResolvedValue('custom')
-
-    // When
-    const got = await appTypePrompt()
-
-    // Then
-    expect(got).toEqual('custom')
-    expect(renderSelectPrompt).toHaveBeenCalledWith({
-      message: 'What type of app are you building?',
-      choices: [
-        {label: 'Public: An app built for a wide merchant audience.', value: 'public'},
-        {label: 'Custom: An app custom built for a single client.', value: 'custom'},
       ],
     })
   })

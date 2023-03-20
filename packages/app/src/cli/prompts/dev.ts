@@ -1,5 +1,5 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
-import {fetchOrgAndApps} from '../services/dev/fetch.js'
+import {fetchOrgAndApps, OrganizationAppsResponse} from '../services/dev/fetch.js'
 import {
   renderAutocompletePrompt,
   renderConfirmationPrompt,
@@ -20,11 +20,7 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
   return organizations.find((org) => org.id === id)!
 }
 
-export async function selectAppPrompt(
-  apps: {pageInfo: {hasNextPage: boolean}; nodes: MinimalOrganizationApp[]},
-  orgId: string,
-  token: string,
-): Promise<string> {
+export async function selectAppPrompt(apps: OrganizationAppsResponse, orgId: string, token: string): Promise<string> {
   const toAnswer = (app: MinimalOrganizationApp) => ({label: app.title, value: app.apiKey})
   const appList = apps.nodes.map(toAnswer)
 
@@ -58,16 +54,6 @@ export async function selectStorePrompt(stores: OrganizationStore[]): Promise<Or
     choices: storeList,
   })
   return stores.find((store) => store.shopId === id)
-}
-
-export async function appTypePrompt(): Promise<'public' | 'custom'> {
-  return renderSelectPrompt({
-    message: 'What type of app are you building?',
-    choices: [
-      {label: 'Public: An app built for a wide merchant audience.', value: 'public'},
-      {label: 'Custom: An app custom built for a single client.', value: 'custom'},
-    ],
-  })
 }
 
 export async function appNamePrompt(currentName: string): Promise<string> {

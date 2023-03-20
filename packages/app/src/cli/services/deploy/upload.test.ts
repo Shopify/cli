@@ -1,4 +1,4 @@
-import {uploadFunctionExtensions} from './upload.js'
+import {uploadExtensionsBundle, uploadFunctionExtensions} from './upload.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {FunctionExtension} from '../../models/app/extensions.js'
 import {
@@ -7,14 +7,18 @@ import {
 } from '../../api/graphql/functions/upload_url_generate.js'
 import {AppFunctionSetMutation, AppFunctionSetMutationSchema} from '../../api/graphql/functions/app_function_set.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {functionProxyRequest} from '@shopify/cli-kit/node/api/partners'
+import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
-import {fetch} from '@shopify/cli-kit/node/http'
+import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/http')
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/node/crypto')
 
 describe('uploadFunctionExtensions', () => {
   let extension: FunctionExtension
@@ -695,6 +699,56 @@ describe('uploadFunctionExtensions', () => {
         },
         enableCreationUi: true,
         moduleUploadUrl: uploadUrl,
+      })
+    })
+  })
+})
+
+describe('uploadExtensionsBundle', () => {
+  test('calls a mutation on partners', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
+      vi.mocked(partnersRequest)
+        .mockResolvedValueOnce({
+          deploymentGenerateSignedUploadUrl: {
+            signedUploadUrl: 'signed-upload-url',
+          },
+        })
+        .mockResolvedValueOnce({
+          deploymentCreate: {
+            deployment: {
+              deployedVersions: [],
+            },
+            id: '2',
+          },
+        })
+      const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
+      vi.mocked<any>(formData).mockReturnValue(mockedFormData)
+      vi.mocked(randomUUID).mockReturnValue('random-uuid')
+      // When
+      await writeFile(joinPath(tmpDir, 'test.zip'), '')
+      await uploadExtensionsBundle({
+        apiKey: 'app-id',
+        bundlePath: joinPath(tmpDir, 'test.zip'),
+        extensions: [{uuid: '123', config: '{}', context: ''}],
+        token: 'api-token',
+        label: 'Deployed with CLI',
+      })
+
+      // Then
+      expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
+        apiKey: 'app-id',
+        bundleUrl: 'signed-upload-url',
+        extensions: [
+          {
+            config: '{}',
+            context: '',
+            uuid: '123',
+          },
+        ],
+        label: 'Deployed with CLI',
+        uuid: 'random-uuid',
       })
     })
   })

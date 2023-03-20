@@ -17,8 +17,8 @@ import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
-const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
-const ORG2: Organization = {id: '2', businessName: 'org2', appsNext: false}
+const ORG1: Organization = {id: '1', businessName: 'org1', betas: {appUiDeployments: false}}
+const ORG2: Organization = {id: '2', businessName: 'org2', betas: {appUiDeployments: false}}
 const APP1: OrganizationApp = {
   id: '1',
   title: 'app1',
@@ -49,7 +49,7 @@ const FETCH_ORG_RESPONSE_VALUE = {
       {
         id: ORG1.id,
         businessName: ORG1.businessName,
-        appsNext: ORG1.appsNext,
+        betas: ORG1.betas,
         apps: {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
         stores: {nodes: [STORE1]},
       },
@@ -62,7 +62,7 @@ const FETCH_STORE_RESPONSE_VALUE = {
       {
         id: ORG1.id,
         businessName: ORG1.businessName,
-        appsNext: ORG1.appsNext,
+        betas: ORG1.betas,
         website: ORG1.website,
         stores: {nodes: [STORE1]},
       },
