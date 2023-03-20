@@ -78,14 +78,20 @@ export type RenderAlertOptions = Omit<AlertOptions, 'type'>
  * │                                                          │
  * │  Reference                                               │
  * │    • Run `npm shopify help`                              │
- * │    • Dev docs ( https://shopify.dev )                    │
+ * │    • Dev docs [1]                                        │
  * │                                                          │
  * │  Custom section                                          │
- * │    • Item 1                                              │
+ * │    • Item 1 [2]                                          │
  * │    • Item 2                                              │
- * │    • Item 3                                              │
+ * │    • Item 3 [3]                                          │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
+ * [1] https://shopify.dev
+ * [2] https://www.google.com/search?q=jh56t9l34kpo35tw8s28hn7s
+ * 9s2xvzla01d8cn6j7yq&rlz=1C1GCEU_enUS832US832&oq=jh56t9l34kpo
+ * 35tw8s28hn7s9s2xvzla01d8cn6j7yq&aqs=chrome.0.35i39l2j0l4j46j
+ * 69i60.2711j0j7&sourceid=chrome&ie=UTF-8
+ * [3] https://shopify.com
  *
  */
 export function renderInfo(options: RenderAlertOptions) {
@@ -112,11 +118,11 @@ export function renderInfo(options: RenderAlertOptions) {
  * │  Partners Dashboard.                                     │
  * │                                                          │
  * │  Next steps                                              │
- * │    • See your deployment and set it live ( https://part  │
- * │      ners.shopify.com/1797046/apps/4523695/deployments   │
- * │      )                                                   │
+ * │    • See your deployment and set it live [1]             │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
+ * [1] https://partners.shopify.com/1797046/apps/4523695/deploy
+ * ments
  *
  */
 export function renderSuccess(options: RenderAlertOptions) {
@@ -145,9 +151,10 @@ export function renderSuccess(options: RenderAlertOptions) {
  * │  1, 2022.                                                │
  * │                                                          │
  * │  Reference                                               │
- * │    • Dev docs ( https://shopify.dev/app/scopes )         │
+ * │    • Dev docs [1]                                        │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
+ * [1] https://shopify.dev/app/scopes
  *
  */
 export function renderWarning(options: RenderAlertOptions) {
@@ -179,14 +186,15 @@ interface RenderFatalErrorOptions {
  * │  No Organization found                                   │
  * │                                                          │
  * │  Next steps                                              │
- * │    • Have you created a Shopify Partners organization (  │
- * │       https://partners.shopify.com/signup )?             │
+ * │    • Have you created a Shopify Partners organization    │
+ * │      [1]?                                                │
  * │    • Have you confirmed your accounts from the emails    │
  * │      you received?                                       │
  * │    • Need to connect to a different App or               │
  * │      organization? Run the command again with `--reset`  │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
+ * [1] https://partners.shopify.com/signup
  *
  */
 // eslint-disable-next-line max-params

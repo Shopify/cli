@@ -4,7 +4,9 @@ export interface AllOrganizationsQuerySchemaOrganization {
   id: string
   businessName: string
   website: string
-  appsNext: boolean
+  betas: {
+    appUiDeployments: boolean
+  }
 }
 
 export interface AllOrganizationsQuerySchema {
@@ -20,7 +22,9 @@ export const AllOrganizationsQuery = gql`
         id
         businessName
         website
-        appsNext
+        betas {
+          appUiDeployments
+        }
       }
     }
   }

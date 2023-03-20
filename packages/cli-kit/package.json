@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.45.0-pre.3",
+  "version": "3.45.0-pre.4",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -143,6 +143,7 @@
     "source-map-support": "0.5.21",
     "stacktracey": "2.1.8",
     "strip-ansi": "7.0.1",
+    "supports-hyperlinks": "3.0.0",
     "tempy": "3.0.0",
     "term-size": "3.0.2",
     "terminal-link": "3.0.0",
@@ -164,9 +165,9 @@
     "@vitest/coverage-istanbul": "0.28.5",
     "ink-testing-library": "^2.1.0",
     "node-stream-zip": "^1.15.0",
+    "ts-morph": "^17.0.1",
     "typedoc": "^0.23.26",
     "typescript": "4.9.5",
-    "ts-morph": "^17.0.1",
     "vite": "^2.9.13",
     "vitest": "^0.28.5"
   },

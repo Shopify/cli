@@ -7,7 +7,9 @@ export const FindOrganizationBasicQuery = gql`
         id
         businessName
         website
-        appsNext
+        betas {
+          appUiDeployments
+        }
       }
     }
   }
@@ -19,7 +21,9 @@ export interface FindOrganizationBasicQuerySchema {
       id: string
       businessName: string
       website: string
-      appsNext: boolean
+      betas: {
+        appUiDeployments: boolean
+      }
     }[]
   }
 }

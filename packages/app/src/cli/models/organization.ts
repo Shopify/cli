@@ -2,7 +2,9 @@ export interface Organization {
   id: string
   businessName: string
   website?: string
-  appsNext: boolean
+  betas: {
+    appUiDeployments: boolean
+  }
 }
 
 export interface MinimalOrganizationApp {

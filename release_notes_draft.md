@@ -20,6 +20,8 @@ now do a different and much cooler thing.
 
 * ***JS functions.*** JavaScript functions are now available! You can learn more
 in the docs: https://shopify.dev/docs/apps/functions/language-support/javascript
+* ***Custom ports for `app dev`.*** You can now define custom ports for the
+frontend or backend processes of the app.
 * ***Theme app extension logs.*** Logs for theme app extensions will no longer
 appear in a separate area and conflict with other logs or the preview/quit bar.
 Instead, they will be integrated with the other logs. Progress bars have been
