@@ -47,7 +47,7 @@ async function tunnel(options: {port: number}): Promise<{url: string}> {
         if (!url) url = findUrl(chunk)
         if (findConnection(chunk)) connected = true
         if (connected) {
-          if (!url) return reject(new Error('A connection was stablished but no Tunnel URL was found'))
+          if (!url) return reject(new Error('A connection was established but no Tunnel URL was found'))
           resolved = true
           resolve({url})
         }
