@@ -17,7 +17,7 @@ const today = new Date().toISOString().split("T")[0]
 const themeName = `nightly-theme-${today}`
 const themePath = path.join(homeDir, "Desktop", themeName)
 
-const installationTypes = ["homebrew", "local", "npm"]
+const installationTypes = os.platform() == "darwin" ? ["homebrew", "local", "npm"] : ["local", "npm"]
 
 program
   .description("Creates a test theme.")
@@ -60,7 +60,7 @@ program
         break
       case "npm":
         try {
-          const { stdout } = await execa("which", ["shopify"])
+          const { stdout } = await execa(os.platform() == "win32" ? "where.exe" : "which", ["shopify"])
           if (stdout !== "") {
             log(
               `Found existing global shopify: ${stdout}. Please uninstall and try again.`
