@@ -6,10 +6,10 @@ import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {basename} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
-import {schema} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 // Base config type that all config schemas must extend
-export type ConfigurationExtensionConfigType = schema.infer<typeof BaseConfigurationExtensionSchema>
+export type ConfigurationExtensionConfigType = zod.infer<typeof BaseConfigurationExtensionSchema>
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
