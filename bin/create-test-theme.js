@@ -29,7 +29,8 @@ program
     "-s, --store <store>",
     `your dev store's name (e.g. my-awesome-dev-store)`
   )
-  .option("--no-cleanup", "keep temp theme and nightly dependencies installed")
+  .option("--cleanup", "remove temp theme and nightly dependencies", true)
+  .option("--no-cleanup", "keep temp theme and nightly dependencies")
   .action(async (options) => {
     let shopifyExec
     let defaultOpts = { stdio: "inherit" }
@@ -110,7 +111,7 @@ program
     log(`Listing all your themes...`)
     await shopifyExec(["theme", "list"], false)
 
-    if (!options.noCleanup) {
+    if (options.cleanup) {
       switch (options.install) {
         case "homebrew":
           log("Uninstalling shopify-cli-nightly via homebrew...")

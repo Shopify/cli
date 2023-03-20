@@ -27,8 +27,13 @@ program
     `installation type: ${installationTypes.join(", ")}`
   )
   .option(
+    "--cleanup",
+    "remove temp app directory",
+    true
+  )
+  .option(
     "--no-cleanup",
-    "keep temporary app around"
+    "keep temp app directory"
   )
   .action(async (options) => {
     let shopifyExec
@@ -151,7 +156,7 @@ program
     log("Deploying your app...")
     await appExec("pnpm", ["shopify", "app", "deploy"])
 
-    if (!options.noCleanup) {
+    if (options.cleanup) {
       log(`Removing app in '${appPath}'...`)
       fs.rmSync(appPath, { recursive: true })
     }
