@@ -66,7 +66,8 @@ interface WithDeprecations {
 }
 
 /**
- * Sets the next deprecation date if response extensions contain deprecation dates.
+ * Sets the next deprecation date from [GraphQL response extensions](https://www.apollographql.com/docs/resources/graphql-glossary/#extensions)
+ * if `response.extensions.deprecations` objects contain a `supportedUntilDate` (ISO 8601-formatted string).
  *
  * @param response - The response of the query.
  */
