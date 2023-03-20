@@ -91,9 +91,6 @@ program
         process.exit(1)
     }
 
-    log("Setting Ruby version in app...")
-    fs.writeFileSync(path.join(appPath, ".ruby-version"), "3.2.1")
-
     if (extensions === extensionTypes) {
       log("Running the app...")
       await pnpmDev()
@@ -112,6 +109,9 @@ program
     }
 
     if (extensions.has("theme")) {
+      // set Ruby version inside app or CLI2 will complain
+      fs.writeFileSync(path.join(appPath, ".ruby-version"), "3.2.1")
+
       log("Generating Theme App extension...")
       await appExec("pnpm", [
         "generate",
