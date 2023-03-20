@@ -21,15 +21,15 @@ const installationTypes = os.platform() == "darwin" ? ["homebrew", "local", "npm
 
 program
   .description("Creates a test theme.")
-  .requiredOption(
+  .option(
     "-i, --install <type>",
-    `installation type: ${installationTypes.join(", ")}`
+    `installation type: ${installationTypes.join(", ")}`,
+    "local"
   )
   .requiredOption(
     "-s, --store <store>",
     `your dev store's name (e.g. my-awesome-dev-store)`
   )
-  .option("--cleanup", "remove temp theme and nightly dependencies", true)
   .option("--no-cleanup", "keep temp theme and nightly dependencies")
   .action(async (options) => {
     let shopifyExec
