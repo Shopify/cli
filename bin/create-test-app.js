@@ -19,20 +19,32 @@ const appName = `nightly-app-${today}`
 const appPath = path.join(homeDir, "Desktop", appName)
 
 const installationTypes = ["local", "nightly"]
+const extensionTypes = ["ui", "theme", "function"]
 
 program
   .description("Creates a test app.")
-  .requiredOption(
+  .option(
     "-i, --install <type>",
-    `installation type: ${installationTypes.join(", ")}`
+    `installation type: ${installationTypes.join(", ")}`,
+    "local"
+  )
+  .option(
+    "-e, --extensions <extensions>",
+    "comma-separated list of extensions to generate",
+    extensionTypes.join(",")
   )
   .option(
     "--no-cleanup",
-    "keep temporary app around"
+    "keep temp app directory"
+  )
+  .option(
+    "--no-deploy",
+    "don't deploy the app to Shopify"
   )
   .action(async (options) => {
     let shopifyExec
     let defaultOpts = { stdio: "inherit" }
+    let extensions = new Set(options.extensions.split(","))
 
     switch (options.install) {
       case "local":
@@ -57,6 +69,7 @@ program
         if (os.platform() == "win32") {
           fs.rmSync(path.join(appPath, "pnpm-lock.yaml"))
         }
+        await appExec("pnpm", ["install"])
         break
       case "nightly":
         log(`Creating new app in ${appPath}...`)
@@ -78,80 +91,89 @@ program
         process.exit(1)
     }
 
-    log("Setting Ruby version in app...")
-    fs.writeFileSync(path.join(appPath, ".ruby-version"), "3.2.1")
+    if (extensions.length === extensionTypes.length) {
+      log("Running the app...")
+      await pnpmDev()
+    }
 
-    log("Running the app...")
-    await appExec("pnpm", ["install"])
-    await pnpmDev()
+    if (extensions.has("ui")) {
+      log("Generating UI extension...")
+      await appExec("pnpm", [
+        "generate",
+        "extension",
+        "--type=subscription_ui",
+        "--name=sub-ui-ext",
+        "--template=vanilla-js",
+      ])
+      await pnpmDev()
+    }
 
-    log("Generating UI extension...")
-    await appExec("pnpm", [
-      "generate",
-      "extension",
-      "--type=subscription_ui",
-      "--name=sub-ui-ext",
-      "--template=vanilla-js",
-    ])
-    await pnpmDev()
+    if (extensions.has("theme")) {
+      // set Ruby version inside app or CLI2 will complain
+      fs.writeFileSync(path.join(appPath, ".ruby-version"), "3.2.1")
 
-    log("Generating Theme App extension...")
-    await appExec("pnpm", [
-      "generate",
-      "extension",
-      "--type=theme_app_extension",
-      "--name=theme-app-ext",
-    ])
-    const fixtureAppTheme = path.join(
-      __dirname,
-      "..",
-      "fixtures",
-      "app",
-      "extensions",
-      "theme-extension"
-    )
-
-    const filesToCopy = [
-      path.join("blocks", "star_rating.liquid"),
-      path.join("snippets", "stars.liquid"),
-      path.join("assets", "thumbs-up.png"),
-      path.join("locales", "en.default.json"),
-    ]
-    filesToCopy.forEach((file) => {
-      fs.copyFileSync(
-        path.join(fixtureAppTheme, file),
-        path.join(appPath, "extensions", "theme-app-ext", file)
+      log("Generating Theme App extension...")
+      await appExec("pnpm", [
+        "generate",
+        "extension",
+        "--type=theme_app_extension",
+        "--name=theme-app-ext",
+      ])
+      const fixtureAppTheme = path.join(
+        __dirname,
+        "..",
+        "fixtures",
+        "app",
+        "extensions",
+        "theme-extension"
       )
-    })
 
-    const gitkeepFolders = [ "assets", "blocks", "locales", "snippets" ]
-    gitkeepFolders.forEach((folder) => {
-      fs.rmSync(path.join(appPath, "extensions", "theme-app-ext", folder, ".gitkeep"))
-    })
+      const filesToCopy = [
+        path.join("blocks", "star_rating.liquid"),
+        path.join("snippets", "stars.liquid"),
+        path.join("assets", "thumbs-up.png"),
+        path.join("locales", "en.default.json"),
+      ]
+      filesToCopy.forEach((file) => {
+        fs.copyFileSync(
+          path.join(fixtureAppTheme, file),
+          path.join(appPath, "extensions", "theme-app-ext", file)
+        )
+      })
 
-    await pnpmDev()
+      const gitkeepFolders = [ "assets", "blocks", "locales", "snippets" ]
+      gitkeepFolders.forEach((folder) => {
+        fs.rmSync(path.join(appPath, "extensions", "theme-app-ext", folder, ".gitkeep"))
+      })
 
-    log("Generating JS function...")
-    const functionDir = path.join(appPath, "extensions", "prod-discount-fun")
-    await appExec("pnpm", [
-      "generate",
-      "extension",
-      "--type=product_discounts",
-      "--name=prod-discount-fun",
-      "--template=typescript",
-    ])
-    await appExec("pnpm", ["build"], { cwd: functionDir })
-    const previewProcess = execa("pnpm", ["preview"], {
-      cwd: functionDir,
-      stdout: "inherit",
-    })
-    Readable.from(['{"discountNode":{"metafield":null}}']).pipe(previewProcess.stdin)
-    await previewProcess
+      await pnpmDev()
+    }
 
-    log("Deploying your app...")
-    await appExec("pnpm", ["shopify", "app", "deploy"])
+    if (extensions.has("function")) {
+      log("Generating JS function...")
+      const functionDir = path.join(appPath, "extensions", "prod-discount-fun")
+      await appExec("pnpm", [
+        "generate",
+        "extension",
+        "--type=product_discounts",
+        "--name=prod-discount-fun",
+        "--template=typescript",
+      ])
+      await appExec("pnpm", ["build"], { cwd: functionDir })
+      const previewProcess = execa("pnpm", ["preview"], {
+        cwd: functionDir,
+        stdout: "inherit",
+      })
+      Readable.from(['{"discountNode":{"metafield":null}}']).pipe(previewProcess.stdin)
+      await previewProcess
+    }
 
-    if (!options.noCleanup) {
+    if (options.deploy) {
+      log("Deploying your app...")
+      await appExec("pnpm", ["shopify", "app", "deploy", "-f"])
+    }
+
+    if (options.cleanup) {
       log(`Removing app in '${appPath}'...`)
       fs.rmSync(appPath, { recursive: true })
     }

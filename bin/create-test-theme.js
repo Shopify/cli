@@ -17,19 +17,20 @@ const today = new Date().toISOString().split("T")[0]
 const themeName = `nightly-theme-${today}`
 const themePath = path.join(homeDir, "Desktop", themeName)
 
-const installationTypes = ["homebrew", "local", "npm"]
+const installationTypes = os.platform() == "darwin" ? ["homebrew", "local", "npm"] : ["local", "npm"]
 
 program
   .description("Creates a test theme.")
-  .requiredOption(
+  .option(
     "-i, --install <type>",
-    `installation type: ${installationTypes.join(", ")}`
+    `installation type: ${installationTypes.join(", ")}`,
+    "local"
   )
   .requiredOption(
     "-s, --store <store>",
     `your dev store's name (e.g. my-awesome-dev-store)`
   )
-  .option("--no-cleanup", "keep temp theme and nightly dependencies installed")
+  .option("--no-cleanup", "keep temp theme and nightly dependencies")
   .action(async (options) => {
     let shopifyExec
     let defaultOpts = { stdio: "inherit" }
@@ -59,7 +60,7 @@ program
         break
       case "npm":
         try {
-          const { stdout } = await execa("which", ["shopify"])
+          const { stdout } = await execa(os.platform() == "win32" ? "where.exe" : "which", ["shopify"])
           if (stdout !== "") {
             log(
               `Found existing global shopify: ${stdout}. Please uninstall and try again.`
@@ -110,7 +111,7 @@ program
     log(`Listing all your themes...`)
     await shopifyExec(["theme", "list"], false)
 
-    if (!options.noCleanup) {
+    if (options.cleanup) {
       switch (options.install) {
         case "homebrew":
           log("Uninstalling shopify-cli-nightly via homebrew...")
