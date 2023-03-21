@@ -85,7 +85,8 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     usingLocalhost = true
   } else {
     frontendPort = await getAvailableTCPPort()
-    const provider = options.tunnelProvider || options.useCloudflareTunnels ? 'cloudflare' : 'ngrok'
+    const defaultProvider = options.useCloudflareTunnels ? 'cloudflare' : 'ngrok'
+    const provider = options.tunnelProvider || defaultProvider
     frontendUrl = await generateURL(options.commandConfig, provider, frontendPort)
   }
 
