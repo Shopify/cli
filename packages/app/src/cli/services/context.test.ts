@@ -19,7 +19,7 @@ import {
 } from './context.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
-import {OrganizationApp, OrganizationStore} from '../models/organization.js'
+import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
@@ -27,7 +27,6 @@ import {testApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
 import {App} from '../models/app/app.js'
-import {AllOrganizationsQuerySchemaOrganization} from '../api/graphql/all_orgs.js'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -68,13 +67,13 @@ const APP2: OrganizationApp = {
   grantedScopes: [],
 }
 
-const ORG1: AllOrganizationsQuerySchemaOrganization = {
+const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
   betas: {appUiDeployments: false, cliTunnelAlternative: false},
   website: '',
 }
-const ORG2: AllOrganizationsQuerySchemaOrganization = {
+const ORG2: Organization = {
   id: '2',
   businessName: 'org2',
   betas: {appUiDeployments: false, cliTunnelAlternative: true},

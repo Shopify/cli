@@ -3,10 +3,9 @@ import {gql} from 'graphql-request'
 export interface AllOrganizationsQuerySchemaOrganization {
   id: string
   businessName: string
-  website: string
+  website?: string
   betas: {
     appUiDeployments?: boolean
-    cliTunnelAlternative?: boolean
   }
 }
 
@@ -25,7 +24,6 @@ export const AllOrganizationsQuery = gql`
         website
         betas {
           appUiDeployments
-          cliTunnelAlternative
         }
       }
     }

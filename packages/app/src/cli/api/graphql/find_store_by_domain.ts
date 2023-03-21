@@ -9,7 +9,6 @@ export const FindStoreByDomainQuery = gql`
         website
         betas {
           appUiDeployments
-          cliTunnelAlternative
         }
         stores(shopDomain: $shopDomain, first: 1, archived: false) {
           nodes {
@@ -34,7 +33,6 @@ export interface FindStoreByDomainSchema {
       website: string
       betas: {
         appUiDeployments?: boolean
-        cliTunnelAlternative?: boolean
       }
       stores: {
         nodes: {
