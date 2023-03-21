@@ -170,7 +170,7 @@ program
 
     if (options.deploy) {
       log("Deploying your app...")
-      await appExec("pnpm", ["shopify", "app", "deploy"])
+      await appExec("pnpm", ["shopify", "app", "deploy", "-f"])
     }
 
     if (options.cleanup) {
