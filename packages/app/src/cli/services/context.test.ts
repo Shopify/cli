@@ -77,7 +77,7 @@ const ORG1: AllOrganizationsQuerySchemaOrganization = {
 const ORG2: AllOrganizationsQuerySchemaOrganization = {
   id: '2',
   businessName: 'org2',
-  betas: {appUiDeployments: false, cliTunnelAlternative: false},
+  betas: {appUiDeployments: false, cliTunnelAlternative: true},
   website: '',
 }
 
@@ -166,7 +166,7 @@ beforeEach(async () => {
   vi.mocked(selectOrCreateApp).mockResolvedValue(APP1)
   vi.mocked(selectStore).mockResolvedValue(STORE1)
   vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
-  vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG1)
+  vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)
   vi.mocked(fetchOrgAndApps).mockResolvedValue(FETCH_RESPONSE)
   vi.mocked(getPackageManager).mockResolvedValue('npm')
 })
@@ -249,6 +249,24 @@ describe('ensureDevContext', () => {
     expect(metadata.getAllPublicMetadata()).toMatchObject({
       api_key: APP1.apiKey,
       partner_id: 1,
+    })
+  })
+
+  it('returns useCloudflareTunnels false if the beta is enabled in partners', async () => {
+    // Given
+    vi.mocked(getAppInfo).mockReturnValue(undefined)
+    vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
+
+    // When
+    const got = await ensureDevContext(INPUT, 'token')
+
+    // Then
+    expect(got).toEqual({
+      remoteApp: {...APP1, apiSecret: 'secret1'},
+      storeFqdn: STORE1.shopDomain,
+      remoteAppUpdated: true,
+      useCloudflareTunnels: false,
+      updateURLs: undefined,
     })
   })
 
