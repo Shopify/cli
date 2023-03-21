@@ -101,6 +101,13 @@
           "description": "Deploy without asking for confirmation.",
           "hidden": false,
           "allowNo": false
+        },
+        "label": {
+          "name": "label",
+          "type": "option",
+          "description": "The deployment label.",
+          "hidden": true,
+          "multiple": false
         }
       },
       "args": {}
