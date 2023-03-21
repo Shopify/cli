@@ -4,6 +4,7 @@ export interface Organization {
   website?: string
   betas: {
     appUiDeployments: boolean
+    cliTunnelAlternative: boolean
   }
 }
 

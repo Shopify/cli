@@ -6,6 +6,7 @@ export interface AllOrganizationsQuerySchemaOrganization {
   website: string
   betas: {
     appUiDeployments: boolean
+    cliTunnelAlternative: boolean
   }
 }
 
@@ -24,6 +25,7 @@ export const AllOrganizationsQuery = gql`
         website
         betas {
           appUiDeployments
+          cliTunnelAlternative
         }
       }
     }

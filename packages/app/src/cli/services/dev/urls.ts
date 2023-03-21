@@ -19,10 +19,10 @@ export interface PartnersURLs {
 
 export interface FrontendURLOptions {
   app: AppInterface
-  tunnelProvider: string
+  tunnelProvider?: string
   noTunnel: boolean
   tunnelUrl?: string
-  cachedTunnelPlugin?: string
+  useCloudflareTunnels: boolean
   commandConfig: Config
 }
 
@@ -54,8 +54,7 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   let usingLocalhost = false
   const hasExtensions = options.app.hasUIExtensions()
 
-  const needsTunnel =
-    (hasExtensions || options.tunnelProvider !== undefined || options.cachedTunnelPlugin) && !options.noTunnel
+  const needsTunnel = hasExtensions && !options.noTunnel
 
   if (codespaceURL()) {
     frontendUrl = `https://${codespaceURL()}-${frontendPort}.githubpreview.dev`
@@ -89,7 +88,8 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
 
   if (needsTunnel) {
     frontendPort = await getAvailableTCPPort()
-    frontendUrl = await generateURL(options.commandConfig, options.tunnelProvider, frontendPort)
+    const provider = options.tunnelProvider || options.useCloudflareTunnels ? 'cloudflare' : 'ngrok'
+    frontendUrl = await generateURL(options.commandConfig, provider, frontendPort)
   } else {
     frontendPort = await getAvailableTCPPort()
     frontendUrl = 'http://localhost'

@@ -71,7 +71,6 @@ export default class Dev extends Command {
       description: 'Select the tunnel provider',
       env: 'SHOPIFY_FLAG_TUNNEL',
       options: ['cloudflare', 'ngrok'],
-      default: 'cloudflare',
       exclusive: ['tunnel-url', 'no-tunnel'],
     }),
     theme: Flags.string({

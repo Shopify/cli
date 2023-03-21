@@ -9,6 +9,7 @@ export const FindOrganizationBasicQuery = gql`
         website
         betas {
           appUiDeployments
+          cliTunnelAlternative
         }
       }
     }
@@ -23,6 +24,7 @@ export interface FindOrganizationBasicQuerySchema {
       website: string
       betas: {
         appUiDeployments: boolean
+        cliTunnelAlternative: boolean
       }
     }[]
   }
