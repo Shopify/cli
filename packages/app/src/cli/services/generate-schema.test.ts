@@ -89,7 +89,7 @@ describe('generateSchemaService', () => {
         organization: {
           id: '1',
           businessName: 'businessName',
-          betas: {appUiDeployments: false},
+          betas: {appUiDeployments: false, cliTunnelAlternative: false},
         },
       })
       vi.mocked(isTerminalInteractive).mockReturnValue(true)
