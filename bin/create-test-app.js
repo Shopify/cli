@@ -91,7 +91,7 @@ program
         process.exit(1)
     }
 
-    if (extensions === extensionTypes) {
+    if (extensions.length === extensionTypes.length) {
       log("Running the app...")
       await pnpmDev()
     }
