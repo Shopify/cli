@@ -32,6 +32,12 @@ export default class Deploy extends Command {
       char: 'f',
       default: false,
     }),
+    label: Flags.string({
+      // we can make this visible once we've rolled out unified deployments
+      hidden: true,
+      description: 'The deployment label.',
+      env: 'SHOPIFY_FLAG_LABEL',
+    }),
   }
 
   async run(): Promise<void> {
@@ -43,6 +49,6 @@ export default class Deploy extends Command {
 
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path})
-    await deploy({app, apiKey: flags['api-key'], reset: flags.reset, force: flags.force})
+    await deploy({app, apiKey: flags['api-key'], reset: flags.reset, force: flags.force, label: flags.label})
   }
 }
