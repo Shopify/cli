@@ -55,7 +55,7 @@ interface DevContextOutput {
  *
  * We just need a valid app API key to access the Specifications API.
  * - If the API key is provided via flag, we use it.
- * - Else, if there is causeCloudflareTunnelsched API key for the current directory, we use it.
+ * - Else, if there is cached API key for the current directory, we use it.
  * - Else, we prompt the user to select/create an app.
  *
  * The selection is then cached as the "dev" app for the current directory.
