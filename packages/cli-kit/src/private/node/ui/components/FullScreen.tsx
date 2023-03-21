@@ -8,6 +8,7 @@ import React, {FunctionComponent, useEffect, useState} from 'react'
  */
 const FullScreen: FunctionComponent = ({children}): JSX.Element => {
   const {stdout} = useStdout()
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
   const standardOutput = stdout!
 
   const [size, setSize] = useState({
