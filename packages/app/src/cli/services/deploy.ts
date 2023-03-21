@@ -144,7 +144,7 @@ export async function deploy(options: DeployOptions) {
         registrations,
         validationErrors,
         deploymentId,
-        unifiedDeployment: organization.betas.appUiDeployments,
+        unifiedDeployment: organization.betas.appUiDeployments ?? false,
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

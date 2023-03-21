@@ -139,7 +139,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
   const organization = await fetchOrgFromId(orgId, token)
-  const useCloudflareTunnels = !organization.betas.cliTunnelAlternative
+  const useCloudflareTunnels = organization.betas.cliTunnelAlternative !== true
 
   if (selectedApp && selectedStore) {
     setAppInfo({

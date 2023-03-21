@@ -97,7 +97,7 @@ describe('deploy', () => {
     await testDeployBundle(app, {
       id: 'org-id',
       businessName: 'org-name',
-      betas: {appUiDeployments: true, cliTunnelAlternative: false},
+      betas: {appUiDeployments: true},
     })
 
     // Then
@@ -117,7 +117,7 @@ describe('deploy', () => {
     await testDeployBundle(app, {
       id: 'org-id',
       businessName: 'org-name',
-      betas: {appUiDeployments: false, cliTunnelAlternative: false},
+      betas: {appUiDeployments: false},
     })
 
     // Then
@@ -164,7 +164,7 @@ describe('deploy', () => {
     await testDeployBundle(app, {
       id: 'org-id',
       businessName: 'org-name',
-      betas: {appUiDeployments: true, cliTunnelAlternative: false},
+      betas: {appUiDeployments: true},
     })
 
     // Then
@@ -200,7 +200,7 @@ async function testDeployBundle(app: AppInterface, organization?: Organization) 
     organization: organization ?? {
       id: 'org-id',
       businessName: 'org-name',
-      betas: {appUiDeployments: false, cliTunnelAlternative: false},
+      betas: {appUiDeployments: false},
     },
   })
   vi.mocked(useThemebundling).mockReturnValue(true)

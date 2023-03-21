@@ -62,7 +62,7 @@ describe('findApiKey', () => {
   const org = {
     id: '1',
     businessName: 'org1',
-    betas: {appUiDeployments: false, cliTunnelAlternative: false},
+    betas: {},
     website: 'http://example.org',
   }
 

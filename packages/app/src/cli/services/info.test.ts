@@ -85,7 +85,7 @@ describe('info', () => {
     const app = mockApp()
     const organization = {
       id: '123',
-      betas: {appUiDeployments: false, cliTunnelAlternative: false},
+      betas: {},
       businessName: 'test',
       website: '',
       apps: {nodes: []},
@@ -130,7 +130,7 @@ describe('info', () => {
     const app = mockApp()
     const organization = {
       id: '123',
-      betas: {appUiDeployments: false, cliTunnelAlternative: false},
+      betas: {},
       businessName: 'test',
       website: '',
       apps: {nodes: []},
@@ -203,7 +203,7 @@ describe('info', () => {
     })
     const organization = {
       id: '123',
-      betas: {appUiDeployments: false, cliTunnelAlternative: false},
+      betas: {},
       businessName: 'test',
       website: '',
       apps: {nodes: []},

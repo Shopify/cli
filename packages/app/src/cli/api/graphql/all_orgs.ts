@@ -5,8 +5,8 @@ export interface AllOrganizationsQuerySchemaOrganization {
   businessName: string
   website: string
   betas: {
-    appUiDeployments: boolean
-    cliTunnelAlternative: boolean
+    appUiDeployments?: boolean
+    cliTunnelAlternative?: boolean
   }
 }
 
