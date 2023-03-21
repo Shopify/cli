@@ -13,6 +13,11 @@ export interface ReverseHTTPProxyTarget {
   logPrefix: string
 
   /**
+   * The port to use for the target HTTP server. When undefined, a random port is automatically assigned.
+   */
+  customPort?: number
+
+  /**
    * The HTTP path prefix used to match against request and determine if the traffic should be
    * forwarded to this target
    */
@@ -55,8 +60,8 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic({
 
   const processes = await Promise.all(
     proxyTargets.map(async (target): Promise<OutputProcess> => {
-      const targetPort = await getAvailableTCPPort()
-      rules[target.pathPrefix ?? '/'] = `http://localhost:${targetPort}`
+      const targetPort = target.customPort || (await getAvailableTCPPort())
+      rules[target.pathPrefix ?? 'default'] = `http://localhost:${targetPort}`
       return {
         prefix: target.logPrefix,
         action: async (stdout, stderr, signal) => {
@@ -149,5 +154,5 @@ function match(rules: {[key: string]: string}, req: http.IncomingMessage) {
     if (path.startsWith(pathPrefix)) return rules[pathPrefix]
   }
 
-  return undefined
+  return rules.default
 }
