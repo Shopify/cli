@@ -302,6 +302,7 @@ describe('generateFrontendURL', () => {
       tunnelProvider: 'cloudflare',
       noTunnel: false,
       tunnelUrl: 'https://my-tunnel-provider.io:4242',
+      useCloudflareTunnels: true,
       commandConfig: new Config({root: ''}),
     }
 
@@ -319,6 +320,7 @@ describe('generateFrontendURL', () => {
       tunnelProvider: 'cloudflare',
       noTunnel: true,
       tunnelUrl: 'https://my-tunnel-provider.io:4242',
+      useCloudflareTunnels: true,
       commandConfig: new Config({root: ''}),
     }
 
@@ -329,13 +331,14 @@ describe('generateFrontendURL', () => {
     expect(got).toEqual({frontendUrl: 'https://my-tunnel-provider.io', frontendPort: 4242, usingLocalhost: false})
   })
 
-  it('generates a tunnel url when there is no tunnelUrl and there are no extensions', async () => {
+  it('generates a tunnel url with cloudflare when there is no tunnelUrl and use cloudflare is true', async () => {
     // Given
-    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(ok('https://fake-url.ngrok.io'))
+    vi.mocked(runTunnelPlugin).mockResolvedValue(ok('https://fake-url.cloudflare.io'))
     const options = {
       app: testApp({hasUIExtensions: () => false}),
-      tunnelProvider: 'cloudflare',
+      tunnelProvider: undefined,
       noTunnel: false,
+      useCloudflareTunnels: true,
       commandConfig: new Config({root: ''}),
     }
 
@@ -343,15 +346,36 @@ describe('generateFrontendURL', () => {
     const got = await generateFrontendURL(options)
 
     // Then
+    expect(runTunnelPlugin).toHaveBeenCalledWith(options.commandConfig, 3042, 'cloudflare')
+    expect(got).toEqual({frontendUrl: 'https://fake-url.cloudflare.io', frontendPort: 3042, usingLocalhost: false})
+  })
+
+  it('generates a tunnel url with ngrok when there is no tunnelUrl and use cloudflare is false', async () => {
+    // Given
+    vi.mocked(runTunnelPlugin).mockResolvedValue(ok('https://fake-url.ngrok.io'))
+    const options = {
+      app: testApp({hasUIExtensions: () => false}),
+      tunnelProvider: undefined,
+      noTunnel: false,
+      useCloudflareTunnels: false,
+      commandConfig: new Config({root: ''}),
+    }
+
+    // When
+    const got = await generateFrontendURL(options)
+
+    // Then
+    expect(vi.mocked(runTunnelPlugin)).toHaveBeenCalledWith(options.commandConfig, 3042, 'ngrok')
     expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingLocalhost: false})
   })
 
-  it('returns localhost if noTunnel is true even if there are extensions', async () => {
+  it('returns localhost if noTunnel is true', async () => {
     // Given
     const options = {
       app: testApp({hasUIExtensions: () => true}),
       tunnelProvider: 'cloudflare',
       noTunnel: true,
+      useCloudflareTunnels: true,
       commandConfig: new Config({root: ''}),
     }
 
@@ -370,6 +394,7 @@ describe('generateFrontendURL', () => {
       tunnelProvider: 'cloudflare',
       noTunnel: false,
       tunnelUrl: 'https://my-tunnel-provider.io',
+      useCloudflareTunnels: true,
       commandConfig: new Config({root: ''}),
     }
 
@@ -387,6 +412,7 @@ describe('generateFrontendURL', () => {
       app: testApp({hasUIExtensions: () => true}),
       tunnelProvider: 'cloudflare',
       noTunnel: false,
+      useCloudflareTunnels: true,
       commandConfig: new Config({root: ''}),
     }
 
@@ -397,26 +423,6 @@ describe('generateFrontendURL', () => {
     await expect(got).rejects.toThrow()
   })
 
-  it('Reuses tunnel option if cached even if tunnel is false and there are no extensions', async () => {
-    // Given
-    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(ok('https://fake-url.ngrok.io'))
-    const options = {
-      app: testApp({hasUIExtensions: () => false, directory: '/app-path'}),
-      tunnelProvider: 'cloudflare',
-      noTunnel: false,
-      cachedTunnelPlugin: 'ngrok',
-      commandConfig: new Config({root: ''}),
-    }
-
-    // When
-    const got = await generateFrontendURL(options)
-
-    // Then
-    expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingLocalhost: false})
-    expect(setAppInfo).not.toBeCalled()
-    expect(renderSelectPrompt).not.toBeCalled()
-  })
-
   it('Returns a gitpod url if we are in a gitpod environment', async () => {
     // Given
     vi.mocked(gitpodURL).mockReturnValue('https://gitpod.url.fqdn.com')
@@ -424,6 +430,7 @@ describe('generateFrontendURL', () => {
       app: testApp({hasUIExtensions: () => false}),
       tunnelProvider: 'cloudflare',
       noTunnel: false,
+      useCloudflareTunnels: true,
       commandConfig: new Config({root: ''}),
     }
 
@@ -443,6 +450,7 @@ describe('generateFrontendURL', () => {
       app: testApp({hasUIExtensions: () => false}),
       tunnelProvider: 'cloudflare',
       noTunnel: false,
+      useCloudflareTunnels: true,
       commandConfig: new Config({root: ''}),
     }
 
@@ -469,6 +477,7 @@ describe('generateFrontendURL', () => {
       app: testApp({hasUIExtensions: () => false}),
       tunnelProvider: 'cloudflare',
       noTunnel: false,
+      useCloudflareTunnels: true,
       commandConfig: new Config({root: ''}),
     }
 
@@ -494,6 +503,7 @@ describe('generateFrontendURL', () => {
       app: testApp({hasUIExtensions: () => false}),
       tunnelProvider: 'cloudflare',
       noTunnel: false,
+      useCloudflareTunnels: true,
       commandConfig: new Config({root: ''}),
     }
 
@@ -517,6 +527,7 @@ describe('generateFrontendURL', () => {
       app: testApp({hasUIExtensions: () => false}),
       tunnelProvider: 'cloudflare',
       noTunnel: false,
+      useCloudflareTunnels: true,
       tunnelUrl: 'https://my-tunnel-provider.io:4242',
       commandConfig: new Config({root: ''}),
     }

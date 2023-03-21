@@ -52,9 +52,6 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   let frontendPort = 4040
   let frontendUrl: string
   let usingLocalhost = false
-  const hasExtensions = options.app.hasUIExtensions()
-
-  const needsTunnel = hasExtensions && !options.noTunnel
 
   if (codespaceURL()) {
     frontendUrl = `https://${codespaceURL()}-${frontendPort}.githubpreview.dev`
@@ -86,14 +83,14 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 
-  if (needsTunnel) {
-    frontendPort = await getAvailableTCPPort()
-    const provider = options.tunnelProvider || options.useCloudflareTunnels ? 'cloudflare' : 'ngrok'
-    frontendUrl = await generateURL(options.commandConfig, provider, frontendPort)
-  } else {
+  if (options.noTunnel) {
     frontendPort = await getAvailableTCPPort()
     frontendUrl = 'http://localhost'
     usingLocalhost = true
+  } else {
+    frontendPort = await getAvailableTCPPort()
+    const provider = options.tunnelProvider || options.useCloudflareTunnels ? 'cloudflare' : 'ngrok'
+    frontendUrl = await generateURL(options.commandConfig, provider, frontendPort)
   }
 
   return {frontendUrl, frontendPort, usingLocalhost}

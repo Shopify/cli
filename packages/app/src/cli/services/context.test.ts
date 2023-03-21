@@ -71,13 +71,13 @@ const APP2: OrganizationApp = {
 const ORG1: AllOrganizationsQuerySchemaOrganization = {
   id: '1',
   businessName: 'org1',
-  betas: {appUiDeployments: false},
+  betas: {appUiDeployments: false, cliTunnelAlternative: false},
   website: '',
 }
 const ORG2: AllOrganizationsQuerySchemaOrganization = {
   id: '2',
   businessName: 'org2',
-  betas: {appUiDeployments: false},
+  betas: {appUiDeployments: false, cliTunnelAlternative: false},
   website: '',
 }
 
@@ -235,7 +235,7 @@ describe('ensureDevContext', () => {
       remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: true,
-      tunnelPlugin: undefined,
+      useCloudflareTunnels: true,
       updateURLs: undefined,
     })
     expect(setAppInfo).toHaveBeenNthCalledWith(1, {
@@ -267,7 +267,7 @@ describe('ensureDevContext', () => {
       remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: false,
-      tunnelPlugin: undefined,
+      useCloudflareTunnels: true,
       updateURLs: undefined,
     })
     expect(fetchOrganizations).not.toBeCalled()
@@ -298,7 +298,7 @@ describe('ensureDevContext', () => {
       remoteApp: {...APP2, apiSecret: 'secret2'},
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: true,
-      tunnelPlugin: undefined,
+      useCloudflareTunnels: true,
       updateURLs: undefined,
     })
     expect(setAppInfo).toHaveBeenNthCalledWith(1, {
