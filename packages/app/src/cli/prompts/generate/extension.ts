@@ -8,7 +8,7 @@ import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)
 
-interface GenerateExtensionOptions {
+export interface GenerateExtensionPromptOptions {
   name?: string
   templateType?: string
   extensionFlavor?: string
@@ -19,7 +19,7 @@ interface GenerateExtensionOptions {
   reset: boolean
 }
 
-interface GenerateExtensionOutput {
+export interface GenerateExtensionPromptOutput {
   name: string
   extensionContent: GenerateExtensionContentOutput[]
 }
@@ -40,7 +40,9 @@ export function buildChoices(templateSpecifications: TemplateSpecification[]) {
   return templateSpecChoices.sort((c1, c2) => c1.label.localeCompare(c2.label))
 }
 
-const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promise<GenerateExtensionOutput> => {
+const generateExtensionPrompt = async (
+  options: GenerateExtensionPromptOptions,
+): Promise<GenerateExtensionPromptOutput> => {
   let templateSpecifications = options.templateSpecifications
   let templateType = options.templateType
   const extensionFlavor = options.extensionFlavor
@@ -86,7 +88,7 @@ const generateExtensionPrompt = async (options: GenerateExtensionOptions): Promi
 }
 
 async function promptNameAndFlavor(
-  options: GenerateExtensionOptions,
+  options: GenerateExtensionPromptOptions,
   specification: GenericSpecification,
 ): Promise<{name: string; flavor?: string; specification: GenericSpecification}> {
   const result = {

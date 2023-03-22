@@ -1,4 +1,5 @@
-import extensionInit, {
+import {
+  generateExtension,
   getExtensionRuntimeDependencies,
   getFunctionRuntimeDependencies,
   TemplateLanguage,
@@ -451,7 +452,7 @@ async function createFromTemplate({
   specifications,
 }: CreateFromTemplateOptions): Promise<string> {
   return (
-    await extensionInit([
+    await generateExtension([
       {
         name,
         specification,

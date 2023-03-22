@@ -32,7 +32,7 @@ async function getTemplatePath(name: string): Promise<string> {
   }
 }
 
-interface ExtensionInitOptions<TSpec extends GenericSpecification = GenericSpecification> {
+export interface ExtensionInitOptions<TSpec extends GenericSpecification = GenericSpecification> {
   name: string
   app: AppInterface
   cloneUrl?: string
@@ -69,9 +69,12 @@ function getTemplateLanguage(flavor: ExtensionFlavorValue): TemplateLanguage {
   }
 }
 
-async function extensionInit(
-  extensionOptions: ExtensionInitOptions[],
-): Promise<{directory: string; specification: GenericSpecification}[]> {
+export interface GeneratedExtension {
+  directory: string
+  specification: GenericSpecification
+}
+
+export async function generateExtension(extensionOptions: ExtensionInitOptions[]): Promise<GeneratedExtension[]> {
   return Promise.all(
     extensionOptions.flatMap(async (options) => {
       const extensionDirectory = await ensureExtensionDirectoryExists({app: options.app, name: options.name})
@@ -289,5 +292,3 @@ async function addResolutionOrOverrideIfNeeded(directory: string, extensionFlavo
     await addResolutionOrOverride(directory, {'@types/react': versions.reactTypes})
   }
 }
-
-export default extensionInit

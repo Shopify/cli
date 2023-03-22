@@ -2,7 +2,7 @@ import generate from './generate.js'
 import {ensureGenerateContext} from './context.js'
 import {load as loadApp} from '../models/app/loader.js'
 import generateExtensionPrompt from '../prompts/generate/extension.js'
-import generateExtensionService from '../services/generate/extension.js'
+import {generateExtension} from '../services/generate/extension.js'
 import {
   testApp,
   testRemoteSpecifications,
@@ -164,6 +164,6 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
     name: 'name',
     extensionContent: [{name: 'name', specification}],
   })
-  vi.mocked(generateExtensionService).mockResolvedValue([{directory: joinPath('extensions', 'name'), specification}])
+  vi.mocked(generateExtension).mockResolvedValue([{directory: joinPath('extensions', 'name'), specification}])
   return mockAndCaptureOutput()
 }

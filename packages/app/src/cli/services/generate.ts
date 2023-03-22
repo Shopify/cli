@@ -4,9 +4,17 @@ import {fetchTemplateSpecifications} from './generate/fetch-template-specificati
 import {AppInterface} from '../models/app/app.js'
 import {load as loadApp} from '../models/app/loader.js'
 import {GenericSpecification} from '../models/app/extensions.js'
-import generateExtensionPrompt from '../prompts/generate/extension.js'
+import generateExtensionPrompt, {
+  GenerateExtensionPromptOutput,
+  GenerateExtensionPromptOptions,
+} from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
-import generateExtensionService, {ExtensionFlavorValue} from '../services/generate/extension.js'
+import {
+  ExtensionFlavorValue,
+  ExtensionInitOptions,
+  GeneratedExtension,
+  generateExtension,
+} from '../services/generate/extension.js'
 import {
   convertSpecificationsToTemplate,
   getTypesExternalIdentitifier,
@@ -36,21 +44,40 @@ export interface GenerateOptions {
 
 async function generate(options: GenerateOptions) {
   const templateSpecifications = await getTemplateSpecifications(options)
-  const app: AppInterface = await loadApp({
-    directory: options.directory,
-    specifications: templateSpecifications.flatMap((templateSpecification) => templateSpecification.types) ?? [],
-  })
+  const specificationTypes = templateSpecifications.flatMap((specification) => specification.types) ?? []
+  const app: AppInterface = await loadApp({directory: options.directory, specifications: specificationTypes})
 
+  const promptOptions = await buildPromptOptions(templateSpecifications, app, options)
+  const promptAnswers = await generateExtensionPrompt(promptOptions)
+
+  await saveAnalyticsMetadata(promptAnswers, options.type)
+
+  const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options)
+  const generatedExtensions = await generateExtension(generateExtensionOptions)
+
+  renderSuccessMessages(generatedExtensions, app.packageManager)
+}
+
+async function getTemplateSpecifications(options: GenerateOptions): Promise<TemplateSpecification[]> {
+  const token = await ensureAuthenticatedPartners()
+  const apiKey = await ensureGenerateContext({...options, token})
+  const specifications = await fetchSpecifications({token, apiKey, config: options.config})
+  const localTemplateSpecifications = convertSpecificationsToTemplate(specifications)
+  const remoteTemplateSpecifications = await fetchTemplateSpecifications(token)
+  return localTemplateSpecifications.concat(remoteTemplateSpecifications)
+}
+
+async function buildPromptOptions(
+  templateSpecifications: TemplateSpecification[],
+  app: AppInterface,
+  options: GenerateOptions,
+): Promise<GenerateExtensionPromptOptions> {
   const templateSpecification = await handleTypeParameter(options.type, app, templateSpecifications)
   validateExtensionFlavor(templateSpecification, options.template)
 
-  const {validTemplateSpecifications, templatesOverlimit} = groupBy(templateSpecifications, (spec) =>
-    spec.types.every((extension) => app.extensionsForType(extension).length < extension.registrationLimit)
-      ? 'validTemplateSpecifications'
-      : 'templatesOverlimit',
-  )
+  const {validTemplateSpecifications, templatesOverlimit} = checkLimits(templateSpecifications, app)
 
-  const promptAnswers = await generateExtensionPrompt({
+  return {
     templateType: templateSpecification?.identifier,
     name: options.name,
     extensionFlavor: options.template,
@@ -59,8 +86,18 @@ async function generate(options: GenerateOptions) {
     templateSpecifications: validTemplateSpecifications ?? [],
     unavailableExtensions: getTypesExternalName(templatesOverlimit ?? []),
     reset: options.reset,
-  })
+  }
+}
 
+function checkLimits(templateSpecifications: TemplateSpecification[], app: AppInterface) {
+  return groupBy(templateSpecifications, (spec) =>
+    spec.types.every((extension) => app.extensionsForType(extension).length < extension.registrationLimit)
+      ? 'validTemplateSpecifications'
+      : 'templatesOverlimit',
+  )
+}
+
+async function saveAnalyticsMetadata(promptAnswers: GenerateExtensionPromptOutput, typeFlag: string | undefined) {
   await Promise.all(
     promptAnswers.extensionContent.map((extensionContent) => {
       return metadata.addPublicMetadata(() => ({
@@ -68,29 +105,38 @@ async function generate(options: GenerateOptions) {
         cmd_scaffold_type: extensionContent.specification.identifier,
         cmd_scaffold_type_category: extensionContent.specification.category(),
         cmd_scaffold_type_gated: extensionContent.specification.gated,
-        cmd_scaffold_used_prompts_for_type: extensionContent.specification.identifier !== options.type,
+        cmd_scaffold_used_prompts_for_type: extensionContent.specification.identifier !== typeFlag,
       }))
     }),
   )
+}
 
-  const generatedExtensions = await generateExtensionService(
-    promptAnswers.extensionContent.map((extensionContent) => {
-      return {
-        name: extensionContent.name,
-        extensionFlavor: extensionContent.extensionFlavor as ExtensionFlavorValue,
-        specification: extensionContent.specification,
-        app,
-        extensionType: extensionContent.specification.identifier,
-        cloneUrl: options.cloneUrl,
-      }
-    }),
-  )
+function buildGenerateOptions(
+  promptAnswers: GenerateExtensionPromptOutput,
+  app: AppInterface,
+  options: GenerateOptions,
+): ExtensionInitOptions[] {
+  return promptAnswers.extensionContent.map((extensionContent) => {
+    return {
+      name: extensionContent.name,
+      extensionFlavor: extensionContent.extensionFlavor as ExtensionFlavorValue,
+      specification: extensionContent.specification,
+      app,
+      extensionType: extensionContent.specification.identifier,
+      cloneUrl: options.cloneUrl,
+    }
+  })
+}
 
+function renderSuccessMessages(
+  generatedExtensions: GeneratedExtension[],
+  packageManager: AppInterface['packageManager'],
+) {
   generatedExtensions.forEach((extension) => {
     const formattedSuccessfulMessage = formatSuccessfulRunMessage(
       extension.specification,
       extension.directory,
-      app.packageManager,
+      packageManager,
     )
     renderSuccess(formattedSuccessfulMessage)
   })
@@ -176,15 +222,6 @@ async function handleTypeParameter(
   })
 
   return templateSpecification
-}
-
-async function getTemplateSpecifications(options: GenerateOptions): Promise<TemplateSpecification[]> {
-  const token = await ensureAuthenticatedPartners()
-  const apiKey = await ensureGenerateContext({...options, token})
-  const specifications = await fetchSpecifications({token, apiKey, config: options.config})
-  const localTemplateSpecifications = convertSpecificationsToTemplate(specifications)
-  const remoteTemplateSpecifications = await fetchTemplateSpecifications(token)
-  return localTemplateSpecifications.concat(remoteTemplateSpecifications)
 }
 
 export default generate
