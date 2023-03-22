@@ -241,7 +241,6 @@ describe('AutocompletePrompt', async () => {
     await waitForInputsToBeReady()
     await sendInputAndWaitForContent(renderInstance, 'No results found', 'a')
     // prompt doesn't change when enter is pressed
-    await new Promise((resolve) => setTimeout(resolve, 100))
     await sendInputAndWait(renderInstance, 100, ENTER)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
@@ -256,12 +255,13 @@ describe('AutocompletePrompt', async () => {
 
   test('has a loading state', async () => {
     const onEnter = vi.fn()
-    const searchPromise = new Promise<SearchResults<string>>((resolve) => {
-      setTimeout(() => resolve({data: [{label: 'a', value: 'b'}]}), 2000)
-    })
 
     const search = () => {
-      return searchPromise
+      return new Promise<SearchResults<string>>((resolve) => {
+        setTimeout(() => {
+          resolve({data: [{label: 'a', value: 'b'}]})
+        }, 2000)
+      })
     }
 
     const renderInstance = render(
