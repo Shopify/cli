@@ -84,7 +84,7 @@ module ShopifyCLI
   autocall(:Logger)   { CLI::Kit::Logger.new(debug_log_file: ShopifyCLI.debug_log_file) }
   # ShopifyCLI::Resolver
   autocall(:Resolver) do
-    ShopifyCLI::Core::HelpResolver.new(
+    CLI::Kit::Resolver.new(
       tool_name: TOOL_NAME,
       command_registry: ShopifyCLI::Commands::Registry
     )
@@ -134,7 +134,6 @@ module ShopifyCLI
   autoload :Task, "shopify_cli/task"
   autoload :Tasks, "shopify_cli/tasks"
   autoload :TransformDataStructure, "shopify_cli/transform_data_structure"
-  autoload :Tunnel, "shopify_cli/tunnel"
   autoload :Utilities, "shopify_cli/utilities"
 
   require "shopify_cli/messages/messages"

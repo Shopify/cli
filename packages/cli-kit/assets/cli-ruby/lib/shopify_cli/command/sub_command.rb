@@ -8,7 +8,6 @@ module ShopifyCLI
         def call(args, command_name, parent_command)
           cmd = new(@ctx)
           args = cmd.options.parse(@_options, args || [])
-          return call_help(parent_command, command_name) if cmd.options.help
           check_ruby_version
           check_node_version
           run_prerequisites
