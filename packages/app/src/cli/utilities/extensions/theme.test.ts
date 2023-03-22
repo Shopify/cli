@@ -23,15 +23,16 @@ describe('themeExtensionConfig', () => {
       await mkdir(joinPath(tmpDir, 'blocks'))
       // Testing standard filenames, files with leading dots, ignored directories.
       const ignoredFiles = ['Thumbs.db', '.DS_Store', '.sublime-project', 'node_modules/foo/package.json']
-      await Promise.all(['test.liquid', ...ignoredFiles].map(async (filename) => {
-        const fullpath = joinPath(tmpDir, 'blocks', filename)
-        await mkdir(dirname(fullpath))
-        await writeFile(fullpath, 'test content')
-      }))
+      await Promise.all(
+        ['test.liquid', ...ignoredFiles].map(async (filename) => {
+          const fullpath = joinPath(tmpDir, 'blocks', filename)
+          await mkdir(dirname(fullpath))
+          await writeFile(fullpath, 'test content')
+        }),
+      )
 
       // Then
-      await expect(themeExtensionFiles(themeExtension)).resolves.toStrictEqual(['blocks/test.liquid'])
+      await expect(themeExtensionFiles(themeExtension)).resolves.toStrictEqual([joinPath(tmpDir, 'blocks/test.liquid')])
     })
   })
 })
-

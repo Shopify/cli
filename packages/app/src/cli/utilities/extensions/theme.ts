@@ -20,7 +20,6 @@ const ignoredFilePatterns = [
 
 export async function themeExtensionFiles(themeExtension: ThemeExtension): Promise<string[]> {
   return glob(joinPath(themeExtension.directory, '*/*'), {
-    ignore: ignoredFilePatterns.map((pattern) => joinPath(themeExtension.directory, '*', pattern))
+    ignore: ignoredFilePatterns.map((pattern) => joinPath(themeExtension.directory, '*', pattern)),
   })
 }
-
