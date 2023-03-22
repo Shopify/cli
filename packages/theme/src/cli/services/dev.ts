@@ -64,6 +64,6 @@ export function currentDirectoryConfirmed(force: boolean) {
   }
 
   return renderConfirmationPrompt({
-    message: 'Are you sure you want to proceed?',
+    message: 'Do you want to proceed?',
   })
 }
