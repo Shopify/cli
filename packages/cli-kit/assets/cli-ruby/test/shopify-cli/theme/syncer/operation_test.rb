@@ -20,7 +20,7 @@ module ShopifyCLI
             .returns("ERROR")
 
           time_freeze do
-            assert_message("{{red:ERROR }}", @operation.as_error_message)
+            assert_message("ERROR ", @operation.as_error_message)
           end
         end
 
@@ -29,7 +29,7 @@ module ShopifyCLI
             .returns("Synced")
 
           time_freeze do
-            assert_message("{{green:Synced}}", @operation.as_synced_message)
+            assert_message("Synced", @operation.as_synced_message)
           end
         end
 
@@ -38,7 +38,7 @@ module ShopifyCLI
             .returns("Synced")
 
           time_freeze do
-            assert_message("{{yellow:Synced}}", @operation.as_synced_message(color: :yellow))
+            assert_message("Synced", @operation.as_synced_message)
           end
         end
 
@@ -47,7 +47,7 @@ module ShopifyCLI
             .returns("Fixed")
 
           time_freeze do
-            assert_message("{{cyan:Fixed }}", @operation.as_fix_message)
+            assert_message("Fixed ", @operation.as_fix_message)
           end
         end
 
@@ -63,7 +63,7 @@ module ShopifyCLI
         private
 
         def assert_message(status, actual_message)
-          expected_message = "12:30:59 #{status} {{>}} {{blue:update sections/apps.liquid}}"
+          expected_message = "{{gray:  • 12:30:59}} #{status} {{>}} {{gray:update sections/apps.liquid}}"
           assert_equal expected_message, actual_message
         end
 
