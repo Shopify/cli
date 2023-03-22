@@ -84,6 +84,19 @@ export default class Dev extends Command {
       description: 'Local port of the theme app extension development server.',
       env: 'SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT',
     }),
+    'application-url': Flags.string({
+      hidden: true,
+      description:
+        'Override your real application URL. Warning: this unsets any redirection URLs that may have been configured in the real application. Format: "https://my-application-domain.com".',
+      env: 'SHOPIFY_FLAG_APPLICATION_URL',
+    }),
+    'no-remote': Flags.boolean({
+      hidden: true,
+      description:
+        "Don't fetch remote data from the Partners API such as application URLs, authorized extension points, etc.",
+      env: 'SHOPIFY_FLAG_NO_REMOTE_APP',
+      default: false,
+    }),
   }
 
   public async run(): Promise<void> {
@@ -112,6 +125,8 @@ export default class Dev extends Command {
       noTunnel: flags['no-tunnel'],
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
+      applicationUrl: flags['application-url'],
+      noRemote: flags['no-remote'],
     })
   }
 }

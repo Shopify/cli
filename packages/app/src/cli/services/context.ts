@@ -13,13 +13,20 @@ import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension, ExtensionRegistration} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
+import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
+import {getURLs, PartnersURLs} from './dev/urls.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
-import {ThemeExtension} from '../models/app/extensions.js'
+import {GenericSpecification, ThemeExtension} from '../models/app/extensions.js'
 import {loadAppName} from '../models/app/loader.js'
+import {
+  loadFunctionSpecifications,
+  loadThemeSpecifications,
+  loadUIExtensionSpecifications,
+} from '../models/extensions/specifications.js'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -27,6 +34,7 @@ import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {Config} from '@oclif/core'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -40,6 +48,9 @@ export interface DevContextOptions {
   apiKey?: string
   storeFqdn?: string
   reset: boolean
+  noRemote: boolean
+  commandConfig: Config
+  applicationUrl?: string
 }
 
 interface DevContextOutput {
@@ -48,6 +59,60 @@ interface DevContextOutput {
   storeFqdn: string
   updateURLs: boolean | undefined
   useCloudflareTunnels: boolean
+  getAuthenticatedPartnersToken: () => string
+  fetchSpecifications: () => Promise<GenericSpecification[]>
+  getPartnersURLs: () => Promise<PartnersURLs>
+}
+
+export async function ensureLocalOrRemoteDevContext(options: DevContextOptions): Promise<DevContextOutput> {
+  if (options.noRemote) {
+    // Ensure these are set:
+    // --application-url
+    // --store
+    return {
+      storeFqdn: options.storeFqdn ?? 'fake-store-fqdn.myshopify.com',
+      remoteAppUpdated: false,
+      updateURLs: false,
+      useCloudflareTunnels: false,
+      remoteApp: {
+        id: 'not-a-real-app-id',
+        organizationId: 'not-a-real-organization-id',
+        title: 'Fake Remote App',
+        apiKey: 'fake-api-key',
+        apiSecret: 'fake-api-secret',
+        grantedScopes: [],
+      },
+      getAuthenticatedPartnersToken() {
+        throw new BugError("getAuthenticatedPartnersToken() can't be called when noRemote is true")
+      },
+      async fetchSpecifications() {
+        // Since we're not fetching a remote app, load all possible extension types.
+        const specifications: GenericSpecification[] = []
+        for (const specList of await Promise.all([
+          loadUIExtensionSpecifications(options.commandConfig),
+          loadThemeSpecifications(),
+          loadFunctionSpecifications(options.commandConfig),
+        ])) {
+          for (const spec of specList) {
+            specifications.push(spec)
+          }
+        }
+        return specifications
+      },
+      async getPartnersURLs() {
+        if (!options.applicationUrl) {
+          throw new Error('applicationUrl was not set')
+        }
+        return {
+          applicationUrl: options.applicationUrl,
+          redirectUrlWhitelist: [],
+        }
+      },
+    }
+  }
+
+  const token = await ensureAuthenticatedPartners()
+  return ensureDevContext(options, token)
 }
 
 /**
@@ -149,7 +214,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
       orgId,
     })
 
-    return buildOutput(selectedApp, selectedStore, useCloudflareTunnels, cachedInfo)
+    return buildOutput(selectedApp, selectedStore, useCloudflareTunnels, token, options.commandConfig, cachedInfo)
   }
 
   const [_selectedApp, _selectedStore] = await Promise.all([
@@ -185,7 +250,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     showReusedValues(organization.businessName, cachedInfo, packageManager)
   }
 
-  const result = buildOutput(selectedApp, selectedStore, useCloudflareTunnels, cachedInfo)
+  const result = buildOutput(selectedApp, selectedStore, useCloudflareTunnels, token, options.commandConfig, cachedInfo)
   await logMetadataForLoadedDevContext(result)
   return result
 }
@@ -218,6 +283,8 @@ function buildOutput(
   app: OrganizationApp,
   store: OrganizationStore,
   useCloudflareTunnels: boolean,
+  authenticatedPartnersToken: string,
+  commandConfig: Config,
   cachedInfo?: CachedAppInfo,
 ): DevContextOutput {
   return {
@@ -229,6 +296,19 @@ function buildOutput(
     storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
     useCloudflareTunnels,
+    getAuthenticatedPartnersToken() {
+      return authenticatedPartnersToken
+    },
+    async fetchSpecifications() {
+      return fetchSpecifications({
+        token: authenticatedPartnersToken,
+        apiKey: app.apiKey,
+        config: commandConfig,
+      })
+    },
+    async getPartnersURLs() {
+      return getURLs(app.apiKey, authenticatedPartnersToken)
+    },
   }
 }
 

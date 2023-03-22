@@ -1,11 +1,11 @@
-import {ensureDevContext} from './context.js'
-import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
+import {ensureLocalOrRemoteDevContext} from './context.js'
+import {generateFrontendURL, generatePartnersURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
 import {outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
-import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
+
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -28,12 +28,7 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {exec} from '@shopify/cli-kit/node/system'
 import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/context/spin'
-import {
-  AdminSession,
-  ensureAuthenticatedAdmin,
-  ensureAuthenticatedPartners,
-  ensureAuthenticatedStorefront,
-} from '@shopify/cli-kit/node/session'
+import {AdminSession, ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {OutputProcess, outputInfo} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
@@ -54,6 +49,8 @@ export interface DevOptions {
   noTunnel: boolean
   theme?: string
   themeExtensionPort?: number
+  applicationUrl?: string
+  noRemote: boolean
 }
 
 interface DevWebOptions {
@@ -65,18 +62,16 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
-  const token = await ensureAuthenticatedPartners()
   const {
     storeFqdn,
     remoteApp,
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
     useCloudflareTunnels,
-  } = await ensureDevContext(options, token)
+    ...context
+  } = await ensureLocalOrRemoteDevContext(options)
 
-  const apiKey = remoteApp.apiKey
-  const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
-  let localApp = await load({directory: options.directory, specifications})
+  let localApp = await load({directory: options.directory, specifications: await context.fetchSpecifications()})
 
   if (!options.skipDependenciesInstallation) {
     localApp = await installAppDependencies(localApp)
@@ -103,7 +98,7 @@ async function dev(options: DevOptions) {
       useCloudflareTunnels,
     }),
     backendConfig?.configuration.port || getAvailableTCPPort(),
-    getURLs(apiKey, token),
+    context.getPartnersURLs(),
   ])
 
   /** If the app doesn't have web/ the link message is not necessary */
@@ -122,7 +117,7 @@ async function dev(options: DevOptions) {
       cachedUpdateURLs,
       newApp: remoteApp.newApp,
     })
-    if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
+    if (shouldUpdateURLs) await updateURLs(newURLs, remoteApp.apiKey, context.getAuthenticatedPartnersToken())
     await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
     previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
   }
@@ -134,11 +129,11 @@ async function dev(options: DevOptions) {
   // If we have a real UUID for an extension, use that instead of a random one
   const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
-  const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
+  const extensionsIds = prodEnvIdentifiers.app === remoteApp.apiKey ? envExtensionsIds : {}
   localApp.extensions.ui.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
 
   const backendOptions = {
-    apiKey,
+    apiKey: remoteApp.apiKey,
     backendPort,
     scopes: localApp.configuration.scopes,
     apiSecret: (remoteApp.apiSecret as string) ?? '',
@@ -149,7 +144,7 @@ async function dev(options: DevOptions) {
     const devExt = await devUIExtensionsTarget({
       app: localApp,
       id: remoteApp.id,
-      apiKey,
+      apiKey: remoteApp.apiKey,
       url: proxyUrl,
       storeFqdn,
       grantedScopes: remoteApp.grantedScopes,
@@ -178,9 +173,12 @@ async function dev(options: DevOptions) {
     }
     const [storefrontToken, args] = await Promise.all([
       ensureAuthenticatedStorefront(),
-      themeExtensionArgs(extension, apiKey, token, {...options, ...optionsToOverwrite}),
+      themeExtensionArgs(extension, remoteApp.apiKey, context.getAuthenticatedPartnersToken(), {
+        ...options,
+        ...optionsToOverwrite,
+      }),
     ])
-    const devExt = devThemeExtensionTarget(args, adminSession, storefrontToken, token)
+    const devExt = devThemeExtensionTarget(args, adminSession, storefrontToken, context.getAuthenticatedPartnersToken())
     additionalProcesses.push(devExt)
   }
 
@@ -191,7 +189,7 @@ async function dev(options: DevOptions) {
   if (frontendConfig) {
     const frontendOptions: DevFrontendTargetOptions = {
       web: frontendConfig,
-      apiKey,
+      apiKey: remoteApp.apiKey,
       scopes: localApp.configuration.scopes,
       apiSecret: (remoteApp.apiSecret as string) ?? '',
       hostname: frontendUrl,
@@ -211,7 +209,7 @@ async function dev(options: DevOptions) {
       action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
         await sendUninstallWebhookToAppServer({
           stdout,
-          token,
+          token: context.getAuthenticatedPartnersToken(),
           address: `http://localhost:${backendOptions.backendPort}${webhooksPath}`,
           sharedSecret: backendOptions.apiSecret,
           storeFqdn,
