@@ -178,6 +178,7 @@ module ShopifyCLI
         else
           syncer.upload_theme!(delay_low_priority_files: true)
         end
+        @ctx.open_browser_url!(address)
       end
 
       def theme
