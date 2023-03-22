@@ -26,6 +26,9 @@ frontend or backend processes of the app.
 appear in a separate area and conflict with other logs or the preview/quit bar.
 Instead, they will be integrated with the other logs. Progress bars have been
 replaced with static output to accommodate this placement.
+* ***Theme app extension excluding system files.*** System files like `Thumbs.db`
+or `.DS_STORE` will now be excluded from theme app extension builds, just like
+they are excluded from themes.
 * ***Customer accounts UI extension preview.*** The link from the dev console for
 Customer Accounts UI Extensions will now redirect to the customer account page.
 
