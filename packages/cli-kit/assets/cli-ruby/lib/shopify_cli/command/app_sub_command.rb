@@ -10,17 +10,6 @@ module ShopifyCLI
       rescue ShopifyCLI::AppTypeDetector::InvalidTypeError => error
         raise ShopifyCLI::Abort, @ctx.message("core.app.error.invalid_project_type", error.project_type)
       end
-
-      class << self
-        def call_help(*)
-          output = help
-          if respond_to?(:extended_help)
-            output += "\n"
-            output += extended_help
-          end
-          @ctx.puts(output)
-        end
-      end
     end
   end
 end

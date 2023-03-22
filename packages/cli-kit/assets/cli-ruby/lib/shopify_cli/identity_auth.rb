@@ -12,7 +12,6 @@ module ShopifyCLI
   class IdentityAuth
     include SmartProperties
 
-    autoload :Servlet, "shopify_cli/identity_auth/servlet"
     autoload :EnvAuthToken, "shopify_cli/identity_auth/env_auth_token"
 
     class Error < StandardError; end
