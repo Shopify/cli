@@ -11,16 +11,11 @@ import {blocks} from '../../constants.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export async function fetchTemplateSpecifications(token: string): Promise<TemplateSpecification[]> {
-  try {
-    const result: RemoteTemplateSpecificationsQuerySchema = await partnersRequest(
-      RemoteTemplateSpecificationsQuery,
-      token,
-    )
-    return result.templateSpecifications.map(mapRemoteTemplateSpecification)
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    return []
-  }
+  const result: RemoteTemplateSpecificationsQuerySchema = await partnersRequest(
+    RemoteTemplateSpecificationsQuery,
+    token,
+  )
+  return result.templateSpecifications.map(mapRemoteTemplateSpecification)
 }
 
 export function mapRemoteTemplateSpecification(
