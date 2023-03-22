@@ -2,7 +2,10 @@ import {renderConfirmationPrompt, renderSuccess, renderWarning} from '@shopify/c
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {access} from 'node:fs/promises'
 
-export function renderLinks(store: string, themeId: string) {
+const DEFAULT_HOST = '127.0.0.1'
+const DEFAULT_PORT = '9292'
+
+export function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port = DEFAULT_PORT) {
   renderSuccess({
     body: [
       {
@@ -11,7 +14,7 @@ export function renderLinks(store: string, themeId: string) {
           items: [
             {
               link: {
-                url: 'http://127.0.0.1:9292',
+                url: `http://${host}:${port}`,
               },
             },
           ],

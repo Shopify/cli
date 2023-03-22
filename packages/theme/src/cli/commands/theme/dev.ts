@@ -129,7 +129,7 @@ export default class Dev extends ThemeCommand {
       this.execute(adminSession, flags.password, command, controller, true)
     }, this.ThemeRefreshTimeoutInMs)
 
-    renderLinks(store, flags.theme!)
+    renderLinks(store, flags.theme!, flags.host, flags.port)
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.execute(adminSession, flags.password, command, controller, false)
