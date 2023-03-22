@@ -70,6 +70,7 @@ export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigCo
   previewMessage(url: string, storeFqdn: string): TokenizedString | undefined
   shouldFetchCartUrl(): boolean
   hasExtensionPointTarget(target: string): boolean
+  isPreviewable: boolean
 }
 
 export function isUIExtension(spec: GenericSpecification): spec is UIExtensionSpec {

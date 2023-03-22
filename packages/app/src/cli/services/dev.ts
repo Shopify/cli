@@ -6,6 +6,8 @@ import {outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
+import {bundleExtension} from './extensions/bundle.js'
+import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -19,6 +21,11 @@ import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
+import {
+  ExtensionUpdateDraftInput,
+  ExtensionUpdateDraftMutation,
+  ExtensionUpdateSchema,
+} from '../api/graphql/update_draft.js'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -34,8 +41,10 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
-import {OutputProcess} from '@shopify/cli-kit/node/output'
+import {OutputProcess, outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {partition} from '@shopify/cli-kit/common/collection'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {Writable} from 'stream'
 
 export interface DevOptions {
@@ -133,6 +142,15 @@ async function dev(options: DevOptions) {
   const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
   localApp.extensions.ui.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
 
+  const {extensions: remoteExtensions} = await ensureDeploymentIdsPresence({
+    app: localApp,
+    appId: apiKey,
+    appName: remoteApp.title,
+    force: true,
+    token,
+    envIdentifiers: prodEnvIdentifiers,
+  })
+
   const backendOptions = {
     apiKey,
     backendPort,
@@ -141,7 +159,12 @@ async function dev(options: DevOptions) {
     hostname: exposedUrl,
   }
 
-  if (localApp.extensions.ui.length > 0) {
+  const [previewableExtensions, nonPreviewableExtensions] = partition(
+    localApp.extensions.ui,
+    (ext) => ext.isPreviewable,
+  )
+
+  if (previewableExtensions.length > 0) {
     const devExt = await devUIExtensionsTarget({
       app: localApp,
       id: remoteApp.id,
@@ -151,6 +174,7 @@ async function dev(options: DevOptions) {
       grantedScopes: remoteApp.grantedScopes,
       subscriptionProductUrl: options.subscriptionProductUrl,
       checkoutCartUrl: options.checkoutCartUrl,
+      extensions: previewableExtensions,
     })
     proxyTargets.push(devExt)
   }
@@ -160,6 +184,19 @@ async function dev(options: DevOptions) {
   outputExtensionsMessages(localApp)
 
   const additionalProcesses: OutputProcess[] = []
+
+  if (nonPreviewableExtensions.length > 0) {
+    additionalProcesses.push(
+      await devNonPreviewableExtensionTarget({
+        app: localApp,
+        apiKey,
+        url: proxyUrl,
+        token,
+        extensions: nonPreviewableExtensions,
+        remoteExtensions,
+      }),
+    )
+  }
 
   if (localApp.extensions.theme.length > 0) {
     const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
@@ -340,6 +377,7 @@ interface DevUIExtensionsTargetOptions {
   id?: string
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
+  extensions: UIExtension[]
 }
 
 async function devUIExtensionsTarget({
@@ -351,8 +389,9 @@ async function devUIExtensionsTarget({
   grantedScopes,
   subscriptionProductUrl,
   checkoutCartUrl,
+  extensions,
 }: DevUIExtensionsTargetOptions): Promise<ReverseHTTPProxyTarget> {
-  const cartUrl = await buildCartURLIfNeeded(app.extensions.ui, storeFqdn, checkoutCartUrl)
+  const cartUrl = await buildCartURLIfNeeded(extensions, storeFqdn, checkoutCartUrl)
   return {
     logPrefix: 'extensions',
     pathPrefix: '/extensions',
@@ -360,7 +399,7 @@ async function devUIExtensionsTarget({
       await devUIExtensions({
         app,
         id,
-        extensions: app.extensions.ui,
+        extensions,
         stdout,
         stderr,
         signal,
@@ -372,6 +411,88 @@ async function devUIExtensionsTarget({
         checkoutCartUrl: cartUrl,
         subscriptionProductUrl,
       })
+    },
+  }
+}
+
+interface DevNonPreviewableExtensionsOptions {
+  app: AppInterface
+  apiKey: string
+  url: string
+  token: string
+  extensions: UIExtension[]
+  remoteExtensions: {
+    [key: string]: string
+  }
+}
+
+async function devNonPreviewableExtensionTarget({
+  extensions,
+  app,
+  url,
+  apiKey,
+  token,
+  remoteExtensions,
+}: DevNonPreviewableExtensionsOptions) {
+  return {
+    prefix: 'extensions',
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+      await Promise.all(
+        extensions.map((extension) => {
+          const registrationId = remoteExtensions[extension.localIdentifier]
+          if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
+
+          return bundleExtension({
+            minify: false,
+            outputBundlePath: extension.outputBundlePath,
+            environment: 'development',
+            env: {
+              ...(app.dotenv?.variables ?? {}),
+              APP_URL: url,
+            },
+            stdin: {
+              contents: extension.getBundleExtensionStdinContent(),
+              resolveDir: extension.directory,
+              loader: 'tsx',
+            },
+            stderr,
+            stdout,
+            watchSignal: signal,
+
+            watch: async (result) => {
+              const error = (result?.errors?.length ?? 0) > 0
+              outputDebug(
+                `The Javascript bundle of the extension with ID ${extension.devUUID} has ${
+                  error ? 'an error' : 'changed'
+                }`,
+                error ? stderr : stdout,
+              )
+              if (error) return
+
+              const content = result?.outputFiles?.[0]?.contents
+              if (!content) return
+              const encodedFile = Buffer.from(content).toString('base64')
+
+              const extensionInput: ExtensionUpdateDraftInput = {
+                apiKey,
+                config: JSON.stringify({
+                  ...(await extension.deployConfig()),
+                  serializedScript: encodedFile,
+                }),
+                context: undefined,
+                registrationId,
+              }
+              const mutation = ExtensionUpdateDraftMutation
+
+              const mutationResult: ExtensionUpdateSchema = await partnersRequest(mutation, token, extensionInput)
+              if (mutationResult.extensionUpdateDraft?.userErrors?.length > 0) {
+                const errors = mutationResult.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
+                stderr.write(`Error while updating drafts: ${errors}`)
+              }
+            },
+          })
+        }),
+      )
     },
   }
 }

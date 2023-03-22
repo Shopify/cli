@@ -92,7 +92,7 @@
   },
   "version": "0.0.0",
   "resolutions": {
-    "@types/react": "16.14.0",
+    "@types/react": "18.0.28",
     "vite": "2.9.12",
     "@oclif/core": "2.1.4"
   }

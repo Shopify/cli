@@ -38,6 +38,7 @@ export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = Bas
   ) => TokenizedString | undefined
   shouldFetchCartUrl?(config: TConfiguration): boolean
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
+  isPreviewable: boolean
 }
 
 /**
@@ -96,6 +97,10 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
 
   get surface() {
     return this.specification.surface
+  }
+
+  get isPreviewable() {
+    return this.specification.isPreviewable
   }
 
   constructor(options: {
@@ -224,6 +229,7 @@ export function createUIExtensionSpecification<TConfiguration extends BaseConfig
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     supportedFlavors: defaultExtensionFlavors,
     category: (): ExtensionCategory => (spec.identifier === 'theme' ? 'theme' : 'ui'),
+    isPreviewable: true,
   }
   return {...defaults, ...spec}
 }
