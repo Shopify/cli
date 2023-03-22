@@ -47,7 +47,7 @@ interface DevContextOutput {
   remoteAppUpdated: boolean
   storeFqdn: string
   updateURLs: boolean | undefined
-  tunnelPlugin: string | undefined
+  useCloudflareTunnels: boolean
 }
 
 /**
@@ -138,6 +138,9 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
+  const organization = await fetchOrgFromId(orgId, token)
+  const useCloudflareTunnels = organization.betas.cliTunnelAlternative !== true
+
   if (selectedApp && selectedStore) {
     setAppInfo({
       appId: selectedApp.apiKey,
@@ -146,11 +149,10 @@ export async function ensureDevContext(options: DevContextOptions, token: string
       orgId,
     })
 
-    return buildOutput(selectedApp, selectedStore, cachedInfo)
+    return buildOutput(selectedApp, selectedStore, useCloudflareTunnels, cachedInfo)
   }
 
-  const [organization, _selectedApp, _selectedStore] = await Promise.all([
-    fetchOrgFromId(orgId, token),
+  const [_selectedApp, _selectedStore] = await Promise.all([
     selectedApp ? selectedApp : appFromId(cachedInfo?.appId, token),
     selectedStore ? selectedStore : storeFromFqdn(cachedInfo?.storeFqdn, orgId, token),
   ])
@@ -183,7 +185,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     showReusedValues(organization.businessName, cachedInfo, packageManager)
   }
 
-  const result = buildOutput(selectedApp, selectedStore, cachedInfo)
+  const result = buildOutput(selectedApp, selectedStore, useCloudflareTunnels, cachedInfo)
   await logMetadataForLoadedDevContext(result)
   return result
 }
@@ -212,7 +214,12 @@ const storeFromFqdn = async (
   }
 }
 
-function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?: CachedAppInfo): DevContextOutput {
+function buildOutput(
+  app: OrganizationApp,
+  store: OrganizationStore,
+  useCloudflareTunnels: boolean,
+  cachedInfo?: CachedAppInfo,
+): DevContextOutput {
   return {
     remoteApp: {
       ...app,
@@ -221,7 +228,7 @@ function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?
     remoteAppUpdated: app.apiKey !== cachedInfo?.appId,
     storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
-    tunnelPlugin: cachedInfo?.tunnelPlugin,
+    useCloudflareTunnels,
   }
 }
 

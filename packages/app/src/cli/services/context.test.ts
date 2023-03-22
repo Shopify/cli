@@ -19,7 +19,7 @@ import {
 } from './context.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
-import {OrganizationApp, OrganizationStore} from '../models/organization.js'
+import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
@@ -27,7 +27,6 @@ import {testApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
 import {App} from '../models/app/app.js'
-import {AllOrganizationsQuerySchemaOrganization} from '../api/graphql/all_orgs.js'
 import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -68,16 +67,16 @@ const APP2: OrganizationApp = {
   grantedScopes: [],
 }
 
-const ORG1: AllOrganizationsQuerySchemaOrganization = {
+const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
-  betas: {appUiDeployments: false},
+  betas: {appUiDeployments: false, cliTunnelAlternative: false},
   website: '',
 }
-const ORG2: AllOrganizationsQuerySchemaOrganization = {
+const ORG2: Organization = {
   id: '2',
   businessName: 'org2',
-  betas: {appUiDeployments: false},
+  betas: {appUiDeployments: false, cliTunnelAlternative: true},
   website: '',
 }
 
@@ -166,7 +165,7 @@ beforeEach(async () => {
   vi.mocked(selectOrCreateApp).mockResolvedValue(APP1)
   vi.mocked(selectStore).mockResolvedValue(STORE1)
   vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
-  vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG1)
+  vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)
   vi.mocked(fetchOrgAndApps).mockResolvedValue(FETCH_RESPONSE)
   vi.mocked(getPackageManager).mockResolvedValue('npm')
 })
@@ -235,7 +234,7 @@ describe('ensureDevContext', () => {
       remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: true,
-      tunnelPlugin: undefined,
+      useCloudflareTunnels: true,
       updateURLs: undefined,
     })
     expect(setAppInfo).toHaveBeenNthCalledWith(1, {
@@ -249,6 +248,24 @@ describe('ensureDevContext', () => {
     expect(metadata.getAllPublicMetadata()).toMatchObject({
       api_key: APP1.apiKey,
       partner_id: 1,
+    })
+  })
+
+  it('returns useCloudflareTunnels false if the beta is enabled in partners', async () => {
+    // Given
+    vi.mocked(getAppInfo).mockReturnValue(undefined)
+    vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
+
+    // When
+    const got = await ensureDevContext(INPUT, 'token')
+
+    // Then
+    expect(got).toEqual({
+      remoteApp: {...APP1, apiSecret: 'secret1'},
+      storeFqdn: STORE1.shopDomain,
+      remoteAppUpdated: true,
+      useCloudflareTunnels: false,
+      updateURLs: undefined,
     })
   })
 
@@ -267,7 +284,7 @@ describe('ensureDevContext', () => {
       remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: false,
-      tunnelPlugin: undefined,
+      useCloudflareTunnels: true,
       updateURLs: undefined,
     })
     expect(fetchOrganizations).not.toBeCalled()
@@ -298,7 +315,7 @@ describe('ensureDevContext', () => {
       remoteApp: {...APP2, apiSecret: 'secret2'},
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: true,
-      tunnelPlugin: undefined,
+      useCloudflareTunnels: true,
       updateURLs: undefined,
     })
     expect(setAppInfo).toHaveBeenNthCalledWith(1, {

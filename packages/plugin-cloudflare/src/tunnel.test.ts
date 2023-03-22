@@ -34,7 +34,7 @@ describe('hookStart', () => {
     const result = await hookStart(port)
 
     // Then
-    expect(result).toEqual(err(new TunnelError('unknown', 'A connection was stablished but no Tunnel URL was found')))
+    expect(result).toEqual(err(new TunnelError('unknown', 'A connection was established but no Tunnel URL was found')))
   })
 
   it.each([

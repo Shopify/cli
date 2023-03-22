@@ -50,7 +50,7 @@ export interface DevOptions {
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
   tunnelUrl?: string
-  tunnel: boolean
+  tunnelProvider?: string
   noTunnel: boolean
   theme?: string
   themeExtensionPort?: number
@@ -71,7 +71,7 @@ async function dev(options: DevOptions) {
     remoteApp,
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
-    tunnelPlugin,
+    useCloudflareTunnels,
   } = await ensureDevContext(options, token)
 
   const apiKey = remoteApp.apiKey
@@ -100,7 +100,7 @@ async function dev(options: DevOptions) {
     generateFrontendURL({
       ...options,
       app: localApp,
-      cachedTunnelPlugin: tunnelPlugin,
+      useCloudflareTunnels,
     }),
     backendConfig?.configuration.port || getAvailableTCPPort(),
     getURLs(apiKey, token),

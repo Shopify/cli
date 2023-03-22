@@ -3,9 +3,9 @@ import {gql} from 'graphql-request'
 export interface AllOrganizationsQuerySchemaOrganization {
   id: string
   businessName: string
-  website: string
+  website?: string
   betas: {
-    appUiDeployments: boolean
+    appUiDeployments?: boolean
   }
 }
 

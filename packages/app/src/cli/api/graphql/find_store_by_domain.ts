@@ -32,7 +32,7 @@ export interface FindStoreByDomainSchema {
       businessName: string
       website: string
       betas: {
-        appUiDeployments: boolean
+        appUiDeployments?: boolean
       }
       stores: {
         nodes: {

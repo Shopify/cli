@@ -3,7 +3,8 @@ export interface Organization {
   businessName: string
   website?: string
   betas: {
-    appUiDeployments: boolean
+    appUiDeployments?: boolean
+    cliTunnelAlternative?: boolean
   }
 }
 

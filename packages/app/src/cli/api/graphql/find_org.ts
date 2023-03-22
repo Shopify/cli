@@ -32,7 +32,7 @@ export interface FindOrganizationQuerySchema {
       businessName: string
       website: string
       betas: {
-        appUiDeployments: boolean
+        appUiDeployments?: boolean
       }
       apps: {
         pageInfo: {

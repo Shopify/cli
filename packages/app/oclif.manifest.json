@@ -189,7 +189,7 @@
         "tunnel-url": {
           "name": "tunnel-url",
           "type": "option",
-          "description": "Override the ngrok tunnel URL. Format: \"https://my-tunnel-url:port\"",
+          "description": "Use a custom tunnel, it must be running before executing dev. Format: \"https://my-tunnel-url:port\".",
           "hidden": false,
           "multiple": false,
           "exclusive": [
@@ -210,10 +210,14 @@
         },
         "tunnel": {
           "name": "tunnel",
-          "type": "boolean",
-          "description": "Use ngrok to create a tunnel to your service entry point",
-          "hidden": false,
-          "allowNo": false,
+          "type": "option",
+          "description": "Select the tunnel provider",
+          "hidden": true,
+          "multiple": false,
+          "options": [
+            "cloudflare",
+            "ngrok"
+          ],
           "exclusive": [
             "tunnel-url",
             "no-tunnel"

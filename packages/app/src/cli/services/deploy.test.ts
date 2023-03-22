@@ -94,7 +94,11 @@ describe('deploy', () => {
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
-    await testDeployBundle(app, {id: 'org-id', businessName: 'org-name', betas: {appUiDeployments: true}})
+    await testDeployBundle(app, {
+      id: 'org-id',
+      businessName: 'org-name',
+      betas: {appUiDeployments: true},
+    })
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith(
@@ -110,7 +114,11 @@ describe('deploy', () => {
     const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})
 
     // When
-    await testDeployBundle(app, {id: 'org-id', businessName: 'org-name', betas: {appUiDeployments: false}})
+    await testDeployBundle(app, {
+      id: 'org-id',
+      businessName: 'org-name',
+      betas: {appUiDeployments: false},
+    })
 
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
@@ -153,7 +161,11 @@ describe('deploy', () => {
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
-    await testDeployBundle(app, {id: 'org-id', businessName: 'org-name', betas: {appUiDeployments: true}})
+    await testDeployBundle(app, {
+      id: 'org-id',
+      businessName: 'org-name',
+      betas: {appUiDeployments: true},
+    })
 
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
@@ -185,7 +197,11 @@ async function testDeployBundle(app: AppInterface, organization?: Organization) 
     identifiers,
     partnersApp: {id: 'app-id', organizationId: 'org-id', title: 'app-title', grantedScopes: []},
     token: 'api-token',
-    organization: organization ?? {id: 'org-id', businessName: 'org-name', betas: {appUiDeployments: false}},
+    organization: organization ?? {
+      id: 'org-id',
+      businessName: 'org-name',
+      betas: {appUiDeployments: false},
+    },
   })
   vi.mocked(useThemebundling).mockReturnValue(true)
   vi.mocked(uploadFunctionExtensions).mockResolvedValue(identifiers)

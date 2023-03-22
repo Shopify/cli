@@ -20,8 +20,16 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
-const ORG1: Organization = {id: '1', businessName: 'org1', betas: {appUiDeployments: false}}
-const ORG2: Organization = {id: '2', businessName: 'org2', betas: {appUiDeployments: false}}
+const ORG1: Organization = {
+  id: '1',
+  businessName: 'org1',
+  betas: {},
+}
+const ORG2: Organization = {
+  id: '2',
+  businessName: 'org2',
+  betas: {},
+}
 const APP1: OrganizationApp = {
   id: '1',
   title: 'app1',
