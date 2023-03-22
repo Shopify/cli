@@ -240,12 +240,7 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
           destination: templateDownloadDir,
           shallow: true,
         })
-        const origin = await ensureFunctionExtensionFlavorExists(
-          specification,
-          extensionFlavor,
-          templateFlavor,
-          templateDownloadDir,
-        )
+        const origin = await ensureFunctionExtensionFlavorExists(specification, extensionFlavor, templateDownloadDir)
 
         await recursiveLiquidTemplateCopy(origin, options.extensionDirectory, {
           flavor: extensionFlavor,
