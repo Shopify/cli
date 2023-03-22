@@ -5,7 +5,7 @@ module ShopifyCLI
   class Command
     class SubCommand < Command
       class << self
-        def call(args, command_name, parent_command)
+        def call(args, command_name, _parent_command)
           cmd = new(@ctx)
           args = cmd.options.parse(@_options, args || [])
           check_ruby_version
