@@ -1,4 +1,5 @@
 import {ThemeExtension} from '../../models/app/extensions.js'
+import {themeExtensionFiles} from '../../utilities/extensions/theme.js'
 import {fileSize, glob} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, relativePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -46,7 +47,7 @@ export async function validateThemeExtensions(extensions: ThemeExtension[]) {
 }
 
 async function validateThemeExtension(extension: ThemeExtension): Promise<void> {
-  const themeFiles = await glob(joinPath(extension.directory, '*/*'))
+  const themeFiles = await themeExtensionFiles(extension)
   const liquidBytes: number[] = []
   const extensionBytes: number[] = []
   await Promise.all(
