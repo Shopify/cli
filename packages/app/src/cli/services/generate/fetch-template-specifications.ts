@@ -4,9 +4,7 @@ import {
   RemoteTemplateSpecificationsQuerySchema,
 } from '../../api/graphql/template_specifications.js'
 import {TemplateSpecification} from '../../models/app/template.js'
-import {BaseFunctionConfigurationSchema, ZodSchemaType} from '../../models/extensions/schemas.js'
-import {ExtensionCategory} from '../../models/app/extensions.js'
-import {FunctionConfigType} from '../../models/extensions/functions.js'
+import {BaseFunctionConfigurationSchema} from '../../models/extensions/schemas.js'
 import {blocks} from '../../constants.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
@@ -27,16 +25,15 @@ export function mapRemoteTemplateSpecification(
     group: remoteTemplateSpecification.group,
     supportLinks: remoteTemplateSpecification.supportLinks,
     types: remoteTemplateSpecification.types.map((extension) => {
-      const extensionCustoms = resolveExtensionCustoms(extension.type)
       return {
         identifier: extension.type,
         externalIdentifier: extension.type,
         externalName: extension.type,
         gated: false,
-        registrationLimit: registrationLimit(extension.type),
+        registrationLimit: blocks.functions.defaultRegistrationLimit,
         supportedFlavors: extension.supportedFlavors,
         group: remoteTemplateSpecification.group,
-        category: () => extensionCustoms.category,
+        category: () => 'function',
         configSchema: BaseFunctionConfigurationSchema,
         templateURL: remoteTemplateSpecification.url,
         helpURL: remoteTemplateSpecification.supportLinks[0]!,
@@ -47,25 +44,5 @@ export function mapRemoteTemplateSpecification(
         },
       }
     }),
-  }
-}
-
-// There should be another api with the extensions specifications. Right now templates only support functions
-function resolveExtensionCustoms(_type: string): {
-  category: ExtensionCategory
-  configSchema?: ZodSchemaType<FunctionConfigType>
-} {
-  return {
-    category: 'function',
-    configSchema: BaseFunctionConfigurationSchema,
-  }
-}
-
-// There should be another api with the extensions specifications. Right now templates only support functions
-function registrationLimit(identifier: string) {
-  if (identifier === 'cart_transform') {
-    return 1
-  } else {
-    return blocks.functions.defaultRegistrationLimit
   }
 }

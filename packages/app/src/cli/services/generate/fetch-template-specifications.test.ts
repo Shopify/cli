@@ -62,7 +62,7 @@ describe('fetchTemplateSpecifications', () => {
               externalIdentifier: 'cart_transform',
               externalName: 'cart_transform',
               gated: false,
-              registrationLimit: 1,
+              registrationLimit: 10,
               supportedFlavors: [
                 {
                   name: 'Wasm',
