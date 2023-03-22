@@ -31,7 +31,7 @@ function renderUpgradeWarning(upgradeByDate: Date, forThemes?: boolean): void {
   const formattedDate = dateFormat.format(upgradeByDate)
 
   const headline = `Upgrade to the latest CLI version by ${formattedDate}.`
-  const body = 'This command is using deprecated internal APIs that will no longer be supported.'
+  const body = 'This command is using internal APIs that will no longer be supported.'
   const upgradeLink = {
     link: {
       label: 'upgrade Shopify CLI',
