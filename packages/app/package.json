@@ -1,6 +1,6 @@
 {
   "name": "@shopify/app",
-  "version": "3.45.0-pre.3",
+  "version": "3.45.0-pre.4",
   "description": "Utilities for loading, building, and publishing apps.",
   "homepage": "https://github.com/shopify/cli#readme",
   "bugs": {
@@ -43,10 +43,10 @@
   "dependencies": {
     "@luckycatfactory/esbuild-graphql-loader": "3.7.0",
     "@oclif/core": "2.1.4",
-    "@shopify/cli-kit": "3.45.0-pre.3",
+    "@shopify/cli-kit": "3.45.0-pre.4",
     "@shopify/function-runner": "4.0.2",
-    "@shopify/plugin-cloudflare": "3.45.0-pre.3",
-    "@shopify/plugin-ngrok": "3.45.0-pre.3",
+    "@shopify/plugin-cloudflare": "3.45.0-pre.4",
+    "@shopify/plugin-ngrok": "3.45.0-pre.4",
     "abort-controller": "3.0.0",
     "chokidar": "3.5.3",
     "diff": "5.1.0",

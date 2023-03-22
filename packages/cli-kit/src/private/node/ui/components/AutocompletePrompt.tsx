@@ -82,12 +82,12 @@ function AutocompletePrompt<T>({
 
   useEffect(() => {
     function onResize() {
-      const availableSpace = stdout!.rows - (wrapperHeight - selectInputHeight)
+      const availableSpace = stdout.rows - (wrapperHeight - selectInputHeight)
       // rough estimate of the limit needed based on the space available
       const newLimit = Math.max(2, availableSpace - 6)
 
       if (newLimit < limit) {
-        stdout!.write(ansiEscapes.clearTerminal)
+        stdout.write(ansiEscapes.clearTerminal)
       }
 
       setLimit(Math.min(newLimit, searchResults.length))
@@ -95,9 +95,9 @@ function AutocompletePrompt<T>({
 
     onResize()
 
-    stdout!.on('resize', onResize)
+    stdout.on('resize', onResize)
     return () => {
-      stdout!.off('resize', onResize)
+      stdout.off('resize', onResize)
     }
   }, [wrapperHeight, selectInputHeight, searchResults.length, stdout, limit])
 

@@ -3,8 +3,10 @@ import {gql} from 'graphql-request'
 export interface AllOrganizationsQuerySchemaOrganization {
   id: string
   businessName: string
-  website: string
-  appsNext: boolean
+  website?: string
+  betas: {
+    appUiDeployments?: boolean
+  }
 }
 
 export interface AllOrganizationsQuerySchema {
@@ -20,7 +22,9 @@ export const AllOrganizationsQuery = gql`
         id
         businessName
         website
-        appsNext
+        betas {
+          appUiDeployments
+        }
       }
     }
   }

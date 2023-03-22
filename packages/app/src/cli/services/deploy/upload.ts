@@ -86,6 +86,9 @@ interface UploadExtensionsBundleOptions {
 
   /** Extensions extra data */
   extensions: ExtensionSettings[]
+
+  /** Deployment label */
+  label?: string
 }
 
 export interface UploadExtensionValidationError {
@@ -102,7 +105,7 @@ export interface UploadExtensionValidationError {
  */
 export async function uploadExtensionsBundle(
   options: UploadExtensionsBundleOptions,
-): Promise<UploadExtensionValidationError[]> {
+): Promise<{validationErrors: UploadExtensionValidationError[]; deploymentId: number}> {
   const deploymentUUID = randomUUID()
   const signedURL = await getExtensionUploadURL(options.apiKey, deploymentUUID)
 
@@ -120,6 +123,7 @@ export async function uploadExtensionsBundle(
     uuid: deploymentUUID,
     bundleUrl: signedURL,
     extensions: options.extensions,
+    label: options.label,
   }
 
   const mutation = CreateDeployment
@@ -136,7 +140,7 @@ export async function uploadExtensionsBundle(
       return {uuid: ver.extensionVersion.registrationUuid, errors: ver.extensionVersion.validationErrors}
     })
 
-  return validationErrors
+  return {validationErrors, deploymentId: result.deploymentCreate.deployment.id}
 }
 
 /**

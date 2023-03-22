@@ -1,6 +1,6 @@
-import {appNamePrompt, appTypePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {Organization, OrganizationApp, MinimalOrganizationApp} from '../../models/organization.js'
-import {fetchAppFromApiKey} from '../dev/fetch.js'
+import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
+import {Organization, OrganizationApp} from '../../models/organization.js'
+import {fetchAppFromApiKey, OrganizationAppsResponse} from '../dev/fetch.js'
 import {CreateAppQuery, CreateAppQuerySchema, CreateAppQueryVariables} from '../../api/graphql/create_app.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -19,7 +19,7 @@ import {outputInfo} from '@shopify/cli-kit/node/output'
  */
 export async function selectOrCreateApp(
   localAppName: string,
-  apps: {pageInfo: {hasNextPage: boolean}; nodes: MinimalOrganizationApp[]},
+  apps: OrganizationAppsResponse,
   org: Organization,
   token: string,
 ): Promise<OrganizationApp> {
@@ -40,13 +40,12 @@ export async function selectOrCreateApp(
 export async function createApp(org: Organization, appName: string, token: string): Promise<OrganizationApp> {
   const name = await appNamePrompt(appName)
 
-  const type = org.appsNext ? 'undecided' : await appTypePrompt()
   const variables: CreateAppQueryVariables = {
     org: parseInt(org.id, 10),
     title: `${name}`,
     appUrl: 'https://example.com',
     redir: ['https://example.com/api/auth'],
-    type,
+    type: 'undecided',
   }
 
   const query = CreateAppQuery
