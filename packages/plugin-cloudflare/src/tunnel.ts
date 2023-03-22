@@ -26,7 +26,8 @@ export async function hookStart(port: number): ReturnType {
 }
 
 async function tunnel(options: {port: number}): Promise<{url: string}> {
-  const args: string[] = ['tunnel', '--url', `http://localhost:${options.port}`, '--no-autoupdate']
+  const args: string[] = ['tunnel', '--url', `http://localhost:${options.port}`, '--no-autoupdate', '--retries', '3']
+  const errors: string[] = []
 
   let connected = false
   let resolved = false
@@ -36,7 +37,8 @@ async function tunnel(options: {port: number}): Promise<{url: string}> {
     setTimeout(() => {
       if (!resolved) {
         resolved = true
-        reject(new Error('Timed out waiting for a cloudflare tunnel'))
+        const errorMessage = errors.length ? `: ${errors.join('\n')}` : ''
+        reject(new Error(`Timed out waiting for a cloudflare tunnel: ${errorMessage}`))
       }
     }, TUNNEL_TIMEOUT * 1000)
 
@@ -52,7 +54,7 @@ async function tunnel(options: {port: number}): Promise<{url: string}> {
           resolve({url})
         }
         const errorMessage = findError(chunk)
-        if (errorMessage) reject(new Error(errorMessage))
+        if (errorMessage) errors.push(errorMessage)
         callback()
       },
     })
