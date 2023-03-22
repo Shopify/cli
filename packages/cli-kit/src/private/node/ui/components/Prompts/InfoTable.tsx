@@ -9,7 +9,7 @@ type Items = TokenItem<InlineToken>[]
 export interface InfoTableSection {
   color?: TextProps['color']
   header: string
-  helperMessage?: string
+  helperText?: string
   items: Items
 }
 
@@ -24,7 +24,7 @@ export interface InfoTableProps {
 const InfoTable: FunctionComponent<InfoTableProps> = ({table}) => {
   const sections = Array.isArray(table)
     ? table
-    : Object.keys(table).map((header) => ({header, items: table[header]!, color: undefined, helperMessage: undefined}))
+    : Object.keys(table).map((header) => ({header, items: table[header]!, color: undefined, helperText: undefined}))
   const headerColumnWidth = Math.max(...sections.map((section) => section.header.length))
 
   return (
@@ -38,9 +38,9 @@ const InfoTable: FunctionComponent<InfoTableProps> = ({table}) => {
           )}
           <Box marginLeft={section.header.length > 0 ? 2 : 0} flexGrow={1} flexDirection="column">
             <List margin={false} items={section.items} color={section.color} />
-            {section.helperMessage ? (
+            {section.helperText ? (
               <Box marginTop={1}>
-                <Text color={section.color}>{section.helperMessage}</Text>
+                <Text color={section.color}>{section.helperText}</Text>
               </Box>
             ) : null}
           </Box>
