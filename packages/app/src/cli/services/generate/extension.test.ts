@@ -487,32 +487,27 @@ async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | vo
 }
 
 describe('getFunctionRuntimeDependencies', () => {
-  const allFunctionSpecs = testRemoteTemplateSpecifications
-    .map(mapRemoteTemplateSpecification)
-    .map((template) => template.types as FunctionSpec[])
-    .flat()
-
   it('adds dependencies for JS functions', async () => {
     // Given
     const templateLanguage: TemplateLanguage = 'javascript'
 
-    // When/then
-    allFunctionSpecs.forEach((specification) => {
-      const got = getFunctionRuntimeDependencies(specification, templateLanguage)
-      expect(got.find((dep) => dep.name === '@shopify/shopify_function')).toBeTruthy()
-      expect(got.find((dep) => dep.name === 'javy')).toBeTruthy()
-    })
+    // When
+    const got = getFunctionRuntimeDependencies(templateLanguage)
+
+    // Then
+    expect(got.find((dep) => dep.name === '@shopify/shopify_function')).toBeTruthy()
+    expect(got.find((dep) => dep.name === 'javy')).toBeTruthy()
   })
 
   it('no-ops for non-JS functions', async () => {
     // Given
     const templateLanguage: TemplateLanguage = 'rust'
 
-    // When/then
-    allFunctionSpecs.forEach((specification) => {
-      const got = getFunctionRuntimeDependencies(specification, templateLanguage)
-      expect(got.find((dep) => dep.name === '@shopify/shopify_function')).toBeFalsy()
-      expect(got.find((dep) => dep.name === 'javy')).toBeFalsy()
-    })
+    // When
+    const got = getFunctionRuntimeDependencies(templateLanguage)
+
+    // Then
+    expect(got.find((dep) => dep.name === '@shopify/shopify_function')).toBeFalsy()
+    expect(got.find((dep) => dep.name === 'javy')).toBeFalsy()
   })
 })

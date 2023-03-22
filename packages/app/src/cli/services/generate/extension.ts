@@ -177,10 +177,7 @@ export function getExtensionRuntimeDependencies({
   return dependencies
 }
 
-export function getFunctionRuntimeDependencies(
-  specification: FunctionSpec,
-  templateLanguage: string,
-): DependencyVersion[] {
+export function getFunctionRuntimeDependencies(templateLanguage: string): DependencyVersion[] {
   const dependencies: DependencyVersion[] = []
   if (templateLanguage === 'javascript') {
     dependencies.push({name: '@shopify/shopify_function', version: '0.0.3'}, {name: 'javy', version: '0.1.0'})
@@ -221,7 +218,7 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
       taskList.push({
         title: 'Installing additional dependencies',
         task: async () => {
-          const requiredDependencies = getFunctionRuntimeDependencies(specification, templateLanguage)
+          const requiredDependencies = getFunctionRuntimeDependencies(templateLanguage)
           await addNPMDependenciesIfNeeded(requiredDependencies, {
             packageManager: options.app.packageManager,
             type: 'prod',
