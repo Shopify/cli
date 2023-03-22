@@ -1,7 +1,7 @@
 import extensionInit, {
   getExtensionRuntimeDependencies,
   getFunctionRuntimeDependencies,
-  TemplateFlavor,
+  TemplateLanguage,
 } from './extension.js'
 import {mapRemoteTemplateSpecification} from './fetch-template-specifications.js'
 import {blocks, configurationFileNames} from '../../constants.js'
@@ -494,11 +494,11 @@ describe('getFunctionRuntimeDependencies', () => {
 
   it('adds dependencies for JS functions', async () => {
     // Given
-    const templateFlavor: TemplateFlavor = 'javascript'
+    const templateLanguage: TemplateLanguage = 'javascript'
 
     // When/then
     allFunctionSpecs.forEach((specification) => {
-      const got = getFunctionRuntimeDependencies(specification, templateFlavor)
+      const got = getFunctionRuntimeDependencies(specification, templateLanguage)
       expect(got.find((dep) => dep.name === '@shopify/shopify_function')).toBeTruthy()
       expect(got.find((dep) => dep.name === 'javy')).toBeTruthy()
     })
@@ -506,11 +506,11 @@ describe('getFunctionRuntimeDependencies', () => {
 
   it('no-ops for non-JS functions', async () => {
     // Given
-    const templateFlavor: TemplateFlavor = 'rust'
+    const templateLanguage: TemplateLanguage = 'rust'
 
     // When/then
     allFunctionSpecs.forEach((specification) => {
-      const got = getFunctionRuntimeDependencies(specification, templateFlavor)
+      const got = getFunctionRuntimeDependencies(specification, templateLanguage)
       expect(got.find((dep) => dep.name === '@shopify/shopify_function')).toBeFalsy()
       expect(got.find((dep) => dep.name === 'javy')).toBeFalsy()
     })

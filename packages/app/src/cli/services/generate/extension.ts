@@ -55,8 +55,8 @@ type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionSpec> & Extensi
 type UIExtensionInitOptions = ExtensionInitOptions<UIExtensionSpec> & ExtensionDirectory
 type ThemeExtensionInitOptions = ExtensionInitOptions<ThemeExtensionSpec> & ExtensionDirectory
 
-export type TemplateFlavor = 'javascript' | 'rust' | 'wasm'
-function getTemplateFlavor(flavor: ExtensionFlavorValue): TemplateFlavor {
+export type TemplateLanguage = 'javascript' | 'rust' | 'wasm'
+function getTemplateLanguage(flavor: ExtensionFlavorValue): TemplateLanguage {
   switch (flavor) {
     case 'vanilla-js':
     case 'react':
@@ -179,10 +179,10 @@ export function getExtensionRuntimeDependencies({
 
 export function getFunctionRuntimeDependencies(
   specification: FunctionSpec,
-  templateFlavor: string,
+  templateLanguage: string,
 ): DependencyVersion[] {
   const dependencies: DependencyVersion[] = []
-  if (templateFlavor === 'javascript') {
+  if (templateLanguage === 'javascript') {
     dependencies.push({name: '@shopify/shopify_function', version: '0.0.3'}, {name: 'javy', version: '0.1.0'})
   }
   return dependencies
@@ -214,14 +214,14 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
   await inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = joinPath(tmpDir, 'download')
     const extensionFlavor = options.extensionFlavor
-    const templateFlavor = getTemplateFlavor(extensionFlavor)
+    const templateLanguage = getTemplateLanguage(extensionFlavor)
     const taskList = []
 
-    if (templateFlavor === 'javascript') {
+    if (templateLanguage === 'javascript') {
       taskList.push({
         title: 'Installing additional dependencies',
         task: async () => {
-          const requiredDependencies = getFunctionRuntimeDependencies(specification, templateFlavor)
+          const requiredDependencies = getFunctionRuntimeDependencies(specification, templateLanguage)
           await addNPMDependenciesIfNeeded(requiredDependencies, {
             packageManager: options.app.packageManager,
             type: 'prod',
@@ -247,7 +247,7 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
           ...options,
         })
 
-        if (templateFlavor === 'javascript') {
+        if (templateLanguage === 'javascript') {
           const srcFileExtension = getSrcFileExtension(extensionFlavor)
           await changeIndexFileExtension(options.extensionDirectory, srcFileExtension)
         }
@@ -259,7 +259,7 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
       },
     })
 
-    if (templateFlavor === 'javascript') {
+    if (templateLanguage === 'javascript') {
       taskList.push({
         title: `Building ${specification.externalName} graphql types`,
         task: async () => {
