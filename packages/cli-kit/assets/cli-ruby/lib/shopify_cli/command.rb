@@ -28,7 +28,6 @@ module ShopifyCLI
         else
           cmd = new(@ctx)
           cmd.options.parse(@_options, args)
-          return call_help(command_name) if cmd.options.help
           check_ruby_version
           check_node_version
           run_prerequisites
@@ -147,11 +146,6 @@ module ShopifyCLI
 
       def task_registry
         @task_registry || ShopifyCLI::Tasks::Registry
-      end
-
-      def call_help(*cmds)
-        help = Commands::Help.new(@ctx)
-        help.call(cmds, nil)
       end
 
       class PrerequisiteTask
