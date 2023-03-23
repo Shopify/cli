@@ -44,6 +44,8 @@ export interface Item<T> {
   value: T
   key?: string
   group?: string
+  helperText?: string
+  disabled?: boolean
 }
 
 interface ItemWithKey<T> extends Item<T> {
@@ -84,6 +86,15 @@ function Item<T>({
   const isSelected = items.indexOf(item) === selectedIndex
   const label = highlightedLabel(item.label, highlightedTerm)
   let title: string | undefined
+  let color
+
+  if (isSelected) {
+    color = 'cyan'
+  } else if (item.disabled) {
+    color = 'dim'
+  } else {
+    color = undefined
+  }
 
   if (typeof previousItem === 'undefined' || item.group !== previousItem.group) {
     title = item.group ?? (hasAnyGroup ? 'Other' : undefined)
@@ -99,7 +110,7 @@ function Item<T>({
 
       <Box key={item.key}>
         <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
-        <Text color={isSelected ? 'cyan' : undefined}>{enableShortcuts ? `(${item.key}) ${label}` : label}</Text>
+        <Text color={color}>{enableShortcuts ? `(${item.key}) ${label}` : label}</Text>
       </Box>
     </Box>
   )
