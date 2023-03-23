@@ -35,7 +35,7 @@ async function buildJSFunctionWithoutTasks(fun: FunctionExtension, options: JSFu
 }
 
 export async function buildJSFunctionWithTasks(fun: FunctionExtension, options: JSFunctionBuildOptions) {
-  return renderTasks([
+  await renderTasks([
     {
       title: 'Building GraphQL types',
       task: async () => {

@@ -116,6 +116,7 @@
           "order_routing_location_rule",
           "cart_transform",
           "tax_calculation",
+          "fulfillment_constraints",
         ],
         "default": "checkout_ui_extension",
     },

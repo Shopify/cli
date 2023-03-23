@@ -47,7 +47,7 @@ interface DevContextOutput {
   remoteAppUpdated: boolean
   storeFqdn: string
   updateURLs: boolean | undefined
-  tunnelPlugin: string | undefined
+  useCloudflareTunnels: boolean
 }
 
 /**
@@ -138,6 +138,9 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   const orgId = cachedInfo?.orgId || (await selectOrg(token))
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
+  const organization = await fetchOrgFromId(orgId, token)
+  const useCloudflareTunnels = organization.betas.cliTunnelAlternative !== true
+
   if (selectedApp && selectedStore) {
     setAppInfo({
       appId: selectedApp.apiKey,
@@ -146,11 +149,10 @@ export async function ensureDevContext(options: DevContextOptions, token: string
       orgId,
     })
 
-    return buildOutput(selectedApp, selectedStore, cachedInfo)
+    return buildOutput(selectedApp, selectedStore, useCloudflareTunnels, cachedInfo)
   }
 
-  const [organization, _selectedApp, _selectedStore] = await Promise.all([
-    organizationFromId(orgId, token),
+  const [_selectedApp, _selectedStore] = await Promise.all([
     selectedApp ? selectedApp : appFromId(cachedInfo?.appId, token),
     selectedStore ? selectedStore : storeFromFqdn(cachedInfo?.storeFqdn, orgId, token),
   ])
@@ -183,18 +185,12 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     showReusedValues(organization.businessName, cachedInfo, packageManager)
   }
 
-  const result = buildOutput(selectedApp, selectedStore, cachedInfo)
+  const result = buildOutput(selectedApp, selectedStore, useCloudflareTunnels, cachedInfo)
   await logMetadataForLoadedDevContext(result)
   return result
 }
 
 const resetHelpMessage = 'You can pass `--reset` to your command to reset your config.'
-
-const organizationFromId = async (orgId: string, token: string): Promise<Organization> => {
-  const organization = await fetchOrgFromId(orgId, token)
-  if (!organization) throw new BugError(`Couldn't find the organization with id ${orgId}. ${resetHelpMessage}`)
-  return organization
-}
 
 const appFromId = async (appId: string | undefined, token: string): Promise<OrganizationApp | undefined> => {
   if (!appId) return
@@ -218,7 +214,12 @@ const storeFromFqdn = async (
   }
 }
 
-function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?: CachedAppInfo): DevContextOutput {
+function buildOutput(
+  app: OrganizationApp,
+  store: OrganizationStore,
+  useCloudflareTunnels: boolean,
+  cachedInfo?: CachedAppInfo,
+): DevContextOutput {
   return {
     remoteApp: {
       ...app,
@@ -227,7 +228,7 @@ function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?
     remoteAppUpdated: app.apiKey !== cachedInfo?.appId,
     storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
-    tunnelPlugin: cachedInfo?.tunnelPlugin,
+    useCloudflareTunnels,
   }
 }
 
@@ -241,9 +242,9 @@ export interface DeployContextOptions {
 interface DeployContextOutput {
   app: AppInterface
   token: string
-  partnersOrganizationId: string
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   identifiers: Identifiers
+  organization: Organization
 }
 
 /**
@@ -261,9 +262,9 @@ export async function fetchDevAppAndPrompt(app: AppInterface, token: string): Pr
   const partnersResponse = await fetchAppFromApiKey(devAppId, token)
   if (!partnersResponse) return undefined
 
-  const org: Organization | undefined = await fetchOrgFromId(partnersResponse.organizationId, token)
+  const org = await fetchOrgFromId(partnersResponse.organizationId, token)
 
-  showDevValues(org?.businessName ?? 'unknown', partnersResponse.title)
+  showDevValues(org.businessName ?? 'unknown', partnersResponse.title)
   const reuse = await reuseDevConfigPrompt()
   return reuse ? partnersResponse : undefined
 }
@@ -289,7 +290,7 @@ export async function ensureThemeExtensionDevContext(
 
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
   const token = await ensureAuthenticatedPartners()
-  const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
+  const [partnersApp, envIdentifiers, organization] = await fetchAppAndIdentifiers(options, token)
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
 
@@ -316,9 +317,9 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
       organizationId: partnersApp.organizationId,
       grantedScopes: partnersApp.grantedScopes,
     },
-    partnersOrganizationId: partnersApp.organizationId,
     identifiers,
     token,
+    organization,
   }
 
   await logMetadataForLoadedDeployContext(result)
@@ -328,20 +329,25 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
 export async function fetchOrganizationAndFetchOrCreateApp(
   app: AppInterface,
   token: string,
-): Promise<{partnersApp: OrganizationApp; orgId: string}> {
+): Promise<{partnersApp: OrganizationApp; organization: Organization}> {
   const orgId = await selectOrg(token)
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
   const partnersApp = await selectOrCreateApp(app.name, apps, organization, token)
-  return {orgId, partnersApp}
+  return {organization, partnersApp}
 }
 
 export async function fetchAppAndIdentifiers(
-  options: {app: AppInterface; reset: boolean; packageManager?: PackageManager; apiKey?: string},
+  options: {
+    app: AppInterface
+    reset: boolean
+    packageManager?: PackageManager
+    apiKey?: string
+  },
   token: string,
-): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
-  let envIdentifiers = await getAppIdentifiers({app: options.app})
-
+): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>, Organization]> {
+  let envIdentifiers = getAppIdentifiers({app: options.app})
   let partnersApp: OrganizationApp | undefined
+  let organization: Organization | undefined
 
   if (options.reset) {
     envIdentifiers = {app: undefined, extensions: {}}
@@ -363,9 +369,14 @@ export async function fetchAppAndIdentifiers(
   if (!partnersApp) {
     const result = await fetchOrganizationAndFetchOrCreateApp(options.app, token)
     partnersApp = result.partnersApp
+    organization = result.organization
   }
 
-  return [partnersApp, envIdentifiers]
+  if (!organization) {
+    organization = await fetchOrgFromId(partnersApp.organizationId, token)
+  }
+
+  return [partnersApp, envIdentifiers, organization]
 }
 
 async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
@@ -528,7 +539,7 @@ async function logMetadataForLoadedDevContext(env: DevContextOutput) {
 
 async function logMetadataForLoadedDeployContext(env: DeployContextOutput) {
   await metadata.addPublicMetadata(() => ({
-    partner_id: tryParseInt(env.partnersOrganizationId),
+    partner_id: tryParseInt(env.organization.id),
     api_key: env.identifiers.app,
   }))
 }

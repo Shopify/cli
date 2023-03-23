@@ -59,12 +59,12 @@ function SelectPrompt<T>({
 
   useEffect(() => {
     function onResize() {
-      const availableSpace = stdout!.rows - (wrapperHeight - selectInputHeight)
+      const availableSpace = stdout.rows - (wrapperHeight - selectInputHeight)
       // rough estimate of the limit needed based on the space available
       const newLimit = Math.max(2, availableSpace - numberOfGroups * 2 - 6)
 
       if (newLimit < limit) {
-        stdout!.write(ansiEscapes.clearTerminal)
+        stdout.write(ansiEscapes.clearTerminal)
       }
 
       setLimit(Math.min(newLimit, choices.length))
@@ -72,9 +72,9 @@ function SelectPrompt<T>({
 
     onResize()
 
-    stdout!.on('resize', onResize)
+    stdout.on('resize', onResize)
     return () => {
-      stdout!.off('resize', onResize)
+      stdout.off('resize', onResize)
     }
   }, [wrapperHeight, selectInputHeight, choices.length, numberOfGroups, stdout, limit])
 

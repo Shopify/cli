@@ -71,15 +71,15 @@ describe('ConcurrentOutput', () => {
 
     // Then
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
-      "0000-00-00 00:00:00 | backend  | first backend message
-      0000-00-00 00:00:00 | backend  | second backend message
-      0000-00-00 00:00:00 | backend  | third backend message
-      0000-00-00 00:00:00 | frontend | first frontend message
-      0000-00-00 00:00:00 | frontend | second frontend message
-      0000-00-00 00:00:00 | frontend | third frontend message
+      "0000-00-00 00:00:00 │ backend  │ first backend message
+      0000-00-00 00:00:00 │ backend  │ second backend message
+      0000-00-00 00:00:00 │ backend  │ third backend message
+      0000-00-00 00:00:00 │ frontend │ first frontend message
+      0000-00-00 00:00:00 │ frontend │ second frontend message
+      0000-00-00 00:00:00 │ frontend │ third frontend message
 
-      › Press p | open your browser
-      › Press q | quit
+      › Press p │ open your browser
+      › Press q │ quit
 
       Preview URL: https://shopify.com
       "

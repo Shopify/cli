@@ -3,6 +3,7 @@ import {startTunnel, TunnelError} from '@shopify/cli-kit/node/plugins/tunnel'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {exec} from '@shopify/cli-kit/node/system'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
 
@@ -41,11 +42,12 @@ async function tunnel(options: {port: number}): Promise<{url: string}> {
 
     const customStdout = new Writable({
       write(chunk, _, callback) {
+        outputDebug(chunk.toString())
         if (resolved) return
         if (!url) url = findUrl(chunk)
         if (findConnection(chunk)) connected = true
         if (connected) {
-          if (!url) return reject(new Error('A connection was stablished but no Tunnel URL was found'))
+          if (!url) return reject(new Error('A connection was established but no Tunnel URL was found'))
           resolved = true
           resolve({url})
         }
@@ -75,6 +77,7 @@ function findError(data: Buffer): string | undefined {
     /failed to parse quick Tunnel ID/,
     /failed to provision routing/,
     /ERR Couldn't start tunnel/,
+    /ERR Failed to serve quic connection/,
   ]
   const match = knownErrors.some((error) => error.test(data.toString()))
   return match ? data.toString() : undefined

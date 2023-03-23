@@ -1,4 +1,4 @@
-import {Organization, OrganizationApp, MinimalOrganizationApp, OrganizationStore} from '../../models/organization.js'
+import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {
   AllAppExtensionRegistrationsQuery,
   AllAppExtensionRegistrationsQuerySchema,
@@ -48,14 +48,16 @@ export const NoOrgError = (organizationId?: string) => {
   return new AbortError(`No Organization found`, undefined, nextSteps)
 }
 
+export interface OrganizationAppsResponse {
+  pageInfo: {
+    hasNextPage: boolean
+  }
+  nodes: MinimalOrganizationApp[]
+}
+
 export interface FetchResponse {
   organization: Organization
-  apps: {
-    pageInfo: {
-      hasNextPage: boolean
-    }
-    nodes: MinimalOrganizationApp[]
-  }
+  apps: OrganizationAppsResponse
   stores: OrganizationStore[]
 }
 
@@ -100,7 +102,7 @@ export async function fetchOrgAndApps(orgId: string, token: string, title?: stri
   const result: FindOrganizationQuerySchema = await partnersRequest(query, token, params)
   const org = result.organizations.nodes[0]
   if (!org) throw NoOrgError(orgId)
-  const parsedOrg = {id: org.id, businessName: org.businessName, appsNext: org.appsNext}
+  const parsedOrg = {id: org.id, businessName: org.businessName, betas: org.betas}
   return {organization: parsedOrg, apps: org.apps, stores: []}
 }
 
@@ -111,10 +113,12 @@ export async function fetchAppFromApiKey(apiKey: string, token: string): Promise
   return res.app
 }
 
-export async function fetchOrgFromId(id: string, token: string): Promise<Organization | undefined> {
+export async function fetchOrgFromId(id: string, token: string): Promise<Organization> {
   const query = FindOrganizationBasicQuery
   const res: FindOrganizationBasicQuerySchema = await partnersRequest(query, token, {id})
-  return res.organizations.nodes[0]
+  const org = res.organizations.nodes[0]
+  if (!org) throw NoOrgError(id)
+  return org
 }
 
 export async function fetchAllDevStores(orgId: string, token: string): Promise<OrganizationStore[]> {
@@ -151,7 +155,7 @@ export async function fetchStoreByDomain(
     return undefined
   }
 
-  const parsedOrg = {id: org.id, businessName: org.businessName, appsNext: org.appsNext}
+  const parsedOrg = {id: org.id, businessName: org.businessName, betas: org.betas}
   const store = org.stores.nodes[0]
 
   return {organization: parsedOrg, store}

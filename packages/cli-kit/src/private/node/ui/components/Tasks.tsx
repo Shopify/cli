@@ -20,6 +20,7 @@ export interface Task<TContext = unknown> {
 export interface TasksProps<TContext> {
   tasks: Task<TContext>[]
   silent?: boolean
+  onComplete?: (ctx: TContext) => void
 }
 
 enum TasksState {
@@ -52,8 +53,14 @@ async function runTask<TContext>(task: Task<TContext>, ctx: TContext) {
   }
 }
 
+const noop = () => {}
+
 // eslint-disable-next-line react/function-component-definition
-function Tasks<TContext>({tasks, silent = isUnitTest()}: React.PropsWithChildren<TasksProps<TContext>>) {
+function Tasks<TContext>({
+  tasks,
+  silent = isUnitTest(),
+  onComplete = noop,
+}: React.PropsWithChildren<TasksProps<TContext>>) {
   const {twoThirds} = useLayout()
   const loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
@@ -80,7 +87,10 @@ function Tasks<TContext>({tasks, silent = isUnitTest()}: React.PropsWithChildren
   }
 
   useAsyncAndUnmount(runTasks, {
-    onFulfilled: () => setState(TasksState.Success),
+    onFulfilled: () => {
+      setState(TasksState.Success)
+      onComplete(ctx.current)
+    },
     onRejected: () => setState(TasksState.Failure),
   })
 

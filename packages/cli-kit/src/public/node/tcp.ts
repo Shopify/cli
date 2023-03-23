@@ -17,6 +17,15 @@ export async function getAvailableTCPPort(): Promise<number> {
 }
 
 /**
+ * Checks if a port is available.
+ *
+ * @param portNumber - The port number to check.
+ */
+export async function checkPortAvailability(portNumber: number): Promise<boolean> {
+  return (await port.checkPort(portNumber)) === portNumber
+}
+
+/**
  * Given a function, it runs it and retries in case of failiure up to the provided number of times.
  *
  * @param execute - The function to execute.

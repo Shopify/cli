@@ -19,8 +19,7 @@ describe('Tasks', () => {
 
     // When
     const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
-    // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 0))
+    await new Promise((resolve) => setTimeout(resolve, 100))
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
@@ -113,7 +112,7 @@ describe('Tasks', () => {
     const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
 
     // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 0))
+    await new Promise((resolve) => setTimeout(resolve, 100))
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
@@ -147,7 +146,7 @@ describe('Tasks', () => {
     const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
 
     // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 0))
+    await new Promise((resolve) => setTimeout(resolve, 100))
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
@@ -188,7 +187,7 @@ describe('Tasks', () => {
     const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
 
     // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 0))
+    await new Promise((resolve) => setTimeout(resolve, 100))
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
@@ -220,7 +219,7 @@ describe('Tasks', () => {
     const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
 
     // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 0))
+    await new Promise((resolve) => setTimeout(resolve, 100))
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
@@ -262,7 +261,7 @@ describe('Tasks', () => {
     const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
 
     // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 0))
+    await new Promise((resolve) => setTimeout(resolve, 100))
 
     // Then
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot('""')
@@ -302,7 +301,7 @@ describe('Tasks', () => {
     const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
 
     // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 0))
+    await new Promise((resolve) => setTimeout(resolve, 100))
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
@@ -351,7 +350,7 @@ describe('Tasks', () => {
     const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
 
     // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 0))
+    await new Promise((resolve) => setTimeout(resolve, 100))
 
     // Then
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot('""')
@@ -397,7 +396,7 @@ describe('Tasks', () => {
     const renderInstance = render(<Tasks tasks={[firstTask, secondTask, thirdTask]} silent={false} />)
 
     // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 0))
+    await new Promise((resolve) => setTimeout(resolve, 100))
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
@@ -405,5 +404,25 @@ describe('Tasks', () => {
       task 3 ..."
     `)
     expect(thirdTaskFunction).toHaveBeenCalled()
+  })
+
+  test('has an onComplete function that is called with the context', async () => {
+    // Given
+    const taskFunction = vi.fn(async (ctx) => {
+      ctx.foo = 'bar'
+    })
+
+    const task: Task<{foo: string}> = {
+      title: 'task 1',
+      task: taskFunction,
+    }
+
+    // When
+    const context = await new Promise((resolve, _reject) => {
+      render(<Tasks tasks={[task]} silent={false} onComplete={resolve} />)
+    })
+
+    // Then
+    expect(context).toEqual({foo: 'bar'})
   })
 })

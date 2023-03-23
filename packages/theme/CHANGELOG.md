@@ -1,5 +1,17 @@
 # @shopify/theme
 
+## 3.45.0-pre.4
+
+### Minor Changes
+
+- 4fc91508e: Fix `shopify theme share` description
+
+### Patch Changes
+
+- Updated dependencies [ce1457036]
+- Updated dependencies [2ca5b35d8]
+  - @shopify/cli-kit@3.45.0-pre.4
+
 ## 3.45.0-pre.3
 
 ### Patch Changes

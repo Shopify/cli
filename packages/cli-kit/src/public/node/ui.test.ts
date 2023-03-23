@@ -95,10 +95,9 @@ describe('renderInfo', async () => {
       │                                                                              │
       │  Reference                                                                   │
       │    • Run \`npm shopify help\`                                                  │
-      │    • Press 'return' to open the really amazing and clean dev docs (          │
-      │      https://shopify.dev )                                                   │
+      │    • Press 'return' to open the really amazing and clean dev docs [1]        │
       │                                                                              │
-      │  Link ( https://shopify.com )                                                │
+      │  Link [2]                                                                    │
       │                                                                              │
       │  Custom section                                                              │
       │    • Item 1                                                                  │
@@ -111,6 +110,8 @@ describe('renderInfo', async () => {
       │    • Item 3                                                                  │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
+      [1] https://shopify.dev
+      [2] https://shopify.com
       "
     `)
   })
@@ -275,13 +276,13 @@ describe('renderFatalError', async () => {
       │  No Organization found                                                       │
       │                                                                              │
       │  Next steps                                                                  │
-      │    • Have you created a Shopify Partners organization (                      │
-      │      https://partners.shopify.com/signup )?                                  │
+      │    • Have you created a Shopify Partners organization [1]?                   │
       │    • Have you confirmed your accounts from the emails you received?          │
       │    • Need to connect to a different App or organization? Run the command     │
       │      again with \`--reset\`                                                    │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
+      [1] https://partners.shopify.com/signup
       "
     `)
   })

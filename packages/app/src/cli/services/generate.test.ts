@@ -89,10 +89,10 @@ describe('after extension command finishes correctly', () => {
       │  Your extension was created in extensions/name.                              │
       │                                                                              │
       │  Reference                                                                   │
-      │    • For more details, see the docs (                                        │
-      │      https://shopify.dev/docs/apps/discounts )                               │
+      │    • For more details, see the docs [1]                                      │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
+      [1] https://shopify.dev/docs/apps/discounts
       "
     `)
   })
