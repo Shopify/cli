@@ -65,6 +65,7 @@ export const extensionTypesGroups: {name: string; extensions: string[]}[] = [
       'cart_checkout_validation',
       'checkout_post_purchase',
       'cart_transform',
+      'fulfillment_constraints',
     ],
   },
   {name: 'Analytics', extensions: ['web_pixel_extension']},
@@ -72,11 +73,6 @@ export const extensionTypesGroups: {name: string; extensions: string[]}[] = [
   {name: 'Point-of-Sale', extensions: ['pos_ui_extension']},
   {
     name: 'Shopify private',
-    extensions: [
-      'customer_accounts_ui_extension',
-      'ui_extension',
-      'order_routing_location_rule',
-      'fulfillment_constraints',
-    ],
+    extensions: ['customer_accounts_ui_extension', 'ui_extension', 'order_routing_location_rule'],
   },
 ]
