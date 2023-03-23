@@ -48,7 +48,7 @@ describe('Tasks', () => {
     const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
 
     // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 0))
+    await new Promise((resolve) => setTimeout(resolve, 100))
 
     // Then
     expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot('""')
@@ -74,7 +74,7 @@ describe('Tasks', () => {
     const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
 
     // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 0))
+    await new Promise((resolve) => setTimeout(resolve, 100))
 
     // Then
     expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot('""')
