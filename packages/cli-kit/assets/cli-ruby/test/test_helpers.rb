@@ -10,7 +10,6 @@ module TestHelpers
   autoload :FakeUI, "test_helpers/fake_ui"
   autoload :Partners, "test_helpers/partners"
   autoload :Project, "test_helpers/project"
-  autoload :Schema, "test_helpers/schema"
   autoload :Shopifolk, "test_helpers/shopifolk"
   autoload :Singleton, "test_helpers/singleton"
   autoload :TemporaryDirectory, "test_helpers/temporary_directory"
