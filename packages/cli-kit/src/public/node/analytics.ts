@@ -63,7 +63,7 @@ async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions)
   const environmentData = await getEnvironmentData(config)
   const sensitiveEnvironmentData = await getSensitiveEnvironmentData(config)
 
-  return {
+  const payload = {
     public: {
       command: startCommand,
       time_start: startTime,
@@ -93,4 +93,13 @@ async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions)
       }),
     },
   }
+
+  return sanitizePayload(payload)
+}
+
+function sanitizePayload(payload: object) {
+  const payloadString = JSON.stringify(payload)
+  // Remove Theme Access passwords from the payload
+  const sanitizedPayloadString = payloadString.replace(/shptka_\w*/g, '*****')
+  return JSON.parse(sanitizedPayloadString)
 }
