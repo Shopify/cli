@@ -16,6 +16,7 @@ const ignoredFilePatterns = [
   'desktop.ini',
   'config.yml',
   'node_modules',
+  '.gitkeep',
 ]
 
 export async function themeExtensionFiles(themeExtension: ThemeExtension): Promise<string[]> {
