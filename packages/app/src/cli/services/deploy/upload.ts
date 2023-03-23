@@ -226,7 +226,7 @@ interface UploadFunctionExtensionOptions {
   const variables: CreateDeploymentVariables = {
     apiKey: options.identifiers.app,
     uuid: deploymentUUID,
-    bundleUrl: Object.values(signedURLs)[0] || "", // we don't use this, but it must be a valid URL for deploy to work.
+    bundleUrl: "", // we don't use this, but it must be a valid URL for deploy to work.
     extensions: formattedExtensions,
   }
 
@@ -313,14 +313,16 @@ async function functionConfiguration(
           singleJsonMetafield: extension.configuration.input.variables,
         }
       : undefined,
-    appBridge: extension.configuration.ui?.paths
-      ? {
-          detailsPath: extension.configuration.ui.paths.details,
-          createPath: extension.configuration.ui.paths.create,
-        }
-      : undefined,
-    enableCreationUi: extension.configuration.ui?.enable_create ?? true,
-    moduleUploadUrl: moduleUploadUrl
+    ui: {
+      appBridge: extension.configuration.ui?.paths
+        ? {
+            detailsPath: extension.configuration.ui.paths.details,
+            createPath: extension.configuration.ui.paths.create,
+          }
+        : undefined,
+      enableCreationUi: extension.configuration.ui?.enable_create ?? true,
+    },
+    moduleId: moduleUploadUrl
   }
 }
 
