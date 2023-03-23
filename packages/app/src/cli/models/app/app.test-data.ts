@@ -203,6 +203,17 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     },
   },
   {
+    name: 'Application URLs',
+    externalName: 'Application URLs',
+    identifier: 'app_urls',
+    externalIdentifier: 'app_urls',
+    gated: false,
+    options: {
+      managementExperience: 'app_setup',
+      registrationLimit: 1,
+    },
+  },
+  {
     name: 'Product Subscription',
     externalName: 'Subscription UI',
     // we are going to replace this to 'product_subscription' because we

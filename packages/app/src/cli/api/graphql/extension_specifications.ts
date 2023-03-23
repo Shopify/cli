@@ -32,7 +32,7 @@ export interface RemoteSpecification {
   gated: boolean
   externalIdentifier: string
   options: {
-    managementExperience: 'cli' | 'custom' | 'dashboard'
+    managementExperience: 'app_setup' | 'cli' | 'custom' | 'dashboard'
     registrationLimit: number
   }
   features?: {
