@@ -35,7 +35,7 @@ export default class Deploy extends Command {
     label: Flags.string({
       // we can make this visible once we've rolled out unified deployments
       hidden: true,
-      description: 'The deployment label.',
+      description: 'The deployment label. Will be shown in the Partners Dashboard.',
       env: 'SHOPIFY_FLAG_LABEL',
     }),
   }
