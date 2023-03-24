@@ -27,19 +27,36 @@ You can run the CLIs through the following `package.json` scripts:
 
 All commands support the `--path` argument, so you can run any command pointing to your app. For example, `pnpm shopify app build --path /path/to/project`
 
-### Run against the fixture project
+### Create a new app from scratch
 
-The repository contains fixture projects under `fixtures/` that can be used for testing purposes.
-`fixture/app` is the most representative of what a standard Shopify app looks like.
+If you want to quickly test creating an app from scratch, you can run `bin/create-test-app.js`. It will:
+
+- create a new app on your Desktop
+- create a UI extension (product subscription)
+- create a theme app extension
+- create a function (product discount in TypeScript)
+- deploy it to Shopify (you can skip this with `--no-deploy`)
+- remove the app directory (you can skip this with `--no-cleanup`)
+
 If you want to interact with it, you can `cd` into the directory and run the CLI through the scripts in the `package.json`:
 
-| Command | **PNPM** | **dev** |
-| ---- | ---- | --- |
-| shopify | `pnpm shopify` | `dev fixture shopify` |
-| build | `pnpm build` | `dev fixture build` |
-| dev | `pnpm dev` | `dev fixture dev` |
-| test | `pnpm test` | `dev fixture test` |
-| generate | `pnpm generate` | `dev fixture generate` |
+| Command | **PNPM** |
+| ---- | ---- |
+| shopify | `pnpm shopify` |
+| build | `pnpm build` |
+| dev | `pnpm dev` |
+| test | `pnpm test` |
+| generate | `pnpm generate` |
+
+### Create a new theme from scratch
+
+If you want to quickly test creating a theme from scratch, you can run `bin/create-test-theme.js -s YOUR_STORE`. It will:
+
+- create a new theme on your Desktop
+- start the development server on http://localhost:9292
+- push the theme to your store
+- list all the available themes
+- remove the theme directory (you can skip this with `--no-cleanup`)
 
 ### More automation
 
