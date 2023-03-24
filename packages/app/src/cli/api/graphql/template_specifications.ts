@@ -8,8 +8,8 @@ export const RemoteTemplateSpecificationsQuery = gql`
       name
       group
       supportLinks
-      url
       types {
+        url
         type
         extensionPoints
         supportedFlavors {
@@ -26,6 +26,7 @@ export interface TemplateType {
   type: string
   extensionPoints: string[]
   supportedFlavors: ExtensionFlavor[]
+  url: string
 }
 
 export interface RemoteTemplateSpecification {
@@ -33,7 +34,6 @@ export interface RemoteTemplateSpecification {
   name: string
   group: string
   supportLinks: string[]
-  url: string
   types: TemplateType[]
 }
 

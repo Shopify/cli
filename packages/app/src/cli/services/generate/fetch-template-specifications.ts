@@ -35,7 +35,7 @@ export function mapRemoteTemplateSpecification(
         group: remoteTemplateSpecification.group,
         category: () => 'function',
         configSchema: BaseFunctionConfigurationSchema,
-        templateURL: remoteTemplateSpecification.url,
+        templateURL: extension.url,
         helpURL: remoteTemplateSpecification.supportLinks[0]!,
         templatePath: (flavor: string) => {
           const supportedFlavor = extension.supportedFlavors.find((supportedFlavor) => supportedFlavor.value === flavor)
