@@ -2,7 +2,12 @@ import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
-import {currentDirectoryConfirmed, renderLinks, validThemeDirectory} from '../../services/dev.js'
+import {
+  showDeprecationWarnings,
+  currentDirectoryConfirmed,
+  renderLinks,
+  validThemeDirectory,
+} from '../../services/dev.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -36,7 +41,6 @@ export default class Dev extends ThemeCommand {
       env: 'SHOPIFY_FLAG_POLL',
     }),
     'theme-editor-sync': Flags.boolean({
-      char: 'e',
       description: 'Synchronize Theme Editor updates in the local theme files.',
       env: 'SHOPIFY_FLAG_THEME_EDITOR_SYNC',
     }),
@@ -75,6 +79,7 @@ export default class Dev extends ThemeCommand {
       env: 'SHOPIFY_FLAG_FORCE',
     }),
     password: themeFlags.password,
+    environment: themeFlags.environment,
   }
 
   static cli2Flags = [
@@ -99,6 +104,7 @@ export default class Dev extends ThemeCommand {
    * Every 110 minutes, it will refresh the session token and restart the server.
    */
   async run(): Promise<void> {
+    showDeprecationWarnings(this.argv)
     let {flags} = await this.parse(Dev)
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password, [], true)
