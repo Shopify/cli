@@ -1,11 +1,26 @@
 import {ensureGenerateContext} from './context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
+import {fetchTemplateSpecifications} from './generate/fetch-template-specifications.js'
 import {AppInterface} from '../models/app/app.js'
 import {load as loadApp} from '../models/app/loader.js'
 import {GenericSpecification} from '../models/app/extensions.js'
-import generateExtensionPrompt from '../prompts/generate/extension.js'
+import generateExtensionPrompt, {
+  GenerateExtensionPromptOutput,
+  GenerateExtensionPromptOptions,
+} from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
-import generateExtensionService, {ExtensionFlavor} from '../services/generate/extension.js'
+import {
+  ExtensionFlavorValue,
+  ExtensionInitOptions,
+  GeneratedExtension,
+  generateExtension,
+} from '../services/generate/extension.js'
+import {
+  convertSpecificationsToTemplate,
+  getTypesExternalIdentitifier,
+  getTypesExternalName,
+  TemplateSpecification,
+} from '../models/app/template.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -28,95 +43,119 @@ export interface GenerateOptions {
 }
 
 async function generate(options: GenerateOptions) {
+  const templateSpecifications = await getTemplateSpecifications(options)
+  const specificationTypes = templateSpecifications.flatMap((specification) => specification.types) ?? []
+  const app: AppInterface = await loadApp({directory: options.directory, specifications: specificationTypes})
+
+  const promptOptions = await buildPromptOptions(templateSpecifications, app, options)
+  const promptAnswers = await generateExtensionPrompt(promptOptions)
+
+  await saveAnalyticsMetadata(promptAnswers, options.type)
+
+  const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options)
+  const generatedExtensions = await generateExtension(generateExtensionOptions)
+
+  renderSuccessMessages(generatedExtensions, app.packageManager)
+}
+
+async function getTemplateSpecifications(options: GenerateOptions): Promise<TemplateSpecification[]> {
   const token = await ensureAuthenticatedPartners()
   const apiKey = await ensureGenerateContext({...options, token})
   const specifications = await fetchSpecifications({token, apiKey, config: options.config})
-  const app: AppInterface = await loadApp({directory: options.directory, specifications})
+  const localTemplateSpecifications = convertSpecificationsToTemplate(specifications)
+  const remoteTemplateSpecifications = await fetchTemplateSpecifications(token)
+  return localTemplateSpecifications.concat(remoteTemplateSpecifications)
+}
 
-  // If the user has specified a type, we need to validate it
-  const specification = findSpecification(options.type, specifications)
-  const allExternalTypes = specifications.map((spec) => spec.externalIdentifier)
+async function buildPromptOptions(
+  templateSpecifications: TemplateSpecification[],
+  app: AppInterface,
+  options: GenerateOptions,
+): Promise<GenerateExtensionPromptOptions> {
+  const templateSpecification = await handleTypeParameter(options.type, app, templateSpecifications)
+  validateExtensionFlavor(templateSpecification, options.template)
 
-  if (options.type && !specification) {
-    const isShopifolk = await isShopify()
-    const tryMsg = isShopifolk ? 'You might need to enable some beta flags on your Organization or App' : undefined
-    throw new AbortError(
-      `Unknown extension type: ${options.type}.\nThe following extension types are supported: ${allExternalTypes.join(
-        ', ',
-      )}`,
-      tryMsg,
-    )
-  }
+  const {validTemplateSpecifications, templatesOverlimit} = checkLimits(templateSpecifications, app)
 
-  // Validate limits for selected type.
-  // If no type is selected, filter out any types that have reached their limit
-  if (specification) {
-    const existing = app.extensionsForType(specification)
-    const limit = specification.registrationLimit
-    if (existing.length >= limit) {
-      throw new AbortError(
-        'Invalid extension type',
-        `You can only generate ${limit} extension(s) of type ${specification.externalIdentifier} per app`,
-      )
-    }
-  }
-
-  const {validSpecifications, overlimit} = groupBy(specifications, (spec) =>
-    app.extensionsForType(spec).length < spec.registrationLimit ? 'validSpecifications' : 'overlimit',
-  )
-
-  validateExtensionFlavor(specification, options.template)
-
-  const promptAnswers = await generateExtensionPrompt({
-    extensionType: specification?.identifier || options.type,
+  return {
+    templateType: templateSpecification?.identifier,
     name: options.name,
     extensionFlavor: options.template,
     directory: joinPath(options.directory, 'extensions'),
     app,
-    extensionSpecifications: validSpecifications ?? [],
-    unavailableExtensions: overlimit?.map((spec) => spec.externalName) ?? [],
+    templateSpecifications: validTemplateSpecifications ?? [],
+    unavailableExtensions: getTypesExternalName(templatesOverlimit ?? []),
     reset: options.reset,
-  })
-
-  const {extensionType, extensionFlavor, name} = promptAnswers
-  const selectedSpecification = findSpecification(extensionType, specifications)
-  if (!selectedSpecification) {
-    throw new AbortError(`The following extension types are supported: ${allExternalTypes.join(', ')}`)
   }
+}
 
-  await metadata.addPublicMetadata(() => ({
-    cmd_scaffold_template_flavor: extensionFlavor,
-    cmd_scaffold_type: extensionType,
-    cmd_scaffold_type_category: selectedSpecification.category(),
-    cmd_scaffold_type_gated: selectedSpecification.gated,
-    cmd_scaffold_used_prompts_for_type: extensionType !== options.type,
-  }))
-
-  const extensionDirectory = await generateExtensionService({
-    name,
-    extensionFlavor: extensionFlavor as ExtensionFlavor,
-    specification: selectedSpecification,
-    app,
-    extensionType: selectedSpecification.identifier,
-    cloneUrl: options.cloneUrl,
-  })
-
-  const formattedSuccessfulMessage = formatSuccessfulRunMessage(
-    selectedSpecification,
-    extensionDirectory,
-    app.packageManager,
+function checkLimits(templateSpecifications: TemplateSpecification[], app: AppInterface) {
+  return groupBy(templateSpecifications, (spec) =>
+    spec.types.every((extension) => app.extensionsForType(extension).length < extension.registrationLimit)
+      ? 'validTemplateSpecifications'
+      : 'templatesOverlimit',
   )
-  renderSuccess(formattedSuccessfulMessage)
 }
 
-function findSpecification(type: string | undefined, specifications: GenericSpecification[]) {
-  return specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
+async function saveAnalyticsMetadata(promptAnswers: GenerateExtensionPromptOutput, typeFlag: string | undefined) {
+  await Promise.all(
+    promptAnswers.extensionContent.map((extensionContent) => {
+      return metadata.addPublicMetadata(() => ({
+        cmd_scaffold_template_flavor: extensionContent.extensionFlavor,
+        cmd_scaffold_type: extensionContent.specification.identifier,
+        cmd_scaffold_type_category: extensionContent.specification.category(),
+        cmd_scaffold_type_gated: extensionContent.specification.gated,
+        cmd_scaffold_used_prompts_for_type: extensionContent.specification.identifier !== typeFlag,
+      }))
+    }),
+  )
 }
 
-function validateExtensionFlavor(specification: GenericSpecification | undefined, flavor: string | undefined) {
-  if (!flavor || !specification) return
+function buildGenerateOptions(
+  promptAnswers: GenerateExtensionPromptOutput,
+  app: AppInterface,
+  options: GenerateOptions,
+): ExtensionInitOptions[] {
+  return promptAnswers.extensionContent.map((extensionContent) => {
+    return {
+      name: extensionContent.name,
+      extensionFlavor: extensionContent.extensionFlavor as ExtensionFlavorValue,
+      specification: extensionContent.specification,
+      app,
+      extensionType: extensionContent.specification.identifier,
+      cloneUrl: options.cloneUrl,
+    }
+  })
+}
 
-  const possibleFlavors = specification.supportedFlavors.map((flavor) => flavor.value as string)
+function renderSuccessMessages(
+  generatedExtensions: GeneratedExtension[],
+  packageManager: AppInterface['packageManager'],
+) {
+  generatedExtensions.forEach((extension) => {
+    const formattedSuccessfulMessage = formatSuccessfulRunMessage(
+      extension.specification,
+      extension.directory,
+      packageManager,
+    )
+    renderSuccess(formattedSuccessfulMessage)
+  })
+}
+
+function findTemplateSpecification(type: string | undefined, specifications: TemplateSpecification[]) {
+  // To support legacy extensions specs, we need to check both the identifier and the external identifier
+  return specifications.find((spec) =>
+    spec.types.some((extension) => extension.identifier === type || extension.externalIdentifier === type),
+  )
+}
+
+function validateExtensionFlavor(templateSpecification?: TemplateSpecification, flavor?: string) {
+  if (!flavor || !templateSpecification) return
+
+  const possibleFlavors: string[] = templateSpecification.types[0]!.supportedFlavors.map(
+    (flavor) => flavor.value as string,
+  )
+
   if (!possibleFlavors.includes(flavor)) {
     throw new AbortError(
       'Invalid template for extension type',
@@ -148,6 +187,41 @@ function formatSuccessfulRunMessage(
   }
 
   return options
+}
+
+async function handleTypeParameter(
+  type: string | undefined,
+  app: AppInterface,
+  templateSpecifications: TemplateSpecification[],
+): Promise<TemplateSpecification | undefined> {
+  if (!type) return
+
+  const templateSpecification = findTemplateSpecification(type, templateSpecifications)
+
+  if (!templateSpecification) {
+    const isShopifolk = await isShopify()
+    const allExternalTypes = getTypesExternalIdentitifier(templateSpecifications)
+    const tryMsg = isShopifolk ? 'You might need to enable some beta flags on your Organization or App' : undefined
+    throw new AbortError(
+      `Unknown extension type: ${type}.\nThe following extension types are supported: ${allExternalTypes.join(', ')}`,
+      tryMsg,
+    )
+  }
+
+  // Validate limits for selected type.
+  // If no type is selected, filter out any types that have reached their limit
+  templateSpecification.types.forEach((spec) => {
+    const existing = app.extensionsForType(spec)
+    const limit = spec.registrationLimit
+    if (existing.length >= limit) {
+      throw new AbortError(
+        'Invalid extension type',
+        `You can only generate ${limit} extension(s) of type ${spec.externalIdentifier} per app`,
+      )
+    }
+  })
+
+  return templateSpecification
 }
 
 export default generate

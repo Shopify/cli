@@ -32,11 +32,11 @@ async function getTemplatePath(name: string): Promise<string> {
   }
 }
 
-interface ExtensionInitOptions<TSpec extends GenericSpecification = GenericSpecification> {
+export interface ExtensionInitOptions<TSpec extends GenericSpecification = GenericSpecification> {
   name: string
   app: AppInterface
   cloneUrl?: string
-  extensionFlavor?: ExtensionFlavor
+  extensionFlavor?: ExtensionFlavorValue
   specification: TSpec
   extensionType: string
 }
@@ -46,17 +46,17 @@ interface ExtensionDirectory {
 }
 
 interface FunctionFlavor {
-  extensionFlavor: ExtensionFlavor
+  extensionFlavor: ExtensionFlavorValue
 }
 
-export type ExtensionFlavor = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react' | 'rust' | 'wasm'
+export type ExtensionFlavorValue = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react' | 'rust' | 'wasm'
 
 type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionSpec> & ExtensionDirectory & FunctionFlavor
 type UIExtensionInitOptions = ExtensionInitOptions<UIExtensionSpec> & ExtensionDirectory
 type ThemeExtensionInitOptions = ExtensionInitOptions<ThemeExtensionSpec> & ExtensionDirectory
 
-export type TemplateFlavor = 'javascript' | 'rust' | 'wasm'
-function getTemplateFlavor(flavor: ExtensionFlavor): TemplateFlavor {
+export type TemplateLanguage = 'javascript' | 'rust' | 'wasm'
+function getTemplateLanguage(flavor: ExtensionFlavorValue): TemplateLanguage {
   switch (flavor) {
     case 'vanilla-js':
     case 'react':
@@ -69,20 +69,29 @@ function getTemplateFlavor(flavor: ExtensionFlavor): TemplateFlavor {
   }
 }
 
-async function extensionInit(options: ExtensionInitOptions): Promise<string> {
-  const extensionDirectory = await ensureExtensionDirectoryExists({app: options.app, name: options.name})
-  switch (options.specification.category()) {
-    case 'theme':
-      await themeExtensionInit({...(options as ThemeExtensionInitOptions), extensionDirectory})
-      break
-    case 'function':
-      await functionExtensionInit({...(options as FunctionExtensionInitOptions), extensionDirectory})
-      break
-    case 'ui':
-      await uiExtensionInit({...(options as UIExtensionInitOptions), extensionDirectory})
-      break
-  }
-  return relativizePath(extensionDirectory)
+export interface GeneratedExtension {
+  directory: string
+  specification: GenericSpecification
+}
+
+export async function generateExtension(extensionOptions: ExtensionInitOptions[]): Promise<GeneratedExtension[]> {
+  return Promise.all(
+    extensionOptions.flatMap(async (options) => {
+      const extensionDirectory = await ensureExtensionDirectoryExists({app: options.app, name: options.name})
+      switch (options.specification.category()) {
+        case 'theme':
+          await themeExtensionInit({...(options as ThemeExtensionInitOptions), extensionDirectory})
+          break
+        case 'function':
+          await functionExtensionInit({...(options as FunctionExtensionInitOptions), extensionDirectory})
+          break
+        case 'ui':
+          await uiExtensionInit({...(options as UIExtensionInitOptions), extensionDirectory})
+          break
+      }
+      return {directory: relativizePath(extensionDirectory), specification: options.specification}
+    }),
+  )
 }
 
 async function themeExtensionInit({name, app, specification, extensionDirectory}: ThemeExtensionInitOptions) {
@@ -143,8 +152,8 @@ async function uiExtensionInit({
 }
 
 type SrcFileExtension = 'ts' | 'tsx' | 'js' | 'jsx' | 'rs' | 'wasm'
-function getSrcFileExtension(extensionFlavor: ExtensionFlavor): SrcFileExtension {
-  const flavorToSrcFileExtension: {[key in ExtensionFlavor]: SrcFileExtension} = {
+function getSrcFileExtension(extensionFlavor: ExtensionFlavorValue): SrcFileExtension {
+  const flavorToSrcFileExtension: {[key in ExtensionFlavorValue]: SrcFileExtension} = {
     'vanilla-js': 'js',
     react: 'jsx',
     typescript: 'ts',
@@ -171,12 +180,9 @@ export function getExtensionRuntimeDependencies({
   return dependencies
 }
 
-export function getFunctionRuntimeDependencies(
-  specification: FunctionSpec,
-  templateFlavor: string,
-): DependencyVersion[] {
+export function getFunctionRuntimeDependencies(templateLanguage: string): DependencyVersion[] {
   const dependencies: DependencyVersion[] = []
-  if (templateFlavor === 'javascript') {
+  if (templateLanguage === 'javascript') {
     dependencies.push({name: '@shopify/shopify_function', version: '0.0.3'}, {name: 'javy', version: '0.1.0'})
   }
   return dependencies
@@ -193,7 +199,7 @@ async function changeIndexFileExtension(extensionDirectory: string, fileExtensio
   await Promise.all(srcFileExensionsToChange)
 }
 
-async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, extensionFlavor: ExtensionFlavor) {
+async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, extensionFlavor: ExtensionFlavorValue) {
   // tsconfig.json file is only needed in extension folder to inform the IDE
   // About the `react-jsx` tsconfig option, so IDE don't complain about missing react import
   if (extensionFlavor !== 'typescript-react') {
@@ -208,14 +214,14 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
   await inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = joinPath(tmpDir, 'download')
     const extensionFlavor = options.extensionFlavor
-    const templateFlavor = getTemplateFlavor(extensionFlavor)
+    const templateLanguage = getTemplateLanguage(extensionFlavor)
     const taskList = []
 
-    if (templateFlavor === 'javascript') {
+    if (templateLanguage === 'javascript') {
       taskList.push({
         title: 'Installing additional dependencies',
         task: async () => {
-          const requiredDependencies = getFunctionRuntimeDependencies(specification, templateFlavor)
+          const requiredDependencies = getFunctionRuntimeDependencies(templateLanguage)
           await addNPMDependenciesIfNeeded(requiredDependencies, {
             packageManager: options.app.packageManager,
             type: 'prod',
@@ -234,19 +240,14 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
           destination: templateDownloadDir,
           shallow: true,
         })
-        const origin = await ensureFunctionExtensionFlavorExists(
-          specification,
-          extensionFlavor,
-          templateFlavor,
-          templateDownloadDir,
-        )
+        const origin = await ensureFunctionExtensionFlavorExists(specification, extensionFlavor, templateDownloadDir)
 
         await recursiveLiquidTemplateCopy(origin, options.extensionDirectory, {
           flavor: extensionFlavor,
           ...options,
         })
 
-        if (templateFlavor === 'javascript') {
+        if (templateLanguage === 'javascript') {
           const srcFileExtension = getSrcFileExtension(extensionFlavor)
           await changeIndexFileExtension(options.extensionDirectory, srcFileExtension)
         }
@@ -258,7 +259,7 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
       },
     })
 
-    if (templateFlavor === 'javascript') {
+    if (templateLanguage === 'javascript') {
       taskList.push({
         title: `Building ${specification.externalName} graphql types`,
         task: async () => {
@@ -286,10 +287,8 @@ async function ensureExtensionDirectoryExists({name, app}: {name: string; app: A
   return extensionDirectory
 }
 
-async function addResolutionOrOverrideIfNeeded(directory: string, extensionFlavor?: ExtensionFlavor) {
+async function addResolutionOrOverrideIfNeeded(directory: string, extensionFlavor?: ExtensionFlavorValue) {
   if (extensionFlavor === 'typescript-react') {
     await addResolutionOrOverride(directory, {'@types/react': versions.reactTypes})
   }
 }
-
-export default extensionInit

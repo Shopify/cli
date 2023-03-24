@@ -1,18 +1,21 @@
-import extensionInit, {
+import {
+  generateExtension,
   getExtensionRuntimeDependencies,
   getFunctionRuntimeDependencies,
-  TemplateFlavor,
+  TemplateLanguage,
 } from './extension.js'
+import {mapRemoteTemplateSpecification} from './fetch-template-specifications.js'
 import {blocks, configurationFileNames} from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {
   loadLocalExtensionsSpecifications,
-  loadLocalFunctionSpecifications,
   loadLocalUIExtensionsSpecifications,
 } from '../../models/extensions/specifications.js'
 import * as functionBuild from '../function/build.js'
 import * as functionCommon from '../function/common.js'
+import {testRemoteTemplateSpecifications} from '../../models/app/app.test-data.js'
+import {FunctionSpec} from '../../models/extensions/functions.js'
 import {describe, it, expect, vi} from 'vitest'
 import * as output from '@shopify/cli-kit/node/output'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
@@ -20,13 +23,16 @@ import * as template from '@shopify/cli-kit/node/liquid'
 import * as file from '@shopify/cli-kit/node/fs'
 import * as git from '@shopify/cli-kit/node/git'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import type {ExtensionFlavor} from './extension.js'
+import type {ExtensionFlavorValue} from './extension.js'
 
 vi.mock('@shopify/cli-kit/node/node-package-manager')
 
 describe('initialize a extension', async () => {
   const allUISpecs = await loadLocalUIExtensionsSpecifications()
-  const allFunctionSpecs = await loadLocalFunctionSpecifications()
+  const allFunctionSpecs = testRemoteTemplateSpecifications
+    .map(mapRemoteTemplateSpecification)
+    .map((template) => template.types as FunctionSpec[])
+    .flat()
   const specifications = await loadLocalExtensionsSpecifications()
 
   it('successfully generates the extension when no other extensions exist', async () => {
@@ -150,7 +156,7 @@ describe('initialize a extension', async () => {
       accumulator.push({specification, flavor: 'typescript'})
 
       return accumulator
-    }, [] as {specification: GenericSpecification; flavor: ExtensionFlavor}[]),
+    }, [] as {specification: GenericSpecification; flavor: ExtensionFlavorValue}[]),
   )(
     `doesn't add deps for $specification.identifier extension when flavor is $flavor`,
 
@@ -178,7 +184,7 @@ describe('initialize a extension', async () => {
     accumulator.push({specification, flavor: 'typescript-react', ext: 'tsx'})
 
     return accumulator
-  }, [] as {specification: GenericSpecification; flavor: ExtensionFlavor; ext: FileExtension}[])
+  }, [] as {specification: GenericSpecification; flavor: ExtensionFlavorValue; ext: FileExtension}[])
 
   it.each(allUISpecsWithAllFlavors)(
     'creates $specification.identifier for $flavor with .$ext files',
@@ -395,7 +401,7 @@ describe('getExtensionRuntimeDependencies', () => {
   it('no not include React for flavored Vanilla UI extensions', async () => {
     // Given
     const allUISpecs = await loadLocalUIExtensionsSpecifications()
-    const extensionFlavor: ExtensionFlavor = 'vanilla-js'
+    const extensionFlavor: ExtensionFlavorValue = 'vanilla-js'
 
     // When/then
     allUISpecs.forEach((specification) => {
@@ -407,7 +413,7 @@ describe('getExtensionRuntimeDependencies', () => {
   it('includes React for flavored React UI extensions', async () => {
     // Given
     const allUISpecs = await loadLocalUIExtensionsSpecifications()
-    const extensionFlavor: ExtensionFlavor = 'react'
+    const extensionFlavor: ExtensionFlavorValue = 'react'
 
     // When/then
     allUISpecs.forEach((specification) => {
@@ -435,7 +441,7 @@ interface CreateFromTemplateOptions {
   name: string
   specification: GenericSpecification
   appDirectory: string
-  extensionFlavor: ExtensionFlavor
+  extensionFlavor: ExtensionFlavorValue
   specifications: GenericSpecification[]
 }
 async function createFromTemplate({
@@ -445,13 +451,17 @@ async function createFromTemplate({
   extensionFlavor,
   specifications,
 }: CreateFromTemplateOptions): Promise<string> {
-  return extensionInit({
-    name,
-    specification,
-    app: await loadApp({directory: appDirectory, specifications}),
-    extensionFlavor,
-    extensionType: specification.identifier,
-  })
+  return (
+    await generateExtension([
+      {
+        name,
+        specification,
+        app: await loadApp({directory: appDirectory, specifications}),
+        extensionFlavor,
+        extensionType: specification.identifier,
+      },
+    ])
+  )[0]!.directory
 }
 async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | void) {
   await file.inTemporaryDirectory(async (tmpDir) => {
@@ -480,27 +490,25 @@ async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | vo
 describe('getFunctionRuntimeDependencies', () => {
   it('adds dependencies for JS functions', async () => {
     // Given
-    const allFunctionSpecs = await loadLocalFunctionSpecifications()
-    const templateFlavor: TemplateFlavor = 'javascript'
+    const templateLanguage: TemplateLanguage = 'javascript'
 
-    // When/then
-    allFunctionSpecs.forEach((specification) => {
-      const got = getFunctionRuntimeDependencies(specification, templateFlavor)
-      expect(got.find((dep) => dep.name === '@shopify/shopify_function')).toBeTruthy()
-      expect(got.find((dep) => dep.name === 'javy')).toBeTruthy()
-    })
+    // When
+    const got = getFunctionRuntimeDependencies(templateLanguage)
+
+    // Then
+    expect(got.find((dep) => dep.name === '@shopify/shopify_function')).toBeTruthy()
+    expect(got.find((dep) => dep.name === 'javy')).toBeTruthy()
   })
 
   it('no-ops for non-JS functions', async () => {
     // Given
-    const allFunctionSpecs = await loadLocalFunctionSpecifications()
-    const templateFlavor: TemplateFlavor = 'rust'
+    const templateLanguage: TemplateLanguage = 'rust'
 
-    // When/then
-    allFunctionSpecs.forEach((specification) => {
-      const got = getFunctionRuntimeDependencies(specification, templateFlavor)
-      expect(got.find((dep) => dep.name === '@shopify/shopify_function')).toBeFalsy()
-      expect(got.find((dep) => dep.name === 'javy')).toBeFalsy()
-    })
+    // When
+    const got = getFunctionRuntimeDependencies(templateLanguage)
+
+    // Then
+    expect(got.find((dep) => dep.name === '@shopify/shopify_function')).toBeFalsy()
+    expect(got.find((dep) => dep.name === 'javy')).toBeFalsy()
   })
 })
