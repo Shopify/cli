@@ -242,7 +242,7 @@ export const testRemoteTemplateSpecifications: RemoteTemplateSpecification[] = [
     supportLinks: ['https://shopify.dev/docs/api/functions/reference/cart-checkout-validation'],
     types: [
       {
-        type: 'cart_checkout_validation',
+        type: 'function',
         url: 'https://github.com/Shopify/function-examples',
         extensionPoints: [],
         supportedFlavors: [
@@ -262,7 +262,7 @@ export const testRemoteTemplateSpecifications: RemoteTemplateSpecification[] = [
     supportLinks: [],
     types: [
       {
-        type: 'cart_transform',
+        type: 'function',
         url: 'https://github.com/Shopify/function-examples',
         extensionPoints: [],
         supportedFlavors: [
@@ -287,7 +287,7 @@ export const testRemoteTemplateSpecifications: RemoteTemplateSpecification[] = [
     supportLinks: [],
     types: [
       {
-        type: 'product_discounts',
+        type: 'function',
         url: 'https://github.com/Shopify/function-examples',
         extensionPoints: [],
         supportedFlavors: [
@@ -312,7 +312,7 @@ export const testRemoteTemplateSpecifications: RemoteTemplateSpecification[] = [
     supportLinks: [],
     types: [
       {
-        type: 'order_discounts',
+        type: 'function',
         url: 'https://github.com/Shopify/function-examples',
         extensionPoints: [],
         supportedFlavors: [

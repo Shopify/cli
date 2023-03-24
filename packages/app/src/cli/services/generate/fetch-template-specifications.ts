@@ -26,9 +26,9 @@ export function mapRemoteTemplateSpecification(
     supportLinks: remoteTemplateSpecification.supportLinks,
     types: remoteTemplateSpecification.types.map((extension) => {
       return {
-        identifier: extension.type,
-        externalIdentifier: extension.type,
-        externalName: extension.type,
+        identifier: remoteTemplateSpecification.identifier,
+        externalIdentifier: remoteTemplateSpecification.identifier,
+        externalName: remoteTemplateSpecification.identifier,
         gated: false,
         registrationLimit: blocks.functions.defaultRegistrationLimit,
         supportedFlavors: extension.supportedFlavors,
