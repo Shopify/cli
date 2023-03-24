@@ -45,7 +45,7 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
 }
 
 async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions) {
-  const {commandStartOptions, ...sensitiveMetadata} = metadata.getAllSensitiveMetadata()
+  const {commandStartOptions, environmentFlags, ...sensitiveMetadata} = metadata.getAllSensitiveMetadata()
   if (commandStartOptions === undefined) {
     outputDebug('Unable to log analytics event - no information on executed command')
     return
@@ -63,7 +63,7 @@ async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions)
   const environmentData = await getEnvironmentData(config)
   const sensitiveEnvironmentData = await getSensitiveEnvironmentData(config)
 
-  return {
+  const payload = {
     public: {
       command: startCommand,
       time_start: startTime,
@@ -80,6 +80,7 @@ async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions)
     },
     sensitive: {
       args: startArgs.join(' '),
+      cmd_all_environment_flags: environmentFlags,
       error_message: errorMessage,
       ...appSensitive,
       ...sensitiveEnvironmentData,
@@ -92,4 +93,13 @@ async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions)
       }),
     },
   }
+
+  return sanitizePayload(payload)
+}
+
+function sanitizePayload(payload: object) {
+  const payloadString = JSON.stringify(payload)
+  // Remove Theme Access passwords from the payload
+  const sanitizedPayloadString = payloadString.replace(/shptka_\w*/g, '*****')
+  return JSON.parse(sanitizedPayloadString)
 }

@@ -1,6 +1,7 @@
 import {decodeToml} from './toml.js'
 import {findPathUp, readFile} from './fs.js'
 import {cwd} from './path.js'
+import * as metadata from './metadata.js'
 import {renderWarning} from './ui.js'
 import {JsonMap} from '../../private/common/json.js'
 
@@ -43,5 +44,10 @@ export async function loadEnvironment(
     renderWarning({
       body: ['Environment', {command: environmentName}, 'not found.'],
     })
+
+  await metadata.addSensitiveMetadata(() => ({
+    environmentFlags: JSON.stringify(environment),
+  }))
+
   return environment
 }

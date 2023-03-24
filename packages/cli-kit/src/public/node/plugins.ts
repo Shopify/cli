@@ -9,7 +9,8 @@ import {Config, Interfaces} from '@oclif/core'
 /**
  * Convenience function to trigger a hook, and gather any successful responses. Failures are ignored.
  *
- * Responses are organised into a dictionary, keyed by plug-in name. Only plug-ins that have hooks registered for the given event, and the hooks were run successfully, are included.
+ * Responses are organised into a dictionary, keyed by plug-in name.
+ * Only plug-ins that have hooks registered for the given event, and the hooks were run successfully, are included.
  *
  * @param config - The oclif config object.
  * @param event - The name of the hook to trigger.
