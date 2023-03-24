@@ -105,7 +105,7 @@
         "label": {
           "name": "label",
           "type": "option",
-          "description": "The deployment label.",
+          "description": "The deployment label. Will be shown in the Partners Dashboard.",
           "hidden": true,
           "multiple": false
         }
