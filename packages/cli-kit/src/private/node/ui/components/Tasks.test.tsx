@@ -19,7 +19,7 @@ describe('Tasks', () => {
 
     // When
     const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await taskHasRendered()
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
@@ -47,8 +47,7 @@ describe('Tasks', () => {
 
     const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
 
-    // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 0))
+    await taskHasRendered()
 
     // Then
     expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot('""')
@@ -73,8 +72,7 @@ describe('Tasks', () => {
     // When
     const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
 
-    // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 0))
+    await taskHasRendered()
 
     // Then
     expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot('""')
@@ -111,8 +109,7 @@ describe('Tasks', () => {
     // When
     const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
 
-    // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await taskHasRendered()
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
@@ -145,8 +142,7 @@ describe('Tasks', () => {
     // When
     const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
 
-    // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await taskHasRendered()
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
@@ -186,8 +182,7 @@ describe('Tasks', () => {
     // When
     const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
 
-    // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await taskHasRendered()
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
@@ -218,8 +213,7 @@ describe('Tasks', () => {
     // When
     const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
 
-    // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await taskHasRendered()
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
@@ -260,8 +254,7 @@ describe('Tasks', () => {
     // When
     const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
 
-    // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await taskHasRendered()
 
     // Then
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot('""')
@@ -300,8 +293,7 @@ describe('Tasks', () => {
     // When
     const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
 
-    // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await taskHasRendered()
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
@@ -349,8 +341,7 @@ describe('Tasks', () => {
     // When
     const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
 
-    // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await taskHasRendered()
 
     // Then
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot('""')
@@ -395,8 +386,7 @@ describe('Tasks', () => {
     // When
     const renderInstance = render(<Tasks tasks={[firstTask, secondTask, thirdTask]} silent={false} />)
 
-    // wait for next tick
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await taskHasRendered()
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
@@ -426,3 +416,7 @@ describe('Tasks', () => {
     expect(context).toEqual({foo: 'bar'})
   })
 })
+
+async function taskHasRendered() {
+  await new Promise((resolve) => setTimeout(resolve, 100))
+}
