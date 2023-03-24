@@ -50,13 +50,13 @@
     "abort-controller": "3.0.0",
     "chokidar": "3.5.3",
     "diff": "5.1.0",
-    "esbuild": "0.15.16",
+    "esbuild": "0.17.10",
     "graphql-request": "5.2.0",
+    "h3": "0.7.21",
     "http-proxy": "1.18.1",
     "javy-cli": "0.1.4",
     "serve-static": "1.15.0",
-    "ws": "8.12.1",
-    "h3": "0.7.21"
+    "ws": "8.12.1"
   },
   "devDependencies": {
     "@types/diff": "^5.0.2",
