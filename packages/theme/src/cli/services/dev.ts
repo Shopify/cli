@@ -79,8 +79,7 @@ export function showDeprecationWarnings(args: string[]) {
         {char: '.'},
         'The shortcut',
         {command: '-e'},
-        'is now reserved for environments',
-        {char: '.'},
+        'is now reserved for environments.',
       ],
     })
   }
