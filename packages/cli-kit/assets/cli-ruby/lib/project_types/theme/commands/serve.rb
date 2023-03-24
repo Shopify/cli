@@ -42,8 +42,6 @@ module Theme
         valid_authentication_method!
 
         root = root_value(options, name)
-        return unless valid_theme_directory?(root)
-
         flags = options.flags.dup
         host = flags[:host] || DEFAULT_HTTP_HOST
 

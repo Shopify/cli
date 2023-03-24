@@ -16,7 +16,11 @@ vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/context/spin')
 
-const ORG1: Organization = {id: '1', businessName: 'org1', appsNext: true}
+const ORG1: Organization = {
+  id: '1',
+  businessName: 'org1',
+  betas: {},
+}
 const STORE1: OrganizationStore = {
   shopId: '1',
   link: 'link1',

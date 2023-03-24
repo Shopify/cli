@@ -13,6 +13,7 @@ export interface TextPromptProps {
   defaultValue?: string
   password?: boolean
   validate?: (value: string) => string | undefined
+  allowEmpty?: boolean
 }
 
 const TextPrompt: FunctionComponent<TextPromptProps> = ({
@@ -21,6 +22,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   validate,
   defaultValue = '',
   password = false,
+  allowEmpty = false,
 }) => {
   if (password && defaultValue) {
     throw new Error("Can't use defaultValue with password")
@@ -32,11 +34,11 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
         return validate(value)
       }
 
-      if (value.length === 0) return 'Type an answer to the prompt.'
+      if (value.length === 0 && !allowEmpty) return 'Type an answer to the prompt.'
 
       return undefined
     },
-    [validate],
+    [allowEmpty, validate],
   )
 
   const {oneThird} = useLayout()

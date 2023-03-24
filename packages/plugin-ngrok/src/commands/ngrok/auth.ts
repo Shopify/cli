@@ -6,6 +6,7 @@ export default class NgrokAuth extends Command {
   static description =
     'Saves a token to authenticate against ngrok. Visit https://dashboard.ngrok.com/signup to create an account.'
 
+  static hidden = true
   static args = {token: Args.string({required: true})}
 
   async run() {

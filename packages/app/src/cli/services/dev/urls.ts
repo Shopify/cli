@@ -19,10 +19,10 @@ export interface PartnersURLs {
 
 export interface FrontendURLOptions {
   app: AppInterface
-  tunnel: boolean
+  tunnelProvider?: string
   noTunnel: boolean
   tunnelUrl?: string
-  cachedTunnelPlugin?: string
+  useCloudflareTunnels: boolean
   commandConfig: Config
 }
 
@@ -40,11 +40,7 @@ export interface FrontendURLResult {
  *   No need for tunnel. In case problems with that configuration, the flags Tunnel or Custom Tunnel url could be used
  * - If a tunnelUrl is provided, that takes preference and is returned as the frontendURL
  * - If noTunnel is true, that takes second preference and localhost is used
- * - A Tunnel is created then if any of these conditions are met:
- *   - Tunnel flag is true
- *   - The app has UI extensions
- *   - In a previous run, the user selected to always use a tunnel (cachedTunnelPlugin)
- * - Otherwise, localhost is used
+ * - Otherwise, a tunnel is created. (by default using cloudflare)
  *
  * If there is no cached tunnel plugin and a tunnel is necessary, we'll ask the user to confirm.
  */
@@ -52,9 +48,6 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   let frontendPort = 4040
   let frontendUrl: string
   let usingLocalhost = false
-  const hasExtensions = options.app.hasUIExtensions()
-
-  const needsTunnel = (hasExtensions || options.tunnel || options.cachedTunnelPlugin) && !options.noTunnel
 
   if (codespaceURL()) {
     frontendUrl = `https://${codespaceURL()}-${frontendPort}.githubpreview.dev`
@@ -86,23 +79,22 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 
-  if (needsTunnel) {
-    frontendPort = await getAvailableTCPPort()
-    frontendUrl = await generateURL(options.commandConfig, frontendPort)
-  } else {
+  if (options.noTunnel) {
     frontendPort = await getAvailableTCPPort()
     frontendUrl = 'http://localhost'
     usingLocalhost = true
+  } else {
+    frontendPort = await getAvailableTCPPort()
+    const defaultProvider = options.useCloudflareTunnels ? 'cloudflare' : 'ngrok'
+    const provider = options.tunnelProvider || defaultProvider
+    frontendUrl = await generateURL(options.commandConfig, provider, frontendPort)
   }
 
   return {frontendUrl, frontendPort, usingLocalhost}
 }
 
-export async function generateURL(config: Config, frontendPort: number): Promise<string> {
-  // For the moment we assume to always have ngrok, this will change in a future PR
-  // and will need to use "getListOfTunnelPlugins" to find the available tunnel plugins
-  const provider = 'ngrok'
-  return (await runTunnelPlugin(config, frontendPort, provider)).mapError(mapRunTunnelPluginError).valueOrAbort()
+export async function generateURL(config: Config, tunnelProvider: string, frontendPort: number): Promise<string> {
+  return (await runTunnelPlugin(config, frontendPort, tunnelProvider)).mapError(mapRunTunnelPluginError).valueOrAbort()
 }
 
 export function generatePartnersURLs(baseURL: string, authCallbackPath?: string | string[]): PartnersURLs {

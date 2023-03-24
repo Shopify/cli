@@ -54,7 +54,8 @@ export default class Dev extends Command {
     }),
     'tunnel-url': Flags.string({
       hidden: false,
-      description: 'Override the ngrok tunnel URL. Format: "https://my-tunnel-url:port"',
+      description:
+        'Use a custom tunnel, it must be running before executing dev. Format: "https://my-tunnel-url:port".',
       env: 'SHOPIFY_FLAG_TUNNEL_URL',
       exclusive: ['no-tunnel', 'tunnel'],
     }),
@@ -65,11 +66,11 @@ export default class Dev extends Command {
       default: false,
       exclusive: ['tunnel-url', 'tunnel'],
     }),
-    tunnel: Flags.boolean({
-      hidden: false,
-      description: 'Use ngrok to create a tunnel to your service entry point',
+    tunnel: Flags.string({
+      hidden: true,
+      description: 'Select the tunnel provider',
       env: 'SHOPIFY_FLAG_TUNNEL',
-      default: true,
+      options: ['cloudflare', 'ngrok'],
       exclusive: ['tunnel-url', 'no-tunnel'],
     }),
     theme: Flags.string({
@@ -91,6 +92,7 @@ export default class Dev extends Command {
     await addPublicMetadata(() => ({
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
       cmd_app_reset_used: flags.reset,
+      cmd_dev_tunnel_type: flags['tunnel-url'] ? 'custom' : flags.tunnel,
     }))
 
     const commandConfig = this.config
@@ -106,7 +108,7 @@ export default class Dev extends Command {
       subscriptionProductUrl: flags['subscription-product-url'],
       checkoutCartUrl: flags['checkout-cart-url'],
       tunnelUrl: flags['tunnel-url'],
-      tunnel: flags.tunnel,
+      tunnelProvider: flags.tunnel,
       noTunnel: flags['no-tunnel'],
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],

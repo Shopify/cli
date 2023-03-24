@@ -2,7 +2,10 @@ export interface Organization {
   id: string
   businessName: string
   website?: string
-  appsNext: boolean
+  betas: {
+    appUiDeployments?: boolean
+    cliTunnelAlternative?: boolean
+  }
 }
 
 export interface MinimalOrganizationApp {

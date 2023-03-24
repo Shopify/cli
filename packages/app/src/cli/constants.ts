@@ -1,4 +1,4 @@
-import {ExtensionFlavor} from './services/generate/extension.js'
+import {ExtensionFlavor} from './models/app/extensions.js'
 
 export const configurationFileNames = {
   app: 'shopify.app.toml',
@@ -36,14 +36,14 @@ export const blocks = {
   },
 } as const
 
-export const defaultFunctionsFlavors: {name: string; value: ExtensionFlavor}[] = [
+export const defaultFunctionsFlavors: ExtensionFlavor[] = [
   {name: 'JavaScript (developer preview)', value: 'vanilla-js'},
   {name: 'TypeScript (developer preview)', value: 'typescript'},
   {name: 'Rust', value: 'rust'},
   {name: 'Wasm', value: 'wasm'},
 ]
 
-export const defaultExtensionFlavors: {name: string; value: ExtensionFlavor}[] = [
+export const defaultExtensionFlavors: ExtensionFlavor[] = [
   {name: 'TypeScript', value: 'typescript'},
   {name: 'JavaScript', value: 'vanilla-js'},
   {name: 'TypeScript React', value: 'typescript-react'},
@@ -72,6 +72,11 @@ export const extensionTypesGroups: {name: string; extensions: string[]}[] = [
   {name: 'Point-of-Sale', extensions: ['pos_ui_extension']},
   {
     name: 'Shopify private',
-    extensions: ['customer_accounts_ui_extension', 'ui_extension', 'order_routing_location_rule'],
+    extensions: [
+      'customer_accounts_ui_extension',
+      'ui_extension',
+      'order_routing_location_rule',
+      'fulfillment_constraints',
+    ],
   },
 ]

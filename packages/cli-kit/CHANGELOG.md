@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.45.0-pre.4
+
+### Patch Changes
+
+- ce1457036: Resolve renderTasks with the value of context
+- 2ca5b35d8: Add UI Kit documentation
+
 ## 3.45.0-pre.3
 
 ### Patch Changes

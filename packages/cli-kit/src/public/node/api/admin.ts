@@ -31,7 +31,7 @@ async function fetchApiVersion(session: AdminSession): Promise<string> {
   const url = adminUrl(session.storeFqdn, 'unstable')
   const query = apiVersionQuery()
   try {
-    const data: ApiVersionResponse = await graphqlRequest(query, 'Admin', url, session.token, {}, false)
+    const data: ApiVersionResponse = await graphqlRequest(query, 'Admin', url, session.token, {}, {handleErrors: false})
 
     return data.publicApiVersions
       .filter((item) => item.supported)

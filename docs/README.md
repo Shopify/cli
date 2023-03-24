@@ -13,6 +13,7 @@ The list below contains valuable resources for people interested in contributing
 * [Get started](./cli/get-started.md)
 * [Architecture](./cli/architecture.md)
 * [Conventions](./cli/conventions.md)
+* [Performance](./cli/performance.md)
 * [Debugging](./cli/debugging.md)
 * [ESLint rules](./cli/eslint-rules.md)
 * [Release process](./cli/release.md)

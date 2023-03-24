@@ -8,14 +8,12 @@ import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
  */
 export const themeFlags = {
   path: Flags.string({
-    hidden: false,
     description: 'The path to your theme directory.',
     env: 'SHOPIFY_FLAG_PATH',
     parse: async (input) => resolvePath(input),
     default: async () => cwd(),
   }),
   password: Flags.string({
-    hidden: false,
     description: 'Password generated from the Theme Access app.',
     env: 'SHOPIFY_CLI_THEME_TOKEN',
   }),
@@ -26,5 +24,10 @@ export const themeFlags = {
       ' or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).',
     env: 'SHOPIFY_FLAG_STORE',
     parse: async (input) => normalizeStoreFqdn(input),
+  }),
+  environment: Flags.string({
+    char: 'e',
+    description: 'The environment to apply to the current command.',
+    env: 'SHOPIFY_FLAG_ENVIRONMENT',
   }),
 }

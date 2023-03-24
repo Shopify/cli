@@ -1,15 +1,10 @@
 import {UIExtensionSpec} from './ui.js'
-import {FunctionSpec} from './functions.js'
 import {ThemeExtensionSpec} from './theme.js'
 import {GenericSpecification} from '../app/extensions.js'
-import {
-  loadUIExtensionSpecificiationsFromPlugins,
-  loadFunctionSpecificationsFromPlugins,
-} from '../../private/plugins/extension.js'
+import {loadUIExtensionSpecificiationsFromPlugins} from '../../private/plugins/extension.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {memoize} from '@shopify/cli-kit/common/function'
 import {Config} from '@oclif/core'
-import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {fileURLToPath} from 'url'
@@ -20,19 +15,8 @@ export async function loadUIExtensionSpecifications(config: Config): Promise<UIE
   return [...local, ...plugins]
 }
 
-export async function loadFunctionSpecifications(config: Config): Promise<FunctionSpec[]> {
-  const local = await loadLocalFunctionSpecifications()
-  const plugins = await loadFunctionSpecificationsFromPlugins(config)
-  return [...local, ...plugins]
-}
-
 export async function loadLocalUIExtensionsSpecifications(): Promise<UIExtensionSpec[]> {
   return memoizedLoadSpecs('ui-specifications')
-}
-
-export async function loadLocalFunctionSpecifications(): Promise<FunctionSpec[]> {
-  const isShopifyUser = await isShopify()
-  return (await memoizedLoadSpecs('function-specifications')).filter((spec) => !spec.gated || isShopifyUser)
 }
 
 export async function loadThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
@@ -44,9 +28,8 @@ export async function loadThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
  */
 export async function loadExtensionsSpecifications(config: Config): Promise<GenericSpecification[]> {
   const ui = await loadUIExtensionSpecifications(config)
-  const functions = await loadFunctionSpecifications(config)
   const theme = await loadThemeSpecifications()
-  return [...ui, ...functions, ...theme]
+  return [...ui, ...theme]
 }
 
 /**
@@ -54,9 +37,8 @@ export async function loadExtensionsSpecifications(config: Config): Promise<Gene
  */
 export async function loadLocalExtensionsSpecifications(): Promise<GenericSpecification[]> {
   const ui = await loadLocalUIExtensionsSpecifications()
-  const functions = await loadLocalFunctionSpecifications()
   const theme = await loadThemeSpecifications()
-  return [...ui, ...functions, ...theme]
+  return [...ui, ...theme]
 }
 
 const memoizedLoadSpecs = memoize(loadSpecifications)
