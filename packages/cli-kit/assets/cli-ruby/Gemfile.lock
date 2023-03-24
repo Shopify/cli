@@ -93,7 +93,7 @@ GEM
     mocha (1.13.0)
     multi_test (0.1.2)
     multipart-post (2.1.1)
-    nokogiri (1.13.10)
+    nokogiri (1.14.2)
       mini_portile2 (~> 2.8.0)
       racc (~> 1.4)
     octokit (4.22.0)
@@ -169,6 +169,7 @@ DEPENDENCIES
   minitest-fail-fast
   minitest-reporters
   mocha
+  nokogiri (~> 1.14.0)
   octokit (~> 4.0)
   pry-byebug
   rack
