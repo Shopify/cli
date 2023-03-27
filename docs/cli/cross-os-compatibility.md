@@ -41,7 +41,11 @@ Install all dependencies:
 pnpm install
 ```
 
-Now you can run the test suite with `pnpm test` and verify that everything works properly.
+Now you can test creating an app and installing in your dev store:
+
+```bash
+node bin/create-test-app.js -e ui
+```
 
 #### Windows ([Parallels](https://www.parallels.com/pd/general/))
 
@@ -68,4 +72,8 @@ Install all dependencies:
 pnpm install
 ```
 
-Now you can run the test suite with `pnpm test` and verify that everything works properly.
+Now you can test creating an app and installing in your dev store:
+
+```bash
+node bin/create-test-app.js -e ui
+```
