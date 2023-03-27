@@ -34,12 +34,14 @@ program
     extensionTypes.join(",")
   )
   .option(
-    "--no-cleanup",
-    "keep temp app directory"
+    "--cleanup",
+    "delete temp app afterwards",
+    false
   )
   .option(
-    "--no-deploy",
-    "don't deploy the app to Shopify"
+    "--deploy",
+    "deploy the app to Shopify",
+    false
   )
   .action(async (options) => {
     let shopifyExec

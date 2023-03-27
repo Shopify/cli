@@ -30,7 +30,11 @@ program
     "-s, --store <store>",
     `your dev store's name (e.g. my-awesome-dev-store)`
   )
-  .option("--no-cleanup", "keep temp theme and nightly dependencies")
+  .option(
+    "--cleanup",
+    "delete temp theme and nightly dependencies afterwards",
+    false
+  )
   .action(async (options) => {
     let shopifyExec
     let defaultOpts = { stdio: "inherit" }

@@ -35,8 +35,11 @@ If you want to quickly test creating an app from scratch, you can run `bin/creat
 - create a UI extension (product subscription)
 - create a theme app extension
 - create a function (product discount in TypeScript)
-- deploy it to Shopify (you can skip this with `--no-deploy`)
-- remove the app directory (you can skip this with `--no-cleanup`)
+
+You can also pass these optional flags:
+- `-e <extensions>` to choose which extensions you want (`ui`, `theme`, or `function`)
+- `--deploy` to deploy your app to Shopify
+- `--cleanup` to remove the app directory afterwards
 
 If you want to interact with it, you can `cd` into the directory and run the CLI through the scripts in the `package.json`:
 
@@ -56,7 +59,9 @@ If you want to quickly test creating a theme from scratch, you can run `bin/crea
 - start the development server on http://localhost:9292
 - push the theme to your store
 - list all the available themes
-- remove the theme directory (you can skip this with `--no-cleanup`)
+
+You can also pass these optional flags:
+- `--cleanup` to remove the theme directory afterwards
 
 ### More automation
 
