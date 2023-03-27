@@ -41,6 +41,16 @@ export function hashString(str: string): string {
 }
 
 /**
+ * Generate an MD5 hash of a buffer.
+ *
+ * @param buff - The file buffer to hash.
+ * @returns A string containing the MD5 hash.
+ */
+export function fileHash(buff: Buffer): string {
+  return crypto.createHash('md5').update(buff).digest('hex')
+}
+
+/**
  * Generate random data of the provided size.
  *
  * @param size - Number of bytes to be generated.
