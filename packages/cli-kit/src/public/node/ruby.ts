@@ -444,7 +444,7 @@ async function getSpinEnvironmentVariables() {
  */
 async function shopifyBundleInstall(directory: string): Promise<void> {
   const bundle = bundleExecutable()
-  const shopifyGemsPath = shopifyGems.data
+  const shopifyGemsPath = shopifyGems.cache
 
   await exec(bundle, ['config', 'set', '--local', 'path', shopifyGemsPath], {
     cwd: directory,
