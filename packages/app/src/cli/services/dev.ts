@@ -142,7 +142,7 @@ async function dev(options: DevOptions) {
   const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
   localApp.extensions.ui.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
 
-  const {extensions: remoteExtensions} = await ensureDeploymentIdsPresence({
+  const {extensionIds: remoteExtensions} = await ensureDeploymentIdsPresence({
     app: localApp,
     appId: apiKey,
     appName: remoteApp.title,
@@ -469,7 +469,7 @@ async function devNonPreviewableExtensionTarget({
               )
               if (error) return
 
-              const content = result?.outputFiles?.[0]?.contents
+              const content = await readFile(extension.outputBundlePath)
               if (!content) return
               const encodedFile = Buffer.from(content).toString('base64')
 
@@ -477,7 +477,7 @@ async function devNonPreviewableExtensionTarget({
                 apiKey,
                 config: JSON.stringify({
                   ...(await extension.deployConfig()),
-                  serializedScript: encodedFile,
+                  serialized_script: encodedFile,
                 }),
                 context: undefined,
                 registrationId,
@@ -488,6 +488,8 @@ async function devNonPreviewableExtensionTarget({
               if (mutationResult.extensionUpdateDraft?.userErrors?.length > 0) {
                 const errors = mutationResult.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
                 stderr.write(`Error while updating drafts: ${errors}`)
+              } else {
+                outputDebug(`Drafts updated successfully for extension: ${extension.localIdentifier}`)
               }
             },
           })
