@@ -1,6 +1,7 @@
 import {ThemeExtension} from '../../models/app/extensions.js'
-import {readFile, glob} from '@shopify/cli-kit/node/fs'
-import {joinPath, relativePath, dirname} from '@shopify/cli-kit/node/path'
+import {themeExtensionFiles} from '../../utilities/extensions/theme.js'
+import {readFile} from '@shopify/cli-kit/node/fs'
+import {relativePath, dirname} from '@shopify/cli-kit/node/path'
 
 export interface ThemeExtensionConfig {
   theme_extension: {
@@ -10,7 +11,7 @@ export interface ThemeExtensionConfig {
 
 export async function themeExtensionConfig(themeExtension: ThemeExtension): Promise<ThemeExtensionConfig> {
   const files: {[key: string]: string} = {}
-  const themeFiles = await glob(joinPath(themeExtension.directory, '*/*'))
+  const themeFiles = await themeExtensionFiles(themeExtension)
   await Promise.all(
     themeFiles.map(async (filepath) => {
       const relativePathName = relativePath(themeExtension.directory, filepath)

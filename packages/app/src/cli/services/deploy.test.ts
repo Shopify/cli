@@ -108,6 +108,27 @@ describe('deploy', () => {
     )
   })
 
+  it('passes a label to the deployment mutation with a flag', async () => {
+    // Given
+    const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
+    const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})
+
+    // When
+    await testDeployBundle(
+      app,
+      {id: 'org-id', businessName: 'org-name', betas: {appUiDeployments: true}},
+      'Deployed from CLI with flag',
+    )
+
+    // Then
+    expect(renderTextPrompt).not.toHaveBeenCalled()
+    expect(uploadExtensionsBundle).toHaveBeenCalledWith(
+      expect.objectContaining({
+        label: 'Deployed from CLI with flag',
+      }),
+    )
+  })
+
   it('shows a success message', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
@@ -181,7 +202,7 @@ describe('deploy', () => {
   })
 })
 
-async function testDeployBundle(app: AppInterface, organization?: Organization) {
+async function testDeployBundle(app: AppInterface, organization?: Organization, label?: string) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
   for (const uiExtension of app.extensions.ui) {
@@ -214,6 +235,7 @@ async function testDeployBundle(app: AppInterface, organization?: Organization) 
     app,
     reset: false,
     force: true,
+    label,
   })
 
   // Then

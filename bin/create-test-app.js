@@ -34,12 +34,14 @@ program
     extensionTypes.join(",")
   )
   .option(
-    "--no-cleanup",
-    "keep temp app directory"
+    "--cleanup",
+    "delete temp app afterwards",
+    false
   )
   .option(
-    "--no-deploy",
-    "don't deploy the app to Shopify"
+    "--deploy",
+    "deploy the app to Shopify",
+    false
   )
   .action(async (options) => {
     let shopifyExec
@@ -119,33 +121,6 @@ program
         "--type=theme_app_extension",
         "--name=theme-app-ext",
       ])
-      const fixtureAppTheme = path.join(
-        __dirname,
-        "..",
-        "fixtures",
-        "app",
-        "extensions",
-        "theme-extension"
-      )
-
-      const filesToCopy = [
-        path.join("blocks", "star_rating.liquid"),
-        path.join("snippets", "stars.liquid"),
-        path.join("assets", "thumbs-up.png"),
-        path.join("locales", "en.default.json"),
-      ]
-      filesToCopy.forEach((file) => {
-        fs.copyFileSync(
-          path.join(fixtureAppTheme, file),
-          path.join(appPath, "extensions", "theme-app-ext", file)
-        )
-      })
-
-      const gitkeepFolders = [ "assets", "blocks", "locales", "snippets" ]
-      gitkeepFolders.forEach((folder) => {
-        fs.rmSync(path.join(appPath, "extensions", "theme-app-ext", folder, ".gitkeep"))
-      })
-
       await pnpmDev()
     }
 

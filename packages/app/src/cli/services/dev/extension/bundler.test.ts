@@ -3,7 +3,7 @@ import * as bundle from '../../extensions/bundle.js'
 import {testUIExtension} from '../../../models/app/app.test-data.js'
 import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
-import {BuildFailure} from 'esbuild'
+import {BuildResult} from 'esbuild'
 
 async function testBundlerAndFileWatcher() {
   const extension1 = await testUIExtension({
@@ -129,7 +129,13 @@ describe('setupBundlerAndFileWatcher()', () => {
     const fileWatcherOptions = await testBundlerAndFileWatcher()
 
     // WHEN
-    const buildFailure = {} as unknown as BuildFailure
+    const buildFailure = {
+      errors: ['error'] as any,
+      warnings: [],
+      outputFiles: [],
+      metafile: {} as any,
+      mangleCache: {},
+    } as BuildResult
     const bundleExtensionFn = bundle.bundleExtension as any
     bundleExtensionFn.mock.calls[0][0].watch(buildFailure)
 

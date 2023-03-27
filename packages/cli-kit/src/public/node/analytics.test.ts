@@ -148,6 +148,30 @@ describe('event tracking', () => {
     })
   })
 
+  it('does not send passwords to Monorail', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given
+      const commandContent = {command: 'dev', topic: 'app'}
+      const argsWithPassword = args.concat(['--password', 'shptka_abc123'])
+      await startAnalytics({commandContent, args: argsWithPassword, currentTime: currentDate.getTime() - 100})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config})
+
+      // Then
+      const expectedPayloadSensitive = {
+        args: expect.stringMatching(/.*password \*\*\*\*\*/),
+        metadata: expect.anything(),
+      }
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      expect(publishEventMock.mock.calls[0]![2]).toMatchObject(expectedPayloadSensitive)
+    })
+  })
+
   it('does nothing when analytics are disabled', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given

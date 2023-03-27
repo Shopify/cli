@@ -54,23 +54,6 @@ env:
   BUNDLE_WITHOUT: 'test:development'
 
 jobs:
-  fixture:
-    name: Fixture
-    runs-on: 'ubuntu-latest'
-    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v3
-        name: Checkout [${{ github.ref_name }}]
-        with:
-          fetch-depth: 0
-      - name: Setup deps
-        uses: ./.github/actions/setup-cli-deps
-        with:
-          node-version: ${{ matrix.node }}
-      - name: Build the fixture app
-        run: pnpm fixtures:build
-
   main:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}

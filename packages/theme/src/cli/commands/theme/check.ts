@@ -72,6 +72,7 @@ Excludes checks matching any category when specified more than once`,
       description: 'Print Theme Check version',
       env: 'SHOPIFY_FLAG_VERSION',
     }),
+    environment: themeFlags.environment,
   }
 
   static cli2Flags = [

@@ -1,7 +1,8 @@
 import {decodeToml} from './toml.js'
 import {findPathUp, readFile} from './fs.js'
-import {outputWarn} from './output.js'
 import {cwd} from './path.js'
+import * as metadata from './metadata.js'
+import {renderWarning} from './ui.js'
 import {JsonMap} from '../../private/common/json.js'
 
 export interface Environments {
@@ -27,16 +28,26 @@ export async function loadEnvironment(
     type: 'file',
   })
   if (!filePath) {
-    outputWarn(`Environment file not found`)
+    renderWarning({body: 'Environment file not found.'})
     return undefined
   }
   const environmentsJson = decodeToml(await readFile(filePath)) as Environments
   const environments = environmentsJson.environments
   if (!environments) {
-    outputWarn(`No environments found in ${filePath}`)
+    renderWarning({
+      body: ['No environments found in', {command: filePath}, {char: '.'}],
+    })
     return undefined
   }
   const environment = environments[environmentName] as JsonMap
-  if (!environment) outputWarn(`Environment ${environmentName} not found`)
+  if (!environment)
+    renderWarning({
+      body: ['Environment', {command: environmentName}, 'not found.'],
+    })
+
+  await metadata.addSensitiveMetadata(() => ({
+    environmentFlags: JSON.stringify(environment),
+  }))
+
   return environment
 }

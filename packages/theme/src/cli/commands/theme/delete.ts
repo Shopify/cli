@@ -37,6 +37,7 @@ export default class Delete extends ThemeCommand {
       multiple: true,
     }),
     store: themeFlags.store,
+    environment: themeFlags.environment,
   }
 
   async run(): Promise<void> {

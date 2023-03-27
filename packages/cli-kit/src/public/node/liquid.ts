@@ -49,6 +49,9 @@ export async function recursiveLiquidTemplateCopy(from: string, to: string, data
         if (isExecutable) {
           await chmod(outputPathWithoutLiquid, 0o755)
         }
+      } else if (templateItemPath.endsWith('.raw')) {
+        const outputPathWithoutRaw = outputPath.replace('.raw', '')
+        await copyFile(templateItemPath, outputPathWithoutRaw)
       } else {
         await copyFile(templateItemPath, outputPath)
       }

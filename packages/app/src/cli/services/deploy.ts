@@ -34,6 +34,9 @@ interface DeployOptions {
 
   /** If true, proceed with deploy without asking for confirmation */
   force: boolean
+
+  /** The deployment label */
+  label?: string
 }
 
 interface TasksContext {
@@ -54,10 +57,12 @@ export async function deploy(options: DeployOptions) {
   let label: string | undefined
 
   if (organization.betas.appUiDeployments) {
-    label = await renderTextPrompt({
-      message: 'Deployment label',
-      allowEmpty: true,
-    })
+    label =
+      options.label ??
+      (await renderTextPrompt({
+        message: 'Deployment label',
+        allowEmpty: true,
+      }))
 
     if (label.length === 0) {
       label = undefined

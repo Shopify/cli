@@ -1,8 +1,4 @@
-import {
-  loadThemeSpecifications,
-  loadUIExtensionSpecifications,
-  loadFunctionSpecifications,
-} from '../../models/extensions/specifications.js'
+import {loadThemeSpecifications, loadUIExtensionSpecifications} from '../../models/extensions/specifications.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
@@ -11,6 +7,7 @@ import {
   ExtensionSpecificationsQuerySchema,
   FlattenedRemoteSpecification,
 } from '../../api/graphql/extension_specifications.js'
+
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -23,15 +20,13 @@ export interface FetchSpecificationsOptions {
   config: Config
 }
 /**
- * Returns all extension/function specifications the user has access to.
+ * Returns all extension specifications the user has access to.
  * This includes:
  * - UI extensions
  * - Theme extensions
- * - Functions
  *
  * Will return a merge of the local and remote specifications (remote values override local ones)
  * Will only return the specifications that are also defined locally
- * (Functions are not validated againts remote specifications, gated access is defined locally)
  *
  * @param token - Token to access partners API
  * @returns List of extension specifications
@@ -64,11 +59,10 @@ export async function fetchSpecifications({
 
   const ui = await loadUIExtensionSpecifications(config)
   const theme = await loadThemeSpecifications()
-  const functions = await loadFunctionSpecifications(config)
   const local = [...ui, ...theme]
 
   const updatedSpecs = mergeLocalAndRemoteSpecs(local, extensionSpecifications)
-  return [...updatedSpecs, ...functions]
+  return [...updatedSpecs]
 }
 
 function mergeLocalAndRemoteSpecs(
