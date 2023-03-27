@@ -4,6 +4,7 @@ import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {exec} from '@shopify/cli-kit/node/system'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
 
@@ -12,7 +13,7 @@ export default startTunnel({provider: TUNNEL_PROVIDER, action: hookStart})
 export type ReturnType = Promise<Result<{url: string}, TunnelError>>
 
 // How much time to wait for a tunnel to be established. in seconds.
-const TUNNEL_TIMEOUT = 20
+const TUNNEL_TIMEOUT = isUnitTest() ? 0.2 : 20
 
 export async function hookStart(port: number): ReturnType {
   try {
