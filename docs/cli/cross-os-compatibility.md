@@ -20,15 +20,28 @@ When implementing business logic that interacts with the OS, for example doing I
 
 Please don't assume that a successful working workflow in the OS in which it was developed will yield success in other OSs. **We strongly recommend manually testing the workflow in other OSs**. If you don't have a computer with a given OS, here are some recommendations to virtualize the environment:
 
-#### Linux ([Podman](https://podman.io/))
+#### Linux ([Parallels](https://www.parallels.com/pd/general/))
 
-Run the following command from the CLI directory to create an temporary virtual Linux environment:
+Create a new Ubuntu 22 virtual machine, then:
+
+- `sudo apt-get update && sudo apt-get -y upgrade`
+- `curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -`
+- `sudo apt-get install -y git nodejs ruby`
+- `curl -fsSL https://get.pnpm.io/install.sh | sh -`
+
+You can clone the CLI repository:
 
 ```bash
-podman run --rm --interactive --tty node:18 /bin/bash
+git clone https://github.com/Shopify/cli.git
 ```
 
-Then clone the [CLI repository](https://github.com/Shopify/cli) and install the dependencies with `pnpm install`.
+Install all dependencies:
+
+```bash
+pnpm install
+```
+
+Now you can run the test suite with `pnpm test` and verify that everything works properly.
 
 #### Windows ([Parallels](https://www.parallels.com/pd/general/))
 
