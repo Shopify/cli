@@ -37,8 +37,8 @@ async function tunnel(options: {port: number}): Promise<{url: string}> {
     setTimeout(() => {
       if (!resolved) {
         resolved = true
-        const errorMessage = errors.length ? `: ${errors.join('\n')}` : ''
-        reject(new Error(`Timed out waiting for a cloudflare tunnel: ${errorMessage}`))
+        const lastErrors = errors.slice(-5).join('\n')
+        reject(new Error(`Timed out waiting for a cloudflare tunnel: ${lastErrors}`))
       }
     }, TUNNEL_TIMEOUT * 1000)
 
