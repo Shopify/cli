@@ -1,5 +1,0 @@
-type="backend"
-
-[commands]
-dev = "npm run dev"
-build = "pnpm run build"

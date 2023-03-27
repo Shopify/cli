@@ -7,7 +7,7 @@ Most of the internal components the project uses have unit tests to thoroughly t
 
 ### Acceptance Tests
 
-Acceptance tests run the built `shopify` command line against a wide range of fixtures and verify its output and results. They are the slowest to run however provide the most coverage. The idea is to test a few complete scenarios for each major feature.
+Acceptance tests run the built `shopify` command line and verify its output and results. They are the slowest to run however provide the most coverage. The idea is to test a few complete scenarios for each major feature.
 
 Those are written in [Cucumber](https://cucumber.io/) and Ruby and can be found in the [`features/`](/features) directory. They can be executed by running:
 
