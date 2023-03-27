@@ -1,12 +1,12 @@
 import {buildThemeExtensions, ThemeExtensionBuildOptions} from '../build/extension.js'
-import {build as esBuild, BuildFailure, BuildResult, formatMessagesSync} from 'esbuild'
+import {context as esContext, BuildResult, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {copyFile, glob} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
-import type {StdinOptions} from 'esbuild'
+import type {StdinOptions, build as esBuild} from 'esbuild'
 
 const require = createRequire(import.meta.url)
 
@@ -23,7 +23,7 @@ export interface BundleOptions {
    * When ESBuild detects changes in any of the modules of the graph it re-bundles it
    * and calls this watch function.
    */
-  watch?: (error: BuildFailure | null, result: BuildResult | null) => void
+  watch?: (result: BuildResult | null) => Promise<void>
 
   /**
    * This signal allows the caller to stop the watching process.
@@ -48,15 +48,20 @@ export interface BundleOptions {
  */
 export async function bundleExtension(options: BundleOptions) {
   const esbuildOptions = getESBuildOptions(options)
-  const result = await esBuild(esbuildOptions)
+  const context = await esContext(esbuildOptions)
+  if (options.watch) {
+    await context.watch()
+  } else {
+    const result = await context.rebuild()
+    onResult(result, options)
+    await context.dispose()
+  }
+
   if (options.watchSignal) {
-    options.watchSignal.addEventListener('abort', () => {
-      if (result.stop) {
-        result.stop()
-      }
+    options.watchSignal.addEventListener('abort', async () => {
+      await context.dispose()
     })
   }
-  onResult(result, options)
 }
 
 export async function bundleThemeExtensions(options: ThemeExtensionBuildOptions): Promise<void> {
@@ -101,7 +106,7 @@ function onResult(result: Awaited<ReturnType<typeof esBuild>> | null, options: B
   }
 }
 
-function getESBuildOptions(options: BundleOptions): Parameters<typeof esBuild>[0] {
+function getESBuildOptions(options: BundleOptions): Parameters<typeof esContext>[0] {
   const env: {[variable: string]: string} = options.env
   const define = Object.keys(env || {}).reduce(
     (acc, key) => ({
@@ -110,7 +115,7 @@ function getESBuildOptions(options: BundleOptions): Parameters<typeof esBuild>[0
     }),
     {'process.env.NODE_ENV': JSON.stringify(options.environment)},
   )
-  let esbuildOptions: Parameters<typeof esBuild>[0] = {
+  const esbuildOptions: Parameters<typeof esContext>[0] = {
     outfile: options.outputBundlePath,
     stdin: options.stdin,
     bundle: true,
@@ -128,20 +133,20 @@ function getESBuildOptions(options: BundleOptions): Parameters<typeof esBuild>[0
   }
   if (options.watch) {
     const watch = options.watch
-    esbuildOptions = {
-      ...esbuildOptions,
-      watch: {
-        onRebuild: (error, result) => {
+    esbuildOptions.plugins?.push({
+      name: 'rebuild-plugin',
+      setup(build) {
+        build.onEnd(async (result) => {
           onResult(result, options)
-          watch(error, result)
-        },
+          await watch(result)
+        })
       },
-    }
+    })
   }
   return esbuildOptions
 }
 
-type ESBuildPlugins = Parameters<typeof esBuild>[0]['plugins']
+type ESBuildPlugins = Parameters<typeof esContext>[0]['plugins']
 
 /**
  * It returns the plugins that should be used with ESBuild.
