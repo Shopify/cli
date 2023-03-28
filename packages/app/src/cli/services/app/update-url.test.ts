@@ -3,7 +3,7 @@ import {selectApp} from './select-app.js'
 import {getURLs, updateURLs} from '../dev/urls.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {allowedRedirectionURLsPrompt, appUrlPrompt} from '../../prompts/update-url.js'
-import {describe, vi, beforeEach, expect} from 'vitest'
+import {describe, vi, beforeEach, expect, test} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 vi.mock('./select-app.js')

@@ -1,6 +1,6 @@
 import {fetchSpecifications} from './fetch-extension-specifications.js'
 import {testRemoteSpecifications} from '../../models/app/app.test-data.js'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 

@@ -6,7 +6,7 @@ import {deployConfirmationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
-import {beforeEach, describe, expect, vi} from 'vitest'
+import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 

@@ -4,7 +4,7 @@ import {getDevelopmentTheme} from './local-storage.js'
 import {fetchStoreThemes} from '../utilities/theme-selector/fetch.js'
 import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {renderTable} from '@shopify/cli-kit/node/ui'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {getHostTheme} from '@shopify/cli-kit/node/themes/conf'
 
 vi.mock('../utilities/theme-selector/fetch.js')

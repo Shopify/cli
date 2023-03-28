@@ -6,7 +6,7 @@ import {
 import {getDevelopmentTheme, setDevelopmentTheme, removeDevelopmentTheme} from '../services/local-storage.js'
 import {createTheme, fetchTheme} from '@shopify/cli-kit/node/themes/themes-api'
 import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
-import {beforeEach, describe, expect, vi} from 'vitest'
+import {beforeEach, describe, expect, vi, test} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/themes/themes-api')
 vi.mock('../services/local-storage.js')

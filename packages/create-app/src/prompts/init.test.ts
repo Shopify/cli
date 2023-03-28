@@ -1,5 +1,5 @@
 import init from './init.js'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')

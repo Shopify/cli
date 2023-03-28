@@ -7,7 +7,7 @@ import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {findApiKey, findInEnv} from './find-app-info.js'
 import {outputSuccess, consoleError, outputInfo} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {beforeEach, describe, expect, vi} from 'vitest'
+import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 const aToken = 'A_TOKEN'

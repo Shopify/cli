@@ -2,7 +2,7 @@ import {getRedirectUrl, getExtensionPointRedirectUrl} from './utilities.js'
 import {ExtensionDevOptions} from '../../extension.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
 import {UIExtension} from '../../../../models/app/extensions.js'
-import {describe, expect} from 'vitest'
+import {describe, expect, test} from 'vitest'
 
 describe('getRedirectURL()', () => {
   test('returns a URL with a URL param', async () => {

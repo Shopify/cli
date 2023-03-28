@@ -1,7 +1,7 @@
 import Init from './init.js'
 import initPrompt, {templateURLMap} from '../prompts/init.js'
 import initService from '../services/init.js'
-import {describe, expect, vi, beforeEach} from 'vitest'
+import {describe, expect, vi, beforeEach, test} from 'vitest'
 import {errorHandler} from '@shopify/cli-kit/node/error-handler'
 import {Config} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'

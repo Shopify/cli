@@ -9,7 +9,7 @@ import {
 import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 
 const eventbridgeAddress = 'arn:aws:events:us-east-1::event-source/aws.partner/shopify.com/3737297/source'
 const pubsubAddress = 'pubsub://topic:subscription'

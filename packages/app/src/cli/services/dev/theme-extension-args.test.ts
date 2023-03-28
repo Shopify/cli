@@ -1,7 +1,7 @@
 import {themeExtensionArgs} from './theme-extension-args.js'
 import {ensureThemeExtensionDevContext} from '../context.js'
 import {testThemeExtensions} from '../../models/app/app.test-data.js'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 
 vi.mock('../../models/app/app.js')
 vi.mock('../context.js')

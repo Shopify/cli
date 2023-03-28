@@ -1,6 +1,6 @@
 import {createExtension} from './create-extension.js'
 import {ExtensionCreateQuery} from '../../api/graphql/extension_create.js'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 vi.mock('@shopify/cli-kit/node/api/partners')

@@ -1,5 +1,5 @@
 import {ConfigSchema, isAutocorrectEnabled, setAutocorrect} from './conf.js'
-import {describe, expect} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 

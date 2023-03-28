@@ -1,7 +1,7 @@
 import {manualMatchIds, ManualMatchResult} from './id-manual-matching.js'
 import {ExtensionRegistration} from '../dev/create-extension.js'
 import {UIExtension} from '../../models/app/extensions.js'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 

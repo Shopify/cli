@@ -1,5 +1,5 @@
 import {packageTheme} from './package.js'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {mkdir, writeFile, inTemporaryDirectory, touchFile, fileExists} from '@shopify/cli-kit/node/fs'

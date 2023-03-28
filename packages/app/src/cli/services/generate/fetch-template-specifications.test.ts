@@ -2,7 +2,7 @@ import {fetchTemplateSpecifications} from './fetch-template-specifications.js'
 import {testRemoteTemplateSpecifications} from '../../models/app/app.test-data.js'
 import {BaseFunctionConfigurationSchema} from '../../models/extensions/schemas.js'
 import {TemplateSpecification} from '../../models/app/template.js'
-import {describe, vi, expect} from 'vitest'
+import {describe, vi, expect, test} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 vi.mock('@shopify/cli-kit/node/api/partners')

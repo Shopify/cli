@@ -1,5 +1,5 @@
 import {authenticate, hookStart} from './tunnel.js'
-import {beforeEach, describe, expect, vi} from 'vitest'
+import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import ngrok from '@shopify/ngrok'
 import {renderFatalError, renderTextPrompt} from '@shopify/cli-kit/node/ui'

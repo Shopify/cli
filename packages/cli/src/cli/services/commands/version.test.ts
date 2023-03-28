@@ -1,5 +1,5 @@
 import {versionService} from './version.js'
-import {afterEach, describe, expect, vi} from 'vitest'
+import {afterEach, describe, expect, vi, test} from 'vitest'
 import {
   checkForNewVersion,
   PackageManager,

@@ -15,7 +15,7 @@ import {
   deliveryMethodPrompt,
   topicPrompt,
 } from '../../prompts/webhook/trigger.js'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'

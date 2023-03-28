@@ -1,5 +1,5 @@
 import {getWebhookSample} from './request-sample.js'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 const samplePayload = '{ "sampleField": "SampleValue" }'

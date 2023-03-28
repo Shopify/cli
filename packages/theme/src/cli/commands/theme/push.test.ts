@@ -1,7 +1,7 @@
 import Push from './push.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
-import {describe, vi, expect} from 'vitest'
+import {describe, vi, expect, test} from 'vitest'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'

@@ -10,7 +10,7 @@ import {
   testThemeExtensions,
 } from '../models/app/app.test-data.js'
 import {Extension, GenericSpecification} from '../models/app/extensions.js'
-import {describe, expect, vi, beforeAll, afterEach} from 'vitest'
+import {describe, expect, vi, beforeAll, afterEach, test} from 'vitest'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'

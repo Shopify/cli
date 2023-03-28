@@ -1,5 +1,5 @@
 import {showDeprecationWarnings, REQUIRED_FOLDERS, validThemeDirectory} from './dev.js'
-import {describe, expect} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'

@@ -1,6 +1,6 @@
 import {sendUninstallWebhookToAppServer} from './send-app-uninstalled-webhook.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {FetchError} from '@shopify/cli-kit/node/http'
 import {Writable} from 'stream'

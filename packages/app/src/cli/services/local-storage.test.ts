@@ -1,5 +1,5 @@
 import {AppLocalStorageSchema, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
-import {describe, expect} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 

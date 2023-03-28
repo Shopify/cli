@@ -1,5 +1,5 @@
 import {hookStart} from './tunnel.js'
-import {describe, vi, expect} from 'vitest'
+import {describe, vi, expect, test} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {TunnelError} from '@shopify/cli-kit/node/plugins/tunnel'

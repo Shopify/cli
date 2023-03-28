@@ -1,6 +1,6 @@
 import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, clientSecretPrompt, topicPrompt} from './trigger.js'
 import {DELIVERY_METHOD} from '../../services/webhook/trigger-flags.js'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')

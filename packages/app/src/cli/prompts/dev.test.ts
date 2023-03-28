@@ -9,7 +9,7 @@ import {
   tunnelConfigurationPrompt,
 } from './dev.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {
   renderAutocompletePrompt,
   renderConfirmationPrompt,

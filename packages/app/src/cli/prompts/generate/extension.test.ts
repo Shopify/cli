@@ -6,7 +6,7 @@ import {
 } from '../../models/extensions/specifications.js'
 import {convertSpecificationsToTemplate, TemplateSpecification} from '../../models/app/template.js'
 import {mapRemoteTemplateSpecification} from '../../services/generate/fetch-template-specifications.js'
-import {describe, expect, vi, beforeEach} from 'vitest'
+import {describe, expect, vi, beforeEach, test} from 'vitest'
 import {isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 

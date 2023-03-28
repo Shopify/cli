@@ -1,5 +1,5 @@
 import {cloneRepoAndCheckoutLatestTag, cloneRepo} from './init.js'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {downloadGitRepository} from '@shopify/cli-kit/node/git'
 
 vi.mock('@shopify/cli-kit/node/git', () => {

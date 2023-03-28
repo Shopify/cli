@@ -1,5 +1,5 @@
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import * as http from '@shopify/cli-kit/node/http'
 
 const samplePayload = '{ "sampleField": "SampleValue" }'

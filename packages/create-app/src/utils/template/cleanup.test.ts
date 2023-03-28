@@ -1,5 +1,5 @@
 import cleanup from './cleanup.js'
-import {describe, expect} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 

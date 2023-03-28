@@ -1,6 +1,6 @@
 import {findAlternativeCommand, shouldRunCommand} from './index.js'
 import {isAutocorrectEnabled} from './services/conf.js'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 interface Config {

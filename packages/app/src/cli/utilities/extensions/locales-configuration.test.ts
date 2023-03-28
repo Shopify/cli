@@ -1,5 +1,5 @@
 import {loadLocalesConfig} from './locales-configuration.js'
-import {describe, expect} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
