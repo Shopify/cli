@@ -26,16 +26,16 @@ export function mapRemoteTemplateSpecification(
     supportLinks: remoteTemplateSpecification.supportLinks,
     types: remoteTemplateSpecification.types.map((extension) => {
       return {
-        identifier: extension.type,
-        externalIdentifier: extension.type,
-        externalName: extension.type,
+        identifier: remoteTemplateSpecification.identifier,
+        externalIdentifier: remoteTemplateSpecification.identifier,
+        externalName: remoteTemplateSpecification.identifier,
         gated: false,
         registrationLimit: blocks.functions.defaultRegistrationLimit,
         supportedFlavors: extension.supportedFlavors,
         group: remoteTemplateSpecification.group,
         category: () => 'function',
         configSchema: BaseFunctionConfigurationSchema,
-        templateURL: remoteTemplateSpecification.url,
+        templateURL: extension.url,
         helpURL: remoteTemplateSpecification.supportLinks[0]!,
         templatePath: (flavor: string) => {
           const supportedFlavor = extension.supportedFlavors.find((supportedFlavor) => supportedFlavor.value === flavor)
