@@ -20,15 +20,32 @@ When implementing business logic that interacts with the OS, for example doing I
 
 Please don't assume that a successful working workflow in the OS in which it was developed will yield success in other OSs. **We strongly recommend manually testing the workflow in other OSs**. If you don't have a computer with a given OS, here are some recommendations to virtualize the environment:
 
-#### Linux ([Podman](https://podman.io/))
+#### Linux ([Parallels](https://www.parallels.com/pd/general/))
 
-Run the following command from the CLI directory to create an temporary virtual Linux environment:
+Create a new Ubuntu 22 virtual machine, then:
+
+- `sudo apt-get update && sudo apt-get -y upgrade`
+- `curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -`
+- `sudo apt-get install -y git nodejs ruby`
+- `curl -fsSL https://get.pnpm.io/install.sh | sh -`
+
+You can clone the CLI repository:
 
 ```bash
-podman run --rm --interactive --tty node:18 /bin/bash
+git clone https://github.com/Shopify/cli.git
 ```
 
-Then clone the [CLI repository](https://github.com/Shopify/cli) and install the dependencies with `pnpm install`.
+Install all dependencies:
+
+```bash
+pnpm install
+```
+
+Now you can test creating an app and installing in your dev store:
+
+```bash
+node bin/create-test-app.js -e ui
+```
 
 #### Windows ([Parallels](https://www.parallels.com/pd/general/))
 
@@ -37,27 +54,26 @@ After you've installed Parallels and virtualized the Windows environment, you ne
 - [Git](https://git-scm.com/download/win)
 - [Node](https://nodejs.org/en/download/)
 - [PNPM](https://pnpm.io/installation)
-- [Python](https://www.python.org/downloads/windows/) (needed for `node-gyp`)
-- [Visual Studio](https://code.visualstudio.com/download) (needed for `node-gyp`, make sure you install the "Desktop development with C++" workload)
-- [Ruby](https://rubyinstaller.org/downloads/) (needed for themes, Ruby+DevKit 3.0.4 is recommended)
+- [Ruby](https://rubyinstaller.org/downloads/) (needed for themes, Ruby+DevKit 3.0.x is recommended)
 
-Git provides a shell called "Git Bash" which you can use. First set your global git user and email:
+We also recommend you install these programs for a better DX:
+- [Powershell](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows)
+- [VS Code](https://code.visualstudio.com/download)
 
-```bash
-git config --global user.email "john.doe@gmail.com"
-git config --global user.name "John Doe"
-```
-
-Then you can clone the CLI repository:
+Please use **Windows Terminal** as your console. You can clone the CLI repository:
 
 ```bash
 git clone https://github.com/Shopify/cli.git
 ```
 
-Now you can install dependencies with `pnpm install`. If Yarn yields "unsigned scripts" errors execute the following command:
+Install all dependencies:
 
 ```bash
-Set-ExecutionPolicy Unrestricted -Scope LocalMachine
+pnpm install
 ```
 
-Now you can run the test suite with `pnpm test` and verify that everything works properly.
+Now you can test creating an app and installing in your dev store:
+
+```bash
+node bin/create-test-app.js -e ui
+```
