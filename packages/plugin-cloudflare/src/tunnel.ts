@@ -4,6 +4,7 @@ import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {exec} from '@shopify/cli-kit/node/system'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
 
@@ -12,7 +13,7 @@ export default startTunnel({provider: TUNNEL_PROVIDER, action: hookStart})
 export type ReturnType = Promise<Result<{url: string}, TunnelError>>
 
 // How much time to wait for a tunnel to be established. in seconds.
-const TUNNEL_TIMEOUT = 20
+const TUNNEL_TIMEOUT = isUnitTest() ? 0.2 : 20
 
 export async function hookStart(port: number): ReturnType {
   try {
@@ -27,6 +28,7 @@ export async function hookStart(port: number): ReturnType {
 
 async function tunnel(options: {port: number}): Promise<{url: string}> {
   const args: string[] = ['tunnel', '--url', `http://localhost:${options.port}`, '--no-autoupdate']
+  const errors: string[] = []
 
   let connected = false
   let resolved = false
@@ -36,7 +38,8 @@ async function tunnel(options: {port: number}): Promise<{url: string}> {
     setTimeout(() => {
       if (!resolved) {
         resolved = true
-        reject(new Error('Timed out waiting for a cloudflare tunnel'))
+        const lastErrors = errors.slice(-5).join('\n')
+        reject(new Error(`Timed out while creating a cloudflare tunnel: ${lastErrors}`))
       }
     }, TUNNEL_TIMEOUT * 1000)
 
@@ -52,7 +55,7 @@ async function tunnel(options: {port: number}): Promise<{url: string}> {
           resolve({url})
         }
         const errorMessage = findError(chunk)
-        if (errorMessage) reject(new Error(errorMessage))
+        if (errorMessage) errors.push(errorMessage)
         callback()
       },
     })

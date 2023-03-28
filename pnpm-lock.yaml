@@ -430,12 +430,14 @@ importers:
       '@oclif/core': 2.1.4
       '@shopify/cli-kit': 3.45.0-pre.4
       node-fetch: 3.3.0
+      semver: 7.3.6
       vite: 2.9.12
       vitest: ^0.28.5
     dependencies:
       '@oclif/core': 2.1.4
       '@shopify/cli-kit': link:../cli-kit
       node-fetch: 3.3.0
+      semver: 7.3.6
     devDependencies:
       vite: 2.9.12
       vitest: 0.28.5

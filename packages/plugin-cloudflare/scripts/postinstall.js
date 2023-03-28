@@ -7,48 +7,49 @@ import {execSync} from 'child_process'
 import {createHash} from 'node:crypto'
 import {chmodSync, existsSync, mkdirSync, renameSync, unlinkSync, createWriteStream, readFileSync} from 'fs'
 import fetch from 'node-fetch'
+import semver from 'semver'
 
-const CLOUDFLARE_VERSION = '2023.2.1'
+const CLOUDFLARE_VERSION = '2023.3.1'
 const CLOUDFLARE_REPO = `https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARE_VERSION}/`
 
 const LINUX_URL = {
   arm64: {
     filename: 'cloudflared-linux-arm64',
-    checksum: '03e8f22ad61465834154ccb8656d20eaf0a73789173e3c70fcabddb7f1b67fd1',
+    checksum: '1989edb5244fcbb8420a94655b2193f9c103758418e7ddaea7b7a63852993135',
   },
   arm: {
     filename: 'cloudflared-linux-arm',
-    checksum: '2fbe0c2eb438ffa8d0f459e7f41b2cf8c8f1bbe88a7362dd15b63380fd2777b5',
+    checksum: '6fb2ec9241e7e6927b9ceddbbc2442714e0245f25882fadb5ce073c672e2d7c5',
   },
   x64: {
     filename: 'cloudflared-linux-amd64',
-    checksum: '41fa4fc3f43214c2121d1006d4cfffa9dc3b952b6cde3a79440d799de658d138',
+    checksum: '72a750d7a043b2ae291470710fafa816ab104a60120ec6721d7c1fbbf24c8558',
   },
   ia32: {
     filename: 'cloudflared-linux-386',
-    checksum: '38208ff59b6fc1b356b51ce4a0041f71abe739b89ccf7d7676e4b941f958f7ca',
+    checksum: '5f361084c2c0ceba4b5287566f192069d40da8c7ae74ce14d6902d65607bbe92',
   },
 }
 
 const MACOS_URL = {
   arm64: {
     filename: 'cloudflared-darwin-amd64.tgz',
-    checksum: 'c58a66da2f153592c366262f5100539f54d3db9d0fd90262afc01f73be5f18f1',
+    checksum: '90b515a036306e6ddd15e8558e029fef879cad88a936f9409c546de50cd7dd7a',
   },
   x64: {
     filename: 'cloudflared-darwin-amd64.tgz',
-    checksum: 'c58a66da2f153592c366262f5100539f54d3db9d0fd90262afc01f73be5f18f1',
+    checksum: '90b515a036306e6ddd15e8558e029fef879cad88a936f9409c546de50cd7dd7a',
   },
 }
 
 const WINDOWS_URL = {
   x64: {
     filename: 'cloudflared-windows-amd64.exe',
-    checksum: 'd3a0e1a79158f3985cd49607ebe0cdfcc49cb9af96b8f43aefd0cdfe2f22e663',
+    checksum: 'bb67c7623ba92fe64ffd9816b8d5b3b1ea3013960a30bd4cf6e295b3eb5b1bad',
   },
   ia32: {
     filename: 'cloudflared-windows-386.exe',
-    checksum: 'd14c52d9220b606f428a8fe9f7c108b0d6f14cf71e7384749e98e6a95962e68f',
+    checksum: 'd2513e58bb03ccc83affde685c6ef987924c37ce6707d8e9857e2524b0d7e90f',
   },
 }
 
@@ -87,9 +88,16 @@ export default async function install() {
   }
 
   const binTarget = getBinPathTarget()
+
   if (existsSync(binTarget)) {
-    console.log('cloudflared already installed, skipping')
-    return
+    // --version returns an string like "cloudflared version 2023.3.1 (built 2023-03-13-1444 UTC)"
+    const versionArray = execSync(`${binTarget} --version`, {encoding: 'utf8'}).split(' ')
+    const versionNumber = versionArray.length > 2 ? versionArray[2] : '0.0.0'
+    const needsUpdate = semver.gt(CLOUDFLARE_VERSION, versionNumber)
+    if (!needsUpdate) {
+      console.log('cloudflared already installed, skipping')
+      return
+    }
   }
 
   if (process.platform === 'linux') {

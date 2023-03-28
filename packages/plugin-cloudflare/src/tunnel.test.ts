@@ -54,6 +54,6 @@ describe('hookStart', () => {
     const result = await hookStart(port)
 
     // Then
-    expect(result).toEqual(err(new TunnelError('unknown', message)))
+    expect(result).toEqual(err(new TunnelError('unknown', `Timed out while creating a cloudflare tunnel: ${message}`)))
   })
 })
