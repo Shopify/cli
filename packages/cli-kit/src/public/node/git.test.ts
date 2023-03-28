@@ -311,7 +311,7 @@ describe('ensureInsideGitDirectory()', () => {
 })
 
 describe('ensureIsClean()', () => {
-  it('throws an error if git directory is not clean', async () => {
+  test('throws an error if git directory is not clean', async () => {
     // Given
     mockedGitStatus.mockResolvedValue({isClean: false})
 
@@ -319,7 +319,7 @@ describe('ensureIsClean()', () => {
     await expect(() => git.ensureIsClean()).rejects.toThrowError(/is not a clean Git directory/)
   })
 
-  it("doesn't throw an error if git directory is clean", async () => {
+  test("doesn't throw an error if git directory is clean", async () => {
     // Given
     mockedGitStatus.mockResolvedValue({isClean: true})
 
@@ -329,7 +329,7 @@ describe('ensureIsClean()', () => {
 })
 
 describe('isGitClean()', () => {
-  it('return false if git directory is not clean', async () => {
+  test('return false if git directory is not clean', async () => {
     // Given
     mockedGitStatus.mockResolvedValue({isClean: false})
 
@@ -337,7 +337,7 @@ describe('isGitClean()', () => {
     expect(await git.isClean()).toBe(false)
   })
 
-  it('return true if git directory is not clean', async () => {
+  test('return true if git directory is not clean', async () => {
     // Given
     mockedGitStatus.mockResolvedValue({isClean: true})
 
@@ -345,7 +345,7 @@ describe('isGitClean()', () => {
     expect(await git.isClean()).toBe(true)
   })
 
-  it('passes the directory option to simple git', async () => {
+  test('passes the directory option to simple git', async () => {
     // Given
     mockedGitStatus.mockResolvedValue({isClean: true})
     const directory = '/test/directory'
