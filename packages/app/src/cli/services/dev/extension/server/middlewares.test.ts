@@ -13,7 +13,7 @@ import * as templates from '../templates.js'
 import * as payload from '../payload.js'
 import {UIExtensionPayload} from '../payload/models.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import * as h3 from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -100,6 +100,7 @@ describe('redirectToDevConsoleMiddleware()', () => {
 })
 
 describe('fileServerMiddleware()', async () => {
+  // eslint-disable-next-line vitest/no-disabled-tests
   test.skip('returns 404 if file does not exist', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       vi.spyOn(utilities, 'sendError').mockImplementation(() => {})

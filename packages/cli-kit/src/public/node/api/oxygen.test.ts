@@ -70,7 +70,7 @@ describe('uploadDeploymentFile', () => {
     })
 
     expect(gotResponse.status).toBe(200)
-    expect(await response.json()).toEqual(responseBody)
+    await expect(response.json()).resolves.toEqual(responseBody)
     expect(buildHeaders).toHaveBeenCalledWith(mockedToken)
   })
 })

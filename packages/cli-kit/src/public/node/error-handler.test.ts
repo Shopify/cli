@@ -70,7 +70,7 @@ describe('errorHandler', () => {
 })
 
 describe('bugsnag stack cleaning', () => {
-  it.each([
+  test.each([
     ['dependency in relative path', 'cool-project/node_modules/deppy/foo/bar.ts', 'deppy/foo/bar.ts'],
     ['dependency in absolute path', '/Users/ju/Desktop/cool/node_modules/deppy/foo/bar.ts', 'deppy/foo/bar.ts'],
     ['plugin in project', 'node_modules/@plugin/name/foo/bar.ts', '@plugin/name/foo/bar.ts'],
@@ -147,8 +147,8 @@ describe('send to Bugsnag', () => {
     expect(onNotify).not.toHaveBeenCalled()
   })
 
-  it.each([null, undefined, {}, {message: 'nope'}])('deals with strange things to throw %s', async (throwable) => {
-    const res = await sendErrorToBugsnag(throwable as any)
+  test.each([null, undefined, {}, {message: 'nope'}])('deals with strange things to throw %s', async (throwable) => {
+    const res = await sendErrorToBugsnag(throwable)
     expect(res.reported).toEqual(false)
     expect(onNotify).not.toHaveBeenCalled()
   })

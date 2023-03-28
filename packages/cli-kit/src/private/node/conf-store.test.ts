@@ -53,7 +53,8 @@ describe('removeSession', () => {
 
 describe('cacheRetrieveOrRepopulate', () => {
   // flaky test
-  it.skip('returns the cached contents when they exist', async () => {
+  // eslint-disable-next-line vitest/no-disabled-tests
+  test.skip('returns the cached contents when they exist', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
