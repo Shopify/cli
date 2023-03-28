@@ -12,6 +12,7 @@ const mockedGetLog = vi.fn(async () => ({}))
 const mockedCommit = vi.fn(async () => ({}))
 const mockedRaw = vi.fn(async () => '')
 const mockedCheckout = vi.fn(async () => ({}))
+const mockedGitStatus = vi.fn(async () => ({isClean: false}))
 const simpleGitProperties = {
   clone: mockedClone,
   init: mockedInit,
@@ -21,6 +22,7 @@ const simpleGitProperties = {
   commit: mockedCommit,
   raw: mockedRaw,
   checkoutLocalBranch: mockedCheckout,
+  status: mockedGitStatus,
 }
 
 vi.mock('./context/local.js')
@@ -302,6 +304,54 @@ describe('ensureInsideGitDirectory()', () => {
 
     // When
     await git.ensureInsideGitDirectory(directory)
+
+    // Then
+    expect(simpleGit).toHaveBeenCalledWith({baseDir: directory})
+  })
+})
+
+describe('ensureIsClean()', () => {
+  it('throws an error if git directory is not clean', async () => {
+    // Given
+    mockedGitStatus.mockResolvedValue({isClean: false})
+
+    // Then
+    await expect(() => git.ensureIsClean()).rejects.toThrowError(/is not a clean Git directory/)
+  })
+
+  it("doesn't throw an error if git directory is clean", async () => {
+    // Given
+    mockedGitStatus.mockResolvedValue({isClean: true})
+
+    // Then
+    await expect(git.ensureIsClean()).resolves.toBeUndefined()
+  })
+})
+
+describe('isGitClean()', () => {
+  it('return false if git directory is not clean', async () => {
+    // Given
+    mockedGitStatus.mockResolvedValue({isClean: false})
+
+    // Then
+    expect(await git.isClean()).toBe(false)
+  })
+
+  it('return true if git directory is not clean', async () => {
+    // Given
+    mockedGitStatus.mockResolvedValue({isClean: true})
+
+    // Then
+    expect(await git.isClean()).toBe(true)
+  })
+
+  it('passes the directory option to simple git', async () => {
+    // Given
+    mockedGitStatus.mockResolvedValue({isClean: true})
+    const directory = '/test/directory'
+
+    // When
+    await git.isClean(directory)
 
     // Then
     expect(simpleGit).toHaveBeenCalledWith({baseDir: directory})
