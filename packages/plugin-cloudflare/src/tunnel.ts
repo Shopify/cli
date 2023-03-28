@@ -39,7 +39,7 @@ async function tunnel(options: {port: number}): Promise<{url: string}> {
       if (!resolved) {
         resolved = true
         const lastErrors = errors.slice(-5).join('\n')
-        reject(new Error(`Timed out waiting for a cloudflare tunnel: ${lastErrors}`))
+        reject(new Error(`Timed out while creating a cloudflare tunnel: ${lastErrors}`))
       }
     }, TUNNEL_TIMEOUT * 1000)
 
