@@ -15,7 +15,7 @@ import {
   deliveryMethodPrompt,
   topicPrompt,
 } from '../../prompts/webhook/trigger.js'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -32,7 +32,7 @@ const aSecret = 'A_SECRET'
 const anApiKey = 'AN_API_KEY'
 
 describe('collectApiVersion', () => {
-  it('uses the passed api-version', async () => {
+  test('uses the passed api-version', async () => {
     // Given
     vi.mocked(apiVersionPrompt)
 
@@ -44,7 +44,7 @@ describe('collectApiVersion', () => {
     expect(apiVersionPrompt).toHaveBeenCalledTimes(0)
   })
 
-  it('asks for api-version if not set', async () => {
+  test('asks for api-version if not set', async () => {
     // Given
     vi.mocked(apiVersionPrompt).mockResolvedValue('2023-01')
     vi.mocked(requestApiVersions).mockResolvedValue(['2023-01', 'unstable'])
@@ -60,7 +60,7 @@ describe('collectApiVersion', () => {
 })
 
 describe('collectTopic', () => {
-  it('uses the passed topic if present for the api-version', async () => {
+  test('uses the passed topic if present for the api-version', async () => {
     // Given
     vi.mocked(topicPrompt)
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create'])
@@ -73,7 +73,7 @@ describe('collectTopic', () => {
     expect(topicPrompt).toHaveBeenCalledTimes(0)
   })
 
-  it('fails if the passed topic is not present in the api-version topics list', async () => {
+  test('fails if the passed topic is not present in the api-version topics list', async () => {
     // Given
     vi.mocked(topicPrompt)
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create'])
@@ -83,7 +83,7 @@ describe('collectTopic', () => {
     expect(topicPrompt).toHaveBeenCalledTimes(0)
   })
 
-  it('asks for topic if not set', async () => {
+  test('asks for topic if not set', async () => {
     // Given
     vi.mocked(topicPrompt).mockResolvedValue('orders/create')
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create'])
@@ -99,7 +99,7 @@ describe('collectTopic', () => {
 })
 
 describe('collectAddressAndMethod', () => {
-  it('uses the passed address - method pair', async () => {
+  test('uses the passed address - method pair', async () => {
     // Given
     vi.mocked(deliveryMethodPrompt)
     vi.mocked(addressPrompt)
@@ -114,7 +114,7 @@ describe('collectAddressAndMethod', () => {
     expect(addressPrompt).toHaveBeenCalledTimes(0)
   })
 
-  it('prompts for the address when deliveryMethod is passed', async () => {
+  test('prompts for the address when deliveryMethod is passed', async () => {
     // Given
     vi.mocked(deliveryMethodPrompt)
     vi.mocked(addressPrompt).mockResolvedValue('http://localhost')
@@ -129,7 +129,7 @@ describe('collectAddressAndMethod', () => {
     expect(addressPrompt).toHaveBeenCalledOnce()
   })
 
-  it('prompts for the address and deliveryMethod when none passed', async () => {
+  test('prompts for the address and deliveryMethod when none passed', async () => {
     // Given
     vi.mocked(deliveryMethodPrompt).mockResolvedValue('http')
     vi.mocked(addressPrompt).mockResolvedValue('https://example.org')
@@ -146,7 +146,7 @@ describe('collectAddressAndMethod', () => {
 })
 
 describe('collectCredentials', () => {
-  it('uses the value set as flag', async () => {
+  test('uses the value set as flag', async () => {
     // Given
     vi.mocked(renderConfirmationPrompt)
     vi.mocked(clientSecretPrompt)
@@ -166,7 +166,7 @@ describe('collectCredentials', () => {
     expect(requestAppInfo).toHaveBeenCalledTimes(0)
   })
 
-  it('prompts for secret if manual', async () => {
+  test('prompts for secret if manual', async () => {
     // Given
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
     vi.mocked(clientSecretPrompt).mockResolvedValue(aSecret)
@@ -185,7 +185,7 @@ describe('collectCredentials', () => {
     expect(requestAppInfo).toHaveBeenCalledTimes(0)
   })
 
-  it('uses .env credentials when present and automatic', async () => {
+  test('uses .env credentials when present and automatic', async () => {
     // Given
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(clientSecretPrompt)
@@ -205,7 +205,7 @@ describe('collectCredentials', () => {
     expect(outputInfo).toHaveBeenCalledWith('Reading client-secret from .env file')
   })
 
-  it('prompts when no .env and no remote api-key found and automatic', async () => {
+  test('prompts when no .env and no remote api-key found and automatic', async () => {
     // Given
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(clientSecretPrompt).mockResolvedValue(aSecret)
@@ -224,7 +224,7 @@ describe('collectCredentials', () => {
     expect(requestAppInfo).toHaveBeenCalledTimes(0)
   })
 
-  it('uses remote secret when no .env and automatic', async () => {
+  test('uses remote secret when no .env and automatic', async () => {
     // Given
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(clientSecretPrompt)
@@ -244,7 +244,7 @@ describe('collectCredentials', () => {
     expect(outputInfo).toHaveBeenCalledWith('Reading client-secret from app settings in Partners')
   })
 
-  it('prompts for secret when no .env, and no app, and automatic', async () => {
+  test('prompts for secret when no .env, and no app, and automatic', async () => {
     // Given
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(clientSecretPrompt).mockResolvedValue(aSecret)
@@ -265,7 +265,7 @@ describe('collectCredentials', () => {
 })
 
 describe('collectApiKey', () => {
-  it('uses .env value when present', async () => {
+  test('uses .env value when present', async () => {
     // Given
     vi.mocked(findInEnv).mockResolvedValue({clientSecret: aSecret, apiKey: anApiKey})
     vi.mocked(findApiKey)
@@ -280,7 +280,7 @@ describe('collectApiKey', () => {
     expect(outputInfo).toHaveBeenCalledWith('Using api-key from .env file')
   })
 
-  it('uses remote value when no .env', async () => {
+  test('uses remote value when no .env', async () => {
     // Given
     vi.mocked(findInEnv).mockResolvedValue({})
     vi.mocked(findApiKey).mockResolvedValue(anApiKey)
@@ -295,7 +295,7 @@ describe('collectApiKey', () => {
     expect(outputInfo).toHaveBeenCalledWith('Using api-key from app settings in Partners')
   })
 
-  it('fails when no .env, and no app', async () => {
+  test('fails when no .env, and no app', async () => {
     // Given
     vi.mocked(findInEnv).mockResolvedValue({})
     vi.mocked(findApiKey).mockResolvedValue(undefined)

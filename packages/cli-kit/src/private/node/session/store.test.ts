@@ -1,12 +1,12 @@
 import {ApplicationToken, Session} from './schema.js'
 import {store, fetch, remove} from './store.js'
 import {getSession, removeSession, setSession} from '../conf-store.js'
-import {describe, expect, vi, it} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 
 vi.mock('../conf-store.js')
 
 describe('store', () => {
-  it('saves the serialized session to the local store', async () => {
+  test('saves the serialized session to the local store', async () => {
     // Given
     const session = testSession()
 
@@ -19,7 +19,7 @@ describe('store', () => {
 })
 
 describe('fetch', () => {
-  it('reads the session from the local store', async () => {
+  test('reads the session from the local store', async () => {
     // When
     await fetch()
 
@@ -29,7 +29,7 @@ describe('fetch', () => {
 })
 
 describe('remove', () => {
-  it('removes the session from the secure store', async () => {
+  test('removes the session from the secure store', async () => {
     // When
     await remove()
 

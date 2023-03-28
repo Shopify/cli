@@ -1,6 +1,6 @@
 import {findAlternativeCommand, shouldRunCommand} from './index.js'
 import {isAutocorrectEnabled} from './services/conf.js'
-import {describe, it, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 interface Config {
@@ -23,7 +23,7 @@ vi.mock('./services/conf.js')
 vi.mock('@shopify/cli-kit/node/ui')
 
 describe('commandNotFound hook', () => {
-  it('returns a probable match', () => {
+  test('returns a probable match', () => {
     // Given
     const config: Config = buildConfig([
       {
@@ -44,7 +44,7 @@ describe('commandNotFound hook', () => {
     expect(got).toBe('version')
   })
 
-  it('gives up if nothing matches', () => {
+  test('gives up if nothing matches', () => {
     // Given
     const config: Config = buildConfig([
       {
@@ -65,7 +65,7 @@ describe('commandNotFound hook', () => {
     expect(got).toBeUndefined()
   })
 
-  it('returns a match when the command is made of multiple words', () => {
+  test('returns a match when the command is made of multiple words', () => {
     // Given
     const config: Config = buildConfig([
       {
@@ -86,7 +86,7 @@ describe('commandNotFound hook', () => {
     expect(got).toBe('app:generate:extension')
   })
 
-  it('returns a match when the command in the wrong order', () => {
+  test('returns a match when the command in the wrong order', () => {
     // Given
     const config: Config = buildConfig([
       {
@@ -107,7 +107,7 @@ describe('commandNotFound hook', () => {
     expect(got).toBe('app:generate:extension')
   })
 
-  it('gives up if command is too short', () => {
+  test('gives up if command is too short', () => {
     // Given
     const config: Config = buildConfig([
       {
@@ -128,7 +128,7 @@ describe('commandNotFound hook', () => {
     expect(got).toBeUndefined()
   })
 
-  it('gives up if command does not share any bigram with available commands', () => {
+  test('gives up if command does not share any bigram with available commands', () => {
     // Given
     const config: Config = buildConfig([
       {
@@ -149,7 +149,7 @@ describe('commandNotFound hook', () => {
     expect(got).toBeUndefined()
   })
 
-  it('should run command if isActive is true', async () => {
+  test('should run command if isActive is true', async () => {
     // Given
     vi.mocked(isAutocorrectEnabled).mockReturnValue(true)
 
@@ -161,7 +161,7 @@ describe('commandNotFound hook', () => {
     expect(renderConfirmationPrompt).not.toBeCalled()
   })
 
-  it('should call renderConfirmationPrompt if isActive is false', async () => {
+  test('should call renderConfirmationPrompt if isActive is false', async () => {
     // Given
     vi.mocked(isAutocorrectEnabled).mockReturnValue(false)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
@@ -174,7 +174,7 @@ describe('commandNotFound hook', () => {
     expect(renderConfirmationPrompt).toBeCalled()
   })
 
-  it('prefers commands that have more in common with the user command', () => {
+  test('prefers commands that have more in common with the user command', () => {
     // Given
     const config: Config = buildConfig([
       {
@@ -200,7 +200,7 @@ describe('commandNotFound hook', () => {
     expect(got).toBe('app:generate:extension')
   })
 
-  it('when score is equal, prefers shorter commands', () => {
+  test('when score is equal, prefers shorter commands', () => {
     // Given
     const config: Config = buildConfig([
       {

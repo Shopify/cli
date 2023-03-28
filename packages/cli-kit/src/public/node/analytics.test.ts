@@ -17,7 +17,7 @@ import {mockAndCaptureOutput} from './testing/output.js'
 import {startAnalytics} from '../../private/node/analytics.js'
 import {hashString} from '../../public/node/crypto.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
-import {it, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
+import {test, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
 vi.mock('./context/local.js')
 vi.mock('./ruby.js')
@@ -60,7 +60,7 @@ describe('event tracking', () => {
     })
   }
 
-  it('sends the expected data to Monorail with cached app info', async () => {
+  test('sends the expected data to Monorail with cached app info', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
       const commandContent = {command: 'dev', topic: 'app', alias: 'alias'}
@@ -110,7 +110,7 @@ describe('event tracking', () => {
     })
   })
 
-  it('sends the expected data to Monorail when there is an error message', async () => {
+  test('sends the expected data to Monorail when there is an error message', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
       const commandContent = {command: 'dev', topic: 'app'}
@@ -148,7 +148,7 @@ describe('event tracking', () => {
     })
   })
 
-  it('does not send passwords to Monorail', async () => {
+  test('does not send passwords to Monorail', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
       const commandContent = {command: 'dev', topic: 'app'}
@@ -172,7 +172,7 @@ describe('event tracking', () => {
     })
   })
 
-  it('does nothing when analytics are disabled', async () => {
+  test('does nothing when analytics are disabled', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
       vi.mocked(analyticsDisabled).mockReturnValueOnce(true)
@@ -191,7 +191,7 @@ describe('event tracking', () => {
     })
   })
 
-  it('shows an error if something else fails', async () => {
+  test('shows an error if something else fails', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
       const commandContent = {command: 'dev', topic: 'app'}

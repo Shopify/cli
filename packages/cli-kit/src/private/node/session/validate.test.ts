@@ -3,7 +3,7 @@ import {validateIdentityToken} from './identity-token-validation.js'
 import {applicationId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {OAuthApplications} from '../session.js'
-import {expect, describe, it, vi, afterAll, beforeEach} from 'vitest'
+import {expect, describe, test, vi, afterAll, beforeEach} from 'vitest'
 
 const pastDate = new Date(2022, 1, 1, 9)
 const currentDate = new Date(2022, 1, 1, 10)
@@ -82,7 +82,7 @@ afterAll(() => {
 })
 
 describe('validateSession', () => {
-  it('returns ok if session is valid', async () => {
+  test('returns ok if session is valid', async () => {
     // Given
     const session = {
       identity: validIdentity,
@@ -96,7 +96,7 @@ describe('validateSession', () => {
     expect(got).toBe('ok')
   })
 
-  it('returns needs_full_auth if there is no session', async () => {
+  test('returns needs_full_auth if there is no session', async () => {
     // Given
     const session: any = undefined
 
@@ -107,7 +107,7 @@ describe('validateSession', () => {
     expect(got).toBe('needs_full_auth')
   })
 
-  it('returns needs_full_auth if identity token is invalid', async () => {
+  test('returns needs_full_auth if identity token is invalid', async () => {
     // Given
     const session = {
       identity: validIdentity,
@@ -122,7 +122,7 @@ describe('validateSession', () => {
     expect(got).toBe('needs_full_auth')
   })
 
-  it('returns needs_full_auth if there is requested scopes are not included in token', async () => {
+  test('returns needs_full_auth if there is requested scopes are not included in token', async () => {
     // Given
     const session = {
       identity: validIdentity,
@@ -136,7 +136,7 @@ describe('validateSession', () => {
     expect(got).toBe('needs_full_auth')
   })
 
-  it('returns needs_refresh if identity is expired', async () => {
+  test('returns needs_refresh if identity is expired', async () => {
     // Given
     const session = {
       identity: expiredIdentity,
@@ -150,7 +150,7 @@ describe('validateSession', () => {
     expect(got).toBe('needs_refresh')
   })
 
-  it('returns needs_refresh if requesting partners and is expired', async () => {
+  test('returns needs_refresh if requesting partners and is expired', async () => {
     // Given
     const applications = {
       partnersApi: {scopes: []},
@@ -167,7 +167,7 @@ describe('validateSession', () => {
     expect(got).toBe('needs_refresh')
   })
 
-  it('returns needs_refresh if requesting storefront and is expired', async () => {
+  test('returns needs_refresh if requesting storefront and is expired', async () => {
     // Given
     const applications = {
       storefrontRendererApi: {scopes: []},
@@ -184,7 +184,7 @@ describe('validateSession', () => {
     expect(got).toBe('needs_refresh')
   })
 
-  it('returns needs_refresh if requesting admin and is expired', async () => {
+  test('returns needs_refresh if requesting admin and is expired', async () => {
     // Given
     const applications: OAuthApplications = {
       adminApi: {scopes: [], storeFqdn: storeName},
@@ -201,7 +201,7 @@ describe('validateSession', () => {
     expect(got).toBe('needs_refresh')
   })
 
-  it('returns needs_refresh if session does not include requested store', async () => {
+  test('returns needs_refresh if session does not include requested store', async () => {
     // Given
     const applications: OAuthApplications = {
       adminApi: {scopes: [], storeFqdn: 'NotMyStore'},

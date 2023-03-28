@@ -6,7 +6,7 @@ import {deployConfirmationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
@@ -147,7 +147,7 @@ beforeEach(() => {
 })
 
 describe('ensureFunctionsIds: matchmaking returns ok with pending manual matches', () => {
-  it('will call manualMatch and merge automatic and manual matches and create missing extensions', async () => {
+  test('will call manualMatch and merge automatic and manual matches and create missing extensions', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {},
@@ -183,7 +183,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with pending manual matches
 })
 
 describe('ensureFunctionsIds: matchmaking returns ok with pending manual matches and manual match fails', () => {
-  it('requires confirmation before proceeding with deploy', async () => {
+  test('requires confirmation before proceeding with deploy', async () => {
     // Given
     vi.mocked(matchConfirmationPrompt).mockResolvedValueOnce(true)
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
@@ -216,7 +216,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with pending manual matches
 })
 
 describe('ensureFunctionsIds: matchmaking returns ok with some pending to create', () => {
-  it('Returns an empty object as functions will be automatically created when deployed', async () => {
+  test('Returns an empty object as functions will be automatically created when deployed', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {},
@@ -238,7 +238,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending to create
 })
 
 describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmation', () => {
-  it('confirms the pending ones and succeeds', async () => {
+  test('confirms the pending ones and succeeds', async () => {
     // Given
     vi.mocked(matchConfirmationPrompt).mockResolvedValueOnce(true)
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
@@ -265,7 +265,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmat
 })
 
 describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmation', () => {
-  it('do not confirms the pending ones and fails', async () => {
+  test('do not confirms the pending ones and fails', async () => {
     // Given
     vi.mocked(matchConfirmationPrompt).mockResolvedValueOnce(false)
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
@@ -288,7 +288,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmat
 })
 
 describe('ensureFunctionsIds: matchmaking returns ok with nothing pending', () => {
-  it('succeeds and returns all identifiers', async () => {
+  test('succeeds and returns all identifiers', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {FUNCTION_A: 'ID_A', FUNCTION_A_2: 'ID_A_2'},
@@ -315,7 +315,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with nothing pending', () =
 })
 
 describe('ensureFunctionsIds: asks user to confirm deploy', () => {
-  it('shows confirmation prompt', async () => {
+  test('shows confirmation prompt', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {FUNCTION_A: 'ID_A', FUNCTION_A_2: 'ID_A_2'},
@@ -343,7 +343,7 @@ describe('ensureFunctionsIds: asks user to confirm deploy', () => {
     })
   })
 
-  it('skips confirmation prompt if --force is passed', async () => {
+  test('skips confirmation prompt if --force is passed', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {FUNCTION_A: 'ID_A', FUNCTION_A_2: 'ID_A_2'},

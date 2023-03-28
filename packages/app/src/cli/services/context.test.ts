@@ -27,7 +27,7 @@ import {testApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
 import {App} from '../models/app/app.js'
-import {beforeEach, describe, expect, it, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -171,7 +171,7 @@ beforeEach(async () => {
 })
 
 describe('ensureGenerateContext', () => {
-  it('returns the provided app apiKey if valid, without cached state', async () => {
+  test('returns the provided app apiKey if valid, without cached state', async () => {
     // Given
     const input = {apiKey: 'key2', directory: '/app', reset: false, token: 'token'}
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
@@ -182,7 +182,7 @@ describe('ensureGenerateContext', () => {
     // Then
     expect(got).toEqual(APP2.apiKey)
   })
-  it('returns the cached api key', async () => {
+  test('returns the cached api key', async () => {
     // Given
     const input = {directory: '/app', reset: false, token: 'token'}
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
@@ -194,7 +194,7 @@ describe('ensureGenerateContext', () => {
     // Then
     expect(got).toEqual(APP2.apiKey)
   })
-  it('selects a new app and returns the api key', async () => {
+  test('selects a new app and returns the api key', async () => {
     // Given
     const input = {directory: '/app', reset: true, token: 'token'}
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
@@ -222,7 +222,7 @@ describe('ensureGenerateContext', () => {
 })
 
 describe('ensureDevContext', () => {
-  it('returns selected data and updates internal state, without cached state', async () => {
+  test('returns selected data and updates internal state, without cached state', async () => {
     // Given
     vi.mocked(getAppInfo).mockReturnValue(undefined)
 
@@ -251,7 +251,7 @@ describe('ensureDevContext', () => {
     })
   })
 
-  it('returns useCloudflareTunnels false if the beta is enabled in partners', async () => {
+  test('returns useCloudflareTunnels false if the beta is enabled in partners', async () => {
     // Given
     vi.mocked(getAppInfo).mockReturnValue(undefined)
     vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
@@ -269,7 +269,7 @@ describe('ensureDevContext', () => {
     })
   })
 
-  it('returns selected data and updates internal state, with cached state', async () => {
+  test('returns selected data and updates internal state, with cached state', async () => {
     // Given
     const outputMock = mockAndCaptureOutput()
     vi.mocked(getAppInfo).mockReturnValue(CACHED1)
@@ -300,7 +300,7 @@ describe('ensureDevContext', () => {
     expect(fetchOrgAndApps).not.toBeCalled()
   })
 
-  it('returns selected data and updates internal state, with inputs from flags', async () => {
+  test('returns selected data and updates internal state, with inputs from flags', async () => {
     // Given
     vi.mocked(getAppInfo).mockReturnValue(undefined)
     vi.mocked(convertToTestStoreIfNeeded).mockResolvedValueOnce()
@@ -331,7 +331,7 @@ describe('ensureDevContext', () => {
     expect(fetchOrgAndApps).not.toBeCalled()
   })
 
-  it('throws if the store input is not valid', async () => {
+  test('throws if the store input is not valid', async () => {
     // Given
     vi.mocked(getAppInfo).mockReturnValue(undefined)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
@@ -343,7 +343,7 @@ describe('ensureDevContext', () => {
     await expect(got).rejects.toThrow(/Could not find invalid_store_domain/)
   })
 
-  it('resets cached state if reset is true', async () => {
+  test('resets cached state if reset is true', async () => {
     // When
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     await ensureDevContext({...INPUT, reset: true}, 'token')

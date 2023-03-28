@@ -1,10 +1,10 @@
 import {ConfSchema, cacheRetrieveOrRepopulate, getSession, removeSession, setSession} from './conf-store.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
-import {describe, expect, it} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
 describe('getSession', () => {
-  it('returns the content of the SessionStore key', async () => {
+  test('returns the content of the SessionStore key', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
@@ -20,7 +20,7 @@ describe('getSession', () => {
 })
 
 describe('setSession', () => {
-  it('saves the desired content in the SessionStore key', async () => {
+  test('saves the desired content in the SessionStore key', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
@@ -36,7 +36,7 @@ describe('setSession', () => {
 })
 
 describe('removeSession', () => {
-  it('removes the SessionStore key', async () => {
+  test('removes the SessionStore key', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
@@ -53,7 +53,8 @@ describe('removeSession', () => {
 
 describe('cacheRetrieveOrRepopulate', () => {
   // flaky test
-  it.skip('returns the cached contents when they exist', async () => {
+  // eslint-disable-next-line vitest/no-disabled-tests
+  test.skip('returns the cached contents when they exist', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
@@ -74,7 +75,7 @@ describe('cacheRetrieveOrRepopulate', () => {
     })
   })
 
-  it('derives the cached contents when the cache is not populated', async () => {
+  test('derives the cached contents when the cache is not populated', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
@@ -90,7 +91,7 @@ describe('cacheRetrieveOrRepopulate', () => {
     })
   })
 
-  it('re-derives the cached contents when the cache is outdated', async () => {
+  test('re-derives the cached contents when the cache is outdated', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})

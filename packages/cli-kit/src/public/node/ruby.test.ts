@@ -7,7 +7,7 @@ import {inTemporaryDirectory, mkdir, findPathUp, touchFile, appendFile, fileExis
 import {getEnvironmentVariables} from './environment.js'
 import {isSpinEnvironment, spinFqdn} from './context/spin.js'
 import {pathConstants} from '../../private/node/constants.js'
-import {beforeEach, describe, expect, it, SpyInstance, vi} from 'vitest'
+import {beforeEach, describe, expect, test, SpyInstance, vi} from 'vitest'
 
 vi.mock('./system')
 vi.mock('./environment')
@@ -21,14 +21,14 @@ beforeEach(() => {
 })
 
 describe('execCLI', () => {
-  it('throws an exception when Ruby is not installed', async () => {
+  test('throws an exception when Ruby is not installed', async () => {
     vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_BUNDLED_THEME_CLI: '1'})
     vi.mocked(captureOutput).mockRejectedValue({})
 
     await expect(() => execCLI2(['args'])).rejects.toThrowError('Ruby environment not found')
   })
 
-  it('throws an exception when Ruby version requirement is not met', async () => {
+  test('throws an exception when Ruby version requirement is not met', async () => {
     const rubyVersion = '2.2.0'
     vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_BUNDLED_THEME_CLI: '1'})
     vi.mocked(captureOutput).mockResolvedValueOnce(rubyVersion)
@@ -38,7 +38,7 @@ describe('execCLI', () => {
     )
   })
 
-  it('throws an exception when Bundler is not installed', async () => {
+  test('throws an exception when Bundler is not installed', async () => {
     const rubyVersion = '2.7.5'
     vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_BUNDLED_THEME_CLI: '1'})
     vi.mocked(captureOutput).mockResolvedValueOnce(rubyVersion)
@@ -47,7 +47,7 @@ describe('execCLI', () => {
     await expect(() => execCLI2(['args'])).rejects.toThrowError(`Bundler not found`)
   })
 
-  it('throws an exception when Bundler version requirement is not met', async () => {
+  test('throws an exception when Bundler version requirement is not met', async () => {
     const rubyVersion = '2.7.5'
     const bundlerVersion = '2.2.0'
     vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_BUNDLED_THEME_CLI: '1'})
@@ -59,7 +59,7 @@ describe('execCLI', () => {
     )
   })
 
-  it('throws an exception when creating CLI working directory', async () => {
+  test('throws an exception when creating CLI working directory', async () => {
     // Given
     const rubyVersion = '2.7.5'
     const bundlerVersion = '2.4.0'
@@ -72,7 +72,7 @@ describe('execCLI', () => {
     await expect(() => execCLI2(['args'])).rejects.toThrowError('Error')
   })
 
-  it('when run bundled CLI2 in non windows then gemfile content is correct and bundle runs with correct params', async () => {
+  test('when run bundled CLI2 in non windows then gemfile content is correct and bundle runs with correct params', async () => {
     await inTemporaryDirectory(async (cli2Directory) => {
       // Given
       const execSpy = mockBundledCLI2(cli2Directory, {windows: false})
@@ -90,7 +90,7 @@ describe('execCLI', () => {
     })
   })
 
-  it('when run bundled CLI2 in windows then gemfile content should be correct and bundle runs with correct params', async () => {
+  test('when run bundled CLI2 in windows then gemfile content should be correct and bundle runs with correct params', async () => {
     await inTemporaryDirectory(async (cli2Directory) => {
       // Given
       const execSpy = mockBundledCLI2(cli2Directory, {windows: true})
@@ -108,7 +108,7 @@ describe('execCLI', () => {
     })
   })
 
-  it('when run embedded CLI2 in non windows then gemfile content should be correct and bundle runs with correct params', async () => {
+  test('when run embedded CLI2 in non windows then gemfile content should be correct and bundle runs with correct params', async () => {
     await inTemporaryDirectory(async (cli2Directory) => {
       // Given
       const execSpy = await mockEmbeddedCLI2(cli2Directory, {windows: false, existingWindowsDependency: false})
@@ -126,7 +126,7 @@ describe('execCLI', () => {
     })
   })
 
-  it('when run embedded CLI2 in windows without dependency then gemfile content should be correct and bundle runs with correct params', async () => {
+  test('when run embedded CLI2 in windows without dependency then gemfile content should be correct and bundle runs with correct params', async () => {
     await inTemporaryDirectory(async (cli2Directory) => {
       // Given
       const execSpy = await mockEmbeddedCLI2(cli2Directory, {windows: true, existingWindowsDependency: false})
@@ -144,7 +144,7 @@ describe('execCLI', () => {
     })
   })
 
-  it('when run embedded CLI2 in windows with existing dependency then gemfile content should be correct and bundle runs with correct params', async () => {
+  test('when run embedded CLI2 in windows with existing dependency then gemfile content should be correct and bundle runs with correct params', async () => {
     await inTemporaryDirectory(async (cli2Directory) => {
       // Given
       const execSpy = await mockEmbeddedCLI2(cli2Directory, {windows: true, existingWindowsDependency: true})
@@ -162,7 +162,7 @@ describe('execCLI', () => {
     })
   })
 
-  it('when run CLI2 in spin then bundle runs with correct params', async () => {
+  test('when run CLI2 in spin then bundle runs with correct params', async () => {
     await inTemporaryDirectory(async (cli2Directory) => {
       // Given
       const fqdn = 'workspace.namespace.eu.spin.dev'

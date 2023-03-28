@@ -1,10 +1,10 @@
 import {getListOfTunnelPlugins, runTunnelPlugin} from './plugins.js'
 import {err, ok} from './result.js'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
 
 describe('getListOfTunnelPlugins', () => {
-  it('returns empty list when there are no tunnel plugins ', async () => {
+  test('returns empty list when there are no tunnel plugins ', async () => {
     // Given
     const config = new Config({root: ''})
     vi.spyOn(config, 'runHook').mockResolvedValue({successes: [], errors: []} as any)
@@ -16,7 +16,7 @@ describe('getListOfTunnelPlugins', () => {
     expect(got).toEqual({plugins: []})
   })
 
-  it('returns error when there are duplicated providers ', async () => {
+  test('returns error when there are duplicated providers ', async () => {
     // Given
     const config = new Config({root: ''})
     vi.spyOn(config, 'runHook').mockResolvedValue({
@@ -35,7 +35,7 @@ describe('getListOfTunnelPlugins', () => {
     expect(got).toEqual({plugins: ['ngrok', 'ngrok'], error: 'multiple-plugins-for-provider'})
   })
 
-  it('returns list of tunnel providers', async () => {
+  test('returns list of tunnel providers', async () => {
     // Given
     const config = new Config({root: ''})
     vi.spyOn(config, 'runHook').mockResolvedValue({
@@ -55,7 +55,7 @@ describe('getListOfTunnelPlugins', () => {
 })
 
 describe('runTunnelPlugin', () => {
-  it('returns tunnel url when there is 1 tunnel and returns a valid url', async () => {
+  test('returns tunnel url when there is 1 tunnel and returns a valid url', async () => {
     // Given
     const config = new Config({root: ''})
     vi.spyOn(config, 'runHook').mockResolvedValue({
@@ -70,7 +70,7 @@ describe('runTunnelPlugin', () => {
     expect(got.valueOrAbort()).toEqual('tunnel_url')
   })
 
-  it('returns tunnel url when there are two tunnel providers and one not matched the requested', async () => {
+  test('returns tunnel url when there are two tunnel providers and one not matched the requested', async () => {
     // Given
     const config = new Config({root: ''})
     vi.spyOn(config, 'runHook').mockResolvedValue({
@@ -88,7 +88,7 @@ describe('runTunnelPlugin', () => {
     expect(got.valueOrAbort()).toEqual('tunnel_url')
   })
 
-  it('returns error if multiple plugins responded to the hook', async () => {
+  test('returns error if multiple plugins responded to the hook', async () => {
     // Given
     const config = new Config({root: ''})
     vi.spyOn(config, 'runHook').mockResolvedValue({
@@ -106,7 +106,7 @@ describe('runTunnelPlugin', () => {
     expect(got.isErr() && got.error.type).equal('multiple-urls')
   })
 
-  it('returns error if no plugin responds with a url', async () => {
+  test('returns error if no plugin responds with a url', async () => {
     // Given
     const config = new Config({root: ''})
     vi.spyOn(config, 'runHook').mockResolvedValue({successes: [], errors: []} as any)
@@ -118,7 +118,7 @@ describe('runTunnelPlugin', () => {
     expect(got.isErr() && got.error.type).equal('no-provider')
   })
 
-  it('returns error if plugin responds with an uknonwn error', async () => {
+  test('returns error if plugin responds with an uknonwn error', async () => {
     // Given
     const config = new Config({root: ''})
     vi.spyOn(config, 'runHook').mockResolvedValue({

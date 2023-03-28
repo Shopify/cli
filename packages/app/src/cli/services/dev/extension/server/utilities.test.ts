@@ -2,10 +2,10 @@ import {getRedirectUrl, getExtensionPointRedirectUrl} from './utilities.js'
 import {ExtensionDevOptions} from '../../extension.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
 import {UIExtension} from '../../../../models/app/extensions.js'
-import {describe, expect, it} from 'vitest'
+import {describe, expect, test} from 'vitest'
 
 describe('getRedirectURL()', () => {
-  it('returns a URL with a URL param', async () => {
+  test('returns a URL with a URL param', async () => {
     const extension = await testUIExtension({
       configuration: {type: 'product_subscription', name: 'test', metafields: []},
       devUUID: '123abc',
@@ -23,7 +23,7 @@ describe('getRedirectURL()', () => {
     )
   })
 
-  it('returns a URL with a dev param if the surface is checkout and the etension has a resourceURL', async () => {
+  test('returns a URL with a dev param if the surface is checkout and the etension has a resourceURL', async () => {
     const extension = await testUIExtension({
       configuration: {type: 'checkout_ui_extension', name: 'test', metafields: []},
     })
@@ -39,7 +39,7 @@ describe('getRedirectURL()', () => {
     expect(result).toBe('https://example.myshopify.com/mock/cart/url?dev=https%3A%2F%2Flocalhost%3A8081%2Fextensions')
   })
 
-  it('returns a URL with a origin param if the surface is customer_accounts', async () => {
+  test('returns a URL with a origin param if the surface is customer_accounts', async () => {
     const extension = await testUIExtension({
       configuration: {type: 'customer_accounts_ui_extension', name: 'test', metafields: []},
     })
@@ -58,7 +58,7 @@ describe('getRedirectURL()', () => {
 })
 
 describe('getExtensionPointRedirectUrl()', () => {
-  it.each(['Admin::CheckoutEditor::RenderSettings', 'admin.checkout-editor.render-settings'])(
+  test.each(['Admin::CheckoutEditor::RenderSettings', 'admin.checkout-editor.render-settings'])(
     'returns Admin dev server URL if the extension point targets Admin using naming convention: %s',
     (extensionPoint: string) => {
       const extension = {
@@ -80,7 +80,7 @@ describe('getExtensionPointRedirectUrl()', () => {
     },
   )
 
-  it('returns Checkout dev server URL if the extension point targets Checkout', () => {
+  test('returns Checkout dev server URL if the extension point targets Checkout', () => {
     const extension = {
       devUUID: '123abc',
     } as UIExtension
@@ -96,7 +96,7 @@ describe('getExtensionPointRedirectUrl()', () => {
     expect(result).toBe('https://example.myshopify.com/mock/cart/url?dev=https%3A%2F%2Flocalhost%3A8081%2Fextensions')
   })
 
-  it('returns undefined if the extension point surface is not supported', () => {
+  test('returns undefined if the extension point surface is not supported', () => {
     const extension = {
       devUUID: '123abc',
     } as UIExtension

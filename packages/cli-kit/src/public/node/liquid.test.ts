@@ -1,10 +1,10 @@
 import {writeFile, mkdir, readFile, inTemporaryDirectory} from './fs.js'
 import {renderLiquidTemplate, recursiveLiquidTemplateCopy} from './liquid.js'
 import {joinPath} from './path.js'
-import {describe, expect, it} from 'vitest'
+import {describe, expect, test} from 'vitest'
 
 describe('create', () => {
-  it('replaces passes the content through the liquid engine', async () => {
+  test('replaces passes the content through the liquid engine', async () => {
     // Given
     const templateContent = '{{variable}}'
 
@@ -17,7 +17,7 @@ describe('create', () => {
 })
 
 describe('recursiveLiquidTemplateCopy', () => {
-  it('copies the template and only runs liquid on the files with the .liquid extension', async () => {
+  test('copies the template and only runs liquid on the files with the .liquid extension', async () => {
     // Given
     await inTemporaryDirectory(async (tmpDir) => {
       // Given

@@ -1,5 +1,5 @@
 import cleanup from './cleanup.js'
-import {describe, expect, it} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -29,7 +29,7 @@ describe('cleanup', () => {
     ])
   }
 
-  it('cleans up template files in web directory', async () => {
+  test('cleans up template files in web directory', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       await mockProjectFolder(tmpDir)
 
@@ -45,7 +45,7 @@ describe('cleanup', () => {
     })
   })
 
-  it('keeps non-template files', async () => {
+  test('keeps non-template files', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       await mockProjectFolder(tmpDir)
 

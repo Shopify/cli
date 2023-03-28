@@ -16,7 +16,7 @@ import * as functionBuild from '../function/build.js'
 import * as functionCommon from '../function/common.js'
 import {testRemoteTemplateSpecifications} from '../../models/app/app.test-data.js'
 import {FunctionSpec} from '../../models/extensions/functions.js'
-import {describe, it, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import * as output from '@shopify/cli-kit/node/output'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
 import * as template from '@shopify/cli-kit/node/liquid'
@@ -35,7 +35,7 @@ describe('initialize a extension', async () => {
     .flat()
   const specifications = await loadLocalExtensionsSpecifications()
 
-  it('successfully generates the extension when no other extensions exist', async () => {
+  test('successfully generates the extension when no other extensions exist', async () => {
     await withTemporaryApp(async (tmpDir) => {
       vi.spyOn(output, 'outputInfo').mockImplementation(() => {})
       const name = 'my-ext-1'
@@ -55,7 +55,7 @@ describe('initialize a extension', async () => {
     })
   })
 
-  it('successfully generates the extension when another extension exists', async () => {
+  test('successfully generates the extension when another extension exists', async () => {
     await withTemporaryApp(async (tmpDir) => {
       const name1 = 'my-ext-1'
       const name2 = 'my-ext-2'
@@ -100,7 +100,7 @@ describe('initialize a extension', async () => {
     })
   })
 
-  it('errors when trying to re-generate an existing extension', async () => {
+  test('errors when trying to re-generate an existing extension', async () => {
     await withTemporaryApp(async (tmpDir: string) => {
       const name = 'my-ext-1'
       const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
@@ -126,7 +126,7 @@ describe('initialize a extension', async () => {
 
   type FileExtension = 'js' | 'jsx' | 'ts' | 'tsx'
 
-  it.each(allUISpecs)(
+  test.each(allUISpecs)(
     `adds deps for $identifier extension when extension flavor is 'typescript-react'`,
 
     async (specification) => {
@@ -149,7 +149,7 @@ describe('initialize a extension', async () => {
     },
   )
 
-  it.each(
+  test.each(
     allUISpecs.reduce((accumulator, specification) => {
       accumulator.push({specification, flavor: 'vanilla-js'})
       accumulator.push({specification, flavor: 'react'})
@@ -186,7 +186,7 @@ describe('initialize a extension', async () => {
     return accumulator
   }, [] as {specification: GenericSpecification; flavor: ExtensionFlavorValue; ext: FileExtension}[])
 
-  it.each(allUISpecsWithAllFlavors)(
+  test.each(allUISpecsWithAllFlavors)(
     'creates $specification.identifier for $flavor with .$ext files',
 
     async ({specification, flavor, ext}) => {
@@ -212,7 +212,7 @@ describe('initialize a extension', async () => {
     },
   )
 
-  it.each(allUISpecsWithAllFlavors)(
+  test.each(allUISpecsWithAllFlavors)(
     'copies liquid templates with type $specification.identifier for $flavor with .$ext files',
 
     async ({specification, flavor, ext}) => {
@@ -240,7 +240,7 @@ describe('initialize a extension', async () => {
     },
   )
 
-  it('uses the custom templatePath when available', async () => {
+  test('uses the custom templatePath when available', async () => {
     await withTemporaryApp(async (tmpDir) => {
       // Given
       vi.spyOn(file, 'moveFile').mockResolvedValue()
@@ -263,7 +263,7 @@ describe('initialize a extension', async () => {
     })
   })
 
-  it('uses the custom templateURL for functions', async () => {
+  test('uses the custom templateURL for functions', async () => {
     await withTemporaryApp(async (tmpDir) => {
       // Given
       vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
@@ -286,7 +286,7 @@ describe('initialize a extension', async () => {
     })
   })
 
-  it('generates a Rust function', async () => {
+  test('generates a Rust function', async () => {
     await withTemporaryApp(async (tmpDir) => {
       // Given
       const name = 'my-fun-1'
@@ -325,7 +325,7 @@ describe('initialize a extension', async () => {
     })
   })
 
-  it('generates a JS function', async () => {
+  test('generates a JS function', async () => {
     await withTemporaryApp(async (tmpDir) => {
       // Given
       const name = 'my-fun-1'
@@ -370,7 +370,7 @@ describe('initialize a extension', async () => {
     })
   })
 
-  it('throws an error if there is no folder for selected flavor', async () => {
+  test('throws an error if there is no folder for selected flavor', async () => {
     await withTemporaryApp(async (tmpDir) => {
       // Given
       const name = 'my-fun-1'
@@ -398,7 +398,7 @@ describe('initialize a extension', async () => {
 })
 
 describe('getExtensionRuntimeDependencies', () => {
-  it('no not include React for flavored Vanilla UI extensions', async () => {
+  test('no not include React for flavored Vanilla UI extensions', async () => {
     // Given
     const allUISpecs = await loadLocalUIExtensionsSpecifications()
     const extensionFlavor: ExtensionFlavorValue = 'vanilla-js'
@@ -410,7 +410,7 @@ describe('getExtensionRuntimeDependencies', () => {
     })
   })
 
-  it('includes React for flavored React UI extensions', async () => {
+  test('includes React for flavored React UI extensions', async () => {
     // Given
     const allUISpecs = await loadLocalUIExtensionsSpecifications()
     const extensionFlavor: ExtensionFlavorValue = 'react'
@@ -422,7 +422,7 @@ describe('getExtensionRuntimeDependencies', () => {
     })
   })
 
-  it('includes the renderer package for UI extensions', async () => {
+  test('includes the renderer package for UI extensions', async () => {
     // Given
     const allUISpecs = await loadLocalUIExtensionsSpecifications()
 
@@ -488,7 +488,7 @@ async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | vo
 }
 
 describe('getFunctionRuntimeDependencies', () => {
-  it('adds dependencies for JS functions', async () => {
+  test('adds dependencies for JS functions', async () => {
     // Given
     const templateLanguage: TemplateLanguage = 'javascript'
 
@@ -500,7 +500,7 @@ describe('getFunctionRuntimeDependencies', () => {
     expect(got.find((dep) => dep.name === 'javy')).toBeTruthy()
   })
 
-  it('no-ops for non-JS functions', async () => {
+  test('no-ops for non-JS functions', async () => {
     // Given
     const templateLanguage: TemplateLanguage = 'rust'
 

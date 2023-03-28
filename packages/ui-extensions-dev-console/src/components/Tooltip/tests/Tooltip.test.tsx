@@ -1,7 +1,7 @@
 import {Tooltip} from '../Tooltip'
 import React from 'react'
 import {mount} from '@shopify/react-testing'
-import {vi} from 'vitest'
+import {vi, test} from 'vitest'
 
 const handleClick = vi.fn()
 
