@@ -107,10 +107,10 @@ importers:
     specifiers:
       '@luckycatfactory/esbuild-graphql-loader': 3.7.0
       '@oclif/core': 2.1.4
-      '@shopify/cli-kit': 3.45.0-pre.4
+      '@shopify/cli-kit': 3.45.0-pre.5
       '@shopify/function-runner': 4.0.2
-      '@shopify/plugin-cloudflare': 3.45.0-pre.4
-      '@shopify/plugin-ngrok': 3.45.0-pre.4
+      '@shopify/plugin-cloudflare': 3.45.0-pre.5
+      '@shopify/plugin-ngrok': 3.45.0-pre.5
       '@types/diff': ^5.0.2
       '@types/http-proxy': ^1.17.9
       '@types/lodash-es': ^4.17.6
@@ -166,10 +166,10 @@ importers:
       '@oclif/plugin-commands': 2.2.10
       '@oclif/plugin-help': 5.2.6
       '@oclif/plugin-plugins': 2.3.2
-      '@shopify/app': 3.45.0-pre.4
-      '@shopify/cli-kit': 3.45.0-pre.4
-      '@shopify/plugin-did-you-mean': 3.45.0-pre.4
-      '@shopify/theme': 3.45.0-pre.4
+      '@shopify/app': 3.45.0-pre.5
+      '@shopify/cli-kit': 3.45.0-pre.5
+      '@shopify/plugin-did-you-mean': 3.45.0-pre.5
+      '@shopify/theme': 3.45.0-pre.5
       '@types/node': 14.18.36
       '@vitest/coverage-istanbul': 0.28.5
       vite: 2.9.12
@@ -343,7 +343,7 @@ importers:
   packages/create-app:
     specifiers:
       '@oclif/core': 2.1.4
-      '@shopify/cli-kit': 3.45.0-pre.4
+      '@shopify/cli-kit': 3.45.0-pre.5
       '@types/node': 14.18.36
       vite: 2.9.12
       vitest: ^0.28.5
@@ -428,7 +428,7 @@ importers:
   packages/plugin-cloudflare:
     specifiers:
       '@oclif/core': 2.1.4
-      '@shopify/cli-kit': 3.45.0-pre.4
+      '@shopify/cli-kit': 3.45.0-pre.5
       node-fetch: 3.3.0
       semver: 7.3.6
       vite: 2.9.12
@@ -445,7 +445,7 @@ importers:
   packages/plugin-did-you-mean:
     specifiers:
       '@oclif/core': 2.1.4
-      '@shopify/cli-kit': 3.45.0-pre.4
+      '@shopify/cli-kit': 3.45.0-pre.5
       n-gram: 2.0.2
       vite: 2.9.12
       vitest: ^0.28.5
@@ -460,7 +460,7 @@ importers:
   packages/plugin-ngrok:
     specifiers:
       '@oclif/core': 2.1.4
-      '@shopify/cli-kit': 3.45.0-pre.4
+      '@shopify/cli-kit': 3.45.0-pre.5
       '@shopify/ngrok': 4.3.2
       '@types/node': 14.18.36
       vite: 2.9.12
@@ -477,7 +477,7 @@ importers:
   packages/theme:
     specifiers:
       '@oclif/core': 2.1.4
-      '@shopify/cli-kit': 3.45.0-pre.4
+      '@shopify/cli-kit': 3.45.0-pre.5
       '@types/node': 14.18.36
       node-stream-zip: ^1.15.0
       vite: 2.9.12

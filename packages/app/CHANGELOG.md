@@ -1,5 +1,27 @@
 # @shopify/app
 
+## 3.45.0-pre.5
+
+### Minor Changes
+
+- e85f718cd: Use `-e` as an alias for --environment and remove the current one for --theme-editor-sync
+- 47856bde2: Set cloudflare as tunneling solution by default
+
+### Patch Changes
+
+- 09ff5a34e: Exclude system files from theme app extensions
+- 326e9b2fb: Update esbuild to 0.17.10
+- 7ff4f45db: Read function specifications from Partners API
+- Updated dependencies [da01d3595]
+- Updated dependencies [6735253e6]
+- Updated dependencies [e85f718cd]
+- Updated dependencies [e6753f4ed]
+- Updated dependencies [47856bde2]
+- Updated dependencies [645b085b8]
+  - @shopify/cli-kit@3.45.0-pre.5
+  - @shopify/plugin-cloudflare@3.45.0-pre.5
+  - @shopify/plugin-ngrok@3.45.0-pre.5
+
 ## 3.45.0-pre.4
 
 ### Minor Changes
