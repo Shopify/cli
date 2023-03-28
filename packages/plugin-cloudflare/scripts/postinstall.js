@@ -87,10 +87,11 @@ export default async function install() {
   }
 
   const binTarget = getBinPathTarget()
+
   if (existsSync(binTarget)) {
-    const versionString = await execSync(`${binTarget} --version`)
-    const versionComponents = versionString.toString().split(' ')
-    const versionNumber = versionComponents.length > 2 ? versionComponents[2] : '0.0.0'
+    // --version returns an string like "cloudflared version 2023.3.1 (built 2023-03-13-1444 UTC)"
+    const versionArray = execSync(`${binTarget} --version`, {encoding: 'utf8'}).split(' ')
+    const versionNumber = versionArray.length > 2 ? versionArray[2] : '0.0.0'
     const needsUpdate = isCurrentVersionOlderThanExpected(versionNumber, CLOUDFLARE_VERSION)
     if (!needsUpdate) {
       console.log('cloudflared already installed, skipping')
