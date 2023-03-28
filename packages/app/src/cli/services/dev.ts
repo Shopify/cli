@@ -491,6 +491,8 @@ async function devNonPreviewableExtensionTarget({
               } else {
                 outputDebug(`Drafts updated successfully for extension: ${extension.localIdentifier}`)
               }
+
+              //TODO: watch for toml changes
             },
           })
         }),
