@@ -1,8 +1,8 @@
 import {Version} from './semver.js'
-import {describe, expect, it} from 'vitest'
+import {describe, expect, test} from 'vitest'
 
 describe('Version', () => {
-  it('initializes when the version is valid', () => {
+  test('initializes when the version is valid', () => {
     // Given
     const version = new Version('2.3.1')
 
@@ -12,7 +12,7 @@ describe('Version', () => {
     expect(version.patch).toEqual(1)
   })
 
-  it('throws if the version is invalid', () => {
+  test('throws if the version is invalid', () => {
     // Given
     expect(() => {
       // eslint-disable-next-line no-new

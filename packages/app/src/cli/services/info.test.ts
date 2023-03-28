@@ -6,7 +6,7 @@ import {AppInterface} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp, testUIExtension} from '../models/app/app.test-data.js'
 import {AppErrors} from '../models/app/loader.js'
-import {describe, it, expect, vi} from 'vitest'
+import {describe, expect, vi} from 'vitest'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -20,7 +20,7 @@ vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
 
 describe('info', () => {
-  it('returns update shopify cli reminder when last version is greater than current version', async () => {
+  test('returns update shopify cli reminder when last version is greater than current version', async () => {
     // Given
     const latestVersion = '2.2.3'
     const app = mockApp()
@@ -32,7 +32,7 @@ describe('info', () => {
     expect(unstyled(result)).toMatch('Shopify CLI       2.2.2 💡 Version 2.2.3 available! Run yarn shopify upgrade')
   })
 
-  it('returns the current configs for dev when present', async () => {
+  test('returns the current configs for dev when present', async () => {
     // Given
     const cachedAppInfo = {
       directory: '/path',
@@ -54,7 +54,7 @@ describe('info', () => {
     expect(unstyled(result)).toMatch(/Update URLs\s*Always/)
   })
 
-  it('returns empty configs for dev when not present', async () => {
+  test('returns empty configs for dev when not present', async () => {
     // Given
     const app = mockApp()
 
@@ -68,7 +68,7 @@ describe('info', () => {
     expect(unstyled(result)).toMatch(/Update URLs\s*Not yet configured/)
   })
 
-  it('returns update shopify cli reminder when last version lower or equals to current version', async () => {
+  test('returns update shopify cli reminder when last version lower or equals to current version', async () => {
     // Given
     const app = mockApp()
     vi.mocked(checkForNewVersion).mockResolvedValue(undefined)
@@ -80,7 +80,7 @@ describe('info', () => {
     expect(unstyled(result)).not.toMatch('CLI reminder')
   })
 
-  it('returns the web environment as a text when webEnv is true', async () => {
+  test('returns the web environment as a text when webEnv is true', async () => {
     // Given
     const app = mockApp()
     const organization = {
@@ -125,7 +125,7 @@ describe('info', () => {
     `)
   })
 
-  it('returns the web environment as a json when webEnv is true', async () => {
+  test('returns the web environment as a json when webEnv is true', async () => {
     // Given
     const app = mockApp()
     const organization = {
@@ -170,7 +170,7 @@ describe('info', () => {
     `)
   })
 
-  it('returns errors alongside extensions when extensions have errors', async () => {
+  test('returns errors alongside extensions when extensions have errors', async () => {
     // Given
     const uiExtension1 = await testUIExtension({
       configuration: {

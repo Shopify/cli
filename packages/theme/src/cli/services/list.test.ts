@@ -4,7 +4,7 @@ import {getDevelopmentTheme} from './local-storage.js'
 import {fetchStoreThemes} from '../utilities/theme-selector/fetch.js'
 import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {renderTable} from '@shopify/cli-kit/node/ui'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, vi} from 'vitest'
 import {getHostTheme} from '@shopify/cli-kit/node/themes/conf'
 
 vi.mock('../utilities/theme-selector/fetch.js')
@@ -18,7 +18,7 @@ const session = {
 }
 
 describe('list', () => {
-  it('should call the table render function, with correctly formatted data', async () => {
+  test('should call the table render function, with correctly formatted data', async () => {
     const developmentThemeId = 5
     const hostThemeId = 6
     vi.mocked(fetchStoreThemes).mockResolvedValue([
@@ -45,7 +45,7 @@ describe('list', () => {
     })
   })
 
-  it('should call the table render function, with correctly formatted and filtered data', async () => {
+  test('should call the table render function, with correctly formatted and filtered data', async () => {
     vi.mocked(fetchStoreThemes).mockResolvedValue([
       {id: 1, name: 'Theme 1', role: 'unpublished'},
       {id: 2, name: 'Theme 2', role: 'demo'},

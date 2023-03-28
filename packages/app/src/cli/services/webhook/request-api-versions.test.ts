@@ -1,5 +1,5 @@
 import {requestApiVersions} from './request-api-versions.js'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
@@ -7,7 +7,7 @@ vi.mock('@shopify/cli-kit/node/api/partners')
 const aToken = 'A_TOKEN'
 
 describe('requestApiVersions', () => {
-  it('calls partners to request data and returns ordered array', async () => {
+  test('calls partners to request data and returns ordered array', async () => {
     // Given
     const graphQLResult = {
       publicApiVersions: ['2022', 'unstable', '2023'],

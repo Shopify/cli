@@ -2,7 +2,7 @@ import {pullEnv} from './pull.js'
 import {selectApp} from '../select-app.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {testApp} from '../../../models/app/app.test-data.js'
-import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {describe, expect, vi, beforeEach} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
 import {resolvePath, joinPath} from '@shopify/cli-kit/node/path'
 import {unstyled, stringifyMessage} from '@shopify/cli-kit/node/output'
@@ -21,7 +21,7 @@ describe('env pull', () => {
     vi.mocked(selectApp).mockResolvedValue(testOrganizationApp())
   })
 
-  it('creates a new environment file when there is no .env', async () => {
+  test('creates a new environment file when there is no .env', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       vi.spyOn(file, 'writeFile')
@@ -46,7 +46,7 @@ describe('env pull', () => {
     })
   })
 
-  it('updates an existing environment file and shows the diff', async () => {
+  test('updates an existing environment file and shows the diff', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const filePath = resolvePath(tmpDir, '.env')
@@ -80,7 +80,7 @@ describe('env pull', () => {
     })
   })
 
-  it('shows no changes if there is an already up to date env file', async () => {
+  test('shows no changes if there is an already up to date env file', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const filePath = resolvePath(tmpDir, '.env')

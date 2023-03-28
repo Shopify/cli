@@ -8,7 +8,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, vi} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
@@ -166,7 +166,7 @@ beforeEach(() => {
 })
 
 describe('ensureExtensionsIds: matchmaking returns more remote sources than local', () => {
-  it('requires user confirmation to go through partial deploy', async () => {
+  test('requires user confirmation to go through partial deploy', async () => {
     // Given
     vi.mocked(matchConfirmationPrompt).mockResolvedValueOnce(true)
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
@@ -196,7 +196,7 @@ describe('ensureExtensionsIds: matchmaking returns more remote sources than loca
 })
 
 describe('ensureExtensionsIds: matchmaking returns ok with pending manual matches', () => {
-  it('will call manualMatch and merge automatic and manual matches and create missing extensions', async () => {
+  test('will call manualMatch and merge automatic and manual matches and create missing extensions', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {},
@@ -238,7 +238,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending manual matche
 })
 
 describe('ensureExtensionsIds: matchmaking returns ok with pending manual matches and manual match fails', () => {
-  it('requires user confirmation to proceed with deploy', async () => {
+  test('requires user confirmation to proceed with deploy', async () => {
     // Given
     vi.mocked(matchConfirmationPrompt).mockResolvedValueOnce(true)
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
@@ -279,7 +279,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending manual matche
 })
 
 describe('ensureExtensionsIds: matchmaking returns ok with pending some pending to create', () => {
-  it('Create the pending extensions and succeeds', async () => {
+  test('Create the pending extensions and succeeds', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {},
@@ -309,7 +309,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending some pending 
 })
 
 describe('ensureExtensionsIds: matchmaking returns ok with some pending confirmation', () => {
-  it('confirms the pending ones and succeeds', async () => {
+  test('confirms the pending ones and succeeds', async () => {
     // Given
     vi.mocked(matchConfirmationPrompt).mockResolvedValueOnce(true)
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
@@ -338,7 +338,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with some pending confirma
 })
 
 describe('ensureExtensionsIds: matchmaking returns ok with some pending confirmation', () => {
-  it('do not confirms the pending ones and fails', async () => {
+  test('do not confirms the pending ones and fails', async () => {
     // Given
     vi.mocked(matchConfirmationPrompt).mockResolvedValueOnce(false)
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
@@ -361,7 +361,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with some pending confirma
 })
 
 describe('ensureExtensionsIds: matchmaking returns ok with nothing pending', () => {
-  it('succeeds and returns all identifiers', async () => {
+  test('succeeds and returns all identifiers', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
@@ -388,7 +388,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with nothing pending', () 
 })
 
 describe('ensureExtensionsIds: asks user to confirm deploy', () => {
-  it('shows confirmation prompt', async () => {
+  test('shows confirmation prompt', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
@@ -416,7 +416,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
     })
   })
 
-  it('skips confirmation prompt if --force is passed', async () => {
+  test('skips confirmation prompt if --force is passed', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
@@ -440,7 +440,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
 })
 
 describe('ensureExtensionsIds: Migrates extension', () => {
-  it('shows confirmation prompt', async () => {
+  test('shows confirmation prompt', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
@@ -464,7 +464,7 @@ describe('ensureExtensionsIds: Migrates extension', () => {
     expect(extensionMigrationPrompt).toBeCalledWith(extensionsToMigrate)
   })
 
-  it('migrates extensions', async () => {
+  test('migrates extensions', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},

@@ -3,7 +3,7 @@ import {load as loadApp} from '../../models/app/loader.js'
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension} from '../../models/app/extensions.js'
-import {describe, vi, it, expect, beforeEach} from 'vitest'
+import {describe, vi, expect, beforeEach} from 'vitest'
 import {Config} from '@oclif/core'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -22,7 +22,7 @@ beforeEach(async () => {
 })
 
 describe('ensure we are within a function context', () => {
-  it('runs callback when we are inside a function directory', async () => {
+  test('runs callback when we are inside a function directory', async () => {
     // Given
     let ranCallback = false
 
@@ -40,7 +40,7 @@ describe('ensure we are within a function context', () => {
     expect(renderFatalError).not.toHaveBeenCalled()
   })
 
-  it('displays an error when we are not inside a function directory', async () => {
+  test('displays an error when we are not inside a function directory', async () => {
     // Given
     let ranCallback = false
 

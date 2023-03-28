@@ -1,13 +1,13 @@
 import AutocorrectStatus from './status.js'
 import {isAutocorrectEnabled} from '../../../services/conf.js'
 import {Config} from '@oclif/core'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('../../../services/conf.js')
 
 describe('Autocorrect Status', () => {
-  it('Displays autocorrect off message if Autocorrect is off', async () => {
+  test('Displays autocorrect off message if Autocorrect is off', async () => {
     // Given
     vi.mocked(isAutocorrectEnabled).mockReturnValue(false)
     const config = new Config({root: __dirname})
@@ -27,7 +27,7 @@ describe('Autocorrect Status', () => {
   `)
   })
 
-  it('Displays autocorrect on message if Autocorrect is on', async () => {
+  test('Displays autocorrect on message if Autocorrect is on', async () => {
     // Given
     vi.mocked(isAutocorrectEnabled).mockReturnValue(true)
     const config = new Config({root: __dirname})

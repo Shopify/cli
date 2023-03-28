@@ -1,13 +1,13 @@
 import {fetchSpecifications} from './fetch-extension-specifications.js'
 import {testRemoteSpecifications} from '../../models/app/app.test-data.js'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, vi} from 'vitest'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
 
 describe('fetchExtensionSpecifications', () => {
-  it('returns the filtered and mapped results including theme', async () => {
+  test('returns the filtered and mapped results including theme', async () => {
     // Given
     vi.mocked(partnersRequest).mockResolvedValue({extensionSpecifications: testRemoteSpecifications})
 

@@ -18,10 +18,10 @@ We use [Vitest](https://vitest.dev/) as a test framework, including the test run
 
 ```ts
 // app.test.ts
-import { describe, it, expect } from "vitest"
+import { describe, test, expect } from "vitest"
 import {load} from "./app"
 
-it("loads the app", async () => {
+test("loads the app", async () => {
   // Given/When
   const got = await load()
 
@@ -42,7 +42,7 @@ If the subject under testing does a filesystem I/O operation, we recommend not s
 ```ts
 import {file, path} from "@shopify/cli-kit"
 
-it("writes", async () => {
+test("writes", async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
     // Given
     const outputPath = path.join(tmpDir, "output")

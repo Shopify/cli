@@ -16,7 +16,7 @@ import {applicationId} from './session/identity.js'
 import * as fqdnModule from '../../public/node/context/fqdn.js'
 import {useDeviceAuth} from '../../public/node/context/local.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
-import {vi, describe, expect, it, beforeEach} from 'vitest'
+import {vi, describe, expect, test, beforeEach} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)
 
@@ -106,7 +106,7 @@ beforeEach(() => {
 })
 
 describe('ensureAuthenticated when previous session is invalid', () => {
-  it('executes complete auth flow if there is no session', async () => {
+  test('executes complete auth flow if there is no session', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
     vi.mocked(secureFetch).mockResolvedValue(undefined)
@@ -123,7 +123,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     expect(got).toEqual(validTokens)
   })
 
-  it('executes complete auth flow if session is for a different fqdn', async () => {
+  test('executes complete auth flow if session is for a different fqdn', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
     vi.mocked(secureFetch).mockResolvedValue(invalidSession)
@@ -141,7 +141,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     expect(got).toEqual(validTokens)
   })
 
-  it('executes complete auth flow if requesting additional scopes', async () => {
+  test('executes complete auth flow if requesting additional scopes', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
     vi.mocked(secureFetch).mockResolvedValue(validSession)
@@ -160,7 +160,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
 })
 
 describe('when existing session is valid', () => {
-  it('does nothing', async () => {
+  test('does nothing', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(secureFetch).mockResolvedValue(validSession)
@@ -176,7 +176,7 @@ describe('when existing session is valid', () => {
     expect(got).toEqual(validTokens)
   })
 
-  it('overwrites partners token if provided with a custom CLI token', async () => {
+  test('overwrites partners token if provided with a custom CLI token', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(secureFetch).mockResolvedValue(validSession)
@@ -194,7 +194,7 @@ describe('when existing session is valid', () => {
     expect(got).toEqual(expected)
   })
 
-  it('refreshes token if forceRefresh is true', async () => {
+  test('refreshes token if forceRefresh is true', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(secureFetch).mockResolvedValue(validSession)
@@ -213,7 +213,7 @@ describe('when existing session is valid', () => {
 })
 
 describe('when existing session is expired', () => {
-  it('refreshes the tokens', async () => {
+  test('refreshes the tokens', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
     vi.mocked(secureFetch).mockResolvedValue(validSession)
@@ -230,7 +230,7 @@ describe('when existing session is expired', () => {
     expect(got).toEqual(validTokens)
   })
 
-  it('attempts to refresh the token and executes a complete flow if identity returns an invalid grant error', async () => {
+  test('attempts to refresh the token and executes a complete flow if identity returns an invalid grant error', async () => {
     // Given
     const tokenResponseError = new InvalidGrantError()
 

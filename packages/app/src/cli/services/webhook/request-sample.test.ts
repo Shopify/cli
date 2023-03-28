@@ -1,5 +1,5 @@
 import {getWebhookSample} from './request-sample.js'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 const samplePayload = '{ "sampleField": "SampleValue" }'
@@ -29,7 +29,7 @@ const graphQLResult = {
 }
 
 describe('getWebhookSample', () => {
-  it('calls partners to request data without api-key', async () => {
+  test('calls partners to request data without api-key', async () => {
     // Given
     const requestValues = {
       topic: inputValues.topic,
@@ -58,7 +58,7 @@ describe('getWebhookSample', () => {
     expect(got.userErrors).toEqual(graphQLResult.sendSampleWebhook.userErrors)
   })
 
-  it('calls partners to request data with api-key', async () => {
+  test('calls partners to request data with api-key', async () => {
     // Given
     const requestValues = {
       topic: inputValues.topic,

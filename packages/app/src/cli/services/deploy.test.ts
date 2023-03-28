@@ -7,7 +7,7 @@ import {testApp, testThemeExtensions, testUIExtension} from '../models/app/app.t
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
 import {Organization} from '../models/organization.js'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, vi} from 'vitest'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
 
@@ -32,7 +32,7 @@ beforeEach(() => {
 })
 
 describe('deploy', () => {
-  it('uploads the extension bundle with 1 UI extension', async () => {
+  test('uploads the extension bundle with 1 UI extension', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})
@@ -49,7 +49,7 @@ describe('deploy', () => {
     })
   })
 
-  it('uploads the extension bundle with 1 theme extension', async () => {
+  test('uploads the extension bundle with 1 theme extension', async () => {
     // Given
     const themeExtension = await testThemeExtensions()
     const app = testApp({extensions: {ui: [], theme: [themeExtension], function: []}})
@@ -66,7 +66,7 @@ describe('deploy', () => {
     })
   })
 
-  it('uploads the extension bundle with 1 UI and 1 theme extension', async () => {
+  test('uploads the extension bundle with 1 UI and 1 theme extension', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const themeExtension = await testThemeExtensions()
@@ -87,7 +87,7 @@ describe('deploy', () => {
     })
   })
 
-  it('passes a label to the deployment mutation', async () => {
+  test('passes a label to the deployment mutation', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})
@@ -108,7 +108,7 @@ describe('deploy', () => {
     )
   })
 
-  it('passes a label to the deployment mutation with a flag', async () => {
+  test('passes a label to the deployment mutation with a flag', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})
@@ -129,7 +129,7 @@ describe('deploy', () => {
     )
   })
 
-  it('shows a success message', async () => {
+  test('shows a success message', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})
@@ -175,7 +175,7 @@ describe('deploy', () => {
     })
   })
 
-  it('shows a specific success message when deploying using the unified app deployment flow', async () => {
+  test('shows a specific success message when deploying using the unified app deployment flow', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})

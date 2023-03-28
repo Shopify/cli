@@ -1,5 +1,5 @@
 import {authenticate, hookStart} from './tunnel.js'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, vi} from 'vitest'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import ngrok from '@shopify/ngrok'
 import {renderFatalError, renderTextPrompt} from '@shopify/cli-kit/node/ui'
@@ -31,7 +31,7 @@ beforeEach(async () => {
 })
 
 describe('start', () => {
-  it('creates a new tunnel on the given port', async () => {
+  test('creates a new tunnel on the given port', async () => {
     // When
     const got = await hookStart(port)
 
@@ -40,7 +40,7 @@ describe('start', () => {
     expect(got.valueOrBug()).toEqual({url: 'https://fake.ngrok.io'})
   })
 
-  it('asks for the token and authenticates if the configuration file is wrong', async () => {
+  test('asks for the token and authenticates if the configuration file is wrong', async () => {
     // Given
     vi.mocked(ngrok.validConfig).mockResolvedValue(false)
     vi.mocked(renderTextPrompt).mockResolvedValue('123')
@@ -53,7 +53,7 @@ describe('start', () => {
     expect(authtokenSpy).toHaveBeenCalledWith('123')
   })
 
-  it('outputs an error if the ngrok tunnel fails to start with a specific message', async () => {
+  test('outputs an error if the ngrok tunnel fails to start with a specific message', async () => {
     // Given
     vi.mocked(ngrok.connect).mockRejectedValue(new Error('Your account has been suspended'))
 
@@ -70,7 +70,7 @@ describe('start', () => {
     expect(got.isErr() && got.error.message).toEqual('Your account has been suspended')
   })
 
-  it('outputs an error if the ngrok tunnel fails to start because of another tunnel is already running in a non windows platform', async () => {
+  test('outputs an error if the ngrok tunnel fails to start because of another tunnel is already running in a non windows platform', async () => {
     // Given
     vi.mocked(ngrok.connect).mockRejectedValue(new Error('error message contains code err_ngrok_108'))
     vi.mocked(platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arch'})
@@ -88,7 +88,7 @@ describe('start', () => {
     expect(got.isErr() && got.error.message).toEqual('error message contains code err_ngrok_108')
   })
 
-  it('outputs an error if the ngrok tunnel fails to start because of another tunnel is already running in windows platform', async () => {
+  test('outputs an error if the ngrok tunnel fails to start because of another tunnel is already running in windows platform', async () => {
     // Given
     vi.mocked(ngrok.connect).mockRejectedValue(new Error('error message contains code err_ngrok_108'))
     vi.mocked(platformAndArch).mockReturnValue({platform: 'windows', arch: 'arch'})
@@ -108,7 +108,7 @@ describe('start', () => {
     expect(got.isErr() && got.error.message).toEqual('error message contains code err_ngrok_108')
   })
 
-  it.each(['err_ngrok_105', 'err_ngrok_106', 'err_ngrok_107'])(
+  test.each(['err_ngrok_105', 'err_ngrok_106', 'err_ngrok_107'])(
     'outputs an error if the ngrok tunnel fails to start because of a %p token problem',
     async (ngrokError: string) => {
       // Given
@@ -131,7 +131,7 @@ describe('start', () => {
 })
 
 describe('authenticate', () => {
-  it('calls the authenticate method from tunnel with the expected token', async () => {
+  test('calls the authenticate method from tunnel with the expected token', async () => {
     // When
     await authenticate('token')
 
@@ -139,7 +139,7 @@ describe('authenticate', () => {
     expect(ngrok.authtoken).toHaveBeenCalledWith('token')
   })
 
-  it('calls the upgradeConfig method from tunnel', async () => {
+  test('calls the upgradeConfig method from tunnel', async () => {
     // When
     await authenticate('token')
 

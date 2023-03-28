@@ -1,10 +1,10 @@
 import {loadLocalesConfig} from './locales-configuration.js'
-import {describe, expect, it} from 'vitest'
+import {describe, expect} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 describe('loadLocalesConfig', () => {
-  it('Works if all locales are correct', async () => {
+  test('Works if all locales are correct', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = joinPath(tmpDir, 'locales')
@@ -24,7 +24,7 @@ describe('loadLocalesConfig', () => {
     })
   })
 
-  it('Throws if one locale is empty', async () => {
+  test('Throws if one locale is empty', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = joinPath(tmpDir, 'locales')
@@ -41,7 +41,7 @@ describe('loadLocalesConfig', () => {
     })
   })
 
-  it('Throws if one locale is too big', async () => {
+  test('Throws if one locale is too big', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = joinPath(tmpDir, 'locales')
@@ -59,7 +59,7 @@ describe('loadLocalesConfig', () => {
     })
   })
 
-  it('Throws if there are no defaults', async () => {
+  test('Throws if there are no defaults', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = joinPath(tmpDir, 'locales')
@@ -76,7 +76,7 @@ describe('loadLocalesConfig', () => {
     })
   })
 
-  it('Throws if there are multiple defaults', async () => {
+  test('Throws if there are multiple defaults', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = joinPath(tmpDir, 'locales')
@@ -93,7 +93,7 @@ describe('loadLocalesConfig', () => {
     })
   })
 
-  it('Throws if bundle is too big', async () => {
+  test('Throws if bundle is too big', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const localesPath = joinPath(tmpDir, 'locales')

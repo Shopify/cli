@@ -4,7 +4,7 @@ import {Organization, OrganizationApp} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {CreateAppQuery} from '../../api/graphql/create_app.js'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
@@ -67,7 +67,7 @@ beforeEach(() => {
 })
 
 describe('createApp', () => {
-  it('sends request to create app and returns it', async () => {
+  test('sends request to create app and returns it', async () => {
     // Given
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
     vi.mocked(partnersRequest).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
@@ -87,7 +87,7 @@ describe('createApp', () => {
     expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables)
   })
 
-  it('throws error if requests has a user error', async () => {
+  test('throws error if requests has a user error', async () => {
     // Given
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
     vi.mocked(partnersRequest).mockResolvedValueOnce({
@@ -103,7 +103,7 @@ describe('createApp', () => {
 })
 
 describe('selectOrCreateApp', () => {
-  it('prompts user to select', async () => {
+  test('prompts user to select', async () => {
     // Given
     vi.mocked(selectAppPrompt).mockResolvedValueOnce(APP1.apiKey)
     vi.mocked(createAsNewAppPrompt).mockResolvedValue(false)
@@ -117,7 +117,7 @@ describe('selectOrCreateApp', () => {
     expect(selectAppPrompt).toHaveBeenCalledWith(APP_LIST, ORG1.id, 'token')
   })
 
-  it('prompts user to create if chooses to create', async () => {
+  test('prompts user to create if chooses to create', async () => {
     // Given
     vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')

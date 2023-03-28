@@ -3,7 +3,7 @@ import {selectApp} from './select-app.js'
 import {getURLs, updateURLs} from '../dev/urls.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {allowedRedirectionURLsPrompt, appUrlPrompt} from '../../prompts/update-url.js'
-import {describe, it, vi, beforeEach, expect} from 'vitest'
+import {describe, vi, beforeEach, expect} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 vi.mock('./select-app.js')
@@ -25,7 +25,7 @@ beforeEach(async () => {
 })
 
 describe('update-url', () => {
-  it('updates the URLs provided as flags', async () => {
+  test('updates the URLs provided as flags', async () => {
     // Given
     const options: UpdateURLOptions = {
       apiKey: 'api-key-from-flag',
@@ -47,7 +47,7 @@ describe('update-url', () => {
     )
   })
 
-  it('asks for the application when the api key is not provided', async () => {
+  test('asks for the application when the api key is not provided', async () => {
     // Given
     vi.mocked(selectApp).mockResolvedValue(APP1)
     const options: UpdateURLOptions = {
@@ -69,7 +69,7 @@ describe('update-url', () => {
     )
   })
 
-  it('asks for the app URL when not provided as a flag', async () => {
+  test('asks for the app URL when not provided as a flag', async () => {
     // Given
     vi.mocked(getURLs).mockResolvedValue({applicationUrl: 'https://example.com', redirectUrlWhitelist: []})
     vi.mocked(appUrlPrompt).mockResolvedValue('https://myapp.example.com')
@@ -92,7 +92,7 @@ describe('update-url', () => {
     )
   })
 
-  it('asks for the redirection URLs when not provided as a flag', async () => {
+  test('asks for the redirection URLs when not provided as a flag', async () => {
     // Given
     vi.mocked(getURLs).mockResolvedValue({applicationUrl: 'https://example.com', redirectUrlWhitelist: []})
     vi.mocked(allowedRedirectionURLsPrompt).mockResolvedValue([

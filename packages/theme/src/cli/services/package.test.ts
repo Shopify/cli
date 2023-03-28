@@ -1,5 +1,5 @@
 import {packageTheme} from './package.js'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, vi} from 'vitest'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {mkdir, writeFile, inTemporaryDirectory, touchFile, fileExists} from '@shopify/cli-kit/node/fs'
@@ -9,7 +9,7 @@ const StreamZip = require('node-stream-zip')
 vi.mock('@shopify/cli-kit/node/ui')
 
 describe('packageTheme', () => {
-  it('creates zip file from theme', async () => {
+  test('creates zip file from theme', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const inputDirectory = joinPath(tmpDir, 'theme')
@@ -42,7 +42,7 @@ describe('packageTheme', () => {
     })
   })
 
-  it('zip file only includes valid directories', async () => {
+  test('zip file only includes valid directories', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const inputDirectory = joinPath(tmpDir, 'theme')
@@ -82,7 +82,7 @@ describe('packageTheme', () => {
     })
   })
 
-  it('zip file name excludes theme version if missing from config/settings_schema.json', async () => {
+  test('zip file name excludes theme version if missing from config/settings_schema.json', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const inputDirectory = joinPath(tmpDir, 'theme')
@@ -112,7 +112,7 @@ describe('packageTheme', () => {
     })
   })
 
-  it('abort if config/settings_schema.json is missing', async () => {
+  test('abort if config/settings_schema.json is missing', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const inputDirectory = joinPath(tmpDir, 'theme')
@@ -129,7 +129,7 @@ describe('packageTheme', () => {
     })
   })
 
-  it('abort if theme name missing from config/settings_schema.json', async () => {
+  test('abort if theme name missing from config/settings_schema.json', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const inputDirectory = joinPath(tmpDir, 'theme')

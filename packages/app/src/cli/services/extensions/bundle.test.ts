@@ -1,7 +1,11 @@
 import {bundleExtension} from './bundle.js'
 import {testApp, testUIExtension} from '../../models/app/app.test-data.js'
 import {describe, expect, test, vi} from 'vitest'
+<<<<<<< Updated upstream
 import {context as esContext} from 'esbuild'
+=======
+import {build as esBuild, BuildOptions} from 'esbuild'
+>>>>>>> Stashed changes
 import {AbortController} from '@shopify/cli-kit/node/abort'
 
 vi.mock('esbuild', async () => {
@@ -170,7 +174,70 @@ describe('bundleExtension()', () => {
     expect(plugins).toContain('rebuild-plugin')
   })
 
+<<<<<<< Updated upstream
   async function esbuildResultFixture() {
+=======
+  test('forwards and outputs watch events', async () => {
+    // Given
+    const extension = await testUIExtension()
+    const app = testApp({
+      directory: '/project',
+      dotenv: {
+        path: '/project/.env',
+        variables: {
+          FOO: 'BAR',
+        },
+      },
+      extensions: {
+        ui: [extension],
+        theme: [],
+        function: [],
+      },
+    })
+    const stdout: any = {
+      write: vi.fn(),
+    }
+    const stderr: any = {
+      write: vi.fn(),
+    }
+    const watcher = vi.fn()
+
+    // When
+    await bundleExtension({
+      env: app.dotenv?.variables ?? {},
+      outputBundlePath: extension.outputBundlePath,
+      minify: true,
+      environment: 'production',
+      stdin: {
+        contents: 'console.log("mock stdin content")',
+        resolveDir: 'mock/resolve/dir',
+        loader: 'tsx',
+      },
+      stdout,
+      stderr,
+      watch: watcher,
+    })
+
+    // Then
+    const call = vi.mocked(esBuild).mock.calls[0] as any
+    expect(call).not.toBeUndefined()
+    const options: BuildOptions = call[0]
+    const onRebuild = (options.watch as any).onRebuild
+    onRebuild(null, esbuildResultFixture())
+    expect(vi.mocked(stdout.write).calls[0][0]).toMatchInlineSnapshot(`
+      "▲ [WARNING] [plugin plugin] warning text
+
+      "
+    `)
+    expect(vi.mocked(stdout.write).calls[0][0]).toMatchInlineSnapshot(`
+      "▲ [WARNING] [plugin plugin] warning text
+
+      "
+    `)
+  })
+
+  function esbuildResultFixture() {
+>>>>>>> Stashed changes
     return {
       errors: [
         {

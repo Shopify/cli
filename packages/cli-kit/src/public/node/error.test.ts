@@ -1,6 +1,6 @@
 import {AbortError, BugError, handler, cleanSingleStackTracePath} from './error.js'
 import {renderFatalError} from './ui.js'
-import {describe, expect, test, vi, it} from 'vitest'
+import {describe, expect, test, vi, test} from 'vitest'
 
 vi.mock('./ui.js')
 

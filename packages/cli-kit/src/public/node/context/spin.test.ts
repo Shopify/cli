@@ -1,7 +1,7 @@
 import {show, isSpin, spinFqdn, instance, isSpinEnvironment, appPort, appHost} from './spin.js'
 import {getCachedSpinFqdn, setCachedSpinFqdn} from '../../../private/node/context/spin-cache.js'
 import {captureOutput} from '../system.js'
-import {describe, test, expect, vi, it} from 'vitest'
+import {describe, test, expect, vi, test} from 'vitest'
 
 vi.mock('../system.js')
 vi.mock('../../../private/node/context/spin-cache.js')
@@ -9,7 +9,7 @@ vi.mock('../../../private/node/context/spin-cache.js')
 const mockedCaptureOutput = vi.mocked(captureOutput)
 
 describe('fqdn', () => {
-  it('shows the latest when SPIN_INSTANCE is not present and there is no cached value', async () => {
+  test('shows the latest when SPIN_INSTANCE is not present and there is no cached value', async () => {
     // Given
     const env = {}
     const showResponse = {fqdn: 'fqdn'}
@@ -25,7 +25,7 @@ describe('fqdn', () => {
     expect(setCachedSpinFqdn).toBeCalledWith('fqdn')
   })
 
-  it("doesn't show the latest when SPIN_INSTANCE is present and there is no cached value", async () => {
+  test("doesn't show the latest when SPIN_INSTANCE is present and there is no cached value", async () => {
     // Given
     const env = {SPIN_INSTANCE: 'instance'}
     const showResponse = {fqdn: 'fqdn'}
@@ -41,7 +41,7 @@ describe('fqdn', () => {
     expect(setCachedSpinFqdn).toBeCalledWith('fqdn')
   })
 
-  it('return cached spin fqdn if valid', async () => {
+  test('return cached spin fqdn if valid', async () => {
     // Given
     const env = {}
     vi.mocked(getCachedSpinFqdn).mockReturnValue('cachedFQDN')
@@ -136,7 +136,7 @@ describe('instance', () => {
 })
 
 describe('isSpinEnvironment', () => {
-  it('returns true when running against SPIN instance', () => {
+  test('returns true when running against SPIN instance', () => {
     // Given
     const env = {SHOPIFY_SERVICE_ENV: 'spin'}
 
@@ -147,7 +147,7 @@ describe('isSpinEnvironment', () => {
     expect(got).toBe(true)
   })
 
-  it('returns true when running inside a SPIN instance', () => {
+  test('returns true when running inside a SPIN instance', () => {
     // Given
     const env = {SPIN: '1'}
 
@@ -158,7 +158,7 @@ describe('isSpinEnvironment', () => {
     expect(got).toBe(true)
   })
 
-  it('returns false when not working with spin instances', () => {
+  test('returns false when not working with spin instances', () => {
     // Given
     const env = {SHOPIFY_SERVICE_ENV: 'local'}
 

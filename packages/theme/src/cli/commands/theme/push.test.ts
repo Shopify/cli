@@ -1,7 +1,7 @@
 import Push from './push.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
-import {describe, it, vi, expect} from 'vitest'
+import {describe, vi, expect} from 'vitest'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
@@ -37,7 +37,7 @@ describe('Push', () => {
       })
     }
 
-    it('should pass development theme from local storage to CLI 2', async () => {
+    test('should pass development theme from local storage to CLI 2', async () => {
       const theme = new Theme(1, 'Theme', 'development')
       await run([], theme)
 
@@ -46,7 +46,7 @@ describe('Push', () => {
       expectCLI2ToHaveBeenCalledWith(`theme push ${path} --development-theme-id ${theme.id}`)
     })
 
-    it('should pass theme and development theme from local storage to CLI 2', async () => {
+    test('should pass theme and development theme from local storage to CLI 2', async () => {
       const themeId = 2
       const theme = new Theme(3, 'Theme', 'development')
       await run([`--theme=${themeId}`], theme)
@@ -54,7 +54,7 @@ describe('Push', () => {
       expectCLI2ToHaveBeenCalledWith(`theme push ${path} --theme ${themeId} --development-theme-id ${theme.id}`)
     })
 
-    it('should not pass development theme to CLI 2 if local storage is empty', async () => {
+    test('should not pass development theme to CLI 2 if local storage is empty', async () => {
       await run([])
 
       expect(DevelopmentThemeManager.prototype.findOrCreate).not.toHaveBeenCalled()
@@ -62,7 +62,7 @@ describe('Push', () => {
       expectCLI2ToHaveBeenCalledWith(`theme push ${path}`)
     })
 
-    it('should pass theme and development theme to CLI 2', async () => {
+    test('should pass theme and development theme to CLI 2', async () => {
       const theme = new Theme(4, 'Theme', 'development')
       await run(['--development'], theme)
 

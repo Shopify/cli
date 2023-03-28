@@ -1,12 +1,12 @@
 import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, clientSecretPrompt, topicPrompt} from './trigger.js'
 import {DELIVERY_METHOD} from '../../services/webhook/trigger-flags.js'
-import {describe, it, expect, vi} from 'vitest'
+import {describe, expect, vi} from 'vitest'
 import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
 describe('topicPrompt', () => {
-  it('asks the user to enter a topic name', async () => {
+  test('asks the user to enter a topic name', async () => {
     // Given
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('orders/create')
 
@@ -26,7 +26,7 @@ describe('topicPrompt', () => {
 })
 
 describe('apiVersionPrompt', () => {
-  it('asks the user to enter an api_version', async () => {
+  test('asks the user to enter an api_version', async () => {
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValue('2022-10')
 
@@ -47,7 +47,7 @@ describe('apiVersionPrompt', () => {
 })
 
 describe('deliveryMethodPrompt', () => {
-  it('asks the user to select a delivery method', async () => {
+  test('asks the user to select a delivery method', async () => {
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValue('http')
 
@@ -68,7 +68,7 @@ describe('deliveryMethodPrompt', () => {
 })
 
 describe('addressPrompt', () => {
-  it('asks the user to enter a destination address', async () => {
+  test('asks the user to enter a destination address', async () => {
     // Given
     vi.mocked(renderTextPrompt).mockResolvedValue('https://example.org')
 
@@ -85,7 +85,7 @@ describe('addressPrompt', () => {
 })
 
 describe('clientSecretPrompt', () => {
-  it('asks the user to enter client_secret', async () => {
+  test('asks the user to enter client_secret', async () => {
     // Given
     vi.mocked(renderTextPrompt).mockResolvedValue('a_secret')
 

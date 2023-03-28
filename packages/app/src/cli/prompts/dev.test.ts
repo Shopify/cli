@@ -9,7 +9,7 @@ import {
   tunnelConfigurationPrompt,
 } from './dev.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
-import {describe, it, expect, vi} from 'vitest'
+import {describe, expect, vi} from 'vitest'
 import {
   renderAutocompletePrompt,
   renderConfirmationPrompt,
@@ -64,7 +64,7 @@ const STORE2: OrganizationStore = {
 }
 
 describe('selectOrganization', () => {
-  it('request org selection if passing more than 1 org', async () => {
+  test('request org selection if passing more than 1 org', async () => {
     // Given
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('1')
 
@@ -82,7 +82,7 @@ describe('selectOrganization', () => {
     })
   })
 
-  it('returns directly if passing only 1 org', async () => {
+  test('returns directly if passing only 1 org', async () => {
     // Given
     const orgs = [ORG2]
 
@@ -96,7 +96,7 @@ describe('selectOrganization', () => {
 })
 
 describe('selectApp', () => {
-  it('returns app if user selects one', async () => {
+  test('returns app if user selects one', async () => {
     // Given
     const apps = {nodes: [APP1, APP2], pageInfo: {hasNextPage: true}}
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('key2')
@@ -119,7 +119,7 @@ describe('selectApp', () => {
 })
 
 describe('selectStore', () => {
-  it('returns undefined if store list is empty', async () => {
+  test('returns undefined if store list is empty', async () => {
     // Given
     const stores: OrganizationStore[] = []
 
@@ -131,7 +131,7 @@ describe('selectStore', () => {
     expect(renderAutocompletePrompt).not.toBeCalled()
   })
 
-  it('returns without asking if there is only 1 store', async () => {
+  test('returns without asking if there is only 1 store', async () => {
     // Given
     const stores: OrganizationStore[] = [STORE1]
     const outputMock = mockAndCaptureOutput()
@@ -145,7 +145,7 @@ describe('selectStore', () => {
     expect(outputMock.output()).toMatch('Using your default dev store (store1) to preview your project')
   })
 
-  it('returns store if user selects one', async () => {
+  test('returns store if user selects one', async () => {
     // Given
     const stores: OrganizationStore[] = [STORE1, STORE2]
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('2')
@@ -166,7 +166,7 @@ describe('selectStore', () => {
 })
 
 describe('appName', () => {
-  it('asks the user to write a name and returns it', async () => {
+  test('asks the user to write a name and returns it', async () => {
     // Given
     vi.mocked(renderTextPrompt).mockResolvedValue('app-name')
 
@@ -184,7 +184,7 @@ describe('appName', () => {
 })
 
 describe('reloadStoreList', () => {
-  it('returns true if user selects reload', async () => {
+  test('returns true if user selects reload', async () => {
     // Given
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
@@ -202,7 +202,7 @@ describe('reloadStoreList', () => {
 })
 
 describe('createAsNewAppPrompt', () => {
-  it('returns true if user selects to create a new app', async () => {
+  test('returns true if user selects to create a new app', async () => {
     // Given
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
@@ -220,7 +220,7 @@ describe('createAsNewAppPrompt', () => {
 })
 
 describe('updateURLsPrompt', () => {
-  it('asks about the URL update and shows 4 different options', async () => {
+  test('asks about the URL update and shows 4 different options', async () => {
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValue('always')
 
@@ -249,7 +249,7 @@ describe('updateURLsPrompt', () => {
 })
 
 describe('tunnelConfigurationPrompt', () => {
-  it('asks about the selected tunnel plugin configuration and shows 3 different options', async () => {
+  test('asks about the selected tunnel plugin configuration and shows 3 different options', async () => {
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValue('always')
 

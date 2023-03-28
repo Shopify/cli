@@ -3,7 +3,7 @@ import * as localEnvironment from './context.js'
 import * as identifiers from '../models/app/identifiers.js'
 import {testApp, testFunctionExtension} from '../models/app/app.test-data.js'
 import {ApiSchemaDefinitionQuery} from '../api/graphql/functions/api_schema_definition.js'
-import {beforeEach, describe, expect, it, MockedFunction, vi} from 'vitest'
+import {beforeEach, describe, expect, MockedFunction, vi} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
@@ -37,7 +37,7 @@ describe('generateSchemaService', () => {
     request.mockImplementation(() => Promise.resolve({definition: 'schema'}))
   })
 
-  it('performs GraphQL query to fetch the schema', async () => {
+  test('performs GraphQL query to fetch the schema', async () => {
     // Given
     const app = testApp()
     const extension = await testFunctionExtension()
@@ -50,7 +50,7 @@ describe('generateSchemaService', () => {
     expect(result).toBe('schema')
   })
 
-  it('aborts if a schema could not be generated', async () => {
+  test('aborts if a schema could not be generated', async () => {
     // Given
     const app = testApp()
     const extension = await testFunctionExtension()
@@ -95,7 +95,7 @@ describe('generateSchemaService', () => {
       vi.mocked(isTerminalInteractive).mockReturnValue(true)
     })
 
-    it('uses options API key if provided', async () => {
+    test('uses options API key if provided', async () => {
       // Given
       const app = testApp()
       const extension = await testFunctionExtension()
@@ -115,7 +115,7 @@ describe('generateSchemaService', () => {
       })
     })
 
-    it('uses app identifier API key, if options API key is not provided', async () => {
+    test('uses app identifier API key, if options API key is not provided', async () => {
       // Given
       const app = testApp()
       const extension = await testFunctionExtension()
@@ -135,7 +135,7 @@ describe('generateSchemaService', () => {
       })
     })
 
-    it('prompts for app if no API key is provided in interactive mode', async () => {
+    test('prompts for app if no API key is provided in interactive mode', async () => {
       // Given
       const app = testApp()
       const extension = await testFunctionExtension()
@@ -156,7 +156,7 @@ describe('generateSchemaService', () => {
       })
     })
 
-    it('aborts if no API key is provided in non-interactive mode', async () => {
+    test('aborts if no API key is provided in non-interactive mode', async () => {
       // Given
       const app = testApp()
       const extension = await testFunctionExtension()

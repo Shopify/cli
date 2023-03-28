@@ -1,5 +1,5 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from './npm.js'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, vi} from 'vitest'
 import {installNodeModules, PackageJson, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, moduleDirectory, normalizePath} from '@shopify/cli-kit/node/path'
@@ -10,7 +10,7 @@ vi.mock('@shopify/cli-kit/node/node-package-manager')
 vi.mock('@shopify/cli-kit/common/version', () => ({CLI_KIT_VERSION: '1.2.3'}))
 
 describe('updateCLIDependencies', () => {
-  it('updates the @shopify/cli and @shopify/app dependency version', async () => {
+  test('updates the @shopify/cli and @shopify/app dependency version', async () => {
     const mockPackageJSON = {} as PackageJson
     const directory = moduleDirectory(import.meta.url)
 
@@ -20,7 +20,7 @@ describe('updateCLIDependencies', () => {
     expect(mockPackageJSON.dependencies!['@shopify/app']).toBe('1.2.3')
   })
 
-  it('does not update overrides or resolutions if local is false', async () => {
+  test('does not update overrides or resolutions if local is false', async () => {
     const mockPackageJSON = {overrides: {}, resolutions: {}} as PackageJson
     const directory = moduleDirectory(import.meta.url)
 
@@ -34,7 +34,7 @@ describe('updateCLIDependencies', () => {
     expect(mockPackageJSON.resolutions!['@shopify/cli-kit']).toBeUndefined()
   })
 
-  it.each(['@shopify/cli', '@shopify/app', '@shopify/cli-kit'])(
+  test.each(['@shopify/cli', '@shopify/app', '@shopify/cli-kit'])(
     'updates overrides for %s if local is true',
     async (dependency) => {
       const mockPackageJSON = {} as PackageJson
@@ -50,7 +50,7 @@ describe('updateCLIDependencies', () => {
     },
   )
 
-  it.each(['@shopify/cli', '@shopify/app', '@shopify/cli-kit'])(
+  test.each(['@shopify/cli', '@shopify/app', '@shopify/cli-kit'])(
     'updates resolutions for %s if local is true',
     async (dependency) => {
       const mockPackageJSON = {} as PackageJson
@@ -66,7 +66,7 @@ describe('updateCLIDependencies', () => {
     },
   )
 
-  it.each(['@shopify/cli', '@shopify/app'])('updates dependency for %s if local is true', async (dependency) => {
+  test.each(['@shopify/cli', '@shopify/app'])('updates dependency for %s if local is true', async (dependency) => {
     const mockPackageJSON = {} as PackageJson
     const directory = moduleDirectory(import.meta.url)
 
@@ -79,7 +79,7 @@ describe('updateCLIDependencies', () => {
     expect(dependencyJSON.name).toBe(dependency)
   })
 
-  it('does not change existing values', async () => {
+  test('does not change existing values', async () => {
     const mockPackageJSON = {
       name: '',
       author: '',
@@ -126,7 +126,7 @@ describe('getDeepInstallNPMTasks', () => {
     didInstallEverything: () => {},
   }
 
-  it('returns a task for each folder with a package.json', async () => {
+  test('returns a task for each folder with a package.json', async () => {
     await mockAppFolder(async (tmpDir) => {
       const tasks = await getDeepInstallNPMTasks({...defaultArgs, from: tmpDir})
 
@@ -147,7 +147,7 @@ describe('getDeepInstallNPMTasks', () => {
     })
   })
 
-  it.each([['darwin'], ['win32']])('each task installs dependencies when the os is %s', async (operativeSystem) => {
+  test.each([['darwin'], ['win32']])('each task installs dependencies when the os is %s', async (operativeSystem) => {
     await mockAppFolder(async (tmpDir) => {
       const expectedArgs = operativeSystem === 'win32' ? ['--network-concurrency', '1'] : []
       vi.mocked(platform).mockReturnValue(operativeSystem as NodeJS.Platform)

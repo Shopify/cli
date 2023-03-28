@@ -1,7 +1,7 @@
 import {outputExtensionsMessages} from './output.js'
 import {testApp, testFunctionExtension, testThemeExtensions, testUIExtension} from '../../models/app/app.test-data.js'
 import {AppInterface} from '../../models/app/app.js'
-import {afterEach, describe, expect, it} from 'vitest'
+import {afterEach, describe, expect} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
@@ -11,7 +11,7 @@ afterEach(() => {
 
 describe('output', () => {
   describe('outputExtensionsMessages', () => {
-    it('logs the correct output extension message when the given app contains a customer-accounts-ui-extension', async () => {
+    test('logs the correct output extension message when the given app contains a customer-accounts-ui-extension', async () => {
       const outputMock = mockAndCaptureOutput()
       const appMock = await mockApp()
 

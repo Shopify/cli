@@ -1,5 +1,5 @@
 import {versionService} from './version.js'
-import {afterEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, describe, expect, vi} from 'vitest'
 import {
   checkForNewVersion,
   PackageManager,
@@ -15,7 +15,7 @@ afterEach(() => {
 })
 
 describe('check CLI version', () => {
-  it.each(['yarn', 'npm', 'pnpm'])(
+  test.each(['yarn', 'npm', 'pnpm'])(
     'displays latest version and %s upgrade message when a newer exists',
     async (packageManager: string) => {
       // Given
@@ -34,7 +34,7 @@ describe('check CLI version', () => {
     },
   )
 
-  it('displays only current version when no newer version exists', async () => {
+  test('displays only current version when no newer version exists', async () => {
     // Given
     const outputMock = mockAndCaptureOutput()
     vi.mocked(checkForNewVersion).mockResolvedValue(undefined)

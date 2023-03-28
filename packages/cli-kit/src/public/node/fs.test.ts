@@ -18,14 +18,14 @@ import {
 } from './fs.js'
 import {joinPath} from './path.js'
 import {takeRandomFromArray} from '../common/array.js'
-import {describe, expect, it, test, vi} from 'vitest'
+import {describe, expect, test, test, vi} from 'vitest'
 import FastGlob from 'fast-glob'
 
 vi.mock('../common/array.js')
 vi.mock('fast-glob')
 
 describe('inTemporaryDirectory', () => {
-  it('ties the lifecycle of the temporary directory to the lifecycle of the callback', async () => {
+  test('ties the lifecycle of the temporary directory to the lifecycle of the callback', async () => {
     // Given
     let gotTmpDir = ''
 
@@ -42,7 +42,7 @@ describe('inTemporaryDirectory', () => {
   })
 })
 describe('copy', () => {
-  it('copies the file', async () => {
+  test('copies the file', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
@@ -59,7 +59,7 @@ describe('copy', () => {
     })
   })
 
-  it('copies the directory recursively including dot files', async () => {
+  test('copies the directory recursively including dot files', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
@@ -82,7 +82,7 @@ describe('copy', () => {
 })
 
 describe('move', () => {
-  it('moves files', async () => {
+  test('moves files', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
@@ -101,7 +101,7 @@ describe('move', () => {
 })
 
 describe('exists', () => {
-  it('returns true when the file exists', async () => {
+  test('returns true when the file exists', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
@@ -116,7 +116,7 @@ describe('exists', () => {
     })
   })
 
-  it('returns false when the file does not exist', async () => {
+  test('returns false when the file does not exist', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const filePath = joinPath(tmpDir, 'from')
@@ -131,7 +131,7 @@ describe('exists', () => {
 })
 
 describe('chmod', () => {
-  it('changes the permissions of a file', async () => {
+  test('changes the permissions of a file', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
@@ -148,7 +148,7 @@ describe('chmod', () => {
 })
 
 describe('remove', () => {
-  it('removes a file', async () => {
+  test('removes a file', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const content = 'test'
@@ -165,7 +165,7 @@ describe('remove', () => {
 })
 
 describe('stripUp', () => {
-  it('strips the given amount of leading directories', async () => {
+  test('strips the given amount of leading directories', async () => {
     // Given
     const filePath = 'a/b/c/d/e'
 
@@ -229,7 +229,7 @@ describe('readFileSync', () => {
 })
 
 describe('glob', () => {
-  it('calls fastGlob with dot:true if no dot option is passed', async () => {
+  test('calls fastGlob with dot:true if no dot option is passed', async () => {
     // When
     await glob('pattern')
 
@@ -237,7 +237,7 @@ describe('glob', () => {
     expect(FastGlob).toBeCalledWith('pattern', {dot: true})
   })
 
-  it('calls fastGlob with dot option if passed', async () => {
+  test('calls fastGlob with dot option if passed', async () => {
     // When
     await glob('pattern', {dot: false})
 

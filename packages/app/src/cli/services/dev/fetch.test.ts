@@ -12,7 +12,7 @@ import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
 import {AllDevStoresByOrganizationQuery} from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainQuery} from '../../api/graphql/find_store_by_domain.js'
 import {AllAppExtensionRegistrationsQuery} from '../../api/graphql/all_app_extension_registrations.js'
-import {describe, expect, it, test, vi} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -81,7 +81,7 @@ const FETCH_STORE_RESPONSE_VALUE = {
 vi.mock('@shopify/cli-kit/node/api/partners')
 
 describe('fetchOrganizations', async () => {
-  it('returns fetched organizations', async () => {
+  test('returns fetched organizations', async () => {
     // Given
     vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: [ORG1, ORG2]}})
 
@@ -93,7 +93,7 @@ describe('fetchOrganizations', async () => {
     expect(partnersRequest).toHaveBeenCalledWith(AllOrganizationsQuery, 'token')
   })
 
-  it('throws if there are no organizations', async () => {
+  test('throws if there are no organizations', async () => {
     // Given
     vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: []}})
 
@@ -107,7 +107,7 @@ describe('fetchOrganizations', async () => {
 })
 
 describe('fetchApp', async () => {
-  it('returns fetched apps', async () => {
+  test('returns fetched apps', async () => {
     // Given
     vi.mocked(partnersRequest).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
 
@@ -119,7 +119,7 @@ describe('fetchApp', async () => {
     expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id})
   })
 
-  it('throws if there are no organizations', async () => {
+  test('throws if there are no organizations', async () => {
     // Given
     vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: []}})
 
@@ -133,7 +133,7 @@ describe('fetchApp', async () => {
 })
 
 describe('fetchAllDevStores', async () => {
-  it('returns fetched stores', async () => {
+  test('returns fetched stores', async () => {
     // Given
     vi.mocked(partnersRequest).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
 
@@ -149,7 +149,7 @@ describe('fetchAllDevStores', async () => {
 })
 
 describe('fetchStoreByDomain', async () => {
-  it('returns fetched store and organization', async () => {
+  test('returns fetched store and organization', async () => {
     // Given
     vi.mocked(partnersRequest).mockResolvedValue(FETCH_STORE_RESPONSE_VALUE)
 
@@ -166,7 +166,7 @@ describe('fetchStoreByDomain', async () => {
 })
 
 describe('fetchAppExtensionRegistrations', () => {
-  it('returns fetched extension registrations', async () => {
+  test('returns fetched extension registrations', async () => {
     // Given
     const response = {
       app: {

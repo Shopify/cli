@@ -3,7 +3,7 @@ import {ciPlatform, cloudEnvironment, isUnitTest, macAddress} from './context/lo
 import {mockAndCaptureOutput} from './testing/output.js'
 import * as error from './error.js'
 import {hashString} from '../../public/node/crypto.js'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 const onNotify = vi.fn()
 
@@ -32,7 +32,7 @@ beforeEach(() => {
 })
 
 describe('errorHandler', () => {
-  it('finishes the execution without exiting the proccess when cancel execution exception is raised', async () => {
+  test('finishes the execution without exiting the proccess when cancel execution exception is raised', async () => {
     // Given
     vi.spyOn(process, 'exit').mockResolvedValue(null as never)
 
@@ -43,7 +43,7 @@ describe('errorHandler', () => {
     expect(process.exit).toBeCalledTimes(0)
   })
 
-  it('finishes the execution without exiting the proccess and display a custom message when cancel execution exception is raised with a message', async () => {
+  test('finishes the execution without exiting the proccess and display a custom message when cancel execution exception is raised with a message', async () => {
     // Given
     vi.spyOn(process, 'exit').mockResolvedValue(null as never)
     const outputMock = mockAndCaptureOutput()
@@ -56,7 +56,7 @@ describe('errorHandler', () => {
     expect(process.exit).toBeCalledTimes(0)
   })
 
-  it('finishes the execution gracefully and exits the proccess when abort silent exception', async () => {
+  test('finishes the execution gracefully and exits the proccess when abort silent exception', async () => {
     // Given
     vi.spyOn(process, 'exit').mockResolvedValue(null as never)
 
@@ -107,7 +107,7 @@ describe('bugsnag stack cleaning', () => {
 })
 
 describe('bugsnag metadata', () => {
-  it('includes public data', async () => {
+  test('includes public data', async () => {
     const event = {
       addMetadata: vi.fn(),
     }
@@ -121,7 +121,7 @@ describe('bugsnag metadata', () => {
 })
 
 describe('send to Bugsnag', () => {
-  it('processes Error instances', async () => {
+  test('processes Error instances', async () => {
     const toThrow = new Error('In test')
     const res = await sendErrorToBugsnag(toThrow)
     expect(res.reported).toEqual(true)
@@ -133,7 +133,7 @@ describe('send to Bugsnag', () => {
     expect(onNotify).toHaveBeenCalledWith(res.error)
   })
 
-  it('processes string instances', async () => {
+  test('processes string instances', async () => {
     const res = await sendErrorToBugsnag('In test' as any)
     expect(res.reported).toEqual(true)
     const {error} = res as any
@@ -141,7 +141,7 @@ describe('send to Bugsnag', () => {
     expect(onNotify).toHaveBeenCalledWith(res.error)
   })
 
-  it('ignores fatals', async () => {
+  test('ignores fatals', async () => {
     const res = await sendErrorToBugsnag(new error.AbortError('In test'))
     expect(res.reported).toEqual(false)
     expect(onNotify).not.toHaveBeenCalled()

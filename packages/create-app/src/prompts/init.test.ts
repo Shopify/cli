@@ -1,11 +1,11 @@
 import init from './init.js'
-import {describe, it, expect, vi} from 'vitest'
+import {describe, expect, vi} from 'vitest'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
 describe('init', () => {
-  it('when name is not passed', async () => {
+  test('when name is not passed', async () => {
     const answers = {
       name: 'app',
     }
@@ -26,7 +26,7 @@ describe('init', () => {
     expect(got).toEqual({...options, ...answers})
   })
 
-  it('when name is passed', async () => {
+  test('when name is passed', async () => {
     const answers = {
       template: 'https://github.com/Shopify/shopify-app-template-node',
     }

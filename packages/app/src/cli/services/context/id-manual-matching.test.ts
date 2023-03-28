@@ -1,7 +1,7 @@
 import {manualMatchIds, ManualMatchResult} from './id-manual-matching.js'
 import {ExtensionRegistration} from '../dev/create-extension.js'
 import {UIExtension} from '../../models/app/extensions.js'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, vi} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 
@@ -106,7 +106,7 @@ const EXTENSION_B: UIExtension = {
 }
 
 describe('manualMatch: when all sources are matched', () => {
-  it('returns IDs', async () => {
+  test('returns IDs', async () => {
     // Given
     vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce('UUID_A')
     vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce('UUID_A_2')
@@ -128,7 +128,7 @@ describe('manualMatch: when all sources are matched', () => {
 })
 
 describe('manualMatch: when there are more local sources', () => {
-  it('returns IDs and some sources pending creation', async () => {
+  test('returns IDs and some sources pending creation', async () => {
     // Given
     vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce('UUID_A')
 
@@ -146,7 +146,7 @@ describe('manualMatch: when there are more local sources', () => {
 })
 
 describe('manualMatch: when there are more local sources and user selects to create', () => {
-  it('returns IDs and some sources pending creation', async () => {
+  test('returns IDs and some sources pending creation', async () => {
     // Given
     vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce('UUID_A')
     vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce('create')
@@ -172,7 +172,7 @@ describe('manualMatch: when there are more local sources and user selects to cre
 })
 
 describe('manualMatch: when not all remote sources are matched', () => {
-  it('returns matched IDs and only remote sources', async () => {
+  test('returns matched IDs and only remote sources', async () => {
     // Given
     vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce('create')
     vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce('create')

@@ -1,7 +1,7 @@
 import Init from './init.js'
 import initPrompt, {templateURLMap} from '../prompts/init.js'
 import initService from '../services/init.js'
-import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {describe, expect, vi, beforeEach} from 'vitest'
 import {errorHandler} from '@shopify/cli-kit/node/error-handler'
 import {Config} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -16,7 +16,7 @@ beforeEach(() => {
 })
 
 describe('create app command', () => {
-  it('executes correctly when no template flag receivec', async () => {
+  test('executes correctly when no template flag receivec', async () => {
     // When
     await Init.run()
 
@@ -24,7 +24,7 @@ describe('create app command', () => {
     expect(initService).toHaveBeenCalledOnce()
   })
 
-  it.each(['node', 'php', 'ruby'])(
+  test.each(['node', 'php', 'ruby'])(
     'executes correctly when using %s as a template alias name',
     async (alias: string) => {
       // When
@@ -35,7 +35,7 @@ describe('create app command', () => {
     },
   )
 
-  it('executes correctly when using a github url as a template alias name', async () => {
+  test('executes correctly when using a github url as a template alias name', async () => {
     // When
     await Init.run(['--template', 'https://github.com/myrepo'])
 
@@ -43,7 +43,7 @@ describe('create app command', () => {
     expect(initService).toHaveBeenCalledOnce()
   })
 
-  it('throw an error when using a non supported template alias name', async () => {
+  test('throw an error when using a non supported template alias name', async () => {
     // Given
     vi.mocked(errorHandler).mockImplementation(async () => {})
 
@@ -60,7 +60,7 @@ describe('create app command', () => {
     expect(errorHandler).toHaveBeenCalledWith(expectedError, anyConfig)
   })
 
-  it('throw an error when using a non github url repo', async () => {
+  test('throw an error when using a non github url repo', async () => {
     // When
     await Init.run(['--template', 'http://nongithub.com/myrepo'])
 
