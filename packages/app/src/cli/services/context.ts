@@ -244,7 +244,7 @@ interface DeployContextOutput {
   token: string
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   identifiers: Identifiers
-  organization: Organization
+  organization: Organization | undefined
 }
 
 /**
@@ -342,9 +342,10 @@ export async function fetchAppAndIdentifiers(
     reset: boolean
     packageManager?: PackageManager
     apiKey?: string
+    force: boolean
   },
   token: string,
-): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>, Organization]> {
+): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>, Organization | undefined]> {
   let envIdentifiers = getAppIdentifiers({app: options.app})
   let partnersApp: OrganizationApp | undefined
   let organization: Organization | undefined
@@ -372,7 +373,7 @@ export async function fetchAppAndIdentifiers(
     organization = result.organization
   }
 
-  if (!organization) {
+  if (!organization && !options.force) {
     organization = await fetchOrgFromId(partnersApp.organizationId, token)
   }
 
@@ -539,7 +540,7 @@ async function logMetadataForLoadedDevContext(env: DevContextOutput) {
 
 async function logMetadataForLoadedDeployContext(env: DeployContextOutput) {
   await metadata.addPublicMetadata(() => ({
-    partner_id: tryParseInt(env.organization.id),
+    partner_id: tryParseInt(env.organization?.id || '0'),
     api_key: env.identifiers.app,
   }))
 }

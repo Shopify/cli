@@ -56,7 +56,7 @@ export async function deploy(options: DeployOptions) {
 
   let label: string | undefined
 
-  if (organization.betas.appUiDeployments) {
+  if (organization && organization.betas.appUiDeployments) {
     label =
       options.label ??
       (await renderTextPrompt({
@@ -116,7 +116,7 @@ export async function deploy(options: DeployOptions) {
           },
         },
         {
-          title: organization.betas.appUiDeployments ? 'Creating deployment' : 'Pushing your code to Shopify',
+          title: organization?.betas.appUiDeployments ? 'Creating deployment' : 'Pushing your code to Shopify',
           task: async () => {
             if (bundle) {
               ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
@@ -144,12 +144,12 @@ export async function deploy(options: DeployOptions) {
       await outputCompletionMessage({
         app,
         partnersApp,
-        partnersOrganizationId: organization.id,
+        partnersOrganizationId: organization?.id ?? '',
         identifiers,
         registrations,
         validationErrors,
         deploymentId,
-        unifiedDeployment: organization.betas.appUiDeployments ?? false,
+        unifiedDeployment: organization?.betas.appUiDeployments ?? false,
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
