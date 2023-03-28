@@ -334,7 +334,7 @@ describe('isGitClean()', () => {
     mockedGitStatus.mockResolvedValue({isClean: false})
 
     // Then
-    expect(await git.isClean()).toBe(false)
+    await expect(git.isClean()).resolves.toBe(false)
   })
 
   test('return true if git directory is not clean', async () => {
@@ -342,7 +342,7 @@ describe('isGitClean()', () => {
     mockedGitStatus.mockResolvedValue({isClean: true})
 
     // Then
-    expect(await git.isClean()).toBe(true)
+    await expect(git.isClean()).resolves.toBe(true)
   })
 
   test('passes the directory option to simple git', async () => {
