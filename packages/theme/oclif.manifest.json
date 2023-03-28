@@ -1,5 +1,5 @@
 {
-  "version": "3.45.0-pre.4",
+  "version": "3.45.0-pre.5",
   "commands": {
     "theme:check": {
       "id": "theme:check",

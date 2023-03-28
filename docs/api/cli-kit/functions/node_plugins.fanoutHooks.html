@@ -21,7 +21,8 @@
 <li class="tsd-signature tsd-anchor-link" id="fanoutHooks">fanout<wbr/>Hooks<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">TPluginMap</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">TEvent</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>config<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Config</span>, event<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">TEvent</span>, options<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">TPluginMap</span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">TEvent</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">&quot;options&quot;</span><span class="tsd-signature-symbol">]</span>, timeout<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Partial</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">TPluginMap</span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-symbol">typeof </span><a class="tsd-signature-type" data-tsd-kind="Parameter">event</a><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">&quot;pluginReturns&quot;</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><a href="#fanoutHooks" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" id="icon-anchor-a"></path><path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" id="icon-anchor-b"></path><path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" id="icon-anchor-c"></path></svg></a></li>
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>Convenience function to trigger a hook, and gather any successful responses. Failures are ignored.</p>
-<p>Responses are organised into a dictionary, keyed by plug-in name. Only plug-ins that have hooks registered for the given event, and the hooks were run successfully, are included.</p>
+<p>Responses are organised into a dictionary, keyed by plug-in name.
+Only plug-ins that have hooks registered for the given event, and the hooks were run successfully, are included.</p>
 
 <h3>Returns</h3><p>A dictionary of plug-in names to the response from the hook.</p>
 </div>
@@ -53,7 +54,7 @@
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Partial</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">TPluginMap</span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-symbol">typeof </span><a class="tsd-signature-type" data-tsd-kind="Parameter">event</a><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">&quot;pluginReturns&quot;</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Shopify/cli/blob/f2d5b107d/packages/cli-kit/src/public/node/plugins.ts#L20">packages/cli-kit/src/public/node/plugins.ts:20</a></li></ul></aside></li></ul></section></div>
+<li>Defined in <a href="https://github.com/Shopify/cli/blob/6824b8308/packages/cli-kit/src/public/node/plugins.ts#L21">packages/cli-kit/src/public/node/plugins.ts:21</a></li></ul></aside></li></ul></section></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
@@ -106,6 +107,7 @@
 <li class="tsd-kind-module"><a href="../modules/node_fs.html">node/fs</a></li>
 <li class="tsd-kind-module"><a href="../modules/node_git.html">node/git</a></li>
 <li class="tsd-kind-module"><a href="../modules/node_github.html">node/github</a></li>
+<li class="tsd-kind-module"><a href="../modules/node_hooks_deprecations.html">node/hooks/deprecations</a></li>
 <li class="tsd-kind-module"><a href="../modules/node_hooks_postrun.html">node/hooks/postrun</a></li>
 <li class="tsd-kind-module"><a href="../modules/node_hooks_prerun.html">node/hooks/prerun</a></li>
 <li class="tsd-kind-module"><a href="../modules/node_http.html">node/http</a></li>

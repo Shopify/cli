@@ -1,5 +1,21 @@
 # @shopify/theme
 
+## 3.45.0-pre.5
+
+### Minor Changes
+
+- e85f718cd: Use `-e` as an alias for --environment and remove the current one for --theme-editor-sync
+
+### Patch Changes
+
+- 6735253e6: Adopt the CLI UI kit in the `shopify theme dev` command
+- Updated dependencies [da01d3595]
+- Updated dependencies [6735253e6]
+- Updated dependencies [e85f718cd]
+- Updated dependencies [e6753f4ed]
+- Updated dependencies [645b085b8]
+  - @shopify/cli-kit@3.45.0-pre.5
+
 ## 3.45.0-pre.4
 
 ### Minor Changes

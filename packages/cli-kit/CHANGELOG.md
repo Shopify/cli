@@ -1,5 +1,18 @@
 # @shopify/cli-kit
 
+## 3.45.0-pre.5
+
+### Minor Changes
+
+- e85f718cd: Use `-e` as an alias for --environment and remove the current one for --theme-editor-sync
+- e6753f4ed: Upgrade Ink to 4.0.0 which is pure ESM and uses React 18
+- 645b085b8: Render upgrade warning if Partners API returns deprecation dates
+
+### Patch Changes
+
+- da01d3595: Send environment flags to analytics
+- 6735253e6: Adopt the CLI UI kit in the `shopify theme dev` command
+
 ## 3.45.0-pre.4
 
 ### Patch Changes
