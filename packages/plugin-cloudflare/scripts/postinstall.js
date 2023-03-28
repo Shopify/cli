@@ -88,8 +88,14 @@ export default async function install() {
 
   const binTarget = getBinPathTarget()
   if (existsSync(binTarget)) {
-    console.log('cloudflared already installed, skipping')
-    return
+    const versionString = await execSync(`${binTarget} --version`)
+    const versionComponents = versionString.toString().split(' ')
+    const versionNumber = versionComponents.length > 2 ? versionComponents[2] : '0.0.0'
+    const needsUpdate = isCurrentVersionOlderThanExpected(versionNumber, CLOUDFLARE_VERSION)
+    if (!needsUpdate) {
+      console.log('cloudflared already installed, skipping')
+      return
+    }
   }
 
   if (process.platform === 'linux') {
@@ -138,6 +144,17 @@ async function downloadFile(url, to) {
 function sha256(filePath) {
   const fileBuffer = readFileSync(filePath)
   return createHash('sha256').update(fileBuffer).digest('hex')
+}
+
+function isCurrentVersionOlderThanExpected(current, expected) {
+  const currentParts = current.split('.')
+  const expectedParts = expected.split('.')
+  for (let i = 0; i < currentParts.length; i++) {
+    if (parseInt(expectedParts[i]) > parseInt(currentParts[i])) {
+      return true
+    }
+  }
+  return false
 }
 
 install().catch((err) => {
