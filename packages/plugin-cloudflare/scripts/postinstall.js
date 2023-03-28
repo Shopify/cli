@@ -7,6 +7,7 @@ import {execSync} from 'child_process'
 import {createHash} from 'node:crypto'
 import {chmodSync, existsSync, mkdirSync, renameSync, unlinkSync, createWriteStream, readFileSync} from 'fs'
 import fetch from 'node-fetch'
+import semver from 'semver'
 
 const CLOUDFLARE_VERSION = '2023.3.1'
 const CLOUDFLARE_REPO = `https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARE_VERSION}/`
@@ -92,7 +93,7 @@ export default async function install() {
     // --version returns an string like "cloudflared version 2023.3.1 (built 2023-03-13-1444 UTC)"
     const versionArray = execSync(`${binTarget} --version`, {encoding: 'utf8'}).split(' ')
     const versionNumber = versionArray.length > 2 ? versionArray[2] : '0.0.0'
-    const needsUpdate = isCurrentVersionOlderThanExpected(versionNumber, CLOUDFLARE_VERSION)
+    const needsUpdate = semver.gt(CLOUDFLARE_VERSION, versionNumber)
     if (!needsUpdate) {
       console.log('cloudflared already installed, skipping')
       return
@@ -145,17 +146,6 @@ async function downloadFile(url, to) {
 function sha256(filePath) {
   const fileBuffer = readFileSync(filePath)
   return createHash('sha256').update(fileBuffer).digest('hex')
-}
-
-function isCurrentVersionOlderThanExpected(current, expected) {
-  const currentParts = current.split('.')
-  const expectedParts = expected.split('.')
-  for (let i = 0; i < currentParts.length; i++) {
-    if (parseInt(expectedParts[i]) > parseInt(currentParts[i])) {
-      return true
-    }
-  }
-  return false
 }
 
 install().catch((err) => {
