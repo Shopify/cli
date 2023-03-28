@@ -14,7 +14,7 @@ const CLOUDFLARE_REPO = `https://github.com/cloudflare/cloudflared/releases/down
 const LINUX_URL = {
   arm64: {
     filename: 'cloudflared-linux-arm64',
-    checksum: '72a750d7a043b2ae291470710fafa816ab104a60120ec6721d7c1fbbf24c8558',
+    checksum: '1989edb5244fcbb8420a94655b2193f9c103758418e7ddaea7b7a63852993135',
   },
   arm: {
     filename: 'cloudflared-linux-arm',
@@ -22,7 +22,7 @@ const LINUX_URL = {
   },
   x64: {
     filename: 'cloudflared-linux-amd64',
-    checksum: '1989edb5244fcbb8420a94655b2193f9c103758418e7ddaea7b7a63852993135',
+    checksum: '72a750d7a043b2ae291470710fafa816ab104a60120ec6721d7c1fbbf24c8558',
   },
   ia32: {
     filename: 'cloudflared-linux-386',
