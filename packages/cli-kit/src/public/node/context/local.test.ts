@@ -10,7 +10,7 @@ import {
 } from './local.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
-import {expect, test, describe, vi, test} from 'vitest'
+import {expect, describe, vi, test} from 'vitest'
 
 vi.mock('../fs.js')
 vi.mock('../system.js')

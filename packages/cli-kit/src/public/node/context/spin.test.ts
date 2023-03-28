@@ -1,7 +1,7 @@
 import {show, isSpin, spinFqdn, instance, isSpinEnvironment, appPort, appHost} from './spin.js'
 import {getCachedSpinFqdn, setCachedSpinFqdn} from '../../../private/node/context/spin-cache.js'
 import {captureOutput} from '../system.js'
-import {describe, test, expect, vi, test} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 
 vi.mock('../system.js')
 vi.mock('../../../private/node/context/spin-cache.js')

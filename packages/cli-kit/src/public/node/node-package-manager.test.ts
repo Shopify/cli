@@ -17,7 +17,7 @@ import {
 import {exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
 import {joinPath, normalizePath as pathNormalize} from './path.js'
-import {describe, test, expect, vi, test} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import latestVersion from 'latest-version'
 
 vi.mock('../../version.js')
