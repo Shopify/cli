@@ -8,7 +8,6 @@
     "@shopify/app",
     "@shopify/create-app",
     "@shopify/cli-kit",
-    "@shopify/fixtures-app",
     "@shopify/theme",
     "@shopify/ui-extensions-dev-console-app",
     "@shopify/plugin-ngrok",

@@ -2,7 +2,6 @@
   "mode": "pre",
   "tag": "pre",
   "initialVersions": {
-    "@shopify/fixtures-app": "3.44.0",
     "shopify-app-template-node": "0.1.0",
     "starter-react-frontend-app": "0.1.0",
     "@shopify/app": "3.44.0",
