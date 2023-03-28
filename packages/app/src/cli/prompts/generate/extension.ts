@@ -1,35 +1,33 @@
 import {AppInterface} from '../../models/app/app.js'
-import {GenericSpecification} from '../../models/app/extensions.js'
-import {TemplateSpecification} from '../../models/app/template.js'
+import {RemoteTemplateSpecification, TemplateType} from '../../api/graphql/template_specifications.js'
+import {ExtensionFlavorValue} from '../../services/generate/extension.js'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputWarn} from '@shopify/cli-kit/node/output'
-import {createRequire} from 'module'
-
-const require = createRequire(import.meta.url)
 
 export interface GenerateExtensionPromptOptions {
   name?: string
   templateType?: string
-  extensionFlavor?: string
+  extensionFlavor?: ExtensionFlavorValue
   directory: string
   app: AppInterface
-  templateSpecifications: TemplateSpecification[]
+  templateSpecifications: RemoteTemplateSpecification[]
   unavailableExtensions: string[]
   reset: boolean
 }
 
 export interface GenerateExtensionPromptOutput {
-  name: string
+  templateSpecification: RemoteTemplateSpecification
   extensionContent: GenerateExtensionContentOutput[]
 }
-interface GenerateExtensionContentOutput {
+
+export interface GenerateExtensionContentOutput {
+  index: number
   name: string
-  specification: GenericSpecification
-  extensionFlavor?: string
+  flavor?: ExtensionFlavorValue
 }
 
-export function buildChoices(templateSpecifications: TemplateSpecification[]) {
+export function buildChoices(templateSpecifications: RemoteTemplateSpecification[]) {
   const templateSpecChoices = templateSpecifications.map((spec) => {
     return {
       label: spec.name,
@@ -40,7 +38,7 @@ export function buildChoices(templateSpecifications: TemplateSpecification[]) {
   return templateSpecChoices.sort((c1, c2) => c1.label.localeCompare(c2.label))
 }
 
-const generateExtensionPrompt = async (
+const generateExtensionPrompts = async (
   options: GenerateExtensionPromptOptions,
 ): Promise<GenerateExtensionPromptOutput> => {
   let templateSpecifications = options.templateSpecifications
@@ -69,52 +67,44 @@ const generateExtensionPrompt = async (
 
   const templateSpecification = templateSpecifications.find((spec) => spec.identifier === templateType)!
 
-  const nameAndFlavors: {name: string; flavor?: string; specification: GenericSpecification}[] = []
-  for (const spec of templateSpecification.types) {
-    // eslint-disable-next-line no-await-in-loop
-    nameAndFlavors.push(await promptNameAndFlavor(options, spec))
+  const extensionContent: GenerateExtensionContentOutput[] = []
+  /* eslint-disable no-await-in-loop */
+  for (const [index, spec] of templateSpecification.types.entries()) {
+    const name = await promptName(options.directory)
+    const flavor = options.extensionFlavor ?? (await promptFlavor(spec))
+    extensionContent.push({index, name, flavor})
+  }
+  /* eslint-enable no-await-in-loop */
+
+  return {templateSpecification, extensionContent}
+}
+
+async function promptName(directory: string): Promise<string> {
+  return renderTextPrompt({
+    message: 'Extension name (internal only)',
+    defaultValue: await generateRandomNameForSubdirectory({suffix: 'ext', directory}),
+  })
+}
+
+async function promptFlavor(specification: TemplateType): Promise<ExtensionFlavorValue | undefined> {
+  if (specification.supportedFlavors.length === 0) {
+    return undefined
   }
 
-  return {
-    name: templateSpecification?.name ?? '',
-    extensionContent: nameAndFlavors.map((nameAndFlavor) => {
+  if (specification.supportedFlavors.length === 1 && specification.supportedFlavors[0]) {
+    return specification.supportedFlavors[0].value
+  }
+
+  return renderSelectPrompt({
+    message: 'What would you like to work in?',
+    choices: specification.supportedFlavors.map((flavor) => {
       return {
-        name: nameAndFlavor.name,
-        specification: nameAndFlavor.specification,
-        extensionFlavor: nameAndFlavor.flavor,
+        label: flavor.name,
+        value: flavor.value,
       }
     }),
-  }
+    defaultValue: 'react',
+  })
 }
 
-async function promptNameAndFlavor(
-  options: GenerateExtensionPromptOptions,
-  specification: GenericSpecification,
-): Promise<{name: string; flavor?: string; specification: GenericSpecification}> {
-  const result = {
-    name: options.name ?? '',
-    flavor: options.extensionFlavor ?? specification.supportedFlavors[0]?.value,
-    specification,
-  }
-  if (!options.name) {
-    result.name = await renderTextPrompt({
-      message: 'Extension name (internal only)',
-      defaultValue: await generateRandomNameForSubdirectory({suffix: 'ext', directory: options.directory}),
-    })
-  }
-  if (!options.extensionFlavor && specification.supportedFlavors.length > 1) {
-    result.flavor = await renderSelectPrompt({
-      message: 'What would you like to work in?',
-      choices: specification.supportedFlavors.map((flavor) => {
-        return {
-          label: flavor.name,
-          value: flavor.value,
-        }
-      }),
-      defaultValue: 'react',
-    })
-  }
-  return result
-}
-
-export default generateExtensionPrompt
+export default generateExtensionPrompts

@@ -1,5 +1,5 @@
 import {
-  generateExtension,
+  generateExtensionTemplate,
   getExtensionRuntimeDependencies,
   getFunctionRuntimeDependencies,
   TemplateLanguage,
@@ -452,7 +452,7 @@ async function createFromTemplate({
   specifications,
 }: CreateFromTemplateOptions): Promise<string> {
   return (
-    await generateExtension([
+    await generateExtensionTemplate([
       {
         name,
         specification,

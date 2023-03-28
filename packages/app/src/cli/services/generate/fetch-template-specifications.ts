@@ -1,19 +1,17 @@
-import {
-  RemoteTemplateSpecification,
-  RemoteTemplateSpecificationsQuery,
-  RemoteTemplateSpecificationsQuerySchema,
-} from '../../api/graphql/template_specifications.js'
+import {RemoteTemplateSpecification} from '../../api/graphql/template_specifications.js'
 import {TemplateSpecification} from '../../models/app/template.js'
 import {BaseFunctionConfigurationSchema} from '../../models/extensions/schemas.js'
 import {blocks} from '../../constants.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import themeSpecification from '../../models/templates/theme-specifications/theme.js'
+import {testRemoteTemplateSpecifications} from '../../models/app/app.test-data.js'
+import checkoutPostPurchaseExtension from '../../models/templates/ui-specifications/checkout_post_purchase.js'
 
-export async function fetchTemplateSpecifications(token: string): Promise<TemplateSpecification[]> {
-  const result: RemoteTemplateSpecificationsQuerySchema = await partnersRequest(
-    RemoteTemplateSpecificationsQuery,
-    token,
-  )
-  return result.templateSpecifications.map(mapRemoteTemplateSpecification)
+export async function fetchTemplateSpecifications(token: string): Promise<RemoteTemplateSpecification[]> {
+  // const result: RemoteTemplateSpecificationsQuerySchema = await partnersRequest(
+  //   RemoteTemplateSpecificationsQuery,
+  //   token,
+  // )
+  return testRemoteTemplateSpecifications.concat(themeSpecification).concat(checkoutPostPurchaseExtension)
 }
 
 export function mapRemoteTemplateSpecification(

@@ -1,4 +1,4 @@
-import generateExtensionPrompt, {buildChoices} from './extension.js'
+import generateExtensionPrompts, {buildChoices} from './extension.js'
 import {testApp, testRemoteTemplateSpecifications} from '../../models/app/app.test-data.js'
 import {
   loadLocalUIExtensionsSpecifications,
@@ -49,7 +49,7 @@ describe('extension prompt', async () => {
     vi.mocked(renderTextPrompt).mockResolvedValue(answers.name)
 
     // When
-    const got = await generateExtensionPrompt(options)
+    const got = await generateExtensionPrompts(options)
 
     // Then
     expect(renderSelectPrompt).toHaveBeenCalledWith(extensionTypeQuestion)
@@ -76,7 +76,7 @@ describe('extension prompt', async () => {
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionType)
 
     // When
-    const got = await generateExtensionPrompt(options)
+    const got = await generateExtensionPrompts(options)
 
     // Then
     expect(renderSelectPrompt).toHaveBeenCalledWith(extensionTypeQuestion)
@@ -103,7 +103,7 @@ describe('extension prompt', async () => {
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionFlavor)
 
     // When
-    const got = await generateExtensionPrompt(options)
+    const got = await generateExtensionPrompts(options)
 
     // Then
     expect(renderSelectPrompt).toHaveBeenCalledWith({
@@ -132,7 +132,7 @@ describe('extension prompt', async () => {
     const specification = findExtensionSpecification('theme', allSpecs)
 
     // When
-    const got = await generateExtensionPrompt(options)
+    const got = await generateExtensionPrompts(options)
 
     // Then
     expect(renderSelectPrompt).not.toHaveBeenCalled()
@@ -160,7 +160,7 @@ describe('extension prompt', async () => {
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionFlavor)
 
     // When
-    const got = await generateExtensionPrompt(options)
+    const got = await generateExtensionPrompts(options)
 
     // Then
     expect(renderSelectPrompt).toHaveBeenCalledWith({
@@ -199,7 +199,7 @@ describe('extension prompt', async () => {
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce('product_discounts')
 
     // When
-    const got = await generateExtensionPrompt(options)
+    const got = await generateExtensionPrompts(options)
 
     // Then
     expect(renderSelectPrompt).toHaveBeenCalledWith(functionTypes)

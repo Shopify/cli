@@ -269,12 +269,12 @@ export const testRemoteTemplateSpecifications: RemoteTemplateSpecification[] = [
           {
             name: 'Wasm',
             value: 'wasm',
-            path: 'checkout/wasm/cart-transform/bundles',
+            path: 'checkout/wasm/cart-transform/default',
           },
           {
             name: 'Rust',
             value: 'rust',
-            path: 'checkout/rust/cart-transform/bundles',
+            path: 'checkout/rust/cart-transform/default',
           },
         ],
       },
@@ -294,12 +294,12 @@ export const testRemoteTemplateSpecifications: RemoteTemplateSpecification[] = [
           {
             name: 'Wasm',
             value: 'wasm',
-            path: 'checkout/wasm/product_discounts/default',
+            path: 'discounts/wasm/product-discounts/default',
           },
           {
             name: 'Rust',
             value: 'rust',
-            path: 'checkout/rust/product_discounts/default',
+            path: 'discounts/rust/product-discounts/default',
           },
         ],
       },
@@ -319,12 +319,12 @@ export const testRemoteTemplateSpecifications: RemoteTemplateSpecification[] = [
           {
             name: 'Wasm',
             value: 'wasm',
-            path: 'checkout/wasm/order_discounts/default',
+            path: 'discounts/wasm/order-discounts/default',
           },
           {
             name: 'Rust',
             value: 'rust',
-            path: 'checkout/rust/order_discounts/default',
+            path: 'discounts/rust/order-discounts/default',
           },
         ],
       },
