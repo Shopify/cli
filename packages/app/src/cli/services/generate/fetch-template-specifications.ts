@@ -5,13 +5,15 @@ import {
 } from '../../api/graphql/template_specifications.js'
 import {TemplateSpecification} from '../../models/app/template.js'
 import {BaseFunctionConfigurationSchema} from '../../models/extensions/schemas.js'
-import {blocks} from '../../constants.js'
+import {blocks, templates} from '../../constants.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export async function fetchTemplateSpecifications(token: string): Promise<TemplateSpecification[]> {
+  const params: {version?: string} = {version: templates.specification.remoteVersion}
   const result: RemoteTemplateSpecificationsQuerySchema = await partnersRequest(
     RemoteTemplateSpecificationsQuery,
     token,
+    params,
   )
   return result.templateSpecifications.map(mapRemoteTemplateSpecification)
 }
