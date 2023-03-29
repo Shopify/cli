@@ -76,3 +76,9 @@ export const extensionTypesGroups: {name: string; extensions: string[]}[] = [
     extensions: ['customer_accounts_ui_extension', 'ui_extension', 'order_routing_location_rule'],
   },
 ]
+
+export const templates = {
+  specification: {
+    remoteVersion: '1',
+  },
+} as const

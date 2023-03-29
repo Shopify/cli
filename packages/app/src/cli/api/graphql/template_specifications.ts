@@ -2,8 +2,8 @@ import {ExtensionFlavor} from '../../models/app/extensions.js'
 import {gql} from 'graphql-request'
 
 export const RemoteTemplateSpecificationsQuery = gql`
-  query {
-    templateSpecifications {
+  query RemoteTemplateSpecifications($version: String) {
+    templateSpecifications(version: $version) {
       identifier
       name
       group
