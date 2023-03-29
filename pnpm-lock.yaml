@@ -373,6 +373,7 @@ importers:
       eslint-plugin-tsdoc: ^0.2.17
       eslint-plugin-unused-imports: ^2.0.0
       eslint-plugin-vitest: ^0.0.57
+      execa: ^5.1.1
       prettier: 2.8.4
       typescript: 4.9.5
     dependencies:
@@ -391,6 +392,7 @@ importers:
       eslint-plugin-tsdoc: 0.2.17
       eslint-plugin-unused-imports: 2.0.0_zjrsl6t6z6b2zbgmkjo6jafrsq
       eslint-plugin-vitest: 0.0.57_pku7h6lsbnh7tcsfjudlqd5qce
+      execa: 5.1.1
     devDependencies:
       eslint: 8.28.0
       prettier: 2.8.4
@@ -6973,7 +6975,6 @@ packages:
       onetime: 5.1.2
       signal-exit: 3.0.7
       strip-final-newline: 2.0.0
-    dev: true
 
   /execa/6.0.0:
     resolution: {integrity: sha512-m4wU9j4Z9nXXoqT8RSfl28JSwmMNLFF69OON8H/lL3NeU0tNpGz313bcOfYoBBHokB0dC2tMl3VUcKgHELhL2Q==}
@@ -7892,7 +7893,6 @@ packages:
   /human-signals/2.1.0:
     resolution: {integrity: sha512-B4FFZ6q/T2jhhksgkbEW3HBvWIfDW85snkQgawt07S7J5QXTk6BkNV+0yAeZrM5QpMAdYlocGoljn0sJ/WQkFw==}
     engines: {node: '>=10.17.0'}
-    dev: true
 
   /human-signals/3.0.1:
     resolution: {integrity: sha512-rQLskxnM/5OCldHo+wNXbpVgDn5A17CUoKX+7Sokwaknlq7CdSnphy0W39GU8dw59XiCXmFXDg4fRuckQRKewQ==}
@@ -11350,7 +11350,6 @@ packages:
   /strip-final-newline/2.0.0:
     resolution: {integrity: sha512-BrpvfNAE3dcvq7ll3xVumzjKjZQ5tI1sEUIKr3Uoks0XUl45St3FlatVqef9prk4jRDzhW6WZg+3bk93y6pLjA==}
     engines: {node: '>=6'}
-    dev: true
 
   /strip-final-newline/3.0.0:
     resolution: {integrity: sha512-dOESqjYr96iWYylGObzd39EuNTa5VJxyvVAEm5Jnh7KGo75V43Hk1odPQkNDyXNmUR6k+gEiDVXnjB8HJ3crXw==}
@@ -12898,6 +12897,7 @@ packages:
       eslint-plugin-tsdoc: 0.2.17
       eslint-plugin-unused-imports: 2.0.0_zjrsl6t6z6b2zbgmkjo6jafrsq
       eslint-plugin-vitest: 0.0.57_pku7h6lsbnh7tcsfjudlqd5qce
+      execa: 5.1.1
     transitivePeerDependencies:
       - eslint-import-resolver-node
       - eslint-import-resolver-typescript
