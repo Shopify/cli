@@ -56,6 +56,9 @@ export async function deploy(options: DeployOptions) {
 
   let label: string | undefined
 
+  // if the command is run using a partnersToken then it is not possible to fetch the organization  In that case the new
+  // appUiDeployments flow is not triggered even if the org has the beta flag enabled. This should be fixed in the
+  // partners server side.
   if (organization?.betas.appUiDeployments) {
     label =
       options.label ??
@@ -144,7 +147,7 @@ export async function deploy(options: DeployOptions) {
       await outputCompletionMessage({
         app,
         partnersApp,
-        partnersOrganizationId: organization?.id ?? '',
+        partnersOrganizationId: partnersApp.organizationId,
         identifiers,
         registrations,
         validationErrors,

@@ -291,7 +291,7 @@ export async function ensureThemeExtensionDevContext(
 
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
   const token = await ensureAuthenticatedPartners()
-  const [partnersApp, envIdentifiers, organization] = await fetchAppAndIdentifiers(options, token, !usePartnersToken)
+  const [partnersApp, envIdentifiers, organization] = await fetchAppAndIdentifiers(options, token)
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
 
@@ -345,7 +345,6 @@ export async function fetchAppAndIdentifiers(
     apiKey?: string
   },
   token: string,
-  requiresOrg: boolean,
 ): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>, Organization | undefined]> {
   let envIdentifiers = getAppIdentifiers({app: options.app})
   let partnersApp: OrganizationApp | undefined
@@ -374,7 +373,9 @@ export async function fetchAppAndIdentifiers(
     organization = result.organization
   }
 
-  if (requiresOrg && !organization) {
+  // if the command is run using a partnersToken then it is not possible to fetch the organization information because
+  // that token has not enough permissions and the command break at this point with a not found organizations error.
+  if (!usePartnersToken() && !organization) {
     organization = await fetchOrgFromId(partnersApp.organizationId, token)
   }
 
@@ -541,7 +542,7 @@ async function logMetadataForLoadedDevContext(env: DevContextOutput) {
 
 async function logMetadataForLoadedDeployContext(env: DeployContextOutput) {
   await metadata.addPublicMetadata(() => ({
-    partner_id: tryParseInt(env.organization?.id || '0'),
+    partner_id: tryParseInt(env.partnersApp.organizationId),
     api_key: env.identifiers.app,
   }))
 }
