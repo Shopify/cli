@@ -52,19 +52,20 @@ describe('removeSession', () => {
 })
 
 describe('cacheRetrieveOrRepopulate', () => {
-  // flaky test
-  test.skip('returns the cached contents when they exist', async () => {
+  test('returns the cached contents when they exist', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
-      // populate the cache
-      await cacheRetrieveOrRepopulate('identity-introspection-url-IDENTITYURL', async () => 'URL1', 1000, config)
+      const cacheValue = {
+        'identity-introspection-url-IDENTITYURL': {value: 'URL1', timestamp: Date.now()},
+      }
+      config.set('cache', cacheValue)
 
       // When
       const got = await cacheRetrieveOrRepopulate(
         'identity-introspection-url-IDENTITYURL',
         async () => 'URL2',
-        1000,
+        60 * 1000,
         config,
       )
 
@@ -83,7 +84,7 @@ describe('cacheRetrieveOrRepopulate', () => {
       const got = await cacheRetrieveOrRepopulate(
         'identity-introspection-url-IDENTITYURL',
         async () => 'URL1',
-        1000,
+        60 * 1000,
         config,
       )
 
@@ -97,7 +98,7 @@ describe('cacheRetrieveOrRepopulate', () => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
       const cacheValue = {
-        'identity-introspection-url-IDENTITYURL': {value: 'URL1', timestamp: Date.now() - 3600 * 1000},
+        'identity-introspection-url-IDENTITYURL': {value: 'URL1', timestamp: Date.now() - 60 * 1000},
       }
       config.set('cache', cacheValue)
 
@@ -126,7 +127,7 @@ describe('cacheRetrieveOrRepopulate', () => {
       const got = await cacheRetrieveOrRepopulate(
         'identity-introspection-url-IDENTITYURL',
         async () => 'URL2',
-        3600 * 1000,
+        60 * 1000,
         config,
       )
 
