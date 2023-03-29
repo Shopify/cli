@@ -20,10 +20,10 @@ export interface AdminSession {
  * If SHOPIFY_CLI_PARTNERS_TOKEN exists, scopes will be ignored.
  *
  * @param scopes - Optional array of extra scopes to authenticate with.
- * @param env - Optional environment variables to use.
+ * @param _env - Optional environment variables to use.
  * @returns The access token for the Partners API.
  */
-export async function ensureAuthenticatedPartners(scopes: string[] = [], env = process.env): Promise<string> {
+export async function ensureAuthenticatedPartners(scopes: string[] = [], _env = process.env): Promise<string> {
   outputDebug(outputContent`Ensuring that the user is authenticated with the Partners API with the following scopes:
 ${outputToken.json(scopes)}
 `)

@@ -22,10 +22,10 @@ import {partnersRequest} from '../../public/node/api/partners.js'
 import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
 import {openURL} from '../../public/node/system.js'
 import {keypress} from '../../public/node/ui.js'
+import {getPartnersToken} from '../../public/node/environment.js'
 import {gql} from 'graphql-request'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputCompleted, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
-import {getPartnersToken} from '@shopify/cli-kit/node/environment'
 
 /**
  * A scope supported by the Shopify Admin API.
@@ -82,13 +82,13 @@ export interface OAuthSession {
  * This method ensures that we have a valid session to authenticate against the given applications using the provided scopes.
  *
  * @param applications - An object containing the applications we need to be authenticated with.
- * @param env - Optional environment variables to use.
+ * @param _env - Optional environment variables to use.
  * @param forceRefresh - Optional flag to force a refresh of the token.
  * @returns An instance with the access tokens organized by application.
  */
 export async function ensureAuthenticated(
   applications: OAuthApplications,
-  env = process.env,
+  _env?: NodeJS.ProcessEnv,
   forceRefresh = false,
 ): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
