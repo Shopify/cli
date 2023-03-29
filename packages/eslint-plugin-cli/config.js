@@ -119,7 +119,7 @@ module.exports = {
     '@shopify/cli/no-trailing-js-in-cli-kit-imports': 'error',
     '@shopify/cli/no-vi-manual-mock-clear': 'error',
     '@shopify/cli/no-vi-mock-in-callbacks': 'error',
-    '@shopify/cli/limit-number-of-named-exports': 'error',
+    '@shopify/cli/limit-number-of-named-exports': ['error', {maxExports: 10}],
     'no-restricted-syntax': [
       'error',
       {
