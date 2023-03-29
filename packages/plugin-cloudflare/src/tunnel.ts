@@ -13,7 +13,7 @@ export default startTunnel({provider: TUNNEL_PROVIDER, action: hookStart})
 export type ReturnType = Promise<Result<{url: string}, TunnelError>>
 
 // How much time to wait for a tunnel to be established. in seconds.
-const TUNNEL_TIMEOUT = isUnitTest() ? 0.2 : 20
+const TUNNEL_TIMEOUT = isUnitTest() ? 0.2 : 40
 
 export async function hookStart(port: number): ReturnType {
   try {
