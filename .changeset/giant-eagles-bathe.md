@@ -2,4 +2,4 @@
 '@shopify/app': patch
 ---
 
-Fix deploy command when the force flag is used
+Fix deploy command when the partners token is used. Now CD pipeline works but without unified deployment support
