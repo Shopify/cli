@@ -27,6 +27,7 @@ import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {usePartnersToken} from '@shopify/cli-kit/node/environment'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -290,7 +291,7 @@ export async function ensureThemeExtensionDevContext(
 
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
   const token = await ensureAuthenticatedPartners()
-  const [partnersApp, envIdentifiers, organization] = await fetchAppAndIdentifiers(options, token)
+  const [partnersApp, envIdentifiers, organization] = await fetchAppAndIdentifiers(options, token, !usePartnersToken)
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
 
@@ -342,9 +343,9 @@ export async function fetchAppAndIdentifiers(
     reset: boolean
     packageManager?: PackageManager
     apiKey?: string
-    force: boolean
   },
   token: string,
+  requiresOrg: boolean,
 ): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>, Organization | undefined]> {
   let envIdentifiers = getAppIdentifiers({app: options.app})
   let partnersApp: OrganizationApp | undefined
@@ -373,7 +374,7 @@ export async function fetchAppAndIdentifiers(
     organization = result.organization
   }
 
-  if (!organization && !options.force) {
+  if (requiresOrg && !organization) {
     organization = await fetchOrgFromId(partnersApp.organizationId, token)
   }
 

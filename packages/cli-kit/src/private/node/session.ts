@@ -15,7 +15,6 @@ import {IdentityToken, Session} from './session/schema.js'
 import * as secureStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {RequestClientError} from './api/headers.js'
-import {environmentVariables} from './constants.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import {firstPartyDev, useDeviceAuth} from '../../public/node/context/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
@@ -26,6 +25,7 @@ import {keypress} from '../../public/node/ui.js'
 import {gql} from 'graphql-request'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputCompleted, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
+import {getPartnersToken} from '@shopify/cli-kit/node/environment'
 
 /**
  * A scope supported by the Shopify Admin API.
@@ -139,7 +139,7 @@ ${outputToken.json(applications)}
   const tokens = await tokensFor(applications, completeSession, fqdn)
 
   // Overwrite partners token if using a custom CLI Token
-  const envToken = env[environmentVariables.partnersToken]
+  const envToken = getPartnersToken()
   if (envToken && applications.partnersApi) {
     tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
   }

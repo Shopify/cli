@@ -56,7 +56,7 @@ export async function deploy(options: DeployOptions) {
 
   let label: string | undefined
 
-  if (organization && organization.betas.appUiDeployments) {
+  if (organization?.betas.appUiDeployments) {
     label =
       options.label ??
       (await renderTextPrompt({

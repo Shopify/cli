@@ -1,10 +1,10 @@
 import {normalizeStoreFqdn} from './context/fqdn.js'
 import {BugError} from './error.js'
+import {getPartnersToken} from './environment.js'
 import * as secureStore from '../../private/node/session/store.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import {ensureAuthenticated} from '../../private/node/session.js'
-import {environmentVariables} from '../../private/node/constants.js'
 
 /**
  * Session Object to access the Admin API, includes the token and the store FQDN.
@@ -27,7 +27,7 @@ export async function ensureAuthenticatedPartners(scopes: string[] = [], env = p
   outputDebug(outputContent`Ensuring that the user is authenticated with the Partners API with the following scopes:
 ${outputToken.json(scopes)}
 `)
-  const envToken = env[environmentVariables.partnersToken]
+  const envToken = getPartnersToken()
   if (envToken) {
     return (await exchangeCustomPartnerToken(envToken)).accessToken
   }
