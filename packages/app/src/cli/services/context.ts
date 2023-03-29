@@ -27,6 +27,7 @@ import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {usePartnersToken} from '@shopify/cli-kit/node/environment'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -244,7 +245,7 @@ interface DeployContextOutput {
   token: string
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   identifiers: Identifiers
-  organization: Organization
+  organization: Organization | undefined
 }
 
 /**
@@ -344,7 +345,7 @@ export async function fetchAppAndIdentifiers(
     apiKey?: string
   },
   token: string,
-): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>, Organization]> {
+): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>, Organization | undefined]> {
   let envIdentifiers = getAppIdentifiers({app: options.app})
   let partnersApp: OrganizationApp | undefined
   let organization: Organization | undefined
@@ -372,7 +373,9 @@ export async function fetchAppAndIdentifiers(
     organization = result.organization
   }
 
-  if (!organization) {
+  // if the command is run using a partnersToken then it is not possible to fetch the organization information because
+  // that token has not enough permissions and the command break at this point with a not found organizations error.
+  if (!usePartnersToken() && !organization) {
     organization = await fetchOrgFromId(partnersApp.organizationId, token)
   }
 
@@ -539,7 +542,7 @@ async function logMetadataForLoadedDevContext(env: DevContextOutput) {
 
 async function logMetadataForLoadedDeployContext(env: DeployContextOutput) {
   await metadata.addPublicMetadata(() => ({
-    partner_id: tryParseInt(env.organization.id),
+    partner_id: tryParseInt(env.partnersApp.organizationId),
     api_key: env.identifiers.app,
   }))
 }

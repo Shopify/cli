@@ -1,10 +1,10 @@
 import {normalizeStoreFqdn} from './context/fqdn.js'
 import {BugError} from './error.js'
+import {getPartnersToken} from './environment.js'
 import * as secureStore from '../../private/node/session/store.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import {ensureAuthenticated} from '../../private/node/session.js'
-import {environmentVariables} from '../../private/node/constants.js'
 
 /**
  * Session Object to access the Admin API, includes the token and the store FQDN.
@@ -20,14 +20,14 @@ export interface AdminSession {
  * If SHOPIFY_CLI_PARTNERS_TOKEN exists, scopes will be ignored.
  *
  * @param scopes - Optional array of extra scopes to authenticate with.
- * @param env - Optional environment variables to use.
+ * @param _env - Optional environment variables to use.
  * @returns The access token for the Partners API.
  */
-export async function ensureAuthenticatedPartners(scopes: string[] = [], env = process.env): Promise<string> {
+export async function ensureAuthenticatedPartners(scopes: string[] = [], _env = process.env): Promise<string> {
   outputDebug(outputContent`Ensuring that the user is authenticated with the Partners API with the following scopes:
 ${outputToken.json(scopes)}
 `)
-  const envToken = env[environmentVariables.partnersToken]
+  const envToken = getPartnersToken()
   if (envToken) {
     return (await exchangeCustomPartnerToken(envToken)).accessToken
   }
