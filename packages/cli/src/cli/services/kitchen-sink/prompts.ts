@@ -110,12 +110,23 @@ export async function prompts() {
     ],
   ]
 
+  // renderConfirmationPrompt
   const options = {
-    message: `Delete the following themes from the store?`,
+    message: `Add the following themes to the store?`,
     infoTable: {'': themes},
-    confirmationMessage: 'Yes, confirm changes',
+    confirmationMessage: 'Yes, add them',
     cancellationMessage: 'Cancel',
   }
 
   await renderConfirmationPrompt(options)
+
+  const dangerousPromptOptions = {
+    message: `Delete the following themes from the store?`,
+    infoTable: {'': themes},
+    confirmationMessage: 'Yes, delete them',
+    cancellationMessage: 'Cancel',
+    defaultValue: false,
+  }
+
+  await renderConfirmationPrompt(dangerousPromptOptions)
 }
