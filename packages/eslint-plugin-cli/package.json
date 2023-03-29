@@ -14,12 +14,11 @@
   },
   "license": "MIT",
   "author": "Shopify Inc.",
-  "devDependencies": {
+  "dependencies": {
     "@babel/core": "^7.21.0",
     "@shopify/eslint-plugin": "42.0.3",
     "@typescript-eslint/eslint-plugin": "^5.54.0",
     "@typescript-eslint/parser": "^5.54.0",
-    "eslint": "^8.12.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-jsdoc": "^39.3.6",
@@ -30,9 +29,12 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-tsdoc": "^0.2.17",
     "eslint-plugin-unused-imports": "^2.0.0",
-    "eslint-plugin-vitest": "^0.0.57",
-    "prettier": "^2.8.4",
-    "typescript": "4.9.5"
+    "eslint-plugin-vitest": "^0.0.57"
+  },
+  "devDependencies": {
+    "eslint": "^8.12.0",
+    "typescript": "4.9.5",
+    "prettier": "2.8.4"
   },
   "peerDependencies": {
     "eslint": "^8.12.0"
