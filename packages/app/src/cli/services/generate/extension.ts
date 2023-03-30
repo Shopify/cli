@@ -13,7 +13,7 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
-import {renderTasks} from '@shopify/cli-kit/node/ui'
+import {renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository} from '@shopify/cli-kit/node/git'
 import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, moduleDirectory, relativizePath} from '@shopify/cli-kit/node/path'
@@ -106,8 +106,9 @@ async function uiExtensionInit({
   extensionFlavor,
   extensionDirectory,
 }: UIExtensionInitOptions) {
-  const tasks = [
-    {
+  const tasks: Task<unknown>[] = []
+  if (!app.usesWorkspaces) {
+    tasks.push({
       title: 'Installing dependencies',
       task: async () => {
         await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor)
@@ -118,7 +119,9 @@ async function uiExtensionInit({
           directory: app.directory,
         })
       },
-    },
+    })
+  }
+  tasks.concat([
     {
       title: `Generating ${specification.externalName} extension`,
       task: async () => {
@@ -147,7 +150,7 @@ async function uiExtensionInit({
         }
       },
     },
-  ]
+  ])
   await renderTasks(tasks)
 }
 
