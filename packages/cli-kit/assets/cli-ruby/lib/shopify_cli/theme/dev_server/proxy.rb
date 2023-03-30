@@ -28,7 +28,12 @@ module ShopifyCLI
         SESSION_COOKIE_NAME = "_secure_session_id"
         SESSION_COOKIE_REGEXP = /#{SESSION_COOKIE_NAME}=(\h+)/
         SESSION_COOKIE_MAX_AGE = 60 * 60 * 23 # 1 day - leeway of 1h
-        IGNORED_ENDPOINTS = ["shopify/monorail", "mini-profiler-resources", "web-pixels-manager"]
+        IGNORED_ENDPOINTS = %w[
+          shopify/monorail
+          mini-profiler-resources
+          web-pixels-manager
+          wpm
+        ]
 
         def initialize(ctx, theme, param_builder)
           @ctx = ctx
