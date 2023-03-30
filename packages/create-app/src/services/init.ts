@@ -76,10 +76,10 @@ async function init(options: InitOptions) {
           if (packageManager === 'pnpm') {
             await writeFile(
               joinPath(templateScaffoldDir, 'pnpm-workspace.yaml'),
-              `packages:\n  - 'web'\n  - 'extensions/*'\n`,
+              `packages:\n  - 'web'\n  - 'web/frontend'\n  - 'extensions/*'\n`,
             )
           } else {
-            packageJSON.workspaces = ['web', 'extensions/*']
+            packageJSON.workspaces = ['web', 'web/frontend', 'extensions/*']
           }
           await updateCLIDependencies({packageJSON, local: options.local, directory: templateScaffoldDir})
 
@@ -109,8 +109,7 @@ async function init(options: InitOptions) {
       {
         title: 'Installing dependencies',
         task: async () => {
-          const subtasks = await getDeepInstallNPMTasks({from: templateScaffoldDir, packageManager})
-          return subtasks
+          await getDeepInstallNPMTasks({from: templateScaffoldDir, packageManager})
         },
       },
       {
