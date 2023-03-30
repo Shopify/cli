@@ -1,4 +1,4 @@
-import {buildGraphqlTypes, bundleExtension, runJavy} from './build.js'
+import {buildGraphqlTypes, bundleExtension, runFunctionRunner, runJavy} from './build.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -148,6 +148,50 @@ describe('runJavy', () => {
         stderr,
         stdout,
         signal,
+      },
+    )
+  })
+})
+
+describe('runFunctionRunner', () => {
+  test('calls function runner to execute function locally', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+
+    // When
+    const got = runFunctionRunner(ourFunction, {json: false})
+
+    // Then
+    await expect(got).resolves.toBeUndefined()
+    expect(exec).toHaveBeenCalledWith(
+      'npm',
+      ['exec', '--', 'function-runner', '-f', joinPath(ourFunction.directory, 'dist/index.wasm')],
+      {
+        cwd: ourFunction.directory,
+        stderr: 'inherit',
+        stdin: 'inherit',
+        stdout: 'inherit',
+      },
+    )
+  })
+
+  test('calls function runner to execute function locally and return json', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+
+    // When
+    const got = runFunctionRunner(ourFunction, {json: true})
+
+    // Then
+    await expect(got).resolves.toBeUndefined()
+    expect(exec).toHaveBeenCalledWith(
+      'npm',
+      ['exec', '--', 'function-runner', '-f', joinPath(ourFunction.directory, 'dist/index.wasm'), '--json'],
+      {
+        cwd: ourFunction.directory,
+        stderr: 'inherit',
+        stdin: 'inherit',
+        stdout: 'inherit',
       },
     )
   })

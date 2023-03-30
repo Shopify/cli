@@ -535,6 +535,14 @@
           "hidden": false,
           "multiple": false,
           "default": "."
+        },
+        "json": {
+          "name": "json",
+          "type": "boolean",
+          "char": "j",
+          "description": "Log the run result as a JSON object.",
+          "hidden": false,
+          "allowNo": false
         }
       },
       "args": {}
