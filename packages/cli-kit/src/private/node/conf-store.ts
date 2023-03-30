@@ -65,7 +65,8 @@ type CacheValueForKey<TKey extends keyof Cache> = NonNullable<Cache[TKey]>['valu
  * before returning it.
  * @param key - The key to use for the cache.
  * @param fn - The function to run to get the value to cache, if a cache miss occurs.
- * @param timeout - The maximum valid age of a cached value, in milliseconds. If the cached value is older than this, it will be refreshed.
+ * @param timeout - The maximum valid age of a cached value, in milliseconds.
+ * If the cached value is older than this, it will be refreshed.
  * @returns The value from the cache or the result of the function.
  */
 export async function cacheRetrieveOrRepopulate(
@@ -77,7 +78,7 @@ export async function cacheRetrieveOrRepopulate(
   const cache: Cache = config.get('cache') || {}
   const cached = cache[key]
 
-  if (cached && (timeout === undefined || Date.now() - cached.timestamp < timeout)) {
+  if (cached?.value !== undefined && (timeout === undefined || Date.now() - cached.timestamp < timeout)) {
     return cached.value
   }
 
