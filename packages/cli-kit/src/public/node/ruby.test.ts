@@ -1,4 +1,4 @@
-import {execCLI2, MinWdmWindowsVersion, RubyCLIVersion} from './ruby.js'
+import {execCLI2, MinWdmWindowsVersion, RubyCLIVersion, bundleUserHome} from './ruby.js'
 import {captureOutput} from './system.js'
 import * as system from './system.js'
 import {platformAndArch} from './os.js'
@@ -18,6 +18,7 @@ vi.mock('./context/spin.js')
 
 beforeEach(() => {
   vi.mocked(getEnvironmentVariables).mockReturnValue({})
+  mockPlatformAndArch({windows: false})
 })
 
 describe('execCLI', () => {
@@ -181,6 +182,34 @@ describe('execCLI', () => {
       validateBundleExec(execSpy, gemfilePath, joinPath(cli2Directory, 'bin', 'shopify'), fqdn)
       await validateGemFileContent(gemfilePath, {bundled: false, windows: true})
     })
+  })
+
+  test('when we run bundler on Windows and there is a PUBLIC env var, we set BUNDLE_USER_HOME', async () => {
+    // Given
+    mockPlatformAndArch({windows: true})
+    vi.stubEnv('PUBLIC', 'root')
+
+    // When
+    expect(bundleUserHome()).toEqual(joinPath('root', 'AppData', 'Local', 'shopify-bundler-nodejs', 'Cache'))
+    vi.unstubAllEnvs()
+  })
+
+  test('when we run bundler on Windows and there is no PUBLIC env var, we dont set BUNDLE_USER_HOME', async () => {
+    // Given
+    mockPlatformAndArch({windows: true})
+    vi.stubEnv('PUBLIC', '')
+
+    // When
+    expect(bundleUserHome()).toBeUndefined()
+    vi.unstubAllEnvs()
+  })
+
+  test('when we run bundler on other OSes, we dont set BUNDLE_USER_HOME', async () => {
+    // Given
+    mockPlatformAndArch({windows: false})
+
+    // When
+    expect(bundleUserHome()).toBeUndefined()
   })
 })
 

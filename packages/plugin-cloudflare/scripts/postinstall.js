@@ -3,7 +3,7 @@ import * as path from 'path'
 import {fileURLToPath} from 'url'
 import util from 'util'
 import {pipeline} from 'stream'
-import {execSync} from 'child_process'
+import {execSync, execFileSync} from 'child_process'
 import {createHash} from 'node:crypto'
 import {chmodSync, existsSync, mkdirSync, renameSync, unlinkSync, createWriteStream, readFileSync} from 'fs'
 import fetch from 'node-fetch'
@@ -91,7 +91,7 @@ export default async function install() {
 
   if (existsSync(binTarget)) {
     // --version returns an string like "cloudflared version 2023.3.1 (built 2023-03-13-1444 UTC)"
-    const versionArray = execSync(`${binTarget} --version`, {encoding: 'utf8'}).split(' ')
+    const versionArray = execFileSync(binTarget, ['--version'], {encoding: 'utf8'}).split(' ')
     const versionNumber = versionArray.length > 2 ? versionArray[2] : '0.0.0'
     const needsUpdate = semver.gt(CLOUDFLARE_VERSION, versionNumber)
     if (!needsUpdate) {
