@@ -115,8 +115,13 @@ export async function runJavy(fun: FunctionExtension, options: JSFunctionBuildOp
   })
 }
 
-export async function runFunctionRunner(fun: FunctionExtension) {
-  return exec('npm', ['exec', '--', 'function-runner', '-f', fun.buildWasmPath], {
+interface FunctionRunnerOptions {
+  json: boolean
+}
+
+export async function runFunctionRunner(fun: FunctionExtension, options: FunctionRunnerOptions) {
+  const outputAsJson = options.json ? ['--json'] : []
+  return exec('npm', ['exec', '--', 'function-runner', '-f', fun.buildWasmPath, ...outputAsJson], {
     cwd: fun.directory,
     stdin: 'inherit',
     stdout: 'inherit',
