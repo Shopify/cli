@@ -1,6 +1,5 @@
 import {PackageManager, installNodeModules, PackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
-import {Task} from '@shopify/cli-kit/node/ui'
 import {moduleDirectory, normalizePath} from '@shopify/cli-kit/node/path'
 import {findPathUp} from '@shopify/cli-kit/node/fs'
 import {platform} from 'os'
@@ -64,11 +63,7 @@ export async function getDeepInstallNPMTasks({
 }: {
   from: string
   packageManager: PackageManager
-}): Promise<Task> {
-  const root = normalizePath(from)
-  // const filePath = joinPath(root, 'package.json')
-  // const folderPath = filePath.replace('package.json', '')
-
+}): Promise<void> {
   /**
    * Installation of dependencies using Yarn on Windows might lead
    * to "EPERM: operation not permitted, unlink" errors when Yarn tries
@@ -79,11 +74,5 @@ export async function getDeepInstallNPMTasks({
    * Reported issue: https://github.com/yarnpkg/yarn/issues/7212
    */
   const args = platform() === 'win32' && packageManager === 'yarn' ? ['--network-concurrency', '1'] : []
-  const title = 'Installing dependencies'
-  return {
-    title,
-    task: async () => {
-      await installNodeModules({directory: root, packageManager, args})
-    },
-  }
+  return installNodeModules({directory: normalizePath(from), packageManager, args})
 }
