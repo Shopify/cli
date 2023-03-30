@@ -3,6 +3,7 @@ import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {AppInterface} from '../../models/app/app.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
+import {Organization} from '../../models/organization.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -14,6 +15,7 @@ export interface EnsureDeploymentIdsPresenceOptions {
   appName: string
   envIdentifiers: Partial<Identifiers>
   force: boolean
+  organization?: Organization
 }
 
 export interface RemoteSource {

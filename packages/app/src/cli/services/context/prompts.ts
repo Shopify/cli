@@ -1,6 +1,7 @@
 import {LocalSource, RemoteSource} from './identifiers.js'
 import {LocalRemoteSource} from './id-matching.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
+import {Organization} from '../../models/organization.js'
 import {
   InfoTableSection,
   renderAutocompletePrompt,
@@ -40,7 +41,7 @@ interface SourceSummary {
   onlyRemote: RemoteSource[]
 }
 
-export async function deployConfirmationPrompt(summary: SourceSummary): Promise<boolean> {
+export async function deployConfirmationPrompt(summary: SourceSummary, organization?: Organization): Promise<boolean> {
   const infoTable: InfoTableSection[] = []
 
   if (summary.toCreate.length > 0) {
@@ -54,12 +55,20 @@ export async function deployConfirmationPrompt(summary: SourceSummary): Promise<
   }
 
   if (summary.onlyRemote.length > 0) {
-    infoTable.push({
+    let missingLocallySection: InfoTableSection = {
       header: 'Missing locally',
       items: summary.onlyRemote.map((source) => source.title),
-      color: 'red',
-      helperText: 'Extensions missing locally will be deleted when you publish this deployment',
-    })
+    }
+
+    if (organization?.betas.appUiDeployments) {
+      missingLocallySection = {
+        ...missingLocallySection,
+        color: 'red',
+        helperText: 'Extensions missing locally will be removed for users when you publish this deployment',
+      }
+    }
+
+    infoTable.push(missingLocallySection)
   }
 
   if (Object.keys(infoTable).length === 0) {
