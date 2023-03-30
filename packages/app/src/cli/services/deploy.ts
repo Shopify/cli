@@ -49,7 +49,7 @@ export async function deploy(options: DeployOptions) {
   let {app, identifiers, partnersApp, token} = await ensureDeployContext(options)
   const apiKey = identifiers.app
 
-  if (!options.app.hasExtensions() && !organization?.betas.appUiDeployments) {
+  if (!options.app.hasExtensions() && !partnersApp.betas?.unifiedAppDeployment) {
     renderInfo({headline: 'No extensions to deploy to Shopify Partners yet.'})
     return
   }

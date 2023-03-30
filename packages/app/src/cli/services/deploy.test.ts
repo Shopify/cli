@@ -1,8 +1,8 @@
 import {ensureDeployContext} from './context.js'
 import {deploy} from './deploy.js'
 import {uploadExtensionsBundle, uploadFunctionExtensions} from './deploy/upload.js'
-import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
+import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {testApp, testThemeExtensions, testUIExtension} from '../models/app/app.test-data.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
@@ -32,6 +32,49 @@ beforeEach(() => {
 })
 
 describe('deploy', () => {
+  test('deploys the app with no extensions and beta flag', async () => {
+    const app = testApp({extensions: {ui: [], theme: [], function: []}})
+    vi.mocked(renderTextPrompt).mockResolvedValueOnce('')
+
+    // When
+    await testDeployBundle(app, {
+      id: 'app-id',
+      organizationId: 'org-id',
+      title: 'app-title',
+      grantedScopes: [],
+      betas: {unifiedAppDeployment: true},
+    })
+
+    // Then
+    expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      apiKey: 'app-id',
+      extensions: [],
+      token: 'api-token',
+    })
+    expect(bundleAndBuildExtensions).not.toHaveBeenCalledOnce()
+    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
+    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
+  })
+
+  test("doesn't deploy the app with no extensions and no beta flag", async () => {
+    const app = testApp({extensions: {ui: [], theme: [], function: []}})
+
+    // When
+    await testDeployBundle(app, {
+      id: 'app-id',
+      organizationId: 'org-id',
+      title: 'app-title',
+      grantedScopes: [],
+      betas: {unifiedAppDeployment: false},
+    })
+
+    // Then
+    expect(uploadExtensionsBundle).not.toHaveBeenCalled()
+    expect(bundleAndBuildExtensions).not.toHaveBeenCalledOnce()
+    expect(updateAppIdentifiers).not.toHaveBeenCalledOnce()
+    expect(fetchAppExtensionRegistrations).not.toHaveBeenCalledOnce()
+  })
+
   test('uploads the extension bundle with 1 UI extension', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
@@ -47,6 +90,9 @@ describe('deploy', () => {
       extensions: [{uuid: uiExtension.localIdentifier, config: '{}', context: ''}],
       token: 'api-token',
     })
+    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
+    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
+    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
 
   test('uploads the extension bundle with 1 theme extension', async () => {
@@ -64,6 +110,9 @@ describe('deploy', () => {
       extensions: [{uuid: themeExtension.localIdentifier, config: '{"theme_extension": {"files": {}}}', context: ''}],
       token: 'api-token',
     })
+    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
+    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
+    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
 
   test('uploads the extension bundle with 1 UI and 1 theme extension', async () => {
@@ -85,6 +134,9 @@ describe('deploy', () => {
       ],
       token: 'api-token',
     })
+    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
+    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
+    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
 
   test('passes a label to the deployment mutation', async () => {
@@ -280,16 +332,10 @@ async function testDeployBundle(
   vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({app: {extensionRegistrations: [], functions: []}})
 
-  // When
   await deploy({
     app,
     reset: false,
     force: Boolean(options?.force),
     label: options?.label,
   })
-
-  // Then
-  expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
-  expect(updateAppIdentifiers).toHaveBeenCalledOnce()
-  expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
 }
