@@ -82,6 +82,19 @@ module ShopifyCLI
             times: 0)
         end
 
+        def test_new_webpixels_requests_are_ignored
+          path = "cli/sfr/wpm@0.0.264@24271aa3w5f39399apdce3a888m968cefc2/sandbox/worker.modern.js"
+          stub_session_id_request
+
+          request.get(path)
+
+          assert_requested(
+            :get,
+            "https://dev-theme-server-store.myshopify.com#{path}",
+            times: 0
+          )
+        end
+
         def test_get_is_proxied_to_theme_access_api_when_password_is_provided
           Environment.stubs(:theme_access_password?).returns(true)
           Environment.stubs(:store).returns("https://dev-theme-server-store.myshopify.com")
