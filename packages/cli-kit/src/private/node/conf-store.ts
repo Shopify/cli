@@ -78,7 +78,7 @@ export async function cacheRetrieveOrRepopulate(
   const cache: Cache = config.get('cache') || {}
   const cached = cache[key]
 
-  if (cached?.value && (timeout === undefined || Date.now() - cached.timestamp < timeout)) {
+  if (cached?.value !== undefined && (timeout === undefined || Date.now() - cached.timestamp < timeout)) {
     return cached.value
   }
 
