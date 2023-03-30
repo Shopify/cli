@@ -61,7 +61,7 @@ async function findThemesByDeleteOptions(adminSession: AdminSession, options: De
 
   const store = adminSession.storeFqdn
   const theme = await findOrSelectTheme(adminSession, {
-    header: `What theme do you want to delete from ${store}?`,
+    header: `Select a theme to delete from ${store}`,
     filter: {
       ...options,
     },
