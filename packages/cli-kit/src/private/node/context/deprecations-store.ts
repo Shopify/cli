@@ -1,15 +1,25 @@
 interface DeprecationsStore {
-  nextDeprecationDate: Date | undefined
+  nextDeprecation: Deprecation | undefined
 }
 
 interface GlobalWithDeprecationsStore {
   deprecationsStore: DeprecationsStore
 }
 
+interface SupportedUntilDateDeprecation {
+  date: Date
+}
+
+interface DeprecatingSoonDeprecation {
+  deprecatingSoon: boolean
+}
+
+export type Deprecation = SupportedUntilDateDeprecation | DeprecatingSoonDeprecation
+
 const globalWithDeprecationsStore: GlobalWithDeprecationsStore = {
   ...globalThis,
   deprecationsStore: {
-    nextDeprecationDate: undefined,
+    nextDeprecation: undefined,
   },
 }
 
@@ -18,8 +28,8 @@ const globalWithDeprecationsStore: GlobalWithDeprecationsStore = {
  *
  * @returns The next deprecation date.
  */
-export function getNextDeprecationDate(): Date | undefined {
-  return globalWithDeprecationsStore.deprecationsStore.nextDeprecationDate
+export function getDeprecation(): Deprecation | undefined {
+  return globalWithDeprecationsStore.deprecationsStore.nextDeprecation
 }
 
 /**
@@ -27,15 +37,28 @@ export function getNextDeprecationDate(): Date | undefined {
  *
  * @param dates - Dates when deprecations will no longer be supported.
  */
-export function setNextDeprecationDate(dates: Date[]): Date | undefined {
+export function setDeprecationDates(dates: Date[]) {
   if (dates.length < 1) return
 
   const earliestFutureDateTime = earliestDateTimeAfter(Date.now(), dates)
   if (!earliestFutureDateTime) return
 
-  const nextDeprecationDate = getNextDeprecationDate()
-  if (!nextDeprecationDate || earliestFutureDateTime < nextDeprecationDate.getTime()) {
-    globalWithDeprecationsStore.deprecationsStore.nextDeprecationDate = new Date(earliestFutureDateTime)
+  const nextDeprecation = getDeprecation()
+
+  if (typeof nextDeprecation !== 'undefined' && 'deprecatingSoon' in nextDeprecation) {
+    return
+  }
+
+  if (!nextDeprecation || earliestFutureDateTime < nextDeprecation.date.getTime()) {
+    globalWithDeprecationsStore.deprecationsStore.nextDeprecation = {
+      date: new Date(earliestFutureDateTime),
+    }
+  }
+}
+
+export function setDeprecatingSoon() {
+  globalWithDeprecationsStore.deprecationsStore.nextDeprecation = {
+    deprecatingSoon: true,
   }
 }
 

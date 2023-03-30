@@ -1,6 +1,6 @@
 import {graphqlRequest, GraphQLVariables, GraphQLResponse} from './graphql.js'
 import {partnersFqdn} from '../context/fqdn.js'
-import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
+import {setDeprecatingSoon, setDeprecationDates} from '../../../private/node/context/deprecations-store.js'
 import {gql} from 'graphql-request'
 
 /**
@@ -66,6 +66,7 @@ const ScriptServiceProxyQuery = gql`
 
 interface Deprecation {
   supportedUntilDate?: string
+  deprecatingSoon?: boolean
 }
 
 interface WithDeprecations {
@@ -82,11 +83,19 @@ export function handleDeprecations<T>(response: GraphQLResponse<T>): void {
   if (!response.extensions) return
 
   const deprecationDates: Date[] = []
+  let isDeprecatingSoon = false
   for (const deprecation of (response.extensions as WithDeprecations).deprecations) {
     if (deprecation.supportedUntilDate) {
       deprecationDates.push(new Date(deprecation.supportedUntilDate))
+    } else if (deprecation.deprecatingSoon) {
+      isDeprecatingSoon = true
+      break
     }
   }
 
-  setNextDeprecationDate(deprecationDates)
+  if (isDeprecatingSoon) {
+    setDeprecatingSoon()
+  } else {
+    setDeprecationDates(deprecationDates)
+  }
 }

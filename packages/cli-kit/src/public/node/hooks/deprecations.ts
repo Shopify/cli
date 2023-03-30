@@ -1,4 +1,4 @@
-import {getNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
+import {Deprecation, getDeprecation} from '../../../private/node/context/deprecations-store.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {Command} from '@oclif/core'
 
@@ -8,29 +8,36 @@ import {Command} from '@oclif/core'
  * @param Command - The class of the command that was run.
  */
 export const postrun = (Command: Command.Class): void => {
-  const nextDeprecationDate = getNextDeprecationDate()
-  if (nextDeprecationDate) {
+  const deprecation = getDeprecation()
+  if (deprecation) {
     const forThemes = Command?.id?.includes('theme')
-    renderUpgradeWarning(nextDeprecationDate, forThemes)
+    renderUpgradeWarning(deprecation, forThemes)
   }
 }
+
+const dateFormat = new Intl.DateTimeFormat('default', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+})
 
 /**
  * Renders a warning to upgrade to avoid using deprecated features
  * that will no longer be supported after the specified date.
  *
- * @param upgradeByDate - The earliest future date when deprecated features will no longer be supported.
+ * @param deprecation - The next deprecation.
  * @param forThemes - If true, references the upgrade link for themes, else for apps.
  */
-function renderUpgradeWarning(upgradeByDate: Date, forThemes?: boolean): void {
-  const dateFormat = new Intl.DateTimeFormat('default', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-  const formattedDate = dateFormat.format(upgradeByDate)
+function renderUpgradeWarning(deprecation: Deprecation, forThemes?: boolean): void {
+  let headline
 
-  const headline = `Upgrade to the latest CLI version by ${formattedDate}.`
+  if ('date' in deprecation) {
+    const formattedDate = dateFormat.format(deprecation.date)
+    headline = `Upgrade to the latest CLI version by ${formattedDate}`
+  } else {
+    headline = 'Upgrade to the latest CLI version'
+  }
+
   const body = 'This command requires an upgrade to continue working as intended.'
   const upgradeLink = {
     link: {
