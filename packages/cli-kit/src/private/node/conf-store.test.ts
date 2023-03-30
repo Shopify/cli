@@ -52,20 +52,20 @@ describe('removeSession', () => {
 })
 
 describe('cacheRetrieveOrRepopulate', () => {
-  // flaky test
-  // eslint-disable-next-line vitest/no-disabled-tests
-  test.skip('returns the cached contents when they exist', async () => {
+  test('returns the cached contents when they exist', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
-      // populate the cache
-      await cacheRetrieveOrRepopulate('identity-introspection-url-IDENTITYURL', async () => 'URL1', 1000, config)
+      const cacheValue = {
+        'identity-introspection-url-IDENTITYURL': {value: 'URL1', timestamp: Date.now()},
+      }
+      config.set('cache', cacheValue)
 
       // When
       const got = await cacheRetrieveOrRepopulate(
         'identity-introspection-url-IDENTITYURL',
         async () => 'URL2',
-        1000,
+        60 * 1000,
         config,
       )
 
@@ -80,13 +80,15 @@ describe('cacheRetrieveOrRepopulate', () => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
 
-      // Then
+      // When
       const got = await cacheRetrieveOrRepopulate(
         'identity-introspection-url-IDENTITYURL',
         async () => 'URL1',
-        1000,
+        60 * 1000,
         config,
       )
+
+      // Then
       expect(got).toEqual('URL1')
     })
   })
@@ -95,19 +97,42 @@ describe('cacheRetrieveOrRepopulate', () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
+      const cacheValue = {
+        'identity-introspection-url-IDENTITYURL': {value: 'URL1', timestamp: Date.now() - 60 * 1000},
+      }
+      config.set('cache', cacheValue)
 
       // When
-      // populate the cache
-      await cacheRetrieveOrRepopulate('identity-introspection-url-IDENTITYURL', async () => 'URL1', 1000, config)
-
-      // Then
       const got = await cacheRetrieveOrRepopulate(
         'identity-introspection-url-IDENTITYURL',
         async () => 'URL2',
         0,
         config,
       )
+
+      // Then
       // Fetches a new value because the old one is outdated per the current request
+      expect(got).toEqual('URL2')
+    })
+  })
+
+  test('re-derives the cached contents when the cache is invalid', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<any>({cwd})
+      const cacheValue = {'identity-introspection-url-IDENTITYURL': {value: undefined, timestamp: Date.now()}}
+      config.set('cache', cacheValue)
+
+      // When
+      const got = await cacheRetrieveOrRepopulate(
+        'identity-introspection-url-IDENTITYURL',
+        async () => 'URL2',
+        60 * 1000,
+        config,
+      )
+
+      // Then
+      // Fetches a new value because the old one is wrong
       expect(got).toEqual('URL2')
     })
   })

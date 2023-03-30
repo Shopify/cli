@@ -16,6 +16,7 @@ import {applicationId} from './session/identity.js'
 import * as fqdnModule from '../../public/node/context/fqdn.js'
 import {useDeviceAuth} from '../../public/node/context/local.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
+import {getPartnersToken} from '../../public/node/environment.js'
 import {vi, describe, expect, test, beforeEach} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)
@@ -91,6 +92,7 @@ vi.mock('./session/store')
 vi.mock('./session/validate')
 vi.mock('../../public/node/api/partners.js')
 vi.mock('../../store')
+vi.mock('../../public/node/environment.js')
 
 beforeEach(() => {
   vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue(fqdn)
@@ -180,11 +182,11 @@ describe('when existing session is valid', () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(secureFetch).mockResolvedValue(validSession)
-    const env = {SHOPIFY_CLI_PARTNERS_TOKEN: 'custom_cli_token'}
+    vi.mocked(getPartnersToken).mockReturnValue('custom_cli_token')
     const expected = {...validTokens, partners: 'custom_partners_token'}
 
     // When
-    const got = await ensureAuthenticated(defaultApplications, env)
+    const got = await ensureAuthenticated(defaultApplications)
 
     // Then
     expect(authorize).not.toHaveBeenCalled()
