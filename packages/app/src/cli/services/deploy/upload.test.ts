@@ -752,4 +752,35 @@ describe('uploadExtensionsBundle', () => {
       })
     })
   })
+
+  test('calls a mutation on partners when there are no extensions', async () => {
+    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
+    vi.mocked(partnersRequest).mockResolvedValueOnce({
+      deploymentCreate: {
+        deployment: {
+          deployedVersions: [],
+        },
+        id: '2',
+      },
+    })
+    const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
+    vi.mocked<any>(formData).mockReturnValue(mockedFormData)
+    vi.mocked(randomUUID).mockReturnValue('random-uuid')
+    // When
+    await uploadExtensionsBundle({
+      apiKey: 'app-id',
+      bundlePath: undefined,
+      extensions: [],
+      token: 'api-token',
+      label: 'Deployed with CLI',
+    })
+
+    // Then
+    expect(vi.mocked(partnersRequest).mock.calls[0]![2]!).toEqual({
+      apiKey: 'app-id',
+      label: 'Deployed with CLI',
+      uuid: 'random-uuid',
+    })
+    expect(partnersRequest).toHaveBeenCalledOnce()
+  })
 })
