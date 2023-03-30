@@ -3,6 +3,7 @@ import {isUnitTest, isVerbose} from './context/local.js'
 import {PackageManager} from './node-package-manager.js'
 import {AbortSignal} from './abort.js'
 import colors from '../../private/node/colors.js'
+import {isTruthy} from '../../private/node/context/utilities.js'
 import {
   ColorContentToken,
   CommandContentToken,
@@ -413,7 +414,7 @@ export function unstyled(message: string): string {
  * @returns True if the console outputs should display colors, false otherwise.
  */
 export function shouldDisplayColors(): boolean {
-  return Boolean(process.stdout.isTTY || process.env.FORCE_COLOR)
+  return Boolean(process.stdout.isTTY && isTruthy(process.env.FORCE_COLOR))
 }
 
 /**

@@ -1,4 +1,5 @@
 import {Flags} from '@oclif/core'
+import {isTruthy} from '../../private/node/context/utilities.js'
 
 /**
  * IMPORTANT NOTE: Imports in this module are dynamic to ensure that "setupEnvironmentVariables" can dynamically
@@ -26,7 +27,11 @@ function setupEnvironmentVariables(options: Pick<RunCLIOptions, 'development'>) 
 }
 
 function forceNoColor() {
-  if (process.argv.includes('--no-color') || process.env.NO_COLOR || process.env.TERM === 'dumb') {
+  if (process.argv.includes('--no-color') ||
+    isTruthy(process.env.NO_COLOR) ||
+    isTruthy(process.env.SHOPIFY_FLAG_NO_COLOR) ||
+    process.env.TERM === 'dumb'
+  ) {
     process.env.FORCE_COLOR = '0'
   }
 }
@@ -80,7 +85,6 @@ export async function runCreateCLI(options: RunCLIOptions): Promise<void> {
 }
 
 export async function useLocalCLIIfDetected(filepath: string): Promise<boolean> {
-  const {isTruthy} = await import('../../private/node/context/utilities.js')
   const {environmentVariables} = await import('../../private/node/constants.js')
   const {joinPath: join} = await import('./path.js')
   const {exec} = await import('./system.js')
