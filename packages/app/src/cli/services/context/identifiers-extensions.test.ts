@@ -134,6 +134,12 @@ const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExte
   })
 }
 
+const ORGANIZATION = {
+  id: '1',
+  businessName: 'org1',
+  betas: {appUiDeployments: true},
+}
+
 const options = (uiExtensions: UIExtension[], identifiers: any = {}) => {
   return {
     app: LOCAL_APP(uiExtensions),
@@ -142,6 +148,7 @@ const options = (uiExtensions: UIExtension[], identifiers: any = {}) => {
     appName: 'appName',
     envIdentifiers: {extensions: identifiers},
     force: false,
+    organization: ORGANIZATION,
   }
 }
 
@@ -405,15 +412,18 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
     const got = await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
 
     // Then
-    expect(deployConfirmationPrompt).toBeCalledWith({
-      question: 'Make the following changes to your extensions in Shopify Partners?',
-      identifiers: {
-        EXTENSION_A: 'UUID_A',
-        EXTENSION_A_2: 'UUID_A_2',
+    expect(deployConfirmationPrompt).toBeCalledWith(
+      {
+        question: 'Make the following changes to your extensions in Shopify Partners?',
+        identifiers: {
+          EXTENSION_A: 'UUID_A',
+          EXTENSION_A_2: 'UUID_A_2',
+        },
+        onlyRemote: [],
+        toCreate: [],
       },
-      onlyRemote: [],
-      toCreate: [],
-    })
+      ORGANIZATION,
+    )
   })
 
   test('skips confirmation prompt if --force is passed', async () => {
