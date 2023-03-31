@@ -31,7 +31,7 @@ export interface FindAppQuerySchema {
     appType: string
     grantedScopes: string[]
     betas?: {
-      unifiedAppDeployment: boolean
+      unifiedAppDeployment?: boolean
     }
   }
 }
