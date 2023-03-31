@@ -8,7 +8,7 @@ export const FindOrganizationQuery = gql`
         businessName
         website
         betas {
-          appUiDeployments
+          cliTunnelAlternative
         }
         apps(first: 25, title: $title) {
           pageInfo {
@@ -32,7 +32,7 @@ export interface FindOrganizationQuerySchema {
       businessName: string
       website: string
       betas: {
-        appUiDeployments?: boolean
+        cliTunnelAlternative?: boolean
       }
       apps: {
         pageInfo: {

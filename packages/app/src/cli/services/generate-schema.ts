@@ -33,7 +33,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
       )
     }
 
-    apiKey = (await fetchOrganizationAndFetchOrCreateApp(app, token)).partnersApp.apiKey
+    apiKey = (await fetchOrganizationAndFetchOrCreateApp(app, token)).apiKey
   }
 
   const query = ApiSchemaDefinitionQuery
