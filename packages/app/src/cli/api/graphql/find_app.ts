@@ -12,6 +12,9 @@ export const FindAppQuery = gql`
       }
       appType
       grantedScopes
+      betas {
+        unifiedAppDeployment
+      }
     }
   }
 `
@@ -27,5 +30,8 @@ export interface FindAppQuerySchema {
     }[]
     appType: string
     grantedScopes: string[]
+    betas?: {
+      unifiedAppDeployment: boolean
+    }
   }
 }
