@@ -1,5 +1,3 @@
-import {environmentVariables} from '../../private/node/constants.js'
-
 /**
  * It returns the environment variables of the environment
  * where the Node process is running.
@@ -12,22 +10,4 @@ import {environmentVariables} from '../../private/node/constants.js'
  */
 export function getEnvironmentVariables(): NodeJS.ProcessEnv {
   return process.env
-}
-
-/**
- * Returns the value of the SHOPIFY_CLI_PARTNERS_TOKEN environment variable.
- *
- * @returns Current process environment variables.
- */
-export function getPartnersToken(): string | undefined {
-  return getEnvironmentVariables()[environmentVariables.partnersToken]
-}
-
-/**
- * Check if the current proccess is running using the partners token.
- *
- * @returns True if the current proccess is running using the partners token.
- */
-export function usePartnersToken(): boolean {
-  return getPartnersToken() !== undefined
 }

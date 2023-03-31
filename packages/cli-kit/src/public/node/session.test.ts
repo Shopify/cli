@@ -5,7 +5,6 @@ import {
   ensureAuthenticatedThemes,
 } from './session.js'
 
-import {getPartnersToken} from './environment.js'
 import {ApplicationToken} from '../../private/node/session/schema.js'
 import {ensureAuthenticated} from '../../private/node/session.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
@@ -22,7 +21,6 @@ const partnersToken: ApplicationToken = {
 vi.mock('../../private/node/session.js')
 vi.mock('../../private/node/session/exchange.js')
 vi.mock('../../private/node/session/store.js')
-vi.mock('./environment.js')
 
 describe('ensureAuthenticatedStorefront', () => {
   test('returns only storefront token if success', async () => {
@@ -109,10 +107,10 @@ describe('ensureAuthenticatedPartners', () => {
     // Given
     vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token'})
     vi.mocked(exchangeCustomPartnerToken).mockResolvedValueOnce(partnersToken)
-    vi.mocked(getPartnersToken).mockReturnValue('custom_cli_token')
+    const env = {SHOPIFY_CLI_PARTNERS_TOKEN: 'custom_cli_token'}
 
     // When
-    const got = await ensureAuthenticatedPartners([])
+    const got = await ensureAuthenticatedPartners([], env)
 
     // Then
     expect(got).toEqual('custom_partners_token')
