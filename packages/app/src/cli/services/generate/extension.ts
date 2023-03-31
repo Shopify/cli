@@ -121,36 +121,38 @@ async function uiExtensionInit({
       },
     })
   }
-  tasks.concat([
-    {
-      title: `Generating ${specification.externalName} extension`,
-      task: async () => {
-        const templateDirectory =
-          specification.templatePath ??
-          (await findPathUp(`templates/ui-extensions/projects/${specification.identifier}`, {
-            type: 'directory',
-            cwd: moduleDirectory(import.meta.url),
-          }))
+  tasks.push(
+    ...[
+      {
+        title: `Generating ${specification.externalName} extension`,
+        task: async () => {
+          const templateDirectory =
+            specification.templatePath ??
+            (await findPathUp(`templates/ui-extensions/projects/${specification.identifier}`, {
+              type: 'directory',
+              cwd: moduleDirectory(import.meta.url),
+            }))
 
-        if (!templateDirectory) {
-          throw new BugError(`Couldn't find the template for '${specification.externalName}'`)
-        }
+          if (!templateDirectory) {
+            throw new BugError(`Couldn't find the template for '${specification.externalName}'`)
+          }
 
-        const srcFileExtension = getSrcFileExtension(extensionFlavor ?? 'vanilla-js')
-        await recursiveLiquidTemplateCopy(templateDirectory, extensionDirectory, {
-          srcFileExtension,
-          flavor: extensionFlavor ?? '',
-          type: specification.identifier,
-          name,
-        })
+          const srcFileExtension = getSrcFileExtension(extensionFlavor ?? 'vanilla-js')
+          await recursiveLiquidTemplateCopy(templateDirectory, extensionDirectory, {
+            srcFileExtension,
+            flavor: extensionFlavor ?? '',
+            type: specification.identifier,
+            name,
+          })
 
-        if (extensionFlavor) {
-          await changeIndexFileExtension(extensionDirectory, srcFileExtension)
-          await removeUnwantedTemplateFilesPerFlavor(extensionDirectory, extensionFlavor)
-        }
+          if (extensionFlavor) {
+            await changeIndexFileExtension(extensionDirectory, srcFileExtension)
+            await removeUnwantedTemplateFilesPerFlavor(extensionDirectory, extensionFlavor)
+          }
+        },
       },
-    },
-  ])
+    ],
+  )
   await renderTasks(tasks)
 }
 
