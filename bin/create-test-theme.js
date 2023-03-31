@@ -14,8 +14,6 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const homeDir = os.homedir()
 const today = new Date().toISOString().split("T")[0]
-const themeName = `nightly-theme-${today}`
-const themePath = path.join(homeDir, "Desktop", themeName)
 
 const installationTypes = os.platform() == "darwin" ? ["homebrew", "local", "npm"] : ["local", "npm"]
 
@@ -31,13 +29,27 @@ program
     `your dev store's name (e.g. my-awesome-dev-store)`
   )
   .option(
+    "--name <name>",
+    "name of your theme. It will be placed on your Desktop",
+    `nightly-theme-${today}`
+  )
+  .option(
     "--cleanup",
     "delete temp theme and nightly dependencies afterwards",
     false
   )
   .action(async (options) => {
+    // helpers
+    const log = (message) => {
+      console.log(`\r\n🧪 ${message}`)
+    }
+
+    // main
     let shopifyExec
     let defaultOpts = { stdio: "inherit" }
+
+    const themeName = options.name
+    const themePath = path.join(homeDir, "Desktop", themeName)
 
     delete process.env.GEM_HOME
     delete process.env.GEM_PATH
@@ -147,8 +159,3 @@ program
 
 // run it
 program.parse()
-
-// helpers
-function log(message) {
-  console.log(`\r\n🧪 ${message}`)
-}
