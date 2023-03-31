@@ -28,7 +28,6 @@ export interface GraphQLResponseOptions<T> {
 /**
  * Executes a GraphQL query to an endpoint.
  *
- *
  * @param options - GraphQL request options.
  * @returns The response of the query of generic type <T>.
  */
