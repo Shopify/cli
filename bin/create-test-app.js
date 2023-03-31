@@ -15,8 +15,6 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const homeDir = os.homedir()
 const today = new Date().toISOString().split("T")[0]
-const appName = `nightly-app-${today}`
-const appPath = path.join(homeDir, "Desktop", appName)
 
 const installationTypes = ["local", "nightly"]
 const extensionTypes = ["ui", "theme", "function"]
@@ -34,6 +32,11 @@ program
     extensionTypes.join(",")
   )
   .option(
+    "--name <name>",
+    "name of your app. It will be placed on your Desktop",
+    `nightly-app-${today}`
+  )
+  .option(
     "--cleanup",
     "delete temp app afterwards",
     false
@@ -44,9 +47,29 @@ program
     false
   )
   .action(async (options) => {
+    // helpers
+    const log = (message) => {
+      console.log(`\r\n🧪 ${message}`)
+    }
+
+    const appExec = async (command, args, options = {}) => {
+      const defaults = { cwd: appPath, stdio: "inherit" }
+      await execa(command, args, { ...defaults, ...options })
+    }
+
+    const pnpmDev = async () => {
+      try {
+        await appExec("pnpm", ["run", "dev"])
+      } catch (error) {}
+    }
+
+    // main
     let shopifyExec
     let defaultOpts = { stdio: "inherit" }
     let extensions = new Set(options.extensions.split(","))
+
+    const appName = options.name
+    const appPath = path.join(homeDir, "Desktop", appName)
 
     switch (options.install) {
       case "local":
@@ -91,11 +114,6 @@ program
       default:
         log(`Invalid installation type: ${options.install}. Must be one of ${installationTypes.join(", ")}.`)
         process.exit(1)
-    }
-
-    if (extensions.length === extensionTypes.length) {
-      log("Running the app...")
-      await pnpmDev()
     }
 
     if (extensions.has("ui")) {
@@ -158,19 +176,3 @@ program
 
 // run it
 program.parse()
-
-// helpers
-function log(message) {
-  console.log(`\r\n🧪 ${message}`)
-}
-
-async function appExec(command, args, options = {}) {
-  const defaults = { cwd: appPath, stdio: "inherit" }
-  await execa(command, args, { ...defaults, ...options })
-}
-
-async function pnpmDev() {
-  try {
-    await appExec("pnpm", ["run", "dev"])
-  } catch (error) {}
-}
