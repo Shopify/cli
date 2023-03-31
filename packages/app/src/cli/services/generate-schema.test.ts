@@ -78,19 +78,12 @@ describe('generateSchemaService', () => {
     beforeEach(async () => {
       getAppIdentifiers.mockReturnValue({app: identifiersApiKey})
       fetchOrganizationAndFetchOrCreateApp.mockResolvedValue({
-        partnersApp: {
-          id: 'id',
-          title: 'title',
-          apiKey: promptApiKey,
-          organizationId: '1',
-          apiSecretKeys: [],
-          grantedScopes: [],
-        },
-        organization: {
-          id: '1',
-          businessName: 'businessName',
-          betas: {},
-        },
+        id: 'id',
+        title: 'title',
+        apiKey: promptApiKey,
+        organizationId: '1',
+        apiSecretKeys: [],
+        grantedScopes: [],
       })
       vi.mocked(isTerminalInteractive).mockReturnValue(true)
     })
