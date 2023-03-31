@@ -1,7 +1,7 @@
+import {graphqlRequest, GraphQLVariables} from './graphql.js'
 import {AdminSession} from '../session.js'
 import {outputContent, outputToken} from '../../../public/node/output.js'
 import {BugError, AbortError} from '../error.js'
-import {graphqlRequest, GraphQLVariables} from '../../../private/node/api/graphql.js'
 import {restRequestBody, restRequestHeaders, restRequestUrl} from '../../../private/node/api/rest.js'
 import {fetch} from '../http.js'
 import {ClientError, gql} from 'graphql-request'
@@ -18,7 +18,7 @@ export async function adminRequest<T>(query: string, session: AdminSession, vari
   const api = 'Admin'
   const version = await fetchApiVersion(session)
   const url = adminUrl(session.storeFqdn, version)
-  return graphqlRequest(query, api, url, session.token, variables)
+  return graphqlRequest({query, api, url, token: session.token, variables})
 }
 
 /**
@@ -31,7 +31,14 @@ async function fetchApiVersion(session: AdminSession): Promise<string> {
   const url = adminUrl(session.storeFqdn, 'unstable')
   const query = apiVersionQuery()
   try {
-    const data: ApiVersionResponse = await graphqlRequest(query, 'Admin', url, session.token, {}, {handleErrors: false})
+    const data: ApiVersionResponse = await graphqlRequest({
+      query,
+      api: 'Admin',
+      url,
+      token: session.token,
+      variables: {},
+      responseOptions: {handleErrors: false},
+    })
 
     return data.publicApiVersions
       .filter((item) => item.supported)

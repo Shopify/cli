@@ -1,5 +1,5 @@
+import {graphqlRequest, GraphQLVariables, GraphQLResponse} from './graphql.js'
 import {partnersFqdn} from '../context/fqdn.js'
-import {graphqlRequest, GraphQLVariables, GraphQLResponse} from '../../../private/node/api/graphql.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {gql} from 'graphql-request'
 
@@ -15,7 +15,14 @@ export async function partnersRequest<T>(query: string, token: string, variables
   const api = 'Partners'
   const fqdn = await partnersFqdn()
   const url = `https://${fqdn}/api/cli/graphql`
-  return graphqlRequest(query, api, url, token, variables, {onResponse: handleDeprecations})
+  return graphqlRequest({
+    query,
+    api,
+    url,
+    token,
+    variables,
+    responseOptions: {onResponse: handleDeprecations},
+  })
 }
 
 interface ProxyResponse {
