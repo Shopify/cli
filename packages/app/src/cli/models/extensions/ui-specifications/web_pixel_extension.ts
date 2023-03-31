@@ -26,8 +26,8 @@ const spec = createUIExtensionSpecification({
       runtime_configuration_definition: config.settings,
     }
   },
-  preDeployValidation: (config) => {
-    if (config.configuration) {
+  preDeployValidation: async (extension) => {
+    if (extension.configuration.configuration) {
       throw new AbortError(
         `The property configuration is deprecated and no longer supported.`,
         `It has been replaced by settings.`,
