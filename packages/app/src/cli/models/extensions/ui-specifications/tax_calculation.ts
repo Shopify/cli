@@ -17,6 +17,7 @@ const spec = createUIExtensionSpecification({
       production_api_base_url: config.productionApiBaseUrl,
       benchmark_api_base_url: config.benchmarkApiBaseUrl,
       calculate_taxes_api_endpoint: config.calculateTaxesApiEndpoint,
+      metafields: config.metafields,
     }
   },
 })
