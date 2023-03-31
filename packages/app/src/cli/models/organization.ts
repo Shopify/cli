@@ -2,7 +2,7 @@ export interface Organization {
   id: string
   businessName: string
   website?: string
-  betas: {
+  betas?: {
     cliTunnelAlternative?: boolean
   }
 }
