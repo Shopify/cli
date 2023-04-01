@@ -55,7 +55,7 @@
   "devDependencies": {
     "@types/node": "14.18.36",
     "vite": "^2.9.13",
-    "vitest": "^0.28.5"
+    "vitest": "^0.29.8"
   },
   "engines": {
     "node": ">=14.17.0"
