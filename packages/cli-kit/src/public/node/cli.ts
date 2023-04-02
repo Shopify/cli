@@ -1,5 +1,5 @@
-import {Flags} from '@oclif/core'
 import {isTruthy} from '../../private/node/context/utilities.js'
+import {Flags} from '@oclif/core'
 
 /**
  * IMPORTANT NOTE: Imports in this module are dynamic to ensure that "setupEnvironmentVariables" can dynamically
@@ -27,7 +27,8 @@ function setupEnvironmentVariables(options: Pick<RunCLIOptions, 'development'>) 
 }
 
 function forceNoColor() {
-  if (process.argv.includes('--no-color') ||
+  if (
+    process.argv.includes('--no-color') ||
     isTruthy(process.env.NO_COLOR) ||
     isTruthy(process.env.SHOPIFY_FLAG_NO_COLOR) ||
     process.env.TERM === 'dumb'

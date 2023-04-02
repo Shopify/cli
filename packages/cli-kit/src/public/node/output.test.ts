@@ -19,7 +19,7 @@ describe('Color disabling', () => {
     const pseudoProcess = {
       ...process,
       env,
-      stdout: Object.create(process.stdout)
+      stdout: Object.create(process.stdout),
     }
     pseudoProcess.stdout.isTTY = stdoutIsTTY
     return pseudoProcess
@@ -34,14 +34,14 @@ describe('Color disabling', () => {
   })
 
   test('disables colors when FORCE_COLOR is truthy', () => {
-    expect(shouldDisplayColors(processLike({env: {'FORCE_COLOR': '1'}, stdoutIsTTY: true}))).toEqual(true)
+    expect(shouldDisplayColors(processLike({env: {FORCE_COLOR: '1'}, stdoutIsTTY: true}))).toEqual(true)
   })
 
   test('enables colors when FORCE_COLOR is falsy', () => {
-    expect(shouldDisplayColors(processLike({env: {'FORCE_COLOR': '0'}, stdoutIsTTY: true}))).toEqual(false)
+    expect(shouldDisplayColors(processLike({env: {FORCE_COLOR: '0'}, stdoutIsTTY: true}))).toEqual(false)
   })
 
   test('enables colors when FORCE_COLOR is truthy even in a non-TTY environment', () => {
-    expect(shouldDisplayColors(processLike({env: {'FORCE_COLOR': '1'}, stdoutIsTTY: false}))).toEqual(true)
+    expect(shouldDisplayColors(processLike({env: {FORCE_COLOR: '1'}, stdoutIsTTY: false}))).toEqual(true)
   })
 })

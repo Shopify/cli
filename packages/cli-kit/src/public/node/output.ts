@@ -411,9 +411,11 @@ export function unstyled(message: string): string {
 /**
  * Checks if the console outputs should display colors or not.
  *
+ * @param _process - Optional, the process-like object to use to check if the console should display colors. Defaults to the global process.
  * @returns True if the console outputs should display colors, false otherwise.
  */
-export function shouldDisplayColors({env, stdout} = process): boolean {
+export function shouldDisplayColors(_process = process): boolean {
+  const {env, stdout} = _process
   if (Object.hasOwnProperty.call(env, 'FORCE_COLOR')) {
     return isTruthy(env.FORCE_COLOR)
   } else {
