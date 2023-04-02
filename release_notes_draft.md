@@ -52,6 +52,9 @@ their system gem directory.
 
 * ***Resizable select prompts.*** The height of select prompts adjusts to the
 height of the terminal, so that prompts won't be cut off in shorter terminals.
+* ***No-color mode.*** You can use the `NO_COLOR=1` environment variable or
+`--no-color` flag to disable color in the CLI. Note that there is only partial
+support for some commands thus far.
 * ***Fix: Log output utf8 support.*** Special characters were appearing strangely
 in subprocess logs, now they are correctly rendered using utf8.
 * ***Fix: Duplicated taskbar.*** Swallow return key presses so they don't cause
