@@ -10,6 +10,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -58,6 +65,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -121,6 +135,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -257,6 +278,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -305,6 +333,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -418,6 +453,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -460,6 +502,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -494,6 +543,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -521,6 +577,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -556,6 +619,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -590,6 +660,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -620,6 +697,13 @@
         "<%= config.bin %> <%= command.id %>"
       ],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -711,6 +795,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -749,6 +840,13 @@
         "<%= config.bin %> <%= command.id %>"
       ],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
