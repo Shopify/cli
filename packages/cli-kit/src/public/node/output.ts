@@ -413,8 +413,12 @@ export function unstyled(message: string): string {
  *
  * @returns True if the console outputs should display colors, false otherwise.
  */
-export function shouldDisplayColors(): boolean {
-  return Boolean(process.stdout.isTTY && isTruthy(process.env.FORCE_COLOR))
+export function shouldDisplayColors({env, stdout} = process): boolean {
+  if (Object.hasOwnProperty.call(env, 'FORCE_COLOR')) {
+    return isTruthy(env.FORCE_COLOR)
+  } else {
+    return Boolean(stdout.isTTY)
+  }
 }
 
 /**
