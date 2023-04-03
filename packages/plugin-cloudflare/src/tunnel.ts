@@ -1,7 +1,8 @@
 import {TUNNEL_PROVIDER} from './provider.js'
-import {startTunnel, TunnelError} from '@shopify/cli-kit/node/plugins/tunnel'
-import {err, ok, Result} from '@shopify/cli-kit/node/result'
+import {startTunnel, TunnelError, TunnelStatusType} from '@shopify/cli-kit/node/plugins/tunnel'
+import {err} from '@shopify/cli-kit/node/result'
 import {exec} from '@shopify/cli-kit/node/system'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -10,15 +11,17 @@ import {fileURLToPath} from 'url'
 
 export default startTunnel({provider: TUNNEL_PROVIDER, action: hookStart})
 
-export type ReturnType = Promise<Result<{url: string}, TunnelError>>
-
 // How much time to wait for a tunnel to be established. in seconds.
 const TUNNEL_TIMEOUT = isUnitTest() ? 0.2 : 40
 
-export async function hookStart(port: number): ReturnType {
+let currentStatus: TunnelStatusType = {status: 'not-started'}
+
+export const getCurrentStatus = () => currentStatus
+export const abortController = new AbortController()
+
+export async function hookStart(port: number) {
   try {
-    const {url} = await tunnel({port})
-    return ok({url})
+    return tunnel({port})
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
     const tunnelError = new TunnelError('unknown', error.message)
@@ -26,45 +29,48 @@ export async function hookStart(port: number): ReturnType {
   }
 }
 
-async function tunnel(options: {port: number}): Promise<{url: string}> {
+function tunnel(options: {port: number}): void {
   const args: string[] = ['tunnel', '--url', `http://localhost:${options.port}`, '--no-autoupdate']
   const errors: string[] = []
 
   let connected = false
   let resolved = false
   let url: string | undefined
+  currentStatus = {status: 'starting'}
 
-  return new Promise<{url: string}>((resolve, reject) => {
-    setTimeout(() => {
-      if (!resolved) {
-        resolved = true
-        const lastErrors = errors.slice(-5).join('\n')
-        reject(new Error(`Timed out while creating a cloudflare tunnel: ${lastErrors}`))
-      }
-    }, TUNNEL_TIMEOUT * 1000)
+  setTimeout(() => {
+    if (!resolved) {
+      resolved = true
+      const lastErrors = errors.slice(-5).join('\n')
+      currentStatus = {status: 'error', message: lastErrors}
+    }
+  }, TUNNEL_TIMEOUT * 1000)
 
-    const customStdout = new Writable({
-      write(chunk, _, callback) {
-        outputDebug(chunk.toString())
-        if (resolved) return
-        if (!url) url = findUrl(chunk)
-        if (findConnection(chunk)) connected = true
-        if (connected) {
-          if (!url) return reject(new Error('A connection was established but no Tunnel URL was found'))
+  const customStdout = new Writable({
+    write(chunk, _, callback) {
+      outputDebug(chunk.toString())
+      if (resolved) return
+      if (!url) url = findUrl(chunk)
+      if (findConnection(chunk)) connected = true
+      if (connected) {
+        if (url) {
           resolved = true
-          resolve({url})
+          currentStatus = {status: 'connected', url}
+        } else {
+          currentStatus = {status: 'error', message: 'Could not find tunnel url'}
         }
-        const errorMessage = findError(chunk)
-        if (errorMessage) errors.push(errorMessage)
-        callback()
-      },
-    })
+      }
+      const errorMessage = findError(chunk)
+      if (errorMessage) errors.push(errorMessage)
+      callback()
+    },
+  })
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    exec(getBinPathTarget(), args, {
-      stdout: customStdout,
-      stderr: customStdout,
-    })
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+  exec(getBinPathTarget(), args, {
+    stdout: customStdout,
+    stderr: customStdout,
+    signal: abortController.signal,
   })
 }
 

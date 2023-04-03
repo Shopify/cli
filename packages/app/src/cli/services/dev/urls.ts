@@ -19,10 +19,9 @@ export interface PartnersURLs {
 
 export interface FrontendURLOptions {
   app: AppInterface
-  tunnelProvider?: string
+  tunnelProvider: string
   noTunnel: boolean
   tunnelUrl?: string
-  useCloudflareTunnels: boolean
   commandConfig: Config
 }
 
@@ -84,17 +83,14 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     frontendUrl = 'http://localhost'
     usingLocalhost = true
   } else {
-    frontendPort = await getAvailableTCPPort()
-    const defaultProvider = options.useCloudflareTunnels ? 'cloudflare' : 'ngrok'
-    const provider = options.tunnelProvider || defaultProvider
-    frontendUrl = await generateURL(options.commandConfig, provider, frontendPort)
+    frontendUrl = await generateURL(options.commandConfig, options.tunnelProvider)
   }
 
   return {frontendUrl, frontendPort, usingLocalhost}
 }
 
-export async function generateURL(config: Config, tunnelProvider: string, frontendPort: number): Promise<string> {
-  return (await runTunnelPlugin(config, frontendPort, tunnelProvider)).mapError(mapRunTunnelPluginError).valueOrAbort()
+export async function generateURL(config: Config, tunnelProvider: string): Promise<string> {
+  return (await runTunnelPlugin(config, tunnelProvider)).mapError(mapRunTunnelPluginError).valueOrAbort()
 }
 
 export function generatePartnersURLs(baseURL: string, authCallbackPath?: string | string[]): PartnersURLs {
@@ -199,11 +195,6 @@ function mapRunTunnelPluginError(tunnelPluginError: TunnelPluginError) {
           list: {
             items: [
               ['Try to run the command again'],
-              [
-                'Add the flag',
-                {command: `--tunnel ${alternative}`},
-                `to use ${alternative} as the tunnel provider instead of ${tunnelPluginError.provider}`,
-              ],
               ['Add the flag', {command: '--tunnel-url {URL}'}, 'to use a custom tunnel URL'],
             ],
           },

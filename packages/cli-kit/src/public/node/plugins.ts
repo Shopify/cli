@@ -1,6 +1,7 @@
 import {HookReturnPerTunnelPlugin} from './plugins/tunnel.js'
-import {err, Result} from './result.js'
+import {err, ok, Result} from './result.js'
 import {MonorailEventPublic, MonorailEventSensitive} from './monorail.js'
+import {outputDebug} from './output.js'
 import {getArrayContainsDuplicates, getArrayRejectingUndefined} from '../common/array.js'
 import {PickByPrefix} from '../common/ts/pick-by-prefix.js'
 import {JsonMap} from '../../private/common/json.js'
@@ -96,27 +97,34 @@ export interface TunnelPluginError {
  * Fails if there aren't plugins for that provider or if there are more than one.
  *
  * @param config - Oclif config used to execute hooks.
- * @param port - Port where the tunnel will be started.
  * @param provider - Selected provider, must be unique.
  * @returns Tunnel URL from the selected provider.
  */
-export async function runTunnelPlugin(
-  config: Config,
-  port: number,
-  provider: string,
-): Promise<Result<string, TunnelPluginError>> {
-  const hooks = await fanoutHooks(config, 'tunnel_start', {port, provider})
-  const urlResults = Object.values(hooks).filter(
-    (tunnelResponse) => !tunnelResponse?.isErr() || tunnelResponse.error.type !== 'invalid-provider',
-  )
-  if (urlResults.length > 1) return err({provider, type: 'multiple-urls'})
-  if (urlResults.length === 0 || !urlResults[0]) return err({provider, type: 'no-provider'})
+export async function runTunnelPlugin(config: Config, provider: string): Promise<Result<string, TunnelPluginError>> {
+  return new Promise<Result<string, TunnelPluginError>>((resolve, reject) => {
+    const retries = 0
+    const pollTunnelStatus = async () => {
+      outputDebug(`Polling tunnel status for ${provider} (attempt ${retries})`)
+      const hooks = await fanoutHooks(config, 'tunnel_status', {provider})
+      const urlResults = Object.values(hooks).filter(
+        (tunnelResponse) => !tunnelResponse?.isErr() || tunnelResponse.error.type !== 'invalid-provider',
+      )
+      if (urlResults.length > 1) reject(err({provider, type: 'multiple-urls'}))
+      if (urlResults.length === 0 || !urlResults[0]) reject(err({provider, type: 'no-provider'}))
+      const first = urlResults[0]!
+      if (first.isErr()) return reject(first.error)
+      outputDebug(`Tunnel status for ${provider} is ${first.value.status}`)
+      if (first.value.status === 'error') return reject(err({provider, type: 'unknown', message: first.value.message}))
 
-  return urlResults[0]
-    .map((data) => data.url)
-    .mapError((error) =>
-      error.type === 'unknown'
-        ? {provider, type: 'unknown', message: error.message}
-        : {provider, type: 'handled-error'},
-    )
+      if (first.value.status === 'connected') {
+        resolve(ok(first.value.url))
+      }
+    }
+    const startPolling = () => {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      setTimeout(pollTunnelStatus, 500)
+    }
+
+    startPolling()
+  })
 }

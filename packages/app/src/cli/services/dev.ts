@@ -36,6 +36,7 @@ import {
 } from '@shopify/cli-kit/node/session'
 import {OutputProcess, outputInfo} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {fanoutHooks} from '@shopify/cli-kit/node/plugins'
 import {Writable} from 'stream'
 
 export interface DevOptions {
@@ -50,7 +51,7 @@ export interface DevOptions {
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
   tunnelUrl?: string
-  tunnelProvider?: string
+  tunnelProvider: string
   noTunnel: boolean
   theme?: string
   themeExtensionPort?: number
@@ -65,6 +66,11 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
+  // Be optimistic about tunnel creation and do it as early as possible
+  const tunnelPort = await getAvailableTCPPort()
+  let tunnelProvider = options.tunnelProvider
+  await fanoutHooks(options.commandConfig, 'tunnel_start', {port: tunnelPort, provider: tunnelProvider})
+
   const token = await ensureAuthenticatedPartners()
   const {
     storeFqdn,
@@ -73,6 +79,13 @@ async function dev(options: DevOptions) {
     updateURLs: cachedUpdateURLs,
     useCloudflareTunnels,
   } = await ensureDevContext(options, token)
+
+  if (!useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
+    // If we can't use cloudflare, stop the previous optimistic tunnel and start a new one
+    await fanoutHooks(options.commandConfig, 'tunnel_stop', {provider: 'cloudflare'})
+    await fanoutHooks(options.commandConfig, 'tunnel_start', {port: tunnelPort, provider: 'ngrok'})
+    tunnelProvider = 'ngrok'
+  }
 
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
@@ -100,7 +113,7 @@ async function dev(options: DevOptions) {
     generateFrontendURL({
       ...options,
       app: localApp,
-      useCloudflareTunnels,
+      tunnelProvider,
     }),
     backendConfig?.configuration.port || getAvailableTCPPort(),
     getURLs(apiKey, token),
