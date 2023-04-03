@@ -1,5 +1,6 @@
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {renderFatalError, renderInfo, renderSuccess, renderTable, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderFatalError, renderInfo, renderSuccess, renderTable, renderWarning, renderModal} from '@shopify/cli-kit/node/ui'
+import {sleep} from '@shopify/cli-kit/node/system'
 
 export async function staticService() {
   // Banners
@@ -187,4 +188,6 @@ export async function staticService() {
       email: {},
     },
   })
+
+  await renderModal('Hello from a modal!')
 }

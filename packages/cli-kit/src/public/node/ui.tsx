@@ -9,6 +9,9 @@ import {render, renderOnce} from '../../private/node/ui.js'
 import {alert, AlertOptions} from '../../private/node/ui/alert.js'
 import {CustomSection} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
+// import {Modal} from '../../private/node/ui/components/Modal.js'
+import {Banner} from '../../private/node/ui/components/Banner.js'
+import {FullScreen} from '../../private/node/ui/components/FullScreen.js'
 import ScalarDict from '../../private/node/ui/components/Table/ScalarDict.js'
 import {Table, TableColumn, TableProps} from '../../private/node/ui/components/Table/Table.js'
 import {SelectPrompt, SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
@@ -19,7 +22,7 @@ import {InlineToken, LinkToken, ListToken, TokenItem} from '../../private/node/u
 import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
 import {recordUIEvent, resetRecordedSleep} from '../../private/node/demo-recorder.js'
 import React from 'react'
-import {Key as InkKey, RenderOptions} from 'ink'
+import {Key as InkKey, RenderOptions, Text} from 'ink'
 
 type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>
 
@@ -395,6 +398,23 @@ export async function renderAutocompletePrompt<T>({renderOptions, ...props}: Ren
     })
       .catch(reject)
       .finally(resetRecordedSleep)
+  })
+}
+
+export function renderModal(text: string, renderOptions: RenderOptions = {}): Promise<void> {
+  // eslint-disable-next-line max-params
+  return new Promise((resolve, reject) => {
+    render(
+      <FullScreen onClose={resolve} closeOnKey="q">
+        <Banner type="info" title='Press "q" to close'><Text>{text}</Text></Banner>
+      </FullScreen>, {
+      ...renderOptions,
+      exitOnCtrlC: false,
+    }).catch(reject)
+    // render(<Modal onClose={resolve}>{text}</Modal>, {
+      // ...renderOptions,
+      // exitOnCtrlC: false,
+    // }).catch(reject)
   })
 }
 

@@ -6,6 +6,7 @@ import React, {FunctionComponent, useContext, useRef} from 'react'
 export type BannerType = 'success' | 'error' | 'warning' | 'info' | 'external_error'
 
 interface BannerProps {
+  title?: string
   type: BannerType
 }
 
@@ -38,7 +39,7 @@ const Footnotes = () => {
   ) : null
 }
 
-const BoxWithBorder: FunctionComponent<BannerProps> = ({type, children}) => {
+const BoxWithBorder: FunctionComponent<BannerProps> = ({title, type, children}) => {
   const {twoThirds} = useLayout()
   const links = useRef<{[key: string]: Link}>({})
 
@@ -70,7 +71,7 @@ const BoxWithBorder: FunctionComponent<BannerProps> = ({type, children}) => {
         borderColor={typeToColor(type)}
       >
         <Box marginTop={-2} marginBottom={1} marginLeft={-1}>
-          <Text>{` ${type.replace(/_/g, ' ')} `}</Text>
+          <Text>{title ?? ` ${type.replace(/_/g, ' ')} `}</Text>
         </Box>
         {children}
       </Box>
