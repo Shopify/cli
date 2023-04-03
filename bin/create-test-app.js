@@ -32,6 +32,11 @@ program
     extensionTypes.join(",")
   )
   .option(
+    "--bare",
+    "don't create any extensions. Overrides --extensions",
+    false
+  )
+  .option(
     "--name <name>",
     "name of your app. It will be placed on your Desktop",
     `nightly-app-${today}`
@@ -66,7 +71,7 @@ program
     // main
     let shopifyExec
     let defaultOpts = { stdio: "inherit" }
-    let extensions = new Set(options.extensions.split(","))
+    let extensions = options.bare ? new Set() : new Set(options.extensions.split(","))
 
     const appName = options.name
     const appPath = path.join(homeDir, "Desktop", appName)
