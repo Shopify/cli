@@ -284,7 +284,7 @@ async function testDeployBundle(
   await deploy({
     app,
     reset: false,
-    force: options?.force ?? false,
+    force: Boolean(options?.force),
     label: options?.label,
   })
 

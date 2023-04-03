@@ -150,7 +150,7 @@ export async function deploy(options: DeployOptions) {
         registrations,
         validationErrors,
         deploymentId,
-        unifiedDeployment: Boolean(partnersApp.betas?.unifiedAppDeployment) ?? false,
+        unifiedDeployment: Boolean(partnersApp.betas?.unifiedAppDeployment),
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
