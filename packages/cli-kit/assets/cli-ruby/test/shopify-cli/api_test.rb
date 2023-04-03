@@ -30,12 +30,6 @@ module ShopifyCLI
       @context.stubs(:uname).returns("Mac")
     end
 
-    def stub_response(code:, body:, request_id: "1111-2222")
-      stub("response", code: code, body: body).tap do |result|
-        result.stubs(:[]).with("x-request-id").returns(request_id)
-      end
-    end
-
     def test_mutation_makes_request_to_shopify
       headers = {
         "User-Agent" => "Shopify CLI; v=#{ShopifyCLI::VERSION}",
@@ -194,6 +188,14 @@ module ShopifyCLI
         .expects(:delete)
         .returns(response)
       @api.request(url: "https://shop.com/api.json", method: "DELETE")
+    end
+
+    private
+
+    def stub_response(code:, body:, request_id: "1111-2222")
+      stub("response", code: code, body: body).tap do |result|
+        result.stubs(:[]).with("x-request-id").returns(request_id)
+      end
     end
   end
 end
