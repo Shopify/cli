@@ -325,7 +325,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   return result
 }
 
-export async function fetchOrganizationAndFetchOrCreateApp(app: AppInterface, token: string): Promise<OrganizationApp> {
+export async function fetchOrCreateOrganizationApp(app: AppInterface, token: string): Promise<OrganizationApp> {
   const orgId = await selectOrg(token)
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
   const partnersApp = await selectOrCreateApp(app.name, apps, organization, token)
@@ -362,7 +362,7 @@ export async function fetchAppAndIdentifiers(
   }
 
   if (!partnersApp) {
-    partnersApp = await fetchOrganizationAndFetchOrCreateApp(options.app, token)
+    partnersApp = await fetchOrCreateOrganizationApp(options.app, token)
   }
 
   return [partnersApp, envIdentifiers]
