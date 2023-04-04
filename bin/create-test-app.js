@@ -99,7 +99,7 @@ program
         if (os.platform() == "win32") {
           fs.rmSync(path.join(appPath, "pnpm-lock.yaml"))
         }
-        await appExec("pnpm", ["install"])
+
         break
       case "nightly":
         log(`Creating new app in ${appPath}...`)
@@ -120,6 +120,10 @@ program
         log(`Invalid installation type: ${options.install}. Must be one of ${installationTypes.join(", ")}.`)
         process.exit(1)
     }
+
+    // on windows pnpm sets the wrong paths, rerunning install fixes it
+    log("Making sure pnpm is setup correctly")
+    await appExec("pnpm", ["install"])
 
     if (extensions.has("ui")) {
       log("Generating UI extension...")
