@@ -1,5 +1,7 @@
 #! /usr/bin/env node
 
+import * as readline from 'node:readline/promises'
+import { stdin as input, stdout as output } from 'node:process'
 import { createRequire } from "module"
 import { fileURLToPath } from "url"
 import execa from "execa"
@@ -99,6 +101,19 @@ program
       default:
         log(`Invalid installation type: ${options.install}. Must be one of ${installationTypes.join(", ")}.`)
         process.exit(1)
+    }
+
+    if (fs.existsSync(themePath)) {
+      const rl = readline.createInterface({ input, output })
+      const answer = await rl.question(`\r\n🙋‍♀️ I've found a theme in ${themePath}. Should I remove it and keep going? (Y/n)`);
+      rl.close();
+
+      if (answer.toLowerCase() === 'y' || answer === '') {
+        log(`Removing theme in '${themePath}'...`)
+        fs.rmSync(themePath, { recursive: true })
+      } else {
+        process.exit(0)
+      }
     }
 
     log(`Creating new theme '${themeName}'...`)
