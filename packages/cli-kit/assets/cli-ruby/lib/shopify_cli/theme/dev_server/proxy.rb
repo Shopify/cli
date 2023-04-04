@@ -210,7 +210,7 @@ module ShopifyCLI
         def request(method, path, headers: nil, query: [], form_data: nil, body_stream: nil)
           uri = URI.join("https://#{shop}", path)
 
-          if Environment.theme_access_password?
+          if proxy_via_theme_access_app?(path)
             headers = headers ? headers.slice("ACCEPT", "CONTENT-TYPE", "CONTENT-LENGTH", "Cookie") : {}
             headers.merge!({
               "X-Shopify-Access-Token" => Environment.admin_auth_token,
@@ -248,6 +248,14 @@ module ShopifyCLI
             .with_core_endpoints(@core_endpoints)
             .with_rack_env(env)
             .build
+        end
+
+        def proxy_via_theme_access_app?(path)
+          return false unless Environment.theme_access_password?
+          return false if path == "/localization"
+          return false if path.start_with?("/cart/")
+
+          true
         end
       end
     end
