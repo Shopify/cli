@@ -57,16 +57,12 @@ namespace :rdoc do
     "lib/shopify_cli/context.rb",
     "lib/shopify_cli/db.rb",
     "lib/shopify_cli/git.rb",
-    "lib/shopify_cli/heroku.rb",
-    "lib/shopify_cli/js_deps.rb",
     "lib/shopify_cli/lazy_delegator.rb",
     "lib/shopify_cli/method_object.rb",
     "lib/shopify_cli/partners_api.rb",
-    "lib/shopify_cli/process_supervision.rb",
     "lib/shopify_cli/project.rb",
     "lib/shopify_cli/result.rb",
     "lib/shopify_cli/transform_data_structure.rb",
-    "lib/shopify_cli/tunnel.rb",
   ]
 
   task all: [:markdown, :wiki, :cleanup]
@@ -104,78 +100,6 @@ end
 
 desc("Generate markdown documentation and update the wiki")
 task(rdoc: "rdoc:all")
-
-namespace :package do
-  require "shopify_cli/packager"
-
-  task all: [:debian, :rpm, :homebrew]
-
-  desc("Builds a Debian package of the CLI")
-  task :debian do
-    ShopifyCLI::Packager.new.build_debian
-  end
-
-  desc("Builds an RPM package of the CLI")
-  task :rpm do
-    ShopifyCLI::Packager.new.build_rpm
-  end
-
-  desc("Builds a Homebrew package of the CLI")
-  task :homebrew do
-    ShopifyCLI::Packager.new.build_homebrew
-  end
-end
-
-desc("Builds all distribution packages of the CLI")
-task(package: "package:all")
-
-namespace :changelog do
-  require "shopify_cli/changelog"
-
-  task :update do
-    ShopifyCLI::Changelog.new.update!
-  end
-end
-
-namespace :release do
-  require "shopify_cli/release"
-
-  task :prepare, [:new_version] do |_t, args|
-    new_version = args[:new_version]
-    unless new_version
-      raise <<~NO_NEW_VERSION
-        New version must be provided, e.g.:
-
-        $ GITHUB_ACCESS_TOKEN=abcdef rake "release:prepare[1.2.3]"
-
-      NO_NEW_VERSION
-    end
-    github_access_token = ENV["GITHUB_ACCESS_TOKEN"]
-    unless github_access_token
-      raise <<~NO_GITHUB_ACCESS_TOKEN
-        GitHub access token must be provided, e.g.:
-
-        $ GITHUB_ACCESS_TOKEN=abcdef rake "release:prepare[1.2.3]"
-      NO_GITHUB_ACCESS_TOKEN
-    end
-
-    ShopifyCLI::Release.new(new_version, github_access_token).prepare!
-    puts "Completed!"
-  end
-
-  task :package do
-    github_access_token = ENV["GITHUB_ACCESS_TOKEN"]
-    unless github_access_token
-      raise <<~NO_GITHUB_ACCESS_TOKEN
-        GitHub access token must be provided, e.g.:
-
-        $ GITHUB_ACCESS_TOKEN=abcdef rake release:package
-      NO_GITHUB_ACCESS_TOKEN
-    end
-    ShopifyCLI::Release.new(ShopifyCLI::VERSION, github_access_token).package!
-    puts "Completed!"
-  end
-end
 
 namespace :extensions do
   task :update do
