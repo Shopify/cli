@@ -100,8 +100,11 @@ export interface TunnelPluginError {
  * @param provider - Selected provider, must be unique.
  * @returns Tunnel URL from the selected provider.
  */
-export async function runTunnelPlugin(config: Config, provider: string): Promise<Result<string, TunnelPluginError>> {
-  return new Promise<Result<string, TunnelPluginError>>((resolve, reject) => {
+export async function runTunnelPlugin(
+  config: Config,
+  provider: string,
+): Promise<Result<{url: string; port: number}, TunnelPluginError>> {
+  return new Promise<Result<{url: string; port: number}, TunnelPluginError>>((resolve, reject) => {
     const retries = 0
     const pollTunnelStatus = async () => {
       outputDebug(`Polling tunnel status for ${provider} (attempt ${retries})`)
@@ -117,7 +120,7 @@ export async function runTunnelPlugin(config: Config, provider: string): Promise
       if (first.value.status === 'error') return reject(err({provider, type: 'unknown', message: first.value.message}))
 
       if (first.value.status === 'connected') {
-        resolve(ok(first.value.url))
+        resolve(ok(first.value))
       }
     }
     const startPolling = () => {

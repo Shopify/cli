@@ -16,7 +16,8 @@ const TUNNEL_TIMEOUT = isUnitTest() ? 0.2 : 40
 
 let currentStatus: TunnelStatusType = {status: 'not-started'}
 
-export const getCurrentStatus = () => currentStatus
+export const getCurrentStatus = async () => currentStatus
+
 export const abortController = new AbortController()
 
 export async function hookStart(port: number) {
@@ -55,7 +56,7 @@ function tunnel(options: {port: number}): void {
       if (connected) {
         if (url) {
           resolved = true
-          currentStatus = {status: 'connected', url}
+          currentStatus = {status: 'connected', url, port: options.port}
         } else {
           currentStatus = {status: 'error', message: 'Could not find tunnel url'}
         }

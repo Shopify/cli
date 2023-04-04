@@ -6,7 +6,7 @@ export type TunnelErrorType = 'invalid-provider' | 'tunnel-already-running' | 'w
 export type TunnelStatusType =
   | {status: 'not-started'}
   | {status: 'starting'}
-  | {status: 'connected'; url: string}
+  | {status: 'connected'; url: string; port: number}
   | {status: 'error'; message: string}
 
 export class TunnelError extends ExtendableError {
@@ -55,7 +55,7 @@ export type TunnelStopReturn = PluginReturnsForHook<'tunnel_start', ''>
 export type TunnelStatusReturn = PluginReturnsForHook<'tunnel_status', ''>
 
 export type TunnelStartAction = (port: number) => Promise<TunnelStartReturn>
-export type TunnelStatusAction = () => TunnelStatusReturn
+export type TunnelStatusAction = () => Promise<TunnelStatusReturn>
 export type TunnelStopAction = () => TunnelStopReturn
 
 export const defineProvider = (input: {name: string}): TunnelProviderFunction => {
