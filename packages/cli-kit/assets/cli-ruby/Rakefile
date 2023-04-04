@@ -101,9 +101,6 @@ end
 desc("Generate markdown documentation and update the wiki")
 task(rdoc: "rdoc:all")
 
-desc("Builds all distribution packages of the CLI")
-task(package: "package:all")
-
 namespace :extensions do
   task :update do
     version = ENV.fetch("VERSION").strip
