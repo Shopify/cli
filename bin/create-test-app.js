@@ -1,5 +1,7 @@
 #! /usr/bin/env node
 
+import * as readline from 'node:readline/promises'
+import { stdin as input, stdout as output } from 'node:process'
 import { createRequire } from "module"
 import { fileURLToPath } from "url"
 import { Readable } from "stream"
@@ -80,6 +82,19 @@ program
       case "local":
         log("Building latest release...")
         await execa("pnpm", ["build"])
+
+        if (fs.existsSync(appPath)) {
+          const rl = readline.createInterface({ input, output })
+          const answer = await rl.question(`\r\n🙋‍♀️ I've found an app in ${appPath}. Should I remove it and keep going? (Y/n)`);
+          rl.close();
+
+          if (answer.toLowerCase() === 'y' || answer === '') {
+            log(`Removing app in '${appPath}'...`)
+            fs.rmSync(appPath, { recursive: true })
+          } else {
+            process.exit(0)
+          }
+        }
 
         log(`Creating new app in ${appPath}...`)
         await execa(
