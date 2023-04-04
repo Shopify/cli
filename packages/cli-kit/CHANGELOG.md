@@ -1,5 +1,43 @@
 # @shopify/cli-kit
 
+## 3.45.0
+
+### Minor Changes
+
+- 1dd35b0b2: Enable environments for themes
+- e85f718cd: Use `-e` as an alias for --environment and remove the current one for --theme-editor-sync
+- e6753f4ed: Upgrade Ink to 4.0.0 which is pure ESM and uses React 18
+- 645b085b8: Render upgrade warning if Partners API returns deprecation dates
+
+### Patch Changes
+
+- da01d3595: Send environment flags to analytics
+- db5981a1e: Clean errors related to metrics requests on theme dev
+- 7f8a9436d: Add log information when graphql requests return an error
+- d2a352442: Added 2 new utilities on the git module:
+
+  - git.ensureIsClean(directory?: string): Promise<void>: If the .git directory tree is not clean (has uncommitted changes) it throws an abort error.
+  - git.isClean(directory?: string): Promise<boolean>: Returns true if the .git directory tree is clean (no uncommitted changes).
+
+- 25fc42ae2: Fix: Run ruby with shopify bin file as an argument
+- fe32fb789: Fix issue with dev footer and resizing the terminal
+- 4d5cff225: Fix issue with unicode characters not being displayed correctly in log output
+- a4b0953d9: Fix visual bug appearing when pressing enter while tasks are running
+- 6735253e6: Adopt the CLI UI kit in the `shopify theme dev` command
+- d6f278863: Integrate Theme App Extension output with the new UI Kit
+- ddb967914: Fix log from api responses for node version that donnot support Headers type
+- c3d5ce5e6: Fix layout width for very narrow terminals
+- 4bb549840: Fix introspection URL cache
+- b2e066fc0: Fix error by installing gems in local folder instead of system folder
+- 9c253511e: Do not inject hot-reload code into web-pixels-manager sandbox
+- 657593b1a: Fix run dev with theme app extension and spin
+- ce1457036: Resolve renderTasks with the value of context
+- 163df5e9a: Add default value option to renderConfirmation prompt
+- b3ea29a21: Fix prompts not showing the question in short terminals
+- 2ca5b35d8: Add UI Kit documentation
+- 067199cf6: Pass development theme from CLI 3’s to CLI 2’s local storage
+- 7153dff92: Cut long host names for development theme naming
+
 ## 3.45.0-pre.5
 
 ### Minor Changes
