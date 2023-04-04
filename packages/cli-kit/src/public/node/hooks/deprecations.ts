@@ -24,7 +24,7 @@ const dateFormat = new Intl.DateTimeFormat('default', {
 
 /**
  * Renders a warning to upgrade to avoid using deprecated features
- * that will no longer be supported after the specified date.
+ * that will no longer be supported (after the specified date, if present).
  *
  * @param deprecation - The next deprecation.
  * @param forThemes - If true, references the upgrade link for themes, else for apps.
