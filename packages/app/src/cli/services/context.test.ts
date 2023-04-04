@@ -57,9 +57,6 @@ const APP1: OrganizationApp = {
   organizationId: '1',
   apiSecretKeys: [{secret: 'secret1'}],
   grantedScopes: [],
-  betas: {
-    unifiedAppDeployment: false,
-  },
 }
 const APP2: OrganizationApp = {
   id: '2',
@@ -68,21 +65,18 @@ const APP2: OrganizationApp = {
   organizationId: '1',
   apiSecretKeys: [{secret: 'secret2'}],
   grantedScopes: [],
-  betas: {
-    unifiedAppDeployment: false,
-  },
 }
 
 const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
-  betas: {cliTunnelAlternative: false},
+  betas: {appUiDeployments: false, cliTunnelAlternative: false},
   website: '',
 }
 const ORG2: Organization = {
   id: '2',
   businessName: 'org2',
-  betas: {cliTunnelAlternative: true},
+  betas: {appUiDeployments: false, cliTunnelAlternative: true},
   website: '',
 }
 
@@ -378,10 +372,12 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
+    expect(fetchOrgFromId).toHaveBeenCalledWith(ORG1.id, 'token')
     expect(got.partnersApp.id).toEqual(APP2.id)
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
+    expect(got.organization?.id).toEqual(ORG1.id)
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
   })
@@ -399,6 +395,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(reuseDevConfigPrompt).mockResolvedValueOnce(true)
+    vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG1)
 
     // When
     const got = await ensureDeployContext(options(app))
@@ -406,10 +403,12 @@ describe('ensureDeployContext', () => {
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).toHaveBeenCalled()
+    expect(fetchOrgFromId).toHaveBeenCalledWith(ORG1.id, 'token')
     expect(got.partnersApp.id).toEqual(APP2.id)
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
+    expect(got.organization?.id).toEqual(ORG1.id)
   })
 
   test('prompts the user to create or select an app and returns it with its id when the app has no extensions', async () => {
@@ -439,10 +438,12 @@ describe('ensureDeployContext', () => {
       identifiers,
       command: 'deploy',
     })
+    expect(fetchOrgFromId).not.toHaveBeenCalled()
     expect(got.partnersApp.id).toEqual(APP1.id)
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
+    expect(got.organization?.id).toEqual(ORG1.id)
   })
 
   test("throws an app not found error if the app with the API key doesn't exist", async () => {
@@ -492,6 +493,7 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
+    expect(got.organization?.id).toEqual(ORG1.id)
   })
 })
 

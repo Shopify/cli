@@ -1,4 +1,4 @@
-import {fetchOrCreateOrganizationApp} from './context.js'
+import {fetchOrganizationAndFetchOrCreateApp} from './context.js'
 import {AppInterface} from '../models/app/app.js'
 import {FunctionExtension} from '../models/app/extensions.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
@@ -33,7 +33,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
       )
     }
 
-    apiKey = (await fetchOrCreateOrganizationApp(app, token)).apiKey
+    apiKey = (await fetchOrganizationAndFetchOrCreateApp(app, token)).partnersApp.apiKey
   }
 
   const query = ApiSchemaDefinitionQuery
