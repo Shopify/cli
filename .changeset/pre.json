@@ -1,0 +1,21 @@
+{
+  "mode": "pre",
+  "tag": "pre",
+  "initialVersions": {
+    "@shopify/app": "3.45.0",
+    "@shopify/cli": "3.45.0",
+    "@shopify/cli-kit": "3.45.0",
+    "@shopify/create-app": "3.45.0",
+    "@shopify/eslint-plugin-cli": "3.45.0",
+    "@shopify/features": "0.7.2",
+    "@shopify/plugin-cloudflare": "3.45.0",
+    "@shopify/plugin-did-you-mean": "3.45.0",
+    "@shopify/plugin-ngrok": "3.45.0",
+    "@shopify/theme": "3.45.0",
+    "@shopify/ui-extensions-dev-console-app": "3.45.0",
+    "@shopify/ui-extensions-server-kit": "4.1.0",
+    "@shopify/ui-extensions-test-utils": "3.25.0",
+    "@shopify/workspace": "0.1.0"
+  },
+  "changesets": []
+}
