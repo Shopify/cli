@@ -1,5 +1,5 @@
 import {cloneRepoAndCheckoutLatestTag, cloneRepo} from './init.js'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {downloadGitRepository} from '@shopify/cli-kit/node/git'
 
 vi.mock('@shopify/cli-kit/node/git', () => {
@@ -9,7 +9,7 @@ vi.mock('@shopify/cli-kit/node/git', () => {
 })
 
 describe('cloneRepoAndCheckoutLatestTag()', async () => {
-  it('calls downloadRepository function from git service to clone a repo without branch', async () => {
+  test('calls downloadRepository function from git service to clone a repo without branch', async () => {
     // Given
     const repoUrl = 'https://github.com/Shopify/dawn.git'
     const destination = 'destination'
@@ -24,7 +24,7 @@ describe('cloneRepoAndCheckoutLatestTag()', async () => {
 })
 
 describe('cloneRepo()', async () => {
-  it('calls downloadRepository function from git service to clone a repo without branch', async () => {
+  test('calls downloadRepository function from git service to clone a repo without branch', async () => {
     // Given
     const repoUrl = 'https://github.com/Shopify/dawn.git'
     const destination = 'destination'

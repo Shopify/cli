@@ -9,7 +9,7 @@ import {
 import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 
 const eventbridgeAddress = 'arn:aws:events:us-east-1::event-source/aws.partner/shopify.com/3737297/source'
 const pubsubAddress = 'pubsub://topic:subscription'
@@ -24,7 +24,7 @@ vi.mock('./request-api-versions.js')
 vi.mock('./request-topics.js')
 
 describe('deliveryMethodForAddress', () => {
-  it('detects a Google Pub Sub address', async () => {
+  test('detects a Google Pub Sub address', async () => {
     // When
     const method = deliveryMethodForAddress(pubsubAddress)
 
@@ -32,7 +32,7 @@ describe('deliveryMethodForAddress', () => {
     expect(method).toEqual(DELIVERY_METHOD.PUBSUB)
   })
 
-  it('detects an Amazon Event Bridge address', async () => {
+  test('detects an Amazon Event Bridge address', async () => {
     // When
     const method = deliveryMethodForAddress(eventbridgeAddress)
 
@@ -40,7 +40,7 @@ describe('deliveryMethodForAddress', () => {
     expect(method).toEqual(DELIVERY_METHOD.EVENTBRIDGE)
   })
 
-  it('detects a localhost address', async () => {
+  test('detects a localhost address', async () => {
     // When
     const method = deliveryMethodForAddress(localHttpAddress)
 
@@ -48,7 +48,7 @@ describe('deliveryMethodForAddress', () => {
     expect(method).toEqual(DELIVERY_METHOD.LOCALHOST)
   })
 
-  it('detects a localhost address case insensitive', async () => {
+  test('detects a localhost address case insensitive', async () => {
     // When
     const method = deliveryMethodForAddress(localHttpAddress.toUpperCase())
 
@@ -56,7 +56,7 @@ describe('deliveryMethodForAddress', () => {
     expect(method).toEqual(DELIVERY_METHOD.LOCALHOST)
   })
 
-  it('detects a remote http address', async () => {
+  test('detects a remote http address', async () => {
     // When
     const method = deliveryMethodForAddress(remoteHttpAddress)
 
@@ -64,7 +64,7 @@ describe('deliveryMethodForAddress', () => {
     expect(method).toEqual(DELIVERY_METHOD.HTTP)
   })
 
-  it('detects a remote http address case insensitive', async () => {
+  test('detects a remote http address case insensitive', async () => {
     // When
     const method = deliveryMethodForAddress(remoteHttpAddress.toUpperCase())
 
@@ -72,7 +72,7 @@ describe('deliveryMethodForAddress', () => {
     expect(method).toEqual(DELIVERY_METHOD.HTTP)
   })
 
-  it('returns undefined when not able to identify address type', async () => {
+  test('returns undefined when not able to identify address type', async () => {
     // When
     const method = deliveryMethodForAddress(ftpAddress)
 
@@ -83,7 +83,7 @@ describe('deliveryMethodForAddress', () => {
 
 describe('isAddressAllowedForDeliveryMethod', () => {
   describe('Google Pub Sub', () => {
-    it('accepts Google Pub Sub for pubsub: addresses', async () => {
+    test('accepts Google Pub Sub for pubsub: addresses', async () => {
       // When
       const allowed = isAddressAllowedForDeliveryMethod(pubsubAddress, DELIVERY_METHOD.PUBSUB)
 
@@ -91,7 +91,7 @@ describe('isAddressAllowedForDeliveryMethod', () => {
       expect(allowed).toBeTruthy()
     })
 
-    it('rejects Google Pub Sub for Non pubsub: addresses', async () => {
+    test('rejects Google Pub Sub for Non pubsub: addresses', async () => {
       // When
       const allowed = isAddressAllowedForDeliveryMethod(remoteHttpAddress, DELIVERY_METHOD.PUBSUB)
 
@@ -101,7 +101,7 @@ describe('isAddressAllowedForDeliveryMethod', () => {
   })
 
   describe('Amazon Event Bridge', () => {
-    it('accepts Amazon Event Bridge for arn:aws:events: addresses', async () => {
+    test('accepts Amazon Event Bridge for arn:aws:events: addresses', async () => {
       // When
       const allowed = isAddressAllowedForDeliveryMethod(eventbridgeAddress, DELIVERY_METHOD.EVENTBRIDGE)
 
@@ -109,7 +109,7 @@ describe('isAddressAllowedForDeliveryMethod', () => {
       expect(allowed).toBeTruthy()
     })
 
-    it('rejects Amazon Event Bridge for Non arn:aws:events: addresses', async () => {
+    test('rejects Amazon Event Bridge for Non arn:aws:events: addresses', async () => {
       // When
       const allowed = isAddressAllowedForDeliveryMethod(remoteHttpAddress, DELIVERY_METHOD.EVENTBRIDGE)
 
@@ -119,7 +119,7 @@ describe('isAddressAllowedForDeliveryMethod', () => {
   })
 
   describe('HTTP', () => {
-    it('accepts http for localhost addresses', async () => {
+    test('accepts http for localhost addresses', async () => {
       // When
       const allowed = isAddressAllowedForDeliveryMethod(localHttpAddress, DELIVERY_METHOD.HTTP)
 
@@ -127,7 +127,7 @@ describe('isAddressAllowedForDeliveryMethod', () => {
       expect(allowed).toBeTruthy()
     })
 
-    it('accepts https for remote addresses', async () => {
+    test('accepts https for remote addresses', async () => {
       // When
       const allowed = isAddressAllowedForDeliveryMethod(remoteHttpAddress, DELIVERY_METHOD.HTTP)
 
@@ -135,7 +135,7 @@ describe('isAddressAllowedForDeliveryMethod', () => {
       expect(allowed).toBeTruthy()
     })
 
-    it('rejects http for remote addresses', async () => {
+    test('rejects http for remote addresses', async () => {
       // When
       const allowed = isAddressAllowedForDeliveryMethod('http://example.org/api/webhooks', DELIVERY_METHOD.HTTP)
 
@@ -144,7 +144,7 @@ describe('isAddressAllowedForDeliveryMethod', () => {
     })
   })
 
-  it('rejects unknown address formats', async () => {
+  test('rejects unknown address formats', async () => {
     // When
     const allowed = isAddressAllowedForDeliveryMethod(ftpAddress, DELIVERY_METHOD.HTTP)
 
@@ -154,12 +154,12 @@ describe('isAddressAllowedForDeliveryMethod', () => {
 })
 
 describe('validateAddressMethod', () => {
-  it('validateAddressMethod a valid address-method pair', async () => {
+  test('validateAddressMethod a valid address-method pair', async () => {
     // When Then
     expect(validateAddressMethod('https://example.org', 'http')).toEqual(true)
   })
 
-  it('fails when address-method are not compatible', async () => {
+  test('fails when address-method are not compatible', async () => {
     // When Then
     expect(() => {
       validateAddressMethod('https://example.org', 'google-pub-sub')
@@ -168,7 +168,7 @@ describe('validateAddressMethod', () => {
 })
 
 describe('parseVersionAndTopic', () => {
-  it('ignores when no flags', async () => {
+  test('ignores when no flags', async () => {
     // When
     const got = await parseVersionAndTopic(aToken, {})
 
@@ -176,7 +176,7 @@ describe('parseVersionAndTopic', () => {
     expect(got).toEqual([undefined, undefined])
   })
 
-  it('gets topic when no version', async () => {
+  test('gets topic when no version', async () => {
     // When
     const got = await parseVersionAndTopic(aToken, {topic: 'topic'})
 
@@ -184,7 +184,7 @@ describe('parseVersionAndTopic', () => {
     expect(got).toEqual([undefined, 'topic'])
   })
 
-  it('validates the version', async () => {
+  test('validates the version', async () => {
     // Given
     vi.mocked(requestApiVersions).mockResolvedValue(['2023-01', 'unstable'])
 
@@ -195,7 +195,7 @@ describe('parseVersionAndTopic', () => {
     expect(got).toEqual(['unstable', undefined])
   })
 
-  it('fails when version not valid', async () => {
+  test('fails when version not valid', async () => {
     // Given
     vi.mocked(requestApiVersions).mockResolvedValue(['2023-01', 'unstable'])
 
@@ -203,7 +203,7 @@ describe('parseVersionAndTopic', () => {
     await expect(parseVersionAndTopic(aToken, {apiVersion: 'unknown'})).rejects.toThrow(AbortError)
   })
 
-  it('validates the version and topic', async () => {
+  test('validates the version and topic', async () => {
     // Given
     vi.mocked(requestApiVersions).mockResolvedValue(['2023-01', 'unstable'])
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'products/delete'])
@@ -215,7 +215,7 @@ describe('parseVersionAndTopic', () => {
     expect(got).toEqual(['unstable', 'shop/redact'])
   })
 
-  it('fails when no topics', async () => {
+  test('fails when no topics', async () => {
     // Given
     vi.mocked(requestApiVersions).mockResolvedValue(['2023-01', 'unstable'])
     vi.mocked(requestTopics).mockResolvedValue([])
@@ -226,7 +226,7 @@ describe('parseVersionAndTopic', () => {
     )
   })
 
-  it('validates the version and GraphQL-like topic', async () => {
+  test('validates the version and GraphQL-like topic', async () => {
     // Given
     vi.mocked(requestApiVersions).mockResolvedValue(['2023-01', 'unstable'])
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create', 'products/delete'])
@@ -238,7 +238,7 @@ describe('parseVersionAndTopic', () => {
     expect(got).toEqual(['unstable', 'orders/create'])
   })
 
-  it('fails when topic not present for api-version topics list', async () => {
+  test('fails when topic not present for api-version topics list', async () => {
     // Given
     vi.mocked(requestApiVersions).mockResolvedValue(['2023-01', 'unstable'])
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create', 'products/delete'])
@@ -261,7 +261,7 @@ describe('parseVersionAndTopic', () => {
 })
 
 describe('parseAddressAndMethod', () => {
-  it('ignores when no flags', async () => {
+  test('ignores when no flags', async () => {
     // When
     const got = parseAddressAndMethod({})
 
@@ -269,21 +269,21 @@ describe('parseAddressAndMethod', () => {
     expect(got).toEqual([undefined, undefined])
   })
 
-  it('gets method from method only', async () => {
+  test('gets method from method only', async () => {
     // Then
     expect(parseAddressAndMethod({deliveryMethod: 'http'})).toEqual(['http', undefined])
     expect(parseAddressAndMethod({deliveryMethod: 'event-bridge'})).toEqual(['event-bridge', undefined])
     expect(parseAddressAndMethod({deliveryMethod: 'google-pub-sub'})).toEqual(['google-pub-sub', undefined])
   })
 
-  it('fails when method is unknown', async () => {
+  test('fails when method is unknown', async () => {
     // Then
     expect(() => {
       parseAddressAndMethod({deliveryMethod: 'ftp'})
     }).toThrow(AbortError)
   })
 
-  it('gets pair from address', async () => {
+  test('gets pair from address', async () => {
     // When
     const got = parseAddressAndMethod({address: 'http://localhost'})
 
@@ -291,14 +291,14 @@ describe('parseAddressAndMethod', () => {
     expect(got).toEqual(['localhost', 'http://localhost'])
   })
 
-  it('fails when address is not accepted', async () => {
+  test('fails when address is not accepted', async () => {
     // When
     expect(() => {
       parseAddressAndMethod({address: 'ftp://example.org'})
     }).toThrow(AbortError)
   })
 
-  it('gets transformed pair from pair', async () => {
+  test('gets transformed pair from pair', async () => {
     // When
     const got = parseAddressAndMethod({deliveryMethod: 'http', address: 'http://localhost'})
 
@@ -306,7 +306,7 @@ describe('parseAddressAndMethod', () => {
     expect(got).toEqual(['localhost', 'http://localhost'])
   })
 
-  it('gets untransformed pair from pair', async () => {
+  test('gets untransformed pair from pair', async () => {
     // When
     const got = parseAddressAndMethod({deliveryMethod: 'http', address: 'https://example.org'})
 

@@ -1,10 +1,10 @@
 import {ConfSchema, cacheRetrieveOrRepopulate, getSession, removeSession, setSession} from './conf-store.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
-import {describe, expect, it} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
 describe('getSession', () => {
-  it('returns the content of the SessionStore key', async () => {
+  test('returns the content of the SessionStore key', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
@@ -20,7 +20,7 @@ describe('getSession', () => {
 })
 
 describe('setSession', () => {
-  it('saves the desired content in the SessionStore key', async () => {
+  test('saves the desired content in the SessionStore key', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
@@ -36,7 +36,7 @@ describe('setSession', () => {
 })
 
 describe('removeSession', () => {
-  it('removes the SessionStore key', async () => {
+  test('removes the SessionStore key', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
@@ -52,19 +52,20 @@ describe('removeSession', () => {
 })
 
 describe('cacheRetrieveOrRepopulate', () => {
-  // flaky test
-  it.skip('returns the cached contents when they exist', async () => {
+  test('returns the cached contents when they exist', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
-      // populate the cache
-      await cacheRetrieveOrRepopulate('identity-introspection-url-IDENTITYURL', async () => 'URL1', 1000, config)
+      const cacheValue = {
+        'identity-introspection-url-IDENTITYURL': {value: 'URL1', timestamp: Date.now()},
+      }
+      config.set('cache', cacheValue)
 
       // When
       const got = await cacheRetrieveOrRepopulate(
         'identity-introspection-url-IDENTITYURL',
         async () => 'URL2',
-        1000,
+        60 * 1000,
         config,
       )
 
@@ -74,39 +75,64 @@ describe('cacheRetrieveOrRepopulate', () => {
     })
   })
 
-  it('derives the cached contents when the cache is not populated', async () => {
-    await inTemporaryDirectory(async (cwd) => {
-      // Given
-      const config = new LocalStorage<ConfSchema>({cwd})
-
-      // Then
-      const got = await cacheRetrieveOrRepopulate(
-        'identity-introspection-url-IDENTITYURL',
-        async () => 'URL1',
-        1000,
-        config,
-      )
-      expect(got).toEqual('URL1')
-    })
-  })
-
-  it('re-derives the cached contents when the cache is outdated', async () => {
+  test('derives the cached contents when the cache is not populated', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
 
       // When
-      // populate the cache
-      await cacheRetrieveOrRepopulate('identity-introspection-url-IDENTITYURL', async () => 'URL1', 1000, config)
+      const got = await cacheRetrieveOrRepopulate(
+        'identity-introspection-url-IDENTITYURL',
+        async () => 'URL1',
+        60 * 1000,
+        config,
+      )
 
       // Then
+      expect(got).toEqual('URL1')
+    })
+  })
+
+  test('re-derives the cached contents when the cache is outdated', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      const cacheValue = {
+        'identity-introspection-url-IDENTITYURL': {value: 'URL1', timestamp: Date.now() - 60 * 1000},
+      }
+      config.set('cache', cacheValue)
+
+      // When
       const got = await cacheRetrieveOrRepopulate(
         'identity-introspection-url-IDENTITYURL',
         async () => 'URL2',
         0,
         config,
       )
+
+      // Then
       // Fetches a new value because the old one is outdated per the current request
+      expect(got).toEqual('URL2')
+    })
+  })
+
+  test('re-derives the cached contents when the cache is invalid', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<any>({cwd})
+      const cacheValue = {'identity-introspection-url-IDENTITYURL': {value: undefined, timestamp: Date.now()}}
+      config.set('cache', cacheValue)
+
+      // When
+      const got = await cacheRetrieveOrRepopulate(
+        'identity-introspection-url-IDENTITYURL',
+        async () => 'URL2',
+        60 * 1000,
+        config,
+      )
+
+      // Then
+      // Fetches a new value because the old one is wrong
       expect(got).toEqual('URL2')
     })
   })

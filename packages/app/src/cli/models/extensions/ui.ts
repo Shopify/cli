@@ -1,7 +1,6 @@
 import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema} from './schemas.js'
-import {ExtensionCategory, GenericSpecification, UIExtension} from '../app/extensions.js'
+import {ExtensionCategory, ExtensionFlavor, GenericSpecification, UIExtension} from '../app/extensions.js'
 import {blocks, defaultExtensionFlavors} from '../../constants.js'
-import {ExtensionFlavor} from '../../services/generate/extension.js'
 import {ok, Result} from '@shopify/cli-kit/node/result'
 import {capitalize, constantize} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -19,7 +18,7 @@ export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = Bas
   surface: string
   singleEntryPath: boolean
   registrationLimit: number
-  supportedFlavors: {name: string; value: ExtensionFlavor}[]
+  supportedFlavors: ExtensionFlavor[]
   gated: boolean
   helpURL?: string
   dependency?: {name: string; version: string}
@@ -29,7 +28,7 @@ export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = Bas
   getBundleExtensionStdinContent?: (config: TConfiguration) => string
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
   validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
-  preDeployValidation?: (config: TConfiguration) => Promise<void>
+  preDeployValidation?: (extension: UIExtensionInstance<TConfiguration>) => Promise<void>
   category: () => ExtensionCategory
   previewMessage?: (
     host: string,
@@ -126,9 +125,9 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
     return this.specification.validate(this.configuration, this.directory)
   }
 
-  preDeployValidation() {
+  preDeployValidation(): Promise<void> {
     if (!this.specification.preDeployValidation) return Promise.resolve()
-    return this.specification.preDeployValidation(this.configuration)
+    return this.specification.preDeployValidation(this)
   }
 
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {

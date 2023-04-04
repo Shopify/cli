@@ -1,8 +1,8 @@
 import {isValidURL} from './url.js'
-import {describe, expect, it} from 'vitest'
+import {describe, expect, test} from 'vitest'
 
 describe('isValidURL', () => {
-  it('returns true if the URL is valid', () => {
+  test('returns true if the URL is valid', () => {
     // Given/When
     const got = isValidURL('https://example.com')
 
@@ -10,7 +10,7 @@ describe('isValidURL', () => {
     expect(got).toBe(true)
   })
 
-  it('returns false if the URL is empty', () => {
+  test('returns false if the URL is empty', () => {
     // Given/When
     const got = isValidURL('')
 
@@ -18,7 +18,7 @@ describe('isValidURL', () => {
     expect(got).toBe(false)
   })
 
-  it('returns false if the format is invalid', () => {
+  test('returns false if the format is invalid', () => {
     // Given/When
     const got = isValidURL('wrong')
 
@@ -26,7 +26,7 @@ describe('isValidURL', () => {
     expect(got).toBe(false)
   })
 
-  it('returns false if the URL is missing the protocol', () => {
+  test('returns false if the URL is missing the protocol', () => {
     // Given/When
     const got = isValidURL('example.com')
 

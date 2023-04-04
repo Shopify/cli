@@ -5,7 +5,7 @@ import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
@@ -146,7 +146,7 @@ beforeEach(() => {
 })
 
 describe('ensureDeploymentIdsPresence: matchmaking returns invalid', () => {
-  it('throw an invalid environment error if functions is invalid', async () => {
+  test('throw an invalid environment error if functions is invalid', async () => {
     // Given
     vi.mocked(ensureFunctionsIds).mockResolvedValue(err('invalid-environment'))
     vi.mocked(ensureExtensionsIds).mockResolvedValue(ok({extensions: {}, extensionIds: {}}))
@@ -158,7 +158,7 @@ describe('ensureDeploymentIdsPresence: matchmaking returns invalid', () => {
     await expect(got).rejects.toThrow(/Deployment failed because this local project doesn't seem to match the app/)
   })
 
-  it('throw an invalid environment error if there are pending remote matches', async () => {
+  test('throw an invalid environment error if there are pending remote matches', async () => {
     // Given
     vi.mocked(ensureFunctionsIds).mockResolvedValue(err('pending-remote'))
     vi.mocked(ensureExtensionsIds).mockResolvedValue(ok({extensions: {}, extensionIds: {}}))
@@ -170,7 +170,7 @@ describe('ensureDeploymentIdsPresence: matchmaking returns invalid', () => {
     await expect(got).rejects.toThrow(/Deployment failed because this local project doesn't seem to match the app/)
   })
 
-  it('throw an invalid environment error if extensions is invalid', async () => {
+  test('throw an invalid environment error if extensions is invalid', async () => {
     // Given
     vi.mocked(ensureFunctionsIds).mockResolvedValue(ok({}))
     vi.mocked(ensureExtensionsIds).mockResolvedValue(err('invalid-environment'))
@@ -184,7 +184,7 @@ describe('ensureDeploymentIdsPresence: matchmaking returns invalid', () => {
 })
 
 describe('ensureDeploymentIdsPresence: matchmaking is valid', () => {
-  it('returns the combination of functions and extensions', async () => {
+  test('returns the combination of functions and extensions', async () => {
     // Given
     vi.mocked(ensureFunctionsIds).mockResolvedValue(ok({FUNCTION_A: 'ID_A', FUNCTION_B: 'ID_B'}))
     vi.mocked(ensureExtensionsIds).mockResolvedValue(

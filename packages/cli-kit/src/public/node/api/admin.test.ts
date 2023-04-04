@@ -1,12 +1,13 @@
 import * as admin from './admin.js'
+import {graphqlRequest} from './graphql.js'
 import {AdminSession} from '../session.js'
-import {graphqlRequest} from '../../../private/node/api/graphql.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'
 import * as http from '../../../public/node/http.js'
 import {test, vi, expect, describe} from 'vitest'
 
-vi.mock('../../../private/node/api/graphql.js')
+vi.mock('./graphql.js')
 vi.mock('../../../private/node/api/headers.js')
+vi.mock('../http.js')
 
 const mockedResult = {
   publicApiVersions: [
@@ -48,13 +49,13 @@ describe('admin-graphql-api', () => {
     await admin.adminRequest('query', Session, {variables: 'variables'})
 
     // Then
-    expect(graphqlRequest).toHaveBeenLastCalledWith(
-      'query',
-      'Admin',
-      'https://store/admin/api/2022-01/graphql.json',
+    expect(graphqlRequest).toHaveBeenLastCalledWith({
+      query: 'query',
+      api: 'Admin',
+      url: 'https://store/admin/api/2022-01/graphql.json',
       token,
-      {variables: 'variables'},
-    )
+      variables: {variables: 'variables'},
+    })
   })
 })
 

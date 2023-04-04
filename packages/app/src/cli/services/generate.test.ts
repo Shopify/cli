@@ -2,10 +2,15 @@ import generate from './generate.js'
 import {ensureGenerateContext} from './context.js'
 import {load as loadApp} from '../models/app/loader.js'
 import generateExtensionPrompt from '../prompts/generate/extension.js'
-import generateExtensionService from '../services/generate/extension.js'
-import {testApp, testRemoteSpecifications, testThemeExtensions} from '../models/app/app.test-data.js'
-import {Extension} from '../models/app/extensions.js'
-import {describe, expect, it, vi, beforeAll, afterEach} from 'vitest'
+import {generateExtension} from '../services/generate/extension.js'
+import {
+  testApp,
+  testRemoteSpecifications,
+  testRemoteTemplateSpecifications,
+  testThemeExtensions,
+} from '../models/app/app.test-data.js'
+import {Extension, GenericSpecification} from '../models/app/extensions.js'
+import {describe, expect, vi, beforeAll, afterEach, test} from 'vitest'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -31,7 +36,7 @@ afterEach(() => {
 
 describe('after extension command finishes correctly', () => {
   const mockConfig = new Config({root: ''})
-  it('displays a confirmation message with instructions to run dev', async () => {
+  test('displays a confirmation message with instructions to run dev', async () => {
     // Given
     const outputInfo = await mockSuccessfulCommandExecution('checkout_ui_extension_external')
 
@@ -53,7 +58,7 @@ describe('after extension command finishes correctly', () => {
     `)
   })
 
-  it('displays a confirmation message for a theme app extension', async () => {
+  test('displays a confirmation message for a theme app extension', async () => {
     // Given
     const outputInfo = await mockSuccessfulCommandExecution('theme')
 
@@ -75,7 +80,7 @@ describe('after extension command finishes correctly', () => {
     `)
   })
 
-  it('displays a confirmation message for a function', async () => {
+  test('displays a confirmation message for a function', async () => {
     // Given
     const outputInfo = await mockSuccessfulCommandExecution('product_discounts')
 
@@ -97,7 +102,7 @@ describe('after extension command finishes correctly', () => {
     `)
   })
 
-  it('throws error if trying to generate a non existing type', async () => {
+  test('throws error if trying to generate a non existing type', async () => {
     // Given
     await mockSuccessfulCommandExecution('unknown_type')
 
@@ -108,7 +113,7 @@ describe('after extension command finishes correctly', () => {
     await expect(got).rejects.toThrow(/Unknown extension type: unknown_type/)
   })
 
-  it('throws error if trying to generate a type over the registration limit', async () => {
+  test('throws error if trying to generate a type over the registration limit', async () => {
     // Given
     const themeExtension = await testThemeExtensions()
     await mockSuccessfulCommandExecution('theme', [themeExtension])
@@ -120,7 +125,7 @@ describe('after extension command finishes correctly', () => {
     await expect(got).rejects.toThrow(/Invalid extension type/)
   })
 
-  it('throws error if trying to generate with an unsupported flavor', async () => {
+  test('throws error if trying to generate with an unsupported flavor', async () => {
     // Given
     await mockSuccessfulCommandExecution('checkout_ui_extension_external')
 
@@ -143,13 +148,22 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
   const app = testApp({
     directory: appRoot,
     configurationPath: joinPath(appRoot, 'shopify.app.toml'),
-    extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => existingExtensions,
+    extensionsForType: (_spec: {identifier: string; externalIdentifier: string}) => existingExtensions,
   })
+  const specification = {
+    ...testRemoteSpecifications[0],
+    ...{category: () => (identifier === 'product_discounts' ? 'function' : 'ui')},
+    ...(identifier === 'product_discounts' && {helpURL: 'https://shopify.dev/docs/apps/discounts'}),
+  } as GenericSpecification
 
   vi.mocked(loadApp).mockResolvedValue(app)
   vi.mocked(partnersRequest).mockResolvedValueOnce({extensionSpecifications: testRemoteSpecifications})
+  vi.mocked(partnersRequest).mockResolvedValueOnce({templateSpecifications: testRemoteTemplateSpecifications})
   vi.mocked(ensureGenerateContext).mockResolvedValue('api-key')
-  vi.mocked(generateExtensionPrompt).mockResolvedValue({name: 'name', extensionType: identifier})
-  vi.mocked(generateExtensionService).mockResolvedValue(joinPath('extensions', 'name'))
+  vi.mocked(generateExtensionPrompt).mockResolvedValue({
+    name: 'name',
+    extensionContent: [{name: 'name', specification}],
+  })
+  vi.mocked(generateExtension).mockResolvedValue([{directory: joinPath('extensions', 'name'), specification}])
   return mockAndCaptureOutput()
 }

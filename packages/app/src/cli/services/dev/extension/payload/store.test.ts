@@ -7,7 +7,7 @@ import {
 import {UIExtensionPayload, ExtensionsEndpointPayload} from './models.js'
 import * as payload from '../payload.js'
 import {UIExtension} from '../../../../models/app/extensions.js'
-import {beforeEach, describe, expect, it, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 describe('getExtensionsPayloadStoreRawPayload()', () => {
   test('returns the raw payload', async () => {
@@ -150,7 +150,7 @@ describe('ExtensionsPayloadStore()', () => {
   })
 
   describe('updateExtensions() informs event listeners of the updated extensions', () => {
-    it('updates only the extensions existing in the store', () => {
+    test('updates only the extensions existing in the store', () => {
       // Given
       const payload = {
         extensions: [{uuid: '123'}],
@@ -172,7 +172,7 @@ describe('ExtensionsPayloadStore()', () => {
       expect(extensionsPayloadStore.getRawPayload().extensions[0]?.test).toEqual('value')
     })
 
-    it('deep merge extension points with incoming payload when the target matches', () => {
+    test('deep merge extension points with incoming payload when the target matches', () => {
       // Given
       const payload = {
         extensions: [
@@ -213,7 +213,7 @@ describe('ExtensionsPayloadStore()', () => {
       })
     })
 
-    it('informs event listeners of updated extensions', () => {
+    test('informs event listeners of updated extensions', () => {
       // Given
       const payload = {
         extensions: [{uuid: '123'}, {uuid: '456'}, {uuid: '789'}, {uuid: '101'}],

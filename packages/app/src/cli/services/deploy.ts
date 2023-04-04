@@ -34,6 +34,9 @@ interface DeployOptions {
 
   /** If true, proceed with deploy without asking for confirmation */
   force: boolean
+
+  /** The deployment label */
+  label?: string
 }
 
 interface TasksContext {
@@ -53,11 +56,16 @@ export async function deploy(options: DeployOptions) {
 
   let label: string | undefined
 
-  if (organization.betas.appUiDeployments) {
-    label = await renderTextPrompt({
-      message: 'Deployment label',
-      allowEmpty: true,
-    })
+  // if the command is run using a partnersToken then it is not possible to fetch the organization  In that case the new
+  // appUiDeployments flow is not triggered even if the org has the beta flag enabled. This should be fixed in the
+  // partners server side.
+  if (organization?.betas.appUiDeployments) {
+    label =
+      options.label ??
+      (await renderTextPrompt({
+        message: 'Deployment label',
+        allowEmpty: true,
+      }))
 
     if (label.length === 0) {
       label = undefined
@@ -111,7 +119,7 @@ export async function deploy(options: DeployOptions) {
           },
         },
         {
-          title: organization.betas.appUiDeployments ? 'Creating deployment' : 'Pushing your code to Shopify',
+          title: organization?.betas.appUiDeployments ? 'Creating deployment' : 'Pushing your code to Shopify',
           task: async () => {
             if (bundle) {
               ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
@@ -139,12 +147,12 @@ export async function deploy(options: DeployOptions) {
       await outputCompletionMessage({
         app,
         partnersApp,
-        partnersOrganizationId: organization.id,
+        partnersOrganizationId: partnersApp.organizationId,
         identifiers,
         registrations,
         validationErrors,
         deploymentId,
-        unifiedDeployment: organization.betas.appUiDeployments ?? false,
+        unifiedDeployment: organization?.betas.appUiDeployments ?? false,
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

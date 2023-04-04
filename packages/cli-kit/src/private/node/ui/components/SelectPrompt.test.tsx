@@ -318,4 +318,30 @@ describe('SelectPrompt', async () => {
       "
     `)
   })
+
+  test('allows passing false as the default value', async () => {
+    const items = [
+      {label: 'yes', value: true},
+      {label: 'no', value: false},
+    ]
+
+    const renderInstance = render(
+      <SelectPrompt
+        message="Associate your project with the org Castile Ventures?"
+        choices={items}
+        onSubmit={() => {}}
+        defaultValue={false}
+      />,
+    )
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "?  Associate your project with the org Castile Ventures?
+
+         (1) yes
+      [36m>[39m  [36m(2) no[39m
+
+         [2mPress ↑↓ arrows to select, enter to confirm[22m
+      "
+    `)
+  })
 })

@@ -34,7 +34,7 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
-import {OutputProcess, outputInfo} from '@shopify/cli-kit/node/output'
+import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 
@@ -86,10 +86,6 @@ async function dev(options: DevOptions) {
   const backendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Backend)
   const webhooksPath = backendConfig?.configuration?.webhooksPath || '/api/webhooks'
   const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated
-
-  if (sendUninstallWebhook) {
-    outputInfo('Using a different app than last time, sending uninstall webhook to app server')
-  }
 
   const initiateUpdateUrls = (frontendConfig || backendConfig) && options.update
   let shouldUpdateURLs = false

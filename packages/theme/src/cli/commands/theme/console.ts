@@ -15,6 +15,7 @@ export default class Console extends ThemeCommand {
     ...globalFlags,
     store: themeFlags.store,
     password: themeFlags.password,
+    environment: themeFlags.environment,
   }
 
   async run() {

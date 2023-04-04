@@ -44,7 +44,8 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
         stderr: options.devOptions.stderr,
         stdout: options.devOptions.stdout,
         watchSignal: abortController.signal,
-        watch: (error) => {
+        watch: async (result) => {
+          const error = (result?.errors?.length ?? 0) > 0
           outputDebug(
             `The Javascript bundle of the UI extension with ID ${extension.devUUID} has ${
               error ? 'an error' : 'changed'
@@ -52,13 +53,14 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
             error ? options.devOptions.stderr : options.devOptions.stdout,
           )
 
-          options.payloadStore
-            .updateExtension(extension, options.devOptions, {
+          try {
+            await options.payloadStore.updateExtension(extension, options.devOptions, {
               status: error ? 'error' : 'success',
             })
+            // eslint-disable-next-line no-catch-all/no-catch-all
+          } catch {
             // ESBuild handles error output
-            .then((_) => {})
-            .catch((_) => {})
+          }
         },
       }),
     )

@@ -1,34 +1,9 @@
-import {buildHeaders, httpsAgent, RequestClientError, sanitizedHeadersOutput} from './headers.js'
+import {RequestClientError, sanitizedHeadersOutput} from './headers.js'
 import {stringifyMessage, outputContent, outputToken, outputDebug} from '../../../public/node/output.js'
 import {AbortError} from '../../../public/node/error.js'
-import {debugLogResponseInfo} from '../api.js'
-import {ClientError, GraphQLClient, RequestDocument, Variables} from 'graphql-request'
+import {ClientError, RequestDocument, Variables} from 'graphql-request'
 
-export interface GraphQLVariables {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any
-}
-
-export async function graphqlRequest<T>(
-  query: RequestDocument,
-  api: string,
-  url: string,
-  token: string,
-  variables?: Variables,
-  handleErrors = true,
-): Promise<T> {
-  const headers = buildHeaders(token)
-  debugLogRequestInfo(api, query, variables, headers)
-  const clientOptions = {agent: await httpsAgent(), headers}
-  const client = new GraphQLClient(url, clientOptions)
-  const response = await debugLogResponseInfo(
-    {request: client.rawRequest<T>(query as string, variables), url},
-    handleErrors ? errorHandler(api) : undefined,
-  )
-  return response.data
-}
-
-function debugLogRequestInfo<T>(
+export function debugLogRequestInfo<T>(
   api: string,
   query: RequestDocument,
   variables?: Variables,
@@ -42,7 +17,7 @@ ${sanitizedHeadersOutput(headers)}
 `)
 }
 
-function errorHandler<T>(api: string): (error: unknown) => Error | unknown {
+export function errorHandler<T>(api: string): (error: unknown) => Error | unknown {
   return (error: unknown) => {
     if (error instanceof ClientError) {
       const errorMessage = stringifyMessage(outputContent`

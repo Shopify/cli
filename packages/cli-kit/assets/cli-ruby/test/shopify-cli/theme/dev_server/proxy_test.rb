@@ -82,13 +82,26 @@ module ShopifyCLI
             times: 0)
         end
 
+        def test_new_webpixels_requests_are_ignored
+          path = "cli/sfr/wpm@0.0.264@24271aa3w5f39399apdce3a888m968cefc2/sandbox/worker.modern.js"
+          stub_session_id_request
+
+          request.get(path)
+
+          assert_requested(
+            :get,
+            "https://dev-theme-server-store.myshopify.com#{path}",
+            times: 0
+          )
+        end
+
         def test_get_is_proxied_to_theme_access_api_when_password_is_provided
+          store = "dev-theme-server-store.myshopify.com"
+
           Environment.stubs(:theme_access_password?).returns(true)
-          Environment.stubs(:store).returns("https://dev-theme-server-store.myshopify.com")
+          Environment.stubs(:store).returns(store)
           stub_request(:head, "https://theme-kit-access.shopifyapps.com/cli/sfr/?_fd=0&pb=0&preview_theme_id=123456789")
-            .with(
-              headers: { "X-Shopify-Shop" => "https://dev-theme-server-store.myshopify.com" },
-            )
+            .with(headers: { "X-Shopify-Shop" => store })
             .to_return(
               status: 200,
               headers: { "Set-Cookie" => "_secure_session_id=#{SECURE_SESSION_ID}" },
@@ -98,7 +111,7 @@ module ShopifyCLI
               headers: {
                 "Content-Length" => "0",
                 "Cookie" => "_secure_session_id=deadbeef",
-                "X-Shopify-Shop" => "https://dev-theme-server-store.myshopify.com",
+                "X-Shopify-Shop" => store,
               },
             )
             .to_return(status: 200, body: "", headers: {})
@@ -106,6 +119,24 @@ module ShopifyCLI
           request.get("/")
 
           assert_requested(:get, "https://theme-kit-access.shopifyapps.com/cli/sfr/?_fd=0&pb=0")
+        end
+
+        def test_request_is_not_proxied_to_theme_access_api_if_it_cant_respond
+          store = "dev-theme-server-store.myshopify.com"
+
+          Environment.stubs(:theme_access_password?).returns(true)
+          Environment.stubs(:store).returns(store)
+
+          stub_request(:head, "https://theme-kit-access.shopifyapps.com/cli/sfr/?_fd=0&pb=0&preview_theme_id=123456789")
+            .with(headers: { "X-Shopify-Shop" => store })
+            .to_return(status: 200, body: "", headers: {})
+          stub_request(:post, "https://dev-theme-server-store.myshopify.com/localization?_fd=0&pb=0")
+            .with(headers: { "Host" => store })
+            .to_return(status: 200, body: "", headers: {})
+
+          request.post("/localization")
+
+          assert_requested(:post, "https://dev-theme-server-store.myshopify.com/localization?_fd=0&pb=0")
         end
 
         def test_refreshes_session_cookie_on_expiry

@@ -6,6 +6,7 @@ import {ThemeExtensionInstance} from '../extensions/theme.js'
 import themeSpec from '../extensions/theme-specifications/theme.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
+import {RemoteTemplateSpecification} from '../../api/graphql/template_specifications.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -230,5 +231,103 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
       managementExperience: 'dashboard',
       registrationLimit: 100,
     },
+  },
+]
+
+export const testRemoteTemplateSpecifications: RemoteTemplateSpecification[] = [
+  {
+    identifier: 'cart_checkout_validation',
+    name: 'Function - Cart and Checkout Validation',
+    group: 'Discounts and checkout',
+    supportLinks: ['https://shopify.dev/docs/api/functions/reference/cart-checkout-validation'],
+    types: [
+      {
+        type: 'function',
+        url: 'https://github.com/Shopify/function-examples',
+        extensionPoints: [],
+        supportedFlavors: [
+          {
+            name: 'Rust',
+            value: 'rust',
+            path: 'checkout/rust/cart-checkout-validation/default',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    identifier: 'cart_transform',
+    name: 'Function - Cart transformer',
+    group: 'Discounts and checkout',
+    supportLinks: [],
+    types: [
+      {
+        type: 'function',
+        url: 'https://github.com/Shopify/function-examples',
+        extensionPoints: [],
+        supportedFlavors: [
+          {
+            name: 'Wasm',
+            value: 'wasm',
+            path: 'checkout/wasm/cart-transform/bundles',
+          },
+          {
+            name: 'Rust',
+            value: 'rust',
+            path: 'checkout/rust/cart-transform/bundles',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    identifier: 'product_discounts',
+    name: 'Function - Product discounts',
+    group: 'Discounts and checkout',
+    supportLinks: [],
+    types: [
+      {
+        type: 'function',
+        url: 'https://github.com/Shopify/function-examples',
+        extensionPoints: [],
+        supportedFlavors: [
+          {
+            name: 'Wasm',
+            value: 'wasm',
+            path: 'checkout/wasm/product_discounts/default',
+          },
+          {
+            name: 'Rust',
+            value: 'rust',
+            path: 'checkout/rust/product_discounts/default',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    identifier: 'order_discounts',
+    name: 'Function - Order discounts',
+    group: 'Discounts and checkout',
+    supportLinks: [],
+    types: [
+      {
+        type: 'function',
+        url: 'https://github.com/Shopify/function-examples',
+        extensionPoints: [],
+        supportedFlavors: [
+          {
+            name: 'Wasm',
+            value: 'wasm',
+            path: 'checkout/wasm/order_discounts/default',
+          },
+          {
+            name: 'Rust',
+            value: 'rust',
+            path: 'checkout/rust/order_discounts/default',
+          },
+        ],
+      },
+    ],
   },
 ]

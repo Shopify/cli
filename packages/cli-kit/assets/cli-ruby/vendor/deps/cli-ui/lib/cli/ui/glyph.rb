@@ -55,7 +55,7 @@ module CLI
       CHECK     = new('v', 0x2713,           '√', Color::GREEN)  # GREEN CHECK MARK (✓)
       X         = new('x', 0x2717,           'X', Color::RED)    # RED BALLOT X (✗)
       BUG       = new('b', 0x1f41b,          '!', Color::WHITE)  # Bug emoji (🐛)
-      CHEVRON   = new('>', 0xbb,             '»', Color::YELLOW) # RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK (»)
+      CHEVRON   = new('>', 0xbb,             '»', Color::GRAY)   # RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK (»)
       HOURGLASS = new('H', [0x231b, 0xfe0e], 'H', Color::BLUE)   # HOURGLASS + VARIATION SELECTOR 15 (⌛︎)
       WARNING   = new('!', [0x26a0, 0xfe0f], '!', Color::YELLOW) # WARNING SIGN + VARIATION SELECTOR 16 (⚠️ )
 

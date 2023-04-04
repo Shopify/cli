@@ -7,7 +7,7 @@ import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {findApiKey, findInEnv} from './find-app-info.js'
 import {outputSuccess, consoleError, outputInfo} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 const aToken = 'A_TOKEN'
@@ -53,7 +53,7 @@ describe('webhookTriggerService', () => {
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue(aToken)
   })
 
-  it('notifies about request errors', async () => {
+  test('notifies about request errors', async () => {
     // Given
     const response = {
       samplePayload: emptyJson,
@@ -75,7 +75,7 @@ describe('webhookTriggerService', () => {
     expect(consoleError).toHaveBeenCalledWith(`Request errors:\n  · Some error\n  · Another error`)
   })
 
-  it('Safe notification in case of unexpected request errors', async () => {
+  test('Safe notification in case of unexpected request errors', async () => {
     // Given
     const response = {
       samplePayload: emptyJson,
@@ -98,7 +98,7 @@ describe('webhookTriggerService', () => {
     expect(consoleError).toHaveBeenCalledWith(`Request errors:\n${JSON.stringify(response.userErrors)}`)
   })
 
-  it('notifies about real delivery being sent', async () => {
+  test('notifies about real delivery being sent', async () => {
     // Given
     mockLists(aVersion, aTopic)
 
@@ -115,7 +115,7 @@ describe('webhookTriggerService', () => {
     expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
   })
 
-  it("won't send to event-bridge if api-key not found", async () => {
+  test("won't send to event-bridge if api-key not found", async () => {
     // Given
     mockLists(aVersion, aTopic)
     vi.mocked(findInEnv).mockResolvedValue({})
@@ -125,7 +125,7 @@ describe('webhookTriggerService', () => {
     await expect(webhookTriggerService(eventBridgeFlags())).rejects.toThrow(AbortError)
   })
 
-  it('notifies about real event-bridge delivery being sent', async () => {
+  test('notifies about real event-bridge delivery being sent', async () => {
     // Given
     mockLists(aVersion, aTopic)
     vi.mocked(findInEnv).mockResolvedValue({})
@@ -151,7 +151,7 @@ describe('webhookTriggerService', () => {
   })
 
   describe('Localhost delivery', () => {
-    it('delivers to localhost', async () => {
+    test('delivers to localhost', async () => {
       // Given
       mockLists(aVersion, aTopic)
 
@@ -168,7 +168,7 @@ describe('webhookTriggerService', () => {
       expect(outputSuccess).toHaveBeenCalledWith('Localhost delivery sucessful')
     })
 
-    it('shows an error if localhost is not ready', async () => {
+    test('shows an error if localhost is not ready', async () => {
       // Given
       mockLists(aVersion, aTopic)
 

@@ -92,7 +92,7 @@ describe('extensionServerReducer()', () => {
     })
   })
 
-  // eslint-disable-next-line jest/no-disabled-tests
+  // eslint-disable-next-line vitest/no-disabled-tests
   test.skip('refreshes extension url', async () => {
     const extension = mockExtension()
     const previousState: ExtensionServerState = {

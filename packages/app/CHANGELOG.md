@@ -1,5 +1,83 @@
 # @shopify/app
 
+## 3.45.0
+
+### Minor Changes
+
+- 1dd35b0b2: Enable environments for themes
+- e85f718cd: Use `-e` as an alias for --environment and remove the current one for --theme-editor-sync
+- 47856bde2: Set cloudflare as tunneling solution by default
+- 04f67f727: [Internal] Implement new unified deployment flow for organizations with the right beta flag
+
+### Patch Changes
+
+- 09ff5a34e: Exclude system files from theme app extensions
+- 705cb92eb: Get redirect url of the preview link for customer-accounts-ui-extension on dev console
+- d6f278863: Integrate Theme App Extension output with the new UI Kit
+- 0c95d6e70: Fix deploy command when the partners token is used. Now CD pipeline works but without unified deployment support
+- 326e9b2fb: Update esbuild to 0.17.10
+- b650d2234: Update the cart_transform templatePath to point to checkout/${lang}/cart-transform/default
+- 7ff4f45db: Read function specifications from Partners API
+- 821055088: Fix: Only display each extension once, even if multiple of the same type are present.
+- da6a3bdf8: Adding support for the new naming convention of extension points
+- 7b409222e: Allow to specify a custom port in toml for frontend/backend processes
+- 8fbf5d50f: Add default api_version to the TOML for the ui-extension template
+- fae45ff9d: Add remote template specification version param to the request
+- b895bb5e9: Fix template for ui_extension to not contain unsupported extensions points
+- 67d919a73: Disable function type validation except on deploy
+- Updated dependencies [da01d3595]
+- Updated dependencies [1dd35b0b2]
+- Updated dependencies [db5981a1e]
+- Updated dependencies [7f8a9436d]
+- Updated dependencies [d2a352442]
+- Updated dependencies [25fc42ae2]
+- Updated dependencies [fe32fb789]
+- Updated dependencies [4d5cff225]
+- Updated dependencies [a4b0953d9]
+- Updated dependencies [6735253e6]
+- Updated dependencies [d6f278863]
+- Updated dependencies [ddb967914]
+- Updated dependencies [c3d5ce5e6]
+- Updated dependencies [e85f718cd]
+- Updated dependencies [4bb549840]
+- Updated dependencies [b2e066fc0]
+- Updated dependencies [9c253511e]
+- Updated dependencies [e6753f4ed]
+- Updated dependencies [47856bde2]
+- Updated dependencies [657593b1a]
+- Updated dependencies [ce1457036]
+- Updated dependencies [163df5e9a]
+- Updated dependencies [b3ea29a21]
+- Updated dependencies [2ca5b35d8]
+- Updated dependencies [067199cf6]
+- Updated dependencies [645b085b8]
+- Updated dependencies [7153dff92]
+  - @shopify/cli-kit@3.45.0
+  - @shopify/plugin-cloudflare@3.45.0
+  - @shopify/plugin-ngrok@3.45.0
+
+## 3.45.0-pre.5
+
+### Minor Changes
+
+- e85f718cd: Use `-e` as an alias for --environment and remove the current one for --theme-editor-sync
+- 47856bde2: Set cloudflare as tunneling solution by default
+
+### Patch Changes
+
+- 09ff5a34e: Exclude system files from theme app extensions
+- 326e9b2fb: Update esbuild to 0.17.10
+- 7ff4f45db: Read function specifications from Partners API
+- Updated dependencies [da01d3595]
+- Updated dependencies [6735253e6]
+- Updated dependencies [e85f718cd]
+- Updated dependencies [e6753f4ed]
+- Updated dependencies [47856bde2]
+- Updated dependencies [645b085b8]
+  - @shopify/cli-kit@3.45.0-pre.5
+  - @shopify/plugin-cloudflare@3.45.0-pre.5
+  - @shopify/plugin-ngrok@3.45.0-pre.5
+
 ## 3.45.0-pre.4
 
 ### Minor Changes

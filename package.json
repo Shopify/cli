@@ -26,9 +26,6 @@
     "refresh-templates": "nx run-many --target=refresh-templates --all --skip-nx-cache",
     "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache && bin/prettify-manifests.js",
     "changeset-manifests": "changeset version && pnpm install --no-frozen-lockfile && pnpm refresh-manifests && bin/update-cli-kit-version.js && pnpm docs:generate",
-    "fixtures:build": "pnpm shopify app build --path fixtures/app --skip-dependencies-installation",
-    "fixtures:dev": "pnpm shopify app dev --path fixtures/app --skip-dependencies-installation",
-    "fixtures:deploy": "pnpm shopify app deploy --path fixtures/app",
     "refresh-documentation": "nx run-many --target=refresh-documentation --all --skip-nx-cache"
   },
   "devDependencies": {
@@ -53,7 +50,7 @@
     "bugsnag-build-reporter": "^2.0.0",
     "commander": "^9.4.0",
     "cross-env": "^7.0.3",
-    "esbuild": "0.15.16",
+    "esbuild": "0.17.10",
     "eslint": "^8.12.0",
     "execa": "^5.1.1",
     "fast-glob": "^3.2.12",
@@ -82,8 +79,7 @@
   "workspaces": {
     "packages": [
       "packages/*",
-      "workspace",
-      "fixtures/**/*"
+      "workspace"
     ]
   },
   "prettier": {

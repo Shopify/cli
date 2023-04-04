@@ -5,10 +5,11 @@ import {
   ensureAuthenticatedThemes,
 } from './session.js'
 
+import {getPartnersToken} from './environment.js'
 import {ApplicationToken} from '../../private/node/session/schema.js'
 import {ensureAuthenticated} from '../../private/node/session.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
-import {vi, describe, expect, it} from 'vitest'
+import {vi, describe, expect, test} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)
 
@@ -21,9 +22,10 @@ const partnersToken: ApplicationToken = {
 vi.mock('../../private/node/session.js')
 vi.mock('../../private/node/session/exchange.js')
 vi.mock('../../private/node/session/store.js')
+vi.mock('./environment.js')
 
 describe('ensureAuthenticatedStorefront', () => {
-  it('returns only storefront token if success', async () => {
+  test('returns only storefront token if success', async () => {
     // Given
     vi.mocked(ensureAuthenticated).mockResolvedValueOnce({storefront: 'storefront_token'})
 
@@ -34,7 +36,7 @@ describe('ensureAuthenticatedStorefront', () => {
     expect(got).toEqual('storefront_token')
   })
 
-  it('returns the password if provided', async () => {
+  test('returns the password if provided', async () => {
     // Given/When
     const got = await ensureAuthenticatedStorefront([], 'theme_access_password')
 
@@ -42,7 +44,7 @@ describe('ensureAuthenticatedStorefront', () => {
     expect(got).toEqual('theme_access_password')
   })
 
-  it('throws error if there is no storefront token', async () => {
+  test('throws error if there is no storefront token', async () => {
     // Given
     vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token'})
 
@@ -55,7 +57,7 @@ describe('ensureAuthenticatedStorefront', () => {
 })
 
 describe('ensureAuthenticatedAdmin', () => {
-  it('returns only admin token if success', async () => {
+  test('returns only admin token if success', async () => {
     // Given
     vi.mocked(ensureAuthenticated).mockResolvedValueOnce({
       admin: {token: 'admin_token', storeFqdn: 'mystore.myshopify.com'},
@@ -68,7 +70,7 @@ describe('ensureAuthenticatedAdmin', () => {
     expect(got).toEqual({token: 'admin_token', storeFqdn: 'mystore.myshopify.com'})
   })
 
-  it('throws error if there is no token', async () => {
+  test('throws error if there is no token', async () => {
     // Given
     vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token'})
 
@@ -81,7 +83,7 @@ describe('ensureAuthenticatedAdmin', () => {
 })
 
 describe('ensureAuthenticatedPartners', () => {
-  it('returns only partners token if success', async () => {
+  test('returns only partners token if success', async () => {
     // Given
     vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token'})
 
@@ -92,7 +94,7 @@ describe('ensureAuthenticatedPartners', () => {
     expect(got).toEqual('partners_token')
   })
 
-  it('throws error if there is no partners token', async () => {
+  test('throws error if there is no partners token', async () => {
     // Given
     vi.mocked(ensureAuthenticated).mockResolvedValueOnce({})
 
@@ -103,14 +105,14 @@ describe('ensureAuthenticatedPartners', () => {
     await expect(got).rejects.toThrow(`No partners token`)
   })
 
-  it('returns custom partners token if envvar is defined', async () => {
+  test('returns custom partners token if envvar is defined', async () => {
     // Given
     vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token'})
     vi.mocked(exchangeCustomPartnerToken).mockResolvedValueOnce(partnersToken)
-    const env = {SHOPIFY_CLI_PARTNERS_TOKEN: 'custom_cli_token'}
+    vi.mocked(getPartnersToken).mockReturnValue('custom_cli_token')
 
     // When
-    const got = await ensureAuthenticatedPartners([], env)
+    const got = await ensureAuthenticatedPartners([])
 
     // Then
     expect(got).toEqual('custom_partners_token')
@@ -118,7 +120,7 @@ describe('ensureAuthenticatedPartners', () => {
 })
 
 describe('ensureAuthenticatedTheme', () => {
-  it('returns admin token when no password is provided', async () => {
+  test('returns admin token when no password is provided', async () => {
     // Given
     vi.mocked(ensureAuthenticated).mockResolvedValueOnce({
       admin: {token: 'admin_token', storeFqdn: 'mystore.myshopify.com'},
@@ -131,7 +133,7 @@ describe('ensureAuthenticatedTheme', () => {
     expect(got).toEqual({token: 'admin_token', storeFqdn: 'mystore.myshopify.com'})
   })
 
-  it('throws error if there is no token when no password is provided', async () => {
+  test('throws error if there is no token when no password is provided', async () => {
     // Given
     vi.mocked(ensureAuthenticated).mockResolvedValueOnce({})
 
@@ -142,7 +144,7 @@ describe('ensureAuthenticatedTheme', () => {
     await expect(got).rejects.toThrow(`No admin token`)
   })
 
-  it('returns the password when is provided', async () => {
+  test('returns the password when is provided', async () => {
     // When
     const got = await ensureAuthenticatedThemes('mystore', 'password')
 

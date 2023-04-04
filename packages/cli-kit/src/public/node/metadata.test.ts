@@ -1,11 +1,11 @@
 import {createRuntimeMetadataContainer} from './metadata.js'
 import * as errorHandler from './error-handler.js'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('./error-handler.js')
 
 describe('runtime metadata', () => {
-  it('can manage data', async () => {
+  test('can manage data', async () => {
     const container = createRuntimeMetadataContainer<
       {
         foo: number
@@ -32,7 +32,7 @@ describe('runtime metadata', () => {
     expect(pub).toEqual({foo: 123})
   })
 
-  it('can mute errors', async () => {
+  test('can mute errors', async () => {
     const container = createRuntimeMetadataContainer<
       {
         foo: number

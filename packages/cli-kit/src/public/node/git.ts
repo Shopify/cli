@@ -266,3 +266,27 @@ export async function ensureInsideGitDirectory(directory?: string): Promise<void
     throw new OutsideGitDirectoryError(`${outputToken.path(directory || cwd())} is not a Git directory`)
   }
 }
+
+export class GitDirectoryNotCleanError extends AbortError {}
+/**
+ * If the .git directory tree is not clean (has uncommitted changes)
+ * it throws an abort error.
+ *
+ * @param directory - The directory to check.
+ */
+export async function ensureIsClean(directory?: string): Promise<void> {
+  if (!(await isClean(directory))) {
+    throw new GitDirectoryNotCleanError(`${outputToken.path(directory || cwd())} is not a clean Git directory`)
+  }
+}
+
+/**
+ * Returns true if the .git directory tree is clean (no uncommitted changes).
+ *
+ * @param directory - The directory to check.
+ */
+export async function isClean(directory?: string): Promise<boolean> {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  return (await git({baseDir: directory}).status()).isClean
+}

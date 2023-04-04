@@ -1,7 +1,7 @@
 import {fileExists, inTemporaryDirectory, readFile} from './fs.js'
 import {downloadFile} from './http.js'
 import {joinPath} from './path.js'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import nodeFetch, {Response} from 'node-fetch'
 import {Readable} from 'stream'
 
@@ -14,7 +14,7 @@ vi.mock('node-fetch', async () => {
 })
 
 describe('downloadFile', () => {
-  it('Downloads a file from a URL to a local path', async () => {
+  test('Downloads a file from a URL to a local path', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const url = 'https://example.com'

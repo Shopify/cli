@@ -1,13 +1,13 @@
 import AutocorrectOn from './on.js'
 import {setAutocorrect} from '../../../services/conf.js'
 import {Config} from '@oclif/core'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('../../../services/conf.js')
 
 describe('AutocorrectOn', () => {
-  it('Enables autocorrect config to on', async () => {
+  test('Enables autocorrect config to on', async () => {
     // Given
     const config = new Config({root: __dirname})
     const outputMock = mockAndCaptureOutput()

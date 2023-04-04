@@ -4,7 +4,8 @@
   // Changing options here won't affect the build of your extension
   "compilerOptions": {
     "jsx": "react-jsx",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "strict": true
   },
   "include": ["./src"]
 }

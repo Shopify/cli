@@ -120,7 +120,7 @@ class AppInfo {
       extensions: TExtension[],
       outputFormatter: (extension: TExtension) => string,
     ) {
-      const types = extensions.map((ext) => ext.type)
+      const types = new Set(extensions.map((ext) => ext.type))
       types.forEach((extensionType: string) => {
         const relevantExtensions = extensions.filter((extension: TExtension) => extension.type === extensionType)
         if (relevantExtensions[0]) {

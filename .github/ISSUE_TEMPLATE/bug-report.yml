@@ -58,7 +58,7 @@ body:
     id: verbose_output
     attributes:
       label: Verbose output
-      description: Rerun the command with `--verbose` and paste the output here
+      description: If you're using npm rerun the command with `-- --verbose` or if you're using yarn or pnpm rerun the command with `--verbose`
       render: shell
     validations:
       required: true

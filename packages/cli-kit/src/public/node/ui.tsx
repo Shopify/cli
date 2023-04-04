@@ -249,6 +249,7 @@ export interface RenderConfirmationPromptOptions extends Pick<SelectPromptProps<
   confirmationMessage?: string
   cancellationMessage?: string
   renderOptions?: RenderOptions
+  defaultValue?: boolean
 }
 
 /**
@@ -271,6 +272,7 @@ export function renderConfirmationPrompt({
   confirmationMessage = 'Yes, confirm',
   cancellationMessage = 'No, cancel',
   renderOptions,
+  defaultValue = true,
 }: RenderConfirmationPromptOptions): Promise<boolean> {
   const choices = [
     {
@@ -291,6 +293,7 @@ export function renderConfirmationPrompt({
     infoTable,
     submitWithShortcuts: true,
     renderOptions,
+    defaultValue,
   })
 }
 

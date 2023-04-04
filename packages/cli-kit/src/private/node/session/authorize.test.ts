@@ -9,7 +9,7 @@ import {renderConfirmationPrompt} from '../../../public/node/ui.js'
 import {checkPort} from 'get-port-please'
 import {killPortProcess} from 'kill-port-process'
 
-import {describe, it, expect, vi} from 'vitest'
+import {describe, test, expect, vi} from 'vitest'
 
 vi.mock('../../../public/node/system.js')
 vi.mock('./redirect-listener')
@@ -24,7 +24,7 @@ const port = 3456
 const host = '127.0.0.1'
 
 describe('authorize', () => {
-  it('authorizes the user through the browser', async () => {
+  test('authorizes the user through the browser', async () => {
     // Given
     const challenge = {
       codeChallenge: 'challenge',
@@ -50,7 +50,7 @@ describe('authorize', () => {
     expect(got).toEqual({code: 'code', codeVerifier: challenge.codeVerifier})
   })
 
-  it('throws error if the returned state is not valid', async () => {
+  test('throws error if the returned state is not valid', async () => {
     // Given
     vi.mocked(checkPort).mockResolvedValue(port)
     vi.mocked(randomHex).mockReturnValue('hex')
@@ -63,7 +63,7 @@ describe('authorize', () => {
     await expect(auth).rejects.toThrowError(/authentication doesn't match/)
   })
 
-  it('throws cancel execution exception if the port used for listening for the authorization response is already in use and the user do not want to terminate the process', async () => {
+  test('throws cancel execution exception if the port used for listening for the authorization response is already in use and the user do not want to terminate the process', async () => {
     // Given
     vi.mocked(checkPort).mockResolvedValue(false)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
@@ -76,7 +76,7 @@ describe('authorize', () => {
     expect(killPortProcess).toBeCalledTimes(0)
   })
 
-  it('terminate process if the port used for listing for the authorization response is already in use and the user confirm to terminate the process', async () => {
+  test('terminate process if the port used for listing for the authorization response is already in use and the user confirm to terminate the process', async () => {
     // Given
     const challenge = {
       codeChallenge: 'challenge',

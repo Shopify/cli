@@ -1,5 +1,5 @@
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import * as http from '@shopify/cli-kit/node/http'
 
 const samplePayload = '{ "sampleField": "SampleValue" }'
@@ -8,7 +8,7 @@ const sampleHeaders = '{ "header": "Header Value" }'
 vi.mock('@shopify/cli-kit/node/http')
 
 describe('triggerLocalWebhook', () => {
-  it('delivers to localhost port', async () => {
+  test('delivers to localhost port', async () => {
     // Given
     const successResponse: any = {status: 200}
     vi.mocked(http.fetch).mockResolvedValue(successResponse)
@@ -29,7 +29,7 @@ describe('triggerLocalWebhook', () => {
     expect(got).toBeTruthy()
   })
 
-  it('notifies failure to deliver to localhost port', async () => {
+  test('notifies failure to deliver to localhost port', async () => {
     // Given
     const errorResponse: any = {status: 500}
     vi.mocked(http.fetch).mockResolvedValue(errorResponse)

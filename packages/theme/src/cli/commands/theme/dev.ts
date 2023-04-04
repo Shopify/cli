@@ -2,6 +2,12 @@ import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
+import {
+  showDeprecationWarnings,
+  currentDirectoryConfirmed,
+  renderLinks,
+  validThemeDirectory,
+} from '../../services/dev.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -35,7 +41,6 @@ export default class Dev extends ThemeCommand {
       env: 'SHOPIFY_FLAG_POLL',
     }),
     'theme-editor-sync': Flags.boolean({
-      char: 'e',
       description: 'Synchronize Theme Editor updates in the local theme files.',
       env: 'SHOPIFY_FLAG_THEME_EDITOR_SYNC',
     }),
@@ -74,6 +79,7 @@ export default class Dev extends ThemeCommand {
       env: 'SHOPIFY_FLAG_FORCE',
     }),
     password: themeFlags.password,
+    environment: themeFlags.environment,
   }
 
   static cli2Flags = [
@@ -98,6 +104,7 @@ export default class Dev extends ThemeCommand {
    * Every 110 minutes, it will refresh the session token and restart the server.
    */
   async run(): Promise<void> {
+    showDeprecationWarnings(this.argv)
     let {flags} = await this.parse(Dev)
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password, [], true)
@@ -114,6 +121,10 @@ export default class Dev extends ThemeCommand {
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Dev.cli2Flags})
     const command = ['theme', 'serve', flags.path, ...flagsToPass]
 
+    if (!(await validThemeDirectory(flags.path)) && !(await currentDirectoryConfirmed(flags.force))) {
+      return
+    }
+
     let controller = new AbortController()
 
     setInterval(() => {
@@ -123,6 +134,8 @@ export default class Dev extends ThemeCommand {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.execute(adminSession, flags.password, command, controller, true)
     }, this.ThemeRefreshTimeoutInMs)
+
+    renderLinks(store, flags.theme!, flags.host, flags.port)
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.execute(adminSession, flags.password, command, controller, false)

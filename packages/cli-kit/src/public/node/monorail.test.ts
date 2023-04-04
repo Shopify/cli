@@ -1,7 +1,7 @@
 import * as http from './http.js'
 import {publishMonorailEvent} from './monorail.js'
 import {mockAndCaptureOutput} from './testing/output.js'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('./http.js')
 
@@ -23,7 +23,7 @@ describe('monorail', () => {
     vi.useRealTimers()
   })
 
-  it('shows an error if the Monorail request fails', async () => {
+  test('shows an error if the Monorail request fails', async () => {
     vi.mocked(http.fetch).mockResolvedValueOnce({status: 500, statusText: 'Monorail is down'} as any)
     const outputMock = mockAndCaptureOutput()
     const res = await publishMonorailEvent('fake_schema/0.0', {foo: 'bar'}, {})
@@ -31,7 +31,7 @@ describe('monorail', () => {
     expect(outputMock.debug()).toMatch('Failed to report usage analytics: Monorail is down')
   })
 
-  it('builds a request', async () => {
+  test('builds a request', async () => {
     const res = await publishMonorailEvent('fake_schema/0.0', {foo: 'bar'}, {baz: 'abc'})
     expect(res.type).toEqual('ok')
     expect(http.fetch).toHaveBeenCalledWith(expectedURL, {

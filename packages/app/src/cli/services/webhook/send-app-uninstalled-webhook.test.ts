@@ -1,6 +1,6 @@
 import {sendUninstallWebhookToAppServer} from './send-app-uninstalled-webhook.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {FetchError} from '@shopify/cli-kit/node/http'
 import {Writable} from 'stream'
@@ -28,7 +28,7 @@ const address = 'http://localhost:3000/test/path'
 const storeFqdn = 'test-store.myshopify.io'
 
 describe('sendUninstallWebhookToAppServer', () => {
-  it('requests sample and API versions, triggers local webhook', async () => {
+  test('requests sample and API versions, triggers local webhook', async () => {
     vi.mocked(partnersRequest).mockResolvedValueOnce(apiVersionsResponse).mockResolvedValueOnce(webhookSampleResponse)
     vi.mocked(triggerLocalWebhook).mockResolvedValueOnce(true)
     const stdout = {write: vi.fn()} as unknown as Writable
@@ -52,7 +52,7 @@ describe('sendUninstallWebhookToAppServer', () => {
     expect(stdout.write).toHaveBeenNthCalledWith(2, expect.stringMatching(/delivered/))
   })
 
-  it('gracefully deals with the webhook delivery failing', async () => {
+  test('gracefully deals with the webhook delivery failing', async () => {
     vi.mocked(partnersRequest).mockResolvedValueOnce(apiVersionsResponse).mockResolvedValueOnce(webhookSampleResponse)
     vi.mocked(triggerLocalWebhook).mockResolvedValueOnce(false)
     const stdout = {write: vi.fn()} as unknown as Writable
@@ -72,7 +72,7 @@ describe('sendUninstallWebhookToAppServer', () => {
     expect(stdout.write).toHaveBeenNthCalledWith(2, expect.stringMatching(/failed/))
   })
 
-  it("retries the webhook request if the app hasn't started yet", async () => {
+  test("retries the webhook request if the app hasn't started yet", async () => {
     const fakeError = new FetchError('Fake error for testing', 'network')
     fakeError.code = 'ECONNREFUSED'
     vi.mocked(partnersRequest).mockResolvedValueOnce(apiVersionsResponse).mockResolvedValueOnce(webhookSampleResponse)

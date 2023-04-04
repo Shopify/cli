@@ -3,7 +3,7 @@ import {GenericSpecification} from './extensions.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js'
-import {describe, it, expect, beforeEach, afterEach, beforeAll} from 'vitest'
+import {describe, expect, beforeEach, afterEach, beforeAll, test} from 'vitest'
 import {yarnLockfile, pnpmLockfile, PackageJson, pnpmWorkspaceFile} from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd} from '@shopify/cli-kit/node/path'
@@ -103,7 +103,7 @@ scopes = "read_products"
     return {blockDir, configPath}
   }
 
-  it("throws an error if the directory doesn't exist", async () => {
+  test("throws an error if the directory doesn't exist", async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       await rmdir(tmp, {force: true})
@@ -113,7 +113,7 @@ scopes = "read_products"
     })
   })
 
-  it("throws an error if the configuration file doesn't exist", async () => {
+  test("throws an error if the configuration file doesn't exist", async () => {
     // Given
     const currentDir = cwd()
 
@@ -123,7 +123,7 @@ scopes = "read_products"
     )
   })
 
-  it('throws an error when the configuration file is invalid', async () => {
+  test('throws an error when the configuration file is invalid', async () => {
     // Given
     const appConfiguration = `
         scopes = 1
@@ -134,7 +134,7 @@ scopes = "read_products"
     await expect(load({directory: tmpDir, specifications})).rejects.toThrow()
   })
 
-  it('loads the app when the configuration is valid and has no blocks', async () => {
+  test('loads the app when the configuration is valid and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
 
@@ -145,7 +145,7 @@ scopes = "read_products"
     expect(app.name).toBe('my_app')
   })
 
-  it('defaults to npm as the package manager when the configuration is valid', async () => {
+  test('defaults to npm as the package manager when the configuration is valid', async () => {
     // Given
     await writeConfig(appConfiguration)
 
@@ -156,7 +156,7 @@ scopes = "read_products"
     expect(app.packageManager).toBe('npm')
   })
 
-  it('defaults to yarn as the package manager when yarn.lock is present, the configuration is valid, and has no blocks', async () => {
+  test('defaults to yarn as the package manager when yarn.lock is present, the configuration is valid, and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
     const yarnLockPath = joinPath(tmpDir, yarnLockfile)
@@ -169,7 +169,7 @@ scopes = "read_products"
     expect(app.packageManager).toBe('yarn')
   })
 
-  it('defaults to pnpm as the package manager when pnpm lockfile is present, the configuration is valid, and has no blocks', async () => {
+  test('defaults to pnpm as the package manager when pnpm lockfile is present, the configuration is valid, and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
     const pnpmLockPath = joinPath(tmpDir, pnpmLockfile)
@@ -182,7 +182,7 @@ scopes = "read_products"
     expect(app.packageManager).toBe('pnpm')
   })
 
-  it("identifies if the app doesn't use workspaces", async () => {
+  test("identifies if the app doesn't use workspaces", async () => {
     // Given
     await writeConfig(appConfiguration)
 
@@ -193,7 +193,7 @@ scopes = "read_products"
     expect(app.usesWorkspaces).toBe(false)
   })
 
-  it('identifies if the app uses yarn or npm workspaces', async () => {
+  test('identifies if the app uses yarn or npm workspaces', async () => {
     // Given
     await writeConfig(appConfiguration, {
       workspaces: ['packages/*'],
@@ -209,7 +209,7 @@ scopes = "read_products"
     expect(app.usesWorkspaces).toBe(true)
   })
 
-  it('identifies if the app uses pnpm workspaces', async () => {
+  test('identifies if the app uses pnpm workspaces', async () => {
     // Given
     await writeConfig(appConfiguration)
     const pnpmWorkspaceFilePath = joinPath(tmpDir, pnpmWorkspaceFile)
@@ -222,7 +222,7 @@ scopes = "read_products"
     expect(app.usesWorkspaces).toBe(true)
   })
 
-  it("throws an error if the extension configuration file doesn't exist", async () => {
+  test("throws an error if the extension configuration file doesn't exist", async () => {
     // Given
     await makeBlockDir({blockType: 'ui', name: 'my-extension'})
 
@@ -230,7 +230,7 @@ scopes = "read_products"
     await expect(load({directory: tmpDir, specifications})).rejects.toThrow(/Couldn't find the configuration file/)
   })
 
-  it('throws an error if the extension configuration file is invalid', async () => {
+  test('throws an error if the extension configuration file is invalid', async () => {
     // Given
     const blockConfiguration = `
       wrong = "my_extension"
@@ -245,7 +245,7 @@ scopes = "read_products"
     await expect(load({directory: tmpDir, specifications})).rejects.toThrow()
   })
 
-  it('loads the app with web blocks', async () => {
+  test('loads the app with web blocks', async () => {
     // Given
     const {webDirectory} = await writeConfig(appConfiguration)
     await moveFile(webDirectory, joinPath(tmpDir, 'we_check_everywhere'))
@@ -258,7 +258,7 @@ scopes = "read_products"
     expect(app.webs[0]!.configuration.type).toBe('backend')
   })
 
-  it('loads the app with custom located web blocks', async () => {
+  test('loads the app with custom located web blocks', async () => {
     // Given
     const {webDirectory} = await writeConfig(`
     scopes = ""
@@ -273,7 +273,7 @@ scopes = "read_products"
     expect(app.webs.length).toBe(1)
   })
 
-  it('loads the app with custom located web blocks, only checks given directory', async () => {
+  test('loads the app with custom located web blocks, only checks given directory', async () => {
     // Given
     const {webDirectory} = await writeConfig(`
     scopes = ""
@@ -288,7 +288,7 @@ scopes = "read_products"
     expect(app.webs.length).toBe(0)
   })
 
-  it('loads the app when it has a extension with a valid configuration', async () => {
+  test('loads the app when it has a extension with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
     const blockConfiguration = `
@@ -315,7 +315,7 @@ scopes = "read_products"
     expect(app.extensions.ui[0]!.localIdentifier).toBe('my-extension')
   })
 
-  it('loads the app when it has a extension with a valid configuration using a supported extension type', async () => {
+  test('loads the app when it has a extension with a valid configuration using a supported extension type', async () => {
     // Given
     await writeConfig(appConfiguration)
     const blockConfiguration = `
@@ -342,7 +342,7 @@ scopes = "read_products"
     expect(app.extensions.ui[0]!.localIdentifier).toBe('my-extension')
   })
 
-  it('loads the app when it has a extension with a valid configuration using a supported extension type and in a non-conventional directory configured in the app configuration file', async () => {
+  test('loads the app when it has a extension with a valid configuration using a supported extension type and in a non-conventional directory configured in the app configuration file', async () => {
     // Given
     await writeConfig(`
     scopes = ""
@@ -372,7 +372,7 @@ scopes = "read_products"
     expect(app.extensions.ui[0]!.localIdentifier).toBe('custom_extension')
   })
 
-  it('loads the app from a extension directory when it has a extension with a valid configuration', async () => {
+  test('loads the app from a extension directory when it has a extension with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
     const blockConfiguration = `
@@ -395,7 +395,7 @@ scopes = "read_products"
     expect(app.extensions.ui[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
   })
 
-  it('loads the app with several extensions that have valid configurations', async () => {
+  test('loads the app with several extensions that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)
 
@@ -435,7 +435,7 @@ scopes = "read_products"
     expect(extensions[1]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_2_ID')
   })
 
-  it('loads the app supports extensions with the following sources paths: index.js, index.jsx, src/index.js, src/index.jsx', async () => {
+  test('loads the app supports extensions with the following sources paths: index.js, index.jsx, src/index.js, src/index.jsx', async () => {
     // Given
     await writeConfig(appConfiguration)
     await Promise.all(
@@ -459,7 +459,7 @@ scopes = "read_products"
     await expect(load({directory: tmpDir, specifications})).resolves.not.toBeUndefined()
   })
 
-  it(`throws an error if the extension doesn't have a source file`, async () => {
+  test(`throws an error if the extension doesn't have a source file`, async () => {
     // Given
     await writeConfig(appConfiguration)
     const blockConfiguration = `
@@ -478,7 +478,7 @@ scopes = "read_products"
     )
   })
 
-  it('throws an error if the extension has a type non included in the specs', async () => {
+  test('throws an error if the extension has a type non included in the specs', async () => {
     // Given
     const blockConfiguration = `
     name = "my-extension"
@@ -494,7 +494,7 @@ scopes = "read_products"
     await expect(() => load({directory: tmpDir, specifications})).rejects.toThrowError()
   })
 
-  it("throws an error if the configuration file doesn't exist", async () => {
+  test("throws an error if the configuration file doesn't exist", async () => {
     // Given
     await makeBlockDir({blockType: 'function', name: 'my-functions'})
 
@@ -502,7 +502,7 @@ scopes = "read_products"
     await expect(load({directory: tmpDir, specifications})).rejects.toThrow(/Couldn't find the configuration file/)
   })
 
-  it('throws an error if the function configuration file is invalid', async () => {
+  test('throws an error if the function configuration file is invalid', async () => {
     // Given
     const blockConfiguration = `
       wrong = "my-function"
@@ -517,7 +517,7 @@ scopes = "read_products"
     await expect(() => load({directory: tmpDir, specifications})).rejects.toThrowError()
   })
 
-  it('throws an error if the function has a type non included in the specs', async () => {
+  test('throws an error if the function has a type non included in the specs', async () => {
     // Given
     const blockConfiguration = `
     name = "my-function"
@@ -534,7 +534,7 @@ scopes = "read_products"
     await expect(() => load({directory: tmpDir, specifications})).rejects.toThrowError()
   })
 
-  it('loads the app when it has a function with a valid configuration', async () => {
+  test('loads the app when it has a function with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
 
@@ -566,7 +566,7 @@ scopes = "read_products"
     expect(myFunction.entrySourceFilePath).toContain(joinPath(blockPath('my-function'), 'src', 'index.js'))
   })
 
-  it('loads the app with several functions that have valid configurations', async () => {
+  test('loads the app with several functions that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)
     let blockConfiguration = `
@@ -615,7 +615,7 @@ scopes = "read_products"
     expect(functions[1]!.localIdentifier).toBe('my-function-2')
   })
 
-  it(`uses a custom function wasm path if configured`, async () => {
+  test(`uses a custom function wasm path if configured`, async () => {
     // Given
     await writeConfig(appConfiguration)
     const blockConfiguration = `
@@ -640,7 +640,7 @@ scopes = "read_products"
     expect(app.extensions.function[0]!.buildWasmPath).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
   })
 
-  it(`defaults the function wasm path if not configured`, async () => {
+  test(`defaults the function wasm path if not configured`, async () => {
     // Given
     await writeConfig(appConfiguration)
     const blockConfiguration = `
@@ -664,7 +664,7 @@ scopes = "read_products"
     expect(app.extensions.function[0]!.buildWasmPath).toMatch(/.+dist\/index.wasm$/)
   })
 
-  it(`updates metadata after loading`, async () => {
+  test(`updates metadata after loading`, async () => {
     const {webDirectory} = await writeConfig(appConfiguration)
     await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
 
@@ -673,7 +673,7 @@ scopes = "read_products"
     expect(metadata.getAllPublicMetadata()).toMatchObject({project_type: 'node', env_package_manager_workspaces: false})
   })
 
-  it(`updates metadata after loading with a flag that indicates the usage of workspaces`, async () => {
+  test(`updates metadata after loading with a flag that indicates the usage of workspaces`, async () => {
     const {webDirectory} = await writeConfig(appConfiguration, {
       workspaces: ['packages/*'],
       name: 'my_app',
@@ -688,7 +688,7 @@ scopes = "read_products"
   })
 
   describe('customer_accounts_ui_extension', () => {
-    it('should not throw when "authenticatedRedirectStartUrl" and "authenticatedRedirectRedirectUrls" are unset', async () => {
+    test('should not throw when "authenticatedRedirectStartUrl" and "authenticatedRedirectRedirectUrls" are unset', async () => {
       // Given
       await writeConfig(appConfiguration)
       const blockConfiguration = `
@@ -706,7 +706,7 @@ scopes = "read_products"
       await expect(load({directory: tmpDir, specifications})).resolves.toBeDefined()
     })
 
-    it('should not throw when "authenticatedRedirectStartUrl" and "authenticatedRedirectRedirectUrls" are set and valid', async () => {
+    test('should not throw when "authenticatedRedirectStartUrl" and "authenticatedRedirectRedirectUrls" are set and valid', async () => {
       // Given
       await writeConfig(appConfiguration)
       const blockConfiguration = `
@@ -728,7 +728,7 @@ scopes = "read_products"
       await expect(load({directory: tmpDir, specifications})).resolves.toBeDefined()
     })
 
-    it('should throw when "authenticatedRedirectStartUrl" is not a valid URL', async () => {
+    test('should throw when "authenticatedRedirectStartUrl" is not a valid URL', async () => {
       // Given
       await writeConfig(appConfiguration)
       const blockConfiguration = `
@@ -750,7 +750,7 @@ scopes = "read_products"
       )
     })
 
-    it('should throw when "authenticatedRedirectStartUrl" is an empty string', async () => {
+    test('should throw when "authenticatedRedirectStartUrl" is an empty string', async () => {
       // Given
       await writeConfig(appConfiguration)
       const blockConfiguration = `
@@ -772,7 +772,7 @@ scopes = "read_products"
       )
     })
 
-    it('should throw when "authenticatedRedirectRedirectUrls" contains an invalid URL', async () => {
+    test('should throw when "authenticatedRedirectRedirectUrls" contains an invalid URL', async () => {
       // Given
       await writeConfig(appConfiguration)
       const blockConfiguration = `
@@ -794,7 +794,7 @@ scopes = "read_products"
       )
     })
 
-    it('should throw when one of the "authenticatedRedirectRedirectUrls" is an invalid URL', async () => {
+    test('should throw when one of the "authenticatedRedirectRedirectUrls" is an invalid URL', async () => {
       // Given
       await writeConfig(appConfiguration)
       const blockConfiguration = `
@@ -816,7 +816,7 @@ scopes = "read_products"
       )
     })
 
-    it('should throw when "authenticatedRedirectRedirectUrls" is an empty array', async () => {
+    test('should throw when "authenticatedRedirectRedirectUrls" is an empty array', async () => {
       // Given
       await writeConfig(appConfiguration)
       const blockConfiguration = `

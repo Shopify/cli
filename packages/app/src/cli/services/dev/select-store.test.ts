@@ -2,7 +2,7 @@ import {selectStore} from './select-store.js'
 import {fetchAllDevStores} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
@@ -54,7 +54,7 @@ beforeEach(() => {
 })
 
 describe('selectStore', async () => {
-  it('prompts user to select', async () => {
+  test('prompts user to select', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
 
@@ -66,7 +66,7 @@ describe('selectStore', async () => {
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 
-  it('prompts user to convert store to non-transferable if selection is invalid', async () => {
+  test('prompts user to convert store to non-transferable if selection is invalid', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
     vi.mocked(partnersRequest).mockResolvedValueOnce({convertDevToTestStore: {convertedToTestStore: true}})
@@ -79,7 +79,7 @@ describe('selectStore', async () => {
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 
-  it('not prompts user to convert store to non-transferable if selection is invalid inside spin instance and first party', async () => {
+  test('not prompts user to convert store to non-transferable if selection is invalid inside spin instance and first party', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
     vi.mocked(isSpinEnvironment).mockReturnValue(true)
@@ -99,7 +99,7 @@ describe('selectStore', async () => {
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 
-  it('throws if store is non convertible', async () => {
+  test('throws if store is non convertible', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE3)
 
@@ -110,7 +110,7 @@ describe('selectStore', async () => {
     await expect(got).rejects.toThrow('The store you specified (domain3) is not a dev store')
   })
 
-  it('prompts user to create & reload if prompt returns undefined, throws if reload is false', async () => {
+  test('prompts user to create & reload if prompt returns undefined, throws if reload is false', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
     vi.mocked(reloadStoreListPrompt).mockResolvedValue(false)
@@ -123,7 +123,7 @@ describe('selectStore', async () => {
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 
-  it('prompts user to create & reload, fetches 10 times and tries again if reload is true', async () => {
+  test('prompts user to create & reload, fetches 10 times and tries again if reload is true', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
     vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(true)

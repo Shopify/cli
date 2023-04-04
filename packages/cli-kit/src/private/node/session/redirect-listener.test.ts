@@ -1,11 +1,11 @@
 import {RedirectListener} from './redirect-listener.js'
-import {describe, it, vi, expect} from 'vitest'
+import {describe, test, vi, expect} from 'vitest'
 import {createServer} from 'http'
 
 vi.mock('http')
 
 describe('RedirectListener', () => {
-  it('starts and stops the server', async () => {
+  test('starts and stops the server', async () => {
     // Given
     const server: any = {
       listen: vi.fn(),
@@ -29,7 +29,7 @@ describe('RedirectListener', () => {
     expect(listenCalls[0][1]).toBeTypeOf('function')
   })
 
-  it('stops the server', async () => {
+  test('stops the server', async () => {
     // Given
     const server: any = {
       listen: vi.fn(),
@@ -48,7 +48,7 @@ describe('RedirectListener', () => {
     expect(closeCalls.length).toEqual(1)
   })
 
-  it('stops error when the server fails to stop', async () => {
+  test('stops error when the server fails to stop', async () => {
     // Given
     const server: any = {
       listen: vi.fn(),

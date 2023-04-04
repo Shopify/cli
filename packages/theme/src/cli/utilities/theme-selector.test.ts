@@ -1,10 +1,12 @@
 import {fetchStoreThemes} from './theme-selector/fetch.js'
 import {findOrSelectTheme, findThemes} from './theme-selector.js'
+import {getDevelopmentTheme} from '../services/local-storage.js'
 import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {test, describe, vi, expect} from 'vitest'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 
 vi.mock('./theme-selector/fetch.js')
+vi.mock('../services/local-storage.js')
 vi.mock('@shopify/cli-kit/node/ui')
 
 const session = {
@@ -46,6 +48,7 @@ describe('findOrSelectTheme', () => {
     const themes = [theme(7, 'development'), theme(8, 'development')]
     vi.mocked(fetchStoreThemes).mockResolvedValue(themes)
     vi.mocked(renderSelectPrompt).mockResolvedValue(themes[0])
+    vi.mocked(getDevelopmentTheme).mockReturnValue('7')
 
     // When
     await findOrSelectTheme(session, {
@@ -58,8 +61,8 @@ describe('findOrSelectTheme', () => {
     expect(renderSelectPrompt).toHaveBeenCalledWith({
       message: header,
       choices: [
-        {label: 'theme 7 [development] [yours]', value: themes[0]},
-        {label: 'theme 8 [development]', value: themes[1]},
+        {group: 'Development', label: 'theme 7 [yours]', value: themes[0]},
+        {group: 'Development', label: 'theme 8', value: themes[1]},
       ],
     })
   })

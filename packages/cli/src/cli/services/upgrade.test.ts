@@ -1,6 +1,6 @@
 import {upgrade} from './upgrade.js'
 import * as upgradeService from './upgrade.js'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, vi, test} from 'vitest'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import * as nodePackageManager from '@shopify/cli-kit/node/node-package-manager'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -34,7 +34,7 @@ describe('upgrade global CLI', () => {
     process.env = {...OLD_ENV, npm_config_user_agent: undefined}
   })
 
-  it('does not upgrade globally if the latest version is found', async () => {
+  test('does not upgrade globally if the latest version is found', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const outputMock = mockAndCaptureOutput()
@@ -50,7 +50,7 @@ describe('upgrade global CLI', () => {
     })
   })
 
-  it('upgrades globally using npm if the latest version is not found', async () => {
+  test('upgrades globally using npm if the latest version is not found', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const outputMock = mockAndCaptureOutput()
@@ -76,7 +76,7 @@ describe('upgrade global CLI', () => {
 
   const homebrewPackageNames = ['shopify-cli', 'shopify-cli@3']
   homebrewPackageNames.forEach((homebrewPackageName: string) => {
-    it('upgrades globally using Homebrew if the latest version is not found and the CLI was installed via Homebrew', async () => {
+    test('upgrades globally using Homebrew if the latest version is not found and the CLI was installed via Homebrew', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const outputMock = mockAndCaptureOutput()
@@ -109,7 +109,7 @@ describe('upgrade local CLI', () => {
     process.env = {...OLD_ENV, npm_config_user_agent: 'npm'}
   })
 
-  it('does not upgrade locally if the latest version is found', async () => {
+  test('does not upgrade locally if the latest version is found', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       await Promise.all([
@@ -132,7 +132,7 @@ describe('upgrade local CLI', () => {
     })
   })
 
-  it('upgrades locally if the latest version is not found', async () => {
+  test('upgrades locally if the latest version is not found', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       await Promise.all([
