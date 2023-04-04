@@ -1,7 +1,7 @@
 import {partnersRequest, functionProxyRequest, handleDeprecations} from './partners.js'
 import {graphqlRequest, GraphQLResponse} from './graphql.js'
 import {partnersFqdn} from '../context/fqdn.js'
-import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
+import {setDeprecatingSoon, setDeprecationDates} from '../../../private/node/context/deprecations-store.js'
 import {test, vi, expect, describe, beforeEach, beforeAll} from 'vitest'
 
 vi.mock('./graphql.js')
@@ -70,10 +70,11 @@ describe('functionProxyRequest', () => {
 
 describe('handleDeprecations', () => {
   beforeAll(() => {
-    vi.mocked(setNextDeprecationDate)
+    vi.mocked(setDeprecationDates)
+    vi.mocked(setDeprecatingSoon)
   })
 
-  test('does not call setNextDeprecationDate if response contains no deprecations', () => {
+  test('does not call setDeprecationDates if response contains no deprecations', () => {
     // Given
     const response = {data: {}} as GraphQLResponse<object>
 
@@ -81,10 +82,10 @@ describe('handleDeprecations', () => {
     handleDeprecations(response)
 
     // Then
-    expect(setNextDeprecationDate).not.toBeCalled()
+    expect(setDeprecationDates).not.toBeCalled()
   })
 
-  test('calls setNextDeprecationDate with response extensions deprecation dates', () => {
+  test('calls setDeprecationDates with response extensions deprecation dates', () => {
     // Given
     const deprecationDates = [new Date()]
     const deprecations = deprecationDates.map((supportedUntilDate) => ({supportedUntilDate}))
@@ -94,6 +95,18 @@ describe('handleDeprecations', () => {
     handleDeprecations(response)
 
     // Then
-    expect(setNextDeprecationDate).toHaveBeenLastCalledWith(deprecationDates)
+    expect(setDeprecationDates).toHaveBeenLastCalledWith(deprecationDates)
+  })
+
+  test('calls setDeprecatingSoon if one of the deprecations is deprecating soon', () => {
+    // Given
+    const response = {data: {}, extensions: {deprecations: [{deprecatingSoon: true}]}} as GraphQLResponse<object>
+
+    // When
+    handleDeprecations(response)
+
+    // Then
+    expect(setDeprecatingSoon).toHaveBeenCalled()
+    expect(setDeprecationDates).not.toHaveBeenCalled()
   })
 })

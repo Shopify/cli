@@ -62,6 +62,10 @@ export function setDeprecatingSoon() {
   }
 }
 
+export function resetDeprecation() {
+  globalWithDeprecationsStore.deprecationsStore.nextDeprecation = undefined
+}
+
 function earliestDateTimeAfter(afterTime: number, dates: Date[]): number | undefined {
   const times = dates.map((date) => date.getTime())
   return times.sort().find((time) => time > afterTime)

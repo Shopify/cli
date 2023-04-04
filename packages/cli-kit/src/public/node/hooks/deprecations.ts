@@ -1,4 +1,4 @@
-import {Deprecation, getDeprecation} from '../../../private/node/context/deprecations-store.js'
+import {Deprecation, getDeprecation, resetDeprecation} from '../../../private/node/context/deprecations-store.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {Command} from '@oclif/core'
 
@@ -12,6 +12,7 @@ export const postrun = (Command: Command.Class): void => {
   if (deprecation) {
     const forThemes = Command?.id?.includes('theme')
     renderUpgradeWarning(deprecation, forThemes)
+    resetDeprecation()
   }
 }
 
