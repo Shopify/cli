@@ -36,7 +36,6 @@ module ShopifyCLI
         "Sec-CH-UA" => "Shopify CLI; v=#{ShopifyCLI::VERSION} sha=#{ShopifyCLI.sha}",
         "Sec-CH-UA-PLATFORM" => @context.os.to_s,
         "Auth" => "faketoken",
-        "X-Request-Id" => "1234-5678",
       }
       uri = URI.parse("https://my-test-shop.myshopify.com/admin/api/2019-04/graphql.json")
       variables = { var_name: "var_value" }
@@ -44,8 +43,7 @@ module ShopifyCLI
       File.stubs(:read)
         .with(File.join(ShopifyCLI::ROOT, "lib/graphql/api/mutation.graphql"))
         .returns(@mutation)
-      SecureRandom.stubs(:uuid).returns("1234-5678")
-      response = stub("response", code: "200", body: "{}")
+      response = stub_response(code: "200", body: "{}")
       HttpRequest.expects(:post).with(uri, body, headers).returns(response)
       @api.query("api/mutation", variables: variables)
     end
@@ -57,7 +55,6 @@ module ShopifyCLI
         "Sec-CH-UA" => "Shopify CLI; v=#{ShopifyCLI::VERSION}",
         "Sec-CH-UA-PLATFORM" => @context.os.to_s,
         "Auth" => "faketoken",
-        "X-Request-Id" => "1234-5678",
       }
       uri = URI.parse("https://my-test-shop.myshopify.com/admin/api/2019-04/graphql.json")
       variables = { var_name: "var_value" }
@@ -65,8 +62,7 @@ module ShopifyCLI
       File.stubs(:read)
         .with(File.join(ShopifyCLI::ROOT, "lib/graphql/api/mutation.graphql"))
         .returns(@mutation)
-      SecureRandom.stubs(:uuid).returns("1234-5678")
-      response = stub("response", code: "200", body: "{}")
+      response = stub_response(code: "200", body: "{}")
       HttpRequest.expects(:post).with(uri, body, headers).returns(response)
       @api.query("api/mutation", variables: variables)
     end
@@ -88,7 +84,7 @@ module ShopifyCLI
     end
 
     def test_query_fails_gracefully_with_internal_server_error
-      response = stub("response", code: "500", body: "{}")
+      response = stub_response(code: "500", body: "{}")
       HttpRequest.expects(:post).returns(response).times(4)
       File.stubs(:read)
         .with(File.join(ShopifyCLI::ROOT, "lib/graphql/api/mutation.graphql"))
@@ -105,17 +101,16 @@ module ShopifyCLI
 
     def test_query_fails_gracefully_with_internal_server_error_on_debug_mode
       @context.stubs(:getenv).with("DEBUG").returns(true)
-      response = stub("response", code: "500", body: "{}")
+      response = stub_response(code: "500", body: "{}")
       HttpRequest.expects(:post).returns(response).times(4)
       File.stubs(:read)
         .with(File.join(ShopifyCLI::ROOT, "lib/graphql/api/mutation.graphql"))
         .returns(@mutation)
-      SecureRandom.stubs(:uuid).returns("1234-5678")
 
       @context.expects(:debug)
         .with(any_of(
           @context.message("core.api.error.internal_server_error_debug", "500\n{}"),
-          @context.message("POST #{@api.url} with X-Request-Id: 1234-5678"),
+          @context.message("POST #{@api.url} with request_id: 1111-2222"),
         )).at_least_once
       @context.expects(:puts).with(@context.message("core.api.error.internal_server_error"))
       @api.query("api/mutation")
@@ -126,7 +121,7 @@ module ShopifyCLI
     end
 
     def test_query_fails_gracefully_with_unexpected_error
-      response = stub("response", code: "600", body: "{}")
+      response = stub_response(code: "600", body: "{}")
       HttpRequest.expects(:post).returns(response)
       File.stubs(:read)
         .with(File.join(ShopifyCLI::ROOT, "lib/graphql/api/mutation.graphql"))
@@ -178,7 +173,7 @@ module ShopifyCLI
         .with(File.join(ShopifyCLI::ROOT, "lib/graphql/api/mutation.graphql"))
         .returns(@mutation)
       mutation = JSON.dump(query: @mutation.tr("\n", ""), variables: {})
-      response = stub("response", code: "200", body: "{}")
+      response = stub_response(code: "200", body: "{}")
       HttpRequest
         .expects(:post)
         .with(anything, mutation, has_entry({ "X-Shopify-Cli-Employee" => "1" }))
@@ -188,11 +183,19 @@ module ShopifyCLI
     end
 
     def test_supports_delete_method
-      response = stub("response", code: "200", body: "{}")
+      response = stub_response(code: "200", body: "{}")
       HttpRequest
         .expects(:delete)
         .returns(response)
       @api.request(url: "https://shop.com/api.json", method: "DELETE")
+    end
+
+    private
+
+    def stub_response(code:, body:, request_id: "1111-2222")
+      stub("response", code: code, body: body).tap do |result|
+        result.stubs(:[]).with("x-request-id").returns(request_id)
+      end
     end
   end
 end
