@@ -102,7 +102,7 @@ export async function fetchOrgAndApps(orgId: string, token: string, title?: stri
   const result: FindOrganizationQuerySchema = await partnersRequest(query, token, params)
   const org = result.organizations.nodes[0]
   if (!org) throw NoOrgError(orgId)
-  const parsedOrg = {id: org.id, businessName: org.businessName, betas: org.betas}
+  const parsedOrg = {id: org.id, businessName: org.businessName}
   return {organization: parsedOrg, apps: org.apps, stores: []}
 }
 
@@ -155,7 +155,7 @@ export async function fetchStoreByDomain(
     return undefined
   }
 
-  const parsedOrg = {id: org.id, businessName: org.businessName, betas: org.betas}
+  const parsedOrg = {id: org.id, businessName: org.businessName}
   const store = org.stores.nodes[0]
 
   return {organization: parsedOrg, store}
