@@ -31,20 +31,21 @@ const spec = createUIExtensionSpecification({
       runtime_configuration_definition: config.settings,
     }
   },
-  preDeployValidation: async (extension) => {
-    if (extension.configuration.configuration) {
-      throw new AbortError(
-        `The property configuration is deprecated and no longer supported.`,
-        `It has been replaced by settings.`,
-      )
-    }
-
+  buildValidation: async (extension) => {
     const bundleSize = await fileSize(extension.outputBundlePath)
     if (bundleSize > BUNDLE_SIZE_LIMIT) {
       const humanReadableBundleSize = `${(bundleSize / kilobytes).toFixed(2)} kB`
       throw new AbortError(
         `Your web pixel extension exceeds the total file size limit (${BUNDLE_SIZE_LIMIT_KB} kB). It's currently ${humanReadableBundleSize}.`,
         `Reduce your total file size and try again.`,
+      )
+    }
+  },
+  preDeployValidation: async (extension) => {
+    if (extension.configuration.configuration) {
+      throw new AbortError(
+        `The property configuration is deprecated and no longer supported.`,
+        `It has been replaced by settings.`,
       )
     }
 
