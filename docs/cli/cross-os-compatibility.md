@@ -26,7 +26,7 @@ Create a new Ubuntu 22 virtual machine, then:
 
 - `sudo apt-get update && sudo apt-get -y upgrade`
 - `curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -`
-- `sudo apt-get install -y git nodejs ruby`
+- `sudo apt-get install -y git nodejs ruby-dev && sudo gem install bundler`
 - `curl -fsSL https://get.pnpm.io/install.sh | sh -`
 
 You can clone the CLI repository:
