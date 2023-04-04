@@ -38,6 +38,7 @@ on:
   pull_request:
     paths-ignore:
       - '**.md'
+  merge_group:
 
 concurrency:
   group: shopify-cli-${{ github.head_ref || github.run_id }}
