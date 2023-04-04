@@ -26,7 +26,7 @@ Create a new Ubuntu 22 virtual machine, then:
 
 - `sudo apt-get update && sudo apt-get -y upgrade`
 - `curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -`
-- `sudo apt-get install -y git nodejs ruby`
+- `sudo apt-get install -y git nodejs ruby-dev && sudo gem install bundler`
 - `curl -fsSL https://get.pnpm.io/install.sh | sh -`
 
 You can clone the CLI repository:
@@ -53,8 +53,14 @@ After you've installed Parallels and virtualized the Windows environment, you ne
 
 - [Git](https://git-scm.com/download/win)
 - [Node](https://nodejs.org/en/download/)
-- [PNPM](https://pnpm.io/installation)
 - [Ruby](https://rubyinstaller.org/downloads/) (needed for themes, Ruby+DevKit 3.0.x is recommended)
+- [PNPM](https://pnpm.io/installation)
+  - You will need to enable [long paths](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=powershell) support on windows:
+  - Search for Terminal, then right click and "Run as administrator". Then run:
+    ```
+    New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
+    -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
+    ```
 
 We also recommend you install these programs for a better DX:
 - [Powershell](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows)
