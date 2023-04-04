@@ -51,21 +51,23 @@ export async function deploy(options: DeployOptions) {
   }
 
   // eslint-disable-next-line prefer-const
-  let {app, identifiers, partnersApp, token} = await ensureDeployContext(options)
+  let {app, identifiers, partnersApp, token, organization} = await ensureDeployContext(options)
   const apiKey = identifiers.app
 
   let label: string | undefined
 
-  if (partnersApp.betas?.unifiedAppDeployment) {
-    label = options.force
-      ? options.label
-      : options.label ??
-        (await renderTextPrompt({
-          message: 'Deployment label',
-          allowEmpty: true,
-        }))
+  // if the command is run using a partnersToken then it is not possible to fetch the organization  In that case the new
+  // appUiDeployments flow is not triggered even if the org has the beta flag enabled. This should be fixed in the
+  // partners server side.
+  if (organization?.betas.appUiDeployments) {
+    label =
+      options.label ??
+      (await renderTextPrompt({
+        message: 'Deployment label',
+        allowEmpty: true,
+      }))
 
-    if (label?.length === 0) {
+    if (label.length === 0) {
       label = undefined
     }
   }
@@ -117,7 +119,7 @@ export async function deploy(options: DeployOptions) {
           },
         },
         {
-          title: partnersApp.betas?.unifiedAppDeployment ? 'Creating deployment' : 'Pushing your code to Shopify',
+          title: organization?.betas.appUiDeployments ? 'Creating deployment' : 'Pushing your code to Shopify',
           task: async () => {
             if (bundle) {
               ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
@@ -150,7 +152,7 @@ export async function deploy(options: DeployOptions) {
         registrations,
         validationErrors,
         deploymentId,
-        unifiedDeployment: Boolean(partnersApp.betas?.unifiedAppDeployment),
+        unifiedDeployment: organization?.betas.appUiDeployments ?? false,
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

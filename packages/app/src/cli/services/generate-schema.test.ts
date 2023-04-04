@@ -24,7 +24,7 @@ vi.mock('./context.js', async () => {
   const context: any = await vi.importActual('./context.js')
   return {
     ...context,
-    fetchOrCreateOrganizationApp: vi.fn(),
+    fetchOrganizationAndFetchOrCreateApp: vi.fn(),
   }
 })
 
@@ -70,19 +70,27 @@ describe('generateSchemaService', () => {
     const promptApiKey = 'prompt-api-key'
 
     const getAppIdentifiers = identifiers.getAppIdentifiers as MockedFunction<typeof identifiers.getAppIdentifiers>
-    const fetchOrCreateOrganizationApp = localEnvironment.fetchOrCreateOrganizationApp as MockedFunction<
-      typeof localEnvironment.fetchOrCreateOrganizationApp
-    >
+    const fetchOrganizationAndFetchOrCreateApp =
+      localEnvironment.fetchOrganizationAndFetchOrCreateApp as MockedFunction<
+        typeof localEnvironment.fetchOrganizationAndFetchOrCreateApp
+      >
 
     beforeEach(async () => {
       getAppIdentifiers.mockReturnValue({app: identifiersApiKey})
-      fetchOrCreateOrganizationApp.mockResolvedValue({
-        id: 'id',
-        title: 'title',
-        apiKey: promptApiKey,
-        organizationId: '1',
-        apiSecretKeys: [],
-        grantedScopes: [],
+      fetchOrganizationAndFetchOrCreateApp.mockResolvedValue({
+        partnersApp: {
+          id: 'id',
+          title: 'title',
+          apiKey: promptApiKey,
+          organizationId: '1',
+          apiSecretKeys: [],
+          grantedScopes: [],
+        },
+        organization: {
+          id: '1',
+          businessName: 'businessName',
+          betas: {},
+        },
       })
       vi.mocked(isTerminalInteractive).mockReturnValue(true)
     })

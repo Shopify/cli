@@ -6,7 +6,7 @@ import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {testApp, testThemeExtensions, testUIExtension} from '../models/app/app.test-data.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
-import {OrganizationApp} from '../models/organization.js'
+import {Organization} from '../models/organization.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
@@ -90,18 +90,14 @@ describe('deploy', () => {
   test('passes a label to the deployment mutation', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({
-      extensions: {ui: [uiExtension], theme: [], function: []},
-    })
+    const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
     await testDeployBundle(app, {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-      betas: {unifiedAppDeployment: true},
+      id: 'org-id',
+      businessName: 'org-name',
+      betas: {appUiDeployments: true},
     })
 
     // Then
@@ -112,57 +108,16 @@ describe('deploy', () => {
     )
   })
 
-  test("doesn't ask for a label if force is used", async () => {
-    // Given
-    const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({
-      extensions: {ui: [uiExtension], theme: [], function: []},
-    })
-
-    // When
-    await testDeployBundle(
-      app,
-      {
-        id: 'app-id',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        betas: {unifiedAppDeployment: true},
-      },
-      {
-        force: true,
-      },
-    )
-
-    // Then
-    expect(vi.mocked(renderTextPrompt)).not.toHaveBeenCalled()
-    expect(uploadExtensionsBundle).toHaveBeenCalledWith(
-      expect.objectContaining({
-        label: undefined,
-      }),
-    )
-  })
-
   test('passes a label to the deployment mutation with a flag', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({
-      extensions: {ui: [uiExtension], theme: [], function: []},
-    })
+    const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})
 
     // When
     await testDeployBundle(
       app,
-      {
-        id: 'app-id',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        betas: {unifiedAppDeployment: true},
-      },
-      {
-        label: 'Deployed from CLI with flag',
-      },
+      {id: 'org-id', businessName: 'org-name', betas: {appUiDeployments: true}},
+      'Deployed from CLI with flag',
     )
 
     // Then
@@ -180,7 +135,11 @@ describe('deploy', () => {
     const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})
 
     // When
-    await testDeployBundle(app)
+    await testDeployBundle(app, {
+      id: 'org-id',
+      businessName: 'org-name',
+      betas: {appUiDeployments: false},
+    })
 
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
@@ -224,11 +183,9 @@ describe('deploy', () => {
 
     // When
     await testDeployBundle(app, {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-      betas: {unifiedAppDeployment: true},
+      id: 'org-id',
+      businessName: 'org-name',
+      betas: {appUiDeployments: true},
     })
 
     // Then
@@ -245,14 +202,7 @@ describe('deploy', () => {
   })
 })
 
-async function testDeployBundle(
-  app: AppInterface,
-  partnersApp?: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>,
-  options?: {
-    label?: string
-    force?: boolean
-  },
-) {
+async function testDeployBundle(app: AppInterface, organization?: Organization, label?: string) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
   for (const uiExtension of app.extensions.ui) {
@@ -266,13 +216,13 @@ async function testDeployBundle(
   vi.mocked(ensureDeployContext).mockResolvedValue({
     app,
     identifiers,
-    partnersApp: partnersApp ?? {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-    },
+    partnersApp: {id: 'app-id', organizationId: 'org-id', title: 'app-title', grantedScopes: []},
     token: 'api-token',
+    organization: organization ?? {
+      id: 'org-id',
+      businessName: 'org-name',
+      betas: {appUiDeployments: false},
+    },
   })
   vi.mocked(useThemebundling).mockReturnValue(true)
   vi.mocked(uploadFunctionExtensions).mockResolvedValue(identifiers)
@@ -284,8 +234,8 @@ async function testDeployBundle(
   await deploy({
     app,
     reset: false,
-    force: Boolean(options?.force),
-    label: options?.label,
+    force: true,
+    label,
   })
 
   // Then

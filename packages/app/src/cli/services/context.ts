@@ -27,6 +27,7 @@ import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {usePartnersToken} from '@shopify/cli-kit/node/environment'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -139,7 +140,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
   const organization = await fetchOrgFromId(orgId, token)
-  const useCloudflareTunnels = organization.betas?.cliTunnelAlternative !== true
+  const useCloudflareTunnels = organization.betas.cliTunnelAlternative !== true
 
   if (selectedApp && selectedStore) {
     setAppInfo({
@@ -244,6 +245,7 @@ interface DeployContextOutput {
   token: string
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   identifiers: Identifiers
+  organization: Organization | undefined
 }
 
 /**
@@ -289,7 +291,7 @@ export async function ensureThemeExtensionDevContext(
 
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
   const token = await ensureAuthenticatedPartners()
-  const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
+  const [partnersApp, envIdentifiers, organization] = await fetchAppAndIdentifiers(options, token)
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
 
@@ -315,21 +317,24 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
       appType: partnersApp.appType,
       organizationId: partnersApp.organizationId,
       grantedScopes: partnersApp.grantedScopes,
-      betas: partnersApp.betas,
     },
     identifiers,
     token,
+    organization,
   }
 
   await logMetadataForLoadedDeployContext(result)
   return result
 }
 
-export async function fetchOrCreateOrganizationApp(app: AppInterface, token: string): Promise<OrganizationApp> {
+export async function fetchOrganizationAndFetchOrCreateApp(
+  app: AppInterface,
+  token: string,
+): Promise<{partnersApp: OrganizationApp; organization: Organization}> {
   const orgId = await selectOrg(token)
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
   const partnersApp = await selectOrCreateApp(app.name, apps, organization, token)
-  return partnersApp
+  return {organization, partnersApp}
 }
 
 export async function fetchAppAndIdentifiers(
@@ -340,9 +345,10 @@ export async function fetchAppAndIdentifiers(
     apiKey?: string
   },
   token: string,
-): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
+): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>, Organization | undefined]> {
   let envIdentifiers = getAppIdentifiers({app: options.app})
   let partnersApp: OrganizationApp | undefined
+  let organization: Organization | undefined
 
   if (options.reset) {
     envIdentifiers = {app: undefined, extensions: {}}
@@ -362,10 +368,18 @@ export async function fetchAppAndIdentifiers(
   }
 
   if (!partnersApp) {
-    partnersApp = await fetchOrCreateOrganizationApp(options.app, token)
+    const result = await fetchOrganizationAndFetchOrCreateApp(options.app, token)
+    partnersApp = result.partnersApp
+    organization = result.organization
   }
 
-  return [partnersApp, envIdentifiers]
+  // if the command is run using a partnersToken then it is not possible to fetch the organization information because
+  // that token has not enough permissions and the command break at this point with a not found organizations error.
+  if (!usePartnersToken() && !organization) {
+    organization = await fetchOrgFromId(partnersApp.organizationId, token)
+  }
+
+  return [partnersApp, envIdentifiers, organization]
 }
 
 async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
