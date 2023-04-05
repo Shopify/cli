@@ -22,7 +22,7 @@ const ensurePathStartsWithSlash = (arg: unknown) => (typeof arg === 'string' && 
 const WebConfigurationAuthCallbackPathSchema = zod.preprocess(ensurePathStartsWithSlash, zod.string())
 
 export const WebConfigurationSchema = zod.object({
-  type: zod.enum([WebType.Frontend, WebType.Backend]),
+  type: zod.enum([WebType.Frontend, WebType.Backend]).default(WebType.Frontend),
   authCallbackPath: zod
     .union([WebConfigurationAuthCallbackPathSchema, WebConfigurationAuthCallbackPathSchema.array()])
     .optional(),
