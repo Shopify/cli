@@ -734,6 +734,7 @@ describe('uploadExtensionsBundle', () => {
         extensions: [{uuid: '123', config: '{}', context: ''}],
         token: 'api-token',
         label: 'Deployed with CLI',
+        extensionIds: {},
       })
 
       // Then
@@ -773,6 +774,7 @@ describe('uploadExtensionsBundle', () => {
       extensions: [],
       token: 'api-token',
       label: 'Deployed with CLI',
+      extensionIds: {},
     })
 
     // Then
@@ -782,5 +784,56 @@ describe('uploadExtensionsBundle', () => {
       uuid: 'random-uuid',
     })
     expect(partnersRequest).toHaveBeenCalledOnce()
+  })
+
+  test('throws an error based on what is returned from partners', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
+      vi.mocked(partnersRequest)
+        .mockResolvedValueOnce({
+          deploymentGenerateSignedUploadUrl: {
+            signedUploadUrl: 'signed-upload-url',
+          },
+        })
+        .mockResolvedValueOnce({
+          deploymentCreate: {
+            userErrors: [
+              {
+                message: 'Missing expected key(s).',
+                details: [
+                  {
+                    extension_id: 123,
+                  },
+                ],
+              },
+            ],
+          },
+        })
+      const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
+      vi.mocked<any>(formData).mockReturnValue(mockedFormData)
+      vi.mocked(randomUUID).mockReturnValue('random-uuid')
+      // When
+      await writeFile(joinPath(tmpDir, 'test.zip'), '')
+
+      // Then
+      await expect(
+        uploadExtensionsBundle({
+          apiKey: 'app-id',
+          bundlePath: joinPath(tmpDir, 'test.zip'),
+          extensions: [{uuid: '123', config: '{}', context: ''}],
+          token: 'api-token',
+          label: 'Deployed with CLI',
+          extensionIds: {
+            'amortizable-marketplace-ext': '123',
+          },
+        }),
+      ).rejects.toThrow(
+        new AbortError([
+          'There has been an error creating your deployment:',
+          {list: {items: ['amortizable-marketplace-ext: Missing expected key(s).']}},
+        ]),
+      )
+    })
   })
 })

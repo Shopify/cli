@@ -87,6 +87,9 @@ interface UploadExtensionsBundleOptions {
   /** Extensions extra data */
   extensions: ExtensionSettings[]
 
+  /** The extensions' numeric identifiers (expressed as a string). */
+  extensionIds: IdentifiersExtensions
+
   /** Deployment label */
   label?: string
 }
@@ -140,8 +143,20 @@ export async function uploadExtensionsBundle(
   const result: CreateDeploymentSchema = await partnersRequest(mutation, options.token, variables)
 
   if (result.deploymentCreate?.userErrors?.length > 0) {
-    const errors = result.deploymentCreate.userErrors.map((error) => error.message).join(', ')
-    throw new AbortError(errors)
+    const errors = result.deploymentCreate.userErrors.map((error) => {
+      const extensionIdentifier = Object.keys(options.extensionIds).find(
+        (localIdentifier) =>
+          options.extensionIds[localIdentifier] ===
+          error.details?.find((detail) => typeof detail.extension_id !== 'undefined')?.extension_id.toString(),
+      )
+
+      if (extensionIdentifier) {
+        return `${extensionIdentifier}: ${error.message}`
+      } else {
+        return error.message
+      }
+    })
+    throw new AbortError(['There has been an error creating your deployment:', {list: {items: errors}}])
   }
 
   const validationErrors = result.deploymentCreate.deployment.deployedVersions

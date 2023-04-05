@@ -22,6 +22,33 @@ describe('FatalError', async () => {
     `)
   })
 
+  test('renders correctly with a formatted message', async () => {
+    const error = new AbortError([
+      'There has been an error creating your deployment:',
+      {
+        list: {
+          items: [
+            'amortizable-marketplace-ext: Missing expected key(s).',
+            "sub-ui-ext: You don't have access to this feature.",
+          ],
+        },
+      },
+    ])
+
+    const {lastFrame} = render(<FatalError error={error} />)
+
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  There has been an error creating your deployment:                           │
+      │    • amortizable-marketplace-ext: Missing expected key(s).                   │
+      │    • sub-ui-ext: You don't have access to this feature.                      │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
+  })
+
   test('renders correctly with a message and a stack', async () => {
     const error = new BugError('Unexpected error')
     error.stack = `

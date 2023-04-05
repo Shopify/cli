@@ -28,6 +28,7 @@ export const CreateDeployment = gql`
       userErrors {
         message
         field
+        details
       }
     }
   }
@@ -45,6 +46,10 @@ export interface CreateDeploymentVariables {
   bundleUrl?: string
   extensions?: ExtensionSettings[]
   label?: string
+}
+
+interface ErrorDetail {
+  extension_id: number
 }
 
 export interface CreateDeploymentSchema {
@@ -66,6 +71,8 @@ export interface CreateDeploymentSchema {
     userErrors: {
       field: string[]
       message: string
+      category: string
+      details: ErrorDetail[]
     }[]
   }
 }

@@ -130,6 +130,7 @@ export async function deploy(options: DeployOptions) {
                 extensions,
                 token,
                 label,
+                extensionIds: identifiers.extensionIds,
               }))
             }
 
