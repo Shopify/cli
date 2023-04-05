@@ -21,8 +21,8 @@ describe('getListOfTunnelPlugins', () => {
     const config = new Config({root: ''})
     vi.spyOn(config, 'runHook').mockResolvedValue({
       successes: [
-        {result: {name: 'ngrok'}, plugin: {name: 'plugin-ngrok'}},
-        {result: {name: 'ngrok'}, plugin: {name: 'another-ngrok'}},
+        {result: {name: 'cloudflare'}, plugin: {name: 'plugin-cloudflare'}},
+        {result: {name: 'cloudflare'}, plugin: {name: 'another-cloudflare'}},
       ],
 
       errors: [],
@@ -32,7 +32,7 @@ describe('getListOfTunnelPlugins', () => {
     const got = await getListOfTunnelPlugins(config)
 
     // Then
-    expect(got).toEqual({plugins: ['ngrok', 'ngrok'], error: 'multiple-plugins-for-provider'})
+    expect(got).toEqual({plugins: ['cloudflare', 'cloudflare'], error: 'multiple-plugins-for-provider'})
   })
 
   test('returns list of tunnel providers', async () => {
@@ -40,8 +40,8 @@ describe('getListOfTunnelPlugins', () => {
     const config = new Config({root: ''})
     vi.spyOn(config, 'runHook').mockResolvedValue({
       successes: [
-        {result: {name: 'ngrok'}, plugin: {name: 'plugin-ngrok'}},
         {result: {name: 'cloudflare'}, plugin: {name: 'plugin-cloudflare'}},
+        {result: {name: 'ngrok'}, plugin: {name: 'plugin-ngrok'}},
       ],
       errors: [],
     } as any)
@@ -50,7 +50,7 @@ describe('getListOfTunnelPlugins', () => {
     const got = await getListOfTunnelPlugins(config)
 
     // Then
-    expect(got).toEqual({plugins: ['ngrok', 'cloudflare']})
+    expect(got).toEqual({plugins: ['cloudflare', 'ngrok']})
   })
 })
 
@@ -59,15 +59,17 @@ describe('runTunnelPlugin', () => {
     // Given
     const config = new Config({root: ''})
     vi.spyOn(config, 'runHook').mockResolvedValue({
-      successes: [{result: ok({url: 'tunnel_url'}), plugin: {name: 'plugin-ngrok'}}],
+      successes: [
+        {result: ok({status: 'connected', url: 'tunnel_url', port: 123}), plugin: {name: 'plugin-cloudflare'}},
+      ],
       errors: [],
     } as any)
 
     // When
-    const got = await runTunnelPlugin(config, 1234, 'ngrok')
+    const got = await runTunnelPlugin(config, 'cloudflare')
 
     // Then
-    expect(got.valueOrAbort()).toEqual('tunnel_url')
+    expect(got.valueOrAbort()).toEqual({status: 'connected', url: 'tunnel_url', port: 123})
   })
 
   test('returns tunnel url when there are two tunnel providers and one not matched the requested', async () => {
@@ -75,17 +77,17 @@ describe('runTunnelPlugin', () => {
     const config = new Config({root: ''})
     vi.spyOn(config, 'runHook').mockResolvedValue({
       successes: [
-        {result: ok({url: 'tunnel_url'}), plugin: {name: 'plugin-ngrok'}},
+        {result: ok({status: 'connected', url: 'tunnel_url', port: 123}), plugin: {name: 'plugin-cloudflare'}},
         {result: err({type: 'invalid-provider'}), plugin: {name: 'other-plugin'}},
       ],
       errors: [],
     } as any)
 
     // When
-    const got = await runTunnelPlugin(config, 1234, 'ngrok')
+    const got = await runTunnelPlugin(config, 'cloudflare')
 
     // Then
-    expect(got.valueOrAbort()).toEqual('tunnel_url')
+    expect(got.valueOrAbort()).toEqual({status: 'connected', url: 'tunnel_url', port: 123})
   })
 
   test('returns error if multiple plugins responded to the hook', async () => {
@@ -93,14 +95,14 @@ describe('runTunnelPlugin', () => {
     const config = new Config({root: ''})
     vi.spyOn(config, 'runHook').mockResolvedValue({
       successes: [
-        {result: ok({url: 'tunnel_url'}), plugin: {name: 'plugin-ngrok'}},
-        {result: ok({url: 'tunnel_url_2'}), plugin: {name: 'plugin-ngrok-2'}},
+        {result: ok({url: 'tunnel_url'}), plugin: {name: 'plugin-cloudflare'}},
+        {result: ok({url: 'tunnel_url_2'}), plugin: {name: 'plugin-cloudflare-2'}},
       ],
       errors: [],
     } as any)
 
     // When
-    const got = await runTunnelPlugin(config, 1234, 'ngrok')
+    const got = await runTunnelPlugin(config, 'cloudflare')
 
     // Then
     expect(got.isErr() && got.error.type).equal('multiple-urls')
@@ -112,7 +114,7 @@ describe('runTunnelPlugin', () => {
     vi.spyOn(config, 'runHook').mockResolvedValue({successes: [], errors: []} as any)
 
     // When
-    const got = await runTunnelPlugin(config, 1234, 'ngrok')
+    const got = await runTunnelPlugin(config, 'cloudflare')
 
     // Then
     expect(got.isErr() && got.error.type).equal('no-provider')
@@ -122,15 +124,38 @@ describe('runTunnelPlugin', () => {
     // Given
     const config = new Config({root: ''})
     vi.spyOn(config, 'runHook').mockResolvedValue({
-      successes: [{result: err({type: 'unknown', message: 'message'}), plugin: {name: 'plugin-ngrok'}}],
+      successes: [{result: err({type: 'unknown', message: 'message'}), plugin: {name: 'plugin-cloudflare'}}],
       errors: [],
     } as any)
 
     // When
-    const got = await runTunnelPlugin(config, 1234, 'ngrok')
+    const got = await runTunnelPlugin(config, 'cloudflare')
 
     // Then
     expect(got.isErr() && got.error.type).equal('unknown')
     expect(got.isErr() && got.error.message).equal('message')
+  })
+
+  test('returns tunnel url when there is 1 tunnel and returns a valid url after a retry', async () => {
+    // Given
+    const config = new Config({root: ''})
+    vi.spyOn(config, 'runHook')
+      .mockResolvedValueOnce({
+        successes: [{result: ok({status: 'starting'}), plugin: {name: 'plugin-cloudflare'}}],
+        errors: [],
+      } as any)
+      .mockResolvedValueOnce({
+        // vi.spyOn(config, 'runHook').mockResolvedValue({
+        successes: [
+          {result: ok({status: 'connected', url: 'tunnel_url', port: 123}), plugin: {name: 'plugin-cloudflare'}},
+        ],
+        errors: [],
+      } as any)
+
+    // When
+    const got = await runTunnelPlugin(config, 'cloudflare')
+
+    // Then
+    expect(got.valueOrAbort()).toEqual({status: 'connected', url: 'tunnel_url', port: 123})
   })
 })
