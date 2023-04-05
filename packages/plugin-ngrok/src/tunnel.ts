@@ -11,11 +11,9 @@ export default startTunnel({provider: TUNNEL_PROVIDER, action: hookStart})
 
 let cachedPort: number
 export const getCurrentStatus = async (): Promise<TunnelStatusType> => {
-  const tunnels = (await ngrok.getApi().listTunnels()).tunnels
-  // if (tunnels) {
-  //   const realTunnels = tunnels.tunnels
-  // }
-  if (tunnels) {
+  const tunnelList = await ngrok.getApi().listTunnels()
+  const tunnels = tunnelList.tunnels
+  if (tunnels && tunnels[0] && tunnels[0].public_url) {
     return {status: 'connected', url: tunnels[0].public_url, port: cachedPort}
   } else {
     return {status: 'starting'}

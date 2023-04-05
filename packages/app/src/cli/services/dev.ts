@@ -80,7 +80,7 @@ async function dev(options: DevOptions) {
     useCloudflareTunnels,
   } = await ensureDevContext(options, token)
 
-  if (!useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
+  if (!useCloudflareTunnels && tunnelProvider === 'cloudflare') {
     // If we can't use cloudflare, stop the previous optimistic tunnel and start a new one
     await fanoutHooks(options.commandConfig, 'tunnel_stop', {provider: 'cloudflare'})
     await fanoutHooks(options.commandConfig, 'tunnel_start', {port: tunnelPort, provider: 'ngrok'})

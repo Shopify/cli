@@ -105,7 +105,7 @@ export async function runTunnelPlugin(
   provider: string,
 ): Promise<Result<{url: string; port: number}, TunnelPluginError>> {
   return new Promise<Result<{url: string; port: number}, TunnelPluginError>>((resolve, reject) => {
-    const retries = 0
+    let retries = 0
     const pollTunnelStatus = async () => {
       outputDebug(`Polling tunnel status for ${provider} (attempt ${retries})`)
       const hooks = await fanoutHooks(config, 'tunnel_status', {provider})
@@ -121,6 +121,9 @@ export async function runTunnelPlugin(
 
       if (first.value.status === 'connected') {
         resolve(ok(first.value))
+      } else {
+        retries += 1
+        startPolling()
       }
     }
     const startPolling = () => {
@@ -128,6 +131,7 @@ export async function runTunnelPlugin(
       setTimeout(pollTunnelStatus, 500)
     }
 
-    startPolling()
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    pollTunnelStatus()
   })
 }
