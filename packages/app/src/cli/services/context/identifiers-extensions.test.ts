@@ -8,6 +8,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
+import {OrganizationApp} from '../../models/organization.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -134,10 +135,14 @@ const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExte
   })
 }
 
-const ORGANIZATION = {
-  id: '1',
-  businessName: 'org1',
-  betas: {appUiDeployments: true},
+const PARTNERS_APP: OrganizationApp = {
+  id: 'app-id',
+  organizationId: 'org-id',
+  title: 'app-title',
+  grantedScopes: [],
+  betas: {unifiedAppDeployment: true},
+  apiKey: 'api-key',
+  apiSecretKeys: [],
 }
 
 const options = (uiExtensions: UIExtension[], identifiers: any = {}) => {
@@ -148,7 +153,7 @@ const options = (uiExtensions: UIExtension[], identifiers: any = {}) => {
     appName: 'appName',
     envIdentifiers: {extensions: identifiers},
     force: false,
-    organization: ORGANIZATION,
+    partnersApp: PARTNERS_APP,
   }
 }
 
@@ -422,7 +427,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
         onlyRemote: [],
         toCreate: [],
       },
-      ORGANIZATION,
+      PARTNERS_APP,
     )
   })
 
