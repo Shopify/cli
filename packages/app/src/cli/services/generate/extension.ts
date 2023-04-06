@@ -10,6 +10,7 @@ import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
   DependencyVersion,
+  installNPMDependenciesRecursively,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
@@ -153,6 +154,16 @@ async function uiExtensionInit({
       },
     ],
   )
+
+  // If using workspaces, install dependencies after creating the extension with its own package.json
+  if (app.usesWorkspaces) {
+    tasks.push({
+      title: 'Installing dependencies',
+      task: async () => {
+        await installNPMDependenciesRecursively({packageManager: app.packageManager, directory: extensionDirectory})
+      },
+    })
+  }
   await renderTasks(tasks)
 }
 
