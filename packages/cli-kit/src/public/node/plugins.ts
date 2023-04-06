@@ -112,9 +112,9 @@ export async function runTunnelPlugin(
       const urlResults = Object.values(hooks).filter(
         (tunnelResponse) => !tunnelResponse?.isErr() || tunnelResponse.error.type !== 'invalid-provider',
       )
-      if (urlResults.length > 1) resolve(err({provider, type: 'multiple-urls'}))
-      if (urlResults.length === 0 || !urlResults[0]) resolve(err({provider, type: 'no-provider'}))
-      const first = urlResults[0]!
+      if (urlResults.length > 1) return resolve(err({provider, type: 'multiple-urls'}))
+      if (urlResults.length === 0 || !urlResults[0]) return resolve(err({provider, type: 'no-provider'}))
+      const first = urlResults[0]
       if (first.isErr()) return resolve(err({provider, type: 'unknown', message: first.error.message}))
       outputDebug(`Tunnel status for ${provider} is ${first.value.status}`)
       if (first.value.status === 'error') return resolve(err({provider, type: 'unknown', message: first.value.message}))
