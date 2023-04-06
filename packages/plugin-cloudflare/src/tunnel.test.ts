@@ -1,8 +1,6 @@
-import {hookStart} from './tunnel.js'
+import {getCurrentStatus, hookStart} from './tunnel.js'
 import {describe, vi, expect, test} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
-import {err, ok} from '@shopify/cli-kit/node/result'
-import {TunnelError} from '@shopify/cli-kit/node/plugins/tunnel'
 import {Writable} from 'stream'
 
 const port = 1234
@@ -17,10 +15,11 @@ describe('hookStart', () => {
     })
 
     // When
-    const result = await hookStart(port)
+    await hookStart(port)
+    const result = await getCurrentStatus()
 
     // Then
-    expect(result).toEqual(ok({url: 'https://example.trycloudflare.com'}))
+    expect(result).toEqual({url: 'https://example.trycloudflare.com', port: 1234, status: 'connected'})
   })
 
   test('throws if a connection is stablished but we didnt find a URL', async () => {
@@ -31,29 +30,24 @@ describe('hookStart', () => {
     })
 
     // When
-    const result = await hookStart(port)
+    await hookStart(port)
+    const result = await getCurrentStatus()
 
     // Then
-    expect(result).toEqual(err(new TunnelError('unknown', 'A connection was established but no Tunnel URL was found')))
+    expect(result).toEqual({status: 'error', message: 'Could not find tunnel url'})
   })
 
-  test.each([
-    '2023-01-30T15:37:11Z failed to request quick Tunnel',
-    '2023-01-30T15:37:11Z failed to unmarshal quick Tunnel',
-    '2023-01-30T15:37:11Z failed to parse quick Tunnel ID',
-    '2023-01-30T15:37:11Z failed to provision routing',
-    "2023-01-30T15:37:11Z ERR Couldn't start tunnel",
-  ])(`throws if cloudflare shows %s before a connection is established`, async (message) => {
+  test('returns starting status if a URL is detected but there is no connection yet', async () => {
     vi.mocked(exec).mockImplementationOnce(async (command, args, options) => {
       const writable = options?.stdout as Writable
-      writable.write(Buffer.from(`2023-01-30T15:37:11Z INF |  https://example.com`))
-      writable.write(Buffer.from(message))
+      writable.write(Buffer.from(`2023-01-30T15:37:11Z INF |  https://example.trycloudflare.com`))
     })
 
     // When
-    const result = await hookStart(port)
+    await hookStart(port)
+    const result = await getCurrentStatus()
 
     // Then
-    expect(result).toEqual(err(new TunnelError('unknown', `Timed out while creating a cloudflare tunnel: ${message}`)))
+    expect(result).toEqual({status: 'starting'})
   })
 })

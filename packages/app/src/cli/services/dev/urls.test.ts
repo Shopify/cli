@@ -43,61 +43,61 @@ describe('generateURL', () => {
   test('returns a tunnel URL by default', async () => {
     // Given
     const config = new Config({root: ''})
-    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(ok('https://fake-url.ngrok.io'))
+    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(ok({url: 'https://fake-url.cloudflare.io', port: 3456}))
 
     // When
-    const got = await generateURL(config, 'cloudflare', 3456)
+    const got = await generateURL(config, 'cloudflare')
 
     // Then
-    expect(got).toEqual('https://fake-url.ngrok.io')
+    expect(got).toEqual({url: 'https://fake-url.cloudflare.io', port: 3456})
   })
 
   test('throws error if there are multiple urls', async () => {
     // Given
     const config = new Config({root: ''})
-    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(err({provider: 'ngrok', type: 'multiple-urls'}))
+    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(err({provider: 'cloudflare', type: 'multiple-urls'}))
 
     // When
-    const got = generateURL(config, 'cloudflare', 3456)
+    const got = generateURL(config, 'cloudflare')
 
     // Then
     await expect(got).rejects.toThrow(BugError)
-    await expect(got).rejects.toThrow(/Multiple tunnel plugins for ngrok found/)
+    await expect(got).rejects.toThrow(/Multiple tunnel plugins for cloudflare found/)
   })
 
   test('throws error if there is no provider', async () => {
     // Given
     const config = new Config({root: ''})
-    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(err({provider: 'ngrok', type: 'no-provider'}))
+    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(err({provider: 'cloudflare', type: 'no-provider'}))
 
     // When
-    const got = generateURL(config, 'cloudflare', 3456)
+    const got = generateURL(config, 'cloudflare')
 
     // Then
     await expect(got).rejects.toThrow(BugError)
-    await expect(got).rejects.toThrow(/We couldn't find the ngrok tunnel plugin/)
+    await expect(got).rejects.toThrow(/We couldn't find the cloudflare tunnel plugin/)
   })
 
   test('throws error if there is an unknown error with the provider', async () => {
     // Given
     const config = new Config({root: ''})
-    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(err({provider: 'ngrok', type: 'unknown', message: 'message'}))
+    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(err({provider: 'cloudflare', type: 'unknown', message: 'message'}))
 
     // When
-    const got = generateURL(config, 'cloudflare', 3456)
+    const got = generateURL(config, 'cloudflare')
 
     // Then
     await expect(got).rejects.toThrow(AbortError)
-    await expect(got).rejects.toThrow(/ngrok failed to start the tunnel/)
+    await expect(got).rejects.toThrow(/cloudflare failed to start the tunnel/)
   })
 
   test('throws error if there are no tunnel urls', async () => {
     // Given
     const config = new Config({root: ''})
-    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(err({provider: 'ngrok', type: 'handled-error'}))
+    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(err({provider: 'cloudflare', type: 'handled-error'}))
 
     // When
-    const got = generateURL(config, 'cloudflare', 3456)
+    const got = generateURL(config, 'cloudflare')
 
     // Then
     await expect(got).rejects.toThrow(AbortSilentError)
@@ -333,10 +333,10 @@ describe('generateFrontendURL', () => {
 
   test('generates a tunnel url with cloudflare when there is no tunnelUrl and use cloudflare is true', async () => {
     // Given
-    vi.mocked(runTunnelPlugin).mockResolvedValue(ok('https://fake-url.cloudflare.io'))
+    vi.mocked(runTunnelPlugin).mockResolvedValue(ok({url: 'https://fake-url.cloudflare.io', port: 3456}))
     const options = {
       app: testApp({hasUIExtensions: () => false}),
-      tunnelProvider: undefined,
+      tunnelProvider: 'cloudflare',
       noTunnel: false,
       useCloudflareTunnels: true,
       commandConfig: new Config({root: ''}),
@@ -350,12 +350,12 @@ describe('generateFrontendURL', () => {
     expect(got).toEqual({frontendUrl: 'https://fake-url.cloudflare.io', frontendPort: 3042, usingLocalhost: false})
   })
 
-  test('generates a tunnel url with ngrok when there is no tunnelUrl and use cloudflare is false', async () => {
+  test('generates a tunnel url with cloudflare when there is no tunnelUrl and use cloudflare is false', async () => {
     // Given
-    vi.mocked(runTunnelPlugin).mockResolvedValue(ok('https://fake-url.ngrok.io'))
+    vi.mocked(runTunnelPlugin).mockResolvedValue(ok({url: 'https://fake-url.cloudflare.io', port: 3456}))
     const options = {
       app: testApp({hasUIExtensions: () => false}),
-      tunnelProvider: undefined,
+      tunnelProvider: 'cloudflare',
       noTunnel: false,
       useCloudflareTunnels: false,
       commandConfig: new Config({root: ''}),
@@ -365,8 +365,8 @@ describe('generateFrontendURL', () => {
     const got = await generateFrontendURL(options)
 
     // Then
-    expect(vi.mocked(runTunnelPlugin)).toHaveBeenCalledWith(options.commandConfig, 3042, 'ngrok')
-    expect(got).toEqual({frontendUrl: 'https://fake-url.ngrok.io', frontendPort: 3042, usingLocalhost: false})
+    expect(vi.mocked(runTunnelPlugin)).toHaveBeenCalledWith(options.commandConfig, 3042, 'cloudflare')
+    expect(got).toEqual({frontendUrl: 'https://fake-url.cloudflare.io', frontendPort: 3042, usingLocalhost: false})
   })
 
   test('returns localhost if noTunnel is true', async () => {
