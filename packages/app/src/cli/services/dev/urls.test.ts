@@ -333,7 +333,7 @@ describe('generateFrontendURL', () => {
 
   test('generates a tunnel url with cloudflare when there is no tunnelUrl and use cloudflare is true', async () => {
     // Given
-    vi.mocked(runTunnelPlugin).mockResolvedValue(ok({url: 'https://fake-url.cloudflare.io', port: 3456}))
+    vi.mocked(runTunnelPlugin).mockResolvedValue(ok({url: 'https://fake-url.cloudflare.io', port: 3042}))
     const options = {
       app: testApp({hasUIExtensions: () => false}),
       tunnelProvider: 'cloudflare',
@@ -346,13 +346,13 @@ describe('generateFrontendURL', () => {
     const got = await generateFrontendURL(options)
 
     // Then
-    expect(runTunnelPlugin).toHaveBeenCalledWith(options.commandConfig, 3042, 'cloudflare')
+    expect(runTunnelPlugin).toHaveBeenCalledWith(options.commandConfig, 'cloudflare')
     expect(got).toEqual({frontendUrl: 'https://fake-url.cloudflare.io', frontendPort: 3042, usingLocalhost: false})
   })
 
   test('generates a tunnel url with cloudflare when there is no tunnelUrl and use cloudflare is false', async () => {
     // Given
-    vi.mocked(runTunnelPlugin).mockResolvedValue(ok({url: 'https://fake-url.cloudflare.io', port: 3456}))
+    vi.mocked(runTunnelPlugin).mockResolvedValue(ok({url: 'https://fake-url.cloudflare.io', port: 3042}))
     const options = {
       app: testApp({hasUIExtensions: () => false}),
       tunnelProvider: 'cloudflare',
@@ -365,7 +365,7 @@ describe('generateFrontendURL', () => {
     const got = await generateFrontendURL(options)
 
     // Then
-    expect(vi.mocked(runTunnelPlugin)).toHaveBeenCalledWith(options.commandConfig, 3042, 'cloudflare')
+    expect(vi.mocked(runTunnelPlugin)).toHaveBeenCalledWith(options.commandConfig, 'cloudflare')
     expect(got).toEqual({frontendUrl: 'https://fake-url.cloudflare.io', frontendPort: 3042, usingLocalhost: false})
   })
 
