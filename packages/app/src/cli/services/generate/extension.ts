@@ -156,10 +156,17 @@ async function uiExtensionInit({
   )
 
   // If using workspaces, install dependencies after creating the extension with its own package.json
+  // In case the dependencies in the templates are outdate, we use the one defined in the specification.
   if (app.usesWorkspaces) {
     tasks.push({
       title: 'Installing dependencies',
       task: async () => {
+        const requiredDependencies = getExtensionRuntimeDependencies({specification, extensionFlavor})
+        await addNPMDependenciesIfNeeded(requiredDependencies, {
+          packageManager: app.packageManager,
+          type: 'prod',
+          directory: extensionDirectory,
+        })
         await installNPMDependenciesRecursively({packageManager: app.packageManager, directory: extensionDirectory})
       },
     })
