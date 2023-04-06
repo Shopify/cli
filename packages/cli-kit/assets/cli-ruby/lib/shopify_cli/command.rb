@@ -5,7 +5,6 @@ require "semantic/semantic"
 module ShopifyCLI
   class Command < CLI::Kit::BaseCommand
     autoload :SubCommand,     "shopify_cli/command/sub_command"
-    autoload :AppSubCommand,  "shopify_cli/command/app_sub_command"
     autoload :ProjectCommand, "shopify_cli/command/project_command"
 
     VersionRange = Struct.new(:from, :to, keyword_init: true)
@@ -28,7 +27,6 @@ module ShopifyCLI
         else
           cmd = new(@ctx)
           cmd.options.parse(@_options, args)
-          return call_help(command_name) if cmd.options.help
           check_ruby_version
           check_node_version
           run_prerequisites
@@ -147,11 +145,6 @@ module ShopifyCLI
 
       def task_registry
         @task_registry || ShopifyCLI::Tasks::Registry
-      end
-
-      def call_help(*cmds)
-        help = Commands::Help.new(@ctx)
-        help.call(cmds, nil)
       end
 
       class PrerequisiteTask

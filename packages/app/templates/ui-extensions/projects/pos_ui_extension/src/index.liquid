@@ -24,12 +24,12 @@ const SmartGridModal = () => {
   );
 }
 
-render('Retail::SmartGrid::Tile', () => <SmartGridTile />);
-render('Retail::SmartGrid::Modal', () => <SmartGridModal />);
+render('pos.home.tile.render', () => <SmartGridTile />);
+render('pos.home.modal.render', () => <SmartGridModal />);
 {%- else -%}
 import { extend, Text, Screen } from "@shopify/retail-ui-extensions";
 
-extend('Retail::SmartGrid::Tile', (root, api) => {
+extend('pos.home.modal.tile', (root, api) => {
   const tileProps = {
     title: 'My app',
     subtitle: 'SmartGrid Extension',
@@ -45,7 +45,7 @@ extend('Retail::SmartGrid::Tile', (root, api) => {
   root.mount();
 });
 
-extend('Retail::SmartGrid::Modal', (root, api) => {
+extend('pos.home.modal.render', (root, api) => {
   const screen = root.createComponent(Screen, {name: 'Hello World'});
   root.appendChild(screen);
 

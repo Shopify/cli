@@ -17,20 +17,28 @@ type HomebrewPackageName = 'shopify-cli' | 'shopify-cli@3'
 // Canonical list of oclif plugins that should be installed globally
 const globalPlugins = ['@shopify/theme']
 
-export async function upgrade(directory: string, currentVersion: string): Promise<void> {
+interface UpgradeOptions {
+  env: NodeJS.ProcessEnv
+}
+
+export async function upgrade(
+  directory: string,
+  currentVersion: string,
+  {env}: UpgradeOptions = {env: process.env},
+): Promise<void> {
   let newestVersion: string | void
 
   const projectDir = await getProjectDir(directory)
   if (projectDir) {
     newestVersion = await upgradeLocalShopify(projectDir, currentVersion)
-  } else if (usingPackageManager()) {
+  } else if (usingPackageManager({env})) {
     throw new AbortError(
       outputContent`Couldn't find the configuration file for ${outputToken.path(
         directory,
       )}, are you in a Shopify project directory?`,
     )
   } else {
-    newestVersion = await upgradeGlobalShopify(currentVersion)
+    newestVersion = await upgradeGlobalShopify(currentVersion, {env})
   }
 
   if (newestVersion) {
@@ -67,7 +75,10 @@ async function upgradeLocalShopify(projectDir: string, currentVersion: string): 
   return newestVersion
 }
 
-async function upgradeGlobalShopify(currentVersion: string): Promise<string | void> {
+async function upgradeGlobalShopify(
+  currentVersion: string,
+  {env}: UpgradeOptions = {env: process.env},
+): Promise<string | void> {
   const newestVersion = await checkForNewVersion(await cliDependency(), currentVersion)
 
   if (!newestVersion) {
@@ -77,24 +88,22 @@ async function upgradeGlobalShopify(currentVersion: string): Promise<string | vo
 
   outputUpgradeMessage(currentVersion, newestVersion)
 
-  const homebrewPackage = process.env.SHOPIFY_HOMEBREW_FORMULA as HomebrewPackageName | undefined
+  const homebrewPackage = env.SHOPIFY_HOMEBREW_FORMULA as HomebrewPackageName | undefined
   try {
-    await (homebrewPackage ? upgradeGlobalViaHomebrew(homebrewPackage) : upgradeGlobalViaNpm())
+    if (homebrewPackage) {
+      throw new AbortError(
+        outputContent`Upgrade only works for packages managed by a Node package manager (e.g. npm). Run ${outputToken.genericShellCommand(
+          'brew upgrade && brew update',
+        )} instead`,
+      )
+    } else {
+      await upgradeGlobalViaNpm()
+    }
   } catch (err) {
     outputWarn('Upgrade failed!')
     throw err
   }
   return newestVersion
-}
-
-async function upgradeGlobalViaHomebrew(homebrewPackage: HomebrewPackageName): Promise<void> {
-  outputInfo(
-    outputContent`Homebrew installation detected. Attempting to upgrade via ${outputToken.genericShellCommand(
-      'brew upgrade',
-    )}...`,
-  )
-  await exec('brew', ['update'], {stdio: 'inherit'})
-  await exec('brew', ['upgrade', homebrewPackage], {stdio: 'inherit'})
 }
 
 async function upgradeGlobalViaNpm(): Promise<void> {
@@ -165,6 +174,6 @@ async function packageJsonContents(): Promise<PackageJsonWithName> {
   return _packageJsonContents
 }
 
-function usingPackageManager(): boolean {
-  return Boolean(process.env.npm_config_user_agent)
+function usingPackageManager({env}: UpgradeOptions = {env: process.env}): boolean {
+  return Boolean(env.npm_config_user_agent)
 }
