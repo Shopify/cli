@@ -58,7 +58,7 @@ export async function ensureExtensionsIds(
         toCreate: extensionsToCreate,
         onlyRemote: onlyRemoteExtensions,
       },
-      options.organization,
+      options.partnersApp,
     )
     if (!confirmed) return err('user-cancelled')
   }

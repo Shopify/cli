@@ -300,7 +300,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     force: options.force,
     token,
     envIdentifiers,
-    organization,
+    partnersApp,
   })
 
   // eslint-disable-next-line no-param-reassign
