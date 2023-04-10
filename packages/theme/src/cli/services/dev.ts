@@ -14,6 +14,7 @@ export function renderLinks(store: string, themeId: string, host = DEFAULT_HOST,
           items: [
             {
               link: {
+                label: `http://${host}:${port}`,
                 url: `http://${host}:${port}`,
               },
             },
