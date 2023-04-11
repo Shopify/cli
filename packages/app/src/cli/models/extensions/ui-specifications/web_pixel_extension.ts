@@ -48,7 +48,6 @@ const spec = createUIExtensionSpecification({
         `It has been replaced by settings.`,
       )
     }
-
     return Promise.resolve()
   },
   previewMessage: () => undefined,
