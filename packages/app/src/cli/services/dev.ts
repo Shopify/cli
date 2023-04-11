@@ -15,11 +15,12 @@ import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {setupConfigWatcher, setupNonPreviewableExtensionBundler} from './dev/extension/bundler.js'
+import {getBackendEnvironmentVariables, getFrontendEnvironmentVariables} from './dev/environment-variables.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
 } from '../utilities/app/http-reverse-proxy.js'
-import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
+import {AppInterface, Web, WebType} from '../models/app/app.js'
 import metadata from '../metadata.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
@@ -38,7 +39,6 @@ import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {exec} from '@shopify/cli-kit/node/system'
-import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/context/spin'
 import {
   AdminSession,
   ensureAuthenticatedAdmin,
@@ -71,11 +71,12 @@ export interface DevOptions {
 }
 
 interface DevWebOptions {
+  name: string
   backendPort: number
   apiKey: string
-  apiSecret?: string
-  hostname?: string
-  scopes?: AppConfiguration['scopes']
+  apiSecret: string
+  hostname: string
+  scopes: string
 }
 
 async function dev(options: DevOptions) {
@@ -164,6 +165,7 @@ async function dev(options: DevOptions) {
   const backendOptions = {
     apiKey,
     backendPort,
+    name: localApp.name,
     scopes: localApp.configuration.scopes,
     apiSecret: (remoteApp.apiSecret as string) ?? '',
     hostname: exposedUrl,
@@ -243,12 +245,13 @@ async function dev(options: DevOptions) {
 
   if (frontendConfig) {
     const frontendOptions: DevFrontendTargetOptions = {
-      web: frontendConfig,
       apiKey,
+      backendPort,
+      name: localApp.name,
+      web: frontendConfig,
       scopes: localApp.configuration.scopes,
       apiSecret: (remoteApp.apiSecret as string) ?? '',
       hostname: frontendUrl,
-      backendPort,
     }
 
     if (usingLocalhost) {
@@ -330,47 +333,16 @@ function devFrontendProxyTarget(options: DevFrontendTargetOptions): ReverseHTTPP
         cwd: options.web.directory,
         stdout,
         stderr,
-        env: {
-          ...(await getDevEnvironmentVariables(options)),
-          BACKEND_PORT: `${options.backendPort}`,
-          PORT: `${port}`,
-          FRONTEND_PORT: `${port}`,
-          APP_URL: options.hostname,
-          APP_ENV: 'development',
-          // Note: These are Laravel varaibles for backwards compatibility with 2.0 templates.
-          SERVER_PORT: `${port}`,
-        },
+        env: await getFrontendEnvironmentVariables({...options, frontendPort: port, env: process.env}),
         signal,
       })
     },
   }
 }
 
-async function getDevEnvironmentVariables(options: DevWebOptions) {
-  return {
-    ...process.env,
-    SHOPIFY_API_KEY: options.apiKey,
-    SHOPIFY_API_SECRET: options.apiSecret,
-    HOST: options.hostname,
-    SCOPES: options.scopes,
-    NODE_ENV: `development`,
-    ...(isSpinEnvironment() && {
-      SHOP_CUSTOM_DOMAIN: `shopify.${await spinFqdn()}`,
-    }),
-  }
-}
-
 async function devBackendTarget(web: Web, options: DevWebOptions): Promise<OutputProcess> {
   const {commands} = web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
-  const env = {
-    ...(await getDevEnvironmentVariables(options)),
-    // SERVER_PORT is the convention Artisan uses
-    PORT: `${options.backendPort}`,
-    SERVER_PORT: `${options.backendPort}`,
-    BACKEND_PORT: `${options.backendPort}`,
-  }
-
   return {
     prefix: web.configuration.type,
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
@@ -379,10 +351,7 @@ async function devBackendTarget(web: Web, options: DevWebOptions): Promise<Outpu
         stdout,
         stderr,
         signal,
-        env: {
-          ...process.env,
-          ...env,
-        },
+        env: await getBackendEnvironmentVariables({...options, env: process.env}),
       })
     },
   }
