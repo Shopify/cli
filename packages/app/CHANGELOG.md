@@ -1,5 +1,18 @@
 # @shopify/app
 
+## 3.46.0-pre.0
+
+### Minor Changes
+
+- 5fdf453c7: Default to type frontend in the web configuration file
+
+### Patch Changes
+
+- Updated dependencies [f95e3a1d5]
+  - @shopify/cli-kit@3.46.0-pre.0
+  - @shopify/plugin-cloudflare@3.46.0-pre.0
+  - @shopify/plugin-ngrok@3.46.0-pre.0
+
 ## 3.45.0
 
 ### Minor Changes

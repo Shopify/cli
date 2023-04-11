@@ -1,5 +1,14 @@
 # @shopify/cli
 
+## 3.46.0-pre.0
+
+### Patch Changes
+
+- 1ed1321cd: Not upgrade the global Homebrew installation of the CLI on 'shopify upgrade'
+- Updated dependencies [f95e3a1d5]
+  - @shopify/cli-kit@3.46.0-pre.0
+  - @shopify/plugin-did-you-mean@3.46.0-pre.0
+
 ## 3.45.0
 
 ### Patch Changes
