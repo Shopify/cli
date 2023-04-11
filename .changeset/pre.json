@@ -17,5 +17,9 @@
     "@shopify/ui-extensions-test-utils": "3.25.0",
     "@shopify/workspace": "0.1.0"
   },
-  "changesets": []
+  "changesets": [
+    "quick-tips-allow",
+    "red-countries-sit",
+    "shaggy-lizards-grow"
+  ]
 }
