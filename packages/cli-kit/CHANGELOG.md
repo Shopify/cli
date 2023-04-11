@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.46.0-pre.0
+
+### Patch Changes
+
+- f95e3a1d5: Do not proxy /localization and /cart/ requests
+
 ## 3.45.0
 
 ### Minor Changes
