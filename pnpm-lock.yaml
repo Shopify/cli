@@ -194,7 +194,7 @@ importers:
       '@bugsnag/js': 7.16.7
       '@iarna/toml': 2.2.5
       '@oclif/core': 2.1.4
-      '@types/archiver': 5.3.1
+      '@types/archiver': 5.3.2
       '@types/commondir': ^1.0.0
       '@types/cross-zip': ^4.0.0
       '@types/diff': ^5.0.2
@@ -268,7 +268,7 @@ importers:
       '@bugsnag/js': 7.16.7
       '@iarna/toml': 2.2.5
       '@oclif/core': 2.1.4
-      '@types/archiver': 5.3.1
+      '@types/archiver': 5.3.2
       abort-controller: 3.0.0
       ansi-escapes: 6.0.0
       archiver: 5.3.1
@@ -3799,10 +3799,10 @@ packages:
     resolution: {integrity: sha512-yOlFc+7UtL/89t2ZhjPvvB/DeAr3r+Dq58IgzsFkOAvVC6NMJXmCGjbptdXdR9qsX7pKcTL+s87FtYREi2dEEQ==}
     dev: true
 
-  /@types/archiver/5.3.1:
-    resolution: {integrity: sha512-wKYZaSXaDvTZuInAWjCeGG7BEAgTWG2zZW0/f7IYFcoHB2X2d9lkVFnrOlXl3W6NrvO6Ml3FLLu8Uksyymcpnw==}
+  /@types/archiver/5.3.2:
+    resolution: {integrity: sha512-IctHreBuWE5dvBDz/0WeKtyVKVRs4h75IblxOACL92wU66v+HGAfEYAOyXkOFphvRJMhuXdI9huDXpX0FC6lCw==}
     dependencies:
-      '@types/glob': 8.0.0
+      '@types/readdir-glob': 1.1.1
     dev: false
 
   /@types/cacheable-request/6.0.3:
@@ -3862,6 +3862,7 @@ packages:
     dependencies:
       '@types/minimatch': 5.1.2
       '@types/node': 14.18.36
+    dev: true
 
   /@types/gradient-string/1.1.2:
     resolution: {integrity: sha512-zIet2KvHr2dkOCPI5ggQQ+WJVyfBSFaqK9sNelhgDjlE2K3Fu2muuPJwu5aKM3xoWuc3WXudVEMUwI1QWhykEQ==}
@@ -3942,6 +3943,7 @@ packages:
 
   /@types/minimatch/5.1.2:
     resolution: {integrity: sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==}
+    dev: true
 
   /@types/minimist/1.2.2:
     resolution: {integrity: sha512-jhuKLIRrhvCPLqwPcx6INqmKeiA5EWrsCOPhrlFSrbrmU4ZMPjj5Ul/oLCMDO98XRUIwVm78xICz4EPCektzeQ==}
@@ -3994,6 +3996,12 @@ packages:
     dependencies:
       '@types/prop-types': 15.7.5
       csstype: 3.1.1
+
+  /@types/readdir-glob/1.1.1:
+    resolution: {integrity: sha512-ImM6TmoF8bgOwvehGviEj3tRdRBbQujr1N+0ypaln/GWjaerOB26jb93vsRHmdMtvVQZQebOlqt2HROark87mQ==}
+    dependencies:
+      '@types/node': 14.18.36
+    dev: false
 
   /@types/responselike/1.0.0:
     resolution: {integrity: sha512-85Y2BjiufFzaMIlvJDvTTB8Fxl2xfLo4HgmHzVBz08w4wDePCTjYw66PdrolO0kzli3yam/YCgRufyo1DdQVTA==}
