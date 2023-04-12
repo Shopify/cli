@@ -163,7 +163,7 @@ importers:
   packages/cli:
     specifiers:
       '@oclif/core': 2.1.4
-      '@oclif/plugin-commands': 2.2.10
+      '@oclif/plugin-commands': 2.2.13
       '@oclif/plugin-help': 5.2.9
       '@oclif/plugin-plugins': 2.3.2
       '@shopify/app': 3.46.0-pre.0
@@ -176,7 +176,7 @@ importers:
       vitest: ^0.28.5
     dependencies:
       '@oclif/core': 2.1.4
-      '@oclif/plugin-commands': 2.2.10
+      '@oclif/plugin-commands': 2.2.13
       '@oclif/plugin-help': 5.2.9
       '@oclif/plugin-plugins': 2.3.2
       '@shopify/cli-kit': link:../cli-kit
@@ -3227,8 +3227,8 @@ packages:
       wordwrap: 1.0.0
       wrap-ansi: 7.0.0
 
-  /@oclif/plugin-commands/2.2.10:
-    resolution: {integrity: sha512-fUOegX6RrJLC+euU/gPbBH6VX6aqh5vRpsg4r1NUlKvCSIJjCI78TSHUKECU+GQmvNA+3ql6tlD7hZ4rBTjKbg==}
+  /@oclif/plugin-commands/2.2.13:
+    resolution: {integrity: sha512-tdFluVuZT231Qid3NGHWNX7VlgHOb/wEaNj/dKt5bCYXoNxEQMk6OUfgXQNFaHXmWqedvBKpZ8AE/3FWjB6z4w==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/core': 2.1.4
