@@ -45,6 +45,7 @@ import {OutputProcess, outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {partition} from '@shopify/cli-kit/common/collection'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {readFile} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 export interface DevOptions {
@@ -492,7 +493,7 @@ async function devNonPreviewableExtensionTarget({
                 outputDebug(`Drafts updated successfully for extension: ${extension.localIdentifier}`)
               }
 
-              //TODO: watch for toml changes
+              // TODO: watch for toml changes
             },
           })
         }),
