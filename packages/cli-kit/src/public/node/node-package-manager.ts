@@ -293,6 +293,12 @@ export interface PackageJson {
    *  The prettier attribute of the package.json
    */
   prettier?: string
+
+  /**
+   * The private attribute of the package.json.
+   * https://docs.npmjs.com/cli/v9/configuring-npm/package-json#private
+   */
+  private?: boolean
 }
 
 /**

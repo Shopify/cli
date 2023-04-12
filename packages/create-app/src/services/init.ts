@@ -73,23 +73,26 @@ async function init(options: InitOptions) {
           const packageJSON = (await findUpAndReadPackageJson(templateScaffoldDir)).content
           packageJSON.name = hyphenizedName
           packageJSON.author = (await username()) ?? ''
-          if (packageManager === 'pnpm') {
-            await writeFile(
-              joinPath(templateScaffoldDir, 'pnpm-workspace.yaml'),
-              `packages:\n  - 'web'\n  - 'web/frontend'\n  - 'extensions/*'\n`,
-            )
-          } else {
-            packageJSON.workspaces = ['web', 'web/frontend', 'extensions/*']
+          packageJSON.private = true
+
+          switch (packageManager) {
+            case 'npm':
+            case 'yarn':
+              packageJSON.workspaces = ['web', 'web/frontend', 'extensions/*']
+              break
+            case 'pnpm':
+              await writeFile(
+                joinPath(templateScaffoldDir, 'pnpm-workspace.yaml'),
+                `packages:\n  - 'web'\n  - 'web/frontend'\n  - 'extensions/*'\n`,
+              )
+              // Ensure that the installation of dependencies doesn't fail when using
+              // pnpm due to missing peerDependencies.
+              await appendFile(joinPath(templateScaffoldDir, '.npmrc'), `auto-install-peers=true\n`)
+              break
           }
+
           await updateCLIDependencies({packageJSON, local: options.local, directory: templateScaffoldDir})
-
           await writePackageJSON(templateScaffoldDir, packageJSON)
-
-          // Ensure that the installation of dependencies doesn't fail when using
-          // pnpm due to missing peerDependencies.
-          if (packageManager === 'pnpm') {
-            await appendFile(joinPath(templateScaffoldDir, '.npmrc'), `auto-install-peers=true\n`)
-          }
         },
       },
     )
