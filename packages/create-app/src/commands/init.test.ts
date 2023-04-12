@@ -1,5 +1,5 @@
 import Init from './init.js'
-import initPrompt, {templateURLMap} from '../prompts/init.js'
+import initPrompt, {getTemplateURLMap, templateURLMap, templateURLMapForShopifolk} from '../prompts/init.js'
 import initService from '../services/init.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
 import {errorHandler} from '@shopify/cli-kit/node/error-handler'
@@ -12,6 +12,7 @@ vi.mock('../services/init')
 vi.mock('@shopify/cli-kit/node/error-handler')
 
 beforeEach(() => {
+  vi.mocked(getTemplateURLMap).mockResolvedValue(templateURLMap)
   vi.mocked(initPrompt).mockResolvedValue({name: 'name', template: 'http://test.es'})
 })
 
@@ -35,6 +36,17 @@ describe('create app command', () => {
     },
   )
 
+  test('executes correctly when using remix as a template alias name and user is shopifolk', async () => {
+    // Given
+    vi.mocked(getTemplateURLMap).mockResolvedValue(templateURLMapForShopifolk)
+
+    // When
+    await Init.run(['--template', 'remix'])
+
+    // Then
+    expect(initService).toHaveBeenCalledOnce()
+  })
+
   test('executes correctly when using a github url as a template alias name', async () => {
     // When
     await Init.run(['--template', 'https://github.com/myrepo'])
@@ -49,6 +61,24 @@ describe('create app command', () => {
 
     // When
     await Init.run(['--template', 'java'])
+
+    // Then
+    const anyConfig = expect.any(Config)
+    const expectedError = new AbortError(
+      outputContent`Only ${Object.keys(templateURLMap)
+        .map((alias) => outputContent`${outputToken.yellow(alias)}`.value)
+        .join(', ')} template aliases are supported`,
+    )
+    expect(errorHandler).toHaveBeenCalledWith(expectedError, anyConfig)
+  })
+
+  test("throw an error when using 'remix' as template alias name and user is not shopifolk", async () => {
+    // Given
+    vi.mocked(errorHandler).mockImplementation(async () => {})
+    vi.mocked(getTemplateURLMap).mockResolvedValue(templateURLMap)
+
+    // When
+    await Init.run(['--template', 'remix'])
 
     // Then
     const anyConfig = expect.any(Config)

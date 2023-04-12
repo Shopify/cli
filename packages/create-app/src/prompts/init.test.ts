@@ -4,7 +4,7 @@ import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
-describe('init', () => {
+describe('init prompt', () => {
   test('when name is not passed', async () => {
     const answers = {
       name: 'app',

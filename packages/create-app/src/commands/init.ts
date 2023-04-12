@@ -1,4 +1,4 @@
-import initPrompt, {templateURLMap} from '../prompts/init.js'
+import initPrompt, {getTemplateURLMap, templateURLMap} from '../prompts/init.js'
 import initService from '../services/init.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -49,7 +49,7 @@ export default class Init extends Command {
   async run(): Promise<void> {
     const {flags} = await this.parse(Init)
 
-    this.validateTemplateValue(flags.template)
+    await this.validateTemplateValue(flags.template)
 
     const promptAnswers = await initPrompt({
       name: flags.name,
@@ -66,7 +66,7 @@ export default class Init extends Command {
     })
   }
 
-  validateTemplateValue(template: string | undefined) {
+  async validateTemplateValue(template: string | undefined) {
     if (!template) {
       return
     }
@@ -77,12 +77,16 @@ export default class Init extends Command {
         'Only GitHub repository references are supported, ' +
           'e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]',
       )
-    if (!url && !Object.keys(templateURLMap).includes(template))
+
+    const templateURLMap = await getTemplateURLMap()
+
+    if (!url && !Object.keys(templateURLMap).includes(template)) {
       throw new AbortError(
         outputContent`Only ${Object.keys(templateURLMap)
           .map((alias) => outputContent`${outputToken.yellow(alias)}`.value)
           .join(', ')} template aliases are supported`,
       )
+    }
   }
 
   parseURL(url: string): URL | undefined {

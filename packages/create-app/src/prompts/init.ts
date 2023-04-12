@@ -1,5 +1,6 @@
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {renderText, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {isShopify} from '@shopify/cli-kit/node/context/local'
 
 interface InitOptions {
   name?: string
@@ -12,17 +13,26 @@ interface InitOutput {
   template: string
 }
 
-// Eventually this list should be taken from a remote location
-// That way we don't have to update the CLI every time we add a template
 export const templateURLMap = {
   node: 'https://github.com/Shopify/shopify-app-template-node',
   php: 'https://github.com/Shopify/shopify-app-template-php',
   ruby: 'https://github.com/Shopify/shopify-app-template-ruby',
 } as const
 
+export const templateURLMapForShopifolk = {
+  ...templateURLMap,
+  remix: 'https://github.com/Shopify/shopify-app-template-remix',
+} as const
+
+export async function getTemplateURLMap(): Promise<typeof templateURLMap | typeof templateURLMapForShopifolk> {
+  const isShopifolk = await isShopify()
+  return isShopifolk ? templateURLMapForShopifolk : templateURLMap
+}
+
 const init = async (options: InitOptions): Promise<InitOutput> => {
   let name = options.name
   let template = options.template
+  const templateURLMap = await getTemplateURLMap()
 
   const defaults = {
     name: await generateRandomNameForSubdirectory({suffix: 'app', directory: options.directory}),

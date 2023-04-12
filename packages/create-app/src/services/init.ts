@@ -11,7 +11,6 @@ import {renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
-import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {downloadGitRepository, initializeGitRepository} from '@shopify/cli-kit/node/git'
 import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -85,17 +84,6 @@ async function init(options: InitOptions) {
         },
       },
     )
-
-    if (await isShopify()) {
-      tasks.push({
-        title: "[Shopifolks-only] Configuring the project's NPM registry",
-        task: async () => {
-          const npmrcPath = joinPath(templateScaffoldDir, '.npmrc')
-          const npmrcContent = `@shopify:registry=https://registry.npmjs.org\n`
-          await appendFile(npmrcPath, npmrcContent)
-        },
-      })
-    }
 
     tasks.push(
       {
