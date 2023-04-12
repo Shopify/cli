@@ -111,7 +111,7 @@ importers:
       '@shopify/function-runner': 4.0.2
       '@shopify/plugin-cloudflare': 3.46.0-pre.0
       '@shopify/plugin-ngrok': 3.46.0-pre.0
-      '@types/diff': ^5.0.2
+      '@types/diff': ^5.0.3
       '@types/http-proxy': ^1.17.9
       '@types/lodash-es': ^4.17.6
       '@types/node': 14.18.36
@@ -149,7 +149,7 @@ importers:
       serve-static: 1.15.0
       ws: 8.12.1
     devDependencies:
-      '@types/diff': 5.0.2
+      '@types/diff': 5.0.3
       '@types/http-proxy': 1.17.9
       '@types/lodash-es': 4.17.6
       '@types/node': 14.18.36
@@ -197,7 +197,7 @@ importers:
       '@types/archiver': 5.3.1
       '@types/commondir': ^1.0.0
       '@types/cross-zip': ^4.0.0
-      '@types/diff': ^5.0.2
+      '@types/diff': ^5.0.3
       '@types/fs-extra': 9.0.13
       '@types/gradient-string': ^1.1.2
       '@types/lodash': 4.14.191
@@ -324,7 +324,7 @@ importers:
     devDependencies:
       '@types/commondir': 1.0.0
       '@types/cross-zip': 4.0.0
-      '@types/diff': 5.0.2
+      '@types/diff': 5.0.3
       '@types/fs-extra': 9.0.13
       '@types/gradient-string': 1.1.2
       '@types/lodash': 4.14.191
@@ -3843,8 +3843,8 @@ packages:
       '@cucumber/cucumber': 8.9.0
     dev: true
 
-  /@types/diff/5.0.2:
-    resolution: {integrity: sha512-uw8eYMIReOwstQ0QKF0sICefSy8cNO/v7gOTiIy9SbwuHyEecJUm7qlgueOO5S1udZ5I/irVydHVwMchgzbKTg==}
+  /@types/diff/5.0.3:
+    resolution: {integrity: sha512-amrLbRqTU9bXMCc6uX0sWpxsQzRIo9z6MJPkH1pkez/qOxuqSZVuryJAWoBRq94CeG8JxY+VK4Le9HtjQR5T9A==}
     dev: true
 
   /@types/expect/1.20.4:
