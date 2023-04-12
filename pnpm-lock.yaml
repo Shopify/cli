@@ -12,7 +12,7 @@ importers:
       '@apollo/client': ^3.7.9
       '@babel/core': ^7.21.0
       '@bugsnag/source-maps': ^2.3.0
-      '@changesets/cli': 2.26.0
+      '@changesets/cli': 2.26.1
       '@nrwl/eslint-plugin-nx': 15.8.3
       '@nrwl/js': 15.8.3
       '@nrwl/tao': 15.8.3
@@ -41,7 +41,7 @@ importers:
       liquidjs: ^10.6.0
       node-fetch: ^3.2.4
       nx: 15.8.3
-      oclif: 3.7.0
+      oclif: 3.7.3
       octokit-plugin-create-pull-request: ^3.12.2
       pathe: 1.0.0
       pin-github-action: ^1.8.0
@@ -59,7 +59,7 @@ importers:
       '@apollo/client': 3.7.9_77h5kg6422vos5a7c32osaaxh4
       '@babel/core': 7.21.0
       '@bugsnag/source-maps': 2.3.1
-      '@changesets/cli': 2.26.0
+      '@changesets/cli': 2.26.1
       '@nrwl/eslint-plugin-nx': 15.8.3_zfq3wdblky2oshho2xol2342ke
       '@nrwl/js': 15.8.3_q5bjatcz2fqjgxjtfkhhv6abzy
       '@nrwl/tao': 15.8.3
@@ -88,7 +88,7 @@ importers:
       liquidjs: 10.6.0
       node-fetch: 3.3.0
       nx: 15.8.3
-      oclif: 3.7.0
+      oclif: 3.7.3
       octokit-plugin-create-pull-request: 3.13.1
       pathe: 1.0.0
       pin-github-action: 1.8.0
@@ -164,7 +164,7 @@ importers:
     specifiers:
       '@oclif/core': 2.1.4
       '@oclif/plugin-commands': 2.2.10
-      '@oclif/plugin-help': 5.2.6
+      '@oclif/plugin-help': 5.2.9
       '@oclif/plugin-plugins': 2.3.2
       '@shopify/app': 3.46.0-pre.0
       '@shopify/cli-kit': 3.46.0-pre.0
@@ -177,7 +177,7 @@ importers:
     dependencies:
       '@oclif/core': 2.1.4
       '@oclif/plugin-commands': 2.2.10
-      '@oclif/plugin-help': 5.2.6
+      '@oclif/plugin-help': 5.2.9
       '@oclif/plugin-plugins': 2.3.2
       '@shopify/cli-kit': link:../cli-kit
       '@shopify/plugin-did-you-mean': link:../plugin-did-you-mean
@@ -200,7 +200,7 @@ importers:
       '@types/diff': ^5.0.2
       '@types/fs-extra': 9.0.13
       '@types/gradient-string': ^1.1.2
-      '@types/lodash': 4.14.191
+      '@types/lodash': 4.14.192
       '@types/node': 14.18.36
       '@types/react': 16.14.0
       '@types/semver': ^7.3.13
@@ -214,7 +214,7 @@ importers:
       commondir: 1.0.1
       conf: 11.0.1
       cross-zip: 4.0.0
-      deepmerge: 4.3.0
+      deepmerge: 4.3.1
       del: 6.0.0
       env-paths: 3.0.0
       envfile: 6.18.0
@@ -246,7 +246,7 @@ importers:
       open: 8.4.2
       pathe: 1.0.0
       react: 18.2.0
-      semver: 7.3.6
+      semver: 7.3.8
       simple-git: 3.16.0
       source-map-support: 0.5.21
       stacktracey: 2.1.8
@@ -278,7 +278,7 @@ importers:
       commondir: 1.0.1
       conf: 11.0.1
       cross-zip: 4.0.0
-      deepmerge: 4.3.0
+      deepmerge: 4.3.1
       del: 6.0.0
       env-paths: 3.0.0
       envfile: 6.18.0
@@ -308,7 +308,7 @@ importers:
       open: 8.4.2
       pathe: 1.0.0
       react: 18.2.0
-      semver: 7.3.6
+      semver: 7.3.8
       simple-git: 3.16.0
       source-map-support: 0.5.21
       stacktracey: 2.1.8
@@ -327,7 +327,7 @@ importers:
       '@types/diff': 5.0.2
       '@types/fs-extra': 9.0.13
       '@types/gradient-string': 1.1.2
-      '@types/lodash': 4.14.191
+      '@types/lodash': 4.14.192
       '@types/node': 14.18.36
       '@types/react': 16.14.0
       '@types/semver': 7.3.13
@@ -433,14 +433,14 @@ importers:
       '@oclif/core': 2.1.4
       '@shopify/cli-kit': 3.46.0-pre.0
       node-fetch: 3.3.0
-      semver: 7.3.6
+      semver: 7.3.8
       vite: 2.9.12
       vitest: ^0.28.5
     dependencies:
       '@oclif/core': 2.1.4
       '@shopify/cli-kit': link:../cli-kit
       node-fetch: 3.3.0
-      semver: 7.3.6
+      semver: 7.3.8
     devDependencies:
       vite: 2.9.12
       vitest: 0.28.5
@@ -507,7 +507,7 @@ importers:
       '@types/react-dom': ^16.9.11
       '@vitejs/plugin-react': ^1.3.2
       '@vitejs/plugin-react-refresh': ^1.3.1
-      copy-to-clipboard: ^3.3.1
+      copy-to-clipboard: ^3.3.3
       qrcode.react: ^1.0.1
       react: ^17.0.2
       react-dom: ^17.0.2
@@ -2058,8 +2058,8 @@ packages:
       '@changesets/types': 5.2.1
     dev: true
 
-  /@changesets/cli/2.26.0:
-    resolution: {integrity: sha512-0cbTiDms+ICTVtEwAFLNW0jBNex9f5+fFv3I771nBvdnV/mOjd1QJ4+f8KtVSOrwD9SJkk9xbDkWFb0oXd8d1Q==}
+  /@changesets/cli/2.26.1:
+    resolution: {integrity: sha512-XnTa+b51vt057fyAudvDKGB0Sh72xutQZNAdXkCqPBKO2zvs2yYZx5hFZj1u9cbtpwM6Sxtcr02/FQJfZOzemQ==}
     hasBin: true
     dependencies:
       '@babel/runtime': 7.20.6
@@ -2645,7 +2645,7 @@ packages:
     dependencies:
       '@types/istanbul-lib-coverage': 2.0.4
       '@types/istanbul-reports': 3.0.1
-      '@types/node': 18.11.18
+      '@types/node': 14.18.36
       '@types/yargs': 15.0.14
       chalk: 4.1.2
     dev: true
@@ -2796,7 +2796,7 @@ packages:
       read-package-json-fast: 2.0.3
       readdir-scoped-modules: 1.1.0
       rimraf: 3.0.2
-      semver: 7.3.6
+      semver: 7.3.8
       ssri: 8.0.1
       treeverse: 1.0.4
       walk-up-path: 1.0.0
@@ -2809,7 +2809,7 @@ packages:
     resolution: {integrity: sha512-8KG5RD0GVP4ydEzRn/I4BNDuxDtqVbOdm8675T49OIG/NGhaK0pjPX7ZcDlvKYbA+ulvVK3ztfcF4uBdOxuJbQ==}
     dependencies:
       '@gar/promisify': 1.1.3
-      semver: 7.3.6
+      semver: 7.3.8
     dev: true
 
   /@npmcli/fs/2.1.2:
@@ -2817,7 +2817,7 @@ packages:
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     dependencies:
       '@gar/promisify': 1.1.3
-      semver: 7.3.6
+      semver: 7.3.8
     dev: true
 
   /@npmcli/git/2.1.0:
@@ -2829,7 +2829,7 @@ packages:
       npm-pick-manifest: 6.1.1
       promise-inflight: 1.0.1
       promise-retry: 2.0.1
-      semver: 7.3.6
+      semver: 7.3.8
       which: 2.0.2
     transitivePeerDependencies:
       - bluebird
@@ -2861,7 +2861,7 @@ packages:
       cacache: 15.3.0
       json-parse-even-better-errors: 2.3.1
       pacote: 12.0.3
-      semver: 7.3.6
+      semver: 7.3.8
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -3235,8 +3235,8 @@ packages:
       lodash: 4.17.21
     dev: false
 
-  /@oclif/plugin-help/5.2.6:
-    resolution: {integrity: sha512-nvpSbIOGtPIct3+OqXca3OIu5liyIynascncAXZy4JDD7z8rIGZ3NYJH2M4JhMVyGxCDZxQuLVsdALyIt67G5g==}
+  /@oclif/plugin-help/5.2.9:
+    resolution: {integrity: sha512-0J3oowPURZJ4Dn1p1WpQ46E4+CoV20KTn1cvsNiDl6Hmbw+qoljKQnArJJzNFeZQxWo4R7/S42PrzKJTVYh68Q==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/core': 2.1.4
@@ -3810,7 +3810,7 @@ packages:
     dependencies:
       '@types/http-cache-semantics': 4.0.1
       '@types/keyv': 3.1.4
-      '@types/node': 18.11.18
+      '@types/node': 14.18.36
       '@types/responselike': 1.0.0
 
   /@types/chai-subset/1.3.3:
@@ -3826,7 +3826,7 @@ packages:
   /@types/cli-progress/3.11.0:
     resolution: {integrity: sha512-XhXhBv1R/q2ahF3BM7qT5HLzJNlIL0wbcGyZVjqOTqAybAnsLisd7gy1UCyIqpL+5Iv6XhlSyzjLCnI2sIdbCg==}
     dependencies:
-      '@types/node': 18.11.18
+      '@types/node': 14.18.36
 
   /@types/commondir/1.0.0:
     resolution: {integrity: sha512-PnpBlim0nunggueM95jRl8G3lyrcE6vPSBq6J9F2GE0o7k0ErZ26vzxdQxNnJwGX7qr/Fa0UaaChgEAZ23nanA==}
@@ -3861,7 +3861,7 @@ packages:
     resolution: {integrity: sha512-l6NQsDDyQUVeoTynNpC9uRvCUint/gSUXQA2euwmTuWGvPY5LSDUu6tkCtJB2SvGQlJQzLaKqcGZP4//7EDveA==}
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 18.11.18
+      '@types/node': 14.18.36
 
   /@types/gradient-string/1.1.2:
     resolution: {integrity: sha512-zIet2KvHr2dkOCPI5ggQQ+WJVyfBSFaqK9sNelhgDjlE2K3Fu2muuPJwu5aKM3xoWuc3WXudVEMUwI1QWhykEQ==}
@@ -3916,7 +3916,7 @@ packages:
   /@types/keyv/3.1.4:
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
     dependencies:
-      '@types/node': 18.11.18
+      '@types/node': 14.18.36
 
   /@types/lodash-es/4.17.6:
     resolution: {integrity: sha512-R+zTeVUKDdfoRxpAryaQNRKk3105Rrgx2CFRClIgRGaqDTdjsm8h6IYA8ir584W3ePzkZfst5xIgDwYrlh9HLg==}
@@ -3926,6 +3926,10 @@ packages:
 
   /@types/lodash/4.14.191:
     resolution: {integrity: sha512-BdZ5BCCvho3EIXw6wUCXHe7rS53AIDPLE+JzwgT+OsJk53oBfbSmZZ7CX4VaRoN78N+TJpFi9QPlfIVNmJYWxQ==}
+    dev: true
+
+  /@types/lodash/4.14.192:
+    resolution: {integrity: sha512-km+Vyn3BYm5ytMO13k9KTp27O75rbQ0NFw+U//g+PX7VZyjCioXaRFisqSIJRECljcTv73G3i6BpglNGHgUQ5A==}
     dev: true
 
   /@types/mime/3.0.1:
@@ -3949,7 +3953,6 @@ packages:
 
   /@types/node/14.18.36:
     resolution: {integrity: sha512-FXKWbsJ6a1hIrRxv+FoukuHnGTgEzKYGi7kilfMae96AL9UNkPFNWJEEYWzdRI9ooIkbr4AKldyuSTLql06vLQ==}
-    dev: true
 
   /@types/node/15.14.9:
     resolution: {integrity: sha512-qjd88DrCxupx/kJD5yQgZdcYKZKSIGBVDIBE1/LTGcNm3d2Np/jxojkdePDdfnBHJc5W7vSMpbJ1aB7p/Py69A==}
@@ -3957,6 +3960,7 @@ packages:
 
   /@types/node/18.11.18:
     resolution: {integrity: sha512-DHQpWGjyQKSHj3ebjFI/wRKcqQcdR+MoFBygntYOZytCqNfkd2ZC4ARDJ2DQqhjH5p85Nnd3jhUJIXrszFX/JA==}
+    dev: true
 
   /@types/node/8.10.66:
     resolution: {integrity: sha512-tktOkFUA4kXx2hhhrB8bIFb5TbwzS4uOhKEmwiD+NoiL0qtP2OQ9mFldbgD4dV1djrlBYP6eBuQZiWjuHUpqFw==}
@@ -3994,7 +3998,7 @@ packages:
   /@types/responselike/1.0.0:
     resolution: {integrity: sha512-85Y2BjiufFzaMIlvJDvTTB8Fxl2xfLo4HgmHzVBz08w4wDePCTjYw66PdrolO0kzli3yam/YCgRufyo1DdQVTA==}
     dependencies:
-      '@types/node': 18.11.18
+      '@types/node': 14.18.36
 
   /@types/rimraf/3.0.2:
     resolution: {integrity: sha512-F3OznnSLAUxFrCEu/L5PY8+ny8DtcFRjx7fZZ9bycvXRi3KPTRS9HOitGZwvPg0juRhXFWIeKX58cnX5YqLohQ==}
@@ -4032,7 +4036,7 @@ packages:
     resolution: {integrity: sha512-4UqPv+2567NhMQuMLdKAyK4yzrfCqwaTt6bLhHEs8PFcxbHILsrxaY63n4wgE/BRLDWDQeI+WcTmkXKExh9hQg==}
     dependencies:
       '@types/expect': 1.20.4
-      '@types/node': 18.11.18
+      '@types/node': 14.18.36
     dev: true
 
   /@types/ws/8.5.4:
@@ -4055,7 +4059,7 @@ packages:
     resolution: {integrity: sha512-Cn6WYCm0tXv8p6k+A8PvbDG763EDpBoTzHdA+Q/MF6H3sapGjCm9NzoaJncJS9tUKSuCoDs9XHxYYsQDgxR6kw==}
     requiresBuild: true
     dependencies:
-      '@types/node': 18.11.18
+      '@types/node': 14.18.36
     dev: false
     optional: true
 
@@ -5874,8 +5878,8 @@ packages:
   /deep-is/0.1.4:
     resolution: {integrity: sha512-oIPzksmTg4/MriiaYGO+okXDT7ztn/w3Eptv/+gSIdMdKsJo0u4CfYNFJPy+4SKMuCqGw2wxnA+URMg3t8a/bQ==}
 
-  /deepmerge/4.3.0:
-    resolution: {integrity: sha512-z2wJZXrmeHdvYJp/Ux55wIjqo81G5Bp4c+oELTW+7ar6SogWHajt5a9gO3s3IDaGSAXjDk0vlQKN3rms8ab3og==}
+  /deepmerge/4.3.1:
+    resolution: {integrity: sha512-3sUqbMEc77XqpdNO7FRyRog+eW3ph+GYCbj+rK+uYyRMuwsVy0rMiVtPn+QJlKFvWP/1PYpapqYn0Me2knFn+A==}
     engines: {node: '>=0.10.0'}
     dev: false
 
@@ -8863,6 +8867,7 @@ packages:
   /lru-cache/7.14.1:
     resolution: {integrity: sha512-ysxwsnTKdAx96aTRdhDOCQfDgbHnt8SK0KY8SEjO0wHinhWOFTESbjVCMPbU1uGXg/ch4lifqx0wfjOawU2+WA==}
     engines: {node: '>=12'}
+    dev: true
 
   /lunr/2.3.9:
     resolution: {integrity: sha512-zTU3DaZaF3Rt9rhN3uBMGQD3dD2/vFQqnvZCDv4dl5iOzq2IZQqTxu90r4E5J+nP70J3ilqVCrbho2eWaeW8Ow==}
@@ -9335,7 +9340,7 @@ packages:
       nopt: 5.0.0
       npmlog: 6.0.2
       rimraf: 3.0.2
-      semver: 7.3.6
+      semver: 7.3.8
       tar: 6.1.12
       which: 2.0.2
     transitivePeerDependencies:
@@ -9374,7 +9379,7 @@ packages:
     dependencies:
       hosted-git-info: 4.1.0
       is-core-module: 2.11.0
-      semver: 7.3.6
+      semver: 7.3.8
       validate-npm-package-license: 3.0.4
     dev: true
 
@@ -9401,7 +9406,7 @@ packages:
     resolution: {integrity: sha512-09OmyDkNLYwqKPOnbI8exiOZU2GVVmQp7tgez2BPi5OZC8M82elDAps7sxC4l//uSUtotWqoEIDwjRvWH4qz8w==}
     engines: {node: '>=10'}
     dependencies:
-      semver: 7.3.6
+      semver: 7.3.8
     dev: true
 
   /npm-normalize-package-bin/1.0.1:
@@ -9418,7 +9423,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       hosted-git-info: 4.1.0
-      semver: 7.3.6
+      semver: 7.3.8
       validate-npm-package-name: 3.0.0
     dev: true
 
@@ -9439,7 +9444,7 @@ packages:
       npm-install-checks: 4.0.0
       npm-normalize-package-bin: 1.0.1
       npm-package-arg: 8.1.5
-      semver: 7.3.6
+      semver: 7.3.8
     dev: true
 
   /npm-registry-fetch/12.0.2:
@@ -9620,13 +9625,13 @@ packages:
       define-properties: 1.1.4
       es-abstract: 1.20.4
 
-  /oclif/3.7.0:
-    resolution: {integrity: sha512-LtLc7/3lOQ0d6/JKGj8QriIK/MiIcjZXVX3WoynbXUswG/X8oIsSr1+F6Q69VVbXnjbYlbfiP+uYASr36Mrjzg==}
+  /oclif/3.7.3:
+    resolution: {integrity: sha512-yQ85UkSJAsDIRx0DXrp287GyvsBc2piyk3a8wup8/T+wxmsdEvWW+SaDWIQfpHNzMHYHrGus0hGW2ZwNvcNgjg==}
     engines: {node: '>=12.0.0'}
     hasBin: true
     dependencies:
       '@oclif/core': 2.1.4
-      '@oclif/plugin-help': 5.2.6
+      '@oclif/plugin-help': 5.2.9
       '@oclif/plugin-not-found': 2.3.9
       '@oclif/plugin-warn-if-update-available': 2.0.16
       aws-sdk: 2.1272.0
@@ -10873,13 +10878,6 @@ packages:
     dependencies:
       lru-cache: 6.0.0
     dev: true
-
-  /semver/7.3.6:
-    resolution: {integrity: sha512-HZWqcgwLsjaX1HBD31msI/rXktuIhS+lWvdE4kN9z+8IVT4Itc7vqU2WvYsyD6/sjYCt4dEKH/m1M3dwI9CC5w==}
-    engines: {node: ^10.0.0 || ^12.0.0 || ^14.0.0 || >=16.0.0}
-    hasBin: true
-    dependencies:
-      lru-cache: 7.14.1
 
   /semver/7.3.8:
     resolution: {integrity: sha512-NB1ctGL5rlHrPJtFDVIVzTyQylMLu9N9VICA6HSFJo8MCGVTMW6gfpicwKmmK/dAjTOrqu5l63JJOpDSrAis3A==}
@@ -12776,7 +12774,7 @@ packages:
       pacote: 12.0.3
       preferred-pm: 3.0.3
       pretty-bytes: 5.6.0
-      semver: 7.3.6
+      semver: 7.3.8
       slash: 3.0.0
       strip-ansi: 6.0.1
       text-table: 0.2.0
@@ -12805,7 +12803,7 @@ packages:
       minimist: 1.2.7
       read-pkg-up: 7.0.1
       run-async: 2.4.1
-      semver: 7.3.6
+      semver: 7.3.8
       shelljs: 0.8.5
       sort-keys: 4.2.0
       text-table: 0.2.0
@@ -12856,7 +12854,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       '@babel/runtime': 7.20.6
-      '@types/lodash': 4.14.191
+      '@types/lodash': 4.14.192
       lodash: 4.17.21
       lodash-es: 4.17.21
       nanoclone: 0.2.1
