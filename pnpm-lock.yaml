@@ -41,7 +41,7 @@ importers:
       liquidjs: ^10.6.0
       node-fetch: ^3.2.4
       nx: 15.8.3
-      oclif: 3.7.0
+      oclif: 3.7.3
       octokit-plugin-create-pull-request: ^3.12.2
       pathe: 1.0.0
       pin-github-action: ^1.8.0
@@ -88,7 +88,7 @@ importers:
       liquidjs: 10.6.0
       node-fetch: 3.3.0
       nx: 15.8.3
-      oclif: 3.7.0
+      oclif: 3.7.3
       octokit-plugin-create-pull-request: 3.13.1
       pathe: 1.0.0
       pin-github-action: 1.8.0
@@ -2645,7 +2645,7 @@ packages:
     dependencies:
       '@types/istanbul-lib-coverage': 2.0.4
       '@types/istanbul-reports': 3.0.1
-      '@types/node': 18.11.18
+      '@types/node': 14.18.36
       '@types/yargs': 15.0.14
       chalk: 4.1.2
     dev: true
@@ -9620,8 +9620,8 @@ packages:
       define-properties: 1.1.4
       es-abstract: 1.20.4
 
-  /oclif/3.7.0:
-    resolution: {integrity: sha512-LtLc7/3lOQ0d6/JKGj8QriIK/MiIcjZXVX3WoynbXUswG/X8oIsSr1+F6Q69VVbXnjbYlbfiP+uYASr36Mrjzg==}
+  /oclif/3.7.3:
+    resolution: {integrity: sha512-yQ85UkSJAsDIRx0DXrp287GyvsBc2piyk3a8wup8/T+wxmsdEvWW+SaDWIQfpHNzMHYHrGus0hGW2ZwNvcNgjg==}
     engines: {node: '>=12.0.0'}
     hasBin: true
     dependencies:
