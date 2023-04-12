@@ -29,7 +29,7 @@ describe('fetchTemplateSpecifications', () => {
               externalIdentifier: 'cart_checkout_validation',
               externalName: 'cart_checkout_validation',
               gated: false,
-              registrationLimit: 10,
+              registrationLimit: 50,
               supportedFlavors: [
                 {
                   name: 'Rust',
@@ -62,7 +62,7 @@ describe('fetchTemplateSpecifications', () => {
               externalIdentifier: 'cart_transform',
               externalName: 'cart_transform',
               gated: false,
-              registrationLimit: 10,
+              registrationLimit: 50,
               supportedFlavors: [
                 {
                   name: 'Wasm',
@@ -100,7 +100,7 @@ describe('fetchTemplateSpecifications', () => {
               externalIdentifier: 'product_discounts',
               externalName: 'product_discounts',
               gated: false,
-              registrationLimit: 10,
+              registrationLimit: 50,
               supportedFlavors: [
                 {
                   name: 'Wasm',
@@ -138,7 +138,7 @@ describe('fetchTemplateSpecifications', () => {
               externalIdentifier: 'order_discounts',
               externalName: 'order_discounts',
               gated: false,
-              registrationLimit: 10,
+              registrationLimit: 50,
               supportedFlavors: [
                 {
                   name: 'Wasm',
