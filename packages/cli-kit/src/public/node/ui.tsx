@@ -15,6 +15,7 @@ import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
 import {InlineToken, LinkToken, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
+import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
 
@@ -460,4 +461,4 @@ export const keypress = async () => {
 }
 
 export type Key = InkKey
-export {Task, TokenItem, InlineToken, LinkToken, TableColumn}
+export {Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection}

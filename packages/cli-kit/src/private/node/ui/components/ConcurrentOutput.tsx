@@ -3,7 +3,7 @@ import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {AbortController} from '../../../../public/node/abort.js'
 import {handleCtrlC} from '../../ui.js'
 import React, {FunctionComponent, useState} from 'react'
-import {Box, Key, Static, Text, useInput} from 'ink'
+import {Box, Key, Static, Text, useInput, TextProps} from 'ink'
 import stripAnsi from 'strip-ansi'
 import treeKill from 'tree-kill'
 import figures from 'figures'
@@ -26,7 +26,7 @@ export interface ConcurrentOutputProps {
   }
 }
 interface Chunk {
-  color: string
+  color: TextProps['color']
   prefix: string
   lines: string[]
 }
@@ -72,7 +72,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   footer,
 }) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
-  const concurrentColors = ['yellow', 'cyan', 'magenta', 'green', 'blue']
+  const concurrentColors: TextProps['color'][] = ['yellow', 'cyan', 'magenta', 'green', 'blue']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
 
   function lineColor(index: number) {
