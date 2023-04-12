@@ -11,7 +11,7 @@ importers:
     specifiers:
       '@apollo/client': ^3.7.9
       '@babel/core': ^7.21.0
-      '@bugsnag/source-maps': ^2.3.0
+      '@bugsnag/source-maps': ^2.3.1
       '@changesets/cli': 2.26.1
       '@nrwl/eslint-plugin-nx': 15.8.3
       '@nrwl/js': 15.8.3
