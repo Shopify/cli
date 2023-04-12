@@ -67,7 +67,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
 
     const localeWatcher = chokidar
       .watch(joinPath(extension.directory, 'locales', '**.json'))
-      .on('change', (event, path) => {
+      .on('change', (_event, path) => {
         outputDebug(`Locale file at path ${path} changed`, options.devOptions.stdout)
         options.payloadStore
           .updateExtension(extension, options.devOptions)
