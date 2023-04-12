@@ -28,7 +28,7 @@ export const blocks = {
   },
   functions: {
     defaultUrl: 'https://github.com/Shopify/function-examples',
-    defaultRegistrationLimit: 10,
+    defaultRegistrationLimit: 50,
   },
   web: {
     directoryName: 'web',
