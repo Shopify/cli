@@ -2,8 +2,7 @@ export interface Organization {
   id: string
   businessName: string
   website?: string
-  betas: {
-    appUiDeployments?: boolean
+  betas?: {
     cliTunnelAlternative?: boolean
   }
 }
@@ -22,6 +21,9 @@ export type OrganizationApp = MinimalOrganizationApp & {
   appType?: string
   newApp?: boolean
   grantedScopes: string[]
+  betas?: {
+    unifiedAppDeployment?: boolean
+  }
 }
 
 export interface OrganizationStore {
