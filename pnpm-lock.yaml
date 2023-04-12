@@ -164,7 +164,7 @@ importers:
     specifiers:
       '@oclif/core': 2.1.4
       '@oclif/plugin-commands': 2.2.10
-      '@oclif/plugin-help': 5.2.6
+      '@oclif/plugin-help': 5.2.9
       '@oclif/plugin-plugins': 2.3.2
       '@shopify/app': 3.46.0-pre.0
       '@shopify/cli-kit': 3.46.0-pre.0
@@ -177,7 +177,7 @@ importers:
     dependencies:
       '@oclif/core': 2.1.4
       '@oclif/plugin-commands': 2.2.10
-      '@oclif/plugin-help': 5.2.6
+      '@oclif/plugin-help': 5.2.9
       '@oclif/plugin-plugins': 2.3.2
       '@shopify/cli-kit': link:../cli-kit
       '@shopify/plugin-did-you-mean': link:../plugin-did-you-mean
@@ -3235,8 +3235,8 @@ packages:
       lodash: 4.17.21
     dev: false
 
-  /@oclif/plugin-help/5.2.6:
-    resolution: {integrity: sha512-nvpSbIOGtPIct3+OqXca3OIu5liyIynascncAXZy4JDD7z8rIGZ3NYJH2M4JhMVyGxCDZxQuLVsdALyIt67G5g==}
+  /@oclif/plugin-help/5.2.9:
+    resolution: {integrity: sha512-0J3oowPURZJ4Dn1p1WpQ46E4+CoV20KTn1cvsNiDl6Hmbw+qoljKQnArJJzNFeZQxWo4R7/S42PrzKJTVYh68Q==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/core': 2.1.4
@@ -9626,7 +9626,7 @@ packages:
     hasBin: true
     dependencies:
       '@oclif/core': 2.1.4
-      '@oclif/plugin-help': 5.2.6
+      '@oclif/plugin-help': 5.2.9
       '@oclif/plugin-not-found': 2.3.9
       '@oclif/plugin-warn-if-update-available': 2.0.16
       aws-sdk: 2.1272.0
