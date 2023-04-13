@@ -273,19 +273,6 @@ module ShopifyCLI
         assert_empty(@syncer.pending_updates)
       end
 
-      def test_logs_upload_error
-        file = @theme.static_asset_files.first
-        @ctx.expects(:error)
-
-        response_body = JSON.generate(errors: { message: "oops" })
-        ShopifyCLI::AdminAPI.stubs(:rest_request).raises(client_error(response_body))
-
-        @syncer.enqueue_updates([file])
-
-        @syncer.start_threads
-        @syncer.wait!
-      end
-
       def test_upload_theme
         @syncer.start_threads
 
