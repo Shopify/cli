@@ -444,7 +444,7 @@ export async function addNPMDependenciesWithoutVersionIfNeeded(
  * @param type - The dependency type.
  * @returns An array with the arguments.
  */
-function argumentsToAddDependenciesWithNPM(dependencies: string[], type: DependencyType, force = false): string[] {
+function argumentsToAddDependenciesWithNPM(dependencies: string[], type: DependencyType): string[] {
   let command = ['install']
   command = command.concat(dependencies)
   switch (type) {
