@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.45.1
+
+### Patch Changes
+
+- f97faf418: Fix peer dependency resolution issue with npm
+
 ## 3.45.0
 
 ### Minor Changes

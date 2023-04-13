@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.45.1
+
+### Patch Changes
+
+- 7602102e2: Update functions limit to 50 in total
+- Updated dependencies [f97faf418]
+  - @shopify/cli-kit@3.45.1
+  - @shopify/plugin-cloudflare@3.45.1
+  - @shopify/plugin-ngrok@3.45.1
+
 ## 3.45.0
 
 ### Minor Changes
