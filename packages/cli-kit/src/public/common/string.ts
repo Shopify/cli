@@ -148,7 +148,6 @@ const SAFE_RANDOM_CREATIVE_NOUNS = [
   'colorway',
   'visuals',
   'typography',
-  'themes',
   'composition',
   'scale',
   'symmetry',
