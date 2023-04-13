@@ -5,11 +5,18 @@ import generateExtensionPrompt from '../prompts/generate/extension.js'
 import {generateExtension} from '../services/generate/extension.js'
 import {
   testApp,
+  testFunctionExtension,
   testRemoteSpecifications,
   testRemoteTemplateSpecifications,
   testThemeExtensions,
 } from '../models/app/app.test-data.js'
-import {Extension, GenericSpecification} from '../models/app/extensions.js'
+import {
+  Extension,
+  FunctionExtension,
+  GenericSpecification,
+  ThemeExtension,
+  UIExtension,
+} from '../models/app/extensions.js'
 import {describe, expect, vi, beforeAll, afterEach, test} from 'vitest'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -17,7 +24,18 @@ import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
-vi.mock('../constants.js')
+vi.mock('../constants.js', async () => {
+  const actual: any = await vi.importActual('../constants.js')
+  return {
+    ...actual,
+    blocks: {
+      ...actual.blocks,
+      functions: {
+        defaultRegistrationLimit: 1,
+      },
+    },
+  }
+})
 vi.mock('../models/app/loader.js')
 vi.mock('../prompts/generate/extension.js')
 vi.mock('../services/generate/extension.js')
@@ -34,7 +52,7 @@ afterEach(() => {
   mockAndCaptureOutput().clear()
 })
 
-describe('after extension command finishes correctly', () => {
+describe('generate', () => {
   const mockConfig = new Config({root: ''})
   test('displays a confirmation message with instructions to run dev', async () => {
     // Given
@@ -113,13 +131,25 @@ describe('after extension command finishes correctly', () => {
     await expect(got).rejects.toThrow(/Unknown extension type: unknown_type/)
   })
 
-  test('throws error if trying to generate a type over the registration limit', async () => {
+  test('throws error if trying to generate a extension over the registration limit', async () => {
     // Given
     const themeExtension = await testThemeExtensions()
     await mockSuccessfulCommandExecution('theme', [themeExtension])
 
     // When
     const got = generate({directory: '/', reset: false, config: mockConfig, type: 'theme'})
+
+    // Then
+    await expect(got).rejects.toThrow(/Invalid extension type/)
+  })
+
+  test('throws error if trying to generate a function over the registration limit', async () => {
+    // Given
+    const discountsFunction = await testFunctionExtension()
+    await mockSuccessfulCommandExecution('product_discounts', [discountsFunction])
+
+    // When
+    const got = generate({directory: '/', reset: false, config: mockConfig, type: 'product_discounts'})
 
     // Then
     await expect(got).rejects.toThrow(/Invalid extension type/)
@@ -149,6 +179,11 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
     directory: appRoot,
     configurationPath: joinPath(appRoot, 'shopify.app.toml'),
     extensionsForType: (_spec: {identifier: string; externalIdentifier: string}) => existingExtensions,
+    extensions: {
+      function: existingExtensions.filter((extension) => extension.type === 'product_discounts') as FunctionExtension[],
+      ui: existingExtensions.filter((extension) => extension.type === 'product_subscription') as UIExtension[],
+      theme: existingExtensions.filter((extension) => extension.type === 'theme') as ThemeExtension[],
+    },
   })
   const specification = {
     ...testRemoteSpecifications[0],
