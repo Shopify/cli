@@ -40,6 +40,7 @@ export const BaseUIExtensionSchema = zod.object({
   capabilities: CapabilitiesSchema.optional(),
   metafields: zod.array(MetafieldSchema).optional().default([]),
   categories: zod.array(zod.string()).optional(),
+  label: zod.string().optional(),
 })
 
 export const ThemeExtensionSchema = zod.object({
