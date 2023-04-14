@@ -173,10 +173,23 @@ class AppLoader {
     this.specifications = specifications
   }
 
+  findSpecificationForType(type: string) {
+    return findSpecificationForType(this.specifications, type)
+  }
+
+  parseConfigurationFile<TSchema extends zod.ZodType>(
+    schema: TSchema,
+    filepath: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    decode: (input: any) => any = decodeToml,
+  ) {
+    return parseConfigurationFile(schema, filepath, this.abortOrReport.bind(this), decode)
+  }
+
   async loaded() {
     this.appDirectory = await this.findAppDirectory()
     const configurationPath = await this.getConfigurationPath()
-    const configuration = await parseConfigurationFile(AppConfigurationSchema, configurationPath, this.abortOrReport)
+    const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
     const dotenv = await this.loadDotEnv()
     const {functions, usedCustomLayout: usedCustomLayoutForFunctionExtensions} = await this.loadFunctions(
       configuration.extensionDirectories,
@@ -275,7 +288,7 @@ class AppLoader {
   async loadWeb(WebConfigurationFile: string): Promise<Web> {
     return {
       directory: dirname(WebConfigurationFile),
-      configuration: await parseConfigurationFile(WebConfigurationSchema, WebConfigurationFile, this.abortOrReport),
+      configuration: await this.parseConfigurationFile(WebConfigurationSchema, WebConfigurationFile),
       framework: await resolveFramework(dirname(WebConfigurationFile)),
     }
   }
@@ -296,7 +309,7 @@ class AppLoader {
         return
       }
 
-      const configuration = await parseConfigurationFile(specification.schema, configurationPath, this.abortOrReport)
+      const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
 
       let entryPath
       if (specification.singleEntryPath) {
@@ -351,11 +364,7 @@ class AppLoader {
 
     const allFunctions = configPaths.map(async (configurationPath) => {
       const directory = dirname(configurationPath)
-      const configuration = await parseConfigurationFile(
-        BaseFunctionConfigurationSchema,
-        configurationPath,
-        this.abortOrReport,
-      )
+      const configuration = await this.parseConfigurationFile(BaseFunctionConfigurationSchema, configurationPath)
 
       const entryPath = (
         await Promise.all(
@@ -386,8 +395,8 @@ class AppLoader {
 
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = dirname(configurationPath)
-      const configuration = await parseConfigurationFile(ThemeExtensionSchema, configurationPath, this.abortOrReport)
-      const specification = findSpecificationForType(this.specifications, 'theme') as ThemeExtensionSpec | undefined
+      const configuration = await this.parseConfigurationFile(ThemeExtensionSchema, configurationPath)
+      const specification = this.findSpecificationForType('theme') as ThemeExtensionSpec | undefined
 
       if (!specification) {
         this.abortOrReport(
