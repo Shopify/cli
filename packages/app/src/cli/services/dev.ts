@@ -1,4 +1,3 @@
-/* eslint-disable promise/no-nesting */
 import {ensureDevContext} from './context.js'
 import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
@@ -7,8 +6,8 @@ import {outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
-import {bundleExtension} from './extensions/bundle.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
+import {setupConfigWatcher, setupNonPreviewableExtensionBundler} from './dev/extension/bundler.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -17,16 +16,12 @@ import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js
 import metadata from '../metadata.js'
 import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {findSpecificationForConfig, load, parseConfigurationFile} from '../models/app/loader.js'
+import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
-import {
-  ExtensionUpdateDraftInput,
-  ExtensionUpdateDraftMutation,
-  ExtensionUpdateSchema,
-} from '../api/graphql/update_draft.js'
+
 import {UIExtensionSpec} from '../models/extensions/ui.js'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
@@ -43,11 +38,9 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
-import {OutputProcess, outputDebug, OutputMessage} from '@shopify/cli-kit/node/output'
+import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {partition} from '@shopify/cli-kit/common/collection'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {readFile} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 export interface DevOptions {
@@ -431,90 +424,7 @@ interface DevNonPreviewableExtensionsOptions {
   specifications: UIExtensionSpec[]
 }
 
-async function updateDraft(
-  extension: UIExtension,
-  token: string,
-  apiKey: string,
-  registrationId: string,
-  stderr: Writable,
-) {
-  const content = await readFile(extension.outputBundlePath)
-  if (!content) return
-  const encodedFile = Buffer.from(content).toString('base64')
-
-  const extensionInput: ExtensionUpdateDraftInput = {
-    apiKey,
-    config: JSON.stringify({
-      ...(await extension.deployConfig()),
-      serialized_script: encodedFile,
-    }),
-    context: undefined,
-    registrationId,
-  }
-  const mutation = ExtensionUpdateDraftMutation
-
-  const mutationResult: ExtensionUpdateSchema = await partnersRequest(mutation, token, extensionInput)
-  if (mutationResult.extensionUpdateDraft?.userErrors?.length > 0) {
-    const errors = mutationResult.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
-    stderr.write(`Error while updating drafts: ${errors}`)
-  } else {
-    outputDebug(`Drafts updated successfully for extension: ${extension.localIdentifier}`)
-  }
-}
-
-async function startConfigWatcher(
-  extension: UIExtension,
-  token: string,
-  apiKey: string,
-  registrationId: string,
-  stdout: Writable,
-  stderr: Writable,
-  signal: AbortSignal,
-  specifications: UIExtensionSpec[],
-) {
-  const {default: chokidar} = await import('chokidar')
-
-  const configWatcher = chokidar.watch(extension.configurationPath).on('change', (_event, _path) => {
-    const abort = (errorMessage: OutputMessage) => {
-      throw new AbortError(errorMessage)
-    }
-
-    outputDebug(`Config file at path ${extension.configurationPath} changed`, stdout)
-
-    findSpecificationForConfig(specifications, extension.configurationPath, abort)
-      .then((specification) => {
-        if (!specification) {
-          return
-        }
-
-        parseConfigurationFile(specification.schema, extension.configurationPath, abort)
-          .then((configuration) => {
-            extension.configuration = configuration
-            updateDraft(extension, token, apiKey, registrationId, stderr).catch((_: unknown) => {})
-          })
-          .catch((_: unknown) => {})
-      })
-      .catch((_: unknown) => {})
-  })
-
-  signal.addEventListener('abort', () => {
-    outputDebug(`Closing config file watching for extension with ID ${extension.devUUID}`, stdout)
-    configWatcher
-      .close()
-      .then(() => {
-        outputDebug(`Config file watching closed for extension with ${extension.devUUID}`, stdout)
-      })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .catch((error: any) => {
-        outputDebug(
-          `Config file watching failed to close for extension with ${extension.devUUID}: ${error.message}`,
-          stderr,
-        )
-      })
-  })
-}
-
-async function devNonPreviewableExtensionTarget({
+export function devNonPreviewableExtensionTarget({
   extensions,
   app,
   url,
@@ -532,37 +442,18 @@ async function devNonPreviewableExtensionTarget({
           if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
 
           return Promise.all([
-            bundleExtension({
-              minify: false,
-              outputBundlePath: extension.outputBundlePath,
-              environment: 'development',
-              env: {
-                ...(app.dotenv?.variables ?? {}),
-                APP_URL: url,
-              },
-              stdin: {
-                contents: extension.getBundleExtensionStdinContent(),
-                resolveDir: extension.directory,
-                loader: 'tsx',
-              },
+            setupNonPreviewableExtensionBundler({
+              extension,
+              app,
+              url,
+              token,
+              apiKey,
+              registrationId,
               stderr,
               stdout,
-              watchSignal: signal,
-
-              watch: async (result) => {
-                const error = (result?.errors?.length ?? 0) > 0
-                outputDebug(
-                  `The Javascript bundle of the extension with ID ${extension.devUUID} has ${
-                    error ? 'an error' : 'changed'
-                  }`,
-                  error ? stderr : stdout,
-                )
-                if (error) return
-
-                await updateDraft(extension, token, apiKey, registrationId, stderr)
-              },
+              signal,
             }),
-            startConfigWatcher(extension, token, apiKey, registrationId, stdout, stderr, signal, specifications),
+            setupConfigWatcher({extension, token, apiKey, registrationId, stdout, stderr, signal, specifications}),
           ])
         }),
       )
