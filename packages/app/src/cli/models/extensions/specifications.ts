@@ -1,5 +1,6 @@
 import {UIExtensionSpec} from './ui.js'
 import {ThemeExtensionSpec} from './theme.js'
+import {FlowExtensionSpec} from './flow.js'
 import {GenericSpecification} from '../app/extensions.js'
 import {loadUIExtensionSpecificiationsFromPlugins} from '../../private/plugins/extension.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
@@ -13,6 +14,10 @@ export async function loadUIExtensionSpecifications(config: Config): Promise<UIE
   const local = await loadLocalUIExtensionsSpecifications()
   const plugins = await loadUIExtensionSpecificiationsFromPlugins(config)
   return [...local, ...plugins]
+}
+
+export async function loadLocalFlowExtensionsSpecifications(): Promise<FlowExtensionSpec[]> {
+  return memoizedLoadSpecs('flow-specifications')
 }
 
 export async function loadLocalUIExtensionsSpecifications(): Promise<UIExtensionSpec[]> {
@@ -29,7 +34,8 @@ export async function loadThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
 export async function loadExtensionsSpecifications(config: Config): Promise<GenericSpecification[]> {
   const ui = await loadUIExtensionSpecifications(config)
   const theme = await loadThemeSpecifications()
-  return [...ui, ...theme]
+  const flow = await loadLocalFlowExtensionsSpecifications()
+  return [...ui, ...theme, ...flow]
 }
 
 /**
@@ -50,6 +56,7 @@ async function loadSpecifications(directoryName: string) {
    * in the list of files.
    */
   const url = joinPath(dirname(fileURLToPath(import.meta.url)), joinPath(directoryName, '*.{js,ts}'))
+
   let files = await glob(url, {ignore: ['**.d.ts', '**.test.ts']})
 
   // From Node 18, all windows paths must start with file://
@@ -61,5 +68,6 @@ async function loadSpecifications(directoryName: string) {
   const promises = files.map((file) => import(file))
   const modules = await Promise.all(promises)
   const specs = modules.map((module) => module.default)
+
   return specs
 }

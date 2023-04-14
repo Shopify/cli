@@ -47,6 +47,11 @@ export const ThemeExtensionSchema = zod.object({
   type: zod.literal('theme'),
 })
 
+export const FlowExtensionSchema = zod.object({
+  name: zod.string(),
+  type: zod.literal('flow_action_definition'),
+})
+
 export const BaseFunctionConfigurationSchema = zod.object({
   name: zod.string(),
   type: zod.string(),

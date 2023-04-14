@@ -1,5 +1,6 @@
 import {FunctionSpec, FunctionConfigType} from '../extensions/functions.js'
 import {ThemeConfigContents, ThemeExtensionSpec} from '../extensions/theme.js'
+import {FlowConfigContents, FlowExtensionSpec} from '../extensions/flow.js'
 import {UIExtensionSpec} from '../extensions/ui.js'
 import {BaseConfigContents} from '../extensions/schemas.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
@@ -7,7 +8,7 @@ import {TokenizedString} from '@shopify/cli-kit/node/output'
 import {Result} from '@shopify/cli-kit/node/result'
 import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 
-export type ExtensionCategory = 'ui' | 'function' | 'theme'
+export type ExtensionCategory = 'ui' | 'function' | 'theme' | 'flow'
 
 /**
  * Common interface for ExtensionSpec and FunctionSpec
@@ -51,6 +52,12 @@ export type FunctionExtension<TConfiguration extends FunctionConfigType = Functi
 }
 
 export type ThemeExtension<TConfiguration extends ThemeConfigContents = ThemeConfigContents> = Extension & {
+  configuration: TConfiguration
+  previewMessage(url: string, storeFqdn: string): TokenizedString | undefined
+  outputBundlePath: string
+}
+
+export type FlowExtension<TConfiguration extends FlowConfigContents = FlowConfigContents> = Extension & {
   configuration: TConfiguration
   previewMessage(url: string, storeFqdn: string): TokenizedString | undefined
   outputBundlePath: string

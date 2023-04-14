@@ -1,10 +1,22 @@
-import {UIExtension, ThemeExtension, FunctionExtension, Extension, GenericSpecification} from './extensions.js'
+import {
+  UIExtension,
+  ThemeExtension,
+  FunctionExtension,
+  Extension,
+  GenericSpecification,
+  FlowExtension,
+} from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
 import {ThemeExtensionInstance, ThemeExtensionSpec} from '../extensions/theme.js'
-import {BaseFunctionConfigurationSchema, ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
+import {
+  BaseFunctionConfigurationSchema,
+  FlowExtensionSchema,
+  ThemeExtensionSchema,
+  TypeSchema,
+} from '../extensions/schemas.js'
 import {FunctionInstance} from '../extensions/functions.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
@@ -24,6 +36,7 @@ import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
+import {FlowExtensionInstance, FlowExtensionSpec} from '../extensions/flow.js'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -98,6 +111,7 @@ class AppLoader {
     const {themeExtensions, usedCustomLayout: usedCustomLayoutForThemeExtensions} = await this.loadThemeExtensions(
       configuration.extensionDirectories,
     )
+    const {flowExtensions} = await this.loadFlowExtensions(configuration.extensionDirectories)
     const packageJSONPath = joinPath(this.appDirectory, 'package.json')
     const name = await loadAppName(this.appDirectory)
     const nodeDependencies = await getDependencies(packageJSONPath)
@@ -116,6 +130,7 @@ class AppLoader {
       webs,
       uiExtensions,
       themeExtensions,
+      flowExtensions,
       functions,
       usesWorkspaces,
       dotenv,
@@ -388,6 +403,42 @@ class AppLoader {
     const themeExtensions = getArrayRejectingUndefined(await Promise.all(extensions))
 
     return {themeExtensions, usedCustomLayout: extensionDirectories !== undefined}
+  }
+
+  async loadFlowExtensions(extensionDirectories?: string[]): Promise<{flowExtensions: FlowExtension[]}> {
+    const flowConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
+      return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.flow}`)
+    })
+    const configPaths = await glob(flowConfigPaths)
+
+    const extensions = configPaths.map(async (configurationPath) => {
+      const directory = dirname(configurationPath)
+      const configuration = await this.parseConfigurationFile(FlowExtensionSchema, configurationPath)
+      const specification = this.findSpecificationForType('flow_action_definition') as FlowExtensionSpec | undefined
+
+      if (!specification) {
+        this.abortOrReport(
+          outputContent`Unknown flow type ${outputToken.yellow('flow_action_definition')} in ${outputToken.path(
+            configurationPath,
+          )}`,
+          undefined,
+          configurationPath,
+        )
+        return undefined
+      }
+
+      return new FlowExtensionInstance({
+        configuration,
+        configurationPath,
+        directory,
+        specification,
+        outputBundlePath: directory,
+      })
+    })
+
+    const flowExtensions = getArrayRejectingUndefined(await Promise.all(extensions))
+
+    return {flowExtensions}
   }
 
   abortOrReport<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {
