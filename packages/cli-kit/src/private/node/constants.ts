@@ -31,6 +31,7 @@ export const environmentVariables = {
   spin: 'SPIN',
   spinAppPort: 'SERVER_PORT',
   spinAppHost: 'SPIN_APP_HOST',
+  organization: 'SHOPIFY_CLI_ORGANIZATION',
 }
 
 export const pathConstants = {

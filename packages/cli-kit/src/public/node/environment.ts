@@ -31,3 +31,12 @@ export function getPartnersToken(): string | undefined {
 export function usePartnersToken(): boolean {
   return getPartnersToken() !== undefined
 }
+
+/**
+ * Returns the value of the organization id from the environment variables.
+ *
+ * @returns True if the current proccess is running using the partners token.
+ */
+export function getOrganization(): string | undefined {
+  return getEnvironmentVariables()[environmentVariables.organization]
+}

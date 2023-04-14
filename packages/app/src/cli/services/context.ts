@@ -27,6 +27,7 @@ import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {getOrganization} from '@shopify/cli-kit/node/environment'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -135,7 +136,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     outputInfo(explanation)
   }
 
-  const orgId = cachedInfo?.orgId || (await selectOrg(token))
+  const orgId = getOrganization() || cachedInfo?.orgId || (await selectOrg(token))
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
   const organization = await fetchOrgFromId(orgId, token)
