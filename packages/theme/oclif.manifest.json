@@ -68,6 +68,13 @@
             "style"
           ]
         },
+        "update-docs": {
+          "name": "update-docs",
+          "type": "boolean",
+          "description": "Update Theme Check docs (objects, filters, and tags)",
+          "required": false,
+          "allowNo": false
+        },
         "init": {
           "name": "init",
           "type": "boolean",
@@ -124,6 +131,7 @@
         "category",
         "config",
         "exclude-category",
+        "update-docs",
         "fail-level",
         "init",
         "list",
