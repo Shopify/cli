@@ -146,7 +146,7 @@ export interface ShouldOrPromptUpdateURLsOptions {
 }
 
 export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLsOptions): Promise<boolean> {
-  if (options.newApp) return true
+  if (options.newApp || isSpin()) return true
   let shouldUpdate: boolean = options.cachedUpdateURLs === true
   if (options.cachedUpdateURLs === undefined) {
     const response = await updateURLsPrompt(
