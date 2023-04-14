@@ -36,6 +36,7 @@ import {
 } from '@shopify/cli-kit/node/session'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {Writable} from 'stream'
 
 export interface DevOptions {
@@ -98,7 +99,7 @@ async function dev(options: DevOptions) {
       app: localApp,
       useCloudflareTunnels,
     }),
-    backendConfig?.configuration.port || getAvailableTCPPort(),
+    getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
     getURLs(apiKey, token),
   ])
 

@@ -1,4 +1,4 @@
-import {environmentVariables} from '../../private/node/constants.js'
+import {environmentVariables, systemEnvironmentVariables} from '../../private/node/constants.js'
 
 /**
  * It returns the environment variables of the environment
@@ -39,4 +39,17 @@ export function usePartnersToken(): boolean {
  */
 export function getOrganization(): string | undefined {
   return getEnvironmentVariables()[environmentVariables.organization]
+}
+
+/**
+ * Return the backend port value.
+ *
+ * @returns The port as a number. Undefined otherwise.
+ */
+export function getBackendPort(): number | undefined {
+  const backendPort = getEnvironmentVariables()[systemEnvironmentVariables.backendPort]
+  if (backendPort && !isNaN(Number(backendPort))) {
+    return Number(backendPort)
+  }
+  return undefined
 }

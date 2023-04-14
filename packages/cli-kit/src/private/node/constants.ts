@@ -34,6 +34,10 @@ export const environmentVariables = {
   organization: 'SHOPIFY_CLI_ORGANIZATION',
 }
 
+export const systemEnvironmentVariables = {
+  backendPort: 'BACKEND_PORT',
+}
+
 export const pathConstants = {
   executables: {
     dev: '/opt/dev/bin/dev',
