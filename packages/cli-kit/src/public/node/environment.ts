@@ -53,3 +53,18 @@ export function getBackendPort(): number | undefined {
   }
   return undefined
 }
+
+/**
+ * Returns the information of the identity token.
+ *
+ * @returns The identity token information in case it exists.
+ */
+export function getIdentityTokenInformation(): {accessToken: string; refreshToken: string} | undefined {
+  const identityToken = getEnvironmentVariables()[environmentVariables.identityToken]
+  const refreshToken = getEnvironmentVariables()[environmentVariables.refreshToken]
+  if (!identityToken || !refreshToken) return undefined
+  return {
+    accessToken: identityToken,
+    refreshToken,
+  }
+}

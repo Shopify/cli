@@ -32,6 +32,8 @@ export const environmentVariables = {
   spinAppPort: 'SERVER_PORT',
   spinAppHost: 'SPIN_APP_HOST',
   organization: 'SHOPIFY_CLI_ORGANIZATION',
+  identityToken: 'SHOPIFY_CLI_IDENTITY_TOKEN',
+  refreshToken: 'SHOPIFY_CLI_REFRESH_TOKEN',
 }
 
 export const systemEnvironmentVariables = {
