@@ -319,13 +319,17 @@ export function unlinkFileSync(path: string): void {
 }
 
 /**
- * Create a read stream for a file.
+ * Create a read stream for a file with optional options.
  *
  * @param path - Path to the file.
+ * @param options - Options for the read stream.
  * @returns A read stream for the file.
  */
-export function createFileReadStream(path: string): ReadStream {
-  return fsCreateReadStream(path)
+export function createFileReadStream(
+  path: string,
+  options?: {encoding?: BufferEncoding; start?: number; end?: number},
+): ReadStream {
+  return fsCreateReadStream(path, options)
 }
 
 /**
