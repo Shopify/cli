@@ -265,6 +265,12 @@
           "description": "Local port of the theme app extension development server.",
           "hidden": false,
           "multiple": false
+        },
+        "notify": {
+          "name": "notify",
+          "type": "option",
+          "char": "n",
+          "description": "The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes."
         }
       },
       "args": {}

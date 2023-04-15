@@ -30,7 +30,7 @@ module ShopifyCLI
       include Singleton
 
       attr_reader :app, :stopped, :ctx, :root, :host, :theme_identifier, :port, :poll, :editor_sync, :stable, :mode,
-        :block, :includes, :ignores
+        :block, :includes, :ignores, :notify
 
       class << self
         def start(
@@ -46,6 +46,7 @@ module ShopifyCLI
           mode: ReloadMode.default,
           includes: nil,
           ignores: nil,
+          notify: nil,
           &block
         )
           instance.setup(
@@ -61,6 +62,7 @@ module ShopifyCLI
             mode,
             includes,
             ignores,
+            notify,
             &block
           )
           instance.start
@@ -85,6 +87,7 @@ module ShopifyCLI
         mode,
         includes,
         ignores,
+        notify,
         &block
       )
         @ctx = ctx
@@ -99,6 +102,7 @@ module ShopifyCLI
         @mode = mode
         @includes = includes
         @ignores = ignores
+        @notify = notify
         @block = block
       end
 
@@ -198,7 +202,8 @@ module ShopifyCLI
           include_filter: include_filter,
           ignore_filter: ignore_filter,
           overwrite_json: !editor_sync || @overwrite_json,
-          stable: stable
+          stable: stable,
+          notify: notify,
         )
       end
 

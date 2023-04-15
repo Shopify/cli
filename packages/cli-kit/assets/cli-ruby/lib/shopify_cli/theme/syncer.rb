@@ -33,12 +33,12 @@ module ShopifyCLI
         :union_merge, # - Union merges the local file content with the remote file content
       ]
 
-      attr_reader :ctx, :theme, :checksums, :error_checksums, :api_client, :pending, :standard_reporter
+      attr_reader :ctx, :theme, :checksums, :error_checksums, :api_client, :pending, :standard_reporter, :notify
       attr_accessor :include_filter, :ignore_filter
 
       def_delegators :@error_reporter, :has_any_error?
 
-      def initialize(ctx, theme:, include_filter: nil, ignore_filter: nil, overwrite_json: true, stable: false)
+      def initialize(ctx, theme:, include_filter: nil, ignore_filter: nil, overwrite_json: true, stable: false, notify: nil)
         @ctx = ctx
         @theme = theme
         @include_filter = include_filter
@@ -47,6 +47,7 @@ module ShopifyCLI
         @error_reporter = ErrorReporter.new(ctx)
         @standard_reporter = StandardReporter.new(ctx)
         @reporters = [@error_reporter, @standard_reporter]
+        @notify = notify
 
         # Queue of `Operation`s waiting to be picked up from a thread for processing.
         @queue = Queue.new
