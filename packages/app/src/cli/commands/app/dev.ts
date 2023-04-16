@@ -84,6 +84,11 @@ export default class Dev extends Command {
       description: 'Local port of the theme app extension development server.',
       env: 'SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT',
     }),
+    notify: Flags.string({
+      char: 'n',
+      description: 'The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.',
+      env: 'SHOPIFY_FLAG_NOTIFY',
+    }),
   }
 
   public async run(): Promise<void> {
@@ -112,6 +117,7 @@ export default class Dev extends Command {
       noTunnel: flags['no-tunnel'],
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
+      notify: flags['notify'],
     })
   }
 }
