@@ -54,7 +54,7 @@ describe('ConcurrentOutput', () => {
           shortcuts: [
             {
               key: 'p',
-              action: 'open your browser',
+              action: 'preview in your browser',
             },
             {
               key: 'q',
@@ -78,7 +78,7 @@ describe('ConcurrentOutput', () => {
       0000-00-00 00:00:00 │ frontend │ second frontend message
       0000-00-00 00:00:00 │ frontend │ third frontend message
 
-      › Press p │ open your browser
+      › Press p │ preview in your browser
       › Press q │ quit
 
       Preview URL: https://shopify.com

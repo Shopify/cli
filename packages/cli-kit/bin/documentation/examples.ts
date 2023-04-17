@@ -68,7 +68,7 @@ export const examples: {[key in string]: Example} = {
         footer: {
           shortcuts: [{
             key: 'p',
-            action: 'open your browser'
+            action: 'preview in your browser'
           }, {
             key: 'q',
             action: 'quit.',
