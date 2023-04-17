@@ -35,7 +35,7 @@ export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps
  * 0000-00-00 00:00:00 │ frontend │ second frontend message
  * 0000-00-00 00:00:00 │ frontend │ third frontend message
  *
- * › Press p │ open your browser
+ * › Press p │ preview in your browser
  * › Press q │ quit.
  *
  * Preview URL: https://shopify.com
