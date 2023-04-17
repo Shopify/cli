@@ -15,4 +15,4 @@ jobs:
           changelogRegex: \.changeset
           message: |
             We detected some changes at either packages/*/src or packages/cli-kit/assets/cli-ruby/** and there are no updates in the .changeset.
-            If the changes are user-facing, run "yarn changeset add" to track your changes and include them in the next release CHANGELOG.
+            If the changes are user-facing, run "pnpm changeset add" to track your changes and include them in the next release CHANGELOG.

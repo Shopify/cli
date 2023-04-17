@@ -1,5 +1,5 @@
 {
-  "version": "3.45.0-pre.5",
+  "version": "3.46.0-pre.0",
   "commands": {
     "upgrade": {
       "id": "upgrade",

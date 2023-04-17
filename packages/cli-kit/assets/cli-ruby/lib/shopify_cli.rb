@@ -84,7 +84,7 @@ module ShopifyCLI
   autocall(:Logger)   { CLI::Kit::Logger.new(debug_log_file: ShopifyCLI.debug_log_file) }
   # ShopifyCLI::Resolver
   autocall(:Resolver) do
-    ShopifyCLI::Core::HelpResolver.new(
+    CLI::Kit::Resolver.new(
       tool_name: TOOL_NAME,
       command_registry: ShopifyCLI::Commands::Registry
     )
@@ -99,11 +99,8 @@ module ShopifyCLI
 
   autoload :AdminAPI, "shopify_cli/admin_api"
   autoload :API, "shopify_cli/api"
-  autoload :AppTypeDetector, "shopify_cli/app_type_detector"
   autoload :Command, "shopify_cli/command"
-  autoload :CommandOptions, "shopify_cli/command_options"
   autoload :Commands, "shopify_cli/commands"
-  autoload :Connect, "shopify_cli/connect"
   autoload :Constants, "shopify_cli/constants"
   autoload :Context, "shopify_cli/context"
   autoload :Core, "shopify_cli/core"
@@ -114,28 +111,22 @@ module ShopifyCLI
   autoload :Git, "shopify_cli/git"
   autoload :GitHub, "shopify_cli/github"
   autoload :Helpers, "shopify_cli/helpers"
-  autoload :Heroku, "shopify_cli/heroku"
   autoload :IdentityAuth, "shopify_cli/identity_auth"
-  autoload :JsDeps, "shopify_cli/js_deps"
   autoload :JsSystem, "shopify_cli/js_system"
   autoload :LazyDelegator, "shopify_cli/lazy_delegator"
   autoload :MethodObject, "shopify_cli/method_object"
   autoload :Options, "shopify_cli/options"
   autoload :PartnersAPI, "shopify_cli/partners_api"
-  autoload :PHPDeps, "shopify_cli/php_deps"
-  autoload :ProcessSupervision, "shopify_cli/process_supervision"
   autoload :Project, "shopify_cli/project"
   autoload :ProjectType, "shopify_cli/project_type"
   autoload :ReportingConfigurationController, "shopify_cli/reporting_configuration_controller"
   autoload :ResolveConstant, "shopify_cli/resolve_constant"
   autoload :Resources, "shopify_cli/resources"
   autoload :Result, "shopify_cli/result"
-  autoload :Services, "shopify_cli/services"
   autoload :Shopifolk, "shopify_cli/shopifolk"
   autoload :Task, "shopify_cli/task"
   autoload :Tasks, "shopify_cli/tasks"
   autoload :TransformDataStructure, "shopify_cli/transform_data_structure"
-  autoload :Tunnel, "shopify_cli/tunnel"
   autoload :Utilities, "shopify_cli/utilities"
 
   require "shopify_cli/messages/messages"

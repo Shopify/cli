@@ -1,1 +1,1 @@
-export const CLI_KIT_VERSION = '3.45.0-pre.5'
+export const CLI_KIT_VERSION = '3.46.0-pre.0'

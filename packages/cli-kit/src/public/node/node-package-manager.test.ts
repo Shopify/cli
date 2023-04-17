@@ -13,18 +13,51 @@ import {
   addResolutionOrOverride,
   writePackageJSON,
   getPackageManager,
+  installNPMDependenciesRecursively,
+  addNPMDependencies,
+  DependencyVersion,
 } from './node-package-manager.js'
 import {exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
-import {joinPath, normalizePath as pathNormalize} from './path.js'
-import {describe, expect, vi, test} from 'vitest'
+import {normalizePath as pathNormalize, joinPath, dirname} from './path.js'
 import latestVersion from 'latest-version'
+import {vi, describe, test, expect} from 'vitest'
 
 vi.mock('../../version.js')
 vi.mock('./system.js')
 vi.mock('latest-version')
 
 const mockedExec = vi.mocked(exec)
+
+describe('installNPMDependenciesRecursively', () => {
+  test('runs install in all the directories containing a package.json', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const rootPackage = joinPath(tmpDir, 'package.json')
+      const webPackage = joinPath(tmpDir, 'web/package.json')
+      const backendPackage = joinPath(tmpDir, 'web/backend/package.json')
+
+      await mkdir(dirname(webPackage))
+      await mkdir(dirname(backendPackage))
+
+      await writeFile(rootPackage, JSON.stringify({}))
+      await writeFile(webPackage, JSON.stringify({}))
+      await writeFile(backendPackage, JSON.stringify({}))
+
+      // When
+      await installNPMDependenciesRecursively({
+        directory: tmpDir,
+        packageManager: 'pnpm',
+      })
+
+      // Then
+      const calls = vi.mocked(exec).mock.calls as any
+      expect(exec).toHaveBeenCalledWith('pnpm', ['install'], expect.objectContaining({cwd: dirname(rootPackage)}))
+      expect(exec).toHaveBeenCalledWith('pnpm', ['install'], expect.objectContaining({cwd: dirname(webPackage)}))
+      expect(exec).toHaveBeenCalledWith('pnpm', ['install'], expect.objectContaining({cwd: dirname(backendPackage)}))
+    })
+  })
+})
 
 describe('packageManagerUsedForCreating', () => {
   test('returns pnpm if the npm_config_user_agent variable contains yarn', () => {
@@ -752,6 +785,77 @@ describe('getPackageManager', () => {
       await expect(() => getPackageManager(subDirectory)).rejects.toThrowError(
         FindUpAndReadPackageJsonNotFoundError(subDirectory),
       )
+    })
+  })
+})
+
+describe('addNPMDependencies', () => {
+  test('when using npm with multiple dependencies they should be installed one by one', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dependencies: DependencyVersion[] = [
+        {name: 'first', version: '0.0.1'},
+        {name: 'second', version: '0.0.2'},
+      ]
+
+      // When
+      await addNPMDependencies(dependencies, {
+        type: 'prod',
+        packageManager: 'npm',
+        directory: tmpDir,
+      })
+
+      // Then
+      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'first@0.0.1', '--save-prod'], {
+        cwd: tmpDir,
+      })
+      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'second@0.0.2', '--save-prod'], {
+        cwd: tmpDir,
+      })
+    })
+  })
+
+  test('when using yarn with multiple dependencies they should be installed all at once', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dependencies: DependencyVersion[] = [
+        {name: 'first', version: '0.0.1'},
+        {name: 'second', version: '0.0.2'},
+      ]
+
+      // When
+      await addNPMDependencies(dependencies, {
+        type: 'prod',
+        packageManager: 'yarn',
+        directory: tmpDir,
+      })
+
+      // Then
+      expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', 'first@0.0.1', 'second@0.0.2', '--prod'], {
+        cwd: tmpDir,
+      })
+    })
+  })
+
+  test('when using pnpm with multiple dependencies they should be installed all at once', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dependencies: DependencyVersion[] = [
+        {name: 'first', version: '0.0.1'},
+        {name: 'second', version: '0.0.2'},
+      ]
+
+      // When
+      await addNPMDependencies(dependencies, {
+        type: 'prod',
+        packageManager: 'pnpm',
+        directory: tmpDir,
+      })
+
+      // Then
+      expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'first@0.0.1', 'second@0.0.2', '--save-prod'], {
+        cwd: tmpDir,
+      })
     })
   })
 })

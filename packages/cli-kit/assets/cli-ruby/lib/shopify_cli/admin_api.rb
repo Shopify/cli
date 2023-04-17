@@ -6,9 +6,6 @@ module ShopifyCLI
   # these concerns are taken care of.
   #
   class AdminAPI < API
-    autoload :PopulateResourceCommand, "shopify_cli/admin_api/populate_resource_command"
-    autoload :Schema, "shopify_cli/admin_api/schema"
-
     class << self
       ##
       # issues a graphql query or mutation to the Shopify Admin API. It loads a graphql

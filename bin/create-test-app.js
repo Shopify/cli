@@ -1,5 +1,7 @@
 #! /usr/bin/env node
 
+import * as readline from 'node:readline/promises'
+import { stdin as input, stdout as output } from 'node:process'
 import { createRequire } from "module"
 import { fileURLToPath } from "url"
 import { Readable } from "stream"
@@ -15,8 +17,6 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const homeDir = os.homedir()
 const today = new Date().toISOString().split("T")[0]
-const appName = `nightly-app-${today}`
-const appPath = path.join(homeDir, "Desktop", appName)
 
 const installationTypes = ["local", "nightly"]
 const extensionTypes = ["ui", "theme", "function"]
@@ -34,6 +34,16 @@ program
     extensionTypes.join(",")
   )
   .option(
+    "--bare",
+    "don't create any extensions. Overrides --extensions",
+    false
+  )
+  .option(
+    "--name <name>",
+    "name of your app. It will be placed on your Desktop",
+    `nightly-app-${today}`
+  )
+  .option(
     "--cleanup",
     "delete temp app afterwards",
     false
@@ -44,14 +54,47 @@ program
     false
   )
   .action(async (options) => {
+    // helpers
+    const log = (message) => {
+      console.log(`\r\n🧪 ${message}`)
+    }
+
+    const appExec = async (command, args, options = {}) => {
+      const defaults = { cwd: appPath, stdio: "inherit" }
+      await execa(command, args, { ...defaults, ...options })
+    }
+
+    const pnpmDev = async () => {
+      try {
+        await appExec("pnpm", ["run", "dev"])
+      } catch (error) {}
+    }
+
+    // main
     let shopifyExec
     let defaultOpts = { stdio: "inherit" }
-    let extensions = new Set(options.extensions.split(","))
+    let extensions = options.bare ? new Set() : new Set(options.extensions.split(","))
+
+    const appName = options.name
+    const appPath = path.join(homeDir, "Desktop", appName)
 
     switch (options.install) {
       case "local":
         log("Building latest release...")
         await execa("pnpm", ["build"])
+
+        if (fs.existsSync(appPath)) {
+          const rl = readline.createInterface({ input, output })
+          const answer = await rl.question(`\r\n🙋‍♀️ I've found an app in ${appPath}. Should I remove it and keep going? (Y/n)`);
+          rl.close();
+
+          if (answer.toLowerCase() === 'y' || answer === '') {
+            log(`Removing app in '${appPath}'...`)
+            fs.rmSync(appPath, { recursive: true })
+          } else {
+            process.exit(0)
+          }
+        }
 
         log(`Creating new app in ${appPath}...`)
         await execa(
@@ -71,7 +114,7 @@ program
         if (os.platform() == "win32") {
           fs.rmSync(path.join(appPath, "pnpm-lock.yaml"))
         }
-        await appExec("pnpm", ["install"])
+
         break
       case "nightly":
         log(`Creating new app in ${appPath}...`)
@@ -93,10 +136,9 @@ program
         process.exit(1)
     }
 
-    if (extensions.length === extensionTypes.length) {
-      log("Running the app...")
-      await pnpmDev()
-    }
+    // on windows pnpm sets the wrong paths, rerunning install fixes it
+    log("Making sure pnpm is setup correctly")
+    await appExec("pnpm", ["install"])
 
     if (extensions.has("ui")) {
       log("Generating UI extension...")
@@ -158,19 +200,3 @@ program
 
 // run it
 program.parse()
-
-// helpers
-function log(message) {
-  console.log(`\r\n🧪 ${message}`)
-}
-
-async function appExec(command, args, options = {}) {
-  const defaults = { cwd: appPath, stdio: "inherit" }
-  await execa(command, args, { ...defaults, ...options })
-}
-
-async function pnpmDev() {
-  try {
-    await appExec("pnpm", ["run", "dev"])
-  } catch (error) {}
-}

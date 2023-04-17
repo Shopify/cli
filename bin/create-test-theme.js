@@ -1,5 +1,7 @@
 #! /usr/bin/env node
 
+import * as readline from 'node:readline/promises'
+import { stdin as input, stdout as output } from 'node:process'
 import { createRequire } from "module"
 import { fileURLToPath } from "url"
 import execa from "execa"
@@ -14,8 +16,6 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const homeDir = os.homedir()
 const today = new Date().toISOString().split("T")[0]
-const themeName = `nightly-theme-${today}`
-const themePath = path.join(homeDir, "Desktop", themeName)
 
 const installationTypes = os.platform() == "darwin" ? ["homebrew", "local", "npm"] : ["local", "npm"]
 
@@ -31,13 +31,27 @@ program
     `your dev store's name (e.g. my-awesome-dev-store)`
   )
   .option(
+    "--name <name>",
+    "name of your theme. It will be placed on your Desktop",
+    `nightly-theme-${today}`
+  )
+  .option(
     "--cleanup",
     "delete temp theme and nightly dependencies afterwards",
     false
   )
   .action(async (options) => {
+    // helpers
+    const log = (message) => {
+      console.log(`\r\n🧪 ${message}`)
+    }
+
+    // main
     let shopifyExec
     let defaultOpts = { stdio: "inherit" }
+
+    const themeName = options.name
+    const themePath = path.join(homeDir, "Desktop", themeName)
 
     delete process.env.GEM_HOME
     delete process.env.GEM_PATH
@@ -87,6 +101,19 @@ program
       default:
         log(`Invalid installation type: ${options.install}. Must be one of ${installationTypes.join(", ")}.`)
         process.exit(1)
+    }
+
+    if (fs.existsSync(themePath)) {
+      const rl = readline.createInterface({ input, output })
+      const answer = await rl.question(`\r\n🙋‍♀️ I've found a theme in ${themePath}. Should I remove it and keep going? (Y/n)`);
+      rl.close();
+
+      if (answer.toLowerCase() === 'y' || answer === '') {
+        log(`Removing theme in '${themePath}'...`)
+        fs.rmSync(themePath, { recursive: true })
+      } else {
+        process.exit(0)
+      }
     }
 
     log(`Creating new theme '${themeName}'...`)
@@ -147,8 +174,3 @@ program
 
 // run it
 program.parse()
-
-// helpers
-function log(message) {
-  console.log(`\r\n🧪 ${message}`)
-}

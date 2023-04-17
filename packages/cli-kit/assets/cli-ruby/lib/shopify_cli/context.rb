@@ -47,12 +47,14 @@ module ShopifyCLI
         str ? str % params : key
       end
 
-      # a wrapper around Kernel.puts to allow for easy formatting
+      # a wrapper around $stdout.puts to allow for easy formatting
       #
       # #### Parameters
       # * `text` - a string message to output
       def puts(*args)
-        Kernel.puts(CLI::UI.fmt(*args))
+        $stdout.puts(CLI::UI.fmt(*args)).tap do
+          $stdout.flush
+        end
       end
 
       # aborts the current running command and outputs an error message:
