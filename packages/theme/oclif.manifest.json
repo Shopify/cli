@@ -10,6 +10,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -142,6 +149,13 @@
       "hidden": true,
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -181,6 +195,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -248,6 +269,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -380,6 +408,13 @@
       "hidden": true,
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -405,6 +440,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -424,6 +466,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -471,6 +520,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -490,6 +546,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -552,6 +615,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -619,6 +689,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -645,6 +722,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -698,6 +782,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -804,6 +895,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -951,6 +1049,13 @@
       "hidden": true,
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -1069,6 +1174,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
