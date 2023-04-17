@@ -1,5 +1,15 @@
 # @shopify/cli-kit
 
+## 3.46.0-pre.1
+
+### Minor Changes
+
+- 3169c1e44: Introduce partial support for --no-color mode
+
+### Patch Changes
+
+- beda7c241: Fix peer dependency resolution issue with npm
+
 ## 3.46.0-pre.0
 
 ### Patch Changes
