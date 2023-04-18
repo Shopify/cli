@@ -173,7 +173,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
             </Box>
           ) : null}
           {footer.subTitle ? (
-            <Box marginTop={1}>
+            <Box marginTop={isRawModeSupported ? 1 : 0}>
               <Text>{footer.subTitle}</Text>
             </Box>
           ) : null}

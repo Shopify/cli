@@ -3,6 +3,7 @@ import {AbortSilentError, FatalError as Fatal} from './error.js'
 import {collectLog, consoleError, consoleLog, Logger, LogLevel, outputDebug, outputWhereAppropriate} from './output.js'
 import {isUnitTest} from './context/local.js'
 import {AbortController} from './abort.js'
+import {terminalSupportsRawMode} from './system.js'
 import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
 import {render, renderOnce} from '../../private/node/ui.js'
 import {alert, AlertOptions} from '../../private/node/ui/alert.js'
@@ -35,7 +36,6 @@ export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps
  * 0000-00-00 00:00:00 │ frontend │ second frontend message
  * 0000-00-00 00:00:00 │ frontend │ third frontend message
  *
- *
  * Preview URL: https://shopify.com
  *
  */
@@ -45,10 +45,15 @@ export async function renderConcurrent({renderOptions, ...props}: RenderConcurre
     ...props,
   }
 
-  return render(<ConcurrentOutput {...newProps} />, {
-    ...renderOptions,
-    exitOnCtrlC: typeof props.onInput === 'undefined',
-  })
+  if (terminalSupportsRawMode()) {
+    return render(<ConcurrentOutput {...newProps} />, {
+      ...renderOptions,
+      exitOnCtrlC: typeof props.onInput === 'undefined',
+    })
+  } else {
+    delete newProps.onInput
+    return render(<ConcurrentOutput {...newProps} />, renderOptions)
+  }
 }
 
 export type AlertCustomSection = CustomSection
