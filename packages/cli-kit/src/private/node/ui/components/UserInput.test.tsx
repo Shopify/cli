@@ -1,7 +1,7 @@
 import {UserInput} from './UserInput.js'
+import {render} from '../../testing/ui.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
-import {render} from 'ink-testing-library'
 
 describe('UserInput', async () => {
   test('renders correctly', async () => {

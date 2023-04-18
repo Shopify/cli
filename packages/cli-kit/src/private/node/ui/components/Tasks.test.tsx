@@ -1,9 +1,8 @@
 import {Task, Tasks} from './Tasks.js'
-import {getLastFrameAfterUnmount} from '../../testing/ui.js'
+import {getLastFrameAfterUnmount, render} from '../../testing/ui.js'
 import {unstyled} from '../../../../public/node/output.js'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {render} from 'ink-testing-library'
 
 describe('Tasks', () => {
   test('shows a loading state at the start', async () => {
