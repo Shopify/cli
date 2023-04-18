@@ -5,7 +5,7 @@ export async function themeExtensionArgs(
   extension: ThemeExtension,
   apiKey: string,
   token: string,
-  options: {theme?: string; themeExtensionPort?: number; generateTmpTheme?: boolean, notify?: string},
+  options: {theme?: string; themeExtensionPort?: number; generateTmpTheme?: boolean; notify?: string},
 ) {
   const extensionRegistration = await ensureThemeExtensionDevContext(extension, apiKey, token)
   const extensionId = extensionRegistration.id

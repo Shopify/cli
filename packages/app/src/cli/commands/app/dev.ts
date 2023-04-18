@@ -86,7 +86,8 @@ export default class Dev extends Command {
     }),
     notify: Flags.string({
       char: 'n',
-      description: 'The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.',
+      description:
+        'The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.',
       env: 'SHOPIFY_FLAG_NOTIFY',
     }),
   }
@@ -117,7 +118,7 @@ export default class Dev extends Command {
       noTunnel: flags['no-tunnel'],
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
-      notify: flags['notify'],
+      notify: flags.notify,
     })
   }
 }

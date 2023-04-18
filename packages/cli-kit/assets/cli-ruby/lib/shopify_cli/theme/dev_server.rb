@@ -203,8 +203,7 @@ module ShopifyCLI
           include_filter: include_filter,
           ignore_filter: ignore_filter,
           overwrite_json: !editor_sync || @overwrite_json,
-          stable: stable,
-          notify: notify,
+          stable: stable
         )
       end
 
