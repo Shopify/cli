@@ -1,15 +1,8 @@
 import {renderConcurrent, RenderConcurrentOptions} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
-import {
-  OutputProcess,
-  outputDebug,
-  outputContent,
-  outputToken,
-  outputWarn,
-  outputInfo,
-} from '@shopify/cli-kit/node/output'
-import {openURL, terminalSupportRawMode} from '@shopify/cli-kit/node/system'
+import {OutputProcess, outputDebug, outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
+import {openURL} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 import * as http from 'http'
 
@@ -125,33 +118,29 @@ ${outputToken.json(JSON.stringify(rules))}
   }
 
   if (previewUrl) {
-    if (terminalSupportRawMode()) {
-      renderConcurrentOptions = {
-        ...renderConcurrentOptions,
-        onInput: (input, _key, exit) => {
-          if (input === 'p' && previewUrl) {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            openURL(previewUrl)
-          } else if (input === 'q') {
-            exit()
-          }
-        },
-        footer: {
-          shortcuts: [
-            {
-              key: 'p',
-              action: 'open your browser',
-            },
-            {
-              key: 'q',
-              action: 'quit',
-            },
-          ],
-          subTitle: `Preview URL: ${previewUrl}`,
-        },
-      }
-    } else {
-      outputInfo(`Preview URL: ${previewUrl}`)
+    renderConcurrentOptions = {
+      ...renderConcurrentOptions,
+      onInput: (input, _key, exit) => {
+        if (input === 'p' && previewUrl) {
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          openURL(previewUrl)
+        } else if (input === 'q') {
+          exit()
+        }
+      },
+      footer: {
+        shortcuts: [
+          {
+            key: 'p',
+            action: 'open your browser',
+          },
+          {
+            key: 'q',
+            action: 'quit',
+          },
+        ],
+        subTitle: `Preview URL: ${previewUrl}`,
+      },
     }
   }
 

@@ -3,7 +3,7 @@ import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {AbortController} from '../../../../public/node/abort.js'
 import {handleCtrlC} from '../../ui.js'
 import React, {FunctionComponent, useState} from 'react'
-import {Box, Key, Static, Text, useInput, TextProps} from 'ink'
+import {Box, Key, Static, Text, useInput, TextProps, useStdin} from 'ink'
 import stripAnsi from 'strip-ansi'
 import treeKill from 'tree-kill'
 import figures from 'figures'
@@ -74,6 +74,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const concurrentColors: TextProps['color'][] = ['yellow', 'cyan', 'magenta', 'green', 'blue']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
+  const {isRawModeSupported} = useStdin()
 
   function lineColor(index: number) {
     const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
@@ -162,13 +163,15 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
       </Static>
       {footer ? (
         <Box marginY={1} flexDirection="column" flexGrow={1}>
-          <Box flexDirection="column">
-            {footer.shortcuts.map((shortcut, index) => (
-              <Text key={index}>
-                {figures.pointerSmall} Press <Text bold>{shortcut.key}</Text> {figures.lineVertical} {shortcut.action}
-              </Text>
-            ))}
-          </Box>
+          {isRawModeSupported ? (
+            <Box flexDirection="column">
+              {footer.shortcuts.map((shortcut, index) => (
+                <Text key={index}>
+                  {figures.pointerSmall} Press <Text bold>{shortcut.key}</Text> {figures.lineVertical} {shortcut.action}
+                </Text>
+              ))}
+            </Box>
+          ) : null}
           {footer.subTitle ? (
             <Box marginTop={1}>
               <Text>{footer.subTitle}</Text>
