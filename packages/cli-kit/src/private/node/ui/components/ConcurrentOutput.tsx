@@ -117,7 +117,9 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
 
       onInput!(input, key, () => treeKill(process.pid, 'SIGINT'))
     },
-    {isActive: typeof onInput !== 'undefined'},
+    // isRawModeSupported can be undefined even if the type doesn't say so
+    // Ink is checking that isActive is actually === false, not falsey
+    {isActive: typeof onInput !== 'undefined' && Boolean(isRawModeSupported)},
   )
 
   useAsyncAndUnmount(runProcesses, {onRejected: () => abortController.abort()})
