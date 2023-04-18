@@ -10,14 +10,9 @@ describe('ConcurrentOutput', () => {
   test('renders a stream of concurrent outputs from sub-processes', async () => {
     // Given
     let backendPromiseResolve: () => void
-    let frontendPromiseResolve: () => void
 
     const backendPromise = new Promise<void>(function (resolve, _reject) {
       backendPromiseResolve = resolve
-    })
-
-    const frontendPromise = new Promise<void>(function (resolve, _reject) {
-      frontendPromiseResolve = resolve
     })
 
     const backendProcess = {
@@ -39,8 +34,6 @@ describe('ConcurrentOutput', () => {
         stdout.write('first frontend message')
         stdout.write('second frontend message')
         stdout.write('third frontend message')
-
-        frontendPromiseResolve()
       },
     }
     // When
@@ -66,7 +59,7 @@ describe('ConcurrentOutput', () => {
     )
 
     // wait for all output to be rendered
-    await frontendPromise
+    await renderInstance.waitUntilExit()
 
     // Then
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
@@ -88,14 +81,9 @@ describe('ConcurrentOutput', () => {
   test("doesn't render shortcuts if the stdin is not a TTY", async () => {
     // Given
     let backendPromiseResolve: () => void
-    let frontendPromiseResolve: () => void
 
     const backendPromise = new Promise<void>(function (resolve, _reject) {
       backendPromiseResolve = resolve
-    })
-
-    const frontendPromise = new Promise<void>(function (resolve, _reject) {
-      frontendPromiseResolve = resolve
     })
 
     const backendProcess = {
@@ -117,8 +105,6 @@ describe('ConcurrentOutput', () => {
         stdout.write('first frontend message')
         stdout.write('second frontend message')
         stdout.write('third frontend message')
-
-        frontendPromiseResolve()
       },
     }
     // When
@@ -145,7 +131,7 @@ describe('ConcurrentOutput', () => {
     )
 
     // wait for all output to be rendered
-    await frontendPromise
+    await renderInstance.waitUntilExit()
 
     // Then
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
