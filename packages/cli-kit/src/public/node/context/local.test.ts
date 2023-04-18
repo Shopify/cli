@@ -179,6 +179,17 @@ describe('useDeviceAuth', () => {
     expect(got).toBe(true)
   })
 
+  test('returns true if CLOUD_SHELL is truthy', () => {
+    // Given
+    const env = {CLOUD_SHELL: 'true'}
+
+    // When
+    const got = useDeviceAuth(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
   test('returns false when SHOPIFY_CLI_DEVICE_AUTH, SPIN, CODESPACES or GITPOD_WORKSPACE_URL are missing', () => {
     // Given
     const env = {}

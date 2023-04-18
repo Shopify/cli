@@ -28,6 +28,7 @@ export const environmentVariables = {
   codespaceName: 'CODESPACE_NAME',
   codespaces: 'CODESPACES',
   gitpod: 'GITPOD_WORKSPACE_URL',
+  cloudShell: 'CLOUD_SHELL',
   spin: 'SPIN',
   spinAppPort: 'SERVER_PORT',
   spinAppHost: 'SPIN_APP_HOST',

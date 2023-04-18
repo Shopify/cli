@@ -162,7 +162,7 @@ export function isCloudEnvironment(env: NodeJS.ProcessEnv = process.env): boolea
  * @returns Cloud platform information.
  */
 export function cloudEnvironment(env: NodeJS.ProcessEnv = process.env): {
-  platform: 'spin' | 'codespaces' | 'gitpod' | 'localhost'
+  platform: 'spin' | 'codespaces' | 'gitpod' | 'cloudShell' | 'localhost'
   editor: boolean
 } {
   if (isSet(env[environmentVariables.codespaces])) {
@@ -170,6 +170,9 @@ export function cloudEnvironment(env: NodeJS.ProcessEnv = process.env): {
   }
   if (isSet(env[environmentVariables.gitpod])) {
     return {platform: 'gitpod', editor: true}
+  }
+  if (isSet(env[environmentVariables.cloudShell])) {
+    return {platform: 'cloudShell', editor: true}
   }
   if (isSpin(env)) {
     return {platform: 'spin', editor: false}
