@@ -6,6 +6,7 @@ import {
   renderInfo,
   renderSuccess,
   renderTable,
+  renderConcurrent,
   renderTasks,
   renderWarning,
   renderAutocompletePrompt,
@@ -13,6 +14,7 @@ import {
   renderSelectPrompt,
   renderTextPrompt,
 } from '@shopify/cli-kit/node/ui'
+import {Writable} from 'stream'
 
 interface AbstractDemoStep {
   type: string
@@ -83,6 +85,31 @@ interface TaskbarStep extends AbstractDemoStep {
   }
 }
 
+interface RenderConcurrentProperties {
+  processes: {
+    prefix: string
+    steps: {
+      startMessage?: string
+      duration: number
+      endMessage?: string
+    }[]
+  }[]
+  footer?: {
+    shortcuts: [
+      {
+        key: string
+        action: string
+      }
+    ]
+    subTitle: string
+  }
+}
+
+interface RenderConcurrentStep extends AbstractDemoStep {
+  type: 'concurrent'
+  properties: RenderConcurrentProperties
+}
+
 type DemoStep =
   OutputStep
   | RenderStep
@@ -94,6 +121,7 @@ type DemoStep =
   | RenderTextPromptStep
   | SleepStep
   | TaskbarStep
+  | RenderConcurrentStep
 
 interface DemoSteps {
   steps: DemoStep[]
@@ -114,6 +142,8 @@ function executorForStep(step: DemoStep): () => Promise<void> {
       return async () => { await sleep(step.properties.duration) }
     case 'taskbar':
       return taskbarExecutor(step.properties.steps)
+    case 'concurrent':
+      return concurrentExecutor(step.properties)
     case 'info':
       return async () => { renderInfo(step.properties) }
     case 'success':
@@ -153,5 +183,24 @@ function taskbarExecutor(steps: {title: string, duration: number}[]) {
       }
     })
     await renderTasks(tasks)
+  }
+}
+
+function concurrentExecutor({processes, footer}: RenderConcurrentProperties) {
+  return async () => {
+    const concurrentProcesses = processes.map(({prefix, steps}) => {
+      return {
+        prefix,
+        action: async (stdout: Writable) => {
+          for (const step of steps) {
+            const {startMessage, duration, endMessage} = step
+            if (startMessage) stdout.write(startMessage)
+            await sleep(duration)
+            if (endMessage) stdout.write(endMessage)
+          }
+        }
+      }
+    })
+    await renderConcurrent({processes: concurrentProcesses, footer})
   }
 }
