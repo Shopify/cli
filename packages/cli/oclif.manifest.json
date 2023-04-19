@@ -1,6 +1,26 @@
 {
   "version": "3.46.0-pre.3",
   "commands": {
+    "demo": {
+      "id": "demo",
+      "description": "Demo a command design defined in a file",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to the design file.",
+          "hidden": false,
+          "multiple": false,
+          "default": "/Users/amcaplan/src/github.com/Shopify/cli/packages/cli"
+        }
+      },
+      "args": {}
+    },
     "upgrade": {
       "id": "upgrade",
       "description": "Upgrade the Shopify CLI.",
@@ -16,7 +36,7 @@
           "description": "The path to your project directory.",
           "hidden": false,
           "multiple": false,
-          "default": "."
+          "default": "/Users/amcaplan/src/github.com/Shopify/cli/packages/cli"
         }
       },
       "args": {}
@@ -80,7 +100,6 @@
       "pluginName": "@shopify/cli",
       "pluginAlias": "@shopify/cli",
       "pluginType": "core",
-      "hidden": true,
       "aliases": [
         "kitchen-sink all"
       ],
