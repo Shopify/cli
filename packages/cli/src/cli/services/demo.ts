@@ -1,3 +1,4 @@
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {
@@ -32,7 +33,12 @@ interface RenderStep extends AbstractDemoStep {
 
 interface RenderFatalErrorStep extends AbstractDemoStep {
   type: 'fatalError'
-  properties: Parameters<typeof renderFatalError>
+  properties: {
+    errorType: 'abort' | 'bug'
+    message: string
+    tryMessage: string
+    nextSteps: any
+  }
 }
 
 interface RenderTableStep extends AbstractDemoStep {
@@ -115,7 +121,14 @@ function executorForStep(step: DemoStep): () => Promise<void> {
     case 'warning':
       return async () => { renderWarning(step.properties) }
     case 'fatalError':
-      return async () => { renderFatalError(...step.properties) }
+      return async () => {
+        const {errorType, message, nextSteps, tryMessage} = step.properties
+        if (errorType === 'abort') {
+          renderFatalError(new AbortError(message, tryMessage, nextSteps))
+        } else {
+          renderFatalError(new BugError(message, tryMessage))
+        }
+      }
     case 'table':
       return async () => { renderTable(step.properties) }
     case 'autocompletePrompt':
@@ -136,7 +149,7 @@ function taskbarExecutor(steps: {title: string, duration: number}[]) {
     const tasks = steps.map(({title, duration}) => {
       return {
         title,
-        task: () => sleep(duration),
+        task: async () => await sleep(duration),
       }
     })
     await renderTasks(tasks)
