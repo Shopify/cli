@@ -15,6 +15,7 @@ module ShopifyCLI
             root = ShopifyCLI::ROOT + "/test/fixtures/theme"
             @ctx = TestHelpers::FakeContext.new(root: root)
             @theme = Theme.new(@ctx, root: root)
+            @notifier = stub("Notifier", notify_updates: true)
             @syncer = stub("Syncer", enqueue_uploads: true, enqueue_deletes: true, enqueue_updates: true,
               ignore_file?: false)
             @syncer.stubs(remote_file?: true)
@@ -231,7 +232,7 @@ module ShopifyCLI
 
           def broadcast_hooks(ignore_filter = nil, include_filter = nil)
             file_change_hook = FileChangeHook.new(@ctx, theme: @theme, ignore_filter: ignore_filter,
-              include_filter: include_filter)
+              include_filter: include_filter, notifier: @notifier)
             [file_change_hook]
           end
         end

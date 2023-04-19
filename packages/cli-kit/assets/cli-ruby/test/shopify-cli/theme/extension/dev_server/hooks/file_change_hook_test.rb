@@ -114,6 +114,10 @@ module ShopifyCLI
               )
             end
 
+            def notifier
+              @notifier ||= stub("Notifier", notify_updates: nil)
+            end
+
             def watcher
               @watcher ||= Watcher.new(ctx, extension: extension, syncer: syncer)
             end
@@ -149,7 +153,7 @@ module ShopifyCLI
             end
 
             def hook
-              @hook ||= FileChangeHook.new(ctx, extension: extension, syncer: syncer)
+              @hook ||= FileChangeHook.new(ctx, extension: extension, syncer: syncer, notifier: notifier)
             end
           end
         end
