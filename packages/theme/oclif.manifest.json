@@ -647,7 +647,7 @@
           "name": "development",
           "type": "boolean",
           "char": "d",
-          "description": "Delete your development theme.",
+          "description": "Open your development theme.",
           "allowNo": false
         },
         "editor": {
@@ -661,7 +661,7 @@
           "name": "live",
           "type": "boolean",
           "char": "l",
-          "description": "Pull theme files from your remote live theme.",
+          "description": "Open your live (published) theme.",
           "allowNo": false
         },
         "theme": {
