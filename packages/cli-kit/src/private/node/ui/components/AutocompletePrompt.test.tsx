@@ -5,11 +5,11 @@ import {
   sendInputAndWaitForChange,
   sendInputAndWaitForContent,
   waitForInputsToBeReady,
+  render,
 } from '../../testing/ui.js'
-import {OutputStream} from '../../ui.js'
+import {Stdout} from '../../ui.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import React from 'react'
-import {render} from 'ink-testing-library'
 import {useStdout} from 'ink'
 
 vi.mock('ink', async () => {
@@ -80,7 +80,7 @@ const DATABASE = [
 
 beforeEach(() => {
   vi.mocked(useStdout).mockReturnValue({
-    stdout: new OutputStream({
+    stdout: new Stdout({
       columns: 80,
       rows: 80,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -670,7 +670,7 @@ describe('AutocompletePrompt', async () => {
   test('adapts to the height of the container', async () => {
     vi.mocked(useStdout).mockReturnValue({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      stdout: new OutputStream({rows: 10}) as any,
+      stdout: new Stdout({rows: 10}) as any,
       write: () => {},
     })
 

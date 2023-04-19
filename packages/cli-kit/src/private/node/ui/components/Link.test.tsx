@@ -1,7 +1,7 @@
 import {Link} from './Link.js'
+import {render} from '../../testing/ui.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
-import {render} from 'ink-testing-library'
 import supportsHyperlinks from 'supports-hyperlinks'
 
 vi.mock('supports-hyperlinks')
