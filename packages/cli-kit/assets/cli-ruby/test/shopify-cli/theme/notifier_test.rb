@@ -25,6 +25,18 @@ module ShopifyCLI
         assert_requested request
       end
 
+      def test_updates_file_atime_and_mtime
+        @ctx.root = Dir.mktmpdir
+        path = "theme.update"
+        freeze_time = Time.utc(2023, 4, 20, 12, 0, 0)
+        Time.stubs(:now).returns(freeze_time)
+
+        @ctx.expects(:utime).with(freeze_time, freeze_time, path)
+
+        @notifier = Notifier.new(@ctx, path: path)
+        @notifier.notify_updates(@files)
+      end
+
       def test_does_not_notify_if_path_is_nil
         @notifier = Notifier.new(@ctx, path: nil)
         @notifier.expects(:notify_url).never
