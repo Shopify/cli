@@ -402,19 +402,14 @@ export async function renderAutocompletePrompt<T>({renderOptions, ...props}: Ren
 }
 
 export function renderModal(text: string, renderOptions: RenderOptions = {}): Promise<void> {
-  // eslint-disable-next-line max-params
-  return new Promise((resolve, reject) => {
-    render(
-      <FullScreen onClose={resolve} closeOnKey="q">
-        <Banner type="info" title='Press "q" to close'><Text>{text}</Text></Banner>
-      </FullScreen>, {
-      ...renderOptions,
-      exitOnCtrlC: false,
-    }).catch(reject)
-    // render(<Modal onClose={resolve}>{text}</Modal>, {
-      // ...renderOptions,
-      // exitOnCtrlC: false,
-    // }).catch(reject)
+  process.stdout.write('\u001B[?1049h')
+
+  return render(
+    <FullScreen closeOnKey="q">
+      <Banner type="info" title='Press "q" to close'><Text>{text}</Text></Banner>
+    </FullScreen>, {
+    ...renderOptions,
+    exitOnCtrlC: false,
   })
 }
 

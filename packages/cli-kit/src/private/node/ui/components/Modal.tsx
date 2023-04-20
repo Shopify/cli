@@ -9,7 +9,7 @@ interface ModalProps {
 
 const Modal: FunctionComponent<ModalProps> = ({children, onClose}) => {
   return (
-    <FullScreen onClose={onClose} closeOnKey="q">
+    <FullScreen closeOnKey="q">
       <Banner type="info" title='Press "q" to close'><Text>{children}</Text></Banner>
     </FullScreen>
   )
