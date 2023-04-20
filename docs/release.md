@@ -29,11 +29,9 @@ The steps are:
 This should be done once a week.
 
 1. Find the [Version Packages - main (pre) PR](https://github.com/Shopify/cli/pulls?q=is%3Apr+is%3Aopen+%22Version+Packages+-+main+%28pre%29%22) and merge it.
-1. Wait until the commit for **Version Packages - main (pre)** becomes <font color="green">green</font> in [CLI Production Shipit](https://shipit.shopify.io/shopify/cli/production) and push the _Deploy_ button.
-1. Push again on the _Create deploy_ button to start the deployment. This will publish the CLI packages to the [NPM registry](https://www.npmjs.com/package/@shopify/cli). If there are failures (as it can be flaky), rerun the deployment and the missing packages should be published.
-1. Go through all the [PRs labeled with `includes-post-release-steps`](https://github.com/Shopify/cli/issues?q=label%3Aincludes-post-release-steps+is%3Aclosed) and if the steps can be applied now:
-  1. Follow the post-release steps described in those PRs.
-  2. Delete the labels afterward.
+2. Wait until the commit for **Version Packages - main (pre)** becomes <font color="green">green</font> in [CLI Production Shipit](https://shipit.shopify.io/shopify/cli/production) and push the _Deploy_ button.
+3. Push again on the _Create deploy_ button to start the deployment. This will publish the CLI packages to the [NPM registry](https://www.npmjs.com/package/@shopify/cli). If there are failures (as it can be flaky), rerun the deployment and the missing packages should be published.
+
 
 ### Creating a new minor version
 
