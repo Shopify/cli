@@ -6,6 +6,7 @@ import {joinPath, dirname, cwd} from './path.js'
 import {AbortError, AbortSilentError} from './error.js'
 import {getEnvironmentVariables} from './environment.js'
 import {isSpinEnvironment, spinFqdn} from './context/spin.js'
+import {firstPartyDev} from './context/local.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
 import {outputContent, outputToken} from '../../public/node/output.js'
@@ -64,6 +65,7 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
     // outside the user's project directory.
     BUNDLE_GEMFILE: joinPath(await shopifyCLIDirectory(embedded), 'Gemfile'),
     ...(await getSpinEnvironmentVariables()),
+    SHOPIFY_CLI_1P_DEV: firstPartyDev() ? '1' : '0',
   }
 
   try {
