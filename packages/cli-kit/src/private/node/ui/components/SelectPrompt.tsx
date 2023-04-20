@@ -4,7 +4,7 @@ import {InlineToken, LinkToken, TokenItem, TokenizedText} from './TokenizedText.
 import {handleCtrlC} from '../../ui.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {uniqBy} from '../../../../public/common/array.js'
-import React, {ReactElement, useCallback, useEffect, useState} from 'react'
+import React, {ReactElement, useCallback, useLayoutEffect, useState} from 'react'
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
 import figures from 'figures'
 import ansiEscapes from 'ansi-escapes'
@@ -58,7 +58,7 @@ function SelectPrompt<T>({
     }
   }, [])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     function onResize() {
       const availableSpace = stdout.rows - (wrapperHeight - selectInputHeight)
       // rough estimate of the limit needed based on the space available
