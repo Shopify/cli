@@ -20,7 +20,6 @@
  kitchen-sink async        @shopify/cli                 
  kitchen-sink prompts      @shopify/cli                 
  kitchen-sink static       @shopify/cli                 
- plugins                   @oclif/plugin-plugins        
  plugins add               @oclif/plugin-plugins        
  plugins inspect           @oclif/plugin-plugins        
  plugins install           @oclif/plugin-plugins        

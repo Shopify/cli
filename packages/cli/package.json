@@ -157,6 +157,9 @@
       },
       "webhook": {
         "description": "Manage webhooks."
+      },
+      "plugins": {
+        "hidden": true
       }
     },
     "additionalHelpFlags": [
