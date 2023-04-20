@@ -16,13 +16,13 @@ module ShopifyCLI
       def notify_updates(files)
         return if path.nil? || path.empty? || !path.is_a?(String)
 
-        if !valid_url?(path)
+        unless valid_url?(path)
           return notify_file(path)
         end
 
         response = notify_url(files)
 
-        if !response.is_a?(Net::HTTPSuccess)
+        unless response.is_a?(Net::HTTPSuccess)
           ctx.puts(ctx.message("theme.serve.notifier.error", path, response.message))
         end
 

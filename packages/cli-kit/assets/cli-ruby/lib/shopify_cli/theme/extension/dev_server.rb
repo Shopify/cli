@@ -30,7 +30,8 @@ module ShopifyCLI
         attr_accessor :project, :specification_handler, :generate_tmp_theme
 
         class << self
-          def start(ctx, root, port: 9292, theme: nil, generate_tmp_theme: false, project:, specification_handler:, notify: nil)
+          def start(ctx, root, port: 9292, theme: nil, generate_tmp_theme: false, project:, specification_handler:,
+            notify: nil)
             instance.project = project
             instance.specification_handler = specification_handler
             instance.generate_tmp_theme = generate_tmp_theme

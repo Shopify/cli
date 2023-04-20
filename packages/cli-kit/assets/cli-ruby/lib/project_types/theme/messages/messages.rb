@@ -162,7 +162,7 @@ module Theme
             },
           },
           notifier: {
-            error: "Error while notifying webhook {{blue:%s}}: %s"
+            error: "Error while notifying webhook {{blue:%s}}: %s",
           },
           syncer: {
             forms: {
