@@ -402,8 +402,6 @@ export async function renderAutocompletePrompt<T>({renderOptions, ...props}: Ren
 }
 
 export function renderModal(text: string, renderOptions: RenderOptions = {}): Promise<void> {
-  process.stdout.write('\u001B[?1049h')
-
   return render(
     <FullScreen closeOnKey="q">
       <Banner type="info" title='Press "q" to close'><Text>{text}</Text></Banner>

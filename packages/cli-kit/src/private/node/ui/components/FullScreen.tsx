@@ -1,5 +1,5 @@
 import {Box, useApp, useInput, useStdout} from 'ink'
-import React, {FunctionComponent, useEffect, useState} from 'react'
+import React, {FunctionComponent, useEffect, useRef, useState} from 'react'
 import { handleCtrlC } from '../../ui.js'
 
 interface FullScreenProps {
@@ -14,6 +14,12 @@ interface FullScreenProps {
 const FullScreen: FunctionComponent<FullScreenProps> = ({children, closeOnKey}): JSX.Element => {
   const {stdout} = useStdout()
   const {exit: unmount} = useApp()
+  const isFirstRender = useRef(true)
+
+  if (isFirstRender.current) {
+    process.stdout.write('\u001B[?1049h')
+    isFirstRender.current = false
+  }
 
   useInput((input, key) => {
     handleCtrlC(input, key)
