@@ -135,6 +135,21 @@ module ShopifyCLI
       assert_equal binary, File.binread(filepath)
     end
 
+    def test_utime_updates_atime_and_mtime
+      @ctx.root = Dir.mktmpdir
+      filename = "theme.update"
+      @ctx.write(filename, "")
+      original_atime = File.atime(File.join(@ctx.root, filename))
+      original_mtime = File.mtime(File.join(@ctx.root, filename))
+      new_atime = Time.now + 100
+      new_mtime = Time.now + 100
+      @ctx.utime(new_atime, new_mtime, filename)
+      assert_equal new_atime, File.atime(File.join(@ctx.root, filename))
+      assert_equal new_mtime, File.mtime(File.join(@ctx.root, filename))
+      refute_equal(original_atime, File.atime(File.join(@ctx.root, filename)))
+      refute_equal(original_mtime, File.mtime(File.join(@ctx.root, filename)))
+    end
+
     def test_binread_writes_to_file_in_project
       @ctx.root = Dir.mktmpdir
       filename = "bin.out"

@@ -41,6 +41,17 @@ module ShopifyCLI
             @watcher.notify_observers(modified, [], [])
           end
 
+          def test_notifier_notifies_updates_when_file_modified
+            modified = ["announcement.liquid"]
+            @notifier.expects(:notify_updates).with(modified)
+
+            app = -> { [200, {}, []] }
+            HotReload.new(@ctx, app, broadcast_hooks: broadcast_hooks, watcher: @watcher, mode: @mode)
+
+            @watcher.changed
+            @watcher.notify_observers(modified, [], [])
+          end
+
           def test_broadcasts_watcher_events_when_file_deleted
             deleted = ["announcement.liquid"]
             HotReload::RemoteFileDeleter
