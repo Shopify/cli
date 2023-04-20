@@ -1,6 +1,6 @@
+import {handleCtrlC} from '../../ui.js'
 import {Box, useApp, useInput, useStdout} from 'ink'
 import React, {FunctionComponent, useEffect, useRef, useState} from 'react'
-import { handleCtrlC } from '../../ui.js'
 
 interface FullScreenProps {
   closeOnKey: string
@@ -48,7 +48,7 @@ const FullScreen: FunctionComponent<FullScreenProps> = ({children, closeOnKey}):
       // switch back to the main buffer
       stdout.write('\u001B[?1049l')
     }
-  }, [])
+  }, [stdout])
 
   return (
     <Box width={size.columns} height={size.rows}>
