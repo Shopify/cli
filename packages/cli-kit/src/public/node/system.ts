@@ -121,3 +121,12 @@ export async function sleep(seconds: number): Promise<void> {
     setTimeout(resolve, 1000 * seconds)
   })
 }
+
+/**
+ * Check if the current proccess is running from a terminal that supports raw mode entry.
+ *
+ * @returns True if the current proccess support raw mode entry.
+ */
+export function terminalSupportsRawMode(): boolean {
+  return process.stdout.isTTY
+}

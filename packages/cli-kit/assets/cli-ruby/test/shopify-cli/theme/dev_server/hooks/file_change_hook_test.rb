@@ -15,6 +15,7 @@ module ShopifyCLI
             root = ShopifyCLI::ROOT + "/test/fixtures/theme"
             @ctx = TestHelpers::FakeContext.new(root: root)
             @theme = Theme.new(@ctx, root: root)
+            @notifier = stub("Notifier", notify_updates: true)
             @syncer = stub("Syncer", enqueue_uploads: true, enqueue_deletes: true, enqueue_updates: true,
               ignore_file?: false)
             @syncer.stubs(remote_file?: true)
@@ -32,6 +33,17 @@ module ShopifyCLI
             SSE::Streams.any_instance
               .expects(:broadcast)
               .with(JSON.generate(modified: modified))
+
+            app = -> { [200, {}, []] }
+            HotReload.new(@ctx, app, broadcast_hooks: broadcast_hooks, watcher: @watcher, mode: @mode)
+
+            @watcher.changed
+            @watcher.notify_observers(modified, [], [])
+          end
+
+          def test_notifier_notifies_updates_when_file_modified
+            modified = ["announcement.liquid"]
+            @notifier.expects(:notify_updates).with(modified)
 
             app = -> { [200, {}, []] }
             HotReload.new(@ctx, app, broadcast_hooks: broadcast_hooks, watcher: @watcher, mode: @mode)
@@ -231,7 +243,7 @@ module ShopifyCLI
 
           def broadcast_hooks(ignore_filter = nil, include_filter = nil)
             file_change_hook = FileChangeHook.new(@ctx, theme: @theme, ignore_filter: ignore_filter,
-              include_filter: include_filter)
+              include_filter: include_filter, notifier: @notifier)
             [file_change_hook]
           end
         end

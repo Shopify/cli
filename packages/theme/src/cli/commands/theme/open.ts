@@ -14,7 +14,7 @@ export default class Open extends ThemeCommand {
     password: themeFlags.password,
     development: Flags.boolean({
       char: 'd',
-      description: 'Delete your development theme.',
+      description: 'Open your development theme.',
       env: 'SHOPIFY_FLAG_DEVELOPMENT',
     }),
     editor: Flags.boolean({
@@ -24,7 +24,7 @@ export default class Open extends ThemeCommand {
     }),
     live: Flags.boolean({
       char: 'l',
-      description: 'Pull theme files from your remote live theme.',
+      description: 'Open your live (published) theme.',
       env: 'SHOPIFY_FLAG_LIVE',
     }),
     theme: Flags.string({

@@ -1,24 +1,18 @@
 import {ConcurrentOutput} from './ConcurrentOutput.js'
-import {getLastFrameAfterUnmount, waitForInputsToBeReady} from '../../testing/ui.js'
+import {getLastFrameAfterUnmount, waitForInputsToBeReady, render, Stdin} from '../../testing/ui.js'
 import {AbortController, AbortSignal} from '../../../../public/node/abort.js'
 import {unstyled} from '../../../../public/node/output.js'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {render} from 'ink-testing-library'
 import {Writable} from 'stream'
 
 describe('ConcurrentOutput', () => {
   test('renders a stream of concurrent outputs from sub-processes', async () => {
     // Given
     let backendPromiseResolve: () => void
-    let frontendPromiseResolve: () => void
 
     const backendPromise = new Promise<void>(function (resolve, _reject) {
       backendPromiseResolve = resolve
-    })
-
-    const frontendPromise = new Promise<void>(function (resolve, _reject) {
-      frontendPromiseResolve = resolve
     })
 
     const backendProcess = {
@@ -40,8 +34,6 @@ describe('ConcurrentOutput', () => {
         stdout.write('first frontend message')
         stdout.write('second frontend message')
         stdout.write('third frontend message')
-
-        frontendPromiseResolve()
       },
     }
     // When
@@ -54,7 +46,7 @@ describe('ConcurrentOutput', () => {
           shortcuts: [
             {
               key: 'p',
-              action: 'open your browser',
+              action: 'preview in your browser',
             },
             {
               key: 'q',
@@ -67,7 +59,7 @@ describe('ConcurrentOutput', () => {
     )
 
     // wait for all output to be rendered
-    await frontendPromise
+    await renderInstance.waitUntilExit()
 
     // Then
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
@@ -78,8 +70,77 @@ describe('ConcurrentOutput', () => {
       0000-00-00 00:00:00 │ frontend │ second frontend message
       0000-00-00 00:00:00 │ frontend │ third frontend message
 
-      › Press p │ open your browser
+      › Press p │ preview in your browser
       › Press q │ quit
+
+      Preview URL: https://shopify.com
+      "
+    `)
+  })
+
+  test("doesn't render shortcuts if the stdin is not a TTY", async () => {
+    // Given
+    let backendPromiseResolve: () => void
+
+    const backendPromise = new Promise<void>(function (resolve, _reject) {
+      backendPromiseResolve = resolve
+    })
+
+    const backendProcess = {
+      prefix: 'backend',
+      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+        stdout.write('first backend message')
+        stdout.write('second backend message')
+        stdout.write('third backend message')
+
+        backendPromiseResolve()
+      },
+    }
+
+    const frontendProcess = {
+      prefix: 'frontend',
+      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+        await backendPromise
+
+        stdout.write('first frontend message')
+        stdout.write('second frontend message')
+        stdout.write('third frontend message')
+      },
+    }
+    // When
+
+    const renderInstance = render(
+      <ConcurrentOutput
+        processes={[backendProcess, frontendProcess]}
+        abortController={new AbortController()}
+        footer={{
+          shortcuts: [
+            {
+              key: 'p',
+              action: 'preview in your browser',
+            },
+            {
+              key: 'q',
+              action: 'quit',
+            },
+          ],
+          subTitle: `Preview URL: https://shopify.com`,
+        }}
+      />,
+      {stdin: new Stdin({isTTY: false})},
+    )
+
+    // wait for all output to be rendered
+    await renderInstance.waitUntilExit()
+
+    // Then
+    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
+      "0000-00-00 00:00:00 │ backend  │ first backend message
+      0000-00-00 00:00:00 │ backend  │ second backend message
+      0000-00-00 00:00:00 │ backend  │ third backend message
+      0000-00-00 00:00:00 │ frontend │ first frontend message
+      0000-00-00 00:00:00 │ frontend │ second frontend message
+      0000-00-00 00:00:00 │ frontend │ third frontend message
 
       Preview URL: https://shopify.com
       "

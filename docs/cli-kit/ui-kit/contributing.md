@@ -210,10 +210,9 @@ test how it behaves with input and what kind of output it produces.
 
 **Output**
 
-For output you can use `ink-testing-library`'s `render` function which will return a `lastFrame` function that can be called to get
+For output you can use the `render` function defined in `private/testing/ui.ts` which will return a `lastFrame` function that can be called to get
 the last frame rendered by Ink. This, in conjunction with `vitest`'s `toMatchInlineSnapshot` should be sufficient.
-If you want to wait for a component to finish processing an async function you can wait for the next tick before checking the last
-frame with something like `await new Promise((resolve) => setTimeout(resolve, 0))`
+If you want to wait for a component to finish rendering before checking the last frame, you can await the return value of `waitUntilExit` which is a property of the instance returned by the `render` method.
 
 **Input**
 

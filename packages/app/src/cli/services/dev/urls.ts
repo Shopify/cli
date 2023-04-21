@@ -11,6 +11,7 @@ import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {appHost, appPort, isSpin, spinFqdn} from '@shopify/cli-kit/node/context/spin'
 import {codespaceURL, gitpodURL} from '@shopify/cli-kit/node/context/local'
 import {runTunnelPlugin, TunnelPluginError} from '@shopify/cli-kit/node/plugins'
+import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 
 export interface PartnersURLs {
   applicationUrl: string
@@ -146,7 +147,7 @@ export interface ShouldOrPromptUpdateURLsOptions {
 }
 
 export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLsOptions): Promise<boolean> {
-  if (options.newApp) return true
+  if (options.newApp || !terminalSupportsRawMode()) return true
   let shouldUpdate: boolean = options.cachedUpdateURLs === true
   if (options.cachedUpdateURLs === undefined) {
     const response = await updateURLsPrompt(

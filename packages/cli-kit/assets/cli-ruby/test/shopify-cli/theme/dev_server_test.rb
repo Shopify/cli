@@ -118,10 +118,10 @@ module ShopifyCLI
       private
 
       def dev_server(identifier: nil, ignores: nil, includes: nil)
-        host, port, poll, editor_sync, overwrite_json, stable, mode = nil
+        host, port, poll, editor_sync, overwrite_json, stable, mode, notify = nil
         server = DevServer.instance
         server.setup(ctx, root, host, identifier, port, poll, editor_sync, overwrite_json, stable, mode, includes,
-          ignores)
+          ignores, notify)
         server
       end
 

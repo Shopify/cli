@@ -107,10 +107,10 @@ importers:
     specifiers:
       '@luckycatfactory/esbuild-graphql-loader': 3.7.0
       '@oclif/core': 2.1.4
-      '@shopify/cli-kit': 3.46.0-pre.0
+      '@shopify/cli-kit': 3.46.0-pre.1
       '@shopify/function-runner': 4.0.2
-      '@shopify/plugin-cloudflare': 3.46.0-pre.0
-      '@shopify/plugin-ngrok': 3.46.0-pre.0
+      '@shopify/plugin-cloudflare': 3.46.0-pre.1
+      '@shopify/plugin-ngrok': 3.46.0-pre.1
       '@types/diff': ^5.0.3
       '@types/http-proxy': ^1.17.9
       '@types/lodash-es': ^4.17.6
@@ -166,10 +166,10 @@ importers:
       '@oclif/plugin-commands': 2.2.13
       '@oclif/plugin-help': 5.2.9
       '@oclif/plugin-plugins': 2.3.2
-      '@shopify/app': 3.46.0-pre.0
-      '@shopify/cli-kit': 3.46.0-pre.0
-      '@shopify/plugin-did-you-mean': 3.46.0-pre.0
-      '@shopify/theme': 3.46.0-pre.0
+      '@shopify/app': 3.46.0-pre.1
+      '@shopify/cli-kit': 3.46.0-pre.1
+      '@shopify/plugin-did-you-mean': 3.46.0-pre.1
+      '@shopify/theme': 3.46.0-pre.1
       '@types/node': 14.18.36
       '@vitest/coverage-istanbul': 0.28.5
       vite: 2.9.12
@@ -232,7 +232,6 @@ importers:
       graphql: 16.4.0
       graphql-request: 5.2.0
       ink: 4.0.0
-      ink-testing-library: ^3.0.0
       is-interactive: 2.0.0
       js-yaml: 4.1.0
       kill-port-process: 3.1.0
@@ -332,7 +331,6 @@ importers:
       '@types/react': 16.14.0
       '@types/semver': 7.3.13
       '@vitest/coverage-istanbul': 0.28.5
-      ink-testing-library: 3.0.0_@types+react@16.14.0
       node-stream-zip: 1.15.0
       ts-morph: 17.0.1
       typedoc: 0.23.26_typescript@4.9.5
@@ -343,7 +341,7 @@ importers:
   packages/create-app:
     specifiers:
       '@oclif/core': 2.1.4
-      '@shopify/cli-kit': 3.46.0-pre.0
+      '@shopify/cli-kit': 3.46.0-pre.1
       '@types/node': 14.18.36
       vite: 2.9.12
       vitest: ^0.28.5
@@ -431,7 +429,7 @@ importers:
   packages/plugin-cloudflare:
     specifiers:
       '@oclif/core': 2.1.4
-      '@shopify/cli-kit': 3.46.0-pre.0
+      '@shopify/cli-kit': 3.46.0-pre.1
       node-fetch: 3.3.0
       semver: 7.3.8
       vite: 2.9.12
@@ -448,7 +446,7 @@ importers:
   packages/plugin-did-you-mean:
     specifiers:
       '@oclif/core': 2.1.4
-      '@shopify/cli-kit': 3.46.0-pre.0
+      '@shopify/cli-kit': 3.46.0-pre.1
       n-gram: 2.0.2
       vite: 2.9.12
       vitest: ^0.28.5
@@ -463,7 +461,7 @@ importers:
   packages/plugin-ngrok:
     specifiers:
       '@oclif/core': 2.1.4
-      '@shopify/cli-kit': 3.46.0-pre.0
+      '@shopify/cli-kit': 3.46.0-pre.1
       '@shopify/ngrok': 4.3.2
       '@types/node': 14.18.36
       vite: 2.9.12
@@ -480,7 +478,7 @@ importers:
   packages/theme:
     specifiers:
       '@oclif/core': 2.1.4
-      '@shopify/cli-kit': 3.46.0-pre.0
+      '@shopify/cli-kit': 3.46.0-pre.1
       '@types/node': 14.18.36
       node-stream-zip: ^1.15.0
       vite: 2.9.12
@@ -8011,18 +8009,6 @@ packages:
   /ini/2.0.0:
     resolution: {integrity: sha512-7PnF4oN3CvZF23ADhA5wRaYEQpJ8qygSkbtTXWBeXWXmEVRXK+1ITciHWwHhsjv1TmW0MgacIv6hEi5pX5NQdA==}
     engines: {node: '>=10'}
-    dev: true
-
-  /ink-testing-library/3.0.0_@types+react@16.14.0:
-    resolution: {integrity: sha512-ItyyoOmcm6yftb7c5mZI2HU22BWzue8PBbO3DStmY8B9xaqfKr7QJONiWOXcwVsOk/6HuVQ0v7N5xhPaR3jycA==}
-    engines: {node: '>=14.16'}
-    peerDependencies:
-      '@types/react': '>=18.0.0'
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-    dependencies:
-      '@types/react': 16.14.0
     dev: true
 
   /ink/4.0.0_vq2ffij4phpunotzorocioecm4:

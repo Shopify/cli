@@ -170,6 +170,7 @@ module Extension
             @context,
             @context.root,
             project: project,
+            notify: nil,
             specification_handler: @spec
           )
 
@@ -184,6 +185,7 @@ module Extension
             @context.root,
             port: 9192,
             project: project,
+            notify: nil,
             specification_handler: @spec
           )
 
@@ -198,6 +200,7 @@ module Extension
             @context.root,
             theme: "1234",
             project: project,
+            notify: nil,
             specification_handler: @spec
           )
 
@@ -209,6 +212,7 @@ module Extension
             nil,
             nil,
             project: nil,
+            notify: nil,
             specification_handler: @spec
           )
 

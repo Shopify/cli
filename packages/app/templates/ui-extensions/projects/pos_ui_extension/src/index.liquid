@@ -9,7 +9,7 @@ const SmartGridTile = () => {
       title="My app"
       subtitle="SmartGrid Extension"
       onPress={() => {
-        api.smartGrid.presentModal({path: 'default'});
+        api.smartGrid.presentModal();
       }}
       enabled
     />
@@ -18,7 +18,7 @@ const SmartGridTile = () => {
 
 const SmartGridModal = () => {
   return (
-    <Screen name="Hello World">
+    <Screen name="HelloWorld" title="Hello World">
       <Text>Welcome to the extension!</Text>
     </Screen>
   );
@@ -35,7 +35,7 @@ extend('pos.home.modal.tile', (root, api) => {
     subtitle: 'SmartGrid Extension',
     enabled: true,
     onPress: () => {
-      api.smartGrid.presentModal({path: 'default'});
+      api.smartGrid.presentModal();
     },
   };
 
@@ -46,7 +46,7 @@ extend('pos.home.modal.tile', (root, api) => {
 });
 
 extend('pos.home.modal.render', (root, api) => {
-  const screen = root.createComponent(Screen, {name: 'Hello World'});
+  const screen = root.createComponent(Screen, {name: 'HelloWorld', title: 'Hello World'});
   root.appendChild(screen);
 
   screen.appendChild(root.createComponent(Text, {}, `Welcome to the extension!`));
