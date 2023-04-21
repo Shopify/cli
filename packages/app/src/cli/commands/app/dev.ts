@@ -85,7 +85,6 @@ export default class Dev extends Command {
       env: 'SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT',
     }),
     notify: Flags.string({
-      char: 'n',
       description:
         'The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.',
       env: 'SHOPIFY_FLAG_NOTIFY',
