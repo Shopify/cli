@@ -21,14 +21,12 @@ import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
-import {UIExtension} from '../models/app/extensions.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
 import {App} from '../models/app/app.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
@@ -102,35 +100,6 @@ const STORE2: OrganizationStore = {
   shopName: 'store2',
   transferDisabled: false,
   convertableToPartnerTest: false,
-}
-
-const EXTENSION_A: UIExtension = {
-  idEnvironmentVariableName: 'EXTENSION_A_ID',
-  localIdentifier: 'EXTENSION_A',
-  configurationPath: '',
-  directory: '',
-  type: 'checkout_post_purchase',
-  graphQLType: 'CHECKOUT_POST_PURCHASE',
-  configuration: {
-    name: '',
-    type: 'checkout_post_purchase',
-    metafields: [],
-    capabilities: {block_progress: false, network_access: false, api_access: false},
-  },
-  entrySourceFilePath: '',
-  outputBundlePath: '',
-  devUUID: 'devUUID',
-  externalType: 'checkout_ui',
-  surface: 'surface',
-  preDeployValidation: () => Promise.resolve(),
-  buildValidation: () => Promise.resolve(),
-  deployConfig: () => Promise.resolve({}),
-  previewMessage: (_) => undefined,
-  publishURL: (_) => Promise.resolve(''),
-  validate: () => Promise.resolve(ok({})),
-  getBundleExtensionStdinContent: () => '',
-  shouldFetchCartUrl: () => true,
-  hasExtensionPointTarget: () => true,
 }
 
 const INPUT: DevContextOptions = {
