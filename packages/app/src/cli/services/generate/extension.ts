@@ -19,6 +19,7 @@ import {downloadGitRepository} from '@shopify/cli-kit/node/git'
 import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, moduleDirectory, relativizePath} from '@shopify/cli-kit/node/path'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {fileURLToPath} from 'url'
 
 async function getTemplatePath(name: string): Promise<string> {
@@ -108,20 +109,6 @@ async function uiExtensionInit({
   extensionDirectory,
 }: UIExtensionInitOptions) {
   const tasks: Task<unknown>[] = []
-  if (!app.usesWorkspaces) {
-    tasks.push({
-      title: 'Installing dependencies',
-      task: async () => {
-        await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor)
-        const requiredDependencies = getExtensionRuntimeDependencies({specification, extensionFlavor})
-        await addNPMDependenciesIfNeeded(requiredDependencies, {
-          packageManager: app.packageManager,
-          type: 'prod',
-          directory: app.directory,
-        })
-      },
-    })
-  }
   tasks.push(
     ...[
       {
@@ -155,22 +142,27 @@ async function uiExtensionInit({
     ],
   )
 
-  // If using workspaces, install dependencies after creating the extension with its own package.json
-  // In case the dependencies in the templates are outdate, we use the one defined in the specification.
-  if (app.usesWorkspaces) {
-    tasks.push({
-      title: 'Installing dependencies',
-      task: async () => {
-        const requiredDependencies = getExtensionRuntimeDependencies({specification, extensionFlavor})
-        await addNPMDependenciesIfNeeded(requiredDependencies, {
-          packageManager: app.packageManager,
-          type: 'prod',
-          directory: extensionDirectory,
-        })
-        await installNPMDependenciesRecursively({packageManager: app.packageManager, directory: extensionDirectory})
-      },
-    })
-  }
+  tasks.push({
+    title: 'Installing dependencies',
+    task: async () => {
+      const directory = app.usesWorkspaces ? extensionDirectory : app.directory
+      const packageManager = app.packageManager
+      const requiredDependencies = getExtensionRuntimeDependencies({specification})
+      await addNPMDependenciesIfNeeded(requiredDependencies, {packageManager, type: 'prod', directory})
+      if (extensionFlavor?.includes('react')) {
+        const reactDependency = {name: 'react', version: versions.react}
+        await addNPMDependenciesIfNeeded([reactDependency], {packageManager, type: 'peer', directory})
+      }
+      if (app.usesWorkspaces) {
+        // If using workspaces, install dependencies after creating the extension with its own package.json
+        // In case the dependencies in the templates are outdated, we use the one defined in the specification.
+        await installNPMDependenciesRecursively({packageManager, directory, deep: 0})
+      } else {
+        await addResolutionOrOverrideIfNeeded(directory, extensionFlavor)
+      }
+    },
+  })
+
   await renderTasks(tasks)
 }
 
@@ -190,17 +182,8 @@ function getSrcFileExtension(extensionFlavor: ExtensionFlavorValue): SrcFileExte
 
 export function getExtensionRuntimeDependencies({
   specification,
-  extensionFlavor,
-}: Pick<UIExtensionInitOptions, 'specification' | 'extensionFlavor'>): DependencyVersion[] {
-  const dependencies: DependencyVersion[] = []
-  if (extensionFlavor?.includes('react')) {
-    dependencies.push({name: 'react', version: versions.react})
-  }
-  const rendererDependency = specification.dependency
-  if (rendererDependency) {
-    dependencies.push(rendererDependency)
-  }
-  return dependencies
+}: Pick<UIExtensionInitOptions, 'specification'>): DependencyVersion[] {
+  return getArrayRejectingUndefined([specification.dependency])
 }
 
 export function getFunctionRuntimeDependencies(templateLanguage: string): DependencyVersion[] {

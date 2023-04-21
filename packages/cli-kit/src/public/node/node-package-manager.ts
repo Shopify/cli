@@ -187,7 +187,7 @@ export async function getPackageName(packageJsonPath: string): Promise<string | 
 }
 
 /**
- * Returns the list of production and dev dependencies of a package.json
+ * Returns the list of production, dev and peer dependencies of a package.json
  * @param packageJsonPath - Path to the package.json file
  * @returns A promise that resolves with the list of dependencies.
  */
@@ -195,8 +195,9 @@ export async function getDependencies(packageJsonPath: string): Promise<{[key: s
   const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
   const dependencies: {[key: string]: string} = packageJsonContent.dependencies ?? {}
   const devDependencies: {[key: string]: string} = packageJsonContent.devDependencies ?? {}
+  const peerDependencies: {[key: string]: string} = packageJsonContent.peerDependencies ?? {}
 
-  return {...dependencies, ...devDependencies}
+  return {...dependencies, ...devDependencies, ...peerDependencies}
 }
 
 /**
@@ -266,6 +267,11 @@ export interface PackageJson {
    * The devDependencies attribute of the package.json
    */
   devDependencies?: {[key: string]: string}
+
+  /**
+   * The peerDependencies attribute of the package.json
+   */
+  peerDependencies?: {[key: string]: string}
 
   /**
    * The optional oclif settings attribute of the package.json
@@ -385,8 +391,7 @@ ${outputToken.json(options)}
     throw PackageJsonNotFoundError(options.directory)
   }
   const existingDependencies = Object.keys(await getDependencies(packageJsonPath))
-  let dependenciesToAdd = dependencies
-  dependenciesToAdd = dependencies.filter((dep) => {
+  const dependenciesToAdd = dependencies.filter((dep) => {
     return !existingDependencies.includes(dep.name)
   })
   if (dependenciesToAdd.length === 0) {
@@ -399,7 +404,6 @@ export async function addNPMDependencies(
   dependencies: DependencyVersion[],
   options: AddNPMDependenciesIfNeededOptions,
 ): Promise<void> {
-  let args: string[]
   const dependenciesWithVersion = dependencies.map((dep) => {
     return dep.version ? `${dep.name}@${dep.version}` : dep.name
   })
