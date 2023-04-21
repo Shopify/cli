@@ -836,8 +836,8 @@ describe('uploadExtensionsBundle', () => {
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
 
       // Then
-      await expect(
-        uploadExtensionsBundle({
+      try {
+        await uploadExtensionsBundle({
           apiKey: 'app-id',
           bundlePath: joinPath(tmpDir, 'test.zip'),
           extensions: [
@@ -850,8 +850,42 @@ describe('uploadExtensionsBundle', () => {
             'amortizable-marketplace-ext': '123',
             'amortizable-marketplace-ext-2': '456',
           },
-        }),
-      ).rejects.toThrow(new AbortError('There has been an error creating your deployment.'))
+        })
+
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (error: any) {
+        expect(error.message).toEqual('There has been an error creating your deployment.')
+        expect(error.customSections).toEqual([
+          {
+            title: 'amortizable-marketplace-ext',
+            body: [
+              {
+                list: {
+                  title: undefined,
+                  items: ['Some other error'],
+                },
+              },
+              {
+                list: {
+                  title: 'Validation errors found in your extension toml file',
+                  items: ['Missing expected key(s).'],
+                },
+              },
+            ],
+          },
+          {
+            title: 'amortizable-marketplace-ext-2',
+            body: [
+              {
+                list: {
+                  title: undefined,
+                  items: ['Something was not found'],
+                },
+              },
+            ],
+          },
+        ])
+      }
     })
   })
 })
