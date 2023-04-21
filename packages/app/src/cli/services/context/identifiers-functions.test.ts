@@ -348,7 +348,7 @@ describe('ensureFunctionsIds: asks user to confirm deploy', () => {
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {FUNCTION_A: 'ID_A', FUNCTION_A_2: 'ID_A_2'},
       toCreate: [],
-      toConfirm: [],
+      toConfirm: [{local: FUNCTION_A, remote: REGISTRATION_A}],
       toManualMatch: {
         local: [],
         remote: [],
@@ -363,5 +363,6 @@ describe('ensureFunctionsIds: asks user to confirm deploy', () => {
 
     // Then
     expect(deployConfirmationPrompt).not.toBeCalled()
+    expect(matchConfirmationPrompt).not.toBeCalled()
   })
 })

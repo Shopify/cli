@@ -439,7 +439,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
       toCreate: [],
-      toConfirm: [],
+      toConfirm: [{local: EXTENSION_B, remote: REGISTRATION_B}],
       toManualMatch: {
         local: [],
         remote: [],
@@ -454,6 +454,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
 
     // Then
     expect(deployConfirmationPrompt).not.toBeCalled()
+    expect(matchConfirmationPrompt).not.toBeCalled()
   })
 })
 

@@ -17,7 +17,7 @@ export async function ensureFunctionsIds(
 
   for (const pending of matchFunctions.toConfirm) {
     // eslint-disable-next-line no-await-in-loop
-    const confirmed = await matchConfirmationPrompt(pending.local, pending.remote)
+    const confirmed = options.force || (await matchConfirmationPrompt(pending.local, pending.remote))
     if (!confirmed) return err('user-cancelled')
     validMatches[pending.local.localIdentifier] = pending.remote.id
   }
