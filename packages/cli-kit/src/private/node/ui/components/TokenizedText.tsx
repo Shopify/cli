@@ -36,7 +36,7 @@ export interface FilePathToken {
 
 export interface ListToken {
   list: {
-    title?: string
+    title?: TokenItem<InlineToken>
     items: TokenItem<InlineToken>[]
     ordered?: boolean
   }

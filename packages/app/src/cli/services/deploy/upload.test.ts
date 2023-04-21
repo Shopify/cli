@@ -861,13 +861,13 @@ describe('uploadExtensionsBundle', () => {
             body: [
               {
                 list: {
-                  title: undefined,
+                  title: '\n',
                   items: ['Some other error'],
                 },
               },
               {
                 list: {
-                  title: 'Validation errors found in your extension toml file',
+                  title: '\nValidation errors found in your extension toml file',
                   items: ['Missing expected key(s).'],
                 },
               },
@@ -878,7 +878,7 @@ describe('uploadExtensionsBundle', () => {
             body: [
               {
                 list: {
-                  title: undefined,
+                  title: '\n',
                   items: ['Something was not found'],
                 },
               },
@@ -939,13 +939,13 @@ describe('deploymentErrorsToCustomSections', () => {
         body: [
           {
             list: {
-              title: undefined,
+              title: '\n',
               items: ['Some other error'],
             },
           },
           {
             list: {
-              title: 'Validation errors found in your extension toml file',
+              title: '\nValidation errors found in your extension toml file',
               items: ['Missing expected key(s).'],
             },
           },
@@ -956,7 +956,7 @@ describe('deploymentErrorsToCustomSections', () => {
         body: [
           {
             list: {
-              title: undefined,
+              title: '\n',
               items: ['Something was not found'],
             },
           },

@@ -166,7 +166,8 @@ export async function uploadExtensionsBundle(
   return {validationErrors, deploymentId: result.deploymentCreate.deployment.id}
 }
 
-const VALIDATION_ERRORS_TITLE = 'Validation errors found in your extension toml file'
+const VALIDATION_ERRORS_TITLE = '\nValidation errors found in your extension toml file'
+const GENERIC_ERRORS_TITLE = '\n'
 
 export function deploymentErrorsToCustomSections(
   errors: CreateDeploymentSchema['deploymentCreate']['userErrors'],
@@ -185,14 +186,14 @@ export function deploymentErrorsToCustomSections(
       const errorsList =
         error.category === 'invalid'
           ? existingSection.body.find((listToken) => listToken.list.title === VALIDATION_ERRORS_TITLE)
-          : existingSection.body.find((listToken) => listToken.list.title === undefined)
+          : existingSection.body.find((listToken) => listToken.list.title === GENERIC_ERRORS_TITLE)
 
       if (errorsList) {
         errorsList.list.items.push(error.message)
       } else {
         existingSection.body.push({
           list: {
-            title: error.category === 'invalid' ? VALIDATION_ERRORS_TITLE : undefined,
+            title: error.category === 'invalid' ? VALIDATION_ERRORS_TITLE : GENERIC_ERRORS_TITLE,
             items: [error.message],
           },
         })
@@ -203,7 +204,7 @@ export function deploymentErrorsToCustomSections(
         body: [
           {
             list: {
-              title: error.category === 'invalid' ? VALIDATION_ERRORS_TITLE : undefined,
+              title: error.category === 'invalid' ? VALIDATION_ERRORS_TITLE : GENERIC_ERRORS_TITLE,
               items: [error.message],
             },
           },
