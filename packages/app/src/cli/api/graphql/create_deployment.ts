@@ -29,6 +29,7 @@ export const CreateDeployment = gql`
         message
         field
         details
+        category
       }
     }
   }
