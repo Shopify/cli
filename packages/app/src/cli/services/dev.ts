@@ -55,6 +55,7 @@ export interface DevOptions {
   noTunnel: boolean
   theme?: string
   themeExtensionPort?: number
+  notify?: string
 }
 
 interface DevWebOptions {

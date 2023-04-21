@@ -389,6 +389,13 @@
           "char": "e",
           "description": "The environment to apply to the current command.",
           "multiple": false
+        },
+        "notify": {
+          "name": "notify",
+          "type": "option",
+          "char": "n",
+          "description": "The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.",
+          "multiple": false
         }
       },
       "args": {},
@@ -403,7 +410,8 @@
         "only",
         "ignore",
         "stable",
-        "force"
+        "force",
+        "notify"
       ]
     },
     "theme:help-old": {
@@ -1168,6 +1176,13 @@
           "type": "option",
           "char": "e",
           "description": "The environment to apply to the current command.",
+          "multiple": false
+        },
+        "notify": {
+          "name": "notify",
+          "type": "option",
+          "char": "n",
+          "description": "The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.",
           "multiple": false
         }
       },
