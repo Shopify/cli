@@ -33,6 +33,7 @@ import {fileExists, readFile, readFileSync} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {AlertCustomSection, ListToken} from '@shopify/cli-kit/node/ui'
 
 interface DeployThemeExtensionOptions {
   /** The application API key */
@@ -102,6 +103,11 @@ export interface UploadExtensionValidationError {
   }[]
 }
 
+type ErrorSectionBody = ListToken[]
+interface ErrorCustomSection extends AlertCustomSection {
+  body: ErrorSectionBody
+}
+
 /**
  * Uploads a bundle.
  * @param options - The upload options
@@ -143,20 +149,12 @@ export async function uploadExtensionsBundle(
   const result: CreateDeploymentSchema = await partnersRequest(mutation, options.token, variables)
 
   if (result.deploymentCreate?.userErrors?.length > 0) {
-    const errors = result.deploymentCreate.userErrors.map((error) => {
-      const extensionIdentifier = Object.keys(options.extensionIds).find(
-        (localIdentifier) =>
-          options.extensionIds[localIdentifier] ===
-          error.details?.find((detail) => typeof detail.extension_id !== 'undefined')?.extension_id.toString(),
-      )
+    const customSections: AlertCustomSection[] = deploymentErrorsToCustomSections(
+      result.deploymentCreate.userErrors,
+      options.extensionIds,
+    )
 
-      if (extensionIdentifier) {
-        return `${extensionIdentifier}: ${error.message}`
-      } else {
-        return error.message
-      }
-    })
-    throw new AbortError(['There has been an error creating your deployment:', {list: {items: errors}}])
+    throw new AbortError('There has been an error creating your deployment.', null, [], customSections)
   }
 
   const validationErrors = result.deploymentCreate.deployment.deployedVersions
@@ -166,6 +164,70 @@ export async function uploadExtensionsBundle(
     })
 
   return {validationErrors, deploymentId: result.deploymentCreate.deployment.id}
+}
+
+const VALIDATION_ERRORS_TITLE = 'Validation errors found in your extension toml file'
+
+export function deploymentErrorsToCustomSections(
+  errors: CreateDeploymentSchema['deploymentCreate']['userErrors'],
+  extensionIds: IdentifiersExtensions,
+): ErrorCustomSection[] {
+  return errors.reduce((sections, error) => {
+    const extensionIdentifier = Object.keys(extensionIds).find(
+      (localIdentifier) =>
+        extensionIds[localIdentifier] ===
+        error.details?.find((detail) => typeof detail.extension_id !== 'undefined')?.extension_id.toString(),
+    )
+
+    const existingSection = sections.find((section) => section.title === extensionIdentifier)
+
+    if (existingSection) {
+      const errorsList =
+        error.category === 'invalid'
+          ? existingSection.body.find((listToken) => listToken.list.title === VALIDATION_ERRORS_TITLE)
+          : existingSection.body.find((listToken) => listToken.list.title === undefined)
+
+      if (errorsList) {
+        errorsList.list.items.push(error.message)
+      } else {
+        existingSection.body.push({
+          list: {
+            title: error.category === 'invalid' ? VALIDATION_ERRORS_TITLE : undefined,
+            items: [error.message],
+          },
+        })
+      }
+    } else {
+      sections.push({
+        title: extensionIdentifier,
+        body: [
+          {
+            list: {
+              title: error.category === 'invalid' ? VALIDATION_ERRORS_TITLE : undefined,
+              items: [error.message],
+            },
+          },
+        ],
+      })
+    }
+
+    sections.forEach((section) => {
+      // eslint-disable-next-line id-length
+      section.body.sort((a, b) => {
+        if (a.list.title === VALIDATION_ERRORS_TITLE) {
+          return 1
+        }
+
+        if (b.list.title === VALIDATION_ERRORS_TITLE) {
+          return -1
+        }
+
+        return 0
+      })
+    })
+
+    return sections
+  }, [] as ErrorCustomSection[])
 }
 
 /**

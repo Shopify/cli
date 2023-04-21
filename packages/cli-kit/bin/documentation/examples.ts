@@ -267,7 +267,38 @@ export const examples: {[key in string]: Example} = {
         ],
       ]
 
-      return renderFatalError(new AbortError('No Organization found', undefined, nextSteps), {
+      const customSections = [
+        {
+          title: 'amortizable-marketplace-ext',
+          body: [
+            {
+              list: {
+                title: undefined,
+                items: ['Some other error'],
+              },
+            },
+            {
+              list: {
+                title: 'Validation errors found in your extension toml file',
+                items: ['Missing expected key(s).'],
+              },
+            },
+          ],
+        },
+        {
+          title: 'amortizable-marketplace-ext-2',
+          body: [
+            {
+              list: {
+                title: undefined,
+                items: ['Something was not found'],
+              },
+            },
+          ],
+        },
+      ]
+
+      return renderFatalError(new AbortError('No Organization found', undefined, nextSteps, customSections), {
         renderOptions: {
           stdout: stdout as any,
         },

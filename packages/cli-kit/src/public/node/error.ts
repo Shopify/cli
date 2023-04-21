@@ -1,4 +1,4 @@
-import {renderFatalError} from './ui.js'
+import {AlertCustomSection, renderFatalError} from './ui.js'
 import {OutputMessage, stringifyMessage, TokenizedString} from '../../public/node/output.js'
 import {normalizePath} from '../../public/node/path.js'
 import {InlineToken, TokenItem, tokenItemToString} from '../../private/node/ui/components/TokenizedText.js'
@@ -23,6 +23,7 @@ export abstract class FatalError extends Error {
   type: FatalErrorType
   nextSteps?: TokenItem<InlineToken>[]
   formattedMessage?: TokenItem
+  customSections?: AlertCustomSection[]
   /**
    * Creates a new FatalError error.
    *
@@ -32,12 +33,14 @@ export abstract class FatalError extends Error {
    * You can pass a string a {@link TokenizedString} or a {@link TokenItem}
    * if you need to style the message inside the error Banner component.
    * @param nextSteps - Message to show as "next steps" with suggestions to solve the issue.
+   * @param customSections - Custom sections to show in the error banner. To be used if nextSteps is not enough.
    */
   constructor(
     message: TokenItem | OutputMessage,
     type: FatalErrorType,
     tryMessage: TokenItem | OutputMessage | null = null,
     nextSteps?: TokenItem<InlineToken>[],
+    customSections?: AlertCustomSection[],
   ) {
     const messageIsOutputMessage = typeof message === 'string' || 'value' in message
     super(messageIsOutputMessage ? stringifyMessage(message) : tokenItemToString(message))
@@ -54,6 +57,7 @@ export abstract class FatalError extends Error {
 
     this.type = type
     this.nextSteps = nextSteps
+    this.customSections = customSections
 
     if (!messageIsOutputMessage) {
       this.formattedMessage = message
@@ -67,12 +71,14 @@ export abstract class FatalError extends Error {
  */
 export class AbortError extends FatalError {
   nextSteps?: TokenItem<InlineToken>[]
+  customSections?: AlertCustomSection[]
   constructor(
     message: TokenItem | OutputMessage,
     tryMessage: TokenItem | OutputMessage | null = null,
     nextSteps?: TokenItem<InlineToken>[],
+    customSections?: AlertCustomSection[],
   ) {
-    super(message, FatalErrorType.Abort, tryMessage, nextSteps)
+    super(message, FatalErrorType.Abort, tryMessage, nextSteps, customSections)
   }
 }
 

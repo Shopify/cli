@@ -1,4 +1,4 @@
-import {uploadExtensionsBundle, uploadFunctionExtensions} from './upload.js'
+import {deploymentErrorsToCustomSections, uploadExtensionsBundle, uploadFunctionExtensions} from './upload.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {FunctionExtension} from '../../models/app/extensions.js'
 import {
@@ -801,9 +801,28 @@ describe('uploadExtensionsBundle', () => {
             userErrors: [
               {
                 message: 'Missing expected key(s).',
+                category: 'invalid',
                 details: [
                   {
                     extension_id: 123,
+                  },
+                ],
+              },
+              {
+                message: 'Some other error',
+                category: 'unknown',
+                details: [
+                  {
+                    extension_id: 123,
+                  },
+                ],
+              },
+              {
+                message: 'Something was not found',
+                category: 'not_found',
+                details: [
+                  {
+                    extension_id: 456,
                   },
                 ],
               },
@@ -821,19 +840,94 @@ describe('uploadExtensionsBundle', () => {
         uploadExtensionsBundle({
           apiKey: 'app-id',
           bundlePath: joinPath(tmpDir, 'test.zip'),
-          extensions: [{uuid: '123', config: '{}', context: ''}],
+          extensions: [
+            {uuid: '123', config: '{}', context: ''},
+            {uuid: '456', config: '{}', context: ''},
+          ],
           token: 'api-token',
           label: 'Deployed with CLI',
           extensionIds: {
             'amortizable-marketplace-ext': '123',
+            'amortizable-marketplace-ext-2': '456',
           },
         }),
-      ).rejects.toThrow(
-        new AbortError([
-          'There has been an error creating your deployment:',
-          {list: {items: ['amortizable-marketplace-ext: Missing expected key(s).']}},
-        ]),
-      )
+      ).rejects.toThrow(new AbortError('There has been an error creating your deployment.'))
     })
+  })
+})
+
+describe('deploymentErrorsToCustomSections', () => {
+  test('returns an array of custom sections', () => {
+    // Given
+    const errors = [
+      {
+        field: ['base'],
+        message: 'Missing expected key(s).',
+        category: 'invalid',
+        details: [
+          {
+            extension_id: 123,
+          },
+        ],
+      },
+      {
+        field: ['base'],
+        message: 'Some other error',
+        category: 'unknown',
+        details: [
+          {
+            extension_id: 123,
+          },
+        ],
+      },
+      {
+        field: ['base'],
+        message: 'Something was not found',
+        category: 'not_found',
+        details: [
+          {
+            extension_id: 456,
+          },
+        ],
+      },
+    ]
+
+    // When
+    const customSections = deploymentErrorsToCustomSections(errors, {
+      'amortizable-marketplace-ext': '123',
+      'amortizable-marketplace-ext-2': '456',
+    })
+
+    // Then
+    expect(customSections).toEqual([
+      {
+        title: 'amortizable-marketplace-ext',
+        body: [
+          {
+            list: {
+              title: undefined,
+              items: ['Some other error'],
+            },
+          },
+          {
+            list: {
+              title: 'Validation errors found in your extension toml file',
+              items: ['Missing expected key(s).'],
+            },
+          },
+        ],
+      },
+      {
+        title: 'amortizable-marketplace-ext-2',
+        body: [
+          {
+            list: {
+              title: undefined,
+              items: ['Something was not found'],
+            },
+          },
+        ],
+      },
+    ])
   })
 })
