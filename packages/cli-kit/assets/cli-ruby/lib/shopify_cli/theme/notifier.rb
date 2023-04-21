@@ -26,7 +26,7 @@ module ShopifyCLI
           ctx.puts(ctx.message("theme.serve.notifier.error", path, response.message))
         end
 
-      rescue StandardError => error
+      rescue => error
         ctx.puts(ctx.message("theme.serve.notifier.error", path, error.message))
       end
 
