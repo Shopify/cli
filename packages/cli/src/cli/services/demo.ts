@@ -16,99 +16,199 @@ import {
 } from '@shopify/cli-kit/node/ui'
 import {Writable} from 'stream'
 
-interface AbstractDemoStep {
-  type: string
-  properties: any
-}
+import {zod} from '@shopify/cli-kit/node/schema'
 
-interface OutputStep extends AbstractDemoStep {
-  type: 'output'
-  properties: {
-    content: string
-  }
+const linkSchema = zod.object({label: zod.string(), url: zod.string()})
+const inlineTokenSchema = zod.union([
+  zod.string(),
+  zod.object({command: zod.string()}),
+  zod.object({link: linkSchema}),
+  zod.object({char: zod.string().length(1)}),
+  zod.object({userInput: zod.string()}),
+  zod.object({subdued: zod.string()}),
+  zod.object({filePath: zod.string()}),
+  zod.object({bold: zod.string()}),
+])
+const headlineTokenSchema = zod.union([
+  zod.string(),
+  zod.object({command: zod.string()}),
+  zod.object({char: zod.string().length(1)}),
+  zod.object({userInput: zod.string()}),
+  zod.object({subdued: zod.string()}),
+  zod.object({filePath: zod.string()}),
+])
+// type InlineToken = zod.infer<typeof inlineTokenSchema>
+function oneOrMore<T>(singular: zod.ZodType<T>) {
+  return zod.union([singular, zod.array(singular)])
 }
+const inlineTokenItemSchema = oneOrMore(inlineTokenSchema)
+// type InlineTokenItem = zod.infer<typeof inlineTokenItemSchema>
+const listSchema = zod.object({
+  list: zod.object({
+    title: zod.string(),
+    items: zod.array(inlineTokenItemSchema),
+    ordered: zod.boolean().optional()
+  })
+})
+const tokenItemSchema = oneOrMore(zod.union([inlineTokenSchema, listSchema]))
 
-interface RenderStep extends AbstractDemoStep {
-  type: 'info' | 'success' | 'warning'
-  properties: Parameters<typeof renderInfo>[0]
-}
+const tableSchema = zod.object({
+  rows: zod.array(zod.object({}).catchall(zod.string())),
+  columns: zod.object({}).catchall(zod.object({
+    header: zod.string().optional(),
+    color: zod.string().optional(),
+  })),
+})
+const infoTableSchema = zod.union([
+  zod.object({}).catchall(zod.array(inlineTokenItemSchema)),
+  zod.object({
+    color: zod.string().optional(),
+    header: zod.string(),
+    helperText: zod.string().optional(),
+    items: zod.array(inlineTokenItemSchema),
+  }),
+])
 
-interface RenderFatalErrorStep extends AbstractDemoStep {
-  type: 'fatalError'
-  properties: {
-    errorType: 'abort' | 'bug'
-    message: string
-    tryMessage: string
-    nextSteps: any
-  }
-}
+const abstractDemoStepSchema = zod.object({
+  type: zod.string(),
+  properties: zod.object({}),
+})
 
-interface RenderTableStep extends AbstractDemoStep {
-  type: 'table'
-  properties: Parameters<typeof renderTable>[0]
-}
+const outputStepSchema = abstractDemoStepSchema.extend({
+  type: zod.literal('output'),
+  properties: zod.object({
+    content: zod.string(),
+  }),
+})
+type OutputStep = zod.infer<typeof outputStepSchema>
 
-interface RenderAutocompletePromptStep extends AbstractDemoStep {
-  type: 'autocompletePrompt'
-  properties: Parameters<typeof renderAutocompletePrompt>[0]
-}
+const renderStepSchema = abstractDemoStepSchema.extend({
+  type: zod.union([
+    zod.literal('info'),
+    zod.literal('success'),
+    zod.literal('warning'),
+  ]),
+  properties: zod.object({
+    headline: headlineTokenSchema.optional(),
+    body: tokenItemSchema.optional(),
+    nextSteps: zod.array(inlineTokenItemSchema).optional(),
+    reference: zod.array(inlineTokenItemSchema).optional(),
+    link: linkSchema.optional(),
+    customSections: zod.array(zod.object({
+      title: zod.string().optional(),
+      body: inlineTokenItemSchema,
+    })).optional(),
+    orderedNextSteps: zod.boolean().optional(),
+  }),
+})
+type RenderStep = zod.infer<typeof renderStepSchema>
 
-interface RenderConfirmationPromptStep extends AbstractDemoStep {
-  type: 'confirmationPrompt'
-  properties: Parameters<typeof renderConfirmationPrompt>[0]
-}
+const renderFatalErrorStepSchema = abstractDemoStepSchema.extend({
+  type: zod.literal('fatalError'),
+  properties: zod.object({
+    errorType: zod.union([zod.literal('abort'), zod.literal('bug')]),
+    message: zod.string(),
+    tryMessage: zod.string().optional(),
+    nextSteps: zod.array(inlineTokenItemSchema).optional(),
+  }),
+})
+type RenderFatalErrorStep = zod.infer<typeof renderFatalErrorStepSchema>
 
-interface RenderSelectPromptStep extends AbstractDemoStep {
-  type: 'selectPrompt'
-  properties: Parameters<typeof renderSelectPrompt>[0]
-}
+const renderTableStepSchema = zod.object({
+  type: zod.literal('table'),
+  properties: tableSchema,
+})
+type RenderTableStep = zod.infer<typeof renderTableStepSchema>
 
-interface RenderTextPromptStep extends AbstractDemoStep {
-  type: 'textPrompt'
-  properties: Parameters<typeof renderTextPrompt>[0]
-}
+const renderAutoCompletePromptStepSchema = abstractDemoStepSchema.extend({
+  type: zod.literal('autocompletePrompt'),
+  properties: zod.object({
+    message: zod.string(),
+    choices: zod.array(zod.object({
+      label: zod.string(),
+      value: zod.string(),
+    })),
+  }),
+})
+type RenderAutocompletePromptStep = zod.infer<typeof renderAutoCompletePromptStepSchema>
 
-interface SleepStep extends AbstractDemoStep {
-  type: 'sleep'
-  properties: {
-    duration: number
-  }
-}
+const renderConfirmationPromptStepSchema = abstractDemoStepSchema.extend({
+  type: zod.literal('confirmationPrompt'),
+  properties: zod.object({
+    message: zod.string(),
+    infoTable: infoTableSchema.optional(),
+    confirmationMessage: zod.string(),
+    cancellationMessage: zod.string(),
+  }),
+})
+type RenderConfirmationPromptStep = zod.infer<typeof renderConfirmationPromptStepSchema>
 
-interface TaskbarStep extends AbstractDemoStep {
-  type: 'taskbar'
-  properties: {
-    steps: {
-      title: string
-      duration: number
-    }[]
-  }
-}
+const renderSelectPromptStepSchema = abstractDemoStepSchema.extend({
+  type: zod.literal('selectPrompt'),
+  properties: zod.object({
+    message: zod.string(),
+    choices: zod.array(zod.object({
+      label: zod.string(),
+      value: zod.string(),
+    })),
+    infoTable: infoTableSchema.optional(),
+  }),
+})
+type RenderSelectPromptStep = zod.infer<typeof renderSelectPromptStepSchema>
 
-interface RenderConcurrentProperties {
-  processes: {
-    prefix: string
-    steps: {
-      startMessage?: string
-      duration: number
-      endMessage?: string
-    }[]
-  }[]
-  footer?: {
-    shortcuts: [
-      {
-        key: string
-        action: string
-      }
-    ]
-    subTitle: string
-  }
-}
+const renderTextPromptStepSchema = abstractDemoStepSchema.extend({
+  type: zod.literal('textPrompt'),
+  properties: zod.object({
+    message: zod.string(),
+    defaultValue: zod.string().optional(),
+    password: zod.boolean().optional(),
+    allowEmpty: zod.boolean().optional(),
+  }),
+})
+type RenderTextPromptStep = zod.infer<typeof renderTextPromptStepSchema>
 
-interface RenderConcurrentStep extends AbstractDemoStep {
-  type: 'concurrent'
-  properties: RenderConcurrentProperties
-}
+const sleepStepSchema = abstractDemoStepSchema.extend({
+  type: zod.literal('sleep'),
+  properties: zod.object({
+    duration: zod.number(),
+  }),
+})
+type SleepStep = zod.infer<typeof sleepStepSchema>
+
+const taskbarStepSchema = abstractDemoStepSchema.extend({
+  type: zod.literal('taskbar'),
+  properties: zod.object({
+    steps: zod.array(zod.object({
+      title: zod.string(),
+      duration: zod.number(),
+    })),
+  }),
+})
+type TaskbarStep = zod.infer<typeof taskbarStepSchema>
+
+const renderConcurrentPropertiesSchema = zod.object({
+  processes: zod.array(zod.object({
+    prefix: zod.string(),
+    steps: zod.array(zod.object({
+      startMessage: zod.string().optional(),
+      duration: zod.number(),
+      endMessage: zod.string().optional(),
+    })),
+  })),
+  footer: zod.object({
+    shortcuts: zod.array(zod.object({
+      key: zod.string(),
+      action: zod.string(),
+    })),
+    subTitle: zod.string().optional(),
+  }).optional(),
+})
+type RenderConcurrentProperties = zod.infer<typeof renderConcurrentPropertiesSchema>
+const renderConcurrentStepSchema = abstractDemoStepSchema.extend({
+  type: zod.literal('concurrent'),
+  properties: renderConcurrentPropertiesSchema,
+})
+type RenderConcurrentStep = zod.infer<typeof renderConcurrentStepSchema>
 
 type DemoStep =
   OutputStep
@@ -123,11 +223,26 @@ type DemoStep =
   | TaskbarStep
   | RenderConcurrentStep
 
-interface DemoSteps {
-  steps: DemoStep[]
-}
+const demoStepSchema = zod.union([
+  outputStepSchema,
+  renderStepSchema,
+  renderTableStepSchema,
+  renderFatalErrorStepSchema,
+  renderAutoCompletePromptStepSchema,
+  renderConfirmationPromptStepSchema,
+  renderSelectPromptStepSchema,
+  renderTextPromptStepSchema,
+  sleepStepSchema,
+  taskbarStepSchema,
+  renderConcurrentStepSchema,
+])
+const demoStepsSchema = zod.object({
+  steps: zod.array(demoStepSchema),
+})
+type DemoSteps = zod.infer<typeof demoStepsSchema>
 
-export async function demo({steps}: DemoSteps) {
+export async function demo(stepsJsonData: DemoSteps) {
+  const {steps} = demoStepsSchema.parse(stepsJsonData)
   const executors = steps.map(executorForStep)
   for (const executor of executors) {
     await executor()
@@ -160,13 +275,13 @@ function executorForStep(step: DemoStep): () => Promise<void> {
         }
       }
     case 'table':
-      return async () => { renderTable(step.properties) }
+      return async () => { renderTable(step.properties as Parameters<typeof renderTable>[0]) }
     case 'autocompletePrompt':
       return async () => { await renderAutocompletePrompt(step.properties) }
     case 'confirmationPrompt':
-      return async () => { await renderConfirmationPrompt(step.properties) }
+      return async () => { await renderConfirmationPrompt(step.properties as Parameters<typeof renderConfirmationPrompt>[0]) }
     case 'selectPrompt':
-      return async () => { await renderSelectPrompt(step.properties) }
+      return async () => { await renderSelectPrompt(step.properties as Parameters<typeof renderSelectPrompt>[0]) }
     case 'textPrompt':
       return async () => { await renderTextPrompt(step.properties) }
     default:
