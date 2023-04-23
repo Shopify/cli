@@ -45,7 +45,7 @@ const inlineTokenItemSchema = oneOrMore(inlineTokenSchema)
 // type InlineTokenItem = zod.infer<typeof inlineTokenItemSchema>
 const listSchema = zod.object({
   list: zod.object({
-    title: zod.string(),
+    title: zod.string().optional(),
     items: zod.array(inlineTokenItemSchema),
     ordered: zod.boolean().optional()
   })
@@ -61,12 +61,14 @@ const tableSchema = zod.object({
 })
 const infoTableSchema = zod.union([
   zod.object({}).catchall(zod.array(inlineTokenItemSchema)),
-  zod.object({
-    color: zod.string().optional(),
-    header: zod.string(),
-    helperText: zod.string().optional(),
-    items: zod.array(inlineTokenItemSchema),
-  }),
+  zod.array(
+    zod.object({
+      color: zod.string().optional(),
+      header: zod.string(),
+      helperText: zod.string().optional(),
+      items: zod.array(inlineTokenItemSchema),
+    }),
+  ),
 ])
 
 const abstractDemoStepSchema = zod.object({
@@ -90,7 +92,7 @@ const renderStepPropertiesSchema = zod.object({
   link: linkSchema.optional(),
   customSections: zod.array(zod.object({
     title: zod.string().optional(),
-    body: inlineTokenItemSchema,
+    body: tokenItemSchema,
   })).optional(),
   orderedNextSteps: zod.boolean().optional(),
 })
