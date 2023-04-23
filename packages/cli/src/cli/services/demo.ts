@@ -247,7 +247,7 @@ const demoStepSchema = zod.discriminatedUnion('type', [
   taskbarStepSchema,
   renderConcurrentStepSchema,
 ])
-const demoStepsSchema = zod.object({
+export const demoStepsSchema = zod.object({
   steps: zod.array(demoStepSchema),
 })
 type DemoSteps = zod.infer<typeof demoStepsSchema>
