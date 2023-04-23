@@ -82,26 +82,33 @@ const outputStepSchema = abstractDemoStepSchema.extend({
 })
 type OutputStep = zod.infer<typeof outputStepSchema>
 
-const renderStepSchema = abstractDemoStepSchema.extend({
-  type: zod.union([
-    zod.literal('info'),
-    zod.literal('success'),
-    zod.literal('warning'),
-  ]),
-  properties: zod.object({
-    headline: headlineTokenSchema.optional(),
-    body: tokenItemSchema.optional(),
-    nextSteps: zod.array(inlineTokenItemSchema).optional(),
-    reference: zod.array(inlineTokenItemSchema).optional(),
-    link: linkSchema.optional(),
-    customSections: zod.array(zod.object({
-      title: zod.string().optional(),
-      body: inlineTokenItemSchema,
-    })).optional(),
-    orderedNextSteps: zod.boolean().optional(),
-  }),
+const renderStepPropertiesSchema = zod.object({
+  headline: headlineTokenSchema.optional(),
+  body: tokenItemSchema.optional(),
+  nextSteps: zod.array(inlineTokenItemSchema).optional(),
+  reference: zod.array(inlineTokenItemSchema).optional(),
+  link: linkSchema.optional(),
+  customSections: zod.array(zod.object({
+    title: zod.string().optional(),
+    body: inlineTokenItemSchema,
+  })).optional(),
+  orderedNextSteps: zod.boolean().optional(),
 })
-type RenderStep = zod.infer<typeof renderStepSchema>
+const renderInfoStepSchema = abstractDemoStepSchema.extend({
+  type: zod.literal('info'),
+  properties: renderStepPropertiesSchema,
+})
+type RenderInfoStep = zod.infer<typeof renderInfoStepSchema>
+const renderSuccessStepSchema = abstractDemoStepSchema.extend({
+  type: zod.literal('success'),
+  properties: renderStepPropertiesSchema,
+})
+type RenderSuccessStep = zod.infer<typeof renderSuccessStepSchema>
+const renderWarningStepSchema = abstractDemoStepSchema.extend({
+  type: zod.literal('warning'),
+  properties: renderStepPropertiesSchema,
+})
+type RenderWarningStep = zod.infer<typeof renderWarningStepSchema>
 
 const renderFatalErrorStepSchema = abstractDemoStepSchema.extend({
   type: zod.literal('fatalError'),
@@ -212,7 +219,9 @@ type RenderConcurrentStep = zod.infer<typeof renderConcurrentStepSchema>
 
 type DemoStep =
   OutputStep
-  | RenderStep
+  | RenderInfoStep
+  | RenderSuccessStep
+  | RenderWarningStep
   | RenderTableStep
   | RenderFatalErrorStep
   | RenderAutocompletePromptStep
@@ -223,9 +232,11 @@ type DemoStep =
   | TaskbarStep
   | RenderConcurrentStep
 
-const demoStepSchema = zod.union([
+const demoStepSchema = zod.discriminatedUnion('type', [
   outputStepSchema,
-  renderStepSchema,
+  renderInfoStepSchema,
+  renderSuccessStepSchema,
+  renderWarningStepSchema,
   renderTableStepSchema,
   renderFatalErrorStepSchema,
   renderAutoCompletePromptStepSchema,
