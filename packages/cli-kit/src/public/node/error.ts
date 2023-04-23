@@ -6,7 +6,7 @@ import {Errors} from '@oclif/core'
 
 export {ExtendableError} from 'ts-error'
 
-enum FatalErrorType {
+export enum FatalErrorType {
   Abort,
   AbortSilent,
   Bug,

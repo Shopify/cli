@@ -1,6 +1,7 @@
 import {Alert, AlertProps} from './components/Alert.js'
 import {renderOnce} from '../ui.js'
 import {consoleLog, consoleWarn, Logger, LogLevel} from '../../../public/node/output.js'
+import {addEvent} from '../demo-recorder.js'
 import React from 'react'
 import {RenderOptions} from 'ink'
 
@@ -31,6 +32,8 @@ export function alert({
   orderedNextSteps = false,
   renderOptions,
 }: AlertOptions) {
+  addEvent({type, properties: arguments[0]})
+
   return renderOnce(
     <Alert
       type={type}

@@ -18,6 +18,7 @@ import {
   RawContentToken,
   SubHeadingContentToken,
 } from '../../private/node/content-tokens.js'
+import {addEvent} from '../../private/node/demo-recorder.js'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'stream'
 import type {Change} from 'diff'
@@ -381,6 +382,7 @@ export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, messa
     } else {
       logger(message)
     }
+    addEvent({type: 'output', properties: { content: message }})
   }
 }
 
