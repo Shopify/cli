@@ -95,6 +95,7 @@ class NoopDemoRecorder {
     return JSON.stringify({steps: []}, null, 2)
   }
 
+  addSleep() {}
   resetSleep() {}
 
   addOrUpdateConcurrentOutput(_data: {prefix: string; index: number; output: string}) {}
@@ -104,6 +105,7 @@ let _instance: {
   addEvent: (event: Event) => void
   recordedEventsJson: () => string
   resetSleep: () => void
+  addSleep: () => void
   addOrUpdateConcurrentOutput: ({prefix, index, output}: {
     prefix: string
     index: number
@@ -134,6 +136,7 @@ export function resetSleep() {
 export function printEventsJson(): void {
   if (isRecording()) {
     ensureInstance()
+    _instance.addSleep()
     console.log(_instance.recordedEventsJson())
   }
 }
