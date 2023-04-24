@@ -356,7 +356,7 @@ export interface RenderAutocompleteOptions<T>
  *
  */
 export function renderAutocompletePrompt<T>({renderOptions, ...props}: RenderAutocompleteOptions<T>): Promise<T> {
-  addEvent({type: 'autocomplete', properties: arguments[0]})
+  addEvent({type: 'autocompletePrompt', properties: arguments[0]})
 
   const newProps = {
     search(term: string) {
