@@ -11,6 +11,7 @@ import {
   addResolutionOrOverride,
   DependencyVersion,
   installNPMDependenciesRecursively,
+  PackageManager,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
@@ -147,12 +148,7 @@ async function uiExtensionInit({
     task: async () => {
       const directory = app.usesWorkspaces ? extensionDirectory : app.directory
       const packageManager = app.packageManager
-      const requiredDependencies = getExtensionRuntimeDependencies({specification})
-      await addNPMDependenciesIfNeeded(requiredDependencies, {packageManager, type: 'prod', directory})
-      if (extensionFlavor?.includes('react')) {
-        const reactDependency = {name: 'react', version: versions.react}
-        await addNPMDependenciesIfNeeded([reactDependency], {packageManager, type: 'peer', directory})
-      }
+      await addExtensionDependencies(directory, packageManager, specification.dependency, extensionFlavor)
       if (app.usesWorkspaces) {
         // If using workspaces, install dependencies after creating the extension with its own package.json
         // In case the dependencies in the templates are outdated, we use the one defined in the specification.
@@ -180,10 +176,18 @@ function getSrcFileExtension(extensionFlavor: ExtensionFlavorValue): SrcFileExte
   return flavorToSrcFileExtension[extensionFlavor] ?? 'js'
 }
 
-export function getExtensionRuntimeDependencies({
-  specification,
-}: Pick<UIExtensionInitOptions, 'specification'>): DependencyVersion[] {
-  return getArrayRejectingUndefined([specification.dependency])
+export async function addExtensionDependencies(
+  directory: string,
+  packageManager: PackageManager,
+  dependency: {name: string; version: string} | undefined,
+  extensionFlavor: ExtensionFlavorValue | undefined,
+): Promise<void> {
+  const requiredDependencies = getArrayRejectingUndefined([dependency])
+  await addNPMDependenciesIfNeeded(requiredDependencies, {packageManager, type: 'prod', directory})
+  if (extensionFlavor?.includes('react')) {
+    const reactDependency = {name: 'react', version: versions.react}
+    await addNPMDependenciesIfNeeded([reactDependency], {packageManager, type: 'peer', directory})
+  }
 }
 
 export function getFunctionRuntimeDependencies(templateLanguage: string): DependencyVersion[] {

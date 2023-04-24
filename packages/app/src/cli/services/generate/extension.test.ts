@@ -1,6 +1,6 @@
 import {
+  addExtensionDependencies,
   generateExtension,
-  getExtensionRuntimeDependencies,
   getFunctionRuntimeDependencies,
   TemplateLanguage,
 } from './extension.js'
@@ -397,42 +397,36 @@ describe('initialize a extension', async () => {
   })
 })
 
-describe('getExtensionRuntimeDependencies', () => {
-  test('no not include React for flavored Vanilla UI extensions', async () => {
+describe('addExtensionDependencies', () => {
+  test('adds the required dependencies', async () => {
     // Given
-    const allUISpecs = await loadLocalUIExtensionsSpecifications()
-    const extensionFlavor: ExtensionFlavorValue = 'vanilla-js'
+    const directory = '/tmp'
+    const dependency = {name: 'semver', version: '7.3.8'}
 
-    // When/then
-    allUISpecs.forEach((specification) => {
-      const got = getExtensionRuntimeDependencies({specification})
-      expect(got.find((dep) => dep.name === 'react' && dep.version === '^17.0.0')).toBeFalsy()
+    // When
+    await addExtensionDependencies(directory, 'yarn', dependency, undefined)
+
+    // Then
+    expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledOnce()
+    expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledWith([dependency], {
+      packageManager: 'yarn',
+      type: 'prod',
+      directory,
     })
   })
 
-  test('includes React for flavored React UI extensions', async () => {
+  test('adds react as a peer dependency when the chosen flavor requires it', async () => {
     // Given
-    const allUISpecs = await loadLocalUIExtensionsSpecifications()
-    const extensionFlavor: ExtensionFlavorValue = 'react'
+    const directory = '/tmp'
+    const react = {name: 'react', version: '^17.0.0'}
 
-    // When/then
-    allUISpecs.forEach((specification) => {
-      const got = getExtensionRuntimeDependencies({specification})
-      expect(got.find((dep) => dep.name === 'react' && dep.version === '^17.0.0')).toBeTruthy()
-    })
-  })
+    // When
+    await addExtensionDependencies(directory, 'npm', undefined, 'react')
 
-  test('includes the renderer package for UI extensions', async () => {
-    // Given
-    const allUISpecs = await loadLocalUIExtensionsSpecifications()
-
-    // When/then
-    allUISpecs.forEach((specification) => {
-      const reference = specification.dependency
-      if (reference) {
-        const got = getExtensionRuntimeDependencies({specification})
-        expect(got.find((dep) => dep.name === reference.name && dep.version === reference.version)).toBeTruthy()
-      }
+    expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledWith([react], {
+      packageManager: 'npm',
+      type: 'peer',
+      directory,
     })
   })
 })
