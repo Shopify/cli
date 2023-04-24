@@ -3,6 +3,13 @@ import {isTruthy} from './context/utilities.js'
 interface Event {
   type: string
   properties: any
+  // Only used within this recorder for tracking concurrency timeline
+  concurrencyStart?: number
+}
+
+interface ConcurrencyStep {
+  timestamp: number
+  endMessage: string
 }
 
 class DemoRecorder {
@@ -25,7 +32,7 @@ class DemoRecorder {
   }
 
   recordedEventsJson() {
-    return JSON.stringify({steps: this.recorded}, null, 2)
+    return JSON.stringify({steps: this.withFormattedConcurrent(this.recorded)}, null, 2)
   }
 
   addSleep() {
@@ -47,7 +54,7 @@ class DemoRecorder {
   }) {
     let last = this.recorded[this.recorded.length - 1]
     if (last?.type !== 'concurrent') {
-      this.addEvent({type: 'concurrent', properties: {processes: []}})
+      this.addEvent({type: 'concurrent', properties: {processes: [], concurrencyStart: Date.now()}})
       last = this.recorded[this.recorded.length - 1]
     } else {
       // Don't sleep between concurrent lines
@@ -58,7 +65,26 @@ class DemoRecorder {
       processes.push({prefix: '', steps: []})
     }
     processes[index].prefix = prefix
-    processes[index].steps.push({duration: 1, endMessage: output})
+    processes[index].steps.push({timestamp: Date.now(), endMessage: output})
+  }
+
+  withFormattedConcurrent(recorded: Event[]) {
+    return recorded.map(event => {
+      if (event.type === 'concurrent') {
+        const {processes, concurrencyStart} = event.properties
+        const formatted = processes.map(({prefix, steps}: {prefix: string, steps: ConcurrencyStep[]}) => {
+          let mostRecentTimestamp = concurrencyStart
+          const formattedSteps = steps.map(({timestamp, endMessage}) => {
+            const duration = (timestamp - mostRecentTimestamp) / 1000
+            mostRecentTimestamp = timestamp
+            return {duration, endMessage}
+          })
+          return {prefix, steps: formattedSteps}
+        })
+        return {type: 'concurrent', properties: {processes: formatted}}
+      }
+      return event
+    })
   }
 }
 
