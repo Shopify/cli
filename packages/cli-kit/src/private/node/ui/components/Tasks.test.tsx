@@ -1,6 +1,7 @@
 import {Task, Tasks} from './Tasks.js'
 import {getLastFrameAfterUnmount, render} from '../../testing/ui.js'
 import {unstyled} from '../../../../public/node/output.js'
+import {AbortController} from '../../../../public/node/abort.js'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -53,6 +54,7 @@ describe('Tasks', () => {
 
   test('stops at the task that throws error', async () => {
     // Given
+    const abortController = new AbortController()
     const secondTaskFunction = vi.fn(async () => {})
 
     const firstTask: Task = {
@@ -68,7 +70,9 @@ describe('Tasks', () => {
     }
 
     // When
-    const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
+    const renderInstance = render(
+      <Tasks tasks={[firstTask, secondTask]} silent={false} abortController={abortController} />,
+    )
 
     // Then
     await expect(renderInstance.waitUntilExit()).rejects.toThrowError('something went wrong')
@@ -395,6 +399,31 @@ describe('Tasks', () => {
 
     // Then
     expect(context).toEqual({foo: 'bar'})
+  })
+
+  test('abortController can be used to exit from outside', async () => {
+    // Given
+    const abortController = new AbortController()
+
+    const firstTaskFunction = vi.fn(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 10000))
+    })
+
+    const firstTask = {
+      title: 'task 1',
+      task: firstTaskFunction,
+    }
+
+    // When
+    const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} abortController={abortController} />)
+    await taskHasRendered()
+    const promise = renderInstance.waitUntilExit()
+
+    abortController.abort()
+
+    // Then
+    expect(unstyled(renderInstance.lastFrame()!)).toEqual('')
+    await expect(promise).resolves.toEqual(undefined)
   })
 })
 

@@ -3,6 +3,8 @@ import useLayout from '../hooks/use-layout.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {isUnitTest} from '../../../../public/node/context/local.js'
 import {handleCtrlC} from '../../ui.js'
+import {AbortController} from '../../../../public/node/abort.js'
+import useAbortSignal from '../hooks/use-abort-signal.js'
 import {Box, Text, useInput, useStdin} from 'ink'
 import React, {useRef, useState} from 'react'
 
@@ -21,6 +23,7 @@ export interface TasksProps<TContext> {
   tasks: Task<TContext>[]
   silent?: boolean
   onComplete?: (ctx: TContext) => void
+  abortController?: AbortController
 }
 
 enum TasksState {
@@ -60,6 +63,7 @@ function Tasks<TContext>({
   tasks,
   silent = isUnitTest(),
   onComplete = noop,
+  abortController,
 }: React.PropsWithChildren<TasksProps<TContext>>) {
   const {twoThirds} = useLayout()
   const loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
@@ -91,7 +95,9 @@ function Tasks<TContext>({
       setState(TasksState.Success)
       onComplete(ctx.current)
     },
-    onRejected: () => setState(TasksState.Failure),
+    onRejected: () => {
+      setState(TasksState.Failure)
+    },
   })
 
   useInput(
@@ -105,11 +111,13 @@ function Tasks<TContext>({
     {isActive: Boolean(isRawModeSupported)},
   )
 
+  const {isAborted} = useAbortSignal(abortController?.signal)
+
   if (silent) {
     return null
   }
 
-  return state === TasksState.Loading ? (
+  return state === TasksState.Loading && !isAborted ? (
     <Box flexDirection="column">
       <TextAnimation text={loadingBar} />
       <Text>{currentTask.title} ...</Text>

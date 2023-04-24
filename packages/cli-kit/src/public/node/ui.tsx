@@ -49,10 +49,15 @@ export async function renderConcurrent({renderOptions, ...props}: RenderConcurre
     ...props,
   }
   if (terminalSupportsRawMode(renderOptions?.stdin)) {
-    return render(<ConcurrentOutput {...newProps} />, {
-      ...renderOptions,
-      exitOnCtrlC: typeof props.onInput === 'undefined',
-    })
+    try {
+      await render(<ConcurrentOutput {...newProps} />, {
+        ...renderOptions,
+        exitOnCtrlC: typeof props.onInput === 'undefined',
+      })
+    } catch (error) {
+      newProps.abortController.abort()
+      throw error
+    }
   } else {
     return Promise.all(
       newProps.processes.map(async (concurrentProcess) => {
@@ -259,7 +264,7 @@ export interface RenderSelectPromptOptions<T> extends Omit<SelectPromptProps<T>,
  *    Press ↑↓ arrows to select, enter to confirm
  *
  */
-export function renderSelectPrompt<T>({
+export async function renderSelectPrompt<T>({
   renderOptions,
   isConfirmationPrompt,
   ...props
@@ -278,7 +283,8 @@ export function renderSelectPrompt<T>({
   })
 }
 
-export interface RenderConfirmationPromptOptions extends Pick<SelectPromptProps<boolean>, 'message' | 'infoTable'> {
+export interface RenderConfirmationPromptOptions
+  extends Pick<SelectPromptProps<boolean>, 'message' | 'infoTable' | 'abortController'> {
   confirmationMessage?: string
   cancellationMessage?: string
   renderOptions?: RenderOptions
@@ -299,13 +305,14 @@ export interface RenderConfirmationPromptOptions extends Pick<SelectPromptProps<
  *    Press ↑↓ arrows to select, enter or a shortcut to confirm
  *
  */
-export function renderConfirmationPrompt({
+export async function renderConfirmationPrompt({
   message,
   infoTable,
   confirmationMessage = 'Yes, confirm',
   cancellationMessage = 'No, cancel',
   renderOptions,
   defaultValue = true,
+  abortController,
 }: RenderConfirmationPromptOptions): Promise<boolean> {
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'confirmationPrompt', properties: arguments[0]})
@@ -331,6 +338,7 @@ export function renderConfirmationPrompt({
     renderOptions,
     defaultValue,
     isConfirmationPrompt: true,
+    abortController,
   })
 }
 
@@ -373,7 +381,7 @@ export interface RenderAutocompleteOptions<T>
  *    Press ↑↓ arrows to select, enter to confirm
  *
  */
-export function renderAutocompletePrompt<T>({renderOptions, ...props}: RenderAutocompleteOptions<T>): Promise<T> {
+export async function renderAutocompletePrompt<T>({renderOptions, ...props}: RenderAutocompleteOptions<T>): Promise<T> {
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'autocompletePrompt', properties: arguments[0]})
 
@@ -463,7 +471,7 @@ export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit
  *    ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
  *
  */
-export function renderTextPrompt({renderOptions, ...props}: RenderTextPromptOptions): Promise<string> {
+export async function renderTextPrompt({renderOptions, ...props}: RenderTextPromptOptions): Promise<string> {
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'textPrompt', properties: arguments[0]})
 

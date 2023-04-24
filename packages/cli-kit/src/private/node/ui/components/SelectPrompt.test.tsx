@@ -2,6 +2,7 @@ import {SelectPrompt} from './SelectPrompt.js'
 import {getLastFrameAfterUnmount, sendInputAndWaitForChange, waitForInputsToBeReady, render} from '../../testing/ui.js'
 import {unstyled} from '../../../../public/node/output.js'
 import {Stdout} from '../../ui.js'
+import {AbortController} from '../../../../public/node/abort.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {useStdout} from 'ink'
@@ -342,5 +343,35 @@ describe('SelectPrompt', async () => {
          [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)
+  })
+
+  test('abortController can be used to exit the prompt from outside', async () => {
+    const items = [
+      {label: 'a', value: 'a'},
+      {label: 'b', value: 'b'},
+    ]
+
+    const abortController = new AbortController()
+
+    const renderInstance = render(
+      <SelectPrompt choices={items} onSubmit={() => {}} message="Test question?" abortController={abortController} />,
+    )
+
+    const promise = renderInstance.waitUntilExit()
+
+    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
+    "?  Test question?
+
+    >  (1) a
+       (2) b
+
+       Press ↑↓ arrows to select, enter to confirm
+    "
+  `)
+
+    abortController.abort()
+
+    expect(getLastFrameAfterUnmount(renderInstance)).toEqual('')
+    await expect(promise).resolves.toEqual(undefined)
   })
 })

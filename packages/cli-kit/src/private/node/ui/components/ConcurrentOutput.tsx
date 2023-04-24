@@ -4,6 +4,7 @@ import {AbortController} from '../../../../public/node/abort.js'
 import {handleCtrlC} from '../../ui.js'
 import {addOrUpdateConcurrentUIEventOutput} from '../../demo-recorder.js'
 import {treeKill} from '../../tree-kill.js'
+import useAbortSignal from '../hooks/use-abort-signal.js'
 import React, {FunctionComponent, useState} from 'react'
 import {Box, Key, Static, Text, useInput, TextProps, useStdin} from 'ink'
 import stripAnsi from 'strip-ansi'
@@ -124,7 +125,8 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     {isActive: typeof onInput !== 'undefined' && Boolean(isRawModeSupported)},
   )
 
-  useAsyncAndUnmount(runProcesses, {onRejected: () => abortController.abort()})
+  useAsyncAndUnmount(runProcesses)
+  const {isAborted} = useAbortSignal(abortController.signal)
 
   return (
     <>
@@ -165,7 +167,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
           )
         }}
       </Static>
-      {footer ? (
+      {!isAborted && footer ? (
         <Box marginY={1} flexDirection="column" flexGrow={1}>
           {isRawModeSupported ? (
             <Box flexDirection="column">
