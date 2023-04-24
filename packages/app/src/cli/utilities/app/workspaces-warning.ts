@@ -1,5 +1,4 @@
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 const links = {
@@ -12,8 +11,8 @@ export function showWorkspaceWarning(packageManager: PackageManager) {
   renderWarning({
     headline: 'Dependency installation behavior soon to change',
     body: [
-      'The CLI will soon stop installing dependencies in project subdirectories by default. To maintain the same behavior, please transition over to using workspaces by running',
-      {command: formatPackageManagerCommand(packageManager, 'app migrate workspaces')},
+      'The CLI will soon stop installing dependencies in project subdirectories by default. ' +
+        'To maintain the same behavior, please transition over to using workspaces.',
     ],
     reference: [
       [
