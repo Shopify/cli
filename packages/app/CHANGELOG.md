@@ -1,5 +1,22 @@
 # @shopify/app
 
+## 3.46.0-pre.2
+
+### Minor Changes
+
+- 162504891: Introduce the `--notify` flag in the shopfiy app/theme dev commands
+
+### Patch Changes
+
+- 05a853f8b: Fix auth_callback_path config for frontends
+- Updated dependencies [a7c1eabeb]
+- Updated dependencies [162504891]
+- Updated dependencies [151684a25]
+- Updated dependencies [01988114d]
+  - @shopify/cli-kit@3.46.0-pre.2
+  - @shopify/plugin-cloudflare@3.46.0-pre.2
+  - @shopify/plugin-ngrok@3.46.0-pre.2
+
 ## 3.46.0-pre.1
 
 ### Patch Changes

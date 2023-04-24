@@ -1,5 +1,18 @@
 # @shopify/cli-kit
 
+## 3.46.0-pre.2
+
+### Minor Changes
+
+- 162504891: Introduce the `--notify` flag in the shopfiy app/theme dev commands
+- 151684a25: - Improve rule for lazy loading to prevent developers from overusing it
+  - Introduce `--update-docs` flag to synchronously update Theme Check resources (objects, filters, and tags)
+- 01988114d: Add support for Google Cloud Shell
+
+### Patch Changes
+
+- a7c1eabeb: Add support for theme app extensions in Spin
+
 ## 3.46.0-pre.1
 
 ### Minor Changes

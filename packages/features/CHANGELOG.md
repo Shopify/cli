@@ -1,5 +1,11 @@
 # @shopify/features
 
+## 0.8.0-pre.0
+
+### Minor Changes
+
+- e13c78960: Hide plugins commands
+
 ## 0.7.2
 
 ### Patch Changes
