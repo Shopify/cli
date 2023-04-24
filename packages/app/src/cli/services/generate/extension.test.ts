@@ -405,7 +405,7 @@ describe('getExtensionRuntimeDependencies', () => {
 
     // When/then
     allUISpecs.forEach((specification) => {
-      const got = getExtensionRuntimeDependencies({specification, extensionFlavor})
+      const got = getExtensionRuntimeDependencies({specification})
       expect(got.find((dep) => dep.name === 'react' && dep.version === '^17.0.0')).toBeFalsy()
     })
   })
@@ -417,7 +417,7 @@ describe('getExtensionRuntimeDependencies', () => {
 
     // When/then
     allUISpecs.forEach((specification) => {
-      const got = getExtensionRuntimeDependencies({specification, extensionFlavor})
+      const got = getExtensionRuntimeDependencies({specification})
       expect(got.find((dep) => dep.name === 'react' && dep.version === '^17.0.0')).toBeTruthy()
     })
   })
