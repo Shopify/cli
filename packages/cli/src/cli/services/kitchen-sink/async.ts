@@ -43,7 +43,7 @@ export async function asyncTasks() {
       shortcuts: [
         {
           key: 'p',
-          action: 'open your browser',
+          action: 'preview in your browser',
         },
         {
           key: 'q',

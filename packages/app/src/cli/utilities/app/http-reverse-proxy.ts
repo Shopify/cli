@@ -132,7 +132,7 @@ ${outputToken.json(JSON.stringify(rules))}
         shortcuts: [
           {
             key: 'p',
-            action: 'open your browser',
+            action: 'preview in your browser',
           },
           {
             key: 'q',

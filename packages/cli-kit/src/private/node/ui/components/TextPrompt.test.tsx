@@ -1,7 +1,6 @@
 import {TextPrompt} from './TextPrompt.js'
-import {getLastFrameAfterUnmount, sendInputAndWaitForChange, waitForInputsToBeReady} from '../../testing/ui.js'
+import {getLastFrameAfterUnmount, sendInputAndWaitForChange, waitForInputsToBeReady, render} from '../../testing/ui.js'
 import {unstyled} from '../../../../public/node/output.js'
-import {render} from 'ink-testing-library'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 

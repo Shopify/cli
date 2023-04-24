@@ -1,9 +1,9 @@
 import {FatalError} from './FatalError.js'
 import {unstyled} from '../../../../public/node/output.js'
 import {AbortError, BugError, ExternalError} from '../../../../public/node/error.js'
+import {render} from '../../testing/ui.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
-import {render} from 'ink-testing-library'
 
 describe('FatalError', async () => {
   test('renders correctly with a just a message and tryMessage', async () => {

@@ -10,13 +10,14 @@ module ShopifyCLI
         class FileChangeHook
           include ShopifyCLI::Theme::IgnoreHelper
 
-          attr_reader :include_filter, :ignore_filter
+          attr_reader :include_filter, :ignore_filter, :notifier
 
-          def initialize(ctx, theme:, include_filter: nil, ignore_filter: nil)
+          def initialize(ctx, theme:, include_filter: nil, ignore_filter: nil, notifier: nil)
             @ctx = ctx
             @theme = theme
             @include_filter = include_filter
             @ignore_filter = ignore_filter
+            @notifier = notifier
           end
 
           def call(modified, added, removed, streams: nil)
@@ -34,6 +35,8 @@ module ShopifyCLI
 
             hot_reload(files) unless files.empty?
             remote_reload(liquid_css_files)
+
+            notifier.notify_updates(modified + added + removed) unless (modified + added + removed).empty?
           end
 
           private

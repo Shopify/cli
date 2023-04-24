@@ -1,8 +1,7 @@
 import {SelectInput} from './SelectInput.js'
-import {sendInputAndWait, sendInputAndWaitForChange, waitForInputsToBeReady} from '../../testing/ui.js'
+import {sendInputAndWait, sendInputAndWaitForChange, waitForInputsToBeReady, render} from '../../testing/ui.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
-import {render} from 'ink-testing-library'
 
 const ARROW_UP = '\u001B[A'
 const ARROW_DOWN = '\u001B[B'
