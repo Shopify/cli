@@ -3,10 +3,10 @@ import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {AbortController} from '../../../../public/node/abort.js'
 import {handleCtrlC} from '../../ui.js'
 import {addOrUpdateConcurrentOutput} from '../../demo-recorder.js'
+import {treeKill} from '../../tree-kill.js'
 import React, {FunctionComponent, useState} from 'react'
 import {Box, Key, Static, Text, useInput, TextProps, useStdin} from 'ink'
 import stripAnsi from 'strip-ansi'
-import treeKill from 'tree-kill'
 import figures from 'figures'
 import {Writable} from 'stream'
 
@@ -117,7 +117,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     (input, key) => {
       handleCtrlC(input, key)
 
-      onInput!(input, key, () => treeKill(process.pid, 'SIGINT'))
+      onInput!(input, key, () => treeKill('SIGINT'))
     },
     // isRawModeSupported can be undefined even if the type doesn't say so
     // Ink is checking that isActive is actually === false, not falsey

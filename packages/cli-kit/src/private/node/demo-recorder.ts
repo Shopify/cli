@@ -87,7 +87,7 @@ let _instance: {
 
 function ensureInstance() {
   if (!_instance) {
-    if (isTruthy(process.env.RECORD_DEMO)) {
+    if (isRecording()) {
       _instance = new DemoRecorder()
     } else {
       _instance = new NoopDemoRecorder()
@@ -105,12 +105,18 @@ export function resetSleep() {
   _instance.resetSleep()
 }
 
-export function exportEventsJson() {
-  ensureInstance()
-  return _instance.recordedEventsJson()
+export function printEventsJson(): void {
+  if (isRecording()) {
+    ensureInstance()
+    console.log(_instance.recordedEventsJson())
+  }
 }
 
 export function addOrUpdateConcurrentOutput(data: {prefix: string; index: number; output: string}) {
   ensureInstance()
   _instance.addOrUpdateConcurrentOutput(data)
+}
+
+function isRecording() {
+  return isTruthy(process.env.RECORD_DEMO)
 }

@@ -1,5 +1,5 @@
 import {isTruthy} from '../../private/node/context/utilities.js'
-import {exportEventsJson} from '../../private/node/demo-recorder.js'
+import {printEventsJson} from '../../private/node/demo-recorder.js'
 import {Flags} from '@oclif/core'
 
 /**
@@ -62,11 +62,7 @@ export async function runCLI(options: RunCLIOptions): Promise<void> {
   run(undefined, options.moduleURL)
     .then(() => flush())
     .catch(errorHandler)
-    .finally(() => {
-      if (isTruthy(process.env.RECORD_DEMO)) {
-        console.log(exportEventsJson())
-      }
-    })
+    .finally(printEventsJson)
 }
 
 /**
