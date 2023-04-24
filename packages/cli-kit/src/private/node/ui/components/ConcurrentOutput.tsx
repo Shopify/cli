@@ -102,11 +102,16 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
 
   const runProcesses = () => {
     return Promise.all(
-      processes.map(async (process, index) => {
-        const stdout = writableStream(process, index)
-        const stderr = writableStream(process, index)
+      processes.map(async (concurrentProcess, index) => {
+        let stdout = writableStream(concurrentProcess, index)
+        let stderr = writableStream(concurrentProcess, index)
 
-        await process.action(stdout, stderr, abortController.signal)
+        if (!isRawModeSupported) {
+          stdout = process.stdout
+          stderr = process.stderr
+        }
+
+        await concurrentProcess.action(stdout, stderr, abortController.signal)
       }),
     )
   }
