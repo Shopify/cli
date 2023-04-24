@@ -1,4 +1,5 @@
 import {isTruthy} from './context/utilities.js'
+import {ConcurrentOutputProps} from './ui/components/ConcurrentOutput.js'
 
 interface Event {
   type: string
@@ -51,10 +52,14 @@ class DemoRecorder {
     prefix: string
     index: number
     output: string
-  }) {
+  }, {footer}: {footer: ConcurrentOutputProps['footer']}) {
     let last = this.recorded[this.recorded.length - 1]
     if (last?.type !== 'concurrent') {
-      this.addEvent({type: 'concurrent', properties: {processes: [], concurrencyStart: Date.now()}})
+      const eventProperties: Event = {
+        type: 'concurrent', properties: {processes: [], concurrencyStart: Date.now()}
+      }
+      if (footer) eventProperties.properties.footer = footer
+      this.addEvent(eventProperties)
       last = this.recorded[this.recorded.length - 1]
     } else {
       // Don't sleep between concurrent lines
@@ -71,7 +76,7 @@ class DemoRecorder {
   withFormattedConcurrent(recorded: Event[]) {
     return recorded.map(event => {
       if (event.type === 'concurrent') {
-        const {processes, concurrencyStart} = event.properties
+        const {processes, footer, concurrencyStart} = event.properties
         const formatted = processes.map(({prefix, steps}: {prefix: string, steps: ConcurrencyStep[]}) => {
           let mostRecentTimestamp = concurrencyStart
           const formattedSteps = steps.map(({timestamp, endMessage}) => {
@@ -81,7 +86,7 @@ class DemoRecorder {
           })
           return {prefix, steps: formattedSteps}
         })
-        return {type: 'concurrent', properties: {processes: formatted}}
+        return {type: 'concurrent', properties: {footer, processes: formatted}}
       }
       return event
     })
@@ -98,7 +103,7 @@ class NoopDemoRecorder {
   addSleep() {}
   resetSleep() {}
 
-  addOrUpdateConcurrentOutput(_data: {prefix: string; index: number; output: string}) {}
+  addOrUpdateConcurrentOutput(..._args: any) {}
 }
 
 let _instance: {
@@ -110,7 +115,7 @@ let _instance: {
     prefix: string
     index: number
     output: string
-  }) => void
+  }, {footer}: {footer: ConcurrentOutputProps['footer']}) => void
 }
 
 function ensureInstance() {
@@ -141,9 +146,13 @@ export function printEventsJson(): void {
   }
 }
 
-export function addOrUpdateConcurrentOutput(data: {prefix: string; index: number; output: string}) {
+export function addOrUpdateConcurrentOutput(data: {
+    prefix: string
+    index: number
+    output: string
+  }, componentData: {footer: ConcurrentOutputProps['footer']}) {
   ensureInstance()
-  _instance.addOrUpdateConcurrentOutput(data)
+  _instance.addOrUpdateConcurrentOutput(data, componentData)
 }
 
 function isRecording() {

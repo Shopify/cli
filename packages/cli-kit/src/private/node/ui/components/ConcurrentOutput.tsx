@@ -86,7 +86,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     return new Writable({
       write(chunk, _encoding, next) {
         const lines = stripAnsi(chunk.toString('utf8').replace(/(\n)$/, '')).split(/\n/)
-        addOrUpdateConcurrentOutput({prefix: process.prefix, index, output: lines.join('\n')})
+        addOrUpdateConcurrentOutput({prefix: process.prefix, index, output: lines.join('\n')}, {footer})
 
         setProcessOutput((previousProcessOutput) => [
           ...previousProcessOutput,
