@@ -1,5 +1,3 @@
-import {isTruthy} from '../../../private/node/context/utilities.js'
-import {exportEventsJson} from '../../../private/node/demo-recorder.js'
 import {postrun as deprecationsHook} from './deprecations.js'
 import {reportAnalyticsEvent} from '../analytics.js'
 import {outputDebug} from '../../../public/node/output.js'
@@ -12,8 +10,4 @@ export const hook: Hook.Postrun = async ({config, Command}) => {
 
   const command = Command?.id?.replace(/:/g, ' ')
   outputDebug(`Completed command ${command}`)
-
-  if (isTruthy(process.env.RECORD_DEMO)) {
-    console.log(exportEventsJson())
-  }
 }
