@@ -374,15 +374,18 @@ export function consoleWarn(message: string): void {
  * @param logLevel - The log level to use to determine if the message should be output.
  * @param logger - The logger to use to output the message.
  * @param message - The message to output.
+ * @param options.skipEvent - By default, the event log will include the output.
+ * Specify this as true to skip the event log. This is useful in cases where
+ * the event log will already have a higher-level concept to represent this activity.
  */
-export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, message: string): void {
+export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, message: string, {skipEvent}: {skipEvent?: boolean} = {}): void {
   if (shouldOutput(logLevel)) {
     if (logger instanceof Writable) {
       logger.write(message)
     } else {
       logger(message)
     }
-    addEvent({type: 'output', properties: { content: message }})
+    if (!skipEvent) addEvent({type: 'output', properties: { content: message }})
   }
 }
 
