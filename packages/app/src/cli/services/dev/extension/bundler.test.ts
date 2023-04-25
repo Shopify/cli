@@ -13,7 +13,7 @@ import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
 import {BuildResult} from 'esbuild'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
@@ -276,7 +276,7 @@ describe('setupConfigWatcher()', async () => {
       stderr,
       token: 'mock-token',
     })
-    expect(outputDebug).toHaveBeenCalledWith(`Config file at path ${mockExtension.configurationPath} changed`, stdout)
+    expect(outputInfo).toHaveBeenCalledWith(`Config file at path ${mockExtension.configurationPath} changed`, stdout)
   })
 
   test('stops watching the config file when the signal aborts and close resolves', async () => {
@@ -423,7 +423,7 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
       registrationId,
       stderr,
     })
-    expect(outputDebug).toHaveBeenCalledWith(`The Javascript bundle of the extension with ID 1 has changed`, stdout)
+    expect(outputInfo).toHaveBeenCalledWith(`The Javascript bundle of the extension with ID 1 has changed`, stdout)
   })
 
   test('does not call updateExtensionDraft when the bundle has errors', async () => {
@@ -450,6 +450,6 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
     bundleExtensionFn.mock.calls[0][0].watch(buildFailure)
 
     expect(updateExtensionDraft).not.toHaveBeenCalled()
-    expect(outputDebug).toHaveBeenCalledWith(`The Javascript bundle of the extension with ID 1 has an error`, stderr)
+    expect(outputInfo).toHaveBeenCalledWith(`The Javascript bundle of the extension with ID 1 has an error`, stderr)
   })
 })
