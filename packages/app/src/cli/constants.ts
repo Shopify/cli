@@ -75,6 +75,10 @@ export const extensionTypesGroups: {name: string; extensions: string[]}[] = [
     name: 'Shopify private',
     extensions: ['customer_accounts_ui_extension', 'ui_extension', 'order_routing_location_rule'],
   },
+  {
+    name: 'Flow',
+    extensions: ['flow_action_definition'],
+  },
 ]
 
 export const templates = {
