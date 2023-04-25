@@ -250,6 +250,7 @@ const demoStepSchema = zod.discriminatedUnion('type', [
   renderConcurrentStepSchema,
 ])
 export const demoStepsSchema = zod.object({
+  $schema: zod.string().optional(),
   steps: zod.array(demoStepSchema),
 })
 type DemoSteps = zod.infer<typeof demoStepsSchema>
