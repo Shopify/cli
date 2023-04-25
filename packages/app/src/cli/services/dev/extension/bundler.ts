@@ -8,7 +8,7 @@ import {UIExtensionSpec} from '../../../models/extensions/ui.js'
 import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 export interface WatchEvent {
@@ -152,7 +152,7 @@ export async function setupNonPreviewableExtensionBundler({
 
     watch: async (result) => {
       const error = (result?.errors?.length ?? 0) > 0
-      outputDebug(
+      outputInfo(
         `The Javascript bundle of the extension with ID ${extension.devUUID} has ${error ? 'an error' : 'changed'}`,
         error ? stderr : stdout,
       )
@@ -187,7 +187,7 @@ export async function setupConfigWatcher({
   const {default: chokidar} = await import('chokidar')
 
   const configWatcher = chokidar.watch(extension.configurationPath).on('change', (_event, _path) => {
-    outputDebug(`Config file at path ${extension.configurationPath} changed`, stdout)
+    outputInfo(`Config file at path ${extension.configurationPath} changed`, stdout)
     updateExtensionConfig({extension, token, apiKey, registrationId, stderr, specifications}).catch((_: unknown) => {})
   })
 

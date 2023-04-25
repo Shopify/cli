@@ -185,7 +185,7 @@ async function dev(options: DevOptions) {
 
   if (nonPreviewableExtensions.length > 0) {
     additionalProcesses.push(
-      await devNonPreviewableExtensionTarget({
+      devNonPreviewableExtensionTarget({
         app: localApp,
         apiKey,
         url: proxyUrl,
