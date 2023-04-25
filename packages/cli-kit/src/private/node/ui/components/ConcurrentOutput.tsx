@@ -33,6 +33,11 @@ interface Chunk {
   lines: string[]
 }
 
+enum ConcurrentOutputState {
+  Running = 'running',
+  Stopped = 'stopped',
+}
+
 /**
  * Renders output from concurrent processes to the terminal.
  * Output will be divided in a three column layout
@@ -77,6 +82,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   const concurrentColors: TextProps['color'][] = ['yellow', 'cyan', 'magenta', 'green', 'blue']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
   const {isRawModeSupported} = useStdin()
+  const [state, setState] = useState<ConcurrentOutputState>(ConcurrentOutputState.Running)
 
   function lineColor(index: number) {
     const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
@@ -125,7 +131,15 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     {isActive: typeof onInput !== 'undefined' && Boolean(isRawModeSupported)},
   )
 
-  useAsyncAndUnmount(runProcesses)
+  useAsyncAndUnmount(runProcesses, {
+    onFulfilled: () => {
+      setState(ConcurrentOutputState.Stopped)
+    },
+    onRejected: () => {
+      setState(ConcurrentOutputState.Stopped)
+    },
+  })
+
   const {isAborted} = useAbortSignal(abortController.signal)
 
   return (
@@ -167,7 +181,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
           )
         }}
       </Static>
-      {!isAborted && footer ? (
+      {state === ConcurrentOutputState.Running && !isAborted && footer ? (
         <Box marginY={1} flexDirection="column" flexGrow={1}>
           {isRawModeSupported ? (
             <Box flexDirection="column">

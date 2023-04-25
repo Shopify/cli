@@ -10,9 +10,14 @@ describe('ConcurrentOutput', () => {
   test('renders a stream of concurrent outputs from sub-processes', async () => {
     // Given
     let backendPromiseResolve: () => void
+    let frontendPromiseResolve: () => void
 
     const backendPromise = new Promise<void>(function (resolve, _reject) {
       backendPromiseResolve = resolve
+    })
+
+    const frontendPromise = new Promise<void>(function (resolve, _reject) {
+      frontendPromiseResolve = resolve
     })
 
     const backendProcess = {
@@ -34,6 +39,11 @@ describe('ConcurrentOutput', () => {
         stdout.write('first frontend message')
         stdout.write('second frontend message')
         stdout.write('third frontend message')
+
+        frontendPromiseResolve()
+
+        // await promise that never resolves
+        await new Promise(() => {})
       },
     }
     // When
@@ -58,11 +68,10 @@ describe('ConcurrentOutput', () => {
       />,
     )
 
-    // wait for all output to be rendered
-    await renderInstance.waitUntilExit()
+    await frontendPromise
 
     // Then
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
       "0000-00-00 00:00:00 │ backend  │ first backend message
       0000-00-00 00:00:00 │ backend  │ second backend message
       0000-00-00 00:00:00 │ backend  │ third backend message
@@ -81,9 +90,14 @@ describe('ConcurrentOutput', () => {
   test("doesn't render shortcuts if the stdin is not a TTY", async () => {
     // Given
     let backendPromiseResolve: () => void
+    let frontendPromiseResolve: () => void
 
     const backendPromise = new Promise<void>(function (resolve, _reject) {
       backendPromiseResolve = resolve
+    })
+
+    const frontendPromise = new Promise<void>(function (resolve, _reject) {
+      frontendPromiseResolve = resolve
     })
 
     const backendProcess = {
@@ -105,6 +119,11 @@ describe('ConcurrentOutput', () => {
         stdout.write('first frontend message')
         stdout.write('second frontend message')
         stdout.write('third frontend message')
+
+        frontendPromiseResolve()
+
+        // await promise that never resolves
+        await new Promise(() => {})
       },
     }
     // When
@@ -130,8 +149,7 @@ describe('ConcurrentOutput', () => {
       {stdin: new Stdin({isTTY: false})},
     )
 
-    // wait for all output to be rendered
-    await renderInstance.waitUntilExit()
+    await frontendPromise
 
     // Then
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
@@ -186,7 +204,8 @@ describe('ConcurrentOutput', () => {
         stdout.write('second backend message')
         stdout.write('third backend message')
 
-        await new Promise((resolve) => setTimeout(resolve, 10000))
+        // await promise that never resolves
+        await new Promise(() => {})
       },
     }
 
@@ -262,5 +281,55 @@ describe('ConcurrentOutput', () => {
     )
 
     await expect(renderInstance.waitUntilExit()).rejects.toThrowError('something went wrong')
+
+    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+      "0000-00-00 00:00:00 │ backend │ first backend message
+      0000-00-00 00:00:00 │ backend │ second backend message
+      0000-00-00 00:00:00 │ backend │ third backend message
+      "
+    `)
+  })
+
+  test("doesn't render the footer when the processes resolve", async () => {
+    // Given
+    const backendProcess = {
+      prefix: 'backend',
+      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+        stdout.write('first backend message')
+        stdout.write('second backend message')
+        stdout.write('third backend message')
+      },
+    }
+
+    // When
+
+    const renderInstance = render(
+      <ConcurrentOutput
+        processes={[backendProcess]}
+        abortController={new AbortController()}
+        footer={{
+          shortcuts: [
+            {
+              key: 'p',
+              action: 'preview in your browser',
+            },
+            {
+              key: 'q',
+              action: 'quit',
+            },
+          ],
+          subTitle: `Preview URL: https://shopify.com`,
+        }}
+      />,
+    )
+
+    await renderInstance.waitUntilExit()
+
+    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+      "0000-00-00 00:00:00 │ backend │ first backend message
+      0000-00-00 00:00:00 │ backend │ second backend message
+      0000-00-00 00:00:00 │ backend │ third backend message
+      "
+    `)
   })
 })
