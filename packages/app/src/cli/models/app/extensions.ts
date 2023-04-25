@@ -1,6 +1,6 @@
 import {FunctionSpec, FunctionConfigType} from '../extensions/functions.js'
 import {ThemeConfigContents, ThemeExtensionSpec} from '../extensions/theme.js'
-import {FlowConfigContents, FlowExtensionSpec} from '../extensions/flow.js'
+import {FlowConfigContents} from '../extensions/flow.js'
 import {UIExtensionSpec} from '../extensions/ui.js'
 import {BaseConfigContents} from '../extensions/schemas.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'

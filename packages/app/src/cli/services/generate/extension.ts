@@ -4,6 +4,7 @@ import {FunctionSpec} from '../../models/extensions/functions.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
+import {FlowExtensionSpec} from '../../models/extensions/flow.js'
 import {buildGraphqlTypes} from '../function/build.js'
 import {ensureFunctionExtensionFlavorExists} from '../function/common.js'
 import {
@@ -21,6 +22,7 @@ import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fileURLToPath} from 'url'
 
 async function getTemplatePath(name: string): Promise<string> {
+  console.log({name})
   const templatePath = await findPathUp(`templates/${name}`, {
     cwd: dirname(fileURLToPath(import.meta.url)),
     type: 'directory',
@@ -54,6 +56,7 @@ export type ExtensionFlavorValue = 'vanilla-js' | 'react' | 'typescript' | 'type
 type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionSpec> & ExtensionDirectory & FunctionFlavor
 type UIExtensionInitOptions = ExtensionInitOptions<UIExtensionSpec> & ExtensionDirectory
 type ThemeExtensionInitOptions = ExtensionInitOptions<ThemeExtensionSpec> & ExtensionDirectory
+type FlowExtensionInitOptions = ExtensionInitOptions<FlowExtensionSpec> & ExtensionDirectory
 
 export type TemplateLanguage = 'javascript' | 'rust' | 'wasm'
 function getTemplateLanguage(flavor: ExtensionFlavorValue): TemplateLanguage {
@@ -88,10 +91,18 @@ export async function generateExtension(extensionOptions: ExtensionInitOptions[]
         case 'ui':
           await uiExtensionInit({...(options as UIExtensionInitOptions), extensionDirectory})
           break
+        case 'flow':
+          await FlowExtensionInit({...(options as FlowExtensionInitOptions), extensionDirectory})
+          break
       }
       return {directory: relativizePath(extensionDirectory), specification: options.specification}
     }),
   )
+}
+
+async function FlowExtensionInit({name, app, specification, extensionDirectory}: FlowExtensionInitOptions) {
+  const templatePath = await getTemplatePath('flow-extensions')
+  await recursiveLiquidTemplateCopy(templatePath, extensionDirectory, {name, type: specification.identifier})
 }
 
 async function themeExtensionInit({name, app, specification, extensionDirectory}: ThemeExtensionInitOptions) {
