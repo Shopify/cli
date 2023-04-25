@@ -47,7 +47,7 @@ export async function renderConcurrent({renderOptions, ...props}: RenderConcurre
     abortController: new AbortController(),
     ...props,
   }
-  if (terminalSupportsRawMode()) {
+  if (terminalSupportsRawMode(renderOptions?.stdin)) {
     return render(<ConcurrentOutput {...newProps} />, {
       ...renderOptions,
       exitOnCtrlC: typeof props.onInput === 'undefined',

@@ -4,6 +4,7 @@ import {cwd} from './path.js'
 import {shouldDisplayColors, outputDebug} from '../../public/node/output.js'
 import {execa, ExecaChildProcess} from 'execa'
 import treeKill from 'tree-kill'
+import {ReadStream} from 'tty'
 import type {Writable, Readable} from 'stream'
 
 export interface ExecOptions {
@@ -123,10 +124,13 @@ export async function sleep(seconds: number): Promise<void> {
 }
 
 /**
- * Check if the current proccess is running from a terminal that supports raw mode entry.
+ * In case an standard input stream is passed check if it supports raw mode. Otherwise default standard input stream
+ * will be used.
  *
- * @returns True if the current proccess support raw mode entry.
+ * @param stdin - The standard input stream to check.
+ * @returns True in the selected input stream support raw mode.
  */
-export function terminalSupportsRawMode(): boolean {
-  return process.stdout.isTTY
+export function terminalSupportsRawMode(stdin?: ReadStream): boolean {
+  if (stdin) return Boolean(stdin.isTTY)
+  return process.stdin.isTTY
 }

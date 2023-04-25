@@ -35,8 +35,6 @@ export const examples: {[key in string]: Example} = {
     basic: async () => {
       const stdout = new Stdout({columns: TERMINAL_WIDTH})
       const stdin = new Stdin()
-      const previousIsTTY = process.stdout.isTTY
-      process.stdout.isTTY = true
 
       let backendPromiseResolve: () => void
 
@@ -87,7 +85,6 @@ export const examples: {[key in string]: Example} = {
         () => Boolean((stdout.frames ?? []).some(frame => unstyled(frame).includes('third frontend message')))
       )
 
-      process.stdout.isTTY = previousIsTTY
       return stdout.frames.find(frame => unstyled(frame).includes('third frontend message'))!.replace(/\d/g, '0')
     },
   },
