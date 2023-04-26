@@ -53,7 +53,6 @@ export async function bundleExtension(options: BundleOptions) {
   if (options.watch) {
     await context.watch()
   } else {
-    console.log({context, esbuildOptions})
     const result = await context.rebuild()
     onResult(result, options)
     await context.dispose()
