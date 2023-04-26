@@ -206,7 +206,7 @@ export function ciPlatform(
 ): {isCI: true; name: string; metadata: Metadata} | {isCI: false; name?: undefined; metadata?: undefined} {
   if (isTruthy(env.CI)) {
     let name = 'unknown'
-    if (isTruthy(env.BITBUCKET_BUILD_NUMBER)) {
+    if (isSet(env.BITBUCKET_BUILD_NUMBER)) {
       name = 'bitbucket'
     } else if (isTruthy(env.CIRCLECI)) {
       name = 'circleci'

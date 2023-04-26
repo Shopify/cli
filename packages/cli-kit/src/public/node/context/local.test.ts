@@ -268,6 +268,35 @@ describe('ciPlatform', () => {
     expect(nonCIResult.isCI).toBe(false)
   })
 
+  test('should return correct data for Bitbucket CI environment', () => {
+    // Given
+    const bitbucketEnv = {
+      CI: 'true',
+      BITBUCKET_BUILD_NUMBER: '123',
+      BITBUCKET_COMMIT_AUTHOR: 'author',
+      BITBUCKET_BRANCH: 'main',
+      BITBUCKET_COMMIT: 'abcdef',
+      BITBUCKET_BUILD_URL: 'https://example.com/bitbucket/build/123',
+    }
+
+    // When
+    const result = ciPlatform(bitbucketEnv)
+
+    // Then
+    expect(result).toEqual({
+      isCI: true,
+      name: 'bitbucket',
+      metadata: {
+        actor: 'author',
+        branch: 'main',
+        build: '123',
+        commitSha: 'abcdef',
+        run: '123',
+        url: 'https://example.com/bitbucket/build/123',
+      },
+    })
+  })
+
   test('should return correct data for Github CI environment', () => {
     // Given
     const githubEnv = {
@@ -283,10 +312,10 @@ describe('ciPlatform', () => {
     }
 
     // When
-    const githubResult = ciPlatform(githubEnv)
+    const result = ciPlatform(githubEnv)
 
     // Then
-    expect(githubResult).toEqual({
+    expect(result).toEqual({
       isCI: true,
       name: 'github',
       metadata: {
