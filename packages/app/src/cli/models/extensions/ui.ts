@@ -235,7 +235,7 @@ export function createUIExtensionSpecification<TConfiguration extends BaseConfig
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     supportedFlavors: defaultExtensionFlavors,
     category: (): ExtensionCategory => (spec.identifier === 'theme' ? 'theme' : 'ui'),
-    isPreviewable: true,
+    isPreviewable: false,
   }
   return {...defaults, ...spec}
 }
