@@ -6,6 +6,9 @@ import {zod} from '@shopify/cli-kit/node/schema'
 const FlowExtensionSchema = BaseUIExtensionSchema.extend({
   name: zod.string(),
   type: zod.literal('flow_action_definition'),
+  title: zod.string(),
+  description: zod.string(),
+  url: zod.string(),
 })
 
 /**
@@ -19,7 +22,11 @@ const themeSpecification = createUIExtensionSpecification({
   supportedFlavors: [],
   singleEntryPath: false,
   deployConfig: async (config, _) => {
-    return {}
+    return {
+      title: config.title,
+      description: config.description,
+      url: config.url,
+    }
   },
 })
 
