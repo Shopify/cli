@@ -36,7 +36,11 @@ module.exports = {
               if (typeof messageValue === 'string') {
                 messageValue = messageValue.toLowerCase()
 
-                if (messageValue.includes('choose') || messageValue.includes('select')) {
+                if (
+                  messageValue.includes('choose') ||
+                  messageValue.includes('select') ||
+                  messageValue.includes('pick')
+                ) {
                   context.report({
                     node: messageProperty,
                     messageId: 'chooseSelectDisallowed',
