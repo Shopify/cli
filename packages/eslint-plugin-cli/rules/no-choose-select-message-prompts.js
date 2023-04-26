@@ -2,14 +2,13 @@ module.exports = {
   meta: {
     type: 'problem',
     docs: {
-      description:
-        'Disallow "choose" or "select" in the message attribute of renderSelectPrompt and renderAutocompletePrompt',
+      description: 'Disallow "choose" or "select" in the message attribute of prompts',
       category: 'Possible Errors',
       recommended: false,
     },
     schema: [],
     messages: {
-      chooseSelectDisallowed: 'The message attribute should not contain the words "choose" or "select".',
+      chooseSelectDisallowed: 'Message should not contain the words "choose" or "select".',
     },
   },
 
