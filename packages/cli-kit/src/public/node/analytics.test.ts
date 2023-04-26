@@ -37,7 +37,7 @@ describe('event tracking', () => {
     vi.mocked(isShopify).mockResolvedValue(false)
     vi.mocked(isDevelopment).mockReturnValue(false)
     vi.mocked(analyticsDisabled).mockReturnValue(false)
-    vi.mocked(ciPlatform).mockReturnValue({isCI: true, name: 'vitest'})
+    vi.mocked(ciPlatform).mockReturnValue({isCI: true, name: 'vitest', metadata: {}})
     vi.mocked(macAddress).mockResolvedValue('macAddress')
     vi.mocked(hashString).mockReturnValue('hashed-macaddress')
     vi.mocked(isUnitTest).mockReturnValue(true)

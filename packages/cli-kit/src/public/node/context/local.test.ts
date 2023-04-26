@@ -1,4 +1,5 @@
 import {
+  ciPlatform,
   hasGit,
   isDevelopment,
   isShopify,
@@ -255,5 +256,77 @@ describe('cloudEnvironment', () => {
 
     // Then
     expect(got.platform).toBe('localhost')
+  })
+})
+
+describe('ciPlatform', () => {
+  test('should return isCI false for non-CI environment', () => {
+    // Given
+    const nonCIResult = ciPlatform({})
+
+    // Then
+    expect(nonCIResult.isCI).toBe(false)
+  })
+
+  test('should return correct data for Bitbucket CI environment', () => {
+    // Given
+    const bitbucketEnv = {
+      CI: 'true',
+      BITBUCKET_BUILD_NUMBER: '123',
+      BITBUCKET_COMMIT_AUTHOR: 'author',
+      BITBUCKET_BRANCH: 'main',
+      BITBUCKET_COMMIT: 'abcdef',
+      BITBUCKET_BUILD_URL: 'https://example.com/bitbucket/build/123',
+    }
+
+    // When
+    const result = ciPlatform(bitbucketEnv)
+
+    // Then
+    expect(result).toEqual({
+      isCI: true,
+      name: 'bitbucket',
+      metadata: {
+        actor: 'author',
+        branch: 'main',
+        build: '123',
+        commitSha: 'abcdef',
+        run: '123',
+        url: 'https://example.com/bitbucket/build/123',
+      },
+    })
+  })
+
+  test('should return correct data for Github CI environment', () => {
+    // Given
+    const githubEnv = {
+      CI: 'true',
+      GITHUB_ACTION: '1',
+      GITHUB_ACTOR: 'github_actor',
+      GITHUB_REF_NAME: 'main',
+      GITHUB_RUN_ID: '456',
+      GITHUB_COMMIT_MESSAGE: 'Test commit message',
+      GITHUB_SHA: 'abcdef',
+      GITHUB_SERVER_URL: 'https://github.com',
+      GITHUB_REPOSITORY: '/user/repo',
+    }
+
+    // When
+    const result = ciPlatform(githubEnv)
+
+    // Then
+    expect(result).toEqual({
+      isCI: true,
+      name: 'github',
+      metadata: {
+        actor: 'github_actor',
+        branch: 'main',
+        build: '456',
+        commitMessage: 'Test commit message',
+        commitSha: 'abcdef',
+        run: '456',
+        url: 'https://github.com/user/repo/actions/runs/456',
+      },
+    })
   })
 })
