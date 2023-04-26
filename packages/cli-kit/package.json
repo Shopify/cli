@@ -133,6 +133,7 @@
     "liquidjs": "10.6.0",
     "lodash": "4.17.21",
     "macaddress": "0.5.3",
+    "mrmime": "1.0.1",
     "node-abort-controller": "3.0.1",
     "node-fetch": "3.2.4",
     "open": "8.4.2",

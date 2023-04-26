@@ -239,6 +239,7 @@ importers:
       liquidjs: 10.6.0
       lodash: 4.17.21
       macaddress: 0.5.3
+      mrmime: 1.0.1
       node-abort-controller: 3.0.1
       node-fetch: 3.2.4
       node-stream-zip: ^1.15.0
@@ -302,6 +303,7 @@ importers:
       liquidjs: 10.6.0
       lodash: 4.17.21
       macaddress: 0.5.3
+      mrmime: 1.0.1
       node-abort-controller: 3.0.1
       node-fetch: 3.2.4
       open: 8.4.2
@@ -9201,6 +9203,11 @@ packages:
     resolution: {integrity: sha512-3DeNIcsQixWHHKk6NdoBhWI4t1VMj5/HzfnI1rE/pLl5qKx7+gd4DNA07ehTaZ6MoUU053si6Hd+YtiM/tQZfg==}
     engines: {node: '>= 8'}
     dev: true
+
+  /mrmime/1.0.1:
+    resolution: {integrity: sha512-hzzEagAgDyoU1Q6yg5uI+AorQgdvMCur3FcKf7NhMKWsaYg+RnbTyHRa/9IlLF9rf455MOCtcqqrQQ83pPP7Uw==}
+    engines: {node: '>=10'}
+    dev: false
 
   /ms/2.0.0:
     resolution: {integrity: sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A==}
