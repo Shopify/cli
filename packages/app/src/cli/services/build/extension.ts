@@ -102,6 +102,7 @@ export async function buildUIExtension(extension: UIExtension, options: Extensio
     stderr: options.stderr,
     stdout: options.stdout,
   })
+
   await extension.buildValidation()
 
   options.stdout.write(`${extension.localIdentifier} successfully built`)
