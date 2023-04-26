@@ -104,7 +104,8 @@ export async function deploy(options: DeployOptions) {
     try {
       const bundleTheme = useThemebundling() && app.extensions.theme.length !== 0
       const bundleUI = app.extensions.ui.length !== 0
-      const bundle = bundleTheme || bundleUI
+      const bundleFunction = app.extensions.function.length !== 0
+      const bundle = bundleTheme || bundleUI || bundleFunction
       let bundlePath: string | undefined
 
       if (bundle) {
