@@ -1,4 +1,5 @@
 import {
+  ciPlatform,
   hasGit,
   isDevelopment,
   isShopify,
@@ -255,5 +256,48 @@ describe('cloudEnvironment', () => {
 
     // Then
     expect(got.platform).toBe('localhost')
+  })
+})
+
+describe('ciPlatform', () => {
+  test('should return isCI false for non-CI environment', () => {
+    // Given
+    const nonCIResult = ciPlatform({})
+
+    // Then
+    expect(nonCIResult.isCI).toBe(false)
+  })
+
+  test('should return correct data for Github CI environment', () => {
+    // Given
+    const githubEnv = {
+      CI: 'true',
+      GITHUB_ACTION: '1',
+      GITHUB_ACTOR: 'github_actor',
+      GITHUB_REF_NAME: 'main',
+      GITHUB_RUN_ID: '456',
+      GITHUB_COMMIT_MESSAGE: 'Test commit message',
+      GITHUB_SHA: 'abcdef',
+      GITHUB_SERVER_URL: 'https://github.com',
+      GITHUB_REPOSITORY: '/user/repo',
+    }
+
+    // When
+    const githubResult = ciPlatform(githubEnv)
+
+    // Then
+    expect(githubResult).toEqual({
+      isCI: true,
+      name: 'github',
+      metadata: {
+        actor: 'github_actor',
+        branch: 'main',
+        build: '456',
+        commitMessage: 'Test commit message',
+        commitSha: 'abcdef',
+        run: '456',
+        url: 'https://github.com/user/repo/actions/runs/456',
+      },
+    })
   })
 })
