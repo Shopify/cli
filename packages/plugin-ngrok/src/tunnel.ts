@@ -52,7 +52,7 @@ async function tokenPrompt(showExplanation = true): Promise<string> {
 
   return renderTextPrompt({
     password: true,
-    message: 'Enter your ngrok token.',
+    message: 'Enter your ngrok token',
     validate: (value) => {
       if (value.length === 0) {
         return "Token can't be empty"
