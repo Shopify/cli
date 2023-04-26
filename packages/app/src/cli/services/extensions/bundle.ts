@@ -49,9 +49,11 @@ export interface BundleOptions {
 export async function bundleExtension(options: BundleOptions) {
   const esbuildOptions = getESBuildOptions(options)
   const context = await esContext(esbuildOptions)
+
   if (options.watch) {
     await context.watch()
   } else {
+    console.log({context, esbuildOptions})
     const result = await context.rebuild()
     onResult(result, options)
     await context.dispose()
