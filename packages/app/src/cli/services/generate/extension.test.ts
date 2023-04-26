@@ -25,7 +25,15 @@ import * as git from '@shopify/cli-kit/node/git'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import type {ExtensionFlavorValue} from './extension.js'
 
-vi.mock('@shopify/cli-kit/node/node-package-manager')
+// vi.mock('@shopify/cli-kit/node/node-package-manager')
+vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
+  const actual: any = await vi.importActual('@shopify/cli-kit/node/node-package-manager')
+  return {
+    ...actual,
+    addNPMDependenciesIfNeeded: vi.fn(),
+    addResolutionOrOverride: vi.fn(),
+  }
+})
 
 describe('initialize a extension', async () => {
   const allUISpecs = await loadLocalUIExtensionsSpecifications()
@@ -75,28 +83,14 @@ describe('initialize a extension', async () => {
         appDirectory: tmpDir,
         specifications,
       })
-      const addDependenciesCalls = vi.mocked(addNPMDependenciesIfNeeded).mock.calls
-      expect(addDependenciesCalls.length).toEqual(2)
+
+      expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledTimes(6)
 
       const loadedApp = await loadApp({directory: tmpDir, specifications})
       const generatedExtension2 = loadedApp.extensions.ui.sort((lhs, rhs) =>
         lhs.directory < rhs.directory ? -1 : 1,
       )[1]!
       expect(generatedExtension2.configuration.name).toBe(name2)
-
-      const firstDependenciesCallArgs = addDependenciesCalls[0]!
-      expect(firstDependenciesCallArgs[0]).toEqual([
-        {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'},
-      ])
-      expect(firstDependenciesCallArgs[1].type).toEqual('prod')
-      expect(firstDependenciesCallArgs[1].directory).toEqual(loadedApp.directory)
-
-      const secondDependencyCallArgs = addDependenciesCalls[1]!
-      expect(firstDependenciesCallArgs[0]).toEqual([
-        {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'},
-      ])
-      expect(secondDependencyCallArgs[1].type).toEqual('prod')
-      expect(secondDependencyCallArgs[1].directory).toEqual(loadedApp.directory)
     })
   })
 
@@ -398,35 +392,43 @@ describe('initialize a extension', async () => {
 })
 
 describe('addExtensionDependencies', () => {
-  test('adds the required dependencies', async () => {
-    // Given
-    const directory = '/tmp'
-    const dependency = {name: 'semver', version: '7.3.8'}
+  test('copies the dependencies from the package.json', async () => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJsonPath = joinPath(tmpDir, 'package.json')
+      await file.writeFile(
+        packageJsonPath,
+        JSON.stringify({
+          dependencies: {semver: '7.3.8'},
+          peerDependencies: {react: '^17.0.2'},
+          devDependencies: {'@types/react': '17.0.2'},
+        }),
+      )
 
-    // When
-    await addExtensionDependencies(directory, 'yarn', dependency, undefined)
+      // When
+      await addExtensionDependencies(packageJsonPath, '/app', 'npm')
 
-    // Then
-    expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledOnce()
-    expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledWith([dependency], {
-      packageManager: 'yarn',
-      type: 'prod',
-      directory,
-    })
-  })
-
-  test('adds react as a peer dependency when the chosen flavor requires it', async () => {
-    // Given
-    const directory = '/tmp'
-    const react = {name: 'react', version: '^17.0.0'}
-
-    // When
-    await addExtensionDependencies(directory, 'npm', undefined, 'react')
-
-    expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledWith([react], {
-      packageManager: 'npm',
-      type: 'peer',
-      directory,
+      // Then
+      expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledTimes(3)
+      expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenNthCalledWith(1, [{name: 'semver', version: '7.3.8'}], {
+        packageManager: 'npm',
+        type: 'prod',
+        directory: '/app',
+      })
+      expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenNthCalledWith(2, [{name: 'react', version: '^17.0.2'}], {
+        packageManager: 'npm',
+        type: 'peer',
+        directory: '/app',
+      })
+      expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenNthCalledWith(
+        3,
+        [{name: '@types/react', version: '17.0.2'}],
+        {
+          packageManager: 'npm',
+          type: 'dev',
+          directory: '/app',
+        },
+      )
     })
   })
 })

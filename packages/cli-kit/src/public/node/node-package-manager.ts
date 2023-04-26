@@ -201,6 +201,36 @@ export async function getDependencies(packageJsonPath: string): Promise<{[key: s
 }
 
 /**
+ * Returns the list of production dependencies of a package.json
+ * @param packageJsonPath - Path to the package.json file
+ * @returns A promise that resolves with the list of dependencies.
+ */
+export async function getProdDependencies(packageJsonPath: string): Promise<DependencyVersion[]> {
+  const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+  return Object.entries(packageJsonContent.dependencies ?? {}).map(([name, version]) => ({name, version}))
+}
+
+/**
+ * Returns the list of dev dependencies of a package.json
+ * @param packageJsonPath - Path to the package.json file
+ * @returns A promise that resolves with the list of dependencies.
+ */
+export async function getDevDependencies(packageJsonPath: string): Promise<DependencyVersion[]> {
+  const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+  return Object.entries(packageJsonContent.devDependencies ?? {}).map(([name, version]) => ({name, version}))
+}
+
+/**
+ * Returns the list of peer dependencies of a package.json
+ * @param packageJsonPath - Path to the package.json file
+ * @returns A promise that resolves with the list of dependencies.
+ */
+export async function getPeerDependencies(packageJsonPath: string): Promise<DependencyVersion[]> {
+  const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+  return Object.entries(packageJsonContent.peerDependencies ?? {}).map(([name, version]) => ({name, version}))
+}
+
+/**
  * Returns true if the app uses workspaces, false otherwise.
  * @param packageJsonPath - Path to the package.json file
  * @param pnpmWorkspacePath - Path to the pnpm-workspace.yaml file

@@ -10,6 +10,9 @@ import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
   DependencyVersion,
+  getDevDependencies,
+  getPeerDependencies,
+  getProdDependencies,
   installNPMDependenciesRecursively,
   PackageManager,
 } from '@shopify/cli-kit/node/node-package-manager'
@@ -17,10 +20,18 @@ import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository} from '@shopify/cli-kit/node/git'
-import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
+import {
+  fileExists,
+  inTemporaryDirectory,
+  mkdir,
+  moveFile,
+  removeFile,
+  glob,
+  findPathUp,
+  fileExistsSync,
+} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, moduleDirectory, relativizePath} from '@shopify/cli-kit/node/path'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {fileURLToPath} from 'url'
 
 async function getTemplatePath(name: string): Promise<string> {
@@ -146,15 +157,18 @@ async function uiExtensionInit({
   tasks.push({
     title: 'Installing dependencies',
     task: async () => {
-      const directory = app.usesWorkspaces ? extensionDirectory : app.directory
       const packageManager = app.packageManager
-      await addExtensionDependencies(directory, packageManager, specification.dependency, extensionFlavor)
       if (app.usesWorkspaces) {
-        // If using workspaces, install dependencies after creating the extension with its own package.json
-        // In case the dependencies in the templates are outdated, we use the one defined in the specification.
-        await installNPMDependenciesRecursively({packageManager, directory, deep: 0})
+        await installNPMDependenciesRecursively({
+          packageManager,
+          directory: app.directory,
+          deep: 0,
+        })
       } else {
-        await addResolutionOrOverrideIfNeeded(directory, extensionFlavor)
+        const extensionPackageJsonPath = joinPath(extensionDirectory, 'package.json')
+        await addExtensionDependencies(extensionPackageJsonPath, app.directory, packageManager)
+        await removeFile(extensionPackageJsonPath)
+        await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor)
       }
     },
   })
@@ -177,17 +191,18 @@ function getSrcFileExtension(extensionFlavor: ExtensionFlavorValue): SrcFileExte
 }
 
 export async function addExtensionDependencies(
+  packageJsonPath: string,
   directory: string,
   packageManager: PackageManager,
-  dependency: {name: string; version: string} | undefined,
-  extensionFlavor: ExtensionFlavorValue | undefined,
 ): Promise<void> {
-  const requiredDependencies = getArrayRejectingUndefined([dependency])
-  await addNPMDependenciesIfNeeded(requiredDependencies, {packageManager, type: 'prod', directory})
-  if (extensionFlavor?.includes('react')) {
-    const reactDependency = {name: 'react', version: versions.react}
-    await addNPMDependenciesIfNeeded([reactDependency], {packageManager, type: 'peer', directory})
-  }
+  if (!fileExistsSync(packageJsonPath)) return
+
+  const prodDependencies = await getProdDependencies(packageJsonPath)
+  const peerDependencies = await getPeerDependencies(packageJsonPath)
+  const devDependencies = await getDevDependencies(packageJsonPath)
+  await addNPMDependenciesIfNeeded(prodDependencies, {packageManager, type: 'prod', directory})
+  await addNPMDependenciesIfNeeded(peerDependencies, {packageManager, type: 'peer', directory})
+  await addNPMDependenciesIfNeeded(devDependencies, {packageManager, type: 'dev', directory})
 }
 
 export function getFunctionRuntimeDependencies(templateLanguage: string): DependencyVersion[] {

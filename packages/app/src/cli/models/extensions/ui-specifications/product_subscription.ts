@@ -3,7 +3,7 @@ import {createUIExtensionSpecification} from '../ui.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
 import {BugError} from '@shopify/cli-kit/node/error'
 
-const dependency = {name: '@shopify/admin-ui-extensions-react', version: '^1.0.1'}
+const dependency = '@shopify/admin-ui-extensions-react'
 
 const spec = createUIExtensionSpecification({
   identifier: 'product_subscription',
@@ -13,8 +13,8 @@ const spec = createUIExtensionSpecification({
   partnersWebIdentifier: 'product_subscription',
   schema: BaseUIExtensionSchema,
   deployConfig: async (_, directory) => {
-    const result = await getDependencyVersion(dependency.name, directory)
-    if (result === 'not_found') throw new BugError('Dependency @shopify/admin-ui-extensions-react not found')
+    const result = await getDependencyVersion(dependency, directory)
+    if (result === 'not_found') throw new BugError(`Dependency ${dependency} not found`)
     return {renderer_version: result?.version}
   },
 })
