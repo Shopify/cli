@@ -119,7 +119,7 @@ module.exports = {
     '@shopify/cli/no-trailing-js-in-cli-kit-imports': 'error',
     '@shopify/cli/no-vi-manual-mock-clear': 'error',
     '@shopify/cli/no-vi-mock-in-callbacks': 'error',
-    '@shopify/cli/no-choose-select-message-prompts': 'warn',
+    '@shopify/cli/prompt-message-format': 'warn',
     'no-restricted-syntax': [
       'error',
       {

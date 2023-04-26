@@ -9,7 +9,7 @@ module.exports = {
     'no-vi-manual-mock-clear': require('./rules/no-vi-manual-mock-clear'),
     'no-vi-mock-in-callbacks': require('./rules/no-vi-mock-in-callbacks'),
     'specific-imports-in-bootstrap-code': require('./rules/specific-imports-in-bootstrap-code'),
-    'no-choose-select-message-prompts': require('./rules/no-choose-select-message-prompts'),
+    'prompt-message-format': require('./rules/prompt-message-format'),
   },
 
   configs: {

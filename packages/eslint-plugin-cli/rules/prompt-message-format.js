@@ -2,13 +2,14 @@ module.exports = {
   meta: {
     type: 'problem',
     docs: {
-      description: 'Disallow "choose" or "select" in the message attribute of prompts',
+      description: 'Disallow certain characters to appear in the message attribute of prompts',
       category: 'Possible Errors',
       recommended: false,
     },
     schema: [],
     messages: {
       chooseSelectDisallowed: 'Message should not contain the words "choose" or "select".',
+      invalidPunctuation: 'The message attribute should not end with any punctuation except "?" and ":".',
     },
   },
 
@@ -39,6 +40,16 @@ module.exports = {
                   context.report({
                     node: messageProperty,
                     messageId: 'chooseSelectDisallowed',
+                  })
+                }
+
+                const lastChar = messageValue.slice(-1)
+                const invalidPunctuation = /[!.,;]/
+
+                if (lastChar.match(invalidPunctuation)) {
+                  context.report({
+                    node: messageProperty,
+                    messageId: 'invalidPunctuation',
                   })
                 }
               }
