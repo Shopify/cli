@@ -102,7 +102,6 @@ async function promptNameAndFlavor(
       defaultValue: await generateRandomNameForSubdirectory({suffix: 'ext', directory: options.directory}),
     })
   }
-
   if (!options.extensionFlavor && specification.supportedFlavors.length > 1) {
     result.flavor = await renderSelectPrompt({
       message: 'What would you like to work in?',
