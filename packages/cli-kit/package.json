@@ -161,7 +161,7 @@
     "@types/gradient-string": "^1.1.2",
     "@types/lodash": "4.14.192",
     "@types/node": "14.18.36",
-    "@types/react": "17.0.2",
+    "@types/react": "18.2.0",
     "@types/semver": "^7.3.13",
     "@vitest/coverage-istanbul": "0.28.5",
     "node-stream-zip": "^1.15.0",
@@ -183,5 +183,8 @@
     "@shopify:registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "engine-strict": true
+  "engine-strict": true,
+  "resolutions": {
+    "@types/react": "18.2.0"
+  }
 }
