@@ -48,7 +48,7 @@ module ShopifyCLI
           original_html = <<~HTML
             <html>
               <head>
-                <link rel="stylesheet" href="//cdn/shop/t/2/assets/theme.css" />
+                <link rel="stylesheet" href="/cdn/shop/t/2/assets/theme.css" />
               </head>
             </html>
           HTML

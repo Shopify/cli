@@ -5,7 +5,7 @@ module ShopifyCLI
     class DevServer
       class LocalAssets
         THEME_REGEX = %r{//cdn\.shopify\.com/s/.+?/(assets/.+?\.(?:css|js))}
-        VANITY_THEME_REGEX = %r{//cdn/shop/.+?/(assets/.+?\.(?:css|js))}
+        VANITY_THEME_REGEX = %r{/cdn/shop/.+?/(assets/.+?\.(?:css|js))}
 
         class FileBody
           def initialize(path)
