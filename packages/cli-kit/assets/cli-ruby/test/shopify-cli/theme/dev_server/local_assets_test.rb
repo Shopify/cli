@@ -48,14 +48,14 @@ module ShopifyCLI
           original_html = <<~HTML
             <html>
               <head>
-                <link rel="stylesheet" href="//cdn/shop/t/2/assets/footer.css" />
+                <link rel="stylesheet" href="//cdn/shop/t/2/assets/theme.css" />
               </head>
             </html>
           HTML
           expected_html = <<~HTML
             <html>
               <head>
-                <link rel="stylesheet" href="/assets/footer.css" />
+                <link rel="stylesheet" href="/assets/theme.css" />
               </head>
             </html>
           HTML
