@@ -112,6 +112,7 @@ async function dev(options: DevOptions) {
       ...options,
       app: localApp,
       tunnelProvider,
+      tunnelPort,
     }),
     getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
     getURLs(apiKey, token),

@@ -23,6 +23,7 @@ export interface FrontendURLOptions {
   tunnelProvider: string
   noTunnel: boolean
   tunnelUrl?: string
+  tunnelPort: number
   commandConfig: Config
 }
 
@@ -84,15 +85,15 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     frontendUrl = 'http://localhost'
     usingLocalhost = true
   } else {
-    const {url, port} = await generateURL(options.commandConfig, options.tunnelProvider)
-    frontendPort = port
+    const url = await generateURL(options.commandConfig, options.tunnelProvider)
+    frontendPort = options.tunnelPort
     frontendUrl = url
   }
 
   return {frontendUrl, frontendPort, usingLocalhost}
 }
 
-export async function generateURL(config: Config, tunnelProvider: string): Promise<{url: string; port: number}> {
+export async function generateURL(config: Config, tunnelProvider: string): Promise<string> {
   return (await runTunnelPlugin(config, tunnelProvider)).mapError(mapRunTunnelPluginError).valueOrAbort()
 }
 

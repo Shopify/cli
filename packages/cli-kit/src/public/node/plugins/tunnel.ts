@@ -6,7 +6,7 @@ export type TunnelErrorType = 'invalid-provider' | 'tunnel-already-running' | 'w
 export type TunnelStatusType =
   | {status: 'not-started'}
   | {status: 'starting'}
-  | {status: 'connected'; url: string; port: number}
+  | {status: 'connected'; url: string}
   | {status: 'error'; message: string}
 
 export class TunnelError extends ExtendableError {

@@ -60,7 +60,7 @@ function tunnel(options: {port: number}): void {
       if (connected) {
         if (url) {
           resolved = true
-          currentStatus = {status: 'connected', url, port: options.port}
+          currentStatus = {status: 'connected', url}
         } else {
           currentStatus = {status: 'error', message: 'Could not find tunnel url'}
         }
@@ -116,4 +116,8 @@ function getBinPathTarget() {
     'bin',
     process.platform === 'win32' ? 'cloudflared.exe' : 'cloudflared',
   )
+}
+
+function getTunnelDomain() {
+  return process.env.SHOPIFY_CLI_CLOUDFLARED_DOMAIN ?? 'trycloudflare.com'
 }

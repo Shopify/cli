@@ -9,12 +9,11 @@ import {outputToken, outputInfo, outputContent} from '@shopify/cli-kit/node/outp
 
 export default startTunnel({provider: TUNNEL_PROVIDER, action: hookStart})
 
-let cachedPort: number
 export const getCurrentStatus = async (): Promise<TunnelStatusType> => {
   const tunnelList = await ngrok.getApi().listTunnels()
   const tunnels = tunnelList.tunnels
   if (tunnels && tunnels[0] && tunnels[0].public_url) {
-    return {status: 'connected', url: tunnels[0].public_url, port: cachedPort}
+    return {status: 'connected', url: tunnels[0].public_url}
   } else {
     return {status: 'starting'}
   }
@@ -23,7 +22,6 @@ export const getCurrentStatus = async (): Promise<TunnelStatusType> => {
 // New entry point for hooks
 export async function hookStart(port: number): Promise<Result<{url: string}, TunnelError>> {
   try {
-    cachedPort = port
     const url = await start({port})
     return ok({url})
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
