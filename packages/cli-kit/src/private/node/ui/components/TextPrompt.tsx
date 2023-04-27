@@ -14,6 +14,7 @@ export interface TextPromptProps {
   password?: boolean
   validate?: (value: string) => string | undefined
   allowEmpty?: boolean
+  emptyDisplayedValue?: string
 }
 
 const TextPrompt: FunctionComponent<TextPromptProps> = ({
@@ -23,6 +24,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   defaultValue = '',
   password = false,
   allowEmpty = false,
+  emptyDisplayedValue = '(empty)',
 }) => {
   if (password && defaultValue) {
     throw new Error("Can't use defaultValue with password")
@@ -44,6 +46,8 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   const {oneThird} = useLayout()
   const [answer, setAnswer] = useState<string>('')
   const answerOrDefault = answer.length > 0 ? answer : defaultValue
+  const useEmptyValue = answerOrDefault === ''
+  const answerWithEmptyOrDefault = useEmptyValue ? emptyDisplayedValue : answerOrDefault
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | undefined>(undefined)
@@ -81,7 +85,9 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
           </Box>
 
           <Box flexGrow={1}>
-            <Text color="cyan">{password ? '*'.repeat(answer.length) : answerOrDefault}</Text>
+            <Text color="cyan" dimColor={useEmptyValue}>
+              {password ? '*'.repeat(answer.length) : answerWithEmptyOrDefault}
+            </Text>
           </Box>
         </Box>
       ) : (
