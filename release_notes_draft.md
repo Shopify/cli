@@ -15,3 +15,7 @@ now do a different and much cooler thing.
 
 * ***Another cool thing.*** You get the idea by now.
 -->
+
+* ***No-color mode.*** You can use the `NO_COLOR=1` environment variable or
+`--no-color` flag to disable color in the CLI. Note that there is only partial
+support for some commands thus far.

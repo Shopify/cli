@@ -17,5 +17,20 @@
     "@shopify/ui-extensions-test-utils": "3.25.0",
     "@shopify/workspace": "0.1.0"
   },
-  "changesets": []
+  "changesets": [
+    "four-adults-flash",
+    "heavy-flies-begin",
+    "itchy-goats-exist",
+    "new-suits-judge",
+    "quick-tips-allow",
+    "red-countries-sit",
+    "rich-deers-roll",
+    "shaggy-lizards-grow",
+    "short-hotels-flow",
+    "small-buses-build",
+    "smooth-actors-talk",
+    "tasty-mice-agree",
+    "tidy-crabs-yell",
+    "wild-oranges-shop"
+  ]
 }

@@ -1,7 +1,7 @@
 import {Command} from './Command.js'
+import {render} from '../../testing/ui.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
-import {render} from 'ink-testing-library'
 
 describe('Command', async () => {
   test('renders correctly', async () => {

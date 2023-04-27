@@ -5,7 +5,7 @@ import {TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {debounce} from '../../../../public/common/function.js'
-import React, {ReactElement, useCallback, useEffect, useRef, useState} from 'react'
+import React, {ReactElement, useCallback, useLayoutEffect, useRef, useState} from 'react'
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
 import figures from 'figures'
 import ansiEscapes from 'ansi-escapes'
@@ -80,11 +80,11 @@ function AutocompletePrompt<T>({
     }
   }, [])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     function onResize() {
       const availableSpace = stdout.rows - (wrapperHeight - selectInputHeight)
       // rough estimate of the limit needed based on the space available
-      const newLimit = Math.max(2, availableSpace - 6)
+      const newLimit = Math.max(2, availableSpace - 4)
 
       if (newLimit < limit) {
         stdout.write(ansiEscapes.clearTerminal)

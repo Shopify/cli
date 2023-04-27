@@ -37,7 +37,7 @@ interface Instance {
   unmount: () => void
 }
 
-export class OutputStream extends EventEmitter {
+export class Stdout extends EventEmitter {
   columns: number
   rows: number
   readonly frames: string[] = []
@@ -59,15 +59,12 @@ export class OutputStream extends EventEmitter {
   }
 }
 
-export const renderString = (element: ReactElement, renderOptions?: RenderOptions): Instance => {
+const renderString = (element: ReactElement, renderOptions?: RenderOptions): Instance => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const stdout = (renderOptions?.stdout as any) ?? new OutputStream({columns: process.stdout.columns})
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const stderr = (renderOptions?.stderr as any) ?? new OutputStream({columns: process.stderr.columns})
+  const stdout = (renderOptions?.stdout as any) ?? new Stdout({columns: process.stdout.columns})
 
   const instance = inkRender(element, {
     stdout,
-    stderr,
     debug: true,
     exitOnCtrlC: false,
     patchConsole: false,

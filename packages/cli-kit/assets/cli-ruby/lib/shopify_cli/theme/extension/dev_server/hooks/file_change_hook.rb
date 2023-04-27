@@ -6,12 +6,13 @@ module ShopifyCLI
       class DevServer
         module Hooks
           class FileChangeHook
-            attr_reader :ctx, :extension, :syncer, :streams
+            attr_reader :ctx, :extension, :syncer, :streams, :notifier
 
-            def initialize(ctx, extension:, syncer:)
+            def initialize(ctx, extension:, syncer:, notifier:)
               @ctx = ctx
               @extension = extension
               @syncer = syncer
+              @notifier = notifier
             end
 
             def call(modified, added, removed, streams: nil)
@@ -23,6 +24,8 @@ module ShopifyCLI
 
               hot_reload(modified) unless modified.empty?
               reload_page(added, removed) unless (added + removed).empty?
+
+              notifier.notify_updates(modified + added + removed) unless (modified + added + removed).empty?
             end
 
             private

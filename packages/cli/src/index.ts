@@ -19,6 +19,13 @@ signals.forEach((signal) => {
   })
 })
 
+// Sometimes we want to specify a precise amount of stdout columns, for example in
+// CI or on a cloud environment.
+const columns = Number(process.env.SHOPIFY_CLI_COLUMNS)
+if (!isNaN(columns)) {
+  process.stdout.columns = columns
+}
+
 interface RunShopifyCLIOptions {
   development: boolean
 }

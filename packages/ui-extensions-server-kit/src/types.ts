@@ -113,6 +113,11 @@ export interface ExtensionPayload {
   title: string
   extensionPoints: ExtensionPoints
   categories?: string[]
+  capabilities?: {
+    apiAccess: boolean
+    blockProgress: boolean
+    networkAccess: boolean
+  }
   authenticatedRedirectStartUrl?: string
   authenticatedRedirectRedirectUrls?: string[]
   localization?: {

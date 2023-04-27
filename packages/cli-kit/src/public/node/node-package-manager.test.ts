@@ -14,6 +14,8 @@ import {
   writePackageJSON,
   getPackageManager,
   installNPMDependenciesRecursively,
+  addNPMDependencies,
+  DependencyVersion,
 } from './node-package-manager.js'
 import {exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
@@ -783,6 +785,77 @@ describe('getPackageManager', () => {
       await expect(() => getPackageManager(subDirectory)).rejects.toThrowError(
         FindUpAndReadPackageJsonNotFoundError(subDirectory),
       )
+    })
+  })
+})
+
+describe('addNPMDependencies', () => {
+  test('when using npm with multiple dependencies they should be installed one by one', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dependencies: DependencyVersion[] = [
+        {name: 'first', version: '0.0.1'},
+        {name: 'second', version: '0.0.2'},
+      ]
+
+      // When
+      await addNPMDependencies(dependencies, {
+        type: 'prod',
+        packageManager: 'npm',
+        directory: tmpDir,
+      })
+
+      // Then
+      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'first@0.0.1', '--save-prod'], {
+        cwd: tmpDir,
+      })
+      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'second@0.0.2', '--save-prod'], {
+        cwd: tmpDir,
+      })
+    })
+  })
+
+  test('when using yarn with multiple dependencies they should be installed all at once', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dependencies: DependencyVersion[] = [
+        {name: 'first', version: '0.0.1'},
+        {name: 'second', version: '0.0.2'},
+      ]
+
+      // When
+      await addNPMDependencies(dependencies, {
+        type: 'prod',
+        packageManager: 'yarn',
+        directory: tmpDir,
+      })
+
+      // Then
+      expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', 'first@0.0.1', 'second@0.0.2', '--prod'], {
+        cwd: tmpDir,
+      })
+    })
+  })
+
+  test('when using pnpm with multiple dependencies they should be installed all at once', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dependencies: DependencyVersion[] = [
+        {name: 'first', version: '0.0.1'},
+        {name: 'second', version: '0.0.2'},
+      ]
+
+      // When
+      await addNPMDependencies(dependencies, {
+        type: 'prod',
+        packageManager: 'pnpm',
+        directory: tmpDir,
+      })
+
+      // Then
+      expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'first@0.0.1', 'second@0.0.2', '--save-prod'], {
+        cwd: tmpDir,
+      })
     })
   })
 })

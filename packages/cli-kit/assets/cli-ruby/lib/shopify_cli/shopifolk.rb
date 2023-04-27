@@ -32,7 +32,8 @@ module ShopifyCLI
 
       def acting_as_shopify_organization?
         !!(DB.get(:acting_as_shopify_organization) ||
-        (Project.has_current? && Project.current.config["shopify_organization"]))
+        (Project.has_current? && Project.current.config["shopify_organization"])) ||
+        ENV.fetch("SHOPIFY_CLI_1P_DEV", "0") == "1"
       end
 
       def reset

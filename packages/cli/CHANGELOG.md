@@ -1,5 +1,38 @@
 # @shopify/cli
 
+## 3.46.0-pre.2
+
+### Minor Changes
+
+- e13c78960: Hide plugins commands
+
+### Patch Changes
+
+- Updated dependencies [a7c1eabeb]
+- Updated dependencies [162504891]
+- Updated dependencies [151684a25]
+- Updated dependencies [01988114d]
+  - @shopify/cli-kit@3.46.0-pre.2
+  - @shopify/plugin-did-you-mean@3.46.0-pre.2
+
+## 3.46.0-pre.1
+
+### Patch Changes
+
+- Updated dependencies [beda7c241]
+- Updated dependencies [3169c1e44]
+  - @shopify/cli-kit@3.46.0-pre.1
+  - @shopify/plugin-did-you-mean@3.46.0-pre.1
+
+## 3.46.0-pre.0
+
+### Patch Changes
+
+- 1ed1321cd: Not upgrade the global Homebrew installation of the CLI on 'shopify upgrade'
+- Updated dependencies [f95e3a1d5]
+  - @shopify/cli-kit@3.46.0-pre.0
+  - @shopify/plugin-did-you-mean@3.46.0-pre.0
+
 ## 3.45.0
 
 ### Patch Changes

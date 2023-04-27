@@ -23,6 +23,7 @@ import {isSpin, spinFqdn, appPort, appHost} from '@shopify/cli-kit/node/context/
 import {codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {runTunnelPlugin} from '@shopify/cli-kit/node/plugins'
+import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 
 vi.mock('../local-storage.js')
 vi.mock('@shopify/cli-kit/node/tcp')
@@ -32,11 +33,13 @@ vi.mock('@shopify/cli-kit/node/context/spin')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/plugins')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/system')
 
 beforeEach(() => {
   vi.mocked(getAvailableTCPPort).mockResolvedValue(3042)
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
   vi.mocked(isUnitTest).mockReturnValue(true)
+  vi.mocked(terminalSupportsRawMode).mockReturnValue(true)
 })
 
 describe('generateURL', () => {

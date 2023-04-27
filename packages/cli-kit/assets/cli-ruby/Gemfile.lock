@@ -111,7 +111,7 @@ GEM
     ruby-progressbar (1.11.0)
     sys-uname (1.2.2)
       ffi (~> 1.1)
-    theme-check (1.14.0)
+    theme-check (1.15.0)
       liquid (>= 5.4.0)
       nokogiri (>= 1.12)
       parser (~> 3)
@@ -145,7 +145,7 @@ DEPENDENCIES
   rubocop-minitest
   rubocop-rake
   rubocop-shopify
-  theme-check (~> 1.14.0)
+  theme-check (~> 1.15.0)
   timecop
   webmock
 

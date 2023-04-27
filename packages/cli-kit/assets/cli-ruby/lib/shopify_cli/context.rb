@@ -262,6 +262,22 @@ module ShopifyCLI
       File.binwrite(ctx_path(fname), content)
     end
 
+    # will update the Access and Modified times of a file, relative to the context root
+    # unless the file path is absolute.
+    #
+    # #### Parameters
+    # * `atime` - the access time
+    # * `mtime` - the modified time
+    # * `fname` - filename of the file that you are writing, relative to root unless it is absolute.
+    #
+    # #### Example
+    #
+    #   @ctx.utime(Time.now, Time.now, '/tmp/file.txt')
+    #
+    def utime(atime, mtime, fname)
+      File.utime(atime, mtime, ctx_path(fname))
+    end
+
     # will change directories and update the root, the filepath is relative to the command root unless absolute
     #
     # #### Parameters

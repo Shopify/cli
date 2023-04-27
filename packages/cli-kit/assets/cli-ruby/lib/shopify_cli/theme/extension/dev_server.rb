@@ -6,6 +6,7 @@ require "shopify_cli/theme/extension/app_extension"
 require "shopify_cli/theme/dev_server"
 require "shopify_cli/theme/extension/host_theme"
 require "shopify_cli/theme/syncer"
+require "shopify_cli/theme/notifier"
 
 require_relative "dev_server/local_assets"
 require_relative "dev_server/proxy_param_builder"
@@ -29,12 +30,13 @@ module ShopifyCLI
         attr_accessor :project, :specification_handler, :generate_tmp_theme
 
         class << self
-          def start(ctx, root, port: 9292, theme: nil, generate_tmp_theme: false, project:, specification_handler:)
+          def start(ctx, root, port: 9292, theme: nil, generate_tmp_theme: false, project:, specification_handler:,
+            notify: nil)
             instance.project = project
             instance.specification_handler = specification_handler
             instance.generate_tmp_theme = generate_tmp_theme
 
-            super(ctx, root, port: port, theme: theme)
+            super(ctx, root, port: port, theme: theme, notify: notify)
           end
         end
 
@@ -63,6 +65,10 @@ module ShopifyCLI
             project: project,
             specification_handler: specification_handler
           )
+        end
+
+        def notifier
+          @notifier ||= ShopifyCLI::Theme::Notifier.new(ctx, path: notify)
         end
 
         def theme
@@ -130,7 +136,7 @@ module ShopifyCLI
         # Hooks
 
         def broadcast_hooks
-          file_handler = Hooks::FileChangeHook.new(ctx, extension: extension, syncer: syncer)
+          file_handler = Hooks::FileChangeHook.new(ctx, extension: extension, syncer: syncer, notifier: notifier)
           [file_handler]
         end
 
@@ -145,7 +151,13 @@ module ShopifyCLI
         end
 
         def preview_message
-          ctx.message("serve.preview_message", extension.location, theme.editor_url, address)
+          if Shopifolk.acting_as_shopify_organization?
+            parsed_uri = URI.parse(extension.location)
+            shopify_org_url = "#{parsed_uri.scheme}://#{parsed_uri.host}/9082/impersonate"
+            ctx.message("serve.preview_message_1p", shopify_org_url, extension.location, theme.editor_url, address)
+          else
+            ctx.message("serve.preview_message", extension.location, theme.editor_url, address)
+          end
         end
       end
     end

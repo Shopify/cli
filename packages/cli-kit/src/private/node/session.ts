@@ -22,7 +22,7 @@ import {partnersRequest} from '../../public/node/api/partners.js'
 import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
 import {openURL} from '../../public/node/system.js'
 import {keypress} from '../../public/node/ui.js'
-import {getPartnersToken} from '../../public/node/environment.js'
+import {getIdentityTokenInformation, getPartnersToken} from '../../public/node/environment.js'
 import {gql} from 'graphql-request'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputCompleted, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
@@ -166,7 +166,10 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
   }
 
   let identityToken: IdentityToken
-  if (useDeviceAuth()) {
+  const identityTokenInformation = getIdentityTokenInformation()
+  if (identityTokenInformation) {
+    identityToken = buildIdentityTokenFromEnv(scopes, identityTokenInformation)
+  } else if (useDeviceAuth()) {
     // Request a device code to authorize without a browser redirect.
     outputDebug(outputContent`Requesting device authorization code...`)
     const deviceAuth = await requestDeviceAuthorization(scopes)
@@ -345,5 +348,16 @@ function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
     admin: apiScopes('admin', adminScope),
     partners: apiScopes('partners', partnerScope),
     storefront: apiScopes('storefront-renderer', storefrontScopes),
+  }
+}
+
+function buildIdentityTokenFromEnv(
+  scopes: string[],
+  identityTokenInformation: {accessToken: string; refreshToken: string},
+) {
+  return {
+    ...identityTokenInformation,
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    scopes,
   }
 }

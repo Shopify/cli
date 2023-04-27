@@ -23,6 +23,7 @@ require_relative "development_theme"
 require_relative "ignore_filter"
 require_relative "include_filter"
 require_relative "syncer"
+require_relative "notifier"
 
 module ShopifyCLI
   module Theme
@@ -30,7 +31,7 @@ module ShopifyCLI
       include Singleton
 
       attr_reader :app, :stopped, :ctx, :root, :host, :theme_identifier, :port, :poll, :editor_sync, :stable, :mode,
-        :block, :includes, :ignores
+        :block, :includes, :ignores, :notify
 
       class << self
         def start(
@@ -46,6 +47,7 @@ module ShopifyCLI
           mode: ReloadMode.default,
           includes: nil,
           ignores: nil,
+          notify: nil,
           &block
         )
           instance.setup(
@@ -61,6 +63,7 @@ module ShopifyCLI
             mode,
             includes,
             ignores,
+            notify,
             &block
           )
           instance.start
@@ -85,6 +88,7 @@ module ShopifyCLI
         mode,
         includes,
         ignores,
+        notify,
         &block
       )
         @ctx = ctx
@@ -99,6 +103,7 @@ module ShopifyCLI
         @mode = mode
         @includes = includes
         @ignores = ignores
+        @notify = notify
         @block = block
       end
 
@@ -202,6 +207,10 @@ module ShopifyCLI
         )
       end
 
+      def notifier
+        @notifier ||= Notifier.new(ctx, path: notify)
+      end
+
       def watcher
         @watcher ||= Watcher.new(
           ctx,
@@ -248,7 +257,7 @@ module ShopifyCLI
 
       def broadcast_hooks
         file_handler = Hooks::FileChangeHook.new(ctx, theme: theme, include_filter: include_filter,
-          ignore_filter: ignore_filter)
+          ignore_filter: ignore_filter, notifier: notifier)
         [file_handler]
       end
 
