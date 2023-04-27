@@ -75,12 +75,34 @@ module ShopifyCLI
         def test_serve_font_from_fonts_cdn
           expected_body = "<FONT_FILE_FROM_CDN>"
 
-          stub_request(:get, "https://fonts.shopifycdn.com/assistant/font.123.woff2?hmac=456")
-            .with(headers: {
+          stub_request(
+            :get,
+            "https://fonts.shopifycdn.com/assistant/font.123.woff2?hmac=456"
+          ).with(
+            headers: {
               "Referer" => "https://my-test-shop.myshopify.com",
-              "Transfer-Encoding" => "chunked",
-            })
-            .to_return(status: 200, body: expected_body, headers: {})
+              "Transfer-Encoding" => "chunked"
+            }
+          ).to_return(status: 200, body: expected_body, headers: {})
+
+          response = serve(path: "/fonts/assistant/font.123.woff2?hmac=456")
+          actual_body = response.body
+
+          assert_equal expected_body, actual_body
+        end
+
+        def test_do_not_replace_font_url_when_content_type_does_not_match_text
+          expected_body = "tan-colored-hat-on-monochrome-background.jpg"
+          response_headers = { "Content-Type" => "image/jpeg" }
+
+          stub_request(
+            :get,
+            "https://cdn.shopify.com/s/files/1/0457/3246/2614/products/tan-colored-hat-on-monochrome-background.jpg"
+          ).to_return(
+            status: 200,
+            body: expected_body,
+            headers: response_headers
+          )
 
           response = serve(path: "/fonts/assistant/font.123.woff2?hmac=456")
           actual_body = response.body
@@ -89,12 +111,15 @@ module ShopifyCLI
         end
 
         def test_404_on_missing_cdn_fonts
-          stub_request(:get, "https://fonts.shopifycdn.com/assistant/missing.123.woff2?hmac=456")
-            .with(headers: {
+          stub_request(
+            :get,
+            "https://fonts.shopifycdn.com/assistant/missing.123.woff2?hmac=456"
+          ).with(
+            headers: {
               "Referer" => "https://my-test-shop.myshopify.com",
-              "Transfer-Encoding" => "chunked",
-            })
-            .to_return(status: 404, body: "Not found", headers: {})
+              "Transfer-Encoding" => "chunked"
+            }
+          ).to_return(status: 404, body: "Not found", headers: {})
 
           response = serve(path: "/fonts/assistant/missing.123.woff2?hmac=456")
 
@@ -105,9 +130,7 @@ module ShopifyCLI
         private
 
         def serve(response_body = "", path: "/")
-          app = lambda do |_env|
-            [200, {}, [response_body]]
-          end
+          app = lambda { |_env| [200, {}, [response_body]] }
           stack = CdnFonts.new(app, theme: theme)
           request = Rack::MockRequest.new(stack)
           request.get(path)

@@ -6,7 +6,7 @@ module ShopifyCLI
       class CdnFonts
         FONTS_PATH = "/fonts"
         FONTS_CDN = "https://fonts.shopifycdn.com"
-        FONTS_REGEX = %r{#{FONTS_CDN}}
+        FONTS_REGEX = /#{FONTS_CDN}/
 
         def initialize(app, theme:)
           @app = app
@@ -21,40 +21,45 @@ module ShopifyCLI
 
           # Proxy the request, and replace the URLs in the response
           status, headers, body = @app.call(env)
-          body = replace_font_urls(body)
+
+          if headers["Content-Type"]&.start_with?("text/")
+            body = replace_font_urls(body)
+          end
+
           [status, headers, body]
         end
 
         private
 
         def serve_font(env)
-          parameters = %w(PATH_INFO QUERY_STRING REQUEST_METHOD rack.input)
+          parameters = %w[PATH_INFO QUERY_STRING REQUEST_METHOD rack.input]
           path, query, method, body_stream = *env.slice(*parameters).values
 
           uri = fonts_cdn_uri(path, query)
 
-          response = Net::HTTP.start(uri.host, 443, use_ssl: true) do |http|
-            req_class = Net::HTTP.const_get(method.capitalize)
-            req = req_class.new(uri)
-            req.initialize_http_header(fonts_cdn_headers)
-            req.body_stream = body_stream
-            http.request(req)
-          end
+          response =
+            Net::HTTP.start(uri.host, 443, use_ssl: true) do |http|
+              req_class = Net::HTTP.const_get(method.capitalize)
+              req = req_class.new(uri)
+              req.initialize_http_header(fonts_cdn_headers)
+              req.body_stream = body_stream
+              http.request(req)
+            end
 
           [
             response.code.to_s,
             {
               "Content-Type" => response.content_type,
-              "Content-Length" => response.content_length.to_s,
+              "Content-Length" => response.content_length.to_s
             },
-            [response.body],
+            [response.body]
           ]
         end
 
         def fonts_cdn_headers
           {
             "Referer" => "https://#{@theme.shop}",
-            "Transfer-Encoding" => "chunked",
+            "Transfer-Encoding" => "chunked"
           }
         end
 
