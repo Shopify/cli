@@ -12,7 +12,7 @@ export async function prompts() {
     choices: [
       {label: 'first', value: 'first', key: 'f'},
       {label: 'second', value: 'second', key: 's'},
-      {label: 'third', value: 'third'},
+      {label: 'third (limit reached)', value: 'third', disabled: true},
       {label: 'fourth', value: 'fourth'},
       {label: 'fifth', value: 'fifth', group: 'Automations', key: 'a'},
       {label: 'sixth', value: 'sixth', group: 'Automations'},

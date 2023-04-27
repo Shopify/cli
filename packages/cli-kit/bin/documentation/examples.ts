@@ -316,7 +316,7 @@ export const examples: {[key in string]: Example} = {
         choices: [
           {label: 'first', value: 'first', key: 'f'},
           {label: 'second', value: 'second', key: 's'},
-          {label: 'third', value: 'third'},
+          {label: 'third (limit reached)', value: 'third', disabled: true},
           {label: 'fourth', value: 'fourth'},
           {label: 'fifth', value: 'fifth', group: 'Automations', key: 'a'},
           {label: 'sixth', value: 'sixth', group: 'Automations'},
@@ -409,7 +409,7 @@ export const examples: {[key in string]: Example} = {
         {label: 'sixteenth', value: 'sixteenth'},
         {label: 'seventeenth', value: 'seventeenth'},
         {label: 'eighteenth', value: 'eighteenth'},
-        {label: 'nineteenth', value: 'nineteenth'},
+        {label: 'nineteenth (disabled)', value: 'nineteenth', disabled: true},
         {label: 'twentieth', value: 'twentieth'},
         {label: 'twenty-first', value: 'twenty-first'},
         {label: 'twenty-second', value: 'twenty-second'},

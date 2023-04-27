@@ -3,7 +3,6 @@ import {ExtensionFlavorValue} from '../../services/generate/extension.js'
 import {ExtensionTemplate, TemplateType} from '../../models/app/template.js'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
-import {outputWarn} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export interface GenerateExtensionPromptOptions {
@@ -28,12 +27,16 @@ export interface GenerateExtensionContentOutput {
   flavor?: ExtensionFlavorValue
 }
 
-export function buildChoices(extensionTemplates: ExtensionTemplate[]) {
+export function buildChoices(extensionTemplates: ExtensionTemplate[], unavailableExtensions: string[] = []) {
   const templateSpecChoices = extensionTemplates.map((spec) => {
+    const disabled = unavailableExtensions.includes(spec.identifier)
+    const label = disabled ? `${spec.name} (limit reached)` : spec.name
+
     return {
-      label: spec.name,
+      label,
       value: spec.identifier,
       group: spec.group || 'Other',
+      disabled,
     }
   })
   return templateSpecChoices.sort((c1, c2) => c1.label.localeCompare(c2.label))
@@ -53,12 +56,6 @@ const generateExtensionPrompts = async (
       )
     }
 
-    if (options.unavailableExtensions.length > 0) {
-      outputWarn(
-        `You've reached the limit for these types of extensions: ${options.unavailableExtensions.join(', ')}\n`,
-      )
-    }
-
     if (extensionTemplates.length === 0) {
       throw new AbortError('You have reached the limit for the number of extensions you can create.')
     }
@@ -66,7 +63,7 @@ const generateExtensionPrompts = async (
     // eslint-disable-next-line require-atomic-updates
     templateType = await renderSelectPrompt({
       message: 'Type of extension?',
-      choices: buildChoices(extensionTemplates),
+      choices: buildChoices(extensionTemplates, options.unavailableExtensions),
     })
   }
 

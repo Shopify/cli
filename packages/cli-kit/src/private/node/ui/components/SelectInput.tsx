@@ -86,14 +86,12 @@ function Item<T>({
   const isSelected = items.indexOf(item) === selectedIndex
   const label = highlightedLabel(item.label, highlightedTerm)
   let title: string | undefined
-  let color
+  let labelColor
 
   if (isSelected) {
-    color = 'cyan'
+    labelColor = 'cyan'
   } else if (item.disabled) {
-    color = 'dim'
-  } else {
-    color = undefined
+    labelColor = 'dim'
   }
 
   if (typeof previousItem === 'undefined' || item.group !== previousItem.group) {
@@ -110,7 +108,7 @@ function Item<T>({
 
       <Box key={item.key}>
         <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
-        <Text color={color}>{enableShortcuts ? `(${item.key}) ${label}` : label}</Text>
+        <Text color={labelColor}>{enableShortcuts ? `(${item.key}) ${label}` : label}</Text>
       </Box>
     </Box>
   )
