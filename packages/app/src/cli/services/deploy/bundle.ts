@@ -46,9 +46,9 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
             extensions: {
               ...options.app.extensions,
               ui: options.app.extensions.ui
-                .filter((themeExtension) => {
+                .filter((uiExtension) => {
                   // excluding flow action definition extensions from being built.
-                  return themeExtension.localIdentifier === 'flow_action_definition'
+                  return uiExtension.type === 'flow_action_definition'
                 })
                 .map((uiExtension) => {
                   const extensionId = options.identifiers.extensions[uiExtension.localIdentifier]!

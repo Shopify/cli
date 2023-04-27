@@ -9,6 +9,7 @@ const FlowExtensionSchema = BaseUIExtensionSchema.extend({
   title: zod.string(),
   description: zod.string(),
   url: zod.string(),
+  fields: zod.array(zod.object({id: zod.string()})),
 })
 
 /**
@@ -26,6 +27,7 @@ const themeSpecification = createUIExtensionSpecification({
       title: config.title,
       description: config.description,
       url: config.url,
+      fields: config.fields,
     }
   },
 })
