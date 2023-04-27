@@ -46,8 +46,8 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   const {oneThird} = useLayout()
   const [answer, setAnswer] = useState<string>('')
   const answerOrDefault = answer.length > 0 ? answer : defaultValue
-  const useEmptyValue = answerOrDefault === ''
-  const answerWithEmptyOrDefault = useEmptyValue ? emptyDisplayedValue : answerOrDefault
+  const displayEmptyValue = answerOrDefault === ''
+  const displayedAnswer = displayEmptyValue ? emptyDisplayedValue : answerOrDefault
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | undefined>(undefined)
@@ -85,8 +85,8 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
           </Box>
 
           <Box flexGrow={1}>
-            <Text color="cyan" dimColor={useEmptyValue}>
-              {password ? '*'.repeat(answer.length) : answerWithEmptyOrDefault}
+            <Text color="cyan" dimColor={displayEmptyValue}>
+              {password ? '*'.repeat(answer.length) : displayedAnswer}
             </Text>
           </Box>
         </Box>
