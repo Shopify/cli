@@ -47,16 +47,16 @@ export interface HookReturnPerTunnelPlugin {
 
 export type TunnelProviderFunction = FanoutHookFunction<'tunnel_provider', ''>
 export type TunnelStartFunction = FanoutHookFunction<'tunnel_start', ''>
-export type TunnelStopFunction = FanoutHookFunction<'tunnel_start', ''>
+export type TunnelStopFunction = FanoutHookFunction<'tunnel_stop', ''>
 export type TunnelStatusFunction = FanoutHookFunction<'tunnel_status', ''>
 
 export type TunnelStartReturn = PluginReturnsForHook<'tunnel_start', ''>
-export type TunnelStopReturn = PluginReturnsForHook<'tunnel_start', ''>
+export type TunnelStopReturn = PluginReturnsForHook<'tunnel_stop', ''>
 export type TunnelStatusReturn = PluginReturnsForHook<'tunnel_status', ''>
 
 export type TunnelStartAction = (port: number) => Promise<TunnelStartReturn>
 export type TunnelStatusAction = () => Promise<TunnelStatusReturn>
-export type TunnelStopAction = () => TunnelStopReturn
+export type TunnelStopAction = () => Promise<TunnelStopReturn>
 
 export const defineProvider = (input: {name: string}): TunnelProviderFunction => {
   return async () => input
@@ -70,7 +70,7 @@ export const startTunnel = (options: {provider: string; action: TunnelStartActio
 }
 
 export const stopTunnel = (options: {provider: string; action: TunnelStopAction}): TunnelStopFunction => {
-  return async (inputs: {provider: string; port: number}): Promise<TunnelStopReturn> => {
+  return async (inputs: {provider: string}): Promise<TunnelStopReturn> => {
     if (inputs.provider !== options.provider) return err(new TunnelError('invalid-provider'))
     return options.action()
   }
