@@ -6,7 +6,7 @@ import {ok} from '@shopify/cli-kit/node/result'
 export default tunnelStatus({
   provider: TUNNEL_PROVIDER,
   action: async () => {
-    const aa = await getCurrentStatus()
-    return ok(aa)
+    const status = await getCurrentStatus()
+    return ok(status)
   },
 })

@@ -18,7 +18,7 @@ let currentStatus: TunnelStatusType = {status: 'not-started'}
 
 export const getCurrentStatus = async () => currentStatus
 
-export const abortController = new AbortController()
+const abortController = new AbortController()
 
 export async function hookStart(port: number) {
   try {
@@ -28,6 +28,10 @@ export async function hookStart(port: number) {
     const tunnelError = new TunnelError('unknown', error.message)
     return err(tunnelError)
   }
+}
+
+export async function stopCloudflareProcess() {
+  abortController.abort()
 }
 
 function tunnel(options: {port: number}): void {
