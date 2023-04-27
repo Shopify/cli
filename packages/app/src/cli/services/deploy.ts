@@ -104,15 +104,14 @@ export async function deploy(options: DeployOptions) {
     try {
       const bundleTheme = useThemebundling() && app.extensions.theme.length !== 0
       const bundleUI = app.extensions.ui.length !== 0
-      const bundleFunction = app.extensions.function.length !== 0
-      const bundle = bundleTheme || bundleUI || bundleFunction
+      const bundle = bundleTheme || bundleUI
       let bundlePath: string | undefined
 
       if (bundle) {
         bundlePath = joinPath(tmpDir, `bundle.zip`)
         await mkdir(dirname(bundlePath))
-        await bundleAndBuildExtensions({app, bundlePath, identifiers, bundle})
       }
+      await bundleAndBuildExtensions({app, bundlePath, identifiers})
 
       const tasks: Task<TasksContext>[] = [
         {
@@ -124,13 +123,15 @@ export async function deploy(options: DeployOptions) {
         {
           title: partnersApp.betas?.unifiedAppDeployment ? 'Creating deployment' : 'Pushing your code to Shopify',
           task: async () => {
-            ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
-              apiKey,
-              bundlePath,
-              extensions,
-              token,
-              label,
-            }))
+            if (bundle || partnersApp.betas?.unifiedAppDeployment) {
+              ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
+                apiKey,
+                bundlePath,
+                extensions,
+                token,
+                label,
+              }))
+            }
 
             if (!useThemebundling()) {
               await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})

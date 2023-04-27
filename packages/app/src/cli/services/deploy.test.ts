@@ -52,7 +52,7 @@ describe('deploy', () => {
       extensions: [],
       token: 'api-token',
     })
-    expect(bundleAndBuildExtensions).not.toHaveBeenCalledOnce()
+    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
     expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
@@ -116,13 +116,50 @@ describe('deploy', () => {
     expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
 
-  test('uploads the extension bundle with 1 function', async () => {
+  test('does not upload the extension bundle with 1 function and no beta flag', async () => {
     // Given
     const functionExtension = await testFunctionExtension()
     const app = testApp({extensions: {ui: [], theme: [], function: [functionExtension]}})
 
     // When
     await testDeployBundle(app)
+
+    // Then
+    expect(uploadFunctionExtensions).toHaveBeenCalledWith(
+      [
+        {
+          configuration: functionExtension.configuration,
+          configurationPath: functionExtension.configurationPath,
+          directory: functionExtension.directory,
+          entrySourceFilePath: functionExtension.entrySourceFilePath,
+          idEnvironmentVariableName: functionExtension.idEnvironmentVariableName,
+          localIdentifier: functionExtension.localIdentifier,
+        },
+      ],
+      {
+        identifiers: {app: 'app-id', extensions: {'my-function': 'my-function'}, extensionIds: {}},
+        token: 'api-token',
+      },
+    )
+    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
+    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
+    expect(uploadExtensionsBundle).not.toHaveBeenCalled()
+    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
+  })
+
+  test('uploads the extension bundle with 1 function and beta flag', async () => {
+    // Given
+    const functionExtension = await testFunctionExtension()
+    const app = testApp({extensions: {ui: [], theme: [], function: [functionExtension]}})
+
+    // When
+    await testDeployBundle(app, {
+      id: 'app-id',
+      organizationId: 'org-id',
+      title: 'app-title',
+      grantedScopes: [],
+      betas: {unifiedAppDeployment: true},
+    })
 
     // Then
     expect(uploadFunctionExtensions).toHaveBeenCalledWith(
