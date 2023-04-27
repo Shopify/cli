@@ -4,7 +4,7 @@ import {err} from '@shopify/cli-kit/node/result'
 import {exec} from '@shopify/cli-kit/node/system'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
@@ -76,11 +76,15 @@ function tunnel(options: {port: number}): void {
     stdout: customStdout,
     stderr: customStdout,
     signal: abortController.signal,
+    externalErrorHandler: () => {
+      outputWarn('Cloudflared tunnel crashed')
+    },
   })
 }
 
 function findUrl(data: Buffer): string | undefined {
-  const match = data.toString().match(/(https?:\/\/[^\s]+trycloudflare\.com)/) ?? undefined
+  const regex = new RegExp(`(https:\\/\\/[^\\s]+\\.${getTunnelDomain()})`)
+  const match = data.toString().match(regex) ?? undefined
   return match && match[1]
 }
 
