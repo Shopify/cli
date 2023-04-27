@@ -1,7 +1,5 @@
 import {RemoteTemplateSpecification} from '../../../api/graphql/template_specifications.js'
 
-const dependency = {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'}
-
 /**
  * Post-purchase UI template specification.
  */

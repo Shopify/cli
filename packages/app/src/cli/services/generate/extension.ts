@@ -9,6 +9,7 @@ import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
   DependencyVersion,
+  getProdDependencies,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
@@ -17,6 +18,7 @@ import {downloadGitRepository} from '@shopify/cli-kit/node/git'
 import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, relativizePath} from '@shopify/cli-kit/node/path'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {captureOutput} from '@shopify/cli-kit/node/system'
 import {fileURLToPath} from 'url'
 
 async function getTemplatePath(name: string): Promise<string> {
@@ -115,18 +117,6 @@ async function themeExtensionInit({type, name, directory}: ExtensionInitOptions)
 async function uiExtensionInit({name, extensionFlavor, directory, app}: ExtensionInitOptions) {
   const tasks = [
     {
-      title: 'Installing dependencies',
-      task: async () => {
-        await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor?.value)
-        const requiredDependencies = getExtensionRuntimeDependencies(extensionFlavor)
-        await addNPMDependenciesIfNeeded(requiredDependencies, {
-          packageManager: app.packageManager,
-          type: 'prod',
-          directory: app.directory,
-        })
-      },
-    },
-    {
       title: `Generating UI extension`,
       task: async () => {
         const templateDirectory = extensionFlavor?.path
@@ -147,6 +137,19 @@ async function uiExtensionInit({name, extensionFlavor, directory, app}: Extensio
         }
       },
     },
+    {
+      title: 'Installing dependencies',
+      task: async () => {
+        await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor?.value)
+        const extensionPackageJsonPath = joinPath(directory, 'package.json')
+        const requiredDependencies = await getProdDependencies(extensionPackageJsonPath)
+        await addNPMDependenciesIfNeeded(requiredDependencies, {
+          packageManager: app.packageManager,
+          type: 'prod',
+          directory: app.directory,
+        })
+      },
+    },
   ]
   await renderTasks(tasks)
 }
@@ -163,20 +166,6 @@ function getSrcFileExtension(extensionFlavor: ExtensionFlavorValue): SrcFileExte
   }
 
   return flavorToSrcFileExtension[extensionFlavor] ?? 'js'
-}
-
-export function getExtensionRuntimeDependencies(extensionFlavor: ExtensionFlavor | undefined): DependencyVersion[] {
-  const dependencies: DependencyVersion[] = []
-  if (extensionFlavor?.value?.includes('react')) {
-    dependencies.push({name: 'react', version: versions.react})
-  }
-  // TODO: add custom dependencies for the extension
-
-  // const rendererDependency = specification.dependency
-  // if (rendererDependency) {
-  //   dependencies.push(rendererDependency)
-  // }
-  return dependencies
 }
 
 export function getFunctionRuntimeDependencies(templateLanguage: string): DependencyVersion[] {

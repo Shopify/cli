@@ -21,7 +21,7 @@ export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = Bas
   supportedFlavors: ExtensionFlavor[]
   gated: boolean
   helpURL?: string
-  dependency?: {name: string; version: string}
+  dependency?: string
   templatePath?: string
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
