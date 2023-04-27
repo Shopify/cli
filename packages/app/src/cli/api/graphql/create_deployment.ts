@@ -51,6 +51,7 @@ export interface CreateDeploymentVariables {
 
 interface ErrorDetail {
   extension_id: number
+  extension_title: string
 }
 
 export interface CreateDeploymentSchema {

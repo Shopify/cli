@@ -149,10 +149,7 @@ export async function uploadExtensionsBundle(
   const result: CreateDeploymentSchema = await partnersRequest(mutation, options.token, variables)
 
   if (result.deploymentCreate?.userErrors?.length > 0) {
-    const customSections: AlertCustomSection[] = deploymentErrorsToCustomSections(
-      result.deploymentCreate.userErrors,
-      options.extensionIds,
-    )
+    const customSections: AlertCustomSection[] = deploymentErrorsToCustomSections(result.deploymentCreate.userErrors)
 
     throw new AbortError('There has been an error creating your deployment.', null, [], customSections)
   }
@@ -166,19 +163,16 @@ export async function uploadExtensionsBundle(
   return {validationErrors, deploymentId: result.deploymentCreate.deployment.id}
 }
 
-const VALIDATION_ERRORS_TITLE = '\nValidation errors found in your extension toml file'
+const VALIDATION_ERRORS_TITLE = '\nValidation errors'
 const GENERIC_ERRORS_TITLE = '\n'
 
 export function deploymentErrorsToCustomSections(
   errors: CreateDeploymentSchema['deploymentCreate']['userErrors'],
-  extensionIds: IdentifiersExtensions,
 ): ErrorCustomSection[] {
   return errors.reduce((sections, error) => {
-    const extensionIdentifier = Object.keys(extensionIds).find(
-      (localIdentifier) =>
-        extensionIds[localIdentifier] ===
-        error.details?.find((detail) => typeof detail.extension_id !== 'undefined')?.extension_id.toString(),
-    )
+    const extensionIdentifier = error.details.find(
+      (detail) => typeof detail.extension_title !== 'undefined',
+    )?.extension_title
 
     const existingSection = sections.find((section) => section.title === extensionIdentifier)
 
