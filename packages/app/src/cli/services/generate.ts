@@ -15,7 +15,8 @@ import {
   ExtensionFlavorValue,
 } from '../services/generate/extension.js'
 import {getTypesExternalName} from '../models/app/template.js'
-import {RemoteTemplateSpecification} from '../api/graphql/template_specifications.js'
+import {RemoteTemplateSpecification, TemplateType} from '../api/graphql/template_specifications.js'
+import {blocks} from '../constants.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -24,6 +25,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {RenderAlertOptions, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {groupBy} from 'lodash-es'
 
 export interface GenerateOptions {
   directory: string
@@ -77,15 +79,21 @@ async function buildPromptOptions(
 }
 
 function checkLimits(templateSpecifications: RemoteTemplateSpecification[], app: AppInterface) {
-  return {validTemplateSpecifications: templateSpecifications, templatesOverlimit: []}
+  const iterateeFunction = (spec: RemoteTemplateSpecification) => {
+    const allValid = spec.types.every((type) => !limitReached(app, type))
+    return allValid ? 'validTemplateSpecifications' : 'templatesOverlimit'
+  }
+  return groupBy(templateSpecifications, iterateeFunction)
+}
 
-  // TODO: check registration limits
-
-  // return groupBy(templateSpecifications, (spec) =>
-  //   spec.types.every((extension) => app.extensionsForType(extension).length < extension.registrationLimit)
-  //     ? 'validTemplateSpecifications'
-  //     : 'templatesOverlimit',
-  // )
+function limitReached(app: AppInterface, templateType: TemplateType) {
+  if (templateType.type === 'function') {
+    return app.extensions.function.length >= blocks.functions.defaultRegistrationLimit
+  } else {
+    // TODO: check registration limits
+    return false
+    // return app.extensionsForType(templateType).length >= templateType.registrationLimit
+  }
 }
 
 async function saveAnalyticsMetadata(promptAnswers: GenerateExtensionPromptOutput, typeFlag: string | undefined) {
@@ -192,16 +200,14 @@ async function handleTypeParameter(
 
   // Validate limits for selected type.
   // If no type is selected, filter out any types that have reached their limit
-  // templateSpecification.types.forEach((spec) => {
-  //   const existing = app.extensionsForType(spec)
-  //   const limit = spec.registrationLimit
-  //   if (existing.length >= limit) {
-  //     throw new AbortError(
-  //       'Invalid extension type',
-  //       `You can only generate ${limit} extension(s) of type ${spec.externalIdentifier} per app`,
-  //     )
-  //   }
-  // })
+  templateSpecification.types.forEach((spec) => {
+    if (limitReached(app, spec)) {
+      throw new AbortError(
+        'Invalid extension type',
+        `You have reached the limit of extension(s) of type ${spec.type} per app`,
+      )
+    }
+  })
 
   return templateSpecification
 }

@@ -1,8 +1,8 @@
 import {parseCommandContent} from './prerun.js'
-import {describe, expect, it} from 'vitest'
+import {describe, expect, test} from 'vitest'
 
 describe('parseCommandContent', () => {
-  it('when a create command is used should return the correct command content', async () => {
+  test('when a create command is used should return the correct command content', async () => {
     // Given
     const cmdInfo = {
       id: 'init',
@@ -20,7 +20,7 @@ describe('parseCommandContent', () => {
     expect(got.alias).toBeUndefined()
   })
 
-  it('when a normal command is used without topic should return the correct command content', async () => {
+  test('when a normal command is used without topic should return the correct command content', async () => {
     // Given
     const cmdInfo = {
       id: 'upgrade',
@@ -38,7 +38,7 @@ describe('parseCommandContent', () => {
     expect(got.alias).toBeUndefined()
   })
 
-  it('when a normal command is with topic should return the correct command content', async () => {
+  test('when a normal command is with topic should return the correct command content', async () => {
     // Given
     const cmdInfo = {
       id: 'app:dev',
@@ -56,7 +56,7 @@ describe('parseCommandContent', () => {
     expect(got.alias).toBeUndefined()
   })
 
-  it('when a normal command is with alias should return the correct command content', async () => {
+  test('when a normal command is with alias should return the correct command content', async () => {
     // Given
     const cmdInfo = {
       id: 'upgrade',

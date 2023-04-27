@@ -1,11 +1,12 @@
 import {AbortSignal} from './abort.js'
 import {platformAndArch} from './os.js'
-import {captureOutput, exec} from './system.js'
+import {captureOutput, exec, ExecOptions} from './system.js'
 import * as file from './fs.js'
 import {joinPath, dirname, cwd} from './path.js'
 import {AbortError, AbortSilentError} from './error.js'
 import {getEnvironmentVariables} from './environment.js'
 import {isSpinEnvironment, spinFqdn} from './context/spin.js'
+import {firstPartyDev} from './context/local.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {AdminSession} from '../../public/node/session.js'
 import {outputContent, outputToken} from '../../public/node/output.js'
@@ -16,7 +17,7 @@ import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
 
 export const RubyCLIVersion = '2.35.0'
-const ThemeCheckVersion = '1.14.0'
+const ThemeCheckVersion = '1.15.0'
 const MinBundlerVersion = '2.3.11'
 const MinRubyVersion = '2.7.5'
 export const MinWdmWindowsVersion = '0.1.0'
@@ -64,11 +65,12 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
     // outside the user's project directory.
     BUNDLE_GEMFILE: joinPath(await shopifyCLIDirectory(embedded), 'Gemfile'),
     ...(await getSpinEnvironmentVariables()),
+    SHOPIFY_CLI_1P_DEV: firstPartyDev() ? '1' : '0',
   }
 
   try {
     const shopifyExecutable = embedded ? [rubyExecutable(), await embeddedCLIExecutable()] : ['shopify']
-    await exec(bundleExecutable(), ['exec', ...shopifyExecutable, ...args], {
+    await runBundler(['exec', ...shopifyExecutable, ...args], {
       ...(options.stdout === undefined && {stdio: 'inherit'}),
       cwd: options.directory ?? cwd(),
       env,
@@ -120,7 +122,7 @@ export async function execThemeCheckCLI(options: ExecThemeCheckCLIOptions): Prom
         }
       },
     })
-    await exec(bundleExecutable(), ['exec', 'theme-check'].concat([directory, ...(options.args || [])]), {
+    await runBundler(['exec', 'theme-check'].concat([directory, ...(options.args || [])]), {
       stdout: options.stdout,
       stderr: customStderr,
       cwd: themeCheckDirectory(),
@@ -221,7 +223,7 @@ async function validateRuby() {
 async function validateBundler() {
   let version
   try {
-    const stdout = await captureOutput(bundleExecutable(), ['-v'])
+    const stdout = await captureOutput(bundleExecutable(), ['-v'], {env: {BUNDLE_USER_HOME: bundleUserHome()}})
     version = coerceSemverVersion(stdout)
   } catch {
     throw new AbortError(
@@ -443,15 +445,35 @@ async function getSpinEnvironmentVariables() {
  * @param directory - Directory where the Gemfile is located.
  */
 async function shopifyBundleInstall(directory: string): Promise<void> {
-  const bundle = bundleExecutable()
-  const shopifyGemsPath = shopifyGems.data
-
-  await exec(bundle, ['config', 'set', '--local', 'path', shopifyGemsPath], {
+  await runBundler(['config', 'set', '--local', 'path', shopifyGems.cache], {
     cwd: directory,
   })
-
-  await exec(bundle, ['config', 'set', '--local', 'without', 'development:test'], {
+  await runBundler(['config', 'set', '--local', 'without', 'development:test'], {
     cwd: directory,
   })
-  await exec(bundle, ['install'], {cwd: directory})
+  await runBundler(['install'], {cwd: directory})
+}
+
+/**
+ * It returns a custom BUNDLE_USER_HOME. This is required in Windows because
+ * bundler will instead crash if the username contains UTF-8 characters.
+ *
+ * @returns The value of the environment variable.
+ */
+export function bundleUserHome(): string | undefined {
+  if (platformAndArch().platform === 'windows' && process.env.PUBLIC) {
+    return joinPath(process.env.PUBLIC, 'AppData', 'Local', 'shopify-bundler-nodejs', 'Cache')
+  } else {
+    return undefined
+  }
+}
+
+/**
+ * It runs bundler commands by setting the correct BUNDLE_USER_HOME env var.
+ *
+ * @param args - Arguments to pass to the bundle command.
+ * @param options - Options to pass to the exec function.
+ */
+async function runBundler(args: string[], options: ExecOptions) {
+  return exec(bundleExecutable(), args, {...options, env: {...options.env, BUNDLE_USER_HOME: bundleUserHome()}})
 }

@@ -1,7 +1,13 @@
 import {LocalSource, RemoteSource} from './identifiers.js'
 import {LocalRemoteSource} from './id-matching.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {renderAutocompletePrompt, renderConfirmationPrompt, renderInfo} from '@shopify/cli-kit/node/ui'
+import {OrganizationApp} from '../../models/organization.js'
+import {
+  InfoTableSection,
+  renderAutocompletePrompt,
+  renderConfirmationPrompt,
+  renderInfo,
+} from '@shopify/cli-kit/node/ui'
 
 export async function matchConfirmationPrompt(local: LocalSource, remote: RemoteSource) {
   return renderConfirmationPrompt({
@@ -35,21 +41,37 @@ interface SourceSummary {
   onlyRemote: RemoteSource[]
 }
 
-export async function deployConfirmationPrompt(summary: SourceSummary): Promise<boolean> {
-  const infoTable: {[key: string]: string[]} = {}
+export async function deployConfirmationPrompt(
+  summary: SourceSummary,
+  partnersApp?: OrganizationApp,
+): Promise<boolean> {
+  const infoTable: InfoTableSection[] = []
 
   if (summary.toCreate.length > 0) {
-    infoTable.add = summary.toCreate.map((source) => source.localIdentifier)
+    infoTable.push({header: 'Add', items: summary.toCreate.map((source) => source.localIdentifier)})
   }
 
   const toUpdate = Object.keys(summary.identifiers)
 
   if (toUpdate.length > 0) {
-    infoTable.update = toUpdate
+    infoTable.push({header: 'Update', items: toUpdate})
   }
 
   if (summary.onlyRemote.length > 0) {
-    infoTable['missing locally'] = summary.onlyRemote.map((source) => source.title)
+    let missingLocallySection: InfoTableSection = {
+      header: 'Missing locally',
+      items: summary.onlyRemote.map((source) => source.title),
+    }
+
+    if (partnersApp?.betas?.unifiedAppDeployment) {
+      missingLocallySection = {
+        ...missingLocallySection,
+        color: 'red',
+        helperText: 'Extensions missing locally will be removed for users when you publish this deployment',
+      }
+    }
+
+    infoTable.push(missingLocallySection)
   }
 
   if (Object.keys(infoTable).length === 0) {

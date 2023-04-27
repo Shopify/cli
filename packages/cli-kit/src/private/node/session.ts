@@ -15,7 +15,6 @@ import {IdentityToken, Session} from './session/schema.js'
 import * as secureStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {RequestClientError} from './api/headers.js'
-import {environmentVariables} from './constants.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import {firstPartyDev, useDeviceAuth} from '../../public/node/context/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
@@ -23,6 +22,7 @@ import {partnersRequest} from '../../public/node/api/partners.js'
 import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
 import {openURL} from '../../public/node/system.js'
 import {keypress} from '../../public/node/ui.js'
+import {getIdentityTokenInformation, getPartnersToken} from '../../public/node/environment.js'
 import {gql} from 'graphql-request'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputCompleted, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
@@ -82,13 +82,13 @@ export interface OAuthSession {
  * This method ensures that we have a valid session to authenticate against the given applications using the provided scopes.
  *
  * @param applications - An object containing the applications we need to be authenticated with.
- * @param env - Optional environment variables to use.
+ * @param _env - Optional environment variables to use.
  * @param forceRefresh - Optional flag to force a refresh of the token.
  * @returns An instance with the access tokens organized by application.
  */
 export async function ensureAuthenticated(
   applications: OAuthApplications,
-  env = process.env,
+  _env?: NodeJS.ProcessEnv,
   forceRefresh = false,
 ): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
@@ -139,7 +139,7 @@ ${outputToken.json(applications)}
   const tokens = await tokensFor(applications, completeSession, fqdn)
 
   // Overwrite partners token if using a custom CLI Token
-  const envToken = env[environmentVariables.partnersToken]
+  const envToken = getPartnersToken()
   if (envToken && applications.partnersApi) {
     tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
   }
@@ -166,7 +166,10 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
   }
 
   let identityToken: IdentityToken
-  if (useDeviceAuth()) {
+  const identityTokenInformation = getIdentityTokenInformation()
+  if (identityTokenInformation) {
+    identityToken = buildIdentityTokenFromEnv(scopes, identityTokenInformation)
+  } else if (useDeviceAuth()) {
     // Request a device code to authorize without a browser redirect.
     outputDebug(outputContent`Requesting device authorization code...`)
     const deviceAuth = await requestDeviceAuthorization(scopes)
@@ -345,5 +348,16 @@ function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
     admin: apiScopes('admin', adminScope),
     partners: apiScopes('partners', partnerScope),
     storefront: apiScopes('storefront-renderer', storefrontScopes),
+  }
+}
+
+function buildIdentityTokenFromEnv(
+  scopes: string[],
+  identityTokenInformation: {accessToken: string; refreshToken: string},
+) {
+  return {
+    ...identityTokenInformation,
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    scopes,
   }
 }

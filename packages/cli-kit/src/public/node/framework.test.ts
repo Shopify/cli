@@ -1,10 +1,10 @@
 import {resolveFramework} from './framework.js'
 import {inTemporaryDirectory, writeFile} from './fs.js'
 import {joinPath} from './path.js'
-import {describe, expect, it} from 'vitest'
+import {describe, expect, test} from 'vitest'
 
 describe('frontFrameworkUsed', () => {
-  it('return rails when match every detectors', async () => {
+  test('return rails when match every detectors', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const gemFilePath = joinPath(tmpDir, 'Gemfile')
@@ -18,7 +18,7 @@ describe('frontFrameworkUsed', () => {
       expect(got).toEqual('rails')
     })
   })
-  it('return next when match every detectors', async () => {
+  test('return next when match every detectors', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = joinPath(tmpDir, 'package.json')
@@ -34,7 +34,7 @@ describe('frontFrameworkUsed', () => {
       expect(got).toEqual('nextjs')
     })
   })
-  it('return remix when match every detectors', async () => {
+  test('return remix when match every detectors', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = joinPath(tmpDir, 'package.json')
@@ -50,7 +50,7 @@ describe('frontFrameworkUsed', () => {
       expect(got).toEqual('remix')
     })
   })
-  it('return flask when match every detectors', async () => {
+  test('return flask when match every detectors', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const pipFilePath = joinPath(tmpDir, 'Pipfile')
@@ -64,7 +64,7 @@ describe('frontFrameworkUsed', () => {
       expect(got).toEqual('flask')
     })
   })
-  it('return laravel when match every detectors', async () => {
+  test('return laravel when match every detectors', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const composerFilePath = joinPath(tmpDir, 'composer.json')
@@ -78,7 +78,7 @@ describe('frontFrameworkUsed', () => {
       expect(got).toEqual('laravel')
     })
   })
-  it('return symfony when match every detectors', async () => {
+  test('return symfony when match every detectors', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const composerFilePath = joinPath(tmpDir, 'composer.json')
@@ -92,7 +92,7 @@ describe('frontFrameworkUsed', () => {
       expect(got).toEqual('symfony')
     })
   })
-  it('return unkonw when no configuration file is present', async () => {
+  test('return unkonw when no configuration file is present', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // When
       const got = await resolveFramework(tmpDir)
@@ -101,7 +101,7 @@ describe('frontFrameworkUsed', () => {
       expect(got).toEqual('unknown')
     })
   })
-  it('return unkonw when unsupported dependency', async () => {
+  test('return unkonw when unsupported dependency', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = joinPath(tmpDir, 'package.json')
@@ -116,7 +116,7 @@ describe('frontFrameworkUsed', () => {
       expect(got).toEqual('unknown')
     })
   })
-  it('return unkonw when not every detector is present', async () => {
+  test('return unkonw when not every detector is present', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = joinPath(tmpDir, 'package.json')

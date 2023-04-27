@@ -1,16 +1,17 @@
 import {partnersRequest, functionProxyRequest, handleDeprecations} from './partners.js'
+import {graphqlRequest, GraphQLResponse} from './graphql.js'
 import {partnersFqdn} from '../context/fqdn.js'
-import {graphqlRequest, GraphQLResponse} from '../../../private/node/api/graphql.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {test, vi, expect, describe, beforeEach, beforeAll} from 'vitest'
 
-vi.mock('../../../private/node/api/graphql')
+vi.mock('./graphql.js')
 vi.mock('../../../private/node/context/deprecations-store.js')
 vi.mock('../context/fqdn.js')
 
 const mockedResult = 'OK'
 const partnersFQDN = 'partners.shopify.com'
 const url = 'https://partners.shopify.com/api/cli/graphql'
+
 const mockedToken = 'token'
 
 beforeEach(() => {
@@ -26,14 +27,14 @@ describe('partnersRequest', () => {
     await partnersRequest('query', mockedToken, {variables: 'variables'})
 
     // Then
-    expect(graphqlRequest).toHaveBeenLastCalledWith(
-      'query',
-      'Partners',
+    expect(graphqlRequest).toHaveBeenLastCalledWith({
+      query: 'query',
+      api: 'Partners',
       url,
-      mockedToken,
-      {variables: 'variables'},
-      {onResponse: handleDeprecations},
-    )
+      token: mockedToken,
+      variables: {variables: 'variables'},
+      responseOptions: {onResponse: handleDeprecations},
+    })
   })
 })
 
@@ -52,18 +53,18 @@ describe('functionProxyRequest', () => {
     await functionProxyRequest(apiKey, query, mockedToken, variables)
 
     // Then
-    expect(graphqlRequest).toHaveBeenLastCalledWith(
-      expect.stringContaining('scriptServiceProxy'),
-      'Partners',
+    expect(graphqlRequest).toHaveBeenLastCalledWith({
+      query: expect.stringContaining('scriptServiceProxy'),
+      api: 'Partners',
       url,
-      mockedToken,
-      {
+      token: mockedToken,
+      variables: {
         api_key: apiKey,
         query,
         variables: JSON.stringify(variables) || '{}',
       },
-      {onResponse: handleDeprecations},
-    )
+      responseOptions: {onResponse: handleDeprecations},
+    })
   })
 })
 

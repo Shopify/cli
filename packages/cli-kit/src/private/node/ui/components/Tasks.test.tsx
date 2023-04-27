@@ -1,9 +1,8 @@
 import {Task, Tasks} from './Tasks.js'
-import {getLastFrameAfterUnmount} from '../../testing/ui.js'
+import {getLastFrameAfterUnmount, render} from '../../testing/ui.js'
 import {unstyled} from '../../../../public/node/output.js'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {render} from 'ink-testing-library'
 
 describe('Tasks', () => {
   test('shows a loading state at the start', async () => {
@@ -46,14 +45,13 @@ describe('Tasks', () => {
     // When
 
     const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
-
-    await taskHasRendered()
+    await renderInstance.waitUntilExit()
 
     // Then
     expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot('""')
   })
 
-  test('shows nothing at the end in case of success', async () => {
+  test('stops at the task that throws error', async () => {
     // Given
     const secondTaskFunction = vi.fn(async () => {})
 
@@ -72,10 +70,8 @@ describe('Tasks', () => {
     // When
     const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
 
-    await taskHasRendered()
-
     // Then
-    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot('""')
+    await expect(renderInstance.waitUntilExit()).rejects.toThrowError('something went wrong')
     expect(secondTaskFunction).toHaveBeenCalledTimes(0)
   })
 
@@ -368,32 +364,17 @@ describe('Tasks', () => {
     const secondTask: Task<{foo: string}> = {
       title: 'task 2',
       task: async (ctx) => {
-        if (ctx.foo !== 'bar') {
-          throw new Error('context is not shared')
+        if (ctx.foo === 'bar') {
+          throw new Error('context is shared')
         }
       },
     }
 
-    const thirdTaskFunction = vi.fn(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-    })
-
-    const thirdTask: Task<{foo: string}> = {
-      title: 'task 3',
-      task: thirdTaskFunction,
-    }
-
     // When
-    const renderInstance = render(<Tasks tasks={[firstTask, secondTask, thirdTask]} silent={false} />)
-
-    await taskHasRendered()
+    const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
 
     // Then
-    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
-      "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-      task 3 ..."
-    `)
-    expect(thirdTaskFunction).toHaveBeenCalled()
+    await expect(renderInstance.waitUntilExit()).rejects.toThrow('context is shared')
   })
 
   test('has an onComplete function that is called with the context', async () => {

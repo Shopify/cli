@@ -1,5 +1,5 @@
 {
-  "version": "3.45.0-pre.4",
+  "version": "3.46.0-pre.2",
   "commands": {
     "app:build": {
       "id": "app:build",
@@ -10,6 +10,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -58,6 +65,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -121,6 +135,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -244,6 +265,12 @@
           "description": "Local port of the theme app extension development server.",
           "hidden": false,
           "multiple": false
+        },
+        "notify": {
+          "name": "notify",
+          "type": "option",
+          "description": "The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.",
+          "multiple": false
         }
       },
       "args": {}
@@ -257,6 +284,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -305,6 +339,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -418,6 +459,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -460,6 +508,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -494,6 +549,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -521,6 +583,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -535,6 +604,14 @@
           "hidden": false,
           "multiple": false,
           "default": "."
+        },
+        "json": {
+          "name": "json",
+          "type": "boolean",
+          "char": "j",
+          "description": "Log the run result as a JSON object.",
+          "hidden": false,
+          "allowNo": false
         }
       },
       "args": {}
@@ -548,6 +625,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -582,6 +666,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -612,6 +703,13 @@
         "<%= config.bin %> <%= command.id %>"
       ],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -703,6 +801,13 @@
       "pluginType": "core",
       "aliases": [],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",
@@ -741,6 +846,13 @@
         "<%= config.bin %> <%= command.id %>"
       ],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",

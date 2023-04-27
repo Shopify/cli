@@ -27,7 +27,7 @@ import {testApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
 import {App} from '../models/app/app.js'
-import {beforeEach, describe, expect, it, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -57,6 +57,9 @@ const APP1: OrganizationApp = {
   organizationId: '1',
   apiSecretKeys: [{secret: 'secret1'}],
   grantedScopes: [],
+  betas: {
+    unifiedAppDeployment: false,
+  },
 }
 const APP2: OrganizationApp = {
   id: '2',
@@ -65,18 +68,21 @@ const APP2: OrganizationApp = {
   organizationId: '1',
   apiSecretKeys: [{secret: 'secret2'}],
   grantedScopes: [],
+  betas: {
+    unifiedAppDeployment: false,
+  },
 }
 
 const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
-  betas: {appUiDeployments: false, cliTunnelAlternative: false},
+  betas: {cliTunnelAlternative: false},
   website: '',
 }
 const ORG2: Organization = {
   id: '2',
   businessName: 'org2',
-  betas: {appUiDeployments: false, cliTunnelAlternative: true},
+  betas: {cliTunnelAlternative: true},
   website: '',
 }
 
@@ -117,6 +123,7 @@ const EXTENSION_A: UIExtension = {
   externalType: 'checkout_ui',
   surface: 'surface',
   preDeployValidation: () => Promise.resolve(),
+  buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
   previewMessage: (_) => undefined,
   publishURL: (_) => Promise.resolve(''),
@@ -171,7 +178,7 @@ beforeEach(async () => {
 })
 
 describe('ensureGenerateContext', () => {
-  it('returns the provided app apiKey if valid, without cached state', async () => {
+  test('returns the provided app apiKey if valid, without cached state', async () => {
     // Given
     const input = {apiKey: 'key2', directory: '/app', reset: false, token: 'token'}
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
@@ -182,7 +189,7 @@ describe('ensureGenerateContext', () => {
     // Then
     expect(got).toEqual(APP2.apiKey)
   })
-  it('returns the cached api key', async () => {
+  test('returns the cached api key', async () => {
     // Given
     const input = {directory: '/app', reset: false, token: 'token'}
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
@@ -194,7 +201,7 @@ describe('ensureGenerateContext', () => {
     // Then
     expect(got).toEqual(APP2.apiKey)
   })
-  it('selects a new app and returns the api key', async () => {
+  test('selects a new app and returns the api key', async () => {
     // Given
     const input = {directory: '/app', reset: true, token: 'token'}
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
@@ -222,7 +229,7 @@ describe('ensureGenerateContext', () => {
 })
 
 describe('ensureDevContext', () => {
-  it('returns selected data and updates internal state, without cached state', async () => {
+  test('returns selected data and updates internal state, without cached state', async () => {
     // Given
     vi.mocked(getAppInfo).mockReturnValue(undefined)
 
@@ -251,7 +258,7 @@ describe('ensureDevContext', () => {
     })
   })
 
-  it('returns useCloudflareTunnels false if the beta is enabled in partners', async () => {
+  test('returns useCloudflareTunnels false if the beta is enabled in partners', async () => {
     // Given
     vi.mocked(getAppInfo).mockReturnValue(undefined)
     vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
@@ -269,7 +276,7 @@ describe('ensureDevContext', () => {
     })
   })
 
-  it('returns selected data and updates internal state, with cached state', async () => {
+  test('returns selected data and updates internal state, with cached state', async () => {
     // Given
     const outputMock = mockAndCaptureOutput()
     vi.mocked(getAppInfo).mockReturnValue(CACHED1)
@@ -300,7 +307,7 @@ describe('ensureDevContext', () => {
     expect(fetchOrgAndApps).not.toBeCalled()
   })
 
-  it('returns selected data and updates internal state, with inputs from flags', async () => {
+  test('returns selected data and updates internal state, with inputs from flags', async () => {
     // Given
     vi.mocked(getAppInfo).mockReturnValue(undefined)
     vi.mocked(convertToTestStoreIfNeeded).mockResolvedValueOnce()
@@ -331,7 +338,7 @@ describe('ensureDevContext', () => {
     expect(fetchOrgAndApps).not.toBeCalled()
   })
 
-  it('throws if the store input is not valid', async () => {
+  test('throws if the store input is not valid', async () => {
     // Given
     vi.mocked(getAppInfo).mockReturnValue(undefined)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
@@ -343,7 +350,7 @@ describe('ensureDevContext', () => {
     await expect(got).rejects.toThrow(/Could not find invalid_store_domain/)
   })
 
-  it('resets cached state if reset is true', async () => {
+  test('resets cached state if reset is true', async () => {
     // When
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     await ensureDevContext({...INPUT, reset: true}, 'token')
@@ -372,12 +379,10 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
-    expect(fetchOrgFromId).toHaveBeenCalledWith(ORG1.id, 'token')
     expect(got.partnersApp.id).toEqual(APP2.id)
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
-    expect(got.organization.id).toEqual(ORG1.id)
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
   })
@@ -395,7 +400,6 @@ describe('ensureDeployContext', () => {
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(reuseDevConfigPrompt).mockResolvedValueOnce(true)
-    vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG1)
 
     // When
     const got = await ensureDeployContext(options(app))
@@ -403,12 +407,10 @@ describe('ensureDeployContext', () => {
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).toHaveBeenCalled()
-    expect(fetchOrgFromId).toHaveBeenCalledWith(ORG1.id, 'token')
     expect(got.partnersApp.id).toEqual(APP2.id)
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
-    expect(got.organization.id).toEqual(ORG1.id)
   })
 
   test('prompts the user to create or select an app and returns it with its id when the app has no extensions', async () => {
@@ -438,12 +440,10 @@ describe('ensureDeployContext', () => {
       identifiers,
       command: 'deploy',
     })
-    expect(fetchOrgFromId).not.toHaveBeenCalled()
     expect(got.partnersApp.id).toEqual(APP1.id)
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
-    expect(got.organization.id).toEqual(ORG1.id)
   })
 
   test("throws an app not found error if the app with the API key doesn't exist", async () => {
@@ -493,7 +493,6 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
-    expect(got.organization.id).toEqual(ORG1.id)
   })
 })
 

@@ -1,11 +1,11 @@
 import {allowedRedirectionURLsPrompt, appUrlPrompt} from './update-url.js'
-import {describe, it, expect, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
 describe('appUrlPrompt', () => {
-  it('asks the user to write a URL and returns it', async () => {
+  test('asks the user to write a URL and returns it', async () => {
     // Given
     vi.mocked(renderTextPrompt).mockResolvedValue('https://my-app.example.com')
 
@@ -23,7 +23,7 @@ describe('appUrlPrompt', () => {
 })
 
 describe('allowedRedirectionURLsPrompt', () => {
-  it('asks the user to write a URL and returns it', async () => {
+  test('asks the user to write a URL and returns it', async () => {
     // Given
     vi.mocked(renderTextPrompt).mockResolvedValue('https://example.com/callback1,https://example.com/callback2')
 

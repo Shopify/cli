@@ -34,8 +34,9 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
-import {OutputProcess, outputInfo} from '@shopify/cli-kit/node/output'
+import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {Writable} from 'stream'
 
 export interface DevOptions {
@@ -54,6 +55,7 @@ export interface DevOptions {
   noTunnel: boolean
   theme?: string
   themeExtensionPort?: number
+  notify?: string
 }
 
 interface DevWebOptions {
@@ -87,10 +89,6 @@ async function dev(options: DevOptions) {
   const webhooksPath = backendConfig?.configuration?.webhooksPath || '/api/webhooks'
   const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated
 
-  if (sendUninstallWebhook) {
-    outputInfo('Using a different app than last time, sending uninstall webhook to app server')
-  }
-
   const initiateUpdateUrls = (frontendConfig || backendConfig) && options.update
   let shouldUpdateURLs = false
 
@@ -102,7 +100,7 @@ async function dev(options: DevOptions) {
       app: localApp,
       useCloudflareTunnels,
     }),
-    backendConfig?.configuration.port || getAvailableTCPPort(),
+    getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
     getURLs(apiKey, token),
   ])
 
@@ -115,7 +113,10 @@ async function dev(options: DevOptions) {
   let previewUrl
 
   if (initiateUpdateUrls) {
-    const newURLs = generatePartnersURLs(exposedUrl, backendConfig?.configuration.authCallbackPath)
+    const newURLs = generatePartnersURLs(
+      exposedUrl,
+      backendConfig?.configuration.authCallbackPath ?? frontendConfig?.configuration.authCallbackPath,
+    )
     shouldUpdateURLs = await shouldOrPromptUpdateURLs({
       currentURLs,
       appDirectory: localApp.directory,

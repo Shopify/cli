@@ -1,6 +1,6 @@
 import {AbortError, BugError, handler, cleanSingleStackTracePath} from './error.js'
 import {renderFatalError} from './ui.js'
-import {describe, expect, test, vi, it} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('./ui.js')
 
@@ -44,7 +44,7 @@ describe('handler', () => {
 })
 
 describe('stack file path helpers', () => {
-  it.each([
+  test.each([
     ['simple file:///', 'file:///something/there.js'],
     ['windows file://', 'file:///D:\\something\\there.js'],
     ['unix no file', '/something/there.js'],

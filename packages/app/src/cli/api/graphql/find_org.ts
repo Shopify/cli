@@ -7,9 +7,6 @@ export const FindOrganizationQuery = gql`
         id
         businessName
         website
-        betas {
-          appUiDeployments
-        }
         apps(first: 25, title: $title) {
           pageInfo {
             hasNextPage
@@ -31,9 +28,6 @@ export interface FindOrganizationQuerySchema {
       id: string
       businessName: string
       website: string
-      betas: {
-        appUiDeployments?: boolean
-      }
       apps: {
         pageInfo: {
           hasNextPage: boolean

@@ -1,7 +1,9 @@
 import {fetchStoreThemes} from './theme-selector/fetch.js'
 import {Filter, FilterProps, filterThemes} from './theme-selector/filter.js'
+import {getDevelopmentTheme} from '../services/local-storage.js'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+import {capitalize} from '@shopify/cli-kit/common/string'
 
 /**
  * Finds or selects a theme in the store.
@@ -30,10 +32,12 @@ export async function findOrSelectTheme(
   return renderSelectPrompt({
     message: options.header,
     choices: themes.map((theme) => {
-      const yoursLabel = theme.id === options.developmentTheme ? ' [yours]' : ''
+      const yoursLabel = theme.id.toString() === getDevelopmentTheme() ? ' [yours]' : ''
+
       return {
         value: theme,
-        label: `${theme.name} [${theme.role}]${yoursLabel}`,
+        label: `${theme.name}${yoursLabel}`,
+        group: capitalize(theme.role),
       }
     }),
   })

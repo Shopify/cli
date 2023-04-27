@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-
-pushd $SCRIPT_DIR/.. > /dev/null
-pnpm nx run-many --target=build --projects=cli,app
-popd > /dev/null
-
-$SCRIPT_DIR/../packages/cli/bin/dev.js $@

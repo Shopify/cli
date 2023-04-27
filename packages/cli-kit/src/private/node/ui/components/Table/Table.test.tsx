@@ -1,8 +1,8 @@
 import {Table, TableColumn} from './Table.js'
 import ScalarDict from './ScalarDict.js'
+import {render} from '../../../testing/ui.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
-import {render} from 'ink-testing-library'
 
 describe('Table', async () => {
   test('formats the table correctly', async () => {

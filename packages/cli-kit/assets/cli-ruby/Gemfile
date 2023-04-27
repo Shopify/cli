@@ -3,7 +3,7 @@ source "https://rubygems.org"
 
 gem "bugsnag", "~> 6.22"
 gem "listen", "~> 3.7.0"
-gem "theme-check", "~> 1.14.0"
+gem "theme-check", "~> 1.15.0"
 gem "nokogiri", "~> 1.14.0"
 
 # None of these can actually be used in a development copy of dev
@@ -17,7 +17,6 @@ group :development, :test do
   gem "rubocop-rake", require: false
   gem "iniparse", "~> 1.5"
   gem "colorize", "~> 0.8.1"
-  gem "octokit", "~> 4.0"
   gem "bundler", ">= 2.3.11"
   gem "rake", "~> 12.3", ">= 12.3.3"
   gem "minitest", "~> 5.0"

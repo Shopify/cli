@@ -37,7 +37,7 @@ describe('publish', () => {
 
     // Then
     expect(renderConfirmationPrompt).toBeCalledWith({
-      message: `Are you sure you want to make my theme the new live theme on https://my-shop.myshopify.com ?`,
+      message: `Do you want to make my theme the new live theme on my-shop.myshopify.com?`,
       confirmationMessage: `Yes, make my theme the new live theme`,
       cancellationMessage: 'No, cancel publish',
     })
@@ -70,7 +70,7 @@ describe('publish', () => {
 
     // Then
     expect(renderConfirmationPrompt).toBeCalledWith({
-      message: `Are you sure you want to make my theme the new live theme on https://my-shop.myshopify.com ?`,
+      message: `Do you want to make my theme the new live theme on my-shop.myshopify.com?`,
       confirmationMessage: `Yes, make my theme the new live theme`,
       cancellationMessage: 'No, cancel publish',
     })

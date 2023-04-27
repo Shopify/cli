@@ -28,9 +28,17 @@ export const environmentVariables = {
   codespaceName: 'CODESPACE_NAME',
   codespaces: 'CODESPACES',
   gitpod: 'GITPOD_WORKSPACE_URL',
+  cloudShell: 'CLOUD_SHELL',
   spin: 'SPIN',
   spinAppPort: 'SERVER_PORT',
   spinAppHost: 'SPIN_APP_HOST',
+  organization: 'SHOPIFY_CLI_ORGANIZATION',
+  identityToken: 'SHOPIFY_CLI_IDENTITY_TOKEN',
+  refreshToken: 'SHOPIFY_CLI_REFRESH_TOKEN',
+}
+
+export const systemEnvironmentVariables = {
+  backendPort: 'BACKEND_PORT',
 }
 
 export const pathConstants = {

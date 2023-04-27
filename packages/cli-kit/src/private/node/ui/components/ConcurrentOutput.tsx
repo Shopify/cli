@@ -3,7 +3,7 @@ import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {AbortController} from '../../../../public/node/abort.js'
 import {handleCtrlC} from '../../ui.js'
 import React, {FunctionComponent, useState} from 'react'
-import {Box, Key, Static, Text, useInput} from 'ink'
+import {Box, Key, Static, Text, useInput, TextProps, useStdin} from 'ink'
 import stripAnsi from 'strip-ansi'
 import treeKill from 'tree-kill'
 import figures from 'figures'
@@ -26,7 +26,7 @@ export interface ConcurrentOutputProps {
   }
 }
 interface Chunk {
-  color: string
+  color: TextProps['color']
   prefix: string
   lines: string[]
 }
@@ -72,8 +72,9 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   footer,
 }) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
-  const concurrentColors = ['yellow', 'cyan', 'magenta', 'green', 'blue']
+  const concurrentColors: TextProps['color'][] = ['yellow', 'cyan', 'magenta', 'green', 'blue']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
+  const {isRawModeSupported} = useStdin()
 
   function lineColor(index: number) {
     const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
@@ -116,7 +117,9 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
 
       onInput!(input, key, () => treeKill(process.pid, 'SIGINT'))
     },
-    {isActive: typeof onInput !== 'undefined'},
+    // isRawModeSupported can be undefined even if the type doesn't say so
+    // Ink is checking that isActive is actually === false, not falsey
+    {isActive: typeof onInput !== 'undefined' && Boolean(isRawModeSupported)},
   )
 
   useAsyncAndUnmount(runProcesses, {onRejected: () => abortController.abort()})
@@ -162,15 +165,17 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
       </Static>
       {footer ? (
         <Box marginY={1} flexDirection="column" flexGrow={1}>
-          <Box flexDirection="column">
-            {footer.shortcuts.map((shortcut, index) => (
-              <Text key={index}>
-                {figures.pointerSmall} Press <Text bold>{shortcut.key}</Text> {figures.lineVertical} {shortcut.action}
-              </Text>
-            ))}
-          </Box>
+          {isRawModeSupported ? (
+            <Box flexDirection="column">
+              {footer.shortcuts.map((shortcut, index) => (
+                <Text key={index}>
+                  {figures.pointerSmall} Press <Text bold>{shortcut.key}</Text> {figures.lineVertical} {shortcut.action}
+                </Text>
+              ))}
+            </Box>
+          ) : null}
           {footer.subTitle ? (
-            <Box marginTop={1}>
+            <Box marginTop={isRawModeSupported ? 1 : 0}>
               <Text>{footer.subTitle}</Text>
             </Box>
           ) : null}

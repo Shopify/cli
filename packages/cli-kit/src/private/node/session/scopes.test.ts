@@ -1,9 +1,9 @@
 import {allDefaultScopes, apiScopes} from './scopes.js'
-import {describe, expect, it} from 'vitest'
+import {describe, expect, test} from 'vitest'
 
 describe('allDefaultScopes', () => {
   // WIP
-  it('returns all scopes including custom ones', async () => {
+  test('returns all scopes including custom ones', async () => {
     // Given
     const customScopes = ['custom-scope']
 
@@ -25,7 +25,7 @@ describe('allDefaultScopes', () => {
 
 describe('apiScopes', () => {
   // WIP
-  it('returns all scopes for the given API including custom ones', async () => {
+  test('returns all scopes for the given API including custom ones', async () => {
     // Given
     const customScopes = ['custom-scope']
 

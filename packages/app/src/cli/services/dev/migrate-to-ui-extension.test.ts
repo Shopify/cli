@@ -1,7 +1,7 @@
 import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from './migrate-to-ui-extension.js'
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {ExtensionMigrateToUiExtensionQuery} from '../../api/graphql/extension_migrate_to_ui_extension.js'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
@@ -34,7 +34,7 @@ describe('getExtensionsToMigrate()', () => {
   }
 
   describe('if local.id matches remote.id', () => {
-    it('returns extensions where local.type is ui_extension but remote.type is CHECKOUT_UI_EXTENSION', () => {
+    test('returns extensions where local.type is ui_extension but remote.type is CHECKOUT_UI_EXTENSION', () => {
       // Given
       const localExtension = getLocalExtension({type: 'ui_extension'})
       const remoteExtension = getRemoteExtension({type: 'CHECKOUT_UI_EXTENSION'})
@@ -46,7 +46,7 @@ describe('getExtensionsToMigrate()', () => {
       expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
     })
 
-    it('does not return extensions where local.type is not ui_extension', () => {
+    test('does not return extensions where local.type is not ui_extension', () => {
       // Given
       const localExtension = getLocalExtension({type: 'checkout_ui_extension'})
       const remoteExtension = getRemoteExtension({type: 'CHECKOUT_UI_EXTENSION'})
@@ -58,7 +58,7 @@ describe('getExtensionsToMigrate()', () => {
       expect(toMigrate).toStrictEqual([])
     })
 
-    it('does not return extensions where remote.type is not CHECKOUT_UI_EXTENSION', () => {
+    test('does not return extensions where remote.type is not CHECKOUT_UI_EXTENSION', () => {
       // Given
       const localExtension = {...getLocalExtension(), type: 'ui_extension'}
       const remoteExtension = {...getRemoteExtension(), type: 'PRODUCT_SUBSCRIPTION_UI_EXTENSION'}
@@ -72,7 +72,7 @@ describe('getExtensionsToMigrate()', () => {
   })
 
   describe('if local.configuration.name matches remote.title', () => {
-    it('returns extensions where local.type is ui_extension but remote.type is CHECKOUT_UI_EXTENSION', () => {
+    test('returns extensions where local.type is ui_extension but remote.type is CHECKOUT_UI_EXTENSION', () => {
       // Given
       const localExtension = getLocalExtension({type: 'ui_extension'})
       const remoteExtension = getRemoteExtension({type: 'CHECKOUT_UI_EXTENSION', title: 'my-extension'})
@@ -84,7 +84,7 @@ describe('getExtensionsToMigrate()', () => {
       expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
     })
 
-    it('does not return extensions where local.type is not ui_extension', () => {
+    test('does not return extensions where local.type is not ui_extension', () => {
       // Given
       const localExtension = getLocalExtension({type: 'checkout_ui_extension'})
       const remoteExtension = getRemoteExtension({type: 'CHECKOUT_UI_EXTENSION', title: 'my-extension'})
@@ -96,7 +96,7 @@ describe('getExtensionsToMigrate()', () => {
       expect(toMigrate).toStrictEqual([])
     })
 
-    it('does not return extensions where remote.type is not CHECKOUT_UI_EXTENSION', () => {
+    test('does not return extensions where remote.type is not CHECKOUT_UI_EXTENSION', () => {
       // Given
       const localExtension = getLocalExtension({type: 'ui_extension'})
       const remoteExtension = getRemoteExtension({type: 'PRODUCT_SUBSCRIPTION_UI_EXTENSION', title: 'my-extension'})
@@ -110,7 +110,7 @@ describe('getExtensionsToMigrate()', () => {
   })
 
   describe('if neither title/name or ids match', () => {
-    it('does not return any extensions', () => {
+    test('does not return any extensions', () => {
       // Given
       const localExtension = getLocalExtension({
         type: 'ui_extension',
@@ -135,7 +135,7 @@ describe('migrateExtensions()', () => {
     })
   })
 
-  it('performs a graphQL mutation for each extension', async () => {
+  test('performs a graphQL mutation for each extension', async () => {
     // Given
     const extensionsToMigrate = [
       {local: getLocalExtension(), remote: getRemoteExtension()},
@@ -159,7 +159,7 @@ describe('migrateExtensions()', () => {
     })
   })
 
-  it('Returns updated remoteExensions', async () => {
+  test('Returns updated remoteExensions', async () => {
     // Given
     const extensionsToMigrate = [
       {local: getLocalExtension(), remote: getRemoteExtension()},

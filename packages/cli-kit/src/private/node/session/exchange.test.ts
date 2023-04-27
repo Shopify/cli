@@ -9,7 +9,7 @@ import {applicationId, clientId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
-import {describe, it, expect, vi, afterAll, beforeEach} from 'vitest'
+import {describe, test, expect, vi, afterAll, beforeEach} from 'vitest'
 import {Response} from 'node-fetch'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -49,7 +49,7 @@ afterAll(() => {
 describe('exchange code for identity token', () => {
   const code = {code: 'code', codeVerifier: 'verifier'}
 
-  it('obtains an identity token from a authorization code', async () => {
+  test('obtains an identity token from a authorization code', async () => {
     // Given
     const response = new Response(JSON.stringify(data))
     vi.mocked(shopifyFetch).mockResolvedValue(response)
@@ -65,7 +65,7 @@ describe('exchange code for identity token', () => {
     expect(got).toEqual(identityToken)
   })
 
-  it('Throws HTTP error if the request fails', () => {
+  test('Throws HTTP error if the request fails', () => {
     // Given
     const responseBody = {
       error: 'invalid_grant',
@@ -85,7 +85,7 @@ describe('exchange code for identity token', () => {
 describe('exchange identity token for application tokens', () => {
   const scopes = {admin: [], partners: [], storefront: []}
 
-  it('returns tokens for all APIs if a store is passed', async () => {
+  test('returns tokens for all APIs if a store is passed', async () => {
     // Given
     const response = new Response(JSON.stringify(data))
 
@@ -119,7 +119,7 @@ describe('exchange identity token for application tokens', () => {
     expect(got).toEqual(expected)
   })
 
-  it('does not return token for admin if there is no store', async () => {
+  test('does not return token for admin if there is no store', async () => {
     // Given
     const response = new Response(JSON.stringify(data))
 
@@ -150,7 +150,7 @@ describe('exchange identity token for application tokens', () => {
 })
 
 describe('refresh access tokens', () => {
-  it('throws a InvalidGrantError when Identity returns invalid_grant', async () => {
+  test('throws a InvalidGrantError when Identity returns invalid_grant', async () => {
     // Given
     const error = {error: 'invalid_grant'}
     const response = new Response(JSON.stringify(error), {status: 400})
@@ -163,7 +163,7 @@ describe('refresh access tokens', () => {
     return expect(got).rejects.toThrowError(InvalidGrantError)
   })
 
-  it('throws a InvalidRequestError when Identity returns invalid_request', async () => {
+  test('throws a InvalidRequestError when Identity returns invalid_request', async () => {
     // Given
     const error = {error: 'invalid_request'}
     const response = new Response(JSON.stringify(error), {status: 400})
@@ -176,7 +176,7 @@ describe('refresh access tokens', () => {
     return expect(got).rejects.toThrowError(InvalidRequestError)
   })
 
-  it('throws an AbortError when Identity returns another error', async () => {
+  test('throws an AbortError when Identity returns another error', async () => {
     // Given
     const error = {error: 'another'}
     const response = new Response(JSON.stringify(error), {status: 400})

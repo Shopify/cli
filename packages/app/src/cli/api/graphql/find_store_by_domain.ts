@@ -7,9 +7,6 @@ export const FindStoreByDomainQuery = gql`
         id
         businessName
         website
-        betas {
-          appUiDeployments
-        }
         stores(shopDomain: $shopDomain, first: 1, archived: false) {
           nodes {
             shopId
@@ -31,9 +28,6 @@ export interface FindStoreByDomainSchema {
       id: string
       businessName: string
       website: string
-      betas: {
-        appUiDeployments?: boolean
-      }
       stores: {
         nodes: {
           shopId: string

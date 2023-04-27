@@ -1,4 +1,5 @@
 import {
+  ciPlatform,
   hasGit,
   isDevelopment,
   isShopify,
@@ -10,13 +11,13 @@ import {
 } from './local.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
-import {expect, it, describe, vi, test} from 'vitest'
+import {expect, describe, vi, test} from 'vitest'
 
 vi.mock('../fs.js')
 vi.mock('../system.js')
 
 describe('isUnitTest', () => {
-  it('returns true when SHOPIFY_UNIT_TEST is truthy', () => {
+  test('returns true when SHOPIFY_UNIT_TEST is truthy', () => {
     // Given
     const env = {SHOPIFY_UNIT_TEST: '1'}
 
@@ -29,7 +30,7 @@ describe('isUnitTest', () => {
 })
 
 describe('isDevelopment', () => {
-  it('returns true when SHOPIFY_CLI_ENV is debug', () => {
+  test('returns true when SHOPIFY_CLI_ENV is debug', () => {
     // Given
     const env = {SHOPIFY_CLI_ENV: 'development'}
 
@@ -42,7 +43,7 @@ describe('isDevelopment', () => {
 })
 
 describe('isShopify', () => {
-  it('returns false when the SHOPIFY_RUN_AS_USER env. variable is truthy', async () => {
+  test('returns false when the SHOPIFY_RUN_AS_USER env. variable is truthy', async () => {
     // Given
     const env = {SHOPIFY_RUN_AS_USER: '1'}
 
@@ -50,7 +51,7 @@ describe('isShopify', () => {
     await expect(isShopify(env)).resolves.toEqual(false)
   })
 
-  it('returns true when the SHOPIFY_RUN_AS_USER env. variable is falsy', async () => {
+  test('returns true when the SHOPIFY_RUN_AS_USER env. variable is falsy', async () => {
     // Given
     const env = {SHOPIFY_RUN_AS_USER: '0'}
 
@@ -58,7 +59,7 @@ describe('isShopify', () => {
     await expect(isShopify(env)).resolves.toEqual(true)
   })
 
-  it('returns true when dev is installed', async () => {
+  test('returns true when dev is installed', async () => {
     // Given
     vi.mocked(fileExists).mockResolvedValue(true)
 
@@ -66,7 +67,7 @@ describe('isShopify', () => {
     await expect(isShopify()).resolves.toBe(true)
   })
 
-  it('returns true when it is a spin environment', async () => {
+  test('returns true when it is a spin environment', async () => {
     // Given
     const env = {SPIN: '1'}
 
@@ -100,7 +101,7 @@ describe('hasGit', () => {
 })
 
 describe('analitycsDisabled', () => {
-  it('returns true when SHOPIFY_CLI_NO_ANALYTICS is truthy', () => {
+  test('returns true when SHOPIFY_CLI_NO_ANALYTICS is truthy', () => {
     // Given
     const env = {SHOPIFY_CLI_NO_ANALYTICS: '1'}
 
@@ -111,7 +112,7 @@ describe('analitycsDisabled', () => {
     expect(got).toBe(true)
   })
 
-  it('returns true when in development', () => {
+  test('returns true when in development', () => {
     // Given
     const env = {SHOPIFY_CLI_ENV: 'development'}
 
@@ -122,7 +123,7 @@ describe('analitycsDisabled', () => {
     expect(got).toBe(true)
   })
 
-  it('returns false without env variables', () => {
+  test('returns false without env variables', () => {
     // Given
     const env = {}
 
@@ -135,7 +136,7 @@ describe('analitycsDisabled', () => {
 })
 
 describe('useDeviceAuth', () => {
-  it('returns true if SHOPIFY_CLI_DEVICE_AUTH is truthy', () => {
+  test('returns true if SHOPIFY_CLI_DEVICE_AUTH is truthy', () => {
     // Given
     const env = {SHOPIFY_CLI_DEVICE_AUTH: '1'}
 
@@ -146,7 +147,7 @@ describe('useDeviceAuth', () => {
     expect(got).toBe(true)
   })
 
-  it('returns true if SPIN is truthy', () => {
+  test('returns true if SPIN is truthy', () => {
     // Given
     const env = {SPIN: '1'}
 
@@ -157,7 +158,7 @@ describe('useDeviceAuth', () => {
     expect(got).toBe(true)
   })
 
-  it('returns true if CODESPACES is truthy', () => {
+  test('returns true if CODESPACES is truthy', () => {
     // Given
     const env = {CODESPACES: '1'}
 
@@ -168,7 +169,7 @@ describe('useDeviceAuth', () => {
     expect(got).toBe(true)
   })
 
-  it('returns true if GITPOD_WORKSPACE_URL is set', () => {
+  test('returns true if GITPOD_WORKSPACE_URL is set', () => {
     // Given
     const env = {GITPOD_WORKSPACE_URL: 'http://custom.gitpod.io'}
 
@@ -179,7 +180,18 @@ describe('useDeviceAuth', () => {
     expect(got).toBe(true)
   })
 
-  it('returns false when SHOPIFY_CLI_DEVICE_AUTH, SPIN, CODESPACES or GITPOD_WORKSPACE_URL are missing', () => {
+  test('returns true if CLOUD_SHELL is truthy', () => {
+    // Given
+    const env = {CLOUD_SHELL: 'true'}
+
+    // When
+    const got = useDeviceAuth(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  test('returns false when SHOPIFY_CLI_DEVICE_AUTH, SPIN, CODESPACES or GITPOD_WORKSPACE_URL are missing', () => {
     // Given
     const env = {}
 
@@ -192,7 +204,7 @@ describe('useDeviceAuth', () => {
 })
 
 describe('macAddress', () => {
-  it('returns any mac address value', async () => {
+  test('returns any mac address value', async () => {
     // When
     const got = await macAddress()
 
@@ -202,7 +214,7 @@ describe('macAddress', () => {
 })
 
 describe('cloudEnvironment', () => {
-  it('when spin environmentreturns correct cloud platform', () => {
+  test('when spin environmentreturns correct cloud platform', () => {
     // Given
     const env = {SPIN: '1'}
 
@@ -213,7 +225,7 @@ describe('cloudEnvironment', () => {
     expect(got.platform).toBe('spin')
   })
 
-  it('when codespace environmentreturns correct cloud platform', () => {
+  test('when codespace environmentreturns correct cloud platform', () => {
     // Given
     const env = {CODESPACES: '1'}
 
@@ -224,7 +236,7 @@ describe('cloudEnvironment', () => {
     expect(got.platform).toBe('codespaces')
   })
 
-  it('when gitpod environmentreturns correct cloud platform', () => {
+  test('when gitpod environmentreturns correct cloud platform', () => {
     // Given
     const env = {GITPOD_WORKSPACE_URL: 'http://custom.gitpod.io'}
 
@@ -235,7 +247,7 @@ describe('cloudEnvironment', () => {
     expect(got.platform).toBe('gitpod')
   })
 
-  it('returns localhost when no cloud enviroment varible exist', () => {
+  test('returns localhost when no cloud enviroment varible exist', () => {
     // Given
     const env = {}
 
@@ -244,5 +256,77 @@ describe('cloudEnvironment', () => {
 
     // Then
     expect(got.platform).toBe('localhost')
+  })
+})
+
+describe('ciPlatform', () => {
+  test('should return isCI false for non-CI environment', () => {
+    // Given
+    const nonCIResult = ciPlatform({})
+
+    // Then
+    expect(nonCIResult.isCI).toBe(false)
+  })
+
+  test('should return correct data for Bitbucket CI environment', () => {
+    // Given
+    const bitbucketEnv = {
+      CI: 'true',
+      BITBUCKET_BUILD_NUMBER: '123',
+      BITBUCKET_COMMIT_AUTHOR: 'author',
+      BITBUCKET_BRANCH: 'main',
+      BITBUCKET_COMMIT: 'abcdef',
+      BITBUCKET_BUILD_URL: 'https://example.com/bitbucket/build/123',
+    }
+
+    // When
+    const result = ciPlatform(bitbucketEnv)
+
+    // Then
+    expect(result).toEqual({
+      isCI: true,
+      name: 'bitbucket',
+      metadata: {
+        actor: 'author',
+        branch: 'main',
+        build: '123',
+        commitSha: 'abcdef',
+        run: '123',
+        url: 'https://example.com/bitbucket/build/123',
+      },
+    })
+  })
+
+  test('should return correct data for Github CI environment', () => {
+    // Given
+    const githubEnv = {
+      CI: 'true',
+      GITHUB_ACTION: '1',
+      GITHUB_ACTOR: 'github_actor',
+      GITHUB_REF_NAME: 'main',
+      GITHUB_RUN_ID: '456',
+      GITHUB_COMMIT_MESSAGE: 'Test commit message',
+      GITHUB_SHA: 'abcdef',
+      GITHUB_SERVER_URL: 'https://github.com',
+      GITHUB_REPOSITORY: '/user/repo',
+    }
+
+    // When
+    const result = ciPlatform(githubEnv)
+
+    // Then
+    expect(result).toEqual({
+      isCI: true,
+      name: 'github',
+      metadata: {
+        actor: 'github_actor',
+        branch: 'main',
+        build: '456',
+        commitMessage: 'Test commit message',
+        commitSha: 'abcdef',
+        run: '456',
+        url: 'https://github.com/user/repo/actions/runs/456',
+      },
+    })
   })
 })

@@ -79,7 +79,7 @@ interface UploadExtensionsBundleOptions {
   apiKey: string
 
   /** The path to the bundle file to be uploaded */
-  bundlePath: string
+  bundlePath?: string
 
   /** The token to send authenticated requests to the partners' API  */
   token: string
@@ -107,23 +107,33 @@ export async function uploadExtensionsBundle(
   options: UploadExtensionsBundleOptions,
 ): Promise<{validationErrors: UploadExtensionValidationError[]; deploymentId: number}> {
   const deploymentUUID = randomUUID()
-  const signedURL = await getExtensionUploadURL(options.apiKey, deploymentUUID)
+  let signedURL
 
-  const form = formData()
-  const buffer = readFileSync(options.bundlePath)
-  form.append('my_upload', buffer)
-  await fetch(signedURL, {
-    method: 'put',
-    body: buffer,
-    headers: form.getHeaders(),
-  })
+  if (options.bundlePath) {
+    signedURL = await getExtensionUploadURL(options.apiKey, deploymentUUID)
+
+    const form = formData()
+    const buffer = readFileSync(options.bundlePath)
+    form.append('my_upload', buffer)
+    await fetch(signedURL, {
+      method: 'put',
+      body: buffer,
+      headers: form.getHeaders(),
+    })
+  }
 
   const variables: CreateDeploymentVariables = {
     apiKey: options.apiKey,
     uuid: deploymentUUID,
-    bundleUrl: signedURL,
-    extensions: options.extensions,
     label: options.label,
+  }
+
+  if (signedURL) {
+    variables.bundleUrl = signedURL
+  }
+
+  if (options.extensions.length > 0) {
+    variables.extensions = options.extensions
   }
 
   const mutation = CreateDeployment

@@ -9,7 +9,7 @@ import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok} from '../../../public/node/result.js'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {Response} from 'node-fetch'
 
 vi.mock('../../../public/node/context/fqdn.js')
@@ -36,7 +36,7 @@ describe('requestDeviceAuthorization', () => {
     interval: data.interval,
   }
 
-  it('requests an authorization code to initiate the device auth', async () => {
+  test('requests an authorization code to initiate the device auth', async () => {
     // Given
     const response = new Response(JSON.stringify(data))
     vi.mocked(shopifyFetch).mockResolvedValue(response)
@@ -64,7 +64,7 @@ describe('pollForDeviceAuthorization', () => {
     scopes: ['scope', 'scope2'],
   }
 
-  it('poll until a valid token is received', async () => {
+  test('poll until a valid token is received', async () => {
     // Given
     vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('authorization_pending'))
     vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('authorization_pending'))
@@ -79,7 +79,7 @@ describe('pollForDeviceAuthorization', () => {
     expect(got).toEqual(identityToken)
   })
 
-  it('when polling, if an error is received, stop polling and throw error', async () => {
+  test('when polling, if an error is received, stop polling and throw error', async () => {
     // Given
     vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('authorization_pending'))
     vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('authorization_pending'))

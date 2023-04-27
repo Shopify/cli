@@ -6,7 +6,7 @@ import {
 } from '../../models/extensions/specifications.js'
 import {convertSpecificationsToTemplate, TemplateSpecification} from '../../models/app/template.js'
 import {mapRemoteTemplateSpecification} from '../../services/generate/fetch-template-specifications.js'
-import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {describe, expect, vi, beforeEach, test} from 'vitest'
 import {isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
@@ -33,7 +33,7 @@ describe('extension prompt', async () => {
     defaultValue: expect.stringMatching(/^\w+-\w+-ext$/),
   }
 
-  it('when name is not passed', async () => {
+  test('when name is not passed', async () => {
     const answers = {name: 'ext', extensionType: 'ui_extension'}
     const options = {
       directory: '/',
@@ -60,7 +60,7 @@ describe('extension prompt', async () => {
     })
   })
 
-  it('when name is passed', async () => {
+  test('when name is passed', async () => {
     const answers = {extensionType: 'ui_extension'}
     const options = {
       name: 'my-special-extension',
@@ -86,7 +86,7 @@ describe('extension prompt', async () => {
     })
   })
 
-  it('when scaffolding a UI extension type prompts for language/framework preference', async () => {
+  test('when scaffolding a UI extension type prompts for language/framework preference', async () => {
     const answers = {extensionFlavor: 'react'}
     const options = {
       name: 'my-special-extension',
@@ -119,7 +119,7 @@ describe('extension prompt', async () => {
     })
   })
 
-  it('when scaffolding a theme extension type does not prompt for language/framework preference', async () => {
+  test('when scaffolding a theme extension type does not prompt for language/framework preference', async () => {
     const options = {
       name: 'my-special-extension',
       templateType: 'theme',
@@ -142,7 +142,7 @@ describe('extension prompt', async () => {
     })
   })
 
-  it('when scaffolding a function extension prompts for the language', async () => {
+  test('when scaffolding a function extension prompts for the language', async () => {
     const answers = {extensionFlavor: 'rust'}
     const options = {
       name: 'my-product-discount',
@@ -177,7 +177,7 @@ describe('extension prompt', async () => {
     })
   })
 
-  it('when extensionFlavor is passed, only compatible extensions are shown', async () => {
+  test('when extensionFlavor is passed, only compatible extensions are shown', async () => {
     // Given
     const options = {
       name: 'my-product-discount',

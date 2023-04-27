@@ -2,13 +2,13 @@ import {fetchTemplateSpecifications} from './fetch-template-specifications.js'
 import {testRemoteTemplateSpecifications} from '../../models/app/app.test-data.js'
 import {BaseFunctionConfigurationSchema} from '../../models/extensions/schemas.js'
 import {TemplateSpecification} from '../../models/app/template.js'
-import {describe, it, vi, expect} from 'vitest'
+import {describe, vi, expect, test} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
 
 describe('fetchTemplateSpecifications', () => {
-  it('returns the filtered and mapped results', async () => {
+  test('returns the filtered and mapped results', async () => {
     // Given
     vi.mocked(partnersRequest).mockResolvedValue({templateSpecifications: testRemoteTemplateSpecifications})
 
@@ -29,7 +29,7 @@ describe('fetchTemplateSpecifications', () => {
               externalIdentifier: 'cart_checkout_validation',
               externalName: 'cart_checkout_validation',
               gated: false,
-              registrationLimit: 10,
+              registrationLimit: 50,
               supportedFlavors: [
                 {
                   name: 'Rust',
@@ -62,7 +62,7 @@ describe('fetchTemplateSpecifications', () => {
               externalIdentifier: 'cart_transform',
               externalName: 'cart_transform',
               gated: false,
-              registrationLimit: 10,
+              registrationLimit: 50,
               supportedFlavors: [
                 {
                   name: 'Wasm',
@@ -100,7 +100,7 @@ describe('fetchTemplateSpecifications', () => {
               externalIdentifier: 'product_discounts',
               externalName: 'product_discounts',
               gated: false,
-              registrationLimit: 10,
+              registrationLimit: 50,
               supportedFlavors: [
                 {
                   name: 'Wasm',
@@ -138,7 +138,7 @@ describe('fetchTemplateSpecifications', () => {
               externalIdentifier: 'order_discounts',
               externalName: 'order_discounts',
               gated: false,
-              registrationLimit: 10,
+              registrationLimit: 50,
               supportedFlavors: [
                 {
                   name: 'Wasm',

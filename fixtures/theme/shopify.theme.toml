@@ -1,8 +1,0 @@
-[environments.env1]
-output = "json"
-live-reload = "hot-reload"
-allow-live = true
-
-[environments.env2]
-output = "text"
-live-reload = "full-page"

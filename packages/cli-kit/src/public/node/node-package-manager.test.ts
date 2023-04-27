@@ -13,12 +13,15 @@ import {
   addResolutionOrOverride,
   writePackageJSON,
   getPackageManager,
+  installNPMDependenciesRecursively,
+  addNPMDependencies,
+  DependencyVersion,
 } from './node-package-manager.js'
 import {exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
-import {joinPath, normalizePath as pathNormalize} from './path.js'
-import {describe, it, expect, vi, test} from 'vitest'
+import {normalizePath as pathNormalize, joinPath, dirname} from './path.js'
 import latestVersion from 'latest-version'
+import {vi, describe, test, expect} from 'vitest'
 
 vi.mock('../../version.js')
 vi.mock('./system.js')
@@ -26,8 +29,38 @@ vi.mock('latest-version')
 
 const mockedExec = vi.mocked(exec)
 
+describe('installNPMDependenciesRecursively', () => {
+  test('runs install in all the directories containing a package.json', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const rootPackage = joinPath(tmpDir, 'package.json')
+      const webPackage = joinPath(tmpDir, 'web/package.json')
+      const backendPackage = joinPath(tmpDir, 'web/backend/package.json')
+
+      await mkdir(dirname(webPackage))
+      await mkdir(dirname(backendPackage))
+
+      await writeFile(rootPackage, JSON.stringify({}))
+      await writeFile(webPackage, JSON.stringify({}))
+      await writeFile(backendPackage, JSON.stringify({}))
+
+      // When
+      await installNPMDependenciesRecursively({
+        directory: tmpDir,
+        packageManager: 'pnpm',
+      })
+
+      // Then
+      const calls = vi.mocked(exec).mock.calls as any
+      expect(exec).toHaveBeenCalledWith('pnpm', ['install'], expect.objectContaining({cwd: dirname(rootPackage)}))
+      expect(exec).toHaveBeenCalledWith('pnpm', ['install'], expect.objectContaining({cwd: dirname(webPackage)}))
+      expect(exec).toHaveBeenCalledWith('pnpm', ['install'], expect.objectContaining({cwd: dirname(backendPackage)}))
+    })
+  })
+})
+
 describe('packageManagerUsedForCreating', () => {
-  it('returns pnpm if the npm_config_user_agent variable contains yarn', () => {
+  test('returns pnpm if the npm_config_user_agent variable contains yarn', () => {
     // Given
     const env = {npm_config_user_agent: 'yarn/1.22.17'}
 
@@ -38,7 +71,7 @@ describe('packageManagerUsedForCreating', () => {
     expect(got).toBe('yarn')
   })
 
-  it('returns pnpm if the npm_config_user_agent variable contains pnpm', () => {
+  test('returns pnpm if the npm_config_user_agent variable contains pnpm', () => {
     // Given
     const env = {npm_config_user_agent: 'pnpm'}
 
@@ -49,7 +82,7 @@ describe('packageManagerUsedForCreating', () => {
     expect(got).toBe('pnpm')
   })
 
-  it('returns npm if the npm_config_user_agent variable contains npm', () => {
+  test('returns npm if the npm_config_user_agent variable contains npm', () => {
     // Given
     const env = {npm_config_user_agent: 'npm'}
 
@@ -60,7 +93,7 @@ describe('packageManagerUsedForCreating', () => {
     expect(got).toBe('npm')
   })
 
-  it('returns unknown when the package manager cannot be detected', () => {
+  test('returns unknown when the package manager cannot be detected', () => {
     // When
     const got = packageManagerUsedForCreating({})
 
@@ -70,7 +103,7 @@ describe('packageManagerUsedForCreating', () => {
 })
 
 describe('install', () => {
-  it('runs the install command', async () => {
+  test('runs the install command', async () => {
     // Given
     const packageManager = 'npm'
     const directory = '/path/to/project'
@@ -487,7 +520,7 @@ describe('addNPMDependenciesIfNeeded', () => {
 })
 
 describe('checkForNewVersion', () => {
-  it('returns undefined when last version is lower or equals than current version', async () => {
+  test('returns undefined when last version is lower or equals than current version', async () => {
     // Given
     const currentVersion = '2.2.2'
     const newestVersion = '2.2.2'
@@ -501,7 +534,7 @@ describe('checkForNewVersion', () => {
     expect(result).toBe(undefined)
   })
 
-  it('returns undefined when last version greater than current version', async () => {
+  test('returns undefined when last version greater than current version', async () => {
     // Given
     const currentVersion = '2.2.2'
     const newestVersion = '2.2.3'
@@ -515,7 +548,7 @@ describe('checkForNewVersion', () => {
     expect(result).toBe(newestVersion)
   })
 
-  it('returns undefined when error is thrown retrieving newest version', async () => {
+  test('returns undefined when error is thrown retrieving newest version', async () => {
     // Given
     const currentVersion = '2.2.2'
     const dependency = 'dependency'
@@ -530,7 +563,7 @@ describe('checkForNewVersion', () => {
 })
 
 describe('findUpAndReadPackageJson', () => {
-  it('returns the content of the package.json', async () => {
+  test('returns the content of the package.json', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const subDirectory = joinPath(tmpDir, 'subdir')
@@ -549,7 +582,7 @@ describe('findUpAndReadPackageJson', () => {
     })
   })
 
-  it("throws a FindUpAndReadPackageJsonNotFoundError error if it can't find a package.json", async () => {
+  test("throws a FindUpAndReadPackageJsonNotFoundError error if it can't find a package.json", async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const subDirectory = joinPath(tmpDir, 'subdir')
@@ -564,7 +597,7 @@ describe('findUpAndReadPackageJson', () => {
 })
 
 describe('addResolutionOrOverride', () => {
-  it('when no package.json then an abort exception is thrown', async () => {
+  test('when no package.json then an abort exception is thrown', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given/When
       const result = () => addResolutionOrOverride(tmpDir, {'@types/react': '17.0.30'})
@@ -574,7 +607,7 @@ describe('addResolutionOrOverride', () => {
     })
   })
 
-  it('when package.json without resolution and yarn manager then new resolution should be added', async () => {
+  test('when package.json without resolution and yarn manager then new resolution should be added', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const reactType = {'@types/react': '17.0.30'}
@@ -594,7 +627,7 @@ describe('addResolutionOrOverride', () => {
     })
   })
 
-  it('when package.json without resolution and npm manager then new overrides should be added', async () => {
+  test('when package.json without resolution and npm manager then new overrides should be added', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const reactType = {'@types/react': '17.0.30'}
@@ -614,7 +647,7 @@ describe('addResolutionOrOverride', () => {
     })
   })
 
-  it('when package.json without resolution and pnpm manager then new overrides should be added', async () => {
+  test('when package.json without resolution and pnpm manager then new overrides should be added', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const reactType = {'@types/react': '17.0.30'}
@@ -634,7 +667,7 @@ describe('addResolutionOrOverride', () => {
     })
   })
 
-  it('when package.json with existing resolution type and yarn manager then dependency version is overwritten', async () => {
+  test('when package.json with existing resolution type and yarn manager then dependency version is overwritten', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const reactType = {'@types/react': '17.0.30'}
@@ -654,7 +687,7 @@ describe('addResolutionOrOverride', () => {
     })
   })
 
-  it('when package.json with different resolution types and yarn manager then dependency version is overwritten', async () => {
+  test('when package.json with different resolution types and yarn manager then dependency version is overwritten', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const reactType = {'@types/react': '17.0.30'}
@@ -676,7 +709,7 @@ describe('addResolutionOrOverride', () => {
 })
 
 describe('writePackageJSON', () => {
-  it('writes the package.json and returns it parsed', async () => {
+  test('writes the package.json and returns it parsed', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJSON = {name: 'mock name'}
@@ -693,7 +726,7 @@ describe('writePackageJSON', () => {
 })
 
 describe('getPackageManager', () => {
-  it('finds if npm is being used', async () => {
+  test('finds if npm is being used', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJSON = {name: 'mock name'}
@@ -708,7 +741,7 @@ describe('getPackageManager', () => {
     })
   })
 
-  it('finds if yarn is being used', async () => {
+  test('finds if yarn is being used', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJSON = {name: 'mock name'}
@@ -725,7 +758,7 @@ describe('getPackageManager', () => {
     })
   })
 
-  it('finds if pnpm is being used', async () => {
+  test('finds if pnpm is being used', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJSON = {name: 'mock name'}
@@ -742,7 +775,7 @@ describe('getPackageManager', () => {
     })
   })
 
-  it("throws a FindUpAndReadPackageJsonNotFoundError error if it can't find a package.json", async () => {
+  test("throws a FindUpAndReadPackageJsonNotFoundError error if it can't find a package.json", async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const subDirectory = joinPath(tmpDir, 'subdir')
@@ -752,6 +785,77 @@ describe('getPackageManager', () => {
       await expect(() => getPackageManager(subDirectory)).rejects.toThrowError(
         FindUpAndReadPackageJsonNotFoundError(subDirectory),
       )
+    })
+  })
+})
+
+describe('addNPMDependencies', () => {
+  test('when using npm with multiple dependencies they should be installed one by one', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dependencies: DependencyVersion[] = [
+        {name: 'first', version: '0.0.1'},
+        {name: 'second', version: '0.0.2'},
+      ]
+
+      // When
+      await addNPMDependencies(dependencies, {
+        type: 'prod',
+        packageManager: 'npm',
+        directory: tmpDir,
+      })
+
+      // Then
+      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'first@0.0.1', '--save-prod'], {
+        cwd: tmpDir,
+      })
+      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'second@0.0.2', '--save-prod'], {
+        cwd: tmpDir,
+      })
+    })
+  })
+
+  test('when using yarn with multiple dependencies they should be installed all at once', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dependencies: DependencyVersion[] = [
+        {name: 'first', version: '0.0.1'},
+        {name: 'second', version: '0.0.2'},
+      ]
+
+      // When
+      await addNPMDependencies(dependencies, {
+        type: 'prod',
+        packageManager: 'yarn',
+        directory: tmpDir,
+      })
+
+      // Then
+      expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', 'first@0.0.1', 'second@0.0.2', '--prod'], {
+        cwd: tmpDir,
+      })
+    })
+  })
+
+  test('when using pnpm with multiple dependencies they should be installed all at once', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dependencies: DependencyVersion[] = [
+        {name: 'first', version: '0.0.1'},
+        {name: 'second', version: '0.0.2'},
+      ]
+
+      // When
+      await addNPMDependencies(dependencies, {
+        type: 'prod',
+        packageManager: 'pnpm',
+        directory: tmpDir,
+      })
+
+      // Then
+      expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'first@0.0.1', 'second@0.0.2', '--save-prod'], {
+        cwd: tmpDir,
+      })
     })
   })
 })

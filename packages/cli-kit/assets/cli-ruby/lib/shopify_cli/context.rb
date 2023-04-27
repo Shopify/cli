@@ -47,12 +47,14 @@ module ShopifyCLI
         str ? str % params : key
       end
 
-      # a wrapper around Kernel.puts to allow for easy formatting
+      # a wrapper around $stdout.puts to allow for easy formatting
       #
       # #### Parameters
       # * `text` - a string message to output
       def puts(*args)
-        Kernel.puts(CLI::UI.fmt(*args))
+        $stdout.puts(CLI::UI.fmt(*args)).tap do
+          $stdout.flush
+        end
       end
 
       # aborts the current running command and outputs an error message:
@@ -258,6 +260,22 @@ module ShopifyCLI
     #
     def binwrite(fname, content)
       File.binwrite(ctx_path(fname), content)
+    end
+
+    # will update the Access and Modified times of a file, relative to the context root
+    # unless the file path is absolute.
+    #
+    # #### Parameters
+    # * `atime` - the access time
+    # * `mtime` - the modified time
+    # * `fname` - filename of the file that you are writing, relative to root unless it is absolute.
+    #
+    # #### Example
+    #
+    #   @ctx.utime(Time.now, Time.now, '/tmp/file.txt')
+    #
+    def utime(atime, mtime, fname)
+      File.utime(atime, mtime, ctx_path(fname))
     end
 
     # will change directories and update the root, the filepath is relative to the command root unless absolute

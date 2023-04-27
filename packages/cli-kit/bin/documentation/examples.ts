@@ -17,7 +17,7 @@ import {
 import {unstyled} from '../../src/public/node/output.js'
 import {AbortError, BugError} from '../../src/public/node/error.js'
 import {AbortSignal} from '../../src/public/node/abort.js'
-import {OutputStream} from '../../src/private/node/ui.js'
+import {Stdout} from '../../src/private/node/ui.js'
 import {Stdin, waitFor} from '../../src/private/node/testing/ui.js'
 import {Writable} from 'node:stream'
 
@@ -33,7 +33,8 @@ export const examples: {[key in string]: Example} = {
   renderConcurrent: {
     type: 'static',
     basic: async () => {
-      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
+      const stdin = new Stdin()
 
       let backendPromiseResolve: () => void
 
@@ -68,7 +69,7 @@ export const examples: {[key in string]: Example} = {
         footer: {
           shortcuts: [{
             key: 'p',
-            action: 'open your browser'
+            action: 'preview in your browser'
           }, {
             key: 'q',
             action: 'quit.',
@@ -76,7 +77,7 @@ export const examples: {[key in string]: Example} = {
           subTitle: `Preview URL: https://shopify.com`,
         },
 
-        renderOptions: {stdout: stdout as any, debug: true},
+        renderOptions: {stdout: stdout as any, stdin: stdin as any, debug: true},
       })
 
       await waitFor(
@@ -90,7 +91,7 @@ export const examples: {[key in string]: Example} = {
   renderInfo: {
     type: 'static',
     basic: async () => {
-      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
 
       return renderInfo({
         headline: 'CLI update available',
@@ -101,7 +102,7 @@ export const examples: {[key in string]: Example} = {
       })!
     },
     complete: async () => {
-      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
 
       return renderInfo({
         headline: [{userInput: 'my-app'}, 'initialized and ready to build.'],
@@ -158,7 +159,7 @@ export const examples: {[key in string]: Example} = {
   renderSuccess: {
     type: 'static',
     basic: async () => {
-      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
 
       return renderSuccess({
         headline: 'CLI updated.',
@@ -169,7 +170,7 @@ export const examples: {[key in string]: Example} = {
       })!
     },
     complete: async () => {
-      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
 
       return renderSuccess({
         headline: 'Deployment successful.',
@@ -191,7 +192,7 @@ export const examples: {[key in string]: Example} = {
   renderWarning: {
     type: 'static',
     basic: async () => {
-      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
 
       return renderWarning({
         headline: 'You have reached your limit of checkout extensions for this app.',
@@ -202,7 +203,7 @@ export const examples: {[key in string]: Example} = {
       })!
     },
     complete: async () => {
-      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
 
       return renderWarning({
         headline: 'Required access scope update.',
@@ -224,7 +225,7 @@ export const examples: {[key in string]: Example} = {
   renderFatalError: {
     type: 'static',
     basic: async () => {
-      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
       const somethingWentWrong = new BugError('Something went wrong.')
 
       somethingWentWrong.stack = `
@@ -242,7 +243,7 @@ export const examples: {[key in string]: Example} = {
       })!
     },
     complete: async () => {
-      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
 
       const nextSteps = [
         [
@@ -276,7 +277,7 @@ export const examples: {[key in string]: Example} = {
   renderSelectPrompt: {
     type: 'prompt',
     basic: async () => {
-      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
       const stdin = new Stdin()
 
       renderSelectPrompt({
@@ -312,7 +313,7 @@ export const examples: {[key in string]: Example} = {
   renderConfirmationPrompt: {
     type: 'prompt',
     basic: async () => {
-      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
       const stdin = new Stdin()
 
       const themes = [
@@ -355,7 +356,7 @@ export const examples: {[key in string]: Example} = {
   renderAutocompletePrompt: {
     type: 'prompt',
     basic: async () => {
-      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
       const stdin = new Stdin()
 
       const database = [
@@ -435,7 +436,7 @@ export const examples: {[key in string]: Example} = {
   renderTable: {
     type: 'static',
     basic: async () => {
-      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
 
       return renderTable({
         rows: [
@@ -475,7 +476,7 @@ export const examples: {[key in string]: Example} = {
   renderTasks: {
     type: 'async',
     basic: async () => {
-      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
 
       const tasks = [
         {
@@ -499,7 +500,7 @@ export const examples: {[key in string]: Example} = {
   renderTextPrompt: {
     type: 'prompt',
     basic: async () => {
-      const stdout = new OutputStream({columns: TERMINAL_WIDTH})
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
       const stdin = new Stdin()
 
       renderTextPrompt({

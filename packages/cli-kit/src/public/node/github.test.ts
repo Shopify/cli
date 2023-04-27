@@ -6,12 +6,12 @@ import {
 } from './github.js'
 import {fetch} from './http.js'
 import {Response} from 'node-fetch'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('./http.js')
 
 describe('getLatestGitHubRelease', () => {
-  it('delegates to fetch', async () => {
+  test('delegates to fetch', async () => {
     // Given
     const user = 'shopify'
     const repo = 'hydrogen'
@@ -28,7 +28,7 @@ describe('getLatestGitHubRelease', () => {
     await expect(latest).toMatchObject(allReleases[0]!)
   })
 
-  it('calls the filter function', async () => {
+  test('calls the filter function', async () => {
     // Given
     const filter = vi.fn()
     const user = 'shopify'
@@ -54,7 +54,7 @@ describe('parseGitHubRepositoryURL', () => {
     'git@github.com:Shopify/hydrogen-app',
     'https://github.com/Shopify/hydrogen-app',
   ].forEach((url) => {
-    it(url, async () => {
+    test(url, async () => {
       const latest = parseGitHubRepositoryURL(url)
       await expect(latest.valueOrAbort()).toMatchObject({
         site: 'github.com',
@@ -66,7 +66,7 @@ describe('parseGitHubRepositoryURL', () => {
     })
   })
 
-  it('supports sub directories', async () => {
+  test('supports sub directories', async () => {
     // Given
     const url = 'git@github.com:Shopify/hydrogen/examples/template-hydrogen-default'
 
@@ -83,7 +83,7 @@ describe('parseGitHubRepositoryURL', () => {
     })
   })
 
-  it('supports branches with #', async () => {
+  test('supports branches with #', async () => {
     // Given
     const url = 'git@github.com:Shopify/hydrogen/examples/template-hydrogen-default#someBranch'
 
@@ -103,7 +103,7 @@ describe('parseGitHubRepositoryURL', () => {
 })
 
 describe('parseGitHubRepositoryReference', () => {
-  it('parses a repository reference', async () => {
+  test('parses a repository reference', async () => {
     // Given
     const url = 'https://github.com/Shopify/foo'
 
@@ -118,7 +118,7 @@ describe('parseGitHubRepositoryReference', () => {
     })
   })
 
-  it('parses a repository reference with a branch', async () => {
+  test('parses a repository reference with a branch', async () => {
     // Given
     const url = 'https://github.com/Shopify/foo#main'
 
@@ -133,7 +133,7 @@ describe('parseGitHubRepositoryReference', () => {
     })
   })
 
-  it('parses a repository reference with a branch and path', async () => {
+  test('parses a repository reference with a branch and path', async () => {
     // Given
     const url = 'https://github.com/Shopify/foo/bar/baz#main'
 

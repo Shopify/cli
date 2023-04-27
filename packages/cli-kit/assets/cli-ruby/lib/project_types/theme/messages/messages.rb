@@ -161,6 +161,9 @@ module Theme
               fixed: "Fixed",
             },
           },
+          notifier: {
+            error: "Error while notifying webhook {{blue:%s}}: %s",
+          },
           syncer: {
             forms: {
               apply_to_all: {

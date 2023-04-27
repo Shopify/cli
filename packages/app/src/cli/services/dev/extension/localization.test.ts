@@ -2,7 +2,7 @@ import {getLocalization, Localization} from './localization.js'
 import {testUIExtension} from '../../../models/app/app.test-data.js'
 import {ExtensionDevOptions} from '../extension.js'
 import * as output from '@shopify/cli-kit/node/output'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {mkdir, writeFile, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -35,14 +35,14 @@ async function testGetLocalization(tmpDir: string, currentLocalization?: Localiz
 }
 
 describe('when there are no locale files', () => {
-  it('returns undefined as the localization', async () => {
+  test('returns undefined as the localization', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const result = await testGetLocalization(tmpDir)
       expect(result.status).toBe('')
     })
   })
 
-  it("returns 'success' as the status", async () => {
+  test("returns 'success' as the status", async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const result = await testGetLocalization(tmpDir)
       expect(result.localization).toBe(undefined)
@@ -51,7 +51,7 @@ describe('when there are no locale files', () => {
 })
 
 describe('when there are locale files', () => {
-  it('returns defaultLocale using the locale marked as .default', async () => {
+  test('returns defaultLocale using the locale marked as .default', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       await mkdir(joinPath(tmpDir, 'locales'))
       await writeFile(joinPath(tmpDir, 'locales', 'en.json'), '{"lorem": "ipsum"}')
@@ -63,7 +63,7 @@ describe('when there are locale files', () => {
     })
   })
 
-  it("returns 'en' for defaultLocale when no locale is marked as .default", async () => {
+  test("returns 'en' for defaultLocale when no locale is marked as .default", async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       await mkdir(joinPath(tmpDir, 'locales'))
       await writeFile(joinPath(tmpDir, 'locales', 'en.json'), '{"lorem": "ipsum}')
@@ -75,7 +75,7 @@ describe('when there are locale files', () => {
     })
   })
 
-  it('returns the contents of every locale file as translations', async () => {
+  test('returns the contents of every locale file as translations', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       await mkdir(joinPath(tmpDir, 'locales'))
       await writeFile(joinPath(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
@@ -90,7 +90,7 @@ describe('when there are locale files', () => {
     })
   })
 
-  it('returns the lastUpdated timestamp of the most recently updated locale', async () => {
+  test('returns the lastUpdated timestamp of the most recently updated locale', async () => {
     const timestamp = 0
     vi.setSystemTime(new Date(timestamp))
 
@@ -105,7 +105,7 @@ describe('when there are locale files', () => {
     })
     vi.useRealTimers()
   })
-  it('returns the last succesful locale built when there are JSON errors', async () => {
+  test('returns the last succesful locale built when there are JSON errors', async () => {
     const timestamp = 0
     vi.setSystemTime(new Date(timestamp))
 
@@ -123,7 +123,7 @@ describe('when there are locale files', () => {
 
     vi.useRealTimers()
   })
-  it("returns 'success' as the status when there are no JSON errors", async () => {
+  test("returns 'success' as the status when there are no JSON errors", async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       await mkdir(joinPath(tmpDir, 'locales'))
       await writeFile(joinPath(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
@@ -134,7 +134,7 @@ describe('when there are locale files', () => {
       expect(result.status).toBe('success')
     })
   })
-  it('outputs message when there are no JSON errors', async () => {
+  test('outputs message when there are no JSON errors', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       vi.spyOn(output, 'outputInfo')
 
@@ -149,7 +149,7 @@ describe('when there are locale files', () => {
     })
   })
 
-  it("retuns 'error' as the status when there are no JSON errors", async () => {
+  test("retuns 'error' as the status when there are no JSON errors", async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const invalidJson = '{invalid_json: "Hi!"'
       await mkdir(joinPath(tmpDir, 'locales'))

@@ -1,6 +1,6 @@
 module.exports = {
   settings: {},
-  plugins: ['no-catch-all', 'jest', 'unused-imports', 'eslint-plugin-tsdoc', 'jsdoc', 'import', '@shopify/cli'],
+  plugins: ['no-catch-all', 'vitest', 'unused-imports', 'eslint-plugin-tsdoc', 'jsdoc', 'import', '@shopify/cli'],
   extends: ['plugin:@shopify/typescript', 'plugin:@shopify/prettier', 'plugin:@shopify/node', 'prettier'],
   rules: {
     'prettier/prettier': ['error'],
@@ -96,21 +96,21 @@ module.exports = {
         ],
       },
     ],
-    'jest/consistent-test-it': [
+    'vitest/consistent-test-it': [
       'error',
       {
         fn: 'test',
         withinDescribe: 'test',
       },
     ],
-    'jest/max-nested-describe': [
+    'vitest/max-nested-describe': [
       'error',
       {
         max: 2,
       },
     ],
-    'jest/no-disabled-tests': 'error',
-    'jest/prefer-expect-resolves': 'error',
+    'vitest/no-disabled-tests': 'error',
+    'vitest/prefer-expect-resolves': 'error',
     '@shopify/cli/command-flags-with-env': 'error',
     '@shopify/cli/command-conventional-flag-env': 'error',
     '@shopify/cli/command-reserved-flags': 'error',

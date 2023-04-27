@@ -3,6 +3,7 @@ import {AbortSilentError, FatalError as Fatal} from './error.js'
 import {collectLog, consoleError, consoleLog, Logger, LogLevel, outputDebug, outputWhereAppropriate} from './output.js'
 import {isUnitTest} from './context/local.js'
 import {AbortController} from './abort.js'
+import {terminalSupportsRawMode} from './system.js'
 import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
 import {render, renderOnce} from '../../private/node/ui.js'
 import {alert, AlertOptions} from '../../private/node/ui/alert.js'
@@ -15,6 +16,7 @@ import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
 import {InlineToken, LinkToken, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
+import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
 
@@ -34,7 +36,7 @@ export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps
  * 0000-00-00 00:00:00 │ frontend │ second frontend message
  * 0000-00-00 00:00:00 │ frontend │ third frontend message
  *
- * › Press p │ open your browser
+ * › Press p │ preview in your browser
  * › Press q │ quit.
  *
  * Preview URL: https://shopify.com
@@ -45,11 +47,18 @@ export async function renderConcurrent({renderOptions, ...props}: RenderConcurre
     abortController: new AbortController(),
     ...props,
   }
-
-  return render(<ConcurrentOutput {...newProps} />, {
-    ...renderOptions,
-    exitOnCtrlC: typeof props.onInput === 'undefined',
-  })
+  if (terminalSupportsRawMode(renderOptions?.stdin)) {
+    return render(<ConcurrentOutput {...newProps} />, {
+      ...renderOptions,
+      exitOnCtrlC: typeof props.onInput === 'undefined',
+    })
+  } else {
+    return Promise.all(
+      newProps.processes.map(async (concurrentProcess) => {
+        await concurrentProcess.action(process.stdout, process.stderr, newProps.abortController.signal)
+      }),
+    )
+  }
 }
 
 export type AlertCustomSection = CustomSection
@@ -249,6 +258,7 @@ export interface RenderConfirmationPromptOptions extends Pick<SelectPromptProps<
   confirmationMessage?: string
   cancellationMessage?: string
   renderOptions?: RenderOptions
+  defaultValue?: boolean
 }
 
 /**
@@ -271,6 +281,7 @@ export function renderConfirmationPrompt({
   confirmationMessage = 'Yes, confirm',
   cancellationMessage = 'No, cancel',
   renderOptions,
+  defaultValue = true,
 }: RenderConfirmationPromptOptions): Promise<boolean> {
   const choices = [
     {
@@ -291,6 +302,7 @@ export function renderConfirmationPrompt({
     infoTable,
     submitWithShortcuts: true,
     renderOptions,
+    defaultValue,
   })
 }
 
@@ -457,4 +469,4 @@ export const keypress = async () => {
 }
 
 export type Key = InkKey
-export {Task, TokenItem, InlineToken, LinkToken, TableColumn}
+export {Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection}

@@ -1,8 +1,8 @@
 import {tokenItemToString, TokenizedText} from './TokenizedText.js'
 import {unstyled} from '../../../../public/node/output.js'
+import {render} from '../../testing/ui.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
-import {render} from 'ink-testing-library'
 
 describe('TokenizedText', async () => {
   test('renders arrays of items separated by spaces', async () => {

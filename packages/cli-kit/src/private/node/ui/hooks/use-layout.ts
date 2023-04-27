@@ -1,5 +1,5 @@
 import {useStdout} from 'ink'
-import {useEffect, useState} from 'react'
+import {useLayoutEffect, useState} from 'react'
 
 const MIN_FULL_WIDTH = 20
 const MIN_FRACTION_WIDTH = 80
@@ -14,7 +14,7 @@ export default function useLayout(): Layout {
   const {stdout} = useStdout()
   const [layout, setLayout] = useState(calculateLayout(stdout))
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!stdout) {
       return
     }

@@ -28,7 +28,8 @@ export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = Bas
   getBundleExtensionStdinContent?: (config: TConfiguration) => string
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
   validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
-  preDeployValidation?: (config: TConfiguration) => Promise<void>
+  preDeployValidation?: (extension: UIExtensionInstance<TConfiguration>) => Promise<void>
+  buildValidation?: (extension: UIExtensionInstance<TConfiguration>) => Promise<void>
   category: () => ExtensionCategory
   previewMessage?: (
     host: string,
@@ -125,9 +126,14 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
     return this.specification.validate(this.configuration, this.directory)
   }
 
-  preDeployValidation() {
+  preDeployValidation(): Promise<void> {
     if (!this.specification.preDeployValidation) return Promise.resolve()
-    return this.specification.preDeployValidation(this.configuration)
+    return this.specification.preDeployValidation(this)
+  }
+
+  buildValidation(): Promise<void> {
+    if (!this.specification.buildValidation) return Promise.resolve()
+    return this.specification.buildValidation(this)
   }
 
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {

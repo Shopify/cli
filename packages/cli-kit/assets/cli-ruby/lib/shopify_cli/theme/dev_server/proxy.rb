@@ -28,7 +28,12 @@ module ShopifyCLI
         SESSION_COOKIE_NAME = "_secure_session_id"
         SESSION_COOKIE_REGEXP = /#{SESSION_COOKIE_NAME}=(\h+)/
         SESSION_COOKIE_MAX_AGE = 60 * 60 * 23 # 1 day - leeway of 1h
-        IGNORED_ENDPOINTS = ["shopify/monorail", "mini-profiler-resources", "web-pixels-manager"]
+        IGNORED_ENDPOINTS = %w[
+          shopify/monorail
+          mini-profiler-resources
+          web-pixels-manager
+          wpm
+        ]
 
         def initialize(ctx, theme, param_builder)
           @ctx = ctx
@@ -205,7 +210,7 @@ module ShopifyCLI
         def request(method, path, headers: nil, query: [], form_data: nil, body_stream: nil)
           uri = URI.join("https://#{shop}", path)
 
-          if Environment.theme_access_password?
+          if proxy_via_theme_access_app?(path)
             headers = headers ? headers.slice("ACCEPT", "CONTENT-TYPE", "CONTENT-LENGTH", "Cookie") : {}
             headers.merge!({
               "X-Shopify-Access-Token" => Environment.admin_auth_token,
@@ -243,6 +248,14 @@ module ShopifyCLI
             .with_core_endpoints(@core_endpoints)
             .with_rack_env(env)
             .build
+        end
+
+        def proxy_via_theme_access_app?(path)
+          return false unless Environment.theme_access_password?
+          return false if path == "/localization"
+          return false if path.start_with?("/cart/")
+
+          true
         end
       end
     end

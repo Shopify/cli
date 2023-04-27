@@ -1,13 +1,13 @@
 import {LocalStorage} from './local-storage.js'
 import {inTemporaryDirectory} from './fs.js'
-import {describe, expect, it} from 'vitest'
+import {describe, expect, test} from 'vitest'
 
 interface TestSchema {
   testValue: string
 }
 
 describe('storage', () => {
-  it('set and returns a value', async () => {
+  test('set and returns a value', async () => {
     await inTemporaryDirectory((cwd) => {
       // Given
       const storage = new LocalStorage<TestSchema>({cwd})
@@ -21,7 +21,7 @@ describe('storage', () => {
     })
   })
 
-  it('deletes the value if present', async () => {
+  test('deletes the value if present', async () => {
     await inTemporaryDirectory((cwd) => {
       // Given
       const storage = new LocalStorage<TestSchema>({cwd})
@@ -38,7 +38,7 @@ describe('storage', () => {
     })
   })
 
-  it('clears all values', async () => {
+  test('clears all values', async () => {
     await inTemporaryDirectory((cwd) => {
       // Given
       const storage = new LocalStorage<TestSchema>({cwd})

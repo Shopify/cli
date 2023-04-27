@@ -1,5 +1,5 @@
 import {AppLocalStorageSchema, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
-import {describe, expect, it} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
@@ -8,7 +8,7 @@ const APP2 = {appId: 'app2', storeFqdn: 'store2', orgId: 'org2', directory: '/ap
 const APP1Updated = {appId: 'updated-app1', storeFqdn: 'store1-updated', orgId: 'org1-updated', directory: '/app1'}
 
 describe('getAppInfo', async () => {
-  it('returns cached info if existss', async () => {
+  test('returns cached info if existss', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
@@ -22,7 +22,7 @@ describe('getAppInfo', async () => {
     })
   })
 
-  it('returns undefined if it does not exists', async () => {
+  test('returns undefined if it does not exists', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
@@ -37,7 +37,7 @@ describe('getAppInfo', async () => {
 })
 
 describe('setAppInfo', async () => {
-  it('updates cached info if exists', async () => {
+  test('updates cached info if exists', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
@@ -52,7 +52,7 @@ describe('setAppInfo', async () => {
     })
   })
 
-  it('creates new info if it does not exists', async () => {
+  test('creates new info if it does not exists', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
@@ -66,7 +66,7 @@ describe('setAppInfo', async () => {
     })
   })
 
-  it('creates new info normalizing the path', async () => {
+  test('creates new info normalizing the path', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
@@ -82,7 +82,7 @@ describe('setAppInfo', async () => {
 })
 
 describe('clearAppInfo', async () => {
-  it('removes cached info if exists', async () => {
+  test('removes cached info if exists', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const storage = new LocalStorage<AppLocalStorageSchema>({cwd})

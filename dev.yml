@@ -55,27 +55,6 @@ commands:
   type-check:
     desc: 'Type-check the project'
     run: pnpm run type-check:affected
-  fixture:
-    desc: 'Commands to interact with the fixture project'
-    subcommands:
-      shopify:
-        desc: Runs Shopify with the fixture project
-        run: pnpm --cwd fixtures/app shopify
-      build:
-        desc: Build the fixture project
-        run: pnpm --cwd fixtures/app build
-      dev:
-        desc: Dev the fixture project
-        run: pnpm --cwd fixtures/app dev
-      test:
-        desc: Test the fixture project
-        run: pnpm --cwd fixtures/app test
-      generate:
-        desc: Generate in the fixture project
-        run: pnpm --cwd fixtures/app generate
-      env:
-        desc: Show and/or update the env file in the fixture project
-        run: pnpm --cwd fixtures/app env
   spin:
     desc: 'Run commands in spin context'
     run: bin/spin

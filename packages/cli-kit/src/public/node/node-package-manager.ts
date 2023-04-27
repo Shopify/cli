@@ -394,22 +394,31 @@ export async function addNPMDependencies(
   options: AddNPMDependenciesIfNeededOptions,
 ): Promise<void> {
   let args: string[]
-  const depedenciesWithVersion = dependencies.map((dep) => {
+  const dependenciesWithVersion = dependencies.map((dep) => {
     return dep.version ? `${dep.name}@${dep.version}` : dep.name
   })
+  options.stdout?.write(`Installing ${[dependenciesWithVersion].join(' ')} with ${options.packageManager}`)
   switch (options.packageManager) {
     case 'npm':
-      args = argumentsToAddDependenciesWithNPM(depedenciesWithVersion, options.type)
+      // npm isn't too smart when resolving the dependency tree. For example, admin ui extensions include react as
+      // a peer dependency, but npm can't figure out the relationship and fails. Installing dependencies one by one
+      // makes the task easier and npm can then proceed.
+      for (const dep of dependenciesWithVersion) {
+        // eslint-disable-next-line no-await-in-loop
+        await installDependencies(options, argumentsToAddDependenciesWithNPM([dep], options.type))
+      }
       break
     case 'yarn':
-      args = argumentsToAddDependenciesWithYarn(depedenciesWithVersion, options.type)
+      await installDependencies(options, argumentsToAddDependenciesWithYarn(dependenciesWithVersion, options.type))
       break
     case 'pnpm':
-      args = argumentsToAddDependenciesWithPNPM(depedenciesWithVersion, options.type)
+      await installDependencies(options, argumentsToAddDependenciesWithPNPM(dependenciesWithVersion, options.type))
       break
   }
-  options.stdout?.write(`Executing... ${[options.packageManager, ...args].join(' ')}`)
-  await exec(options.packageManager, args, {
+}
+
+async function installDependencies(options: AddNPMDependenciesIfNeededOptions, args: string[]) {
+  return exec(options.packageManager, args, {
     cwd: options.directory,
     stdout: options.stdout,
     stderr: options.stderr,
