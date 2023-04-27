@@ -251,16 +251,34 @@ const demoStepSchema = zod.discriminatedUnion('type', [
 ])
 export const demoStepsSchema = zod.object({
   $schema: zod.string().optional(),
+  command: zod.string().optional(),
   steps: zod.array(demoStepSchema),
 })
 type DemoSteps = zod.infer<typeof demoStepsSchema>
 
 export async function demo(stepsJsonData: DemoSteps) {
-  const {steps} = demoStepsSchema.parse(stepsJsonData)
+  const {steps, command} = demoStepsSchema.parse(stepsJsonData)
   const executors = steps.map(executorForStep)
+
+  await simulateTyping(command)
   for (const executor of executors) {
     await executor()
   }
+}
+
+async function simulateTyping(text?: string) {
+  if (!text) return
+
+  console.clear()
+  process.stdout.write('$ ')
+  const chars = text.split('')
+  while (chars.length > 0) {
+    const char = chars.shift()!
+    process.stdout.write(char)
+    await sleep(0.1 + Math.random() / 10)
+  }
+  process.stdout.write('\n')
+  await sleep(1 + Math.random() / 10)
 }
 
 function executorForStep(step: DemoStep): () => Promise<void> {
