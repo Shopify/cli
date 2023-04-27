@@ -59,9 +59,7 @@ describe('runTunnelPlugin', () => {
     // Given
     const config = new Config({root: ''})
     vi.spyOn(config, 'runHook').mockResolvedValue({
-      successes: [
-        {result: ok({status: 'connected', url: 'tunnel_url', port: 123}), plugin: {name: 'plugin-cloudflare'}},
-      ],
+      successes: [{result: ok({status: 'connected', url: 'tunnel_url'}), plugin: {name: 'plugin-cloudflare'}}],
       errors: [],
     } as any)
 
@@ -69,7 +67,7 @@ describe('runTunnelPlugin', () => {
     const got = await runTunnelPlugin(config, 'cloudflare')
 
     // Then
-    expect(got.valueOrAbort()).toEqual({status: 'connected', url: 'tunnel_url', port: 123})
+    expect(got.valueOrAbort()).toEqual('tunnel_url')
   })
 
   test('returns tunnel url when there are two tunnel providers and one not matched the requested', async () => {
@@ -77,7 +75,7 @@ describe('runTunnelPlugin', () => {
     const config = new Config({root: ''})
     vi.spyOn(config, 'runHook').mockResolvedValue({
       successes: [
-        {result: ok({status: 'connected', url: 'tunnel_url', port: 123}), plugin: {name: 'plugin-cloudflare'}},
+        {result: ok({status: 'connected', url: 'tunnel_url'}), plugin: {name: 'plugin-cloudflare'}},
         {result: err({type: 'invalid-provider'}), plugin: {name: 'other-plugin'}},
       ],
       errors: [],
@@ -87,7 +85,7 @@ describe('runTunnelPlugin', () => {
     const got = await runTunnelPlugin(config, 'cloudflare')
 
     // Then
-    expect(got.valueOrAbort()).toEqual({status: 'connected', url: 'tunnel_url', port: 123})
+    expect(got.valueOrAbort()).toEqual('tunnel_url')
   })
 
   test('returns error if multiple plugins responded to the hook', async () => {
@@ -146,9 +144,7 @@ describe('runTunnelPlugin', () => {
       } as any)
       .mockResolvedValueOnce({
         // vi.spyOn(config, 'runHook').mockResolvedValue({
-        successes: [
-          {result: ok({status: 'connected', url: 'tunnel_url', port: 123}), plugin: {name: 'plugin-cloudflare'}},
-        ],
+        successes: [{result: ok({status: 'connected', url: 'tunnel_url'}), plugin: {name: 'plugin-cloudflare'}}],
         errors: [],
       } as any)
 
@@ -156,6 +152,6 @@ describe('runTunnelPlugin', () => {
     const got = await runTunnelPlugin(config, 'cloudflare')
 
     // Then
-    expect(got.valueOrAbort()).toEqual({status: 'connected', url: 'tunnel_url', port: 123})
+    expect(got.valueOrAbort()).toEqual('tunnel_url')
   })
 })

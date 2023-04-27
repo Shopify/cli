@@ -46,13 +46,13 @@ describe('generateURL', () => {
   test('returns a tunnel URL by default', async () => {
     // Given
     const config = new Config({root: ''})
-    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(ok({url: 'https://fake-url.cloudflare.io', port: 3456}))
+    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(ok('https://fake-url.cloudflare.io'))
 
     // When
     const got = await generateURL(config, 'cloudflare')
 
     // Then
-    expect(got).toEqual({url: 'https://fake-url.cloudflare.io', port: 3456})
+    expect(got).toEqual('https://fake-url.cloudflare.io')
   })
 
   test('throws error if there are multiple urls', async () => {
@@ -305,6 +305,7 @@ describe('generateFrontendURL', () => {
       tunnelProvider: 'cloudflare',
       noTunnel: false,
       tunnelUrl: 'https://my-tunnel-provider.io:4242',
+      tunnelPort: 4242,
       useCloudflareTunnels: true,
       commandConfig: new Config({root: ''}),
     }
@@ -323,6 +324,7 @@ describe('generateFrontendURL', () => {
       tunnelProvider: 'cloudflare',
       noTunnel: true,
       tunnelUrl: 'https://my-tunnel-provider.io:4242',
+      tunnelPort: 4242,
       useCloudflareTunnels: true,
       commandConfig: new Config({root: ''}),
     }
@@ -336,11 +338,12 @@ describe('generateFrontendURL', () => {
 
   test('generates a tunnel url with cloudflare when there is no tunnelUrl and use cloudflare is true', async () => {
     // Given
-    vi.mocked(runTunnelPlugin).mockResolvedValue(ok({url: 'https://fake-url.cloudflare.io', port: 3042}))
+    vi.mocked(runTunnelPlugin).mockResolvedValue(ok('https://fake-url.cloudflare.io'))
     const options = {
       app: testApp({hasUIExtensions: () => false}),
       tunnelProvider: 'cloudflare',
       noTunnel: false,
+      tunnelPort: 3042,
       useCloudflareTunnels: true,
       commandConfig: new Config({root: ''}),
     }
@@ -355,12 +358,13 @@ describe('generateFrontendURL', () => {
 
   test('generates a tunnel url with cloudflare when there is no tunnelUrl and use cloudflare is false', async () => {
     // Given
-    vi.mocked(runTunnelPlugin).mockResolvedValue(ok({url: 'https://fake-url.cloudflare.io', port: 3042}))
+    vi.mocked(runTunnelPlugin).mockResolvedValue(ok('https://fake-url.cloudflare.io'))
     const options = {
       app: testApp({hasUIExtensions: () => false}),
       tunnelProvider: 'cloudflare',
       noTunnel: false,
       useCloudflareTunnels: false,
+      tunnelPort: 3042,
       commandConfig: new Config({root: ''}),
     }
 
@@ -379,6 +383,7 @@ describe('generateFrontendURL', () => {
       tunnelProvider: 'cloudflare',
       noTunnel: true,
       useCloudflareTunnels: true,
+      tunnelPort: 3042,
       commandConfig: new Config({root: ''}),
     }
 
@@ -397,6 +402,7 @@ describe('generateFrontendURL', () => {
       tunnelProvider: 'cloudflare',
       noTunnel: false,
       tunnelUrl: 'https://my-tunnel-provider.io',
+      tunnelPort: 3042,
       useCloudflareTunnels: true,
       commandConfig: new Config({root: ''}),
     }
@@ -415,6 +421,7 @@ describe('generateFrontendURL', () => {
       app: testApp({hasUIExtensions: () => true}),
       tunnelProvider: 'cloudflare',
       noTunnel: false,
+      tunnelPort: 3042,
       useCloudflareTunnels: true,
       commandConfig: new Config({root: ''}),
     }
@@ -433,6 +440,7 @@ describe('generateFrontendURL', () => {
       app: testApp({hasUIExtensions: () => false}),
       tunnelProvider: 'cloudflare',
       noTunnel: false,
+      tunnelPort: 3042,
       useCloudflareTunnels: true,
       commandConfig: new Config({root: ''}),
     }
@@ -453,6 +461,7 @@ describe('generateFrontendURL', () => {
       app: testApp({hasUIExtensions: () => false}),
       tunnelProvider: 'cloudflare',
       noTunnel: false,
+      tunnelPort: 3042,
       useCloudflareTunnels: true,
       commandConfig: new Config({root: ''}),
     }
@@ -481,6 +490,7 @@ describe('generateFrontendURL', () => {
       tunnelProvider: 'cloudflare',
       noTunnel: false,
       useCloudflareTunnels: true,
+      tunnelPort: 3042,
       commandConfig: new Config({root: ''}),
     }
 
@@ -507,6 +517,7 @@ describe('generateFrontendURL', () => {
       tunnelProvider: 'cloudflare',
       noTunnel: false,
       useCloudflareTunnels: true,
+      tunnelPort: 3042,
       commandConfig: new Config({root: ''}),
     }
 
@@ -531,6 +542,7 @@ describe('generateFrontendURL', () => {
       tunnelProvider: 'cloudflare',
       noTunnel: false,
       useCloudflareTunnels: true,
+      tunnelPort: 3042,
       tunnelUrl: 'https://my-tunnel-provider.io:4242',
       commandConfig: new Config({root: ''}),
     }

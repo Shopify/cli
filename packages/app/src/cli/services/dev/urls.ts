@@ -186,7 +186,6 @@ export function validatePartnersURLs(urls: PartnersURLs): void {
 }
 
 function mapRunTunnelPluginError(tunnelPluginError: TunnelPluginError) {
-  const alternative = tunnelPluginError.provider === 'cloudflare' ? 'ngrok' : 'cloudflare'
   switch (tunnelPluginError.type) {
     case 'no-provider':
       return new BugError(`We couldn't find the ${tunnelPluginError.provider} tunnel plugin`)

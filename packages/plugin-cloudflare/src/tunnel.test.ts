@@ -19,7 +19,7 @@ describe('hookStart', () => {
     const result = await getCurrentStatus()
 
     // Then
-    expect(result).toEqual({url: 'https://example.trycloudflare.com', port: 1234, status: 'connected'})
+    expect(result).toEqual({url: 'https://example.trycloudflare.com', status: 'connected'})
   })
 
   test('throws if a connection is stablished but we didnt find a URL', async () => {
