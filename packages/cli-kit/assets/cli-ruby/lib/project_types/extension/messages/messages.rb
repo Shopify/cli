@@ -126,6 +126,19 @@ module Extension
           Preview your theme app extension:
           {{green:%s}}
         PREVIEW_MESSAGE
+        preview_message_1p: <<~PREVIEW_MESSAGE,
+          Access Shopify Organization:
+            {{green:%s}}
+
+          Enable your theme app extension:
+          {{green:%s}}
+
+          Setup your theme app extension in the host theme:
+          {{green:%s}}
+
+          Preview your theme app extension:
+          {{green:%s}}
+        PREVIEW_MESSAGE
       },
       tunnel: {
         duplicate_session: <<~MESSAGE,

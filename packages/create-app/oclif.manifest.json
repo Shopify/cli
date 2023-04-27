@@ -1,5 +1,5 @@
 {
-  "version": "3.46.0-pre.0",
+  "version": "3.46.0-pre.2",
   "commands": {
     "init": {
       "id": "init",
@@ -11,6 +11,13 @@
         "create-app"
       ],
       "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
         "verbose": {
           "name": "verbose",
           "type": "boolean",

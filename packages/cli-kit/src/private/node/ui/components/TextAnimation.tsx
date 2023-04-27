@@ -1,6 +1,6 @@
 /* eslint-disable id-length */
 import {Text} from 'ink'
-import React, {FunctionComponent, useCallback, useEffect, useRef, useState} from 'react'
+import React, {FunctionComponent, useCallback, useLayoutEffect, useRef, useState} from 'react'
 import gradient from 'gradient-string'
 
 interface TextAnimationProps {
@@ -33,7 +33,7 @@ const TextAnimation: FunctionComponent<TextAnimationProps> = ({text}): JSX.Eleme
     }, 35)
   }, [text])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     renderAnimation()
 
     return () => {

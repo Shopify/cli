@@ -1,4 +1,5 @@
 import {
+  createFileReadStream,
   copyFile,
   mkdir,
   fileHasExecutablePermissions,
@@ -224,6 +225,43 @@ describe('readFileSync', () => {
       await touchFile(filePath)
       await appendFile(filePath, content)
       await expect(readFileSync(filePath).toString()).toContain(content)
+    })
+  })
+})
+
+describe('createFileReadStream', () => {
+  test('creates a readable stream for a file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'test-file')
+      const content = 'test-content'
+      await touchFile(filePath)
+      await appendFile(filePath, content)
+      const stream = createFileReadStream(filePath)
+      let data = ''
+      stream.on('data', (chunk) => {
+        data += chunk
+      })
+      stream.on('end', () => {
+        expect(data).toBe(content)
+      })
+    })
+  })
+
+  test('creates a readable stream for a chunk of a file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'test-file')
+      const content = 'test-content'
+      await touchFile(filePath)
+      await appendFile(filePath, content)
+
+      const stream = createFileReadStream(filePath, {start: 1, end: 7})
+      let data = ''
+      stream.on('data', (chunk) => {
+        data += chunk
+      })
+      stream.on('end', () => {
+        expect(data).toBe('est-con')
+      })
     })
   })
 })

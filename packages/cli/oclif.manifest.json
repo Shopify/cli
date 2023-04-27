@@ -1,5 +1,5 @@
 {
-  "version": "3.46.0-pre.0",
+  "version": "3.46.0-pre.2",
   "commands": {
     "upgrade": {
       "id": "upgrade",
@@ -86,6 +86,17 @@
       "pluginName": "@shopify/cli",
       "pluginAlias": "@shopify/cli",
       "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    },
+    "plugins": {
+      "id": "plugins",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "hidden": true,
       "aliases": [],
       "flags": {},
       "args": {}

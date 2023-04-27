@@ -1,21 +1,85 @@
 import {isTruthy} from '../context/utilities.js'
-import {render} from 'ink-testing-library'
+import {Stdout} from '../ui.js'
+import {ReactElement} from 'react'
+import {render as inkRender} from 'ink'
 import {EventEmitter} from 'events'
 
+class Stderr extends EventEmitter {
+  readonly frames: string[] = []
+  private _lastFrame?: string
+
+  write = (frame: string) => {
+    this.frames.push(frame)
+    this._lastFrame = frame
+  }
+
+  lastFrame = () => this._lastFrame
+}
+
 export class Stdin extends EventEmitter {
-  isTTY = true
+  isTTY: boolean
+
+  constructor(options: {isTTY?: boolean} = {}) {
+    super()
+    this.isTTY = options.isTTY ?? true
+  }
 
   write = (data: string) => {
     this.emit('data', data)
   }
 
   setEncoding() {}
-
   setRawMode() {}
-
   resume() {}
-
   pause() {}
+}
+
+interface Instance {
+  rerender: (tree: ReactElement) => void
+  unmount: () => void
+  cleanup: () => void
+  stdout: Stdout
+  stderr: Stderr
+  stdin: Stdin
+  frames: string[]
+  lastFrame: () => string | undefined
+  waitUntilExit: () => Promise<void>
+}
+
+interface RenderOptions {
+  stdout?: EventEmitter
+  stderr?: EventEmitter
+  stdin?: EventEmitter
+}
+
+export const render = (tree: ReactElement, options: RenderOptions = {}): Instance => {
+  const stdout = new Stdout({columns: 100})
+  const stderr = new Stderr()
+  const stdin = new Stdin()
+
+  const instance = inkRender(tree, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    stdout: options.stdout ?? (stdout as any),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    stderr: options.stderr ?? (stderr as any),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    stdin: options.stdin ?? (stdin as any),
+    debug: true,
+    exitOnCtrlC: false,
+    patchConsole: false,
+  })
+
+  return {
+    rerender: instance.rerender,
+    unmount: instance.unmount,
+    cleanup: instance.cleanup,
+    waitUntilExit: instance.waitUntilExit,
+    stdout,
+    stderr,
+    stdin,
+    frames: stdout.frames,
+    lastFrame: stdout.lastFrame,
+  }
 }
 
 /**

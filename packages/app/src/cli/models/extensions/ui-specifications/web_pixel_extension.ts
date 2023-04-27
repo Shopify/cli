@@ -3,6 +3,11 @@ import {defaultExtensionFlavors} from '../../../constants.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {fileSize} from '@shopify/cli-kit/node/fs'
+
+const kilobytes = 1024
+const BUNDLE_SIZE_LIMIT_KB = 64
+const BUNDLE_SIZE_LIMIT = BUNDLE_SIZE_LIMIT_KB * kilobytes
 
 const dependency = {name: '@shopify/web-pixels-extension', version: '^0.1.1'}
 
@@ -24,6 +29,16 @@ const spec = createUIExtensionSpecification({
     return {
       runtime_context: config.runtimeContext,
       runtime_configuration_definition: config.settings,
+    }
+  },
+  buildValidation: async (extension) => {
+    const bundleSize = await fileSize(extension.outputBundlePath)
+    if (bundleSize > BUNDLE_SIZE_LIMIT) {
+      const humanReadableBundleSize = `${(bundleSize / kilobytes).toFixed(2)} kB`
+      throw new AbortError(
+        `Your web pixel extension exceeds the total file size limit (${BUNDLE_SIZE_LIMIT_KB} kB). It's currently ${humanReadableBundleSize}.`,
+        `Reduce your total file size and try again.`,
+      )
     }
   },
   preDeployValidation: async (extension) => {

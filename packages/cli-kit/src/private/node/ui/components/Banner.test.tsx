@@ -1,7 +1,7 @@
 import {Banner} from './Banner.js'
+import {render} from '../../testing/ui.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
-import {render} from 'ink-testing-library'
 
 describe('Banner', async () => {
   test('renders with a border for success', async () => {

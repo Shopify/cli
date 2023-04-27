@@ -77,12 +77,14 @@ module Extension
           @ctx = options[:context]
           root = options[:context]&.root
           project = options[:project]
+          notify = options[:notify]
           properties = options
             .slice(:port, :theme, :generate_tmp_theme)
             .compact
             .merge({
               project: project,
               specification_handler: self,
+              notify: notify,
             })
 
           ShopifyCLI::Theme::Extension::DevServer.start(@ctx, root, **properties)

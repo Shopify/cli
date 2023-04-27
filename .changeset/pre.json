@@ -18,8 +18,19 @@
     "@shopify/workspace": "0.1.0"
   },
   "changesets": [
+    "four-adults-flash",
+    "heavy-flies-begin",
+    "itchy-goats-exist",
+    "new-suits-judge",
     "quick-tips-allow",
     "red-countries-sit",
-    "shaggy-lizards-grow"
+    "rich-deers-roll",
+    "shaggy-lizards-grow",
+    "short-hotels-flow",
+    "small-buses-build",
+    "smooth-actors-talk",
+    "tasty-mice-agree",
+    "tidy-crabs-yell",
+    "wild-oranges-shop"
   ]
 }

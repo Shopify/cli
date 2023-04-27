@@ -1,8 +1,13 @@
 import {TextInput} from './TextInput.js'
-import {sendInputAndWait, sendInputAndWaitForChange, waitForChange, waitForInputsToBeReady} from '../../testing/ui.js'
+import {
+  sendInputAndWait,
+  sendInputAndWaitForChange,
+  waitForChange,
+  waitForInputsToBeReady,
+  render,
+} from '../../testing/ui.js'
 import React, {useState} from 'react'
 import {describe, test, expect, vi} from 'vitest'
-import {render} from 'ink-testing-library'
 
 const ARROW_LEFT = '\u001B[D'
 const ARROW_RIGHT = '\u001B[C'

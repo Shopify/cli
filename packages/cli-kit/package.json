@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.46.0-pre.0",
+  "version": "3.46.0-pre.2",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -80,13 +80,13 @@
                 "../../public/node/context/local.js",
                 "./context/local.js",
                 "@oclif/core",
-                "../../private/node/context/utilities.js",
                 "../../private/node/constants.js",
                 "./path.js",
                 "./system.js"
               ],
               "static": [
-                "@oclif/core"
+                "@oclif/core",
+                "../../private/node/context/utilities.js"
               ]
             }
           ]
@@ -133,6 +133,7 @@
     "liquidjs": "10.6.0",
     "lodash": "4.17.21",
     "macaddress": "0.5.3",
+    "mrmime": "1.0.1",
     "node-abort-controller": "3.0.1",
     "node-fetch": "3.2.4",
     "open": "8.4.2",
@@ -163,7 +164,6 @@
     "@types/react": "17.0.2",
     "@types/semver": "^7.3.13",
     "@vitest/coverage-istanbul": "0.28.5",
-    "ink-testing-library": "^3.0.0",
     "node-stream-zip": "^1.15.0",
     "ts-morph": "^17.0.1",
     "typedoc": "^0.23.26",

@@ -14,10 +14,10 @@ function link(label: string | undefined, url: string, linksContext: LinksContext
   if (!supportsHyperlinks.stdout) {
     if (linksContext === null) {
       return label ? `${label} ${chalk.dim(`( ${url} )`)}` : url
-    } else {
-      const linkId = linksContext.addLink(label, url)
-      return label ? `${label} [${linkId}]` : `[${linkId}]]`
     }
+
+    const linkId = linksContext.addLink(label, url)
+    return `${label ?? url} [${linkId}]`
   }
 
   return ansiEscapes.link(label ?? url, url)
