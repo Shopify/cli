@@ -25,7 +25,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {RenderAlertOptions, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
-import {groupBy} from 'lodash-es'
+import {groupBy} from '@shopify/cli-kit/common/collection'
 
 export interface GenerateOptions {
   directory: string

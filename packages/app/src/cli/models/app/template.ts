@@ -1,5 +1,6 @@
 import {GenericSpecification} from './extensions.js'
 import {extensionTypesGroups} from '../../constants.js'
+import {RemoteTemplateSpecification} from '../../api/graphql/template_specifications.js'
 
 export interface TemplateSpecification {
   identifier: string
@@ -25,6 +26,6 @@ export function getTypesExternalIdentitifier(templates: TemplateSpecification[])
   return templates.flatMap((template) => template.types.map((type) => type.externalIdentifier))
 }
 
-export function getTypesExternalName(templates: TemplateSpecification[]): string[] {
-  return templates.flatMap((template) => template.types.map((type) => type.externalName))
+export function getTypesExternalName(templates: RemoteTemplateSpecification[]): string[] {
+  return templates.flatMap((template) => template.name)
 }
