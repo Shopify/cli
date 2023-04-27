@@ -1,9 +1,9 @@
 module.exports = {
   meta: {
-    type: 'problem',
+    type: 'suggestion',
     docs: {
       description: 'Disallow certain characters to appear in the message attribute of prompts',
-      category: 'Possible Errors',
+      category: 'Stylistic Issues',
       recommended: false,
     },
     schema: [],

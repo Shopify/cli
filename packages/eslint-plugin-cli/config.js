@@ -120,6 +120,7 @@ module.exports = {
     '@shopify/cli/no-vi-manual-mock-clear': 'error',
     '@shopify/cli/no-vi-mock-in-callbacks': 'error',
     '@shopify/cli/prompt-message-format': 'warn',
+    '@shopify/cli/banner-headline-format': 'warn',
     'no-restricted-syntax': [
       'error',
       {

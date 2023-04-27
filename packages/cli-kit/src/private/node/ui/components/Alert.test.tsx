@@ -129,7 +129,7 @@ describe('Alert', async () => {
 
   test('has the headline in bold', async () => {
     const options = {
-      headline: 'Title',
+      headline: 'Title.',
     }
 
     const {lastFrame} = render(<Alert type="info" {...options} />)

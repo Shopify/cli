@@ -4,12 +4,16 @@ import {renderFatalError, renderInfo, renderSuccess, renderTable, renderWarning}
 export async function staticService() {
   // Banners
   renderInfo({
-    headline: 'CLI update available',
+    headline: 'CLI update available.',
     body: ['Run', {command: 'npm run shopify upgrade'}, {char: '.'}],
   })
 
   renderInfo({
-    headline: ['To connect this project to your shopify store cd into:', {filePath: '/my-store/hydrogen.config.js'}],
+    headline: [
+      'To connect this project to your shopify store cd into:',
+      {filePath: '/my-store/hydrogen.config.js'},
+      {char: '.'},
+    ],
     body: [
       'You can also try the following steps:',
       {

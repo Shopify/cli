@@ -10,6 +10,7 @@ module.exports = {
     'no-vi-mock-in-callbacks': require('./rules/no-vi-mock-in-callbacks'),
     'prompt-message-format': require('./rules/prompt-message-format'),
     'specific-imports-in-bootstrap-code': require('./rules/specific-imports-in-bootstrap-code'),
+    'banner-headline-format': require('./rules/banner-headline-format'),
   },
 
   configs: {
