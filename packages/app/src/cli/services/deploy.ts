@@ -7,7 +7,7 @@ import {
 } from './deploy/upload.js'
 
 import {ensureDeployContext} from './context.js'
-import {bundleAndBuildExtensions} from './deploy/bundle.js'
+import {buildFunctions, bundleExtensions} from './deploy/bundle.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
@@ -16,8 +16,7 @@ import {OrganizationApp} from '../models/organization.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt} from '@shopify/cli-kit/node/ui'
-import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
-import {joinPath, dirname} from '@shopify/cli-kit/node/path'
+import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {outputNewline, outputInfo} from '@shopify/cli-kit/node/output'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import type {AlertCustomSection, Task} from '@shopify/cli-kit/node/ui'
@@ -102,16 +101,8 @@ export async function deploy(options: DeployOptions) {
 
   await inTemporaryDirectory(async (tmpDir) => {
     try {
-      const bundleTheme = useThemebundling() && app.extensions.theme.length !== 0
-      const bundleUI = app.extensions.ui.length !== 0
-      const bundle = bundleTheme || bundleUI
-      let bundlePath: string | undefined
-
-      if (bundle) {
-        bundlePath = joinPath(tmpDir, `bundle.zip`)
-        await mkdir(dirname(bundlePath))
-      }
-      await bundleAndBuildExtensions({app, bundlePath, identifiers})
+      const bundleExtensionsPath = await bundleExtensions({app, bundleRootPath: tmpDir, identifiers})
+      await buildFunctions(app)
 
       const tasks: Task<TasksContext>[] = [
         {
@@ -123,10 +114,10 @@ export async function deploy(options: DeployOptions) {
         {
           title: partnersApp.betas?.unifiedAppDeployment ? 'Creating deployment' : 'Pushing your code to Shopify',
           task: async () => {
-            if (bundle || partnersApp.betas?.unifiedAppDeployment) {
+            if (bundleExtensionsPath || partnersApp.betas?.unifiedAppDeployment) {
               ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
                 apiKey,
-                bundlePath,
+                bundlePath: bundleExtensionsPath,
                 extensions,
                 token,
                 label,

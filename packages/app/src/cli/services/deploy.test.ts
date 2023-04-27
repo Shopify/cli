@@ -2,7 +2,7 @@ import {ensureDeployContext} from './context.js'
 import {deploy} from './deploy.js'
 import {uploadExtensionsBundle, uploadFunctionExtensions} from './deploy/upload.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
-import {bundleAndBuildExtensions} from './deploy/bundle.js'
+import {bundleExtensions} from './deploy/bundle.js'
 import {testApp, testFunctionExtension, testThemeExtensions, testUIExtension} from '../models/app/app.test-data.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
@@ -52,7 +52,6 @@ describe('deploy', () => {
       extensions: [],
       token: 'api-token',
     })
-    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
     expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
@@ -71,7 +70,6 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).not.toHaveBeenCalled()
-    expect(bundleAndBuildExtensions).not.toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).not.toHaveBeenCalledOnce()
     expect(fetchAppExtensionRegistrations).not.toHaveBeenCalledOnce()
   })
@@ -80,6 +78,7 @@ describe('deploy', () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})
+    vi.mocked(bundleExtensions).mockResolvedValueOnce('bundlePath')
 
     // When
     await testDeployBundle(app)
@@ -87,11 +86,10 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
-      bundlePath: expect.stringMatching(/bundle.zip$/),
+      bundlePath: 'bundlePath',
       extensions: [{uuid: uiExtension.localIdentifier, config: '{}', context: ''}],
       token: 'api-token',
     })
-    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
     expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
@@ -100,6 +98,7 @@ describe('deploy', () => {
     // Given
     const themeExtension = await testThemeExtensions()
     const app = testApp({extensions: {ui: [], theme: [themeExtension], function: []}})
+    vi.mocked(bundleExtensions).mockResolvedValueOnce('bundlePath')
 
     // When
     await testDeployBundle(app)
@@ -107,11 +106,10 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
-      bundlePath: expect.stringMatching(/bundle.zip$/),
+      bundlePath: 'bundlePath',
       extensions: [{uuid: themeExtension.localIdentifier, config: '{"theme_extension": {"files": {}}}', context: ''}],
       token: 'api-token',
     })
-    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
     expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
@@ -141,7 +139,6 @@ describe('deploy', () => {
         token: 'api-token',
       },
     )
-    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
     expect(uploadExtensionsBundle).not.toHaveBeenCalled()
     expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
@@ -178,7 +175,6 @@ describe('deploy', () => {
         token: 'api-token',
       },
     )
-    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
     expect(uploadExtensionsBundle).toHaveBeenCalled()
     expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
@@ -189,6 +185,7 @@ describe('deploy', () => {
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const themeExtension = await testThemeExtensions()
     const app = testApp({extensions: {ui: [uiExtension], theme: [themeExtension], function: []}})
+    vi.mocked(bundleExtensions).mockResolvedValueOnce('bundlePath')
 
     // When
     await testDeployBundle(app)
@@ -196,14 +193,13 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
-      bundlePath: expect.stringMatching(/bundle.zip$/),
+      bundlePath: 'bundlePath',
       extensions: [
         {uuid: uiExtension.localIdentifier, config: '{}', context: ''},
         {uuid: themeExtension.localIdentifier, config: '{"theme_extension": {"files": {}}}', context: ''},
       ],
       token: 'api-token',
     })
-    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
     expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })

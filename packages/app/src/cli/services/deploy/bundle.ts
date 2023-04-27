@@ -7,18 +7,26 @@ import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {inTemporaryDirectory, mkdirSync, touchFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
+import {useThemebundling} from '@shopify/cli-kit/node/context/local'
+import {outputInfo, outputNewline} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
-interface BundleOptions {
+interface BundleExtensionsOptions {
   app: AppInterface
-  bundlePath?: string
+  bundleRootPath: string
   identifiers: Identifiers
 }
 
-export async function bundleAndBuildExtensions(options: BundleOptions) {
-  await inTemporaryDirectory(async (tmpDir) => {
+export async function bundleExtensions(options: BundleExtensionsOptions) {
+  const bundleTheme = useThemebundling() && options.app.extensions.theme.length !== 0
+  const bundleUI = options.app.extensions.ui.length !== 0
+  if (!bundleTheme && !bundleUI) return
+
+  outputNewline()
+  outputInfo(`Preparing UI and Theme extensions`)
+  return inTemporaryDirectory(async (tmpDir) => {
     const bundleDirectory = joinPath(tmpDir, 'bundle')
-    await mkdirSync(bundleDirectory)
+    mkdirSync(bundleDirectory)
     await touchFile(joinPath(bundleDirectory, '.shopify'))
 
     await renderConcurrent({
@@ -56,23 +64,31 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
             },
           },
         })),
-        ...options.app.extensions.function.map((functionExtension) => {
-          return {
-            prefix: functionExtension.localIdentifier,
-            action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-              await buildFunctionExtension(functionExtension, {stdout, stderr, signal, app: options.app})
-            },
-          }
-        }),
       ],
       showTimestamps: false,
     })
 
-    if (options.bundlePath) {
-      await zip({
-        inputDirectory: bundleDirectory,
-        outputZipPath: options.bundlePath,
-      })
-    }
+    const bundlePath = joinPath(options.bundleRootPath, `bundle.zip`)
+    await zip({
+      inputDirectory: bundleDirectory,
+      outputZipPath: bundlePath,
+    })
+    return bundlePath
+  })
+}
+
+export async function buildFunctions(app: AppInterface) {
+  outputNewline()
+  outputInfo(`Preparing Function extensions`)
+  await renderConcurrent({
+    processes: app.extensions.function.map((functionExtension) => {
+      return {
+        prefix: functionExtension.localIdentifier,
+        action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+          await buildFunctionExtension(functionExtension, {stdout, stderr, signal, app})
+        },
+      }
+    }),
+    showTimestamps: false,
   })
 }
