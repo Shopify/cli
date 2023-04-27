@@ -16,6 +16,9 @@ import {
   installNPMDependenciesRecursively,
   addNPMDependencies,
   DependencyVersion,
+  getDevDependencies,
+  getProdDependencies,
+  getPeerDependencies,
 } from './node-package-manager.js'
 import {exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
@@ -223,13 +226,14 @@ describe('usesWorkspaces', () => {
 })
 
 describe('getDependencies', () => {
-  test('returns dev and production dependencies', async () => {
+  test('returns dev, production and peer dependencies', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = joinPath(tmpDir, 'package.json')
       const packageJson = {
         dependencies: {prod: '1.2.3'},
         devDependencies: {dev: '4.5.6'},
+        peerDependencies: {peer: '7.8.9'},
       }
       await writeFile(packageJsonPath, JSON.stringify(packageJson))
 
@@ -239,27 +243,11 @@ describe('getDependencies', () => {
       // Then
       expect(got.prod).toEqual('1.2.3')
       expect(got.dev).toEqual('4.5.6')
+      expect(got.peer).toEqual('7.8.9')
     })
   })
 
-  test('returns dev dependencies when production dependencies do not exist', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const packageJsonPath = joinPath(tmpDir, 'package.json')
-      const packageJson = {
-        devDependencies: {dev: '4.5.6'},
-      }
-      await writeFile(packageJsonPath, JSON.stringify(packageJson))
-
-      // When
-      const got = await getDependencies(packageJsonPath)
-
-      // Then
-      expect(got.dev).toEqual('4.5.6')
-    })
-  })
-
-  test('returns production dependencies when dev dependencies do not exist', async () => {
+  test('returns production dependencies when other types do not exist', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = joinPath(tmpDir, 'package.json')
@@ -283,6 +271,123 @@ describe('getDependencies', () => {
 
       // When
       await expect(getDependencies(packageJsonPath)).rejects.toEqual(PackageJsonNotFoundError(pathNormalize(tmpDir)))
+    })
+  })
+})
+
+describe('getProdDependencies', () => {
+  test('returns prod dependencies', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJsonPath = joinPath(tmpDir, 'package.json')
+      const packageJson = {
+        dependencies: {prod: '1.2.3'},
+        devDependencies: {dev1: '4.5.6', dev2: '7.8.9'},
+      }
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+
+      // When
+      const got = await getProdDependencies(packageJsonPath)
+
+      // Then
+      expect(got).toEqual([{name: 'prod', version: '1.2.3'}])
+    })
+  })
+
+  test('returns an empty array when there are no dependencies', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJsonPath = joinPath(tmpDir, 'package.json')
+      const packageJson = {
+        devDependencies: {dev1: '4.5.6', dev2: '7.8.9'},
+      }
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+
+      // When
+      const got = await getProdDependencies(packageJsonPath)
+
+      // Then
+      expect(got).toEqual([])
+    })
+  })
+})
+
+describe('getDevDependencies', () => {
+  test('returns dev dependencies', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJsonPath = joinPath(tmpDir, 'package.json')
+      const packageJson = {
+        dependencies: {prod: '1.2.3'},
+        devDependencies: {dev1: '4.5.6', dev2: '7.8.9'},
+      }
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+
+      // When
+      const got = await getDevDependencies(packageJsonPath)
+
+      // Then
+      expect(got).toEqual([
+        {name: 'dev1', version: '4.5.6'},
+        {name: 'dev2', version: '7.8.9'},
+      ])
+    })
+  })
+
+  test('returns an empty array when there are no dependencies', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJsonPath = joinPath(tmpDir, 'package.json')
+      const packageJson = {
+        dependencies: {prod: '1.2.3'},
+      }
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+
+      // When
+      const got = await getDevDependencies(packageJsonPath)
+
+      // Then
+      expect(got).toEqual([])
+    })
+  })
+})
+
+describe('getPeerDependencies', () => {
+  test('returns dev dependencies', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJsonPath = joinPath(tmpDir, 'package.json')
+      const packageJson = {
+        dependencies: {prod: '1.2.3'},
+        peerDependencies: {peer1: '4.5.6', peer2: '7.8.9'},
+      }
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+
+      // When
+      const got = await getPeerDependencies(packageJsonPath)
+
+      // Then
+      expect(got).toEqual([
+        {name: 'peer1', version: '4.5.6'},
+        {name: 'peer2', version: '7.8.9'},
+      ])
+    })
+  })
+
+  test('returns an empty array when there are no dependencies', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJsonPath = joinPath(tmpDir, 'package.json')
+      const packageJson = {
+        dependencies: {prod: '1.2.3'},
+      }
+      await writeFile(packageJsonPath, JSON.stringify(packageJson))
+
+      // When
+      const got = await getPeerDependencies(packageJsonPath)
+
+      // Then
+      expect(got).toEqual([])
     })
   })
 })
