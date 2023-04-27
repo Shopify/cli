@@ -44,6 +44,24 @@ module ShopifyCLI
           assert_equal(expected_html, serve(original_html).body)
         end
 
+        def test_replace_local_assets_in_reponse_body_with_vanity_url
+          original_html = <<~HTML
+            <html>
+              <head>
+                <link rel="stylesheet" href="//cdn/shop/t/2/assets/footer.css" />
+              </head>
+            </html>
+          HTML
+          expected_html = <<~HTML
+            <html>
+              <head>
+                <link rel="stylesheet" href="/assets/footer.css" />
+              </head>
+            </html>
+          HTML
+          assert_equal(expected_html, serve(original_html).body)
+        end
+
         def test_dont_replace_other_assets
           original_html = <<~HTML
             <html>
