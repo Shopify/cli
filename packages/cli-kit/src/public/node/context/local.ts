@@ -1,5 +1,5 @@
 import {isSpin} from './spin.js'
-import {isTruthy, isSet} from '../../../private/node/context/utilities.js'
+import {getCIMetadata, isTruthy, isSet, Metadata} from '../../../private/node/context/utilities.js'
 import {environmentVariables, pathConstants} from '../../../private/node/constants.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
@@ -201,10 +201,14 @@ export async function hasGit(): Promise<boolean> {
  * @param env - The environment variables from the environment of the current process.
  * @returns The CI platform info.
  */
-export function ciPlatform(env = process.env): {isCI: true; name: string} | {isCI: false; name?: undefined} {
+export function ciPlatform(
+  env = process.env,
+): {isCI: true; name: string; metadata: Metadata} | {isCI: false; name?: undefined; metadata?: undefined} {
   if (isTruthy(env.CI)) {
     let name = 'unknown'
-    if (isTruthy(env.CIRCLECI)) {
+    if (isSet(env.BITBUCKET_BUILD_NUMBER)) {
+      name = 'bitbucket'
+    } else if (isTruthy(env.CIRCLECI)) {
       name = 'circleci'
     } else if (isSet(env.GITHUB_ACTION)) {
       name = 'github'
@@ -215,6 +219,7 @@ export function ciPlatform(env = process.env): {isCI: true; name: string} | {isC
     return {
       isCI: true,
       name,
+      metadata: getCIMetadata(name, env),
     }
   }
   return {
@@ -230,3 +235,5 @@ export function ciPlatform(env = process.env): {isCI: true; name: string} | {isC
 export function macAddress(): Promise<string> {
   return macaddress.one()
 }
+
+export type CIMetadata = Metadata

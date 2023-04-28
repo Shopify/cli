@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.46.0-pre.1",
+  "version": "3.46.0-pre.2",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -133,6 +133,7 @@
     "liquidjs": "10.6.0",
     "lodash": "4.17.21",
     "macaddress": "0.5.3",
+    "mrmime": "1.0.1",
     "node-abort-controller": "3.0.1",
     "node-fetch": "3.2.4",
     "open": "8.4.2",
@@ -160,7 +161,7 @@
     "@types/gradient-string": "^1.1.2",
     "@types/lodash": "4.14.192",
     "@types/node": "14.18.36",
-    "@types/react": "17.0.2",
+    "@types/react": "18.2.0",
     "@types/semver": "^7.3.13",
     "@vitest/coverage-istanbul": "0.28.5",
     "node-stream-zip": "^1.15.0",
@@ -182,5 +183,8 @@
     "@shopify:registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "engine-strict": true
+  "engine-strict": true,
+  "resolutions": {
+    "@types/react": "18.2.0"
+  }
 }

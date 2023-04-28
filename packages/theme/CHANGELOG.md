@@ -1,5 +1,23 @@
 # @shopify/theme
 
+## 3.46.0-pre.2
+
+### Minor Changes
+
+- 162504891: Introduce the `--notify` flag in the shopfiy app/theme dev commands
+- 151684a25: - Improve rule for lazy loading to prevent developers from overusing it
+  - Introduce `--update-docs` flag to synchronously update Theme Check resources (objects, filters, and tags)
+
+### Patch Changes
+
+- 9e06083e4: Fix localhost link in the `shopify theme dev` command
+- 595233406: Fix description for `shopify theme open` flags
+- Updated dependencies [a7c1eabeb]
+- Updated dependencies [162504891]
+- Updated dependencies [151684a25]
+- Updated dependencies [01988114d]
+  - @shopify/cli-kit@3.46.0-pre.2
+
 ## 3.46.0-pre.1
 
 ### Patch Changes

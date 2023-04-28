@@ -24,7 +24,7 @@ vi.mock('./context/local.js')
 vi.mock('../../public/node/crypto.js')
 
 beforeEach(() => {
-  vi.mocked(ciPlatform).mockReturnValue({isCI: true, name: 'vitest'})
+  vi.mocked(ciPlatform).mockReturnValue({isCI: true, name: 'vitest', metadata: {}})
   vi.mocked(macAddress).mockResolvedValue('macAddress')
   vi.mocked(cloudEnvironment).mockReturnValue({platform: 'spin', editor: false})
   vi.mocked(hashString).mockReturnValue('hashed-macaddress')

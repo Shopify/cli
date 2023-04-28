@@ -88,7 +88,7 @@ export async function prompts() {
   ]
 
   await renderAutocompletePrompt({
-    message: 'Select a template',
+    message: 'Template',
     choices: database,
     search(term: string) {
       return Promise.resolve({data: database.filter((item) => item.label.includes(term))})
