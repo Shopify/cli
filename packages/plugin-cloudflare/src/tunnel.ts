@@ -23,7 +23,7 @@ let currentStatus: TunnelStatusType = {status: 'not-started'}
 
 export const getCurrentStatus = async () => currentStatus
 
-const abortController = new AbortController()
+let abortController: AbortController
 
 export async function hookStart(port: number) {
   try {
@@ -81,33 +81,38 @@ function tunnel(options: {port: number}, retries = 0): void {
     },
   })
 
+  abortController = new AbortController()
+
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
   exec(getBinPathTarget(), args, {
     stdout: customStdout,
     stderr: customStdout,
     signal: abortController.signal,
     externalErrorHandler: async () => {
-      if (resolved) {
-        // If already resolved, means that the CLI already received the tunnel URL.
-        // Can't retry because the CLI is running with an invalid URL
-        throw new AbortError(`Tunnel process crashed after stablishing a connection.`, [
-          'What to try:',
-          {
-            list: {
-              items: [
-                ['Try to run the command again'],
-                ['Add the flag', {command: '--tunnel-url {URL}'}, 'to use a custom tunnel URL'],
-              ],
-            },
-          },
-        ])
-      }
+      // If already resolved, means that the CLI already received the tunnel URL.
+      // Can't retry because the CLI is running with an invalid URL
+      if (resolved) throw processCrashed()
+
       outputDebug('Cloudflared tunnel crashed, restarting...')
       // wait 1 second before restarting the tunnel, to avoid rate limiting
       await sleep(1)
       tunnel(options, retries + 1)
     },
   })
+}
+
+function processCrashed() {
+  return new AbortError(`Tunnel process crashed after stablishing a connection.`, [
+    'What to try:',
+    {
+      list: {
+        items: [
+          ['Try to run the command again'],
+          ['Add the flag', {command: '--tunnel-url {URL}'}, 'to use a custom tunnel URL'],
+        ],
+      },
+    },
+  ])
 }
 
 function findUrl(data: Buffer): string | undefined {
@@ -130,7 +135,7 @@ function findError(data: Buffer): string | undefined {
 }
 
 function findConnection(data: Buffer): string | undefined {
-  const match = data.toString().match(/INF Connection/) ?? undefined
+  const match = data.toString().match(/(INF Registered tunnel connection|INF Connection)/) ?? undefined
   return match && match[0]
 }
 
