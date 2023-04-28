@@ -75,7 +75,7 @@ export async function exec(command: string, args: string[], options?: ExecOption
     // The aborted flag tell use that we killed it, so we can ignore the error.
     if (aborted) return
     if (options?.externalErrorHandler) {
-      options?.externalErrorHandler(processError)
+      await options?.externalErrorHandler(processError)
     } else {
       const abortError = new ExternalError(processError.message, command, args)
       abortError.stack = processError.stack
