@@ -5,7 +5,7 @@ up:
       version: v18.7.0
       packages: []
   - ruby:
-      version: 3.1.2
+      version: 3.2.2
   - bundler:
       gemfile: packages/cli-kit/assets/cli-ruby/Gemfile
   - homebrew:
@@ -58,4 +58,3 @@ commands:
   spin:
     desc: 'Run commands in spin context'
     run: bin/spin
-
