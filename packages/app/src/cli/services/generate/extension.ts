@@ -10,8 +10,6 @@ import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
   DependencyVersion,
-  getDevDependencies,
-  getPeerDependencies,
   getProdDependencies,
   installNPMDependenciesRecursively,
   PackageManager,
@@ -206,11 +204,7 @@ export async function addExtensionDependencies(
   if (!fileExistsSync(packageJsonPath)) return
 
   const prodDependencies = await getProdDependencies(packageJsonPath)
-  const peerDependencies = await getPeerDependencies(packageJsonPath)
-  const devDependencies = await getDevDependencies(packageJsonPath)
   await addNPMDependenciesIfNeeded(prodDependencies, {packageManager, type: 'prod', directory})
-  await addNPMDependenciesIfNeeded(peerDependencies, {packageManager, type: 'peer', directory})
-  await addNPMDependenciesIfNeeded(devDependencies, {packageManager, type: 'dev', directory})
 }
 
 export function getFunctionRuntimeDependencies(templateLanguage: string): DependencyVersion[] {

@@ -84,7 +84,7 @@ describe('initialize a extension', async () => {
         specifications,
       })
 
-      expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledTimes(6)
+      expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledTimes(2)
 
       const loadedApp = await loadApp({directory: tmpDir, specifications})
       const generatedExtension2 = loadedApp.extensions.ui.sort((lhs, rhs) =>
@@ -392,7 +392,7 @@ describe('initialize a extension', async () => {
 })
 
 describe('addExtensionDependencies', () => {
-  test('copies the dependencies from the package.json', async () => {
+  test('copies the prod dependencies from the package.json', async () => {
     await file.inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJsonPath = joinPath(tmpDir, 'package.json')
@@ -400,8 +400,6 @@ describe('addExtensionDependencies', () => {
         packageJsonPath,
         JSON.stringify({
           dependencies: {semver: '7.3.8'},
-          peerDependencies: {react: '^17.0.2'},
-          devDependencies: {'@types/react': '17.0.2'},
         }),
       )
 
@@ -409,26 +407,12 @@ describe('addExtensionDependencies', () => {
       await addExtensionDependencies(packageJsonPath, '/app', 'npm')
 
       // Then
-      expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledTimes(3)
+      expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledOnce()
       expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenNthCalledWith(1, [{name: 'semver', version: '7.3.8'}], {
         packageManager: 'npm',
         type: 'prod',
         directory: '/app',
       })
-      expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenNthCalledWith(2, [{name: 'react', version: '^17.0.2'}], {
-        packageManager: 'npm',
-        type: 'peer',
-        directory: '/app',
-      })
-      expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenNthCalledWith(
-        3,
-        [{name: '@types/react', version: '17.0.2'}],
-        {
-          packageManager: 'npm',
-          type: 'dev',
-          directory: '/app',
-        },
-      )
     })
   })
 })
