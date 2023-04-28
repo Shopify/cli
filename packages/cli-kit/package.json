@@ -82,7 +82,9 @@
                 "@oclif/core",
                 "../../private/node/constants.js",
                 "./path.js",
-                "./system.js"
+                "./system.js",
+                "url",
+                "./custom-oclif-loader.js"
               ],
               "static": [
                 "@oclif/core",
@@ -133,6 +135,7 @@
     "liquidjs": "10.6.0",
     "lodash": "4.17.21",
     "macaddress": "0.5.3",
+    "minimatch": "^9.0.0",
     "mrmime": "1.0.1",
     "node-abort-controller": "3.0.1",
     "node-fetch": "3.2.4",
@@ -151,6 +154,7 @@
     "tree-kill": "1.2.2",
     "ts-error": "1.0.6",
     "unique-string": "3.0.0",
+    "yargs": "^17.7.2",
     "zod": "3.17.3"
   },
   "devDependencies": {
@@ -163,6 +167,7 @@
     "@types/node": "14.18.36",
     "@types/react": "18.2.0",
     "@types/semver": "^7.3.13",
+    "@types/yargs": "^17.0.24",
     "@vitest/coverage-istanbul": "0.28.5",
     "node-stream-zip": "^1.15.0",
     "ts-morph": "^17.0.1",

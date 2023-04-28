@@ -53,12 +53,18 @@ export async function runCLI(options: RunCLIOptions): Promise<void> {
   const {errorHandler} = await import('./error-handler.js')
   const {isDevelopment} = await import('./context/local.js')
   const {run, settings, flush} = await import('@oclif/core')
+  const {fileURLToPath} = await import('url')
+  const {ShopifyConfig} = await import('./custom-oclif-loader.js')
 
   if (isDevelopment()) {
     settings.debug = true
   }
 
-  run(undefined, options.moduleURL)
+  // Use a custom OCLIF config so that plug-ins can be dynamically discovered and loaded
+  const config = new ShopifyConfig({root: fileURLToPath(options.moduleURL)})
+  await config.load()
+
+  run(undefined, config)
     .then(() => flush())
     .catch(errorHandler)
 }
