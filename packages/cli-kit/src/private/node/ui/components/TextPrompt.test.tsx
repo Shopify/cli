@@ -92,6 +92,44 @@ describe('TextPrompt', () => {
     `)
   })
 
+  test('display the empty value when no input is entered and there is no default value', async () => {
+    const onSubmit = vi.fn()
+    const renderInstance = render(
+      <TextPrompt onSubmit={onSubmit} message="Test question" allowEmpty emptyDisplayedValue="empty" />,
+    )
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, ENTER)
+    expect(onSubmit).toHaveBeenCalledWith('')
+    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
+      "?  Test question:
+      ✔  empty
+      "
+    `)
+  })
+
+  test("display the default value when allow empty is enabled but the user don't modify it", async () => {
+    const onSubmit = vi.fn()
+    const renderInstance = render(
+      <TextPrompt
+        onSubmit={onSubmit}
+        message="Test question"
+        allowEmpty
+        emptyDisplayedValue="empty"
+        defaultValue="A"
+      />,
+    )
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, ENTER)
+    expect(onSubmit).toHaveBeenCalledWith('A')
+    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
+      "?  Test question:
+      ✔  A
+      "
+    `)
+  })
+
   test('text wrapping', async () => {
     // component width is 80 characters wide in tests but because of the question mark and
     // spaces before the question, we only have 77 characters to work with
