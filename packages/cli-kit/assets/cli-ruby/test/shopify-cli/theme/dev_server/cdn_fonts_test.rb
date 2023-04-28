@@ -104,19 +104,20 @@ module ShopifyCLI
 
         def test_do_not_replace_when_content_type_does_not_match_text
           CdnFonts.any_instance.expects(:replace_font_urls).never
-          response = serve(path: "/cdn/shop/products/tan-colored-hat-on-monochrome-background.jpg", content_type: "image/jpeg")
+          serve(path: "/cdn/shop/products/tan-colored-hat-on-monochrome-background.jpg",
+            content_type: "image/jpeg")
         end
 
         def test_replace_when_content_type_does_match_text
           CdnFonts.any_instance.expects(:replace_font_urls).once
-          response = serve(path: "/cdn/shop/products/style.css", content_type: "text/css")
+          serve(path: "/cdn/shop/products/style.css", content_type: "text/css")
         end
 
         private
 
         def serve(response_body = "", path: "/", content_type: "text/html")
           app = lambda do |_env|
-            [200, {"Content-Type" => content_type}, [response_body]]
+            [200, { "Content-Type" => content_type }, [response_body]]
           end
           stack = CdnFonts.new(app, theme: theme)
           request = Rack::MockRequest.new(stack)
