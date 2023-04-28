@@ -16,7 +16,7 @@ export interface ExecOptions {
   stdio?: 'inherit'
   input?: string
   signal?: AbortSignal
-  externalErrorHandler?: (error: unknown) => void
+  externalErrorHandler?: (error: unknown) => Promise<void>
 }
 
 /**

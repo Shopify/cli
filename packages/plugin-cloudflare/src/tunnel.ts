@@ -1,11 +1,12 @@
 import {TUNNEL_PROVIDER} from './provider.js'
 import {startTunnel, TunnelError, TunnelStatusType} from '@shopify/cli-kit/node/plugins/tunnel'
 import {err} from '@shopify/cli-kit/node/result'
-import {exec} from '@shopify/cli-kit/node/system'
+import {exec, sleep} from '@shopify/cli-kit/node/system'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
 
@@ -13,6 +14,10 @@ export default startTunnel({provider: TUNNEL_PROVIDER, action: hookStart})
 
 // How much time to wait for a tunnel to be established. in seconds.
 const TUNNEL_TIMEOUT = isUnitTest() ? 0.2 : 40
+
+// if the tunnel process crashes, we'll retry this many times before giving up
+// If we retry too many times, we might get rate limited by cloudflare
+const MAX_RETRIES = 5
 
 let currentStatus: TunnelStatusType = {status: 'not-started'}
 
@@ -34,7 +39,12 @@ export async function stopCloudflareProcess() {
   abortController.abort()
 }
 
-function tunnel(options: {port: number}): void {
+function tunnel(options: {port: number}, retries = 0): void {
+  if (retries >= MAX_RETRIES) {
+    currentStatus = {status: 'error', message: 'Could not start tunnel, max retries reached'}
+    return
+  }
+
   const args: string[] = ['tunnel', '--url', `http://localhost:${options.port}`, '--no-autoupdate']
   const errors: string[] = []
 
@@ -76,8 +86,26 @@ function tunnel(options: {port: number}): void {
     stdout: customStdout,
     stderr: customStdout,
     signal: abortController.signal,
-    externalErrorHandler: () => {
-      outputWarn('Cloudflared tunnel crashed')
+    externalErrorHandler: async () => {
+      if (resolved) {
+        // If already resolved, means that the CLI already received the tunnel URL.
+        // Can't retry because the CLI is running with an invalid URL
+        throw new AbortError(`Tunnel process crashed after stablishing a connection.`, [
+          'What to try:',
+          {
+            list: {
+              items: [
+                ['Try to run the command again'],
+                ['Add the flag', {command: '--tunnel-url {URL}'}, 'to use a custom tunnel URL'],
+              ],
+            },
+          },
+        ])
+      }
+      outputDebug('Cloudflared tunnel crashed, restarting...')
+      // wait 1 second before restarting the tunnel, to avoid rate limiting
+      await sleep(1)
+      tunnel(options, retries + 1)
     },
   })
 }
