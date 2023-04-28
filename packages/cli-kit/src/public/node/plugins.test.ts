@@ -143,7 +143,6 @@ describe('runTunnelPlugin', () => {
         errors: [],
       } as any)
       .mockResolvedValueOnce({
-        // vi.spyOn(config, 'runHook').mockResolvedValue({
         successes: [{result: ok({status: 'connected', url: 'tunnel_url'}), plugin: {name: 'plugin-cloudflare'}}],
         errors: [],
       } as any)

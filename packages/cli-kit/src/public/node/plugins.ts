@@ -93,7 +93,7 @@ export interface TunnelPluginError {
 }
 
 /**
- * Execute the 'tunnel_start' hook for the given provider.
+ * Poll the 'tunnel_status' hook every 0.5s for the given provider until a URL or error is returned.
  * Fails if there aren't plugins for that provider or if there are more than one.
  *
  * @param config - Oclif config used to execute hooks.
