@@ -159,16 +159,24 @@ async function uiExtensionInit({
     task: async () => {
       const packageManager = app.packageManager
       if (app.usesWorkspaces) {
+        // NPM doesn't resolve the react dependency properly with extensions depending on React 17 and cli-kit on React 18
+        if (extensionFlavor?.includes('react') && packageManager === 'npm') {
+          await addNPMDependenciesIfNeeded([{name: 'react', version: versions.react}], {
+            packageManager,
+            type: 'prod',
+            directory: app.directory,
+          })
+        }
         await installNPMDependenciesRecursively({
           packageManager,
           directory: app.directory,
           deep: 0,
         })
       } else {
+        await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor)
         const extensionPackageJsonPath = joinPath(extensionDirectory, 'package.json')
         await addExtensionDependencies(extensionPackageJsonPath, app.directory, packageManager)
         await removeFile(extensionPackageJsonPath)
-        await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor)
       }
     },
   })
@@ -312,7 +320,7 @@ async function ensureExtensionDirectoryExists({name, app}: {name: string; app: A
   return extensionDirectory
 }
 
-async function addResolutionOrOverrideIfNeeded(directory: string, extensionFlavor?: ExtensionFlavorValue) {
+async function addResolutionOrOverrideIfNeeded(directory: string, extensionFlavor: ExtensionFlavorValue | undefined) {
   if (extensionFlavor === 'typescript-react') {
     await addResolutionOrOverride(directory, {'@types/react': versions.reactTypes})
   }
