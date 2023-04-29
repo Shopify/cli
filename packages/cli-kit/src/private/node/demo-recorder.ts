@@ -16,14 +16,16 @@ interface ConcurrencyStep {
 class DemoRecorder {
   recorded: any[]
   sleepStart: number
+  command: string
 
   constructor() {
     this.recorded = []
     this.sleepStart = Date.now()
+    this.command = ['shopify', ...process.argv.slice(2)].join(' ')
   }
 
   addEvent({type, properties}: Event) {
-    if (type === 'taskbar' || type.endsWith('Prompt')) {
+    if (type === 'taskbar') {
       this.resetSleep()
     } else {
       this.addSleep()
@@ -33,7 +35,10 @@ class DemoRecorder {
   }
 
   recordedEventsJson() {
-    return JSON.stringify({steps: this.withFormattedConcurrent(this.recorded)}, null, 2)
+    return JSON.stringify({
+      command: this.command,
+      steps: this.withFormattedConcurrent(this.recorded),
+    }, null, 2)
   }
 
   addSleep() {
@@ -126,6 +131,10 @@ function ensureInstance() {
       _instance = new NoopDemoRecorder()
     }
   }
+}
+
+export function initDemoRecorder() {
+  ensureInstance()
 }
 
 export function addEvent(event: Event) {

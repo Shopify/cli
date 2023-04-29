@@ -257,7 +257,7 @@ export function renderSelectPrompt<T>({renderOptions, isConfirmationPrompt, ...p
     render(<SelectPrompt {...props} onSubmit={(value: T) => resolve(value)} />, {
       ...renderOptions,
       exitOnCtrlC: false,
-    }).catch(reject)
+    }).catch(reject).finally(resetSleep)
   })
 }
 
@@ -372,7 +372,7 @@ export function renderAutocompletePrompt<T>({renderOptions, ...props}: RenderAut
     render(<AutocompletePrompt {...newProps} onSubmit={(value: T) => resolve(value)} />, {
       ...renderOptions,
       exitOnCtrlC: false,
-    }).catch(reject)
+    }).catch(reject).finally(resetSleep)
   })
 }
 
@@ -447,7 +447,7 @@ export function renderTextPrompt({renderOptions, ...props}: RenderTextPromptOpti
     render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
       ...renderOptions,
       exitOnCtrlC: false,
-    }).catch(reject)
+    }).catch(reject).finally(resetSleep)
   })
 }
 
