@@ -14,9 +14,8 @@ import {
   renderSelectPrompt,
   renderTextPrompt,
 } from '@shopify/cli-kit/node/ui'
-import {Writable} from 'stream'
-
 import {zod} from '@shopify/cli-kit/node/schema'
+import {Writable} from 'stream'
 
 const linkSchema = zod.object({label: zod.string(), url: zod.string()})
 const inlineTokenSchema = zod.union([
@@ -47,17 +46,19 @@ const listSchema = zod.object({
   list: zod.object({
     title: zod.string().optional(),
     items: zod.array(inlineTokenItemSchema),
-    ordered: zod.boolean().optional()
-  })
+    ordered: zod.boolean().optional(),
+  }),
 })
 const tokenItemSchema = oneOrMore(zod.union([inlineTokenSchema, listSchema]))
 
 const tableSchema = zod.object({
   rows: zod.array(zod.object({}).catchall(zod.string())),
-  columns: zod.object({}).catchall(zod.object({
-    header: zod.string().optional(),
-    color: zod.string().optional(),
-  })),
+  columns: zod.object({}).catchall(
+    zod.object({
+      header: zod.string().optional(),
+      color: zod.string().optional(),
+    }),
+  ),
 })
 const infoTableSchema = zod.union([
   zod.object({}).catchall(zod.array(inlineTokenItemSchema)),
@@ -90,10 +91,14 @@ const renderStepPropertiesSchema = zod.object({
   nextSteps: zod.array(inlineTokenItemSchema).optional(),
   reference: zod.array(inlineTokenItemSchema).optional(),
   link: linkSchema.optional(),
-  customSections: zod.array(zod.object({
-    title: zod.string().optional(),
-    body: tokenItemSchema,
-  })).optional(),
+  customSections: zod
+    .array(
+      zod.object({
+        title: zod.string().optional(),
+        body: tokenItemSchema,
+      }),
+    )
+    .optional(),
   orderedNextSteps: zod.boolean().optional(),
 })
 const renderInfoStepSchema = abstractDemoStepSchema.extend({
@@ -133,10 +138,12 @@ const renderAutoCompletePromptStepSchema = abstractDemoStepSchema.extend({
   type: zod.literal('autocompletePrompt'),
   properties: zod.object({
     message: zod.string(),
-    choices: zod.array(zod.object({
-      label: zod.string(),
-      value: zod.string(),
-    })),
+    choices: zod.array(
+      zod.object({
+        label: zod.string(),
+        value: zod.string(),
+      }),
+    ),
   }),
 })
 type RenderAutocompletePromptStep = zod.infer<typeof renderAutoCompletePromptStepSchema>
@@ -156,10 +163,12 @@ const renderSelectPromptStepSchema = abstractDemoStepSchema.extend({
   type: zod.literal('selectPrompt'),
   properties: zod.object({
     message: zod.string(),
-    choices: zod.array(zod.object({
-      label: zod.string(),
-      value: zod.string(),
-    })),
+    choices: zod.array(
+      zod.object({
+        label: zod.string(),
+        value: zod.string(),
+      }),
+    ),
     infoTable: infoTableSchema.optional(),
   }),
 })
@@ -187,30 +196,40 @@ type SleepStep = zod.infer<typeof sleepStepSchema>
 const taskbarStepSchema = abstractDemoStepSchema.extend({
   type: zod.literal('taskbar'),
   properties: zod.object({
-    steps: zod.array(zod.object({
-      title: zod.string(),
-      duration: zod.number(),
-    })),
+    steps: zod.array(
+      zod.object({
+        title: zod.string(),
+        duration: zod.number(),
+      }),
+    ),
   }),
 })
 type TaskbarStep = zod.infer<typeof taskbarStepSchema>
 
 const renderConcurrentPropertiesSchema = zod.object({
-  processes: zod.array(zod.object({
-    prefix: zod.string(),
-    steps: zod.array(zod.object({
-      startMessage: zod.string().optional(),
-      duration: zod.number(),
-      endMessage: zod.string().optional(),
-    })),
-  })),
-  footer: zod.object({
-    shortcuts: zod.array(zod.object({
-      key: zod.string(),
-      action: zod.string(),
-    })),
-    subTitle: zod.string().optional(),
-  }).optional(),
+  processes: zod.array(
+    zod.object({
+      prefix: zod.string(),
+      steps: zod.array(
+        zod.object({
+          startMessage: zod.string().optional(),
+          duration: zod.number(),
+          endMessage: zod.string().optional(),
+        }),
+      ),
+    }),
+  ),
+  footer: zod
+    .object({
+      shortcuts: zod.array(
+        zod.object({
+          key: zod.string(),
+          action: zod.string(),
+        }),
+      ),
+      subTitle: zod.string().optional(),
+    })
+    .optional(),
 })
 type RenderConcurrentProperties = zod.infer<typeof renderConcurrentPropertiesSchema>
 const renderConcurrentStepSchema = abstractDemoStepSchema.extend({
@@ -220,7 +239,7 @@ const renderConcurrentStepSchema = abstractDemoStepSchema.extend({
 type RenderConcurrentStep = zod.infer<typeof renderConcurrentStepSchema>
 
 type DemoStep =
-  OutputStep
+  | OutputStep
   | RenderInfoStep
   | RenderSuccessStep
   | RenderWarningStep
@@ -262,6 +281,7 @@ export async function demo(stepsJsonData: DemoSteps) {
 
   await simulateTyping(command)
   for (const executor of executors) {
+    // eslint-disable-next-line no-await-in-loop
     await executor()
   }
 }
@@ -269,12 +289,14 @@ export async function demo(stepsJsonData: DemoSteps) {
 async function simulateTyping(text?: string) {
   if (!text) return
 
+  // eslint-disable-next-line no-console
   console.clear()
   process.stdout.write('$ ')
   const chars = text.split('')
   while (chars.length > 0) {
     const char = chars.shift()!
     process.stdout.write(char)
+    // eslint-disable-next-line no-await-in-loop
     await sleep(0.1 + Math.random() / 10)
   }
   process.stdout.write('\n')
@@ -284,19 +306,29 @@ async function simulateTyping(text?: string) {
 function executorForStep(step: DemoStep): () => Promise<void> {
   switch (step.type) {
     case 'output':
-      return async () => { outputInfo(step.properties.content) }
+      return async () => {
+        outputInfo(step.properties.content)
+      }
     case 'sleep':
-      return async () => { await sleep(step.properties.duration) }
+      return async () => {
+        await sleep(step.properties.duration)
+      }
     case 'taskbar':
       return taskbarExecutor(step.properties.steps)
     case 'concurrent':
       return concurrentExecutor(step.properties)
     case 'info':
-      return async () => { renderInfo(step.properties) }
+      return async () => {
+        renderInfo(step.properties)
+      }
     case 'success':
-      return async () => { renderSuccess(step.properties) }
+      return async () => {
+        renderSuccess(step.properties)
+      }
     case 'warning':
-      return async () => { renderWarning(step.properties) }
+      return async () => {
+        renderWarning(step.properties)
+      }
     case 'fatalError':
       return async () => {
         const {errorType, message, nextSteps, tryMessage} = step.properties
@@ -307,26 +339,36 @@ function executorForStep(step: DemoStep): () => Promise<void> {
         }
       }
     case 'table':
-      return async () => { renderTable(step.properties as Parameters<typeof renderTable>[0]) }
+      return async () => {
+        renderTable(step.properties as Parameters<typeof renderTable>[0])
+      }
     case 'autocompletePrompt':
-      return async () => { await renderAutocompletePrompt(step.properties) }
+      return async () => {
+        await renderAutocompletePrompt(step.properties)
+      }
     case 'confirmationPrompt':
-      return async () => { await renderConfirmationPrompt(step.properties as Parameters<typeof renderConfirmationPrompt>[0]) }
+      return async () => {
+        await renderConfirmationPrompt(step.properties as Parameters<typeof renderConfirmationPrompt>[0])
+      }
     case 'selectPrompt':
-      return async () => { await renderSelectPrompt(step.properties as Parameters<typeof renderSelectPrompt>[0]) }
+      return async () => {
+        await renderSelectPrompt(step.properties as Parameters<typeof renderSelectPrompt>[0])
+      }
     case 'textPrompt':
-      return async () => { await renderTextPrompt(step.properties) }
+      return async () => {
+        await renderTextPrompt(step.properties)
+      }
     default:
-      throw new Error(`Unknown step type: ${(step as any).type}`)
+      throw new Error(`Unknown step type: ${(step as DemoStep).type}`)
   }
 }
 
-function taskbarExecutor(steps: {title: string, duration: number}[]) {
+function taskbarExecutor(steps: {title: string; duration: number}[]) {
   return async () => {
     const tasks = steps.map(({title, duration}) => {
       return {
         title,
-        task: async () => await sleep(duration),
+        task: async () => sleep(duration),
       }
     })
     await renderTasks(tasks)
@@ -342,10 +384,11 @@ function concurrentExecutor({processes, footer}: RenderConcurrentProperties) {
           for (const step of steps) {
             const {startMessage, duration, endMessage} = step
             if (startMessage) stdout.write(startMessage)
+            // eslint-disable-next-line no-await-in-loop
             await sleep(duration)
             if (endMessage) stdout.write(endMessage)
           }
-        }
+        },
       }
     })
     await renderConcurrent({processes: concurrentProcesses, footer})

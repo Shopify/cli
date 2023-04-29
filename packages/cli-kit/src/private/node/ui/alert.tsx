@@ -32,6 +32,7 @@ export function alert({
   orderedNextSteps = false,
   renderOptions,
 }: AlertOptions) {
+  // eslint-disable-next-line prefer-rest-params
   const {type: alertType, ...eventProps} = arguments[0]
   addEvent({type, properties: eventProps})
 

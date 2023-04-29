@@ -3,7 +3,7 @@ import {ConcurrentOutputProps} from './ui/components/ConcurrentOutput.js'
 
 interface Event {
   type: string
-  properties: any
+  properties: {[key: string]: unknown}
   // Only used within this recorder for tracking concurrency timeline
   concurrencyStart?: number
 }
@@ -13,8 +13,13 @@ interface ConcurrencyStep {
   endMessage: string
 }
 
+interface ConcurrencyProcess {
+  prefix: string
+  steps: ConcurrencyStep[]
+}
+
 class DemoRecorder {
-  recorded: any[]
+  recorded: Event[]
   sleepStart: number
   command: string
 
@@ -35,10 +40,14 @@ class DemoRecorder {
   }
 
   recordedEventsJson() {
-    return JSON.stringify({
-      command: this.command,
-      steps: this.withFormattedConcurrent(this.recorded),
-    }, null, 2)
+    return JSON.stringify(
+      {
+        command: this.command,
+        steps: this.withFormattedConcurrent(this.recorded),
+      },
+      null,
+      2,
+    )
   }
 
   addSleep() {
@@ -53,36 +62,48 @@ class DemoRecorder {
     this.sleepStart = Date.now()
   }
 
-  addOrUpdateConcurrentOutput({prefix, index, output}: {
-    prefix: string
-    index: number
-    output: string
-  }, {footer}: {footer: ConcurrentOutputProps['footer']}) {
+  addOrUpdateConcurrentOutput(
+    {
+      prefix,
+      index,
+      output,
+    }: {
+      prefix: string
+      index: number
+      output: string
+    },
+    {footer}: {footer: ConcurrentOutputProps['footer']},
+  ) {
     let last = this.recorded[this.recorded.length - 1]
-    if (last?.type !== 'concurrent') {
+    if (last?.type === 'concurrent') {
+      // Don't sleep between concurrent lines
+      this.resetSleep()
+    } else {
       const eventProperties: Event = {
-        type: 'concurrent', properties: {processes: [], concurrencyStart: Date.now()}
+        type: 'concurrent',
+        properties: {processes: [], concurrencyStart: Date.now()},
       }
       if (footer) eventProperties.properties.footer = footer
       this.addEvent(eventProperties)
       last = this.recorded[this.recorded.length - 1]
-    } else {
-      // Don't sleep between concurrent lines
-      this.resetSleep()
     }
-    const {processes} = last.properties
+    const {processes} = last!.properties as {processes: ConcurrencyProcess[]}
     while (processes.length <= index) {
       processes.push({prefix: '', steps: []})
     }
-    processes[index].prefix = prefix
-    processes[index].steps.push({timestamp: Date.now(), endMessage: output})
+    processes[index]!.prefix = prefix
+    processes[index]!.steps.push({timestamp: Date.now(), endMessage: output})
   }
 
   withFormattedConcurrent(recorded: Event[]) {
-    return recorded.map(event => {
+    return recorded.map((event) => {
       if (event.type === 'concurrent') {
-        const {processes, footer, concurrencyStart} = event.properties
-        const formatted = processes.map(({prefix, steps}: {prefix: string, steps: ConcurrencyStep[]}) => {
+        const {processes, footer, concurrencyStart} = event.properties as {
+          processes: ConcurrencyProcess[]
+          footer?: string
+          concurrencyStart: number
+        }
+        const formatted = processes.map(({prefix, steps}: {prefix: string; steps: ConcurrencyStep[]}) => {
           let mostRecentTimestamp = concurrencyStart
           const formattedSteps = steps.map(({timestamp, endMessage}) => {
             const duration = (timestamp - mostRecentTimestamp) / 1000
@@ -108,7 +129,7 @@ class NoopDemoRecorder {
   addSleep() {}
   resetSleep() {}
 
-  addOrUpdateConcurrentOutput(..._args: any) {}
+  addOrUpdateConcurrentOutput(..._args: unknown[]) {}
 }
 
 let _instance: {
@@ -116,11 +137,18 @@ let _instance: {
   recordedEventsJson: () => string
   resetSleep: () => void
   addSleep: () => void
-  addOrUpdateConcurrentOutput: ({prefix, index, output}: {
-    prefix: string
-    index: number
-    output: string
-  }, {footer}: {footer: ConcurrentOutputProps['footer']}) => void
+  addOrUpdateConcurrentOutput: (
+    {
+      prefix,
+      index,
+      output,
+    }: {
+      prefix: string
+      index: number
+      output: string
+    },
+    {footer}: {footer: ConcurrentOutputProps['footer']},
+  ) => void
 }
 
 function ensureInstance() {
@@ -151,15 +179,19 @@ export function printEventsJson(): void {
   if (isRecording()) {
     ensureInstance()
     _instance.addSleep()
+    // eslint-disable-next-line no-console
     console.log(_instance.recordedEventsJson())
   }
 }
 
-export function addOrUpdateConcurrentOutput(data: {
+export function addOrUpdateConcurrentOutput(
+  data: {
     prefix: string
     index: number
     output: string
-  }, componentData: {footer: ConcurrentOutputProps['footer']}) {
+  },
+  componentData: {footer: ConcurrentOutputProps['footer']},
+) {
   ensureInstance()
   _instance.addOrUpdateConcurrentOutput(data, componentData)
 }

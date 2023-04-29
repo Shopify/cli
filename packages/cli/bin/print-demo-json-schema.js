@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import {demoStepsSchema} from '../dist/cli/services/demo.js'
-import zodToJsonSchema from "zod-to-json-schema"
+import zodToJsonSchema from 'zod-to-json-schema'
 
 const jsonSchema = zodToJsonSchema.default(demoStepsSchema, 'demo-steps')
 const printable = JSON.stringify(jsonSchema)

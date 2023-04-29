@@ -248,7 +248,11 @@ export interface RenderSelectPromptOptions<T> extends Omit<SelectPromptProps<T>,
  *    Press ↑↓ arrows to select, enter to confirm
  *
  */
-export function renderSelectPrompt<T>({renderOptions, isConfirmationPrompt, ...props}: RenderSelectPromptOptions<T>): Promise<T> {
+export function renderSelectPrompt<T>({
+  renderOptions,
+  isConfirmationPrompt,
+  ...props
+}: RenderSelectPromptOptions<T>): Promise<T> {
   if (!isConfirmationPrompt) {
     addEvent({type: 'selectPrompt', properties: {renderOptions, ...props}})
   }
@@ -257,7 +261,9 @@ export function renderSelectPrompt<T>({renderOptions, isConfirmationPrompt, ...p
     render(<SelectPrompt {...props} onSubmit={(value: T) => resolve(value)} />, {
       ...renderOptions,
       exitOnCtrlC: false,
-    }).catch(reject).finally(resetSleep)
+    })
+      .catch(reject)
+      .finally(resetSleep)
   })
 }
 
@@ -290,6 +296,7 @@ export function renderConfirmationPrompt({
   renderOptions,
   defaultValue = true,
 }: RenderConfirmationPromptOptions): Promise<boolean> {
+  // eslint-disable-next-line prefer-rest-params
   addEvent({type: 'confirmationPrompt', properties: arguments[0]})
 
   const choices = [
@@ -356,6 +363,7 @@ export interface RenderAutocompleteOptions<T>
  *
  */
 export function renderAutocompletePrompt<T>({renderOptions, ...props}: RenderAutocompleteOptions<T>): Promise<T> {
+  // eslint-disable-next-line prefer-rest-params
   addEvent({type: 'autocompletePrompt', properties: arguments[0]})
 
   const newProps = {
@@ -372,7 +380,9 @@ export function renderAutocompletePrompt<T>({renderOptions, ...props}: RenderAut
     render(<AutocompletePrompt {...newProps} onSubmit={(value: T) => resolve(value)} />, {
       ...renderOptions,
       exitOnCtrlC: false,
-    }).catch(reject).finally(resetSleep)
+    })
+      .catch(reject)
+      .finally(resetSleep)
   })
 }
 
@@ -390,6 +400,7 @@ interface RenderTableOptions<T extends ScalarDict> extends TableProps<T> {
  * 3   John Smith  jon@smith.com
  */
 export function renderTable<T extends ScalarDict>({renderOptions, ...props}: RenderTableOptions<T>) {
+  // eslint-disable-next-line prefer-rest-params
   addEvent({type: 'table', properties: arguments[0]})
 
   return renderOnce(<Table {...props} />, {renderOptions})
@@ -412,8 +423,10 @@ export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOpti
     properties: {
       // Rather than timing exactly, pretend each step takes 2 seconds. This
       // should be easy to tweak manually.
-      steps: tasks.map((task) => { return {title: task.title, duration: 2} }),
-    }
+      steps: tasks.map((task) => {
+        return {title: task.title, duration: 2}
+      }),
+    },
   })
 
   // eslint-disable-next-line max-params
@@ -440,6 +453,7 @@ export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit
  *
  */
 export function renderTextPrompt({renderOptions, ...props}: RenderTextPromptOptions): Promise<string> {
+  // eslint-disable-next-line prefer-rest-params
   addEvent({type: 'textPrompt', properties: arguments[0]})
 
   // eslint-disable-next-line max-params
@@ -447,7 +461,9 @@ export function renderTextPrompt({renderOptions, ...props}: RenderTextPromptOpti
     render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
       ...renderOptions,
       exitOnCtrlC: false,
-    }).catch(reject).finally(resetSleep)
+    })
+      .catch(reject)
+      .finally(resetSleep)
   })
 }
 

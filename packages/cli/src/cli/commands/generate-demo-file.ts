@@ -1,5 +1,5 @@
 import {demoStepsSchema} from '../services/demo.js'
-import zodToJsonSchema from "zod-to-json-schema"
+import zodToJsonSchema from 'zod-to-json-schema'
 import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -7,9 +7,10 @@ import {mkdir, fileExists, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputSuccess, outputToken} from '@shopify/cli-kit/node/output'
 import {resolvePath, joinPath, cwd} from '@shopify/cli-kit/node/path'
 
-const schemaFilename = "demo-schema.json"
+const schemaFilename = 'demo-schema.json'
 
-export default class GenerateDemoFile extends Command { static description = 'Create a command design file'
+export default class GenerateDemoFile extends Command {
+  static description = 'Create a command design file'
   static summary = 'Creates a JSON file alongside a JSON schema that will validate it'
   static hidden = true
 
@@ -28,7 +29,7 @@ export default class GenerateDemoFile extends Command { static description = 'Cr
       required: true,
       validate: (input: string) => {
         if (input === schemaFilename) {
-          return `The demo file cannot be named ${schemaFilename}, as this is used for the schema file.`
+          return `The demo file can't be named ${schemaFilename}, as this is used for the schema file.`
         }
         return true
       },
@@ -38,18 +39,25 @@ export default class GenerateDemoFile extends Command { static description = 'Cr
   async run(): Promise<void> {
     const {flags} = await this.parse(GenerateDemoFile)
     await mkdir(flags.path)
-    const demoFilePath = joinPath(flags.path!, flags.filename)
+    const demoFilePath = joinPath(flags.path, flags.filename)
     if (await fileExists(demoFilePath)) {
       throw new AbortError(`The file ${demoFilePath} already exists.`)
     }
-    const demoSchemaPath = joinPath(flags.path!, schemaFilename)
+    const demoSchemaPath = joinPath(flags.path, schemaFilename)
     const jsonSchema = zodToJsonSchema.default(demoStepsSchema, 'demo-steps')
     await Promise.all([
       writeFile(demoSchemaPath, JSON.stringify(jsonSchema, null, 2)),
-      writeFile(demoFilePath, JSON.stringify({
-        $schema: `./${schemaFilename}`,
-        steps: [],
-      }, null, 2)),
+      writeFile(
+        demoFilePath,
+        JSON.stringify(
+          {
+            $schema: `./${schemaFilename}`,
+            steps: [],
+          },
+          null,
+          2,
+        ),
+      ),
     ])
     outputSuccess(outputContent`Created ${outputToken.path(demoFilePath)} and ${outputToken.path(demoSchemaPath)}`)
   }

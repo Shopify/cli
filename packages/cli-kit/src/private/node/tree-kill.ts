@@ -1,5 +1,5 @@
-import originalTreeKill from 'tree-kill'
 import {printEventsJson} from './demo-recorder.js'
+import originalTreeKill from 'tree-kill'
 
 export function treeKill(signal: string) {
   printEventsJson()
