@@ -92,6 +92,7 @@ function defaultFunctionConfiguration(): FunctionConfigType {
     },
     apiVersion: '2022-07',
     configurationUi: true,
+    metafields: [],
   }
 }
 

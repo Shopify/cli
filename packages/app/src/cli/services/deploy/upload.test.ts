@@ -51,6 +51,7 @@ describe('uploadFunctionExtensions', () => {
             key: 'key',
           },
         },
+        metafields: [],
       },
       configurationPath: '/function/shopify.function.extension.toml',
       buildWasmPath: '/function/dist/index.wasm',

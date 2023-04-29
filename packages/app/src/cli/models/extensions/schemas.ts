@@ -47,9 +47,10 @@ export const ThemeExtensionSchema = zod.object({
   type: zod.literal('theme'),
 })
 
-export const BaseFunctionConfigurationSchema = zod.object({
+export const BaseFunctionConfigurationSchema = BaseUIExtensionSchema.extend({
   name: zod.string(),
   type: zod.string(),
+  apiType: zod.string().optional(),
   description: zod.string().optional().default(''),
   build: zod.object({
     command: zod
@@ -81,6 +82,13 @@ export const BaseFunctionConfigurationSchema = zod.object({
         .optional(),
     })
     .optional(),
+}).transform((value) => {
+  if (value.type === 'function') {
+    return value
+  }
+  value.apiType = value.type
+  value.type = 'function'
+  return value
 })
 
 export type NewExtensionPointSchemaType = zod.infer<typeof NewExtensionPointSchema>

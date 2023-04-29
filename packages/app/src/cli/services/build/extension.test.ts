@@ -32,6 +32,7 @@ describe('buildFunctionExtension', () => {
         },
         configurationUi: true,
         apiVersion: '2022-07',
+        metafields: [],
       },
     })
   })

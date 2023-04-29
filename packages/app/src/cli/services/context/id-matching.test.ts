@@ -253,6 +253,7 @@ const FUNCTION_A: FunctionExtension = {
     },
     configurationUi: false,
     apiVersion: '2022-07',
+    metafields: [],
   },
   buildCommand: 'make build',
   buildWasmPath: '/function/dist/index.wasm',

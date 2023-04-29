@@ -15,6 +15,7 @@ export type ExtensionCategory = 'ui' | 'function' | 'theme'
 export interface GenericSpecification {
   identifier: string
   externalIdentifier: string
+  additionalIdentifiers?: string[]
   externalName: string
   registrationLimit: number
   helpURL?: string

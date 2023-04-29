@@ -1,11 +1,9 @@
-import {UIExtension, ThemeExtension, FunctionExtension, Extension, GenericSpecification} from './extensions.js'
+import {UIExtension, Extension, GenericSpecification} from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
-import {ThemeExtensionInstance, ThemeExtensionSpec} from '../extensions/theme.js'
-import {BaseFunctionConfigurationSchema, ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
-import {FunctionInstance} from '../extensions/functions.js'
+import {TypeSchema} from '../extensions/schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -81,7 +79,10 @@ class AppLoader {
   }
 
   findSpecificationForType(type: string) {
-    return this.specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
+    return this.specifications.find(
+      (spec) =>
+        spec.identifier === type || spec.externalIdentifier === type || spec.additionalIdentifiers?.includes(type),
+    )
   }
 
   async loaded() {
@@ -89,15 +90,15 @@ class AppLoader {
     const configurationPath = await this.getConfigurationPath()
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
     const dotenv = await this.loadDotEnv()
-    const {functions, usedCustomLayout: usedCustomLayoutForFunctionExtensions} = await this.loadFunctions(
-      configuration.extensionDirectories,
-    )
+    // const {functions, usedCustomLayout: usedCustomLayoutForFunctionExtensions} = await this.loadFunctions(
+    //   configuration.extensionDirectories,
+    // )
     const {uiExtensions, usedCustomLayout: usedCustomLayoutForUIExtensions} = await this.loadUIExtensions(
       configuration.extensionDirectories,
     )
-    const {themeExtensions, usedCustomLayout: usedCustomLayoutForThemeExtensions} = await this.loadThemeExtensions(
-      configuration.extensionDirectories,
-    )
+    // const {themeExtensions, usedCustomLayout: usedCustomLayoutForThemeExtensions} = await this.loadThemeExtensions(
+    //   configuration.extensionDirectories,
+    // )
     const packageJSONPath = joinPath(this.appDirectory, 'package.json')
     const name = await loadAppName(this.appDirectory)
     const nodeDependencies = await getDependencies(packageJSONPath)
@@ -115,8 +116,8 @@ class AppLoader {
       nodeDependencies,
       webs,
       uiExtensions,
-      themeExtensions,
-      functions,
+      [],
+      [],
       usesWorkspaces,
       dotenv,
     )
@@ -126,8 +127,8 @@ class AppLoader {
     await logMetadataForLoadedApp(appClass, {
       usedCustomLayoutForWeb,
       usedCustomLayoutForUIExtensions,
-      usedCustomLayoutForFunctionExtensions,
-      usedCustomLayoutForThemeExtensions,
+      usedCustomLayoutForFunctionExtensions: false,
+      usedCustomLayoutForThemeExtensions: false,
     })
 
     return appClass
@@ -254,7 +255,7 @@ class AppLoader {
     extensionDirectories?: string[],
   ): Promise<{uiExtensions: UIExtension[]; usedCustomLayout: boolean}> {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
-      return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.ui}`)
+      return joinPath(this.appDirectory, extensionPath, '*.extension.toml')
     })
     const configPaths = await glob(extensionConfigPaths)
 
@@ -284,8 +285,8 @@ class AppLoader {
       if (specification.singleEntryPath) {
         entryPath = (
           await Promise.all(
-            ['index']
-              .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
+            ['index', 'main']
+              .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`, `${name}.rs`])
               .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
               .map((relativePath) => joinPath(directory, relativePath))
               .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
@@ -323,72 +324,72 @@ class AppLoader {
     return {uiExtensions, usedCustomLayout: extensionDirectories !== undefined}
   }
 
-  async loadFunctions(
-    extensionDirectories?: string[],
-  ): Promise<{functions: FunctionExtension[]; usedCustomLayout: boolean}> {
-    const functionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
-      return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.function}`)
-    })
-    const configPaths = await glob(functionConfigPaths)
+  // async loadFunctions(
+  //   extensionDirectories?: string[],
+  // ): Promise<{functions: FunctionExtension[]; usedCustomLayout: boolean}> {
+  //   const functionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
+  //     return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.function}`)
+  //   })
+  //   const configPaths = await glob(functionConfigPaths)
 
-    const allFunctions = configPaths.map(async (configurationPath) => {
-      const directory = dirname(configurationPath)
-      const configuration = await this.parseConfigurationFile(BaseFunctionConfigurationSchema, configurationPath)
+  //   const allFunctions = configPaths.map(async (configurationPath) => {
+  //     const directory = dirname(configurationPath)
+  //     const configuration = await this.parseConfigurationFile(BaseFunctionConfigurationSchema, configurationPath)
 
-      const entryPath = (
-        await Promise.all(
-          ['src/index.js', 'src/index.ts', 'src/main.rs']
-            .map((relativePath) => joinPath(directory, relativePath))
-            .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
-        )
-      ).find((sourcePath) => sourcePath !== undefined)
+  //     const entryPath = (
+  //       await Promise.all(
+  //         ['src/index.js', 'src/index.ts', 'src/main.rs']
+  //           .map((relativePath) => joinPath(directory, relativePath))
+  //           .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
+  //       )
+  //     ).find((sourcePath) => sourcePath !== undefined)
 
-      return new FunctionInstance({
-        configuration,
-        configurationPath,
-        entryPath,
-        directory,
-      })
-    })
-    const functions = getArrayRejectingUndefined(await Promise.all(allFunctions))
-    return {functions, usedCustomLayout: extensionDirectories !== undefined}
-  }
+  //     return new FunctionInstance({
+  //       configuration,
+  //       configurationPath,
+  //       entryPath,
+  //       directory,
+  //     })
+  //   })
+  //   const functions = getArrayRejectingUndefined(await Promise.all(allFunctions))
+  //   return {functions, usedCustomLayout: extensionDirectories !== undefined}
+  // }
 
-  async loadThemeExtensions(
-    extensionDirectories?: string[],
-  ): Promise<{themeExtensions: ThemeExtension[]; usedCustomLayout: boolean}> {
-    const themeConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
-      return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.theme}`)
-    })
-    const configPaths = await glob(themeConfigPaths)
+  // async loadThemeExtensions(
+  //   extensionDirectories?: string[],
+  // ): Promise<{themeExtensions: ThemeExtension[]; usedCustomLayout: boolean}> {
+  //   const themeConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
+  //     return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.theme}`)
+  //   })
+  //   const configPaths = await glob(themeConfigPaths)
 
-    const extensions = configPaths.map(async (configurationPath) => {
-      const directory = dirname(configurationPath)
-      const configuration = await this.parseConfigurationFile(ThemeExtensionSchema, configurationPath)
-      const specification = this.findSpecificationForType('theme') as ThemeExtensionSpec | undefined
+  //   const extensions = configPaths.map(async (configurationPath) => {
+  //     const directory = dirname(configurationPath)
+  //     const configuration = await this.parseConfigurationFile(ThemeExtensionSchema, configurationPath)
+  //     const specification = this.findSpecificationForType('theme') as ThemeExtensionSpec | undefined
 
-      if (!specification) {
-        this.abortOrReport(
-          outputContent`Unknown theme type ${outputToken.yellow('theme')} in ${outputToken.path(configurationPath)}`,
-          undefined,
-          configurationPath,
-        )
-        return undefined
-      }
+  //     if (!specification) {
+  //       this.abortOrReport(
+  //         outputContent`Unknown theme type ${outputToken.yellow('theme')} in ${outputToken.path(configurationPath)}`,
+  //         undefined,
+  //         configurationPath,
+  //       )
+  //       return undefined
+  //     }
 
-      return new ThemeExtensionInstance({
-        configuration,
-        configurationPath,
-        directory,
-        specification,
-        outputBundlePath: directory,
-      })
-    })
+  //     return new ThemeExtensionInstance({
+  //       configuration,
+  //       configurationPath,
+  //       directory,
+  //       specification,
+  //       outputBundlePath: directory,
+  //     })
+  //   })
 
-    const themeExtensions = getArrayRejectingUndefined(await Promise.all(extensions))
+  //   const themeExtensions = getArrayRejectingUndefined(await Promise.all(extensions))
 
-    return {themeExtensions, usedCustomLayout: extensionDirectories !== undefined}
-  }
+  //   return {themeExtensions, usedCustomLayout: extensionDirectories !== undefined}
+  // }
 
   abortOrReport<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {
     if (this.mode === 'strict') {

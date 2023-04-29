@@ -14,6 +14,7 @@ import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node
 export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>
   extends GenericSpecification {
   identifier: string
+  additionalIdentifiers: string[]
   partnersWebIdentifier: string
   surface: string
   singleEntryPath: boolean
@@ -221,6 +222,7 @@ export function createUIExtensionSpecification<TConfiguration extends BaseConfig
     // these two fields are going to be overridden by the extension specification API response,
     // but we need them to have a default value for tests
     externalIdentifier: `${spec.identifier}_external`,
+    additionalIdentifiers: [],
     externalName: capitalize(spec.identifier.replace(/_/g, ' ')),
     surface: 'unknown',
     partnersWebIdentifier: spec.identifier,
