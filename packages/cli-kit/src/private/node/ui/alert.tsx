@@ -32,7 +32,8 @@ export function alert({
   orderedNextSteps = false,
   renderOptions,
 }: AlertOptions) {
-  addEvent({type, properties: arguments[0]})
+  const {type: alertType, ...eventProps} = arguments[0]
+  addEvent({type, properties: eventProps})
 
   return renderOnce(
     <Alert
