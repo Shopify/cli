@@ -30,6 +30,7 @@
     "shopify": "./bin/run.js"
   },
   "files": [
+    "/assets",
     "/bin/run.cmd",
     "/bin/run.js",
     "/dist",
