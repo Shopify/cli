@@ -1,4 +1,4 @@
-import {demo} from '../services/demo.js'
+import {demo} from '../../services/demo.js'
 import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
 import {readFile} from '@shopify/cli-kit/node/fs'

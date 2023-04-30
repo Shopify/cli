@@ -1,4 +1,4 @@
-import {demoStepsSchema} from '../services/demo.js'
+import {demoStepsSchema} from '../../services/demo.js'
 import zodToJsonSchema from 'zod-to-json-schema'
 import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
@@ -9,7 +9,7 @@ import {resolvePath, joinPath, cwd} from '@shopify/cli-kit/node/path'
 
 const schemaFilename = 'demo-schema.json'
 
-export default class GenerateDemoFile extends Command {
+export default class GenerateFile extends Command {
   static description = 'Create a command design file'
   static summary = 'Creates a JSON file alongside a JSON schema that will validate it'
   static hidden = true
@@ -37,7 +37,7 @@ export default class GenerateDemoFile extends Command {
   }
 
   async run(): Promise<void> {
-    const {flags} = await this.parse(GenerateDemoFile)
+    const {flags} = await this.parse(GenerateFile)
     await mkdir(flags.path)
     const demoFilePath = joinPath(flags.path, flags.filename)
     if (await fileExists(demoFilePath)) {
