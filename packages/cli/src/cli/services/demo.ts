@@ -17,6 +17,9 @@ import {
 import {zod} from '@shopify/cli-kit/node/schema'
 import {Writable} from 'stream'
 
+function oneOrMore<T>(singular: zod.ZodType<T>) {
+  return zod.union([singular, zod.array(singular)])
+}
 const linkSchema = zod.object({label: zod.string(), url: zod.string()})
 const inlineTokenSchema = zod.union([
   zod.string(),
@@ -28,18 +31,15 @@ const inlineTokenSchema = zod.union([
   zod.object({filePath: zod.string()}),
   zod.object({bold: zod.string()}),
 ])
-const headlineTokenSchema = zod.union([
+const headlineTokenSchema = oneOrMore(zod.union([
   zod.string(),
   zod.object({command: zod.string()}),
   zod.object({char: zod.string().length(1)}),
   zod.object({userInput: zod.string()}),
   zod.object({subdued: zod.string()}),
   zod.object({filePath: zod.string()}),
-])
+]))
 // type InlineToken = zod.infer<typeof inlineTokenSchema>
-function oneOrMore<T>(singular: zod.ZodType<T>) {
-  return zod.union([singular, zod.array(singular)])
-}
 const inlineTokenItemSchema = oneOrMore(inlineTokenSchema)
 // type InlineTokenItem = zod.infer<typeof inlineTokenItemSchema>
 const listSchema = zod.object({
@@ -75,6 +75,9 @@ const infoTableSchema = zod.union([
 const abstractDemoStepSchema = zod.object({
   type: zod.string(),
   properties: zod.object({}),
+  // optional properties for documentation purposes
+  title: zod.string().optional(),
+  description: zod.string().optional(),
 })
 
 const outputStepSchema = abstractDemoStepSchema.extend({
@@ -128,7 +131,7 @@ const renderFatalErrorStepSchema = abstractDemoStepSchema.extend({
 })
 type RenderFatalErrorStep = zod.infer<typeof renderFatalErrorStepSchema>
 
-const renderTableStepSchema = zod.object({
+const renderTableStepSchema = abstractDemoStepSchema.extend({
   type: zod.literal('table'),
   properties: tableSchema,
 })
@@ -153,6 +156,7 @@ const renderConfirmationPromptStepSchema = abstractDemoStepSchema.extend({
   properties: zod.object({
     message: zod.string(),
     infoTable: infoTableSchema.optional(),
+    defaultValue: zod.boolean().optional(),
     confirmationMessage: zod.string(),
     cancellationMessage: zod.string(),
   }),
@@ -167,6 +171,8 @@ const renderSelectPromptStepSchema = abstractDemoStepSchema.extend({
       zod.object({
         label: zod.string(),
         value: zod.string(),
+        key: zod.string().length(1).optional(),
+        group: zod.string().optional(),
       }),
     ),
     infoTable: infoTableSchema.optional(),
