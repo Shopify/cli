@@ -1,4 +1,4 @@
-import {DemoStep} from '../../services/demo.js'
+import {demo, DemoStep} from '../../services/demo.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -23,7 +23,10 @@ export default class Catalog extends Command {
         }
       }),
     })
-    const selectedStep = steps.find(({title}) => title === stepSelection)
+    const selectedStep = steps.find(({title}) => title === stepSelection)!
+    outputInfo('The step looks like this:')
+    await demo({steps: [selectedStep]})
+    outputInfo('JSON for this step:')
     outputInfo(JSON.stringify(selectedStep, null, 2))
   }
 }
