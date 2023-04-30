@@ -20,6 +20,7 @@ import {Writable} from 'stream'
 function oneOrMore<T>(singular: zod.ZodType<T>) {
   return zod.union([singular, zod.array(singular)])
 }
+const scalar = zod.union([zod.string(), zod.number(), zod.boolean(), zod.null(), zod.undefined()])
 const linkSchema = zod.object({label: zod.string(), url: zod.string()})
 const inlineTokenSchema = zod.union([
   zod.string(),
@@ -52,7 +53,7 @@ const listSchema = zod.object({
 const tokenItemSchema = oneOrMore(zod.union([inlineTokenSchema, listSchema]))
 
 const tableSchema = zod.object({
-  rows: zod.array(zod.object({}).catchall(zod.string())),
+  rows: zod.array(zod.object({}).catchall(scalar)),
   columns: zod.object({}).catchall(
     zod.object({
       header: zod.string().optional(),
@@ -244,7 +245,7 @@ const renderConcurrentStepSchema = abstractDemoStepSchema.extend({
 })
 type RenderConcurrentStep = zod.infer<typeof renderConcurrentStepSchema>
 
-type DemoStep =
+export type DemoStep =
   | OutputStep
   | RenderInfoStep
   | RenderSuccessStep

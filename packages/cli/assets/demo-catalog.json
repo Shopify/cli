@@ -2,6 +2,30 @@
   "command": "shopify demo",
   "steps": [
     {
+      "type": "output",
+      "title": "Simple output",
+      "description": "This step demonstrates a simple output.",
+      "properties": {
+        "content": "\nThis is simple output."
+      }
+    },
+    {
+      "type": "output",
+      "title": "Formatted output",
+      "description": "Output including bold and underlined text",
+      "properties": {
+        "content": "\nThis output includes \u001b[1mbold\u001b[22m and \u001b[4munderlined\u001b[24m text."
+      }
+    },
+    {
+      "type": "output",
+      "title": "Formatted output with colors",
+      "description": "Output including colored text",
+      "properties": {
+        "content": "\nHere is a rainbow of colored output:\n• \u001b[31mred\u001b[39m\n• \u001b[32mgreen\u001b[39m\n• \u001b[33myellow\u001b[39m\n• \u001b[34mblue\u001b[39m\n• \u001b[35mmagenta\u001b[39m\n• \u001b[36mcyan\u001b[39m\n• \u001b[90mdim\u001b[39m\n• \u001b[91mbrightRed\u001b[39m\n• \u001b[92mbrightGreen\u001b[39m\n• \u001b[93mbrightYellow\u001b[39m\n• \u001b[94mbrightBlue\u001b[39m\n• \u001b[95mbrightMagenta\u001b[39m\n• \u001b[96mbrightCyan\u001b[39m\n• \u001b[97mwhite\u001b[39m\n"
+      }
+    },
+    {
       "type": "warning",
       "title": "Warning to update CLI",
       "description": "Show a warning message indicating the CLI is out of date.",
@@ -116,7 +140,7 @@
     },
     {
       "type": "table",
-      "title": "List of available themes",
+      "title": "Table of available themes",
       "description": "This step demonstrates a table output showing a list of available themes.",
       "properties": {
         "rows": [
@@ -142,6 +166,32 @@
           "Role": {
             "header": "Role",
             "color": "dim"
+          }
+        }
+      }
+    },
+    {
+      "type": "table",
+      "title": "Table of apps and earned income",
+      "description": "A table output showing a list of apps and their earned income. Uses non-string values.",
+      "properties": {
+        "rows": [
+          {
+            "App": "My App",
+            "Earned": 1000
+          },
+          {
+            "App": "My Other App",
+            "Earned": 2000
+          }
+        ],
+        "columns": {
+          "App": {
+            "header": "App"
+          },
+          "Earned": {
+            "header": "Earned",
+            "color": "green"
           }
         }
       }
@@ -190,7 +240,7 @@
     {
       "type": "selectPrompt",
       "title": "Choose an extension type",
-      "description": "Select prompt for choosing an extension type.",
+      "description": "Select prompt for choosing an extension type, using groups and custom keys.",
       "properties": {
         "message": "Choose an extension type:",
         "choices": [
@@ -222,13 +272,110 @@
       }
     },
     {
+      "type": "selectPrompt",
+      "title": "Choose a plan",
+      "description": "Select prompt for choosing a plan, including an infoTable with plan information.",
+      "properties": {
+        "message": "Choose a plan",
+        "choices": [
+          {
+            "label": "Free",
+            "value": "free"
+          },
+          {
+            "label": "Basic",
+            "value": "basic"
+          },
+          {
+            "label": "Pro",
+            "value": "pro"
+          },
+          {
+            "label": "Enterprise",
+            "value": "enterprise"
+          }
+        ],
+        "infoTable": [
+          {
+            "header": "Free Plan",
+            "helperText": "The Free Plan is a good fit for merchants who are just starting out.",
+            "items": [
+              "Price: $0.00 USD",
+              [
+                "Features:",
+                {"bold": "Minimal"},
+                "features"
+              ]
+            ]
+          },
+          {
+            "header": "Basic",
+            "helperText": "The Basic Plan includes the most important features for a growing business.",
+            "items": [
+              "Price: $9.99 USD",
+              [
+                "Features:",
+                {"bold": "Some"},
+                "features"
+              ]
+            ]
+          },
+          {
+            "header": "Pro",
+            "helperText": "The Pro Plan includes all the features you need to scale your business.",
+            "items": [
+              "Price: $19.99 USD",
+              [
+                "Features:",
+                {"bold": "Most"},
+                "features"
+              ]
+            ]
+          },
+          {
+            "header": "Enterprise",
+            "helperText": "The Enterprise Plan allows you to customize our product to fit your business needs.",
+            "items": [
+              "Price: Contact us",
+              [
+                "Features:",
+                {"bold": "All"},
+                "features",
+                {"subdued": "(for a price 😉)"}
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
       "type": "textPrompt",
-      "title": "App name prompt",
+      "title": "App name prompt with default value",
       "description": "A text prompt for entering an app name.",
       "properties": {
         "message": "Enter an app name",
         "defaultValue": "expansive-commerce-app",
         "allowEmpty": false,
+        "password": false
+      }
+    },
+    {
+      "type": "textPrompt",
+      "title": "Required text prompt without a default value",
+      "description": "A text prompt for entering a value without a default value. Some input is required.",
+      "properties": {
+        "message": "How are you feeling today?",
+        "allowEmpty": false,
+        "password": false
+      }
+    },
+    {
+      "type": "textPrompt",
+      "title": "Optional text prompt without a default value",
+      "description": "A text prompt for entering a value without a default value. The prompt can be skipped.",
+      "properties": {
+        "message": "To change the default behavior to release by default, enter the following exactly: \u001b[1mdefault-to-release\u001b[0m.\n\nOtherwise, press enter to create a version without releasing",
+        "allowEmpty": true,
         "password": false
       }
     },
@@ -357,7 +504,7 @@
     },
     {
       "type": "sleep",
-      "title": "Sleep",
+      "title": "Sleep 1 second",
       "description": "Sleep to simulate waiting at the terminal with no visual activity",
       "properties": {
         "duration": 1
@@ -387,7 +534,7 @@
     {
       "type": "concurrent",
       "title": "Concurrent processes",
-      "description": "Concurrent processes running during app development.",
+      "description": "Simple example of concurrent processes with a server and file watcher",
       "properties": {
         "processes": [
           {
@@ -428,6 +575,62 @@
           ],
           "subTitle": "Preview URL: https://shopify.com"
         }
+      }
+    },
+    {
+      "type": "concurrent",
+      "title": "Realistic concurrent processes: App dev",
+      "description": "Realistic example of concurrent processes during app dev",
+      "properties": {
+        "footer": {
+          "shortcuts": [
+            {
+              "key": "p",
+              "action": "preview in your browser"
+            },
+            {
+              "key": "q",
+              "action": "quit"
+            }
+          ],
+          "subTitle": "Preview URL: https://thunder-gmbh-desperate-lo.trycloudflare.com/extensions/dev-console"
+        },
+        "processes": [
+          {
+            "prefix": "frontend",
+            "steps": [
+              {
+                "duration": 0,
+                "endMessage": "\n> dev\n> vite\n"
+              },
+              {
+                "duration": 0.593,
+                "endMessage": "\n  vite v2.9.15 dev server running at:\n"
+              },
+              {
+                "duration": 0.002,
+                "endMessage": "  > Local:    http://localhost:64382/\n  > Network:  http://127.0.2.2:64382/\n  > Network:  http://127.0.2.3:64382/\n  > Network:  http://192.168.1.112:64382/\n  > Network:  http://172.16.0.2:64382/\n\n  ready in 140ms.\n"
+              }
+            ]
+          },
+          {
+            "prefix": "backend",
+            "steps": [
+              {
+                "duration": 0.003,
+                "endMessage": "\n> dev\n> cross-env NODE_ENV=development nodemon index.js --ignore ./frontend\n"
+              },
+              {
+                "duration": 0.595,
+                "endMessage": "[nodemon] 2.0.22\n[nodemon] to restart at any time, enter `rs`\n[nodemon] watching path(s): *.*\n[nodemon] watching extensions: js,mjs,json\n[nodemon] starting `node index.js`"
+              },
+              {
+                "duration": 0.223,
+                "endMessage": "[shopify-api/INFO] version 6.2.0, environment Node v20.0.0"
+              }
+            ]
+          }
+        ]
       }
     }
   ]

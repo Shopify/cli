@@ -17,7 +17,7 @@
           "description": "The path to the design file.",
           "hidden": false,
           "multiple": false,
-          "default": "/Users/amcaplan/src/github.com/Shopify/cli/packages/cli"
+          "default": "."
         }
       },
       "args": {}
@@ -39,7 +39,7 @@
           "description": "The directory for generating the demo file.",
           "hidden": false,
           "multiple": false,
-          "default": "/Users/amcaplan/src/github.com/Shopify/cli/packages/cli"
+          "default": "."
         },
         "filename": {
           "name": "filename",
@@ -67,7 +67,7 @@
           "description": "The path to your project directory.",
           "hidden": false,
           "multiple": false,
-          "default": "/Users/amcaplan/src/github.com/Shopify/cli/packages/cli"
+          "default": "."
         }
       },
       "args": {}
@@ -111,6 +111,60 @@
           "allowNo": false
         }
       },
+      "args": {}
+    },
+    "demo:catalog": {
+      "id": "demo:catalog",
+      "description": "Browse the catalog for steps",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    },
+    "demo:generate-file": {
+      "id": "demo:generate-file",
+      "summary": "Creates a JSON file alongside a JSON schema that will validate it",
+      "description": "Create a command design file",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The directory for generating the demo file.",
+          "hidden": false,
+          "multiple": false,
+          "default": "."
+        },
+        "filename": {
+          "name": "filename",
+          "type": "option",
+          "description": "The name of the demo file.",
+          "hidden": false,
+          "required": true,
+          "multiple": false
+        }
+      },
+      "args": {}
+    },
+    "demo:print-gpt-prompt": {
+      "id": "demo:print-gpt-prompt",
+      "description": "Prints the prompts for ChatGPT-4 to generate a demo",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {},
       "args": {}
     },
     "kitchen-sink:async": {
