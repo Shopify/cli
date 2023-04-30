@@ -1,11 +1,13 @@
-import {demoStepsSchema} from '../../services/demo.js'
+import {demoStepsSchema, DemoStep} from '../../services/demo.js'
 import zodToJsonSchema from 'zod-to-json-schema'
 import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {mkdir, fileExists, writeFile} from '@shopify/cli-kit/node/fs'
+import {mkdir, fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputSuccess, outputToken} from '@shopify/cli-kit/node/output'
 import {resolvePath, joinPath, cwd} from '@shopify/cli-kit/node/path'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {fileURLToPath} from 'url'
 
 const schemaFilename = 'demo-schema.json'
 
@@ -52,7 +54,7 @@ export default class GenerateFile extends Command {
         JSON.stringify(
           {
             $schema: `./${schemaFilename}`,
-            steps: [],
+            steps: await selectSteps(),
           },
           null,
           2,
@@ -61,4 +63,31 @@ export default class GenerateFile extends Command {
     ])
     outputSuccess(outputContent`Created ${outputToken.path(demoFilePath)} and ${outputToken.path(demoSchemaPath)}`)
   }
+}
+
+async function selectSteps(): Promise<DemoStep[]> {
+  const catalogFile = joinPath(fileURLToPath(import.meta.url), '../../../../../assets/demo-catalog.json')
+  const {steps} = JSON.parse(await readFile(catalogFile)) as {steps: DemoStep[]}
+  const selectedSteps: DemoStep[] = []
+  while (true) {
+    const stepSelection = await renderAutocompletePrompt({
+      message: 'Add a step to the demo file',
+      choices: [
+        {
+          label: "I'm done",
+          value: 'done',
+        },
+        ...steps.map(({title, type}) => {
+          return {
+            label: title!,
+            value: title!,
+            group: type,
+          }
+        }),
+      ]
+    })
+    if (stepSelection === 'done') break
+    selectedSteps.push(steps.find(({title}) => title === stepSelection)!)
+  }
+  return selectedSteps
 }
