@@ -32,14 +32,16 @@ const inlineTokenSchema = zod.union([
   zod.object({filePath: zod.string()}),
   zod.object({bold: zod.string()}),
 ])
-const headlineTokenSchema = oneOrMore(zod.union([
-  zod.string(),
-  zod.object({command: zod.string()}),
-  zod.object({char: zod.string().length(1)}),
-  zod.object({userInput: zod.string()}),
-  zod.object({subdued: zod.string()}),
-  zod.object({filePath: zod.string()}),
-]))
+const headlineTokenSchema = oneOrMore(
+  zod.union([
+    zod.string(),
+    zod.object({command: zod.string()}),
+    zod.object({char: zod.string().length(1)}),
+    zod.object({userInput: zod.string()}),
+    zod.object({subdued: zod.string()}),
+    zod.object({filePath: zod.string()}),
+  ]),
+)
 // type InlineToken = zod.infer<typeof inlineTokenSchema>
 const inlineTokenItemSchema = oneOrMore(inlineTokenSchema)
 // type InlineTokenItem = zod.infer<typeof inlineTokenItemSchema>

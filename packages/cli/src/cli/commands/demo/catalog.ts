@@ -14,7 +14,7 @@ export default class Catalog extends Command {
     const catalogFile = joinPath(fileURLToPath(import.meta.url), '../../../../../assets/demo-catalog.json')
     const {steps} = JSON.parse(await readFile(catalogFile)) as {steps: DemoStep[]}
     const stepSelection = await renderAutocompletePrompt({
-      message: 'Select a step to display',
+      message: 'Step to display',
       choices: steps.map(({title, type}) => {
         return {
           label: title!,

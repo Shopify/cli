@@ -70,6 +70,7 @@ async function selectSteps(): Promise<DemoStep[]> {
   const {steps} = JSON.parse(await readFile(catalogFile)) as {steps: DemoStep[]}
   const selectedSteps: DemoStep[] = []
   while (true) {
+    // eslint-disable-next-line no-await-in-loop
     const stepSelection = await renderAutocompletePrompt({
       message: 'Add a step to the demo file',
       choices: [
@@ -84,7 +85,7 @@ async function selectSteps(): Promise<DemoStep[]> {
             group: type,
           }
         }),
-      ]
+      ],
     })
     if (stepSelection === 'done') break
     selectedSteps.push(steps.find(({title}) => title === stepSelection)!)

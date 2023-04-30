@@ -7,7 +7,7 @@ import {fileURLToPath} from 'url'
 describe('demoStepsSchema', () => {
   test('validates catalog', async () => {
     const filePath = joinPath(fileURLToPath(dirname(import.meta.url)), '../../../assets/demo-catalog.json')
-    const catalogContents = demoStepsSchema.parse(JSON.parse((await readFile(filePath))))
+    const catalogContents = demoStepsSchema.parse(JSON.parse(await readFile(filePath)))
     expect(catalogContents.command).toEqual('shopify demo')
   })
 })
