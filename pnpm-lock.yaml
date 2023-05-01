@@ -512,7 +512,7 @@ importers:
       react: ^17.0.2
       react-dom: ^17.0.2
       react-router-dom: ^6.8.2
-      react-toastify: ^9.1.1
+      react-toastify: ^9.1.2
       react-transition-group: ^4.4.5
       sass: ^1.42.1
       ts-node: ^10.2.1
@@ -530,7 +530,7 @@ importers:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       react-router-dom: 6.8.2_sfoxds7t5ydpegc3knd667wn6m
-      react-toastify: 9.1.1_sfoxds7t5ydpegc3knd667wn6m
+      react-toastify: 9.1.2_sfoxds7t5ydpegc3knd667wn6m
       react-transition-group: 4.4.5_sfoxds7t5ydpegc3knd667wn6m
     devDependencies:
       '@shopify/react-testing': 3.3.10_sfoxds7t5ydpegc3knd667wn6m
@@ -3615,7 +3615,6 @@ packages:
       - prettier
       - supports-color
       - typescript
-    dev: false
 
   /@shopify/function-enhancers/2.0.8:
     resolution: {integrity: sha512-/nv59+ycOVV2ZKixl6V1d+xJmfMN40qUEmpFgbXhCnNjAE/vz3nJPal70Esp4Li2NR3GzKVJklZk3Y3pG+W1vw==}
@@ -10413,8 +10412,8 @@ packages:
       react: 17.0.2
     dev: false
 
-  /react-toastify/9.1.1_sfoxds7t5ydpegc3knd667wn6m:
-    resolution: {integrity: sha512-pkFCla1z3ve045qvjEmn2xOJOy4ZciwRXm1oMPULVkELi5aJdHCN/FHnuqXq8IwGDLB7PPk2/J6uP9D8ejuiRw==}
+  /react-toastify/9.1.2_sfoxds7t5ydpegc3knd667wn6m:
+    resolution: {integrity: sha512-PBfzXO5jMGEtdYR5jxrORlNZZe/EuOkwvwKijMatsZZm8IZwLj01YvobeJYNjFcA6uy6CVrx2fzL9GWbhWPTDA==}
     peerDependencies:
       react: '>=16'
       react-dom: '>=16'
@@ -12896,7 +12895,7 @@ packages:
       eslint: ^8.12.0
     dependencies:
       '@babel/core': 7.21.0
-      '@shopify/eslint-plugin': registry.npmjs.org/@shopify/eslint-plugin/42.0.3_j7wgdy2hx73uboeuxog2zmqowq
+      '@shopify/eslint-plugin': 42.0.3_j7wgdy2hx73uboeuxog2zmqowq
       '@typescript-eslint/eslint-plugin': 5.54.0_b5t7h5icc5sgu66nrn62jmjpfy
       '@typescript-eslint/parser': 5.54.0_pku7h6lsbnh7tcsfjudlqd5qce
       eslint: 8.28.0
@@ -12913,49 +12912,6 @@ packages:
       eslint-plugin-vitest: 0.0.57_pku7h6lsbnh7tcsfjudlqd5qce
       execa: 5.1.1
     transitivePeerDependencies:
-      - eslint-import-resolver-node
-      - eslint-import-resolver-typescript
-      - eslint-import-resolver-webpack
-      - jest
-      - prettier
-      - supports-color
-      - typescript
-    dev: true
-
-  registry.npmjs.org/@shopify/eslint-plugin/42.0.3_j7wgdy2hx73uboeuxog2zmqowq:
-    resolution: {integrity: sha512-Vve7bpv3qeiDSIViHx1v0oJ6jDSiwqFzUlJZXIcgU/AcQTMEVYHozhxnNO02XTVeN1CJS3hiMjq2ruZdBiKWPw==, registry: https://npm.shopify.io/node/, tarball: https://registry.npmjs.org/@shopify/eslint-plugin/-/eslint-plugin-42.0.3.tgz}
-    id: registry.npmjs.org/@shopify/eslint-plugin/42.0.3
-    name: '@shopify/eslint-plugin'
-    version: 42.0.3
-    peerDependencies:
-      eslint: ^8.3.0
-    dependencies:
-      '@babel/eslint-parser': 7.19.1_wjlnxrioldhfhhmoyxwvyz6c3u
-      '@babel/eslint-plugin': 7.19.1_qo7nbvejrlukndoriyrzp32xfy
-      '@typescript-eslint/eslint-plugin': 5.54.0_b5t7h5icc5sgu66nrn62jmjpfy
-      '@typescript-eslint/parser': 5.54.0_pku7h6lsbnh7tcsfjudlqd5qce
-      change-case: 4.1.2
-      common-tags: 1.8.2
-      doctrine: 2.1.0
-      eslint: 8.28.0
-      eslint-config-prettier: 8.5.0_eslint@8.28.0
-      eslint-module-utils: 2.7.4_43ib274i5lujux4y3je47fgcna
-      eslint-plugin-eslint-comments: 3.2.0_eslint@8.28.0
-      eslint-plugin-import: 2.27.5_43ib274i5lujux4y3je47fgcna
-      eslint-plugin-jest: 25.7.0_zwchrddfmowy2djxhvygsdkrn4
-      eslint-plugin-jest-formatting: 3.1.0_eslint@8.28.0
-      eslint-plugin-jsx-a11y: 6.5.1_eslint@8.28.0
-      eslint-plugin-node: 11.1.0_eslint@8.28.0
-      eslint-plugin-prettier: 4.2.1_ut6ng3rjtiriv4gbc46g5qsm4u
-      eslint-plugin-promise: 6.1.1_eslint@8.28.0
-      eslint-plugin-react: 7.32.2_eslint@8.28.0
-      eslint-plugin-react-hooks: 4.6.0_eslint@8.28.0
-      eslint-plugin-sort-class-members: 1.16.0_eslint@8.28.0
-      jsx-ast-utils: 3.3.3
-      pkg-dir: 5.0.0
-      pluralize: 8.0.0
-    transitivePeerDependencies:
-      - '@babel/core'
       - eslint-import-resolver-node
       - eslint-import-resolver-typescript
       - eslint-import-resolver-webpack
