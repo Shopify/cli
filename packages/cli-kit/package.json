@@ -137,7 +137,7 @@
     "node-abort-controller": "3.0.1",
     "node-fetch": "3.2.4",
     "open": "8.4.2",
-    "pathe": "1.0.0",
+    "pathe": "1.1.0",
     "react": "18.2.0",
     "semver": "7.3.8",
     "simple-git": "3.16.0",
