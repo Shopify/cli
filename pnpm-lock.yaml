@@ -46,7 +46,7 @@ importers:
       pathe: 1.0.0
       pin-github-action: ^1.8.0
       postinstall-postinstall: ^2.1.0
-      prettier: ^2.8.7
+      prettier: ^2.8.8
       react: 17.0.2
       rimraf: ^3.0.2
       shx: ^0.3.4
@@ -61,12 +61,12 @@ importers:
       '@bugsnag/source-maps': 2.3.1
       '@changesets/cli': 2.26.1
       '@nrwl/eslint-plugin-nx': 15.8.3_zfq3wdblky2oshho2xol2342ke
-      '@nrwl/js': 15.8.3_rv56gvc2j37x3c4rgiqbhufkfu
+      '@nrwl/js': 15.8.3_l4pnpcl6hgypl6u23kkydy3kei
       '@nrwl/tao': 15.8.3
-      '@nrwl/workspace': 15.8.3_5xsukyw25v34svgywiftnneroi
+      '@nrwl/workspace': 15.8.3_rsrmsl66wev5na227efdgamhsi
       '@octokit/core': 4.1.0
       '@octokit/rest': 19.0.7
-      '@shopify/eslint-plugin-cli': file:packages/eslint-plugin-cli_5xsukyw25v34svgywiftnneroi
+      '@shopify/eslint-plugin-cli': file:packages/eslint-plugin-cli_rsrmsl66wev5na227efdgamhsi
       '@shopify/typescript-configs': 5.1.0
       '@shopify/web-pixels-extension': 0.1.4
       '@types/node': 14.18.36
@@ -93,7 +93,7 @@ importers:
       pathe: 1.0.0
       pin-github-action: 1.8.0
       postinstall-postinstall: 2.1.0
-      prettier: 2.8.7
+      prettier: 2.8.8
       react: 17.0.2
       rimraf: 3.0.2
       shx: 0.3.4
@@ -374,11 +374,11 @@ importers:
       eslint-plugin-unused-imports: 2.0.0
       eslint-plugin-vitest: 0.0.57
       execa: 5.1.1
-      prettier: 2.8.7
+      prettier: 2.8.8
       typescript: 4.9.5
     dependencies:
       '@babel/core': 7.21.0
-      '@shopify/eslint-plugin': 42.0.3_j7wgdy2hx73uboeuxog2zmqowq
+      '@shopify/eslint-plugin': 42.0.3_nfe4v4gjhnpq2m74qyw3qzdu24
       '@typescript-eslint/eslint-plugin': 5.54.0_b5t7h5icc5sgu66nrn62jmjpfy
       '@typescript-eslint/parser': 5.54.0_pku7h6lsbnh7tcsfjudlqd5qce
       eslint-config-prettier: 8.5.0_eslint@8.28.0
@@ -386,7 +386,7 @@ importers:
       eslint-plugin-jsdoc: 39.3.6_eslint@8.28.0
       eslint-plugin-jsx-a11y: 6.5.1_eslint@8.28.0
       eslint-plugin-no-catch-all: 1.1.0_eslint@8.28.0
-      eslint-plugin-prettier: 4.0.0_ut6ng3rjtiriv4gbc46g5qsm4u
+      eslint-plugin-prettier: 4.0.0_2zr6ucilykqub3ws4cuqnqqr4a
       eslint-plugin-react: 7.32.2_eslint@8.28.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.28.0
       eslint-plugin-tsdoc: 0.2.17
@@ -395,7 +395,7 @@ importers:
       execa: 5.1.1
     devDependencies:
       eslint: 8.28.0
-      prettier: 2.8.7
+      prettier: 2.8.8
       typescript: 4.9.5
 
   packages/features:
@@ -2036,7 +2036,7 @@ packages:
       fs-extra: 7.0.1
       lodash.startcase: 4.4.0
       outdent: 0.5.0
-      prettier: 2.8.7
+      prettier: 2.8.8
       resolve-from: 5.0.0
       semver: 5.7.1
     dev: true
@@ -2204,7 +2204,7 @@ packages:
       '@changesets/types': 5.2.1
       fs-extra: 7.0.1
       human-id: 1.0.2
-      prettier: 2.8.7
+      prettier: 2.8.8
     dev: true
 
   /@colors/colors/1.5.0:
@@ -2965,7 +2965,7 @@ packages:
       - typescript
     dev: true
 
-  /@nrwl/js/15.8.3_nx@15.8.3+typescript@4.9.5:
+  /@nrwl/js/15.8.3_l4pnpcl6hgypl6u23kkydy3kei:
     resolution: {integrity: sha512-XE0zXYMd1dFb61TRC9gZpNfFjCZvl3TtunhfHE6bW7TY2X/oMZBV09LCyyyaP28h720VZCYiPAQvEAZ0Vv/eMw==}
     dependencies:
       '@babel/core': 7.21.0
@@ -2976,38 +2976,7 @@ packages:
       '@babel/preset-typescript': 7.21.0_@babel+core@7.21.0
       '@babel/runtime': 7.20.6
       '@nrwl/devkit': 15.8.3_nx@15.8.3+typescript@4.9.5
-      '@nrwl/workspace': 15.8.3_5xsukyw25v34svgywiftnneroi
-      '@phenomnomnominal/tsquery': 4.1.1_typescript@4.9.5
-      babel-plugin-const-enum: 1.2.0_@babel+core@7.21.0
-      babel-plugin-macros: 2.8.0
-      babel-plugin-transform-typescript-metadata: 0.3.2
-      chalk: 4.1.2
-      fast-glob: 3.2.7
-      fs-extra: 11.1.0
-      ignore: 5.2.1
-      js-tokens: 4.0.0
-      minimatch: 3.0.5
-      source-map-support: 0.5.19
-      tree-kill: 1.2.2
-      tslib: 2.5.0
-    transitivePeerDependencies:
-      - nx
-      - supports-color
-      - typescript
-    dev: true
-
-  /@nrwl/js/15.8.3_rv56gvc2j37x3c4rgiqbhufkfu:
-    resolution: {integrity: sha512-XE0zXYMd1dFb61TRC9gZpNfFjCZvl3TtunhfHE6bW7TY2X/oMZBV09LCyyyaP28h720VZCYiPAQvEAZ0Vv/eMw==}
-    dependencies:
-      '@babel/core': 7.21.0
-      '@babel/plugin-proposal-class-properties': 7.18.6_@babel+core@7.21.0
-      '@babel/plugin-proposal-decorators': 7.21.0_@babel+core@7.21.0
-      '@babel/plugin-transform-runtime': 7.21.0_@babel+core@7.21.0
-      '@babel/preset-env': 7.20.2_@babel+core@7.21.0
-      '@babel/preset-typescript': 7.21.0_@babel+core@7.21.0
-      '@babel/runtime': 7.20.6
-      '@nrwl/devkit': 15.8.3_nx@15.8.3+typescript@4.9.5
-      '@nrwl/workspace': 15.8.3_5xsukyw25v34svgywiftnneroi
+      '@nrwl/workspace': 15.8.3_rsrmsl66wev5na227efdgamhsi
       '@phenomnomnominal/tsquery': 4.1.1_typescript@4.9.5
       babel-plugin-const-enum: 1.2.0_@babel+core@7.21.0
       babel-plugin-macros: 2.8.0
@@ -3028,6 +2997,37 @@ packages:
       - eslint
       - nx
       - prettier
+      - supports-color
+      - typescript
+    dev: true
+
+  /@nrwl/js/15.8.3_nx@15.8.3+typescript@4.9.5:
+    resolution: {integrity: sha512-XE0zXYMd1dFb61TRC9gZpNfFjCZvl3TtunhfHE6bW7TY2X/oMZBV09LCyyyaP28h720VZCYiPAQvEAZ0Vv/eMw==}
+    dependencies:
+      '@babel/core': 7.21.0
+      '@babel/plugin-proposal-class-properties': 7.18.6_@babel+core@7.21.0
+      '@babel/plugin-proposal-decorators': 7.21.0_@babel+core@7.21.0
+      '@babel/plugin-transform-runtime': 7.21.0_@babel+core@7.21.0
+      '@babel/preset-env': 7.20.2_@babel+core@7.21.0
+      '@babel/preset-typescript': 7.21.0_@babel+core@7.21.0
+      '@babel/runtime': 7.20.6
+      '@nrwl/devkit': 15.8.3_nx@15.8.3+typescript@4.9.5
+      '@nrwl/workspace': 15.8.3_rsrmsl66wev5na227efdgamhsi
+      '@phenomnomnominal/tsquery': 4.1.1_typescript@4.9.5
+      babel-plugin-const-enum: 1.2.0_@babel+core@7.21.0
+      babel-plugin-macros: 2.8.0
+      babel-plugin-transform-typescript-metadata: 0.3.2
+      chalk: 4.1.2
+      fast-glob: 3.2.7
+      fs-extra: 11.1.0
+      ignore: 5.2.1
+      js-tokens: 4.0.0
+      minimatch: 3.0.5
+      source-map-support: 0.5.19
+      tree-kill: 1.2.2
+      tslib: 2.5.0
+    transitivePeerDependencies:
+      - nx
       - supports-color
       - typescript
     dev: true
@@ -3144,7 +3144,7 @@ packages:
       - debug
     dev: true
 
-  /@nrwl/workspace/15.8.3_5xsukyw25v34svgywiftnneroi:
+  /@nrwl/workspace/15.8.3_rsrmsl66wev5na227efdgamhsi:
     resolution: {integrity: sha512-oklUSt1sK+1MIoqvul0l8/nW7RdyzECE85lg09nFnDGATpujnmYO6/M1eg+EmRAvaBGufEYLqVAZGhatQKUkuQ==}
     peerDependencies:
       prettier: ^2.6.2
@@ -3168,7 +3168,7 @@ packages:
       npm-run-path: 4.0.1
       nx: 15.8.3
       open: 8.4.2
-      prettier: 2.8.7
+      prettier: 2.8.8
       rxjs: 6.6.7
       semver: 7.3.4
       tmp: 0.2.1
@@ -3577,7 +3577,7 @@ packages:
       '@shopify/function-enhancers': 2.0.8
     dev: false
 
-  /@shopify/eslint-plugin/42.0.3_j7wgdy2hx73uboeuxog2zmqowq:
+  /@shopify/eslint-plugin/42.0.3_nfe4v4gjhnpq2m74qyw3qzdu24:
     resolution: {integrity: sha512-Vve7bpv3qeiDSIViHx1v0oJ6jDSiwqFzUlJZXIcgU/AcQTMEVYHozhxnNO02XTVeN1CJS3hiMjq2ruZdBiKWPw==}
     peerDependencies:
       eslint: ^8.3.0
@@ -3598,7 +3598,7 @@ packages:
       eslint-plugin-jest-formatting: 3.1.0_eslint@8.28.0
       eslint-plugin-jsx-a11y: 6.5.1_eslint@8.28.0
       eslint-plugin-node: 11.1.0_eslint@8.28.0
-      eslint-plugin-prettier: 4.2.1_ut6ng3rjtiriv4gbc46g5qsm4u
+      eslint-plugin-prettier: 4.2.1_2zr6ucilykqub3ws4cuqnqqr4a
       eslint-plugin-promise: 6.1.1_eslint@8.28.0
       eslint-plugin-react: 7.32.2_eslint@8.28.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.28.0
@@ -3615,7 +3615,6 @@ packages:
       - prettier
       - supports-color
       - typescript
-    dev: false
 
   /@shopify/function-enhancers/2.0.8:
     resolution: {integrity: sha512-/nv59+ycOVV2ZKixl6V1d+xJmfMN40qUEmpFgbXhCnNjAE/vz3nJPal70Esp4Li2NR3GzKVJklZk3Y3pG+W1vw==}
@@ -6715,7 +6714,7 @@ packages:
       resolve: 1.22.1
       semver: 6.3.0
 
-  /eslint-plugin-prettier/4.0.0_ut6ng3rjtiriv4gbc46g5qsm4u:
+  /eslint-plugin-prettier/4.0.0_2zr6ucilykqub3ws4cuqnqqr4a:
     resolution: {integrity: sha512-98MqmCJ7vJodoQK359bqQWaxOE0CS8paAz/GgjaZLyex4TTk3g9HugoO89EqWCrFiOqn9EVvcoo7gZzONCWVwQ==}
     engines: {node: '>=6.0.0'}
     peerDependencies:
@@ -6728,10 +6727,10 @@ packages:
     dependencies:
       eslint: 8.28.0
       eslint-config-prettier: 8.5.0_eslint@8.28.0
-      prettier: 2.8.7
+      prettier: 2.8.8
       prettier-linter-helpers: 1.0.0
 
-  /eslint-plugin-prettier/4.2.1_ut6ng3rjtiriv4gbc46g5qsm4u:
+  /eslint-plugin-prettier/4.2.1_2zr6ucilykqub3ws4cuqnqqr4a:
     resolution: {integrity: sha512-f/0rXLXUt0oFYs8ra4w49wYZBG5GKZpAYsJSm6rnYL5uVDjd+zowwMwVZHnAjf4edNrKpCDYfXDgmRE/Ak7QyQ==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
@@ -6744,7 +6743,7 @@ packages:
     dependencies:
       eslint: 8.28.0
       eslint-config-prettier: 8.5.0_eslint@8.28.0
-      prettier: 2.8.7
+      prettier: 2.8.8
       prettier-linter-helpers: 1.0.0
 
   /eslint-plugin-promise/6.1.1_eslint@8.28.0:
@@ -10144,8 +10143,8 @@ packages:
     dependencies:
       fast-diff: 1.2.0
 
-  /prettier/2.8.7:
-    resolution: {integrity: sha512-yPngTo3aXUUmyuTjeTUT75txrf+aMh9FiD7q9ZE/i6r0bPb22g4FsE6Y338PQX1bmfy08i9QQCB7/rcUAVntfw==}
+  /prettier/2.8.8:
+    resolution: {integrity: sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==}
     engines: {node: '>=10.13.0'}
     hasBin: true
 
@@ -12887,7 +12886,7 @@ packages:
     resolution: {integrity: sha512-4oKP5zvG6GGbMlqBkI5FESOAweldEhSOZ6LI6cG+JzUT7ofj1ZOC0PJudpQOpT1iqOFpYYtX5Pw0+o403y4bcg==}
     dev: false
 
-  file:packages/eslint-plugin-cli_5xsukyw25v34svgywiftnneroi:
+  file:packages/eslint-plugin-cli_rsrmsl66wev5na227efdgamhsi:
     resolution: {directory: packages/eslint-plugin-cli, type: directory}
     id: file:packages/eslint-plugin-cli
     name: '@shopify/eslint-plugin-cli'
@@ -12896,7 +12895,7 @@ packages:
       eslint: ^8.12.0
     dependencies:
       '@babel/core': 7.21.0
-      '@shopify/eslint-plugin': registry.npmjs.org/@shopify/eslint-plugin/42.0.3_j7wgdy2hx73uboeuxog2zmqowq
+      '@shopify/eslint-plugin': 42.0.3_nfe4v4gjhnpq2m74qyw3qzdu24
       '@typescript-eslint/eslint-plugin': 5.54.0_b5t7h5icc5sgu66nrn62jmjpfy
       '@typescript-eslint/parser': 5.54.0_pku7h6lsbnh7tcsfjudlqd5qce
       eslint: 8.28.0
@@ -12905,7 +12904,7 @@ packages:
       eslint-plugin-jsdoc: 39.3.6_eslint@8.28.0
       eslint-plugin-jsx-a11y: 6.5.1_eslint@8.28.0
       eslint-plugin-no-catch-all: 1.1.0_eslint@8.28.0
-      eslint-plugin-prettier: 4.0.0_ut6ng3rjtiriv4gbc46g5qsm4u
+      eslint-plugin-prettier: 4.0.0_2zr6ucilykqub3ws4cuqnqqr4a
       eslint-plugin-react: 7.32.2_eslint@8.28.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.28.0
       eslint-plugin-tsdoc: 0.2.17
@@ -12913,49 +12912,6 @@ packages:
       eslint-plugin-vitest: 0.0.57_pku7h6lsbnh7tcsfjudlqd5qce
       execa: 5.1.1
     transitivePeerDependencies:
-      - eslint-import-resolver-node
-      - eslint-import-resolver-typescript
-      - eslint-import-resolver-webpack
-      - jest
-      - prettier
-      - supports-color
-      - typescript
-    dev: true
-
-  registry.npmjs.org/@shopify/eslint-plugin/42.0.3_j7wgdy2hx73uboeuxog2zmqowq:
-    resolution: {integrity: sha512-Vve7bpv3qeiDSIViHx1v0oJ6jDSiwqFzUlJZXIcgU/AcQTMEVYHozhxnNO02XTVeN1CJS3hiMjq2ruZdBiKWPw==, registry: https://npm.shopify.io/node/, tarball: https://registry.npmjs.org/@shopify/eslint-plugin/-/eslint-plugin-42.0.3.tgz}
-    id: registry.npmjs.org/@shopify/eslint-plugin/42.0.3
-    name: '@shopify/eslint-plugin'
-    version: 42.0.3
-    peerDependencies:
-      eslint: ^8.3.0
-    dependencies:
-      '@babel/eslint-parser': 7.19.1_wjlnxrioldhfhhmoyxwvyz6c3u
-      '@babel/eslint-plugin': 7.19.1_qo7nbvejrlukndoriyrzp32xfy
-      '@typescript-eslint/eslint-plugin': 5.54.0_b5t7h5icc5sgu66nrn62jmjpfy
-      '@typescript-eslint/parser': 5.54.0_pku7h6lsbnh7tcsfjudlqd5qce
-      change-case: 4.1.2
-      common-tags: 1.8.2
-      doctrine: 2.1.0
-      eslint: 8.28.0
-      eslint-config-prettier: 8.5.0_eslint@8.28.0
-      eslint-module-utils: 2.7.4_43ib274i5lujux4y3je47fgcna
-      eslint-plugin-eslint-comments: 3.2.0_eslint@8.28.0
-      eslint-plugin-import: 2.27.5_43ib274i5lujux4y3je47fgcna
-      eslint-plugin-jest: 25.7.0_zwchrddfmowy2djxhvygsdkrn4
-      eslint-plugin-jest-formatting: 3.1.0_eslint@8.28.0
-      eslint-plugin-jsx-a11y: 6.5.1_eslint@8.28.0
-      eslint-plugin-node: 11.1.0_eslint@8.28.0
-      eslint-plugin-prettier: 4.2.1_ut6ng3rjtiriv4gbc46g5qsm4u
-      eslint-plugin-promise: 6.1.1_eslint@8.28.0
-      eslint-plugin-react: 7.32.2_eslint@8.28.0
-      eslint-plugin-react-hooks: 4.6.0_eslint@8.28.0
-      eslint-plugin-sort-class-members: 1.16.0_eslint@8.28.0
-      jsx-ast-utils: 3.3.3
-      pkg-dir: 5.0.0
-      pluralize: 8.0.0
-    transitivePeerDependencies:
-      - '@babel/core'
       - eslint-import-resolver-node
       - eslint-import-resolver-typescript
       - eslint-import-resolver-webpack
