@@ -3,7 +3,7 @@ import {BaseUIExtensionSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.25.0'}
+const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.26.0'}
 
 const CheckoutSchema = BaseUIExtensionSchema.extend({
   extensionPoints: zod.array(zod.string()).optional(),
