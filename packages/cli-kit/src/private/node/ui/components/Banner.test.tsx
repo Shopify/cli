@@ -1,36 +1,35 @@
 import {Banner} from './Banner.js'
+import {List} from './List.js'
 import {render} from '../../testing/ui.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
-import {Box, Text} from 'ink'
+import {Text} from 'ink'
 import {unstyled} from '@shopify/cli-kit/node/output'
 
 describe('Banner', async () => {
   test('renders with a border for success with proper wrapping', async () => {
     const {lastFrame} = render(
       <Banner type="success">
-        <Box marginLeft={2}>
-          <Box width={1}>
-            <Text>-</Text>
-          </Box>
-          <Box marginLeft={1} flexGrow={1}>
-            <Text>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
-              dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex
-              ea commodo consequat.
-            </Text>
-          </Box>
-        </Box>
+        <List
+          items={[
+            'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+            'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+          ]}
+        />
       </Banner>,
     )
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "╭─ success ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │    • Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do         │
-      │      eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad  │
-      │       minim veniam, quis nostrud exercitation ullamco laboris nisi ut        │
-      │      aliquip ex ea commodo consequat.                                        │
+      │    • Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod │
+      │       tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim   │
+      │      veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea │
+      │       commodo consequat.                                                     │
+      │    • Duis aute irure dolor in reprehenderit in voluptate velit esse cillum   │
+      │      dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non  │
+      │      proident, sunt in culpa qui officia deserunt mollit anim id est         │
+      │      laborum.                                                                │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
