@@ -25,13 +25,12 @@ const List: FunctionComponent<ListProps> = ({title, items, margin = true, ordere
         </Text>
       ) : null}
       {items.map((item, index) => (
-        <Box key={index}>
+        <Box key={index} gap={1} marginLeft={margin ? 2 : 0}>
           <Box>
-            {margin ? <Text>{'  '}</Text> : null}
             <Text color={color}>{`${ordered ? `${index + 1}.` : DOT}`}</Text>
           </Box>
 
-          <Box flexGrow={1} marginLeft={1}>
+          <Box flexGrow={1}>
             <Text color={color}>
               <TokenizedText item={item} />
             </Text>

@@ -41,31 +41,19 @@ const FatalError: FunctionComponent<FatalErrorProps> = ({error}) => {
   return (
     <Banner type={tool ? 'external_error' : 'error'}>
       {tool ? (
-        <Box marginBottom={1}>
-          <Text>
-            Error coming from <Command command={tool} />
-          </Text>
-        </Box>
+        <Text>
+          Error coming from <Command command={tool} />
+        </Text>
       ) : null}
 
-      <Box>
-        <Text>{error.message}</Text>
-      </Box>
+      <Text>{error.message}</Text>
 
-      {error.tryMessage ? (
-        <Box marginTop={1}>
-          <TokenizedText item={error.tryMessage} />
-        </Box>
-      ) : null}
+      {error.tryMessage ? <TokenizedText item={error.tryMessage} /> : null}
 
-      {error.nextSteps ? (
-        <Box marginTop={1}>
-          <List title="Next steps" items={error.nextSteps} />
-        </Box>
-      ) : null}
+      {error.nextSteps ? <List title="Next steps" items={error.nextSteps} /> : null}
 
       {stack && stack.items.length !== 0 ? (
-        <Box marginTop={1} flexDirection="column">
+        <Box flexDirection="column">
           <Text>To investigate the issue, examine this stack trace:</Text>
           {stack.items.map((item, index) => (
             <Box flexDirection="column" key={index} paddingLeft={2}>
