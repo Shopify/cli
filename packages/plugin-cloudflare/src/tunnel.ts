@@ -18,12 +18,11 @@ const TUNNEL_TIMEOUT = isUnitTest() ? 0.2 : 40
 // if the tunnel process crashes, we'll retry this many times before giving up
 // If we retry too many times, we might get rate limited by cloudflare
 const MAX_RETRIES = 5
-let currentStatus: TunnelStatusType = {status: 'not-started'}
-let abortController: AbortController
 
 export async function hookStart(port: number): Promise<TunnelStartReturn> {
   try {
-    return tunnel({port})
+    const client = new TunnelClient(port)
+    return ok(client)
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
     const tunnelError = new TunnelError('unknown', error.message)
@@ -31,72 +30,88 @@ export async function hookStart(port: number): Promise<TunnelStartReturn> {
   }
 }
 
-function tunnel(options: {port: number}, retries = 0) {
-  abortController = new AbortController()
+class TunnelClient {
+  port: number
+  provider = TUNNEL_PROVIDER
 
-  if (retries >= MAX_RETRIES) {
-    throw new Error('Could not start tunnel, max retries reached')
+  private currentStatus: TunnelStatusType = {status: 'not-started'}
+  private abortController: AbortController | undefined = undefined
+
+  constructor(port: number) {
+    this.port = port
+    this.tunnel()
   }
 
-  const args: string[] = ['tunnel', '--url', `http://localhost:${options.port}`, '--no-autoupdate']
-  const errors: string[] = []
+  getTunnelStatus(): TunnelStatusType {
+    return this.currentStatus
+  }
 
-  let connected = false
-  let resolved = false
-  let url: string | undefined
-  currentStatus = {status: 'starting'}
+  stopTunnel() {
+    this.abortController?.abort()
+  }
 
-  setTimeout(() => {
-    if (!resolved) {
-      resolved = true
-      const lastErrors = errors.slice(-5).join('\n')
-      currentStatus = {status: 'error', message: lastErrors}
+  tunnel(retries = 0) {
+    this.abortController = new AbortController()
+
+    if (retries >= MAX_RETRIES) {
+      throw new Error('Could not start tunnel, max retries reached')
     }
-  }, TUNNEL_TIMEOUT * 1000)
 
-  const customStdout = new Writable({
-    write(chunk, _, callback) {
-      outputDebug(chunk.toString())
-      if (resolved) return
-      if (!url) url = findUrl(chunk)
-      if (findConnection(chunk)) connected = true
-      if (connected) {
-        if (url) {
-          resolved = true
-          currentStatus = {status: 'connected', url}
-        } else {
-          currentStatus = {status: 'error', message: 'Could not find tunnel url'}
-        }
+    const args: string[] = ['tunnel', '--url', `http://localhost:${this.port}`, '--no-autoupdate']
+    const errors: string[] = []
+
+    let connected = false
+    let resolved = false
+    let url: string | undefined
+    this.currentStatus = {status: 'starting'}
+
+    setTimeout(() => {
+      if (!resolved) {
+        resolved = true
+        const lastErrors = errors.slice(-5).join('\n')
+        this.currentStatus = {status: 'error', message: lastErrors}
       }
-      const errorMessage = findError(chunk)
-      if (errorMessage) errors.push(errorMessage)
-      callback()
-    },
-  })
+    }, TUNNEL_TIMEOUT * 1000)
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this
 
-  // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  exec(getBinPathTarget(), args, {
-    stdout: customStdout,
-    stderr: customStdout,
-    signal: abortController.signal,
-    externalErrorHandler: async () => {
-      // If already resolved, means that the CLI already received the tunnel URL.
-      // Can't retry because the CLI is running with an invalid URL
-      if (resolved) throw processCrashed()
+    const customStdout = new Writable({
+      write(chunk, _, callback) {
+        outputDebug(chunk.toString())
+        if (resolved) return
+        if (!url) url = findUrl(chunk)
+        if (findConnection(chunk)) connected = true
+        if (connected) {
+          if (url) {
+            resolved = true
+            self.currentStatus = {status: 'connected', url}
+          } else {
+            self.currentStatus = {status: 'error', message: 'Could not find tunnel url'}
+          }
+        }
+        const errorMessage = findError(chunk)
+        if (errorMessage) errors.push(errorMessage)
+        callback()
+      },
+    })
 
-      outputDebug('Cloudflared tunnel crashed, restarting...')
-      // wait 1 second before restarting the tunnel, to avoid rate limiting
-      await sleep(1)
-      tunnel(options, retries + 1)
-    },
-  })
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    exec(getBinPathTarget(), args, {
+      stdout: customStdout,
+      stderr: customStdout,
+      signal: this.abortController.signal,
+      externalErrorHandler: async () => {
+        // If already resolved, means that the CLI already received the tunnel URL.
+        // Can't retry because the CLI is running with an invalid URL
+        if (resolved) throw processCrashed()
 
-  return ok({
-    getTunnelStatus: () => currentStatus,
-    stopTunnel: () => abortController.abort(),
-    provider: TUNNEL_PROVIDER,
-    port: options.port,
-  })
+        outputDebug('Cloudflared tunnel crashed, restarting...')
+        // wait 1 second before restarting the tunnel, to avoid rate limiting
+        await sleep(1)
+        this.tunnel(retries + 1)
+      },
+    })
+  }
 }
 
 function processCrashed() {
