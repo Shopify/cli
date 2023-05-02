@@ -102,11 +102,28 @@ module ShopifyCLI
           assert_equal("Not found", response.body)
         end
 
+        def test_do_not_replace_when_content_type_does_not_match_text
+          CdnFonts.any_instance.expects(:replace_font_urls).never
+          original_input = "https://fonts.shopifycdn.com/font.woff2"
+          response = serve(original_input, path: "/cdn/shop/products/tan-colored-hat-on-monochrome-background.jpg",
+            content_type: "image/jpeg")
+
+          assert_equal(original_input, response.body)
+        end
+
+        def test_replace_when_content_type_does_match_text
+          original_input = "https://fonts.shopifycdn.com/font.woff2"
+          response = serve(original_input, path: "/cdn/shop/products/style.css", content_type: "text/css")
+          response_body = response.body
+          refute_equal(original_input, response_body)
+          assert_equal("/fonts/font.woff2", response_body)
+        end
+
         private
 
-        def serve(response_body = "", path: "/")
+        def serve(response_body = "", path: "/", content_type: "text/html")
           app = lambda do |_env|
-            [200, {}, [response_body]]
+            [200, { "Content-Type" => content_type }, [response_body]]
           end
           stack = CdnFonts.new(app, theme: theme)
           request = Rack::MockRequest.new(stack)
