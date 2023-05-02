@@ -1,9 +1,15 @@
 import {TUNNEL_PROVIDER} from './provider.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
-import {startTunnel, TunnelError, TunnelErrorType, TunnelStatusType} from '@shopify/cli-kit/node/plugins/tunnel'
+import {
+  startTunnel,
+  TunnelError,
+  TunnelErrorType,
+  TunnelStartReturn,
+  TunnelStatusType,
+} from '@shopify/cli-kit/node/plugins/tunnel'
 import ngrok from '@shopify/ngrok'
 import {renderFatalError, renderTextPrompt} from '@shopify/cli-kit/node/ui'
-import {err, ok, Result} from '@shopify/cli-kit/node/result'
+import {err, ok} from '@shopify/cli-kit/node/result'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputToken, outputInfo, outputContent} from '@shopify/cli-kit/node/output'
 
@@ -20,10 +26,17 @@ export const getCurrentStatus = async (): Promise<TunnelStatusType> => {
 }
 
 // New entry point for hooks
-export async function hookStart(port: number): Promise<Result<{url: string}, TunnelError>> {
+export async function hookStart(port: number): Promise<TunnelStartReturn> {
   try {
     const url = await start({port})
-    return ok({url})
+    return ok({
+      getTunnelStatus: () => {
+        return {status: 'connected', url}
+      },
+      stopTunnel: () => ngrok.kill(),
+      provider: TUNNEL_PROVIDER,
+      port,
+    })
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
     const errorType = getErrorType(error.message)

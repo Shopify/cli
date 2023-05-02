@@ -1,7 +1,5 @@
 import {HookReturnPerTunnelPlugin} from './plugins/tunnel.js'
-import {err, ok, Result} from './result.js'
 import {MonorailEventPublic, MonorailEventSensitive} from './monorail.js'
-import {outputDebug} from './output.js'
 import {getArrayContainsDuplicates, getArrayRejectingUndefined} from '../common/array.js'
 import {PickByPrefix} from '../common/ts/pick-by-prefix.js'
 import {JsonMap} from '../../private/common/json.js'
@@ -88,47 +86,6 @@ export async function getListOfTunnelPlugins(config: Config): Promise<{plugins: 
 
 export interface TunnelPluginError {
   provider: string
-  type: 'multiple-urls' | 'handled-error' | 'unknown' | 'no-provider'
+  type: 'multiple-providers' | 'handled-error' | 'unknown' | 'no-provider'
   message?: string
-}
-
-/**
- * Poll the 'tunnel_status' hook every 0.5s for the given provider until a URL or error is returned.
- * Fails if there aren't plugins for that provider or if there are more than one.
- *
- * @param config - Oclif config used to execute hooks.
- * @param provider - Selected provider, must be unique.
- * @returns Tunnel URL from the selected provider.
- */
-export async function runTunnelPlugin(config: Config, provider: string): Promise<Result<string, TunnelPluginError>> {
-  return new Promise<Result<string, TunnelPluginError>>((resolve, reject) => {
-    let retries = 0
-    const pollTunnelStatus = async () => {
-      outputDebug(`Polling tunnel status for ${provider} (attempt ${retries})`)
-      const hooks = await fanoutHooks(config, 'tunnel_status', {provider})
-      const urlResults = Object.values(hooks).filter(
-        (tunnelResponse) => !tunnelResponse?.isErr() || tunnelResponse.error.type !== 'invalid-provider',
-      )
-      if (urlResults.length > 1) return resolve(err({provider, type: 'multiple-urls'}))
-      if (urlResults.length === 0 || !urlResults[0]) return resolve(err({provider, type: 'no-provider'}))
-      const first = urlResults[0]
-      if (first.isErr()) return resolve(err({provider, type: 'unknown', message: first.error.message}))
-      outputDebug(`Tunnel status for ${provider} is ${first.value.status}`)
-      if (first.value.status === 'error') return resolve(err({provider, type: 'unknown', message: first.value.message}))
-
-      if (first.value.status === 'connected') {
-        resolve(ok(first.value.url))
-      } else {
-        retries += 1
-        startPolling()
-      }
-    }
-    const startPolling = () => {
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      setTimeout(pollTunnelStatus, 500)
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    pollTunnelStatus()
-  })
 }

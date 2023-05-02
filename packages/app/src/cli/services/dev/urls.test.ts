@@ -22,7 +22,6 @@ import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isSpin, spinFqdn, appPort, appHost} from '@shopify/cli-kit/node/context/spin'
 import {codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
-import {runTunnelPlugin} from '@shopify/cli-kit/node/plugins'
 import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 
 vi.mock('../local-storage.js')

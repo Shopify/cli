@@ -1,5 +1,12 @@
 import {ensureDevContext} from './context.js'
-import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
+import {
+  generateFrontendURL,
+  generatePartnersURLs,
+  getURLs,
+  shouldOrPromptUpdateURLs,
+  startTunnelPlugin,
+  updateURLs,
+} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
 import {outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
@@ -36,7 +43,6 @@ import {
 } from '@shopify/cli-kit/node/session'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fanoutHooks} from '@shopify/cli-kit/node/plugins'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {Writable} from 'stream'
 
@@ -70,8 +76,8 @@ interface DevWebOptions {
 async function dev(options: DevOptions) {
   // Be optimistic about tunnel creation and do it as early as possible
   const tunnelPort = await getAvailableTCPPort()
-  let tunnelProvider = options.tunnelProvider
-  await fanoutHooks(options.commandConfig, 'tunnel_start', {port: tunnelPort, provider: tunnelProvider})
+
+  let tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, options.tunnelProvider)
 
   const token = await ensureAuthenticatedPartners()
   const {
@@ -82,11 +88,10 @@ async function dev(options: DevOptions) {
     useCloudflareTunnels,
   } = await ensureDevContext(options, token)
 
-  if (!useCloudflareTunnels && tunnelProvider === 'cloudflare') {
+  if (!useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
     // If we can't use cloudflare, stop the previous optimistic tunnel and start a new one
-    await fanoutHooks(options.commandConfig, 'tunnel_stop', {provider: 'cloudflare'})
-    await fanoutHooks(options.commandConfig, 'tunnel_start', {port: tunnelPort, provider: 'ngrok'})
-    tunnelProvider = 'ngrok'
+    tunnelClient.stopTunnel()
+    tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, 'ngrok')
   }
 
   const apiKey = remoteApp.apiKey
@@ -111,8 +116,7 @@ async function dev(options: DevOptions) {
     generateFrontendURL({
       ...options,
       app: localApp,
-      tunnelProvider,
-      tunnelPort,
+      tunnelClient,
     }),
     getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
     getURLs(apiKey, token),

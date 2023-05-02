@@ -1,6 +1,6 @@
 import {TUNNEL_PROVIDER} from './provider.js'
-import {startTunnel, TunnelError, TunnelStatusType} from '@shopify/cli-kit/node/plugins/tunnel'
-import {err} from '@shopify/cli-kit/node/result'
+import {startTunnel, TunnelError, TunnelStartReturn, TunnelStatusType} from '@shopify/cli-kit/node/plugins/tunnel'
+import {err, ok} from '@shopify/cli-kit/node/result'
 import {exec, sleep} from '@shopify/cli-kit/node/system'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -18,14 +18,10 @@ const TUNNEL_TIMEOUT = isUnitTest() ? 0.2 : 40
 // if the tunnel process crashes, we'll retry this many times before giving up
 // If we retry too many times, we might get rate limited by cloudflare
 const MAX_RETRIES = 5
-
 let currentStatus: TunnelStatusType = {status: 'not-started'}
-
-export const getCurrentStatus = async () => currentStatus
-
 let abortController: AbortController
 
-export async function hookStart(port: number) {
+export async function hookStart(port: number): Promise<TunnelStartReturn> {
   try {
     return tunnel({port})
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
@@ -35,14 +31,11 @@ export async function hookStart(port: number) {
   }
 }
 
-export async function stopCloudflareProcess() {
-  abortController.abort()
-}
+function tunnel(options: {port: number}, retries = 0) {
+  abortController = new AbortController()
 
-function tunnel(options: {port: number}, retries = 0): void {
   if (retries >= MAX_RETRIES) {
-    currentStatus = {status: 'error', message: 'Could not start tunnel, max retries reached'}
-    return
+    throw new Error('Could not start tunnel, max retries reached')
   }
 
   const args: string[] = ['tunnel', '--url', `http://localhost:${options.port}`, '--no-autoupdate']
@@ -81,8 +74,6 @@ function tunnel(options: {port: number}, retries = 0): void {
     },
   })
 
-  abortController = new AbortController()
-
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
   exec(getBinPathTarget(), args, {
     stdout: customStdout,
@@ -98,6 +89,13 @@ function tunnel(options: {port: number}, retries = 0): void {
       await sleep(1)
       tunnel(options, retries + 1)
     },
+  })
+
+  return ok({
+    getTunnelStatus: () => currentStatus,
+    stopTunnel: () => abortController.abort(),
+    provider: TUNNEL_PROVIDER,
+    port: options.port,
   })
 }
 
