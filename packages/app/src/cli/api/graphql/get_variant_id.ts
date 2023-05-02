@@ -2,7 +2,7 @@ import {gql} from 'graphql-request'
 
 export const FindProductVariantQuery = gql`
   query {
-    products(first: 1) {
+    products(first: 1, query: "published_status:published") {
       edges {
         node {
           id
