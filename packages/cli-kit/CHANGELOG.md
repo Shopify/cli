@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.45.2
+
+### Patch Changes
+
+- 9fdbdf86d: fixes theme preview for new shopify cdn url format
+
 ## 3.45.1
 
 ### Patch Changes
