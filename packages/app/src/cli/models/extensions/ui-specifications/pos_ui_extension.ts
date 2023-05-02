@@ -3,7 +3,7 @@ import {createUIExtensionSpecification} from '../ui.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
 import {BugError} from '@shopify/cli-kit/node/error'
 
-const dependency = {name: '@shopify/retail-ui-extensions-react', version: '1.0.0'}
+const dependency = {name: '@shopify/retail-ui-extensions-react', version: '1.0.1'}
 
 const spec = createUIExtensionSpecification({
   identifier: 'pos_ui_extension',
