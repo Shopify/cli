@@ -2,4 +2,4 @@
 '@shopify/cli-kit': patch
 ---
 
-Install all node dependencies as exact versions
+Install pos_ui_extension node dependencies as exact versions
