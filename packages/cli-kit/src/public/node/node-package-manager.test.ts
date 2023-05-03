@@ -274,7 +274,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'new', '--save-dev'], {
+      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'new', '--save-dev', '--save-exact'], {
         cwd: tmpDir,
       })
     })
@@ -297,7 +297,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'new@version', '--save-dev'], {
+      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'new@version', '--save-dev', '--save-exact'], {
         cwd: tmpDir,
       })
     })
@@ -320,7 +320,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'new@version', '--save-prod'], {
+      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'new@version', '--save-prod', '--save-exact'], {
         cwd: tmpDir,
       })
     })
@@ -343,7 +343,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'new@version', '--save-peer'], {
+      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'new@version', '--save-peer', '--save-exact'], {
         cwd: tmpDir,
       })
     })
@@ -366,7 +366,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', 'new@version', '--dev'], {
+      expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', 'new@version', '--dev', '--exact'], {
         cwd: tmpDir,
       })
     })
@@ -389,7 +389,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', 'new@version', '--prod'], {
+      expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', 'new@version', '--prod', '--exact'], {
         cwd: tmpDir,
       })
     })
@@ -412,7 +412,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', 'new@version', '--peer'], {
+      expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', 'new@version', '--peer', '--exact'], {
         cwd: tmpDir,
       })
     })
@@ -435,7 +435,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'new@version', '--save-dev'], {
+      expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'new@version', '--save-dev', '--save-exact'], {
         cwd: tmpDir,
       })
     })
@@ -458,7 +458,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'new@version', '--save-prod'], {
+      expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'new@version', '--save-prod', '--save-exact'], {
         cwd: tmpDir,
       })
     })
@@ -481,7 +481,7 @@ describe('addNPMDependenciesIfNeeded', () => {
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'new@version', '--save-peer'], {
+      expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'new@version', '--save-peer', '--save-exact'], {
         cwd: tmpDir,
       })
     })
@@ -775,10 +775,10 @@ describe('addNPMDependencies', () => {
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'first@0.0.1', '--save-prod'], {
+      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'first@0.0.1', '--save-prod', '--save-exact'], {
         cwd: tmpDir,
       })
-      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'second@0.0.2', '--save-prod'], {
+      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'second@0.0.2', '--save-prod', '--save-exact'], {
         cwd: tmpDir,
       })
     })
@@ -800,7 +800,7 @@ describe('addNPMDependencies', () => {
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', 'first@0.0.1', 'second@0.0.2', '--prod'], {
+      expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', 'first@0.0.1', 'second@0.0.2', '--prod', '--exact'], {
         cwd: tmpDir,
       })
     })
@@ -822,9 +822,13 @@ describe('addNPMDependencies', () => {
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'first@0.0.1', 'second@0.0.2', '--save-prod'], {
-        cwd: tmpDir,
-      })
+      expect(mockedExec).toHaveBeenCalledWith(
+        'pnpm',
+        ['add', 'first@0.0.1', 'second@0.0.2', '--save-prod', '--save-exact'],
+        {
+          cwd: tmpDir,
+        },
+      )
     })
   })
 })
