@@ -117,12 +117,11 @@ async function uiExtensionInit({
       task: async () => {
         await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor)
         const requiredDependencies = getExtensionRuntimeDependencies({specification, extensionFlavor})
-        const exact = specification.identifier === 'pos_ui_extension'
         await addNPMDependenciesIfNeeded(requiredDependencies, {
           packageManager: app.packageManager,
           type: 'prod',
           directory: app.directory,
-          exact,
+          exact: specification.identifier === 'pos_ui_extension',
         })
       },
     },
