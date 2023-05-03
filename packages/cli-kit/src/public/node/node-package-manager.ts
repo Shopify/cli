@@ -458,6 +458,7 @@ function argumentsToAddDependenciesWithNPM(dependencies: string[], type: Depende
       command.push('--save-prod')
       break
   }
+  command.push('--save-exact')
   return command
 }
 
@@ -481,6 +482,7 @@ function argumentsToAddDependenciesWithYarn(dependencies: string[], type: Depend
       command.push('--prod')
       break
   }
+  command.push('--exact')
   return command
 }
 
@@ -504,6 +506,7 @@ function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: Depend
       command.push('--save-prod')
       break
   }
+  command.push('--save-exact')
   return command
 }
 
