@@ -104,7 +104,7 @@ function AutocompletePrompt<T>({
     return () => {
       stdout.off('resize', onResize)
     }
-  }, [wrapperHeight, selectInputHeight, searchResults.length, stdout, limit])
+  }, [wrapperHeight, selectInputHeight, searchResults.length, stdout, limit, numberOfGroups])
 
   useInput((input, key) => {
     handleCtrlC(input, key)
