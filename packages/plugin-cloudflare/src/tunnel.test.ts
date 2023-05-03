@@ -1,4 +1,4 @@
-import {getCurrentStatus, hookStart} from './tunnel.js'
+import {hookStart} from './tunnel.js'
 import {describe, vi, expect, test} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
@@ -16,8 +16,8 @@ describe('hookStart', () => {
     })
 
     // When
-    await hookStart(port)
-    const result = await getCurrentStatus()
+    const tunnelClient = await hookStart(port)
+    const result = tunnelClient.valueOrAbort().getTunnelStatus()
 
     // Then
     expect(result).toEqual({url: 'https://example.trycloudflare.com', status: 'connected'})
@@ -32,8 +32,8 @@ describe('hookStart', () => {
     })
 
     // When
-    await hookStart(port)
-    const result = await getCurrentStatus()
+    const tunnelClient = await hookStart(port)
+    const result = tunnelClient.valueOrAbort().getTunnelStatus()
 
     // Then
     expect(result).toEqual({url: 'https://example.trycloudflare.com', status: 'connected'})
@@ -48,8 +48,8 @@ describe('hookStart', () => {
     })
 
     // When
-    await hookStart(port)
-    const result = await getCurrentStatus()
+    const tunnelClient = await hookStart(port)
+    const result = tunnelClient.valueOrAbort().getTunnelStatus()
 
     // Then
     expect(result).toEqual({status: 'error', message: 'Could not find tunnel url'})
@@ -63,8 +63,8 @@ describe('hookStart', () => {
     })
 
     // When
-    await hookStart(port)
-    const result = await getCurrentStatus()
+    const tunnelClient = await hookStart(port)
+    const result = tunnelClient.valueOrAbort().getTunnelStatus()
 
     // Then
     expect(result).toEqual({status: 'starting'})
@@ -83,8 +83,8 @@ describe('hookStart', () => {
     })
 
     // When
-    await hookStart(port)
-    const result = await getCurrentStatus()
+    const tunnelClient = await hookStart(port)
+    const result = tunnelClient.valueOrAbort().getTunnelStatus()
 
     // Then
     expect(exec).toBeCalledTimes(2)
@@ -98,12 +98,8 @@ describe('hookStart', () => {
     })
 
     // When
-    await hookStart(port)
-    let result = {status: 'starting'}
-    while (result.status === 'starting') {
-      // eslint-disable-next-line no-await-in-loop
-      result = await getCurrentStatus()
-    }
+    const tunnelClient = (await hookStart(port)).valueOrAbort()
+    const result = tunnelClient.getTunnelStatus()
 
     // Then
     expect(exec).toBeCalledTimes(5)

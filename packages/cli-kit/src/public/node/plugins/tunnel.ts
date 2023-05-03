@@ -3,7 +3,7 @@ import {FanoutHookFunction, PluginReturnsForHook} from '../plugins.js'
 import {err, Result} from '../result.js'
 
 export type TunnelErrorType = 'invalid-provider' | 'tunnel-already-running' | 'wrong-credentials' | 'unknown'
-export interface TunnelStartResult {
+export interface TunnelClient {
   getTunnelStatus: () => TunnelStatusType
   stopTunnel: () => void
   provider: string
@@ -32,7 +32,7 @@ export interface HookReturnPerTunnelPlugin {
   tunnel_start: {
     options: {port: number; provider: string}
     pluginReturns: {
-      [key: string]: Result<TunnelStartResult, TunnelError>
+      [key: string]: Result<TunnelClient, TunnelError>
     }
   }
   tunnel_provider: {

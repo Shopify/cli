@@ -1,5 +1,11 @@
 import {TUNNEL_PROVIDER} from './provider.js'
-import {startTunnel, TunnelError, TunnelStartReturn, TunnelStatusType} from '@shopify/cli-kit/node/plugins/tunnel'
+import {
+  startTunnel,
+  TunnelError,
+  TunnelStartReturn,
+  TunnelStatusType,
+  TunnelClient,
+} from '@shopify/cli-kit/node/plugins/tunnel'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {exec, sleep} from '@shopify/cli-kit/node/system'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -21,7 +27,7 @@ const MAX_RETRIES = 5
 
 export async function hookStart(port: number): Promise<TunnelStartReturn> {
   try {
-    const client = new TunnelClient(port)
+    const client = new TunnelClientInstance(port)
     return ok(client)
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
@@ -30,7 +36,7 @@ export async function hookStart(port: number): Promise<TunnelStartReturn> {
   }
 }
 
-class TunnelClient {
+class TunnelClientInstance implements TunnelClient {
   port: number
   provider = TUNNEL_PROVIDER
 
@@ -52,16 +58,18 @@ class TunnelClient {
 
   tunnel(retries = 0) {
     this.abortController = new AbortController()
+    let resolved = false
 
     if (retries >= MAX_RETRIES) {
-      throw new Error('Could not start tunnel, max retries reached')
+      resolved = true
+      this.currentStatus = {status: 'error', message: 'Could not start tunnel, max retries reached'}
+      return
     }
 
     const args: string[] = ['tunnel', '--url', `http://localhost:${this.port}`, '--no-autoupdate']
     const errors: string[] = []
 
     let connected = false
-    let resolved = false
     let url: string | undefined
     this.currentStatus = {status: 'starting'}
 
@@ -70,6 +78,7 @@ class TunnelClient {
         resolved = true
         const lastErrors = errors.slice(-5).join('\n')
         this.currentStatus = {status: 'error', message: lastErrors}
+        this.abortController?.abort()
       }
     }, TUNNEL_TIMEOUT * 1000)
     // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -107,7 +116,7 @@ class TunnelClient {
 
         outputDebug('Cloudflared tunnel crashed, restarting...')
         // wait 1 second before restarting the tunnel, to avoid rate limiting
-        await sleep(1)
+        if (!isUnitTest) await sleep(1)
         this.tunnel(retries + 1)
       },
     })

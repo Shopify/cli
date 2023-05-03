@@ -12,7 +12,7 @@ import {appHost, appPort, isSpin, spinFqdn} from '@shopify/cli-kit/node/context/
 import {codespaceURL, gitpodURL} from '@shopify/cli-kit/node/context/local'
 import {fanoutHooks} from '@shopify/cli-kit/node/plugins'
 import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
-import {TunnelStartResult} from '@shopify/cli-kit/node/plugins/tunnel'
+import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export interface PartnersURLs {
@@ -25,7 +25,7 @@ export interface FrontendURLOptions {
   noTunnel: boolean
   tunnelUrl?: string
   commandConfig: Config
-  tunnelClient: TunnelStartResult
+  tunnelClient: TunnelClient
 }
 
 export interface FrontendURLResult {
@@ -97,7 +97,7 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
 /**
  * Poll the tunnel provider every 0.5 until an URL or error is returned.
  */
-export async function generateURL(tunnelClient: TunnelStartResult): Promise<string> {
+export async function generateURL(tunnelClient: TunnelClient): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     let retries = 0
     const pollTunnelStatus = async () => {
@@ -209,7 +209,7 @@ export function validatePartnersURLs(urls: PartnersURLs): void {
   })
 }
 
-export async function startTunnelPlugin(config: Config, port: number, provider: string): Promise<TunnelStartResult> {
+export async function startTunnelPlugin(config: Config, port: number, provider: string): Promise<TunnelClient> {
   const hooks = await fanoutHooks(config, 'tunnel_start', {port, provider})
   const results = Object.values(hooks).filter(
     (tunnelResponse) => !tunnelResponse?.isErr() || tunnelResponse.error.type !== 'invalid-provider',
