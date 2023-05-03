@@ -86,7 +86,7 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     frontendUrl = 'http://localhost'
     usingLocalhost = true
   } else {
-    const url = await generateURL(options.tunnelClient)
+    const url = await pollTunnelURL(options.tunnelClient)
     frontendPort = options.tunnelClient.port
     frontendUrl = url
   }
@@ -97,7 +97,7 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
 /**
  * Poll the tunnel provider every 0.5 until an URL or error is returned.
  */
-export async function generateURL(tunnelClient: TunnelClient): Promise<string> {
+async function pollTunnelURL(tunnelClient: TunnelClient): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     let retries = 0
     const pollTunnelStatus = async () => {

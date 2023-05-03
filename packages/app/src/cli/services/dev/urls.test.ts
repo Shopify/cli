@@ -1,12 +1,12 @@
 import {
   updateURLs,
-  generateURL,
   getURLs,
   shouldOrPromptUpdateURLs,
   generateFrontendURL,
   generatePartnersURLs,
   PartnersURLs,
   validatePartnersURLs,
+  FrontendURLOptions,
 } from './urls.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {UpdateURLsQuery} from '../../api/graphql/update_urls.js'
@@ -14,8 +14,7 @@ import {GetURLsQuery} from '../../api/graphql/get_urls.js'
 import {setAppInfo} from '../local-storage.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {Config} from '@oclif/core'
-import {err, ok} from '@shopify/cli-kit/node/result'
-import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -41,70 +40,18 @@ beforeEach(() => {
   vi.mocked(terminalSupportsRawMode).mockReturnValue(true)
 })
 
-describe('generateURL', () => {
-  test('returns a tunnel URL by default', async () => {
-    // Given
-    const config = new Config({root: ''})
-    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(ok('https://fake-url.cloudflare.io'))
-
-    // When
-    const got = await generateURL(config, 'cloudflare')
-
-    // Then
-    expect(got).toEqual('https://fake-url.cloudflare.io')
-  })
-
-  test('throws error if there are multiple urls', async () => {
-    // Given
-    const config = new Config({root: ''})
-    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(err({provider: 'cloudflare', type: 'multiple-urls'}))
-
-    // When
-    const got = generateURL(config, 'cloudflare')
-
-    // Then
-    await expect(got).rejects.toThrow(BugError)
-    await expect(got).rejects.toThrow(/Multiple tunnel plugins for cloudflare found/)
-  })
-
-  test('throws error if there is no provider', async () => {
-    // Given
-    const config = new Config({root: ''})
-    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(err({provider: 'cloudflare', type: 'no-provider'}))
-
-    // When
-    const got = generateURL(config, 'cloudflare')
-
-    // Then
-    await expect(got).rejects.toThrow(BugError)
-    await expect(got).rejects.toThrow(/We couldn't find the cloudflare tunnel plugin/)
-  })
-
-  test('throws error if there is an unknown error with the provider', async () => {
-    // Given
-    const config = new Config({root: ''})
-    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(err({provider: 'cloudflare', type: 'unknown', message: 'message'}))
-
-    // When
-    const got = generateURL(config, 'cloudflare')
-
-    // Then
-    await expect(got).rejects.toThrow(AbortError)
-    await expect(got).rejects.toThrow(/cloudflare failed to start the tunnel/)
-  })
-
-  test('throws error if there are no tunnel urls', async () => {
-    // Given
-    const config = new Config({root: ''})
-    vi.mocked(runTunnelPlugin).mockResolvedValueOnce(err({provider: 'cloudflare', type: 'handled-error'}))
-
-    // When
-    const got = generateURL(config, 'cloudflare')
-
-    // Then
-    await expect(got).rejects.toThrow(AbortSilentError)
-  })
-})
+const defaultOptions: FrontendURLOptions = {
+  app: testApp({hasUIExtensions: () => false}),
+  noTunnel: false,
+  tunnelUrl: undefined,
+  commandConfig: new Config({root: ''}),
+  tunnelClient: {
+    getTunnelStatus: () => ({status: 'starting'}),
+    stopTunnel: () => {},
+    provider: 'cloudflare',
+    port: 1111,
+  },
+}
 
 describe('updateURLs', () => {
   test('sends a request to update the URLs', async () => {
@@ -299,15 +246,8 @@ describe('generateFrontendURL', () => {
 
   test('returns tunnelUrl when there is a tunnelUrl ignoring the tunnel provider', async () => {
     // Given
-    const options = {
-      app: testApp({hasUIExtensions: () => false}),
-      tunnelProvider: 'cloudflare',
-      noTunnel: false,
-      tunnelUrl: 'https://my-tunnel-provider.io:4242',
-      tunnelPort: 4242,
-      useCloudflareTunnels: true,
-      commandConfig: new Config({root: ''}),
-    }
+
+    const options = {...defaultOptions, tunnelUrl: 'https://my-tunnel-provider.io:4242'}
 
     // When
     const got = await generateFrontendURL(options)
@@ -319,13 +259,9 @@ describe('generateFrontendURL', () => {
   test('returns tunnelUrl when there is a tunnelUrl ignoring all other true values', async () => {
     // Given
     const options = {
+      ...defaultOptions,
       app: testApp({hasUIExtensions: () => true}),
-      tunnelProvider: 'cloudflare',
-      noTunnel: true,
       tunnelUrl: 'https://my-tunnel-provider.io:4242',
-      tunnelPort: 4242,
-      useCloudflareTunnels: true,
-      commandConfig: new Config({root: ''}),
     }
 
     // When
@@ -337,54 +273,26 @@ describe('generateFrontendURL', () => {
 
   test('generates a tunnel url with cloudflare when there is no tunnelUrl and use cloudflare is true', async () => {
     // Given
-    vi.mocked(runTunnelPlugin).mockResolvedValue(ok('https://fake-url.cloudflare.io'))
-    const options = {
-      app: testApp({hasUIExtensions: () => false}),
-      tunnelProvider: 'cloudflare',
-      noTunnel: false,
-      tunnelPort: 3042,
-      useCloudflareTunnels: true,
-      commandConfig: new Config({root: ''}),
+    const options: FrontendURLOptions = {
+      ...defaultOptions,
+      tunnelClient: {
+        getTunnelStatus: () => ({status: 'connected', url: 'https://fake-url.cloudflare.io'}),
+        port: 3042,
+        stopTunnel: () => {},
+        provider: 'cloudflare',
+      },
     }
 
     // When
     const got = await generateFrontendURL(options)
 
     // Then
-    expect(runTunnelPlugin).toHaveBeenCalledWith(options.commandConfig, 'cloudflare')
-    expect(got).toEqual({frontendUrl: 'https://fake-url.cloudflare.io', frontendPort: 3042, usingLocalhost: false})
-  })
-
-  test('generates a tunnel url with cloudflare when there is no tunnelUrl and use cloudflare is false', async () => {
-    // Given
-    vi.mocked(runTunnelPlugin).mockResolvedValue(ok('https://fake-url.cloudflare.io'))
-    const options = {
-      app: testApp({hasUIExtensions: () => false}),
-      tunnelProvider: 'cloudflare',
-      noTunnel: false,
-      useCloudflareTunnels: false,
-      tunnelPort: 3042,
-      commandConfig: new Config({root: ''}),
-    }
-
-    // When
-    const got = await generateFrontendURL(options)
-
-    // Then
-    expect(vi.mocked(runTunnelPlugin)).toHaveBeenCalledWith(options.commandConfig, 'cloudflare')
     expect(got).toEqual({frontendUrl: 'https://fake-url.cloudflare.io', frontendPort: 3042, usingLocalhost: false})
   })
 
   test('returns localhost if noTunnel is true', async () => {
     // Given
-    const options = {
-      app: testApp({hasUIExtensions: () => true}),
-      tunnelProvider: 'cloudflare',
-      noTunnel: true,
-      useCloudflareTunnels: true,
-      tunnelPort: 3042,
-      commandConfig: new Config({root: ''}),
-    }
+    const options = {...defaultOptions, noTunnel: true}
 
     // When
     const got = await generateFrontendURL(options)
@@ -396,15 +304,7 @@ describe('generateFrontendURL', () => {
 
   test('raises error if tunnelUrl does not include port', async () => {
     // Given
-    const options = {
-      app: testApp({hasUIExtensions: () => false}),
-      tunnelProvider: 'cloudflare',
-      noTunnel: false,
-      tunnelUrl: 'https://my-tunnel-provider.io',
-      tunnelPort: 3042,
-      useCloudflareTunnels: true,
-      commandConfig: new Config({root: ''}),
-    }
+    const options = {...defaultOptions, tunnelUrl: 'https://my-tunnel-provider.io'}
 
     // When
     const got = generateFrontendURL(options)
@@ -413,39 +313,12 @@ describe('generateFrontendURL', () => {
     await expect(got).rejects.toThrow(/Invalid tunnel URL/)
   })
 
-  test('cancels execution if you select not to continue in the plugin prompt', async () => {
-    // Given
-    vi.mocked(renderSelectPrompt).mockResolvedValue('cancel')
-    const options = {
-      app: testApp({hasUIExtensions: () => true}),
-      tunnelProvider: 'cloudflare',
-      noTunnel: false,
-      tunnelPort: 3042,
-      useCloudflareTunnels: true,
-      commandConfig: new Config({root: ''}),
-    }
-
-    // When
-    const got = generateFrontendURL(options)
-
-    // Then
-    await expect(got).rejects.toThrow()
-  })
-
   test('Returns a gitpod url if we are in a gitpod environment', async () => {
     // Given
     vi.mocked(gitpodURL).mockReturnValue('https://gitpod.url.fqdn.com')
-    const options = {
-      app: testApp({hasUIExtensions: () => false}),
-      tunnelProvider: 'cloudflare',
-      noTunnel: false,
-      tunnelPort: 3042,
-      useCloudflareTunnels: true,
-      commandConfig: new Config({root: ''}),
-    }
 
     // When
-    const got = await generateFrontendURL(options)
+    const got = await generateFrontendURL(defaultOptions)
 
     // Then
     expect(got).toEqual({frontendUrl: 'https://4040-gitpod.url.fqdn.com', frontendPort: 4040, usingLocalhost: false})
@@ -456,17 +329,9 @@ describe('generateFrontendURL', () => {
   test('Returns a codespace url if we are in a codespace environment', async () => {
     // Given
     vi.mocked(codespaceURL).mockReturnValue('codespace.url.fqdn.com')
-    const options = {
-      app: testApp({hasUIExtensions: () => false}),
-      tunnelProvider: 'cloudflare',
-      noTunnel: false,
-      tunnelPort: 3042,
-      useCloudflareTunnels: true,
-      commandConfig: new Config({root: ''}),
-    }
 
     // When
-    const got = await generateFrontendURL(options)
+    const got = await generateFrontendURL(defaultOptions)
 
     // Then
     expect(got).toEqual({
@@ -484,17 +349,9 @@ describe('generateFrontendURL', () => {
     vi.mocked(spinFqdn).mockResolvedValue('spin.domain.dev')
     vi.mocked(appPort).mockReturnValue(undefined)
     vi.mocked(appHost).mockReturnValue(undefined)
-    const options = {
-      app: testApp({hasUIExtensions: () => false}),
-      tunnelProvider: 'cloudflare',
-      noTunnel: false,
-      useCloudflareTunnels: true,
-      tunnelPort: 3042,
-      commandConfig: new Config({root: ''}),
-    }
 
     // When
-    const got = await generateFrontendURL(options)
+    const got = await generateFrontendURL(defaultOptions)
 
     // Then
     expect(got).toEqual({
@@ -511,17 +368,9 @@ describe('generateFrontendURL', () => {
     vi.mocked(isSpin).mockReturnValue(true)
     vi.mocked(appPort).mockReturnValue(1234)
     vi.mocked(appHost).mockReturnValue('1p-app-host.spin.domain.dev')
-    const options = {
-      app: testApp({hasUIExtensions: () => false}),
-      tunnelProvider: 'cloudflare',
-      noTunnel: false,
-      useCloudflareTunnels: true,
-      tunnelPort: 3042,
-      commandConfig: new Config({root: ''}),
-    }
 
     // When
-    const got = await generateFrontendURL(options)
+    const got = await generateFrontendURL(defaultOptions)
 
     // Then
     expect(got).toEqual({
@@ -536,15 +385,7 @@ describe('generateFrontendURL', () => {
   test('Returns a custom tunnel url if we are in a spin environment but a custom tunnel option is active', async () => {
     // Given
     vi.mocked(isSpin).mockReturnValue(true)
-    const options = {
-      app: testApp({hasUIExtensions: () => false}),
-      tunnelProvider: 'cloudflare',
-      noTunnel: false,
-      useCloudflareTunnels: true,
-      tunnelPort: 3042,
-      tunnelUrl: 'https://my-tunnel-provider.io:4242',
-      commandConfig: new Config({root: ''}),
-    }
+    const options = {...defaultOptions, tunnelUrl: 'https://my-tunnel-provider.io:4242'}
 
     // When
     const got = await generateFrontendURL(options)
