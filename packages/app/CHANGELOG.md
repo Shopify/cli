@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.45.3
+
+### Patch Changes
+
+- 76e58ade3: Update POS UI extension template
+- Updated dependencies [9fa670b44]
+  - @shopify/cli-kit@3.45.3
+  - @shopify/plugin-cloudflare@3.45.3
+  - @shopify/plugin-ngrok@3.45.3
+
 ## 3.45.2
 
 ### Patch Changes
