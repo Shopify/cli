@@ -393,6 +393,7 @@ describe('initialize a extension', async () => {
 
       // Then
       await expect(got).rejects.toThrowErrorMatchingInlineSnapshot('"No folder for selected flavor"')
+      expect(file.fileExistsSync(joinPath(tmpDir, 'extensions', name))).toBeFalsy()
     })
   })
 })
