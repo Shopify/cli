@@ -1,5 +1,13 @@
 # @shopify/theme
 
+## 3.45.3
+
+### Patch Changes
+
+- 9fa670b44: Fix unavailable constant reference in theme dev
+- Updated dependencies [9fa670b44]
+  - @shopify/cli-kit@3.45.3
+
 ## 3.45.2
 
 ### Patch Changes
