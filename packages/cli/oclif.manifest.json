@@ -43,6 +43,17 @@
       "flags": {},
       "args": {}
     },
+    "auth:shop:create": {
+      "id": "auth:shop:create",
+      "description": "Do something to the shop",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    },
     "kitchen-sink:async": {
       "id": "kitchen-sink:async",
       "description": "View the UI kit components that process async tasks",
