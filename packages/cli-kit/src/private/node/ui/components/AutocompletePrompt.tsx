@@ -9,6 +9,7 @@ import React, {ReactElement, useCallback, useLayoutEffect, useRef, useState} fro
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
 import figures from 'figures'
 import ansiEscapes from 'ansi-escapes'
+import {uniqBy} from '@shopify/cli-kit/common/array'
 
 export interface SearchResults<T> {
   data: SelectItem<T>[]
@@ -56,6 +57,10 @@ function AutocompletePrompt<T>({
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [selectInputHeight, setSelectInputHeight] = useState(0)
   const [limit, setLimit] = useState(searchResults.length)
+  const numberOfGroups = uniqBy(
+    searchResults.filter((choice) => choice.group),
+    'group',
+  ).length
 
   const paginatedSearch = useCallback(
     async (term: string) => {
@@ -84,7 +89,7 @@ function AutocompletePrompt<T>({
     function onResize() {
       const availableSpace = stdout.rows - (wrapperHeight - selectInputHeight)
       // rough estimate of the limit needed based on the space available
-      const newLimit = Math.max(2, availableSpace - 4)
+      const newLimit = Math.max(2, availableSpace - numberOfGroups * 2 - 4)
 
       if (newLimit < limit) {
         stdout.write(ansiEscapes.clearTerminal)
@@ -99,7 +104,7 @@ function AutocompletePrompt<T>({
     return () => {
       stdout.off('resize', onResize)
     }
-  }, [wrapperHeight, selectInputHeight, searchResults.length, stdout, limit])
+  }, [wrapperHeight, selectInputHeight, searchResults.length, stdout, limit, numberOfGroups])
 
   useInput((input, key) => {
     handleCtrlC(input, key)
