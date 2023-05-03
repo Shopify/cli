@@ -21,14 +21,8 @@ module ShopifyCLI
 
           # Proxy the request, and replace the URLs in the response
           status, headers, body = @app.call(env)
-          # Use Rack::Response to get the content type header regardless of case
-          response = Rack::Response.new(nil, status, headers)
-          content_type = response.get_header("Content-Type")
-          if content_type.nil? || content_type == "" || content_type&.start_with?("text/")
-            Rack::Response.new(replace_font_urls(body), status, headers).finish
-          else
-            Rack::Response.new(body, status, headers).finish
-          end
+          body = replace_font_urls(body)
+          [status, headers, body]
         end
 
         private
