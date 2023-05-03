@@ -1,57 +1,6 @@
 {
   "version": "3.46.0-pre.3",
   "commands": {
-    "demo": {
-      "id": "demo",
-      "description": "Demo a command design defined in a file",
-      "strict": true,
-      "pluginName": "@shopify/cli",
-      "pluginAlias": "@shopify/cli",
-      "pluginType": "core",
-      "hidden": true,
-      "aliases": [],
-      "flags": {
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to the design file.",
-          "hidden": false,
-          "multiple": false,
-          "default": "."
-        }
-      },
-      "args": {}
-    },
-    "generate-demo-file": {
-      "id": "generate-demo-file",
-      "summary": "Creates a JSON file alongside a JSON schema that will validate it",
-      "description": "Create a command design file",
-      "strict": true,
-      "pluginName": "@shopify/cli",
-      "pluginAlias": "@shopify/cli",
-      "pluginType": "core",
-      "hidden": true,
-      "aliases": [],
-      "flags": {
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The directory for generating the demo file.",
-          "hidden": false,
-          "multiple": false,
-          "default": "."
-        },
-        "filename": {
-          "name": "filename",
-          "type": "option",
-          "description": "The name of the demo file.",
-          "hidden": false,
-          "required": true,
-          "multiple": false
-        }
-      },
-      "args": {}
-    },
     "upgrade": {
       "id": "upgrade",
       "description": "Upgrade the Shopify CLI.",
@@ -151,6 +100,27 @@
           "hidden": false,
           "required": true,
           "multiple": false
+        }
+      },
+      "args": {}
+    },
+    "demo": {
+      "id": "demo",
+      "description": "Demo a command design defined in a file",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to the design file.",
+          "hidden": false,
+          "multiple": false,
+          "default": "."
         }
       },
       "args": {}
