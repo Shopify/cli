@@ -170,6 +170,8 @@ export function deploymentErrorsToCustomSections(
   errors: CreateDeploymentSchema['deploymentCreate']['userErrors'],
 ): ErrorCustomSection[] {
   return errors.reduce((sections, error) => {
+    const errorMessage = error.field.join('.') === 'base' ? error.message : `${error.field}: ${error.message}`
+
     const extensionIdentifier = error.details.find(
       (detail) => typeof detail.extension_title !== 'undefined',
     )?.extension_title
@@ -183,12 +185,12 @@ export function deploymentErrorsToCustomSections(
           : existingSection.body.find((listToken) => listToken.list.title === GENERIC_ERRORS_TITLE)
 
       if (errorsList) {
-        errorsList.list.items.push(error.message)
+        errorsList.list.items.push(errorMessage)
       } else {
         existingSection.body.push({
           list: {
             title: error.category === 'invalid' ? VALIDATION_ERRORS_TITLE : GENERIC_ERRORS_TITLE,
-            items: [error.message],
+            items: [errorMessage],
           },
         })
       }
@@ -199,7 +201,7 @@ export function deploymentErrorsToCustomSections(
           {
             list: {
               title: error.category === 'invalid' ? VALIDATION_ERRORS_TITLE : GENERIC_ERRORS_TITLE,
-              items: [error.message],
+              items: [errorMessage],
             },
           },
         ],
