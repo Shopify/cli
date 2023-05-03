@@ -15,7 +15,7 @@ module.exports = {
 
   create: function (context) {
     function checkForPunctuation(value, node) {
-      const punctuationRegex = /[!.,;:?]+$/
+      const punctuationRegex = /[!.:?]+$/
       if (typeof value === 'string' && !value.match(punctuationRegex)) {
         context.report({
           node: node,
@@ -28,7 +28,7 @@ module.exports = {
       const charProperty = value.properties.find((property) => property.key.name === 'char')
 
       if (charProperty) {
-        const punctuationRegex = /[!.,;:?]+/
+        const punctuationRegex = /[!.:?]+/
         if (!charProperty.value.value.match(punctuationRegex)) {
           context.report({
             node: charProperty,
