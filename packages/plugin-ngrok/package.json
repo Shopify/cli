@@ -61,8 +61,6 @@
     "commands": "dist/commands",
     "hooks": {
       "tunnel_start": "dist/tunnel",
-      "tunnel_status": "dist/status",
-      "tunnel_stop": "dist/stop",
       "tunnel_provider": "dist/provider"
     }
   }
