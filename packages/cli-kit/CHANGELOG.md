@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.45.4
+
+### Patch Changes
+
+- f6cb04a72: Install pos_ui_extension node dependencies as exact versions
+
 ## 3.45.3
 
 ### Patch Changes

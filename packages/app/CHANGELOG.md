@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.45.4
+
+### Patch Changes
+
+- Updated dependencies [f6cb04a72]
+  - @shopify/cli-kit@3.45.4
+  - @shopify/plugin-cloudflare@3.45.4
+  - @shopify/plugin-ngrok@3.45.4
+
 ## 3.45.3
 
 ### Patch Changes
