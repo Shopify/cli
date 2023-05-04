@@ -84,7 +84,7 @@ describe('renderInfo', async () => {
     expect(mockOutput.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Title                                                                       │
+      │  Title.                                                                      │
       │                                                                              │
       │  Body                                                                        │
       │                                                                              │
@@ -131,7 +131,7 @@ describe('renderSuccess', async () => {
     expect(mockOutput.info()).toMatchInlineSnapshot(`
       "╭─ success ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Title                                                                       │
+      │  Title.                                                                      │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
@@ -159,7 +159,7 @@ describe('renderWarning', async () => {
     expect(mockOutput.warn()).toMatchInlineSnapshot(`
       "╭─ warning ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Title                                                                       │
+      │  Title.                                                                      │
       │                                                                              │
       │  Next steps                                                                  │
       │    1. First                                                                  │

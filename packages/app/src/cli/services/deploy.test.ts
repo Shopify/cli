@@ -291,7 +291,7 @@ describe('deploy', () => {
           url: 'https://partners.shopify.com/org-id/apps/app-id/deployments/2',
         },
       },
-      headline: 'Deployment created',
+      headline: 'Deployment created.',
       nextSteps: ['Publish your deployment to make your changes go live for merchants'],
     })
   })
