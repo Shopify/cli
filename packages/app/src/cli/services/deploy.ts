@@ -190,7 +190,7 @@ async function outputCompletionMessage({
 }) {
   if (unifiedDeployment) {
     return renderSuccess({
-      headline: 'Deployment created',
+      headline: 'Deployment created.',
       body: {
         link: {
           url: `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/deployments/${deploymentId}`,
