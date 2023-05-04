@@ -18,7 +18,7 @@ import {
   RawContentToken,
   SubHeadingContentToken,
 } from '../../private/node/content-tokens.js'
-import {addEvent} from '../../private/node/demo-recorder.js'
+import {recordUIEvent} from '../../private/node/demo-recorder.js'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'stream'
 import type {Change} from 'diff'
@@ -392,7 +392,7 @@ export function outputWhereAppropriate(
     } else {
       logger(message)
     }
-    if (!options?.skipEvent) addEvent({type: 'output', properties: {content: message}})
+    if (!options?.skipEvent) recordUIEvent({type: 'output', properties: {content: message}})
   }
 }
 

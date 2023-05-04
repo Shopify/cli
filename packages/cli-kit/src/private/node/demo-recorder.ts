@@ -165,7 +165,7 @@ export function initDemoRecorder() {
   ensureInstance()
 }
 
-export function addEvent(event: Event) {
+export function recordUIEvent(event: Event) {
   ensureInstance()
   _instance.addEvent(event)
 }
