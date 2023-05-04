@@ -746,7 +746,6 @@ describe('uploadExtensionsBundle', () => {
             uuid: '123',
           },
         ],
-        label: 'Deployed with CLI',
         uuid: 'random-uuid',
       })
     })
@@ -776,7 +775,6 @@ describe('uploadExtensionsBundle', () => {
     // Then
     expect(vi.mocked(partnersRequest).mock.calls[0]![2]!).toEqual({
       apiKey: 'app-id',
-      label: 'Deployed with CLI',
       uuid: 'random-uuid',
     })
     expect(partnersRequest).toHaveBeenCalledOnce()
