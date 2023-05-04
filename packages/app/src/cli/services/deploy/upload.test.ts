@@ -733,7 +733,6 @@ describe('uploadExtensionsBundle', () => {
         bundlePath: joinPath(tmpDir, 'test.zip'),
         extensions: [{uuid: '123', config: '{}', context: ''}],
         token: 'api-token',
-        label: 'Deployed with CLI',
       })
 
       // Then
@@ -772,7 +771,6 @@ describe('uploadExtensionsBundle', () => {
       bundlePath: undefined,
       extensions: [],
       token: 'api-token',
-      label: 'Deployed with CLI',
     })
 
     // Then
