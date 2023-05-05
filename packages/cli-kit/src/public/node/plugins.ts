@@ -1,5 +1,4 @@
 import {HookReturnPerTunnelPlugin} from './plugins/tunnel.js'
-import {err, Result} from './result.js'
 import {MonorailEventPublic, MonorailEventSensitive} from './monorail.js'
 import {getArrayContainsDuplicates, getArrayRejectingUndefined} from '../common/array.js'
 import {PickByPrefix} from '../common/ts/pick-by-prefix.js'
@@ -87,36 +86,6 @@ export async function getListOfTunnelPlugins(config: Config): Promise<{plugins: 
 
 export interface TunnelPluginError {
   provider: string
-  type: 'multiple-urls' | 'handled-error' | 'unknown' | 'no-provider'
+  type: 'multiple-providers' | 'handled-error' | 'unknown' | 'no-provider'
   message?: string
-}
-
-/**
- * Execute the 'tunnel_start' hook for the given provider.
- * Fails if there aren't plugins for that provider or if there are more than one.
- *
- * @param config - Oclif config used to execute hooks.
- * @param port - Port where the tunnel will be started.
- * @param provider - Selected provider, must be unique.
- * @returns Tunnel URL from the selected provider.
- */
-export async function runTunnelPlugin(
-  config: Config,
-  port: number,
-  provider: string,
-): Promise<Result<string, TunnelPluginError>> {
-  const hooks = await fanoutHooks(config, 'tunnel_start', {port, provider})
-  const urlResults = Object.values(hooks).filter(
-    (tunnelResponse) => !tunnelResponse?.isErr() || tunnelResponse.error.type !== 'invalid-provider',
-  )
-  if (urlResults.length > 1) return err({provider, type: 'multiple-urls'})
-  if (urlResults.length === 0 || !urlResults[0]) return err({provider, type: 'no-provider'})
-
-  return urlResults[0]
-    .map((data) => data.url)
-    .mapError((error) =>
-      error.type === 'unknown'
-        ? {provider, type: 'unknown', message: error.message}
-        : {provider, type: 'handled-error'},
-    )
 }
