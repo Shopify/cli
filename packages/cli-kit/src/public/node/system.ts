@@ -16,6 +16,7 @@ export interface ExecOptions {
   stdio?: 'inherit'
   input?: string
   signal?: AbortSignal
+  // Custom handler if process exits with a non-zero code
   externalErrorHandler?: (error: unknown) => Promise<void>
 }
 

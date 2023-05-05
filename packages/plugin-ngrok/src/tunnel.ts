@@ -1,12 +1,6 @@
 import {TUNNEL_PROVIDER} from './provider.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
-import {
-  startTunnel,
-  TunnelError,
-  TunnelErrorType,
-  TunnelStartReturn,
-  TunnelStatusType,
-} from '@shopify/cli-kit/node/plugins/tunnel'
+import {startTunnel, TunnelError, TunnelErrorType, TunnelStartReturn} from '@shopify/cli-kit/node/plugins/tunnel'
 import ngrok from '@shopify/ngrok'
 import {renderFatalError, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {err, ok} from '@shopify/cli-kit/node/result'
@@ -14,16 +8,6 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputToken, outputInfo, outputContent} from '@shopify/cli-kit/node/output'
 
 export default startTunnel({provider: TUNNEL_PROVIDER, action: hookStart})
-
-export const getCurrentStatus = async (): Promise<TunnelStatusType> => {
-  const tunnelList = await ngrok.getApi().listTunnels()
-  const tunnels = tunnelList.tunnels
-  if (tunnels && tunnels[0] && tunnels[0].public_url) {
-    return {status: 'connected', url: tunnels[0].public_url}
-  } else {
-    return {status: 'starting'}
-  }
-}
 
 // New entry point for hooks
 export async function hookStart(port: number): Promise<TunnelStartReturn> {
