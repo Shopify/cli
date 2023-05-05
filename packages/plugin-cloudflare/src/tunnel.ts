@@ -115,8 +115,9 @@ class TunnelClientInstance implements TunnelClient {
         if (resolved) throw processCrashed()
 
         outputDebug('Cloudflared tunnel crashed, restarting...')
+
         // wait 1 second before restarting the tunnel, to avoid rate limiting
-        if (!isUnitTest) await sleep(1)
+        if (!isUnitTest()) await sleep(1)
         this.tunnel(retries + 1)
       },
     })
