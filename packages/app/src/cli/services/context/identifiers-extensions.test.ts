@@ -41,6 +41,13 @@ const REGISTRATION_B = {
   type: 'SUBSCRIPTION_MANAGEMENT',
 }
 
+const FUNCTION_REGISTRATION_A = {
+  uuid: 'FUNCTION_A_UUID',
+  id: 'FUNCTION_A',
+  title: 'FUNCTION_A',
+  type: 'FUNCTION',
+}
+
 const EXTENSION_A: UIExtension = {
   idEnvironmentVariableName: 'EXTENSION_A_ID',
   localIdentifier: 'EXTENSION_A',
@@ -128,6 +135,33 @@ const EXTENSION_B: UIExtension = {
   hasExtensionPointTarget: (target: string) => true,
 }
 
+const FUNCTION_A: FunctionExtension = {
+  idEnvironmentVariableName: 'FUNCTION_A_ID',
+  localIdentifier: 'FUNCTION_A',
+  configurationPath: '/function/shopify.function.extension.toml',
+  directory: '/function',
+  type: 'product_discounts',
+  graphQLType: 'PRODUCT_DISCOUNTS',
+  configuration: {
+    name: '',
+    type: 'product_discounts',
+    description: 'Function',
+    build: {
+      command: 'make build',
+      path: 'dist/index.wasm',
+    },
+    configurationUi: false,
+    apiVersion: '2022-07',
+  },
+  buildCommand: 'make build',
+  buildWasmPath: '/function/dist/index.wasm',
+  inputQueryPath: '/function/input.graphql',
+  isJavaScript: false,
+  externalType: 'function',
+  usingExtensionsFramework: false,
+  publishURL: (_) => Promise.resolve(''),
+}
+
 const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): AppInterface => {
   return testApp({
     name: 'my-app',
@@ -138,7 +172,7 @@ const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExte
   })
 }
 
-const PARTNERS_APP: OrganizationApp = {
+const PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA: OrganizationApp = {
   id: 'app-id',
   organizationId: 'org-id',
   title: 'app-title',
@@ -148,15 +182,29 @@ const PARTNERS_APP: OrganizationApp = {
   apiSecretKeys: [],
 }
 
-const options = (uiExtensions: UIExtension[], identifiers: any = {}) => {
+const PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA: OrganizationApp = {
+  id: 'app-id',
+  organizationId: 'org-id',
+  title: 'app-title',
+  grantedScopes: [],
+  apiKey: 'api-key',
+  apiSecretKeys: [],
+}
+
+const options = (
+  uiExtensions: UIExtension[],
+  functionExtensions: FunctionExtension[] = [],
+  identifiers: any = {},
+  partnersApp: OrganizationApp = PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA,
+) => {
   return {
-    app: LOCAL_APP(uiExtensions),
+    app: LOCAL_APP(uiExtensions, functionExtensions),
     token: 'token',
     appId: 'appId',
     appName: 'appName',
     envIdentifiers: {extensions: identifiers},
     force: false,
-    partnersApp: PARTNERS_APP,
+    partnersApp,
   }
 }
 
@@ -402,6 +450,78 @@ describe('ensureExtensionsIds: matchmaking returns ok with nothing pending', () 
   })
 })
 
+describe('ensureExtensionsIds: excludes functions when unifiedAppDeployment beta is not set', () => {
+  test('succeeds and returns all identifiers', async () => {
+    // Given
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {EXTENSION_A: 'UUID_A'},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
+
+    // When
+    const got = await ensureExtensionsIds(
+      options([EXTENSION_A], [FUNCTION_A], {}, PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA),
+      [REGISTRATION_A, FUNCTION_REGISTRATION_A],
+    )
+
+    // Then
+    expect(automaticMatchmaking).toHaveBeenCalledWith(
+      [EXTENSION_A],
+      [REGISTRATION_A, FUNCTION_REGISTRATION_A],
+      {},
+      'uuid',
+    )
+    expect(got).toEqual(
+      ok({
+        extensions: {EXTENSION_A: 'UUID_A'},
+        extensionIds: {EXTENSION_A: 'A'},
+      }),
+    )
+  })
+})
+
+describe('ensureExtensionsIds: includes functions when unifiedAppDeployment beta is set', () => {
+  test('succeeds and returns all identifiers', async () => {
+    // Given
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {EXTENSION_A: 'UUID_A', FUNCTION_A: 'FUNCTION_A_UUID'},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
+
+    // When
+    const got = await ensureExtensionsIds(
+      options([EXTENSION_A], [FUNCTION_A], {}, PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA),
+      [REGISTRATION_A, FUNCTION_REGISTRATION_A],
+    )
+
+    // Then
+    expect(automaticMatchmaking).toHaveBeenCalledWith(
+      [EXTENSION_A, FUNCTION_A],
+      [REGISTRATION_A, FUNCTION_REGISTRATION_A],
+      {},
+      'uuid',
+    )
+    expect(got).toEqual(
+      ok({
+        extensions: {EXTENSION_A: 'UUID_A', FUNCTION_A: 'FUNCTION_A_UUID'},
+        extensionIds: {EXTENSION_A: 'A', FUNCTION_A: 'FUNCTION_A'},
+      }),
+    )
+  })
+})
+
 describe('ensureExtensionsIds: asks user to confirm deploy', () => {
   test('shows confirmation prompt', async () => {
     // Given
@@ -430,7 +550,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
         onlyRemote: [],
         toCreate: [],
       },
-      PARTNERS_APP,
+      PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA,
     )
   })
 

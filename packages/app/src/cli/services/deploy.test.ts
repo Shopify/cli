@@ -134,6 +134,7 @@ describe('deploy', () => {
           entrySourceFilePath: functionExtension.entrySourceFilePath,
           idEnvironmentVariableName: functionExtension.idEnvironmentVariableName,
           localIdentifier: functionExtension.localIdentifier,
+          _usingExtensionsFramework: false,
         },
       ],
       {
@@ -171,6 +172,7 @@ describe('deploy', () => {
           entrySourceFilePath: functionExtension.entrySourceFilePath,
           idEnvironmentVariableName: functionExtension.idEnvironmentVariableName,
           localIdentifier: functionExtension.localIdentifier,
+          _usingExtensionsFramework: false,
         },
       ],
       {

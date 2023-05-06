@@ -63,6 +63,7 @@ describe('uploadFunctionExtensions', () => {
       localIdentifier: 'my-function',
       type: 'order_discounts',
       graphQLType: 'order_discounts',
+      usingExtensionsFramework: false,
     }
     token = 'token'
     identifiers = {
