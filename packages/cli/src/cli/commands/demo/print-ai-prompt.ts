@@ -4,8 +4,8 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
-export default class PrintGptPrompt extends Command {
-  static description = 'Prints the prompts for ChatGPT-4 to generate a demo'
+export default class PrintAIPrompt extends Command {
+  static description = 'Prints the prompts for a chat-enabled LLM to generate a demo'
   static hidden = true
 
   async run(): Promise<void> {
