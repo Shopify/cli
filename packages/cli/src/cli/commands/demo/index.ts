@@ -9,7 +9,7 @@ export default class Demo extends Command {
   static hidden = true
 
   static flags = {
-    path: Flags.string({
+    file: Flags.string({
       hidden: false,
       description: 'The path to the design file.',
       env: 'SHOPIFY_FLAG_PATH',
@@ -20,7 +20,7 @@ export default class Demo extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Demo)
-    const contents = await readFile(flags.path)
+    const contents = await readFile(flags.file)
     const design = JSON.parse(contents)
     await demo(design)
   }

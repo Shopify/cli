@@ -24,7 +24,7 @@ export default class GenerateFile extends Command {
       parse: async (input) => resolvePath(input),
       default: async () => cwd(),
     }),
-    filename: Flags.string({
+    file: Flags.string({
       hidden: false,
       description: 'The name of the demo file.',
       env: 'SHOPIFY_FLAG_FILENAME',
@@ -41,7 +41,7 @@ export default class GenerateFile extends Command {
   async run(): Promise<void> {
     const {flags} = await this.parse(GenerateFile)
     await mkdir(flags.path)
-    const demoFilePath = joinPath(flags.path, flags.filename)
+    const demoFilePath = joinPath(flags.path, flags.file)
     if (await fileExists(demoFilePath)) {
       throw new AbortError(`The file ${demoFilePath} already exists.`)
     }
