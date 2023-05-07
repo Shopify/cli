@@ -93,8 +93,8 @@
           "multiple": false,
           "default": "."
         },
-        "filename": {
-          "name": "filename",
+        "file": {
+          "name": "file",
           "type": "option",
           "description": "The name of the demo file.",
           "hidden": false,
@@ -114,8 +114,8 @@
       "hidden": true,
       "aliases": [],
       "flags": {
-        "path": {
-          "name": "path",
+        "file": {
+          "name": "file",
           "type": "option",
           "description": "The path to the design file.",
           "hidden": false,
@@ -125,9 +125,9 @@
       },
       "args": {}
     },
-    "demo:print-gpt-prompt": {
-      "id": "demo:print-gpt-prompt",
-      "description": "Prints the prompts for ChatGPT-4 to generate a demo",
+    "demo:print-ai-prompt": {
+      "id": "demo:print-ai-prompt",
+      "description": "Prints the prompts for a chat-enabled LLM to generate a demo",
       "strict": true,
       "pluginName": "@shopify/cli",
       "pluginAlias": "@shopify/cli",
