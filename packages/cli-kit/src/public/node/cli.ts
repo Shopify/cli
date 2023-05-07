@@ -61,8 +61,8 @@ export async function runCLI(options: RunCLIOptions): Promise<void> {
 
   run(undefined, options.moduleURL)
     .then(() => flush())
+    .then(printEventsJson)
     .catch(errorHandler)
-    .finally(printEventsJson)
 }
 
 /**
