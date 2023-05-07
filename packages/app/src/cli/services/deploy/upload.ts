@@ -231,7 +231,7 @@ async function uploadFunctionExtension(
   extension: FunctionExtension,
   options: UploadFunctionExtensionOptions,
 ): Promise<string> {
-  const url = await uploadWasmBlob(extension, options.apiKey, options.token)
+  const {url} = await uploadWasmBlob(extension, options.apiKey, options.token)
 
   let inputQuery: string | undefined
   if (await fileExists(extension.inputQueryPath)) {
@@ -273,8 +273,12 @@ ${outputToken.json(userErrors)}
   return res.data.functionSet.function?.id as string
 }
 
-async function uploadWasmBlob(extension: FunctionExtension, apiKey: string, token: string): Promise<string> {
-  const {url, headers, maxSize} = await getFunctionExtensionUploadURL({apiKey, token})
+export async function uploadWasmBlob(
+  extension: FunctionExtension,
+  apiKey: string,
+  token: string,
+): Promise<{url: string; moduleId: string}> {
+  const {url, moduleId, headers, maxSize} = await getFunctionExtensionUploadURL({apiKey, token})
   headers['Content-Type'] = 'application/wasm'
 
   const functionContent = await readFile(extension.buildWasmPath, {})
@@ -282,7 +286,7 @@ async function uploadWasmBlob(extension: FunctionExtension, apiKey: string, toke
   const resBody = res.body?.read()?.toString() || ''
 
   if (res.status === 200) {
-    return url
+    return {url, moduleId}
   } else if (res.status === 400 && resBody.includes('EntityTooLarge')) {
     const errorMessage = outputContent`The size of the Wasm binary file for Function ${extension.localIdentifier} is too large. It must be less than ${maxSize}.`
     throw new AbortError(errorMessage)
@@ -304,6 +308,7 @@ interface GetFunctionExtensionUploadURLOptions {
 
 interface GetFunctionExtensionUploadURLOutput {
   url: string
+  moduleId: string
   maxSize: string
   headers: {[key: string]: string}
 }
@@ -317,4 +322,34 @@ async function getFunctionExtensionUploadURL(
     options.token,
   )
   return res.data.uploadUrlGenerate
+}
+
+export async function functionConfiguration(extension: FunctionExtension, moduleId: string): Promise<object> {
+  let inputQuery: string | undefined
+  if (await fileExists(extension.inputQueryPath)) {
+    inputQuery = await readFile(extension.inputQueryPath)
+  }
+
+  return {
+    title: extension.configuration.name,
+    module_id: moduleId,
+    description: extension.configuration.description,
+    api_type: extension.configuration.type,
+    api_version: extension.configuration.apiVersion,
+    input_query: inputQuery,
+    input_query_variables: extension.configuration.input?.variables
+      ? {
+          single_json_metafield: extension.configuration.input.variables,
+        }
+      : undefined,
+    ui: extension.configuration.ui?.paths
+      ? {
+          app_bridge: {
+            details_path: extension.configuration.ui.paths.details,
+            create_path: extension.configuration.ui.paths.create,
+          },
+        }
+      : undefined,
+    enable_creation_ui: extension.configuration.ui?.enable_create ?? true,
+  }
 }

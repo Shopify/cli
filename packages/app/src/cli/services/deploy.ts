@@ -1,9 +1,11 @@
 /* eslint-disable require-atomic-updates */
 import {
   UploadExtensionValidationError,
+  uploadWasmBlob,
   uploadFunctionExtensions,
   uploadThemeExtensions,
   uploadExtensionsBundle,
+  functionConfiguration,
 } from './deploy/upload.js'
 
 import {ensureDeployContext} from './context.js'
@@ -104,6 +106,20 @@ export async function deploy(options: DeployOptions) {
         {
           title: partnersApp.betas?.unifiedAppDeployment ? 'Creating deployment' : 'Pushing your code to Shopify',
           task: async () => {
+            if (partnersApp.betas?.unifiedAppDeployment) {
+              const functionExtensions = await Promise.all(
+                options.app.extensions.function.map(async (extension) => {
+                  const {moduleId} = await uploadWasmBlob(extension, identifiers.app, token)
+                  return {
+                    uuid: identifiers.extensions[extension.localIdentifier]!,
+                    config: JSON.stringify(await functionConfiguration(extension, moduleId)),
+                    context: '',
+                  }
+                }),
+              )
+              extensions.push(...functionExtensions)
+            }
+
             if (bundle || partnersApp.betas?.unifiedAppDeployment) {
               ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
                 apiKey,
@@ -117,7 +133,10 @@ export async function deploy(options: DeployOptions) {
               await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
             }
 
-            identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
+            if (!partnersApp.betas?.unifiedAppDeployment) {
+              identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
+            }
+
             app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
             registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
           },
