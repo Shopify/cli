@@ -14,9 +14,9 @@ on:
         default: '18.7.0'
         type: choice
         options:
-          - 14.20.0
           - 16.17.0
           - 18.7.0
+          - 20.2.0
       os:
         description: 'Operating system'
         required: true
@@ -50,7 +50,7 @@ env:
   SHOPIFY_CONFIG: debug
   RUBY_VERSION: '3.1.2'
   BUNDLER_VERSION: '2.3.18'
-  PNPM_VERSION: '7.18.1'
+  PNPM_VERSION: '8.4.0'
   BUNDLE_GEMFILE: ${{ github.workspace }}/packages/cli-kit/assets/cli-ruby/Gemfile
   BUNDLE_WITHOUT: 'test:development'
 
@@ -63,7 +63,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['14.20.0', '16.17.0', '18.7.0']
+        node: ['16.17.0', '18.7.0', '20.2.0']
     steps:
       - uses: actions/checkout@v3
         name: Checkout [${{ github.ref_name }}]
@@ -179,7 +179,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['14.20.0', '16.17.0', '18.7.0']
+        node: ['16.17.0', '18.7.0', '20.2.0']
     steps:
       - uses: actions/checkout@v3
         with:
