@@ -1,10 +1,15 @@
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
-const links = {
-  npm: 'https://docs.npmjs.com/cli/v7/using-npm/workspaces',
-  yarn: 'https://classic.yarnpkg.com/lang/en/docs/workspaces/',
-  pnpm: 'https://pnpm.io/workspaces',
+function link(packageManager: PackageManager) {
+  switch (packageManager) {
+    case 'npm':
+      return 'https://docs.npmjs.com/cli/v7/using-npm/workspaces'
+    case 'yarn':
+      return 'https://classic.yarnpkg.com/lang/en/docs/workspaces/'
+    case 'pnpm':
+      return 'https://pnpm.io/workspaces'
+  }
 }
 
 export function showWorkspaceWarning(packageManager: PackageManager) {
@@ -18,7 +23,7 @@ export function showWorkspaceWarning(packageManager: PackageManager) {
       [
         {
           link: {
-            url: links[packageManager],
+            url: link(packageManager),
             label: `${packageManager} workspaces`,
           },
         },
