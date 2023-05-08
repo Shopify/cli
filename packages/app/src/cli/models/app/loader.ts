@@ -106,10 +106,6 @@ class AppLoader {
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(configuration.webDirectories)
     const usesWorkspaces = await appUsesWorkspaces(this.appDirectory)
 
-    if (!usesWorkspaces) {
-      showWorkspaceWarning(packageManager)
-    }
-
     const appClass = new App(
       name,
       'SHOPIFY_API_KEY',
@@ -134,6 +130,10 @@ class AppLoader {
       usedCustomLayoutForFunctionExtensions,
       usedCustomLayoutForThemeExtensions,
     })
+
+    if (!usesWorkspaces) {
+      showWorkspaceWarning(packageManager)
+    }
 
     return appClass
   }
