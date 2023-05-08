@@ -13,7 +13,7 @@ import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {downloadGitRepository, initializeGitRepository} from '@shopify/cli-kit/node/git'
-import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {username} from '@shopify/cli-kit/node/os'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -73,23 +73,6 @@ async function init(options: InitOptions) {
           const packageJSON = (await findUpAndReadPackageJson(templateScaffoldDir)).content
           packageJSON.name = hyphenizedName
           packageJSON.author = (await username()) ?? ''
-          packageJSON.private = true
-
-          switch (packageManager) {
-            case 'npm':
-            case 'yarn':
-              packageJSON.workspaces = ['web', 'web/frontend', 'extensions/*']
-              break
-            case 'pnpm':
-              await writeFile(
-                joinPath(templateScaffoldDir, 'pnpm-workspace.yaml'),
-                `packages:\n  - 'web'\n  - 'web/frontend'\n  - 'extensions/*'\n`,
-              )
-              // Ensure that the installation of dependencies doesn't fail when using
-              // pnpm due to missing peerDependencies.
-              await appendFile(joinPath(templateScaffoldDir, '.npmrc'), `auto-install-peers=true\n`)
-              break
-          }
 
           await updateCLIDependencies({packageJSON, local: options.local, directory: templateScaffoldDir})
           await writePackageJSON(templateScaffoldDir, packageJSON)
