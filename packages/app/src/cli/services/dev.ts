@@ -26,7 +26,6 @@ import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
-import {showWorkspaceWarning} from '../utilities/app/workspaces-warning.js'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -101,10 +100,6 @@ async function dev(options: DevOptions) {
 
   if (!options.skipDependenciesInstallation && !localApp.usesWorkspaces) {
     localApp = await installAppDependencies(localApp)
-  }
-
-  if (!localApp.usesWorkspaces) {
-    showWorkspaceWarning(localApp.packageManager)
   }
 
   const frontendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Frontend)

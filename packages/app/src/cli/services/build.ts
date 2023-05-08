@@ -2,7 +2,6 @@ import {buildThemeExtensions, buildFunctionExtension, buildUIExtensions} from '.
 import buildWeb from './web.js'
 import {installAppDependencies} from './dependencies.js'
 import {AppInterface, Web} from '../models/app/app.js'
-import {showWorkspaceWarning} from '../utilities/app/workspaces-warning.js'
 import {renderConcurrent, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
@@ -16,10 +15,6 @@ interface BuildOptions {
 async function build(options: BuildOptions) {
   if (!options.skipDependenciesInstallation && !options.app.usesWorkspaces) {
     await installAppDependencies(options.app)
-  }
-
-  if (!options.app.usesWorkspaces) {
-    showWorkspaceWarning(options.app.packageManager)
   }
 
   const env: {SHOPIFY_API_KEY?: string} = {}
