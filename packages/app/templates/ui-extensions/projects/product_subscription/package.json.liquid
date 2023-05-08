@@ -4,7 +4,11 @@
   "main": "dist/main.js",
   "license": "UNLICENSED",
   "dependencies": {
-    "@shopify/admin-ui-extensions-react": "^1.0.1",
-    "react": "^17.0.0"
+    {%- if flavor contains "react" -%}
+      "@shopify/admin-ui-extensions-react": "^1.0.1",
+      "react": "^17.0.0"
+    {%- else -%}
+      "@shopify/admin-ui-extensions": "^1.0.1"
+    {%- endif -%}
   }
 }

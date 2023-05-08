@@ -4,7 +4,11 @@
   "main": "dist/main.js",
   "license": "UNLICENSED",
   "dependencies": {
-    "@shopify/post-purchase-ui-extensions-react": "^0.13.2",
-    "react": "^17.0.0"
+    {%- if flavor contains "react" -%}
+      "@shopify/post-purchase-ui-extensions-react": "^0.13.2",
+      "react": "^17.0.0"
+    {%- else -%}
+    "@shopify/post-purchase-ui-extensions": "^0.13.2"
+    {%- endif -%}
   }
 }
