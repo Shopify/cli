@@ -9,47 +9,47 @@ import {chmodSync, existsSync, mkdirSync, renameSync, unlinkSync, createWriteStr
 import fetch from 'node-fetch'
 import semver from 'semver'
 
-const CLOUDFLARE_VERSION = '2023.3.1'
+const CLOUDFLARE_VERSION = '2023.4.2'
 const CLOUDFLARE_REPO = `https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARE_VERSION}/`
 
 const LINUX_URL = {
   arm64: {
     filename: 'cloudflared-linux-arm64',
-    checksum: '1989edb5244fcbb8420a94655b2193f9c103758418e7ddaea7b7a63852993135',
+    checksum: 'e453b576d0db95e4e9b7f511bb379f6b0b0a73924da678655875c2c295b95627',
   },
   arm: {
     filename: 'cloudflared-linux-arm',
-    checksum: '6fb2ec9241e7e6927b9ceddbbc2442714e0245f25882fadb5ce073c672e2d7c5',
+    checksum: 'f3c4698aca3fff4f94a455cbf1f9c0e1cd81498e67d0decb73d63b6a41337f43',
   },
   x64: {
     filename: 'cloudflared-linux-amd64',
-    checksum: '72a750d7a043b2ae291470710fafa816ab104a60120ec6721d7c1fbbf24c8558',
+    checksum: '7e48b3d91f44badc1b4c2bd446ef1c4ae4c824840d594bd353cf20cba5fd1cef',
   },
   ia32: {
     filename: 'cloudflared-linux-386',
-    checksum: '5f361084c2c0ceba4b5287566f192069d40da8c7ae74ce14d6902d65607bbe92',
+    checksum: '576955db7b44e1d997a22bb07eebb58001bd56956351142da504d80c07663153',
   },
 }
 
 const MACOS_URL = {
   arm64: {
     filename: 'cloudflared-darwin-amd64.tgz',
-    checksum: '90b515a036306e6ddd15e8558e029fef879cad88a936f9409c546de50cd7dd7a',
+    checksum: '1154f3b2c31f4727c076c3e08024887be0e0a0b68a89e4f88f286f6f6196ac74',
   },
   x64: {
     filename: 'cloudflared-darwin-amd64.tgz',
-    checksum: '90b515a036306e6ddd15e8558e029fef879cad88a936f9409c546de50cd7dd7a',
+    checksum: '1154f3b2c31f4727c076c3e08024887be0e0a0b68a89e4f88f286f6f6196ac74',
   },
 }
 
 const WINDOWS_URL = {
   x64: {
     filename: 'cloudflared-windows-amd64.exe',
-    checksum: 'bb67c7623ba92fe64ffd9816b8d5b3b1ea3013960a30bd4cf6e295b3eb5b1bad',
+    checksum: '53f8adbd76c0eb16f5e43cadde422474d8a06f9c8f959389c1930042ad8beaa5',
   },
   ia32: {
     filename: 'cloudflared-windows-386.exe',
-    checksum: 'd2513e58bb03ccc83affde685c6ef987924c37ce6707d8e9857e2524b0d7e90f',
+    checksum: 'c2cfd23fdc6c0e1b1ffa0e545cbe556f18d11b362b4a89ba0713f6ab01c4827f',
   },
 }
 

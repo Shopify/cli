@@ -498,6 +498,7 @@ function argumentsToAddDependenciesWithNPM(dependencies: string[], type: Depende
       command.push('--save-prod')
       break
   }
+
   return command
 }
 
@@ -521,6 +522,7 @@ function argumentsToAddDependenciesWithYarn(dependencies: string[], type: Depend
       command.push('--prod')
       break
   }
+
   return command
 }
 
@@ -544,6 +546,7 @@ function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: Depend
       command.push('--save-prod')
       break
   }
+
   return command
 }
 

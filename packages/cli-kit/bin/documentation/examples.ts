@@ -94,7 +94,7 @@ export const examples: {[key in string]: Example} = {
       const stdout = new Stdout({columns: TERMINAL_WIDTH})
 
       return renderInfo({
-        headline: 'CLI update available',
+        headline: 'CLI update available.',
         body: ['Run', {command: 'npm run shopify upgrade'}, {char: '.'}],
         renderOptions: {
           stdout: stdout as any,

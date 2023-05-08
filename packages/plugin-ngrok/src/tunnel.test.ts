@@ -34,10 +34,11 @@ describe('start', () => {
   test('creates a new tunnel on the given port', async () => {
     // When
     const got = await hookStart(port)
+    const status = got.valueOrBug().getTunnelStatus()
 
     // Then
     expect(ngrok.connect).toHaveBeenCalledWith({proto: 'http', addr: 1234})
-    expect(got.valueOrBug()).toEqual({url: 'https://fake.ngrok.io'})
+    expect(status).toEqual({status: 'connected', url: 'https://fake.ngrok.io'})
   })
 
   test('asks for the token and authenticates if the configuration file is wrong', async () => {

@@ -1,5 +1,16 @@
 # @shopify/plugin-did-you-mean
 
+## 3.46.0-pre.3
+
+### Patch Changes
+
+- Updated dependencies [d9ef6c3f6]
+- Updated dependencies [cc37858fb]
+- Updated dependencies [1c8afb7f4]
+- Updated dependencies [6663b3a8f]
+- Updated dependencies [069e38ecf]
+  - @shopify/cli-kit@3.46.0-pre.3
+
 ## 3.46.0-pre.2
 
 ### Patch Changes

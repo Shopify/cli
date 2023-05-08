@@ -1,5 +1,12 @@
 import {ensureDevContext} from './context.js'
-import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
+import {
+  generateFrontendURL,
+  generatePartnersURLs,
+  getURLs,
+  shouldOrPromptUpdateURLs,
+  startTunnelPlugin,
+  updateURLs,
+} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
 import {outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
@@ -52,7 +59,7 @@ export interface DevOptions {
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
   tunnelUrl?: string
-  tunnelProvider?: string
+  tunnelProvider: string
   noTunnel: boolean
   theme?: string
   themeExtensionPort?: number
@@ -68,6 +75,11 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
+  // Be optimistic about tunnel creation and do it as early as possible
+  const tunnelPort = await getAvailableTCPPort()
+
+  let tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, options.tunnelProvider)
+
   const token = await ensureAuthenticatedPartners()
   const {
     storeFqdn,
@@ -76,6 +88,12 @@ async function dev(options: DevOptions) {
     updateURLs: cachedUpdateURLs,
     useCloudflareTunnels,
   } = await ensureDevContext(options, token)
+
+  if (!useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
+    // If we can't use cloudflare, stop the previous optimistic tunnel and start a new one
+    tunnelClient.stopTunnel()
+    tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, 'ngrok')
+  }
 
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
@@ -103,7 +121,7 @@ async function dev(options: DevOptions) {
     generateFrontendURL({
       ...options,
       app: localApp,
-      useCloudflareTunnels,
+      tunnelClient,
     }),
     getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
     getURLs(apiKey, token),

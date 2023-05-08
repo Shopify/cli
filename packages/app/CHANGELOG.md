@@ -1,5 +1,20 @@
 # @shopify/app
 
+## 3.46.0-pre.3
+
+### Patch Changes
+
+- 6200c45d9: Fix issue that retuns an error when you deploy an app only with function extensions
+- 069e38ecf: Fix graphql query for products to only retrieve published products
+- Updated dependencies [d9ef6c3f6]
+- Updated dependencies [cc37858fb]
+- Updated dependencies [1c8afb7f4]
+- Updated dependencies [6663b3a8f]
+- Updated dependencies [069e38ecf]
+  - @shopify/cli-kit@3.46.0-pre.3
+  - @shopify/plugin-cloudflare@3.46.0-pre.3
+  - @shopify/plugin-ngrok@3.46.0-pre.3
+
 ## 3.46.0-pre.2
 
 ### Minor Changes
