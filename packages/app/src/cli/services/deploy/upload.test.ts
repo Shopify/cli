@@ -1041,7 +1041,7 @@ describe('deploymentErrorsToCustomSections', () => {
       {
         title: 'admin-link',
         body: [
-          '1 validation error found in your extension. Fix these issues in the',
+          '1 error found in your extension. Fix these issues in the',
           {
             link: {
               url: 'https://partners.shopify.com/1/apps/1/extensions/admin_links/1',

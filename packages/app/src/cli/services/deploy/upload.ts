@@ -167,7 +167,7 @@ export async function uploadExtensionsBundle(
   return {validationErrors, deploymentId: result.deploymentCreate.deployment.id}
 }
 
-const VALIDATION_ERRORS_TITLE = '\nValidation errors'
+const VALIDATION_ERRORS_TITLE = '\nValidation errors found in your extension toml file'
 const GENERIC_ERRORS_TITLE = '\n'
 
 export function deploymentErrorsToCustomSections(
@@ -183,7 +183,12 @@ export function deploymentErrorsToCustomSections(
 
   const [cliErrors, partnerErrors] = partition(errors, (error) => isCliError(error, extensionIds))
 
-  const cliErrorsSections = cliErrors.reduce((sections, error) => {
+  const customSections = [...cliErrorsSections(cliErrors), ...partnersErrorsSections(partnerErrors)]
+  return customSections
+}
+
+function cliErrorsSections(errors: CreateDeploymentSchema['deploymentCreate']['userErrors']) {
+  return errors.reduce((sections, error) => {
     const errorMessage = error.field.join('.') === 'base' ? error.message : `${error.field}: ${error.message}`
 
     const extensionIdentifier = error.details.find(
@@ -240,8 +245,10 @@ export function deploymentErrorsToCustomSections(
 
     return sections
   }, [] as ErrorCustomSection[])
+}
 
-  const partnersErrorsSections = partnerErrors
+function partnersErrorsSections(errors: CreateDeploymentSchema['deploymentCreate']['userErrors']) {
+  return errors
     .reduce((sections, error) => {
       const extensionIdentifier = error.details.find(
         (detail) => typeof detail.extension_title !== 'undefined',
@@ -275,9 +282,6 @@ export function deploymentErrorsToCustomSections(
         'and try deploying again.',
       ],
     })) as ErrorCustomSection[]
-
-  const customSections = [...cliErrorsSections, ...partnersErrorsSections]
-  return customSections
 }
 
 /**
