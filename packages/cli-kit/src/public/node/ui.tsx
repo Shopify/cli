@@ -17,7 +17,7 @@ import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/Text
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
 import {InlineToken, LinkToken, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
-import {recordUIEvent, resetSleep} from '../../private/node/demo-recorder.js'
+import {recordUIEvent, resetRecordedSleep} from '../../private/node/demo-recorder.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
 
@@ -266,7 +266,7 @@ export function renderSelectPrompt<T>({
       exitOnCtrlC: false,
     })
       .catch(reject)
-      .finally(resetSleep)
+      .finally(resetRecordedSleep)
   })
 }
 
@@ -385,7 +385,7 @@ export function renderAutocompletePrompt<T>({renderOptions, ...props}: RenderAut
       exitOnCtrlC: false,
     })
       .catch(reject)
-      .finally(resetSleep)
+      .finally(resetRecordedSleep)
   })
 }
 
@@ -438,7 +438,7 @@ export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOpti
       ...renderOptions,
       exitOnCtrlC: false,
     })
-      .then(() => resetSleep())
+      .then(() => resetRecordedSleep())
       .catch(reject)
   })
 }
@@ -466,7 +466,7 @@ export function renderTextPrompt({renderOptions, ...props}: RenderTextPromptOpti
       exitOnCtrlC: false,
     })
       .catch(reject)
-      .finally(resetSleep)
+      .finally(resetRecordedSleep)
   })
 }
 

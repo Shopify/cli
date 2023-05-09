@@ -2,7 +2,7 @@ import {OutputProcess} from '../../../../public/node/output.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {AbortController} from '../../../../public/node/abort.js'
 import {handleCtrlC} from '../../ui.js'
-import {addOrUpdateConcurrentOutput} from '../../demo-recorder.js'
+import {addOrUpdateConcurrentUIEventOutput} from '../../demo-recorder.js'
 import {treeKill} from '../../tree-kill.js'
 import React, {FunctionComponent, useState} from 'react'
 import {Box, Key, Static, Text, useInput, TextProps, useStdin} from 'ink'
@@ -86,7 +86,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     return new Writable({
       write(chunk, _encoding, next) {
         const lines = stripAnsi(chunk.toString('utf8').replace(/(\n)$/, '')).split(/\n/)
-        addOrUpdateConcurrentOutput({prefix: process.prefix, index, output: lines.join('\n')}, {footer})
+        addOrUpdateConcurrentUIEventOutput({prefix: process.prefix, index, output: lines.join('\n')}, {footer})
 
         setProcessOutput((previousProcessOutput) => [
           ...previousProcessOutput,

@@ -170,7 +170,7 @@ export function recordUIEvent(event: Event) {
   _instance.addEvent(event)
 }
 
-export function resetSleep() {
+export function resetRecordedSleep() {
   ensureInstance()
   _instance.resetSleep()
 }
@@ -184,7 +184,7 @@ export function printEventsJson(): void {
   }
 }
 
-export function addOrUpdateConcurrentOutput(
+export function addOrUpdateConcurrentUIEventOutput(
   data: {
     prefix: string
     index: number
