@@ -177,9 +177,9 @@ export function deploymentErrorsToCustomSections(
     return Object.values(extensionIds).includes(errorExtensionId)
   }
 
-  const [cliErrors, partnerErrors] = partition(errors, (error) => isCliError(error, extensionIds))
+  const [cliErrors, partnersErrors] = partition(errors, (error) => isCliError(error, extensionIds))
 
-  const customSections = [...cliErrorsSections(cliErrors), ...partnersErrorsSections(partnerErrors)]
+  const customSections = [...cliErrorsSections(cliErrors), ...partnersErrorsSections(partnersErrors)]
   return customSections
 }
 
@@ -266,7 +266,7 @@ function partnersErrorsSections(errors: CreateDeploymentSchema['deploymentCreate
     }, [] as {title: string | undefined; errorCount: number}[])
     .map((section) => ({
       title: section.title,
-      body: `${section.errorCount} error${
+      body: `\n${section.errorCount} error${
         section.errorCount > 1 ? 's' : ''
       } found in your extension. Fix these issues in the Partner Dashboard and try deploying again.`,
     })) as ErrorCustomSection[]
