@@ -439,25 +439,27 @@ export function devNonPreviewableExtensionTarget({
     prefix: 'extensions',
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
       await Promise.all(
-        extensions.map((extension) => {
-          const registrationId = remoteExtensions[extension.localIdentifier]
-          if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
+        extensions
+          .map((extension) => {
+            const registrationId = remoteExtensions[extension.localIdentifier]
+            if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
 
-          return Promise.all([
-            setupNonPreviewableExtensionBundler({
-              extension,
-              app,
-              url,
-              token,
-              apiKey,
-              registrationId,
-              stderr,
-              stdout,
-              signal,
-            }),
-            setupConfigWatcher({extension, token, apiKey, registrationId, stdout, stderr, signal, specifications}),
-          ])
-        }),
+            return [
+              setupNonPreviewableExtensionBundler({
+                extension,
+                app,
+                url,
+                token,
+                apiKey,
+                registrationId,
+                stderr,
+                stdout,
+                signal,
+              }),
+              setupConfigWatcher({extension, token, apiKey, registrationId, stdout, stderr, signal, specifications}),
+            ]
+          })
+          .flat(),
       )
     },
   }
