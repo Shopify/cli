@@ -265,18 +265,9 @@ function partnersErrorsSections(errors: CreateDeploymentSchema['deploymentCreate
     }, [] as {title: string | undefined; errorCount: number}[])
     .map((section) => ({
       title: section.title,
-      body: [
-        `${section.errorCount} error${
-          section.errorCount > 1 ? 's' : ''
-        } found in your extension. Fix these issues in the`,
-        {
-          link: {
-            url: 'https://partners.shopify.com/1/apps/1/extensions/admin_links/1',
-            label: 'Partner Dashboard',
-          },
-        },
-        'and try deploying again.',
-      ],
+      body: `${section.errorCount} error${
+        section.errorCount > 1 ? 's' : ''
+      } found in your extension. Fix these issues in the Partner Dashboard and try deploying again.`,
     })) as ErrorCustomSection[]
 }
 

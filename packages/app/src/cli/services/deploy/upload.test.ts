@@ -867,7 +867,6 @@ describe('uploadExtensionsBundle', () => {
             {uuid: '456', config: '{}', context: ''},
           ],
           token: 'api-token',
-          label: 'Deployed with CLI',
           extensionIds: {
             'amortizable-marketplace-ext': '123',
             'amortizable-marketplace-ext-2': '456',
@@ -914,16 +913,7 @@ describe('uploadExtensionsBundle', () => {
           },
           {
             title: 'admin-link',
-            body: [
-              '1 validation error found in your extension. Fix these issues in the',
-              {
-                link: {
-                  url: 'https://partners.shopify.com/1/apps/1/extensions/admin_links/1',
-                  label: 'Partner Dashboard',
-                },
-              },
-              'and try deploying again.',
-            ],
+            body: '1 validation error found in your extension. Fix these issues in the Partner Dashboard and try deploying again.',
           },
         ])
       }
@@ -1036,16 +1026,7 @@ describe('deploymentErrorsToCustomSections', () => {
       },
       {
         title: 'admin-link',
-        body: [
-          '1 error found in your extension. Fix these issues in the',
-          {
-            link: {
-              url: 'https://partners.shopify.com/1/apps/1/extensions/admin_links/1',
-              label: 'Partner Dashboard',
-            },
-          },
-          'and try deploying again.',
-        ],
+        body: '1 validation error found in your extension. Fix these issues in the Partner Dashboard and try deploying again.',
       },
     ])
   })
