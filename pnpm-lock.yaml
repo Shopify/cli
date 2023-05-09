@@ -169,7 +169,7 @@ importers:
       '@shopify/plugin-did-you-mean': 3.46.0-pre.3
       '@shopify/theme': 3.46.0-pre.3
       '@types/node': 14.18.36
-      '@vitest/coverage-istanbul': 0.29.8
+      '@vitest/coverage-istanbul': 0.28.5
       vite: 2.9.12
       vitest: ^0.28.5
     dependencies:
@@ -183,7 +183,7 @@ importers:
       '@shopify/app': link:../app
       '@shopify/theme': link:../theme
       '@types/node': 14.18.36
-      '@vitest/coverage-istanbul': 0.29.8_vitest@0.28.5
+      '@vitest/coverage-istanbul': 0.28.5
       vite: 2.9.12
       vitest: 0.28.5
 
@@ -202,7 +202,7 @@ importers:
       '@types/node': 14.18.36
       '@types/react': 17.0.2
       '@types/semver': ^7.3.13
-      '@vitest/coverage-istanbul': 0.29.8
+      '@vitest/coverage-istanbul': 0.28.5
       abort-controller: 3.0.0
       ansi-escapes: 6.0.0
       archiver: 5.3.1
@@ -330,7 +330,7 @@ importers:
       '@types/node': 14.18.36
       '@types/react': 17.0.2
       '@types/semver': 7.5.0
-      '@vitest/coverage-istanbul': 0.29.8_vitest@0.28.5
+      '@vitest/coverage-istanbul': 0.28.5
       node-stream-zip: 1.15.0
       ts-morph: 17.0.1
       typedoc: 0.23.28_typescript@4.9.5
@@ -4116,10 +4116,8 @@ packages:
       - supports-color
     dev: false
 
-  /@vitest/coverage-istanbul/0.29.8_vitest@0.28.5:
-    resolution: {integrity: sha512-ZCBDQFM8Quu5yQN2BNhTRL2XHxzghE1aH2pUctwrCDcafabpLE2CV8KaYHg1bBVNIKGtyLqQagv4E455uAn6dw==}
-    peerDependencies:
-      vitest: '>=0.28.0 <1'
+  /@vitest/coverage-istanbul/0.28.5:
+    resolution: {integrity: sha512-na1pkr3AVrdFflzuBXsBh1MvBfhSMrv4nfd4N8rm0HEJlvlbQc+GiqNwtwzfO8TPsXxcjNphSIMp5wvCy+0xrQ==}
     dependencies:
       istanbul-lib-coverage: 3.2.0
       istanbul-lib-instrument: 5.2.1
@@ -4129,6 +4127,14 @@ packages:
       test-exclude: 6.0.0
       vitest: 0.28.5
     transitivePeerDependencies:
+      - '@edge-runtime/vm'
+      - '@vitest/browser'
+      - '@vitest/ui'
+      - happy-dom
+      - jsdom
+      - less
+      - sass
+      - stylus
       - supports-color
     dev: true
 
@@ -7264,7 +7270,7 @@ packages:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 3.0.5
+      minimatch: 3.1.2
       once: 1.4.0
       path-is-absolute: 1.0.1
     dev: true

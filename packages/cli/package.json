@@ -104,7 +104,7 @@
     "@shopify/app": "3.46.0-pre.3",
     "@shopify/theme": "3.46.0-pre.3",
     "@types/node": "14.18.36",
-    "@vitest/coverage-istanbul": "0.29.8",
+    "@vitest/coverage-istanbul": "0.28.5",
     "vite": "^2.9.13",
     "vitest": "^0.28.5"
   },
