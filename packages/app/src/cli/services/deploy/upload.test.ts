@@ -801,10 +801,23 @@ describe('uploadExtensionsBundle', () => {
             userErrors: [
               {
                 message: 'Missing expected key(s).',
+                field: ['base'],
                 category: 'invalid',
                 details: [
                   {
                     extension_id: 123,
+                    extension_title: 'amortizable-marketplace-ext',
+                  },
+                ],
+              },
+              {
+                message: 'is blank',
+                field: ['title'],
+                category: 'invalid',
+                details: [
+                  {
+                    extension_id: 456,
+                    extension_title: 'amortizable-marketplace-ext-2',
                   },
                 ],
               },
@@ -814,6 +827,7 @@ describe('uploadExtensionsBundle', () => {
                 details: [
                   {
                     extension_id: 123,
+                    extension_title: 'amortizable-marketplace-ext',
                   },
                 ],
               },
@@ -823,6 +837,18 @@ describe('uploadExtensionsBundle', () => {
                 details: [
                   {
                     extension_id: 456,
+                    extension_title: 'amortizable-marketplace-ext-2',
+                  },
+                ],
+              },
+              {
+                message: 'is blank',
+                field: ['title'],
+                category: 'invalid',
+                details: [
+                  {
+                    extension_id: 999,
+                    extension_title: 'admin-link',
                   },
                 ],
               },
@@ -882,6 +908,25 @@ describe('uploadExtensionsBundle', () => {
                   items: ['Something was not found'],
                 },
               },
+              {
+                list: {
+                  title: '\nValidation errors found in your extension toml file',
+                  items: ['title: is blank'],
+                },
+              },
+            ],
+          },
+          {
+            title: 'admin-link',
+            body: [
+              '1 validation error found in your extension. Fix these issues in the',
+              {
+                link: {
+                  url: 'https://partners.shopify.com/1/apps/1/extensions/admin_links/1',
+                  label: 'Partner Dashboard',
+                },
+              },
+              'and try deploying again.',
             ],
           },
         ])
@@ -901,6 +946,7 @@ describe('deploymentErrorsToCustomSections', () => {
         details: [
           {
             extension_id: 123,
+            extension_title: 'amortizable-marketplace-ext',
           },
         ],
       },
@@ -911,6 +957,7 @@ describe('deploymentErrorsToCustomSections', () => {
         details: [
           {
             extension_id: 123,
+            extension_title: 'amortizable-marketplace-ext',
           },
         ],
       },
@@ -921,6 +968,29 @@ describe('deploymentErrorsToCustomSections', () => {
         details: [
           {
             extension_id: 456,
+            extension_title: 'amortizable-marketplace-ext-2',
+          },
+        ],
+      },
+      {
+        message: 'is blank',
+        field: ['title'],
+        category: 'invalid',
+        details: [
+          {
+            extension_id: 456,
+            extension_title: 'amortizable-marketplace-ext-2',
+          },
+        ],
+      },
+      {
+        message: 'is blank',
+        field: ['title'],
+        category: 'invalid',
+        details: [
+          {
+            extension_id: 999,
+            extension_title: 'admin-link',
           },
         ],
       },
@@ -960,6 +1030,25 @@ describe('deploymentErrorsToCustomSections', () => {
               items: ['Something was not found'],
             },
           },
+          {
+            list: {
+              title: '\nValidation errors found in your extension toml file',
+              items: ['title: is blank'],
+            },
+          },
+        ],
+      },
+      {
+        title: 'admin-link',
+        body: [
+          '1 validation error found in your extension. Fix these issues in the',
+          {
+            link: {
+              url: 'https://partners.shopify.com/1/apps/1/extensions/admin_links/1',
+              label: 'Partner Dashboard',
+            },
+          },
+          'and try deploying again.',
         ],
       },
     ])

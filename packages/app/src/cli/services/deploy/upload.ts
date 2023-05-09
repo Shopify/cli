@@ -33,7 +33,8 @@ import {fileExists, readFile, readFileSync} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {AlertCustomSection, ListToken} from '@shopify/cli-kit/node/ui'
+import {AlertCustomSection, ListToken, TokenItem} from '@shopify/cli-kit/node/ui'
+import {partition} from '@shopify/cli-kit/common/collection'
 
 interface DeployThemeExtensionOptions {
   /** The application API key */
@@ -103,7 +104,7 @@ export interface UploadExtensionValidationError {
   }[]
 }
 
-type ErrorSectionBody = ListToken[]
+type ErrorSectionBody = TokenItem
 interface ErrorCustomSection extends AlertCustomSection {
   body: ErrorSectionBody
 }
@@ -149,7 +150,10 @@ export async function uploadExtensionsBundle(
   const result: CreateDeploymentSchema = await partnersRequest(mutation, options.token, variables)
 
   if (result.deploymentCreate?.userErrors?.length > 0) {
-    const customSections: AlertCustomSection[] = deploymentErrorsToCustomSections(result.deploymentCreate.userErrors)
+    const customSections: AlertCustomSection[] = deploymentErrorsToCustomSections(
+      result.deploymentCreate.userErrors,
+      options.extensionIds,
+    )
 
     throw new AbortError('There has been an error creating your deployment.', null, [], customSections)
   }
@@ -168,8 +172,18 @@ const GENERIC_ERRORS_TITLE = '\n'
 
 export function deploymentErrorsToCustomSections(
   errors: CreateDeploymentSchema['deploymentCreate']['userErrors'],
+  extensionIds: IdentifiersExtensions,
 ): ErrorCustomSection[] {
-  return errors.reduce((sections, error) => {
+  const isCliError = (error: (typeof errors)[0], extensionIds: IdentifiersExtensions) => {
+    const errorExtensionId =
+      error.details?.find((detail) => typeof detail.extension_id !== 'undefined')?.extension_id.toString() ?? ''
+
+    return Object.values(extensionIds).includes(errorExtensionId)
+  }
+
+  const [cliErrors, partnerErrors] = partition(errors, (error) => isCliError(error, extensionIds))
+
+  const cliErrorsSections = cliErrors.reduce((sections, error) => {
     const errorMessage = error.field.join('.') === 'base' ? error.message : `${error.field}: ${error.message}`
 
     const extensionIdentifier = error.details.find(
@@ -179,15 +193,16 @@ export function deploymentErrorsToCustomSections(
     const existingSection = sections.find((section) => section.title === extensionIdentifier)
 
     if (existingSection) {
+      const sectionBody = existingSection.body as ListToken[]
       const errorsList =
         error.category === 'invalid'
-          ? existingSection.body.find((listToken) => listToken.list.title === VALIDATION_ERRORS_TITLE)
-          : existingSection.body.find((listToken) => listToken.list.title === GENERIC_ERRORS_TITLE)
+          ? sectionBody.find((listToken) => listToken.list.title === VALIDATION_ERRORS_TITLE)
+          : sectionBody.find((listToken) => listToken.list.title === GENERIC_ERRORS_TITLE)
 
       if (errorsList) {
         errorsList.list.items.push(errorMessage)
       } else {
-        existingSection.body.push({
+        sectionBody.push({
           list: {
             title: error.category === 'invalid' ? VALIDATION_ERRORS_TITLE : GENERIC_ERRORS_TITLE,
             items: [errorMessage],
@@ -210,7 +225,7 @@ export function deploymentErrorsToCustomSections(
 
     sections.forEach((section) => {
       // eslint-disable-next-line id-length
-      section.body.sort((a, b) => {
+      ;(section.body as ListToken[]).sort((a, b) => {
         if (a.list.title === VALIDATION_ERRORS_TITLE) {
           return 1
         }
@@ -225,6 +240,44 @@ export function deploymentErrorsToCustomSections(
 
     return sections
   }, [] as ErrorCustomSection[])
+
+  const partnersErrorsSections = partnerErrors
+    .reduce((sections, error) => {
+      const extensionIdentifier = error.details.find(
+        (detail) => typeof detail.extension_title !== 'undefined',
+      )?.extension_title
+
+      const existingSection = sections.find((section) => section.title === extensionIdentifier)
+
+      if (existingSection) {
+        existingSection.errorCount += 1
+      } else {
+        sections.push({
+          title: extensionIdentifier,
+          errorCount: 1,
+        })
+      }
+
+      return sections
+    }, [] as {title: string | undefined; errorCount: number}[])
+    .map((section) => ({
+      title: section.title,
+      body: [
+        `${section.errorCount} error${
+          section.errorCount > 1 ? 's' : ''
+        } found in your extension. Fix these issues in the`,
+        {
+          link: {
+            url: 'https://partners.shopify.com/1/apps/1/extensions/admin_links/1',
+            label: 'Partner Dashboard',
+          },
+        },
+        'and try deploying again.',
+      ],
+    })) as ErrorCustomSection[]
+
+  const customSections = [...cliErrorsSections, ...partnersErrorsSections]
+  return customSections
 }
 
 /**
