@@ -369,7 +369,7 @@ export function consoleWarn(message: string): void {
 }
 
 interface OutputWhereAppropriateOptions {
-  skipEvent?: boolean
+  skipUIEvent?: boolean
 }
 
 /**
@@ -384,7 +384,7 @@ export function outputWhereAppropriate(
   logLevel: LogLevel,
   logger: Logger,
   message: string,
-  options: OutputWhereAppropriateOptions = {skipEvent: false},
+  options: OutputWhereAppropriateOptions = {skipUIEvent: false},
 ): void {
   if (shouldOutput(logLevel)) {
     if (logger instanceof Writable) {
@@ -392,7 +392,7 @@ export function outputWhereAppropriate(
     } else {
       logger(message)
     }
-    if (!options?.skipEvent) recordUIEvent({type: 'output', properties: {content: message}})
+    if (!options?.skipUIEvent) recordUIEvent({type: 'output', properties: {content: message}})
   }
 }
 
