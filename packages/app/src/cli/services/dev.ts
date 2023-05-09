@@ -140,15 +140,6 @@ async function dev(options: DevOptions) {
   const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
   localApp.extensions.ui.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
 
-  const {extensionIds: remoteExtensions} = await ensureDeploymentIdsPresence({
-    app: localApp,
-    appId: apiKey,
-    appName: remoteApp.title,
-    force: true,
-    token,
-    envIdentifiers: prodEnvIdentifiers,
-  })
-
   const backendOptions = {
     apiKey,
     backendPort,
@@ -184,6 +175,15 @@ async function dev(options: DevOptions) {
   const additionalProcesses: OutputProcess[] = []
 
   if (nonPreviewableExtensions.length > 0) {
+    const {extensionIds: remoteExtensions} = await ensureDeploymentIdsPresence({
+      app: localApp,
+      appId: apiKey,
+      appName: remoteApp.title,
+      force: true,
+      token,
+      envIdentifiers: prodEnvIdentifiers,
+    })
+
     additionalProcesses.push(
       devNonPreviewableExtensionTarget({
         app: localApp,
