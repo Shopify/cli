@@ -820,6 +820,7 @@ describe('uploadExtensionsBundle', () => {
               {
                 message: 'Some other error',
                 category: 'unknown',
+                field: ['base'],
                 details: [
                   {
                     extension_id: 123,
@@ -830,6 +831,7 @@ describe('uploadExtensionsBundle', () => {
               {
                 message: 'Something was not found',
                 category: 'not_found',
+                field: ['base'],
                 details: [
                   {
                     extension_id: 456,
@@ -913,7 +915,7 @@ describe('uploadExtensionsBundle', () => {
           },
           {
             title: 'admin-link',
-            body: '1 validation error found in your extension. Fix these issues in the Partner Dashboard and try deploying again.',
+            body: '1 error found in your extension. Fix these issues in the Partner Dashboard and try deploying again.',
           },
         ])
       }
@@ -1026,7 +1028,7 @@ describe('deploymentErrorsToCustomSections', () => {
       },
       {
         title: 'admin-link',
-        body: '1 validation error found in your extension. Fix these issues in the Partner Dashboard and try deploying again.',
+        body: '1 error found in your extension. Fix these issues in the Partner Dashboard and try deploying again.',
       },
     ])
   })

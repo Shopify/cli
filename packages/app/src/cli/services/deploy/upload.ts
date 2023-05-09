@@ -185,7 +185,8 @@ export function deploymentErrorsToCustomSections(
 
 function cliErrorsSections(errors: CreateDeploymentSchema['deploymentCreate']['userErrors']) {
   return errors.reduce((sections, error) => {
-    const errorMessage = error.field.join('.') === 'base' ? error.message : `${error.field}: ${error.message}`
+    const field = error.field.join('.')
+    const errorMessage = field === 'base' ? error.message : `${field}: ${error.message}`
 
     const extensionIdentifier = error.details.find(
       (detail) => typeof detail.extension_title !== 'undefined',
