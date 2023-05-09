@@ -15,7 +15,7 @@ import {Extension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {renderInfo, renderSuccess, renderTasks, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo} from '@shopify/cli-kit/node/output'
@@ -34,9 +34,6 @@ interface DeployOptions {
 
   /** If true, proceed with deploy without asking for confirmation */
   force: boolean
-
-  /** The deployment label */
-  label?: string
 }
 
 interface TasksContext {
@@ -52,22 +49,6 @@ export async function deploy(options: DeployOptions) {
   if (!options.app.hasExtensions() && !partnersApp.betas?.unifiedAppDeployment) {
     renderInfo({headline: 'No extensions to deploy to Shopify Partners yet.'})
     return
-  }
-
-  let label: string | undefined
-
-  if (partnersApp.betas?.unifiedAppDeployment) {
-    label = options.force
-      ? options.label
-      : options.label ??
-        (await renderTextPrompt({
-          message: 'Deployment label',
-          allowEmpty: true,
-        }))
-
-    if (label?.length === 0) {
-      label = undefined
-    }
   }
 
   outputNewline()
@@ -129,7 +110,6 @@ export async function deploy(options: DeployOptions) {
                 bundlePath,
                 extensions,
                 token,
-                label,
                 extensionIds: identifiers.extensionIds,
               }))
             }
@@ -191,7 +171,7 @@ async function outputCompletionMessage({
 }) {
   if (unifiedDeployment) {
     return renderSuccess({
-      headline: 'Deployment created',
+      headline: 'Deployment created.',
       body: {
         link: {
           url: `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/deployments/${deploymentId}`,

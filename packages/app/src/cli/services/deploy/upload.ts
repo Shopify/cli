@@ -91,9 +91,6 @@ interface UploadExtensionsBundleOptions {
 
   /** The extensions' numeric identifiers (expressed as a string). */
   extensionIds: IdentifiersExtensions
-
-  /** Deployment label */
-  label?: string
 }
 
 export interface UploadExtensionValidationError {
@@ -135,7 +132,6 @@ export async function uploadExtensionsBundle(
   const variables: CreateDeploymentVariables = {
     apiKey: options.apiKey,
     uuid: deploymentUUID,
-    label: options.label,
   }
 
   if (signedURL) {

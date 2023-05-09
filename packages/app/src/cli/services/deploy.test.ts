@@ -212,93 +212,6 @@ describe('deploy', () => {
     expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
 
-  test('passes a label to the deployment mutation', async () => {
-    // Given
-    const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({
-      extensions: {ui: [uiExtension], theme: [], function: []},
-    })
-    vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
-
-    // When
-    await testDeployBundle(app, {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-      betas: {unifiedAppDeployment: true},
-    })
-
-    // Then
-    expect(uploadExtensionsBundle).toHaveBeenCalledWith(
-      expect.objectContaining({
-        label: 'Deployed from CLI',
-      }),
-    )
-  })
-
-  test("doesn't ask for a label if force is used", async () => {
-    // Given
-    const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({
-      extensions: {ui: [uiExtension], theme: [], function: []},
-    })
-
-    // When
-    await testDeployBundle(
-      app,
-      {
-        id: 'app-id',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        betas: {unifiedAppDeployment: true},
-      },
-      {
-        force: true,
-      },
-    )
-
-    // Then
-    expect(vi.mocked(renderTextPrompt)).not.toHaveBeenCalled()
-    expect(uploadExtensionsBundle).toHaveBeenCalledWith(
-      expect.objectContaining({
-        label: undefined,
-      }),
-    )
-  })
-
-  test('passes a label to the deployment mutation with a flag', async () => {
-    // Given
-    const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({
-      extensions: {ui: [uiExtension], theme: [], function: []},
-    })
-
-    // When
-    await testDeployBundle(
-      app,
-      {
-        id: 'app-id',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        betas: {unifiedAppDeployment: true},
-      },
-      {
-        label: 'Deployed from CLI with flag',
-      },
-    )
-
-    // Then
-    expect(renderTextPrompt).not.toHaveBeenCalled()
-    expect(uploadExtensionsBundle).toHaveBeenCalledWith(
-      expect.objectContaining({
-        label: 'Deployed from CLI with flag',
-      }),
-    )
-  })
-
   test('shows a success message', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
@@ -364,7 +277,7 @@ describe('deploy', () => {
           url: 'https://partners.shopify.com/org-id/apps/app-id/deployments/2',
         },
       },
-      headline: 'Deployment created',
+      headline: 'Deployment created.',
       nextSteps: ['Publish your deployment to make your changes go live for merchants'],
     })
   })
@@ -374,7 +287,6 @@ async function testDeployBundle(
   app: AppInterface,
   partnersApp?: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>,
   options?: {
-    label?: string
     force?: boolean
   },
 ) {
@@ -412,6 +324,5 @@ async function testDeployBundle(
     app,
     reset: false,
     force: Boolean(options?.force),
-    label: options?.label,
   })
 }

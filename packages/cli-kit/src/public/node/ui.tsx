@@ -69,7 +69,7 @@ export type RenderAlertOptions = Omit<AlertOptions, 'type'>
  * @example Basic
  * ╭─ info ───────────────────────────────────────────────────╮
  * │                                                          │
- * │  CLI update available                                    │
+ * │  CLI update available.                                   │
  * │                                                          │
  * │  Run `npm run shopify upgrade`.                          │
  * │                                                          │
