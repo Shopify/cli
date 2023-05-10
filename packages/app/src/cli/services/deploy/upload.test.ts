@@ -1,4 +1,4 @@
-import {uploadExtensionsBundle, uploadFunctionExtensions} from './upload.js'
+import {deploymentErrorsToCustomSections, uploadExtensionsBundle, uploadFunctionExtensions} from './upload.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {FunctionExtension} from '../../models/app/extensions.js'
 import {
@@ -733,6 +733,7 @@ describe('uploadExtensionsBundle', () => {
         bundlePath: joinPath(tmpDir, 'test.zip'),
         extensions: [{uuid: '123', config: '{}', context: ''}],
         token: 'api-token',
+        extensionIds: {},
       })
 
       // Then
@@ -770,6 +771,7 @@ describe('uploadExtensionsBundle', () => {
       bundlePath: undefined,
       extensions: [],
       token: 'api-token',
+      extensionIds: {},
     })
 
     // Then
@@ -778,5 +780,256 @@ describe('uploadExtensionsBundle', () => {
       uuid: 'random-uuid',
     })
     expect(partnersRequest).toHaveBeenCalledOnce()
+  })
+
+  test('throws an error based on what is returned from partners', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
+      vi.mocked(partnersRequest)
+        .mockResolvedValueOnce({
+          deploymentGenerateSignedUploadUrl: {
+            signedUploadUrl: 'signed-upload-url',
+          },
+        })
+        .mockResolvedValueOnce({
+          deploymentCreate: {
+            userErrors: [
+              {
+                message: 'Missing expected key(s).',
+                field: ['base'],
+                category: 'invalid',
+                details: [
+                  {
+                    extension_id: 123,
+                    extension_title: 'amortizable-marketplace-ext',
+                  },
+                ],
+              },
+              {
+                message: 'is blank',
+                field: ['title'],
+                category: 'invalid',
+                details: [
+                  {
+                    extension_id: 456,
+                    extension_title: 'amortizable-marketplace-ext-2',
+                  },
+                ],
+              },
+              {
+                message: 'Some other error',
+                category: 'unknown',
+                field: ['base'],
+                details: [
+                  {
+                    extension_id: 123,
+                    extension_title: 'amortizable-marketplace-ext',
+                  },
+                ],
+              },
+              {
+                message: 'Something was not found',
+                category: 'not_found',
+                field: ['base'],
+                details: [
+                  {
+                    extension_id: 456,
+                    extension_title: 'amortizable-marketplace-ext-2',
+                  },
+                ],
+              },
+              {
+                message: 'is blank',
+                field: ['title'],
+                category: 'invalid',
+                details: [
+                  {
+                    extension_id: 999,
+                    extension_title: 'admin-link',
+                  },
+                ],
+              },
+            ],
+          },
+        })
+      const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
+      vi.mocked<any>(formData).mockReturnValue(mockedFormData)
+      vi.mocked(randomUUID).mockReturnValue('random-uuid')
+      // When
+      await writeFile(joinPath(tmpDir, 'test.zip'), '')
+
+      // Then
+      try {
+        await uploadExtensionsBundle({
+          apiKey: 'app-id',
+          bundlePath: joinPath(tmpDir, 'test.zip'),
+          extensions: [
+            {uuid: '123', config: '{}', context: ''},
+            {uuid: '456', config: '{}', context: ''},
+          ],
+          token: 'api-token',
+          extensionIds: {
+            'amortizable-marketplace-ext': '123',
+            'amortizable-marketplace-ext-2': '456',
+          },
+        })
+
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (error: any) {
+        expect(error.message).toEqual('There has been an error creating your deployment.')
+        expect(error.customSections).toEqual([
+          {
+            title: 'amortizable-marketplace-ext',
+            body: [
+              {
+                list: {
+                  title: '\n',
+                  items: ['Some other error'],
+                },
+              },
+              {
+                list: {
+                  title: '\nValidation errors',
+                  items: ['Missing expected key(s).'],
+                },
+              },
+            ],
+          },
+          {
+            title: 'amortizable-marketplace-ext-2',
+            body: [
+              {
+                list: {
+                  title: '\n',
+                  items: ['Something was not found'],
+                },
+              },
+              {
+                list: {
+                  title: '\nValidation errors',
+                  items: ['title: is blank'],
+                },
+              },
+            ],
+          },
+          {
+            title: 'admin-link',
+            body: '\n1 error found in your extension. Fix these issues in the Partner Dashboard and try deploying again.',
+          },
+        ])
+      }
+    })
+  })
+})
+
+describe('deploymentErrorsToCustomSections', () => {
+  test('returns an array of custom sections', () => {
+    // Given
+    const errors = [
+      {
+        field: ['base'],
+        message: 'Missing expected key(s).',
+        category: 'invalid',
+        details: [
+          {
+            extension_id: 123,
+            extension_title: 'amortizable-marketplace-ext',
+          },
+        ],
+      },
+      {
+        field: ['base'],
+        message: 'Some other error',
+        category: 'unknown',
+        details: [
+          {
+            extension_id: 123,
+            extension_title: 'amortizable-marketplace-ext',
+          },
+        ],
+      },
+      {
+        field: ['base'],
+        message: 'Something was not found',
+        category: 'not_found',
+        details: [
+          {
+            extension_id: 456,
+            extension_title: 'amortizable-marketplace-ext-2',
+          },
+        ],
+      },
+      {
+        message: 'is blank',
+        field: ['title'],
+        category: 'invalid',
+        details: [
+          {
+            extension_id: 456,
+            extension_title: 'amortizable-marketplace-ext-2',
+          },
+        ],
+      },
+      {
+        message: 'is blank',
+        field: ['title'],
+        category: 'invalid',
+        details: [
+          {
+            extension_id: 999,
+            extension_title: 'admin-link',
+          },
+        ],
+      },
+    ]
+
+    // When
+    const customSections = deploymentErrorsToCustomSections(errors, {
+      'amortizable-marketplace-ext': '123',
+      'amortizable-marketplace-ext-2': '456',
+    })
+
+    // Then
+    expect(customSections).toEqual([
+      {
+        title: 'amortizable-marketplace-ext',
+        body: [
+          {
+            list: {
+              title: '\n',
+              items: ['Some other error'],
+            },
+          },
+          {
+            list: {
+              title: '\nValidation errors',
+              items: ['Missing expected key(s).'],
+            },
+          },
+        ],
+      },
+      {
+        title: 'amortizable-marketplace-ext-2',
+        body: [
+          {
+            list: {
+              title: '\n',
+              items: ['Something was not found'],
+            },
+          },
+          {
+            list: {
+              title: '\nValidation errors',
+              items: ['title: is blank'],
+            },
+          },
+        ],
+      },
+      {
+        title: 'admin-link',
+        body: '\n1 error found in your extension. Fix these issues in the Partner Dashboard and try deploying again.',
+      },
+    ])
   })
 })

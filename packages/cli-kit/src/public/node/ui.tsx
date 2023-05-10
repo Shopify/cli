@@ -15,7 +15,7 @@ import {SelectPrompt, SelectPromptProps} from '../../private/node/ui/components/
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
-import {InlineToken, LinkToken, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
+import {InlineToken, LinkToken, ListToken, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
@@ -201,6 +201,14 @@ interface RenderFatalErrorOptions {
  * │      you received?                                       │
  * │    • Need to connect to a different App or               │
  * │      organization? Run the command again with `--reset`  │
+ * │                                                          │
+ * │  amortizable-marketplace-ext                             │
+ * │    • Some other error                                    │
+ * │  Validation errors                                       │
+ * │    • Missing expected key(s).                            │
+ * │                                                          │
+ * │  amortizable-marketplace-ext-2                           │
+ * │    • Something was not found                             │
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * [1] https://partners.shopify.com/signup
@@ -469,4 +477,4 @@ export const keypress = async () => {
 }
 
 export type Key = InkKey
-export {Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection}
+export {Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection, ListToken}
