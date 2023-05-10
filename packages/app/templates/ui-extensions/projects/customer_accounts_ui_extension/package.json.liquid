@@ -1,14 +1,22 @@
+{%- if flavor contains "react" -%}
 {
   "name": "{{ name }}",
   "version": "1.0.0",
   "main": "dist/main.js",
   "license": "UNLICENSED",
   "dependencies": {
-    {%- if flavor contains "react" -%}
-      "@shopify/customer-account-ui-extensions-react": "^0.0.20",
-      "react": "^17.0.0"
-    {%- else -%}
-      "@shopify/customer-account-ui-extensions": "^0.0.20"
-    {%- endif -%}
+    "react": "^17.0.0",
+    "@shopify/customer-account-ui-extensions-react": "^0.0.20"
   }
 }
+{%- else -%}
+{
+  "name": "{{ name }}",
+  "version": "1.0.0",
+  "main": "dist/main.js",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@shopify/customer-account-ui-extensions": "^0.0.20"
+  }
+}
+{%- endif -%}
