@@ -126,6 +126,7 @@ export async function deploy(options: DeployOptions) {
                 bundlePath,
                 extensions,
                 token,
+                extensionIds: identifiers.extensionIds,
               }))
             }
 
