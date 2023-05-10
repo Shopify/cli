@@ -674,30 +674,42 @@ describe('AutocompletePrompt', async () => {
       write: () => {},
     })
 
+    const items = [
+      {label: 'first', value: 'first', group: 'Automations', key: 'f'},
+      {label: 'second', value: 'second', group: 'Automations', key: 's'},
+      {label: 'third', value: 'third', group: 'Merchant Admin'},
+      {label: 'fourth', value: 'fourth', group: 'Merchant Admin'},
+      {label: 'fifth', value: 'fifth', key: 'a'},
+      {label: 'sixth', value: 'sixth'},
+      {label: 'seventh', value: 'seventh'},
+      {label: 'eighth', value: 'eighth'},
+      {label: 'ninth', value: 'ninth'},
+      {label: 'tenth', value: 'tenth'},
+    ]
+
     const renderInstance = render(
       <AutocompletePrompt
         message="Associate your project with the org Castile Ventures?"
-        choices={DATABASE}
+        choices={items}
         onSubmit={() => {}}
         hasMorePages
         search={() =>
           Promise.resolve({
-            data: DATABASE,
+            data: items,
           } as SearchResults<string>)
         }
       />,
     )
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "?  Associate your project with the org Castile Ventures?   [36m[7mT[27m[2mype to search...[22m[39m
+      "?  Associate your project with the org Castile Ventures?
 
+         [1mAutomations[22m
       [36m>[39m  [36mfirst[39m
          second
-         third
-         fourth
 
-         [1m1-25 of many[22m  Find what you're looking for by typing its name.
-         [2mShowing 4 of 25 items.[22m
+         [1m1-10 of many[22m  Find what you're looking for by typing its name.
+         [2mShowing 2 of 10 items.[22m
          [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)

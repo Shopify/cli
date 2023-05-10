@@ -28,7 +28,7 @@ export default class Console extends ThemeCommand {
     const authUrl = 'http://localhost:9293'
 
     renderWarning({
-      headline: 'This is a beta feature',
+      headline: 'This is a beta feature.',
       body: [
         'This command is beta, so it can change or be removed.',
         'If you have any feedback or would like to to keep it, please leave an up-vote',

@@ -1,5 +1,6 @@
 import {sanitizedHeadersOutput} from './api/headers.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {Headers} from 'form-data'
 import {ClientError} from 'graphql-request'
 import {performance} from 'perf_hooks'
 
@@ -23,7 +24,8 @@ export async function debugLogResponseInfo<T extends {headers: Headers; status: 
   let response: T = {} as T
   try {
     response = await request
-    response.headers.forEach((value, key) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    response.headers.forEach((value: any, key: any) => {
       if (interestingResponseHeaders.has(key)) responseHeaders[key] = value
     })
   } catch (err) {

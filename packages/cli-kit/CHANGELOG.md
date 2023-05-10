@@ -1,5 +1,18 @@
 # @shopify/cli-kit
 
+## 3.46.0-pre.3
+
+### Minor Changes
+
+- 1c8afb7f4: lookupMimeType and setMimeTypes using mrmime
+
+### Patch Changes
+
+- d9ef6c3f6: Add support to display an empty value when the input in configured to allow empty values
+- cc37858fb: Disable concurrent output component in a non tty terminal
+- 6663b3a8f: ciPlatform: return metadata from environment variables
+- 069e38ecf: Fix graphql query for products to only retrieve published products
+
 ## 3.46.0-pre.2
 
 ### Minor Changes

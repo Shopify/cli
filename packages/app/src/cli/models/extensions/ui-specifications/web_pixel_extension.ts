@@ -6,7 +6,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileSize} from '@shopify/cli-kit/node/fs'
 
 const kilobytes = 1024
-const BUNDLE_SIZE_LIMIT_KB = 64
+const BUNDLE_SIZE_LIMIT_KB = 128
 const BUNDLE_SIZE_LIMIT = BUNDLE_SIZE_LIMIT_KB * kilobytes
 
 const dependency = {name: '@shopify/web-pixels-extension', version: '^0.1.1'}

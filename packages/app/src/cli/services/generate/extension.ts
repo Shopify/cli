@@ -78,18 +78,23 @@ export async function generateExtension(extensionOptions: ExtensionInitOptions[]
   return Promise.all(
     extensionOptions.flatMap(async (options) => {
       const extensionDirectory = await ensureExtensionDirectoryExists({app: options.app, name: options.name})
-      switch (options.specification.category()) {
-        case 'theme':
-          await themeExtensionInit({...(options as ThemeExtensionInitOptions), extensionDirectory})
-          break
-        case 'function':
-          await functionExtensionInit({...(options as FunctionExtensionInitOptions), extensionDirectory})
-          break
-        case 'ui':
-          await uiExtensionInit({...(options as UIExtensionInitOptions), extensionDirectory})
-          break
+      try {
+        switch (options.specification.category()) {
+          case 'theme':
+            await themeExtensionInit({...(options as ThemeExtensionInitOptions), extensionDirectory})
+            break
+          case 'function':
+            await functionExtensionInit({...(options as FunctionExtensionInitOptions), extensionDirectory})
+            break
+          case 'ui':
+            await uiExtensionInit({...(options as UIExtensionInitOptions), extensionDirectory})
+            break
+        }
+        return {directory: relativizePath(extensionDirectory), specification: options.specification}
+      } catch (error) {
+        await removeFile(extensionDirectory)
+        throw error
       }
-      return {directory: relativizePath(extensionDirectory), specification: options.specification}
     }),
   )
 }
@@ -116,6 +121,9 @@ async function uiExtensionInit({
           packageManager: app.packageManager,
           type: 'prod',
           directory: app.directory,
+          // This is a temporary workaround for POS extensions. By deafult all dependencies have the `^` prefix.
+          // We need an exact dependency version for the 1.0.1 release.
+          exact: specification.identifier === 'pos_ui_extension',
         })
       },
     },

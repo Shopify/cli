@@ -18,19 +18,25 @@
     "@shopify/workspace": "0.1.0"
   },
   "changesets": [
+    "clean-feet-judge",
     "four-adults-flash",
+    "fresh-stingrays-battle",
     "heavy-flies-begin",
     "itchy-goats-exist",
     "new-suits-judge",
+    "old-sheep-attack",
     "quick-tips-allow",
     "red-countries-sit",
     "rich-deers-roll",
+    "rotten-bears-trade",
     "shaggy-lizards-grow",
     "short-hotels-flow",
     "small-buses-build",
     "smooth-actors-talk",
+    "soft-seahorses-grow",
     "tasty-mice-agree",
     "tidy-crabs-yell",
-    "wild-oranges-shop"
+    "wild-oranges-shop",
+    "wise-fans-rest"
   ]
 }

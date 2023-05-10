@@ -18,15 +18,23 @@
 <h1>Function terminalSupportsRawMode</h1></div>
 <section class="tsd-panel">
 <ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
-<li class="tsd-signature tsd-anchor-link" id="terminalSupportsRawMode">terminal<wbr/>Supports<wbr/>Raw<wbr/>Mode<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><a href="#terminalSupportsRawMode" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" id="icon-anchor-a"></path><path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" id="icon-anchor-b"></path><path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" id="icon-anchor-c"></path></svg></a></li>
+<li class="tsd-signature tsd-anchor-link" id="terminalSupportsRawMode">terminal<wbr/>Supports<wbr/>Raw<wbr/>Mode<span class="tsd-signature-symbol">(</span>stdin<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">ReadStream</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><a href="#terminalSupportsRawMode" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" id="icon-anchor-a"></path><path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" id="icon-anchor-b"></path><path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" id="icon-anchor-c"></path></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Check if the current proccess is running from a terminal that supports raw mode entry.</p>
+<div class="tsd-comment tsd-typography"><p>In case an standard input stream is passed check if it supports raw mode. Otherwise default standard input stream
+will be used.</p>
 
-<h3>Returns</h3><p>True if the current proccess support raw mode entry.</p>
+<h3>Returns</h3><p>True in the selected input stream support raw mode.</p>
 </div>
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li>
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> stdin: <span class="tsd-signature-type">ReadStream</span></h5>
+<div class="tsd-comment tsd-typography"><p>The standard input stream to check.</p>
+</div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Shopify/cli/blob/bcffcbe4f/packages/cli-kit/src/public/node/system.ts#L130">packages/cli-kit/src/public/node/system.ts:130</a></li></ul></aside></li></ul></section></div>
+<li>Defined in <a href="https://github.com/Shopify/cli/blob/d685078f8/packages/cli-kit/src/public/node/system.ts#L133">packages/cli-kit/src/public/node/system.ts:133</a></li></ul></aside></li></ul></section></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
@@ -86,6 +94,7 @@
 <li class="tsd-kind-module"><a href="../modules/node_liquid.html">node/liquid</a></li>
 <li class="tsd-kind-module"><a href="../modules/node_local_storage.html">node/local-<wbr/>storage</a></li>
 <li class="tsd-kind-module"><a href="../modules/node_metadata.html">node/metadata</a></li>
+<li class="tsd-kind-module"><a href="../modules/node_mimes.html">node/mimes</a></li>
 <li class="tsd-kind-module"><a href="../modules/node_monorail.html">node/monorail</a></li>
 <li class="tsd-kind-module"><a href="../modules/node_node_package_manager.html">node/node-<wbr/>package-<wbr/>manager</a></li>
 <li class="tsd-kind-module"><a href="../modules/node_os.html">node/os</a></li>
