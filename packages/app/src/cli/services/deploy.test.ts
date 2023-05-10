@@ -192,6 +192,8 @@ describe('deploy', () => {
         },
       ],
       token: 'api-token',
+      extensionIds: {},
+      bundlePath: undefined,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
