@@ -4,7 +4,7 @@ import {BaseUIExtensionSchema} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 // TODO: we need to figure out if we can do inter field validation (e.g. CCP requires Preview and validation URLs)
-const FlowExtensionSchema = BaseUIExtensionSchema.extend({
+const FlowActionDefinitionExtensionSchema = BaseUIExtensionSchema.extend({
   name: zod.string(),
   type: zod.literal('flow_action_definition'),
   title: zod.string(),
@@ -30,7 +30,7 @@ const FlowExtensionSchema = BaseUIExtensionSchema.extend({
  */
 const flowActionDefinitionSpecification = createUIExtensionSpecification({
   identifier: 'flow_action_definition',
-  schema: FlowExtensionSchema,
+  schema: FlowActionDefinitionExtensionSchema,
   supportedFlavors: [],
   singleEntryPath: false,
   deployConfig: async (config, _) => {

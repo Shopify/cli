@@ -77,7 +77,7 @@ export const extensionTypesGroups: {name: string; extensions: string[]}[] = [
   },
   {
     name: 'Flow',
-    extensions: ['flow_action_definition'],
+    extensions: ['flow_action_definition', 'flow_trigger_definition'],
   },
 ]
 
