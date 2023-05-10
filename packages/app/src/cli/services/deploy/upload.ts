@@ -151,7 +151,7 @@ export async function uploadExtensionsBundle(
       options.extensionIds,
     )
 
-    throw new AbortError('There has been an error creating your deployment.', null, [], customSections)
+    throw new AbortError("Version couldn't be created", null, [], customSections)
   }
 
   const validationErrors = result.deploymentCreate.deployment.deployedVersions

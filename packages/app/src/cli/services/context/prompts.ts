@@ -78,10 +78,14 @@ export async function deployConfirmationPrompt(
     return new Promise((resolve) => resolve(true))
   }
 
+  let confirmationMessageStr = partnersApp?.betas?.unifiedAppDeployment
+    ? 'Yes, create this new version'
+    : 'Yes, deploy to push changes'
+
   return renderConfirmationPrompt({
     message: summary.question,
     infoTable,
-    confirmationMessage: 'Yes, deploy to push changes',
+    confirmationMessage: confirmationMessageStr,
     cancellationMessage: 'No, cancel',
   })
 }

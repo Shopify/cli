@@ -171,14 +171,19 @@ async function outputCompletionMessage({
 }) {
   if (unifiedDeployment) {
     return renderSuccess({
-      headline: 'Deployment created.',
-      body: {
-        link: {
-          url: `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/deployments/${deploymentId}`,
-          label: `Deployment ${deploymentId}`,
-        },
-      },
-      nextSteps: ['Publish your deployment to make your changes go live for merchants'],
+      headline: 'New version created',
+      body: 'Release this version to go live to users.',
+      nextSteps: [
+        [
+          'Release this version from the',
+          {
+            link: {
+              url: `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/versions/${deploymentId}`,
+              label: 'Partner Dashboard',
+            },
+          },
+        ],
+      ],
     })
   }
 

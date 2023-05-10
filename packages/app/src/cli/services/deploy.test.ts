@@ -271,14 +271,15 @@ describe('deploy', () => {
 
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
-      body: {
+      body: 'Release this version to go live to users.',
+      nextSteps: {
+        'Release this version from the',
         link: {
-          label: 'Deployment 2',
-          url: 'https://partners.shopify.com/org-id/apps/app-id/deployments/2',
+          label: 'Partner Dashboard',
+          url: 'https://partners.shopify.com/org-id/apps/app-id/versions/2',
         },
       },
-      headline: 'Deployment created.',
-      nextSteps: ['Publish your deployment to make your changes go live for merchants'],
+      headline: 'New version created',
     })
   })
 })

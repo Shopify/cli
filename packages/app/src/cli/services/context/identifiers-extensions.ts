@@ -51,9 +51,13 @@ export async function ensureExtensionsIds(
   }
 
   if (!options.force) {
+    let questionStr: String = options.partnersApp?.betas?.unifiedAppDeployment
+      ? `Create a new version of ${options.app.name}?`
+      : `Make the following changes to your extensions in Shopify Partners?`
+
     const confirmed = await deployConfirmationPrompt(
       {
-        question: 'Make the following changes to your extensions in Shopify Partners?',
+        question: questionStr.toString(),
         identifiers: validMatches,
         toCreate: extensionsToCreate,
         onlyRemote: onlyRemoteExtensions,

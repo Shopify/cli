@@ -877,7 +877,7 @@ describe('uploadExtensionsBundle', () => {
 
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (error: any) {
-        expect(error.message).toEqual('There has been an error creating your deployment.')
+        expect(error.message).toEqual("Version couldn't be created")
         expect(error.customSections).toEqual([
           {
             title: 'amortizable-marketplace-ext',
