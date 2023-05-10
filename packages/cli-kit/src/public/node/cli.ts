@@ -1,4 +1,5 @@
 import {isTruthy} from '../../private/node/context/utilities.js'
+import {printEventsJson} from '../../private/node/demo-recorder.js'
 import {Flags} from '@oclif/core'
 
 /**
@@ -60,6 +61,7 @@ export async function runCLI(options: RunCLIOptions): Promise<void> {
 
   run(undefined, options.moduleURL)
     .then(() => flush())
+    .then(printEventsJson)
     .catch(errorHandler)
 }
 

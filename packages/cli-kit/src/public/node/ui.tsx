@@ -1,5 +1,5 @@
 /* eslint-disable tsdoc/syntax */
-import {AbortSilentError, FatalError as Fatal} from './error.js'
+import {AbortSilentError, FatalError as Fatal, FatalErrorType} from './error.js'
 import {collectLog, consoleError, consoleLog, Logger, LogLevel, outputDebug, outputWhereAppropriate} from './output.js'
 import {isUnitTest} from './context/local.js'
 import {AbortController} from './abort.js'
@@ -17,6 +17,7 @@ import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/Text
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
 import {InlineToken, LinkToken, ListToken, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
+import {recordUIEvent, resetRecordedSleep} from '../../private/node/demo-recorder.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
 
@@ -216,10 +217,16 @@ interface RenderFatalErrorOptions {
  */
 // eslint-disable-next-line max-params
 export function renderFatalError(error: Fatal, {renderOptions}: RenderFatalErrorOptions = {}) {
+  recordUIEvent({
+    type: 'fatalError',
+    properties: {...error, errorType: error.type === FatalErrorType.Bug ? 'bug' : 'abort'},
+  })
+
   return renderOnce(<FatalError error={error} />, {logLevel: 'error', logger: consoleError, renderOptions})
 }
 
-export interface RenderSeletPromptOptions<T> extends Omit<SelectPromptProps<T>, 'onSubmit'> {
+export interface RenderSelectPromptOptions<T> extends Omit<SelectPromptProps<T>, 'onSubmit'> {
+  isConfirmationPrompt?: boolean
   renderOptions?: RenderOptions
 }
 
@@ -252,13 +259,22 @@ export interface RenderSeletPromptOptions<T> extends Omit<SelectPromptProps<T>, 
  *    Press ↑↓ arrows to select, enter to confirm
  *
  */
-export function renderSelectPrompt<T>({renderOptions, ...props}: RenderSeletPromptOptions<T>): Promise<T> {
+export function renderSelectPrompt<T>({
+  renderOptions,
+  isConfirmationPrompt,
+  ...props
+}: RenderSelectPromptOptions<T>): Promise<T> {
+  if (!isConfirmationPrompt) {
+    recordUIEvent({type: 'selectPrompt', properties: {renderOptions, ...props}})
+  }
   // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {
     render(<SelectPrompt {...props} onSubmit={(value: T) => resolve(value)} />, {
       ...renderOptions,
       exitOnCtrlC: false,
-    }).catch(reject)
+    })
+      .catch(reject)
+      .finally(resetRecordedSleep)
   })
 }
 
@@ -291,6 +307,9 @@ export function renderConfirmationPrompt({
   renderOptions,
   defaultValue = true,
 }: RenderConfirmationPromptOptions): Promise<boolean> {
+  // eslint-disable-next-line prefer-rest-params
+  recordUIEvent({type: 'confirmationPrompt', properties: arguments[0]})
+
   const choices = [
     {
       label: confirmationMessage,
@@ -311,6 +330,7 @@ export function renderConfirmationPrompt({
     submitWithShortcuts: true,
     renderOptions,
     defaultValue,
+    isConfirmationPrompt: true,
   })
 }
 
@@ -354,6 +374,9 @@ export interface RenderAutocompleteOptions<T>
  *
  */
 export function renderAutocompletePrompt<T>({renderOptions, ...props}: RenderAutocompleteOptions<T>): Promise<T> {
+  // eslint-disable-next-line prefer-rest-params
+  recordUIEvent({type: 'autocompletePrompt', properties: arguments[0]})
+
   const newProps = {
     search(term: string) {
       return Promise.resolve({
@@ -368,7 +391,9 @@ export function renderAutocompletePrompt<T>({renderOptions, ...props}: RenderAut
     render(<AutocompletePrompt {...newProps} onSubmit={(value: T) => resolve(value)} />, {
       ...renderOptions,
       exitOnCtrlC: false,
-    }).catch(reject)
+    })
+      .catch(reject)
+      .finally(resetRecordedSleep)
   })
 }
 
@@ -386,6 +411,9 @@ interface RenderTableOptions<T extends ScalarDict> extends TableProps<T> {
  * 3   John Smith  jon@smith.com
  */
 export function renderTable<T extends ScalarDict>({renderOptions, ...props}: RenderTableOptions<T>) {
+  // eslint-disable-next-line prefer-rest-params
+  recordUIEvent({type: 'table', properties: arguments[0]})
+
   return renderOnce(<Table {...props} />, {renderOptions})
 }
 
@@ -401,12 +429,25 @@ interface RenderTasksOptions {
  */
 // eslint-disable-next-line max-params
 export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOptions}: RenderTasksOptions = {}) {
+  recordUIEvent({
+    type: 'taskbar',
+    properties: {
+      // Rather than timing exactly, pretend each step takes 2 seconds. This
+      // should be easy to tweak manually.
+      steps: tasks.map((task) => {
+        return {title: task.title, duration: 2}
+      }),
+    },
+  })
+
   // eslint-disable-next-line max-params
   return new Promise<TContext>((resolve, reject) => {
     render(<Tasks tasks={tasks} onComplete={resolve} />, {
       ...renderOptions,
       exitOnCtrlC: false,
-    }).catch(reject)
+    })
+      .then(() => resetRecordedSleep())
+      .catch(reject)
   })
 }
 
@@ -423,12 +464,17 @@ export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit
  *
  */
 export function renderTextPrompt({renderOptions, ...props}: RenderTextPromptOptions): Promise<string> {
+  // eslint-disable-next-line prefer-rest-params
+  recordUIEvent({type: 'textPrompt', properties: arguments[0]})
+
   // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {
     render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
       ...renderOptions,
       exitOnCtrlC: false,
-    }).catch(reject)
+    })
+      .catch(reject)
+      .finally(resetRecordedSleep)
   })
 }
 
