@@ -177,7 +177,7 @@ describe('FatalError', async () => {
           },
           {
             list: {
-              title: 'Validation errors found in your extension toml file',
+              title: 'Validation errors',
               items: ['Missing expected key(s).'],
             },
           },
@@ -210,7 +210,7 @@ describe('FatalError', async () => {
       │                                                                              │
       │  amortizable-marketplace-ext                                                 │
       │    • Some other error                                                        │
-      │  Validation errors found in your extension toml file                         │
+      │  Validation errors                                                           │
       │    • Missing expected key(s).                                                │
       │                                                                              │
       │  amortizable-marketplace-ext-2                                               │

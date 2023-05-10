@@ -279,7 +279,7 @@ export const examples: {[key in string]: Example} = {
             },
             {
               list: {
-                title: 'Validation errors found in your extension toml file',
+                title: 'Validation errors',
                 items: ['Missing expected key(s).'],
               },
             },

@@ -890,7 +890,7 @@ describe('uploadExtensionsBundle', () => {
               },
               {
                 list: {
-                  title: '\nValidation errors found in your extension toml file',
+                  title: '\nValidation errors',
                   items: ['Missing expected key(s).'],
                 },
               },
@@ -907,7 +907,7 @@ describe('uploadExtensionsBundle', () => {
               },
               {
                 list: {
-                  title: '\nValidation errors found in your extension toml file',
+                  title: '\nValidation errors',
                   items: ['title: is blank'],
                 },
               },
@@ -1003,7 +1003,7 @@ describe('deploymentErrorsToCustomSections', () => {
           },
           {
             list: {
-              title: '\nValidation errors found in your extension toml file',
+              title: '\nValidation errors',
               items: ['Missing expected key(s).'],
             },
           },
@@ -1020,7 +1020,7 @@ describe('deploymentErrorsToCustomSections', () => {
           },
           {
             list: {
-              title: '\nValidation errors found in your extension toml file',
+              title: '\nValidation errors',
               items: ['title: is blank'],
             },
           },

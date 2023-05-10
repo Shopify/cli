@@ -163,7 +163,7 @@ export async function uploadExtensionsBundle(
   return {validationErrors, deploymentId: result.deploymentCreate.deployment.id}
 }
 
-const VALIDATION_ERRORS_TITLE = '\nValidation errors found in your extension toml file'
+const VALIDATION_ERRORS_TITLE = '\nValidation errors'
 const GENERIC_ERRORS_TITLE = '\n'
 
 export function deploymentErrorsToCustomSections(

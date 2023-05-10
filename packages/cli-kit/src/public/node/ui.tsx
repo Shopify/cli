@@ -204,7 +204,7 @@ interface RenderFatalErrorOptions {
  * │                                                          │
  * │  amortizable-marketplace-ext                             │
  * │    • Some other error                                    │
- * │  Validation errors found in your extension toml file     │
+ * │  Validation errors                                       │
  * │    • Missing expected key(s).                            │
  * │                                                          │
  * │  amortizable-marketplace-ext-2                           │
