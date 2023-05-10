@@ -915,7 +915,7 @@ describe('uploadExtensionsBundle', () => {
           },
           {
             title: 'admin-link',
-            body: '1 error found in your extension. Fix these issues in the Partner Dashboard and try deploying again.',
+            body: '\n1 error found in your extension. Fix these issues in the Partner Dashboard and try deploying again.',
           },
         ])
       }
@@ -1028,7 +1028,7 @@ describe('deploymentErrorsToCustomSections', () => {
       },
       {
         title: 'admin-link',
-        body: '1 error found in your extension. Fix these issues in the Partner Dashboard and try deploying again.',
+        body: '\n1 error found in your extension. Fix these issues in the Partner Dashboard and try deploying again.',
       },
     ])
   })
