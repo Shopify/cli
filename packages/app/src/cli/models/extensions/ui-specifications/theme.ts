@@ -8,7 +8,8 @@ const spec = createUIExtensionSpecification({
   schema: BaseUIExtensionSchema,
   partnersWebIdentifier: 'theme_app_extension',
   graphQLType: 'theme_app_extension',
-  category: (): ExtensionCategory => 'function',
+  supportedFlavors: [],
+  category: (): ExtensionCategory => 'theme',
 })
 
 export default spec

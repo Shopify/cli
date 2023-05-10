@@ -89,6 +89,9 @@ const EXTENSION_A: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
+  functionFeatureConfig: undefined,
+  themeFeatureConfig: undefined,
+  uiFeatureConfig: undefined,
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -118,6 +121,9 @@ const EXTENSION_A_2: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
+  functionFeatureConfig: undefined,
+  themeFeatureConfig: undefined,
+  uiFeatureConfig: undefined,
 }
 
 const EXTENSION_B: UIExtension = {
@@ -147,6 +153,9 @@ const EXTENSION_B: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
+  functionFeatureConfig: undefined,
+  themeFeatureConfig: undefined,
+  uiFeatureConfig: undefined,
 }
 
 const EXTENSION_B_2: UIExtension = {
@@ -176,6 +185,9 @@ const EXTENSION_B_2: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
+  functionFeatureConfig: undefined,
+  themeFeatureConfig: undefined,
+  uiFeatureConfig: undefined,
 }
 
 const EXTENSION_C: UIExtension = {
@@ -205,6 +217,9 @@ const EXTENSION_C: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
+  functionFeatureConfig: undefined,
+  themeFeatureConfig: undefined,
+  uiFeatureConfig: undefined,
 }
 
 const EXTENSION_D: UIExtension = {
@@ -234,6 +249,9 @@ const EXTENSION_D: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
+  functionFeatureConfig: undefined,
+  themeFeatureConfig: undefined,
+  uiFeatureConfig: undefined,
 }
 
 const FUNCTION_A: FunctionExtension = {
@@ -261,6 +279,9 @@ const FUNCTION_A: FunctionExtension = {
   isJavaScript: false,
   externalType: 'function',
   publishURL: (_) => Promise.resolve(''),
+  functionFeatureConfig: undefined,
+  themeFeatureConfig: undefined,
+  uiFeatureConfig: undefined,
 }
 
 const REGISTRATION_FUNCTION_A = {

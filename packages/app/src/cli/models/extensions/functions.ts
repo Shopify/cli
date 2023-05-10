@@ -100,6 +100,18 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
     const fqdn = await partnersFqdn()
     return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions`
   }
+
+  get functionFeatureConfig() {
+    return undefined
+  }
+
+  get themeFeatureConfig() {
+    return undefined
+  }
+
+  get uiFeatureConfig() {
+    return undefined
+  }
 }
 
 /**

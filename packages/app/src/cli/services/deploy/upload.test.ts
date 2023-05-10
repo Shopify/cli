@@ -64,6 +64,9 @@ describe('uploadFunctionExtensions', () => {
       localIdentifier: 'my-function',
       type: 'order_discounts',
       graphQLType: 'order_discounts',
+      functionFeatureConfig: undefined,
+      themeFeatureConfig: undefined,
+      uiFeatureConfig: undefined,
     }
     token = 'token'
     identifiers = {

@@ -57,6 +57,9 @@ const EXTENSION_A: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
+  functionFeatureConfig: undefined,
+  themeFeatureConfig: undefined,
+  uiFeatureConfig: undefined,
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -86,6 +89,9 @@ const EXTENSION_A_2: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
+  functionFeatureConfig: undefined,
+  themeFeatureConfig: undefined,
+  uiFeatureConfig: undefined,
 }
 
 const FUNCTION_C: FunctionExtension = {
@@ -113,6 +119,9 @@ const FUNCTION_C: FunctionExtension = {
   isJavaScript: false,
   externalType: 'function',
   publishURL: (_) => Promise.resolve(''),
+  functionFeatureConfig: undefined,
+  themeFeatureConfig: undefined,
+  uiFeatureConfig: undefined,
 }
 
 const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): AppInterface => {

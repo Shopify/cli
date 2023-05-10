@@ -1,4 +1,4 @@
-import {UIExtension, Extension, GenericSpecification} from './extensions.js'
+import {Extension, GenericSpecification} from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -93,7 +93,7 @@ class AppLoader {
     // const {functions, usedCustomLayout: usedCustomLayoutForFunctionExtensions} = await this.loadFunctions(
     //   configuration.extensionDirectories,
     // )
-    const {uiExtensions, usedCustomLayout: usedCustomLayoutForUIExtensions} = await this.loadUIExtensions(
+    const {allExtensions, usedCustomLayout: usedCustomLayoutForUIExtensions} = await this.loadUIExtensions(
       configuration.extensionDirectories,
     )
     // const {themeExtensions, usedCustomLayout: usedCustomLayoutForThemeExtensions} = await this.loadThemeExtensions(
@@ -106,6 +106,10 @@ class AppLoader {
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(configuration.webDirectories)
     const usesWorkspaces = await appUsesWorkspaces(this.appDirectory)
 
+    const themeExtensions = getArrayRejectingUndefined(allExtensions.map((extension) => extension.themeFeatureConfig))
+    const functions = getArrayRejectingUndefined(allExtensions.map((extension) => extension.functionFeatureConfig))
+    const uiExtensions = getArrayRejectingUndefined(allExtensions.map((extension) => extension.uiFeatureConfig))
+
     const appClass = new App(
       name,
       'SHOPIFY_API_KEY',
@@ -116,8 +120,8 @@ class AppLoader {
       nodeDependencies,
       webs,
       uiExtensions,
-      [],
-      [],
+      themeExtensions,
+      functions,
       usesWorkspaces,
       dotenv,
     )
@@ -127,8 +131,8 @@ class AppLoader {
     await logMetadataForLoadedApp(appClass, {
       usedCustomLayoutForWeb,
       usedCustomLayoutForUIExtensions,
-      usedCustomLayoutForFunctionExtensions: false,
-      usedCustomLayoutForThemeExtensions: false,
+      usedCustomLayoutForFunctionExtensions: usedCustomLayoutForUIExtensions,
+      usedCustomLayoutForThemeExtensions: usedCustomLayoutForUIExtensions,
     })
 
     return appClass
@@ -253,7 +257,7 @@ class AppLoader {
 
   async loadUIExtensions(
     extensionDirectories?: string[],
-  ): Promise<{uiExtensions: UIExtension[]; usedCustomLayout: boolean}> {
+  ): Promise<{allExtensions: Extension[]; usedCustomLayout: boolean}> {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return joinPath(this.appDirectory, extensionPath, '*.extension.toml')
     })
@@ -282,11 +286,11 @@ class AppLoader {
       const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
 
       let entryPath
-      if (specification.singleEntryPath) {
+      if (specification.singleEntryPath && specification.category() === 'ui') {
         entryPath = (
           await Promise.all(
-            ['index', 'main']
-              .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`, `${name}.rs`])
+            ['index']
+              .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
               .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
               .map((relativePath) => joinPath(directory, relativePath))
               .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
@@ -301,6 +305,15 @@ class AppLoader {
             directory,
           )
         }
+      }
+      if (specification.category() === 'function') {
+        entryPath = (
+          await Promise.all(
+            ['src/index.js', 'src/index.ts', 'src/main.rs']
+              .map((relativePath) => joinPath(directory, relativePath))
+              .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
+          )
+        ).find((sourcePath) => sourcePath !== undefined)
       }
 
       const extensionInstance = new UIExtensionInstance({
@@ -320,8 +333,8 @@ class AppLoader {
       return extensionInstance
     })
 
-    const uiExtensions = getArrayRejectingUndefined(await Promise.all(extensions))
-    return {uiExtensions, usedCustomLayout: extensionDirectories !== undefined}
+    const allExtensions = getArrayRejectingUndefined(await Promise.all(extensions))
+    return {allExtensions, usedCustomLayout: extensionDirectories !== undefined}
   }
 
   // async loadFunctions(

@@ -56,6 +56,9 @@ const FUNCTION_A: FunctionExtension = {
   isJavaScript: false,
   externalType: 'function',
   publishURL: (_) => Promise.resolve(''),
+  functionFeatureConfig: undefined,
+  themeFeatureConfig: undefined,
+  uiFeatureConfig: undefined,
 }
 
 const FUNCTION_A_2: FunctionExtension = {
@@ -83,6 +86,9 @@ const FUNCTION_A_2: FunctionExtension = {
   isJavaScript: false,
   externalType: 'function',
   publishURL: (_) => Promise.resolve(''),
+  functionFeatureConfig: undefined,
+  themeFeatureConfig: undefined,
+  uiFeatureConfig: undefined,
 }
 
 const FUNCTION_B: FunctionExtension = {
@@ -110,6 +116,9 @@ const FUNCTION_B: FunctionExtension = {
   isJavaScript: false,
   externalType: 'function',
   publishURL: (_) => Promise.resolve(''),
+  functionFeatureConfig: undefined,
+  themeFeatureConfig: undefined,
+  uiFeatureConfig: undefined,
 }
 
 const LOCAL_APP = (functionExtensions: FunctionExtension[]): AppInterface => {

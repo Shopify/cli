@@ -40,6 +40,9 @@ export interface Extension {
   externalType: string
   graphQLType: string
   publishURL(options: {orgId: string; appId: string; extensionId?: string}): Promise<string>
+  functionFeatureConfig: FunctionExtension | undefined
+  themeFeatureConfig: ThemeExtension | undefined
+  uiFeatureConfig: UIExtension | undefined
 }
 
 export type FunctionExtension<TConfiguration extends FunctionConfigType = FunctionConfigType> = Extension & {

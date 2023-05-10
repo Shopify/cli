@@ -20,13 +20,14 @@ beforeEach(() => {
 
 describe('extension prompt', async () => {
   // ALL UI Specs, filter out theme
-  const allUISpecs = convertSpecificationsToTemplate(await loadLocalUIExtensionsSpecifications())
-  const allFunctionSpecs = testRemoteTemplateSpecifications.map(mapRemoteTemplateSpecification)
-  const allSpecs = convertSpecificationsToTemplate(await loadLocalExtensionsSpecifications())
+  const allSpecs = await loadLocalUIExtensionsSpecifications()
+  const allUITemplates = convertSpecificationsToTemplate(allSpecs.filter((spec) => spec.category() === 'ui'))
+  const allFunctionTemplates = testRemoteTemplateSpecifications.map(mapRemoteTemplateSpecification)
+  const allTemplates = convertSpecificationsToTemplate(await loadLocalExtensionsSpecifications())
 
   const extensionTypeQuestion = {
     message: 'Type of extension?',
-    choices: buildChoices(allUISpecs),
+    choices: buildChoices(allUITemplates),
   }
   const extensionNameQuestion = {
     message: 'Extension name (internal only)',
@@ -39,10 +40,10 @@ describe('extension prompt', async () => {
       directory: '/',
       app: testApp(),
       reset: false,
-      templateSpecifications: allUISpecs,
+      templateSpecifications: allUITemplates,
       unavailableExtensions: [],
     }
-    const specification = findExtensionSpecification('ui_extension', allUISpecs)
+    const specification = findExtensionSpecification('ui_extension', allUITemplates)
 
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionType)
@@ -67,10 +68,10 @@ describe('extension prompt', async () => {
       directory: '/',
       app: testApp(),
       reset: false,
-      templateSpecifications: allUISpecs,
+      templateSpecifications: allUITemplates,
       unavailableExtensions: [],
     }
-    const specification = findExtensionSpecification('ui_extension', allUISpecs)
+    const specification = findExtensionSpecification('ui_extension', allUITemplates)
 
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionType)
@@ -94,10 +95,10 @@ describe('extension prompt', async () => {
       directory: '/',
       app: testApp(),
       reset: false,
-      templateSpecifications: allUISpecs,
+      templateSpecifications: allUITemplates,
       unavailableExtensions: [],
     }
-    const specification = findExtensionSpecification('checkout_post_purchase', allUISpecs)
+    const specification = findExtensionSpecification('checkout_post_purchase', allUITemplates)
 
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionFlavor)
@@ -126,10 +127,10 @@ describe('extension prompt', async () => {
       directory: '/',
       app: testApp(),
       reset: false,
-      templateSpecifications: allSpecs,
+      templateSpecifications: allTemplates,
       unavailableExtensions: [],
     }
-    const specification = findExtensionSpecification('theme', allSpecs)
+    const specification = findExtensionSpecification('theme', allTemplates)
 
     // When
     const got = await generateExtensionPrompt(options)
@@ -150,11 +151,11 @@ describe('extension prompt', async () => {
       directory: '/',
       app: testApp(),
       reset: false,
-      templateSpecifications: allFunctionSpecs,
+      templateSpecifications: allFunctionTemplates,
       unavailableExtensions: [],
     }
-    const specification = findExtensionSpecification('product_discounts', allFunctionSpecs)
-    const templateSpecification = allFunctionSpecs.find((template) => template.identifier === 'product_discounts')
+    const specification = findExtensionSpecification('product_discounts', allFunctionTemplates)
+    const templateSpecification = allFunctionTemplates.find((template) => template.identifier === 'product_discounts')
 
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionFlavor)
@@ -185,16 +186,16 @@ describe('extension prompt', async () => {
       app: testApp(),
       reset: false,
       extensionFlavor: 'rust',
-      templateSpecifications: [...allFunctionSpecs, ...allUISpecs],
+      templateSpecifications: [...allFunctionTemplates, ...allUITemplates],
       unavailableExtensions: [],
     }
-    const specification = findExtensionSpecification('product_discounts', allFunctionSpecs)
-    const templateSpecification = allFunctionSpecs.find((template) => template.identifier === 'product_discounts')
+    const specification = findExtensionSpecification('product_discounts', allFunctionTemplates)
+    const templateSpecification = allFunctionTemplates.find((template) => template.identifier === 'product_discounts')
 
     // only function types should be shown if flavor is rust
     const functionTypes = {
       message: 'Type of extension?',
-      choices: buildChoices(allFunctionSpecs),
+      choices: buildChoices(allFunctionTemplates),
     }
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce('product_discounts')
 

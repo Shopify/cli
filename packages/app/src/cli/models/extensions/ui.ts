@@ -1,5 +1,12 @@
 import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema} from './schemas.js'
-import {ExtensionCategory, ExtensionFlavor, GenericSpecification, UIExtension} from '../app/extensions.js'
+import {
+  ExtensionCategory,
+  ExtensionFlavor,
+  FunctionExtension,
+  GenericSpecification,
+  ThemeExtension,
+  UIExtension,
+} from '../app/extensions.js'
 import {blocks, defaultExtensionFlavors} from '../../constants.js'
 import {ok, Result} from '@shopify/cli-kit/node/result'
 import {capitalize, constantize} from '@shopify/cli-kit/common/string'
@@ -170,6 +177,35 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
 
   hasExtensionPointTarget(target: string): boolean {
     return this.specification.hasExtensionPointTarget?.(this.configuration, target) || false
+  }
+
+  get functionFeatureConfig(): FunctionExtension | undefined {
+    if (this.specification.identifier !== 'function') return undefined
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const config: any = this.configuration
+    return {
+      ...(this as unknown as FunctionExtension),
+      ...{
+        buildCommand: config.build.command,
+        buildWasmPath: joinPath(this.directory, config.build.path ?? joinPath('dist', 'index.wasm')),
+        inputQueryPath: joinPath(this.directory, 'input.graphql'),
+        isJavaScript: Boolean(this.entrySourceFilePath?.endsWith('.js') || this.entrySourceFilePath?.endsWith('.ts')),
+      },
+    }
+  }
+
+  get uiFeatureConfig(): UIExtension | undefined {
+    if (['function', 'theme'].includes(this.specification.identifier)) return undefined
+    return this as unknown as UIExtension
+  }
+
+  get themeFeatureConfig(): ThemeExtension | undefined {
+    if (this.specification.identifier !== 'theme') return undefined
+    return this as unknown as ThemeExtension
+  }
+
+  get isUI(): boolean {
+    return this.specification.category() === 'ui'
   }
 }
 

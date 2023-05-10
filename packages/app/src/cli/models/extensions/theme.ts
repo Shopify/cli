@@ -95,6 +95,18 @@ export class ThemeExtensionInstance<TConfiguration extends ThemeConfigContents =
 
     return outputContent`${heading}\n${message.value}\n`
   }
+
+  get functionFeatureConfig() {
+    return undefined
+  }
+
+  get themeFeatureConfig() {
+    return undefined
+  }
+
+  get uiFeatureConfig() {
+    return undefined
+  }
 }
 
 /* Find the registered spec for a given theme type

@@ -1,4 +1,4 @@
-import {loadThemeSpecifications, loadUIExtensionSpecifications} from '../../models/extensions/specifications.js'
+import {loadUIExtensionSpecifications} from '../../models/extensions/specifications.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
@@ -58,8 +58,8 @@ export async function fetchSpecifications({
     })
 
   const ui = await loadUIExtensionSpecifications(config)
-  const theme = await loadThemeSpecifications()
-  const local = [...ui, ...theme]
+  // const theme = await loadThemeSpecifications()
+  const local = [...ui]
 
   const updatedSpecs = mergeLocalAndRemoteSpecs(local, extensionSpecifications)
   return [...updatedSpecs]

@@ -25,7 +25,7 @@ describe('fetchTemplateSpecifications', () => {
           supportLinks: ['https://shopify.dev/docs/api/functions/reference/cart-checkout-validation'],
           types: [
             {
-              identifier: 'cart_checkout_validation',
+              identifier: 'function',
               externalIdentifier: 'cart_checkout_validation',
               externalName: 'cart_checkout_validation',
               gated: false,
@@ -58,7 +58,7 @@ describe('fetchTemplateSpecifications', () => {
           supportLinks: [],
           types: [
             {
-              identifier: 'cart_transform',
+              identifier: 'function',
               externalIdentifier: 'cart_transform',
               externalName: 'cart_transform',
               gated: false,
@@ -96,7 +96,7 @@ describe('fetchTemplateSpecifications', () => {
           supportLinks: [],
           types: [
             {
-              identifier: 'product_discounts',
+              identifier: 'function',
               externalIdentifier: 'product_discounts',
               externalName: 'product_discounts',
               gated: false,
@@ -134,7 +134,7 @@ describe('fetchTemplateSpecifications', () => {
           supportLinks: [],
           types: [
             {
-              identifier: 'order_discounts',
+              identifier: 'function',
               externalIdentifier: 'order_discounts',
               externalName: 'order_discounts',
               gated: false,
