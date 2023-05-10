@@ -1,9 +1,6 @@
 import generateExtensionPrompt, {buildChoices} from './extension.js'
 import {testApp, testRemoteTemplateSpecifications} from '../../models/app/app.test-data.js'
-import {
-  loadLocalUIExtensionsSpecifications,
-  loadLocalExtensionsSpecifications,
-} from '../../models/extensions/specifications.js'
+import {loadLocalUIExtensionsSpecifications} from '../../models/extensions/specifications.js'
 import {convertSpecificationsToTemplate, TemplateSpecification} from '../../models/app/template.js'
 import {mapRemoteTemplateSpecification} from '../../services/generate/fetch-template-specifications.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
@@ -23,7 +20,7 @@ describe('extension prompt', async () => {
   const allSpecs = await loadLocalUIExtensionsSpecifications()
   const allUITemplates = convertSpecificationsToTemplate(allSpecs.filter((spec) => spec.category() === 'ui'))
   const allFunctionTemplates = testRemoteTemplateSpecifications.map(mapRemoteTemplateSpecification)
-  const allTemplates = convertSpecificationsToTemplate(await loadLocalExtensionsSpecifications())
+  const allTemplates = convertSpecificationsToTemplate(allSpecs)
 
   const extensionTypeQuestion = {
     message: 'Type of extension?',

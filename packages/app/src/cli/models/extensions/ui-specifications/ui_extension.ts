@@ -1,4 +1,4 @@
-import {createUIExtensionSpecification} from '../ui.js'
+import {createExtensionSpecification} from '../ui.js'
 import {BaseUIExtensionSchema, NewExtensionPointSchemaType, NewExtensionPointsSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
@@ -20,7 +20,7 @@ const UIExtensionSchema = BaseUIExtensionSchema.extend({
   extensionPoints: NewExtensionPointsSchema,
 })
 
-const spec = createUIExtensionSpecification({
+const spec = createExtensionSpecification({
   identifier: 'ui_extension',
   surface: 'all',
   dependency,

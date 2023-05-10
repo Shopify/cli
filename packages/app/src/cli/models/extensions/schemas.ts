@@ -32,10 +32,10 @@ export const ApiVersionSchema = zod.string()
 
 export type ApiVersionSchemaType = zod.infer<typeof ApiVersionSchema>
 
-export const BaseUIExtensionSchema = zod.object({
+export const BaseSchema = zod.object({
   name: zod.string(),
+  type: zod.string(),
   description: zod.string().optional(),
-  type: zod.string().default('ui_extension'),
   apiVersion: ApiVersionSchema.optional(),
   extensionPoints: zod.any().optional(),
   capabilities: CapabilitiesSchema.optional(),
@@ -43,14 +43,16 @@ export const BaseUIExtensionSchema = zod.object({
   categories: zod.array(zod.string()).optional(),
 })
 
-export const ThemeExtensionSchema = zod.object({
+export const BaseUIExtensionSchema = BaseSchema.extend({
+  type: zod.string().default('ui_extension'),
+})
+
+export const ThemeExtensionSchema = BaseSchema.extend({
   name: zod.string(),
   type: zod.literal('theme'),
 })
 
-export const BaseFunctionConfigurationSchema = BaseUIExtensionSchema.extend({
-  name: zod.string(),
-  type: zod.string(),
+export const BaseFunctionConfigurationSchema = BaseSchema.extend({
   apiType: zod.string().optional(),
   description: zod.string().optional().default(''),
   build: zod.object({
@@ -96,3 +98,5 @@ export type NewExtensionPointSchemaType = zod.infer<typeof NewExtensionPointSche
 
 // Base config type that all config schemas must extend.
 export type BaseConfigContents = zod.infer<typeof BaseUIExtensionSchema>
+
+export type BaseSchemaContents = zod.infer<typeof BaseSchema>

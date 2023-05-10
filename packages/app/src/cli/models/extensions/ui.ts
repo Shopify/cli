@@ -1,4 +1,4 @@
-import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema} from './schemas.js'
+import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema, BaseSchemaContents} from './schemas.js'
 import {
   ExtensionCategory,
   ExtensionFlavor,
@@ -61,17 +61,15 @@ export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = Bas
  *
  * This class holds the public interface to interact with extensions
  */
-export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseConfigContents>
-  implements UIExtension<TConfiguration>
-{
+export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseSchemaContents> {
   entrySourceFilePath: string
-  outputBundlePath: string
   devUUID: string
   localIdentifier: string
   idEnvironmentVariableName: string
   directory: string
   configuration: TConfiguration
   configurationPath: string
+  private _outputBundlePath?: string
 
   private specification: UIExtensionSpec
 
@@ -107,6 +105,16 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     return this.specification.surface
   }
 
+  get outputBundlePath() {
+    if (this._outputBundlePath) return this._outputBundlePath
+    if (this.specification.identifier === 'theme') return this.directory
+    return joinPath(this.directory, 'dist/main.js')
+  }
+
+  set outputBundlePath(path: string) {
+    this._outputBundlePath = path
+  }
+
   constructor(options: {
     configuration: TConfiguration
     configurationPath: string
@@ -119,7 +127,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseC
     this.entrySourceFilePath = options.entryPath
     this.directory = options.directory
     this.specification = options.specification
-    this.outputBundlePath = joinPath(options.directory, 'dist/main.js')
     this.devUUID = `dev-${randomUUID()}`
     this.localIdentifier = basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
@@ -264,7 +271,7 @@ export interface CreateExtensionSpecType<TConfiguration extends BaseConfigConten
  * hasExtensionPointTarget?: (configuration: TConfiguration, target: string) => boolean // function to determine if the extension has a given extension point target
  * ```
  */
-export function createUIExtensionSpecification<TConfiguration extends BaseConfigContents = BaseConfigContents>(
+export function createExtensionSpecification<TConfiguration extends BaseConfigContents = BaseConfigContents>(
   spec: CreateExtensionSpecType<TConfiguration>,
 ): UIExtensionSpec<TConfiguration> {
   const defaults = {

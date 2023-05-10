@@ -2,8 +2,6 @@ import {App, AppInterface} from './app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {ExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
 import {FunctionConfigType} from '../extensions/functions.js'
-import {ThemeExtensionInstance} from '../extensions/theme.js'
-import themeSpec from '../extensions/theme-specifications/theme.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {RemoteTemplateSpecification} from '../../api/graphql/template_specifications.js'
@@ -63,6 +61,7 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
     directory,
     specification,
   })
+
   extension.devUUID = uiExtension?.devUUID ?? 'test-ui-extension-uuid'
   return extension
 }
@@ -71,15 +70,23 @@ export async function testThemeExtensions(): Promise<ThemeExtension> {
   const configuration = {
     name: 'theme extension name',
     type: 'theme' as const,
+    metafields: [],
   }
 
-  return new ThemeExtensionInstance({
+  const allSpecs = await loadLocalExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'theme') as UIExtensionSpec
+
+  const extension = new ExtensionInstance({
     configuration,
     configurationPath: '',
+    entryPath: '',
     directory: './my-extension',
-    specification: themeSpec,
-    outputBundlePath: './my-extension',
+    specification,
   })
+
+  extension.outputBundlePath = './my-extension'
+
+  return extension
 }
 
 function defaultFunctionConfiguration(): FunctionConfigType {

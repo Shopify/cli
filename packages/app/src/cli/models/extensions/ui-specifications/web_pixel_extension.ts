@@ -1,4 +1,4 @@
-import {createUIExtensionSpecification} from '../ui.js'
+import {createExtensionSpecification} from '../ui.js'
 import {defaultExtensionFlavors} from '../../../constants.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -18,7 +18,7 @@ const WebPixelSchema = BaseUIExtensionSchema.extend({
   settings: zod.any(),
 })
 
-const spec = createUIExtensionSpecification({
+const spec = createExtensionSpecification({
   identifier: 'web_pixel_extension',
   surface: 'unknown',
   dependency,

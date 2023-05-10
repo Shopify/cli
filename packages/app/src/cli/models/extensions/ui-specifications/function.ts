@@ -1,9 +1,9 @@
-import {createUIExtensionSpecification} from '../ui.js'
+import {createExtensionSpecification} from '../ui.js'
 import {BaseFunctionConfigurationSchema} from '../schemas.js'
 import {defaultFunctionsFlavors} from '../../../constants.js'
 import {ExtensionCategory} from '../../app/extensions.js'
 
-const spec = createUIExtensionSpecification({
+const spec = createExtensionSpecification({
   identifier: 'function',
   additionalIdentifiers: [
     'order_discounts',
