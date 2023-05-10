@@ -28,7 +28,7 @@ export function mapRemoteTemplateSpecification(
     supportLinks: remoteTemplateSpecification.supportLinks,
     types: remoteTemplateSpecification.types.map((extension) => {
       return {
-        identifier: remoteTemplateSpecification.identifier,
+        identifier: 'function',
         externalIdentifier: remoteTemplateSpecification.identifier,
         externalName: remoteTemplateSpecification.identifier,
         gated: false,

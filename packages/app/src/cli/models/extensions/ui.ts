@@ -188,6 +188,7 @@ export type ForbiddenFields = 'registrationLimit' | 'category' | 'externalIdenti
 export interface CreateExtensionSpecType<TConfiguration extends BaseConfigContents = BaseConfigContents>
   extends Partial<Omit<UIExtensionSpec<TConfiguration>, ForbiddenFields>> {
   identifier: string
+  category?: () => ExtensionCategory
 }
 
 /**

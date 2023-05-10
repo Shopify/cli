@@ -1,6 +1,7 @@
 import {createUIExtensionSpecification} from '../ui.js'
 import {BaseFunctionConfigurationSchema} from '../schemas.js'
 import {defaultFunctionsFlavors} from '../../../constants.js'
+import {ExtensionCategory} from '../../app/extensions.js'
 
 const spec = createUIExtensionSpecification({
   identifier: 'function',
@@ -19,6 +20,7 @@ const spec = createUIExtensionSpecification({
   supportedFlavors: defaultFunctionsFlavors,
   partnersWebIdentifier: 'theme_app_extension',
   graphQLType: 'function',
+  category: (): ExtensionCategory => 'function',
 })
 
 export default spec

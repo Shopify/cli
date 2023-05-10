@@ -28,7 +28,8 @@ import type {ExtensionFlavorValue} from './extension.js'
 vi.mock('@shopify/cli-kit/node/node-package-manager')
 
 describe('initialize a extension', async () => {
-  const allUISpecs = await loadLocalUIExtensionsSpecifications()
+  const allSpecs = await loadLocalUIExtensionsSpecifications()
+  const allUISpecs = allSpecs.filter((spec) => spec.category() === 'ui')
   const allFunctionSpecs = testRemoteTemplateSpecifications
     .map(mapRemoteTemplateSpecification)
     .map((template) => template.types as FunctionSpec[])
@@ -270,7 +271,7 @@ describe('initialize a extension', async () => {
       vi.spyOn(functionCommon, 'ensureFunctionExtensionFlavorExists').mockImplementationOnce(async () => tmpDir)
 
       const name = 'my-ext-1'
-      const specification = allFunctionSpecs.find((spec) => spec.identifier === 'order_discounts')!
+      const specification = allFunctionSpecs[0]!
       specification.templateURL = 'custom/template/url'
       const extensionFlavor = 'rust'
 
@@ -290,7 +291,7 @@ describe('initialize a extension', async () => {
     await withTemporaryApp(async (tmpDir) => {
       // Given
       const name = 'my-fun-1'
-      const specification = allFunctionSpecs.find((spec) => spec.identifier === 'order_discounts')!
+      const specification = allFunctionSpecs[0]!
       const extensionFlavor = 'rust'
 
       vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
@@ -306,6 +307,8 @@ describe('initialize a extension', async () => {
           command = "cargo wasi build --release"
           path = "target/wasm32-wasi/release/prod-discount-rust.wasm"`,
         )
+
+        await file.writeFile(joinPath(destination, 'main.rs'), `//empty`)
       })
 
       // When
@@ -329,7 +332,7 @@ describe('initialize a extension', async () => {
     await withTemporaryApp(async (tmpDir) => {
       // Given
       const name = 'my-fun-1'
-      const specification = allFunctionSpecs.find((spec) => spec.identifier === 'order_discounts')!
+      const specification = allFunctionSpecs[0]!
       const extensionFlavor = 'vanilla-js'
 
       vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
@@ -374,7 +377,7 @@ describe('initialize a extension', async () => {
     await withTemporaryApp(async (tmpDir) => {
       // Given
       const name = 'my-fun-1'
-      const specification = allFunctionSpecs.find((spec) => spec.identifier === 'order_discounts')!
+      const specification = allFunctionSpecs[0]!
       const extensionFlavor = 'vanilla-js'
 
       vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
