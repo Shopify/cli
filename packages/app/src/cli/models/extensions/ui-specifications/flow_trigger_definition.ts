@@ -8,6 +8,7 @@ const FlowTriggerDefinitionExtensionSchema = BaseUIExtensionSchema.extend({
   type: zod.literal('flow_trigger_definition'),
   title: zod.string(),
   description: zod.string(),
+  fields: zod.array(zod.object({})),
 })
 
 /**
@@ -22,6 +23,7 @@ const flowActionDefinitionSpecification = createUIExtensionSpecification({
     return {
       title: config.title,
       description: config.description,
+      fields: config.fields,
     }
   },
 })
