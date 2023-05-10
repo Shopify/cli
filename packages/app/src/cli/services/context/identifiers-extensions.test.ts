@@ -457,7 +457,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
 
     // Then
     expect(deployConfirmationPrompt).not.toBeCalled()
-    expect(matchConfirmationPrompt).not.toBeCalled()
+    expect(matchConfirmationPrompt).toBeCalled()
   })
 })
 
