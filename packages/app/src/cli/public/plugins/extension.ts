@@ -1,10 +1,9 @@
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
-import {FunctionSpec} from '../../models/extensions/functions.js'
 import {BaseConfigContents} from '../../models/extensions/schemas.js'
 import {FanoutHookFunction, HookReturnsPerPlugin} from '@shopify/cli-kit/node/plugins'
 
 export {createUIExtensionSpecification, UIExtensionSpec, CreateExtensionSpecType} from '../../models/extensions/ui.js'
-export {createFunctionSpecification, FunctionSpec, CreateFunctionSpecType} from '../../models/extensions/functions.js'
+export {FunctionSpec} from '../../models/extensions/functions.js'
 export {fetchProductVariant} from '../../utilities/extensions/fetch-product-variant.js'
 export {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
 
@@ -22,16 +21,9 @@ export interface HookReturnPerExtensionPlugin extends HookReturnsPerPlugin {
       [pluginName: string]: UIExtensionSpec[]
     }
   }
-  function_specs: {
-    options: {[key: string]: never}
-    pluginReturns: {
-      [pluginName: string]: FunctionSpec[]
-    }
-  }
 }
 
 export type ExtensionSpecsFunction = FanoutHookFunction<'extension_specs', '', HookReturnPerExtensionPlugin>
-export type FunctionSpecsFunction = FanoutHookFunction<'function_specs', '', HookReturnPerExtensionPlugin>
 
 /**
  * A function for plugins to register new UI extension types.
@@ -44,15 +36,4 @@ export const registerUIExtensionSpecifications = <TConfiguration extends BaseCon
   specifications: UIExtensionSpec<TConfiguration>[],
 ): ExtensionSpecsFunction => {
   return async () => specifications as UIExtensionSpec[]
-}
-
-/**
- * A function for plugins to register new function types.
- *
- * @param specifications - The function specifications to register.
- * @returns A function that returns the list of specifications.
- * @example
- */
-export const registerFunctionSpecifications = (specifications: FunctionSpec[]): FunctionSpecsFunction => {
-  return async () => specifications
 }

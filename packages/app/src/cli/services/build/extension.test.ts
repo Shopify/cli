@@ -14,6 +14,18 @@ describe('buildFunctionExtension', () => {
   let stderr: any
   let signal: any
   let app: any
+  const defaultConfig = {
+    name: 'MyFunction',
+    type: 'product_discounts',
+    description: '',
+    build: {
+      command: 'make build',
+      path: 'dist/index.wasm',
+    },
+    configurationUi: true,
+    apiVersion: '2022-07',
+    metafields: [],
+  }
 
   beforeEach(async () => {
     stdout = vi.fn()
@@ -21,20 +33,7 @@ describe('buildFunctionExtension', () => {
     stdout = {write: vi.fn()}
     signal = vi.fn()
     app = {}
-    extension = await testFunctionExtension({
-      config: {
-        name: 'MyFunction',
-        type: 'product_discounts',
-        description: '',
-        build: {
-          command: 'make build',
-          path: 'dist/index.wasm',
-        },
-        configurationUi: true,
-        apiVersion: '2022-07',
-        metafields: [],
-      },
-    })
+    extension = await testFunctionExtension({config: defaultConfig})
   })
 
   test('delegates the build to system when the build command is present', async () => {
@@ -77,8 +76,8 @@ describe('buildFunctionExtension', () => {
 
   test('succeeds when is a JS function and build command is not present', async () => {
     // Given
+    extension = await testFunctionExtension({config: defaultConfig, entryPath: 'src/index.js'})
     extension.configuration.build.command = undefined
-    extension.entrySourceFilePath = 'src/index.js'
 
     // When
     await expect(
@@ -101,8 +100,8 @@ describe('buildFunctionExtension', () => {
 
   test('succeeds when is a JS function and build command is present', async () => {
     // Given
+    extension = await testFunctionExtension({config: defaultConfig, entryPath: 'src/index.js'})
     extension.configuration.build.command = './scripts/build.sh argument'
-    extension.entrySourceFilePath = 'src/index.js'
 
     // When
     await expect(

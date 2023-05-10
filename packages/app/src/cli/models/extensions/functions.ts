@@ -1,9 +1,5 @@
 import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
-import {ExtensionCategory, GenericSpecification, FunctionExtension, ExtensionFlavor} from '../app/extensions.js'
-import {blocks, defaultFunctionsFlavors} from '../../constants.js'
-import {constantize} from '@shopify/cli-kit/common/string'
-import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {joinPath, basename} from '@shopify/cli-kit/node/path'
+import {ExtensionCategory, GenericSpecification, ExtensionFlavor} from '../app/extensions.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 // Base config type that all config schemas must extend
@@ -35,93 +31,93 @@ export interface FunctionSpec<TConfiguration extends FunctionConfigType = Functi
  *
  * This class holds the public interface to interact with functions
  */
-export class FunctionInstance<TConfiguration extends FunctionConfigType = FunctionConfigType>
-  implements FunctionExtension
-{
-  idEnvironmentVariableName: string
-  localIdentifier: string
-  directory: string
-  entrySourceFilePath?: string
-  configuration: TConfiguration
-  configurationPath: string
+// export class FunctionInstance<TConfiguration extends FunctionConfigType = FunctionConfigType>
+//   implements FunctionExtension
+// {
+//   idEnvironmentVariableName: string
+//   localIdentifier: string
+//   directory: string
+//   entrySourceFilePath?: string
+//   configuration: TConfiguration
+//   configurationPath: string
 
-  constructor(options: {
-    configuration: TConfiguration
-    configurationPath: string
-    directory: string
-    entryPath?: string
-  }) {
-    this.configuration = options.configuration
-    this.configurationPath = options.configurationPath
-    this.directory = options.directory
-    this.entrySourceFilePath = options.entryPath
-    this.localIdentifier = basename(options.directory)
-    this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
-  }
+//   constructor(options: {
+//     configuration: TConfiguration
+//     configurationPath: string
+//     directory: string
+//     entryPath?: string
+//   }) {
+//     this.configuration = options.configuration
+//     this.configurationPath = options.configurationPath
+//     this.directory = options.directory
+//     this.entrySourceFilePath = options.entryPath
+//     this.localIdentifier = basename(options.directory)
+//     this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
+//   }
 
-  get graphQLType() {
-    return this.configuration.type.toUpperCase()
-  }
+//   get graphQLType() {
+//     return this.configuration.type.toUpperCase()
+//   }
 
-  get type() {
-    return this.configuration.type
-  }
+//   get type() {
+//     return this.configuration.type
+//   }
 
-  get identifier() {
-    return this.configuration.type
-  }
+//   get identifier() {
+//     return this.configuration.type
+//   }
 
-  get externalType() {
-    return this.configuration.type
-  }
+//   get externalType() {
+//     return this.configuration.type
+//   }
 
-  get name() {
-    return this.configuration.name
-  }
+//   get name() {
+//     return this.configuration.name
+//   }
 
-  get buildCommand() {
-    return this.configuration.build.command
-  }
+//   get buildCommand() {
+//     return this.configuration.build.command
+//   }
 
-  get inputQueryPath() {
-    return joinPath(this.directory, 'input.graphql')
-  }
+//   get inputQueryPath() {
+//     return joinPath(this.directory, 'input.graphql')
+//   }
 
-  get buildWasmPath() {
-    const relativePath = this.configuration.build.path ?? joinPath('dist', 'index.wasm')
-    return joinPath(this.directory, relativePath)
-  }
+//   get buildWasmPath() {
+//     const relativePath = this.configuration.build.path ?? joinPath('dist', 'index.wasm')
+//     return joinPath(this.directory, relativePath)
+//   }
 
-  get isJavaScript() {
-    return Boolean(this.entrySourceFilePath?.endsWith('.js') || this.entrySourceFilePath?.endsWith('.ts'))
-  }
+//   get isJavaScript() {
+//     return Boolean(this.entrySourceFilePath?.endsWith('.js') || this.entrySourceFilePath?.endsWith('.ts'))
+//   }
 
-  async publishURL(options: {orgId: string; appId: string}) {
-    const fqdn = await partnersFqdn()
-    return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions`
-  }
+//   async publishURL(options: {orgId: string; appId: string}) {
+//     const fqdn = await partnersFqdn()
+//     return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions`
+//   }
 
-  get functionFeatureConfig() {
-    return undefined
-  }
+//   get functionFeatureConfig() {
+//     return undefined
+//   }
 
-  get themeFeatureConfig() {
-    return undefined
-  }
+//   get themeFeatureConfig() {
+//     return undefined
+//   }
 
-  get uiFeatureConfig() {
-    return undefined
-  }
-}
+//   get uiFeatureConfig() {
+//     return undefined
+//   }
+// }
 
 /**
  * Partial FunctionSpec type used when creating a new FunctionSpec, the only mandatory fields are the identifier and the templatePath
  */
-export interface CreateFunctionSpecType<TConfiguration extends FunctionConfigType = FunctionConfigType>
-  extends Partial<FunctionSpec<TConfiguration>> {
-  identifier: string
-  templatePath: (lang: string) => string
-}
+// export interface CreateFunctionSpecType<TConfiguration extends FunctionConfigType = FunctionConfigType>
+//   extends Partial<FunctionSpec<TConfiguration>> {
+//   identifier: string
+//   templatePath: (lang: string) => string
+// }
 
 /**
  * Create a new function spec.
@@ -140,19 +136,19 @@ export interface CreateFunctionSpecType<TConfiguration extends FunctionConfigTyp
  * templatePath: (lang: string) => string // path to the template directory for the given language inside the templateURL repo
  * ```
  */
-export function createFunctionSpecification<TConfiguration extends FunctionConfigType = FunctionConfigType>(
-  spec: CreateFunctionSpecType<TConfiguration>,
-): FunctionSpec {
-  const defaults = {
-    templateURL: 'https://github.com/Shopify/function-examples',
-    externalIdentifier: spec.identifier,
-    externalName: spec.identifier,
-    supportedFlavors: defaultFunctionsFlavors,
-    configSchema: BaseFunctionConfigurationSchema,
-    gated: false,
-    registrationLimit: spec.registrationLimit ?? blocks.functions.defaultRegistrationLimit,
-    category: (): ExtensionCategory => 'function',
-  }
+// export function createFunctionSpecification<TConfiguration extends FunctionConfigType = FunctionConfigType>(
+//   spec: CreateFunctionSpecType<TConfiguration>,
+// ): FunctionSpec {
+//   const defaults = {
+//     templateURL: 'https://github.com/Shopify/function-examples',
+//     externalIdentifier: spec.identifier,
+//     externalName: spec.identifier,
+//     supportedFlavors: defaultFunctionsFlavors,
+//     configSchema: BaseFunctionConfigurationSchema,
+//     gated: false,
+//     registrationLimit: spec.registrationLimit ?? blocks.functions.defaultRegistrationLimit,
+//     category: (): ExtensionCategory => 'function',
+//   }
 
-  return {...defaults, ...spec}
-}
+//   return {...defaults, ...spec}
+// }

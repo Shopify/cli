@@ -3,7 +3,7 @@ import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {fetchTemplateSpecifications} from './generate/fetch-template-specifications.js'
 import {AppInterface} from '../models/app/app.js'
 import {load as loadApp} from '../models/app/loader.js'
-import {GenericSpecification, isFunctionExtension} from '../models/app/extensions.js'
+import {GenericSpecification} from '../models/app/extensions.js'
 import generateExtensionPrompt, {
   GenerateExtensionPromptOutput,
   GenerateExtensionPromptOptions,
@@ -21,7 +21,6 @@ import {
   getTypesExternalName,
   TemplateSpecification,
 } from '../models/app/template.js'
-import {blocks} from '../constants.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -99,11 +98,7 @@ function checkLimits(templateSpecifications: TemplateSpecification[], app: AppIn
 }
 
 function limitReached(app: AppInterface, type: GenericSpecification) {
-  if (isFunctionExtension(type)) {
-    return app.extensions.function.length >= blocks.functions.defaultRegistrationLimit
-  } else {
-    return app.extensionsForType(type).length >= type.registrationLimit
-  }
+  return app.extensionsForType(type).length >= type.registrationLimit
 }
 
 async function saveAnalyticsMetadata(promptAnswers: GenerateExtensionPromptOutput, typeFlag: string | undefined) {

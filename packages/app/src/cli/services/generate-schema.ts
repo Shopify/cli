@@ -22,7 +22,7 @@ interface GenerateSchemaOptions {
 export async function generateSchemaService(options: GenerateSchemaOptions) {
   const {extension, app} = options
   const token = await ensureAuthenticatedPartners()
-  const {apiVersion: version, type} = extension.configuration
+  const {apiVersion: version, apiType, type} = extension.configuration
   let apiKey = options.apiKey || getAppIdentifiers({app}).app
 
   if (!apiKey) {
@@ -40,7 +40,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
   const variables: ApiSchemaDefinitionQueryVariables = {
     apiKey,
     version,
-    type,
+    type: apiType ?? type,
   }
   const response: ApiSchemaDefinitionQuerySchema = await partnersRequest(query, token, variables)
 

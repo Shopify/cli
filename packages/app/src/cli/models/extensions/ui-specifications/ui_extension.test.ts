@@ -1,6 +1,6 @@
 import {configurationFileNames} from '../../../constants.js'
 import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
-import {UIExtensionInstance, UIExtensionSpec} from '../ui.js'
+import {ExtensionInstance, UIExtensionSpec} from '../ui.js'
 import {loadLocalExtensionsSpecifications} from '../specifications.js'
 import {describe, expect, test, vi} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
@@ -31,7 +31,7 @@ describe('ui_extension', async () => {
       settings: {},
     }
 
-    return new UIExtensionInstance({
+    return new ExtensionInstance({
       configuration,
       directory,
       specification,

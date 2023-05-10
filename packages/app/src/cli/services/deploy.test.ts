@@ -127,14 +127,14 @@ describe('deploy', () => {
     // Then
     expect(uploadFunctionExtensions).toHaveBeenCalledWith(
       [
-        {
+        expect.objectContaining({
           configuration: functionExtension.configuration,
           configurationPath: functionExtension.configurationPath,
           directory: functionExtension.directory,
           entrySourceFilePath: functionExtension.entrySourceFilePath,
           idEnvironmentVariableName: functionExtension.idEnvironmentVariableName,
           localIdentifier: functionExtension.localIdentifier,
-        },
+        }),
       ],
       {
         identifiers: {app: 'app-id', extensions: {'my-function': 'my-function'}, extensionIds: {}},
@@ -164,14 +164,14 @@ describe('deploy', () => {
     // Then
     expect(uploadFunctionExtensions).toHaveBeenCalledWith(
       [
-        {
+        expect.objectContaining({
           configuration: functionExtension.configuration,
           configurationPath: functionExtension.configurationPath,
           directory: functionExtension.directory,
           entrySourceFilePath: functionExtension.entrySourceFilePath,
           idEnvironmentVariableName: functionExtension.idEnvironmentVariableName,
           localIdentifier: functionExtension.localIdentifier,
-        },
+        }),
       ],
       {
         identifiers: {app: 'app-id', extensions: {'my-function': 'my-function'}, extensionIds: {}},

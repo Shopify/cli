@@ -2,7 +2,7 @@ import {Extension, GenericSpecification} from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
-import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
+import {ExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
 import {TypeSchema} from '../extensions/schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
@@ -316,7 +316,7 @@ class AppLoader {
         ).find((sourcePath) => sourcePath !== undefined)
       }
 
-      const extensionInstance = new UIExtensionInstance({
+      const extensionInstance = new ExtensionInstance({
         configuration,
         configurationPath,
         entryPath: entryPath ?? '',

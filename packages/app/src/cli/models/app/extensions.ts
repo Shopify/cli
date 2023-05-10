@@ -1,6 +1,5 @@
-import {FunctionSpec, FunctionConfigType} from '../extensions/functions.js'
-import {ThemeConfigContents, ThemeExtensionSpec} from '../extensions/theme.js'
-import {UIExtensionSpec} from '../extensions/ui.js'
+import {FunctionConfigType} from '../extensions/functions.js'
+import {ThemeConfigContents} from '../extensions/theme.js'
 import {BaseConfigContents} from '../extensions/schemas.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
 import {TokenizedString} from '@shopify/cli-kit/node/output'
@@ -75,16 +74,4 @@ export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigCo
   previewMessage(url: string, storeFqdn: string): TokenizedString | undefined
   shouldFetchCartUrl(): boolean
   hasExtensionPointTarget(target: string): boolean
-}
-
-export function isUIExtension(spec: GenericSpecification): spec is UIExtensionSpec {
-  return spec.category() === 'ui'
-}
-
-export function isThemeExtension(spec: GenericSpecification): spec is ThemeExtensionSpec {
-  return spec.category() === 'theme'
-}
-
-export function isFunctionExtension(spec: GenericSpecification): spec is FunctionSpec {
-  return spec.category() === 'function'
 }

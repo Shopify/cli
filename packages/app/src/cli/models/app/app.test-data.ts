@@ -1,7 +1,7 @@
 import {App, AppInterface} from './app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
-import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
-import {FunctionConfigType, FunctionInstance} from '../extensions/functions.js'
+import {ExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
+import {FunctionConfigType} from '../extensions/functions.js'
 import {ThemeExtensionInstance} from '../extensions/theme.js'
 import themeSpec from '../extensions/theme-specifications/theme.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js'
@@ -56,7 +56,7 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === configuration.type) as UIExtensionSpec
 
-  const extension = new UIExtensionInstance({
+  const extension = new ExtensionInstance({
     configuration,
     configurationPath,
     entryPath: entrySourceFilePath,
@@ -86,7 +86,8 @@ function defaultFunctionConfiguration(): FunctionConfigType {
   return {
     name: 'test function extension',
     description: 'description',
-    type: 'product_discounts',
+    apiType: 'product_discounts',
+    type: 'function',
     build: {
       command: 'echo "hello world"',
     },
@@ -99,17 +100,24 @@ function defaultFunctionConfiguration(): FunctionConfigType {
 interface TestFunctionExtensionOptions {
   dir?: string
   config?: FunctionConfigType
+  entryPath?: string
 }
 
 export async function testFunctionExtension(opts: TestFunctionExtensionOptions = {}): Promise<FunctionExtension> {
   const directory = opts.dir ?? '/tmp/project/extensions/my-function'
   const configuration = opts.config ?? defaultFunctionConfiguration()
 
-  return new FunctionInstance({
+  const allSpecs = await loadLocalExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'function') as UIExtensionSpec
+
+  const extension = new ExtensionInstance({
     configuration,
     configurationPath: '',
+    entryPath: opts.entryPath ?? '',
     directory,
+    specification,
   })
+  return extension.functionFeatureConfig!
 }
 
 export const testRemoteSpecifications: RemoteSpecification[] = [
@@ -231,6 +239,22 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'dashboard',
       registrationLimit: 100,
+    },
+  },
+  {
+    name: 'function',
+    externalName: 'function',
+    identifier: 'function',
+    externalIdentifier: 'function',
+    gated: false,
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+    features: {
+      argo: {
+        surface: 'checkout',
+      },
     },
   },
 ]

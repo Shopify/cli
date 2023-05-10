@@ -36,8 +36,8 @@ export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = Bas
   getBundleExtensionStdinContent?: (config: TConfiguration) => string
   deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
   validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
-  preDeployValidation?: (extension: UIExtensionInstance<TConfiguration>) => Promise<void>
-  buildValidation?: (extension: UIExtensionInstance<TConfiguration>) => Promise<void>
+  preDeployValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
+  buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   category: () => ExtensionCategory
   previewMessage?: (
     host: string,
@@ -61,7 +61,7 @@ export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = Bas
  *
  * This class holds the public interface to interact with extensions
  */
-export class UIExtensionInstance<TConfiguration extends BaseConfigContents = BaseConfigContents>
+export class ExtensionInstance<TConfiguration extends BaseConfigContents = BaseConfigContents>
   implements UIExtension<TConfiguration>
 {
   entrySourceFilePath: string
@@ -181,17 +181,8 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
 
   get functionFeatureConfig(): FunctionExtension | undefined {
     if (this.specification.identifier !== 'function') return undefined
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const config: any = this.configuration
-    return {
-      ...(this as unknown as FunctionExtension),
-      ...{
-        buildCommand: config.build.command,
-        buildWasmPath: joinPath(this.directory, config.build.path ?? joinPath('dist', 'index.wasm')),
-        inputQueryPath: joinPath(this.directory, 'input.graphql'),
-        isJavaScript: Boolean(this.entrySourceFilePath?.endsWith('.js') || this.entrySourceFilePath?.endsWith('.ts')),
-      },
-    }
+
+    return this as unknown as FunctionExtension
   }
 
   get uiFeatureConfig(): UIExtension | undefined {
@@ -206,6 +197,27 @@ export class UIExtensionInstance<TConfiguration extends BaseConfigContents = Bas
 
   get isUI(): boolean {
     return this.specification.category() === 'ui'
+  }
+
+  // FUNCTION STUFF
+  get buildCommand() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const config: any = this.configuration
+    return config.build.command
+  }
+
+  get buildWasmPath() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const config: any = this.configuration
+    return joinPath(this.directory, config.build.path ?? joinPath('dist', 'index.wasm'))
+  }
+
+  get inputQueryPath() {
+    return joinPath(this.directory, 'input.graphql')
+  }
+
+  get isJavaScript() {
+    return Boolean(this.entrySourceFilePath?.endsWith('.js') || this.entrySourceFilePath?.endsWith('.ts'))
   }
 }
 
