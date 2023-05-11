@@ -2,8 +2,8 @@
 import {AbortSilentError, FatalError as Fatal, FatalErrorType} from './error.js'
 import {collectLog, consoleError, consoleLog, Logger, LogLevel, outputDebug, outputWhereAppropriate} from './output.js'
 import {isUnitTest} from './context/local.js'
-import {AbortController} from './abort.js'
 import {terminalSupportsRawMode} from './system.js'
+import {AbortController} from './abort.js'
 import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
 import {render, renderOnce} from '../../private/node/ui.js'
 import {alert, AlertOptions} from '../../private/node/ui/alert.js'
@@ -23,7 +23,7 @@ import {Key as InkKey, RenderOptions} from 'ink'
 
 type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>
 
-export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortController'> {
+export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortSignal'> {
   renderOptions?: RenderOptions
 }
 
@@ -44,19 +44,17 @@ export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps
  *
  */
 export async function renderConcurrent({renderOptions, ...props}: RenderConcurrentOptions) {
-  const newProps = {
-    abortController: new AbortController(),
-    ...props,
-  }
+  const abortSignal = props.abortSignal ?? new AbortController().signal
+
   if (terminalSupportsRawMode(renderOptions?.stdin)) {
-    return render(<ConcurrentOutput {...newProps} />, {
+    return render(<ConcurrentOutput {...props} abortSignal={abortSignal} />, {
       ...renderOptions,
       exitOnCtrlC: typeof props.onInput === 'undefined',
     })
   } else {
     return Promise.all(
-      newProps.processes.map(async (concurrentProcess) => {
-        await concurrentProcess.action(process.stdout, process.stderr, newProps.abortController.signal)
+      props.processes.map(async (concurrentProcess) => {
+        await concurrentProcess.action(process.stdout, process.stderr, abortSignal)
       }),
     )
   }
@@ -259,7 +257,7 @@ export interface RenderSelectPromptOptions<T> extends Omit<SelectPromptProps<T>,
  *    Press ↑↓ arrows to select, enter to confirm
  *
  */
-export function renderSelectPrompt<T>({
+export async function renderSelectPrompt<T>({
   renderOptions,
   isConfirmationPrompt,
   ...props
@@ -278,7 +276,8 @@ export function renderSelectPrompt<T>({
   })
 }
 
-export interface RenderConfirmationPromptOptions extends Pick<SelectPromptProps<boolean>, 'message' | 'infoTable'> {
+export interface RenderConfirmationPromptOptions
+  extends Pick<SelectPromptProps<boolean>, 'message' | 'infoTable' | 'abortSignal'> {
   confirmationMessage?: string
   cancellationMessage?: string
   renderOptions?: RenderOptions
@@ -299,13 +298,14 @@ export interface RenderConfirmationPromptOptions extends Pick<SelectPromptProps<
  *    Press ↑↓ arrows to select, enter or a shortcut to confirm
  *
  */
-export function renderConfirmationPrompt({
+export async function renderConfirmationPrompt({
   message,
   infoTable,
   confirmationMessage = 'Yes, confirm',
   cancellationMessage = 'No, cancel',
   renderOptions,
   defaultValue = true,
+  abortSignal,
 }: RenderConfirmationPromptOptions): Promise<boolean> {
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'confirmationPrompt', properties: arguments[0]})
@@ -331,6 +331,7 @@ export function renderConfirmationPrompt({
     renderOptions,
     defaultValue,
     isConfirmationPrompt: true,
+    abortSignal,
   })
 }
 
@@ -373,7 +374,7 @@ export interface RenderAutocompleteOptions<T>
  *    Press ↑↓ arrows to select, enter to confirm
  *
  */
-export function renderAutocompletePrompt<T>({renderOptions, ...props}: RenderAutocompleteOptions<T>): Promise<T> {
+export async function renderAutocompletePrompt<T>({renderOptions, ...props}: RenderAutocompleteOptions<T>): Promise<T> {
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'autocompletePrompt', properties: arguments[0]})
 
@@ -463,7 +464,7 @@ export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit
  *    ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
  *
  */
-export function renderTextPrompt({renderOptions, ...props}: RenderTextPromptOptions): Promise<string> {
+export async function renderTextPrompt({renderOptions, ...props}: RenderTextPromptOptions): Promise<string> {
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'textPrompt', properties: arguments[0]})
 

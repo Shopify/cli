@@ -1,6 +1,7 @@
 import {TextPrompt} from './TextPrompt.js'
 import {getLastFrameAfterUnmount, sendInputAndWaitForChange, waitForInputsToBeReady, render} from '../../testing/ui.js'
 import {unstyled} from '../../../../public/node/output.js'
+import {AbortController} from '../../../../public/node/abort.js'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -182,5 +183,24 @@ describe('TextPrompt', () => {
     const renderInstance = render(<TextPrompt onSubmit={() => {}} message="Test question" password defaultValue="A" />)
 
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toContain("ERROR  Can't use defaultValue with password")
+  })
+
+  test('abortController can be used to exit the prompt from outside', async () => {
+    const abortController = new AbortController()
+
+    const renderInstance = render(
+      <TextPrompt
+        onSubmit={() => {}}
+        message="Test question"
+        defaultValue="Placeholder"
+        abortSignal={abortController.signal}
+      />,
+    )
+    const promise = renderInstance.waitUntilExit()
+
+    abortController.abort()
+
+    expect(getLastFrameAfterUnmount(renderInstance)).toEqual('')
+    await expect(promise).resolves.toEqual(undefined)
   })
 })

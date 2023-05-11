@@ -8,7 +8,7 @@ interface Options {
 
 export default function useAsyncAndUnmount(
   asyncFunction: () => Promise<unknown>,
-  {onFulfilled = () => {}, onRejected = () => {}}: Options,
+  {onFulfilled = () => {}, onRejected = () => {}}: Options = {},
 ) {
   const {exit: unmountInk} = useApp()
 
