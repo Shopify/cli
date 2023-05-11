@@ -1,4 +1,9 @@
-import {deploymentErrorsToCustomSections, uploadExtensionsBundle, uploadFunctionExtensions} from './upload.js'
+import {
+  deploymentErrorsToCustomSections,
+  uploadExtensionsBundle,
+  uploadFunctionExtensions,
+  functionConfiguration,
+} from './upload.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {FunctionExtension} from '../../models/app/extensions.js'
 import {
@@ -63,6 +68,7 @@ describe('uploadFunctionExtensions', () => {
       localIdentifier: 'my-function',
       type: 'order_discounts',
       graphQLType: 'order_discounts',
+      usingExtensionsFramework: false,
     }
     token = 'token'
     identifiers = {
@@ -100,6 +106,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -127,6 +134,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200 kb',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -166,6 +174,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -205,6 +214,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -242,6 +252,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -279,6 +290,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -306,6 +318,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -360,6 +373,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -427,6 +441,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -490,6 +505,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -543,6 +559,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -594,6 +611,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -652,6 +670,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -1031,5 +1050,120 @@ describe('deploymentErrorsToCustomSections', () => {
         body: '\n1 error found in your extension. Fix these issues in the Partner Dashboard and try deploying again.',
       },
     ])
+  })
+})
+
+describe('functionConfiguration', () => {
+  let extension: FunctionExtension
+  let identifiers: Identifiers
+  let token: string
+
+  beforeEach(() => {
+    extension = {
+      directory: '/function',
+      configuration: {
+        name: 'function',
+        type: 'order_discounts',
+        description: 'my function',
+        build: {
+          command: 'make build',
+          path: 'dist/index.wasm',
+        },
+        ui: {
+          paths: {
+            create: '/create',
+            details: '/details/:id',
+          },
+          enable_create: true,
+        },
+        configurationUi: false,
+        apiVersion: '2022-07',
+        input: {
+          variables: {
+            namespace: 'namespace',
+            key: 'key',
+          },
+        },
+      },
+      configurationPath: '/function/shopify.function.extension.toml',
+      buildWasmPath: '/function/dist/index.wasm',
+      inputQueryPath: 'input.graphql',
+      publishURL: (_) => Promise.resolve(''),
+      isJavaScript: false,
+      buildCommand: 'make build',
+      externalType: 'order_discounts',
+      idEnvironmentVariableName: 'SHOPIFY_FUNCTION_ID',
+      localIdentifier: 'my-function',
+      type: 'order_discounts',
+      graphQLType: 'order_discounts',
+      usingExtensionsFramework: false,
+    }
+    token = 'token'
+    identifiers = {
+      app: 'api=key',
+      extensions: {},
+      extensionIds: {},
+    }
+  })
+
+  test('returns a snake_case object with all possible fields', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const moduleId = 'module_id'
+      const inputQuery = 'inputQuery'
+      extension.inputQueryPath = joinPath(tmpDir, extension.inputQueryPath)
+      await writeFile(extension.inputQueryPath, inputQuery)
+
+      // When
+      const got = await functionConfiguration(extension, moduleId)
+
+      // Then
+      expect(got).toEqual({
+        title: extension.configuration.name,
+        description: extension.configuration.description,
+        api_type: 'order_discounts',
+        api_version: extension.configuration.apiVersion,
+        ui: {
+          app_bridge: {
+            details_path: extension.configuration.ui!.paths!.details,
+            create_path: extension.configuration.ui!.paths!.create,
+          },
+        },
+        input_query: inputQuery,
+        input_query_variables: {
+          single_json_metafield: {
+            namespace: 'namespace',
+            key: 'key',
+          },
+        },
+        enable_creation_ui: true,
+        module_id: moduleId,
+      })
+    })
+  })
+
+  test('returns a snake_case object with only required fields', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const moduleId = 'module_id'
+      extension.configuration.input = undefined
+      extension.configuration.ui = undefined
+
+      // When
+      const got = await functionConfiguration(extension, moduleId)
+
+      // Then
+      expect(got).toEqual({
+        title: extension.configuration.name,
+        description: extension.configuration.description,
+        api_type: 'order_discounts',
+        api_version: extension.configuration.apiVersion,
+        module_id: moduleId,
+        enable_creation_ui: true,
+        input_query: undefined,
+        input_query_variabels: undefined,
+        ui: undefined,
+      })
+    })
   })
 })

@@ -54,6 +54,7 @@ const FUNCTION_A: FunctionExtension = {
   inputQueryPath: '/function/input.graphql',
   isJavaScript: false,
   externalType: 'function',
+  usingExtensionsFramework: false,
   publishURL: (_) => Promise.resolve(''),
 }
 
@@ -80,6 +81,7 @@ const FUNCTION_A_2: FunctionExtension = {
   inputQueryPath: '/function/input.graphql',
   isJavaScript: false,
   externalType: 'function',
+  usingExtensionsFramework: false,
   publishURL: (_) => Promise.resolve(''),
 }
 
@@ -106,6 +108,7 @@ const FUNCTION_B: FunctionExtension = {
   inputQueryPath: '/function/input.graphql',
   isJavaScript: false,
   externalType: 'function',
+  usingExtensionsFramework: false,
   publishURL: (_) => Promise.resolve(''),
 }
 

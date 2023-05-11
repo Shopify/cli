@@ -1,6 +1,11 @@
 import {ensureDeployContext} from './context.js'
 import {deploy} from './deploy.js'
-import {uploadExtensionsBundle, uploadFunctionExtensions} from './deploy/upload.js'
+import {
+  uploadWasmBlob,
+  uploadExtensionsBundle,
+  uploadFunctionExtensions,
+  functionConfiguration,
+} from './deploy/upload.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {testApp, testFunctionExtension, testThemeExtensions, testUIExtension} from '../models/app/app.test-data.js'
@@ -137,6 +142,7 @@ describe('deploy', () => {
           entrySourceFilePath: functionExtension.entrySourceFilePath,
           idEnvironmentVariableName: functionExtension.idEnvironmentVariableName,
           localIdentifier: functionExtension.localIdentifier,
+          _usingExtensionsFramework: false,
         },
       ],
       {
@@ -154,6 +160,17 @@ describe('deploy', () => {
     // Given
     const functionExtension = await testFunctionExtension()
     const app = testApp({extensions: {ui: [], theme: [], function: [functionExtension]}})
+    const moduleId = 'module-id'
+    const mockedFunctionConfiguration = {
+      title: functionExtension.configuration.name,
+      description: functionExtension.configuration.description,
+      api_type: functionExtension.configuration.type,
+      api_version: functionExtension.configuration.apiVersion,
+      enable_creation_ui: true,
+      module_id: moduleId,
+    }
+    vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
+    vi.mocked(functionConfiguration).mockResolvedValue(mockedFunctionConfiguration)
 
     // When
     await testDeployBundle(app, {
@@ -165,25 +182,21 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(uploadFunctionExtensions).toHaveBeenCalledWith(
-      [
+    expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      apiKey: 'app-id',
+      extensions: [
         {
-          configuration: functionExtension.configuration,
-          configurationPath: functionExtension.configurationPath,
-          directory: functionExtension.directory,
-          entrySourceFilePath: functionExtension.entrySourceFilePath,
-          idEnvironmentVariableName: functionExtension.idEnvironmentVariableName,
-          localIdentifier: functionExtension.localIdentifier,
+          uuid: functionExtension.localIdentifier,
+          config: JSON.stringify(mockedFunctionConfiguration),
+          context: '',
         },
       ],
-      {
-        identifiers: {app: 'app-id', extensions: {'my-function': 'my-function'}, extensionIds: {}},
-        token: 'api-token',
-      },
-    )
+      token: 'api-token',
+      extensionIds: {},
+      bundlePath: undefined,
+    })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
-    expect(uploadExtensionsBundle).toHaveBeenCalled()
     expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
 

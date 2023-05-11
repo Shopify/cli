@@ -5,6 +5,7 @@ import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
+import {OrganizationApp} from '../../models/organization.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -113,6 +114,7 @@ const FUNCTION_C: FunctionExtension = {
   inputQueryPath: '/function/input.graphql',
   isJavaScript: false,
   externalType: 'function',
+  usingExtensionsFramework: false,
   publishURL: (_) => Promise.resolve(''),
 }
 
@@ -126,7 +128,22 @@ const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExte
   })
 }
 
-const options = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[], identifiers: any = {}) => {
+const PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA: OrganizationApp = {
+  id: 'app-id',
+  organizationId: 'org-id',
+  title: 'app-title',
+  grantedScopes: [],
+  betas: {unifiedAppDeployment: true},
+  apiKey: 'api-key',
+  apiSecretKeys: [],
+}
+
+const options = (
+  uiExtensions: UIExtension[],
+  functionExtensions: FunctionExtension[],
+  identifiers: any = {},
+  partnersApp?: OrganizationApp,
+) => {
   return {
     app: LOCAL_APP(uiExtensions, functionExtensions),
     token: 'token',
@@ -134,6 +151,7 @@ const options = (uiExtensions: UIExtension[], functionExtensions: FunctionExtens
     appName: 'appName',
     envIdentifiers: {extensions: identifiers},
     force: false,
+    partnersApp,
   }
 }
 
@@ -203,6 +221,29 @@ describe('ensureDeploymentIdsPresence: matchmaking is valid', () => {
       app: 'appId',
       extensions: {EXTENSION_A: 'UUID_A', FUNCTION_A: 'ID_A', FUNCTION_B: 'ID_B'},
       extensionIds: {EXTENSION_A: 'ID_A'},
+    })
+  })
+
+  test('treats functions as extensions when unifiedAppDeployment beta is set', async () => {
+    // Given
+    vi.mocked(ensureExtensionsIds).mockResolvedValue(
+      ok({
+        extensions: {EXTENSION_A: 'UUID_A', FUNCTION_A: 'FUNCTION_UUID_A'},
+        extensionIds: {EXTENSION_A: 'ID_A', FUNCTION_A: 'FUNCTION_ID_A'},
+      }),
+    )
+
+    // When
+    const got = await ensureDeploymentIdsPresence(
+      options([EXTENSION_A, EXTENSION_A_2], [FUNCTION_C], {}, PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA),
+    )
+
+    // Then
+    expect(ensureFunctionsIds).not.toHaveBeenCalledOnce()
+    await expect(got).toEqual({
+      app: 'appId',
+      extensions: {EXTENSION_A: 'UUID_A', FUNCTION_A: 'FUNCTION_UUID_A'},
+      extensionIds: {EXTENSION_A: 'ID_A', FUNCTION_A: 'FUNCTION_ID_A'},
     })
   })
 })
