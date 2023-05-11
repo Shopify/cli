@@ -8,10 +8,7 @@ import {mapRemoteTemplateSpecification} from './fetch-template-specifications.js
 import {blocks, configurationFileNames} from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
-import {
-  loadLocalExtensionsSpecifications,
-  loadLocalUIExtensionsSpecifications,
-} from '../../models/extensions/specifications.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/specifications.js'
 import * as functionBuild from '../function/build.js'
 import * as functionCommon from '../function/common.js'
 import {testRemoteTemplateSpecifications} from '../../models/app/app.test-data.js'
@@ -28,7 +25,7 @@ import type {ExtensionFlavorValue} from './extension.js'
 vi.mock('@shopify/cli-kit/node/node-package-manager')
 
 describe('initialize a extension', async () => {
-  const allSpecs = await loadLocalUIExtensionsSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
   const allUISpecs = allSpecs.filter((spec) => spec.category() === 'ui')
   const allFunctionSpecs = testRemoteTemplateSpecifications
     .map(mapRemoteTemplateSpecification)
@@ -404,7 +401,7 @@ describe('initialize a extension', async () => {
 describe('getExtensionRuntimeDependencies', () => {
   test('no not include React for flavored Vanilla UI extensions', async () => {
     // Given
-    const allUISpecs = await loadLocalUIExtensionsSpecifications()
+    const allUISpecs = await loadLocalExtensionsSpecifications()
     const extensionFlavor: ExtensionFlavorValue = 'vanilla-js'
 
     // When/then
@@ -416,7 +413,7 @@ describe('getExtensionRuntimeDependencies', () => {
 
   test('includes React for flavored React UI extensions', async () => {
     // Given
-    const allUISpecs = await loadLocalUIExtensionsSpecifications()
+    const allUISpecs = await loadLocalExtensionsSpecifications()
     const extensionFlavor: ExtensionFlavorValue = 'react'
 
     // When/then
@@ -428,7 +425,7 @@ describe('getExtensionRuntimeDependencies', () => {
 
   test('includes the renderer package for UI extensions', async () => {
     // Given
-    const allUISpecs = await loadLocalUIExtensionsSpecifications()
+    const allUISpecs = await loadLocalExtensionsSpecifications()
 
     // When/then
     allUISpecs.forEach((specification) => {

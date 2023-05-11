@@ -1,5 +1,4 @@
 import {ExtensionSpecification} from './ui.js'
-import {GenericSpecification} from '../app/extensions.js'
 import {loadUIExtensionSpecificiationsFromPlugins} from '../../private/plugins/extension.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {memoize} from '@shopify/cli-kit/common/function'
@@ -8,30 +7,20 @@ import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {fileURLToPath} from 'url'
 
-export async function loadUIExtensionSpecifications(config: Config): Promise<ExtensionSpecification[]> {
-  const local = await loadLocalUIExtensionsSpecifications()
-  const plugins = await loadUIExtensionSpecificiationsFromPlugins(config)
-  return [...local, ...plugins]
-}
-
-export async function loadLocalUIExtensionsSpecifications(): Promise<ExtensionSpecification[]> {
-  return memoizedLoadSpecs('ui-specifications')
-}
-
 /**
  * Load all specifications from the local file system AND plugins
  */
-export async function loadExtensionsSpecifications(config: Config): Promise<GenericSpecification[]> {
-  const ui = await loadUIExtensionSpecifications(config)
-  return [...ui]
+export async function loadExtensionsSpecifications(config: Config): Promise<ExtensionSpecification[]> {
+  const local = await loadLocalExtensionsSpecifications()
+  const plugins = await loadUIExtensionSpecificiationsFromPlugins(config)
+  return [...local, ...plugins]
 }
 
 /**
  * Load all specifications ONLY from the local file system
  */
-export async function loadLocalExtensionsSpecifications(): Promise<GenericSpecification[]> {
-  const ui = await loadLocalUIExtensionsSpecifications()
-  return [...ui]
+export async function loadLocalExtensionsSpecifications(): Promise<ExtensionSpecification[]> {
+  return memoizedLoadSpecs('ui-specifications')
 }
 
 const memoizedLoadSpecs = memoize(loadSpecifications)

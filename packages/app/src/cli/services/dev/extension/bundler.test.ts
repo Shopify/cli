@@ -7,8 +7,8 @@ import {
 import * as bundle from '../../extensions/bundle.js'
 import {testUIExtension} from '../../../models/app/app.test-data.js'
 import {UIExtension} from '../../../models/app/extensions.js'
-import {loadLocalUIExtensionsSpecifications} from '../../../models/extensions/specifications.js'
 import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/specifications.js'
 import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
 import {BuildResult} from 'esbuild'
@@ -215,7 +215,7 @@ describe('setupConfigWatcher()', async () => {
   const registrationId = 'mock-registration-id'
   const stdout = new Writable()
   const stderr = new Writable()
-  const specifications = await loadLocalUIExtensionsSpecifications()
+  const specifications = await loadLocalExtensionsSpecifications()
 
   test('starts watching the configuration file', async () => {
     const chokidarCloseSpy = vi.fn()

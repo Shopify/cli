@@ -1,7 +1,7 @@
 import {devNonPreviewableExtensionTarget} from './dev.js'
 import {setupConfigWatcher, setupNonPreviewableExtensionBundler} from './dev/extension/bundler.js'
 import {testApp, testUIExtension} from '../models/app/app.test-data.js'
-import {loadLocalUIExtensionsSpecifications} from '../models/extensions/specifications.js'
+import {loadLocalExtensionsSpecifications} from '../models/extensions/specifications.js'
 import {describe, expect, test, vi} from 'vitest'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'node:stream'
@@ -28,7 +28,7 @@ describe('devNonPreviewableExtensionTarget()', () => {
     const remoteExtensions = {} as any
     remoteExtensions[extension1.localIdentifier] = 'mock-registration-id-1'
     remoteExtensions[extension2.localIdentifier] = 'mock-registration-id-2'
-    const specifications = await loadLocalUIExtensionsSpecifications()
+    const specifications = await loadLocalExtensionsSpecifications()
 
     const process = devNonPreviewableExtensionTarget({
       extensions,

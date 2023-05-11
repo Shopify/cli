@@ -1,10 +1,10 @@
-import {loadLocalUIExtensionsSpecifications} from './specifications.js'
+import {loadLocalExtensionsSpecifications} from './specifications.js'
 import {describe, test, expect} from 'vitest'
 
 describe('allUISpecifications', () => {
   test('loads the specifications successfully', async () => {
     // When
-    const got = await loadLocalUIExtensionsSpecifications()
+    const got = await loadLocalExtensionsSpecifications()
 
     // Then
     expect(got.length).not.toEqual(0)
@@ -14,7 +14,7 @@ describe('allUISpecifications', () => {
 describe('allLocalSpecs', () => {
   test('loads the specifications successfully', async () => {
     // When
-    const got = await loadLocalUIExtensionsSpecifications()
+    const got = await loadLocalExtensionsSpecifications()
 
     // Then
     expect(got.length).not.toEqual(0)

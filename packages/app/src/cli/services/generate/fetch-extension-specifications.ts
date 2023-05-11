@@ -1,4 +1,4 @@
-import {loadUIExtensionSpecifications} from '../../models/extensions/specifications.js'
+import {loadExtensionsSpecifications} from '../../models/extensions/specifications.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {
   ExtensionSpecificationsQuery,
@@ -54,9 +54,7 @@ export async function fetchSpecifications({
       return newSpec
     })
 
-  const ui = await loadUIExtensionSpecifications(config)
-  const local = [...ui]
-
+  const local = await loadExtensionsSpecifications(config)
   const updatedSpecs = mergeLocalAndRemoteSpecs(local, extensionSpecifications)
   return [...updatedSpecs]
 }

@@ -3,7 +3,7 @@ import {ExtensionUpdateDraftMutation} from '../../api/graphql/update_draft.js'
 import {testUIExtension} from '../../models/app/app.test-data.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {findSpecificationForConfig, parseConfigurationFile} from '../../models/app/loader.js'
-import {loadLocalUIExtensionsSpecifications} from '../../models/extensions/specifications.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/specifications.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -100,7 +100,7 @@ describe('updateExtensionDraft()', () => {
 
 describe('updateExtensionConfig()', () => {
   test('updates draft with new config', async () => {
-    const specifications = await loadLocalUIExtensionsSpecifications()
+    const specifications = await loadLocalExtensionsSpecifications()
 
     await inTemporaryDirectory(async (tmpDir) => {
       const configuration = {
