@@ -405,7 +405,7 @@ export async function addNPMDependencies(
       // makes the task easier and npm can then proceed.
       for (const dep of dependenciesWithVersion) {
         // eslint-disable-next-line no-await-in-loop
-        await installDependencies(options, argumentsToAddDependenciesWithNPM([dep], options.type))
+        await installDependencies(options, argumentsToAddDependenciesWithNPM(dep, options.type))
       }
       break
     case 'yarn':
@@ -444,9 +444,9 @@ export async function addNPMDependenciesWithoutVersionIfNeeded(
  * @param type - The dependency type.
  * @returns An array with the arguments.
  */
-function argumentsToAddDependenciesWithNPM(dependencies: string[], type: DependencyType): string[] {
+function argumentsToAddDependenciesWithNPM(dependency: string, type: DependencyType): string[] {
   let command = ['install']
-  command = command.concat(dependencies)
+  command = command.concat(dependency)
   switch (type) {
     case 'dev':
       command.push('--save-dev')
@@ -457,6 +457,10 @@ function argumentsToAddDependenciesWithNPM(dependencies: string[], type: Depende
     case 'prod':
       command.push('--save-prod')
       break
+  }
+  // NPM adds ^ to the installed version by default. We want to install exact versions unless specified otherwise.
+  if (dependency.match(/@\d/g)) {
+    command.push('--save-exact')
   }
   return command
 }
