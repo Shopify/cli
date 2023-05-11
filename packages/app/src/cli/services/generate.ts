@@ -3,7 +3,6 @@ import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {fetchTemplateSpecifications} from './generate/fetch-template-specifications.js'
 import {AppInterface} from '../models/app/app.js'
 import {load as loadApp} from '../models/app/loader.js'
-import {GenericSpecification} from '../models/app/extensions.js'
 import generateExtensionPrompt, {
   GenerateExtensionPromptOutput,
   GenerateExtensionPromptOptions,
@@ -21,6 +20,7 @@ import {
   getTypesExternalName,
   TemplateSpecification,
 } from '../models/app/template.js'
+import {ExtensionSpecification} from '../models/extensions/ui.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -97,7 +97,7 @@ function checkLimits(templateSpecifications: TemplateSpecification[], app: AppIn
   return groupBy(templateSpecifications, iterateeFunction)
 }
 
-function limitReached(app: AppInterface, type: GenericSpecification) {
+function limitReached(app: AppInterface, type: ExtensionSpecification) {
   return app.extensionsForType(type).length >= type.registrationLimit
 }
 
@@ -169,7 +169,7 @@ function validateExtensionFlavor(templateSpecification?: TemplateSpecification, 
 }
 
 function formatSuccessfulRunMessage(
-  specification: GenericSpecification,
+  specification: ExtensionSpecification,
   extensionDirectory: string,
   depndencyManager: PackageManager,
 ): RenderAlertOptions {

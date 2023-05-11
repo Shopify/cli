@@ -1,15 +1,15 @@
-import {GenericSpecification} from './extensions.js'
 import {extensionTypesGroups} from '../../constants.js'
+import {ExtensionSpecification} from '../extensions/ui.js'
 
 export interface TemplateSpecification {
   identifier: string
   name: string
   group: string
   supportLinks: string[]
-  types: GenericSpecification[]
+  types: ExtensionSpecification[]
 }
 
-export function convertSpecificationsToTemplate(specifications: GenericSpecification[]): TemplateSpecification[] {
+export function convertSpecificationsToTemplate(specifications: ExtensionSpecification[]): TemplateSpecification[] {
   return specifications.map((spec) => {
     return {
       identifier: spec.identifier,

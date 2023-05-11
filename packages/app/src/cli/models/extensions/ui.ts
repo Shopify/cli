@@ -1,12 +1,5 @@
 import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema, BaseSchemaContents} from './schemas.js'
-import {
-  ExtensionCategory,
-  ExtensionFlavor,
-  FunctionExtension,
-  GenericSpecification,
-  ThemeExtension,
-  UIExtension,
-} from '../app/extensions.js'
+import {ExtensionCategory, ExtensionFlavor, FunctionExtension, ThemeExtension, UIExtension} from '../app/extensions.js'
 import {blocks, defaultExtensionFlavors} from '../../constants.js'
 import {ok, Result} from '@shopify/cli-kit/node/result'
 import {capitalize, constantize} from '@shopify/cli-kit/common/string'
@@ -20,9 +13,11 @@ export type ExtensionFeature = 'ui' | 'ui_legacy' | 'function' | 'theme' | 'bund
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
-export interface ExtensionSpecification<TConfiguration extends BaseConfigContents = BaseConfigContents>
-  extends GenericSpecification {
+export interface ExtensionSpecification<TConfiguration extends BaseConfigContents = BaseConfigContents> {
   identifier: string
+  externalIdentifier: string
+  externalName: string
+  group?: string
   additionalIdentifiers: string[]
   partnersWebIdentifier: string
   surface: string
@@ -32,7 +27,8 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigContent
   gated: boolean
   helpURL?: string
   dependency?: {name: string; version: string}
-  templatePath?: string
+  templateURL?: string // functions only
+  templatePath?: (lang?: string) => string | undefined // functions only
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
   getBundleExtensionStdinContent?: (config: TConfiguration) => string

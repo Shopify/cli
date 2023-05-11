@@ -10,13 +10,8 @@ import {
   testRemoteTemplateSpecifications,
   testThemeExtensions,
 } from '../models/app/app.test-data.js'
-import {
-  Extension,
-  FunctionExtension,
-  GenericSpecification,
-  ThemeExtension,
-  UIExtension,
-} from '../models/app/extensions.js'
+import {Extension, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
+import {ExtensionSpecification} from '../models/extensions/ui.js'
 import {describe, expect, vi, beforeAll, afterEach, test} from 'vitest'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -189,7 +184,7 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
     ...testRemoteSpecifications[0],
     ...{category: () => (identifier === 'product_discounts' ? 'function' : 'ui')},
     ...(identifier === 'product_discounts' && {helpURL: 'https://shopify.dev/docs/apps/discounts'}),
-  } as GenericSpecification
+  } as ExtensionSpecification
 
   vi.mocked(loadApp).mockResolvedValue(app)
   vi.mocked(partnersRequest).mockResolvedValueOnce({extensionSpecifications: testRemoteSpecifications})

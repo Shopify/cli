@@ -20,6 +20,7 @@ const spec = createExtensionSpecification({
   supportedFlavors: defaultFunctionsFlavors,
   partnersWebIdentifier: 'function',
   graphQLType: 'function',
+  isPreviewable: false,
   category: (): ExtensionCategory => 'function',
 })
 

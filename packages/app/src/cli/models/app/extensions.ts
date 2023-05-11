@@ -7,19 +7,6 @@ import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 
 export type ExtensionCategory = 'ui' | 'function' | 'theme'
 
-export interface GenericSpecification {
-  identifier: string
-  externalIdentifier: string
-  additionalIdentifiers?: string[]
-  externalName: string
-  registrationLimit: number
-  helpURL?: string
-  supportedFlavors: ExtensionFlavor[]
-  gated: boolean
-  category: () => ExtensionCategory
-  group?: string
-}
-
 export interface ExtensionFlavor {
   name: string
   value: ExtensionFlavorValue

@@ -1,6 +1,6 @@
 import {AppInterface} from '../../models/app/app.js'
-import {GenericSpecification} from '../../models/app/extensions.js'
 import {TemplateSpecification} from '../../models/app/template.js'
+import {ExtensionSpecification} from '../../models/extensions/ui.js'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputWarn} from '@shopify/cli-kit/node/output'
@@ -25,7 +25,7 @@ export interface GenerateExtensionPromptOutput {
 }
 interface GenerateExtensionContentOutput {
   name: string
-  specification: GenericSpecification
+  specification: ExtensionSpecification
   extensionFlavor?: string
 }
 
@@ -69,7 +69,7 @@ const generateExtensionPrompt = async (
 
   const templateSpecification = templateSpecifications.find((spec) => spec.identifier === templateType)!
 
-  const nameAndFlavors: {name: string; flavor?: string; specification: GenericSpecification}[] = []
+  const nameAndFlavors: {name: string; flavor?: string; specification: ExtensionSpecification}[] = []
   for (const spec of templateSpecification.types) {
     // eslint-disable-next-line no-await-in-loop
     nameAndFlavors.push(await promptNameAndFlavor(options, spec))
@@ -89,8 +89,8 @@ const generateExtensionPrompt = async (
 
 async function promptNameAndFlavor(
   options: GenerateExtensionPromptOptions,
-  specification: GenericSpecification,
-): Promise<{name: string; flavor?: string; specification: GenericSpecification}> {
+  specification: ExtensionSpecification,
+): Promise<{name: string; flavor?: string; specification: ExtensionSpecification}> {
   const result = {
     name: options.name ?? '',
     flavor: options.extensionFlavor ?? specification.supportedFlavors[0]?.value,

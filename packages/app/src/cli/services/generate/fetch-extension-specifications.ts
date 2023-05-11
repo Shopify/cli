@@ -1,5 +1,4 @@
 import {loadExtensionsSpecifications} from '../../models/extensions/specifications.js'
-import {GenericSpecification} from '../../models/app/extensions.js'
 import {
   ExtensionSpecificationsQuery,
   ExtensionSpecificationsQuerySchema,
@@ -32,7 +31,7 @@ export async function fetchSpecifications({
   token,
   apiKey,
   config,
-}: FetchSpecificationsOptions): Promise<GenericSpecification[]> {
+}: FetchSpecificationsOptions): Promise<ExtensionSpecification[]> {
   const result: ExtensionSpecificationsQuerySchema = await partnersRequest(ExtensionSpecificationsQuery, token, {
     api_key: apiKey,
   })
@@ -62,12 +61,12 @@ export async function fetchSpecifications({
 function mergeLocalAndRemoteSpecs(
   local: ExtensionSpecification[],
   remote: FlattenedRemoteSpecification[],
-): GenericSpecification[] {
+): ExtensionSpecification[] {
   const updated = local.map((spec) => {
     const remoteSpec = remote.find((remote) => remote.identifier === spec.identifier)
     if (remoteSpec) return {...spec, ...remoteSpec}
     return undefined
   })
 
-  return getArrayRejectingUndefined<GenericSpecification>(updated)
+  return getArrayRejectingUndefined<ExtensionSpecification>(updated)
 }

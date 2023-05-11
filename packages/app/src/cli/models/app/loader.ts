@@ -1,4 +1,4 @@
-import {Extension, GenericSpecification} from './extensions.js'
+import {Extension} from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -90,7 +90,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   return parseResult.data
 }
 
-export function findSpecificationForType(specifications: GenericSpecification[], type: string) {
+export function findSpecificationForType(specifications: ExtensionSpecification[], type: string) {
   return specifications.find(
     (spec) =>
       spec.identifier === type || spec.externalIdentifier === type || spec.additionalIdentifiers?.includes(type),
@@ -98,14 +98,14 @@ export function findSpecificationForType(specifications: GenericSpecification[],
 }
 
 export async function findSpecificationForConfig(
-  specifications: GenericSpecification[],
+  specifications: ExtensionSpecification[],
   configurationPath: string,
   abortOrReport: AbortOrReport,
 ) {
   const fileContent = await readFile(configurationPath)
   const obj = decodeToml(fileContent)
   const {type} = TypeSchema.parse(obj)
-  const specification = findSpecificationForType(specifications, type) as ExtensionSpecification | undefined
+  const specification = findSpecificationForType(specifications, type)
 
   if (!specification) {
     const isShopifolk = await isShopify()
@@ -148,7 +148,7 @@ export class AppErrors {
 interface AppLoaderConstructorArgs {
   directory: string
   mode?: AppLoaderMode
-  specifications: GenericSpecification[]
+  specifications: ExtensionSpecification[]
 }
 
 /**
@@ -166,7 +166,7 @@ class AppLoader {
   private appDirectory = ''
   private configurationPath = ''
   private errors: AppErrors = new AppErrors()
-  private specifications: GenericSpecification[]
+  private specifications: ExtensionSpecification[]
 
   constructor({directory, mode, specifications}: AppLoaderConstructorArgs) {
     this.mode = mode ?? 'strict'

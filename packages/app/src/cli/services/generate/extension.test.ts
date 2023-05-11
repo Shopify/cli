@@ -7,12 +7,11 @@ import {
 import {mapRemoteTemplateSpecification} from './fetch-template-specifications.js'
 import {blocks, configurationFileNames} from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
-import {GenericSpecification} from '../../models/app/extensions.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/specifications.js'
 import * as functionBuild from '../function/build.js'
 import * as functionCommon from '../function/common.js'
 import {testRemoteTemplateSpecifications} from '../../models/app/app.test-data.js'
-import {FunctionSpec} from '../../models/extensions/functions.js'
+import {ExtensionSpecification} from '../../models/extensions/ui.js'
 import {describe, expect, vi, test} from 'vitest'
 import * as output from '@shopify/cli-kit/node/output'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
@@ -29,7 +28,7 @@ describe('initialize a extension', async () => {
   const allUISpecs = allSpecs.filter((spec) => spec.category() === 'ui')
   const allFunctionSpecs = testRemoteTemplateSpecifications
     .map(mapRemoteTemplateSpecification)
-    .map((template) => template.types as FunctionSpec[])
+    .map((template) => template.types)
     .flat()
   const specifications = await loadLocalExtensionsSpecifications()
 
@@ -154,7 +153,7 @@ describe('initialize a extension', async () => {
       accumulator.push({specification, flavor: 'typescript'})
 
       return accumulator
-    }, [] as {specification: GenericSpecification; flavor: ExtensionFlavorValue}[]),
+    }, [] as {specification: ExtensionSpecification; flavor: ExtensionFlavorValue}[]),
   )(
     `doesn't add deps for $specification.identifier extension when flavor is $flavor`,
 
@@ -182,7 +181,7 @@ describe('initialize a extension', async () => {
     accumulator.push({specification, flavor: 'typescript-react', ext: 'tsx'})
 
     return accumulator
-  }, [] as {specification: GenericSpecification; flavor: ExtensionFlavorValue; ext: FileExtension}[])
+  }, [] as {specification: ExtensionSpecification; flavor: ExtensionFlavorValue; ext: FileExtension}[])
 
   test.each(allUISpecsWithAllFlavors)(
     'creates $specification.identifier for $flavor with .$ext files',
@@ -244,7 +243,7 @@ describe('initialize a extension', async () => {
       vi.spyOn(file, 'moveFile').mockResolvedValue()
       const name = 'my-ext-1'
       const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
-      specification.templatePath = 'path/to/custom/template'
+      specification.templatePath = () => 'path/to/custom/template'
       const extensionFlavor = 'vanilla-js'
       const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockResolvedValue()
 
@@ -440,10 +439,10 @@ describe('getExtensionRuntimeDependencies', () => {
 
 interface CreateFromTemplateOptions {
   name: string
-  specification: GenericSpecification
+  specification: ExtensionSpecification
   appDirectory: string
   extensionFlavor: ExtensionFlavorValue
-  specifications: GenericSpecification[]
+  specifications: ExtensionSpecification[]
 }
 async function createFromTemplate({
   name,

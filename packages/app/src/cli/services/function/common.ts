@@ -2,8 +2,8 @@ import {FunctionExtension} from '../../models/app/extensions.js'
 import {App, AppInterface} from '../../models/app/app.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {loadExtensionsSpecifications} from '../../models/extensions/specifications.js'
-import {FunctionSpec} from '../../models/extensions/functions.js'
 import {ExtensionFlavorValue} from '../generate/extension.js'
+import {ExtensionSpecification} from '../../models/extensions/ui.js'
 import {resolvePath, cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -39,11 +39,11 @@ export async function inFunctionContext(
 }
 
 export async function ensureFunctionExtensionFlavorExists(
-  specification: FunctionSpec,
+  specification: ExtensionSpecification,
   extensionFlavor: ExtensionFlavorValue,
   templateDownloadDir: string,
 ): Promise<string> {
-  const templatePath = specification.templatePath(extensionFlavor)
+  const templatePath = specification.templatePath?.(extensionFlavor) ?? 'unknown'
   const origin = joinPath(templateDownloadDir, templatePath)
   if (!(await fileExists(origin))) {
     throw new AbortError(`\nExtension '${specification.externalName}' is not available for ${extensionFlavor}`)

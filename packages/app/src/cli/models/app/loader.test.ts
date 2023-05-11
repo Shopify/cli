@@ -1,8 +1,8 @@
 import {load} from './loader.js'
-import {GenericSpecification} from './extensions.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js'
+import {ExtensionSpecification} from '../extensions/ui.js'
 import {describe, expect, beforeEach, afterEach, beforeAll, test} from 'vitest'
 import {yarnLockfile, pnpmLockfile, PackageJson, pnpmWorkspaceFile} from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
@@ -10,7 +10,7 @@ import {joinPath, dirname, cwd} from '@shopify/cli-kit/node/path'
 
 describe('load', () => {
   type BlockType = 'ui' | 'function' | 'theme'
-  let specifications: GenericSpecification[] = []
+  let specifications: ExtensionSpecification[] = []
 
   let tmpDir: string
   const appConfiguration = `

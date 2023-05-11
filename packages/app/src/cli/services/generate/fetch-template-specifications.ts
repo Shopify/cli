@@ -4,8 +4,9 @@ import {
   RemoteTemplateSpecificationsQuerySchema,
 } from '../../api/graphql/template_specifications.js'
 import {TemplateSpecification} from '../../models/app/template.js'
-import {BaseFunctionConfigurationSchema} from '../../models/extensions/schemas.js'
-import {blocks, templates} from '../../constants.js'
+import {templates} from '../../constants.js'
+import functionSpec from '../../models/extensions/ui-specifications/function.js'
+import {ExtensionSpecification} from '../../models/extensions/ui.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export async function fetchTemplateSpecifications(token: string): Promise<TemplateSpecification[]> {
@@ -21,30 +22,28 @@ export async function fetchTemplateSpecifications(token: string): Promise<Templa
 export function mapRemoteTemplateSpecification(
   remoteTemplateSpecification: RemoteTemplateSpecification,
 ): TemplateSpecification {
+  const spec = functionSpec as unknown as ExtensionSpecification
   return {
     identifier: remoteTemplateSpecification.identifier,
     name: remoteTemplateSpecification.name,
     group: remoteTemplateSpecification.group,
     supportLinks: remoteTemplateSpecification.supportLinks,
-    types: remoteTemplateSpecification.types.map((extension) => {
-      return {
-        identifier: 'function',
-        externalIdentifier: remoteTemplateSpecification.identifier,
-        externalName: remoteTemplateSpecification.identifier,
-        gated: false,
-        registrationLimit: blocks.functions.defaultRegistrationLimit,
-        supportedFlavors: extension.supportedFlavors,
-        group: remoteTemplateSpecification.group,
-        category: () => 'function',
-        configSchema: BaseFunctionConfigurationSchema,
-        templateURL: extension.url,
-        helpURL: remoteTemplateSpecification.supportLinks[0]!,
-        templatePath: (flavor: string) => {
-          const supportedFlavor = extension.supportedFlavors.find((supportedFlavor) => supportedFlavor.value === flavor)
-          if (!supportedFlavor) return undefined
-          return supportedFlavor.path
-        },
-      }
-    }),
+    types: [spec],
+    //   return {
+    //     ...spec,
+    //     ...{
+    //       registrationLimit: blocks.functions.defaultRegistrationLimit,
+    //       supportedFlavors: extension.supportedFlavors,
+    //       group: remoteTemplateSpecification.group,
+    //       templateURL: extension.url,
+    //       helpURL: remoteTemplateSpecification.supportLinks[0]!,
+    //       templatePath: (lang?: string) => {
+    //         const supportedFlavor = extension.supportedFlavors.find((supportedFlavor) => supportedFlavor.value === lang)
+    //         if (!supportedFlavor) return undefined
+    //         return supportedFlavor.path
+    //       },
+    //     },
+    //   }
+    // }),
   }
 }

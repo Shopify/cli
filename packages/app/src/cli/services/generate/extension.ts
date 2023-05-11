@@ -1,7 +1,5 @@
 import {blocks, versions} from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
-import {FunctionSpec} from '../../models/extensions/functions.js'
-import {GenericSpecification} from '../../models/app/extensions.js'
 import {ExtensionSpecification} from '../../models/extensions/ui.js'
 import {buildGraphqlTypes} from '../function/build.js'
 import {ensureFunctionExtensionFlavorExists} from '../function/common.js'
@@ -31,7 +29,7 @@ async function getTemplatePath(name: string): Promise<string> {
   }
 }
 
-export interface ExtensionInitOptions<TSpec extends GenericSpecification = GenericSpecification> {
+export interface ExtensionInitOptions<TSpec extends ExtensionSpecification = ExtensionSpecification> {
   name: string
   app: AppInterface
   cloneUrl?: string
@@ -50,7 +48,7 @@ interface FunctionFlavor {
 
 export type ExtensionFlavorValue = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react' | 'rust' | 'wasm'
 
-type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionSpec> & ExtensionDirectory & FunctionFlavor
+type FunctionExtensionInitOptions = ExtensionInitOptions<ExtensionSpecification> & ExtensionDirectory & FunctionFlavor
 type UIExtensionInitOptions = ExtensionInitOptions<ExtensionSpecification> & ExtensionDirectory
 type ThemeExtensionInitOptions = ExtensionInitOptions<ExtensionSpecification> & ExtensionDirectory
 
@@ -70,7 +68,7 @@ function getTemplateLanguage(flavor: ExtensionFlavorValue): TemplateLanguage {
 
 export interface GeneratedExtension {
   directory: string
-  specification: GenericSpecification
+  specification: ExtensionSpecification
 }
 
 export async function generateExtension(extensionOptions: ExtensionInitOptions[]): Promise<GeneratedExtension[]> {
@@ -130,7 +128,7 @@ async function uiExtensionInit({
       title: `Generating ${specification.externalName} extension`,
       task: async () => {
         const templateDirectory =
-          specification.templatePath ??
+          specification.templatePath?.() ??
           (await findPathUp(`templates/ui-extensions/projects/${specification.identifier}`, {
             type: 'directory',
             cwd: moduleDirectory(import.meta.url),
@@ -215,7 +213,7 @@ async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, 
 }
 
 async function functionExtensionInit(options: FunctionExtensionInitOptions) {
-  const url = options.cloneUrl || options.specification.templateURL
+  const url = options.cloneUrl || options.specification.templateURL || blocks.functions.defaultUrl
   const specification = options.specification
 
   await inTemporaryDirectory(async (tmpDir) => {

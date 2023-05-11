@@ -1,5 +1,6 @@
 import {BaseFunctionConfigurationSchema, ZodSchemaType} from './schemas.js'
-import {ExtensionCategory, GenericSpecification, ExtensionFlavor} from '../app/extensions.js'
+import {ExtensionSpecification} from './ui.js'
+import {ExtensionCategory, ExtensionFlavor} from '../app/extensions.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 // Base config type that all config schemas must extend
@@ -9,7 +10,7 @@ export type FunctionConfigType = zod.infer<typeof BaseFunctionConfigurationSchem
  * Specification with all the needed properties and methods to load a function.
  */
 export interface FunctionSpec<TConfiguration extends FunctionConfigType = FunctionConfigType>
-  extends GenericSpecification {
+  extends ExtensionSpecification<TConfiguration> {
   identifier: string
   externalIdentifier: string
   externalName: string
@@ -19,7 +20,7 @@ export interface FunctionSpec<TConfiguration extends FunctionConfigType = Functi
   supportedFlavors: ExtensionFlavor[]
   configSchema: ZodSchemaType<TConfiguration>
   registrationLimit: number
-  templatePath: (lang: string) => string
+  templatePath: (lang?: string) => string
   category: () => ExtensionCategory
 }
 
