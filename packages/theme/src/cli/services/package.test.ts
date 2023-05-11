@@ -19,6 +19,7 @@ describe('packageTheme', () => {
         'layout/theme.liquid',
         'config/settings_schema.json',
         'release-notes.md',
+        'update_extension.json',
       ]
       await createFiles(themeRelativePaths, inputDirectory)
       await createSettingsSchema(
@@ -92,6 +93,7 @@ describe('packageTheme', () => {
         'layout/theme.liquid',
         'config/settings_schema.json',
         'release-notes.md',
+        'update_extension.json',
       ]
       await createFiles(themeRelativePaths, inputDirectory)
       await createSettingsSchema('[{"name": "theme_info", "theme_name": "Dawn"}]', inputDirectory)

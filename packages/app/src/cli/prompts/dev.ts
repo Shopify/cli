@@ -100,7 +100,7 @@ export async function reuseDevConfigPrompt(): Promise<boolean> {
 
 export function updateURLsPrompt(currentAppUrl: string, currentRedirectUrls: string[]): Promise<string> {
   return renderSelectPrompt({
-    message: `Have Shopify automatically update your app's URL in order to create a preview experience?`,
+    message: "Have Shopify automatically update your app's URL in order to create a preview experience?",
     choices: [
       {label: 'Always by default', value: 'always'},
       {label: 'Yes, this time', value: 'yes'},

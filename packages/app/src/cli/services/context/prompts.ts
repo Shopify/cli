@@ -11,9 +11,9 @@ import {
 
 export async function matchConfirmationPrompt(local: LocalSource, remote: RemoteSource) {
   return renderConfirmationPrompt({
-    message: `Deploy ${local.configuration.name} (local name) as ${remote.title} (name on Shopify Partners, ID: ${remote.id})?`,
+    message: `Match ${local.configuration.name} (local name) with ${remote.title} (name on Shopify Partners, ID: ${remote.id})?`,
     confirmationMessage: `Yes, that's right`,
-    cancellationMessage: `No, cancel deployment`,
+    cancellationMessage: `No, cancel`,
   })
 }
 
@@ -92,7 +92,7 @@ export async function extensionMigrationPrompt(toMigrate: LocalRemoteSource[]): 
   const uniqueMigrationTypes = allMigrationTypes.filter((type, i) => allMigrationTypes.indexOf(type) === i).join(',')
 
   renderInfo({
-    headline: "Extension migrations can't be undone",
+    headline: "Extension migrations can't be undone.",
     body: `Your ${migrationNames} configuration has been updated. Migrating gives you access to new features and won't impact the end user experience. All previous extension versions will reflect this change.`,
   })
 

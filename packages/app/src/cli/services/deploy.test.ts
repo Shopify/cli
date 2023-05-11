@@ -1,9 +1,14 @@
 import {ensureDeployContext} from './context.js'
 import {deploy} from './deploy.js'
-import {uploadExtensionsBundle, uploadFunctionExtensions} from './deploy/upload.js'
+import {
+  uploadWasmBlob,
+  uploadExtensionsBundle,
+  uploadFunctionExtensions,
+  functionConfiguration,
+} from './deploy/upload.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
-import {testApp, testThemeExtensions, testUIExtension} from '../models/app/app.test-data.js'
+import {testApp, testFunctionExtension, testThemeExtensions, testUIExtension} from '../models/app/app.test-data.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
@@ -18,6 +23,7 @@ vi.mock('./dev/fetch.js')
 vi.mock('../models/app/identifiers.js')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('../validators/extensions.js')
 
 beforeEach(() => {
   // this is needed because using importActual to mock the ui module
@@ -50,8 +56,9 @@ describe('deploy', () => {
       apiKey: 'app-id',
       extensions: [],
       token: 'api-token',
+      extensionIds: {},
     })
-    expect(bundleAndBuildExtensions).not.toHaveBeenCalledOnce()
+    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
     expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
@@ -89,6 +96,7 @@ describe('deploy', () => {
       bundlePath: expect.stringMatching(/bundle.zip$/),
       extensions: [{uuid: uiExtension.localIdentifier, config: '{}', context: ''}],
       token: 'api-token',
+      extensionIds: {},
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
@@ -109,6 +117,83 @@ describe('deploy', () => {
       bundlePath: expect.stringMatching(/bundle.zip$/),
       extensions: [{uuid: themeExtension.localIdentifier, config: '{"theme_extension": {"files": {}}}', context: ''}],
       token: 'api-token',
+      extensionIds: {},
+    })
+    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
+    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
+    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
+  })
+
+  test('does not upload the extension bundle with 1 function and no beta flag', async () => {
+    // Given
+    const functionExtension = await testFunctionExtension()
+    const app = testApp({extensions: {ui: [], theme: [], function: [functionExtension]}})
+
+    // When
+    await testDeployBundle(app)
+
+    // Then
+    expect(uploadFunctionExtensions).toHaveBeenCalledWith(
+      [
+        {
+          configuration: functionExtension.configuration,
+          configurationPath: functionExtension.configurationPath,
+          directory: functionExtension.directory,
+          entrySourceFilePath: functionExtension.entrySourceFilePath,
+          idEnvironmentVariableName: functionExtension.idEnvironmentVariableName,
+          localIdentifier: functionExtension.localIdentifier,
+          _usingExtensionsFramework: false,
+        },
+      ],
+      {
+        identifiers: {app: 'app-id', extensions: {'my-function': 'my-function'}, extensionIds: {}},
+        token: 'api-token',
+      },
+    )
+    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
+    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
+    expect(uploadExtensionsBundle).not.toHaveBeenCalled()
+    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
+  })
+
+  test('uploads the extension bundle with 1 function and beta flag', async () => {
+    // Given
+    const functionExtension = await testFunctionExtension()
+    const app = testApp({extensions: {ui: [], theme: [], function: [functionExtension]}})
+    const moduleId = 'module-id'
+    const mockedFunctionConfiguration = {
+      title: functionExtension.configuration.name,
+      description: functionExtension.configuration.description,
+      api_type: functionExtension.configuration.type,
+      api_version: functionExtension.configuration.apiVersion,
+      enable_creation_ui: true,
+      module_id: moduleId,
+    }
+    vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
+    vi.mocked(functionConfiguration).mockResolvedValue(mockedFunctionConfiguration)
+
+    // When
+    await testDeployBundle(app, {
+      id: 'app-id',
+      organizationId: 'org-id',
+      title: 'app-title',
+      grantedScopes: [],
+      betas: {unifiedAppDeployment: true},
+    })
+
+    // Then
+    expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      apiKey: 'app-id',
+      extensions: [
+        {
+          uuid: functionExtension.localIdentifier,
+          config: JSON.stringify(mockedFunctionConfiguration),
+          context: '',
+        },
+      ],
+      token: 'api-token',
+      extensionIds: {},
+      bundlePath: undefined,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
@@ -133,97 +218,11 @@ describe('deploy', () => {
         {uuid: themeExtension.localIdentifier, config: '{"theme_extension": {"files": {}}}', context: ''},
       ],
       token: 'api-token',
+      extensionIds: {},
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
     expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
-  })
-
-  test('passes a label to the deployment mutation', async () => {
-    // Given
-    const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({
-      extensions: {ui: [uiExtension], theme: [], function: []},
-    })
-    vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
-
-    // When
-    await testDeployBundle(app, {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-      betas: {unifiedAppDeployment: true},
-    })
-
-    // Then
-    expect(uploadExtensionsBundle).toHaveBeenCalledWith(
-      expect.objectContaining({
-        label: 'Deployed from CLI',
-      }),
-    )
-  })
-
-  test("doesn't ask for a label if force is used", async () => {
-    // Given
-    const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({
-      extensions: {ui: [uiExtension], theme: [], function: []},
-    })
-
-    // When
-    await testDeployBundle(
-      app,
-      {
-        id: 'app-id',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        betas: {unifiedAppDeployment: true},
-      },
-      {
-        force: true,
-      },
-    )
-
-    // Then
-    expect(vi.mocked(renderTextPrompt)).not.toHaveBeenCalled()
-    expect(uploadExtensionsBundle).toHaveBeenCalledWith(
-      expect.objectContaining({
-        label: undefined,
-      }),
-    )
-  })
-
-  test('passes a label to the deployment mutation with a flag', async () => {
-    // Given
-    const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({
-      extensions: {ui: [uiExtension], theme: [], function: []},
-    })
-
-    // When
-    await testDeployBundle(
-      app,
-      {
-        id: 'app-id',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        betas: {unifiedAppDeployment: true},
-      },
-      {
-        label: 'Deployed from CLI with flag',
-      },
-    )
-
-    // Then
-    expect(renderTextPrompt).not.toHaveBeenCalled()
-    expect(uploadExtensionsBundle).toHaveBeenCalledWith(
-      expect.objectContaining({
-        label: 'Deployed from CLI with flag',
-      }),
-    )
   })
 
   test('shows a success message', async () => {
@@ -291,7 +290,7 @@ describe('deploy', () => {
           url: 'https://partners.shopify.com/org-id/apps/app-id/deployments/2',
         },
       },
-      headline: 'Deployment created',
+      headline: 'Deployment created.',
       nextSteps: ['Publish your deployment to make your changes go live for merchants'],
     })
   })
@@ -301,7 +300,6 @@ async function testDeployBundle(
   app: AppInterface,
   partnersApp?: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>,
   options?: {
-    label?: string
     force?: boolean
   },
 ) {
@@ -312,6 +310,9 @@ async function testDeployBundle(
   }
   for (const themeExtension of app.extensions.theme) {
     extensionsPayload[themeExtension.localIdentifier] = themeExtension.localIdentifier
+  }
+  for (const functionExtension of app.extensions.function) {
+    extensionsPayload[functionExtension.localIdentifier] = functionExtension.localIdentifier
   }
   const identifiers = {app: 'app-id', extensions: extensionsPayload, extensionIds: {}}
 
@@ -336,6 +337,5 @@ async function testDeployBundle(
     app,
     reset: false,
     force: Boolean(options?.force),
-    label: options?.label,
   })
 }

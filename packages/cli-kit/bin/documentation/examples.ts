@@ -94,7 +94,7 @@ export const examples: {[key in string]: Example} = {
       const stdout = new Stdout({columns: TERMINAL_WIDTH})
 
       return renderInfo({
-        headline: 'CLI update available',
+        headline: 'CLI update available.',
         body: ['Run', {command: 'npm run shopify upgrade'}, {char: '.'}],
         renderOptions: {
           stdout: stdout as any,
@@ -267,7 +267,38 @@ export const examples: {[key in string]: Example} = {
         ],
       ]
 
-      return renderFatalError(new AbortError('No Organization found', undefined, nextSteps), {
+      const customSections = [
+        {
+          title: 'amortizable-marketplace-ext',
+          body: [
+            {
+              list: {
+                title: undefined,
+                items: ['Some other error'],
+              },
+            },
+            {
+              list: {
+                title: 'Validation errors',
+                items: ['Missing expected key(s).'],
+              },
+            },
+          ],
+        },
+        {
+          title: 'amortizable-marketplace-ext-2',
+          body: [
+            {
+              list: {
+                title: undefined,
+                items: ['Something was not found'],
+              },
+            },
+          ],
+        },
+      ]
+
+      return renderFatalError(new AbortError('No Organization found', undefined, nextSteps, customSections), {
         renderOptions: {
           stdout: stdout as any,
         },

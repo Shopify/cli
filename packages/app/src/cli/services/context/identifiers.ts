@@ -40,9 +40,13 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
 
   const remoteSpecifications = await fetchAppExtensionRegistrations({token: options.token, apiKey: options.appId})
 
-  const result = await ensureFunctionsIds(options, remoteSpecifications.app.functions)
-  if (result.isErr()) throw handleIdsError(result.error, options.appName, options.app.packageManager)
-  const functions: IdentifiersExtensions = result.value
+  let functions: IdentifiersExtensions = {}
+
+  if (!options.partnersApp?.betas?.unifiedAppDeployment) {
+    const result = await ensureFunctionsIds(options, remoteSpecifications.app.functions)
+    if (result.isErr()) throw handleIdsError(result.error, options.appName, options.app.packageManager)
+    functions = result.value
+  }
 
   const extensions = await ensureExtensionsIds(options, remoteSpecifications.app.extensionRegistrations)
   if (extensions.isErr()) throw handleIdsError(extensions.error, options.appName, options.app.packageManager)

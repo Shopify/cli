@@ -11,6 +11,7 @@ const spec = createUIExtensionSpecification({
   partnersWebIdentifier: 'post_purchase',
   helpURL: 'https://shopify.dev/docs/apps/checkout/post-purchase',
   schema: BaseUIExtensionSchema,
+  isPreviewable: true,
   deployConfig: async (config, _) => {
     return {metafields: config.metafields}
   },

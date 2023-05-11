@@ -1,19 +1,26 @@
 import {TUNNEL_PROVIDER} from './provider.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
-import {startTunnel, TunnelError, TunnelErrorType} from '@shopify/cli-kit/node/plugins/tunnel'
+import {startTunnel, TunnelError, TunnelErrorType, TunnelStartReturn} from '@shopify/cli-kit/node/plugins/tunnel'
 import ngrok from '@shopify/ngrok'
 import {renderFatalError, renderTextPrompt} from '@shopify/cli-kit/node/ui'
-import {err, ok, Result} from '@shopify/cli-kit/node/result'
+import {err, ok} from '@shopify/cli-kit/node/result'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputToken, outputInfo, outputContent} from '@shopify/cli-kit/node/output'
 
 export default startTunnel({provider: TUNNEL_PROVIDER, action: hookStart})
 
 // New entry point for hooks
-export async function hookStart(port: number): Promise<Result<{url: string}, TunnelError>> {
+export async function hookStart(port: number): Promise<TunnelStartReturn> {
   try {
     const url = await start({port})
-    return ok({url})
+    return ok({
+      getTunnelStatus: () => {
+        return {status: 'connected', url}
+      },
+      stopTunnel: () => ngrok.kill(),
+      provider: TUNNEL_PROVIDER,
+      port,
+    })
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
     const errorType = getErrorType(error.message)
@@ -31,7 +38,6 @@ export async function start(options: {port: number}): Promise<string> {
     const token = await tokenPrompt()
     await authenticate(token)
   }
-
   return ngrok.connect({proto: 'http', addr: options.port})
 }
 
@@ -52,7 +58,7 @@ async function tokenPrompt(showExplanation = true): Promise<string> {
 
   return renderTextPrompt({
     password: true,
-    message: 'Enter your ngrok token.',
+    message: 'Enter your ngrok token',
     validate: (value) => {
       if (value.length === 0) {
         return "Token can't be empty"

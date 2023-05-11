@@ -6,7 +6,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileSize} from '@shopify/cli-kit/node/fs'
 
 const kilobytes = 1024
-const BUNDLE_SIZE_LIMIT_KB = 64
+const BUNDLE_SIZE_LIMIT_KB = 128
 const BUNDLE_SIZE_LIMIT = BUNDLE_SIZE_LIMIT_KB * kilobytes
 
 const dependency = '@shopify/web-pixels-extension'
@@ -51,6 +51,7 @@ const spec = createUIExtensionSpecification({
     return Promise.resolve()
   },
   previewMessage: () => undefined,
+  isPreviewable: false,
 })
 
 export default spec

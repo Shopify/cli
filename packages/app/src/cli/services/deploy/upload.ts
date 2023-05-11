@@ -33,6 +33,8 @@ import {fileExists, readFile, readFileSync} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {AlertCustomSection, ListToken, TokenItem} from '@shopify/cli-kit/node/ui'
+import {partition} from '@shopify/cli-kit/common/collection'
 
 interface DeployThemeExtensionOptions {
   /** The application API key */
@@ -87,8 +89,8 @@ interface UploadExtensionsBundleOptions {
   /** Extensions extra data */
   extensions: ExtensionSettings[]
 
-  /** Deployment label */
-  label?: string
+  /** The extensions' numeric identifiers (expressed as a string). */
+  extensionIds: IdentifiersExtensions
 }
 
 export interface UploadExtensionValidationError {
@@ -97,6 +99,11 @@ export interface UploadExtensionValidationError {
     message: string
     field: string[]
   }[]
+}
+
+type ErrorSectionBody = TokenItem
+interface ErrorCustomSection extends AlertCustomSection {
+  body: ErrorSectionBody
 }
 
 /**
@@ -125,7 +132,6 @@ export async function uploadExtensionsBundle(
   const variables: CreateDeploymentVariables = {
     apiKey: options.apiKey,
     uuid: deploymentUUID,
-    label: options.label,
   }
 
   if (signedURL) {
@@ -140,8 +146,12 @@ export async function uploadExtensionsBundle(
   const result: CreateDeploymentSchema = await partnersRequest(mutation, options.token, variables)
 
   if (result.deploymentCreate?.userErrors?.length > 0) {
-    const errors = result.deploymentCreate.userErrors.map((error) => error.message).join(', ')
-    throw new AbortError(errors)
+    const customSections: AlertCustomSection[] = deploymentErrorsToCustomSections(
+      result.deploymentCreate.userErrors,
+      options.extensionIds,
+    )
+
+    throw new AbortError('There has been an error creating your deployment.', null, [], customSections)
   }
 
   const validationErrors = result.deploymentCreate.deployment.deployedVersions
@@ -151,6 +161,115 @@ export async function uploadExtensionsBundle(
     })
 
   return {validationErrors, deploymentId: result.deploymentCreate.deployment.id}
+}
+
+const VALIDATION_ERRORS_TITLE = '\nValidation errors'
+const GENERIC_ERRORS_TITLE = '\n'
+
+export function deploymentErrorsToCustomSections(
+  errors: CreateDeploymentSchema['deploymentCreate']['userErrors'],
+  extensionIds: IdentifiersExtensions,
+): ErrorCustomSection[] {
+  const isCliError = (error: (typeof errors)[0], extensionIds: IdentifiersExtensions) => {
+    const errorExtensionId =
+      error.details?.find((detail) => typeof detail.extension_id !== 'undefined')?.extension_id.toString() ?? ''
+
+    return Object.values(extensionIds).includes(errorExtensionId)
+  }
+
+  const [cliErrors, partnersErrors] = partition(errors, (error) => isCliError(error, extensionIds))
+
+  const customSections = [...cliErrorsSections(cliErrors), ...partnersErrorsSections(partnersErrors)]
+  return customSections
+}
+
+function cliErrorsSections(errors: CreateDeploymentSchema['deploymentCreate']['userErrors']) {
+  return errors.reduce((sections, error) => {
+    const field = error.field.join('.')
+    const errorMessage = field === 'base' ? error.message : `${field}: ${error.message}`
+
+    const extensionIdentifier = error.details.find(
+      (detail) => typeof detail.extension_title !== 'undefined',
+    )?.extension_title
+
+    const existingSection = sections.find((section) => section.title === extensionIdentifier)
+
+    if (existingSection) {
+      const sectionBody = existingSection.body as ListToken[]
+      const errorsList =
+        error.category === 'invalid'
+          ? sectionBody.find((listToken) => listToken.list.title === VALIDATION_ERRORS_TITLE)
+          : sectionBody.find((listToken) => listToken.list.title === GENERIC_ERRORS_TITLE)
+
+      if (errorsList) {
+        errorsList.list.items.push(errorMessage)
+      } else {
+        sectionBody.push({
+          list: {
+            title: error.category === 'invalid' ? VALIDATION_ERRORS_TITLE : GENERIC_ERRORS_TITLE,
+            items: [errorMessage],
+          },
+        })
+      }
+    } else {
+      sections.push({
+        title: extensionIdentifier,
+        body: [
+          {
+            list: {
+              title: error.category === 'invalid' ? VALIDATION_ERRORS_TITLE : GENERIC_ERRORS_TITLE,
+              items: [errorMessage],
+            },
+          },
+        ],
+      })
+    }
+
+    sections.forEach((section) => {
+      // eslint-disable-next-line id-length
+      ;(section.body as ListToken[]).sort((a, b) => {
+        if (a.list.title === VALIDATION_ERRORS_TITLE) {
+          return 1
+        }
+
+        if (b.list.title === VALIDATION_ERRORS_TITLE) {
+          return -1
+        }
+
+        return 0
+      })
+    })
+
+    return sections
+  }, [] as ErrorCustomSection[])
+}
+
+function partnersErrorsSections(errors: CreateDeploymentSchema['deploymentCreate']['userErrors']) {
+  return errors
+    .reduce((sections, error) => {
+      const extensionIdentifier = error.details.find(
+        (detail) => typeof detail.extension_title !== 'undefined',
+      )?.extension_title
+
+      const existingSection = sections.find((section) => section.title === extensionIdentifier)
+
+      if (existingSection) {
+        existingSection.errorCount += 1
+      } else {
+        sections.push({
+          title: extensionIdentifier,
+          errorCount: 1,
+        })
+      }
+
+      return sections
+    }, [] as {title: string | undefined; errorCount: number}[])
+    .map((section) => ({
+      title: section.title,
+      body: `\n${section.errorCount} error${
+        section.errorCount > 1 ? 's' : ''
+      } found in your extension. Fix these issues in the Partner Dashboard and try deploying again.`,
+    })) as ErrorCustomSection[]
 }
 
 /**
@@ -235,7 +354,7 @@ async function uploadFunctionExtension(
   extension: FunctionExtension,
   options: UploadFunctionExtensionOptions,
 ): Promise<string> {
-  const url = await uploadWasmBlob(extension, options.apiKey, options.token)
+  const {url} = await uploadWasmBlob(extension, options.apiKey, options.token)
 
   let inputQuery: string | undefined
   if (await fileExists(extension.inputQueryPath)) {
@@ -277,8 +396,12 @@ ${outputToken.json(userErrors)}
   return res.data.functionSet.function?.id as string
 }
 
-async function uploadWasmBlob(extension: FunctionExtension, apiKey: string, token: string): Promise<string> {
-  const {url, headers, maxSize} = await getFunctionExtensionUploadURL({apiKey, token})
+export async function uploadWasmBlob(
+  extension: FunctionExtension,
+  apiKey: string,
+  token: string,
+): Promise<{url: string; moduleId: string}> {
+  const {url, moduleId, headers, maxSize} = await getFunctionExtensionUploadURL({apiKey, token})
   headers['Content-Type'] = 'application/wasm'
 
   const functionContent = await readFile(extension.buildWasmPath, {})
@@ -286,7 +409,7 @@ async function uploadWasmBlob(extension: FunctionExtension, apiKey: string, toke
   const resBody = res.body?.read()?.toString() || ''
 
   if (res.status === 200) {
-    return url
+    return {url, moduleId}
   } else if (res.status === 400 && resBody.includes('EntityTooLarge')) {
     const errorMessage = outputContent`The size of the Wasm binary file for Function ${extension.localIdentifier} is too large. It must be less than ${maxSize}.`
     throw new AbortError(errorMessage)
@@ -308,6 +431,7 @@ interface GetFunctionExtensionUploadURLOptions {
 
 interface GetFunctionExtensionUploadURLOutput {
   url: string
+  moduleId: string
   maxSize: string
   headers: {[key: string]: string}
 }
@@ -321,4 +445,34 @@ async function getFunctionExtensionUploadURL(
     options.token,
   )
   return res.data.uploadUrlGenerate
+}
+
+export async function functionConfiguration(extension: FunctionExtension, moduleId: string): Promise<object> {
+  let inputQuery: string | undefined
+  if (await fileExists(extension.inputQueryPath)) {
+    inputQuery = await readFile(extension.inputQueryPath)
+  }
+
+  return {
+    title: extension.configuration.name,
+    module_id: moduleId,
+    description: extension.configuration.description,
+    api_type: extension.configuration.type,
+    api_version: extension.configuration.apiVersion,
+    input_query: inputQuery,
+    input_query_variables: extension.configuration.input?.variables
+      ? {
+          single_json_metafield: extension.configuration.input.variables,
+        }
+      : undefined,
+    ui: extension.configuration.ui?.paths
+      ? {
+          app_bridge: {
+            details_path: extension.configuration.ui.paths.details,
+            create_path: extension.configuration.ui.paths.create,
+          },
+        }
+      : undefined,
+    enable_creation_ui: extension.configuration.ui?.enable_create ?? true,
+  }
 }

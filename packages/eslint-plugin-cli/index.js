@@ -8,7 +8,9 @@ module.exports = {
     'no-trailing-js-in-cli-kit-imports': require('./rules/no-trailing-js-in-cli-kit-imports'),
     'no-vi-manual-mock-clear': require('./rules/no-vi-manual-mock-clear'),
     'no-vi-mock-in-callbacks': require('./rules/no-vi-mock-in-callbacks'),
+    'prompt-message-format': require('./rules/prompt-message-format'),
     'specific-imports-in-bootstrap-code': require('./rules/specific-imports-in-bootstrap-code'),
+    'banner-headline-format': require('./rules/banner-headline-format'),
   },
 
   configs: {

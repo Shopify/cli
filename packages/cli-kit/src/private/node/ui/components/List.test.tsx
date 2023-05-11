@@ -36,4 +36,26 @@ describe('List', async () => {
         3. Item 3"
     `)
   })
+
+  test('title can be made of tokens', async () => {
+    const options = {
+      title: [
+        'List title',
+        {
+          bold: ' (bold)',
+        },
+      ],
+      items: ['Item 1', 'Item 2', 'Item 3'],
+      ordered: false,
+    }
+
+    const {lastFrame} = render(<List {...options} />)
+
+    expect(lastFrame()).toMatchInlineSnapshot(`
+      "List title [1m (bold)[22m
+        • Item 1
+        • Item 2
+        • Item 3"
+    `)
+  })
 })

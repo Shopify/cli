@@ -1,11 +1,13 @@
 import {OutputProcess} from '../../../../public/node/output.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
-import {AbortController} from '../../../../public/node/abort.js'
+import {AbortSignal} from '../../../../public/node/abort.js'
 import {handleCtrlC} from '../../ui.js'
+import {addOrUpdateConcurrentUIEventOutput} from '../../demo-recorder.js'
+import {treeKill} from '../../tree-kill.js'
+import useAbortSignal from '../hooks/use-abort-signal.js'
 import React, {FunctionComponent, useState} from 'react'
 import {Box, Key, Static, Text, useInput, TextProps, useStdin} from 'ink'
 import stripAnsi from 'strip-ansi'
-import treeKill from 'tree-kill'
 import figures from 'figures'
 import {Writable} from 'stream'
 
@@ -17,7 +19,7 @@ interface Shortcut {
 }
 export interface ConcurrentOutputProps {
   processes: OutputProcess[]
-  abortController: AbortController
+  abortSignal: AbortSignal
   showTimestamps?: boolean
   onInput?: (input: string, key: Key, exit: () => void) => void
   footer?: {
@@ -29,6 +31,11 @@ interface Chunk {
   color: TextProps['color']
   prefix: string
   lines: string[]
+}
+
+enum ConcurrentOutputState {
+  Running = 'running',
+  Stopped = 'stopped',
 }
 
 /**
@@ -66,7 +73,7 @@ interface Chunk {
  */
 const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   processes,
-  abortController,
+  abortSignal,
   showTimestamps = true,
   onInput,
   footer,
@@ -75,6 +82,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   const concurrentColors: TextProps['color'][] = ['yellow', 'cyan', 'magenta', 'green', 'blue']
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
   const {isRawModeSupported} = useStdin()
+  const [state, setState] = useState<ConcurrentOutputState>(ConcurrentOutputState.Running)
 
   function lineColor(index: number) {
     const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
@@ -85,6 +93,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     return new Writable({
       write(chunk, _encoding, next) {
         const lines = stripAnsi(chunk.toString('utf8').replace(/(\n)$/, '')).split(/\n/)
+        addOrUpdateConcurrentUIEventOutput({prefix: process.prefix, index, output: lines.join('\n')}, {footer})
 
         setProcessOutput((previousProcessOutput) => [
           ...previousProcessOutput,
@@ -106,7 +115,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         const stdout = writableStream(process, index)
         const stderr = writableStream(process, index)
 
-        await process.action(stdout, stderr, abortController.signal)
+        await process.action(stdout, stderr, abortSignal)
       }),
     )
   }
@@ -115,14 +124,23 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     (input, key) => {
       handleCtrlC(input, key)
 
-      onInput!(input, key, () => treeKill(process.pid, 'SIGINT'))
+      onInput!(input, key, () => treeKill('SIGINT'))
     },
     // isRawModeSupported can be undefined even if the type doesn't say so
     // Ink is checking that isActive is actually === false, not falsey
     {isActive: typeof onInput !== 'undefined' && Boolean(isRawModeSupported)},
   )
 
-  useAsyncAndUnmount(runProcesses, {onRejected: () => abortController.abort()})
+  useAsyncAndUnmount(runProcesses, {
+    onFulfilled: () => {
+      setState(ConcurrentOutputState.Stopped)
+    },
+    onRejected: () => {
+      setState(ConcurrentOutputState.Stopped)
+    },
+  })
+
+  const {isAborted} = useAbortSignal(abortSignal)
 
   return (
     <>
@@ -163,7 +181,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
           )
         }}
       </Static>
-      {footer ? (
+      {state === ConcurrentOutputState.Running && !isAborted && footer ? (
         <Box marginY={1} flexDirection="column" flexGrow={1}>
           {isRawModeSupported ? (
             <Box flexDirection="column">

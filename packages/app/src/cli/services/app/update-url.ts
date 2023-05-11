@@ -31,7 +31,7 @@ async function getNewURLs(token: string, apiKey: string, options: UpdateURLOptio
 
 function printResult(urls: PartnersURLs): void {
   renderSuccess({
-    headline: 'App URLs updated',
+    headline: 'App URLs updated.',
     customSections: [
       {title: 'App URL', body: {list: {items: [urls.applicationUrl]}}},
       {title: 'Allowed redirection URL(s)', body: {list: {items: urls.redirectUrlWhitelist}}},

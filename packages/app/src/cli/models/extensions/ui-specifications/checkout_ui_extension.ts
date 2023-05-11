@@ -20,6 +20,7 @@ const spec = createUIExtensionSpecification({
   dependency,
   partnersWebIdentifier: 'checkout_ui_extension',
   schema: CheckoutSchema,
+  isPreviewable: true,
   deployConfig: async (config, directory) => {
     return {
       extension_points: config.extensionPoints,

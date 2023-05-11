@@ -18,7 +18,7 @@ export async function outputUpdateURLsResult(
       body: [
         "You can update your app's URL anytime in the",
         dashboardURL,
-        'But once your app is live, updating its URL will disrupt merchant access.',
+        'But once your app is live, updating its URL will disrupt user access.',
       ],
     })
   } else if (!updated) {

@@ -5,6 +5,7 @@ module ShopifyCLI
     class DevServer
       class LocalAssets
         THEME_REGEX = %r{//cdn\.shopify\.com/s/.+?/(assets/.+?\.(?:css|js))}
+        VANITY_THEME_REGEX = %r{/cdn/shop/.+?/(assets/.+?\.(?:css|js))}
 
         class FileBody
           def initialize(path)
@@ -44,12 +45,11 @@ module ShopifyCLI
         private
 
         def replace_asset_urls(body)
-          replaced_body = body.join.gsub(THEME_REGEX) do |match|
-            path = Regexp.last_match[1]
-            if @target.static_asset_paths.include?(path)
-              "/#{path}"
-            else
-              match
+          replaced_body = body.join
+          [THEME_REGEX, VANITY_THEME_REGEX].each do |regex|
+            replaced_body = replaced_body.gsub(regex) do |match|
+              path = Regexp.last_match[1]
+              @target.static_asset_paths.include?(path) ? "/#{path}" : match
             end
           end
 

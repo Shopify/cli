@@ -1,4 +1,9 @@
-import {uploadExtensionsBundle, uploadFunctionExtensions} from './upload.js'
+import {
+  deploymentErrorsToCustomSections,
+  uploadExtensionsBundle,
+  uploadFunctionExtensions,
+  functionConfiguration,
+} from './upload.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {FunctionExtension} from '../../models/app/extensions.js'
 import {
@@ -63,6 +68,7 @@ describe('uploadFunctionExtensions', () => {
       localIdentifier: 'my-function',
       type: 'order_discounts',
       graphQLType: 'order_discounts',
+      usingExtensionsFramework: false,
     }
     token = 'token'
     identifiers = {
@@ -100,6 +106,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -127,6 +134,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200 kb',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -166,6 +174,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -205,6 +214,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -242,6 +252,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -279,6 +290,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -306,6 +318,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -360,6 +373,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -427,6 +441,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -490,6 +505,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -543,6 +559,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -594,6 +611,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -652,6 +670,7 @@ describe('uploadFunctionExtensions', () => {
             headers: {},
             maxSize: '200',
             url: uploadUrl,
+            moduleId: 'module-id',
           },
         },
       }
@@ -733,7 +752,7 @@ describe('uploadExtensionsBundle', () => {
         bundlePath: joinPath(tmpDir, 'test.zip'),
         extensions: [{uuid: '123', config: '{}', context: ''}],
         token: 'api-token',
-        label: 'Deployed with CLI',
+        extensionIds: {},
       })
 
       // Then
@@ -747,7 +766,6 @@ describe('uploadExtensionsBundle', () => {
             uuid: '123',
           },
         ],
-        label: 'Deployed with CLI',
         uuid: 'random-uuid',
       })
     })
@@ -772,15 +790,380 @@ describe('uploadExtensionsBundle', () => {
       bundlePath: undefined,
       extensions: [],
       token: 'api-token',
-      label: 'Deployed with CLI',
+      extensionIds: {},
     })
 
     // Then
     expect(vi.mocked(partnersRequest).mock.calls[0]![2]!).toEqual({
       apiKey: 'app-id',
-      label: 'Deployed with CLI',
       uuid: 'random-uuid',
     })
     expect(partnersRequest).toHaveBeenCalledOnce()
+  })
+
+  test('throws an error based on what is returned from partners', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
+      vi.mocked(partnersRequest)
+        .mockResolvedValueOnce({
+          deploymentGenerateSignedUploadUrl: {
+            signedUploadUrl: 'signed-upload-url',
+          },
+        })
+        .mockResolvedValueOnce({
+          deploymentCreate: {
+            userErrors: [
+              {
+                message: 'Missing expected key(s).',
+                field: ['base'],
+                category: 'invalid',
+                details: [
+                  {
+                    extension_id: 123,
+                    extension_title: 'amortizable-marketplace-ext',
+                  },
+                ],
+              },
+              {
+                message: 'is blank',
+                field: ['title'],
+                category: 'invalid',
+                details: [
+                  {
+                    extension_id: 456,
+                    extension_title: 'amortizable-marketplace-ext-2',
+                  },
+                ],
+              },
+              {
+                message: 'Some other error',
+                category: 'unknown',
+                field: ['base'],
+                details: [
+                  {
+                    extension_id: 123,
+                    extension_title: 'amortizable-marketplace-ext',
+                  },
+                ],
+              },
+              {
+                message: 'Something was not found',
+                category: 'not_found',
+                field: ['base'],
+                details: [
+                  {
+                    extension_id: 456,
+                    extension_title: 'amortizable-marketplace-ext-2',
+                  },
+                ],
+              },
+              {
+                message: 'is blank',
+                field: ['title'],
+                category: 'invalid',
+                details: [
+                  {
+                    extension_id: 999,
+                    extension_title: 'admin-link',
+                  },
+                ],
+              },
+            ],
+          },
+        })
+      const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
+      vi.mocked<any>(formData).mockReturnValue(mockedFormData)
+      vi.mocked(randomUUID).mockReturnValue('random-uuid')
+      // When
+      await writeFile(joinPath(tmpDir, 'test.zip'), '')
+
+      // Then
+      try {
+        await uploadExtensionsBundle({
+          apiKey: 'app-id',
+          bundlePath: joinPath(tmpDir, 'test.zip'),
+          extensions: [
+            {uuid: '123', config: '{}', context: ''},
+            {uuid: '456', config: '{}', context: ''},
+          ],
+          token: 'api-token',
+          extensionIds: {
+            'amortizable-marketplace-ext': '123',
+            'amortizable-marketplace-ext-2': '456',
+          },
+        })
+
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (error: any) {
+        expect(error.message).toEqual('There has been an error creating your deployment.')
+        expect(error.customSections).toEqual([
+          {
+            title: 'amortizable-marketplace-ext',
+            body: [
+              {
+                list: {
+                  title: '\n',
+                  items: ['Some other error'],
+                },
+              },
+              {
+                list: {
+                  title: '\nValidation errors',
+                  items: ['Missing expected key(s).'],
+                },
+              },
+            ],
+          },
+          {
+            title: 'amortizable-marketplace-ext-2',
+            body: [
+              {
+                list: {
+                  title: '\n',
+                  items: ['Something was not found'],
+                },
+              },
+              {
+                list: {
+                  title: '\nValidation errors',
+                  items: ['title: is blank'],
+                },
+              },
+            ],
+          },
+          {
+            title: 'admin-link',
+            body: '\n1 error found in your extension. Fix these issues in the Partner Dashboard and try deploying again.',
+          },
+        ])
+      }
+    })
+  })
+})
+
+describe('deploymentErrorsToCustomSections', () => {
+  test('returns an array of custom sections', () => {
+    // Given
+    const errors = [
+      {
+        field: ['base'],
+        message: 'Missing expected key(s).',
+        category: 'invalid',
+        details: [
+          {
+            extension_id: 123,
+            extension_title: 'amortizable-marketplace-ext',
+          },
+        ],
+      },
+      {
+        field: ['base'],
+        message: 'Some other error',
+        category: 'unknown',
+        details: [
+          {
+            extension_id: 123,
+            extension_title: 'amortizable-marketplace-ext',
+          },
+        ],
+      },
+      {
+        field: ['base'],
+        message: 'Something was not found',
+        category: 'not_found',
+        details: [
+          {
+            extension_id: 456,
+            extension_title: 'amortizable-marketplace-ext-2',
+          },
+        ],
+      },
+      {
+        message: 'is blank',
+        field: ['title'],
+        category: 'invalid',
+        details: [
+          {
+            extension_id: 456,
+            extension_title: 'amortizable-marketplace-ext-2',
+          },
+        ],
+      },
+      {
+        message: 'is blank',
+        field: ['title'],
+        category: 'invalid',
+        details: [
+          {
+            extension_id: 999,
+            extension_title: 'admin-link',
+          },
+        ],
+      },
+    ]
+
+    // When
+    const customSections = deploymentErrorsToCustomSections(errors, {
+      'amortizable-marketplace-ext': '123',
+      'amortizable-marketplace-ext-2': '456',
+    })
+
+    // Then
+    expect(customSections).toEqual([
+      {
+        title: 'amortizable-marketplace-ext',
+        body: [
+          {
+            list: {
+              title: '\n',
+              items: ['Some other error'],
+            },
+          },
+          {
+            list: {
+              title: '\nValidation errors',
+              items: ['Missing expected key(s).'],
+            },
+          },
+        ],
+      },
+      {
+        title: 'amortizable-marketplace-ext-2',
+        body: [
+          {
+            list: {
+              title: '\n',
+              items: ['Something was not found'],
+            },
+          },
+          {
+            list: {
+              title: '\nValidation errors',
+              items: ['title: is blank'],
+            },
+          },
+        ],
+      },
+      {
+        title: 'admin-link',
+        body: '\n1 error found in your extension. Fix these issues in the Partner Dashboard and try deploying again.',
+      },
+    ])
+  })
+})
+
+describe('functionConfiguration', () => {
+  let extension: FunctionExtension
+  let identifiers: Identifiers
+  let token: string
+
+  beforeEach(() => {
+    extension = {
+      directory: '/function',
+      configuration: {
+        name: 'function',
+        type: 'order_discounts',
+        description: 'my function',
+        build: {
+          command: 'make build',
+          path: 'dist/index.wasm',
+        },
+        ui: {
+          paths: {
+            create: '/create',
+            details: '/details/:id',
+          },
+          enable_create: true,
+        },
+        configurationUi: false,
+        apiVersion: '2022-07',
+        input: {
+          variables: {
+            namespace: 'namespace',
+            key: 'key',
+          },
+        },
+      },
+      configurationPath: '/function/shopify.function.extension.toml',
+      buildWasmPath: '/function/dist/index.wasm',
+      inputQueryPath: 'input.graphql',
+      publishURL: (_) => Promise.resolve(''),
+      isJavaScript: false,
+      buildCommand: 'make build',
+      externalType: 'order_discounts',
+      idEnvironmentVariableName: 'SHOPIFY_FUNCTION_ID',
+      localIdentifier: 'my-function',
+      type: 'order_discounts',
+      graphQLType: 'order_discounts',
+      usingExtensionsFramework: false,
+    }
+    token = 'token'
+    identifiers = {
+      app: 'api=key',
+      extensions: {},
+      extensionIds: {},
+    }
+  })
+
+  test('returns a snake_case object with all possible fields', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const moduleId = 'module_id'
+      const inputQuery = 'inputQuery'
+      extension.inputQueryPath = joinPath(tmpDir, extension.inputQueryPath)
+      await writeFile(extension.inputQueryPath, inputQuery)
+
+      // When
+      const got = await functionConfiguration(extension, moduleId)
+
+      // Then
+      expect(got).toEqual({
+        title: extension.configuration.name,
+        description: extension.configuration.description,
+        api_type: 'order_discounts',
+        api_version: extension.configuration.apiVersion,
+        ui: {
+          app_bridge: {
+            details_path: extension.configuration.ui!.paths!.details,
+            create_path: extension.configuration.ui!.paths!.create,
+          },
+        },
+        input_query: inputQuery,
+        input_query_variables: {
+          single_json_metafield: {
+            namespace: 'namespace',
+            key: 'key',
+          },
+        },
+        enable_creation_ui: true,
+        module_id: moduleId,
+      })
+    })
+  })
+
+  test('returns a snake_case object with only required fields', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const moduleId = 'module_id'
+      extension.configuration.input = undefined
+      extension.configuration.ui = undefined
+
+      // When
+      const got = await functionConfiguration(extension, moduleId)
+
+      // Then
+      expect(got).toEqual({
+        title: extension.configuration.name,
+        description: extension.configuration.description,
+        api_type: 'order_discounts',
+        api_version: extension.configuration.apiVersion,
+        module_id: moduleId,
+        enable_creation_ui: true,
+        input_query: undefined,
+        input_query_variabels: undefined,
+        ui: undefined,
+      })
+    })
   })
 })

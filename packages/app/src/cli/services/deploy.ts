@@ -1,9 +1,11 @@
 /* eslint-disable require-atomic-updates */
 import {
   UploadExtensionValidationError,
+  uploadWasmBlob,
   uploadFunctionExtensions,
   uploadThemeExtensions,
   uploadExtensionsBundle,
+  functionConfiguration,
 } from './deploy/upload.js'
 
 import {ensureDeployContext} from './context.js'
@@ -15,7 +17,7 @@ import {Extension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {renderInfo, renderSuccess, renderTasks, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo} from '@shopify/cli-kit/node/output'
@@ -34,9 +36,6 @@ interface DeployOptions {
 
   /** If true, proceed with deploy without asking for confirmation */
   force: boolean
-
-  /** The deployment label */
-  label?: string
 }
 
 interface TasksContext {
@@ -52,22 +51,6 @@ export async function deploy(options: DeployOptions) {
   if (!options.app.hasExtensions() && !partnersApp.betas?.unifiedAppDeployment) {
     renderInfo({headline: 'No extensions to deploy to Shopify Partners yet.'})
     return
-  }
-
-  let label: string | undefined
-
-  if (partnersApp.betas?.unifiedAppDeployment) {
-    label = options.force
-      ? options.label
-      : options.label ??
-        (await renderTextPrompt({
-          message: 'Deployment label',
-          allowEmpty: true,
-        }))
-
-    if (label?.length === 0) {
-      label = undefined
-    }
   }
 
   outputNewline()
@@ -110,8 +93,8 @@ export async function deploy(options: DeployOptions) {
       if (bundle) {
         bundlePath = joinPath(tmpDir, `bundle.zip`)
         await mkdir(dirname(bundlePath))
-        await bundleAndBuildExtensions({app, bundlePath, identifiers, bundle})
       }
+      await bundleAndBuildExtensions({app, bundlePath, identifiers})
 
       const tasks: Task<TasksContext>[] = [
         {
@@ -123,19 +106,38 @@ export async function deploy(options: DeployOptions) {
         {
           title: partnersApp.betas?.unifiedAppDeployment ? 'Creating deployment' : 'Pushing your code to Shopify',
           task: async () => {
-            ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
-              apiKey,
-              bundlePath,
-              extensions,
-              token,
-              label,
-            }))
+            if (partnersApp.betas?.unifiedAppDeployment) {
+              const functionExtensions = await Promise.all(
+                options.app.extensions.function.map(async (extension) => {
+                  const {moduleId} = await uploadWasmBlob(extension, identifiers.app, token)
+                  return {
+                    uuid: identifiers.extensions[extension.localIdentifier]!,
+                    config: JSON.stringify(await functionConfiguration(extension, moduleId)),
+                    context: '',
+                  }
+                }),
+              )
+              extensions.push(...functionExtensions)
+            }
+
+            if (bundle || partnersApp.betas?.unifiedAppDeployment) {
+              ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
+                apiKey,
+                bundlePath,
+                extensions,
+                token,
+                extensionIds: identifiers.extensionIds,
+              }))
+            }
 
             if (!useThemebundling()) {
               await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
             }
 
-            identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
+            if (!partnersApp.betas?.unifiedAppDeployment) {
+              identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
+            }
+
             app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
             registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
           },
@@ -188,7 +190,7 @@ async function outputCompletionMessage({
 }) {
   if (unifiedDeployment) {
     return renderSuccess({
-      headline: 'Deployment created',
+      headline: 'Deployment created.',
       body: {
         link: {
           url: `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/deployments/${deploymentId}`,

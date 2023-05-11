@@ -11,9 +11,8 @@ import {Writable} from 'stream'
 
 interface BundleOptions {
   app: AppInterface
-  bundlePath: string
+  bundlePath?: string
   identifiers: Identifiers
-  bundle: boolean
 }
 
 export async function bundleAndBuildExtensions(options: BundleOptions) {
@@ -69,7 +68,7 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
       showTimestamps: false,
     })
 
-    if (options.bundle) {
+    if (options.bundlePath) {
       await zip({
         inputDirectory: bundleDirectory,
         outputZipPath: options.bundlePath,
