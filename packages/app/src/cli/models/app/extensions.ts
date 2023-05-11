@@ -1,5 +1,4 @@
 import {FunctionConfigType} from '../extensions/functions.js'
-import {ThemeConfigContents} from '../extensions/theme.js'
 import {BaseConfigContents} from '../extensions/schemas.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
 import {TokenizedString} from '@shopify/cli-kit/node/output'
@@ -8,9 +7,6 @@ import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 
 export type ExtensionCategory = 'ui' | 'function' | 'theme'
 
-/**
- * Common interface for ExtensionSpec and FunctionSpec
- */
 export interface GenericSpecification {
   identifier: string
   externalIdentifier: string
@@ -57,7 +53,7 @@ export type FunctionExtension = Extension & {
 }
 
 export type ThemeExtension = Extension & {
-  configuration: ThemeConfigContents
+  configuration: BaseConfigContents
   previewMessage(url: string, storeFqdn: string): TokenizedString | undefined
   outputBundlePath: string
 }

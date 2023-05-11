@@ -1,5 +1,4 @@
 import {ExtensionSpecification} from './ui.js'
-import {ThemeExtensionSpec} from './theme.js'
 import {GenericSpecification} from '../app/extensions.js'
 import {loadUIExtensionSpecificiationsFromPlugins} from '../../private/plugins/extension.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
@@ -19,17 +18,12 @@ export async function loadLocalUIExtensionsSpecifications(): Promise<ExtensionSp
   return memoizedLoadSpecs('ui-specifications')
 }
 
-export async function loadThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
-  return memoizedLoadSpecs('theme-specifications')
-}
-
 /**
  * Load all specifications from the local file system AND plugins
  */
 export async function loadExtensionsSpecifications(config: Config): Promise<GenericSpecification[]> {
   const ui = await loadUIExtensionSpecifications(config)
-  const theme = await loadThemeSpecifications()
-  return [...ui, ...theme]
+  return [...ui]
 }
 
 /**
@@ -37,8 +31,7 @@ export async function loadExtensionsSpecifications(config: Config): Promise<Gene
  */
 export async function loadLocalExtensionsSpecifications(): Promise<GenericSpecification[]> {
   const ui = await loadLocalUIExtensionsSpecifications()
-  const theme = await loadThemeSpecifications()
-  return [...ui, ...theme]
+  return [...ui]
 }
 
 const memoizedLoadSpecs = memoize(loadSpecifications)

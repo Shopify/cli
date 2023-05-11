@@ -1,6 +1,4 @@
 import {loadUIExtensionSpecifications} from '../../models/extensions/specifications.js'
-import {ExtensionSpecification} from '../../models/extensions/ui.js'
-import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {
   ExtensionSpecificationsQuery,
@@ -8,11 +6,10 @@ import {
   FlattenedRemoteSpecification,
 } from '../../api/graphql/extension_specifications.js'
 
+import {ExtensionSpecification} from '../../models/extensions/ui.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-
-type ExtensionSpec = ExtensionSpecification | ThemeExtensionSpec
 
 export interface FetchSpecificationsOptions {
   token: string
@@ -58,7 +55,6 @@ export async function fetchSpecifications({
     })
 
   const ui = await loadUIExtensionSpecifications(config)
-  // const theme = await loadThemeSpecifications()
   const local = [...ui]
 
   const updatedSpecs = mergeLocalAndRemoteSpecs(local, extensionSpecifications)
@@ -66,7 +62,7 @@ export async function fetchSpecifications({
 }
 
 function mergeLocalAndRemoteSpecs(
-  local: ExtensionSpec[],
+  local: ExtensionSpecification[],
   remote: FlattenedRemoteSpecification[],
 ): GenericSpecification[] {
   const updated = local.map((spec) => {

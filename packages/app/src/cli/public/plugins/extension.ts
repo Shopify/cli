@@ -7,7 +7,6 @@ export {
   ExtensionSpecification,
   CreateExtensionSpecType,
 } from '../../models/extensions/ui.js'
-export {FunctionSpec} from '../../models/extensions/functions.js'
 export {fetchProductVariant} from '../../utilities/extensions/fetch-product-variant.js'
 export {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
 
