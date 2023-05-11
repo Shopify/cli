@@ -380,30 +380,6 @@ describe('addNPMDependenciesIfNeeded', () => {
     })
   })
 
-  test("runs the right command when it's npm and exact versions", async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const packageJsonPath = joinPath(tmpDir, 'package.json')
-      const packageJson = {
-        dependencies: {existing: '1.2.3'},
-      }
-      await writeFile(packageJsonPath, JSON.stringify(packageJson))
-
-      // When
-      await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
-        type: 'prod',
-        packageManager: 'npm',
-        directory: tmpDir,
-        exact: true,
-      })
-
-      // Then
-      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'new@version', '--save-prod', '--save-exact'], {
-        cwd: tmpDir,
-      })
-    })
-  })
-
   test("runs the right command when it's yarn and dev dependencies", async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
@@ -473,30 +449,6 @@ describe('addNPMDependenciesIfNeeded', () => {
     })
   })
 
-  test("runs the right command when it's yarn and exact versions", async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const packageJsonPath = joinPath(tmpDir, 'package.json')
-      const packageJson = {
-        dependencies: {existing: '1.2.3'},
-      }
-      await writeFile(packageJsonPath, JSON.stringify(packageJson))
-
-      // When
-      await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
-        type: 'prod',
-        packageManager: 'yarn',
-        directory: tmpDir,
-        exact: true,
-      })
-
-      // Then
-      expect(mockedExec).toHaveBeenCalledWith('yarn', ['add', 'new@version', '--prod', '--exact'], {
-        cwd: tmpDir,
-      })
-    })
-  })
-
   test("runs the right command when it's pnpm and dev dependencies", async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
@@ -561,30 +513,6 @@ describe('addNPMDependenciesIfNeeded', () => {
 
       // Then
       expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'new@version', '--save-peer'], {
-        cwd: tmpDir,
-      })
-    })
-  })
-
-  test("runs the right command when it's pnpm and exact versions", async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const packageJsonPath = joinPath(tmpDir, 'package.json')
-      const packageJson = {
-        dependencies: {existing: '1.2.3'},
-      }
-      await writeFile(packageJsonPath, JSON.stringify(packageJson))
-
-      // When
-      await addNPMDependenciesIfNeeded([{name: 'new', version: 'version'}], {
-        type: 'prod',
-        packageManager: 'pnpm',
-        directory: tmpDir,
-        exact: true,
-      })
-
-      // Then
-      expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'new@version', '--save-prod', '--save-exact'], {
         cwd: tmpDir,
       })
     })

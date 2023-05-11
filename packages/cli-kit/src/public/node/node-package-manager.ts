@@ -327,9 +327,6 @@ interface AddNPMDependenciesIfNeededOptions {
 
   /** Abort signal to stop the process */
   signal?: AbortSignal
-
-  /** Whether or not to install exact versions of the dependencies */
-  exact?: boolean
 }
 
 /**
@@ -408,20 +405,14 @@ export async function addNPMDependencies(
       // makes the task easier and npm can then proceed.
       for (const dep of dependenciesWithVersion) {
         // eslint-disable-next-line no-await-in-loop
-        await installDependencies(options, argumentsToAddDependenciesWithNPM([dep], options.type, options.exact))
+        await installDependencies(options, argumentsToAddDependenciesWithNPM([dep], options.type))
       }
       break
     case 'yarn':
-      await installDependencies(
-        options,
-        argumentsToAddDependenciesWithYarn(dependenciesWithVersion, options.type, options.exact),
-      )
+      await installDependencies(options, argumentsToAddDependenciesWithYarn(dependenciesWithVersion, options.type))
       break
     case 'pnpm':
-      await installDependencies(
-        options,
-        argumentsToAddDependenciesWithPNPM(dependenciesWithVersion, options.type, options.exact),
-      )
+      await installDependencies(options, argumentsToAddDependenciesWithPNPM(dependenciesWithVersion, options.type))
       break
   }
 }
@@ -453,7 +444,7 @@ export async function addNPMDependenciesWithoutVersionIfNeeded(
  * @param type - The dependency type.
  * @returns An array with the arguments.
  */
-function argumentsToAddDependenciesWithNPM(dependencies: string[], type: DependencyType, exact = false): string[] {
+function argumentsToAddDependenciesWithNPM(dependencies: string[], type: DependencyType): string[] {
   let command = ['install']
   command = command.concat(dependencies)
   switch (type) {
@@ -467,7 +458,6 @@ function argumentsToAddDependenciesWithNPM(dependencies: string[], type: Depende
       command.push('--save-prod')
       break
   }
-  if (exact) command.push('--save-exact')
   return command
 }
 
@@ -477,7 +467,7 @@ function argumentsToAddDependenciesWithNPM(dependencies: string[], type: Depende
  * @param type - The dependency type.
  * @returns An array with the arguments.
  */
-function argumentsToAddDependenciesWithYarn(dependencies: string[], type: DependencyType, exact = false): string[] {
+function argumentsToAddDependenciesWithYarn(dependencies: string[], type: DependencyType): string[] {
   let command = ['add']
   command = command.concat(dependencies)
   switch (type) {
@@ -491,7 +481,6 @@ function argumentsToAddDependenciesWithYarn(dependencies: string[], type: Depend
       command.push('--prod')
       break
   }
-  if (exact) command.push('--exact')
   return command
 }
 
@@ -501,7 +490,7 @@ function argumentsToAddDependenciesWithYarn(dependencies: string[], type: Depend
  * @param type - The dependency type.
  * @returns An array with the arguments.
  */
-function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: DependencyType, exact = false): string[] {
+function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: DependencyType): string[] {
   let command = ['add']
   command = command.concat(dependencies)
   switch (type) {
@@ -515,7 +504,6 @@ function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: Depend
       command.push('--save-prod')
       break
   }
-  if (exact) command.push('--save-exact')
   return command
 }
 
