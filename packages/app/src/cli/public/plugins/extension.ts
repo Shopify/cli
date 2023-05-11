@@ -1,10 +1,10 @@
-import {UIExtensionSpec} from '../../models/extensions/ui.js'
+import {ExtensionSpecification} from '../../models/extensions/ui.js'
 import {BaseConfigContents} from '../../models/extensions/schemas.js'
 import {FanoutHookFunction, HookReturnsPerPlugin} from '@shopify/cli-kit/node/plugins'
 
 export {
-  createExtensionSpecification as createUIExtensionSpecification,
-  UIExtensionSpec,
+  createExtensionSpecification,
+  ExtensionSpecification,
   CreateExtensionSpecType,
 } from '../../models/extensions/ui.js'
 export {FunctionSpec} from '../../models/extensions/functions.js'
@@ -22,7 +22,7 @@ export interface HookReturnPerExtensionPlugin extends HookReturnsPerPlugin {
   extension_specs: {
     options: {[key: string]: never}
     pluginReturns: {
-      [pluginName: string]: UIExtensionSpec[]
+      [pluginName: string]: ExtensionSpecification[]
     }
   }
 }
@@ -37,7 +37,7 @@ export type ExtensionSpecsFunction = FanoutHookFunction<'extension_specs', '', H
  * @example
  */
 export const registerUIExtensionSpecifications = <TConfiguration extends BaseConfigContents = BaseConfigContents>(
-  specifications: UIExtensionSpec<TConfiguration>[],
+  specifications: ExtensionSpecification<TConfiguration>[],
 ): ExtensionSpecsFunction => {
-  return async () => specifications as UIExtensionSpec[]
+  return async () => specifications as ExtensionSpecification[]
 }

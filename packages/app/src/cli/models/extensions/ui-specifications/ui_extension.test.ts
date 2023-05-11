@@ -1,6 +1,6 @@
 import {configurationFileNames} from '../../../constants.js'
 import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
-import {ExtensionInstance, UIExtensionSpec} from '../ui.js'
+import {ExtensionInstance, ExtensionSpecification} from '../ui.js'
 import {loadLocalExtensionsSpecifications} from '../specifications.js'
 import {describe, expect, test, vi} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
@@ -16,7 +16,7 @@ describe('ui_extension', async () => {
   async function getTestUIExtension({directory, extensionPoints}: GetUIExtensionProps) {
     const configurationPath = joinPath(directory, configurationFileNames.extension.ui)
     const allSpecs = await loadLocalExtensionsSpecifications()
-    const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension') as UIExtensionSpec
+    const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension') as ExtensionSpecification
     const configuration = {
       extensionPoints,
       apiVersion: '2023-01' as const,

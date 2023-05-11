@@ -1,5 +1,5 @@
 import {loadUIExtensionSpecifications} from '../../models/extensions/specifications.js'
-import {UIExtensionSpec} from '../../models/extensions/ui.js'
+import {ExtensionSpecification} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {
@@ -12,7 +12,7 @@ import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
-type ExtensionSpec = UIExtensionSpec | ThemeExtensionSpec
+type ExtensionSpec = ExtensionSpecification | ThemeExtensionSpec
 
 export interface FetchSpecificationsOptions {
   token: string

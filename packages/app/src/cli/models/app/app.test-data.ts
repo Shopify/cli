@@ -1,6 +1,6 @@
 import {App, AppInterface} from './app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
-import {ExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
+import {ExtensionInstance, ExtensionSpecification} from '../extensions/ui.js'
 import {FunctionConfigType} from '../extensions/functions.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
@@ -52,7 +52,7 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
   const entrySourceFilePath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
 
   const allSpecs = await loadLocalExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === configuration.type) as UIExtensionSpec
+  const specification = allSpecs.find((spec) => spec.identifier === configuration.type) as ExtensionSpecification
 
   const extension = new ExtensionInstance({
     configuration,
@@ -74,7 +74,7 @@ export async function testThemeExtensions(): Promise<ThemeExtension> {
   }
 
   const allSpecs = await loadLocalExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === 'theme') as UIExtensionSpec
+  const specification = allSpecs.find((spec) => spec.identifier === 'theme') as ExtensionSpecification
 
   const extension = new ExtensionInstance({
     configuration,
@@ -115,7 +115,7 @@ export async function testFunctionExtension(opts: TestFunctionExtensionOptions =
   const configuration = opts.config ?? defaultFunctionConfiguration()
 
   const allSpecs = await loadLocalExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === 'function') as UIExtensionSpec
+  const specification = allSpecs.find((spec) => spec.identifier === 'function') as ExtensionSpecification
 
   const extension = new ExtensionInstance({
     configuration,

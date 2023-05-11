@@ -2,7 +2,7 @@ import {blocks, versions} from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
 import {FunctionSpec} from '../../models/extensions/functions.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
-import {UIExtensionSpec} from '../../models/extensions/ui.js'
+import {ExtensionSpecification} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
 import {buildGraphqlTypes} from '../function/build.js'
 import {ensureFunctionExtensionFlavorExists} from '../function/common.js'
@@ -52,7 +52,7 @@ interface FunctionFlavor {
 export type ExtensionFlavorValue = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react' | 'rust' | 'wasm'
 
 type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionSpec> & ExtensionDirectory & FunctionFlavor
-type UIExtensionInitOptions = ExtensionInitOptions<UIExtensionSpec> & ExtensionDirectory
+type UIExtensionInitOptions = ExtensionInitOptions<ExtensionSpecification> & ExtensionDirectory
 type ThemeExtensionInitOptions = ExtensionInitOptions<ThemeExtensionSpec> & ExtensionDirectory
 
 export type TemplateLanguage = 'javascript' | 'rust' | 'wasm'

@@ -1,4 +1,4 @@
-import {UIExtensionSpec} from './ui.js'
+import {ExtensionSpecification} from './ui.js'
 import {ThemeExtensionSpec} from './theme.js'
 import {GenericSpecification} from '../app/extensions.js'
 import {loadUIExtensionSpecificiationsFromPlugins} from '../../private/plugins/extension.js'
@@ -9,13 +9,13 @@ import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {fileURLToPath} from 'url'
 
-export async function loadUIExtensionSpecifications(config: Config): Promise<UIExtensionSpec[]> {
+export async function loadUIExtensionSpecifications(config: Config): Promise<ExtensionSpecification[]> {
   const local = await loadLocalUIExtensionsSpecifications()
   const plugins = await loadUIExtensionSpecificiationsFromPlugins(config)
   return [...local, ...plugins]
 }
 
-export async function loadLocalUIExtensionsSpecifications(): Promise<UIExtensionSpec[]> {
+export async function loadLocalUIExtensionsSpecifications(): Promise<ExtensionSpecification[]> {
   return memoizedLoadSpecs('ui-specifications')
 }
 

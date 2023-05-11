@@ -1,6 +1,6 @@
 import {themeExtensionConfig} from './theme-extension-config.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/specifications.js'
-import {ExtensionInstance, UIExtensionSpec} from '../../models/extensions/ui.js'
+import {ExtensionInstance, ExtensionSpecification} from '../../models/extensions/ui.js'
 import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
@@ -10,7 +10,7 @@ describe('themeExtensionConfig', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const allSpecs = await loadLocalExtensionsSpecifications()
-      const specification = allSpecs.find((spec) => spec.identifier === 'theme') as UIExtensionSpec
+      const specification = allSpecs.find((spec) => spec.identifier === 'theme') as ExtensionSpecification
       const themeExtension = new ExtensionInstance({
         configuration: {
           name: 'theme extension name',
@@ -41,7 +41,7 @@ describe('themeExtensionConfig', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const allSpecs = await loadLocalExtensionsSpecifications()
-      const specification = allSpecs.find((spec) => spec.identifier === 'theme') as UIExtensionSpec
+      const specification = allSpecs.find((spec) => spec.identifier === 'theme') as ExtensionSpecification
       const themeExtension = new ExtensionInstance({
         configuration: {
           name: 'theme extension name',

@@ -18,7 +18,7 @@ import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
-export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = BaseConfigContents>
+export interface ExtensionSpecification<TConfiguration extends BaseConfigContents = BaseConfigContents>
   extends GenericSpecification {
   identifier: string
   additionalIdentifiers: string[]
@@ -71,7 +71,7 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
   configurationPath: string
   private _outputBundlePath?: string
 
-  private specification: UIExtensionSpec
+  private specification: ExtensionSpecification
 
   get graphQLType() {
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
@@ -120,7 +120,7 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
     configurationPath: string
     entryPath: string
     directory: string
-    specification: UIExtensionSpec
+    specification: ExtensionSpecification
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
@@ -241,7 +241,7 @@ export type ForbiddenFields = 'registrationLimit' | 'category' | 'externalIdenti
  * Partial ExtensionSpec type used when creating a new ExtensionSpec, the only mandatory field is the identifier
  */
 export interface CreateExtensionSpecType<TConfiguration extends BaseConfigContents = BaseConfigContents>
-  extends Partial<Omit<UIExtensionSpec<TConfiguration>, ForbiddenFields>> {
+  extends Partial<Omit<ExtensionSpecification<TConfiguration>, ForbiddenFields>> {
   identifier: string
   category?: () => ExtensionCategory
 }
@@ -273,7 +273,7 @@ export interface CreateExtensionSpecType<TConfiguration extends BaseConfigConten
  */
 export function createExtensionSpecification<TConfiguration extends BaseConfigContents = BaseConfigContents>(
   spec: CreateExtensionSpecType<TConfiguration>,
-): UIExtensionSpec<TConfiguration> {
+): ExtensionSpecification<TConfiguration> {
   const defaults = {
     // these two fields are going to be overridden by the extension specification API response,
     // but we need them to have a default value for tests

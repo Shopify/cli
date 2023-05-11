@@ -2,7 +2,7 @@ import {Extension, GenericSpecification} from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
-import {ExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
+import {ExtensionInstance, ExtensionSpecification} from '../extensions/ui.js'
 import {TypeSchema} from '../extensions/schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
@@ -268,7 +268,7 @@ class AppLoader {
       const fileContent = await readFile(configurationPath)
       const obj = decodeToml(fileContent)
       const {type} = TypeSchema.parse(obj)
-      const specification = this.findSpecificationForType(type) as UIExtensionSpec | undefined
+      const specification = this.findSpecificationForType(type) as ExtensionSpecification | undefined
 
       if (!specification) {
         const isShopifolk = await isShopify()
