@@ -188,7 +188,7 @@ export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlew
         app: {
           apiKey: devOptions.apiKey,
         },
-        version: '3',
+        version: devOptions.manifestVersion,
         root: {
           url: new URL('/extensions', devOptions.url).toString(),
         },

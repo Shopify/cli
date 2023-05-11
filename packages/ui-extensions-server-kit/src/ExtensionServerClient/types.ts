@@ -1,3 +1,5 @@
+import type {LocalesOptions} from 'i18n'
+
 declare global {
   namespace ExtensionServer {
     /**
@@ -56,6 +58,12 @@ declare global {
        * If provided the extension server will only return extensions that matches the specified surface
        */
       surface?: Surface
+
+      /**
+       * If provided the extension server will return a requested translations object with flattened
+       * translations for each extension matching the requested locales
+       */
+      locales?: LocalesOptions
     }
 
     /**

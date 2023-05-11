@@ -46,6 +46,8 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {Writable} from 'stream'
 
+const MANIFEST_VERSION = '3'
+
 export interface DevOptions {
   directory: string
   id?: number
@@ -394,6 +396,7 @@ async function devUIExtensionsTarget({
         grantedScopes,
         checkoutCartUrl: cartUrl,
         subscriptionProductUrl,
+        manifestVersion: MANIFEST_VERSION,
       })
     },
   }

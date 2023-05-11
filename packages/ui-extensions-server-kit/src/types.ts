@@ -1,4 +1,5 @@
 /* eslint-disable @shopify/strict-component-boundaries */
+import {FlattenedLocalization, Localization} from './i18n'
 import './ExtensionServerClient/types'
 import type {Surface} from './ExtensionServerClient/types'
 
@@ -88,6 +89,7 @@ export interface ExtensionPoint {
   metafields?: Metafield[]
   resource: ResourceURL
   root: ResourceURL
+  localization?: FlattenedLocalization | Localization | null
 }
 
 export type ExtensionPoints = string[] | ExtensionPoint[] | null
@@ -120,11 +122,7 @@ export interface ExtensionPayload {
   }
   authenticatedRedirectStartUrl?: string
   authenticatedRedirectRedirectUrls?: string[]
-  localization?: {
-    defaultLocale: string
-    lastUpdated: number
-    translations: {[locale: string]: ExtensionTranslationMap}
-  }
+  localization?: FlattenedLocalization | Localization | null
 }
 
 export enum Status {
@@ -149,8 +147,4 @@ export interface App {
   }
   supportEmail?: string
   supportLocales?: string[]
-}
-
-interface ExtensionTranslationMap {
-  [key: string]: string
 }
