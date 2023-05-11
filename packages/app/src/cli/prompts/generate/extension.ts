@@ -1,6 +1,6 @@
 import {AppInterface} from '../../models/app/app.js'
 import {TemplateSpecification} from '../../models/app/template.js'
-import {ExtensionSpecification} from '../../models/extensions/ui.js'
+import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputWarn} from '@shopify/cli-kit/node/output'

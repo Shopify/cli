@@ -20,7 +20,7 @@ import {
   getTypesExternalName,
   TemplateSpecification,
 } from '../models/app/template.js'
-import {ExtensionSpecification} from '../models/extensions/ui.js'
+import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'

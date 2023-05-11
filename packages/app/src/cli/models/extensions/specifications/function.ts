@@ -1,4 +1,4 @@
-import {createExtensionSpecification} from '../ui.js'
+import {createExtensionSpecification} from '../specification.js'
 import {BaseFunctionConfigurationSchema} from '../schemas.js'
 import {defaultFunctionsFlavors} from '../../../constants.js'
 import {ExtensionCategory} from '../../app/extensions.js'

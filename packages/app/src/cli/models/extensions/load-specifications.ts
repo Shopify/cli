@@ -1,4 +1,4 @@
-import {ExtensionSpecification} from './ui.js'
+import {ExtensionSpecification} from './specification.js'
 import {loadUIExtensionSpecificiationsFromPlugins} from '../../private/plugins/extension.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {memoize} from '@shopify/cli-kit/common/function'

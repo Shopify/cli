@@ -6,7 +6,7 @@ import {
 import {TemplateSpecification} from '../../models/app/template.js'
 import {BaseFunctionConfigurationSchema} from '../../models/extensions/schemas.js'
 import {blocks, templates} from '../../constants.js'
-import {ExtensionSpecification} from '../../models/extensions/ui.js'
+import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export async function fetchTemplateSpecifications(token: string): Promise<TemplateSpecification[]> {
@@ -46,7 +46,7 @@ export function mapRemoteTemplateSpecification(
         templateURL: extension.url,
         helpURL: remoteTemplateSpecification.supportLinks[0]!,
         templatePath: (lang?: string) => {
-          const supportedFlavor = extension.supportedFlavors.find((supportedFlavor) => supportedFlavor.value === flavor)
+          const supportedFlavor = extension.supportedFlavors.find((supportedFlavor) => supportedFlavor.value === lang)
           if (!supportedFlavor) return undefined
           return supportedFlavor.path
         },

@@ -11,7 +11,7 @@ import {
   testThemeExtensions,
 } from '../models/app/app.test-data.js'
 import {Extension, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
-import {ExtensionSpecification} from '../models/extensions/ui.js'
+import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {describe, expect, vi, beforeAll, afterEach, test} from 'vitest'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'

@@ -1,5 +1,5 @@
 import {extensionTypesGroups} from '../../constants.js'
-import {ExtensionSpecification} from '../extensions/ui.js'
+import {ExtensionSpecification} from '../extensions/specification.js'
 
 export interface TemplateSpecification {
   identifier: string

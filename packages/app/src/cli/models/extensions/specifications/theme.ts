@@ -1,4 +1,4 @@
-import {createExtensionSpecification} from '../ui.js'
+import {createExtensionSpecification} from '../specification.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
 import {ExtensionCategory} from '../../app/extensions.js'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'

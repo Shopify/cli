@@ -1,4 +1,4 @@
-import {ExtensionSpecification} from '../../models/extensions/ui.js'
+import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {HookReturnPerExtensionPlugin} from '../../public/plugins/extension.js'
 import {Config} from '@oclif/core'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'

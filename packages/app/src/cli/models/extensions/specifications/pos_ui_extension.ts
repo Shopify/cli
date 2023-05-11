@@ -1,5 +1,5 @@
 import {getDependencyVersion} from '../../app/app.js'
-import {createExtensionSpecification} from '../ui.js'
+import {createExtensionSpecification} from '../specification.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
 import {BugError} from '@shopify/cli-kit/node/error'
 

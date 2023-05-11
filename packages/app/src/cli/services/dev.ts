@@ -29,7 +29,7 @@ import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
 
-import {ExtensionSpecification} from '../models/extensions/ui.js'
+import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -213,7 +213,7 @@ async function dev(options: DevOptions) {
         token,
         extensions: nonPreviewableExtensions,
         remoteExtensions,
-        specifications: specifications as ExtensionSpecification[],
+        specifications,
       }),
     )
   }

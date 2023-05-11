@@ -1,7 +1,7 @@
 import {devNonPreviewableExtensionTarget} from './dev.js'
 import {setupConfigWatcher, setupNonPreviewableExtensionBundler} from './dev/extension/bundler.js'
 import {testApp, testUIExtension} from '../models/app/app.test-data.js'
-import {loadLocalExtensionsSpecifications} from '../models/extensions/specifications.js'
+import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {describe, expect, test, vi} from 'vitest'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'node:stream'

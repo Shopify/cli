@@ -1,4 +1,4 @@
-import {ExtensionSpecification} from '../../models/extensions/ui.js'
+import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {BaseConfigContents} from '../../models/extensions/schemas.js'
 import {FanoutHookFunction, HookReturnsPerPlugin} from '@shopify/cli-kit/node/plugins'
 
@@ -6,7 +6,7 @@ export {
   createExtensionSpecification,
   ExtensionSpecification,
   CreateExtensionSpecType,
-} from '../../models/extensions/ui.js'
+} from '../../models/extensions/specification.js'
 export {fetchProductVariant} from '../../utilities/extensions/fetch-product-variant.js'
 export {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
 

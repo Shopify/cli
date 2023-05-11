@@ -1,6 +1,6 @@
 import {blocks, versions} from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
-import {ExtensionSpecification} from '../../models/extensions/ui.js'
+import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {buildGraphqlTypes} from '../function/build.js'
 import {ensureFunctionExtensionFlavorExists} from '../function/common.js'
 import {

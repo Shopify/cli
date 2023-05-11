@@ -1,4 +1,4 @@
-import {createExtensionSpecification} from '../ui.js'
+import {createExtensionSpecification} from '../specification.js'
 import {defaultExtensionFlavors} from '../../../constants.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'

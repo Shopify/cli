@@ -1,11 +1,11 @@
-import {loadExtensionsSpecifications} from '../../models/extensions/specifications.js'
+import {loadExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {
   ExtensionSpecificationsQuery,
   ExtensionSpecificationsQuerySchema,
   FlattenedRemoteSpecification,
 } from '../../api/graphql/extension_specifications.js'
 
-import {ExtensionSpecification} from '../../models/extensions/ui.js'
+import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
