@@ -49,15 +49,10 @@ export async function renderConcurrent({renderOptions, ...props}: RenderConcurre
     ...props,
   }
   if (terminalSupportsRawMode(renderOptions?.stdin)) {
-    try {
-      await render(<ConcurrentOutput {...newProps} />, {
-        ...renderOptions,
-        exitOnCtrlC: typeof props.onInput === 'undefined',
-      })
-    } catch (error) {
-      newProps.abortController.abort()
-      throw error
-    }
+    await render(<ConcurrentOutput {...newProps} />, {
+      ...renderOptions,
+      exitOnCtrlC: typeof props.onInput === 'undefined',
+    })
   } else {
     return Promise.all(
       newProps.processes.map(async (concurrentProcess) => {
