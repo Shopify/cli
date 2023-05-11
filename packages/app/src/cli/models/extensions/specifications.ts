@@ -20,7 +20,7 @@ export async function loadExtensionsSpecifications(config: Config): Promise<Exte
  * Load all specifications ONLY from the local file system
  */
 export async function loadLocalExtensionsSpecifications(): Promise<ExtensionSpecification[]> {
-  return memoizedLoadSpecs('ui-specifications')
+  return memoizedLoadSpecs('specifications')
 }
 
 const memoizedLoadSpecs = memoize(loadSpecifications)
