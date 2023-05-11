@@ -161,9 +161,6 @@ async function uiExtensionInit({name, extensionFlavor, directory, app, url}: Ext
           packageManager: app.packageManager,
           type: 'prod',
           directory: app.directory,
-          // This is a temporary workaround for POS extensions. By deafult all dependencies have the `^` prefix.
-          // We need an exact dependency version for the 1.0.1 release.
-          exact: specification.identifier === 'pos_ui_extension',
         })
       },
     },
