@@ -35,6 +35,7 @@ const spec = createUIExtensionSpecification({
   dependency,
   partnersWebIdentifier: 'customer_accounts_ui_extension',
   schema: CustomerAccountsSchema,
+  isPreviewable: true,
   deployConfig: async (config, directory) => {
     return {
       extension_points: config.extensionPoints,

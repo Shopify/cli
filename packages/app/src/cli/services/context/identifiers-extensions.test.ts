@@ -68,6 +68,7 @@ const EXTENSION_A: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
+  isPreviewable: true,
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -97,6 +98,7 @@ const EXTENSION_A_2: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
+  isPreviewable: true,
 }
 
 const EXTENSION_B: UIExtension = {
@@ -126,6 +128,7 @@ const EXTENSION_B: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
+  isPreviewable: true,
 }
 
 const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): AppInterface => {
@@ -439,7 +442,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
       toCreate: [],
-      toConfirm: [],
+      toConfirm: [{local: EXTENSION_B, remote: REGISTRATION_B}],
       toManualMatch: {
         local: [],
         remote: [],
@@ -454,6 +457,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
 
     // Then
     expect(deployConfirmationPrompt).not.toBeCalled()
+    expect(matchConfirmationPrompt).toBeCalled()
   })
 })
 

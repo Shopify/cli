@@ -20,6 +20,7 @@ const spec = createUIExtensionSpecification({
       metafields: config.metafields,
     }
   },
+  isPreviewable: false,
 })
 
 export default spec
