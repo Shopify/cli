@@ -1068,6 +1068,7 @@ describe('functionConfiguration', () => {
       configuration: {
         name: 'function',
         type: 'order_discounts',
+        metafields: [],
         description: 'my function',
         build: {
           command: 'make build',
@@ -1101,6 +1102,9 @@ describe('functionConfiguration', () => {
       type: 'order_discounts',
       graphQLType: 'order_discounts',
       usingExtensionsFramework: false,
+      functionFeatureConfig: undefined,
+      themeFeatureConfig: undefined,
+      uiFeatureConfig: undefined,
     }
     token = 'token'
     identifiers = {

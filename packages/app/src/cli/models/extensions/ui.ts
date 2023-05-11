@@ -80,7 +80,9 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
   get graphQLType() {
     if (this.configuration.type === 'function') {
       if (this._usingExtensionsFramework) return 'FUNCTION'
-      return this.configuration.type.toUpperCase()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const functionConfig: any = this.configuration
+      return functionConfig.apiType.toUpperCase()
     }
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
   }

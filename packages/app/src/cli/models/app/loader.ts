@@ -91,7 +91,10 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
 }
 
 export function findSpecificationForType(specifications: GenericSpecification[], type: string) {
-  return specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
+  return specifications.find(
+    (spec) =>
+      spec.identifier === type || spec.externalIdentifier === type || spec.additionalIdentifiers?.includes(type),
+  )
 }
 
 export async function findSpecificationForConfig(

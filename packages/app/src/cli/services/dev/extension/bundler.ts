@@ -4,8 +4,8 @@ import {bundleExtension} from '../../extensions/bundle.js'
 
 import {AppInterface} from '../../../models/app/app.js'
 import {UIExtension} from '../../../models/app/extensions.js'
-import {UIExtensionSpec} from '../../../models/extensions/ui.js'
 import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
+import {ExtensionSpecification} from '../../../models/extensions/ui.js'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
@@ -171,7 +171,7 @@ interface SetupConfigWatcherOptions {
   stdout: Writable
   stderr: Writable
   signal: AbortSignal
-  specifications: UIExtensionSpec[]
+  specifications: ExtensionSpecification[]
 }
 
 export async function setupConfigWatcher({
