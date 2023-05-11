@@ -54,7 +54,6 @@ export const ThemeExtensionSchema = BaseSchema.extend({
 
 export const BaseFunctionConfigurationSchema = BaseSchema.extend({
   apiType: zod.string().optional(),
-  description: zod.string().optional().default(''),
   build: zod.object({
     command: zod
       .string()
@@ -100,3 +99,4 @@ export type NewExtensionPointSchemaType = zod.infer<typeof NewExtensionPointSche
 export type BaseConfigContents = zod.infer<typeof BaseUIExtensionSchema>
 
 export type BaseSchemaContents = zod.infer<typeof BaseSchema>
+export type FunctionSchemaContents = zod.infer<typeof BaseFunctionConfigurationSchema>

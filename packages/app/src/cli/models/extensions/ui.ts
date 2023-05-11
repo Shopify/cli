@@ -15,6 +15,8 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
 
+export type ExtensionFeature = 'ui' | 'ui_legacy' | 'function' | 'theme' | 'bundling' | 'cart_url'
+
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
@@ -69,7 +71,7 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
   directory: string
   configuration: TConfiguration
   configurationPath: string
-  private _outputBundlePath?: string
+  outputBundlePath: string
 
   private specification: ExtensionSpecification
 
@@ -105,16 +107,6 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
     return this.specification.surface
   }
 
-  get outputBundlePath() {
-    if (this._outputBundlePath) return this._outputBundlePath
-    if (this.specification.identifier === 'theme') return this.directory
-    return joinPath(this.directory, 'dist/main.js')
-  }
-
-  set outputBundlePath(path: string) {
-    this._outputBundlePath = path
-  }
-
   constructor(options: {
     configuration: TConfiguration
     configurationPath: string
@@ -130,6 +122,11 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
     this.devUUID = `dev-${randomUUID()}`
     this.localIdentifier = basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
+    if (this.specification.identifier === 'theme') {
+      this.outputBundlePath = this.directory
+    } else {
+      this.outputBundlePath = joinPath(this.directory, 'dist/main.js')
+    }
   }
 
   deployConfig(): Promise<{[key: string]: unknown}> {
@@ -170,6 +167,22 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
     return outputContent`${heading}\n${message.value}\n`
   }
 
+  get functionFeatureConfig(): FunctionExtension | undefined {
+    if (this.specification.identifier !== 'function') return undefined
+    return this as unknown as FunctionExtension
+  }
+
+  get uiFeatureConfig(): UIExtension | undefined {
+    if (['function', 'theme'].includes(this.specification.identifier)) return undefined
+    return this as UIExtension
+  }
+
+  get themeFeatureConfig(): ThemeExtension | undefined {
+    if (this.specification.identifier !== 'theme') return undefined
+    return this as ThemeExtension
+  }
+
+  // UI STUFF
   getBundleExtensionStdinContent() {
     if (this.specification.getBundleExtensionStdinContent) {
       return this.specification.getBundleExtensionStdinContent(this.configuration)
@@ -184,26 +197,6 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
 
   hasExtensionPointTarget(target: string): boolean {
     return this.specification.hasExtensionPointTarget?.(this.configuration, target) || false
-  }
-
-  get functionFeatureConfig(): FunctionExtension | undefined {
-    if (this.specification.identifier !== 'function') return undefined
-
-    return this as unknown as FunctionExtension
-  }
-
-  get uiFeatureConfig(): UIExtension | undefined {
-    if (['function', 'theme'].includes(this.specification.identifier)) return undefined
-    return this as unknown as UIExtension
-  }
-
-  get themeFeatureConfig(): ThemeExtension | undefined {
-    if (this.specification.identifier !== 'theme') return undefined
-    return this as unknown as ThemeExtension
-  }
-
-  get isUI(): boolean {
-    return this.specification.category() === 'ui'
   }
 
   // FUNCTION STUFF

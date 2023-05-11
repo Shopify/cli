@@ -18,7 +18,7 @@ const spec = createExtensionSpecification({
   surface: 'admin',
   schema: BaseFunctionConfigurationSchema,
   supportedFlavors: defaultFunctionsFlavors,
-  partnersWebIdentifier: 'theme_app_extension',
+  partnersWebIdentifier: 'function',
   graphQLType: 'function',
   category: (): ExtensionCategory => 'function',
 })

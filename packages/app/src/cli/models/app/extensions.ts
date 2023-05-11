@@ -46,8 +46,8 @@ export interface Extension {
   uiFeatureConfig: UIExtension | undefined
 }
 
-export type FunctionExtension<TConfiguration extends FunctionConfigType = FunctionConfigType> = Extension & {
-  configuration: TConfiguration
+export type FunctionExtension = Extension & {
+  configuration: FunctionConfigType
   entrySourceFilePath?: string
   buildCommand: string | undefined
   buildWasmPath: string
@@ -55,8 +55,8 @@ export type FunctionExtension<TConfiguration extends FunctionConfigType = Functi
   isJavaScript: boolean
 }
 
-export type ThemeExtension<TConfiguration extends ThemeConfigContents = ThemeConfigContents> = Extension & {
-  configuration: TConfiguration
+export type ThemeExtension = Extension & {
+  configuration: ThemeConfigContents
   previewMessage(url: string, storeFqdn: string): TokenizedString | undefined
   outputBundlePath: string
 }
