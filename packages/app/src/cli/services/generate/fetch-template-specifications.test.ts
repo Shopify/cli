@@ -1,7 +1,7 @@
 import {fetchTemplateSpecifications} from './fetch-template-specifications.js'
 import {testRemoteTemplateSpecifications} from '../../models/app/app.test-data.js'
-import {BaseFunctionConfigurationSchema} from '../../models/extensions/schemas.js'
 import {TemplateSpecification} from '../../models/app/template.js'
+import {BaseFunctionConfigurationSchema} from '../../models/extensions/schemas.js'
 import {describe, vi, expect, test} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
@@ -28,6 +28,11 @@ describe('fetchTemplateSpecifications', () => {
               identifier: 'function',
               externalIdentifier: 'cart_checkout_validation',
               externalName: 'cart_checkout_validation',
+              additionalIdentifiers: [],
+              partnersWebIdentifier: 'function',
+              surface: '',
+              isPreviewable: false,
+              singleEntryPath: true,
               gated: false,
               registrationLimit: 50,
               supportedFlavors: [
@@ -39,7 +44,7 @@ describe('fetchTemplateSpecifications', () => {
               ],
               group: 'Discounts and checkout',
               category: expect.any(Function),
-              configSchema: BaseFunctionConfigurationSchema,
+              schema: BaseFunctionConfigurationSchema,
               templateURL: 'https://github.com/Shopify/function-examples',
               helpURL: 'https://shopify.dev/docs/api/functions/reference/cart-checkout-validation',
               templatePath: expect.any(Function),
@@ -57,10 +62,15 @@ describe('fetchTemplateSpecifications', () => {
           group: 'Discounts and checkout',
           supportLinks: [],
           types: [
-            {
+            expect.objectContaining({
               identifier: 'function',
               externalIdentifier: 'cart_transform',
               externalName: 'cart_transform',
+              additionalIdentifiers: [],
+              partnersWebIdentifier: 'function',
+              surface: '',
+              isPreviewable: false,
+              singleEntryPath: true,
               gated: false,
               registrationLimit: 50,
               supportedFlavors: [
@@ -77,11 +87,11 @@ describe('fetchTemplateSpecifications', () => {
               ],
               group: 'Discounts and checkout',
               category: expect.any(Function),
-              configSchema: BaseFunctionConfigurationSchema,
+              schema: BaseFunctionConfigurationSchema,
               templateURL: 'https://github.com/Shopify/function-examples',
               helpURL: undefined,
               templatePath: expect.any(Function),
-            },
+            }),
           ],
         },
       ]),
@@ -95,10 +105,15 @@ describe('fetchTemplateSpecifications', () => {
           group: 'Discounts and checkout',
           supportLinks: [],
           types: [
-            {
+            expect.objectContaining({
               identifier: 'function',
               externalIdentifier: 'product_discounts',
               externalName: 'product_discounts',
+              additionalIdentifiers: [],
+              partnersWebIdentifier: 'function',
+              surface: '',
+              isPreviewable: false,
+              singleEntryPath: true,
               gated: false,
               registrationLimit: 50,
               supportedFlavors: [
@@ -115,11 +130,11 @@ describe('fetchTemplateSpecifications', () => {
               ],
               group: 'Discounts and checkout',
               category: expect.any(Function),
-              configSchema: BaseFunctionConfigurationSchema,
+              schema: BaseFunctionConfigurationSchema,
               templateURL: 'https://github.com/Shopify/function-examples',
               helpURL: undefined,
               templatePath: expect.any(Function),
-            },
+            }),
           ],
         },
       ]),
@@ -133,10 +148,15 @@ describe('fetchTemplateSpecifications', () => {
           group: 'Discounts and checkout',
           supportLinks: [],
           types: [
-            {
+            expect.objectContaining({
               identifier: 'function',
               externalIdentifier: 'order_discounts',
               externalName: 'order_discounts',
+              additionalIdentifiers: [],
+              partnersWebIdentifier: 'function',
+              surface: '',
+              isPreviewable: false,
+              singleEntryPath: true,
               gated: false,
               registrationLimit: 50,
               supportedFlavors: [
@@ -153,11 +173,11 @@ describe('fetchTemplateSpecifications', () => {
               ],
               group: 'Discounts and checkout',
               category: expect.any(Function),
-              configSchema: BaseFunctionConfigurationSchema,
+              schema: BaseFunctionConfigurationSchema,
               templateURL: 'https://github.com/Shopify/function-examples',
               helpURL: undefined,
               templatePath: expect.any(Function),
-            },
+            }),
           ],
         },
       ]),

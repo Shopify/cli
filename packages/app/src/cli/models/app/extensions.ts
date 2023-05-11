@@ -1,5 +1,4 @@
-import {FunctionConfigType} from '../extensions/functions.js'
-import {BaseConfigContents} from '../extensions/schemas.js'
+import {BaseConfigContents, FunctionSchemaContents} from '../extensions/schemas.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
 import {TokenizedString} from '@shopify/cli-kit/node/output'
 import {Result} from '@shopify/cli-kit/node/result'
@@ -30,7 +29,7 @@ export interface Extension {
 }
 
 export type FunctionExtension = Extension & {
-  configuration: FunctionConfigType
+  configuration: FunctionSchemaContents
   entrySourceFilePath?: string
   buildCommand: string | undefined
   buildWasmPath: string

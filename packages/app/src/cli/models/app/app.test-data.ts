@@ -1,10 +1,10 @@
 import {App, AppInterface} from './app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {ExtensionInstance, ExtensionSpecification} from '../extensions/ui.js'
-import {FunctionConfigType} from '../extensions/functions.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {RemoteTemplateSpecification} from '../../api/graphql/template_specifications.js'
+import {FunctionSchemaContents} from '../extensions/schemas.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -89,7 +89,7 @@ export async function testThemeExtensions(): Promise<ThemeExtension> {
   return extension
 }
 
-function defaultFunctionConfiguration(): FunctionConfigType {
+function defaultFunctionConfiguration(): FunctionSchemaContents {
   return {
     name: 'test function extension',
     description: 'description',
@@ -106,7 +106,7 @@ function defaultFunctionConfiguration(): FunctionConfigType {
 
 interface TestFunctionExtensionOptions {
   dir?: string
-  config?: FunctionConfigType
+  config?: FunctionSchemaContents
   entryPath?: string
 }
 
