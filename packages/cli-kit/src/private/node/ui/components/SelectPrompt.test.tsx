@@ -354,7 +354,12 @@ describe('SelectPrompt', async () => {
     const abortController = new AbortController()
 
     const renderInstance = render(
-      <SelectPrompt choices={items} onSubmit={() => {}} message="Test question?" abortController={abortController} />,
+      <SelectPrompt
+        choices={items}
+        onSubmit={() => {}}
+        message="Test question?"
+        abortSignal={abortController.signal}
+      />,
     )
 
     const promise = renderInstance.waitUntilExit()

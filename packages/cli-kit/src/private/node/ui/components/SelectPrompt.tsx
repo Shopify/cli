@@ -4,7 +4,7 @@ import {InlineToken, LinkToken, TokenItem, TokenizedText} from './TokenizedText.
 import {handleCtrlC} from '../../ui.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {uniqBy} from '../../../../public/common/array.js'
-import {AbortController} from '../../../../public/node/abort.js'
+import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import React, {ReactElement, useCallback, useLayoutEffect, useState} from 'react'
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
@@ -18,7 +18,7 @@ export interface SelectPromptProps<T> {
   infoTable?: InfoTableProps['table']
   defaultValue?: T
   submitWithShortcuts?: boolean
-  abortController?: AbortController
+  abortSignal?: AbortSignal
 }
 
 // eslint-disable-next-line react/function-component-definition
@@ -29,7 +29,7 @@ function SelectPrompt<T>({
   onSubmit,
   defaultValue,
   submitWithShortcuts = false,
-  abortController,
+  abortSignal,
 }: React.PropsWithChildren<SelectPromptProps<T>>): ReactElement | null {
   if (choices.length === 0) {
     throw new Error('SelectPrompt requires at least one choice')
@@ -95,7 +95,7 @@ function SelectPrompt<T>({
     [stdout, wrapperHeight, unmountInk, onSubmit],
   )
 
-  const {isAborted} = useAbortSignal(abortController?.signal)
+  const {isAborted} = useAbortSignal(abortSignal)
 
   useInput((input, key) => {
     handleCtrlC(input, key)

@@ -5,7 +5,7 @@ import {TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {debounce} from '../../../../public/common/function.js'
-import {AbortController} from '../../../../public/node/abort.js'
+import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import React, {ReactElement, useCallback, useLayoutEffect, useRef, useState} from 'react'
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
@@ -27,7 +27,7 @@ export interface AutocompletePromptProps<T> {
   infoTable?: InfoTableProps['table']
   hasMorePages?: boolean
   search: (term: string) => Promise<SearchResults<T>>
-  abortController?: AbortController
+  abortSignal?: AbortSignal
 }
 
 enum PromptState {
@@ -47,7 +47,7 @@ function AutocompletePrompt<T>({
   onSubmit,
   search,
   hasMorePages: initialHasMorePages = false,
-  abortController,
+  abortSignal,
 }: React.PropsWithChildren<AutocompletePromptProps<T>>): ReactElement | null {
   const paginatedInitialChoices = initialChoices.slice(0, PAGE_SIZE)
   const [answer, setAnswer] = useState<SelectItem<T> | undefined>(paginatedInitialChoices[0])
@@ -110,7 +110,7 @@ function AutocompletePrompt<T>({
     }
   }, [wrapperHeight, selectInputHeight, searchResults.length, stdout, limit, numberOfGroups])
 
-  const {isAborted} = useAbortSignal(abortController?.signal)
+  const {isAborted} = useAbortSignal(abortSignal)
 
   useInput((input, key) => {
     handleCtrlC(input, key)

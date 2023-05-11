@@ -51,7 +51,7 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[backendProcess, frontendProcess]}
-        abortController={new AbortController()}
+        abortSignal={new AbortController().signal}
         footer={{
           shortcuts: [
             {
@@ -131,7 +131,7 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[backendProcess, frontendProcess]}
-        abortController={new AbortController()}
+        abortSignal={new AbortController().signal}
         footer={{
           shortcuts: [
             {
@@ -180,8 +180,8 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[neverEndingProcess]}
-        abortController={new AbortController()}
         onInput={(input, key) => onInput(input, key)}
+        abortSignal={new AbortController().signal}
       />,
     )
 
@@ -214,7 +214,7 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[backendProcess]}
-        abortController={abortController}
+        abortSignal={abortController.signal}
         footer={{
           shortcuts: [
             {
@@ -263,7 +263,7 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[backendProcess]}
-        abortController={new AbortController()}
+        abortSignal={new AbortController().signal}
         footer={{
           shortcuts: [
             {
@@ -306,7 +306,7 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[backendProcess]}
-        abortController={new AbortController()}
+        abortSignal={new AbortController().signal}
         footer={{
           shortcuts: [
             {

@@ -2,8 +2,8 @@
 import {AbortSilentError, FatalError as Fatal, FatalErrorType} from './error.js'
 import {collectLog, consoleError, consoleLog, Logger, LogLevel, outputDebug, outputWhereAppropriate} from './output.js'
 import {isUnitTest} from './context/local.js'
-import {AbortController} from './abort.js'
 import {terminalSupportsRawMode} from './system.js'
+import {AbortController} from './abort.js'
 import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
 import {render, renderOnce} from '../../private/node/ui.js'
 import {alert, AlertOptions} from '../../private/node/ui/alert.js'
@@ -23,7 +23,7 @@ import {Key as InkKey, RenderOptions} from 'ink'
 
 type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>
 
-export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortController'> {
+export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortSignal'> {
   renderOptions?: RenderOptions
 }
 
@@ -44,19 +44,17 @@ export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps
  *
  */
 export async function renderConcurrent({renderOptions, ...props}: RenderConcurrentOptions) {
-  const newProps = {
-    abortController: new AbortController(),
-    ...props,
-  }
+  const abortSignal = props.abortSignal ?? new AbortController().signal
+
   if (terminalSupportsRawMode(renderOptions?.stdin)) {
-    await render(<ConcurrentOutput {...newProps} />, {
+    await render(<ConcurrentOutput {...props} abortSignal={abortSignal} />, {
       ...renderOptions,
       exitOnCtrlC: typeof props.onInput === 'undefined',
     })
   } else {
     return Promise.all(
-      newProps.processes.map(async (concurrentProcess) => {
-        await concurrentProcess.action(process.stdout, process.stderr, newProps.abortController.signal)
+      props.processes.map(async (concurrentProcess) => {
+        await concurrentProcess.action(process.stdout, process.stderr, abortSignal)
       }),
     )
   }
@@ -279,7 +277,7 @@ export async function renderSelectPrompt<T>({
 }
 
 export interface RenderConfirmationPromptOptions
-  extends Pick<SelectPromptProps<boolean>, 'message' | 'infoTable' | 'abortController'> {
+  extends Pick<SelectPromptProps<boolean>, 'message' | 'infoTable' | 'abortSignal'> {
   confirmationMessage?: string
   cancellationMessage?: string
   renderOptions?: RenderOptions
@@ -307,7 +305,7 @@ export async function renderConfirmationPrompt({
   cancellationMessage = 'No, cancel',
   renderOptions,
   defaultValue = true,
-  abortController,
+  abortSignal,
 }: RenderConfirmationPromptOptions): Promise<boolean> {
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'confirmationPrompt', properties: arguments[0]})
@@ -333,7 +331,7 @@ export async function renderConfirmationPrompt({
     renderOptions,
     defaultValue,
     isConfirmationPrompt: true,
-    abortController,
+    abortSignal,
   })
 }
 

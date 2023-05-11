@@ -3,7 +3,7 @@ import {TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {messageWithPunctuation} from '../utilities.js'
-import {AbortController} from '../../../../public/node/abort.js'
+import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import React, {FunctionComponent, useCallback, useState} from 'react'
 import {Box, useApp, useInput, Text} from 'ink'
@@ -17,7 +17,7 @@ export interface TextPromptProps {
   validate?: (value: string) => string | undefined
   allowEmpty?: boolean
   emptyDisplayedValue?: string
-  abortController?: AbortController
+  abortSignal?: AbortSignal
 }
 
 const TextPrompt: FunctionComponent<TextPromptProps> = ({
@@ -28,7 +28,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   password = false,
   allowEmpty = false,
   emptyDisplayedValue = '(empty)',
-  abortController,
+  abortSignal,
 }) => {
   if (password && defaultValue) {
     throw new Error("Can't use defaultValue with password")
@@ -58,7 +58,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   const shouldShowError = submitted && error
   const color = shouldShowError ? 'red' : 'cyan'
   const underline = new Array(oneThird - 3).fill('▔')
-  const {isAborted} = useAbortSignal(abortController?.signal)
+  const {isAborted} = useAbortSignal(abortSignal)
 
   useInput((input, key) => {
     handleCtrlC(input, key)

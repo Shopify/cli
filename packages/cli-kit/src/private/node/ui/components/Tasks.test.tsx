@@ -71,7 +71,7 @@ describe('Tasks', () => {
 
     // When
     const renderInstance = render(
-      <Tasks tasks={[firstTask, secondTask]} silent={false} abortController={abortController} />,
+      <Tasks tasks={[firstTask, secondTask]} silent={false} abortSignal={abortController.signal} />,
     )
 
     // Then
@@ -415,7 +415,7 @@ describe('Tasks', () => {
     }
 
     // When
-    const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} abortController={abortController} />)
+    const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} abortSignal={abortController.signal} />)
     await taskHasRendered()
     const promise = renderInstance.waitUntilExit()
 

@@ -1,6 +1,6 @@
 import {OutputProcess} from '../../../../public/node/output.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
-import {AbortController} from '../../../../public/node/abort.js'
+import {AbortSignal} from '../../../../public/node/abort.js'
 import {handleCtrlC} from '../../ui.js'
 import {addOrUpdateConcurrentUIEventOutput} from '../../demo-recorder.js'
 import {treeKill} from '../../tree-kill.js'
@@ -19,7 +19,7 @@ interface Shortcut {
 }
 export interface ConcurrentOutputProps {
   processes: OutputProcess[]
-  abortController: AbortController
+  abortSignal: AbortSignal
   showTimestamps?: boolean
   onInput?: (input: string, key: Key, exit: () => void) => void
   footer?: {
@@ -73,7 +73,7 @@ enum ConcurrentOutputState {
  */
 const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   processes,
-  abortController,
+  abortSignal,
   showTimestamps = true,
   onInput,
   footer,
@@ -115,7 +115,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         const stdout = writableStream(process, index)
         const stderr = writableStream(process, index)
 
-        await process.action(stdout, stderr, abortController.signal)
+        await process.action(stdout, stderr, abortSignal)
       }),
     )
   }
@@ -140,7 +140,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     },
   })
 
-  const {isAborted} = useAbortSignal(abortController.signal)
+  const {isAborted} = useAbortSignal(abortSignal)
 
   return (
     <>

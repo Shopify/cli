@@ -734,7 +734,7 @@ describe('AutocompletePrompt', async () => {
             data: [],
           } as SearchResults<string>)
         }
-        abortController={abortController}
+        abortSignal={abortController.signal}
       />,
     )
     const promise = renderInstance.waitUntilExit()

@@ -193,7 +193,7 @@ describe('TextPrompt', () => {
         onSubmit={() => {}}
         message="Test question"
         defaultValue="Placeholder"
-        abortController={abortController}
+        abortSignal={abortController.signal}
       />,
     )
     const promise = renderInstance.waitUntilExit()
