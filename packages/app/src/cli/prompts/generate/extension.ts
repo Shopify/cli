@@ -1,6 +1,6 @@
 import {AppInterface} from '../../models/app/app.js'
-import {RemoteTemplateSpecification, TemplateType} from '../../api/graphql/template_specifications.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
+import {TemplateSpecification, TemplateType} from '../../models/app/template.js'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputWarn} from '@shopify/cli-kit/node/output'
@@ -11,13 +11,13 @@ export interface GenerateExtensionPromptOptions {
   extensionFlavor?: ExtensionFlavorValue
   directory: string
   app: AppInterface
-  templateSpecifications: RemoteTemplateSpecification[]
+  templateSpecifications: TemplateSpecification[]
   unavailableExtensions: string[]
   reset: boolean
 }
 
 export interface GenerateExtensionPromptOutput {
-  templateSpecification: RemoteTemplateSpecification
+  templateSpecification: TemplateSpecification
   extensionContent: GenerateExtensionContentOutput[]
 }
 
@@ -27,7 +27,7 @@ export interface GenerateExtensionContentOutput {
   flavor?: ExtensionFlavorValue
 }
 
-export function buildChoices(templateSpecifications: RemoteTemplateSpecification[]) {
+export function buildChoices(templateSpecifications: TemplateSpecification[]) {
   const templateSpecChoices = templateSpecifications.map((spec) => {
     return {
       label: spec.name,

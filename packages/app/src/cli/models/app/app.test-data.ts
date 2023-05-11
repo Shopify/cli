@@ -1,12 +1,12 @@
 import {App, AppInterface} from './app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
+import {TemplateSpecification} from './template.js'
 import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
 import {FunctionConfigType, FunctionInstance} from '../extensions/functions.js'
 import {ThemeExtensionInstance} from '../extensions/theme.js'
 import themeSpec from '../extensions/theme-specifications/theme.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import {RemoteTemplateSpecification} from '../../api/graphql/template_specifications.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -234,7 +234,7 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
   },
 ]
 
-export const testRemoteTemplateSpecifications: RemoteTemplateSpecification[] = [
+export const testRemoteTemplateSpecifications: TemplateSpecification[] = [
   {
     identifier: 'cart_checkout_validation',
     name: 'Function - Cart and Checkout Validation',

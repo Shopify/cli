@@ -1,9 +1,9 @@
-import {RemoteTemplateSpecification} from '../../../api/graphql/template_specifications.js'
+import {TemplateSpecification} from '../../app/template.js'
 
 /**
  * Post-purchase UI template specification.
  */
-const checkoutPostPurchaseExtension: RemoteTemplateSpecification = {
+const checkoutPostPurchaseExtension: TemplateSpecification = {
   identifier: 'checkout_post_purchase',
   name: 'Post-purchase UI',
   group: 'Discounts and checkout',
@@ -11,7 +11,7 @@ const checkoutPostPurchaseExtension: RemoteTemplateSpecification = {
   types: [
     {
       url: 'https://github.com/Shopify/cli',
-      type: 'ui',
+      type: 'checkout_post_purchase',
       extensionPoints: [],
       supportedFlavors: [
         {

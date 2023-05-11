@@ -1,31 +1,20 @@
-import {GenericSpecification} from './extensions.js'
-import {extensionTypesGroups} from '../../constants.js'
-import {RemoteTemplateSpecification} from '../../api/graphql/template_specifications.js'
+import {ExtensionFlavor} from './extensions.js'
+
+export interface TemplateType {
+  type: string
+  extensionPoints: string[]
+  supportedFlavors: ExtensionFlavor[]
+  url: string
+}
 
 export interface TemplateSpecification {
   identifier: string
   name: string
   group: string
   supportLinks: string[]
-  types: GenericSpecification[]
+  types: TemplateType[]
 }
 
-export function convertSpecificationsToTemplate(specifications: GenericSpecification[]): TemplateSpecification[] {
-  return specifications.map((spec) => {
-    return {
-      identifier: spec.identifier,
-      name: spec.externalName,
-      group: spec.group || extensionTypesGroups.find((group) => group.extensions.includes(spec.identifier))?.name || '',
-      supportLinks: spec.helpURL ? [spec.helpURL] : [],
-      types: [spec],
-    }
-  })
-}
-
-export function getTypesExternalIdentitifier(templates: TemplateSpecification[]): string[] {
-  return templates.flatMap((template) => template.types.map((type) => type.externalIdentifier))
-}
-
-export function getTypesExternalName(templates: RemoteTemplateSpecification[]): string[] {
+export function getTypesExternalName(templates: TemplateSpecification[]): string[] {
   return templates.flatMap((template) => template.name)
 }

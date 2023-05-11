@@ -1,9 +1,9 @@
-import {RemoteTemplateSpecification} from '../../../api/graphql/template_specifications.js'
+import {TemplateSpecification} from '../../app/template.js'
 
 /**
  * Theme App extension template specification.
  */
-const themeSpecification: RemoteTemplateSpecification = {
+const themeSpecification: TemplateSpecification = {
   identifier: 'theme',
   name: 'Theme app extension',
   group: 'Online store',

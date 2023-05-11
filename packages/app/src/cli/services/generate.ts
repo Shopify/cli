@@ -14,9 +14,9 @@ import {
   generateExtensionTemplate,
   ExtensionFlavorValue,
 } from '../services/generate/extension.js'
-import {getTypesExternalName} from '../models/app/template.js'
-import {RemoteTemplateSpecification, TemplateType} from '../api/graphql/template_specifications.js'
+import {TemplateSpecification, TemplateType, getTypesExternalName} from '../models/app/template.js'
 import {blocks} from '../constants.js'
+import {GenericSpecification} from '../models/app/extensions.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -45,7 +45,7 @@ async function generate(options: GenerateOptions) {
   const app: AppInterface = await loadApp({directory: options.directory, specifications})
   const templateSpecifications = await fetchTemplateSpecifications(token)
 
-  const promptOptions = await buildPromptOptions(templateSpecifications, app, options)
+  const promptOptions = await buildPromptOptions(templateSpecifications, specifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)
 
   await saveAnalyticsMetadata(promptAnswers, options.type)
@@ -57,14 +57,15 @@ async function generate(options: GenerateOptions) {
 }
 
 async function buildPromptOptions(
-  templateSpecifications: RemoteTemplateSpecification[],
+  templateSpecifications: TemplateSpecification[],
+  specifications: GenericSpecification[],
   app: AppInterface,
   options: GenerateOptions,
 ): Promise<GenerateExtensionPromptOptions> {
-  const templateSpecification = await handleTypeParameter(options.type, app, templateSpecifications)
+  const templateSpecification = await handleTypeParameter(options.type, app, templateSpecifications, specifications)
   validateExtensionFlavor(templateSpecification, options.template)
 
-  const {validTemplateSpecifications, templatesOverlimit} = checkLimits(templateSpecifications, app)
+  const {validTemplateSpecifications, templatesOverlimit} = checkLimits(templateSpecifications, specifications, app)
 
   return {
     templateType: templateSpecification?.identifier,
@@ -78,21 +79,26 @@ async function buildPromptOptions(
   }
 }
 
-function checkLimits(templateSpecifications: RemoteTemplateSpecification[], app: AppInterface) {
-  const iterateeFunction = (spec: RemoteTemplateSpecification) => {
-    const allValid = spec.types.every((type) => !limitReached(app, type))
+function checkLimits(
+  templateSpecifications: TemplateSpecification[],
+  specifications: GenericSpecification[],
+  app: AppInterface,
+) {
+  const iterateeFunction = (spec: TemplateSpecification) => {
+    const allValid = spec.types.every((type) => !limitReached(app, specifications, type))
     return allValid ? 'validTemplateSpecifications' : 'templatesOverlimit'
   }
   return groupBy(templateSpecifications, iterateeFunction)
 }
 
-function limitReached(app: AppInterface, templateType: TemplateType) {
-  if (templateType.type === 'function') {
+function limitReached(app: AppInterface, specifications: GenericSpecification[], templateType: TemplateType) {
+  const type = templateType.type
+  if (type === 'function') {
     return app.extensions.function.length >= blocks.functions.defaultRegistrationLimit
   } else {
-    // TODO: check registration limits
-    return false
-    // return app.extensionsForType(templateType).length >= templateType.registrationLimit
+    const specification = specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
+    const existingExtensions = app.extensionsForType({identifier: type, externalIdentifier: type})
+    return existingExtensions.length >= specification!!.registrationLimit
   }
 }
 
@@ -137,7 +143,7 @@ function renderSuccessMessages(
   })
 }
 
-function validateExtensionFlavor(templateSpecification?: RemoteTemplateSpecification, flavor?: string) {
+function validateExtensionFlavor(templateSpecification?: TemplateSpecification, flavor?: string) {
   if (!flavor || !templateSpecification) return
 
   const possibleFlavors: string[] = templateSpecification.types[0]!.supportedFlavors.map(
@@ -153,7 +159,7 @@ function validateExtensionFlavor(templateSpecification?: RemoteTemplateSpecifica
 }
 
 function formatSuccessfulRunMessage(
-  specification: RemoteTemplateSpecification,
+  specification: TemplateSpecification,
   extensionDirectory: string,
   depndencyManager: PackageManager,
 ): RenderAlertOptions {
@@ -180,8 +186,9 @@ function formatSuccessfulRunMessage(
 async function handleTypeParameter(
   typeFlag: string | undefined,
   app: AppInterface,
-  templateSpecifications: RemoteTemplateSpecification[],
-): Promise<RemoteTemplateSpecification | undefined> {
+  templateSpecifications: TemplateSpecification[],
+  specifications: GenericSpecification[],
+): Promise<TemplateSpecification | undefined> {
   if (!typeFlag) return
 
   const templateSpecification = templateSpecifications.find((spec) => spec.identifier === typeFlag)
@@ -200,11 +207,11 @@ async function handleTypeParameter(
 
   // Validate limits for selected type.
   // If no type is selected, filter out any types that have reached their limit
-  templateSpecification.types.forEach((spec) => {
-    if (limitReached(app, spec)) {
+  templateSpecification.types.forEach((type) => {
+    if (limitReached(app, specifications, type)) {
       throw new AbortError(
         'Invalid extension type',
-        `You have reached the limit of extension(s) of type ${spec.type} per app`,
+        `You have reached the limit of extension(s) of type ${type.type} per app`,
       )
     }
   })

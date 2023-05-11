@@ -2,9 +2,9 @@ import {blocks, versions} from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
 import {buildGraphqlTypes} from '../function/build.js'
 import {ensureFunctionExtensionFlavorExists} from '../function/common.js'
-import {RemoteTemplateSpecification} from '../../api/graphql/template_specifications.js'
 import {GenerateExtensionContentOutput} from '../../prompts/generate/extension.js'
 import {ExtensionFlavor} from '../../models/app/extensions.js'
+import {TemplateSpecification} from '../../models/app/template.js'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
@@ -18,7 +18,6 @@ import {downloadGitRepository} from '@shopify/cli-kit/node/git'
 import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, relativizePath} from '@shopify/cli-kit/node/path'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {captureOutput} from '@shopify/cli-kit/node/system'
 import {fileURLToPath} from 'url'
 
 async function getTemplatePath(name: string): Promise<string> {
@@ -37,7 +36,7 @@ export interface GenerateExtensionTemplateOptions {
   app: AppInterface
   cloneUrl?: string
   extensionChoices: GenerateExtensionContentOutput[]
-  specification: RemoteTemplateSpecification
+  specification: TemplateSpecification
 }
 
 export type ExtensionFlavorValue = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react' | 'rust' | 'wasm'
@@ -60,7 +59,7 @@ function getTemplateLanguage(flavor: ExtensionFlavorValue | undefined): Template
 
 export interface GeneratedExtension {
   directory: string
-  specification: RemoteTemplateSpecification
+  specification: TemplateSpecification
 }
 
 interface ExtensionInitOptions {
@@ -96,6 +95,7 @@ export async function generateExtensionTemplate(
 }
 
 async function extensionInit(options: ExtensionInitOptions) {
+  console.log('extensionInit')
   switch (options.type) {
     case 'theme':
       await themeExtensionInit(options)
@@ -103,7 +103,7 @@ async function extensionInit(options: ExtensionInitOptions) {
     case 'function':
       await functionExtensionInit(options)
       break
-    case 'ui':
+    default:
       await uiExtensionInit(options)
       break
   }
@@ -114,27 +114,37 @@ async function themeExtensionInit({type, name, directory}: ExtensionInitOptions)
   await recursiveLiquidTemplateCopy(templatePath, directory, {name, type})
 }
 
-async function uiExtensionInit({name, extensionFlavor, directory, app}: ExtensionInitOptions) {
+async function uiExtensionInit({name, extensionFlavor, directory, app, url}: ExtensionInitOptions) {
   const tasks = [
     {
       title: `Generating UI extension`,
       task: async () => {
-        const templateDirectory = extensionFlavor?.path
+        await inTemporaryDirectory(async (tmpDir) => {
+          let templateDirectory = ''
+          const srcFileExtension = getSrcFileExtension(extensionFlavor?.value ?? 'vanilla-js')
+          if (url === 'https://github.com/Shopify/cli') {
+            templateDirectory = await ensureLocalExtensionFlavorExists(extensionFlavor)
+          } else {
+            const templateDownloadDir = joinPath(tmpDir, 'download')
+            await mkdir(templateDownloadDir)
+            await downloadGitRepository({
+              repoUrl: url,
+              destination: templateDownloadDir,
+              shallow: true,
+            })
+            templateDirectory = await ensureFunctionExtensionFlavorExists(extensionFlavor, templateDownloadDir)
+          }
 
-        if (!templateDirectory) {
-          throw new BugError(`Couldn't find the template for the UI extension`)
-        }
+          await recursiveLiquidTemplateCopy(templateDirectory, directory, {
+            srcFileExtension,
+            name,
+          })
 
-        const srcFileExtension = getSrcFileExtension(extensionFlavor?.value ?? 'vanilla-js')
-        await recursiveLiquidTemplateCopy(templateDirectory, directory, {
-          srcFileExtension,
-          name,
+          if (extensionFlavor) {
+            await changeIndexFileExtension(directory, srcFileExtension)
+            await removeUnwantedTemplateFilesPerFlavor(directory, extensionFlavor.value)
+          }
         })
-
-        if (extensionFlavor) {
-          await changeIndexFileExtension(directory, srcFileExtension)
-          await removeUnwantedTemplateFilesPerFlavor(directory, extensionFlavor.value)
-        }
       },
     },
     {
@@ -263,6 +273,21 @@ async function ensureExtensionDirectoryExists({name, app}: {name: string; app: A
   }
   await mkdir(extensionDirectory)
   return extensionDirectory
+}
+
+export async function ensureLocalExtensionFlavorExists(extensionFlavor: ExtensionFlavor | undefined): Promise<string> {
+  const templatePath = extensionFlavor?.path || ''
+
+  const templateDirectory = await findPathUp(templatePath, {
+    cwd: dirname(fileURLToPath(import.meta.url)),
+    type: 'directory',
+  })
+
+  if (!templateDirectory) {
+    throw new AbortError(`\nThe extension is not available for ${extensionFlavor?.value}`)
+  }
+
+  return templateDirectory
 }
 
 async function addResolutionOrOverrideIfNeeded(directory: string, extensionFlavor?: ExtensionFlavorValue) {
