@@ -11,6 +11,7 @@ const spec = createExtensionSpecification({
   dependency,
   partnersWebIdentifier: 'pos_ui_extension',
   schema: BaseUIExtensionSchema,
+  isPreviewable: true,
   deployConfig: async (config, directory) => {
     const result = await getDependencyVersion(dependency.name, directory)
     if (result === 'not_found') throw new BugError(`Dependency ${dependency.name} not found`)

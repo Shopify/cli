@@ -49,6 +49,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigContent
   ) => TokenizedString | undefined
   shouldFetchCartUrl?(config: TConfiguration): boolean
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
+  isPreviewable: boolean
 }
 
 /**
@@ -72,10 +73,15 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
   configuration: TConfiguration
   configurationPath: string
   outputBundlePath: string
+  _usingExtensionsFramework: boolean
 
   private specification: ExtensionSpecification
 
   get graphQLType() {
+    if (this.configuration.type === 'function') {
+      if (this._usingExtensionsFramework) return 'FUNCTION'
+      return this.configuration.type.toUpperCase()
+    }
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
   }
 
@@ -107,6 +113,14 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
     return this.specification.surface
   }
 
+  get isPreviewable() {
+    return this.specification.isPreviewable
+  }
+
+  set usingExtensionsFramework(value: boolean) {
+    this._usingExtensionsFramework = value
+  }
+
   constructor(options: {
     configuration: TConfiguration
     configurationPath: string
@@ -122,6 +136,7 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
     this.devUUID = `dev-${randomUUID()}`
     this.localIdentifier = basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
+    this._usingExtensionsFramework = false
     if (this.specification.identifier === 'theme') {
       this.outputBundlePath = this.directory
     } else {
@@ -281,6 +296,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigCo
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     supportedFlavors: defaultExtensionFlavors,
     category: (): ExtensionCategory => (spec.identifier === 'theme' ? 'theme' : 'ui'),
+    isPreviewable: false,
   }
   return {...defaults, ...spec}
 }

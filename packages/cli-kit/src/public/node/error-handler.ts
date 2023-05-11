@@ -13,6 +13,7 @@ import {
 import {getEnvironmentData} from '../../private/node/analytics.js'
 import {outputDebug, outputInfo} from '../../public/node/output.js'
 import {bugsnagApiKey} from '../../private/node/constants.js'
+import {printEventsJson} from '../../private/node/demo-recorder.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {Bugsnag} from '../../private/node/error-handler.js'
 import {settings, Interfaces} from '@oclif/core'
@@ -30,7 +31,7 @@ export function errorHandler(error: Error & {exitCode?: number | undefined}, con
       outputInfo(`✨  ${error.message}`)
     }
   } else if (error instanceof AbortSilentError) {
-    process.exit(1)
+    exit(1)
   } else {
     return errorMapper(error)
       .then((error) => {
@@ -38,9 +39,14 @@ export function errorHandler(error: Error & {exitCode?: number | undefined}, con
       })
       .then((mappedError) => reportError(mappedError, config))
       .then(() => {
-        process.exit(1)
+        exit(1)
       })
   }
+}
+
+function exit(code: number) {
+  printEventsJson()
+  process.exit(code)
 }
 
 const reportError = async (error: unknown, config?: Interfaces.Config): Promise<void> => {

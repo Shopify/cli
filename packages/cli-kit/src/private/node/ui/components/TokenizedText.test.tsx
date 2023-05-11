@@ -51,5 +51,18 @@ describe('TokenizedText', async () => {
     test("doesn't add a space before char", async () => {
       expect(tokenItemToString(['Run', {char: '!'}])).toBe('Run!')
     })
+
+    test('it concatenates list items inline', async () => {
+      expect(
+        tokenItemToString([
+          'Run',
+          {
+            list: {
+              items: ['Item 1', 'Item 2', 'Item 3'],
+            },
+          },
+        ]),
+      ).toBe('Run Item 1 Item 2 Item 3')
+    })
   })
 })

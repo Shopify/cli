@@ -53,6 +53,7 @@ export type FunctionExtension = Extension & {
   buildWasmPath: string
   inputQueryPath: string
   isJavaScript: boolean
+  usingExtensionsFramework: boolean
 }
 
 export type ThemeExtension = Extension & {
@@ -76,4 +77,5 @@ export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigCo
   previewMessage(url: string, storeFqdn: string): TokenizedString | undefined
   shouldFetchCartUrl(): boolean
   hasExtensionPointTarget(target: string): boolean
+  isPreviewable: boolean
 }

@@ -172,6 +172,7 @@ importers:
       '@vitest/coverage-istanbul': 0.28.5
       vite: 2.9.12
       vitest: ^0.28.5
+      zod-to-json-schema: 3.20.4
     dependencies:
       '@oclif/core': 2.1.4
       '@oclif/plugin-commands': 2.2.13
@@ -186,6 +187,7 @@ importers:
       '@vitest/coverage-istanbul': 0.28.5
       vite: 2.9.12
       vitest: 0.28.5
+      zod-to-json-schema: 3.20.4
 
   packages/cli-kit:
     specifiers:
@@ -12637,6 +12639,12 @@ packages:
       compress-commons: 4.1.1
       readable-stream: 3.6.2
     dev: false
+
+  /zod-to-json-schema/3.20.4:
+    resolution: {integrity: sha512-Un9+kInJ2Zt63n6Z7mLqBifzzPcOyX+b+Exuzf7L1+xqck9Q2EPByyTRduV3kmSPaXaRer1JCsucubpgL1fipg==}
+    peerDependencies:
+      zod: ^3.20.0
+    dev: true
 
   /zod/3.21.4:
     resolution: {integrity: sha512-m46AKbrzKVzOzs/DZgVnG5H55N1sv1M8qZU3A8RIKbs3mrACDNeIOeilDymVb2HdmP8uwshOCF4uJ8uM9rCqJw==}

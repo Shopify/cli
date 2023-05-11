@@ -92,6 +92,7 @@ const EXTENSION_A: UIExtension = {
   functionFeatureConfig: undefined,
   themeFeatureConfig: undefined,
   uiFeatureConfig: undefined,
+  isPreviewable: true,
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -124,6 +125,7 @@ const EXTENSION_A_2: UIExtension = {
   functionFeatureConfig: undefined,
   themeFeatureConfig: undefined,
   uiFeatureConfig: undefined,
+  isPreviewable: true,
 }
 
 const EXTENSION_B: UIExtension = {
@@ -156,6 +158,7 @@ const EXTENSION_B: UIExtension = {
   functionFeatureConfig: undefined,
   themeFeatureConfig: undefined,
   uiFeatureConfig: undefined,
+  isPreviewable: true,
 }
 
 const EXTENSION_B_2: UIExtension = {
@@ -188,6 +191,7 @@ const EXTENSION_B_2: UIExtension = {
   functionFeatureConfig: undefined,
   themeFeatureConfig: undefined,
   uiFeatureConfig: undefined,
+  isPreviewable: true,
 }
 
 const EXTENSION_C: UIExtension = {
@@ -220,6 +224,7 @@ const EXTENSION_C: UIExtension = {
   functionFeatureConfig: undefined,
   themeFeatureConfig: undefined,
   uiFeatureConfig: undefined,
+  isPreviewable: true,
 }
 
 const EXTENSION_D: UIExtension = {
@@ -252,6 +257,7 @@ const EXTENSION_D: UIExtension = {
   functionFeatureConfig: undefined,
   themeFeatureConfig: undefined,
   uiFeatureConfig: undefined,
+  isPreviewable: false,
 }
 
 const FUNCTION_A: FunctionExtension = {
@@ -278,6 +284,7 @@ const FUNCTION_A: FunctionExtension = {
   inputQueryPath: '/function/input.graphql',
   isJavaScript: false,
   externalType: 'function',
+  usingExtensionsFramework: false,
   publishURL: (_) => Promise.resolve(''),
   functionFeatureConfig: undefined,
   themeFeatureConfig: undefined,

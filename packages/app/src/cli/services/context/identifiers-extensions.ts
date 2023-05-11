@@ -4,6 +4,7 @@ import {EnsureDeploymentIdsPresenceOptions, LocalSource, MatchingError, RemoteSo
 import {deployConfirmationPrompt, extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
+import {FunctionExtension} from '../../models/app/extensions.js'
 import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -15,7 +16,15 @@ export async function ensureExtensionsIds(
 ): Promise<Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions}, MatchingError>> {
   let remoteExtensions = initialRemoteExtensions
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
-  const localExtensions = [...options.app.extensions.ui, ...options.app.extensions.theme]
+  let functionExtensions: FunctionExtension[] = []
+  if (options.partnersApp?.betas?.unifiedAppDeployment) {
+    functionExtensions = options.app.extensions.function.map((functionExtension) => {
+      functionExtension.usingExtensionsFramework = true
+      return functionExtension
+    })
+  }
+
+  const localExtensions = [...options.app.extensions.ui, ...options.app.extensions.theme, ...functionExtensions]
   const extensionsToMigrate = getExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
 
   if (extensionsToMigrate.length > 0) {

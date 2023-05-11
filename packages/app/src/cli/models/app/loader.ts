@@ -27,6 +27,99 @@ const defaultExtensionDirectory = 'extensions/*'
 
 export type AppLoaderMode = 'strict' | 'report'
 
+type AbortOrReport = <T>(errorMessage: OutputMessage, fallback: T, configurationPath: string) => T
+
+async function loadConfigurationFile(
+  filepath: string,
+  abortOrReport: AbortOrReport,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  decode: (input: any) => any = decodeToml,
+): Promise<unknown> {
+  if (!(await fileExists(filepath))) {
+    return abortOrReport(
+      outputContent`Couldn't find the configuration file at ${outputToken.path(filepath)}`,
+      '',
+      filepath,
+    )
+  }
+  const configurationContent = await readFile(filepath)
+  let configuration: object
+  try {
+    configuration = decode(configurationContent)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    // TOML errors have line, pos and col properties
+    if (err.line && err.pos && err.col) {
+      return abortOrReport(
+        outputContent`Fix the following error in ${outputToken.path(filepath)}:\n${err.message}`,
+        null,
+        filepath,
+      )
+    } else {
+      throw err
+    }
+  }
+  // Convert snake_case keys to camelCase before returning
+  return {
+    ...Object.fromEntries(Object.entries(configuration).map((kv) => [camelize(kv[0]), kv[1]])),
+  }
+}
+
+export async function parseConfigurationFile<TSchema extends zod.ZodType>(
+  schema: TSchema,
+  filepath: string,
+  abortOrReport: AbortOrReport,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  decode: (input: any) => any = decodeToml,
+): Promise<zod.TypeOf<TSchema>> {
+  const fallbackOutput = {} as zod.TypeOf<TSchema>
+
+  const configurationObject = await loadConfigurationFile(filepath, abortOrReport, decode)
+  if (!configurationObject) return fallbackOutput
+
+  const parseResult = schema.safeParse(configurationObject)
+
+  if (!parseResult.success) {
+    const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
+    return abortOrReport(
+      outputContent`Fix a schema error in ${outputToken.path(filepath)}:\n${formattedError}`,
+      fallbackOutput,
+      filepath,
+    )
+  }
+  return parseResult.data
+}
+
+export function findSpecificationForType(specifications: GenericSpecification[], type: string) {
+  return specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
+}
+
+export async function findSpecificationForConfig(
+  specifications: GenericSpecification[],
+  configurationPath: string,
+  abortOrReport: AbortOrReport,
+) {
+  const fileContent = await readFile(configurationPath)
+  const obj = decodeToml(fileContent)
+  const {type} = TypeSchema.parse(obj)
+  const specification = findSpecificationForType(specifications, type) as ExtensionSpecification | undefined
+
+  if (!specification) {
+    const isShopifolk = await isShopify()
+    const shopifolkMessage = '\nYou might need to enable some beta flags on your Organization or App'
+    abortOrReport(
+      outputContent`Unknown extension type ${outputToken.yellow(type)} in ${outputToken.path(configurationPath)}. ${
+        isShopifolk ? shopifolkMessage : ''
+      }`,
+      undefined,
+      configurationPath,
+    )
+    return undefined
+  }
+
+  return specification
+}
+
 export class AppErrors {
   private errors: {
     [key: string]: OutputMessage
@@ -79,10 +172,16 @@ class AppLoader {
   }
 
   findSpecificationForType(type: string) {
-    return this.specifications.find(
-      (spec) =>
-        spec.identifier === type || spec.externalIdentifier === type || spec.additionalIdentifiers?.includes(type),
-    )
+    return findSpecificationForType(this.specifications, type)
+  }
+
+  parseConfigurationFile<TSchema extends zod.ZodType>(
+    schema: TSchema,
+    filepath: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    decode: (input: any) => any = decodeToml,
+  ) {
+    return parseConfigurationFile(schema, filepath, this.abortOrReport.bind(this), decode)
   }
 
   async loaded() {
@@ -196,65 +295,6 @@ class AppLoader {
     }
   }
 
-  async loadConfigurationFile(
-    filepath: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    decode: (input: any) => any = decodeToml,
-  ): Promise<unknown> {
-    if (!(await fileExists(filepath))) {
-      return this.abortOrReport(
-        outputContent`Couldn't find the configuration file at ${outputToken.path(filepath)}`,
-        '',
-        filepath,
-      )
-    }
-    const configurationContent = await readFile(filepath)
-    let configuration: object
-    try {
-      configuration = decode(configurationContent)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      // TOML errors have line, pos and col properties
-      if (err.line && err.pos && err.col) {
-        return this.abortOrReport(
-          outputContent`Fix the following error in ${outputToken.path(filepath)}:\n${err.message}`,
-          null,
-          filepath,
-        )
-      } else {
-        throw err
-      }
-    }
-    // Convert snake_case keys to camelCase before returning
-    return {
-      ...Object.fromEntries(Object.entries(configuration).map((kv) => [camelize(kv[0]), kv[1]])),
-    }
-  }
-
-  async parseConfigurationFile<TSchema extends zod.ZodType>(
-    schema: TSchema,
-    filepath: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    decode: (input: any) => any = decodeToml,
-  ): Promise<zod.TypeOf<TSchema>> {
-    const fallbackOutput = {} as zod.TypeOf<TSchema>
-
-    const configurationObject = await this.loadConfigurationFile(filepath, decode)
-    if (!configurationObject) return fallbackOutput
-
-    const parseResult = schema.safeParse(configurationObject)
-
-    if (!parseResult.success) {
-      const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
-      return this.abortOrReport(
-        outputContent`Fix a schema error in ${outputToken.path(filepath)}:\n${formattedError}`,
-        fallbackOutput,
-        filepath,
-      )
-    }
-    return parseResult.data
-  }
-
   async loadUIExtensions(
     extensionDirectories?: string[],
   ): Promise<{allExtensions: Extension[]; usedCustomLayout: boolean}> {
@@ -265,22 +305,10 @@ class AppLoader {
 
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = dirname(configurationPath)
-      const fileContent = await readFile(configurationPath)
-      const obj = decodeToml(fileContent)
-      const {type} = TypeSchema.parse(obj)
-      const specification = this.findSpecificationForType(type) as ExtensionSpecification | undefined
+      const specification = await findSpecificationForConfig(this.specifications, configurationPath, this.abortOrReport)
 
       if (!specification) {
-        const isShopifolk = await isShopify()
-        const shopifolkMessage = '\nYou might need to enable some beta flags on your Organization or App'
-        this.abortOrReport(
-          outputContent`Unknown extension type ${outputToken.yellow(type)} in ${outputToken.path(configurationPath)}. ${
-            isShopifolk ? shopifolkMessage : ''
-          }`,
-          undefined,
-          configurationPath,
-        )
-        return undefined
+        return
       }
 
       const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)

@@ -51,6 +51,7 @@ const EXTENSION_A: UIExtension = {
   functionFeatureConfig: undefined,
   themeFeatureConfig: undefined,
   uiFeatureConfig: undefined,
+  isPreviewable: true,
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -83,6 +84,7 @@ const EXTENSION_A_2: UIExtension = {
   functionFeatureConfig: undefined,
   themeFeatureConfig: undefined,
   uiFeatureConfig: undefined,
+  isPreviewable: true,
 }
 
 const EXTENSION_B: UIExtension = {
@@ -115,6 +117,7 @@ const EXTENSION_B: UIExtension = {
   functionFeatureConfig: undefined,
   themeFeatureConfig: undefined,
   uiFeatureConfig: undefined,
+  isPreviewable: true,
 }
 
 describe('manualMatch: when all sources are matched', () => {

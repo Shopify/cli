@@ -1,6 +1,7 @@
 import {Alert, AlertProps} from './components/Alert.js'
 import {renderOnce} from '../ui.js'
 import {consoleLog, consoleWarn, Logger, LogLevel} from '../../../public/node/output.js'
+import {recordUIEvent} from '../demo-recorder.js'
 import React from 'react'
 import {RenderOptions} from 'ink'
 
@@ -31,6 +32,10 @@ export function alert({
   orderedNextSteps = false,
   renderOptions,
 }: AlertOptions) {
+  // eslint-disable-next-line prefer-rest-params
+  const {type: alertType, ...eventProps} = arguments[0]
+  recordUIEvent({type, properties: eventProps})
+
   return renderOnce(
     <Alert
       type={type}
