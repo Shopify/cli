@@ -422,7 +422,7 @@ describe('Tasks', () => {
     abortController.abort()
 
     // Then
-    expect(unstyled(renderInstance.lastFrame()!)).toEqual('')
+    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toEqual('')
     await expect(promise).resolves.toEqual(undefined)
   })
 })
