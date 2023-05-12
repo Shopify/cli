@@ -1,4 +1,3 @@
-import {Extension} from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -411,7 +410,7 @@ async function logMetadataForLoadedApp(
     const extensionUICount = app.legacyExtensions.ui.length
     const extensionThemeCount = app.legacyExtensions.theme.length
 
-    const extensionTotalCount = extensionFunctionCount + extensionUICount + extensionThemeCount
+    const extensionTotalCount = app.extensions.length
 
     const webBackendCount = app.webs.filter((web) => web.configuration.type === WebType.Backend).length
     const webBackendFramework =
@@ -420,13 +419,8 @@ async function logMetadataForLoadedApp(
         : undefined
     const webFrontendCount = app.webs.filter((web) => web.configuration.type === WebType.Frontend).length
 
-    const allExtensions: Extension[] = [
-      ...app.legacyExtensions.function,
-      ...app.legacyExtensions.theme,
-      ...app.legacyExtensions.ui,
-    ]
     const extensionsBreakdownMapping: {[key: string]: number} = {}
-    for (const extension of allExtensions) {
+    for (const extension of app.extensions) {
       if (extensionsBreakdownMapping[extension.type] === undefined) {
         extensionsBreakdownMapping[extension.type] = 1
       } else {

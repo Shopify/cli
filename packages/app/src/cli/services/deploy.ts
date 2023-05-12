@@ -249,11 +249,7 @@ async function outputCompletionMessage({
       title: 'Summary',
       body: {
         list: {
-          items: [
-            ...app.legacyExtensions.ui.map(outputDeployedButNotLiveMessage),
-            ...app.legacyExtensions.theme.map(outputDeployedButNotLiveMessage),
-            ...app.legacyExtensions.function.map(outputDeployedAndLivedMessage),
-          ],
+          items: app.extensions.map(outputDeployedButNotLiveMessage),
         },
       },
     },

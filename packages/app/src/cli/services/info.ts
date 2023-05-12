@@ -136,15 +136,9 @@ class AppInfo {
     augmentWithExtensions(this.app.legacyExtensions.theme, this.themeExtensionSubSection.bind(this))
     augmentWithExtensions(this.app.legacyExtensions.function, this.functionExtensionSubSection.bind(this))
 
-    const allExtensions = [
-      ...this.app.legacyExtensions.ui,
-      ...this.app.legacyExtensions.theme,
-      ...this.app.legacyExtensions.function,
-    ]
-
     if (this.app.errors?.isEmpty() === false) {
       body += `\n\n${outputContent`${outputToken.subheading('Extensions with errors')}`.value}`
-      allExtensions.forEach((extension) => {
+      this.app.extensions.forEach((extension) => {
         body += `${this.invalidExtensionSubSection(extension)}`
       })
     }
