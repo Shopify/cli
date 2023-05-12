@@ -8,6 +8,9 @@ export const AllAppExtensionRegistrationsQuery = gql`
         uuid
         title
         type
+        draftVersion {
+          config
+        }
       }
       functions {
         id
@@ -30,6 +33,15 @@ export interface AllAppExtensionRegistrationsQuerySchema {
       uuid: string
       title: string
       type: string
+      draftVersion?: {
+        config: string
+        registrationId: string
+        lastUserInteractionAt: string
+        validationErrors: {
+          field: string[]
+          message: string
+        }[]
+      }
     }[]
     functions: {
       id: string

@@ -1,7 +1,6 @@
 import {automaticMatchmaking} from './id-matching.js'
 import {manualMatchIds} from './id-manual-matching.js'
 import {ensureExtensionsIds} from './identifiers-extensions.js'
-import {RemoteSource} from './identifiers.js'
 import {deployConfirmationPrompt, extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {createExtension} from '../dev/create-extension.js'
 import {AppInterface} from '../../models/app/app.js'
@@ -13,7 +12,7 @@ import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
-const REGISTRATION_A: RemoteSource = {
+const REGISTRATION_A = {
   uuid: 'UUID_A',
   id: 'A',
   title: 'A',

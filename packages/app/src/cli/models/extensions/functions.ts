@@ -71,15 +71,18 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
   }
 
   get type() {
-    return this.configuration.type
+    if (this._usingExtensionsFramework) return 'function'
+    else return this.configuration.type
   }
 
   get identifier() {
-    return this.configuration.type
+    if (this._usingExtensionsFramework) return 'function'
+    else return this.configuration.type
   }
 
   get externalType() {
-    return this.configuration.type
+    if (this._usingExtensionsFramework) return 'function'
+    else return this.configuration.type
   }
 
   get name() {

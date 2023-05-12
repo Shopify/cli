@@ -1,8 +1,7 @@
 import {FunctionInstance} from './functions.js'
-import {FunctionExtension} from '../app/extensions.js'
 import {describe, expect, test} from 'vitest'
 
-const FUNCTION_A: FunctionExtension = new FunctionInstance({
+const FUNCTION_A = new FunctionInstance({
   configuration: {
     name: 'FUNCTION A',
     type: 'product_discounts',
@@ -35,5 +34,65 @@ describe('graphQLType', () => {
 
     // Then
     expect(got).toEqual('FUNCTION')
+  })
+})
+
+describe('type', () => {
+  test('returns type when not using extensions framework', async () => {
+    // When
+    FUNCTION_A.usingExtensionsFramework = false
+    const got = FUNCTION_A.type
+
+    // Then
+    expect(got).toEqual('product_discounts')
+  })
+
+  test('returns FUNCTION when using extensions framework', async () => {
+    // When
+    FUNCTION_A.usingExtensionsFramework = true
+    const got = FUNCTION_A.type
+
+    // Then
+    expect(got).toEqual('function')
+  })
+})
+
+describe('identifier', () => {
+  test('returns identifier when not using extensions framework', async () => {
+    // When
+    FUNCTION_A.usingExtensionsFramework = false
+    const got = FUNCTION_A.identifier
+
+    // Then
+    expect(got).toEqual('product_discounts')
+  })
+
+  test('returns FUNCTION when using extensions framework', async () => {
+    // When
+    FUNCTION_A.usingExtensionsFramework = true
+    const got = FUNCTION_A.identifier
+
+    // Then
+    expect(got).toEqual('function')
+  })
+})
+
+describe('externalType', () => {
+  test('returns externalType when not using extensions framework', async () => {
+    // When
+    FUNCTION_A.usingExtensionsFramework = false
+    const got = FUNCTION_A.externalType
+
+    // Then
+    expect(got).toEqual('product_discounts')
+  })
+
+  test('returns FUNCTION when using extensions framework', async () => {
+    // When
+    FUNCTION_A.usingExtensionsFramework = true
+    const got = FUNCTION_A.externalType
+
+    // Then
+    expect(got).toEqual('function')
   })
 })
