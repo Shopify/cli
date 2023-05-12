@@ -64,7 +64,7 @@ function mergeLocalAndRemoteSpecs(
 ): ExtensionSpecification[] {
   const updated = local.map((spec) => {
     const remoteSpec = remote.find((remote) => remote.identifier === spec.identifier)
-    if (remoteSpec) return {...spec, ...remoteSpec}
+    if (remoteSpec) return {...spec, ...remoteSpec} as ExtensionSpecification
     return undefined
   })
 

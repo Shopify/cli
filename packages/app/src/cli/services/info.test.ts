@@ -195,7 +195,7 @@ describe('info', () => {
 
     const app = mockApp(undefined, {
       errors,
-      extensions: {
+      legacyExtensions: {
         ui: [uiExtension1, uiExtension2],
         theme: [],
         function: [],

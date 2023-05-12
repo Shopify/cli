@@ -4,9 +4,9 @@ import {
   RemoteTemplateSpecificationsQuerySchema,
 } from '../../api/graphql/template_specifications.js'
 import {TemplateSpecification} from '../../models/app/template.js'
-import {BaseFunctionConfigurationSchema} from '../../models/extensions/schemas.js'
 import {blocks, templates} from '../../constants.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {BaseFunctionConfigurationSchema} from '../../models/extensions/schemas.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export async function fetchTemplateSpecifications(token: string): Promise<TemplateSpecification[]> {
@@ -45,6 +45,7 @@ export function mapRemoteTemplateSpecification(
         schema: BaseFunctionConfigurationSchema,
         templateURL: extension.url,
         helpURL: remoteTemplateSpecification.supportLinks[0]!,
+        features: () => ['function'],
         templatePath: (lang?: string) => {
           const supportedFlavor = extension.supportedFlavors.find((supportedFlavor) => supportedFlavor.value === lang)
           if (!supportedFlavor) return undefined

@@ -10,6 +10,7 @@ const spec = createExtensionSpecification({
   partnersWebIdentifier: 'theme_app_extension',
   graphQLType: 'theme_app_extension',
   supportedFlavors: [],
+  features: (_) => ['theme'],
   previewMessage() {
     const link = outputToken.link(
       'dev doc instructions',

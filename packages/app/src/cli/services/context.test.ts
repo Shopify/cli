@@ -25,7 +25,7 @@ import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
-import {App} from '../models/app/app.js'
+import {AppInterface} from '../models/app/app.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -127,7 +127,7 @@ const FETCH_RESPONSE = {
   stores: [STORE1, STORE2],
 }
 
-const options = (app: App): DeployContextOptions => {
+const options = (app: AppInterface): DeployContextOptions => {
   return {
     app,
     reset: false,

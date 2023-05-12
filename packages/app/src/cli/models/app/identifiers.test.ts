@@ -12,7 +12,7 @@ describe('updateAppIdentifiers', () => {
       const uiExtension = await testUIExtension()
       const app = testApp({
         directory: tmpDir,
-        extensions: {
+        legacyExtensions: {
           ui: [uiExtension],
           function: [],
           theme: [],
@@ -46,7 +46,7 @@ describe('updateAppIdentifiers', () => {
       const uiExtension = await testUIExtension()
       const app = testApp({
         directory: tmpDir,
-        extensions: {
+        legacyExtensions: {
           ui: [uiExtension],
           function: [],
           theme: [],
@@ -94,7 +94,7 @@ describe('getAppIdentifiers', () => {
           path: joinPath(tmpDir, '.env'),
           variables: {SHOPIFY_API_KEY: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
         },
-        extensions: {
+        legacyExtensions: {
           ui: [uiExtension],
           function: [],
           theme: [],
@@ -122,7 +122,7 @@ describe('getAppIdentifiers', () => {
       })
       const app = testApp({
         directory: tmpDir,
-        extensions: {
+        legacyExtensions: {
           ui: [uiExtension],
           function: [],
           theme: [],

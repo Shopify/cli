@@ -80,6 +80,7 @@ const EXTENSION_A: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  features: ['ui_legacy', 'bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -89,9 +90,6 @@ const EXTENSION_A: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  functionFeatureConfig: undefined,
-  themeFeatureConfig: undefined,
-  uiFeatureConfig: undefined,
   isPreviewable: true,
 }
 
@@ -113,6 +111,7 @@ const EXTENSION_A_2: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  features: ['ui_legacy', 'bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -122,9 +121,6 @@ const EXTENSION_A_2: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  functionFeatureConfig: undefined,
-  themeFeatureConfig: undefined,
-  uiFeatureConfig: undefined,
   isPreviewable: true,
 }
 
@@ -147,6 +143,7 @@ const EXTENSION_B: UIExtension = {
   externalType: 'checkout_ui',
   publishURL: (_) => Promise.resolve(''),
   surface: 'surface',
+  features: ['ui_legacy', 'bundling'],
   validate: () => Promise.resolve({} as any),
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
@@ -155,9 +152,6 @@ const EXTENSION_B: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  functionFeatureConfig: undefined,
-  themeFeatureConfig: undefined,
-  uiFeatureConfig: undefined,
   isPreviewable: true,
 }
 
@@ -179,6 +173,7 @@ const EXTENSION_B_2: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  features: ['ui_legacy', 'bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -188,9 +183,6 @@ const EXTENSION_B_2: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  functionFeatureConfig: undefined,
-  themeFeatureConfig: undefined,
-  uiFeatureConfig: undefined,
   isPreviewable: true,
 }
 
@@ -212,6 +204,7 @@ const EXTENSION_C: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  features: ['ui_legacy', 'bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -221,9 +214,6 @@ const EXTENSION_C: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  functionFeatureConfig: undefined,
-  themeFeatureConfig: undefined,
-  uiFeatureConfig: undefined,
   isPreviewable: true,
 }
 
@@ -245,6 +235,7 @@ const EXTENSION_D: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  features: ['bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -254,9 +245,6 @@ const EXTENSION_D: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  functionFeatureConfig: undefined,
-  themeFeatureConfig: undefined,
-  uiFeatureConfig: undefined,
   isPreviewable: false,
 }
 
@@ -285,10 +273,8 @@ const FUNCTION_A: FunctionExtension = {
   isJavaScript: false,
   externalType: 'function',
   usingExtensionsFramework: false,
+  features: ['function'],
   publishURL: (_) => Promise.resolve(''),
-  functionFeatureConfig: undefined,
-  themeFeatureConfig: undefined,
-  uiFeatureConfig: undefined,
 }
 
 const REGISTRATION_FUNCTION_A = {

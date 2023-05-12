@@ -30,7 +30,7 @@ describe('bundleExtension()', () => {
           FOO: 'BAR',
         },
       },
-      extensions: {
+      legacyExtensions: {
         ui: [extension],
         theme: [],
         function: [],
@@ -117,7 +117,7 @@ describe('bundleExtension()', () => {
           FOO: 'BAR',
         },
       },
-      extensions: {
+      legacyExtensions: {
         ui: [extension],
         theme: [],
         function: [],

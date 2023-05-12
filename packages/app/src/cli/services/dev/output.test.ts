@@ -46,7 +46,7 @@ async function mockApp(): Promise<AppInterface> {
       scopes: 'my-scope',
     },
     nodeDependencies,
-    extensions: {
+    legacyExtensions: {
       ui: [uiExtension],
       theme: [themeExtension],
       function: [functionExtension],

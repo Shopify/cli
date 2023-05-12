@@ -151,7 +151,7 @@ async function dev(options: DevOptions) {
     previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
   }
 
-  if (localApp.extensions.ui.length > 0) {
+  if (localApp.legacyExtensions.ui.length > 0) {
     previewUrl = `${proxyUrl}/extensions/dev-console`
   }
 
@@ -159,7 +159,7 @@ async function dev(options: DevOptions) {
   const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
   const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
-  localApp.extensions.ui.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
+  localApp.legacyExtensions.ui.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
 
   const backendOptions = {
     apiKey,
@@ -170,7 +170,7 @@ async function dev(options: DevOptions) {
   }
 
   const [previewableExtensions, nonPreviewableExtensions] = partition(
-    localApp.extensions.ui,
+    localApp.legacyExtensions.ui,
     (ext) => ext.isPreviewable,
   )
 
@@ -218,9 +218,9 @@ async function dev(options: DevOptions) {
     )
   }
 
-  if (localApp.extensions.theme.length > 0) {
+  if (localApp.legacyExtensions.theme.length > 0) {
     const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
-    const extension = localApp.extensions.theme[0]!
+    const extension = localApp.legacyExtensions.theme[0]!
     let optionsToOverwrite = {}
     if (!options.theme) {
       const theme = await new HostThemeManager(adminSession).findOrCreate()

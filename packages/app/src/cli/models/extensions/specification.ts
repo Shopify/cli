@@ -1,5 +1,5 @@
 import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema, BaseSchemaContents} from './schemas.js'
-import {ExtensionCategory, ExtensionFlavor, FunctionExtension, ThemeExtension, UIExtension} from '../app/extensions.js'
+import {ExtensionCategory, ExtensionFlavor} from '../app/extensions.js'
 import {blocks, defaultExtensionFlavors} from '../../constants.js'
 import {ok, Result} from '@shopify/cli-kit/node/result'
 import {capitalize, constantize} from '@shopify/cli-kit/common/string'
@@ -45,6 +45,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigContent
   ) => TokenizedString | undefined
   shouldFetchCartUrl?(config: TConfiguration): boolean
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
+  features: (config: TConfiguration) => ExtensionFeature[]
   isPreviewable: boolean
 }
 
@@ -115,6 +116,10 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
     return this.specification.isPreviewable
   }
 
+  get features(): ExtensionFeature[] {
+    return this.specification.features(this.configuration)
+  }
+
   set usingExtensionsFramework(value: boolean) {
     this._usingExtensionsFramework = value
   }
@@ -180,21 +185,6 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
     return outputContent`${heading}\n${message.value}\n`
   }
 
-  get functionFeatureConfig(): FunctionExtension | undefined {
-    if (this.specification.identifier !== 'function') return undefined
-    return this as unknown as FunctionExtension
-  }
-
-  get uiFeatureConfig(): UIExtension | undefined {
-    if (['function', 'theme'].includes(this.specification.identifier)) return undefined
-    return this as UIExtension
-  }
-
-  get themeFeatureConfig(): ThemeExtension | undefined {
-    if (this.specification.identifier !== 'theme') return undefined
-    return this as ThemeExtension
-  }
-
   // UI STUFF
   getBundleExtensionStdinContent() {
     if (this.specification.getBundleExtensionStdinContent) {
@@ -249,6 +239,7 @@ export type ForbiddenFields = 'registrationLimit' | 'category' | 'externalIdenti
 export interface CreateExtensionSpecType<TConfiguration extends BaseConfigContents = BaseConfigContents>
   extends Partial<Omit<ExtensionSpecification<TConfiguration>, ForbiddenFields>> {
   identifier: string
+  features: (config: TConfiguration) => ExtensionFeature[]
   category?: () => ExtensionCategory
 }
 

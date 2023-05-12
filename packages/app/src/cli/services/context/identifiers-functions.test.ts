@@ -56,10 +56,8 @@ const FUNCTION_A: FunctionExtension = {
   isJavaScript: false,
   externalType: 'function',
   usingExtensionsFramework: false,
+  features: ['function'],
   publishURL: (_) => Promise.resolve(''),
-  functionFeatureConfig: undefined,
-  themeFeatureConfig: undefined,
-  uiFeatureConfig: undefined,
 }
 
 const FUNCTION_A_2: FunctionExtension = {
@@ -87,10 +85,8 @@ const FUNCTION_A_2: FunctionExtension = {
   isJavaScript: false,
   externalType: 'function',
   usingExtensionsFramework: false,
+  features: ['function'],
   publishURL: (_) => Promise.resolve(''),
-  functionFeatureConfig: undefined,
-  themeFeatureConfig: undefined,
-  uiFeatureConfig: undefined,
 }
 
 const FUNCTION_B: FunctionExtension = {
@@ -118,10 +114,8 @@ const FUNCTION_B: FunctionExtension = {
   isJavaScript: false,
   externalType: 'function',
   usingExtensionsFramework: false,
+  features: ['function'],
   publishURL: (_) => Promise.resolve(''),
-  functionFeatureConfig: undefined,
-  themeFeatureConfig: undefined,
-  uiFeatureConfig: undefined,
 }
 
 const LOCAL_APP = (functionExtensions: FunctionExtension[]): AppInterface => {
@@ -130,7 +124,7 @@ const LOCAL_APP = (functionExtensions: FunctionExtension[]): AppInterface => {
     directory: '/app',
     configurationPath: '/shopify.app.toml',
     configuration: {scopes: 'read_products', extensionDirectories: ['extensions/*']},
-    extensions: {ui: [], theme: [], function: functionExtensions},
+    legacyExtensions: {ui: [], theme: [], function: functionExtensions},
   })
 }
 

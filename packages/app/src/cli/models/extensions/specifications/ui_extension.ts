@@ -1,4 +1,4 @@
-import {createExtensionSpecification} from '../specification.js'
+import {ExtensionFeature, createExtensionSpecification} from '../specification.js'
 import {BaseUIExtensionSchema, NewExtensionPointSchemaType, NewExtensionPointsSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
@@ -27,6 +27,14 @@ const spec = createExtensionSpecification({
   partnersWebIdentifier: 'ui_extension',
   singleEntryPath: false,
   schema: UIExtensionSchema,
+  features: (config) => {
+    const basic: ExtensionFeature[] = ['ui', 'bundling']
+    const needsCart =
+      config.extensionPoints.find((extensionPoint) => {
+        return getExtensionPointTargetSurface(extensionPoint.target) === 'checkout'
+      }) !== undefined
+    return needsCart ? [...basic, 'cart_url'] : basic
+  },
   validate: async (config, directory) => {
     return validateUIExtensionPointConfig(directory, config.extensionPoints)
   },

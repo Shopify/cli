@@ -21,6 +21,7 @@ const spec = createExtensionSpecification({
   partnersWebIdentifier: 'checkout_ui_extension',
   schema: CheckoutSchema,
   isPreviewable: true,
+  features: (_) => ['ui_legacy', 'bundling', 'cart_url'],
   deployConfig: async (config, directory) => {
     return {
       extension_points: config.extensionPoints,

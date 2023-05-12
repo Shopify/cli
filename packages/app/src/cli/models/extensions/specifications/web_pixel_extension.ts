@@ -25,6 +25,7 @@ const spec = createExtensionSpecification({
   partnersWebIdentifier: 'web_pixel',
   supportedFlavors: defaultExtensionFlavors.filter((flavor) => !flavor.value.includes('react')),
   schema: WebPixelSchema,
+  features: (_) => ['bundling'],
   deployConfig: async (config, _) => {
     return {
       runtime_context: config.runtimeContext,

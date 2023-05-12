@@ -1,5 +1,6 @@
 import {BaseConfigContents, FunctionSchemaContents} from '../extensions/schemas.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
+import {ExtensionFeature} from '../extensions/specification.js'
 import {TokenizedString} from '@shopify/cli-kit/node/output'
 import {Result} from '@shopify/cli-kit/node/result'
 import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
@@ -23,9 +24,7 @@ export interface Extension {
   externalType: string
   graphQLType: string
   publishURL(options: {orgId: string; appId: string; extensionId?: string}): Promise<string>
-  functionFeatureConfig: FunctionExtension | undefined
-  themeFeatureConfig: ThemeExtension | undefined
-  uiFeatureConfig: UIExtension | undefined
+  features: ExtensionFeature[]
 }
 
 export type FunctionExtension = Extension & {

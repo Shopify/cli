@@ -69,9 +69,7 @@ describe('uploadFunctionExtensions', () => {
       localIdentifier: 'my-function',
       type: 'order_discounts',
       graphQLType: 'order_discounts',
-      functionFeatureConfig: undefined,
-      themeFeatureConfig: undefined,
-      uiFeatureConfig: undefined,
+      features: [],
       usingExtensionsFramework: false,
     }
     token = 'token'
@@ -1102,9 +1100,7 @@ describe('functionConfiguration', () => {
       type: 'order_discounts',
       graphQLType: 'order_discounts',
       usingExtensionsFramework: false,
-      functionFeatureConfig: undefined,
-      themeFeatureConfig: undefined,
-      uiFeatureConfig: undefined,
+      features: [],
     }
     token = 'token'
     identifiers = {

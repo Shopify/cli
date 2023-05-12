@@ -66,6 +66,7 @@ const EXTENSION_A: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  features: ['ui_legacy', 'bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -75,9 +76,6 @@ const EXTENSION_A: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  functionFeatureConfig: undefined,
-  themeFeatureConfig: undefined,
-  uiFeatureConfig: undefined,
   isPreviewable: true,
 }
 
@@ -99,6 +97,7 @@ const EXTENSION_A_2: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  features: ['ui_legacy', 'bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -108,9 +107,6 @@ const EXTENSION_A_2: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  functionFeatureConfig: undefined,
-  themeFeatureConfig: undefined,
-  uiFeatureConfig: undefined,
   isPreviewable: true,
 }
 
@@ -132,6 +128,7 @@ const EXTENSION_B: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  features: ['ui_legacy', 'bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -141,9 +138,6 @@ const EXTENSION_B: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  functionFeatureConfig: undefined,
-  themeFeatureConfig: undefined,
-  uiFeatureConfig: undefined,
   isPreviewable: true,
 }
 
@@ -172,10 +166,8 @@ const FUNCTION_A: FunctionExtension = {
   isJavaScript: false,
   externalType: 'function',
   usingExtensionsFramework: false,
+  features: ['function'],
   publishURL: (_) => Promise.resolve(''),
-  functionFeatureConfig: undefined,
-  themeFeatureConfig: undefined,
-  uiFeatureConfig: undefined,
 }
 
 const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): AppInterface => {
@@ -184,7 +176,7 @@ const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExte
     directory: '/app',
     configurationPath: '/shopify.app.toml',
     configuration: {scopes: 'read_products', extensionDirectories: ['extensions/*']},
-    extensions: {ui: uiExtensions, theme: [], function: functionExtensions},
+    legacyExtensions: {ui: uiExtensions, theme: [], function: functionExtensions},
   })
 }
 

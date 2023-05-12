@@ -1,5 +1,5 @@
 import {App, AppInterface} from './app.js'
-import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
+import {ThemeExtension, UIExtension} from './extensions.js'
 import {ExtensionInstance, ExtensionSpecification} from '../extensions/specification.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
@@ -16,9 +16,10 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     app.configurationPath ?? '/tmp/project/shopify.app.toml',
     app.nodeDependencies ?? {},
     app.webs ?? [],
-    app.extensions?.ui ?? [],
-    app.extensions?.theme ?? [],
-    app.extensions?.function ?? [],
+    app.extensions ?? [],
+    app.legacyExtensions?.ui ?? [],
+    app.legacyExtensions?.theme ?? [],
+    app.legacyExtensions?.function ?? [],
     app.usesWorkspaces ?? false,
     app.dotenv,
     app.errors,
@@ -110,7 +111,7 @@ interface TestFunctionExtensionOptions {
   entryPath?: string
 }
 
-export async function testFunctionExtension(opts: TestFunctionExtensionOptions = {}): Promise<FunctionExtension> {
+export async function testFunctionExtension(opts: TestFunctionExtensionOptions = {}): Promise<ExtensionInstance> {
   const directory = opts.dir ?? '/tmp/project/extensions/my-function'
   const configuration = opts.config ?? defaultFunctionConfiguration()
 
@@ -124,7 +125,7 @@ export async function testFunctionExtension(opts: TestFunctionExtensionOptions =
     directory,
     specification,
   })
-  return extension.functionFeatureConfig!
+  return extension
 }
 
 export const testRemoteSpecifications: RemoteSpecification[] = [

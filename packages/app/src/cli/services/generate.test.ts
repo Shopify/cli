@@ -174,7 +174,7 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
     directory: appRoot,
     configurationPath: joinPath(appRoot, 'shopify.app.toml'),
     extensionsForType: (_spec: {identifier: string; externalIdentifier: string}) => existingExtensions,
-    extensions: {
+    legacyExtensions: {
       function: existingExtensions.filter((extension) => extension.type === 'product_discounts') as FunctionExtension[],
       ui: existingExtensions.filter((extension) => extension.type === 'product_subscription') as UIExtension[],
       theme: existingExtensions.filter((extension) => extension.type === 'theme') as ThemeExtension[],

@@ -1,5 +1,6 @@
 import {Extension, FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {AppErrors} from './loader.js'
+import {ExtensionInstance} from '../extensions/specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -55,7 +56,8 @@ export interface AppInterface {
   webs: Web[]
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
-  extensions: {
+  extensions: ExtensionInstance[]
+  legacyExtensions: {
     ui: UIExtension[]
     theme: ThemeExtension[]
     function: FunctionExtension[]
@@ -65,6 +67,11 @@ export interface AppInterface {
   hasUIExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => Extension[]
+  // functionExtensions: FunctionExtension[]
+  // themeExtensions: ThemeExtension[]
+  // previewableExtensions: UIExtension[]
+  // nonPreviewableExtensions: Extension[]
+  // bundableExtensions: Extension[]
 }
 
 export class App implements AppInterface {
@@ -79,7 +86,8 @@ export class App implements AppInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
-  extensions: {
+  extensions: ExtensionInstance[]
+  legacyExtensions: {
     ui: UIExtension[]
     theme: ThemeExtension[]
     function: FunctionExtension[]
@@ -95,6 +103,7 @@ export class App implements AppInterface {
     configurationPath: string,
     nodeDependencies: {[key: string]: string},
     webs: Web[],
+    extensions: ExtensionInstance[],
     ui: UIExtension[],
     theme: ThemeExtension[],
     functions: FunctionExtension[],
@@ -102,6 +111,11 @@ export class App implements AppInterface {
     dotenv?: DotEnvFile,
     errors?: AppErrors,
   ) {
+    const functionsExt = extensions.filter((extension) => extension.features.includes('function'))
+    const themes = extensions.filter((extension) => extension.features.includes('theme'))
+    const uis = extensions.filter(
+      (extension) => extension.features.includes('ui') || extension.features.includes('ui_legacy'),
+    )
     this.name = name
     this.idEnvironmentVariableName = idEnvironmentVariableName
     this.directory = directory
@@ -111,10 +125,11 @@ export class App implements AppInterface {
     this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
-    this.extensions = {
-      ui,
-      theme,
-      function: functions,
+    this.extensions = extensions
+    this.legacyExtensions = {
+      ui: uis,
+      theme: themes,
+      function: functionsExt as unknown as FunctionExtension[],
     }
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
@@ -125,19 +140,41 @@ export class App implements AppInterface {
     this.nodeDependencies = nodeDependencies
   }
 
+  // private get functionExtensions(): FunctionExtension[] {
+  //   const ext = this.extensions.filter((extension) => extension.features.includes('function'))
+  //   return ext as unknown as FunctionExtension[]
+  // }
+
+  // private get themeExtensions(): ThemeExtension[] {
+  //   return this.extensions.filter((extension) => extension.features.includes('theme'))
+  // }
+
+  // private get previewableExtensions(): UIExtension[] {
+  //   return this.extensions.filter(
+  //     (extension) => extension.features.includes('ui') || extension.features.includes('ui_legacy'),
+  //   )
+  // }
+
+  // private get nonPreviewableExtensions(): Extension[] {
+  //   return this.extensions.filter(
+  //     (extension) => !extension.features.includes('ui') && !extension.features.includes('ui_legacy'),
+  //   )
+  // }
+
+  // private get bundableExtensions(): Extension[] {
+  //   return this.extensions.filter((extension) => extension.features.includes('bundling'))
+  // }
+
   hasExtensions(): boolean {
-    return (
-      this.extensions.ui.length !== 0 || this.extensions.function.length !== 0 || this.extensions.theme.length !== 0
-    )
+    return this.extensions.length > 0
   }
 
   hasUIExtensions(): boolean {
-    return this.extensions.ui.length > 0
+    return this.legacyExtensions.ui.length > 0
   }
 
   extensionsForType(specification: {identifier: string; externalIdentifier: string}): Extension[] {
-    const allExternsions = [...this.extensions.ui, ...this.extensions.function, ...this.extensions.theme]
-    return allExternsions.filter(
+    return this.extensions.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
   }

@@ -91,9 +91,9 @@ export function getAppIdentifiers(
       extensionsIdentifiers[extension.localIdentifier] = envVariables[extension.idEnvironmentVariableName]!
     }
   }
-  app.extensions.ui.forEach(processExtension)
-  app.extensions.function.forEach(processExtension)
-  app.extensions.theme.forEach(processExtension)
+  app.legacyExtensions.ui.forEach(processExtension)
+  app.legacyExtensions.function.forEach(processExtension)
+  app.legacyExtensions.theme.forEach(processExtension)
 
   return {
     app: envVariables[app.idEnvironmentVariableName],

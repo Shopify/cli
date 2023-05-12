@@ -45,7 +45,7 @@ describe('initialize a extension', async () => {
         appDirectory: tmpDir,
         specifications,
       })
-      const generatedExtension = (await loadApp({directory: tmpDir, specifications})).extensions.ui[0]!
+      const generatedExtension = (await loadApp({directory: tmpDir, specifications})).legacyExtensions.ui[0]!
 
       expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
       expect(generatedExtension.configuration.name).toBe(name)
@@ -76,7 +76,7 @@ describe('initialize a extension', async () => {
       expect(addDependenciesCalls.length).toEqual(2)
 
       const loadedApp = await loadApp({directory: tmpDir, specifications})
-      const generatedExtension2 = loadedApp.extensions.ui.sort((lhs, rhs) =>
+      const generatedExtension2 = loadedApp.legacyExtensions.ui.sort((lhs, rhs) =>
         lhs.directory < rhs.directory ? -1 : 1,
       )[1]!
       expect(generatedExtension2.configuration.name).toBe(name2)
@@ -318,7 +318,7 @@ describe('initialize a extension', async () => {
 
       // Then
       const app = await loadApp({directory: tmpDir, specifications})
-      const generatedFunction = app.extensions.function[0]!
+      const generatedFunction = app.legacyExtensions.function[0]!
       expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
       expect(generatedFunction.configuration.name).toBe(name)
     })
@@ -359,7 +359,7 @@ describe('initialize a extension', async () => {
 
       // Then
       const app = await loadApp({directory: tmpDir, specifications})
-      const generatedFunction = app.extensions.function[0]!
+      const generatedFunction = app.legacyExtensions.function[0]!
       expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
       expect(generatedFunction.configuration.name).toBe(name)
       expect(generatedFunction.entrySourceFilePath).toBe(joinPath(extensionDir, 'src', 'index.js'))

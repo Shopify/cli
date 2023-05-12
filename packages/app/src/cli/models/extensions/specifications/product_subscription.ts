@@ -13,6 +13,7 @@ const spec = createExtensionSpecification({
   partnersWebIdentifier: 'product_subscription',
   schema: BaseUIExtensionSchema,
   isPreviewable: true,
+  features: (_) => ['ui_legacy', 'bundling'],
   deployConfig: async (_, directory) => {
     const result = await getDependencyVersion(dependency.name, directory)
     if (result === 'not_found') throw new BugError('Dependency @shopify/admin-ui-extensions-react not found')

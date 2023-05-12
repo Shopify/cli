@@ -68,11 +68,11 @@ interface BuildUIExtensionsOptions {
 }
 
 export async function buildUIExtensions(options: BuildUIExtensionsOptions): Promise<OutputProcess[]> {
-  if (options.app.extensions.ui.length === 0) {
+  if (options.app.legacyExtensions.ui.length === 0) {
     return []
   }
 
-  return options.app.extensions.ui.map((uiExtension) => {
+  return options.app.legacyExtensions.ui.map((uiExtension) => {
     return {
       prefix: uiExtension.localIdentifier,
       action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {

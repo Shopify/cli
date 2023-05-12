@@ -18,13 +18,17 @@ export async function ensureExtensionsIds(
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
   let functionExtensions: FunctionExtension[] = []
   if (options.partnersApp?.betas?.unifiedAppDeployment) {
-    functionExtensions = options.app.extensions.function.map((functionExtension) => {
+    functionExtensions = options.app.legacyExtensions.function.map((functionExtension) => {
       functionExtension.usingExtensionsFramework = true
       return functionExtension
     })
   }
 
-  const localExtensions = [...options.app.extensions.ui, ...options.app.extensions.theme, ...functionExtensions]
+  const localExtensions = [
+    ...options.app.legacyExtensions.ui,
+    ...options.app.legacyExtensions.theme,
+    ...functionExtensions,
+  ]
   const extensionsToMigrate = getExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
 
   if (extensionsToMigrate.length > 0) {

@@ -39,7 +39,7 @@ beforeEach(() => {
 
 describe('deploy', () => {
   test('deploys the app with no extensions and beta flag', async () => {
-    const app = testApp({extensions: {ui: [], theme: [], function: []}})
+    const app = testApp({legacyExtensions: {ui: [], theme: [], function: []}})
     vi.mocked(renderTextPrompt).mockResolvedValueOnce('')
 
     // When
@@ -64,7 +64,7 @@ describe('deploy', () => {
   })
 
   test("doesn't deploy the app with no extensions and no beta flag", async () => {
-    const app = testApp({extensions: {ui: [], theme: [], function: []}})
+    const app = testApp({legacyExtensions: {ui: [], theme: [], function: []}})
 
     // When
     await testDeployBundle(app, {
@@ -85,7 +85,7 @@ describe('deploy', () => {
   test('uploads the extension bundle with 1 UI extension', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})
+    const app = testApp({legacyExtensions: {ui: [uiExtension], theme: [], function: []}})
 
     // When
     await testDeployBundle(app)
@@ -106,7 +106,7 @@ describe('deploy', () => {
   test('uploads the extension bundle with 1 theme extension', async () => {
     // Given
     const themeExtension = await testThemeExtensions()
-    const app = testApp({extensions: {ui: [], theme: [themeExtension], function: []}})
+    const app = testApp({legacyExtensions: {ui: [], theme: [themeExtension], function: []}})
 
     // When
     await testDeployBundle(app)
@@ -127,7 +127,7 @@ describe('deploy', () => {
   test('does not upload the extension bundle with 1 function and no beta flag', async () => {
     // Given
     const functionExtension = await testFunctionExtension()
-    const app = testApp({extensions: {ui: [], theme: [], function: [functionExtension]}})
+    const app = testApp({legacyExtensions: {ui: [], theme: [], function: [functionExtension]}})
 
     // When
     await testDeployBundle(app)
@@ -159,7 +159,7 @@ describe('deploy', () => {
   test('uploads the extension bundle with 1 function and beta flag', async () => {
     // Given
     const functionExtension = await testFunctionExtension()
-    const app = testApp({extensions: {ui: [], theme: [], function: [functionExtension]}})
+    const app = testApp({legacyExtensions: {ui: [], theme: [], function: [functionExtension]}})
     const moduleId = 'module-id'
     const mockedFunctionConfiguration = {
       title: functionExtension.configuration.name,
@@ -204,7 +204,7 @@ describe('deploy', () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const themeExtension = await testThemeExtensions()
-    const app = testApp({extensions: {ui: [uiExtension], theme: [themeExtension], function: []}})
+    const app = testApp({legacyExtensions: {ui: [uiExtension], theme: [themeExtension], function: []}})
 
     // When
     await testDeployBundle(app)
@@ -228,7 +228,7 @@ describe('deploy', () => {
   test('shows a success message', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})
+    const app = testApp({legacyExtensions: {ui: [uiExtension], theme: [], function: []}})
 
     // When
     await testDeployBundle(app)
@@ -270,7 +270,7 @@ describe('deploy', () => {
   test('shows a specific success message when deploying using the unified app deployment flow', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})
+    const app = testApp({legacyExtensions: {ui: [uiExtension], theme: [], function: []}})
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
@@ -305,13 +305,13 @@ async function testDeployBundle(
 ) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
-  for (const uiExtension of app.extensions.ui) {
+  for (const uiExtension of app.legacyExtensions.ui) {
     extensionsPayload[uiExtension.localIdentifier] = uiExtension.localIdentifier
   }
-  for (const themeExtension of app.extensions.theme) {
+  for (const themeExtension of app.legacyExtensions.theme) {
     extensionsPayload[themeExtension.localIdentifier] = themeExtension.localIdentifier
   }
-  for (const functionExtension of app.extensions.function) {
+  for (const functionExtension of app.legacyExtensions.function) {
     extensionsPayload[functionExtension.localIdentifier] = functionExtension.localIdentifier
   }
   const identifiers = {app: 'app-id', extensions: extensionsPayload, extensionIds: {}}

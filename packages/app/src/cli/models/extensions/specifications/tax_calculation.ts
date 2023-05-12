@@ -12,6 +12,7 @@ const spec = createExtensionSpecification({
   identifier: 'tax_calculation',
   surface: 'admin',
   schema: TaxCalculationsSchema,
+  features: (_) => [],
   deployConfig: async (config, _) => {
     return {
       production_api_base_url: config.productionApiBaseUrl,
