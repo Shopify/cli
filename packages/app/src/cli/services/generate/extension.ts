@@ -249,21 +249,6 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
     const templateLanguage = getTemplateLanguage(extensionFlavor)
     const taskList = []
 
-    if (templateLanguage === 'javascript') {
-      taskList.push({
-        title: 'Installing additional dependencies',
-        task: async () => {
-          const requiredDependencies = getFunctionRuntimeDependencies(templateLanguage)
-          await addNPMDependenciesIfNeeded(requiredDependencies, {
-            packageManager: options.app.packageManager,
-            type: 'prod',
-            directory: options.app.directory,
-            addToWorkspace: options.app.usesWorkspaces,
-          })
-        },
-      })
-    }
-
     taskList.push({
       title: `Generating ${specification.externalName} extension`,
       task: async () => {
@@ -291,6 +276,20 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
         }
       },
     })
+
+    if (templateLanguage === 'javascript') {
+      taskList.push({
+        title: 'Installing additional dependencies',
+        task: async () => {
+          const requiredDependencies = getFunctionRuntimeDependencies(templateLanguage)
+          await addNPMDependenciesIfNeeded(requiredDependencies, {
+            packageManager: options.app.packageManager,
+            type: 'prod',
+            directory: options.extensionDirectory,
+          })
+        },
+      })
+    }
 
     if (templateLanguage === 'javascript') {
       taskList.push({
