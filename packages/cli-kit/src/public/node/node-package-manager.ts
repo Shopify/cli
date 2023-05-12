@@ -369,6 +369,9 @@ interface AddNPMDependenciesIfNeededOptions {
 
   /** Abort signal to stop the process */
   signal?: AbortSignal
+
+  /** Whether to add the dependencies to the workspace */
+  addToWorkspace?: boolean
 }
 
 /**
@@ -452,7 +455,10 @@ export async function addNPMDependencies(
       await installDependencies(options, argumentsToAddDependenciesWithYarn(dependenciesWithVersion, options.type))
       break
     case 'pnpm':
-      await installDependencies(options, argumentsToAddDependenciesWithPNPM(dependenciesWithVersion, options.type))
+      await installDependencies(
+        options,
+        argumentsToAddDependenciesWithPNPM(dependenciesWithVersion, options.type, options.addToWorkspace ?? false),
+      )
       break
   }
 }
@@ -534,7 +540,11 @@ function argumentsToAddDependenciesWithYarn(dependencies: string[], type: Depend
  * @param type - The dependency type.
  * @returns An array with the arguments.
  */
-function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: DependencyType): string[] {
+function argumentsToAddDependenciesWithPNPM(
+  dependencies: string[],
+  type: DependencyType,
+  addToWorkspace: boolean,
+): string[] {
   let command = ['add']
   command = command.concat(dependencies)
   switch (type) {
@@ -548,6 +558,7 @@ function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: Depend
       command.push('--save-prod')
       break
   }
+  if (addToWorkspace) command.push('-w')
   return command
 }
 

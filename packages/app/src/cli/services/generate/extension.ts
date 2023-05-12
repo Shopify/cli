@@ -258,6 +258,7 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
             packageManager: options.app.packageManager,
             type: 'prod',
             directory: options.app.directory,
+            addToWorkspace: options.app.usesWorkspaces,
           })
         },
       })
