@@ -23,7 +23,7 @@ const FlowTriggerDefinitionExtensionSchema = BaseUIExtensionSchema.extend({
 /**
  * Extension specification with all properties and methods needed to load a UI extension.
  */
-const flowActionDefinitionSpecification = createUIExtensionSpecification({
+const flowTriggerDefinitionSpecification = createUIExtensionSpecification({
   identifier: 'flow_trigger_definition',
   schema: FlowTriggerDefinitionExtensionSchema,
   supportedFlavors: [],
@@ -37,4 +37,4 @@ const flowActionDefinitionSpecification = createUIExtensionSpecification({
   },
 })
 
-export default flowActionDefinitionSpecification
+export default flowTriggerDefinitionSpecification
