@@ -1,7 +1,12 @@
 import {manualMatchIds} from './id-manual-matching.js'
 import {automaticMatchmaking} from './id-matching.js'
 import {EnsureDeploymentIdsPresenceOptions, LocalSource, MatchingError, RemoteSource} from './identifiers.js'
-import {deployConfirmationPrompt, extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
+import {
+  deployConfirmationPrompt,
+  extensionMigrationPrompt,
+  matchConfirmationPrompt,
+  releaseConfirmationPrompt,
+} from './prompts.js'
 import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
@@ -12,7 +17,9 @@ import {outputCompleted} from '@shopify/cli-kit/node/output'
 export async function ensureExtensionsIds(
   options: EnsureDeploymentIdsPresenceOptions,
   initialRemoteExtensions: RemoteSource[],
-): Promise<Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions}, MatchingError>> {
+): Promise<
+  Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions; skipRelease: boolean}, MatchingError>
+> {
   let remoteExtensions = initialRemoteExtensions
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
   const localExtensions = [...options.app.extensions.ui, ...options.app.extensions.theme]
@@ -32,6 +39,7 @@ export async function ensureExtensionsIds(
 
   let validMatches = matchExtensions.identifiers
   const validMatchesById: {[key: string]: string} = {}
+  let skipRelease = true
 
   for (const pending of matchExtensions.toConfirm) {
     // eslint-disable-next-line no-await-in-loop
@@ -65,6 +73,10 @@ export async function ensureExtensionsIds(
       options.partnersApp,
     )
     if (!confirmed) return err('user-cancelled')
+
+    if (options.partnersApp?.betas?.unifiedAppDeployment) {
+      skipRelease = !(await releaseConfirmationPrompt())
+    }
   }
 
   if (extensionsToCreate.length > 0) {
@@ -84,6 +96,7 @@ export async function ensureExtensionsIds(
   return ok({
     extensions: validMatches,
     extensionIds: validMatchesById,
+    skipRelease: skipRelease,
   })
 }
 

@@ -90,6 +90,15 @@ export async function deployConfirmationPrompt(
   })
 }
 
+export async function releaseConfirmationPrompt(): Promise<boolean> {
+  return renderConfirmationPrompt({
+    message: 'Release this version to users?',
+    confirmationMessage: 'Yes, release this version to users',
+    cancellationMessage: 'No',
+    defaultValue: false,
+  })
+}
+
 export async function extensionMigrationPrompt(toMigrate: LocalRemoteSource[]): Promise<boolean> {
   const migrationNames = toMigrate.map(({local}) => local.configuration.name).join(',')
   const allMigrationTypes = toMigrate.map(({remote}) => remote.type.toLocaleLowerCase())

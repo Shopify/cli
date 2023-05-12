@@ -15,7 +15,7 @@ import {Extension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderSuccess, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo} from '@shopify/cli-kit/node/output'
@@ -43,6 +43,12 @@ interface TasksContext {
 
 export async function deploy(options: DeployOptions) {
   // eslint-disable-next-line prefer-const
+
+  renderWarning({
+    headline: 'New change to deploy behavior',
+    body: 'XXXXX',
+  })
+
   let {app, identifiers, partnersApp, token} = await ensureDeployContext(options)
   const apiKey = identifiers.app
 
