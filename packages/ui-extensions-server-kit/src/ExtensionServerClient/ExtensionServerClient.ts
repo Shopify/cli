@@ -69,8 +69,8 @@ export class ExtensionServerClient implements ExtensionServer.Client {
       }
 
       /**
-       * Since each websocket connection will have its own translated values,
-       * We need to strip out all translated properties to prevent
+       * Since each websocket connection will have its own translated values
+       * we need to strip out all translated properties to prevent
        * mutating the Dev Server's data
        * Before:
        * ```
