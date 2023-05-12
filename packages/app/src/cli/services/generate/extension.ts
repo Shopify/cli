@@ -285,7 +285,7 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
           await addNPMDependenciesIfNeeded(requiredDependencies, {
             packageManager: options.app.packageManager,
             type: 'prod',
-            directory: options.extensionDirectory,
+            directory: options.app.usesWorkspaces ? options.extensionDirectory : options.app.directory,
           })
         },
       })
