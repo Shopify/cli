@@ -7,22 +7,24 @@ import {zod} from '@shopify/cli-kit/node/schema'
 const FlowActionDefinitionExtensionSchema = BaseUIExtensionSchema.extend({
   name: zod.string(),
   type: zod.literal('flow_action_definition'),
-  title: zod.string(),
-  description: zod.string(),
-  url: zod.string(),
-  fields: zod.array(
-    zod.object({
-      id: zod.string(),
-      name: zod.string(),
-      label: zod.string(),
-      description: zod.string().optional(),
-      required: zod.boolean(),
-      uiType: zod.string(),
-    }),
-  ),
-  validationUrl: zod.string().optional(),
-  customConfigurationPageUrl: zod.string().optional(),
-  customConfigurationPagePreviewUrl: zod.string().optional(),
+  task: zod.object({
+    title: zod.string(),
+    description: zod.string(),
+    url: zod.string(),
+    validationUrl: zod.string().optional(),
+    customConfigurationPageUrl: zod.string().optional(),
+    customConfigurationPagePreviewUrl: zod.string().optional(),
+    fields: zod.array(
+      zod.object({
+        id: zod.string(),
+        name: zod.string(),
+        label: zod.string(),
+        description: zod.string().optional(),
+        required: zod.boolean(),
+        uiType: zod.string(),
+      }),
+    ),
+  }),
 })
 
 /**
@@ -37,13 +39,13 @@ const flowActionDefinitionSpecification = createUIExtensionSpecification({
     // TODO: we'll need to figure out a solution for how we manage generating UUIDs for fields
     // we can either ask the partner to provide them, or we can generate them for them but we'll need to update the config file
     return {
-      title: config.title,
-      description: config.description,
-      url: config.url,
-      fields: config.fields,
-      validation_url: config.validationUrl,
-      custom_configuration_page_url: config.customConfigurationPageUrl,
-      custom_configuration_page_preview_url: config.customConfigurationPagePreviewUrl,
+      title: config.task.title,
+      description: config.task.description,
+      url: config.task.url,
+      fields: config.task.fields,
+      validation_url: config.task.validationUrl,
+      custom_configuration_page_url: config.task.customConfigurationPageUrl,
+      custom_configuration_page_preview_url: config.task.customConfigurationPagePreviewUrl,
     }
   },
 })

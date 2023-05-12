@@ -6,16 +6,18 @@ import {zod} from '@shopify/cli-kit/node/schema'
 const FlowTriggerDefinitionExtensionSchema = BaseUIExtensionSchema.extend({
   name: zod.string(),
   type: zod.literal('flow_trigger_definition'),
-  title: zod.string(),
-  description: zod.string(),
-  fields: zod.array(
-    zod.object({
-      name: zod.string(),
-      description: zod.string().optional(),
-      id: zod.string(),
-      uiType: zod.string(),
-    }),
-  ),
+  task: zod.object({
+    title: zod.string(),
+    description: zod.string(),
+    fields: zod.array(
+      zod.object({
+        name: zod.string(),
+        description: zod.string().optional(),
+        id: zod.string(),
+        uiType: zod.string(),
+      }),
+    ),
+  }),
 })
 
 /**
@@ -28,9 +30,9 @@ const flowActionDefinitionSpecification = createUIExtensionSpecification({
   singleEntryPath: false,
   deployConfig: async (config, _) => {
     return {
-      title: config.title,
-      description: config.description,
-      fields: config.fields,
+      title: config.task.title,
+      description: config.task.description,
+      fields: config.task.fields,
     }
   },
 })
