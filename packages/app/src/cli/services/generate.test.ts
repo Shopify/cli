@@ -10,8 +10,7 @@ import {
   testRemoteTemplateSpecifications,
   testThemeExtensions,
 } from '../models/app/app.test-data.js'
-import {Extension, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
-import {ExtensionSpecification} from '../models/extensions/specification.js'
+import {ExtensionInstance, ExtensionSpecification} from '../models/extensions/specification.js'
 import {describe, expect, vi, beforeAll, afterEach, test} from 'vitest'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -168,17 +167,13 @@ describe('generate', () => {
   })
 })
 
-async function mockSuccessfulCommandExecution(identifier: string, existingExtensions: Extension[] = []) {
+async function mockSuccessfulCommandExecution(identifier: string, existingExtensions: ExtensionInstance[] = []) {
   const appRoot = '/'
   const app = testApp({
     directory: appRoot,
     configurationPath: joinPath(appRoot, 'shopify.app.toml'),
     extensionsForType: (_spec: {identifier: string; externalIdentifier: string}) => existingExtensions,
-    legacyExtensions: {
-      function: existingExtensions.filter((extension) => extension.type === 'product_discounts') as FunctionExtension[],
-      ui: existingExtensions.filter((extension) => extension.type === 'product_subscription') as UIExtension[],
-      theme: existingExtensions.filter((extension) => extension.type === 'theme') as ThemeExtension[],
-    },
+    extensions: existingExtensions,
   })
   const specification = {
     ...testRemoteSpecifications[0],

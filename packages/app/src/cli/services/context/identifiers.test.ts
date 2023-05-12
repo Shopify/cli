@@ -6,6 +6,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {OrganizationApp} from '../../models/organization.js'
+import {ExtensionInstance} from '../../models/extensions/specification.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -122,13 +123,13 @@ const FUNCTION_C: FunctionExtension = {
   publishURL: (_) => Promise.resolve(''),
 }
 
-const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): AppInterface => {
+const LOCAL_APP = (uiExtensions: ExtensionInstance[], functionExtensions: ExtensionInstance[] = []): AppInterface => {
   return testApp({
     name: 'my-app',
     directory: '/app',
     configurationPath: '/shopify.app.toml',
     configuration: {scopes: 'read_products', extensionDirectories: ['extensions/*']},
-    legacyExtensions: {ui: uiExtensions, theme: [], function: functionExtensions},
+    extensions: [...uiExtensions, ...functionExtensions],
   })
 }
 
@@ -149,7 +150,7 @@ const options = (
   partnersApp?: OrganizationApp,
 ) => {
   return {
-    app: LOCAL_APP(uiExtensions, functionExtensions),
+    app: LOCAL_APP(uiExtensions as ExtensionInstance[], functionExtensions as unknown as ExtensionInstance[]),
     token: 'token',
     appId: 'appId',
     appName: 'appName',

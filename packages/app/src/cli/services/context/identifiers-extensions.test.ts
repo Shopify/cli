@@ -9,6 +9,7 @@ import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {OrganizationApp} from '../../models/organization.js'
+import {ExtensionInstance} from '../../models/extensions/specification.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -176,7 +177,7 @@ const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExte
     directory: '/app',
     configurationPath: '/shopify.app.toml',
     configuration: {scopes: 'read_products', extensionDirectories: ['extensions/*']},
-    legacyExtensions: {ui: uiExtensions, theme: [], function: functionExtensions},
+    extensions: [...uiExtensions, ...functionExtensions] as ExtensionInstance[],
   })
 }
 

@@ -30,7 +30,7 @@ const spec = createExtensionSpecification({
   features: (config) => {
     const basic: ExtensionFeature[] = ['ui', 'bundling']
     const needsCart =
-      config.extensionPoints.find((extensionPoint) => {
+      config.extensionPoints?.find((extensionPoint) => {
         return getExtensionPointTargetSurface(extensionPoint.target) === 'checkout'
       }) !== undefined
     return needsCart ? [...basic, 'cart_url'] : basic

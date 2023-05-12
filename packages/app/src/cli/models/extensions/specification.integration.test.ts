@@ -1,6 +1,5 @@
 import {loadLocalExtensionsSpecifications} from './load-specifications.js'
 import {testFunctionExtension} from '../app/app.test-data.js'
-import {FunctionExtension} from '../app/extensions.js'
 import {describe, test, expect} from 'vitest'
 
 describe('allUISpecifications', () => {
@@ -26,7 +25,7 @@ describe('allLocalSpecs', () => {
 describe('graphQLType', () => {
   test('returns type when not using extensions framework', async () => {
     // Given
-    const functionA: FunctionExtension = await testFunctionExtension()
+    const functionA = await testFunctionExtension()
 
     // When
     functionA.usingExtensionsFramework = false
@@ -38,7 +37,7 @@ describe('graphQLType', () => {
 
   test('returns FUNCTION when using extensions framework', async () => {
     // Given
-    const functionA: FunctionExtension = await testFunctionExtension()
+    const functionA = await testFunctionExtension()
 
     // When
     functionA.usingExtensionsFramework = true

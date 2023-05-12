@@ -113,9 +113,7 @@ export class App implements AppInterface {
   ) {
     const functionsExt = extensions.filter((extension) => extension.features.includes('function'))
     const themes = extensions.filter((extension) => extension.features.includes('theme'))
-    const uis = extensions.filter(
-      (extension) => extension.features.includes('ui') || extension.features.includes('ui_legacy'),
-    )
+    const uis = extensions.filter((extension) => extension.features.includes('bundling'))
     this.name = name
     this.idEnvironmentVariableName = idEnvironmentVariableName
     this.directory = directory
