@@ -1,23 +1,26 @@
-import {blocks, versions} from '../../constants.js'
+import {versions} from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
 import {buildGraphqlTypes} from '../function/build.js'
-import {ensureFunctionExtensionFlavorExists} from '../function/common.js'
 import {GenerateExtensionContentOutput} from '../../prompts/generate/extension.js'
 import {ExtensionFlavor} from '../../models/app/extensions.js'
 import {TemplateSpecification} from '../../models/app/template.js'
+import {
+  ensureDownloadedExtensionFlavorExists,
+  ensureExtensionDirectoryExists,
+  ensureLocalExtensionFlavorExists,
+} from '../extensions/common.js'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
   DependencyVersion,
   getProdDependencies,
 } from '@shopify/cli-kit/node/node-package-manager'
-import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository} from '@shopify/cli-kit/node/git'
 import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, relativizePath} from '@shopify/cli-kit/node/path'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {BugError} from '@shopify/cli-kit/node/error'
 import {fileURLToPath} from 'url'
 
 async function getTemplatePath(name: string): Promise<string> {
@@ -136,7 +139,7 @@ async function uiExtensionInit({name, extensionFlavor, directory, app, url}: Ext
               destination: templateDownloadDir,
               shallow: true,
             })
-            templateDirectory = await ensureFunctionExtensionFlavorExists(extensionFlavor, templateDownloadDir)
+            templateDirectory = await ensureDownloadedExtensionFlavorExists(extensionFlavor, templateDownloadDir)
           }
 
           await recursiveLiquidTemplateCopy(templateDirectory, directory, {
@@ -238,8 +241,7 @@ async function functionExtensionInit({name, extensionFlavor, url, directory, app
           destination: templateDownloadDir,
           shallow: true,
         })
-        const origin = await ensureFunctionExtensionFlavorExists(extensionFlavor, templateDownloadDir)
-
+        const origin = await ensureDownloadedExtensionFlavorExists(extensionFlavor, templateDownloadDir)
         await recursiveLiquidTemplateCopy(origin, directory, {name})
 
         if (templateLanguage === 'javascript') {
@@ -265,33 +267,6 @@ async function functionExtensionInit({name, extensionFlavor, url, directory, app
 
     await renderTasks(taskList)
   })
-}
-
-async function ensureExtensionDirectoryExists({name, app}: {name: string; app: AppInterface}): Promise<string> {
-  const hyphenizedName = hyphenate(name)
-  const extensionDirectory = joinPath(app.directory, blocks.extensions.directoryName, hyphenizedName)
-  if (await fileExists(extensionDirectory)) {
-    throw new AbortError(
-      `\nA directory with this name (${hyphenizedName}) already exists.\nChoose a new name for your extension.`,
-    )
-  }
-  await mkdir(extensionDirectory)
-  return extensionDirectory
-}
-
-export async function ensureLocalExtensionFlavorExists(extensionFlavor: ExtensionFlavor | undefined): Promise<string> {
-  const templatePath = extensionFlavor?.path || ''
-
-  const templateDirectory = await findPathUp(templatePath, {
-    cwd: dirname(fileURLToPath(import.meta.url)),
-    type: 'directory',
-  })
-
-  if (!templateDirectory) {
-    throw new AbortError(`\nThe extension is not available for ${extensionFlavor?.value}`)
-  }
-
-  return templateDirectory
 }
 
 async function addResolutionOrOverrideIfNeeded(directory: string, extensionFlavor?: ExtensionFlavorValue) {

@@ -1,11 +1,15 @@
-import {generateExtensionTemplate, getFunctionRuntimeDependencies, TemplateLanguage} from './extension.js'
-import * as extension from './extension.js'
+import {
+  generateExtensionTemplate,
+  getFunctionRuntimeDependencies,
+  TemplateLanguage,
+  ExtensionFlavorValue,
+} from './extension.js'
+import * as extensionsCommon from '../extensions/common.js'
 import {blocks, configurationFileNames} from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {GenericSpecification} from '../../models/app/extensions.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/specifications.js'
 import * as functionBuild from '../function/build.js'
-import * as functionCommon from '../function/common.js'
 import {testRemoteTemplateSpecifications} from '../../models/app/app.test-data.js'
 import checkoutPostPurchaseExtension from '../../models/templates/ui-specifications/checkout_post_purchase.js'
 import {TemplateSpecification} from '../../models/app/template.js'
@@ -16,7 +20,6 @@ import * as template from '@shopify/cli-kit/node/liquid'
 import * as file from '@shopify/cli-kit/node/fs'
 import * as git from '@shopify/cli-kit/node/git'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import type {ExtensionFlavorValue} from './extension.js'
 
 vi.mock('@shopify/cli-kit/node/node-package-manager')
 
@@ -195,8 +198,6 @@ describe('initialize a extension', async () => {
 
     async ({specification, flavor, ext}) => {
       await withTemporaryApp(async (tmpDir: string) => {
-        vi.spyOn(file, 'moveFile').mockResolvedValue()
-
         const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockResolvedValue()
         const name = 'extension-name'
 
@@ -219,8 +220,7 @@ describe('initialize a extension', async () => {
   test('uses the custom templatePath for extensions', async () => {
     await withTemporaryApp(async (tmpDir) => {
       // Given
-      // vi.spyOn(file, 'moveFile').mockResolvedValue()
-      vi.spyOn(extension, 'ensureLocalExtensionFlavorExists').mockImplementationOnce(
+      vi.spyOn(extensionsCommon, 'ensureLocalExtensionFlavorExists').mockImplementationOnce(
         async () => 'path/to/custom/template',
       )
       const name = 'my-ext-1'
@@ -248,7 +248,7 @@ describe('initialize a extension', async () => {
     await withTemporaryApp(async (tmpDir) => {
       // Given
       vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
-      vi.spyOn(functionCommon, 'ensureFunctionExtensionFlavorExists').mockImplementationOnce(async () => tmpDir)
+      vi.spyOn(extensionsCommon, 'ensureDownloadedExtensionFlavorExists').mockImplementationOnce(async () => tmpDir)
 
       const name = 'my-ext-1'
       const specification = allFunctionSpecs.find((spec) => spec.identifier === 'order_discounts')!
@@ -273,9 +273,8 @@ describe('initialize a extension', async () => {
       const name = 'my-fun-1'
       const specification = allFunctionSpecs.find((spec) => spec.identifier === 'order_discounts')!
       const extensionFlavor = 'rust'
-
       vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
-      vi.spyOn(functionCommon, 'ensureFunctionExtensionFlavorExists').mockImplementationOnce(async () => tmpDir)
+      vi.spyOn(extensionsCommon, 'ensureDownloadedExtensionFlavorExists').mockImplementationOnce(async () => tmpDir)
       vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockImplementationOnce(async (_origin, destination) => {
         await file.writeFile(
           joinPath(destination, 'shopify.function.extension.toml'),
@@ -314,7 +313,7 @@ describe('initialize a extension', async () => {
       const extensionFlavor = 'vanilla-js'
 
       vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
-      vi.spyOn(functionCommon, 'ensureFunctionExtensionFlavorExists').mockImplementationOnce(async () => tmpDir)
+      vi.spyOn(extensionsCommon, 'ensureDownloadedExtensionFlavorExists').mockImplementationOnce(async () => tmpDir)
       vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockImplementationOnce(async (_origin, destination) => {
         await file.writeFile(
           joinPath(destination, 'shopify.function.extension.toml'),
@@ -326,7 +325,7 @@ describe('initialize a extension', async () => {
           path = "dist/function.wasm"`,
         )
         await file.mkdir(joinPath(destination, 'src'))
-        await file.writeFile(joinPath(destination, 'src', 'index.js'), '')
+        await file.writeFile(joinPath(destination, 'src', 'index'), '')
       })
       const buildGraphqlTypesSpy = vi.spyOn(functionBuild, 'buildGraphqlTypes').mockResolvedValue()
 
@@ -359,7 +358,7 @@ describe('initialize a extension', async () => {
       const extensionFlavor = 'vanilla-js'
 
       vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
-      vi.spyOn(functionCommon, 'ensureFunctionExtensionFlavorExists').mockImplementationOnce(async () => {
+      vi.spyOn(extensionsCommon, 'ensureDownloadedExtensionFlavorExists').mockImplementationOnce(async () => {
         throw new Error('No folder for selected flavor')
       })
 

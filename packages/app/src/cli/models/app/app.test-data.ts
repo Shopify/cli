@@ -326,6 +326,11 @@ export const testRemoteTemplateSpecifications: TemplateSpecification[] = [
             value: 'rust',
             path: 'discounts/rust/order-discounts/default',
           },
+          {
+            name: 'JavaScript',
+            value: 'vanilla-js',
+            path: 'discounts/javascript/order-discounts/default',
+          },
         ],
       },
     ],
