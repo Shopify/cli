@@ -1,4 +1,5 @@
 import ThemeCommand from '../../../utilities/theme-command.js'
+import {themeFlags} from '../../../flags.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class UpdateInit extends ThemeCommand {
@@ -8,6 +9,7 @@ export default class UpdateInit extends ThemeCommand {
 
   static flags = {
     ...globalFlags,
+    path: themeFlags.path,
   }
 
   async run(): Promise<void> {
