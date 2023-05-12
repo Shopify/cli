@@ -212,9 +212,6 @@ class AppLoader {
       nodeDependencies,
       webs,
       allExtensions,
-      [],
-      [],
-      [],
       usesWorkspaces,
       dotenv,
     )
