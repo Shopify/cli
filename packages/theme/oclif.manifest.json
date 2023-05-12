@@ -1249,6 +1249,106 @@
       "cli2Flags": [
         "force"
       ]
+    },
+    "theme:update:check": {
+      "id": "theme:update:check",
+      "description": "Validate an 'update_extension.json' script.",
+      "strict": true,
+      "pluginName": "@shopify/theme",
+      "pluginAlias": "@shopify/theme",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "script": {
+          "name": "script",
+          "type": "option",
+          "description": "The path to the 'update_extension.json' script.",
+          "multiple": false,
+          "default": "./update_extension.json"
+        }
+      },
+      "args": {}
+    },
+    "theme:update:init": {
+      "id": "theme:update:init",
+      "description": "Initialize an 'update_extension.json' script.",
+      "strict": true,
+      "pluginName": "@shopify/theme",
+      "pluginAlias": "@shopify/theme",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to your theme directory.",
+          "multiple": false,
+          "default": "."
+        }
+      },
+      "args": {}
+    },
+    "theme:update:run": {
+      "id": "theme:update:run",
+      "description": "Run an 'update_extension.json' script in a theme.",
+      "strict": true,
+      "pluginName": "@shopify/theme",
+      "pluginAlias": "@shopify/theme",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to your theme directory.",
+          "multiple": false,
+          "default": "."
+        }
+      },
+      "args": {}
     }
   }
 }
