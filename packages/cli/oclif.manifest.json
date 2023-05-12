@@ -62,6 +62,81 @@
       },
       "args": {}
     },
+    "demo:catalog": {
+      "id": "demo:catalog",
+      "description": "Browse the catalog for steps",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    },
+    "demo:generate-file": {
+      "id": "demo:generate-file",
+      "summary": "Creates a JSON file alongside a JSON schema that will validate it",
+      "description": "Create a command design file",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The directory for generating the demo file.",
+          "hidden": false,
+          "multiple": false,
+          "default": "."
+        },
+        "file": {
+          "name": "file",
+          "type": "option",
+          "description": "The name of the demo file.",
+          "hidden": false,
+          "required": true,
+          "multiple": false
+        }
+      },
+      "args": {}
+    },
+    "demo": {
+      "id": "demo",
+      "description": "Demo a command design defined in a file",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {
+        "file": {
+          "name": "file",
+          "type": "option",
+          "description": "The path to the design file.",
+          "hidden": false,
+          "multiple": false,
+          "default": "."
+        }
+      },
+      "args": {}
+    },
+    "demo:print-ai-prompt": {
+      "id": "demo:print-ai-prompt",
+      "description": "Prints the prompts for a chat-enabled LLM to generate a demo",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    },
     "kitchen-sink:async": {
       "id": "kitchen-sink:async",
       "description": "View the UI kit components that process async tasks",

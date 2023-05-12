@@ -1,0 +1,637 @@
+{
+  "command": "shopify demo",
+  "steps": [
+    {
+      "type": "output",
+      "title": "Simple output",
+      "description": "This step demonstrates a simple output.",
+      "properties": {
+        "content": "\nThis is simple output."
+      }
+    },
+    {
+      "type": "output",
+      "title": "Formatted output",
+      "description": "Output including bold and underlined text",
+      "properties": {
+        "content": "\nThis output includes \u001b[1mbold\u001b[22m and \u001b[4munderlined\u001b[24m text."
+      }
+    },
+    {
+      "type": "output",
+      "title": "Formatted output with colors",
+      "description": "Output including colored text",
+      "properties": {
+        "content": "\nHere is a rainbow of colored output:\n• \u001b[31mred\u001b[39m\n• \u001b[32mgreen\u001b[39m\n• \u001b[33myellow\u001b[39m\n• \u001b[34mblue\u001b[39m\n• \u001b[35mmagenta\u001b[39m\n• \u001b[36mcyan\u001b[39m\n• \u001b[90mdim\u001b[39m\n• \u001b[91mbrightRed\u001b[39m\n• \u001b[92mbrightGreen\u001b[39m\n• \u001b[93mbrightYellow\u001b[39m\n• \u001b[94mbrightBlue\u001b[39m\n• \u001b[95mbrightMagenta\u001b[39m\n• \u001b[96mbrightCyan\u001b[39m\n• \u001b[97mwhite\u001b[39m\n"
+      }
+    },
+    {
+      "type": "warning",
+      "title": "Warning to update CLI",
+      "description": "Show a warning message indicating the CLI is out of date.",
+      "properties": {
+        "headline": "CLI update available",
+        "body": ["Run", {"command": "npm run shopify upgrade"}, {"char": "."}]
+      }
+    },
+    {
+      "type": "success",
+      "title": "CLI updated",
+      "description": "Show a success message indicating the CLI has been updated.",
+      "properties": {
+        "headline": "CLI updated.",
+        "body": "You are now running version 3.47."
+      }
+    },
+    {
+      "type": "success",
+      "title": "App created successfully",
+      "description": "This step shows an info message after the app is created.",
+      "properties": {
+        "headline": [{"userInput": "my-app"}, "initialized and ready to build."],
+        "body": "Congratulations! You're on your way to success with the Shopify Partners program.",
+        "nextSteps": [
+          [
+            "Run",
+            {
+              "command": "cd verification-app"
+            }
+          ],
+          [
+            "To preview your project, run",
+            {
+              "command": "npm app dev"
+            }
+          ],
+          [
+            "To add extensions, run",
+            {
+              "command": "npm generate extension"
+            }
+          ]
+        ],
+        "reference": [
+          [
+            "Run",
+            {
+              "command": "npm shopify help"
+            }
+          ],
+          {
+            "link": {
+              "label": "Dev docs",
+              "url": "https://shopify.dev"
+            }
+          }
+        ],
+        "customSections": [
+          {
+            "title": "Custom section",
+            "body": {
+              "list": {
+                "items": [{"link": {"label": "Item 1", "url": "https://shopify.com"}}, "Item 2"]
+              }
+            }
+          },
+          {
+            "title": "Custom section 2",
+            "body": {
+              "list": {
+                "items": ["Item 1", "Item 2", "Item 3"]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "success",
+      "title": "Successful deployment",
+      "description": "Show a success message after the app is deployed.",
+      "properties": {
+        "headline": "Deployment successful.",
+        "body": "Your extensions have been uploaded to your Shopify Partners Dashboard.",
+        "nextSteps": [
+          {
+            "link": {
+              "label": "See your deployment and set it live",
+              "url": "https://partners.shopify.com/1797046/apps/4523695/deployments"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "warning",
+      "title": "Access scope update required",
+      "description": "Show a warning message indicating the app's access scopes need to be updated.",
+      "properties": {
+        "headline": "Required access scope update.",
+        "body": "The deadline for re-selecting your app scopes is May 1, 2022.",
+        "reference": [
+          {
+            "link": {
+              "label": "Dev docs",
+              "url": "https://shopify.dev/app/scopes"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "table",
+      "title": "Table of available themes",
+      "description": "This step demonstrates a table output showing a list of available themes.",
+      "properties": {
+        "rows": [
+          {
+            "ID": "1",
+            "Name": "Debut",
+            "Role": "main"
+          },
+          {
+            "ID": "2",
+            "Name": "Simple",
+            "Role": "unpublished"
+          }
+        ],
+        "columns": {
+          "ID": {
+            "header": "ID",
+            "color": "red"
+          },
+          "Name": {
+            "header": "Name"
+          },
+          "Role": {
+            "header": "Role",
+            "color": "dim"
+          }
+        }
+      }
+    },
+    {
+      "type": "table",
+      "title": "Table of apps and earned income",
+      "description": "A table output showing a list of apps and their earned income. Uses non-string values.",
+      "properties": {
+        "rows": [
+          {
+            "App": "My App",
+            "Earned": 1000
+          },
+          {
+            "App": "My Other App",
+            "Earned": 2000
+          }
+        ],
+        "columns": {
+          "App": {
+            "header": "App"
+          },
+          "Earned": {
+            "header": "Earned",
+            "color": "green"
+          }
+        }
+      }
+    },
+    {
+      "type": "fatalError",
+      "title": "BugError: Something went wrong",
+      "description": "Show a fatal error message indicating something unexpected went wrong.",
+      "properties": {
+        "errorType": "bug",
+        "message": "Something went wrong",
+        "tryMessage": "Run this command again."
+      }
+    },
+    {
+      "type": "fatalError",
+      "title": "AbortError: No Organization found",
+      "description": "Show a fatal error message indicating no organization was found.",
+      "properties": {
+        "errorType": "abort",
+        "message": "No Organization found",
+        "tryMessage": "Run this command again after creating and confirming your organization.",
+        "nextSteps": [
+          [
+            "Have you",
+            {
+              "link": {
+                "label": "created a Shopify Partners organization",
+                "url": "https://partners.shopify.com/signup"
+              }
+            },
+            {
+              "char": "?"
+            }
+          ],
+          "Have you confirmed your accounts from the emails you received?",
+          [
+            "Need to connect to a different App or organization? Run the command again with",
+            {
+              "command": "--reset"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "type": "selectPrompt",
+      "title": "Choose an extension type",
+      "description": "Select prompt for choosing an extension type, using groups and custom keys.",
+      "properties": {
+        "message": "Choose an extension type:",
+        "choices": [
+          {
+            "label": "Checkout UI extension",
+            "value": "checkout-ui-extension",
+            "key": "c",
+            "group": "Checkout extensions"
+          },
+          {
+            "label": "Checkout post-purchase UI extension",
+            "value": "checkout-post-purchase-extension",
+            "key": "p",
+            "group": "Checkout extensions"
+          },
+          {
+            "label": "Discount function",
+            "value": "discount-function",
+            "key": "d",
+            "group": "Functions"
+          },
+          {
+            "label": "Theme app extension",
+            "value": "theme-app-extension",
+            "key": "t",
+            "group": "Theme extensions"
+          }
+        ]
+      }
+    },
+    {
+      "type": "selectPrompt",
+      "title": "Choose a plan",
+      "description": "Select prompt for choosing a plan, including an infoTable with plan information.",
+      "properties": {
+        "message": "Choose a plan",
+        "choices": [
+          {
+            "label": "Free",
+            "value": "free"
+          },
+          {
+            "label": "Basic",
+            "value": "basic"
+          },
+          {
+            "label": "Pro",
+            "value": "pro"
+          },
+          {
+            "label": "Enterprise",
+            "value": "enterprise"
+          }
+        ],
+        "infoTable": [
+          {
+            "header": "Free Plan",
+            "helperText": "The Free Plan is a good fit for merchants who are just starting out.",
+            "items": [
+              "Price: $0.00 USD",
+              [
+                "Features:",
+                {"bold": "Minimal"},
+                "features"
+              ]
+            ]
+          },
+          {
+            "header": "Basic",
+            "helperText": "The Basic Plan includes the most important features for a growing business.",
+            "items": [
+              "Price: $9.99 USD",
+              [
+                "Features:",
+                {"bold": "Some"},
+                "features"
+              ]
+            ]
+          },
+          {
+            "header": "Pro",
+            "helperText": "The Pro Plan includes all the features you need to scale your business.",
+            "items": [
+              "Price: $19.99 USD",
+              [
+                "Features:",
+                {"bold": "Most"},
+                "features"
+              ]
+            ]
+          },
+          {
+            "header": "Enterprise",
+            "helperText": "The Enterprise Plan allows you to customize our product to fit your business needs.",
+            "items": [
+              "Price: Contact us",
+              [
+                "Features:",
+                {"bold": "All"},
+                "features",
+                {"subdued": "(for a price 😉)"}
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "textPrompt",
+      "title": "App name prompt with default value",
+      "description": "A text prompt for entering an app name.",
+      "properties": {
+        "message": "Enter an app name",
+        "defaultValue": "expansive-commerce-app",
+        "allowEmpty": false,
+        "password": false
+      }
+    },
+    {
+      "type": "textPrompt",
+      "title": "Required text prompt without a default value",
+      "description": "A text prompt for entering a value without a default value. Some input is required.",
+      "properties": {
+        "message": "How are you feeling today?",
+        "allowEmpty": false,
+        "password": false
+      }
+    },
+    {
+      "type": "textPrompt",
+      "title": "Optional text prompt without a default value",
+      "description": "A text prompt for entering a value without a default value. The prompt can be skipped.",
+      "properties": {
+        "message": "To change the default behavior to release by default, enter the following exactly: \u001b[1mdefault-to-release\u001b[0m.\n\nOtherwise, press enter to create a version without releasing",
+        "allowEmpty": true,
+        "password": false
+      }
+    },
+    {
+      "type": "textPrompt",
+      "title": "App secret prompt",
+      "description": "A text prompt for entering secret information.",
+      "properties": {
+        "message": "Enter your app secret",
+        "allowEmpty": false,
+        "password": true
+      }
+    },
+    {
+      "type": "autocompletePrompt",
+      "title": "Autocomplete select an app",
+      "description": "An autocomplete prompt for selecting an app from many options",
+      "properties": {
+        "message": "Which app do you want to connect to?",
+        "choices": [
+          {"label": "Expansive commerce app", "value": "expansive-commerce-app"},
+          {"label": "Profitable ecosystem app", "value": "profitable-ecosystem-app"},
+          {"label": "Sustainable business app", "value": "sustainable-business-app"},
+          {"label": "Amortizable account app", "value": "amortizable-account-app"},
+          {"label": "Branded shipping app", "value": "branded-shipping-app"},
+          {"label": "Efficient inventory app", "value": "efficient-inventory-app"},
+          {"label": "Streamlined payroll app", "value": "streamlined-payroll-app"},
+          {"label": "Innovative marketing app", "value": "innovative-marketing-app"},
+          {"label": "Integrated CRM app", "value": "integrated-crm-app"},
+          {"label": "Secure payment app", "value": "secure-payment-app"},
+          {"label": "Automated billing app", "value": "automated-billing-app"},
+          {"label": "Customizable storefront app", "value": "customizable-storefront-app"},
+          {"label": "User-friendly analytics app", "value": "user-friendly-analytics-app"},
+          {"label": "Responsive customer service app", "value": "responsive-customer-service-app"},
+          {"label": "Flexible scheduling app", "value": "flexible-scheduling-app"},
+          {"label": "Seamless checkout app", "value": "seamless-checkout-app"},
+          {"label": "Dynamic pricing app", "value": "dynamic-pricing-app"},
+          {"label": "Interactive product app", "value": "interactive-product-app"},
+          {"label": "Collaborative project management app", "value": "collaborative-project-management-app"},
+          {"label": "Real-time inventory tracking app", "value": "real-time-inventory-tracking-app"},
+          {"label": "Integrated shipping app", "value": "integrated-shipping-app"},
+          {"label": "Effortless returns app", "value": "effortless-returns-app"},
+          {"label": "Intuitive dashboard app", "value": "intuitive-dashboard-app"},
+          {"label": "Powerful reporting app", "value": "powerful-reporting-app"},
+          {"label": "Automated fulfillment app", "value": "automated-fulfillment-app"},
+          {"label": "Customizable branding app", "value": "customizable-branding-app"},
+          {"label": "Seamless integration app", "value": "seamless-integration-app"},
+          {"label": "Secure data management app", "value": "secure-data-management-app"},
+          {"label": "Intelligent upselling app", "value": "intelligent-upselling-app"},
+          {"label": "Virtual appointment app", "value": "virtual-appointment-app"},
+          {"label": "Personalized recommendations app", "value": "personalized-recommendations-app"},
+          {"label": "Interactive FAQ app", "value": "interactive-faq-app"},
+          {"label": "Automated email marketing app", "value": "automated-email-marketing-app"},
+          {"label": "Dynamic discount app", "value": "dynamic-discount-app"},
+          {"label": "Collaborative design app", "value": "collaborative-design-app"},
+          {"label": "Real-time chat app", "value": "real-time-chat-app"},
+          {"label": "Integrated accounting app", "value": "integrated-accounting-app"},
+          {"label": "Effortless onboarding app", "value": "effortless-onboarding-app"},
+          {"label": "Intuitive search app", "value": "intuitive-search-app"},
+          {"label": "Powerful SEO app", "value": "powerful-seo-app"},
+          {"label": "Automated inventory management app", "value": "automated-inventory-management-app"},
+          {"label": "Customizable checkout app", "value": "customizable-checkout-app"},
+          {"label": "Seamless order tracking app", "value": "seamless-order-tracking-app"},
+          {"label": "Secure login app", "value": "secure-login-app"},
+          {"label": "Intelligent recommendations app", "value": "intelligent-recommendations-app"},
+          {"label": "Virtual try-on app", "value": "virtual-try-on-app"},
+          {"label": "Personalized content app", "value": "personalized-content-app"},
+          {"label": "Interactive product tour app", "value": "interactive-product-tour-app"},
+          {"label": "Automated customer service app", "value": "automated-customer-service-app"},
+          {"label": "Dynamic upselling app", "value": "dynamic-upselling-app"}
+        ]
+      }
+    },
+    {
+      "type": "confirmationPrompt",
+      "title": "Confirm adding themes to store",
+      "description": "Confirmation prompt for adding themes to a store. Includes an info table of themes.",
+      "properties": {
+        "message": "Add the following themes to the store?",
+        "infoTable": {
+          "": [
+            [
+              "first theme",
+              {
+                "subdued": "(#1)"
+              }
+            ],
+            [
+              "second theme",
+              {
+                "subdued": "(#2)"
+              }
+            ]
+          ]
+        },
+        "confirmationMessage": "Yes, add them",
+        "cancellationMessage": "Cancel"
+      }
+    },
+    {
+      "type": "confirmationPrompt",
+      "title": "Dangerous prompt: Confirm deleting themes from the store",
+      "description": "Confirmation prompt for deleting themes from a store. Includes an info table of themes, defaults to false",
+      "properties": {
+        "message": "Delete the following themes from the store?",
+        "infoTable": {
+          "": [
+            [
+              "first theme",
+              {
+                "subdued": "(#1)"
+              }
+            ],
+            [
+              "second theme",
+              {
+                "subdued": "(#2)"
+              }
+            ]
+          ]
+        },
+        "confirmationMessage": "Yes, delete them",
+        "cancellationMessage": "Cancel",
+        "defaultValue": false
+      }
+    },
+    {
+      "type": "sleep",
+      "title": "Sleep 1 second",
+      "description": "Sleep to simulate waiting at the terminal with no visual activity",
+      "properties": {
+        "duration": 1
+      }
+    },
+    {
+      "type": "taskbar",
+      "title": "App creation progress",
+      "description": "Taskbar showing progress through the steps of the app creation process.",
+      "properties": {
+        "steps": [
+          {
+            "title": "Creating app",
+            "duration": 2
+          },
+          {
+            "title": "Setting up environment",
+            "duration": 1
+          },
+          {
+            "title": "Installing dependencies",
+            "duration": 3
+          }
+        ]
+      }
+    },
+    {
+      "type": "concurrent",
+      "title": "Concurrent processes",
+      "description": "Simple example of concurrent processes with a server and file watcher",
+      "properties": {
+        "processes": [
+          {
+            "prefix": "Server",
+            "steps": [
+              {
+                "startMessage": "Starting server...",
+                "duration": 2,
+                "endMessage": "Server started at http://localhost:3000"
+              }
+            ]
+          },
+          {
+            "prefix": "Watcher",
+            "steps": [
+              {
+                "startMessage": "Starting file watcher...",
+                "duration": 1,
+                "endMessage": "File watcher started"
+              }
+            ]
+          }
+        ],
+        "footer": {
+          "shortcuts": [
+            {
+              "key": "p",
+              "action": "preview in your browser"
+            },
+            {
+              "key": "q",
+              "action": "quit"
+            },
+            {
+              "key": "r",
+              "action": "restart"
+            }
+          ],
+          "subTitle": "Preview URL: https://shopify.com"
+        }
+      }
+    },
+    {
+      "type": "concurrent",
+      "title": "Realistic concurrent processes: App dev",
+      "description": "Realistic example of concurrent processes during app dev",
+      "properties": {
+        "footer": {
+          "shortcuts": [
+            {
+              "key": "p",
+              "action": "preview in your browser"
+            },
+            {
+              "key": "q",
+              "action": "quit"
+            }
+          ],
+          "subTitle": "Preview URL: https://thunder-gmbh-desperate-lo.trycloudflare.com/extensions/dev-console"
+        },
+        "processes": [
+          {
+            "prefix": "frontend",
+            "steps": [
+              {
+                "duration": 0,
+                "endMessage": "\n> dev\n> vite\n"
+              },
+              {
+                "duration": 0.593,
+                "endMessage": "\n  vite v2.9.15 dev server running at:\n"
+              },
+              {
+                "duration": 0.002,
+                "endMessage": "  > Local:    http://localhost:64382/\n  > Network:  http://127.0.2.2:64382/\n  > Network:  http://127.0.2.3:64382/\n  > Network:  http://192.168.1.112:64382/\n  > Network:  http://172.16.0.2:64382/\n\n  ready in 140ms.\n"
+              }
+            ]
+          },
+          {
+            "prefix": "backend",
+            "steps": [
+              {
+                "duration": 0.003,
+                "endMessage": "\n> dev\n> cross-env NODE_ENV=development nodemon index.js --ignore ./frontend\n"
+              },
+              {
+                "duration": 0.595,
+                "endMessage": "[nodemon] 2.0.22\n[nodemon] to restart at any time, enter `rs`\n[nodemon] watching path(s): *.*\n[nodemon] watching extensions: js,mjs,json\n[nodemon] starting `node index.js`"
+              },
+              {
+                "duration": 0.223,
+                "endMessage": "[shopify-api/INFO] version 6.2.0, environment Node v20.0.0"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

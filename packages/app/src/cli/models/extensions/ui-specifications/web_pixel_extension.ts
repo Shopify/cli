@@ -51,6 +51,7 @@ const spec = createUIExtensionSpecification({
     return Promise.resolve()
   },
   previewMessage: () => undefined,
+  isPreviewable: false,
 })
 
 export default spec

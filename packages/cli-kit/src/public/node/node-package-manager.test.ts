@@ -895,11 +895,11 @@ describe('getPackageManager', () => {
 })
 
 describe('addNPMDependencies', () => {
-  test('when using npm with multiple dependencies they should be installed one by one', async () => {
+  test('when using npm with multiple dependencies they should be installed one by one, adding --save-exact if needed', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const dependencies: DependencyVersion[] = [
-        {name: 'first', version: '0.0.1'},
+        {name: 'first', version: '^0.0.1'},
         {name: 'second', version: '0.0.2'},
       ]
 
@@ -911,10 +911,10 @@ describe('addNPMDependencies', () => {
       })
 
       // Then
-      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'first@0.0.1', '--save-prod'], {
+      expect(mockedExec).toHaveBeenNthCalledWith(1, 'npm', ['install', 'first@^0.0.1', '--save-prod'], {
         cwd: tmpDir,
       })
-      expect(mockedExec).toHaveBeenCalledWith('npm', ['install', 'second@0.0.2', '--save-prod'], {
+      expect(mockedExec).toHaveBeenNthCalledWith(2, 'npm', ['install', 'second@0.0.2', '--save-prod', '--save-exact'], {
         cwd: tmpDir,
       })
     })

@@ -4,24 +4,25 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {resolvePath, relativizePath} from '@shopify/cli-kit/node/path'
 
-const themeDirectoriesPattern = [
-  'assets',
-  'config',
-  'layout',
-  'locales',
-  'sections',
-  'snippets',
-  'templates',
-  'templates/customers',
+const themeFilesPattern = [
+  'assets/**',
+  'config/**',
+  'layout/**',
+  'locales/**',
+  'sections/**',
+  'snippets/**',
+  'templates/**',
+  'templates/customers/**',
   'release-notes.md',
-].join('/**|')
+  'update_extension.json',
+].join('|')
 
 // package is a reserved word so the function needs to be named packageTheme
 export async function packageTheme(inputDirectory: string) {
   const packageName = await getThemePackageName(inputDirectory)
 
   const outputZipPath = `${inputDirectory}/${packageName}`
-  const matchFilePattern = `${inputDirectory}/(${themeDirectoriesPattern})`
+  const matchFilePattern = `${inputDirectory}/(${themeFilesPattern})`
 
   await zip({
     inputDirectory,

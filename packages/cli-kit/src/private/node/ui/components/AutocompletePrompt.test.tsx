@@ -8,6 +8,7 @@ import {
   render,
 } from '../../testing/ui.js'
 import {Stdout} from '../../ui.js'
+import {AbortController} from '../../../../public/node/abort.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {useStdout} from 'ink'
@@ -713,5 +714,34 @@ describe('AutocompletePrompt', async () => {
          [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)
+  })
+
+  test('abortController can be used to exit the prompt from outside', async () => {
+    const items = [
+      {label: 'a', value: 'a'},
+      {label: 'b', value: 'b'},
+    ]
+
+    const abortController = new AbortController()
+
+    const renderInstance = render(
+      <AutocompletePrompt
+        message="Associate your project with the org Castile Ventures?"
+        choices={items}
+        onSubmit={() => {}}
+        search={() =>
+          Promise.resolve({
+            data: [],
+          } as SearchResults<string>)
+        }
+        abortSignal={abortController.signal}
+      />,
+    )
+    const promise = renderInstance.waitUntilExit()
+
+    abortController.abort()
+
+    expect(getLastFrameAfterUnmount(renderInstance)).toEqual('')
+    await expect(promise).resolves.toEqual(undefined)
   })
 })

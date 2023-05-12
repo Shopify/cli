@@ -114,7 +114,7 @@ ${outputToken.json(JSON.stringify(rules))}
 
   let renderConcurrentOptions: RenderConcurrentOptions = {
     processes: [...processes, ...additionalProcesses],
-    abortController,
+    abortSignal: abortController.signal,
   }
 
   if (previewUrl) {

@@ -44,6 +44,7 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
   entrySourceFilePath?: string
   configuration: TConfiguration
   configurationPath: string
+  _usingExtensionsFramework: boolean
 
   constructor(options: {
     configuration: TConfiguration
@@ -57,10 +58,16 @@ export class FunctionInstance<TConfiguration extends FunctionConfigType = Functi
     this.entrySourceFilePath = options.entryPath
     this.localIdentifier = basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
+    this._usingExtensionsFramework = false
+  }
+
+  set usingExtensionsFramework(value: boolean) {
+    this._usingExtensionsFramework = value
   }
 
   get graphQLType() {
-    return this.configuration.type.toUpperCase()
+    if (this._usingExtensionsFramework) return 'FUNCTION'
+    else return this.configuration.type.toUpperCase()
   }
 
   get type() {

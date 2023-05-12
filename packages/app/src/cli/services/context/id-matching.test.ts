@@ -89,6 +89,7 @@ const EXTENSION_A: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
+  isPreviewable: true,
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -118,6 +119,7 @@ const EXTENSION_A_2: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
+  isPreviewable: true,
 }
 
 const EXTENSION_B: UIExtension = {
@@ -147,6 +149,7 @@ const EXTENSION_B: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
+  isPreviewable: true,
 }
 
 const EXTENSION_B_2: UIExtension = {
@@ -176,6 +179,7 @@ const EXTENSION_B_2: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
+  isPreviewable: true,
 }
 
 const EXTENSION_C: UIExtension = {
@@ -205,6 +209,7 @@ const EXTENSION_C: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
+  isPreviewable: true,
 }
 
 const EXTENSION_D: UIExtension = {
@@ -234,6 +239,7 @@ const EXTENSION_D: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
+  isPreviewable: false,
 }
 
 const FUNCTION_A: FunctionExtension = {
@@ -259,6 +265,7 @@ const FUNCTION_A: FunctionExtension = {
   inputQueryPath: '/function/input.graphql',
   isJavaScript: false,
   externalType: 'function',
+  usingExtensionsFramework: false,
   publishURL: (_) => Promise.resolve(''),
 }
 
