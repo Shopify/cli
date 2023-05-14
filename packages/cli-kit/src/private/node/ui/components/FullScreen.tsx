@@ -30,8 +30,8 @@ const FullScreen: FunctionComponent<FullScreenProps> = ({children, closeOnKey}):
   })
 
   const [size, setSize] = useState({
-    columns: stdout.columns,
-    rows: stdout.rows,
+    columns: stdout.columns - 1,
+    rows: stdout.rows - 1,
   })
 
   useEffect(() => {
