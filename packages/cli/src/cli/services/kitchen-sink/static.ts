@@ -189,5 +189,5 @@ export async function staticService() {
     },
   })
 
-  await renderModal('Hello from a modal!')
+  await renderModal({body: 'Hello from a modal!'})
 }

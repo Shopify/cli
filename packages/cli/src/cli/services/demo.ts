@@ -9,6 +9,7 @@ import {
   renderConcurrent,
   renderTasks,
   renderWarning,
+  renderModal,
   renderAutocompletePrompt,
   renderConfirmationPrompt,
   renderSelectPrompt,
@@ -122,6 +123,12 @@ const renderWarningStepSchema = abstractDemoStepSchema.extend({
   properties: renderStepPropertiesSchema,
 })
 type RenderWarningStep = zod.infer<typeof renderWarningStepSchema>
+
+const modalStepSchema = abstractDemoStepSchema.extend({
+  type: zod.literal('modal'),
+  properties: renderStepPropertiesSchema,
+})
+type ModalStep = zod.infer<typeof modalStepSchema>
 
 const renderFatalErrorStepSchema = abstractDemoStepSchema.extend({
   type: zod.literal('fatalError'),
@@ -261,6 +268,7 @@ export type DemoStep =
   | RenderTextPromptStep
   | SleepStep
   | TaskbarStep
+  | ModalStep
   | RenderConcurrentStep
 
 const demoStepSchema = zod.discriminatedUnion('type', [
@@ -276,6 +284,7 @@ const demoStepSchema = zod.discriminatedUnion('type', [
   renderTextPromptStepSchema,
   sleepStepSchema,
   taskbarStepSchema,
+  modalStepSchema,
   renderConcurrentStepSchema,
 ])
 export const demoStepsSchema = zod.object({
@@ -338,6 +347,10 @@ function executorForStep(step: DemoStep): () => Promise<void> {
     case 'warning':
       return async () => {
         renderWarning(step.properties)
+      }
+    case 'modal':
+      return async () => {
+        await renderModal(step.properties)
       }
     case 'fatalError':
       return async () => {

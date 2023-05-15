@@ -22,10 +22,12 @@ export interface AlertProps {
   }
   orderedNextSteps?: boolean
   customSections?: CustomSection[]
+  title?: string
 }
 
 const Alert: FunctionComponent<AlertProps> = ({
   type,
+  title,
   headline,
   body,
   nextSteps,
@@ -35,7 +37,7 @@ const Alert: FunctionComponent<AlertProps> = ({
   orderedNextSteps = false,
 }) => {
   return (
-    <Banner type={type}>
+    <Banner type={type} title={title}>
       {headline ? (
         <Box>
           <Text bold>
