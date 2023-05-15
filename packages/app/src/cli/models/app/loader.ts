@@ -6,7 +6,6 @@ import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
 import {ThemeExtensionInstance, ThemeExtensionSpec} from '../extensions/theme.js'
 import {BaseFunctionConfigurationSchema, ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
 import {FunctionInstance} from '../extensions/functions.js'
-import {showWorkspaceWarning} from '../../utilities/app/workspaces-warning.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -232,10 +231,6 @@ class AppLoader {
       usedCustomLayoutForFunctionExtensions,
       usedCustomLayoutForThemeExtensions,
     })
-
-    if (!usesWorkspaces) {
-      showWorkspaceWarning(packageManager)
-    }
 
     return appClass
   }
