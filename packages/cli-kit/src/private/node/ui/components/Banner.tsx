@@ -61,21 +61,23 @@ const BoxWithBorder: FunctionComponent<BannerProps> = ({title, type, children}) 
         },
       }}
     >
-      <Box
-        width={twoThirds}
-        paddingY={1}
-        paddingX={2}
-        marginBottom={1}
-        borderStyle="round"
-        flexDirection="column"
-        borderColor={typeToColor(type)}
-      >
-        <Box marginTop={-2} marginBottom={1} marginLeft={-1}>
-          <Text>{title ?? ` ${type.replace(/_/g, ' ')} `}</Text>
+      <Box flexDirection="column">
+        <Box
+          width={twoThirds}
+          paddingY={1}
+          paddingX={2}
+          marginBottom={1}
+          borderStyle="round"
+          flexDirection="column"
+          borderColor={typeToColor(type)}
+        >
+          <Box marginTop={-2} marginBottom={1} marginLeft={-1}>
+            <Text>{title ?? ` ${type.replace(/_/g, ' ')} `}</Text>
+          </Box>
+          {children}
         </Box>
-        {children}
+        <Footnotes />
       </Box>
-      <Footnotes />
     </LinksContext.Provider>
   )
 }

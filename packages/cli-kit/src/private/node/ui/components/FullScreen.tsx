@@ -17,6 +17,7 @@ const FullScreen: FunctionComponent<FullScreenProps> = ({children, closeOnKey}):
   const isFirstRender = useRef(true)
 
   if (isFirstRender.current) {
+    // switch to the alternate buffer
     process.stdout.write('\u001B[?1049h')
     isFirstRender.current = false
   }
@@ -31,14 +32,14 @@ const FullScreen: FunctionComponent<FullScreenProps> = ({children, closeOnKey}):
 
   const [size, setSize] = useState({
     columns: stdout.columns,
-    rows: stdout.rows - 1,
+    rows: stdout.rows,
   })
 
   useEffect(() => {
     function onResize() {
       setSize({
         columns: stdout.columns,
-        rows: stdout.rows,
+        rows: stdout.rows - 1,
       })
     }
 
