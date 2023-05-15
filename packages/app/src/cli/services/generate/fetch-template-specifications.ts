@@ -5,6 +5,13 @@ import {
 import {TemplateSpecification} from '../../models/app/template.js'
 import themeSpecification from '../../models/templates/theme-specifications/theme.js'
 import checkoutPostPurchaseExtension from '../../models/templates/ui-specifications/checkout_post_purchase.js'
+import checkoutUIExtension from '../../models/templates/ui-specifications/checkout_ui_extension.js'
+import customerAccountsUIExtension from '../../models/templates/ui-specifications/customer_accounts_ui_extension.js'
+import posUIExtension from '../../models/templates/ui-specifications/pos_ui_extension.js'
+import productSubscriptionUIExtension from '../../models/templates/ui-specifications/product_subscription.js'
+import taxCalculationUIExtension from '../../models/templates/ui-specifications/tax_calculation.js'
+import UIExtension from '../../models/templates/ui-specifications/ui_extension.js'
+import webPixelUIExtension from '../../models/templates/ui-specifications/web_pixel_extension.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export async function fetchTemplateSpecifications(token: string): Promise<TemplateSpecification[]> {
@@ -12,9 +19,19 @@ export async function fetchTemplateSpecifications(token: string): Promise<Templa
     RemoteTemplateSpecificationsQuery,
     token,
   )
-  return remoteTemplates.templateSpecifications.concat(localSpecifications())
+  return remoteTemplates.templateSpecifications.concat(localTemplateSpecifications())
 }
 
-function localSpecifications() {
-  return [themeSpecification, checkoutPostPurchaseExtension]
+export function localTemplateSpecifications() {
+  return [
+    themeSpecification,
+    checkoutPostPurchaseExtension,
+    checkoutUIExtension,
+    customerAccountsUIExtension,
+    posUIExtension,
+    productSubscriptionUIExtension,
+    taxCalculationUIExtension,
+    UIExtension,
+    webPixelUIExtension,
+  ]
 }

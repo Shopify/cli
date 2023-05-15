@@ -98,7 +98,7 @@ function limitReached(app: AppInterface, specifications: GenericSpecification[],
   } else {
     const specification = specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
     const existingExtensions = app.extensionsForType({identifier: type, externalIdentifier: type})
-    return existingExtensions.length >= specification!!.registrationLimit
+    return existingExtensions.length >= (specification?.registrationLimit || 1)
   }
 }
 
@@ -108,8 +108,6 @@ async function saveAnalyticsMetadata(promptAnswers: GenerateExtensionPromptOutpu
       return metadata.addPublicMetadata(() => ({
         cmd_scaffold_template_flavor: extensionContent.flavor,
         cmd_scaffold_type: promptAnswers.templateSpecification.identifier,
-        // cmd_scaffold_type_category: promptAnswers.templateSpecification.category(),
-        // cmd_scaffold_type_gated: promptAnswers.templateSpecification.gated,
         cmd_scaffold_used_prompts_for_type: !typeFlag,
       }))
     }),

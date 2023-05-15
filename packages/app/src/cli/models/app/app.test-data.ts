@@ -7,6 +7,9 @@ import {ThemeExtensionInstance} from '../extensions/theme.js'
 import themeSpec from '../extensions/theme-specifications/theme.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
+import themeSpecification from '../templates/theme-specifications/theme.js'
+import checkoutPostPurchaseExtension from '../templates/ui-specifications/checkout_post_purchase.js'
+import checkoutUIExtension from '../templates/ui-specifications/checkout_ui_extension.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -284,7 +287,7 @@ export const testRemoteTemplateSpecifications: TemplateSpecification[] = [
     identifier: 'product_discounts',
     name: 'Function - Product discounts',
     group: 'Discounts and checkout',
-    supportLinks: [],
+    supportLinks: ['https://shopify.dev/docs/apps/discounts'],
     types: [
       {
         type: 'function',
@@ -335,4 +338,10 @@ export const testRemoteTemplateSpecifications: TemplateSpecification[] = [
       },
     ],
   },
+]
+
+export const testLocalTemplateSpecifications: TemplateSpecification[] = [
+  themeSpecification,
+  checkoutPostPurchaseExtension,
+  checkoutUIExtension,
 ]

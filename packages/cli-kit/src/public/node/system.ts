@@ -70,10 +70,8 @@ export async function exec(command: string, args: string[], options?: ExecOption
   })
   try {
     await commandProcess
-    console.log('done')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (processError: any) {
-    console.log('error')
     // Windows will throw an error whenever the process is killed, no matter the reason.
     // The aborted flag tell use that we killed it, so we can ignore the error.
     if (aborted) return

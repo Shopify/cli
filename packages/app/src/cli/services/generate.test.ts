@@ -1,20 +1,17 @@
 import generate from './generate.js'
 import {ensureGenerateContext} from './context.js'
+import {generateExtensionTemplate} from './generate/extension.js'
 import {load as loadApp} from '../models/app/loader.js'
 import {
   testApp,
   testFunctionExtension,
+  testLocalTemplateSpecifications,
   testRemoteSpecifications,
   testRemoteTemplateSpecifications,
   testThemeExtensions,
 } from '../models/app/app.test-data.js'
-import {
-  Extension,
-  FunctionExtension,
-  GenericSpecification,
-  ThemeExtension,
-  UIExtension,
-} from '../models/app/extensions.js'
+import {Extension, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
+import generateExtensionPrompts from '../prompts/generate/extension.js'
 import {describe, expect, vi, beforeAll, afterEach, test} from 'vitest'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -52,9 +49,9 @@ afterEach(() => {
 
 describe('generate', () => {
   const mockConfig = new Config({root: ''})
-  test('displays a confirmation message with instructions to run dev', async () => {
+  test.only('displays a confirmation message with instructions to run dev', async () => {
     // Given
-    const outputInfo = await mockSuccessfulCommandExecution('checkout_ui_extension_external')
+    const outputInfo = await mockSuccessfulCommandExecution('checkout_ui_extension')
 
     // When
     await generate({directory: '/', reset: false, config: mockConfig})
@@ -155,14 +152,14 @@ describe('generate', () => {
 
   test('throws error if trying to generate with an unsupported flavor', async () => {
     // Given
-    await mockSuccessfulCommandExecution('checkout_ui_extension_external')
+    await mockSuccessfulCommandExecution('checkout_ui_extension')
 
     // When
     const got = generate({
       directory: '/',
       reset: false,
       config: mockConfig,
-      type: 'checkout_ui_extension_external',
+      type: 'checkout_ui_extension',
       template: 'unknown',
     })
 
@@ -183,20 +180,26 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
       theme: existingExtensions.filter((extension) => extension.type === 'theme') as ThemeExtension[],
     },
   })
-  const specification = {
-    ...testRemoteSpecifications[0],
-    ...{category: () => (identifier === 'product_discounts' ? 'function' : 'ui')},
-    ...(identifier === 'product_discounts' && {helpURL: 'https://shopify.dev/docs/apps/discounts'}),
-  } as GenericSpecification
+
+  const allTemplateSpecs = testRemoteTemplateSpecifications.concat(testLocalTemplateSpecifications)
+  const templateSpecification = allTemplateSpecs.find((spec) => spec.identifier === identifier)!
 
   vi.mocked(loadApp).mockResolvedValue(app)
   vi.mocked(partnersRequest).mockResolvedValueOnce({extensionSpecifications: testRemoteSpecifications})
   vi.mocked(partnersRequest).mockResolvedValueOnce({templateSpecifications: testRemoteTemplateSpecifications})
   vi.mocked(ensureGenerateContext).mockResolvedValue('api-key')
-  // vi.mocked(generateExtensionPrompts).mockResolvedValue({
-  //   name: 'name',
-  //   extensionContent: [{name: 'name', specification}],
-  // })
-  // vi.mocked(generateExtensionTemplate).mockResolvedValue([{directory: joinPath('extensions', 'name'), specification}])
+  vi.mocked(generateExtensionPrompts).mockResolvedValue({
+    templateSpecification,
+    extensionContent: [
+      {
+        index: 0,
+        name: identifier,
+        flavor: 'vanilla-js',
+      },
+    ],
+  })
+  vi.mocked(generateExtensionTemplate).mockResolvedValue([
+    {directory: joinPath('extensions', 'name'), specification: templateSpecification},
+  ])
   return mockAndCaptureOutput()
 }

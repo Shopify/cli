@@ -2,9 +2,9 @@ import generateExtensionPrompts, {buildChoices} from './extension.js'
 import {testApp, testRemoteTemplateSpecifications} from '../../models/app/app.test-data.js'
 
 import {TemplateSpecification} from '../../models/app/template.js'
-import checkoutPostPurchaseExtension from '../../models/templates/ui-specifications/checkout_post_purchase.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
 import themeSpecification from '../../models/templates/theme-specifications/theme.js'
+import {localTemplateSpecifications} from '../../services/generate/fetch-template-specifications.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
 import {isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
@@ -18,7 +18,7 @@ beforeEach(() => {
 })
 
 describe('extension prompt', async () => {
-  const allUISpecs = [checkoutPostPurchaseExtension]
+  const allUISpecs = localTemplateSpecifications()
   const allFunctionSpecs = testRemoteTemplateSpecifications
   const allSpecs = allFunctionSpecs.concat(allUISpecs).concat(themeSpecification)
 
@@ -32,7 +32,7 @@ describe('extension prompt', async () => {
   }
 
   test('when name is not passed', async () => {
-    const answers = {name: 'ext', extensionType: 'ui_extension'}
+    const answers = {name: 'ext', extensionType: 'checkout_ui_extension'}
     const options = {
       directory: '/',
       app: testApp(),
@@ -40,7 +40,7 @@ describe('extension prompt', async () => {
       templateSpecifications: allUISpecs,
       unavailableExtensions: [],
     }
-    const specification = findExtensionSpecification('ui_extension', allUISpecs)
+    const specification = findExtensionSpecification('checkout_ui_extension', allUISpecs)
 
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionType)
@@ -52,14 +52,14 @@ describe('extension prompt', async () => {
     // Then
     expect(renderSelectPrompt).toHaveBeenCalledWith(extensionTypeQuestion)
     expect(renderTextPrompt).toHaveBeenCalledWith(extensionNameQuestion)
-    // expect(got).toEqual({
-    //   name: specification?.externalName,
-    //   extensionContent: [{name: 'ext', specification}],
-    // })
+    expect(got).toEqual({
+      templateSpecification: specification,
+      extensionContent: [{name: 'ext', flavor: undefined, index: 0}],
+    })
   })
 
   test('when name is passed', async () => {
-    const answers = {extensionType: 'ui_extension'}
+    const answers = {extensionType: 'checkout_ui_extension'}
     const options = {
       name: 'my-special-extension',
       directory: '/',
@@ -68,7 +68,7 @@ describe('extension prompt', async () => {
       templateSpecifications: allUISpecs,
       unavailableExtensions: [],
     }
-    const specification = findExtensionSpecification('ui_extension', allUISpecs)
+    const templateSpecification = findExtensionSpecification('checkout_ui_extension', allUISpecs)
 
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionType)
@@ -78,10 +78,10 @@ describe('extension prompt', async () => {
 
     // Then
     expect(renderSelectPrompt).toHaveBeenCalledWith(extensionTypeQuestion)
-    // expect(got).toEqual({
-    //   name: specification?.externalName,
-    //   extensionContent: [{name: 'my-special-extension', specification}],
-    // })
+    expect(got).toEqual({
+      templateSpecification,
+      extensionContent: [{name: undefined, flavor: undefined, index: 0}],
+    })
   })
 
   test('when scaffolding a UI extension type prompts for language/framework preference', async () => {
@@ -115,10 +115,10 @@ describe('extension prompt', async () => {
       choices: expectedFlavors,
       defaultValue: 'react',
     })
-    // expect(got).toEqual({
-    //   name: specification?.externalName,
-    //   extensionContent: [{name: 'my-special-extension', specification, extensionFlavor: answers.extensionFlavor}],
-    // })
+    expect(got).toEqual({
+      templateSpecification: specification,
+      extensionContent: [{name: undefined, flavor: 'react', index: 0}],
+    })
   })
 
   test('when scaffolding a theme extension type does not prompt for language/framework preference', async () => {
@@ -137,17 +137,17 @@ describe('extension prompt', async () => {
 
     // Then
     expect(renderSelectPrompt).not.toHaveBeenCalled()
-    // expect(got).toEqual({
-    //   name: themeSpecification?.externalName,
-    //   extensionContent: [{name: 'my-special-extension', themeSpecification}],
-    // })
+    expect(got).toEqual({
+      templateSpecification: themeSpecification,
+      extensionContent: [{name: undefined, index: 0, flavor: undefined}],
+    })
   })
 
   test('when scaffolding a function extension prompts for the language', async () => {
     const answers = {extensionFlavor: 'rust'}
     const expectedFlavors = [
-      {label: 'Rust', value: 'rust'},
       {label: 'Wasm', value: 'wasm'},
+      {label: 'Rust', value: 'rust'},
     ]
     const options = {
       name: 'my-product-discount',
@@ -158,7 +158,6 @@ describe('extension prompt', async () => {
       templateSpecifications: allFunctionSpecs,
       unavailableExtensions: [],
     }
-    const specification = findExtensionSpecification('product_discounts', allFunctionSpecs)
     const templateSpecification = allFunctionSpecs.find((template) => template.identifier === 'product_discounts')
 
     // Given
@@ -175,8 +174,8 @@ describe('extension prompt', async () => {
     })
 
     expect(got).toEqual({
-      name: templateSpecification?.name,
-      extensionContent: [{name: 'my-product-discount', specification, extensionFlavor: answers.extensionFlavor}],
+      templateSpecification,
+      extensionContent: [{name: undefined, flavor: 'rust', index: 0}],
     })
   })
 
@@ -192,7 +191,6 @@ describe('extension prompt', async () => {
       templateSpecifications: allSpecs,
       unavailableExtensions: [],
     }
-    const specification = findExtensionSpecification('product_discounts', allFunctionSpecs)
     const templateSpecification = allFunctionSpecs.find((template) => template.identifier === 'product_discounts')
 
     // only function types should be shown if flavor is rust
@@ -208,8 +206,8 @@ describe('extension prompt', async () => {
     // Then
     expect(renderSelectPrompt).toHaveBeenCalledWith(functionTypes)
     expect(got).toEqual({
-      name: templateSpecification?.name,
-      extensionContent: [{name: 'my-product-discount', specification, extensionFlavor: 'rust'}],
+      templateSpecification,
+      extensionContent: [{name: undefined, index: 0, flavor: 'rust'}],
     })
   })
 })
