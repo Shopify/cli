@@ -116,10 +116,10 @@ export function useDeviceAuth(env = process.env): boolean {
  * Returns true if the CLI should use theme bundling.
  *
  * @param env - The environment variables from the environment of the current process.
- * @returns True if SHOPIFY_NO_THEME_BUNDLING is truthy.
+ * @returns False if SHOPIFY_CLI_NO_THEME_BUNDLING is truthy.
  */
 export function useThemebundling(env = process.env): boolean {
-  return isTruthy(env[environmentVariables.themeBundling])
+  return !isTruthy(env[environmentVariables.noThemeBundling])
 }
 
 /**
