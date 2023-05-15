@@ -165,6 +165,7 @@ async function uiExtensionInit({name, extensionFlavor, directory, app, url}: Ext
           type: 'prod',
           directory: app.directory,
         })
+        await removeFile(extensionPackageJsonPath)
       },
     },
   ]
