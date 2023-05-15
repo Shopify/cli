@@ -70,7 +70,7 @@ const generateExtensionPrompts = async (
   const extensionContent: GenerateExtensionContentOutput[] = []
   /* eslint-disable no-await-in-loop */
   for (const [index, spec] of templateSpecification.types.entries()) {
-    const name = await promptName(options.directory)
+    const name = (templateSpecification.types.length === 1 && options.name) || (await promptName(options.directory))
     const flavor = options.extensionFlavor ?? (await promptFlavor(spec))
     extensionContent.push({index, name, flavor})
   }

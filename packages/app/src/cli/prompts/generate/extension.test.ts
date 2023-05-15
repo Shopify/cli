@@ -80,7 +80,7 @@ describe('extension prompt', async () => {
     expect(renderSelectPrompt).toHaveBeenCalledWith(extensionTypeQuestion)
     expect(got).toEqual({
       templateSpecification,
-      extensionContent: [{name: undefined, flavor: undefined, index: 0}],
+      extensionContent: [{name: 'my-special-extension', flavor: undefined, index: 0}],
     })
   })
 
@@ -117,7 +117,7 @@ describe('extension prompt', async () => {
     })
     expect(got).toEqual({
       templateSpecification: specification,
-      extensionContent: [{name: undefined, flavor: 'react', index: 0}],
+      extensionContent: [{name: 'my-special-extension', flavor: 'react', index: 0}],
     })
   })
 
@@ -139,7 +139,7 @@ describe('extension prompt', async () => {
     expect(renderSelectPrompt).not.toHaveBeenCalled()
     expect(got).toEqual({
       templateSpecification: themeSpecification,
-      extensionContent: [{name: undefined, index: 0, flavor: undefined}],
+      extensionContent: [{name: 'my-special-extension', index: 0, flavor: undefined}],
     })
   })
 
@@ -175,7 +175,7 @@ describe('extension prompt', async () => {
 
     expect(got).toEqual({
       templateSpecification,
-      extensionContent: [{name: undefined, flavor: 'rust', index: 0}],
+      extensionContent: [{name: 'my-product-discount', flavor: 'rust', index: 0}],
     })
   })
 
@@ -207,7 +207,7 @@ describe('extension prompt', async () => {
     expect(renderSelectPrompt).toHaveBeenCalledWith(functionTypes)
     expect(got).toEqual({
       templateSpecification,
-      extensionContent: [{name: undefined, index: 0, flavor: 'rust'}],
+      extensionContent: [{name: 'my-product-discount', index: 0, flavor: 'rust'}],
     })
   })
 })
