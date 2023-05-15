@@ -1,7 +1,13 @@
+/**
+ * These translation utilities were adapted from https://github.com/Shopify/checkout-web/blob/master/app/utilities/development-mode/i18n-utilities.tsx
+ * */
+
+type Translation = string | {[key: string]: Translation}
+
 export interface Localization {
   defaultLocale: string
+  translations: {[key: string]: {[key: string]: Translation}}
   lastUpdated: number
-  translations: {[locale: string]: ExtensionTranslationMap}
 }
 
 export interface FlattenedLocalization {
@@ -172,12 +178,16 @@ function getNonRegionalLocale(locale: string): string {
   return locale.split('-')[0]
 }
 
-export function getFlattenedTranslations(
+export function getFlattenedLocalization(
   localization?: FlattenedLocalization | Localization | null,
   locales?: LocalesOptions,
 ) {
-  if (!localization || !locales || isFlattenedTranslations(localization)) {
+  if (!localization || !locales) {
     return
+  }
+
+  if (isFlattenedTranslations(localization)) {
+    return localization
   }
 
   const extensionLocale = resolveDevExtensionLocale(localization, locales)

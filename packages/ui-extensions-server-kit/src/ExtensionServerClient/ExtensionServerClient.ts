@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import {Surface} from './types.js'
-import {TRANSLATED_KEYS, getFlattenedTranslations} from '../i18n'
+import {TRANSLATED_KEYS, getFlattenedLocalization} from '../i18n'
 import {isUIExtension, isValidSurface} from '../utilities'
 import {DeepPartial, ExtensionPayload, ExtensionPoint} from '../types'
 
@@ -191,7 +191,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
         this.extensionsByUuid[extension.uuid]?.localization?.lastUpdated !== extension.localization?.lastUpdated
 
       const localization = shouldUpdateTranslations
-        ? getFlattenedTranslations(extension.localization, this.options.locales)
+        ? getFlattenedLocalization(extension.localization, this.options.locales)
         : this.extensionsByUuid[extension.uuid].localization
 
       this.extensionsByUuid[extension.uuid] = {
