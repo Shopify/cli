@@ -163,7 +163,11 @@ vi.mock('./identifiers-functions')
 beforeEach(() => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-    app: {extensionRegistrations: [REGISTRATION_A, REGISTRATION_B], functions: [REGISTRATION_C]},
+    app: {
+      extensionRegistrations: [REGISTRATION_A, REGISTRATION_B],
+      dashboardManagedExtensionRegistrations: [],
+      functions: [REGISTRATION_C],
+    },
   })
 })
 
