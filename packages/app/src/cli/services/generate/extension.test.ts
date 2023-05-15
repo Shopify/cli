@@ -50,10 +50,6 @@ describe('initialize a extension', async () => {
   })
 
   test('successfully generates the extension when another extension exists', async () => {
-    // vi.mocked(getProdDependencies).mockResolvedValue([
-    //   {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'},
-    // ])
-
     await withTemporaryApp(async (tmpDir) => {
       const name1 = 'my-ext-1'
       const name2 = 'my-ext-2'

@@ -49,7 +49,7 @@ afterEach(() => {
 
 describe('generate', () => {
   const mockConfig = new Config({root: ''})
-  test.only('displays a confirmation message with instructions to run dev', async () => {
+  test('displays a confirmation message with instructions to run dev', async () => {
     // Given
     const outputInfo = await mockSuccessfulCommandExecution('checkout_ui_extension')
 

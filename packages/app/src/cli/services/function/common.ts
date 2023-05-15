@@ -1,12 +1,11 @@
-import {ExtensionFlavor, FunctionExtension} from '../../models/app/extensions.js'
+import {FunctionExtension} from '../../models/app/extensions.js'
 import {App, AppInterface} from '../../models/app/app.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {loadExtensionsSpecifications} from '../../models/extensions/specifications.js'
-import {resolvePath, cwd, joinPath} from '@shopify/cli-kit/node/path'
+import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Config, Flags} from '@oclif/core'
-import {fileExists} from '@shopify/cli-kit/node/fs'
 
 export const functionFlags = {
   path: Flags.string({
@@ -34,16 +33,4 @@ export async function inFunctionContext(
       new AbortError('Run this command from a function directory or use `--path` to specify a function directory.'),
     )
   }
-}
-
-export async function ensureFunctionExtensionFlavorExists(
-  extensionFlavor: ExtensionFlavor | undefined,
-  templateDownloadDir: string,
-): Promise<string> {
-  const templatePath = extensionFlavor?.path || ''
-  const origin = joinPath(templateDownloadDir, templatePath)
-  if (!(await fileExists(origin))) {
-    throw new AbortError(`\nThe function is not available for ${extensionFlavor?.value}`)
-  }
-  return origin
 }

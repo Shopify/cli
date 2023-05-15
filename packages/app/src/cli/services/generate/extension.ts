@@ -13,7 +13,7 @@ import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
   DependencyVersion,
-  getProdDependencies,
+  readAndParsePackageJson,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
@@ -274,4 +274,9 @@ async function addResolutionOrOverrideIfNeeded(directory: string, extensionFlavo
   if (extensionFlavor === 'typescript-react') {
     await addResolutionOrOverride(directory, {'@types/react': versions.reactTypes})
   }
+}
+
+async function getProdDependencies(packageJsonPath: string): Promise<DependencyVersion[]> {
+  const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+  return Object.entries(packageJsonContent?.dependencies ?? {}).map(([name, version]) => ({name, version}))
 }
