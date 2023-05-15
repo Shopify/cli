@@ -189,5 +189,16 @@ export async function staticService() {
     },
   })
 
-  await renderModal({body: 'Hello from a modal!'})
+  await renderModal({
+    headline: "Upcoming change",
+    body: "We're making a change to the way you access your app's data. You'll need to update your app by 2025-04-17 to use the new access method.",
+    nextSteps: [
+      {
+        link: {
+          label: "Learn more",
+          url: "https://shopify.dev/app/access-scopes",
+        }
+      },
+    ],
+  })
 }

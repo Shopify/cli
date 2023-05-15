@@ -139,6 +139,23 @@
       }
     },
     {
+      "type": "modal",
+      "title": "Modal",
+      "description": "Show a modal to alert user about an upcoming change.",
+      "properties": {
+        "headline": "Upcoming change",
+        "body": "We're making a change to the way you access your app's data. You'll need to update your app by 2025-04-17 to use the new access method.",
+        "nextSteps": [
+          {
+            "link": {
+              "label": "Learn more",
+              "url": "https://shopify.dev/app/access-scopes"
+            }
+          }
+        ]
+      }
+    },
+    {
       "type": "table",
       "title": "Table of available themes",
       "description": "This step demonstrates a table output showing a list of available themes.",
