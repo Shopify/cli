@@ -76,9 +76,6 @@ export class ExtensionServerClient implements ExtensionServer.Client {
        * ```
        * {
        *  localization: {...},
-       *  development: {
-       *    hidden: false
-       *  }
        *  extensionPoints: [{
        *    target: 'admin.product.item.action'
        *    localization: {...}
@@ -87,10 +84,6 @@ export class ExtensionServerClient implements ExtensionServer.Client {
        * ```
        * After:
        * ```
-       * {
-       *  development: {
-       *    hidden: false
-       *  }
        *  extensionPoints: [{
        *    target: 'admin.product.item.action'
        *  }],
