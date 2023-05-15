@@ -399,14 +399,16 @@ export async function renderAutocompletePrompt<T>({renderOptions, ...props}: Ren
   })
 }
 
-type RenderModalOptions = Omit<AlertProps, 'type'>
+interface RenderModalOptions extends Omit<AlertProps, 'type'> {
+  renderOptions?: RenderOptions
+}
 
-export function renderModal(options: RenderModalOptions, renderOptions: RenderOptions = {}): Promise<void> {
+export async function renderModal({renderOptions, ...props}: RenderModalOptions): Promise<void> {
   return render(
     <FullScreen closeOnKey="q">
-      <Alert type="info" title="info (`q` to close)" {...options} />
+      <Alert type="info" title="info (`q` to close)" {...props} />
     </FullScreen>,
-    {...renderOptions}
+    {...renderOptions},
   )
 }
 
