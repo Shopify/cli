@@ -1,6 +1,12 @@
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {renderFatalError, renderInfo, renderSuccess, renderTable, renderWarning, renderModal} from '@shopify/cli-kit/node/ui'
-import {sleep} from '@shopify/cli-kit/node/system'
+import {
+  renderFatalError,
+  renderInfo,
+  renderSuccess,
+  renderTable,
+  renderWarning,
+  renderModal,
+} from '@shopify/cli-kit/node/ui'
 
 export async function staticService() {
   // Banners
@@ -190,14 +196,14 @@ export async function staticService() {
   })
 
   await renderModal({
-    headline: "Upcoming change",
+    headline: 'Upcoming change',
     body: "We're making a change to the way you access your app's data. You'll need to update your app by 2025-04-17 to use the new access method.",
     nextSteps: [
       {
         link: {
-          label: "Learn more",
-          url: "https://shopify.dev/app/access-scopes",
-        }
+          label: 'Learn more',
+          url: 'https://shopify.dev/app/access-scopes',
+        },
       },
     ],
   })

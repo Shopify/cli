@@ -82,7 +82,7 @@ const BoxWithBorder: FunctionComponent<BannerProps> = ({title, type, children}) 
   )
 }
 
-const BoxWithTopBottomLines: FunctionComponent<BannerProps> = ({type, children}) => {
+const BoxWithTopBottomLines: FunctionComponent<Omit<BannerProps, 'title'>> = ({type, children}) => {
   const {twoThirds} = useLayout()
   // 2 initial dashes + 2 spaces surrounding the type
   let topLineAfterTypeLength = twoThirds - 2 - type.length - 2
