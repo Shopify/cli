@@ -127,7 +127,7 @@ async function uiExtensionInit({
         title: `Generating ${specification.externalName} extension`,
         task: async () => {
           const templateDirectory =
-            specification.templatePath ??
+            specification.templatePath?.() ??
             (await findPathUp(`templates/ui-extensions/projects/${specification.identifier}`, {
               type: 'directory',
               cwd: moduleDirectory(import.meta.url),
@@ -237,7 +237,7 @@ async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, 
 }
 
 async function functionExtensionInit(options: FunctionExtensionInitOptions) {
-  const url = options.cloneUrl || options.specification.templatePath || blocks.functions.defaultUrl
+  const url = options.cloneUrl || options.specification.templateURL || blocks.functions.defaultUrl
   const specification = options.specification
 
   await inTemporaryDirectory(async (tmpDir) => {

@@ -26,8 +26,9 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigContent
   supportedFlavors: ExtensionFlavor[]
   gated: boolean
   helpURL?: string
+  templateURL?: string // functions only
+  templatePath?: (lang?: string) => string | undefined // functions only
   dependency?: string
-  templatePath?: string
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
   getBundleExtensionStdinContent?: (config: TConfiguration) => string

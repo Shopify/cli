@@ -237,7 +237,7 @@ describe('initialize a extension', async () => {
       vi.spyOn(file, 'moveFile').mockResolvedValue()
       const name = 'my-ext-1'
       const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
-      specification.templatePath = 'path/to/custom/template'
+      specification.templatePath = () => 'path/to/custom/template'
       const extensionFlavor = 'vanilla-js'
       const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockResolvedValue()
 
@@ -262,7 +262,7 @@ describe('initialize a extension', async () => {
 
       const name = 'my-ext-1'
       const specification = allFunctionSpecs[0]!
-      specification.templatePath = 'custom/template/url'
+      specification.templateURL = 'custom/template/url'
       const extensionFlavor = 'rust'
 
       // When
