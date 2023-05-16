@@ -1,4 +1,5 @@
 import {TemplateSpecification} from '../../app/template.js'
+import {uiFlavors} from '../common.js'
 
 /**
  * Customer Accounts UI extension template specification.
@@ -13,28 +14,7 @@ const customerAccountsUIExtension: TemplateSpecification = {
       url: 'https://github.com/Shopify/cli',
       type: 'customer_accounts_ui_extension',
       extensionPoints: [],
-      supportedFlavors: [
-        {
-          name: 'TypeScript',
-          value: 'typescript',
-          path: 'packages/app/templates/ui-extensions/projects/customer_accounts_ui_extension',
-        },
-        {
-          name: 'JavaScript',
-          value: 'vanilla-js',
-          path: 'packages/app/templates/ui-extensions/projects/customer_accounts_ui_extension',
-        },
-        {
-          name: 'TypeScript React',
-          value: 'typescript-react',
-          path: 'packages/app/templates/ui-extensions/projects/customer_accounts_ui_extension',
-        },
-        {
-          name: 'JavaScript React',
-          value: 'react',
-          path: 'packages/app/templates/ui-extensions/projects/customer_accounts_ui_extension',
-        },
-      ],
+      supportedFlavors: uiFlavors('packages/app/templates/ui-extensions/projects/customer_accounts_ui_extension'),
     },
   ],
 }

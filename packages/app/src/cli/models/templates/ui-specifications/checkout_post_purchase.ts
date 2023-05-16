@@ -1,4 +1,5 @@
 import {TemplateSpecification} from '../../app/template.js'
+import {uiFlavors} from '../common.js'
 
 /**
  * Post-purchase UI template specification.
@@ -13,28 +14,7 @@ const checkoutPostPurchaseExtension: TemplateSpecification = {
       url: 'https://github.com/Shopify/cli',
       type: 'checkout_post_purchase',
       extensionPoints: [],
-      supportedFlavors: [
-        {
-          name: 'TypeScript',
-          value: 'typescript',
-          path: 'packages/app/templates/ui-extensions/projects/checkout_post_purchase',
-        },
-        {
-          name: 'JavaScript',
-          value: 'vanilla-js',
-          path: 'packages/app/templates/ui-extensions/projects/checkout_post_purchase',
-        },
-        {
-          name: 'TypeScript React',
-          value: 'typescript-react',
-          path: 'packages/app/templates/ui-extensions/projects/checkout_post_purchase',
-        },
-        {
-          name: 'JavaScript React',
-          value: 'react',
-          path: 'packages/app/templates/ui-extensions/projects/checkout_post_purchase',
-        },
-      ],
+      supportedFlavors: uiFlavors('packages/app/templates/ui-extensions/projects/checkout_post_purchase'),
     },
   ],
 }
