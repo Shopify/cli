@@ -42,7 +42,7 @@
         "skip-dependencies-installation": {
           "name": "skip-dependencies-installation",
           "type": "boolean",
-          "description": "Skips the installation of dependencies.",
+          "description": "Skips the installation of dependencies. Deprecated, use workspaces instead.",
           "hidden": false,
           "allowNo": false
         },
@@ -182,7 +182,7 @@
         "skip-dependencies-installation": {
           "name": "skip-dependencies-installation",
           "type": "boolean",
-          "description": "Skips the installation of dependencies.",
+          "description": "Skips the installation of dependencies. Deprecated, use workspaces instead.",
           "hidden": false,
           "allowNo": false
         },

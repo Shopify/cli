@@ -9,7 +9,7 @@ const kilobytes = 1024
 const BUNDLE_SIZE_LIMIT_KB = 128
 const BUNDLE_SIZE_LIMIT = BUNDLE_SIZE_LIMIT_KB * kilobytes
 
-const dependency = {name: '@shopify/web-pixels-extension', version: '^0.1.1'}
+const dependency = '@shopify/web-pixels-extension'
 
 const WebPixelSchema = BaseUIExtensionSchema.extend({
   runtimeContext: zod.string(),
