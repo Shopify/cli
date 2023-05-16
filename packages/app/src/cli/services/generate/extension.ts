@@ -1,49 +1,24 @@
-import {versions} from '../../constants.js'
+import {blocks, versions} from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
 import {buildGraphqlTypes} from '../function/build.js'
 import {GenerateExtensionContentOutput} from '../../prompts/generate/extension.js'
 import {ExtensionFlavor} from '../../models/app/extensions.js'
 import {TemplateSpecification} from '../../models/app/template.js'
-import {
-  ensureDownloadedExtensionFlavorExists,
-  ensureExtensionDirectoryExists,
-  ensureLocalExtensionFlavorExists,
-} from '../extensions/common.js'
+import {ensureDownloadedExtensionFlavorExists, ensureLocalExtensionFlavorExists} from '../extensions/common.js'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
   DependencyVersion,
-  PackageManager,
+  installNPMDependenciesRecursively,
   readAndParsePackageJson,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository} from '@shopify/cli-kit/node/git'
-import {
-  fileExists,
-  inTemporaryDirectory,
-  mkdir,
-  moveFile,
-  removeFile,
-  glob,
-  findPathUp,
-  fileExistsSync,
-} from '@shopify/cli-kit/node/fs'
-import {joinPath, dirname, relativizePath} from '@shopify/cli-kit/node/path'
-import {BugError} from '@shopify/cli-kit/node/error'
-import {fileURLToPath} from 'url'
-
-async function getTemplatePath(name: string): Promise<string> {
-  const templatePath = await findPathUp(`templates/${name}`, {
-    cwd: dirname(fileURLToPath(import.meta.url)),
-    type: 'directory',
-  })
-  if (templatePath) {
-    return templatePath
-  } else {
-    throw new BugError(`Couldn't find the template ${name} in @shopify/app.`)
-  }
-}
+import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob} from '@shopify/cli-kit/node/fs'
+import {joinPath, relativizePath} from '@shopify/cli-kit/node/path'
+import {hyphenate} from '@shopify/cli-kit/common/string'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export interface GenerateExtensionTemplateOptions {
   app: AppInterface
@@ -76,12 +51,12 @@ export interface GeneratedExtension {
 }
 
 interface ExtensionInitOptions {
-  type: string
-  name: string
   directory: string
   url: string
-  extensionFlavor: ExtensionFlavor | undefined
   app: AppInterface
+  type: string
+  name: string
+  extensionFlavor: ExtensionFlavor | undefined
 }
 
 export async function generateExtensionTemplate(
@@ -93,13 +68,14 @@ export async function generateExtensionTemplate(
       const extensionFlavorValue = options.extensionChoices[index]?.flavor
       const extensionFlavor = spec.supportedFlavors.find((flavor) => flavor.value === extensionFlavorValue)
       const directory = await ensureExtensionDirectoryExists({app: options.app, name: extensionName})
+      const url = options.cloneUrl || spec.url
       const initOptions: ExtensionInitOptions = {
+        directory,
+        url,
+        app: options.app,
         type: spec.type,
         name: extensionName,
-        directory,
-        url: options.cloneUrl || spec.url,
         extensionFlavor,
-        app: options.app,
       }
       await extensionInit(initOptions)
       return {directory: relativizePath(directory), specification: options.specification}
@@ -126,45 +102,111 @@ async function extensionInit(options: ExtensionInitOptions) {
   }
 }
 
-async function themeExtensionInit({url, extensionFlavor, type, name, directory}: ExtensionInitOptions) {
-  await inTemporaryDirectory(async (tmpDir) => {
+async function themeExtensionInit({directory, url, type, name, extensionFlavor}: ExtensionInitOptions) {
+  return inTemporaryDirectory(async (tmpDir) => {
     const templateDirectory = await downloadOrFindTemplateDirectory(url, extensionFlavor, tmpDir)
     await recursiveLiquidTemplateCopy(templateDirectory, directory, {name, type})
   })
 }
 
-async function uiExtensionInit({name, extensionFlavor, directory, app, url}: ExtensionInitOptions) {
+async function functionExtensionInit({directory, url, app, name, extensionFlavor}: ExtensionInitOptions) {
+  const templateLanguage = getTemplateLanguage(extensionFlavor?.value)
+  const taskList = []
+
+  taskList.push({
+    title: `Generating function extension`,
+    task: async () => {
+      await recursiveLiquidTemplateCopy(templateDirectory, directory, {name})
+      await inTemporaryDirectory(async (tmpDir) => {
+        const templateDirectory = await downloadOrFindTemplateDirectory(url, extensionFlavor, tmpDir)
+        await recursiveLiquidTemplateCopy(templateDirectory, directory, {name})
+      })
+
+      if (templateLanguage === 'javascript') {
+        const srcFileExtension = getSrcFileExtension(extensionFlavor?.value || 'rust')
+        await changeIndexFileExtension(directory, srcFileExtension)
+      }
+
+      const configYamlPath = joinPath(directory, 'script.config.yml')
+      if (await fileExists(configYamlPath)) {
+        await removeFile(configYamlPath)
+      }
+    },
+  })
+
+  if (templateLanguage === 'javascript') {
+    taskList.push({
+      title: 'Installing additional dependencies',
+      task: async () => {
+        const requiredDependencies = getFunctionRuntimeDependencies(templateLanguage)
+        await addNPMDependenciesIfNeeded(requiredDependencies, {
+          packageManager: app.packageManager,
+          type: 'prod',
+          directory: app.usesWorkspaces ? directory : app.directory,
+        })
+      },
+    })
+  }
+
+  if (templateLanguage === 'javascript') {
+    taskList.push({
+      title: `Building GraphQL types`,
+      task: async () => {
+        await buildGraphqlTypes({directory, isJavaScript: true}, {stdout: process.stdout, stderr: process.stderr})
+      },
+    })
+  }
+
+  await renderTasks(taskList)
+}
+
+async function uiExtensionInit({directory, url, app, name, extensionFlavor}: ExtensionInitOptions) {
   const tasks = [
     {
       title: `Generating UI extension`,
       task: async () => {
+        const srcFileExtension = getSrcFileExtension(extensionFlavor?.value ?? 'vanilla-js')
+
         await inTemporaryDirectory(async (tmpDir) => {
           const templateDirectory = await downloadOrFindTemplateDirectory(url, extensionFlavor, tmpDir)
-          const srcFileExtension = getSrcFileExtension(extensionFlavor?.value ?? 'vanilla-js')
-          await recursiveLiquidTemplateCopy(templateDirectory, directory, {
-            srcFileExtension,
-            name,
-          })
-
-          if (extensionFlavor) {
-            await changeIndexFileExtension(directory, srcFileExtension)
-            await removeUnwantedTemplateFilesPerFlavor(directory, extensionFlavor.value)
-          }
+          await recursiveLiquidTemplateCopy(templateDirectory, directory, {srcFileExtension, name})
         })
+
+        if (extensionFlavor) {
+          await changeIndexFileExtension(directory, srcFileExtension)
+          await removeUnwantedTemplateFilesPerFlavor(directory, extensionFlavor.value)
+        }
       },
     },
     {
       title: 'Installing dependencies',
       task: async () => {
-        await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor?.value)
-        const extensionPackageJsonPath = joinPath(directory, 'package.json')
-        const requiredDependencies = await getProdDependencies(extensionPackageJsonPath)
-        await addNPMDependenciesIfNeeded(requiredDependencies, {
-          packageManager: app.packageManager,
-          type: 'prod',
-          directory: app.directory,
-        })
-        await removeFile(extensionPackageJsonPath)
+        const packageManager = app.packageManager
+        if (app.usesWorkspaces) {
+          // NPM doesn't resolve the react dependency properly with extensions depending on React 17 and cli-kit on React 18
+          if (extensionFlavor?.value.includes('react') && packageManager === 'npm') {
+            await addNPMDependenciesIfNeeded([{name: 'react', version: versions.react}], {
+              packageManager,
+              type: 'prod',
+              directory: app.directory,
+            })
+          }
+          await installNPMDependenciesRecursively({
+            packageManager,
+            directory: app.directory,
+            deep: 0,
+          })
+        } else {
+          await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor?.value)
+          const extensionPackageJsonPath = joinPath(directory, 'package.json')
+          const requiredDependencies = await getProdDependencies(extensionPackageJsonPath)
+          await addNPMDependenciesIfNeeded(requiredDependencies, {
+            packageManager,
+            type: 'prod',
+            directory: app.directory,
+          })
+          await removeFile(extensionPackageJsonPath)
+        }
       },
     },
   ]
@@ -183,17 +225,6 @@ function getSrcFileExtension(extensionFlavor: ExtensionFlavorValue): SrcFileExte
   }
 
   return flavorToSrcFileExtension[extensionFlavor] ?? 'js'
-}
-
-export async function addExtensionDependencies(
-  packageJsonPath: string,
-  directory: string,
-  packageManager: PackageManager,
-): Promise<void> {
-  if (!fileExistsSync(packageJsonPath)) return
-
-  const prodDependencies = await getProdDependencies(packageJsonPath)
-  await addNPMDependenciesIfNeeded(prodDependencies, {packageManager, type: 'prod', directory})
 }
 
 export function getFunctionRuntimeDependencies(templateLanguage: string): DependencyVersion[] {
@@ -223,91 +254,6 @@ async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, 
   }
 }
 
-async function functionExtensionInit({name, extensionFlavor, url, directory, app}: ExtensionInitOptions) {
-  await inTemporaryDirectory(async (tmpDir) => {
-    const templateDownloadDir = joinPath(tmpDir, 'download')
-    const templateLanguage = getTemplateLanguage(extensionFlavor?.value)
-    const taskList = []
-
-    if (templateLanguage === 'javascript') {
-      taskList.push({
-        title: 'Installing additional dependencies',
-        task: async () => {
-          const requiredDependencies = getFunctionRuntimeDependencies(templateLanguage)
-          await addNPMDependenciesIfNeeded(requiredDependencies, {
-            packageManager: app.packageManager,
-            type: 'prod',
-            directory: app.directory,
-          })
-        },
-      })
-    }
-
-    taskList.push({
-      title: `Generating function extension`,
-      task: async () => {
-        await mkdir(templateDownloadDir)
-        await downloadGitRepository({
-          repoUrl: url,
-          destination: templateDownloadDir,
-          shallow: true,
-        })
-        const origin = await ensureDownloadedExtensionFlavorExists(extensionFlavor, templateDownloadDir)
-        await recursiveLiquidTemplateCopy(origin, directory, {name})
-
-        if (templateLanguage === 'javascript') {
-          const srcFileExtension = getSrcFileExtension(extensionFlavor?.value || 'rust')
-          await changeIndexFileExtension(directory, srcFileExtension)
-        }
-
-        const configYamlPath = joinPath(directory, 'script.config.yml')
-        if (await fileExists(configYamlPath)) {
-          await removeFile(configYamlPath)
-        }
-      },
-    })
-
-    if (templateLanguage === 'javascript') {
-      taskList.push({
-        title: 'Installing additional dependencies',
-        task: async () => {
-          const requiredDependencies = getFunctionRuntimeDependencies(templateLanguage)
-          await addNPMDependenciesIfNeeded(requiredDependencies, {
-            packageManager: options.app.packageManager,
-            type: 'prod',
-            directory: options.app.usesWorkspaces ? options.extensionDirectory : options.app.directory,
-          })
-        },
-      })
-    }
-
-    if (templateLanguage === 'javascript') {
-      taskList.push({
-        title: 'Installing additional dependencies',
-        task: async () => {
-          const requiredDependencies = getFunctionRuntimeDependencies(templateLanguage)
-          await addNPMDependenciesIfNeeded(requiredDependencies, {
-            packageManager: options.app.packageManager,
-            type: 'prod',
-            directory: options.app.usesWorkspaces ? options.extensionDirectory : options.app.directory,
-          })
-        },
-      })
-    }
-
-    if (templateLanguage === 'javascript') {
-      taskList.push({
-        title: `Building GraphQL types`,
-        task: async () => {
-          await buildGraphqlTypes({directory, isJavaScript: true}, {stdout: process.stdout, stderr: process.stderr})
-        },
-      })
-    }
-
-    await renderTasks(taskList)
-  })
-}
-
 async function ensureExtensionDirectoryExists({name, app}: {name: string; app: AppInterface}): Promise<string> {
   const hyphenizedName = hyphenate(name)
   const extensionDirectory = joinPath(app.directory, blocks.extensions.directoryName, hyphenizedName)
@@ -327,6 +273,8 @@ async function addResolutionOrOverrideIfNeeded(directory: string, extensionFlavo
 }
 
 async function getProdDependencies(packageJsonPath: string): Promise<DependencyVersion[]> {
+  if (!(await fileExists(packageJsonPath))) return []
+
   const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
   return Object.entries(packageJsonContent?.dependencies ?? {}).map(([name, version]) => ({name, version}))
 }
