@@ -116,9 +116,11 @@ async function extensionInit(options: ExtensionInitOptions) {
   }
 }
 
-async function themeExtensionInit({type, name, directory}: ExtensionInitOptions) {
-  const templatePath = await getTemplatePath('theme-extension')
-  await recursiveLiquidTemplateCopy(templatePath, directory, {name, type})
+async function themeExtensionInit({url, extensionFlavor, type, name, directory}: ExtensionInitOptions) {
+  await inTemporaryDirectory(async (tmpDir) => {
+    const templateDirectory = await downloadOrFindTemplateDirectory(url, extensionFlavor, tmpDir)
+    await recursiveLiquidTemplateCopy(templateDirectory, directory, {name, type})
+  })
 }
 
 async function uiExtensionInit({name, extensionFlavor, directory, app, url}: ExtensionInitOptions) {
@@ -127,21 +129,8 @@ async function uiExtensionInit({name, extensionFlavor, directory, app, url}: Ext
       title: `Generating UI extension`,
       task: async () => {
         await inTemporaryDirectory(async (tmpDir) => {
-          let templateDirectory = ''
+          const templateDirectory = await downloadOrFindTemplateDirectory(url, extensionFlavor, tmpDir)
           const srcFileExtension = getSrcFileExtension(extensionFlavor?.value ?? 'vanilla-js')
-          if (url === 'https://github.com/Shopify/cli') {
-            templateDirectory = await ensureLocalExtensionFlavorExists(extensionFlavor)
-          } else {
-            const templateDownloadDir = joinPath(tmpDir, 'download')
-            await mkdir(templateDownloadDir)
-            await downloadGitRepository({
-              repoUrl: url,
-              destination: templateDownloadDir,
-              shallow: true,
-            })
-            templateDirectory = await ensureDownloadedExtensionFlavorExists(extensionFlavor, templateDownloadDir)
-          }
-
           await recursiveLiquidTemplateCopy(templateDirectory, directory, {
             srcFileExtension,
             name,
@@ -279,4 +268,23 @@ async function addResolutionOrOverrideIfNeeded(directory: string, extensionFlavo
 async function getProdDependencies(packageJsonPath: string): Promise<DependencyVersion[]> {
   const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
   return Object.entries(packageJsonContent?.dependencies ?? {}).map(([name, version]) => ({name, version}))
+}
+
+async function downloadOrFindTemplateDirectory(
+  url: string,
+  extensionFlavor: ExtensionFlavor | undefined,
+  tmpDir: string,
+) {
+  if (url === 'https://github.com/Shopify/cli') {
+    return ensureLocalExtensionFlavorExists(extensionFlavor)
+  } else {
+    const templateDownloadDir = joinPath(tmpDir, 'download')
+    await mkdir(templateDownloadDir)
+    await downloadGitRepository({
+      repoUrl: url,
+      destination: templateDownloadDir,
+      shallow: true,
+    })
+    return ensureDownloadedExtensionFlavorExists(extensionFlavor, templateDownloadDir)
+  }
 }

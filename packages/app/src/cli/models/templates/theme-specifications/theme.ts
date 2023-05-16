@@ -10,10 +10,16 @@ const themeSpecification: TemplateSpecification = {
   supportLinks: [],
   types: [
     {
-      url: 'https://github.com/Shopify/cli/packages/app/templates/theme-extension',
+      url: 'https://github.com/Shopify/cli',
       type: 'theme',
       extensionPoints: [],
-      supportedFlavors: [],
+      supportedFlavors: [
+        {
+          name: 'JavaScript',
+          value: 'vanilla-js',
+          path: 'packages/app/templates/theme-extension',
+        },
+      ],
     },
   ],
 }

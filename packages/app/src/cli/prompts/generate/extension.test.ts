@@ -139,7 +139,7 @@ describe('extension prompt', async () => {
     expect(renderSelectPrompt).not.toHaveBeenCalled()
     expect(got).toEqual({
       templateSpecification: themeSpecification,
-      extensionContent: [{name: 'my-special-extension', index: 0, flavor: undefined}],
+      extensionContent: [{name: 'my-special-extension', index: 0, flavor: 'vanilla-js'}],
     })
   })
 
