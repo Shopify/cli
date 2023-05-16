@@ -81,8 +81,8 @@ export async function generateExtensionTemplate(
     options.specification.types.flatMap(async (spec, index) => {
       const extensionName: string = options.extensionChoices[index]!.name
       const extensionFlavorValue = options.extensionChoices[index]?.flavor
-      const directory = await ensureExtensionDirectoryExists({app: options.app, name: extensionName})
       const extensionFlavor = spec.supportedFlavors.find((flavor) => flavor.value === extensionFlavorValue)
+      const directory = await ensureExtensionDirectoryExists({app: options.app, name: extensionName})
       const initOptions: ExtensionInitOptions = {
         type: spec.type,
         name: extensionName,

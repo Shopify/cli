@@ -4,6 +4,7 @@ import {TemplateSpecification, TemplateType} from '../../models/app/template.js'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputWarn} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export interface GenerateExtensionPromptOptions {
   name?: string
@@ -56,6 +57,10 @@ const generateExtensionPrompts = async (
       outputWarn(
         `You've reached the limit for these types of extensions: ${options.unavailableExtensions.join(', ')}\n`,
       )
+    }
+
+    if (templateSpecifications.length === 0) {
+      throw new AbortError('You have reached the limit for the number of extensions you can create.')
     }
 
     // eslint-disable-next-line require-atomic-updates

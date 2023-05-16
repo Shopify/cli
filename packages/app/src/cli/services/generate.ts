@@ -208,7 +208,7 @@ async function handleTypeParameter(
   templateSpecification.types.forEach((type) => {
     if (limitReached(app, specifications, type)) {
       throw new AbortError(
-        'Invalid extension type',
+        `Invalid extension type: ${typeFlag}`,
         `You have reached the limit of extension(s) of type ${type.type} per app`,
       )
     }
