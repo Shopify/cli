@@ -35,6 +35,7 @@ export type ExtensionFlavorValue =
   | 'rust'
   | 'wasm'
   | 'liquid'
+  | 'config-only'
 
 export type TemplateLanguage = 'javascript' | 'rust' | 'wasm' | undefined
 function getTemplateLanguage(flavor: ExtensionFlavorValue | undefined): TemplateLanguage {
@@ -219,7 +220,7 @@ async function uiExtensionInit({directory, url, app, name, extensionFlavor}: Ext
   await renderTasks(tasks)
 }
 
-type SrcFileExtension = 'ts' | 'tsx' | 'js' | 'jsx' | 'rs' | 'wasm' | 'liquid'
+type SrcFileExtension = 'ts' | 'tsx' | 'js' | 'jsx' | 'rs' | 'wasm' | 'liquid' | ''
 function getSrcFileExtension(extensionFlavor: ExtensionFlavorValue): SrcFileExtension {
   const flavorToSrcFileExtension: {[key in ExtensionFlavorValue]: SrcFileExtension} = {
     'vanilla-js': 'js',
@@ -229,6 +230,7 @@ function getSrcFileExtension(extensionFlavor: ExtensionFlavorValue): SrcFileExte
     rust: 'rs',
     wasm: 'wasm',
     liquid: 'liquid',
+    'config-only': '',
   }
 
   return flavorToSrcFileExtension[extensionFlavor] ?? 'js'

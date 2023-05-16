@@ -1,5 +1,4 @@
 import {TemplateSpecification} from '../../app/template.js'
-import {uiFlavors} from '../common.js'
 
 /**
  * Tax Calculation UI extension template specification.
@@ -14,7 +13,13 @@ const taxCalculationUIExtension: TemplateSpecification = {
       url: 'https://github.com/Shopify/cli',
       type: 'tax_calculation',
       extensionPoints: [],
-      supportedFlavors: uiFlavors('packages/app/templates/ui-extensions/projects/tax_calculation'),
+      supportedFlavors: [
+        {
+          name: 'Config only',
+          value: 'config-only',
+          path: 'packages/app/templates/ui-extensions/projects/tax_calculation',
+        },
+      ],
     },
   ],
 }
