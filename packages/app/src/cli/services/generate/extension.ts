@@ -27,7 +27,14 @@ export interface GenerateExtensionTemplateOptions {
   specification: TemplateSpecification
 }
 
-export type ExtensionFlavorValue = 'vanilla-js' | 'react' | 'typescript' | 'typescript-react' | 'rust' | 'wasm'
+export type ExtensionFlavorValue =
+  | 'vanilla-js'
+  | 'react'
+  | 'typescript'
+  | 'typescript-react'
+  | 'rust'
+  | 'wasm'
+  | 'liquid'
 
 export type TemplateLanguage = 'javascript' | 'rust' | 'wasm' | undefined
 function getTemplateLanguage(flavor: ExtensionFlavorValue | undefined): TemplateLanguage {
@@ -116,7 +123,6 @@ async function functionExtensionInit({directory, url, app, name, extensionFlavor
   taskList.push({
     title: `Generating function extension`,
     task: async () => {
-      await recursiveLiquidTemplateCopy(templateDirectory, directory, {name})
       await inTemporaryDirectory(async (tmpDir) => {
         const templateDirectory = await downloadOrFindTemplateDirectory(url, extensionFlavor, tmpDir)
         await recursiveLiquidTemplateCopy(templateDirectory, directory, {name})
@@ -213,7 +219,7 @@ async function uiExtensionInit({directory, url, app, name, extensionFlavor}: Ext
   await renderTasks(tasks)
 }
 
-type SrcFileExtension = 'ts' | 'tsx' | 'js' | 'jsx' | 'rs' | 'wasm'
+type SrcFileExtension = 'ts' | 'tsx' | 'js' | 'jsx' | 'rs' | 'wasm' | 'liquid'
 function getSrcFileExtension(extensionFlavor: ExtensionFlavorValue): SrcFileExtension {
   const flavorToSrcFileExtension: {[key in ExtensionFlavorValue]: SrcFileExtension} = {
     'vanilla-js': 'js',
@@ -222,6 +228,7 @@ function getSrcFileExtension(extensionFlavor: ExtensionFlavorValue): SrcFileExte
     'typescript-react': 'tsx',
     rust: 'rs',
     wasm: 'wasm',
+    liquid: 'liquid',
   }
 
   return flavorToSrcFileExtension[extensionFlavor] ?? 'js'

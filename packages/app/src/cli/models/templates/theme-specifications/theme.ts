@@ -15,8 +15,8 @@ const themeSpecification: TemplateSpecification = {
       extensionPoints: [],
       supportedFlavors: [
         {
-          name: 'JavaScript',
-          value: 'vanilla-js',
+          name: 'Liquid',
+          value: 'liquid',
           path: 'packages/app/templates/theme-extension',
         },
       ],
