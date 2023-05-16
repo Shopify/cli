@@ -193,7 +193,7 @@ export async function getUIExtensionRendererVersion(
   // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)
   const rendererDependency = extension.dependency
   if (!rendererDependency) return undefined
-  return getDependencyVersion(rendererDependency.name, app.directory)
+  return getDependencyVersion(rendererDependency, app.directory)
 }
 
 export async function getDependencyVersion(dependency: string, directory: string): Promise<RendererVersionResult> {

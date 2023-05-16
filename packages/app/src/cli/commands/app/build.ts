@@ -16,7 +16,7 @@ export default class Build extends Command {
     ...appFlags,
     'skip-dependencies-installation': Flags.boolean({
       hidden: false,
-      description: 'Skips the installation of dependencies.',
+      description: 'Skips the installation of dependencies. Deprecated, use workspaces instead.',
       env: 'SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION',
       default: false,
     }),

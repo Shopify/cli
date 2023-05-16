@@ -3,7 +3,6 @@ import {ExtensionFlavorValue} from '../../services/generate/extension.js'
 import {ExtensionFeature} from '../extensions/specification.js'
 import {TokenizedString} from '@shopify/cli-kit/node/output'
 import {Result} from '@shopify/cli-kit/node/result'
-import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 
 export type ExtensionCategory = 'ui' | 'function' | 'theme'
 
@@ -49,7 +48,7 @@ export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigCo
   outputBundlePath: string
   devUUID: string
   surface: string
-  dependency?: DependencyVersion
+  dependency?: string
   getBundleExtensionStdinContent(): string
   validate(): Promise<Result<unknown, string>>
   preDeployValidation(): Promise<void>

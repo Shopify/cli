@@ -13,7 +13,7 @@ interface BuildOptions {
 }
 
 async function build(options: BuildOptions) {
-  if (!options.skipDependenciesInstallation) {
+  if (!options.skipDependenciesInstallation && !options.app.usesWorkspaces) {
     await installAppDependencies(options.app)
   }
 

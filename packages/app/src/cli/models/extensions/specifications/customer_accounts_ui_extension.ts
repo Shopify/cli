@@ -4,7 +4,7 @@ import {loadLocalesConfig} from '../../../utilities/extensions/locales-configura
 import {zod} from '@shopify/cli-kit/node/schema'
 import {outputContent} from '@shopify/cli-kit/node/output'
 
-const dependency = {name: '@shopify/customer-account-ui-extensions-react', version: '^0.0.20'}
+const dependency = '@shopify/customer-account-ui-extensions'
 
 const CustomerAccountsSchema = BaseUIExtensionSchema.extend({
   categories: zod.array(zod.string()).optional(),

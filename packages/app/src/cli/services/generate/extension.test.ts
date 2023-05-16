@@ -1,6 +1,6 @@
 import {
+  addExtensionDependencies,
   generateExtension,
-  getExtensionRuntimeDependencies,
   getFunctionRuntimeDependencies,
   TemplateLanguage,
 } from './extension.js'
@@ -21,7 +21,15 @@ import * as git from '@shopify/cli-kit/node/git'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import type {ExtensionFlavorValue} from './extension.js'
 
-vi.mock('@shopify/cli-kit/node/node-package-manager')
+// vi.mock('@shopify/cli-kit/node/node-package-manager')
+vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
+  const actual: any = await vi.importActual('@shopify/cli-kit/node/node-package-manager')
+  return {
+    ...actual,
+    addNPMDependenciesIfNeeded: vi.fn(),
+    addResolutionOrOverride: vi.fn(),
+  }
+})
 
 describe('initialize a extension', async () => {
   const allSpecs = await loadLocalExtensionsSpecifications()
@@ -72,28 +80,14 @@ describe('initialize a extension', async () => {
         appDirectory: tmpDir,
         specifications,
       })
-      const addDependenciesCalls = vi.mocked(addNPMDependenciesIfNeeded).mock.calls
-      expect(addDependenciesCalls.length).toEqual(2)
+
+      expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledTimes(2)
 
       const loadedApp = await loadApp({directory: tmpDir, specifications})
       const generatedExtension2 = loadedApp.legacyExtensions.ui.sort((lhs, rhs) =>
         lhs.directory < rhs.directory ? -1 : 1,
       )[1]!
       expect(generatedExtension2.configuration.name).toBe(name2)
-
-      const firstDependenciesCallArgs = addDependenciesCalls[0]!
-      expect(firstDependenciesCallArgs[0]).toEqual([
-        {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'},
-      ])
-      expect(firstDependenciesCallArgs[1].type).toEqual('prod')
-      expect(firstDependenciesCallArgs[1].directory).toEqual(loadedApp.directory)
-
-      const secondDependencyCallArgs = addDependenciesCalls[1]!
-      expect(firstDependenciesCallArgs[0]).toEqual([
-        {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'},
-      ])
-      expect(secondDependencyCallArgs[1].type).toEqual('prod')
-      expect(secondDependencyCallArgs[1].directory).toEqual(loadedApp.directory)
     })
   })
 
@@ -243,7 +237,7 @@ describe('initialize a extension', async () => {
       vi.spyOn(file, 'moveFile').mockResolvedValue()
       const name = 'my-ext-1'
       const specification = allUISpecs.find((spec) => spec.identifier === 'checkout_post_purchase')!
-      specification.templatePath = () => 'path/to/custom/template'
+      specification.templatePath = 'path/to/custom/template'
       const extensionFlavor = 'vanilla-js'
       const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockResolvedValue()
 
@@ -268,7 +262,7 @@ describe('initialize a extension', async () => {
 
       const name = 'my-ext-1'
       const specification = allFunctionSpecs[0]!
-      specification.templateURL = 'custom/template/url'
+      specification.templatePath = 'custom/template/url'
       const extensionFlavor = 'rust'
 
       // When
@@ -397,42 +391,28 @@ describe('initialize a extension', async () => {
   })
 })
 
-describe('getExtensionRuntimeDependencies', () => {
-  test('no not include React for flavored Vanilla UI extensions', async () => {
-    // Given
-    const allUISpecs = await loadLocalExtensionsSpecifications()
-    const extensionFlavor: ExtensionFlavorValue = 'vanilla-js'
+describe('addExtensionDependencies', () => {
+  test('copies the prod dependencies from the package.json', async () => {
+    await file.inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const packageJsonPath = joinPath(tmpDir, 'package.json')
+      await file.writeFile(
+        packageJsonPath,
+        JSON.stringify({
+          dependencies: {semver: '7.3.8'},
+        }),
+      )
 
-    // When/then
-    allUISpecs.forEach((specification) => {
-      const got = getExtensionRuntimeDependencies({specification, extensionFlavor})
-      expect(got.find((dep) => dep.name === 'react' && dep.version === '^17.0.0')).toBeFalsy()
-    })
-  })
+      // When
+      await addExtensionDependencies(packageJsonPath, '/app', 'npm')
 
-  test('includes React for flavored React UI extensions', async () => {
-    // Given
-    const allUISpecs = await loadLocalExtensionsSpecifications()
-    const extensionFlavor: ExtensionFlavorValue = 'react'
-
-    // When/then
-    allUISpecs.forEach((specification) => {
-      const got = getExtensionRuntimeDependencies({specification, extensionFlavor})
-      expect(got.find((dep) => dep.name === 'react' && dep.version === '^17.0.0')).toBeTruthy()
-    })
-  })
-
-  test('includes the renderer package for UI extensions', async () => {
-    // Given
-    const allUISpecs = await loadLocalExtensionsSpecifications()
-
-    // When/then
-    allUISpecs.forEach((specification) => {
-      const reference = specification.dependency
-      if (reference) {
-        const got = getExtensionRuntimeDependencies({specification})
-        expect(got.find((dep) => dep.name === reference.name && dep.version === reference.version)).toBeTruthy()
-      }
+      // Then
+      expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledOnce()
+      expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenNthCalledWith(1, [{name: 'semver', version: '7.3.8'}], {
+        packageManager: 'npm',
+        type: 'prod',
+        directory: '/app',
+      })
     })
   })
 })

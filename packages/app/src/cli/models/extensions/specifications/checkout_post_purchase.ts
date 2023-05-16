@@ -2,7 +2,7 @@ import {createExtensionSpecification} from '../specification.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
 import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
 
-const dependency = {name: '@shopify/post-purchase-ui-extensions-react', version: '^0.13.2'}
+const dependency = '@shopify/post-purchase-ui-extensions'
 
 const spec = createExtensionSpecification({
   identifier: 'checkout_post_purchase',
