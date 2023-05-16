@@ -13,12 +13,22 @@ import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
   DependencyVersion,
+  PackageManager,
   readAndParsePackageJson,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository} from '@shopify/cli-kit/node/git'
-import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
+import {
+  fileExists,
+  inTemporaryDirectory,
+  mkdir,
+  moveFile,
+  removeFile,
+  glob,
+  findPathUp,
+  fileExistsSync,
+} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, relativizePath} from '@shopify/cli-kit/node/path'
 import {BugError} from '@shopify/cli-kit/node/error'
 import {fileURLToPath} from 'url'
@@ -175,6 +185,17 @@ function getSrcFileExtension(extensionFlavor: ExtensionFlavorValue): SrcFileExte
   return flavorToSrcFileExtension[extensionFlavor] ?? 'js'
 }
 
+export async function addExtensionDependencies(
+  packageJsonPath: string,
+  directory: string,
+  packageManager: PackageManager,
+): Promise<void> {
+  if (!fileExistsSync(packageJsonPath)) return
+
+  const prodDependencies = await getProdDependencies(packageJsonPath)
+  await addNPMDependenciesIfNeeded(prodDependencies, {packageManager, type: 'prod', directory})
+}
+
 export function getFunctionRuntimeDependencies(templateLanguage: string): DependencyVersion[] {
   const dependencies: DependencyVersion[] = []
   if (templateLanguage === 'javascript') {
@@ -248,6 +269,34 @@ async function functionExtensionInit({name, extensionFlavor, url, directory, app
 
     if (templateLanguage === 'javascript') {
       taskList.push({
+        title: 'Installing additional dependencies',
+        task: async () => {
+          const requiredDependencies = getFunctionRuntimeDependencies(templateLanguage)
+          await addNPMDependenciesIfNeeded(requiredDependencies, {
+            packageManager: options.app.packageManager,
+            type: 'prod',
+            directory: options.app.usesWorkspaces ? options.extensionDirectory : options.app.directory,
+          })
+        },
+      })
+    }
+
+    if (templateLanguage === 'javascript') {
+      taskList.push({
+        title: 'Installing additional dependencies',
+        task: async () => {
+          const requiredDependencies = getFunctionRuntimeDependencies(templateLanguage)
+          await addNPMDependenciesIfNeeded(requiredDependencies, {
+            packageManager: options.app.packageManager,
+            type: 'prod',
+            directory: options.app.usesWorkspaces ? options.extensionDirectory : options.app.directory,
+          })
+        },
+      })
+    }
+
+    if (templateLanguage === 'javascript') {
+      taskList.push({
         title: `Building GraphQL types`,
         task: async () => {
           await buildGraphqlTypes({directory, isJavaScript: true}, {stdout: process.stdout, stderr: process.stderr})
@@ -259,7 +308,19 @@ async function functionExtensionInit({name, extensionFlavor, url, directory, app
   })
 }
 
-async function addResolutionOrOverrideIfNeeded(directory: string, extensionFlavor?: ExtensionFlavorValue) {
+async function ensureExtensionDirectoryExists({name, app}: {name: string; app: AppInterface}): Promise<string> {
+  const hyphenizedName = hyphenate(name)
+  const extensionDirectory = joinPath(app.directory, blocks.extensions.directoryName, hyphenizedName)
+  if (await fileExists(extensionDirectory)) {
+    throw new AbortError(
+      `\nA directory with this name (${hyphenizedName}) already exists.\nChoose a new name for your extension.`,
+    )
+  }
+  await mkdir(extensionDirectory)
+  return extensionDirectory
+}
+
+async function addResolutionOrOverrideIfNeeded(directory: string, extensionFlavor: ExtensionFlavorValue | undefined) {
   if (extensionFlavor === 'typescript-react') {
     await addResolutionOrOverride(directory, {'@types/react': versions.reactTypes})
   }

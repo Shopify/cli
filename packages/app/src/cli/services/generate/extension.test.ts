@@ -21,7 +21,15 @@ import * as file from '@shopify/cli-kit/node/fs'
 import * as git from '@shopify/cli-kit/node/git'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 
-vi.mock('@shopify/cli-kit/node/node-package-manager')
+// vi.mock('@shopify/cli-kit/node/node-package-manager')
+vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
+  const actual: any = await vi.importActual('@shopify/cli-kit/node/node-package-manager')
+  return {
+    ...actual,
+    addNPMDependenciesIfNeeded: vi.fn(),
+    addResolutionOrOverride: vi.fn(),
+  }
+})
 
 describe('initialize a extension', async () => {
   const allUISpecs = [checkoutPostPurchaseExtension]
@@ -69,8 +77,8 @@ describe('initialize a extension', async () => {
         appDirectory: tmpDir,
         specifications,
       })
-      const addDependenciesCalls = vi.mocked(addNPMDependenciesIfNeeded).mock.calls
-      expect(addDependenciesCalls.length).toEqual(2)
+
+      expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledTimes(2)
 
       const loadedApp = await loadApp({directory: tmpDir, specifications})
       expect(loadedApp.extensions.ui.length).toEqual(2)

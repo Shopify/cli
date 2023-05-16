@@ -9,7 +9,7 @@ import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
-const dependency = '@shopify/checkout-ui-extensions-react'
+const dependency = '@shopify/checkout-ui-extensions'
 
 const UIExtensionSchema = BaseUIExtensionSchema.extend({
   settings: zod

@@ -103,7 +103,7 @@ async function dev(options: DevOptions) {
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
   let localApp = await load({directory: options.directory, specifications})
 
-  if (!options.skipDependenciesInstallation) {
+  if (!options.skipDependenciesInstallation && !localApp.usesWorkspaces) {
     localApp = await installAppDependencies(localApp)
   }
 
