@@ -33,7 +33,7 @@ export function buildChoices(templateSpecifications: TemplateSpecification[]) {
     return {
       label: spec.name,
       value: spec.identifier,
-      group: spec.group,
+      group: spec.group || 'Other',
     }
   })
   return templateSpecChoices.sort((c1, c2) => c1.label.localeCompare(c2.label))
