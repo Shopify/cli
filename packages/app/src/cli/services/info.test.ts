@@ -118,6 +118,11 @@ describe('info', () => {
     // Then
     expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
     "
+        SHOPIFY_APP_API_KEY=api-key
+        SHOPIFY_APP_API_SECRET=api-secret
+        SHOPIFY_APP_SCOPES=my-scope
+
+        Apps created before version X.Y.Z may use these variables:
         SHOPIFY_API_KEY=api-key
         SHOPIFY_API_SECRET=api-secret
         SCOPES=my-scope
@@ -163,6 +168,9 @@ describe('info', () => {
     // Then
     expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
       "{
+        \\"SHOPIFY_APP_API_KEY\\": \\"api-key\\",
+        \\"SHOPIFY_APP_API_SECRET\\": \\"api-secret\\",
+        \\"SHOPIFY_APP_SCOPES\\": \\"my-scope\\",
         \\"SHOPIFY_API_KEY\\": \\"api-key\\",
         \\"SHOPIFY_API_SECRET\\": \\"api-secret\\",
         \\"SCOPES\\": \\"my-scope\\"
