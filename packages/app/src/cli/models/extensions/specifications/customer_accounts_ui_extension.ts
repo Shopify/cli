@@ -36,7 +36,7 @@ const spec = createExtensionSpecification({
   partnersWebIdentifier: 'customer_accounts_ui_extension',
   schema: CustomerAccountsSchema,
   isPreviewable: true,
-  features: (_) => ['ui_legacy', 'bundling'],
+  appModuleFeatures: (_) => ['ui_legacy', 'bundling'],
   deployConfig: async (config, directory) => {
     return {
       extension_points: config.extensionPoints,

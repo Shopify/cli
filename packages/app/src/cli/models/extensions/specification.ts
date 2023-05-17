@@ -45,7 +45,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigContent
   ) => TokenizedString | undefined
   shouldFetchCartUrl?(config: TConfiguration): boolean
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
-  features: (config: TConfiguration) => ExtensionFeature[]
+  appModuleFeatures: (config: TConfiguration) => ExtensionFeature[]
   isPreviewable: boolean
 }
 
@@ -117,7 +117,7 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
   }
 
   get features(): ExtensionFeature[] {
-    return this.specification.features(this.configuration)
+    return this.specification.appModuleFeatures(this.configuration)
   }
 
   set usingExtensionsFramework(value: boolean) {
@@ -239,7 +239,7 @@ export type ForbiddenFields = 'registrationLimit' | 'category' | 'externalIdenti
 export interface CreateExtensionSpecType<TConfiguration extends BaseConfigContents = BaseConfigContents>
   extends Partial<Omit<ExtensionSpecification<TConfiguration>, ForbiddenFields>> {
   identifier: string
-  features: (config: TConfiguration) => ExtensionFeature[]
+  appModuleFeatures: (config: TConfiguration) => ExtensionFeature[]
   category?: () => ExtensionCategory
 }
 

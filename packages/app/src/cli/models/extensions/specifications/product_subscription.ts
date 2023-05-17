@@ -13,7 +13,7 @@ const spec = createExtensionSpecification({
   partnersWebIdentifier: 'product_subscription',
   schema: BaseUIExtensionSchema,
   isPreviewable: true,
-  features: (_) => ['ui_legacy', 'bundling'],
+  appModuleFeatures: (_) => ['ui_legacy', 'bundling'],
   deployConfig: async (_, directory) => {
     const result = await getDependencyVersion(dependency, directory)
     if (result === 'not_found') throw new BugError(`Dependency ${dependency} not found`)

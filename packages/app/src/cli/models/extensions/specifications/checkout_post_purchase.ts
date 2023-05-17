@@ -12,7 +12,7 @@ const spec = createExtensionSpecification({
   helpURL: 'https://shopify.dev/docs/apps/checkout/post-purchase',
   schema: BaseUIExtensionSchema,
   isPreviewable: true,
-  features: (_) => ['ui_legacy', 'bundling'],
+  appModuleFeatures: (_) => ['ui_legacy', 'bundling'],
   deployConfig: async (config, _) => {
     return {metafields: config.metafields}
   },

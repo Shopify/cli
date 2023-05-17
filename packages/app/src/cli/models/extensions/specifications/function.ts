@@ -21,7 +21,7 @@ const spec = createExtensionSpecification({
   partnersWebIdentifier: 'function',
   graphQLType: 'function',
   isPreviewable: false,
-  features: (_) => ['function'],
+  appModuleFeatures: (_) => ['function'],
   category: (): ExtensionCategory => 'function',
 })
 
