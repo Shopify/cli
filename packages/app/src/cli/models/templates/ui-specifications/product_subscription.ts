@@ -5,7 +5,7 @@ import {uiFlavors} from '../common.js'
  * Product Subscription UI extension template specification.
  */
 const productSubscriptionUIExtension: ExtensionTemplate = {
-  identifier: 'product_subscription',
+  identifier: 'subscription_ui',
   name: 'Subscription UI',
   group: 'Merchant admin',
   supportLinks: [],
