@@ -26,11 +26,15 @@ const InfoTable: FunctionComponent<InfoTableProps> = ({table}) => {
     ? table
     : Object.keys(table).map((header) => ({header, items: table[header]!, color: undefined, helperText: undefined}))
 
-  const headerColumnWidth = Math.max(...sections.map((section) => {
-    return Math.max(...section.header.split('\n').map(line => {
-      return line.length
-    }))
-  }))
+  const headerColumnWidth = Math.max(
+    ...sections.map((section) => {
+      return Math.max(
+        ...section.header.split('\n').map((line) => {
+          return line.length
+        }),
+      )
+    }),
+  )
 
   return (
     <Box flexDirection="column">
