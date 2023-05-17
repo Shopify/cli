@@ -5,6 +5,7 @@ import {ensureThemeStore} from '../../../utilities/theme-store.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {Flags} from '@oclif/core'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 export default class UpdateRun extends ThemeCommand {
   static description = `Run an 'update_extension.json' script in a theme.`
@@ -31,6 +32,14 @@ export default class UpdateRun extends ThemeCommand {
   }
 
   async run(): Promise<void> {
+    /**
+     * FIXME: Remove this warning when `triggerUpdaterAPI` gets updated at
+     * `packages/theme/src/cli/services/update/run.ts`.
+     */
+    renderWarning({
+      body: [{bold: 'Upcoming feature:'}, 'This command is under development and may not function as expected.'],
+    })
+
     const {flags} = await this.parse(UpdateRun)
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
