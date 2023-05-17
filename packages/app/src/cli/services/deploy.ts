@@ -112,7 +112,7 @@ export async function deploy(options: DeployOptions) {
                   const {moduleId} = await uploadWasmBlob(extension, identifiers.app, token)
                   return {
                     uuid: identifiers.extensions[extension.localIdentifier]!,
-                    config: JSON.stringify(await functionConfiguration(extension, moduleId)),
+                    config: JSON.stringify(await functionConfiguration(extension, moduleId, apiKey)),
                     context: '',
                   }
                 }),

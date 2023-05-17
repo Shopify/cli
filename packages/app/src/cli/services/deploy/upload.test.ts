@@ -1110,17 +1110,19 @@ describe('functionConfiguration', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const moduleId = 'module_id'
+      const appKey = 'app-key'
       const inputQuery = 'inputQuery'
       extension.inputQueryPath = joinPath(tmpDir, extension.inputQueryPath)
       await writeFile(extension.inputQueryPath, inputQuery)
 
       // When
-      const got = await functionConfiguration(extension, moduleId)
+      const got = await functionConfiguration(extension, moduleId, appKey)
 
       // Then
       expect(got).toEqual({
         title: extension.configuration.name,
         description: extension.configuration.description,
+        app_key: appKey,
         api_type: 'order_discounts',
         api_version: extension.configuration.apiVersion,
         ui: {
@@ -1146,16 +1148,18 @@ describe('functionConfiguration', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const moduleId = 'module_id'
+      const appKey = 'app-key'
       extension.configuration.input = undefined
       extension.configuration.ui = undefined
 
       // When
-      const got = await functionConfiguration(extension, moduleId)
+      const got = await functionConfiguration(extension, moduleId, appKey)
 
       // Then
       expect(got).toEqual({
         title: extension.configuration.name,
         description: extension.configuration.description,
+        app_key: appKey,
         api_type: 'order_discounts',
         api_version: extension.configuration.apiVersion,
         module_id: moduleId,
