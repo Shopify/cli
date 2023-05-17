@@ -173,7 +173,11 @@ async function uiExtensionInit({directory, url, app, name, extensionFlavor}: Ext
 
         await inTemporaryDirectory(async (tmpDir) => {
           const templateDirectory = await downloadOrFindTemplateDirectory(url, extensionFlavor, tmpDir)
-          await recursiveLiquidTemplateCopy(templateDirectory, directory, {srcFileExtension, name})
+          await recursiveLiquidTemplateCopy(templateDirectory, directory, {
+            srcFileExtension,
+            name,
+            flavor: extensionFlavor?.value ?? '',
+          })
         })
 
         if (extensionFlavor) {

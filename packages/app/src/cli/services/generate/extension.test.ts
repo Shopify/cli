@@ -216,6 +216,7 @@ describe('initialize a extension', async () => {
         expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
           srcFileExtension: ext,
           name,
+          flavor,
         })
       })
     },
@@ -249,6 +250,7 @@ describe('initialize a extension', async () => {
         {
           srcFileExtension: 'js',
           name,
+          flavor: extensionFlavor,
         },
       )
     })
