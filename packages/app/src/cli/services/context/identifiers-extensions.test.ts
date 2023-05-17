@@ -41,6 +41,13 @@ const REGISTRATION_B = {
   type: 'SUBSCRIPTION_MANAGEMENT',
 }
 
+const DASHBOARD_REGISTRATION_A = {
+  uuid: 'UUID_DASHBOARD_A',
+  id: 'DASHBOARD_A',
+  title: 'DASHBOARD_A',
+  type: 'APP_LINK',
+}
+
 const FUNCTION_REGISTRATION_A = {
   uuid: 'FUNCTION_A_UUID',
   id: 'FUNCTION_A',
@@ -74,7 +81,7 @@ const EXTENSION_A: UIExtension = {
   validate: () => Promise.resolve(ok({})),
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
-  hasExtensionPointTarget: (target: string) => true,
+  hasExtensionPointTarget: (_target: string) => true,
   isPreviewable: true,
 }
 
@@ -104,7 +111,7 @@ const EXTENSION_A_2: UIExtension = {
   validate: () => Promise.resolve(ok({})),
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
-  hasExtensionPointTarget: (target: string) => true,
+  hasExtensionPointTarget: (_target: string) => true,
   isPreviewable: true,
 }
 
@@ -134,7 +141,7 @@ const EXTENSION_B: UIExtension = {
   validate: () => Promise.resolve(ok({})),
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
-  hasExtensionPointTarget: (target: string) => true,
+  hasExtensionPointTarget: (_target: string) => true,
   isPreviewable: true,
 }
 
@@ -569,7 +576,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
     // When
     await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), {
       extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2],
-      dashboardManagedExtensionRegistrations: [],
+      dashboardManagedExtensionRegistrations: [DASHBOARD_REGISTRATION_A],
     })
 
     // Then
@@ -581,7 +588,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
           EXTENSION_A_2: 'UUID_A_2',
         },
         onlyRemote: [],
-        dashboardOnly: [],
+        dashboardOnly: [DASHBOARD_REGISTRATION_A],
         toCreate: [],
       },
       PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA,
