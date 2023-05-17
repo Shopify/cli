@@ -165,6 +165,8 @@ async function functionExtensionInit({directory, url, app, name, extensionFlavor
 }
 
 async function uiExtensionInit({directory, url, app, name, extensionFlavor}: ExtensionInitOptions) {
+  const templateLanguage = getTemplateLanguage(extensionFlavor?.value)
+
   const tasks = [
     {
       title: `Generating UI extension`,
@@ -180,9 +182,9 @@ async function uiExtensionInit({directory, url, app, name, extensionFlavor}: Ext
           })
         })
 
-        if (extensionFlavor) {
+        if (templateLanguage === 'javascript') {
           await changeIndexFileExtension(directory, srcFileExtension)
-          await removeUnwantedTemplateFilesPerFlavor(directory, extensionFlavor.value)
+          await removeUnwantedTemplateFilesPerFlavor(directory, extensionFlavor!.value)
         }
       },
     },
