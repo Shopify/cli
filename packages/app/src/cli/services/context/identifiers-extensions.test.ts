@@ -491,7 +491,10 @@ describe('ensureExtensionsIds: excludes functions when unifiedAppDeployment beta
     // When
     const got = await ensureExtensionsIds(
       options([EXTENSION_A], [FUNCTION_A], {}, PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA),
-      [REGISTRATION_A, FUNCTION_REGISTRATION_A],
+      {
+        extensionRegistrations: [REGISTRATION_A, FUNCTION_REGISTRATION_A],
+        dashboardManagedExtensionRegistrations: [],
+      },
     )
 
     // Then
@@ -527,7 +530,10 @@ describe('ensureExtensionsIds: includes functions when unifiedAppDeployment beta
     // When
     const got = await ensureExtensionsIds(
       options([EXTENSION_A], [FUNCTION_A], {}, PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA),
-      [REGISTRATION_A, FUNCTION_REGISTRATION_A],
+      {
+        extensionRegistrations: [REGISTRATION_A, FUNCTION_REGISTRATION_A],
+        dashboardManagedExtensionRegistrations: [],
+      },
     )
 
     // Then
