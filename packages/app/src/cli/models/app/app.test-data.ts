@@ -1,13 +1,13 @@
 import {App, AppInterface} from './app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
-import {TemplateSpecification} from './template.js'
+import {ExtensionTemplate} from './template.js'
 import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
 import {FunctionConfigType, FunctionInstance} from '../extensions/functions.js'
 import {ThemeExtensionInstance} from '../extensions/theme.js'
 import themeSpec from '../extensions/theme-specifications/theme.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/specifications.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import themeSpecification from '../templates/theme-specifications/theme.js'
+import themeExtension from '../templates/theme-specifications/theme.js'
 import checkoutPostPurchaseExtension from '../templates/ui-specifications/checkout_post_purchase.js'
 import checkoutUIExtension from '../templates/ui-specifications/checkout_ui_extension.js'
 
@@ -237,7 +237,7 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
   },
 ]
 
-export const testRemoteTemplateSpecifications: TemplateSpecification[] = [
+export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
   {
     identifier: 'cart_checkout_validation',
     name: 'Function - Cart and Checkout Validation',
@@ -340,8 +340,8 @@ export const testRemoteTemplateSpecifications: TemplateSpecification[] = [
   },
 ]
 
-export const testLocalTemplateSpecifications: TemplateSpecification[] = [
-  themeSpecification,
+export const testLocalExtensionTemplates: ExtensionTemplate[] = [
+  themeExtension,
   checkoutPostPurchaseExtension,
   checkoutUIExtension,
 ]

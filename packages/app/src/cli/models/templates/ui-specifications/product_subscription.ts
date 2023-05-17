@@ -1,10 +1,10 @@
-import {TemplateSpecification} from '../../app/template.js'
+import {ExtensionTemplate} from '../../app/template.js'
 import {uiFlavors} from '../common.js'
 
 /**
  * Product Subscription UI extension template specification.
  */
-const productSubscriptionUIExtension: TemplateSpecification = {
+const productSubscriptionUIExtension: ExtensionTemplate = {
   identifier: 'product_subscription',
   name: 'Subscription UI',
   group: 'Merchant admin',

@@ -1,10 +1,10 @@
-import {TemplateSpecification} from '../../app/template.js'
+import {ExtensionTemplate} from '../../app/template.js'
 import {uiFlavors} from '../common.js'
 
 /**
  * Post-purchase UI template specification.
  */
-const checkoutPostPurchaseExtension: TemplateSpecification = {
+const checkoutPostPurchaseExtension: ExtensionTemplate = {
   identifier: 'checkout_post_purchase',
   name: 'Post-purchase UI',
   group: 'Discounts and checkout',

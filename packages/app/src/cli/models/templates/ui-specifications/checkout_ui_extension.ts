@@ -1,10 +1,10 @@
-import {TemplateSpecification} from '../../app/template.js'
+import {ExtensionTemplate} from '../../app/template.js'
 import {uiFlavors} from '../common.js'
 
 /**
  * Checkout UI template specification.
  */
-const checkoutUIExtension: TemplateSpecification = {
+const checkoutUIExtension: ExtensionTemplate = {
   identifier: 'checkout_ui_extension',
   name: 'Checkout UI',
   group: 'Discounts and checkout',

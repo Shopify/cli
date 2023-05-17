@@ -1,4 +1,4 @@
-import {TemplateSpecification} from '../../models/app/template.js'
+import {ExtensionTemplate} from '../../models/app/template.js'
 import {gql} from 'graphql-request'
 
 export const RemoteTemplateSpecificationsQuery = gql`
@@ -23,5 +23,5 @@ export const RemoteTemplateSpecificationsQuery = gql`
 `
 
 export interface RemoteTemplateSpecificationsQuerySchema {
-  templateSpecifications: TemplateSpecification[]
+  templateSpecifications: ExtensionTemplate[]
 }

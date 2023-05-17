@@ -1,9 +1,9 @@
-import {TemplateSpecification} from '../../app/template.js'
+import {ExtensionTemplate} from '../../app/template.js'
 
 /**
  * Theme App extension template specification.
  */
-const themeSpecification: TemplateSpecification = {
+const themeExtension: ExtensionTemplate = {
   identifier: 'theme',
   name: 'Theme app extension',
   group: 'Online store',
@@ -24,4 +24,4 @@ const themeSpecification: TemplateSpecification = {
   ],
 }
 
-export default themeSpecification
+export default themeExtension

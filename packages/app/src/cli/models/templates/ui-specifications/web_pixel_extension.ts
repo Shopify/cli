@@ -1,9 +1,9 @@
-import {TemplateSpecification} from '../../app/template.js'
+import {ExtensionTemplate} from '../../app/template.js'
 
 /**
  * Web Pixel UI extension template specification.
  */
-const webPixelUIExtension: TemplateSpecification = {
+const webPixelUIExtension: ExtensionTemplate = {
   identifier: 'web_pixel_extension',
   name: 'Web Pixel',
   group: 'Analytics',

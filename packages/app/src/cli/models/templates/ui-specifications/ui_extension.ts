@@ -1,10 +1,10 @@
-import {TemplateSpecification} from '../../app/template.js'
+import {ExtensionTemplate} from '../../app/template.js'
 import {uiFlavors} from '../common.js'
 
 /**
  * UI extension template specification.
  */
-const UIExtension: TemplateSpecification = {
+const UIExtension: ExtensionTemplate = {
   identifier: 'ui_extension',
   name: 'UI Extension',
   group: 'Shopify private',

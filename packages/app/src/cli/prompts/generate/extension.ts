@@ -1,6 +1,6 @@
 import {AppInterface} from '../../models/app/app.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
-import {TemplateSpecification, TemplateType} from '../../models/app/template.js'
+import {ExtensionTemplate, TemplateType} from '../../models/app/template.js'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputWarn} from '@shopify/cli-kit/node/output'
@@ -12,13 +12,13 @@ export interface GenerateExtensionPromptOptions {
   extensionFlavor?: ExtensionFlavorValue
   directory: string
   app: AppInterface
-  templateSpecifications: TemplateSpecification[]
+  extensionTemplates: ExtensionTemplate[]
   unavailableExtensions: string[]
   reset: boolean
 }
 
 export interface GenerateExtensionPromptOutput {
-  templateSpecification: TemplateSpecification
+  extensionTemplate: ExtensionTemplate
   extensionContent: GenerateExtensionContentOutput[]
 }
 
@@ -28,8 +28,8 @@ export interface GenerateExtensionContentOutput {
   flavor?: ExtensionFlavorValue
 }
 
-export function buildChoices(templateSpecifications: TemplateSpecification[]) {
-  const templateSpecChoices = templateSpecifications.map((spec) => {
+export function buildChoices(extensionTemplates: ExtensionTemplate[]) {
+  const templateSpecChoices = extensionTemplates.map((spec) => {
     return {
       label: spec.name,
       value: spec.identifier,
@@ -42,7 +42,7 @@ export function buildChoices(templateSpecifications: TemplateSpecification[]) {
 const generateExtensionPrompts = async (
   options: GenerateExtensionPromptOptions,
 ): Promise<GenerateExtensionPromptOutput> => {
-  let templateSpecifications = options.templateSpecifications
+  let templateSpecifications = options.extensionTemplates
   let templateType = options.templateType
   const extensionFlavor = options.extensionFlavor
 
@@ -81,7 +81,7 @@ const generateExtensionPrompts = async (
   }
   /* eslint-enable no-await-in-loop */
 
-  return {templateSpecification, extensionContent}
+  return {extensionTemplate: templateSpecification, extensionContent}
 }
 
 async function promptName(directory: string): Promise<string> {

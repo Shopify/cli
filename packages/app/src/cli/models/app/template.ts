@@ -7,7 +7,7 @@ export interface TemplateType {
   url: string
 }
 
-export interface TemplateSpecification {
+export interface ExtensionTemplate {
   identifier: string
   name: string
   group: string
@@ -15,6 +15,6 @@ export interface TemplateSpecification {
   types: TemplateType[]
 }
 
-export function getTypesExternalName(templates: TemplateSpecification[]): string[] {
+export function getTypesExternalName(templates: ExtensionTemplate[]): string[] {
   return templates.flatMap((template) => template.name)
 }

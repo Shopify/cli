@@ -1,6 +1,6 @@
 import {fetchTemplateSpecifications} from './fetch-template-specifications.js'
-import {testRemoteTemplateSpecifications} from '../../models/app/app.test-data.js'
-import {TemplateSpecification} from '../../models/app/template.js'
+import {testRemoteExtensionTemplates} from '../../models/app/app.test-data.js'
+import {ExtensionTemplate} from '../../models/app/template.js'
 import {describe, vi, expect, test} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
@@ -9,10 +9,10 @@ vi.mock('@shopify/cli-kit/node/api/partners')
 describe('fetchTemplateSpecifications', () => {
   test('returns the remote and local specs', async () => {
     // Given
-    vi.mocked(partnersRequest).mockResolvedValue({templateSpecifications: testRemoteTemplateSpecifications})
+    vi.mocked(partnersRequest).mockResolvedValue({templateSpecifications: testRemoteExtensionTemplates})
 
     // When
-    const got: TemplateSpecification[] = await fetchTemplateSpecifications('token')
+    const got: ExtensionTemplate[] = await fetchTemplateSpecifications('token')
 
     // Then
     expect(got.length).toEqual(13)

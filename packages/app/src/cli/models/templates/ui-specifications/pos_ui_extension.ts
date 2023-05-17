@@ -1,10 +1,10 @@
-import {TemplateSpecification} from '../../app/template.js'
+import {ExtensionTemplate} from '../../app/template.js'
 import {uiFlavors} from '../common.js'
 
 /**
  * POS UI template specification.
  */
-const posUIExtension: TemplateSpecification = {
+const posUIExtension: ExtensionTemplate = {
   identifier: 'pos_ui_extension',
   name: 'POS UI',
   group: 'Point-of-Sale',

@@ -14,7 +14,7 @@ import {
   generateExtensionTemplate,
   ExtensionFlavorValue,
 } from '../services/generate/extension.js'
-import {TemplateSpecification, TemplateType, getTypesExternalName} from '../models/app/template.js'
+import {ExtensionTemplate, TemplateType, getTypesExternalName} from '../models/app/template.js'
 import {blocks} from '../constants.js'
 import {GenericSpecification} from '../models/app/extensions.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
@@ -57,15 +57,15 @@ async function generate(options: GenerateOptions) {
 }
 
 async function buildPromptOptions(
-  templateSpecifications: TemplateSpecification[],
+  extensionTemplates: ExtensionTemplate[],
   specifications: GenericSpecification[],
   app: AppInterface,
   options: GenerateOptions,
 ): Promise<GenerateExtensionPromptOptions> {
-  const templateSpecification = await handleTypeParameter(options.type, app, templateSpecifications, specifications)
+  const templateSpecification = await handleTypeParameter(options.type, app, extensionTemplates, specifications)
   validateExtensionFlavor(templateSpecification, options.template)
 
-  const {validTemplateSpecifications, templatesOverlimit} = checkLimits(templateSpecifications, specifications, app)
+  const {validTemplateSpecifications, templatesOverlimit} = checkLimits(extensionTemplates, specifications, app)
 
   return {
     templateType: templateSpecification?.identifier,
@@ -73,22 +73,22 @@ async function buildPromptOptions(
     extensionFlavor: options.template as ExtensionFlavorValue,
     directory: joinPath(options.directory, 'extensions'),
     app,
-    templateSpecifications: validTemplateSpecifications ?? [],
+    extensionTemplates: validTemplateSpecifications ?? [],
     unavailableExtensions: getTypesExternalName(templatesOverlimit ?? []),
     reset: options.reset,
   }
 }
 
 function checkLimits(
-  templateSpecifications: TemplateSpecification[],
+  extensionTemplates: ExtensionTemplate[],
   specifications: GenericSpecification[],
   app: AppInterface,
 ) {
-  const iterateeFunction = (spec: TemplateSpecification) => {
-    const allValid = spec.types.every((type) => !limitReached(app, specifications, type))
+  const iterateeFunction = (template: ExtensionTemplate) => {
+    const allValid = template.types.every((type) => !limitReached(app, specifications, type))
     return allValid ? 'validTemplateSpecifications' : 'templatesOverlimit'
   }
-  return groupBy(templateSpecifications, iterateeFunction)
+  return groupBy(extensionTemplates, iterateeFunction)
 }
 
 function limitReached(app: AppInterface, specifications: GenericSpecification[], templateType: TemplateType) {
@@ -107,7 +107,7 @@ async function saveAnalyticsMetadata(promptAnswers: GenerateExtensionPromptOutpu
     promptAnswers.extensionContent.map((extensionContent) => {
       return metadata.addPublicMetadata(() => ({
         cmd_scaffold_template_flavor: extensionContent.flavor,
-        cmd_scaffold_type: promptAnswers.templateSpecification.identifier,
+        cmd_scaffold_type: promptAnswers.extensionTemplate.identifier,
         cmd_scaffold_used_prompts_for_type: !typeFlag,
       }))
     }),
@@ -123,7 +123,7 @@ function buildGenerateOptions(
     app,
     cloneUrl: options.cloneUrl,
     extensionChoices: promptAnswers.extensionContent,
-    specification: promptAnswers.templateSpecification,
+    extensionTemplate: promptAnswers.extensionTemplate,
   }
 }
 
@@ -133,7 +133,7 @@ function renderSuccessMessages(
 ) {
   generatedExtensions.forEach((extension) => {
     const formattedSuccessfulMessage = formatSuccessfulRunMessage(
-      extension.specification,
+      extension.extensionTemplate,
       extension.directory,
       packageManager,
     )
@@ -141,12 +141,10 @@ function renderSuccessMessages(
   })
 }
 
-function validateExtensionFlavor(templateSpecification?: TemplateSpecification, flavor?: string) {
-  if (!flavor || !templateSpecification) return
+function validateExtensionFlavor(extensionTemplate?: ExtensionTemplate, flavor?: string) {
+  if (!flavor || !extensionTemplate) return
 
-  const possibleFlavors: string[] = templateSpecification.types[0]!.supportedFlavors.map(
-    (flavor) => flavor.value as string,
-  )
+  const possibleFlavors: string[] = extensionTemplate.types[0]!.supportedFlavors.map((flavor) => flavor.value as string)
 
   if (!possibleFlavors.includes(flavor)) {
     throw new AbortError(
@@ -157,7 +155,7 @@ function validateExtensionFlavor(templateSpecification?: TemplateSpecification, 
 }
 
 function formatSuccessfulRunMessage(
-  specification: TemplateSpecification,
+  extensionTemplate: ExtensionTemplate,
   extensionDirectory: string,
   depndencyManager: PackageManager,
 ): RenderAlertOptions {
@@ -167,15 +165,18 @@ function formatSuccessfulRunMessage(
     reference: [],
   }
 
-  if (specification.types.some((type) => type.type !== 'function')) {
+  if (extensionTemplate.types.some((type) => type.type !== 'function')) {
     options.nextSteps!.push([
       'To preview this extension along with the rest of the project, run',
       {command: `${formatPackageManagerCommand(depndencyManager, 'dev')}`},
     ])
   }
 
-  if (specification.supportLinks[0]) {
-    options.reference!.push(['For more details, see the', {link: {label: 'docs', url: specification.supportLinks[0]}}])
+  if (extensionTemplate.supportLinks[0]) {
+    options.reference!.push([
+      'For more details, see the',
+      {link: {label: 'docs', url: extensionTemplate.supportLinks[0]}},
+    ])
   }
 
   return options
@@ -184,9 +185,9 @@ function formatSuccessfulRunMessage(
 async function handleTypeParameter(
   typeFlag: string | undefined,
   app: AppInterface,
-  templateSpecifications: TemplateSpecification[],
+  templateSpecifications: ExtensionTemplate[],
   specifications: GenericSpecification[],
-): Promise<TemplateSpecification | undefined> {
+): Promise<ExtensionTemplate | undefined> {
   if (!typeFlag) return
 
   const templateSpecification = templateSpecifications.find((spec) => spec.identifier === typeFlag)

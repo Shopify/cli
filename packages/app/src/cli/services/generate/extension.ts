@@ -3,7 +3,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {buildGraphqlTypes} from '../function/build.js'
 import {GenerateExtensionContentOutput} from '../../prompts/generate/extension.js'
 import {ExtensionFlavor} from '../../models/app/extensions.js'
-import {TemplateSpecification} from '../../models/app/template.js'
+import {ExtensionTemplate} from '../../models/app/template.js'
 import {
   ensureDownloadedExtensionFlavorExists,
   ensureExtensionDirectoryExists,
@@ -26,7 +26,7 @@ export interface GenerateExtensionTemplateOptions {
   app: AppInterface
   cloneUrl?: string
   extensionChoices: GenerateExtensionContentOutput[]
-  specification: TemplateSpecification
+  extensionTemplate: ExtensionTemplate
 }
 
 export type ExtensionFlavorValue =
@@ -57,7 +57,7 @@ function getTemplateLanguage(flavor: ExtensionFlavorValue | undefined): Template
 
 export interface GeneratedExtension {
   directory: string
-  specification: TemplateSpecification
+  extensionTemplate: ExtensionTemplate
 }
 
 interface ExtensionInitOptions {
@@ -73,7 +73,7 @@ export async function generateExtensionTemplate(
   options: GenerateExtensionTemplateOptions,
 ): Promise<GeneratedExtension[]> {
   return Promise.all(
-    options.specification.types.flatMap(async (spec, index) => {
+    options.extensionTemplate.types.flatMap(async (spec, index) => {
       const extensionName: string = options.extensionChoices[index]!.name
       const extensionFlavorValue = options.extensionChoices[index]?.flavor
       const extensionFlavor = spec.supportedFlavors.find((flavor) => flavor.value === extensionFlavorValue)
@@ -88,7 +88,7 @@ export async function generateExtensionTemplate(
         extensionFlavor,
       }
       await extensionInit(initOptions)
-      return {directory: relativizePath(directory), specification: options.specification}
+      return {directory: relativizePath(directory), extensionTemplate: options.extensionTemplate}
     }),
   )
 }

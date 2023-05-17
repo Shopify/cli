@@ -1,9 +1,9 @@
-import {TemplateSpecification} from '../../app/template.js'
+import {ExtensionTemplate} from '../../app/template.js'
 
 /**
  * Tax Calculation UI extension template specification.
  */
-const taxCalculationUIExtension: TemplateSpecification = {
+const taxCalculationUIExtension: ExtensionTemplate = {
   identifier: 'tax_calculation',
   name: 'Tax Calculation',
   group: 'Merchant admin',
