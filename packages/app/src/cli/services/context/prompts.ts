@@ -39,7 +39,7 @@ interface SourceSummary {
   identifiers: IdentifiersExtensions
   toCreate: LocalSource[]
   onlyRemote: RemoteSource[]
-  dashboardOnly?: RemoteSource[]
+  dashboardOnly: RemoteSource[]
 }
 
 export async function deployConfirmationPrompt(
@@ -58,7 +58,7 @@ export async function deployConfirmationPrompt(
     infoTable.push({header: 'Update', items: toUpdate})
   }
 
-  if (dashboardOnly?.length && dashboardOnly.length > 0) {
+  if (dashboardOnly.length > 0) {
     infoTable.push({header: 'Included from Partner dashboard', items: dashboardOnly.map((source) => source.title)})
   }
 
