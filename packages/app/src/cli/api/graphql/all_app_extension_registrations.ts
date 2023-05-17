@@ -9,6 +9,12 @@ export const AllAppExtensionRegistrationsQuery = gql`
         title
         type
       }
+      dashboardManagedExtensionRegistrations {
+        id
+        uuid
+        title
+        type
+      }
       functions {
         id
         uuid
@@ -23,19 +29,17 @@ export interface AllAppExtensionRegistrationsQueryVariables {
   apiKey: string
 }
 
+interface ExtensionRegistration {
+  id: string
+  uuid: string
+  title: string
+  type: string
+}
+
 export interface AllAppExtensionRegistrationsQuerySchema {
   app: {
-    extensionRegistrations: {
-      id: string
-      uuid: string
-      title: string
-      type: string
-    }[]
-    functions: {
-      id: string
-      uuid: string
-      title: string
-      type: string
-    }[]
+    extensionRegistrations: ExtensionRegistration[]
+    dashboardManagedExtensionRegistrations: ExtensionRegistration[]
+    functions: ExtensionRegistration[]
   }
 }

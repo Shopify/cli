@@ -343,6 +343,7 @@ describe('ensureFunctionsIds: asks user to confirm deploy', () => {
       },
       onlyRemote: [],
       toCreate: [],
+      dashboardOnly: [],
     })
   })
 

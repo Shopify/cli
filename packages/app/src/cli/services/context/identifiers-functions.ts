@@ -38,6 +38,7 @@ export async function ensureFunctionsIds(
       identifiers: validMatches,
       toCreate: functionsToCreate,
       onlyRemote: onlyRemoteFunctions,
+      dashboardOnly: [],
     })
     if (!confirmed) return err('user-cancelled')
   }
