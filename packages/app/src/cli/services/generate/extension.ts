@@ -1,10 +1,14 @@
-import {blocks, versions} from '../../constants.js'
+import {versions} from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
 import {buildGraphqlTypes} from '../function/build.js'
 import {GenerateExtensionContentOutput} from '../../prompts/generate/extension.js'
 import {ExtensionFlavor} from '../../models/app/extensions.js'
 import {TemplateSpecification} from '../../models/app/template.js'
-import {ensureDownloadedExtensionFlavorExists, ensureLocalExtensionFlavorExists} from '../extensions/common.js'
+import {
+  ensureDownloadedExtensionFlavorExists,
+  ensureExtensionDirectoryExists,
+  ensureLocalExtensionFlavorExists,
+} from '../extensions/common.js'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
@@ -17,8 +21,6 @@ import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository} from '@shopify/cli-kit/node/git'
 import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativizePath} from '@shopify/cli-kit/node/path'
-import {hyphenate} from '@shopify/cli-kit/common/string'
-import {AbortError} from '@shopify/cli-kit/node/error'
 
 export interface GenerateExtensionTemplateOptions {
   app: AppInterface
@@ -132,11 +134,6 @@ async function functionExtensionInit({directory, url, app, name, extensionFlavor
       if (templateLanguage === 'javascript') {
         const srcFileExtension = getSrcFileExtension(extensionFlavor?.value || 'rust')
         await changeIndexFileExtension(directory, srcFileExtension)
-      }
-
-      const configYamlPath = joinPath(directory, 'script.config.yml')
-      if (await fileExists(configYamlPath)) {
-        await removeFile(configYamlPath)
       }
     },
   })
@@ -261,18 +258,6 @@ async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, 
   if (extensionFlavor !== 'typescript-react') {
     await removeFile(joinPath(extensionDirectory, 'tsconfig.json'))
   }
-}
-
-async function ensureExtensionDirectoryExists({name, app}: {name: string; app: AppInterface}): Promise<string> {
-  const hyphenizedName = hyphenate(name)
-  const extensionDirectory = joinPath(app.directory, blocks.extensions.directoryName, hyphenizedName)
-  if (await fileExists(extensionDirectory)) {
-    throw new AbortError(
-      `\nA directory with this name (${hyphenizedName}) already exists.\nChoose a new name for your extension.`,
-    )
-  }
-  await mkdir(extensionDirectory)
-  return extensionDirectory
 }
 
 async function addResolutionOrOverrideIfNeeded(directory: string, extensionFlavor: ExtensionFlavorValue | undefined) {

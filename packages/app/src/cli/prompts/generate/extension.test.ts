@@ -20,7 +20,7 @@ beforeEach(() => {
 describe('extension prompt', async () => {
   const allUISpecs = localTemplateSpecifications()
   const allFunctionSpecs = testRemoteTemplateSpecifications
-  const allSpecs = allFunctionSpecs.concat(allUISpecs).concat(themeSpecification)
+  const allSpecs = allFunctionSpecs.concat(allUISpecs)
 
   const extensionTypeQuestion = {
     message: 'Type of extension?',
@@ -32,7 +32,7 @@ describe('extension prompt', async () => {
   }
 
   test('when name is not passed', async () => {
-    const answers = {name: 'ext', extensionType: 'checkout_ui_extension'}
+    const answers = {name: 'ext', extensionType: 'ui_extension'}
     const options = {
       directory: '/',
       app: testApp(),
@@ -40,7 +40,7 @@ describe('extension prompt', async () => {
       templateSpecifications: allUISpecs,
       unavailableExtensions: [],
     }
-    const specification = findExtensionSpecification('checkout_ui_extension', allUISpecs)
+    const specification = findExtensionSpecification('ui_extension', allUISpecs)
 
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionType)
@@ -59,7 +59,7 @@ describe('extension prompt', async () => {
   })
 
   test('when name is passed', async () => {
-    const answers = {extensionType: 'checkout_ui_extension'}
+    const answers = {extensionType: 'ui_extension'}
     const options = {
       name: 'my-special-extension',
       directory: '/',
@@ -68,7 +68,7 @@ describe('extension prompt', async () => {
       templateSpecifications: allUISpecs,
       unavailableExtensions: [],
     }
-    const templateSpecification = findExtensionSpecification('checkout_ui_extension', allUISpecs)
+    const templateSpecification = findExtensionSpecification('ui_extension', allUISpecs)
 
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionType)
