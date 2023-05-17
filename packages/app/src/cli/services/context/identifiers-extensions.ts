@@ -74,7 +74,7 @@ export async function ensureExtensionsIds(
         identifiers: validMatches,
         toCreate: extensionsToCreate,
         onlyRemote: onlyRemoteExtensions,
-        dashboardOnly: dashboardOnlyExtensions,
+        dashboardOnly: options.partnersApp?.betas?.unifiedAppDeployment ? dashboardOnlyExtensions : [],
       },
       options.partnersApp,
     )
