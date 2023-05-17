@@ -4,7 +4,7 @@ import {testApp, testRemoteExtensionTemplates} from '../../models/app/app.test-d
 import {ExtensionTemplate} from '../../models/app/template.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
 import themeExtension from '../../models/templates/theme-specifications/theme.js'
-import {localTemplateSpecifications} from '../../services/generate/fetch-template-specifications.js'
+import {localExtensionTemplates} from '../../services/generate/fetch-template-specifications.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
 import {isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
@@ -18,7 +18,7 @@ beforeEach(() => {
 })
 
 describe('extension prompt', async () => {
-  const allUITemplates = localTemplateSpecifications()
+  const allUITemplates = localExtensionTemplates()
   const allFunctionTemplates = testRemoteExtensionTemplates
   const allTemplates = allFunctionTemplates.concat(allUITemplates)
 

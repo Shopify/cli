@@ -14,15 +14,15 @@ import UIExtension from '../../models/templates/ui-specifications/ui_extension.j
 import webPixelUIExtension from '../../models/templates/ui-specifications/web_pixel_extension.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
-export async function fetchTemplateSpecifications(token: string): Promise<ExtensionTemplate[]> {
+export async function fetchExtensionTemplates(token: string): Promise<ExtensionTemplate[]> {
   const remoteTemplates: RemoteTemplateSpecificationsQuerySchema = await partnersRequest(
     RemoteTemplateSpecificationsQuery,
     token,
   )
-  return remoteTemplates.templateSpecifications.concat(localTemplateSpecifications())
+  return remoteTemplates.templateSpecifications.concat(localExtensionTemplates())
 }
 
-export function localTemplateSpecifications() {
+export function localExtensionTemplates() {
   return [
     themeExtension,
     checkoutPostPurchaseExtension,

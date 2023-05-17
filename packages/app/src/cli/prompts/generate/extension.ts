@@ -42,14 +42,14 @@ export function buildChoices(extensionTemplates: ExtensionTemplate[]) {
 const generateExtensionPrompts = async (
   options: GenerateExtensionPromptOptions,
 ): Promise<GenerateExtensionPromptOutput> => {
-  let templateSpecifications = options.extensionTemplates
+  let extensionTemplates = options.extensionTemplates
   let templateType = options.templateType
   const extensionFlavor = options.extensionFlavor
 
   if (!templateType) {
     if (extensionFlavor) {
-      templateSpecifications = templateSpecifications.filter((spec) =>
-        spec.types[0]?.supportedFlavors.map((elem) => elem.value as string).includes(extensionFlavor),
+      extensionTemplates = extensionTemplates.filter((template) =>
+        template.types[0]?.supportedFlavors.map((elem) => elem.value as string).includes(extensionFlavor),
       )
     }
 
@@ -59,29 +59,29 @@ const generateExtensionPrompts = async (
       )
     }
 
-    if (templateSpecifications.length === 0) {
+    if (extensionTemplates.length === 0) {
       throw new AbortError('You have reached the limit for the number of extensions you can create.')
     }
 
     // eslint-disable-next-line require-atomic-updates
     templateType = await renderSelectPrompt({
       message: 'Type of extension?',
-      choices: buildChoices(templateSpecifications),
+      choices: buildChoices(extensionTemplates),
     })
   }
 
-  const templateSpecification = templateSpecifications.find((spec) => spec.identifier === templateType)!
+  const extensionTemplate = extensionTemplates.find((template) => template.identifier === templateType)!
 
   const extensionContent: GenerateExtensionContentOutput[] = []
   /* eslint-disable no-await-in-loop */
-  for (const [index, spec] of templateSpecification.types.entries()) {
-    const name = (templateSpecification.types.length === 1 && options.name) || (await promptName(options.directory))
-    const flavor = options.extensionFlavor ?? (await promptFlavor(spec))
+  for (const [index, templateType] of extensionTemplate.types.entries()) {
+    const name = (extensionTemplate.types.length === 1 && options.name) || (await promptName(options.directory))
+    const flavor = options.extensionFlavor ?? (await promptFlavor(templateType))
     extensionContent.push({index, name, flavor})
   }
   /* eslint-enable no-await-in-loop */
 
-  return {extensionTemplate: templateSpecification, extensionContent}
+  return {extensionTemplate, extensionContent}
 }
 
 async function promptName(directory: string): Promise<string> {
@@ -91,18 +91,18 @@ async function promptName(directory: string): Promise<string> {
   })
 }
 
-async function promptFlavor(specification: TemplateType): Promise<ExtensionFlavorValue | undefined> {
-  if (specification.supportedFlavors.length === 0) {
+async function promptFlavor(templateType: TemplateType): Promise<ExtensionFlavorValue | undefined> {
+  if (templateType.supportedFlavors.length === 0) {
     return undefined
   }
 
-  if (specification.supportedFlavors.length === 1 && specification.supportedFlavors[0]) {
-    return specification.supportedFlavors[0].value
+  if (templateType.supportedFlavors.length === 1 && templateType.supportedFlavors[0]) {
+    return templateType.supportedFlavors[0].value
   }
 
   return renderSelectPrompt({
     message: 'What would you like to work in?',
-    choices: specification.supportedFlavors.map((flavor) => {
+    choices: templateType.supportedFlavors.map((flavor) => {
       return {
         label: flavor.name,
         value: flavor.value,

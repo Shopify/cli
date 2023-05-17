@@ -181,15 +181,15 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
     },
   })
 
-  const allTemplateSpecs = testRemoteExtensionTemplates.concat(testLocalExtensionTemplates)
-  const templateSpecification = allTemplateSpecs.find((spec) => spec.identifier === identifier)!
+  const allExtensionTemplates = testRemoteExtensionTemplates.concat(testLocalExtensionTemplates)
+  const extensionTemplate = allExtensionTemplates.find((spec) => spec.identifier === identifier)!
 
   vi.mocked(loadApp).mockResolvedValue(app)
   vi.mocked(partnersRequest).mockResolvedValueOnce({extensionSpecifications: testRemoteSpecifications})
   vi.mocked(partnersRequest).mockResolvedValueOnce({templateSpecifications: testRemoteExtensionTemplates})
   vi.mocked(ensureGenerateContext).mockResolvedValue('api-key')
   vi.mocked(generateExtensionPrompts).mockResolvedValue({
-    extensionTemplate: templateSpecification,
+    extensionTemplate,
     extensionContent: [
       {
         index: 0,
@@ -199,7 +199,7 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
     ],
   })
   vi.mocked(generateExtensionTemplate).mockResolvedValue([
-    {directory: joinPath('extensions', 'name'), extensionTemplate: templateSpecification},
+    {directory: joinPath('extensions', 'name'), extensionTemplate},
   ])
   return mockAndCaptureOutput()
 }

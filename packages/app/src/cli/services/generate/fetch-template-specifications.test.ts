@@ -1,4 +1,4 @@
-import {fetchTemplateSpecifications} from './fetch-template-specifications.js'
+import {fetchExtensionTemplates} from './fetch-template-specifications.js'
 import {testRemoteExtensionTemplates} from '../../models/app/app.test-data.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
 import {describe, vi, expect, test} from 'vitest'
@@ -12,7 +12,7 @@ describe('fetchTemplateSpecifications', () => {
     vi.mocked(partnersRequest).mockResolvedValue({templateSpecifications: testRemoteExtensionTemplates})
 
     // When
-    const got: ExtensionTemplate[] = await fetchTemplateSpecifications('token')
+    const got: ExtensionTemplate[] = await fetchExtensionTemplates('token')
 
     // Then
     expect(got.length).toEqual(13)

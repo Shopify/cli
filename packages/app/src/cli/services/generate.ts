@@ -1,4 +1,4 @@
-import {fetchTemplateSpecifications} from './generate/fetch-template-specifications.js'
+import {fetchExtensionTemplates} from './generate/fetch-template-specifications.js'
 import {ensureGenerateContext} from './context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {AppInterface} from '../models/app/app.js'
@@ -43,9 +43,9 @@ async function generate(options: GenerateOptions) {
   const apiKey = await ensureGenerateContext({...options, token})
   const specifications = await fetchSpecifications({token, apiKey, config: options.config})
   const app: AppInterface = await loadApp({directory: options.directory, specifications})
-  const templateSpecifications = await fetchTemplateSpecifications(token)
+  const extensionTemplates = await fetchExtensionTemplates(token)
 
-  const promptOptions = await buildPromptOptions(templateSpecifications, specifications, app, options)
+  const promptOptions = await buildPromptOptions(extensionTemplates, specifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)
 
   await saveAnalyticsMetadata(promptAnswers, options.type)
@@ -62,18 +62,18 @@ async function buildPromptOptions(
   app: AppInterface,
   options: GenerateOptions,
 ): Promise<GenerateExtensionPromptOptions> {
-  const templateSpecification = await handleTypeParameter(options.type, app, extensionTemplates, specifications)
-  validateExtensionFlavor(templateSpecification, options.template)
+  const extensionTemplate = await handleTypeParameter(options.type, app, extensionTemplates, specifications)
+  validateExtensionFlavor(extensionTemplate, options.template)
 
-  const {validTemplateSpecifications, templatesOverlimit} = checkLimits(extensionTemplates, specifications, app)
+  const {validTemplates, templatesOverlimit} = checkLimits(extensionTemplates, specifications, app)
 
   return {
-    templateType: templateSpecification?.identifier,
+    templateType: extensionTemplate?.identifier,
     name: options.name,
     extensionFlavor: options.template as ExtensionFlavorValue,
     directory: joinPath(options.directory, 'extensions'),
     app,
-    extensionTemplates: validTemplateSpecifications ?? [],
+    extensionTemplates: validTemplates ?? [],
     unavailableExtensions: getTypesExternalName(templatesOverlimit ?? []),
     reset: options.reset,
   }
@@ -86,7 +86,7 @@ function checkLimits(
 ) {
   const iterateeFunction = (template: ExtensionTemplate) => {
     const allValid = template.types.every((type) => !limitReached(app, specifications, type))
-    return allValid ? 'validTemplateSpecifications' : 'templatesOverlimit'
+    return allValid ? 'validTemplates' : 'templatesOverlimit'
   }
   return groupBy(extensionTemplates, iterateeFunction)
 }
@@ -185,16 +185,16 @@ function formatSuccessfulRunMessage(
 async function handleTypeParameter(
   typeFlag: string | undefined,
   app: AppInterface,
-  templateSpecifications: ExtensionTemplate[],
+  extensionTemplates: ExtensionTemplate[],
   specifications: GenericSpecification[],
 ): Promise<ExtensionTemplate | undefined> {
   if (!typeFlag) return
 
-  const templateSpecification = templateSpecifications.find((spec) => spec.identifier === typeFlag)
+  const extensionTemplate = extensionTemplates.find((spec) => spec.identifier === typeFlag)
 
-  if (!templateSpecification) {
+  if (!extensionTemplate) {
     const isShopifolk = await isShopify()
-    const allExternalTypes = templateSpecifications.map((spec) => spec.identifier)
+    const allExternalTypes = extensionTemplates.map((spec) => spec.identifier)
     const tryMsg = isShopifolk ? 'You might need to enable some beta flags on your Organization or App' : undefined
     throw new AbortError(
       `Unknown extension type: ${typeFlag}.\nThe following extension types are supported: ${allExternalTypes.join(
@@ -206,7 +206,7 @@ async function handleTypeParameter(
 
   // Validate limits for selected type.
   // If no type is selected, filter out any types that have reached their limit
-  templateSpecification.types.forEach((type) => {
+  extensionTemplate.types.forEach((type) => {
     if (limitReached(app, specifications, type)) {
       throw new AbortError(
         `Invalid extension type: ${typeFlag}`,
@@ -215,7 +215,7 @@ async function handleTypeParameter(
     }
   })
 
-  return templateSpecification
+  return extensionTemplate
 }
 
 export default generate
