@@ -59,7 +59,7 @@ export async function deployConfirmationPrompt(
   }
 
   if (dashboardOnly.length > 0) {
-    infoTable.push({header: 'Included from Partner dashboard', items: dashboardOnly.map((source) => source.title)})
+    infoTable.push({header: 'Included from\nPartner dashboard', items: dashboardOnly.map((source) => source.title)})
   }
 
   if (onlyRemote.length > 0) {
