@@ -25,7 +25,7 @@ const InfoTable: FunctionComponent<InfoTableProps> = ({table}) => {
   const sections = Array.isArray(table)
     ? table
     : Object.keys(table).map((header) => ({header, items: table[header]!, color: undefined, helperText: undefined}))
-  const headerColumnWidth = Math.max(...sections.map((section) => section.header.length))
+  const headerColumnWidth = Math.min(Math.max(...sections.map((section) => section.header.length)), 20)
 
   return (
     <Box flexDirection="column">
