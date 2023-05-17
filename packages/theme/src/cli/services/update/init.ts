@@ -1,7 +1,7 @@
 import {schemaUrlV1} from './schemas/update_extension_schema_v1.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 export async function init(rawPath?: string) {
@@ -10,7 +10,7 @@ export async function init(rawPath?: string) {
   await createScript(path)
 
   renderSuccess({
-    body: [`The '${path}' script has been created.`],
+    body: [`The '${relativePath('.', path)}' script has been created.`],
   })
 }
 
@@ -26,7 +26,7 @@ async function createScript(path: string) {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    const message = `The '${path}' script couldn't be created.`
+    const message = `The '${relativePath('.', path)}' script couldn't be created.`
     const cause = `Cause: ${error.message}`
 
     throw new AbortError(message, cause)

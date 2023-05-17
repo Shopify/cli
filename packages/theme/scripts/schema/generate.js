@@ -11,7 +11,7 @@ function remoteSchemaPath(schemaVersion) {
 }
 
 function localSchemaPath(schemaVersion) {
-  return resolve(`./src/cli/services/update/schemas/update_extension_schema_v${1}.ts`)
+  return resolve(`./src/cli/services/update/schemas/update_extension_schema_v${schemaVersion}.ts`)
 }
 
 function downloadSchema(schemaUrl) {

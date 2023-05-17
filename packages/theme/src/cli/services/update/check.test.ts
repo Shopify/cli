@@ -331,7 +331,7 @@ describe('check', () => {
     }
   })
 
-  test(`when script has additional propertiess`, async () => {
+  test(`when script has additional properties`, async () => {
     // Given
     const script = '/tmp/update_extension.json'
 
@@ -351,7 +351,7 @@ describe('check', () => {
     expect(errors).toEqual([`The "extra_property" is not a permitted key`])
   })
 
-  test(`when a step has additional propertiess`, async () => {
+  test(`when a step has additional properties`, async () => {
     const actions = ['add', 'delete', 'copy', 'move', 'update']
 
     for (const action of actions) {
