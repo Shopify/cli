@@ -1,58 +1,37 @@
 import {
-  RemoteTemplateSpecification,
   RemoteTemplateSpecificationsQuery,
   RemoteTemplateSpecificationsQuerySchema,
 } from '../../api/graphql/template_specifications.js'
-import {TemplateSpecification} from '../../models/app/template.js'
-import {blocks, templates} from '../../constants.js'
-import {ExtensionSpecification} from '../../models/extensions/specification.js'
-import {BaseFunctionConfigurationSchema} from '../../models/extensions/schemas.js'
+import {ExtensionTemplate} from '../../models/app/template.js'
+import themeExtension from '../../models/templates/theme-specifications/theme.js'
+import checkoutPostPurchaseExtension from '../../models/templates/ui-specifications/checkout_post_purchase.js'
+import checkoutUIExtension from '../../models/templates/ui-specifications/checkout_ui_extension.js'
+import customerAccountsUIExtension from '../../models/templates/ui-specifications/customer_accounts_ui_extension.js'
+import posUIExtension from '../../models/templates/ui-specifications/pos_ui_extension.js'
+import productSubscriptionUIExtension from '../../models/templates/ui-specifications/product_subscription.js'
+import taxCalculationUIExtension from '../../models/templates/ui-specifications/tax_calculation.js'
+import UIExtension from '../../models/templates/ui-specifications/ui_extension.js'
+import webPixelUIExtension from '../../models/templates/ui-specifications/web_pixel_extension.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
-export async function fetchTemplateSpecifications(token: string): Promise<TemplateSpecification[]> {
-  const params: {version?: string} = {version: templates.specification.remoteVersion}
-  const result: RemoteTemplateSpecificationsQuerySchema = await partnersRequest(
+export async function fetchExtensionTemplates(token: string): Promise<ExtensionTemplate[]> {
+  const remoteTemplates: RemoteTemplateSpecificationsQuerySchema = await partnersRequest(
     RemoteTemplateSpecificationsQuery,
     token,
-    params,
   )
-  return result.templateSpecifications.map(mapRemoteTemplateSpecification)
+  return remoteTemplates.templateSpecifications.concat(localExtensionTemplates())
 }
 
-export function mapRemoteTemplateSpecification(
-  remoteTemplateSpecification: RemoteTemplateSpecification,
-): TemplateSpecification {
-  return {
-    identifier: remoteTemplateSpecification.identifier,
-    name: remoteTemplateSpecification.name,
-    group: remoteTemplateSpecification.group,
-    supportLinks: remoteTemplateSpecification.supportLinks,
-    types: remoteTemplateSpecification.types.map((extension) => {
-      const customSpec: ExtensionSpecification = {
-        identifier: 'function',
-        additionalIdentifiers: [],
-        partnersWebIdentifier: 'function',
-        surface: '',
-        isPreviewable: false,
-        singleEntryPath: true,
-        externalIdentifier: remoteTemplateSpecification.identifier,
-        externalName: remoteTemplateSpecification.identifier,
-        gated: false,
-        registrationLimit: blocks.functions.defaultRegistrationLimit,
-        supportedFlavors: extension.supportedFlavors,
-        group: remoteTemplateSpecification.group,
-        category: () => 'function',
-        schema: BaseFunctionConfigurationSchema,
-        templateURL: extension.url,
-        helpURL: remoteTemplateSpecification.supportLinks[0]!,
-        features: () => ['function'],
-        templatePath: (lang?: string) => {
-          const supportedFlavor = extension.supportedFlavors.find((supportedFlavor) => supportedFlavor.value === lang)
-          if (!supportedFlavor) return undefined
-          return supportedFlavor.path
-        },
-      }
-      return customSpec
-    }),
-  }
+export function localExtensionTemplates() {
+  return [
+    themeExtension,
+    checkoutPostPurchaseExtension,
+    checkoutUIExtension,
+    customerAccountsUIExtension,
+    posUIExtension,
+    productSubscriptionUIExtension,
+    taxCalculationUIExtension,
+    UIExtension,
+    webPixelUIExtension,
+  ]
 }

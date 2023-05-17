@@ -50,33 +50,6 @@ export const defaultExtensionFlavors: ExtensionFlavor[] = [
   {name: 'JavaScript React', value: 'react'},
 ]
 
-// The order of the groups in extensionTypesGroups will be the same displayed in the select prompt
-export const extensionTypesGroups: {name: string; extensions: string[]}[] = [
-  {name: 'Online store', extensions: ['theme']},
-  {
-    name: 'Discounts and checkout',
-    extensions: [
-      'product_discounts',
-      'order_discounts',
-      'shipping_discounts',
-      'payment_customization',
-      'delivery_customization',
-      'checkout_ui_extension',
-      'cart_checkout_validation',
-      'checkout_post_purchase',
-      'cart_transform',
-      'fulfillment_constraints',
-    ],
-  },
-  {name: 'Analytics', extensions: ['web_pixel_extension']},
-  {name: 'Merchant admin', extensions: ['product_subscription', 'tax_calculation']},
-  {name: 'Point-of-Sale', extensions: ['pos_ui_extension']},
-  {
-    name: 'Shopify private',
-    extensions: ['customer_accounts_ui_extension', 'ui_extension', 'order_routing_location_rule'],
-  },
-]
-
 export const templates = {
   specification: {
     remoteVersion: '1',

@@ -1,10 +1,13 @@
 import {App, AppInterface} from './app.js'
 import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
-import {ExtensionInstance, ExtensionSpecification} from '../extensions/specification.js'
-import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
+import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import {RemoteTemplateSpecification} from '../../api/graphql/template_specifications.js'
+import themeExtension from '../templates/theme-specifications/theme.js'
+import checkoutPostPurchaseExtension from '../templates/ui-specifications/checkout_post_purchase.js'
+import checkoutUIExtension from '../templates/ui-specifications/checkout_ui_extension.js'
+import {ExtensionInstance, ExtensionSpecification} from '../extensions/specification.js'
 import {FunctionSchemaContents} from '../extensions/schemas.js'
+import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -266,7 +269,7 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
   },
 ]
 
-export const testRemoteTemplateSpecifications: RemoteTemplateSpecification[] = [
+export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
   {
     identifier: 'cart_checkout_validation',
     name: 'Function - Cart and Checkout Validation',
@@ -301,12 +304,12 @@ export const testRemoteTemplateSpecifications: RemoteTemplateSpecification[] = [
           {
             name: 'Wasm',
             value: 'wasm',
-            path: 'checkout/wasm/cart-transform/bundles',
+            path: 'checkout/wasm/cart-transform/default',
           },
           {
             name: 'Rust',
             value: 'rust',
-            path: 'checkout/rust/cart-transform/bundles',
+            path: 'checkout/rust/cart-transform/default',
           },
         ],
       },
@@ -316,7 +319,7 @@ export const testRemoteTemplateSpecifications: RemoteTemplateSpecification[] = [
     identifier: 'product_discounts',
     name: 'Function - Product discounts',
     group: 'Discounts and checkout',
-    supportLinks: [],
+    supportLinks: ['https://shopify.dev/docs/apps/discounts'],
     types: [
       {
         type: 'function',
@@ -326,12 +329,12 @@ export const testRemoteTemplateSpecifications: RemoteTemplateSpecification[] = [
           {
             name: 'Wasm',
             value: 'wasm',
-            path: 'checkout/wasm/product_discounts/default',
+            path: 'discounts/wasm/product-discounts/default',
           },
           {
             name: 'Rust',
             value: 'rust',
-            path: 'checkout/rust/product_discounts/default',
+            path: 'discounts/rust/product-discounts/default',
           },
         ],
       },
@@ -351,15 +354,26 @@ export const testRemoteTemplateSpecifications: RemoteTemplateSpecification[] = [
           {
             name: 'Wasm',
             value: 'wasm',
-            path: 'checkout/wasm/order_discounts/default',
+            path: 'discounts/wasm/order-discounts/default',
           },
           {
             name: 'Rust',
             value: 'rust',
-            path: 'checkout/rust/order_discounts/default',
+            path: 'discounts/rust/order-discounts/default',
+          },
+          {
+            name: 'JavaScript',
+            value: 'vanilla-js',
+            path: 'discounts/javascript/order-discounts/default',
           },
         ],
       },
     ],
   },
+]
+
+export const testLocalExtensionTemplates: ExtensionTemplate[] = [
+  themeExtension,
+  checkoutPostPurchaseExtension,
+  checkoutUIExtension,
 ]
