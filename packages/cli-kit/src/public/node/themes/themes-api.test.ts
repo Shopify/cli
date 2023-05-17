@@ -13,8 +13,8 @@ describe('fetchThemes', () => {
     vi.mocked(restRequest).mockResolvedValue({
       json: {
         themes: [
-          {id: 123, name: 'store theme 1'},
-          {id: 456, name: 'store theme 2'},
+          {id: 123, name: 'store theme 1', processing: false},
+          {id: 456, name: 'store theme 2', processing: true},
         ],
       },
       status: 200,
@@ -25,7 +25,7 @@ describe('fetchThemes', () => {
     const themes = await fetchThemes(session)
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith('GET', '/themes', session, undefined, {fields: 'id,name,role'})
+    expect(restRequest).toHaveBeenCalledWith('GET', '/themes', session, undefined, {fields: 'id,name,role,processing'})
     expect(themes).toHaveLength(2)
 
     expect(themes[0]!.id).toEqual(123)
@@ -33,6 +33,9 @@ describe('fetchThemes', () => {
 
     expect(themes[0]!.name).toEqual('store theme 1')
     expect(themes[1]!.name).toEqual('store theme 2')
+
+    expect(themes[0]!.processing).toBeFalsy()
+    expect(themes[1]!.processing).toBeTruthy()
   })
 })
 
@@ -42,10 +45,11 @@ describe('createTheme', () => {
     const id = 123
     const name = 'new theme'
     const role = 'unpublished'
+    const processing = false
     const params: ThemeParams = {name, role}
 
     vi.mocked(restRequest).mockResolvedValue({
-      json: {theme: {id, name, role}},
+      json: {theme: {id, name, role, processing}},
       status: 200,
       headers: {},
     })
@@ -59,6 +63,7 @@ describe('createTheme', () => {
     expect(theme!.id).toEqual(id)
     expect(theme!.name).toEqual(name)
     expect(theme!.role).toEqual(role)
+    expect(theme!.processing).toBeFalsy()
   })
 })
 

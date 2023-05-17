@@ -7,15 +7,15 @@ import {restRequest, RestResponse} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-export type ThemeParams = Partial<Pick<Theme, 'name' | 'role'>>
+export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing'>>
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
-  const response = await request('GET', `/themes/${id}`, session, undefined, {fields: 'id'})
+  const response = await request('GET', `/themes/${id}`, session, undefined, {fields: 'id,processing'})
   return buildTheme(response.json.theme)
 }
 
 export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
-  const response = await request('GET', '/themes', session, undefined, {fields: 'id,name,role'})
+  const response = await request('GET', '/themes', session, undefined, {fields: 'id,name,role,processing'})
   return buildThemes(response)
 }
 
@@ -66,6 +66,8 @@ async function request<T>(
       return handleForbiddenError(session)
     case status === 401:
       throw new AbortError(`[${status}] API request unauthorized error`)
+    case status === 422:
+      throw new AbortError(`[${status}] API request unprocessable content: ${errors(response)}`)
     case status >= 400 && status <= 499:
       throw new AbortError(`[${status}] API request client error`)
     case status >= 500 && status <= 599:
@@ -92,7 +94,7 @@ function buildTheme(themeJson: any): Theme | undefined {
     return undefined
   }
 
-  return new Theme(themeJson.id, themeJson.name, themeJson.role, themeJson.createdAtRuntime)
+  return new Theme(themeJson.id, themeJson.name, themeJson.role, themeJson.createdAtRuntime, themeJson.processing)
 }
 
 function handleForbiddenError(session: AdminSession): never {
@@ -110,4 +112,8 @@ function handleForbiddenError(session: AdminSession): never {
       'Shopify CLI. Logging in to the Shopify admin directly connects the development ' +
       'store with your Shopify login.',
   )
+}
+
+function errors(response: RestResponse) {
+  return JSON.stringify(response.json?.errors)
 }
