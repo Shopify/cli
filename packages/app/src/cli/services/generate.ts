@@ -16,6 +16,7 @@ import {
 } from '../services/generate/extension.js'
 import {ExtensionTemplate, TemplateType, getTypesExternalName} from '../models/app/template.js'
 import {blocks} from '../constants.js'
+import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -25,7 +26,6 @@ import {RenderAlertOptions, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {groupBy} from '@shopify/cli-kit/common/collection'
-import {ExtensionSpecification} from '../models/extensions/specification.js'
 
 export interface GenerateOptions {
   directory: string

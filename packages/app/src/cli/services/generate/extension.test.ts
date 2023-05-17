@@ -11,6 +11,8 @@ import * as functionBuild from '../function/build.js'
 import {testRemoteExtensionTemplates} from '../../models/app/app.test-data.js'
 import checkoutPostPurchaseExtension from '../../models/templates/ui-specifications/checkout_post_purchase.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
+import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {describe, expect, vi, test} from 'vitest'
 import * as output from '@shopify/cli-kit/node/output'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
@@ -18,8 +20,6 @@ import * as template from '@shopify/cli-kit/node/liquid'
 import * as file from '@shopify/cli-kit/node/fs'
 import * as git from '@shopify/cli-kit/node/git'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import {ExtensionSpecification} from '../../models/extensions/specification.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 
 // vi.mock('@shopify/cli-kit/node/node-package-manager')
 vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
