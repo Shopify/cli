@@ -67,9 +67,6 @@ export interface ExtensionTranslationMap {
   [key: string]: string
 }
 
-export const PLURALIZATION_KEY_NAME = 'count'
-export const DYNAMIC_KEY_NAME = 'scope'
-export const SEPARATOR = '.'
 export const TRANSLATED_KEYS = ['localization']
 /**
  * From a nested dictionary like the following :
@@ -152,17 +149,17 @@ export function resolveDevExtensionLocale(
   if (extensionLocales.has(locales.user)) return locales.user
 
   // 2. Attempt to match the non-regional part of the user's locale (i.e. 'fr-CA' becomes 'fr')
-  const nonRegionalLocale = getNonRegionalLocale(locales.user)
-  if (extensionLocales.has(nonRegionalLocale)) return nonRegionalLocale
+  const nonRegionalUserLocale = getNonRegionalLocale(locales.user)
+  if (extensionLocales.has(nonRegionalUserLocale)) return nonRegionalUserLocale
 
   // 3. Attempt to match the shop's default locale exactly
   if (locales.shop && extensionLocales.has(locales.shop)) return locales.shop
 
   // 4. Attempt to match the non-regional part of the shop's default locale (i.e. 'fr-CA' becomes 'fr')
   const nonRegionalShopLocale = locales.shop && getNonRegionalLocale(locales.shop)
-  if (nonRegionalShopLocale && extensionLocales.has(nonRegionalShopLocale)) return nonRegionalLocale
+  if (nonRegionalShopLocale && extensionLocales.has(nonRegionalShopLocale)) return nonRegionalShopLocale
 
-  // 5. Finally, return the default locale if it exists, otherwise set to buyer's locale
+  // 5. Finally, return the default locale as a fallback
   return localization.defaultLocale
 }
 

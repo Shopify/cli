@@ -187,7 +187,6 @@ export class ExtensionServerClient implements ExtensionServer.Client {
       }
 
       const shouldUpdateTranslations =
-        this.extensionsByUuid[extension.uuid] ||
         this.extensionsByUuid[extension.uuid]?.localization?.lastUpdated !== extension.localization?.lastUpdated
 
       const localization = shouldUpdateTranslations

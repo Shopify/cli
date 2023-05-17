@@ -35,7 +35,7 @@ describe('resolveDevExtensionLocale()', () => {
     expect(extensionLocale).toBe(userLocale)
   })
 
-  test('returns the non-regional locale if there is no exact match with user locale', async () => {
+  test('returns the non-regional user locale if there is no exact match with user locale', async () => {
     const userLocale = 'de-DE'
 
     const localization = {
@@ -91,9 +91,9 @@ describe('resolveDevExtensionLocale()', () => {
     expect(extensionLocale).toBe(shopLocale)
   })
 
-  test('returns the non-regional locale if there is no exact match with user locale', async () => {
-    const userLocale = 'de-DE'
-    const shopLocale = 'fr-FR'
+  test("returns the non-regional shop locale if it is provided as a supported locale and there isn't a match for the user locale", async () => {
+    const userLocale = 'ja-JP'
+    const shopLocale = 'de-DE'
 
     const localization = {
       defaultLocale: 'en',
@@ -109,20 +109,15 @@ describe('resolveDevExtensionLocale()', () => {
             hello: 'Hallo',
           },
         },
-        'fr-FR': {
-          greetings: {
-            hello: 'Bonjour',
-          },
-        },
       },
     }
 
     const extensionLocale = resolveDevExtensionLocale(localization, {user: userLocale, shop: shopLocale})
 
-    expect(extensionLocale).toBe(userLocale.split('-')[0])
+    expect(extensionLocale).toBe(shopLocale.split('-')[0])
   })
 
-  test('returns the default translation locale when no full or partial match can be made', async () => {
+  test('returns the default translation locale when no full or partial match can be for neither user nor shop locale made', async () => {
     const userLocale = 'en-US'
     const shopLocale = 'ja'
     const defaultLocale = 'fi'

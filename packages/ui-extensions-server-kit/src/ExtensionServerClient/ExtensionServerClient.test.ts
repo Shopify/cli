@@ -1,6 +1,7 @@
 import {ExtensionServerClient} from './ExtensionServerClient'
 import {mockApp} from '../testing'
 import WS from 'jest-websocket-mock'
+import {Localization} from 'i18n.js'
 
 const defaultOptions = {
   connection: {url: 'ws://example-host.com:8000/extensions/'},
@@ -101,7 +102,7 @@ describe('ExtensionServerClient', () => {
     test('sends data with translatable props as-is for UI extensions when locales option is not provided on "connected" event', async () => {
       const {socket, client} = setup()
       const connectSpy = vi.fn()
-      const localization = {
+      const localization: Localization = {
         defaultLocale: 'en',
         translations: {
           ja: {
@@ -146,7 +147,7 @@ describe('ExtensionServerClient', () => {
     test('sends data with translated props for UI extensions when locales option is provided on "connected" event', async () => {
       const {socket, client} = setup({...defaultOptions, locales: {user: 'ja', shop: 'fr'}})
       const connectSpy = vi.fn()
-      const localization = {
+      const localization: Localization = {
         defaultLocale: 'en',
         translations: {
           ja: {
@@ -262,7 +263,7 @@ describe('ExtensionServerClient', () => {
     test('sends data with translatable props as-is when locales option is not provided on "update" event', async () => {
       const {socket, client} = setup()
       const updateSpy = vi.fn()
-      const localization = {
+      const localization: Localization = {
         defaultLocale: 'en',
         translations: {
           ja: {
@@ -307,7 +308,7 @@ describe('ExtensionServerClient', () => {
     test('sends data with translated props when locales option is provided on "update" event', async () => {
       const {socket, client} = setup({...defaultOptions, locales: {user: 'ja', shop: 'fr'}})
       const updateSpy = vi.fn()
-      const localization = {
+      const localization: Localization = {
         defaultLocale: 'en',
         translations: {
           ja: {

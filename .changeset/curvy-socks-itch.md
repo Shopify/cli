@@ -3,4 +3,4 @@
 '@shopify/app': patch
 ---
 
-Enable ui-extensions-servet-kit to send translated strings for the requested locales
+Enable ui-extensions-server-kit to send translated strings for the requested locales

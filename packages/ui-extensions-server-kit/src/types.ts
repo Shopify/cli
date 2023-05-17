@@ -90,6 +90,7 @@ export interface ExtensionPoint {
   resource: ResourceURL
   root: ResourceURL
   localization?: FlattenedLocalization | Localization | null
+  label?: string
 }
 
 export type ExtensionPoints = string[] | ExtensionPoint[] | null
