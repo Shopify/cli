@@ -1,56 +1,55 @@
 import {AppInterface} from '../../models/app/app.js'
-import {GenericSpecification} from '../../models/app/extensions.js'
-import {TemplateSpecification} from '../../models/app/template.js'
+import {ExtensionFlavorValue} from '../../services/generate/extension.js'
+import {ExtensionTemplate, TemplateType} from '../../models/app/template.js'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputWarn} from '@shopify/cli-kit/node/output'
-import {createRequire} from 'module'
-
-const require = createRequire(import.meta.url)
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export interface GenerateExtensionPromptOptions {
   name?: string
   templateType?: string
-  extensionFlavor?: string
+  extensionFlavor?: ExtensionFlavorValue
   directory: string
   app: AppInterface
-  templateSpecifications: TemplateSpecification[]
+  extensionTemplates: ExtensionTemplate[]
   unavailableExtensions: string[]
   reset: boolean
 }
 
 export interface GenerateExtensionPromptOutput {
-  name: string
+  extensionTemplate: ExtensionTemplate
   extensionContent: GenerateExtensionContentOutput[]
 }
-interface GenerateExtensionContentOutput {
+
+export interface GenerateExtensionContentOutput {
+  index: number
   name: string
-  specification: GenericSpecification
-  extensionFlavor?: string
+  flavor?: ExtensionFlavorValue
 }
 
-export function buildChoices(templateSpecifications: TemplateSpecification[]) {
-  const templateSpecChoices = templateSpecifications.map((spec) => {
+export function buildChoices(extensionTemplates: ExtensionTemplate[]) {
+  const templateSpecChoices = extensionTemplates.map((spec) => {
     return {
       label: spec.name,
       value: spec.identifier,
-      group: spec.group,
+      group: spec.group || 'Other',
     }
   })
   return templateSpecChoices.sort((c1, c2) => c1.label.localeCompare(c2.label))
 }
 
-const generateExtensionPrompt = async (
+const generateExtensionPrompts = async (
   options: GenerateExtensionPromptOptions,
 ): Promise<GenerateExtensionPromptOutput> => {
-  let templateSpecifications = options.templateSpecifications
+  let extensionTemplates = options.extensionTemplates
   let templateType = options.templateType
   const extensionFlavor = options.extensionFlavor
 
   if (!templateType) {
     if (extensionFlavor) {
-      templateSpecifications = templateSpecifications.filter((spec) =>
-        spec.types[0]?.supportedFlavors.map((elem) => elem.value as string).includes(extensionFlavor),
+      extensionTemplates = extensionTemplates.filter((template) =>
+        template.types[0]?.supportedFlavors.map((elem) => elem.value as string).includes(extensionFlavor),
       )
     }
 
@@ -60,61 +59,57 @@ const generateExtensionPrompt = async (
       )
     }
 
+    if (extensionTemplates.length === 0) {
+      throw new AbortError('You have reached the limit for the number of extensions you can create.')
+    }
+
     // eslint-disable-next-line require-atomic-updates
     templateType = await renderSelectPrompt({
       message: 'Type of extension?',
-      choices: buildChoices(templateSpecifications),
+      choices: buildChoices(extensionTemplates),
     })
   }
 
-  const templateSpecification = templateSpecifications.find((spec) => spec.identifier === templateType)!
+  const extensionTemplate = extensionTemplates.find((template) => template.identifier === templateType)!
 
-  const nameAndFlavors: {name: string; flavor?: string; specification: GenericSpecification}[] = []
-  for (const spec of templateSpecification.types) {
-    // eslint-disable-next-line no-await-in-loop
-    nameAndFlavors.push(await promptNameAndFlavor(options, spec))
+  const extensionContent: GenerateExtensionContentOutput[] = []
+  /* eslint-disable no-await-in-loop */
+  for (const [index, templateType] of extensionTemplate.types.entries()) {
+    const name = (extensionTemplate.types.length === 1 && options.name) || (await promptName(options.directory))
+    const flavor = options.extensionFlavor ?? (await promptFlavor(templateType))
+    extensionContent.push({index, name, flavor})
+  }
+  /* eslint-enable no-await-in-loop */
+
+  return {extensionTemplate, extensionContent}
+}
+
+async function promptName(directory: string): Promise<string> {
+  return renderTextPrompt({
+    message: 'Extension name (internal only)',
+    defaultValue: await generateRandomNameForSubdirectory({suffix: 'ext', directory}),
+  })
+}
+
+async function promptFlavor(templateType: TemplateType): Promise<ExtensionFlavorValue | undefined> {
+  if (templateType.supportedFlavors.length === 0) {
+    return undefined
   }
 
-  return {
-    name: templateSpecification?.name ?? '',
-    extensionContent: nameAndFlavors.map((nameAndFlavor) => {
+  if (templateType.supportedFlavors.length === 1 && templateType.supportedFlavors[0]) {
+    return templateType.supportedFlavors[0].value
+  }
+
+  return renderSelectPrompt({
+    message: 'What would you like to work in?',
+    choices: templateType.supportedFlavors.map((flavor) => {
       return {
-        name: nameAndFlavor.name,
-        specification: nameAndFlavor.specification,
-        extensionFlavor: nameAndFlavor.flavor,
+        label: flavor.name,
+        value: flavor.value,
       }
     }),
-  }
+    defaultValue: 'react',
+  })
 }
 
-async function promptNameAndFlavor(
-  options: GenerateExtensionPromptOptions,
-  specification: GenericSpecification,
-): Promise<{name: string; flavor?: string; specification: GenericSpecification}> {
-  const result = {
-    name: options.name ?? '',
-    flavor: options.extensionFlavor ?? specification.supportedFlavors[0]?.value,
-    specification,
-  }
-  if (!options.name) {
-    result.name = await renderTextPrompt({
-      message: 'Extension name (internal only)',
-      defaultValue: await generateRandomNameForSubdirectory({suffix: 'ext', directory: options.directory}),
-    })
-  }
-  if (!options.extensionFlavor && specification.supportedFlavors.length > 1) {
-    result.flavor = await renderSelectPrompt({
-      message: 'What would you like to work in?',
-      choices: specification.supportedFlavors.map((flavor) => {
-        return {
-          label: flavor.name,
-          value: flavor.value,
-        }
-      }),
-      defaultValue: 'react',
-    })
-  }
-  return result
-}
-
-export default generateExtensionPrompt
+export default generateExtensionPrompts
