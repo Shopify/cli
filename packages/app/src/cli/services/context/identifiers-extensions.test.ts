@@ -595,6 +595,44 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
     )
   })
 
+  test('does not include dashboard managed extensions in confirmation prompt if the beta flag is off', async () => {
+    // Given
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
+
+    // When
+    await ensureExtensionsIds(
+      options([EXTENSION_A, EXTENSION_A_2], [], {}, PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA),
+      {
+        extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2],
+        dashboardManagedExtensionRegistrations: [DASHBOARD_REGISTRATION_A],
+      },
+    )
+
+    // Then
+    expect(deployConfirmationPrompt).toBeCalledWith(
+      {
+        question: 'Make the following changes to your extensions in Shopify Partners?',
+        identifiers: {
+          EXTENSION_A: 'UUID_A',
+          EXTENSION_A_2: 'UUID_A_2',
+        },
+        onlyRemote: [],
+        dashboardOnly: [],
+        toCreate: [],
+      },
+      PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA,
+    )
+  })
+
   test('skips confirmation prompt if --force is passed', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
