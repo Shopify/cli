@@ -1,18 +1,40 @@
 import ThemeCommand from '../../../utilities/theme-command.js'
 import {themeFlags} from '../../../flags.js'
+import {run} from '../../../services/update/run.js'
+import {ensureThemeStore} from '../../../utilities/theme-store.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {Flags} from '@oclif/core'
 
-export default class UpdateInit extends ThemeCommand {
+export default class UpdateRun extends ThemeCommand {
   static description = `Run an 'update_extension.json' script in a theme.`
-
-  static hidden = true
 
   static flags = {
     ...globalFlags,
     path: themeFlags.path,
+    store: themeFlags.store,
+    script: Flags.string({
+      description: `The path to the 'update_extension.json' script.`,
+      env: 'SHOPIFY_FLAG_SCRIPT',
+      default: `./update_extension.json`,
+    }),
+    'source-theme': Flags.string({
+      description: 'The theme ID or name of the theme at the previous version.',
+      env: 'SHOPIFY_FLAG_SOURCE_THEME',
+      required: true,
+    }),
+    'target-theme': Flags.string({
+      description: 'The theme ID or name of the theme at the target version.',
+      env: 'SHOPIFY_FLAG_TARGET_THEME',
+      required: true,
+    }),
   }
 
   async run(): Promise<void> {
-    // empty.
+    const {flags} = await this.parse(UpdateRun)
+    const store = ensureThemeStore(flags)
+    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
+
+    await run(adminSession, flags)
   }
 }

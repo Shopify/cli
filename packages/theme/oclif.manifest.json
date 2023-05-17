@@ -1337,7 +1337,6 @@
       "pluginName": "@shopify/theme",
       "pluginAlias": "@shopify/theme",
       "pluginType": "core",
-      "hidden": true,
       "aliases": [],
       "flags": {
         "no-color": {
@@ -1360,6 +1359,34 @@
           "description": "The path to your theme directory.",
           "multiple": false,
           "default": "."
+        },
+        "store": {
+          "name": "store",
+          "type": "option",
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
+          "multiple": false
+        },
+        "script": {
+          "name": "script",
+          "type": "option",
+          "description": "The path to the 'update_extension.json' script.",
+          "multiple": false,
+          "default": "./update_extension.json"
+        },
+        "source-theme": {
+          "name": "source-theme",
+          "type": "option",
+          "description": "The theme ID or name of the theme at the previous version.",
+          "required": true,
+          "multiple": false
+        },
+        "target-theme": {
+          "name": "target-theme",
+          "type": "option",
+          "description": "The theme ID or name of the theme at the target version.",
+          "required": true,
+          "multiple": false
         }
       },
       "args": {}
