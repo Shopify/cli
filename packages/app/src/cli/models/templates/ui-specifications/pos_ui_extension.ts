@@ -5,7 +5,7 @@ import {uiFlavors} from '../common.js'
  * POS UI template specification.
  */
 const posUIExtension: ExtensionTemplate = {
-  identifier: 'pos_ui_extension',
+  identifier: 'pos_ui',
   name: 'POS UI',
   group: 'Point-of-Sale',
   supportLinks: [],

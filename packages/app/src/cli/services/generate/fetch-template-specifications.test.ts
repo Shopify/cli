@@ -25,7 +25,7 @@ describe('fetchTemplateSpecifications', () => {
     expect(identifiers).toContain('post_purchase_ui')
     expect(identifiers).toContain('checkout_ui')
     expect(identifiers).toContain('customer_accounts_ui_extension')
-    expect(identifiers).toContain('pos_ui_extension')
+    expect(identifiers).toContain('pos_ui')
     expect(identifiers).toContain('subscription_ui')
     expect(identifiers).toContain('tax_calculation')
     expect(identifiers).toContain('ui_extension')
