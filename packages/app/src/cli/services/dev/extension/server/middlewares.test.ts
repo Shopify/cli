@@ -418,6 +418,7 @@ describe('getExtensionPayloadMiddleware()', () => {
               devUUID: extensionId,
             }),
           ],
+          manifestVersion: '3',
         },
         payloadStore: {},
       } as unknown as GetExtensionsMiddlewareOptions

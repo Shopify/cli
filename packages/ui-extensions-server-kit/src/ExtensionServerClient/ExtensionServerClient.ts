@@ -1,7 +1,8 @@
 /* eslint-disable no-console */
 import {Surface} from './types.js'
-import {isValidSurface} from '../utilities'
-import {DeepPartial, ExtensionPayload} from '../types'
+import {TRANSLATED_KEYS, getFlattenedLocalization} from '../i18n'
+import {isUIExtension, isValidSurface} from '../utilities'
+import {DeepPartial, ExtensionPayload, ExtensionPoint} from '../types'
 
 export class ExtensionServerClient implements ExtensionServer.Client {
   public id: string
@@ -15,6 +16,8 @@ export class ExtensionServerClient implements ExtensionServer.Client {
   protected listeners: {[key: string]: Set<any>} = {}
 
   protected connected = false
+
+  private extensionsByUuid: {[key: string]: ExtensionPayload} = {}
 
   constructor(options: DeepPartial<ExtensionServer.Options> = {}) {
     this.id = (Math.random() + 1).toString(36).substring(7)
@@ -61,6 +64,42 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     data: ExtensionServer.OutboundPersistEvents[TEvent],
   ): void {
     if (this.EVENT_THAT_WILL_MUTATE_THE_SERVER.includes(event)) {
+      if (!this.options.locales) {
+        return this.connection?.send(JSON.stringify({event, data}))
+      }
+
+      /**
+       * Since each websocket connection will have its own translated values
+       * we need to strip out all translated properties to prevent
+       * mutating the Dev Server's data
+       * Before:
+       * ```
+       * {
+       *  localization: {...},
+       *  extensionPoints: [{
+       *    target: 'admin.product.item.action'
+       *    localization: {...}
+       *  }],
+       * }
+       * ```
+       * After:
+       * ```
+       *  extensionPoints: [{
+       *    target: 'admin.product.item.action'
+       *  }],
+       * }
+       * ```
+       */
+      data.extensions?.forEach((extension) => {
+        TRANSLATED_KEYS.forEach((key) => {
+          if (isUIExtension(extension)) {
+            extension.extensionPoints?.forEach((extensionPoint) => {
+              delete extensionPoint[key as keyof ExtensionPoint]
+            })
+          }
+          delete extension[key as keyof ExtensionPayload]
+        })
+      })
       return this.connection?.send(JSON.stringify({event, data}))
     }
 
@@ -107,7 +146,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
           : data.extensions
 
         this.listeners[event]?.forEach((listener) => {
-          listener({...data, extensions: filteredExtensions})
+          listener({...data, extensions: this._getLocalizedExtensions(filteredExtensions)})
         })
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (err) {
@@ -139,6 +178,34 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     if (this.connected) {
       this.connection?.close()
     }
+  }
+
+  private _getLocalizedExtensions(extensions?: ExtensionPayload[]) {
+    return extensions?.map((extension) => {
+      if (!this.options.locales) {
+        return extension
+      }
+
+      const shouldUpdateTranslations =
+        this.extensionsByUuid[extension.uuid]?.localization?.lastUpdated !== extension.localization?.lastUpdated
+
+      const localization = shouldUpdateTranslations
+        ? getFlattenedLocalization(extension.localization, this.options.locales)
+        : this.extensionsByUuid[extension.uuid]?.localization || extension.localization
+
+      this.extensionsByUuid[extension.uuid] = {
+        ...extension,
+        localization,
+        extensionPoints: isUIExtension(extension)
+          ? extension.extensionPoints?.map((extensionPoint) => ({
+              ...extensionPoint,
+              localization,
+            }))
+          : extension.extensionPoints,
+      }
+
+      return this.extensionsByUuid[extension.uuid]
+    })
   }
 }
 
