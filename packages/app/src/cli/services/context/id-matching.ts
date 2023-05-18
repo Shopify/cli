@@ -67,8 +67,12 @@ function migrateLegacyFunctions(
       const config = functionExtension.draftVersion?.config
       if (config === undefined) return
 
-      const legacyId = JSON.parse(config).legacy_function_id
+      const parsedConfig = JSON.parse(config)
+      const legacyId = parsedConfig.legacy_function_id
       if (legacyId) pendingMigrations[legacyId] = functionExtension.uuid
+
+      const legacyUuid = parsedConfig.legacy_function_uuid
+      if (legacyUuid) pendingMigrations[legacyUuid] = functionExtension.uuid
     })
 
   localSources

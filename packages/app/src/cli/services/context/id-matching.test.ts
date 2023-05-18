@@ -309,7 +309,10 @@ const REGISTRATION_FUNCTION_A = {
   title: 'FUNCTION A',
   type: 'FUNCTION',
   draftVersion: {
-    config: JSON.stringify({legacy_function_id: 'LEGACY_FUNCTION_UUID_A'}),
+    config: JSON.stringify({
+      legacy_function_id: 'LEGACY_FUNCTION_ULID_A',
+      legacy_function_uuid: 'LEGACY_FUNCTION_UUID_A',
+    }),
   },
 }
 
@@ -733,6 +736,26 @@ describe('automaticMatchmaking: functions', () => {
 
 describe('automaticMatchmaking: migrates functions with legacy IDs to extension IDs', () => {
   test('updates function when using legacy ID and value exists on remote', async () => {
+    // When
+    const got = await automaticMatchmaking(
+      [FUNCTION_A],
+      [REGISTRATION_FUNCTION_A],
+      {FUNCTION_A: 'LEGACY_FUNCTION_ULID_A'},
+      'id',
+    )
+
+    // Then
+    const expected = {
+      identifiers: {FUNCTION_A: 'FUNCTION_UUID_A'},
+      toConfirm: [],
+      toCreate: [],
+      toManualMatch: {local: [], remote: []},
+    }
+
+    expect(got).toEqual(expected)
+  })
+
+  test('updates function when using legacy UUID and value exists on remote', async () => {
     // When
     const got = await automaticMatchmaking(
       [FUNCTION_A],
