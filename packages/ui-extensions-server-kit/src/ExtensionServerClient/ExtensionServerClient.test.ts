@@ -177,9 +177,14 @@ describe('ExtensionServerClient', () => {
             uuid: '123',
             type: 'ui_extension',
             localization,
-            extensionPoints: [{localization}],
+            extensionPoints: [{localization, label: 't:welcome'}],
           },
-          {uuid: '456', type: 'ui_extension', localization: null, extensionPoints: [{localization: null}]},
+          {
+            uuid: '456',
+            type: 'ui_extension',
+            localization: null,
+            extensionPoints: [{localization: null, label: 'Fixed label'}],
+          },
           {uuid: '789', type: 'product_subscription'},
         ],
       }
@@ -195,13 +200,18 @@ describe('ExtensionServerClient', () => {
               uuid: '123',
               type: 'ui_extension',
               localization: translatedLocalization,
-              extensionPoints: [{localization: translatedLocalization}],
+              extensionPoints: [
+                {
+                  localization: translatedLocalization,
+                  label: 'いらっしゃいませ!',
+                },
+              ],
             },
             {
               uuid: '456',
               type: 'ui_extension',
               localization: null,
-              extensionPoints: [{localization: null}],
+              extensionPoints: [{localization: null, label: 'Fixed label'}],
             },
             {uuid: '789', type: 'product_subscription'},
           ],
@@ -289,9 +299,14 @@ describe('ExtensionServerClient', () => {
             uuid: '123',
             type: 'ui_extension',
             localization,
-            extensionPoints: [{localization}],
+            extensionPoints: [{localization, label: 't:welcome'}],
           },
-          {uuid: '456', type: 'ui_extension', localization: null, extensionPoints: [{localization: null}]},
+          {
+            uuid: '456',
+            type: 'ui_extension',
+            localization: null,
+            extensionPoints: [{localization: null, label: 'Fixed label'}],
+          },
           {uuid: '789', type: 'product_subscription'},
         ],
       }
@@ -341,7 +356,7 @@ describe('ExtensionServerClient', () => {
             uuid: '123',
             type: 'ui_extension',
             localization,
-            extensionPoints: [{localization}],
+            extensionPoints: [{localization, label: 't:welcome'}],
           },
           {uuid: '456', type: 'ui_extension', localization: null, extensionPoints: [{localization: null}]},
           {uuid: '789', type: 'product_subscription'},
@@ -359,7 +374,7 @@ describe('ExtensionServerClient', () => {
               uuid: '123',
               type: 'ui_extension',
               localization: translatedLocalization,
-              extensionPoints: [{localization: translatedLocalization}],
+              extensionPoints: [{localization: translatedLocalization, label: 'いらっしゃいませ!'}],
             },
             {
               uuid: '456',
@@ -482,7 +497,14 @@ describe('ExtensionServerClient', () => {
       }
 
       client.persist('update', {
-        extensions: [{uuid: '123', type: 'ui_extension', localization: {}, extensionPoints: [{localization: {}}]}],
+        extensions: [
+          {
+            uuid: '123',
+            type: 'ui_extension',
+            localization: {},
+            extensionPoints: [{localization: {}, label: 'いらっしゃいませ!'}],
+          },
+        ],
       })
 
       await expect(socket).toReceiveMessage(data)
