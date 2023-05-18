@@ -1,6 +1,5 @@
 import {createExtensionSpecification} from '../specification.js'
 import {BaseUIExtensionSchema} from '../schemas.js'
-import {ExtensionCategory} from '../../app/extensions.js'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 const spec = createExtensionSpecification({
@@ -19,7 +18,6 @@ const spec = createExtensionSpecification({
     )
     return outputContent`Follow the ${link} by deploying your work as a draft`
   },
-  category: (): ExtensionCategory => 'theme',
 })
 
 export default spec

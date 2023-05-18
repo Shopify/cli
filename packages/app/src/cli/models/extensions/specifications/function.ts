@@ -1,7 +1,6 @@
 import {createExtensionSpecification} from '../specification.js'
 import {BaseFunctionConfigurationSchema} from '../schemas.js'
 import {defaultFunctionsFlavors} from '../../../constants.js'
-import {ExtensionCategory} from '../../app/extensions.js'
 
 const spec = createExtensionSpecification({
   identifier: 'function',
@@ -23,7 +22,6 @@ const spec = createExtensionSpecification({
   graphQLType: 'function',
   isPreviewable: false,
   appModuleFeatures: (_) => ['function'],
-  category: (): ExtensionCategory => 'function',
 })
 
 export default spec

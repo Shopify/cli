@@ -1,5 +1,11 @@
-import {ZodSchemaType, BaseConfigContents, BaseUIExtensionSchema, BaseSchemaContents} from './schemas.js'
-import {ExtensionCategory, ExtensionFlavor} from '../app/extensions.js'
+import {
+  ZodSchemaType,
+  BaseConfigContents,
+  BaseUIExtensionSchema,
+  BaseSchemaContents,
+  FunctionSchemaContents,
+} from './schemas.js'
+import {ExtensionFlavor} from '../app/extensions.js'
 import {blocks, defaultExtensionFlavors} from '../../constants.js'
 import {ok, Result} from '@shopify/cli-kit/node/result'
 import {capitalize, constantize} from '@shopify/cli-kit/common/string'
@@ -36,7 +42,6 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigContent
   validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
-  category: () => ExtensionCategory
   previewMessage?: (
     host: string,
     uuid: string,
@@ -185,7 +190,7 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
     return outputContent`${heading}\n${message.value}\n`
   }
 
-  // UI STUFF
+  // UI Specific properties
   getBundleExtensionStdinContent() {
     if (this.specification.getBundleExtensionStdinContent) {
       return this.specification.getBundleExtensionStdinContent(this.configuration)
@@ -202,16 +207,14 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
     return this.specification.hasExtensionPointTarget?.(this.configuration, target) || false
   }
 
-  // FUNCTION STUFF
+  // Functions specific properties
   get buildCommand() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const config: any = this.configuration
+    const config = this.configuration as unknown as FunctionSchemaContents
     return config.build.command
   }
 
   get buildWasmPath() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const config: any = this.configuration
+    const config = this.configuration as unknown as FunctionSchemaContents
     return joinPath(this.directory, config.build.path ?? joinPath('dist', 'index.wasm'))
   }
 
@@ -240,7 +243,6 @@ export interface CreateExtensionSpecType<TConfiguration extends BaseConfigConten
   extends Partial<Omit<ExtensionSpecification<TConfiguration>, ForbiddenFields>> {
   identifier: string
   appModuleFeatures: (config: TConfiguration) => ExtensionFeature[]
-  category?: () => ExtensionCategory
 }
 
 /**
@@ -284,7 +286,6 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigCo
     schema: BaseUIExtensionSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     supportedFlavors: defaultExtensionFlavors,
-    category: (): ExtensionCategory => (spec.identifier === 'theme' ? 'theme' : 'ui'),
     isPreviewable: false,
   }
   return {...defaults, ...spec}
