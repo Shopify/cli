@@ -42,6 +42,13 @@ const REGISTRATION_B = {
   type: 'SUBSCRIPTION_MANAGEMENT',
 }
 
+const DASHBOARD_REGISTRATION_A = {
+  uuid: 'UUID_DASHBOARD_A',
+  id: 'DASHBOARD_A',
+  title: 'DASHBOARD_A',
+  type: 'APP_LINK',
+}
+
 const FUNCTION_REGISTRATION_A = {
   uuid: 'FUNCTION_A_UUID',
   id: 'FUNCTION_A',
@@ -76,7 +83,7 @@ const EXTENSION_A: UIExtension = {
   validate: () => Promise.resolve(ok({})),
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
-  hasExtensionPointTarget: (target: string) => true,
+  hasExtensionPointTarget: (_target: string) => true,
   isPreviewable: true,
 }
 
@@ -107,7 +114,7 @@ const EXTENSION_A_2: UIExtension = {
   validate: () => Promise.resolve(ok({})),
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
-  hasExtensionPointTarget: (target: string) => true,
+  hasExtensionPointTarget: (_target: string) => true,
   isPreviewable: true,
 }
 
@@ -138,7 +145,7 @@ const EXTENSION_B: UIExtension = {
   validate: () => Promise.resolve(ok({})),
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
-  hasExtensionPointTarget: (target: string) => true,
+  hasExtensionPointTarget: (_target: string) => true,
   isPreviewable: true,
 }
 
@@ -253,7 +260,10 @@ describe('ensureExtensionsIds: matchmaking returns more remote sources than loca
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
-    const got = await ensureExtensionsIds(options([EXTENSION_A]), [REGISTRATION_A, REGISTRATION_B])
+    const got = await ensureExtensionsIds(options([EXTENSION_A]), {
+      extensionRegistrations: [REGISTRATION_A, REGISTRATION_B],
+      dashboardManagedExtensionRegistrations: [],
+    })
 
     // Then
     expect(got).toEqual(
@@ -289,7 +299,10 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending manual matche
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
-    const got = await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
+    const got = await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), {
+      extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2],
+      dashboardManagedExtensionRegistrations: [],
+    })
 
     // Then
     expect(manualMatchIds).toHaveBeenCalledWith(
@@ -331,7 +344,10 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending manual matche
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
-    const got = await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
+    const got = await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), {
+      extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2],
+      dashboardManagedExtensionRegistrations: [],
+    })
 
     // Then
     expect(got).toEqual(
@@ -367,7 +383,10 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending some pending 
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
-    const got = await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
+    const got = await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), {
+      extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2],
+      dashboardManagedExtensionRegistrations: [],
+    })
 
     // Then
     expect(createExtension).toBeCalledTimes(2)
@@ -396,7 +415,10 @@ describe('ensureExtensionsIds: matchmaking returns ok with some pending confirma
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
-    const got = await ensureExtensionsIds(options([EXTENSION_B]), [REGISTRATION_B])
+    const got = await ensureExtensionsIds(options([EXTENSION_B]), {
+      extensionRegistrations: [REGISTRATION_B],
+      dashboardManagedExtensionRegistrations: [],
+    })
 
     // Then
     expect(createExtension).not.toBeCalled()
@@ -425,7 +447,10 @@ describe('ensureExtensionsIds: matchmaking returns ok with some pending confirma
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
-    const got = await ensureExtensionsIds(options([EXTENSION_B]), [REGISTRATION_B])
+    const got = await ensureExtensionsIds(options([EXTENSION_B]), {
+      extensionRegistrations: [REGISTRATION_B],
+      dashboardManagedExtensionRegistrations: [],
+    })
 
     // Then
     expect(got).toEqual(err('user-cancelled'))
@@ -447,7 +472,10 @@ describe('ensureExtensionsIds: matchmaking returns ok with nothing pending', () 
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
-    const got = await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
+    const got = await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), {
+      extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2],
+      dashboardManagedExtensionRegistrations: [],
+    })
 
     // Then
     expect(got).toEqual(
@@ -476,7 +504,10 @@ describe('ensureExtensionsIds: excludes functions when unifiedAppDeployment beta
     // When
     const got = await ensureExtensionsIds(
       options([EXTENSION_A], [FUNCTION_A], {}, PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA),
-      [REGISTRATION_A, FUNCTION_REGISTRATION_A],
+      {
+        extensionRegistrations: [REGISTRATION_A, FUNCTION_REGISTRATION_A],
+        dashboardManagedExtensionRegistrations: [],
+      },
     )
 
     // Then
@@ -512,7 +543,10 @@ describe('ensureExtensionsIds: includes functions when unifiedAppDeployment beta
     // When
     const got = await ensureExtensionsIds(
       options([EXTENSION_A], [FUNCTION_A], {}, PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA),
-      [REGISTRATION_A, FUNCTION_REGISTRATION_A],
+      {
+        extensionRegistrations: [REGISTRATION_A, FUNCTION_REGISTRATION_A],
+        dashboardManagedExtensionRegistrations: [],
+      },
     )
 
     // Then
@@ -546,7 +580,10 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
-    const got = await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
+    await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), {
+      extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2],
+      dashboardManagedExtensionRegistrations: [DASHBOARD_REGISTRATION_A],
+    })
 
     // Then
     expect(deployConfirmationPrompt).toBeCalledWith(
@@ -557,9 +594,48 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
           EXTENSION_A_2: 'UUID_A_2',
         },
         onlyRemote: [],
+        dashboardOnly: [DASHBOARD_REGISTRATION_A],
         toCreate: [],
       },
       PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA,
+    )
+  })
+
+  test('does not include dashboard managed extensions in confirmation prompt if the beta flag is off', async () => {
+    // Given
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
+
+    // When
+    await ensureExtensionsIds(
+      options([EXTENSION_A, EXTENSION_A_2], [], {}, PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA),
+      {
+        extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2],
+        dashboardManagedExtensionRegistrations: [DASHBOARD_REGISTRATION_A],
+      },
+    )
+
+    // Then
+    expect(deployConfirmationPrompt).toBeCalledWith(
+      {
+        question: 'Make the following changes to your extensions in Shopify Partners?',
+        identifiers: {
+          EXTENSION_A: 'UUID_A',
+          EXTENSION_A_2: 'UUID_A_2',
+        },
+        onlyRemote: [],
+        dashboardOnly: [],
+        toCreate: [],
+      },
+      PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA,
     )
   })
 
@@ -579,7 +655,10 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
     opts.force = true
 
     // When
-    await ensureExtensionsIds(opts, [REGISTRATION_A, REGISTRATION_A_2])
+    await ensureExtensionsIds(opts, {
+      extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2],
+      dashboardManagedExtensionRegistrations: [],
+    })
 
     // Then
     expect(deployConfirmationPrompt).not.toBeCalled()
@@ -606,7 +685,10 @@ describe('ensureExtensionsIds: Migrates extension', () => {
     vi.mocked(getExtensionsToMigrate).mockReturnValueOnce(extensionsToMigrate)
 
     // When
-    await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
+    await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), {
+      extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2],
+      dashboardManagedExtensionRegistrations: [],
+    })
 
     // Then
     expect(extensionMigrationPrompt).toBeCalledWith(extensionsToMigrate)
@@ -633,7 +715,10 @@ describe('ensureExtensionsIds: Migrates extension', () => {
     const remoteExtensions = [REGISTRATION_A, REGISTRATION_A_2]
 
     // When
-    await ensureExtensionsIds(opts, remoteExtensions)
+    await ensureExtensionsIds(opts, {
+      extensionRegistrations: remoteExtensions,
+      dashboardManagedExtensionRegistrations: [],
+    })
 
     // Then
     expect(migrateExtensionsToUIExtension).toBeCalledWith(extensionsToMigrate, opts.appId, remoteExtensions)

@@ -51,7 +51,7 @@ describe('generate', () => {
   const mockConfig = new Config({root: ''})
   test('displays a confirmation message with instructions to run dev', async () => {
     // Given
-    const outputInfo = await mockSuccessfulCommandExecution('checkout_ui_extension')
+    const outputInfo = await mockSuccessfulCommandExecution('checkout_ui')
 
     // When
     await generate({directory: '/', reset: false, config: mockConfig})
@@ -73,7 +73,7 @@ describe('generate', () => {
 
   test('displays a confirmation message for a theme app extension', async () => {
     // Given
-    const outputInfo = await mockSuccessfulCommandExecution('theme')
+    const outputInfo = await mockSuccessfulCommandExecution('theme_app_extension')
 
     // When
     await generate({directory: '/', reset: false, config: mockConfig})
@@ -129,10 +129,10 @@ describe('generate', () => {
   test('throws error if trying to generate a extension over the registration limit', async () => {
     // Given
     const themeExtension = await testThemeExtensions()
-    await mockSuccessfulCommandExecution('theme', [themeExtension])
+    await mockSuccessfulCommandExecution('theme_app_extension', [themeExtension])
 
     // When
-    const got = generate({directory: '/', reset: false, config: mockConfig, type: 'theme'})
+    const got = generate({directory: '/', reset: false, config: mockConfig, type: 'theme_app_extension'})
 
     // Then
     await expect(got).rejects.toThrow(/Invalid extension type/)
@@ -152,14 +152,14 @@ describe('generate', () => {
 
   test('throws error if trying to generate with an unsupported flavor', async () => {
     // Given
-    await mockSuccessfulCommandExecution('checkout_ui_extension')
+    await mockSuccessfulCommandExecution('checkout_ui')
 
     // When
     const got = generate({
       directory: '/',
       reset: false,
       config: mockConfig,
-      type: 'checkout_ui_extension',
+      type: 'checkout_ui',
       template: 'unknown',
     })
 

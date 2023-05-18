@@ -4,7 +4,7 @@ import {ExtensionTemplate} from '../../app/template.js'
  * Theme App extension template specification.
  */
 const themeExtension: ExtensionTemplate = {
-  identifier: 'theme',
+  identifier: 'theme_app_extension',
   name: 'Theme app extension',
   group: 'Online store',
   supportLinks: [],

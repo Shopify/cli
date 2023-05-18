@@ -488,6 +488,7 @@ describe('ensureThemeExtensionDevContext', () => {
             type: 'THEME_APP_EXTENSION',
           },
         ],
+        dashboardManagedExtensionRegistrations: [],
         functions: [],
       },
     })
@@ -509,7 +510,7 @@ describe('ensureThemeExtensionDevContext', () => {
     const extension = await testThemeExtensions()
 
     vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-      app: {extensionRegistrations: [], functions: []},
+      app: {extensionRegistrations: [], dashboardManagedExtensionRegistrations: [], functions: []},
     })
     vi.mocked(createExtension).mockResolvedValue({
       id: 'new ID',

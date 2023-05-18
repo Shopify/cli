@@ -10,16 +10,17 @@ describe('InfoTable', async () => {
       <InfoTable
         table={{
           'header 1': ['some', 'items'],
-          'header 2': [['one item', {link: {label: 'Shopify', url: 'https://shopify.com'}}]],
+          'header 2\nlonger text here': [['one item', {link: {label: 'Shopify', url: 'https://shopify.com'}}]],
         }}
       />,
     )
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
-      "Header 1:  • some
-                 • items
+      "Header 1:          • some
+                         • items
 
-      Header 2:  • one item Shopify ( https://shopify.com )"
+      Header 2           • one item Shopify ( https://shopify.com )
+      longer text here:"
     `)
   })
 

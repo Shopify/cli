@@ -39,28 +39,33 @@ interface SourceSummary {
   identifiers: IdentifiersExtensions
   toCreate: LocalSource[]
   onlyRemote: RemoteSource[]
+  dashboardOnly: RemoteSource[]
 }
 
 export async function deployConfirmationPrompt(
-  summary: SourceSummary,
+  {question, identifiers, toCreate, onlyRemote, dashboardOnly}: SourceSummary,
   partnersApp?: OrganizationApp,
 ): Promise<boolean> {
   const infoTable: InfoTableSection[] = []
 
-  if (summary.toCreate.length > 0) {
-    infoTable.push({header: 'Add', items: summary.toCreate.map((source) => source.localIdentifier)})
+  if (toCreate.length > 0) {
+    infoTable.push({header: 'Add', items: toCreate.map((source) => source.localIdentifier)})
   }
 
-  const toUpdate = Object.keys(summary.identifiers)
+  const toUpdate = Object.keys(identifiers)
 
   if (toUpdate.length > 0) {
     infoTable.push({header: 'Update', items: toUpdate})
   }
 
-  if (summary.onlyRemote.length > 0) {
+  if (dashboardOnly.length > 0) {
+    infoTable.push({header: 'Included from\nPartner dashboard', items: dashboardOnly.map((source) => source.title)})
+  }
+
+  if (onlyRemote.length > 0) {
     let missingLocallySection: InfoTableSection = {
       header: 'Missing locally',
-      items: summary.onlyRemote.map((source) => source.title),
+      items: onlyRemote.map((source) => source.title),
     }
 
     if (partnersApp?.betas?.unifiedAppDeployment) {
@@ -79,7 +84,7 @@ export async function deployConfirmationPrompt(
   }
 
   return renderConfirmationPrompt({
-    message: summary.question,
+    message: question,
     infoTable,
     confirmationMessage: 'Yes, deploy to push changes',
     cancellationMessage: 'No, cancel',

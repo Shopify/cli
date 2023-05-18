@@ -331,7 +331,9 @@ async function testDeployBundle(
   vi.mocked(uploadFunctionExtensions).mockResolvedValue(identifiers)
   vi.mocked(uploadExtensionsBundle).mockResolvedValue({validationErrors: [], deploymentId: 2})
   vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
-  vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({app: {extensionRegistrations: [], functions: []}})
+  vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
+    app: {extensionRegistrations: [], dashboardManagedExtensionRegistrations: [], functions: []},
+  })
 
   await deploy({
     app,

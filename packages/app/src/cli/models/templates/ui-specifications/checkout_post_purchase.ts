@@ -5,7 +5,7 @@ import {uiFlavors} from '../common.js'
  * Post-purchase UI template specification.
  */
 const checkoutPostPurchaseExtension: ExtensionTemplate = {
-  identifier: 'checkout_post_purchase',
+  identifier: 'post_purchase_ui',
   name: 'Post-purchase UI',
   group: 'Discounts and checkout',
   supportLinks: ['https://shopify.dev/docs/apps/checkout/post-purchase'],
