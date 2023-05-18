@@ -127,7 +127,8 @@ describe('ExtensionServerClient', () => {
             localization,
             extensionPoints: [{localization}],
           },
-          {uuid: '456', type: 'ui_extension', localization, extensionPoints: [{localization}]},
+          {uuid: '456', type: 'ui_extension', localization: null, extensionPoints: [{localization: null}]},
+          {uuid: '789', type: 'product_subscription'},
         ],
       }
 
@@ -178,7 +179,8 @@ describe('ExtensionServerClient', () => {
             localization,
             extensionPoints: [{localization}],
           },
-          {uuid: '456', type: 'ui_extension', localization, extensionPoints: [{localization}]},
+          {uuid: '456', type: 'ui_extension', localization: null, extensionPoints: [{localization: null}]},
+          {uuid: '789', type: 'product_subscription'},
         ],
       }
 
@@ -198,9 +200,10 @@ describe('ExtensionServerClient', () => {
             {
               uuid: '456',
               type: 'ui_extension',
-              localization: translatedLocalization,
-              extensionPoints: [{localization: translatedLocalization}],
+              localization: null,
+              extensionPoints: [{localization: null}],
             },
+            {uuid: '789', type: 'product_subscription'},
           ],
         }),
       )
@@ -216,7 +219,7 @@ describe('ExtensionServerClient', () => {
         extensions: [
           {uuid: '123', surface: 'admin'},
           {uuid: '456', surface: 'checkout'},
-          {uuid: '456', surface: '', extensionPoints: [{surface: 'admin'}]},
+          {uuid: '789', surface: '', extensionPoints: [{surface: 'admin'}]},
         ],
       }
 
@@ -228,7 +231,7 @@ describe('ExtensionServerClient', () => {
         expect.objectContaining({
           extensions: [
             {uuid: '123', surface: 'admin'},
-            {uuid: '456', surface: '', extensionPoints: [{surface: 'admin'}]},
+            {uuid: '789', surface: '', extensionPoints: [{surface: 'admin'}]},
           ],
         }),
       )
@@ -288,7 +291,8 @@ describe('ExtensionServerClient', () => {
             localization,
             extensionPoints: [{localization}],
           },
-          {uuid: '456', localization, extensionPoints: [{localization}]},
+          {uuid: '456', type: 'ui_extension', localization: null, extensionPoints: [{localization: null}]},
+          {uuid: '789', type: 'product_subscription'},
         ],
       }
 
@@ -339,7 +343,8 @@ describe('ExtensionServerClient', () => {
             localization,
             extensionPoints: [{localization}],
           },
-          {uuid: '456', type: 'ui_extension', localization, extensionPoints: [{localization}]},
+          {uuid: '456', type: 'ui_extension', localization: null, extensionPoints: [{localization: null}]},
+          {uuid: '789', type: 'product_subscription'},
         ],
       }
 
@@ -359,9 +364,10 @@ describe('ExtensionServerClient', () => {
             {
               uuid: '456',
               type: 'ui_extension',
-              localization: translatedLocalization,
-              extensionPoints: [{localization: translatedLocalization}],
+              localization: null,
+              extensionPoints: [{localization: null}],
             },
+            {uuid: '789', type: 'product_subscription'},
           ],
         }),
       )
