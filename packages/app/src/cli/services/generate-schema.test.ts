@@ -93,6 +93,7 @@ describe('generateSchemaService', () => {
       const extension = await testFunctionExtension()
       const {
         configuration: {apiVersion: version},
+        type,
       } = extension
 
       // When
@@ -102,7 +103,7 @@ describe('generateSchemaService', () => {
       expect(request).toHaveBeenCalledWith(ApiSchemaDefinitionQuery, token, {
         apiKey,
         version,
-        type: 'product_discounts',
+        type,
       })
     })
 
@@ -112,6 +113,7 @@ describe('generateSchemaService', () => {
       const extension = await testFunctionExtension()
       const {
         configuration: {apiVersion: version},
+        type,
       } = extension
 
       // When
@@ -121,7 +123,7 @@ describe('generateSchemaService', () => {
       expect(request).toHaveBeenCalledWith(ApiSchemaDefinitionQuery, token, {
         apiKey: identifiersApiKey,
         version,
-        type: 'product_discounts',
+        type,
       })
     })
 
@@ -131,6 +133,7 @@ describe('generateSchemaService', () => {
       const extension = await testFunctionExtension()
       const {
         configuration: {apiVersion: version},
+        type,
       } = extension
       getAppIdentifiers.mockReturnValue({app: undefined})
 
@@ -141,7 +144,7 @@ describe('generateSchemaService', () => {
       expect(request).toHaveBeenCalledWith(ApiSchemaDefinitionQuery, token, {
         apiKey: promptApiKey,
         version,
-        type: 'product_discounts',
+        type,
       })
     })
 
