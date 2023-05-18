@@ -1,6 +1,12 @@
 /* eslint-disable no-console */
 import {Surface} from './types.js'
-import {TRANSLATED_KEYS, getFlattenedLocalization} from '../i18n'
+import {
+  FlattenedLocalization,
+  Localization,
+  TRANSLATED_KEYS,
+  getFlattenedLocalization,
+  isFlattenedTranslations,
+} from '../i18n'
 import {isUIExtension, isValidSurface} from '../utilities'
 import {DeepPartial, ExtensionPayload, ExtensionPoint} from '../types'
 
@@ -78,6 +84,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
        *  localization: {...},
        *  extensionPoints: [{
        *    target: 'admin.product.item.action'
+       *    label: 'en label'
        *    localization: {...}
        *  }],
        * }
@@ -197,15 +204,39 @@ export class ExtensionServerClient implements ExtensionServer.Client {
         ...extension,
         localization,
         extensionPoints: isUIExtension(extension)
-          ? extension.extensionPoints?.map((extensionPoint) => ({
-              ...extensionPoint,
-              localization,
-            }))
+          ? this._getLocalizedExtensionPoints(shouldUpdateTranslations, localization, extension.extensionPoints)
           : extension.extensionPoints,
       }
 
       return this.extensionsByUuid[extension.uuid]
     })
+  }
+
+  private _getLocalizedExtensionPoints(
+    shouldUpdateTranslations: boolean,
+    localization: FlattenedLocalization | Localization | null | undefined,
+    extensionPoints: ExtensionPoint[],
+  ): ExtensionPoint[] {
+    const shouldTranslateLabel = shouldUpdateTranslations && localization && isFlattenedTranslations(localization)
+    const parsedTranslation = shouldTranslateLabel ? JSON.parse(localization.translations) : null
+    return extensionPoints?.map((extensionPoint) => {
+      if (shouldTranslateLabel && extensionPoint.label && extensionPoint.label.startsWith('t:')) {
+        return {
+          ...extensionPoint,
+          localization,
+          label: this._getLocalizedLabel(parsedTranslation, extensionPoint.label),
+        }
+      }
+      return {
+        ...extensionPoint,
+        localization,
+      }
+    })
+  }
+
+  private _getLocalizedLabel(translations: {[x: string]: string}, label: string): string {
+    const translationKey = label.replace('t:', '')
+    return translations[translationKey] ?? label
   }
 }
 
