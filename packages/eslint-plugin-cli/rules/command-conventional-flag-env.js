@@ -13,6 +13,9 @@ module.exports = {
     return {
       PropertyDefinition(node) {
         if (node.key.name === 'flags') {
+          if (!node.value.properties) {
+            return
+          }
           node.value.properties.forEach((flag) => {
             const arguments = flag.value?.arguments ?? []
             const argument = arguments[0]

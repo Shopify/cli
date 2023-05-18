@@ -1,7 +1,7 @@
 import {askFor, command} from './command-helpers.js'
+import * as loader from '../models/app/loader.js'
 import {test, expect, describe, vi, beforeEach} from 'vitest'
 import {Flags} from '@oclif/core'
-import * as loader from '../models/app/loader.js'
 
 vi.mock('../models/app/loader.js')
 

@@ -1,10 +1,10 @@
-import {appFlags} from '../flags.js'
-import type {AppInterface} from '../models/app/app.js'
-import {load as loadApp} from '../models/app/loader.js'
 import Command from './app-command.js'
-import type {Config} from '@oclif/core'
-import {resolvePath} from '@shopify/cli-kit/node/path'
+import {appFlags} from '../flags.js'
+import {load as loadApp} from '../models/app/loader.js'
+import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import type {AppInterface} from '../models/app/app.js'
+import type {Config} from '@oclif/core'
 import type {FlagOutput, ParserOutput, FlagInput, ArgOutput} from '@oclif/core/lib/interfaces/parser.js'
 
 interface BuiltInFlags {
@@ -42,7 +42,7 @@ type PromptBasedFlagProcessor<
 /**
  * Takes a collection of parsed flags, applies the prompts for values not given via a flag, and returns the combined data set
  *
- * @param options List of prompts to use for anything not provided via a flag. It's best to give this with `as const`
+ * @param options - List of prompts to use for anything not provided via a flag. It's best to give this with `as const`
  * @returns Parsed flag outputs, with prompts applied if necessary
  */
 export function askFor<
@@ -72,10 +72,10 @@ type ConcreteCommand = new (argv: string[], config: Config) => Command
 /**
  * Creates a command class, using our preferred patterns
  *
- * @param description Description for the command
- * @param flags Command flags
- * @param applyPrompts Function that takes the flags, post-parsing, and applies extra values, usually via prompts
- * @param runService Service function that does the work of the command
+ * @param description - Description for the command
+ * @param flags - Command flags
+ * @param applyPrompts - Function that takes the flags, post-parsing, and applies extra values, usually via prompts
+ * @param runService - Service function that does the work of the command
  * @returns Whatever the service function returns
  */
 export function command<TFlags extends FlagOutput, TServiceOptions extends TFlags = TFlags>(
@@ -97,13 +97,13 @@ export function command<TFlags extends FlagOutput, TServiceOptions extends TFlag
 
     public async run(): Promise<unknown> {
       const {flags} = await this.parse<TFlags & BuiltInFlags, FlagOutput, ArgOutput>(CustomCommand)
-      const directory = flags.path ? resolvePath(flags.path) : process.cwd()
+      const directory = flags.path ? resolvePath(flags.path) : cwd()
 
       const app: AppInterface = await loadApp({directory, specifications: []})
 
       const finalOptions = await applyPrompts(flags)
 
-      return await runService(app, finalOptions)
+      return runService(app, finalOptions)
     }
   }
   return CustomCommand

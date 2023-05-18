@@ -1,4 +1,5 @@
 // https://eslint.org/docs/developer-guide/working-with-rules
+/** @type {import('eslint').Rule.RuleModule} */
 module.exports = {
   meta: {
     type: 'problem',
@@ -23,6 +24,9 @@ module.exports = {
     return {
       PropertyDefinition(node) {
         if (node.key.name === 'flags') {
+          if (!node.value.properties) {
+            return
+          }
           node.value.properties.forEach((flag) => {
             const flagName = flag.key?.name
             if (!flagName) {
