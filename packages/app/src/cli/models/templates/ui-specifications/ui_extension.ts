@@ -14,7 +14,7 @@ const UIExtension: ExtensionTemplate = {
       url: 'https://github.com/Shopify/cli',
       type: 'ui_extension',
       extensionPoints: [],
-      supportedFlavors: uiFlavors('packages/app/templates/ui-extensions/projects/ui_extension'),
+      supportedFlavors: uiFlavors('templates/ui-extensions/projects/ui_extension'),
     },
   ],
 }

@@ -14,7 +14,7 @@ const customerAccountsUIExtension: ExtensionTemplate = {
       url: 'https://github.com/Shopify/cli',
       type: 'customer_accounts_ui_extension',
       extensionPoints: [],
-      supportedFlavors: uiFlavors('packages/app/templates/ui-extensions/projects/customer_accounts_ui_extension'),
+      supportedFlavors: uiFlavors('templates/ui-extensions/projects/customer_accounts_ui_extension'),
     },
   ],
 }

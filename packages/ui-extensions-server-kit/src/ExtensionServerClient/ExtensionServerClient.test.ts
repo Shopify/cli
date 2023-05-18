@@ -1,21 +1,28 @@
 import {ExtensionServerClient} from './ExtensionServerClient'
 import {mockApp} from '../testing'
 import WS from 'jest-websocket-mock'
+import {Localization} from 'i18n.js'
 
 const defaultOptions = {
   connection: {url: 'ws://example-host.com:8000/extensions/'},
 }
 
 describe('ExtensionServerClient', () => {
+  let socket: WS
+
   function setup(options: ExtensionServer.Options = defaultOptions) {
     if (!options.connection.url) {
       throw new Error('Please set a URL')
     }
-    const socket = new WS(options.connection.url, {jsonProtocol: true})
+    socket = new WS(options.connection.url, {jsonProtocol: true})
     const client = new ExtensionServerClient(options)
 
     return {socket, client, options}
   }
+
+  afterEach(() => {
+    socket.close()
+  })
 
   describe('initialization', () => {
     test('connects to the target websocket', async () => {
@@ -92,6 +99,128 @@ describe('ExtensionServerClient', () => {
       socket.close()
     })
 
+    test('sends data with translatable props as-is for UI extensions when locales option is not provided on "connected" event', async () => {
+      const {socket, client} = setup()
+      const connectSpy = vi.fn()
+      const localization: Localization = {
+        defaultLocale: 'en',
+        translations: {
+          ja: {
+            welcome: 'いらっしゃいませ!',
+          },
+          en: {
+            welcome: 'Welcome!',
+          },
+          fr: {
+            welcome: 'Bienvenue!',
+          },
+        },
+        lastUpdated: 1684164163736,
+      }
+
+      const data = {
+        app: mockApp(),
+        extensions: [
+          {
+            uuid: '123',
+            type: 'ui_extension',
+            localization,
+            extensionPoints: [{localization}],
+          },
+          {uuid: '456', type: 'ui_extension', localization: null, extensionPoints: [{localization: null}]},
+          {uuid: '789', type: 'product_subscription'},
+        ],
+      }
+
+      client.on('connected', connectSpy)
+      socket.send({event: 'connected', data})
+
+      expect(connectSpy).toHaveBeenCalledTimes(1)
+      expect(connectSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          extensions: data.extensions,
+        }),
+      )
+
+      socket.close()
+    })
+
+    test('sends data with translated props for UI extensions when locales option is provided on "connected" event', async () => {
+      const {socket, client} = setup({...defaultOptions, locales: {user: 'ja', shop: 'fr'}})
+      const connectSpy = vi.fn()
+      const localization: Localization = {
+        defaultLocale: 'en',
+        translations: {
+          ja: {
+            welcome: 'いらっしゃいませ!',
+          },
+          en: {
+            welcome: 'Welcome!',
+          },
+          fr: {
+            welcome: 'Bienvenue!',
+          },
+        },
+        lastUpdated: 1684164163736,
+      }
+
+      const translatedLocalization = {
+        extensionLocale: 'ja',
+        translations: '{"welcome":"いらっしゃいませ!"}',
+        lastUpdated: localization.lastUpdated,
+      }
+
+      const data = {
+        app: mockApp(),
+        extensions: [
+          {
+            uuid: '123',
+            type: 'ui_extension',
+            localization,
+            extensionPoints: [{localization, label: 't:welcome'}],
+          },
+          {
+            uuid: '456',
+            type: 'ui_extension',
+            localization: null,
+            extensionPoints: [{localization: null, label: 'Fixed label'}],
+          },
+          {uuid: '789', type: 'product_subscription'},
+        ],
+      }
+
+      client.on('connected', connectSpy)
+      socket.send({event: 'connected', data})
+
+      expect(connectSpy).toHaveBeenCalledTimes(1)
+      expect(connectSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          extensions: [
+            {
+              uuid: '123',
+              type: 'ui_extension',
+              localization: translatedLocalization,
+              extensionPoints: [
+                {
+                  localization: translatedLocalization,
+                  label: 'いらっしゃいませ!',
+                },
+              ],
+            },
+            {
+              uuid: '456',
+              type: 'ui_extension',
+              localization: null,
+              extensionPoints: [{localization: null, label: 'Fixed label'}],
+            },
+            {uuid: '789', type: 'product_subscription'},
+          ],
+        }),
+      )
+
+      socket.close()
+    })
+
     test('sends data with extensions filtered by surface option on "update" event', async () => {
       const {socket, client} = setup({...defaultOptions, surface: 'admin'})
       const updateSpy = vi.fn()
@@ -100,7 +229,7 @@ describe('ExtensionServerClient', () => {
         extensions: [
           {uuid: '123', surface: 'admin'},
           {uuid: '456', surface: 'checkout'},
-          {uuid: '456', surface: '', extensionPoints: [{surface: 'admin'}]},
+          {uuid: '789', surface: '', extensionPoints: [{surface: 'admin'}]},
         ],
       }
 
@@ -112,7 +241,7 @@ describe('ExtensionServerClient', () => {
         expect.objectContaining({
           extensions: [
             {uuid: '123', surface: 'admin'},
-            {uuid: '456', surface: '', extensionPoints: [{surface: 'admin'}]},
+            {uuid: '789', surface: '', extensionPoints: [{surface: 'admin'}]},
           ],
         }),
       )
@@ -138,6 +267,123 @@ describe('ExtensionServerClient', () => {
       expect(updateSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           extensions: data.extensions,
+        }),
+      )
+
+      socket.close()
+    })
+
+    test('sends data with translatable props as-is when locales option is not provided on "update" event', async () => {
+      const {socket, client} = setup()
+      const updateSpy = vi.fn()
+      const localization: Localization = {
+        defaultLocale: 'en',
+        translations: {
+          ja: {
+            welcome: 'いらっしゃいませ!',
+          },
+          en: {
+            welcome: 'Welcome!',
+          },
+          fr: {
+            welcome: 'Bienvenue!',
+          },
+        },
+        lastUpdated: 1684164163736,
+      }
+
+      const data = {
+        app: mockApp(),
+        extensions: [
+          {
+            uuid: '123',
+            type: 'ui_extension',
+            localization,
+            extensionPoints: [{localization, label: 't:welcome'}],
+          },
+          {
+            uuid: '456',
+            type: 'ui_extension',
+            localization: null,
+            extensionPoints: [{localization: null, label: 'Fixed label'}],
+          },
+          {uuid: '789', type: 'product_subscription'},
+        ],
+      }
+
+      client.on('update', updateSpy)
+      socket.send({event: 'update', data})
+
+      expect(updateSpy).toHaveBeenCalledTimes(1)
+      expect(updateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          extensions: data.extensions,
+        }),
+      )
+
+      socket.close()
+    })
+
+    test('sends data with translated props when locales option is provided on "update" event', async () => {
+      const {socket, client} = setup({...defaultOptions, locales: {user: 'ja', shop: 'fr'}})
+      const updateSpy = vi.fn()
+      const localization: Localization = {
+        defaultLocale: 'en',
+        translations: {
+          ja: {
+            welcome: 'いらっしゃいませ!',
+          },
+          en: {
+            welcome: 'Welcome!',
+          },
+          fr: {
+            welcome: 'Bienvenue!',
+          },
+        },
+        lastUpdated: 1684164163736,
+      }
+
+      const translatedLocalization = {
+        extensionLocale: 'ja',
+        translations: '{"welcome":"いらっしゃいませ!"}',
+        lastUpdated: localization.lastUpdated,
+      }
+
+      const data = {
+        app: mockApp(),
+        extensions: [
+          {
+            uuid: '123',
+            type: 'ui_extension',
+            localization,
+            extensionPoints: [{localization, label: 't:welcome'}],
+          },
+          {uuid: '456', type: 'ui_extension', localization: null, extensionPoints: [{localization: null}]},
+          {uuid: '789', type: 'product_subscription'},
+        ],
+      }
+
+      client.on('update', updateSpy)
+      socket.send({event: 'update', data})
+
+      expect(updateSpy).toHaveBeenCalledTimes(1)
+      expect(updateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          extensions: [
+            {
+              uuid: '123',
+              type: 'ui_extension',
+              localization: translatedLocalization,
+              extensionPoints: [{localization: translatedLocalization, label: 'いらっしゃいませ!'}],
+            },
+            {
+              uuid: '456',
+              type: 'ui_extension',
+              localization: null,
+              extensionPoints: [{localization: null}],
+            },
+            {uuid: '789', type: 'product_subscription'},
+          ],
         }),
       )
 
@@ -239,6 +485,49 @@ describe('ExtensionServerClient', () => {
 
       socket.close()
       warnSpy.mockRestore()
+    })
+
+    test('remove translated props from the UI extensions payload when locales are provided in the client options', async () => {
+      const {socket, client} = setup({connection: defaultOptions.connection, locales: {user: 'ja', shop: 'fr'}})
+      const data = {
+        event: 'update',
+        data: {
+          extensions: [{uuid: '123', type: 'ui_extension', extensionPoints: [{}]}],
+        },
+      }
+
+      client.persist('update', {
+        extensions: [
+          {
+            uuid: '123',
+            type: 'ui_extension',
+            localization: {},
+            extensionPoints: [{localization: {}, label: 'いらっしゃいませ!'}],
+          },
+        ],
+      })
+
+      await expect(socket).toReceiveMessage(data)
+
+      socket.close()
+    })
+
+    test('leave translatable props as-is in the UI extensions payload when locales are not provided in the client options', async () => {
+      const {socket, client} = setup()
+      const data = {
+        event: 'update',
+        data: {
+          extensions: [{uuid: '123', type: 'ui_extension', localization: {}, extensionPoints: [{localization: {}}]}],
+        },
+      }
+
+      client.persist('update', {
+        extensions: [{uuid: '123', type: 'ui_extension', localization: {}, extensionPoints: [{localization: {}}]}],
+      })
+
+      await expect(socket).toReceiveMessage(data)
+
+      socket.close()
     })
   })
 

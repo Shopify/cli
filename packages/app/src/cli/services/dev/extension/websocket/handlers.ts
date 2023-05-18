@@ -29,7 +29,7 @@ export function getConnectionDoneHandler(wss: WebSocketServer, options: SetupWeb
     const connectedPayload = {
       event: 'connected',
       data: options.payloadStore.getConnectedPayload(),
-      version: '3',
+      version: options.manifestVersion,
     }
     outputDebug(outputContent`Sending connected payload: ${outputToken.json(connectedPayload)}`, options.stdout)
     ws.send(JSON.stringify(connectedPayload))
@@ -82,7 +82,7 @@ export function getPayloadUpdateHandler(
   return (extensionIds: string[]) => {
     const payload = {
       event: EventType.Update,
-      version: '3',
+      version: options.manifestVersion,
       data: {
         ...options.payloadStore.getRawPayloadFilteredByExtensionIds(extensionIds),
       },
@@ -116,7 +116,7 @@ export function getOutgoingDispatchMessage(
   const extensionsPayload = options.payloadStore.getRawPayload()
   return {
     ...incomingMessage,
-    version: '3',
+    version: options.manifestVersion,
     data: {
       ...incomingMessage.data,
       extensions: [],
