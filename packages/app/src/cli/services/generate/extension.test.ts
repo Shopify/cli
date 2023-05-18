@@ -61,7 +61,7 @@ describe('initialize a extension', async () => {
     await withTemporaryApp(async (tmpDir) => {
       const name1 = 'my-ext-1'
       const name2 = 'my-ext-2'
-      const extensionTemplate = allUITemplates.find((spec) => spec.identifier === 'checkout_post_purchase')!
+      const extensionTemplate = allUITemplates.find((spec) => spec.identifier === 'post_purchase_ui')!
       const extensionFlavor = 'vanilla-js'
       await createFromTemplate({
         name: name1,
@@ -88,7 +88,7 @@ describe('initialize a extension', async () => {
   test('errors when trying to re-generate an existing extension', async () => {
     await withTemporaryApp(async (tmpDir: string) => {
       const name = 'my-ext-1'
-      const extensionTemplate = allUITemplates.find((spec) => spec.identifier === 'checkout_post_purchase')!
+      const extensionTemplate = allUITemplates.find((spec) => spec.identifier === 'post_purchase_ui')!
       const extensionFlavor = 'vanilla-js'
       await createFromTemplate({
         name,

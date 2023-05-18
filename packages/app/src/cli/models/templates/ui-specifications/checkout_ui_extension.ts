@@ -5,7 +5,7 @@ import {uiFlavors} from '../common.js'
  * Checkout UI template specification.
  */
 const checkoutUIExtension: ExtensionTemplate = {
-  identifier: 'checkout_ui_extension',
+  identifier: 'checkout_ui',
   name: 'Checkout UI',
   group: 'Discounts and checkout',
   supportLinks: [],

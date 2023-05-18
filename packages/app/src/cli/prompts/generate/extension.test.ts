@@ -88,14 +88,14 @@ describe('extension prompt', async () => {
     const answers = {extensionFlavor: 'react'}
     const options = {
       name: 'my-special-extension',
-      templateType: 'checkout_post_purchase',
+      templateType: 'post_purchase_ui',
       directory: '/',
       app: testApp(),
       reset: false,
       extensionTemplates: allUITemplates,
       unavailableExtensions: [],
     }
-    const extensionTemplate = findExtensionTemplate('checkout_post_purchase', allUITemplates)
+    const extensionTemplate = findExtensionTemplate('post_purchase_ui', allUITemplates)
 
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionFlavor)
@@ -124,7 +124,7 @@ describe('extension prompt', async () => {
   test('when scaffolding a theme extension type does not prompt for language/framework preference', async () => {
     const options = {
       name: 'my-special-extension',
-      templateType: 'theme',
+      templateType: 'theme_app_extension',
       directory: '/',
       app: testApp(),
       reset: false,

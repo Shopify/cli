@@ -4,7 +4,7 @@ import {ExtensionTemplate} from '../../app/template.js'
  * Web Pixel UI extension template specification.
  */
 const webPixelUIExtension: ExtensionTemplate = {
-  identifier: 'web_pixel_extension',
+  identifier: 'web_pixel',
   name: 'Web Pixel',
   group: 'Analytics',
   supportLinks: [],
