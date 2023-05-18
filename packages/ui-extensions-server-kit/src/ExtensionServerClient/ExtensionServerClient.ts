@@ -23,7 +23,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
 
   protected connected = false
 
-  private extensionsByUuid: {[key: string]: ExtensionPayload} = {}
+  private uiExtensionsByUuid: {[key: string]: ExtensionServer.UIExtension} = {}
 
   constructor(options: DeepPartial<ExtensionServer.Options> = {}) {
     this.id = (Math.random() + 1).toString(36).substring(7)
@@ -189,54 +189,52 @@ export class ExtensionServerClient implements ExtensionServer.Client {
 
   private _getLocalizedExtensions(extensions?: ExtensionPayload[]) {
     return extensions?.map((extension) => {
-      if (!this.options.locales) {
+      if (!this.options.locales || !isUIExtension(extension)) {
         return extension
       }
 
       const shouldUpdateTranslations =
-        this.extensionsByUuid[extension.uuid]?.localization?.lastUpdated !== extension.localization?.lastUpdated
+        this.uiExtensionsByUuid[extension.uuid]?.localization?.lastUpdated !== extension.localization?.lastUpdated
 
       const localization = shouldUpdateTranslations
         ? getFlattenedLocalization(extension.localization, this.options.locales)
-        : this.extensionsByUuid[extension.uuid]?.localization || extension.localization
+        : this.uiExtensionsByUuid[extension.uuid]?.localization || extension.localization
 
-      this.extensionsByUuid[extension.uuid] = {
+      this.uiExtensionsByUuid[extension.uuid] = {
         ...extension,
         localization,
-        extensionPoints: isUIExtension(extension)
-          ? this._getLocalizedExtensionPoints(shouldUpdateTranslations, localization, extension.extensionPoints)
-          : extension.extensionPoints,
+        extensionPoints: this._getLocalizedExtensionPoints(localization, extension.extensionPoints),
       }
 
-      return this.extensionsByUuid[extension.uuid]
+      return this.uiExtensionsByUuid[extension.uuid]
     })
   }
 
   private _getLocalizedExtensionPoints(
-    shouldUpdateTranslations: boolean,
     localization: FlattenedLocalization | Localization | null | undefined,
     extensionPoints: ExtensionPoint[],
   ): ExtensionPoint[] {
-    const shouldTranslateLabel = shouldUpdateTranslations && localization && isFlattenedTranslations(localization)
-    const parsedTranslation = shouldTranslateLabel ? JSON.parse(localization.translations) : null
+    if (!localization || !isFlattenedTranslations(localization)) {
+      return extensionPoints
+    }
+
+    const parsedTranslation = JSON.parse(localization.translations)
+
     return extensionPoints?.map((extensionPoint) => {
-      if (shouldTranslateLabel && extensionPoint.label && extensionPoint.label.startsWith('t:')) {
-        return {
-          ...extensionPoint,
-          localization,
-          label: this._getLocalizedLabel(parsedTranslation, extensionPoint.label),
-        }
-      }
       return {
         ...extensionPoint,
         localization,
+        label:
+          extensionPoint.label && extensionPoint.label.startsWith('t:')
+            ? this._getLocalizedLabel(parsedTranslation, extensionPoint.label)
+            : extensionPoint.label,
       }
     })
   }
 
   private _getLocalizedLabel(translations: {[x: string]: string}, label: string): string {
     const translationKey = label.replace('t:', '')
-    return translations[translationKey] ?? label
+    return translations[translationKey] || label
   }
 }
 
