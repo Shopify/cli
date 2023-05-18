@@ -89,12 +89,8 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
   }
 
-  get identifier() {
-    return this.specification.identifier
-  }
-
   get type() {
-    return this.specification.identifier
+    return this.configuration.type
   }
 
   get humanName() {
