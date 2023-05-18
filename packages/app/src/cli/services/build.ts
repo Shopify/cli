@@ -37,7 +37,7 @@ async function build(options: BuildOptions) {
         action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
           await buildThemeExtensions({
             app: options.app,
-            extensions: options.app.legacyExtensions.theme,
+            extensions: options.app.extensions.theme,
             stdout,
             stderr,
             signal,
@@ -45,7 +45,7 @@ async function build(options: BuildOptions) {
         },
       },
       ...(await buildUIExtensions({app: options.app})),
-      ...options.app.legacyExtensions.function.map((functionExtension) => {
+      ...options.app.extensions.function.map((functionExtension) => {
         return {
           prefix: functionExtension.localIdentifier,
           action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {

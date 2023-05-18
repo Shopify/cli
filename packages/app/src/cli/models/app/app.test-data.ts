@@ -19,7 +19,7 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     app.configurationPath ?? '/tmp/project/shopify.app.toml',
     app.nodeDependencies ?? {},
     app.webs ?? [],
-    app.extensions ?? [],
+    app.allExtensions ?? [],
     app.usesWorkspaces ?? false,
     app.dotenv,
     app.errors,

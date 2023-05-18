@@ -94,7 +94,7 @@ function checkLimits(
 function limitReached(app: AppInterface, specifications: ExtensionSpecification[], templateType: TemplateType) {
   const type = templateType.type
   if (type === 'function') {
-    return app.legacyExtensions.function.length >= blocks.functions.defaultRegistrationLimit
+    return app.extensions.function.length >= blocks.functions.defaultRegistrationLimit
   } else {
     const specification = specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
     const existingExtensions = app.extensionsForType({identifier: type, externalIdentifier: type})

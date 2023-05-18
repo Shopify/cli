@@ -56,8 +56,8 @@ export interface AppInterface {
   webs: Web[]
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
-  extensions: ExtensionInstance[]
-  legacyExtensions: {
+  allExtensions: ExtensionInstance[]
+  extensions: {
     ui: UIExtension[]
     theme: ThemeExtension[]
     function: FunctionExtension[]
@@ -81,8 +81,8 @@ export class App implements AppInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
-  extensions: ExtensionInstance[]
-  legacyExtensions: {
+  allExtensions: ExtensionInstance[]
+  extensions: {
     ui: UIExtension[]
     theme: ThemeExtension[]
     function: FunctionExtension[]
@@ -118,8 +118,8 @@ export class App implements AppInterface {
     this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
-    this.extensions = extensions
-    this.legacyExtensions = {
+    this.allExtensions = extensions
+    this.extensions = {
       ui: uis,
       theme: themes,
       function: functionsExt as unknown as FunctionExtension[],
@@ -134,15 +134,15 @@ export class App implements AppInterface {
   }
 
   hasExtensions(): boolean {
-    return this.extensions.length > 0
+    return this.allExtensions.length > 0
   }
 
   hasUIExtensions(): boolean {
-    return this.legacyExtensions.ui.length > 0
+    return this.extensions.ui.length > 0
   }
 
   extensionsForType(specification: {identifier: string; externalIdentifier: string}): Extension[] {
-    return this.extensions.filter(
+    return this.allExtensions.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
   }

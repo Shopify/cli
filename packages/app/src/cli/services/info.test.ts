@@ -195,7 +195,7 @@ describe('info', () => {
 
     const app = mockApp(undefined, {
       errors,
-      extensions: [uiExtension1, uiExtension2],
+      allExtensions: [uiExtension1, uiExtension2],
     })
     const organization = {
       id: '123',

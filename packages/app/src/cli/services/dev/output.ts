@@ -35,8 +35,8 @@ export async function outputUpdateURLsResult(
 }
 
 export function outputExtensionsMessages(app: AppInterface) {
-  outputFunctionsMessage(app.legacyExtensions.function)
-  outputThemeExtensionsMessage(app.legacyExtensions.theme)
+  outputFunctionsMessage(app.extensions.function)
+  outputThemeExtensionsMessage(app.extensions.theme)
 }
 
 function outputFunctionsMessage(extensions: FunctionExtension[]) {

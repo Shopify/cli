@@ -58,7 +58,7 @@ export async function deploy(options: DeployOptions) {
   outputNewline()
 
   const extensions = await Promise.all(
-    options.app.legacyExtensions.ui.map(async (extension) => {
+    options.app.extensions.ui.map(async (extension) => {
       return {
         uuid: identifiers.extensions[extension.localIdentifier]!,
         config: JSON.stringify(await extension.deployConfig()),
@@ -68,7 +68,7 @@ export async function deploy(options: DeployOptions) {
   )
   if (useThemebundling()) {
     const themeExtensions = await Promise.all(
-      options.app.legacyExtensions.theme.map(async (extension) => {
+      options.app.extensions.theme.map(async (extension) => {
         return {
           uuid: identifiers.extensions[extension.localIdentifier]!,
           config: '{"theme_extension": {"files": {}}}',
@@ -85,8 +85,8 @@ export async function deploy(options: DeployOptions) {
 
   await inTemporaryDirectory(async (tmpDir) => {
     try {
-      const bundleTheme = useThemebundling() && app.legacyExtensions.theme.length !== 0
-      const bundleUI = app.legacyExtensions.ui.length !== 0
+      const bundleTheme = useThemebundling() && app.extensions.theme.length !== 0
+      const bundleUI = app.extensions.ui.length !== 0
       const bundle = bundleTheme || bundleUI
       let bundlePath: string | undefined
 
@@ -108,7 +108,7 @@ export async function deploy(options: DeployOptions) {
           task: async () => {
             if (partnersApp.betas?.unifiedAppDeployment) {
               const functionExtensions = await Promise.all(
-                options.app.legacyExtensions.function.map(async (extension) => {
+                options.app.extensions.function.map(async (extension) => {
                   const {moduleId} = await uploadWasmBlob(extension, identifiers.app, token)
                   return {
                     uuid: identifiers.extensions[extension.localIdentifier]!,
@@ -131,11 +131,11 @@ export async function deploy(options: DeployOptions) {
             }
 
             if (!useThemebundling()) {
-              await uploadThemeExtensions(options.app.legacyExtensions.theme, {apiKey, identifiers, token})
+              await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
             }
 
             if (!partnersApp.betas?.unifiedAppDeployment) {
-              identifiers = await uploadFunctionExtensions(app.legacyExtensions.function, {identifiers, token})
+              identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
             }
 
             app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
@@ -249,18 +249,18 @@ async function outputCompletionMessage({
       title: 'Summary',
       body: {
         list: {
-          items: app.extensions.map(outputDeployedButNotLiveMessage),
+          items: app.allExtensions.map(outputDeployedButNotLiveMessage),
         },
       },
     },
   ]
 
-  if (app.legacyExtensions.ui.length !== 0 || app.legacyExtensions.theme.length !== 0) {
+  if (app.extensions.ui.length !== 0 || app.extensions.theme.length !== 0) {
     customSections.push({
       title: 'Next steps',
       body: {
         list: {
-          items: await Promise.all([...app.legacyExtensions.ui, ...app.legacyExtensions.theme].map(outputNextStep)),
+          items: await Promise.all([...app.extensions.ui, ...app.extensions.theme].map(outputNextStep)),
         },
       },
     })

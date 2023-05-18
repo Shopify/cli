@@ -406,11 +406,11 @@ async function logMetadataForLoadedApp(
   await metadata.addPublicMetadata(async () => {
     const projectType = await getProjectType(app.webs)
 
-    const extensionFunctionCount = app.legacyExtensions.function.length
-    const extensionUICount = app.legacyExtensions.ui.length
-    const extensionThemeCount = app.legacyExtensions.theme.length
+    const extensionFunctionCount = app.extensions.function.length
+    const extensionUICount = app.extensions.ui.length
+    const extensionThemeCount = app.extensions.theme.length
 
-    const extensionTotalCount = app.extensions.length
+    const extensionTotalCount = app.allExtensions.length
 
     const webBackendCount = app.webs.filter((web) => web.configuration.type === WebType.Backend).length
     const webBackendFramework =
@@ -420,7 +420,7 @@ async function logMetadataForLoadedApp(
     const webFrontendCount = app.webs.filter((web) => web.configuration.type === WebType.Frontend).length
 
     const extensionsBreakdownMapping: {[key: string]: number} = {}
-    for (const extension of app.extensions) {
+    for (const extension of app.allExtensions) {
       if (extensionsBreakdownMapping[extension.type] === undefined) {
         extensionsBreakdownMapping[extension.type] = 1
       } else {

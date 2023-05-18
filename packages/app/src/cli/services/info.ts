@@ -132,13 +132,13 @@ class AppInfo {
       })
     }
 
-    augmentWithExtensions(this.app.legacyExtensions.ui, this.uiExtensionSubSection.bind(this))
-    augmentWithExtensions(this.app.legacyExtensions.theme, this.themeExtensionSubSection.bind(this))
-    augmentWithExtensions(this.app.legacyExtensions.function, this.functionExtensionSubSection.bind(this))
+    augmentWithExtensions(this.app.extensions.ui, this.uiExtensionSubSection.bind(this))
+    augmentWithExtensions(this.app.extensions.theme, this.themeExtensionSubSection.bind(this))
+    augmentWithExtensions(this.app.extensions.function, this.functionExtensionSubSection.bind(this))
 
     if (this.app.errors?.isEmpty() === false) {
       body += `\n\n${outputContent`${outputToken.subheading('Extensions with errors')}`.value}`
-      this.app.extensions.forEach((extension) => {
+      this.app.allExtensions.forEach((extension) => {
         body += `${this.invalidExtensionSubSection(extension)}`
       })
     }

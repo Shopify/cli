@@ -129,7 +129,7 @@ const LOCAL_APP = (uiExtensions: ExtensionInstance[], functionExtensions: Extens
     directory: '/app',
     configurationPath: '/shopify.app.toml',
     configuration: {scopes: 'read_products', extensionDirectories: ['extensions/*']},
-    extensions: [...uiExtensions, ...functionExtensions],
+    allExtensions: [...uiExtensions, ...functionExtensions],
   })
 }
 

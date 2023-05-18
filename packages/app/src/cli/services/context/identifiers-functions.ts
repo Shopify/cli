@@ -10,7 +10,7 @@ export async function ensureFunctionsIds(
   remoteFunctions: RemoteSource[],
 ): Promise<Result<IdentifiersExtensions, MatchingError>> {
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
-  const localFunctions = options.app.legacyExtensions.function
+  const localFunctions = options.app.extensions.function
 
   const matchFunctions = await automaticMatchmaking(localFunctions, remoteFunctions, validIdentifiers, 'id')
   let validMatches = matchFunctions.identifiers
