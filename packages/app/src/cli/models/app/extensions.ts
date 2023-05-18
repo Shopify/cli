@@ -12,8 +12,6 @@ export interface ExtensionFlavor {
   path?: string
 }
 
-export type AnyExtension = FunctionExtension | ThemeExtension | UIExtension
-
 export interface Extension {
   idEnvironmentVariableName: string
   localIdentifier: string

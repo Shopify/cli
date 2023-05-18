@@ -104,11 +104,9 @@ export class App implements AppInterface {
     errors?: AppErrors,
   ) {
     // Temporary workaround while we migrate to use appModule features.
-    const functionsExt = extensions.filter((extension) => extension.features.includes('function'))
-    const themes = extensions.filter((extension) => extension.features.includes('theme'))
-    const uis = extensions.filter(
-      (extension) => !extension.features.includes('function') && !extension.features.includes('theme'),
-    )
+    const functionsExt = extensions.filter((extension) => extension.identifier === 'function')
+    const themes = extensions.filter((extension) => extension.identifier === 'theme')
+    const uis = extensions.filter((ext) => ext.identifier !== 'function' && ext.identifier !== 'theme')
     this.name = name
     this.idEnvironmentVariableName = idEnvironmentVariableName
     this.directory = directory

@@ -50,7 +50,7 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
     },
   }
   const configurationPath = uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`
-  const entrySourceFilePath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
+  const entryPath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
 
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === configuration.type) as ExtensionSpecification
@@ -58,7 +58,7 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
   const extension = new ExtensionInstance({
     configuration,
     configurationPath,
-    entryPath: entrySourceFilePath,
+    entryPath,
     directory,
     specification,
   })
@@ -80,7 +80,6 @@ export async function testThemeExtensions(): Promise<ExtensionInstance & ThemeEx
   const extension = new ExtensionInstance({
     configuration,
     configurationPath: '',
-    entryPath: '',
     directory: './my-extension',
     specification,
   })
@@ -123,7 +122,7 @@ export async function testFunctionExtension(
   const extension = new ExtensionInstance({
     configuration,
     configurationPath: '',
-    entryPath: opts.entryPath ?? '',
+    entryPath: opts.entryPath,
     directory,
     specification,
   })
