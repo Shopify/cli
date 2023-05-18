@@ -12,6 +12,7 @@ const spec = createExtensionSpecification({
   identifier: 'tax_calculation',
   surface: 'admin',
   schema: TaxCalculationsSchema,
+  singleEntryPath: false,
   appModuleFeatures: (_) => [],
   deployConfig: async (config, _) => {
     return {

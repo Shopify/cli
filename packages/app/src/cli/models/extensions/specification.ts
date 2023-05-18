@@ -127,13 +127,13 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
   constructor(options: {
     configuration: TConfiguration
     configurationPath: string
-    entryPath: string
+    entryPath?: string
     directory: string
     specification: ExtensionSpecification
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
-    this.entrySourceFilePath = options.entryPath
+    this.entrySourceFilePath = options.entryPath ?? ''
     this.directory = options.directory
     this.specification = options.specification
     this.devUUID = `dev-${randomUUID()}`

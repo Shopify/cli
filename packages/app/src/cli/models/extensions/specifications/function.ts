@@ -16,6 +16,7 @@ const spec = createExtensionSpecification({
     'fulfillment_constraints',
   ],
   surface: 'admin',
+  singleEntryPath: false,
   schema: BaseFunctionConfigurationSchema,
   supportedFlavors: defaultFunctionsFlavors,
   partnersWebIdentifier: 'function',

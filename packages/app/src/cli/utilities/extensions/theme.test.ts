@@ -20,7 +20,6 @@ describe('themeExtensionConfig', () => {
         configurationPath: '',
         directory: tmpDir,
         specification,
-        entryPath: '',
       })
 
       await mkdir(joinPath(tmpDir, 'blocks'))

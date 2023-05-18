@@ -192,7 +192,7 @@ class AppLoader {
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
     const dotenv = await this.loadDotEnv()
 
-    const {allExtensions, usedCustomLayout} = await this.loadUIExtensions(configuration.extensionDirectories)
+    const {allExtensions, usedCustomLayout} = await this.loadExtensions(configuration.extensionDirectories)
 
     const packageJSONPath = joinPath(this.appDirectory, 'package.json')
     const name = await loadAppName(this.appDirectory)
@@ -283,7 +283,7 @@ class AppLoader {
     }
   }
 
-  async loadUIExtensions(
+  async loadExtensions(
     extensionDirectories?: string[],
   ): Promise<{allExtensions: ExtensionInstance[]; usedCustomLayout: boolean}> {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
@@ -295,62 +295,62 @@ class AppLoader {
       const directory = dirname(configurationPath)
       const specification = await findSpecificationForConfig(this.specifications, configurationPath, this.abortOrReport)
 
-      if (!specification) {
-        return
-      }
+      if (!specification) return
 
       const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
-
-      let entryPath
-      if (specification.singleEntryPath && specification.category() === 'ui') {
-        entryPath = (
-          await Promise.all(
-            ['index']
-              .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
-              .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
-              .map((relativePath) => joinPath(directory, relativePath))
-              .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
-          )
-        ).find((sourcePath) => sourcePath !== undefined)
-        if (!entryPath) {
-          this.abortOrReport(
-            outputContent`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${outputToken.path(
-              directory,
-            )} or ${outputToken.path(joinPath(directory, 'src'))}`,
-            undefined,
-            directory,
-          )
-        }
-      }
-      if (specification.category() === 'function') {
-        entryPath = (
-          await Promise.all(
-            ['src/index.js', 'src/index.ts', 'src/main.rs']
-              .map((relativePath) => joinPath(directory, relativePath))
-              .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
-          )
-        ).find((sourcePath) => sourcePath !== undefined)
-      }
+      const entryPath = await this.findEntryPath(directory, specification)
 
       const extensionInstance = new ExtensionInstance({
         configuration,
         configurationPath,
-        entryPath: entryPath ?? '',
+        entryPath,
         directory,
         specification,
       })
 
-      if (configuration.type) {
-        const validateResult = await extensionInstance.validate()
-        if (validateResult.isErr()) {
-          this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
-        }
+      const validateResult = await extensionInstance.validate()
+      if (validateResult.isErr()) {
+        this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
       }
+
       return extensionInstance
     })
 
     const allExtensions = getArrayRejectingUndefined(await Promise.all(extensions))
     return {allExtensions, usedCustomLayout: extensionDirectories !== undefined}
+  }
+
+  async findEntryPath(directory: string, specification: ExtensionSpecification) {
+    let entryPath
+    if (specification.singleEntryPath) {
+      entryPath = (
+        await Promise.all(
+          ['index']
+            .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
+            .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
+            .map((relativePath) => joinPath(directory, relativePath))
+            .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
+        )
+      ).find((sourcePath) => sourcePath !== undefined)
+      if (!entryPath) {
+        this.abortOrReport(
+          outputContent`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${outputToken.path(
+            directory,
+          )} or ${outputToken.path(joinPath(directory, 'src'))}`,
+          undefined,
+          directory,
+        )
+      }
+    } else if (specification.identifier === 'function') {
+      entryPath = (
+        await Promise.all(
+          ['src/index.js', 'src/index.ts', 'src/main.rs']
+            .map((relativePath) => joinPath(directory, relativePath))
+            .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
+        )
+      ).find((sourcePath) => sourcePath !== undefined)
+    }
+    return entryPath
   }
 
   abortOrReport<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {

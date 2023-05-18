@@ -67,11 +67,6 @@ export interface AppInterface {
   hasUIExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => Extension[]
-  // functionExtensions: FunctionExtension[]
-  // themeExtensions: ThemeExtension[]
-  // previewableExtensions: UIExtension[]
-  // nonPreviewableExtensions: Extension[]
-  // bundableExtensions: Extension[]
 }
 
 export class App implements AppInterface {
@@ -108,6 +103,7 @@ export class App implements AppInterface {
     dotenv?: DotEnvFile,
     errors?: AppErrors,
   ) {
+    // Temporary workaround while we migrate to use appModule features.
     const functionsExt = extensions.filter((extension) => extension.features.includes('function'))
     const themes = extensions.filter((extension) => extension.features.includes('theme'))
     const uis = extensions.filter(
@@ -136,31 +132,6 @@ export class App implements AppInterface {
     const nodeDependencies = await getDependencies(joinPath(this.directory, 'package.json'))
     this.nodeDependencies = nodeDependencies
   }
-
-  // private get functionExtensions(): FunctionExtension[] {
-  //   const ext = this.extensions.filter((extension) => extension.features.includes('function'))
-  //   return ext as unknown as FunctionExtension[]
-  // }
-
-  // private get themeExtensions(): ThemeExtension[] {
-  //   return this.extensions.filter((extension) => extension.features.includes('theme'))
-  // }
-
-  // private get previewableExtensions(): UIExtension[] {
-  //   return this.extensions.filter(
-  //     (extension) => extension.features.includes('ui') || extension.features.includes('ui_legacy'),
-  //   )
-  // }
-
-  // private get nonPreviewableExtensions(): Extension[] {
-  //   return this.extensions.filter(
-  //     (extension) => !extension.features.includes('ui') && !extension.features.includes('ui_legacy'),
-  //   )
-  // }
-
-  // private get bundableExtensions(): Extension[] {
-  //   return this.extensions.filter((extension) => extension.features.includes('bundling'))
-  // }
 
   hasExtensions(): boolean {
     return this.extensions.length > 0
