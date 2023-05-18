@@ -93,8 +93,7 @@ function defaultFunctionConfiguration(): FunctionSchemaContents {
   return {
     name: 'test function extension',
     description: 'description',
-    apiType: 'product_discounts',
-    type: 'function',
+    type: 'product_discounts',
     build: {
       command: 'echo "hello world"',
     },
