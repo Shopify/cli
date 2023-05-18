@@ -14,7 +14,7 @@ const posUIExtension: ExtensionTemplate = {
       url: 'https://github.com/Shopify/cli',
       type: 'pos_ui_extension',
       extensionPoints: [],
-      supportedFlavors: uiFlavors('packages/app/templates/ui-extensions/projects/pos_ui_extension'),
+      supportedFlavors: uiFlavors('templates/ui-extensions/projects/pos_ui_extension'),
     },
   ],
 }

@@ -17,12 +17,12 @@ const webPixelUIExtension: ExtensionTemplate = {
         {
           name: 'TypeScript',
           value: 'typescript',
-          path: 'packages/app/templates/ui-extensions/projects/web_pixel_extension',
+          path: 'templates/ui-extensions/projects/web_pixel_extension',
         },
         {
           name: 'JavaScript',
           value: 'vanilla-js',
-          path: 'packages/app/templates/ui-extensions/projects/web_pixel_extension',
+          path: 'templates/ui-extensions/projects/web_pixel_extension',
         },
       ],
     },
