@@ -17,7 +17,7 @@ const taxCalculationUIExtension: ExtensionTemplate = {
         {
           name: 'Config only',
           value: 'config-only',
-          path: 'packages/app/templates/ui-extensions/projects/tax_calculation',
+          path: 'templates/ui-extensions/projects/tax_calculation',
         },
       ],
     },

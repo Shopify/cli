@@ -14,7 +14,7 @@ const productSubscriptionUIExtension: ExtensionTemplate = {
       url: 'https://github.com/Shopify/cli',
       type: 'product_subscription',
       extensionPoints: [],
-      supportedFlavors: uiFlavors('packages/app/templates/ui-extensions/projects/product_subscription'),
+      supportedFlavors: uiFlavors('templates/ui-extensions/projects/product_subscription'),
     },
   ],
 }

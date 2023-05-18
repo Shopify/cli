@@ -17,7 +17,7 @@ const themeExtension: ExtensionTemplate = {
         {
           name: 'Liquid',
           value: 'liquid',
-          path: 'packages/app/templates/theme-extension',
+          path: 'templates/theme-extension',
         },
       ],
     },

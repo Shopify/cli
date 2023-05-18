@@ -14,7 +14,7 @@ const checkoutPostPurchaseExtension: ExtensionTemplate = {
       url: 'https://github.com/Shopify/cli',
       type: 'checkout_post_purchase',
       extensionPoints: [],
-      supportedFlavors: uiFlavors('packages/app/templates/ui-extensions/projects/checkout_post_purchase'),
+      supportedFlavors: uiFlavors('templates/ui-extensions/projects/checkout_post_purchase'),
     },
   ],
 }
