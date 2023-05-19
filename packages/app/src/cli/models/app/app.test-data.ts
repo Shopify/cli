@@ -5,9 +5,9 @@ import {RemoteSpecification} from '../../api/graphql/extension_specifications.js
 import themeExtension from '../templates/theme-specifications/theme.js'
 import checkoutPostPurchaseExtension from '../templates/ui-specifications/checkout_post_purchase.js'
 import checkoutUIExtension from '../templates/ui-specifications/checkout_ui_extension.js'
-import {ExtensionInstance, ExtensionSpecification} from '../extensions/specification.js'
-import {FunctionSchemaContents} from '../extensions/schemas.js'
+import {ExtensionInstance} from '../extensions/specification.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
+import {FunctionConfigType} from '../extensions/specifications/function.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -53,7 +53,7 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
   const entryPath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
 
   const allSpecs = await loadLocalExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === configuration.type) as ExtensionSpecification
+  const specification = allSpecs.find((spec) => spec.identifier === configuration.type)!
 
   const extension = new ExtensionInstance({
     configuration,
@@ -75,7 +75,7 @@ export async function testThemeExtensions(): Promise<ExtensionInstance & ThemeEx
   }
 
   const allSpecs = await loadLocalExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === 'theme') as ExtensionSpecification
+  const specification = allSpecs.find((spec) => spec.identifier === 'theme')!
 
   const extension = new ExtensionInstance({
     configuration,
@@ -89,7 +89,7 @@ export async function testThemeExtensions(): Promise<ExtensionInstance & ThemeEx
   return extension
 }
 
-function defaultFunctionConfiguration(): FunctionSchemaContents {
+function defaultFunctionConfiguration(): FunctionConfigType {
   return {
     name: 'test function extension',
     description: 'description',
@@ -105,7 +105,7 @@ function defaultFunctionConfiguration(): FunctionSchemaContents {
 
 interface TestFunctionExtensionOptions {
   dir?: string
-  config?: FunctionSchemaContents
+  config?: FunctionConfigType
   entryPath?: string
 }
 
@@ -116,7 +116,7 @@ export async function testFunctionExtension(
   const configuration = opts.config ?? defaultFunctionConfiguration()
 
   const allSpecs = await loadLocalExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === 'function') as ExtensionSpecification
+  const specification = allSpecs.find((spec) => spec.identifier === 'function')!
 
   const extension = new ExtensionInstance({
     configuration,

@@ -153,10 +153,6 @@ async function dev(options: DevOptions) {
     previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
   }
 
-  if (localApp.extensions.ui.length > 0) {
-    previewUrl = `${proxyUrl}/extensions/dev-console`
-  }
-
   // If we have a real UUID for an extension, use that instead of a random one
   const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
@@ -177,6 +173,7 @@ async function dev(options: DevOptions) {
   )
 
   if (previewableExtensions.length > 0) {
+    previewUrl = `${proxyUrl}/extensions/dev-console`
     const devExt = await devUIExtensionsTarget({
       app: localApp,
       id: remoteApp.id,

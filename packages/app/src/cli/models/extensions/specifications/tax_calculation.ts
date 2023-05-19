@@ -1,8 +1,8 @@
 import {createExtensionSpecification} from '../specification.js'
-import {BaseUIExtensionSchema} from '../schemas.js'
+import {BaseSchema} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const TaxCalculationsSchema = BaseUIExtensionSchema.extend({
+const TaxCalculationsSchema = BaseSchema.extend({
   productionApiBaseUrl: zod.string(),
   benchmarkApiBaseUrl: zod.string().optional(),
   calculateTaxesApiEndpoint: zod.string(),

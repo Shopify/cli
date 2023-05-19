@@ -1,12 +1,12 @@
 import {createExtensionSpecification} from '../specification.js'
-import {BaseUIExtensionSchema} from '../schemas.js'
+import {BaseSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {outputContent} from '@shopify/cli-kit/node/output'
 
 const dependency = '@shopify/customer-account-ui-extensions'
 
-const CustomerAccountsSchema = BaseUIExtensionSchema.extend({
+const CustomerAccountsSchema = BaseSchema.extend({
   categories: zod.array(zod.string()).optional(),
   extensionPoints: zod.array(zod.string()).optional(),
   localization: zod.any().optional(),
