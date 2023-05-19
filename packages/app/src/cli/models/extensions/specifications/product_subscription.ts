@@ -13,7 +13,6 @@ const spec = createExtensionSpecification({
   graphQLType: 'subscription_management',
   partnersWebIdentifier: 'product_subscription',
   schema: BaseSchema,
-  isPreviewable: true,
   findEntryPath: findUIEntryPath,
   appModuleFeatures: (_) => ['ui_legacy', 'bundling'],
   deployConfig: async (_, directory) => {

@@ -25,7 +25,6 @@ const spec = createExtensionSpecification({
   surface: 'all',
   dependency,
   partnersWebIdentifier: 'ui_extension',
-  singleEntryPath: false,
   schema: UIExtensionSchema,
   appModuleFeatures: (config) => {
     const basic: ExtensionFeature[] = ['ui', 'bundling']
@@ -35,7 +34,6 @@ const spec = createExtensionSpecification({
       }) !== undefined
     return needsCart ? [...basic, 'cart_url'] : basic
   },
-  isPreviewable: true,
   validate: async (config, directory) => {
     return validateUIExtensionPointConfig(directory, config.extensionPoints)
   },

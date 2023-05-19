@@ -12,7 +12,6 @@ const spec = createExtensionSpecification({
   dependency,
   partnersWebIdentifier: 'pos_ui_extension',
   schema: BaseSchema,
-  isPreviewable: true,
   findEntryPath: findUIEntryPath,
   appModuleFeatures: (_) => ['ui_legacy', 'bundling'],
   deployConfig: async (config, directory) => {

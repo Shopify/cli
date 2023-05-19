@@ -12,7 +12,6 @@ const spec = createExtensionSpecification({
   partnersWebIdentifier: 'post_purchase',
   helpURL: 'https://shopify.dev/docs/apps/checkout/post-purchase',
   schema: BaseSchema,
-  isPreviewable: true,
   findEntryPath: findUIEntryPath,
   appModuleFeatures: (_) => ['ui_legacy', 'bundling'],
   deployConfig: async (config, _) => {

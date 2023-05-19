@@ -52,12 +52,10 @@ const spec = createExtensionSpecification({
     'fulfillment_constraints',
   ],
   surface: 'admin',
-  singleEntryPath: false,
   schema: FunctionExtensionSchema,
   supportedFlavors: defaultFunctionsFlavors,
   partnersWebIdentifier: 'function',
   graphQLType: 'function',
-  isPreviewable: false,
   appModuleFeatures: (_) => ['function'],
   findEntryPath: async (directory) => {
     return (

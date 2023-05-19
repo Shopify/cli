@@ -22,7 +22,6 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   additionalIdentifiers: string[]
   partnersWebIdentifier: string
   surface: string
-  singleEntryPath: boolean
   registrationLimit: number
   supportedFlavors: ExtensionFlavor[]
   gated: boolean
@@ -47,7 +46,6 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config: TConfiguration) => ExtensionFeature[]
   findEntryPath?: (directory: string) => Promise<string | undefined>
-  isPreviewable: boolean
 }
 
 /**
@@ -107,10 +105,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   get surface() {
     return this.specification.surface
-  }
-
-  get isPreviewable() {
-    return this.specification.isPreviewable
   }
 
   get features(): ExtensionFeature[] {
@@ -246,7 +240,6 @@ export interface CreateExtensionSpecType<TConfiguration extends BaseConfigType =
  * externalIdentifier: string // identifier used externally (default: same as "identifier")
  * partnersWebIdentifier: string // identifier used in the partners web UI (default: same as "identifier")
  * surface?: string // surface where the extension is going to be rendered (default: 'unknown')
- * singleEntryPath: boolean // whether the extension has a single entry point (default: true)
  * supportedFlavors: {name: string; value: string}[] // list of supported flavors (default: 'javascript', 'typescript', 'typescript-react', 'javascript-react')
  * helpURL?: string // url to the help page for the extension, shown after generating the extension
  * dependency?: {name: string; version: string} // dependency to be added to the extension's package.json
@@ -273,12 +266,10 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     externalName: capitalize(spec.identifier.replace(/_/g, ' ')),
     surface: 'unknown',
     partnersWebIdentifier: spec.identifier,
-    singleEntryPath: true,
     gated: false,
     schema: BaseSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     supportedFlavors: defaultExtensionFlavors,
-    isPreviewable: false,
     findEntryPath: async () => undefined,
   }
   return {...defaults, ...spec}

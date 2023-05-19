@@ -167,9 +167,8 @@ async function dev(options: DevOptions) {
     hostname: exposedUrl,
   }
 
-  const [previewableExtensions, nonPreviewableExtensions] = partition(
-    localApp.extensions.ui,
-    (ext) => ext.isPreviewable,
+  const [previewableExtensions, nonPreviewableExtensions] = partition(localApp.extensions.ui, (ext) =>
+    ext.features.includes('ui'),
   )
 
   if (previewableExtensions.length > 0) {
