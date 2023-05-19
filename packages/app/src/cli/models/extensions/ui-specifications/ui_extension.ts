@@ -27,6 +27,7 @@ const spec = createUIExtensionSpecification({
   partnersWebIdentifier: 'ui_extension',
   singleEntryPath: false,
   schema: UIExtensionSchema,
+  isPreviewable: true,
   validate: async (config, directory) => {
     return validateUIExtensionPointConfig(directory, config.extensionPoints)
   },
