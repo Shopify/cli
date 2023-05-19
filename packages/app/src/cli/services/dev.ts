@@ -468,20 +468,28 @@ export function devNonPreviewableExtensionTarget({
             const registrationId = remoteExtensions[extension.localIdentifier]
             if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
 
-            return [
-              setupNonPreviewableExtensionBundler({
-                extension,
-                app,
-                url,
-                token,
-                apiKey,
-                registrationId,
-                stderr,
-                stdout,
-                signal,
-              }),
+            // All non-previewable extensions have config file to watch
+            const actions = [
               setupConfigWatcher({extension, token, apiKey, registrationId, stdout, stderr, signal, specifications}),
             ]
+
+            // Only extensions with bundling feature should be whatched using esbuild
+            if (extension.features.includes('bundling')) {
+              actions.push(
+                setupNonPreviewableExtensionBundler({
+                  extension,
+                  app,
+                  url,
+                  token,
+                  apiKey,
+                  registrationId,
+                  stderr,
+                  stdout,
+                  signal,
+                }),
+              )
+            }
+            return actions
           })
           .flat(),
       )
