@@ -36,7 +36,7 @@ describe('<PostPurchaseModal/>', () => {
     const container = render(<PostPurchaseModal {...defaultProps} />, withProviders(DefaultProviders))
 
     expect(container).toContainReactComponent('a', {
-      href: 'https://github.com/Shopify/post-purchase-devtools/releases',
+      href: 'https://chrome.google.com/webstore/detail/shopify-post-purchase-dev/nenmcifhoegealiiblnpihbnjenleong',
       target: '_blank',
     })
   })
