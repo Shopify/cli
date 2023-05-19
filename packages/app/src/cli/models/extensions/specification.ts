@@ -1,10 +1,5 @@
-import {
-  ZodSchemaType,
-  BaseConfigContents,
-  BaseUIExtensionSchema,
-  BaseSchemaContents,
-  FunctionSchemaContents,
-} from './schemas.js'
+import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
+import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFlavor} from '../app/extensions.js'
 import {blocks, defaultExtensionFlavors} from '../../constants.js'
 import {ok, Result} from '@shopify/cli-kit/node/result'
@@ -19,7 +14,7 @@ export type ExtensionFeature = 'ui' | 'ui_legacy' | 'function' | 'theme' | 'bund
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
-export interface ExtensionSpecification<TConfiguration extends BaseConfigContents = BaseConfigContents> {
+export interface ExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType> {
   identifier: string
   externalIdentifier: string
   externalName: string
@@ -66,7 +61,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigContent
  *
  * This class holds the public interface to interact with extensions
  */
-export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseSchemaContents> {
+export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfigType> {
   entrySourceFilePath: string
   devUUID: string
   localIdentifier: string
@@ -80,7 +75,7 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
   private specification: ExtensionSpecification
 
   get graphQLType() {
-    if (this.specification.identifier === 'function') {
+    if (this.features.includes('function')) {
       if (this._usingExtensionsFramework) return 'FUNCTION'
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const functionConfig: any = this.configuration
@@ -205,12 +200,12 @@ export class ExtensionInstance<TConfiguration extends BaseSchemaContents = BaseS
 
   // Functions specific properties
   get buildCommand() {
-    const config = this.configuration as unknown as FunctionSchemaContents
+    const config = this.configuration as unknown as FunctionConfigType
     return config.build.command
   }
 
   get buildWasmPath() {
-    const config = this.configuration as unknown as FunctionSchemaContents
+    const config = this.configuration as unknown as FunctionConfigType
     return joinPath(this.directory, config.build.path ?? joinPath('dist', 'index.wasm'))
   }
 
@@ -235,7 +230,7 @@ export type ForbiddenFields = 'registrationLimit' | 'category' | 'externalIdenti
 /**
  * Partial ExtensionSpec type used when creating a new ExtensionSpec, the only mandatory field is the identifier
  */
-export interface CreateExtensionSpecType<TConfiguration extends BaseConfigContents = BaseConfigContents>
+export interface CreateExtensionSpecType<TConfiguration extends BaseConfigType = BaseConfigType>
   extends Partial<Omit<ExtensionSpecification<TConfiguration>, ForbiddenFields>> {
   identifier: string
   appModuleFeatures: (config: TConfiguration) => ExtensionFeature[]
@@ -266,7 +261,7 @@ export interface CreateExtensionSpecType<TConfiguration extends BaseConfigConten
  * hasExtensionPointTarget?: (configuration: TConfiguration, target: string) => boolean // function to determine if the extension has a given extension point target
  * ```
  */
-export function createExtensionSpecification<TConfiguration extends BaseConfigContents = BaseConfigContents>(
+export function createExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
   spec: CreateExtensionSpecType<TConfiguration>,
 ): ExtensionSpecification<TConfiguration> {
   const defaults = {
@@ -279,7 +274,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigCo
     partnersWebIdentifier: spec.identifier,
     singleEntryPath: true,
     gated: false,
-    schema: BaseUIExtensionSchema as ZodSchemaType<TConfiguration>,
+    schema: BaseSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     supportedFlavors: defaultExtensionFlavors,
     isPreviewable: false,

@@ -6,8 +6,8 @@ import themeExtension from '../templates/theme-specifications/theme.js'
 import checkoutPostPurchaseExtension from '../templates/ui-specifications/checkout_post_purchase.js'
 import checkoutUIExtension from '../templates/ui-specifications/checkout_ui_extension.js'
 import {ExtensionInstance} from '../extensions/specification.js'
-import {FunctionSchemaContents} from '../extensions/schemas.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
+import {FunctionConfigType} from '../extensions/specifications/function.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -89,7 +89,7 @@ export async function testThemeExtensions(): Promise<ExtensionInstance & ThemeEx
   return extension
 }
 
-function defaultFunctionConfiguration(): FunctionSchemaContents {
+function defaultFunctionConfiguration(): FunctionConfigType {
   return {
     name: 'test function extension',
     description: 'description',
@@ -105,7 +105,7 @@ function defaultFunctionConfiguration(): FunctionSchemaContents {
 
 interface TestFunctionExtensionOptions {
   dir?: string
-  config?: FunctionSchemaContents
+  config?: FunctionConfigType
   entryPath?: string
 }
 

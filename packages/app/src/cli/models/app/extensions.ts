@@ -1,6 +1,7 @@
-import {BaseConfigContents, FunctionSchemaContents} from '../extensions/schemas.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
+import {BaseConfigType} from '../extensions/schemas.js'
 import {ExtensionFeature} from '../extensions/specification.js'
+import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {TokenizedString} from '@shopify/cli-kit/node/output'
 import {Result} from '@shopify/cli-kit/node/result'
 
@@ -25,7 +26,7 @@ export interface Extension {
 }
 
 export type FunctionExtension = Extension & {
-  configuration: FunctionSchemaContents
+  configuration: FunctionConfigType
   entrySourceFilePath?: string
   buildCommand: string | undefined
   buildWasmPath: string
@@ -35,12 +36,12 @@ export type FunctionExtension = Extension & {
 }
 
 export type ThemeExtension = Extension & {
-  configuration: BaseConfigContents
+  configuration: BaseConfigType
   previewMessage(url: string, storeFqdn: string): TokenizedString | undefined
   outputBundlePath: string
 }
 
-export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigContents> = Extension & {
+export type UIExtension<TConfiguration extends BaseConfigType = BaseConfigType> = Extension & {
   configuration: TConfiguration
   entrySourceFilePath?: string
   outputBundlePath: string

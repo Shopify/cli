@@ -43,52 +43,7 @@ export const BaseSchema = zod.object({
   categories: zod.array(zod.string()).optional(),
 })
 
-export const BaseUIExtensionSchema = BaseSchema.extend({
-  type: zod.string().default('ui_extension'),
-})
-
-export const ThemeExtensionSchema = BaseSchema.extend({
-  name: zod.string(),
-  type: zod.literal('theme'),
-})
-
-export const BaseFunctionConfigurationSchema = BaseSchema.extend({
-  build: zod.object({
-    command: zod
-      .string()
-      .transform((value) => (value.trim() === '' ? undefined : value))
-      .optional(),
-    path: zod.string().optional(),
-  }),
-  configurationUi: zod.boolean().optional().default(true),
-  ui: zod
-    .object({
-      enable_create: zod.boolean().optional(),
-      paths: zod
-        .object({
-          create: zod.string(),
-          details: zod.string(),
-        })
-        .optional(),
-    })
-    .optional(),
-  apiVersion: zod.string(),
-  input: zod
-    .object({
-      variables: zod
-        .object({
-          namespace: zod.string(),
-          key: zod.string(),
-        })
-        .optional(),
-    })
-    .optional(),
-})
-
 export type NewExtensionPointSchemaType = zod.infer<typeof NewExtensionPointSchema>
 
 // Base config type that all config schemas must extend.
-export type BaseConfigContents = zod.infer<typeof BaseUIExtensionSchema>
-
-export type BaseSchemaContents = zod.infer<typeof BaseSchema>
-export type FunctionSchemaContents = zod.infer<typeof BaseFunctionConfigurationSchema>
+export type BaseConfigType = zod.infer<typeof BaseSchema>

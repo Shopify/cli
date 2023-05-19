@@ -1,6 +1,6 @@
 import {getDependencyVersion} from '../../app/app.js'
 import {createExtensionSpecification} from '../specification.js'
-import {BaseUIExtensionSchema} from '../schemas.js'
+import {BaseSchema} from '../schemas.js'
 import {BugError} from '@shopify/cli-kit/node/error'
 
 const dependency = '@shopify/admin-ui-extensions'
@@ -11,7 +11,7 @@ const spec = createExtensionSpecification({
   dependency,
   graphQLType: 'subscription_management',
   partnersWebIdentifier: 'product_subscription',
-  schema: BaseUIExtensionSchema,
+  schema: BaseSchema,
   isPreviewable: true,
   appModuleFeatures: (_) => ['ui_legacy', 'bundling'],
   deployConfig: async (_, directory) => {

@@ -1,11 +1,11 @@
 import {createExtensionSpecification} from '../specification.js'
-import {BaseUIExtensionSchema} from '../schemas.js'
+import {BaseSchema} from '../schemas.js'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 const spec = createExtensionSpecification({
   identifier: 'theme',
   surface: 'admin',
-  schema: BaseUIExtensionSchema,
+  schema: BaseSchema,
   partnersWebIdentifier: 'theme_app_extension',
   graphQLType: 'theme_app_extension',
   supportedFlavors: [],

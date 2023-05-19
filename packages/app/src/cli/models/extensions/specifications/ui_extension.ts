@@ -1,5 +1,5 @@
 import {ExtensionFeature, createExtensionSpecification} from '../specification.js'
-import {BaseUIExtensionSchema, NewExtensionPointSchemaType, NewExtensionPointsSchema} from '../schemas.js'
+import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
@@ -11,7 +11,7 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 const dependency = '@shopify/checkout-ui-extensions'
 
-const UIExtensionSchema = BaseUIExtensionSchema.extend({
+const UIExtensionSchema = BaseSchema.extend({
   settings: zod
     .object({
       fields: zod.any().optional(),

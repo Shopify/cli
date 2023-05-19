@@ -1,5 +1,5 @@
+import {BaseConfigType} from './extension.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
-import {BaseConfigContents} from '../../models/extensions/schemas.js'
 import {FanoutHookFunction, HookReturnsPerPlugin} from '@shopify/cli-kit/node/plugins'
 
 export {
@@ -35,7 +35,7 @@ export type ExtensionSpecsFunction = FanoutHookFunction<'extension_specs', '', H
  * @returns A function that returns the list of specifications.
  * @example
  */
-export const registerUIExtensionSpecifications = <TConfiguration extends BaseConfigContents = BaseConfigContents>(
+export const registerUIExtensionSpecifications = <TConfiguration extends BaseConfigType = BaseConfigType>(
   specifications: ExtensionSpecification<TConfiguration>[],
 ): ExtensionSpecsFunction => {
   return async () => specifications as ExtensionSpecification[]
