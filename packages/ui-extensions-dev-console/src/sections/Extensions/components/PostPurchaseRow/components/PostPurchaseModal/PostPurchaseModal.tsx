@@ -37,7 +37,10 @@ export function PostPurchaseModal({url, onClose, open}: Props) {
       <ol className={styles.Instructions}>
         <li>
           {i18n.translate('point1.intro')}{' '}
-          <a href="https://github.com/Shopify/post-purchase-devtools/releases" target="_blank">
+          <a
+            href="https://chrome.google.com/webstore/detail/shopify-post-purchase-dev/nenmcifhoegealiiblnpihbnjenleong"
+            target="_blank"
+          >
             {i18n.translate('point1.linkText')}
           </a>
         </li>
