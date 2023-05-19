@@ -46,6 +46,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   shouldFetchCartUrl?(config: TConfiguration): boolean
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config: TConfiguration) => ExtensionFeature[]
+  findEntryPath?: (directory: string) => Promise<string | undefined>
   isPreviewable: boolean
 }
 
@@ -278,6 +279,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     supportedFlavors: defaultExtensionFlavors,
     isPreviewable: false,
+    findEntryPath: async () => undefined,
   }
   return {...defaults, ...spec}
 }

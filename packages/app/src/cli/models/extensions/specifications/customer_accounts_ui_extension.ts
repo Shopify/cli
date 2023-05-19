@@ -1,6 +1,7 @@
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
+import {findUIEntryPath} from '../common.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {outputContent} from '@shopify/cli-kit/node/output'
 
@@ -36,6 +37,7 @@ const spec = createExtensionSpecification({
   partnersWebIdentifier: 'customer_accounts_ui_extension',
   schema: CustomerAccountsSchema,
   isPreviewable: true,
+  findEntryPath: findUIEntryPath,
   appModuleFeatures: (_) => ['ui_legacy', 'bundling'],
   deployConfig: async (config, directory) => {
     return {

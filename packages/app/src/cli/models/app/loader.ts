@@ -321,36 +321,12 @@ class AppLoader {
   }
 
   async findEntryPath(directory: string, specification: ExtensionSpecification) {
-    let entryPath
-    if (specification.singleEntryPath) {
-      entryPath = (
-        await Promise.all(
-          ['index']
-            .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
-            .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
-            .map((relativePath) => joinPath(directory, relativePath))
-            .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
-        )
-      ).find((sourcePath) => sourcePath !== undefined)
-      if (!entryPath) {
-        this.abortOrReport(
-          outputContent`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${outputToken.path(
-            directory,
-          )} or ${outputToken.path(joinPath(directory, 'src'))}`,
-          undefined,
-          directory,
-        )
-      }
-    } else if (specification.identifier === 'function') {
-      entryPath = (
-        await Promise.all(
-          ['src/index.js', 'src/index.ts', 'src/main.rs']
-            .map((relativePath) => joinPath(directory, relativePath))
-            .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
-        )
-      ).find((sourcePath) => sourcePath !== undefined)
+    try {
+      return await specification.findEntryPath?.(directory)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-catch-all/no-catch-all
+    } catch (error: any) {
+      this.abortOrReport(error.message, undefined, directory)
     }
-    return entryPath
   }
 
   abortOrReport<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {
