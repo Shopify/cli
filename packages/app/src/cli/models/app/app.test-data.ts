@@ -5,7 +5,7 @@ import {RemoteSpecification} from '../../api/graphql/extension_specifications.js
 import themeExtension from '../templates/theme-specifications/theme.js'
 import checkoutPostPurchaseExtension from '../templates/ui-specifications/checkout_post_purchase.js'
 import checkoutUIExtension from '../templates/ui-specifications/checkout_ui_extension.js'
-import {ExtensionInstance, ExtensionSpecification} from '../extensions/specification.js'
+import {ExtensionInstance} from '../extensions/specification.js'
 import {FunctionSchemaContents} from '../extensions/schemas.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 
@@ -53,7 +53,7 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
   const entryPath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
 
   const allSpecs = await loadLocalExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === configuration.type) as ExtensionSpecification
+  const specification = allSpecs.find((spec) => spec.identifier === configuration.type)!
 
   const extension = new ExtensionInstance({
     configuration,
@@ -75,7 +75,7 @@ export async function testThemeExtensions(): Promise<ExtensionInstance & ThemeEx
   }
 
   const allSpecs = await loadLocalExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === 'theme') as ExtensionSpecification
+  const specification = allSpecs.find((spec) => spec.identifier === 'theme')!
 
   const extension = new ExtensionInstance({
     configuration,
@@ -116,7 +116,7 @@ export async function testFunctionExtension(
   const configuration = opts.config ?? defaultFunctionConfiguration()
 
   const allSpecs = await loadLocalExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === 'function') as ExtensionSpecification
+  const specification = allSpecs.find((spec) => spec.identifier === 'function')!
 
   const extension = new ExtensionInstance({
     configuration,
