@@ -4,4 +4,4 @@
 '@shopify/app': minor
 ---
 
-Introduce the `--notify` flag in the shopfiy app/theme dev commands
+Introduce the `--notify` flag in the shopify app/theme dev commands
