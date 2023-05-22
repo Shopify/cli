@@ -16,17 +16,17 @@ import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export async function fetchExtensionTemplates(
   token: string,
-  enabledLocalTemplates: string[],
+  availableSpecifications: string[],
 ): Promise<ExtensionTemplate[]> {
   const remoteTemplates: RemoteTemplateSpecificationsQuerySchema = await partnersRequest(
     RemoteTemplateSpecificationsQuery,
     token,
   )
-  const localTemplates = localExtensionTemplates(enabledLocalTemplates)
+  const localTemplates = localExtensionTemplates(availableSpecifications)
   return remoteTemplates.templateSpecifications.concat(localTemplates)
 }
 
-export function localExtensionTemplates(enabledLocalTemplates: string[]): ExtensionTemplate[] {
+export function localExtensionTemplates(availableSpecifications: string[]): ExtensionTemplate[] {
   const allLocalTemplates = [
     themeExtension,
     checkoutPostPurchaseExtension,
@@ -40,6 +40,7 @@ export function localExtensionTemplates(enabledLocalTemplates: string[]): Extens
   ]
   return allLocalTemplates.filter(
     (template) =>
-      enabledLocalTemplates.includes(template.identifier) || enabledLocalTemplates.includes(template.types[0]!.type),
+      availableSpecifications.includes(template.identifier) ||
+      availableSpecifications.includes(template.types[0]!.type),
   )
 }
