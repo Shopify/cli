@@ -10,6 +10,7 @@ import {RemoteSpecification} from '../../api/graphql/extension_specifications.js
 import themeExtension from '../templates/theme-specifications/theme.js'
 import checkoutPostPurchaseExtension from '../templates/ui-specifications/checkout_post_purchase.js'
 import checkoutUIExtension from '../templates/ui-specifications/checkout_ui_extension.js'
+import UIExtensionTemplate from '../templates/ui-specifications/ui_extension.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -344,4 +345,5 @@ export const testLocalExtensionTemplates: ExtensionTemplate[] = [
   themeExtension,
   checkoutPostPurchaseExtension,
   checkoutUIExtension,
+  UIExtensionTemplate,
 ]
