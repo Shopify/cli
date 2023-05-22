@@ -1,5 +1,49 @@
 # @shopify/app
 
+## 3.46.0
+
+### Minor Changes
+
+- 162504891: Introduce the `--notify` flag in the shopify app/theme dev commands
+- 9de04da4d: Introduce `.jpeg` support for theme app extensions
+- 5fdf453c7: Default to type frontend in the web configuration file
+
+### Patch Changes
+
+- 63b78ff74: Add local extension templates for UI and theme extensions
+- 2c6e98652: Enable ui-extensions-server-kit to send translated strings for the requested locales
+- 94d197f63: Display clear error message when prompting fails due to non-TTY terminal
+- 05a853f8b: Fix auth_callback_path config for frontends
+- 6d273f23e: Remove folder created when a new extension is being generated but an error arises during the execution
+- 6200c45d9: Fix issue that retuns an error when you deploy an app only with function extensions
+- ff2d126a7: Update functions limit to 50 in total
+- 37b53a5be: Install exact versions with NPM by default
+- 069e38ecf: Fix graphql query for products to only retrieve published products
+- Updated dependencies [d9ef6c3f6]
+- Updated dependencies [33881af95]
+- Updated dependencies [2729e3784]
+- Updated dependencies [3b1da7747]
+- Updated dependencies [a7c1eabeb]
+- Updated dependencies [cc37858fb]
+- Updated dependencies [1707ef75a]
+- Updated dependencies [94d197f63]
+- Updated dependencies [162504891]
+- Updated dependencies [9e4c97b52]
+- Updated dependencies [9de04da4d]
+- Updated dependencies [f95e3a1d5]
+- Updated dependencies [1c8afb7f4]
+- Updated dependencies [151684a25]
+- Updated dependencies [37b53a5be]
+- Updated dependencies [01988114d]
+- Updated dependencies [beda7c241]
+- Updated dependencies [07d0be690]
+- Updated dependencies [6663b3a8f]
+- Updated dependencies [3169c1e44]
+- Updated dependencies [069e38ecf]
+  - @shopify/cli-kit@3.46.0
+  - @shopify/plugin-cloudflare@3.46.0
+  - @shopify/plugin-ngrok@3.46.0
+
 ## 3.46.0-pre.3
 
 ### Patch Changes

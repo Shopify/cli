@@ -1,6 +1,16 @@
 /* eslint-disable tsdoc/syntax */
-import {AbortSilentError, FatalError as Fatal, FatalErrorType} from './error.js'
-import {collectLog, consoleError, consoleLog, Logger, LogLevel, outputDebug, outputWhereAppropriate} from './output.js'
+import {AbortError, AbortSilentError, FatalError as Fatal, FatalErrorType} from './error.js'
+import {
+  collectLog,
+  consoleError,
+  consoleLog,
+  Logger,
+  LogLevel,
+  outputContent,
+  outputDebug,
+  outputToken,
+  outputWhereAppropriate,
+} from './output.js'
 import {isUnitTest} from './context/local.js'
 import {terminalSupportsRawMode} from './system.js'
 import {AbortController} from './abort.js'
@@ -11,11 +21,17 @@ import {CustomSection} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
 import ScalarDict from '../../private/node/ui/components/Table/ScalarDict.js'
 import {Table, TableColumn, TableProps} from '../../private/node/ui/components/Table/Table.js'
+import {
+  tokenItemToString,
+  InlineToken,
+  LinkToken,
+  ListToken,
+  TokenItem,
+} from '../../private/node/ui/components/TokenizedText.js'
 import {SelectPrompt, SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
-import {InlineToken, LinkToken, ListToken, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
 import {recordUIEvent, resetRecordedSleep} from '../../private/node/demo-recorder.js'
 import React from 'react'
@@ -262,6 +278,8 @@ export async function renderSelectPrompt<T>({
   isConfirmationPrompt,
   ...props
 }: RenderSelectPromptOptions<T>): Promise<T> {
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin})
+
   if (!isConfirmationPrompt) {
     recordUIEvent({type: 'selectPrompt', properties: {renderOptions, ...props}})
   }
@@ -375,6 +393,8 @@ export interface RenderAutocompleteOptions<T>
  *
  */
 export async function renderAutocompletePrompt<T>({renderOptions, ...props}: RenderAutocompleteOptions<T>): Promise<T> {
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin})
+
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'autocompletePrompt', properties: arguments[0]})
 
@@ -465,6 +485,8 @@ export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit
  *
  */
 export async function renderTextPrompt({renderOptions, ...props}: RenderTextPromptOptions): Promise<string> {
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin})
+
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'textPrompt', properties: arguments[0]})
 
@@ -521,6 +543,26 @@ export const keypress = async () => {
     process.stdin.setRawMode(true)
     process.stdin.once('data', handler)
   })
+}
+
+interface ThrowInNonTTYOptions {
+  message: TokenItem
+  stdin?: NodeJS.ReadStream
+}
+
+function throwInNonTTY({message, stdin}: ThrowInNonTTYOptions) {
+  if (stdin || terminalSupportsRawMode()) return
+
+  const promptText = tokenItemToString(message)
+  const errorMessage = `Failed to prompt:
+
+${outputContent`${outputToken.cyan(promptText)}`.value}
+
+This usually happens when running a command non-interactively, for example in a CI environment, or when piping input from another process.`
+  throw new AbortError(
+    errorMessage,
+    'To resolve this, specify the option in the command, or run the command in an interactive environment such as your local terminal.',
+  )
 }
 
 export type Key = InkKey

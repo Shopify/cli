@@ -183,7 +183,7 @@ describe('ExtensionServerClient', () => {
             uuid: '456',
             type: 'ui_extension',
             localization: null,
-            extensionPoints: [{localization: null, label: 'Fixed label'}],
+            extensionPoints: [{localization: null, label: 'Fixed label t:'}],
           },
           {uuid: '789', type: 'product_subscription'},
         ],
@@ -211,7 +211,7 @@ describe('ExtensionServerClient', () => {
               uuid: '456',
               type: 'ui_extension',
               localization: null,
-              extensionPoints: [{localization: null, label: 'Fixed label'}],
+              extensionPoints: [{localization: null, label: 'Fixed label t:'}],
             },
             {uuid: '789', type: 'product_subscription'},
           ],
@@ -368,6 +368,73 @@ describe('ExtensionServerClient', () => {
 
       expect(updateSpy).toHaveBeenCalledTimes(1)
       expect(updateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          extensions: [
+            {
+              uuid: '123',
+              type: 'ui_extension',
+              localization: translatedLocalization,
+              extensionPoints: [{localization: translatedLocalization, label: 'いらっしゃいませ!'}],
+            },
+            {
+              uuid: '456',
+              type: 'ui_extension',
+              localization: null,
+              extensionPoints: [{localization: null}],
+            },
+            {uuid: '789', type: 'product_subscription'},
+          ],
+        }),
+      )
+
+      socket.close()
+    })
+
+    test('sends data with translated props when locales option is provided on subsequent "update" events', async () => {
+      const {socket, client} = setup({...defaultOptions, locales: {user: 'ja', shop: 'fr'}})
+      const updateSpy = vi.fn()
+      const localization: Localization = {
+        defaultLocale: 'en',
+        translations: {
+          ja: {
+            welcome: 'いらっしゃいませ!',
+          },
+          en: {
+            welcome: 'Welcome!',
+          },
+          fr: {
+            welcome: 'Bienvenue!',
+          },
+        },
+        lastUpdated: 1684164163736,
+      }
+
+      const translatedLocalization = {
+        extensionLocale: 'ja',
+        translations: '{"welcome":"いらっしゃいませ!"}',
+        lastUpdated: localization.lastUpdated,
+      }
+
+      const data = {
+        app: mockApp(),
+        extensions: [
+          {
+            uuid: '123',
+            type: 'ui_extension',
+            localization,
+            extensionPoints: [{localization, label: 't:welcome'}],
+          },
+          {uuid: '456', type: 'ui_extension', localization: null, extensionPoints: [{localization: null}]},
+          {uuid: '789', type: 'product_subscription'},
+        ],
+      }
+
+      client.on('update', updateSpy)
+      socket.send({event: 'update', data})
+      socket.send({event: 'update', data})
+
+      expect(updateSpy).toHaveBeenNthCalledWith(
+        2,
         expect.objectContaining({
           extensions: [
             {

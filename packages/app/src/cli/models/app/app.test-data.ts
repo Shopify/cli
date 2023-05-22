@@ -8,6 +8,7 @@ import checkoutUIExtension from '../templates/ui-specifications/checkout_ui_exte
 import {ExtensionInstance} from '../extensions/specification.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
+import UIExtensionTemplate from '../templates/ui-specifications/ui_extension.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -374,4 +375,5 @@ export const testLocalExtensionTemplates: ExtensionTemplate[] = [
   themeExtension,
   checkoutPostPurchaseExtension,
   checkoutUIExtension,
+  UIExtensionTemplate,
 ]
