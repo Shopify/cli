@@ -1,5 +1,11 @@
 # @shopify/ui-extensions-server-kit
 
+## 4.2.0
+
+### Minor Changes
+
+- 2c6e98652: Enable ui-extensions-server-kit to send translated strings for the requested locales
+
 ## 4.1.0
 
 ### Minor Changes
