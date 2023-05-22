@@ -278,7 +278,7 @@ export async function renderSelectPrompt<T>({
   isConfirmationPrompt,
   ...props
 }: RenderSelectPromptOptions<T>): Promise<T> {
-  throwInNonTTY(props.message, renderOptions?.stdin)
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin})
 
   if (!isConfirmationPrompt) {
     recordUIEvent({type: 'selectPrompt', properties: {renderOptions, ...props}})
@@ -393,7 +393,7 @@ export interface RenderAutocompleteOptions<T>
  *
  */
 export async function renderAutocompletePrompt<T>({renderOptions, ...props}: RenderAutocompleteOptions<T>): Promise<T> {
-  throwInNonTTY(props.message, renderOptions?.stdin)
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin})
 
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'autocompletePrompt', properties: arguments[0]})
@@ -485,7 +485,7 @@ export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit
  *
  */
 export async function renderTextPrompt({renderOptions, ...props}: RenderTextPromptOptions): Promise<string> {
-  throwInNonTTY(props.message, renderOptions?.stdin)
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin})
 
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'textPrompt', properties: arguments[0]})
@@ -545,7 +545,12 @@ export const keypress = async () => {
   })
 }
 
-function throwInNonTTY(message: TokenItem, stdin?: NodeJS.ReadStream) {
+interface ThrowInNonTTYOptions {
+  message: TokenItem
+  stdin?: NodeJS.ReadStream
+}
+
+function throwInNonTTY({message, stdin}: ThrowInNonTTYOptions) {
   if (stdin || terminalSupportsRawMode()) return
 
   const promptText = tokenItemToString(message)
