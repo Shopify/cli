@@ -43,7 +43,8 @@ async function generate(options: GenerateOptions) {
   const apiKey = await ensureGenerateContext({...options, token})
   const specifications = await fetchSpecifications({token, apiKey, config: options.config})
   const app: AppInterface = await loadApp({directory: options.directory, specifications})
-  const extensionTemplates = await fetchExtensionTemplates(token)
+  const enabledLocalTemplates = specifications.map((spec) => spec.identifier)
+  const extensionTemplates = await fetchExtensionTemplates(token, enabledLocalTemplates)
 
   const promptOptions = await buildPromptOptions(extensionTemplates, specifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)
