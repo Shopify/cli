@@ -12,6 +12,7 @@ import {AdminSession} from '../../public/node/session.js'
 import {outputContent, outputToken} from '../../public/node/output.js'
 import {isTruthy} from '../../private/node/context/utilities.js'
 import {coerceSemverVersion} from '../../private/node/semver.js'
+import {CLI_KIT_VERSION} from '../common/version.js'
 import envPaths from 'env-paths'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
@@ -66,6 +67,7 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
     BUNDLE_GEMFILE: joinPath(await shopifyCLIDirectory(embedded), 'Gemfile'),
     ...(await getSpinEnvironmentVariables()),
     SHOPIFY_CLI_1P_DEV: firstPartyDev() ? '1' : '0',
+    SHOPIFY_CLI_VERSION: CLI_KIT_VERSION,
   }
 
   try {
