@@ -3,7 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/features",
   "projectType": "library",
-  "implicitDependencies": ["create-app", "cli"],
+  "implicitDependencies": ["create-app", "cli", "app"],
   "tags": ["scope:e2e"],
   "targets": {
     "test": {
