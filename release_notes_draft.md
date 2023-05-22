@@ -34,7 +34,10 @@ now do a different and much cooler thing.
 
 * ***--`notify` flag on theme dev.*** You can now specify `--notify` when running `theme dev` to update a file or URL when files are changed. This supports integrations with other tools.
 * ***Upgrade theme-check to 1.15.0.*** Changelog [here](https://github.com/Shopify/theme-check/releases/tag/v1.15.0)
-* ***Fix: Support vanity URLs in theme preview.*** Some elements, including images and fonts, were broken for vanity URLs. They are now displayed correctly.
+* ***`--update-docs` flag on theme check.*** You can now synchronously update Theme Check resources (objects, filters, and tags) before running it. This ensures that your code is checked against the most updated version of theme resources.
+* ***Fix: Support vanity URLs on theme dev.*** Some elements, including images and fonts, were broken for vanity URLs. They are now displayed correctly.
+* ***Fix: localhost link issue on theme dev.*** In some scenarios, the localhost link was being hidden.
+* ***Fix: `/localization` and `/cart` requests on theme dev.*** Now, these endpoints will no longer fail when using `shopify theme dev`.
 
 # UI (applicable across project types)
 
