@@ -168,7 +168,7 @@ async function dev(options: DevOptions) {
   }
 
   const [previewableExtensions, nonPreviewableExtensions] = partition(localApp.extensions.ui, (ext) =>
-    ext.features.includes('ui'),
+    ext.features.includes('ui_preview'),
   )
 
   if (previewableExtensions.length > 0) {

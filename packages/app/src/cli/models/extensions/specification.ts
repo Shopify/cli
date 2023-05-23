@@ -9,7 +9,7 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
 
-export type ExtensionFeature = 'ui' | 'ui_legacy' | 'function' | 'theme' | 'bundling' | 'cart_url'
+export type ExtensionFeature = 'ui_preview' | 'function' | 'theme' | 'bundling' | 'cart_url'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
