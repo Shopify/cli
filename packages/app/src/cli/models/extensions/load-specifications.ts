@@ -1,6 +1,4 @@
-import {UIExtensionSpec} from './ui.js'
-import {ThemeExtensionSpec} from './theme.js'
-import {GenericSpecification} from '../app/extensions.js'
+import {ExtensionSpecification} from './specification.js'
 import {loadUIExtensionSpecificiationsFromPlugins} from '../../private/plugins/extension.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {memoize} from '@shopify/cli-kit/common/function'
@@ -9,36 +7,20 @@ import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {fileURLToPath} from 'url'
 
-export async function loadUIExtensionSpecifications(config: Config): Promise<UIExtensionSpec[]> {
-  const local = await loadLocalUIExtensionsSpecifications()
-  const plugins = await loadUIExtensionSpecificiationsFromPlugins(config)
-  return [...local, ...plugins]
-}
-
-export async function loadLocalUIExtensionsSpecifications(): Promise<UIExtensionSpec[]> {
-  return memoizedLoadSpecs('ui-specifications')
-}
-
-export async function loadThemeSpecifications(): Promise<ThemeExtensionSpec[]> {
-  return memoizedLoadSpecs('theme-specifications')
-}
-
 /**
  * Load all specifications from the local file system AND plugins
  */
-export async function loadExtensionsSpecifications(config: Config): Promise<GenericSpecification[]> {
-  const ui = await loadUIExtensionSpecifications(config)
-  const theme = await loadThemeSpecifications()
-  return [...ui, ...theme]
+export async function loadExtensionsSpecifications(config: Config): Promise<ExtensionSpecification[]> {
+  const local = await loadLocalExtensionsSpecifications()
+  const plugins = await loadUIExtensionSpecificiationsFromPlugins(config)
+  return [...local, ...plugins]
 }
 
 /**
  * Load all specifications ONLY from the local file system
  */
-export async function loadLocalExtensionsSpecifications(): Promise<GenericSpecification[]> {
-  const ui = await loadLocalUIExtensionsSpecifications()
-  const theme = await loadThemeSpecifications()
-  return [...ui, ...theme]
+export async function loadLocalExtensionsSpecifications(): Promise<ExtensionSpecification[]> {
+  return memoizedLoadSpecs('specifications')
 }
 
 const memoizedLoadSpecs = memoize(loadSpecifications)

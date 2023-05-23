@@ -28,8 +28,7 @@ beforeEach(async () => {
 describe('buildGraphqlTypes', () => {
   test('generate types', async () => {
     // Given
-    const ourFunction = await testFunctionExtension()
-    ourFunction.entrySourceFilePath = 'src/index.js'
+    const ourFunction = await testFunctionExtension({entryPath: 'src/index.js'})
 
     // When
     const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal})

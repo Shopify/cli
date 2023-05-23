@@ -10,7 +10,7 @@ import {
   testRemoteExtensionTemplates,
   testThemeExtensions,
 } from '../models/app/app.test-data.js'
-import {Extension, FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
+import {ExtensionInstance} from '../models/extensions/specification.js'
 import generateExtensionPrompts from '../prompts/generate/extension.js'
 import {describe, expect, vi, beforeAll, afterEach, test} from 'vitest'
 import {Config} from '@oclif/core'
@@ -168,17 +168,13 @@ describe('generate', () => {
   })
 })
 
-async function mockSuccessfulCommandExecution(identifier: string, existingExtensions: Extension[] = []) {
+async function mockSuccessfulCommandExecution(identifier: string, existingExtensions: ExtensionInstance[] = []) {
   const appRoot = '/'
   const app = testApp({
     directory: appRoot,
     configurationPath: joinPath(appRoot, 'shopify.app.toml'),
     extensionsForType: (_spec: {identifier: string; externalIdentifier: string}) => existingExtensions,
-    extensions: {
-      function: existingExtensions.filter((extension) => extension.type === 'product_discounts') as FunctionExtension[],
-      ui: existingExtensions.filter((extension) => extension.type === 'product_subscription') as UIExtension[],
-      theme: existingExtensions.filter((extension) => extension.type === 'theme') as ThemeExtension[],
-    },
+    allExtensions: existingExtensions,
   })
 
   const allExtensionTemplates = testRemoteExtensionTemplates.concat(testLocalExtensionTemplates)

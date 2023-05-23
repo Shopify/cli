@@ -56,6 +56,7 @@ describe('uploadFunctionExtensions', () => {
             key: 'key',
           },
         },
+        metafields: [],
       },
       configurationPath: '/function/shopify.function.extension.toml',
       buildWasmPath: '/function/dist/index.wasm',
@@ -68,6 +69,7 @@ describe('uploadFunctionExtensions', () => {
       localIdentifier: 'my-function',
       type: 'order_discounts',
       graphQLType: 'order_discounts',
+      features: [],
       usingExtensionsFramework: false,
     }
     token = 'token'
@@ -1064,6 +1066,7 @@ describe('functionConfiguration', () => {
       configuration: {
         name: 'function',
         type: 'order_discounts',
+        metafields: [],
         description: 'my function',
         build: {
           command: 'make build',
@@ -1097,6 +1100,7 @@ describe('functionConfiguration', () => {
       type: 'order_discounts',
       graphQLType: 'order_discounts',
       usingExtensionsFramework: false,
+      features: [],
     }
     token = 'token'
     identifiers = {

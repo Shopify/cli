@@ -48,6 +48,7 @@ const FUNCTION_A: FunctionExtension = {
     },
     configurationUi: false,
     apiVersion: '2022-07',
+    metafields: [],
   },
   buildCommand: 'make build',
   buildWasmPath: '/function/dist/index.wasm',
@@ -55,6 +56,7 @@ const FUNCTION_A: FunctionExtension = {
   isJavaScript: false,
   externalType: 'function',
   usingExtensionsFramework: false,
+  features: ['function'],
   publishURL: (_) => Promise.resolve(''),
 }
 
@@ -75,6 +77,7 @@ const FUNCTION_A_2: FunctionExtension = {
     },
     configurationUi: false,
     apiVersion: '2022-07',
+    metafields: [],
   },
   buildCommand: 'make build',
   buildWasmPath: '/function/dist/index.wasm',
@@ -82,6 +85,7 @@ const FUNCTION_A_2: FunctionExtension = {
   isJavaScript: false,
   externalType: 'function',
   usingExtensionsFramework: false,
+  features: ['function'],
   publishURL: (_) => Promise.resolve(''),
 }
 
@@ -102,6 +106,7 @@ const FUNCTION_B: FunctionExtension = {
     },
     configurationUi: false,
     apiVersion: '2022-07',
+    metafields: [],
   },
   buildCommand: 'make build',
   buildWasmPath: '/function/dist/index.wasm',
@@ -109,6 +114,7 @@ const FUNCTION_B: FunctionExtension = {
   isJavaScript: false,
   externalType: 'function',
   usingExtensionsFramework: false,
+  features: ['function'],
   publishURL: (_) => Promise.resolve(''),
 }
 

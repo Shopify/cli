@@ -7,12 +7,12 @@ import {
 import * as extensionsCommon from '../extensions/common.js'
 import {blocks, configurationFileNames} from '../../constants.js'
 import {load as loadApp} from '../../models/app/loader.js'
-import {GenericSpecification} from '../../models/app/extensions.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/specifications.js'
 import * as functionBuild from '../function/build.js'
 import {testRemoteExtensionTemplates} from '../../models/app/app.test-data.js'
 import checkoutPostPurchaseExtension from '../../models/templates/ui-specifications/checkout_post_purchase.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
+import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {describe, expect, vi, test} from 'vitest'
 import * as output from '@shopify/cli-kit/node/output'
 import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
@@ -304,6 +304,8 @@ describe('initialize a extension', async () => {
           command = "cargo wasi build --release"
           path = "target/wasm32-wasi/release/prod-discount-rust.wasm"`,
         )
+
+        await file.writeFile(joinPath(destination, 'main.rs'), `//empty`)
       })
 
       // When
@@ -401,7 +403,7 @@ interface CreateFromTemplateOptions {
   extensionTemplate: ExtensionTemplate
   appDirectory: string
   extensionFlavor: ExtensionFlavorValue
-  specifications: GenericSpecification[]
+  specifications: ExtensionSpecification[]
 }
 async function createFromTemplate({
   name,

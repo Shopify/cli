@@ -1,5 +1,5 @@
-import {createUIExtensionSpecification} from '../ui.js'
-import {BaseUIExtensionSchema, NewExtensionPointSchemaType, NewExtensionPointsSchema} from '../schemas.js'
+import {ExtensionFeature, createExtensionSpecification} from '../specification.js'
+import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
@@ -11,7 +11,7 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 const dependency = '@shopify/checkout-ui-extensions'
 
-const UIExtensionSchema = BaseUIExtensionSchema.extend({
+const UIExtensionSchema = BaseSchema.extend({
   settings: zod
     .object({
       fields: zod.any().optional(),
@@ -20,13 +20,21 @@ const UIExtensionSchema = BaseUIExtensionSchema.extend({
   extensionPoints: NewExtensionPointsSchema,
 })
 
-const spec = createUIExtensionSpecification({
+const spec = createExtensionSpecification({
   identifier: 'ui_extension',
   surface: 'all',
   dependency,
   partnersWebIdentifier: 'ui_extension',
   singleEntryPath: false,
   schema: UIExtensionSchema,
+  appModuleFeatures: (config) => {
+    const basic: ExtensionFeature[] = ['ui', 'bundling']
+    const needsCart =
+      config.extensionPoints?.find((extensionPoint) => {
+        return getExtensionPointTargetSurface(extensionPoint.target) === 'checkout'
+      }) !== undefined
+    return needsCart ? [...basic, 'cart_url'] : basic
+  },
   isPreviewable: true,
   validate: async (config, directory) => {
     return validateUIExtensionPointConfig(directory, config.extensionPoints)
