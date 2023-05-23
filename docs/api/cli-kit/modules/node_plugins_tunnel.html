@@ -16,7 +16,7 @@
 <li><a href="node_plugins_tunnel.html">node/plugins/tunnel</a></li></ul>
 <h1>Module node/plugins/tunnel</h1></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Shopify/cli/blob/d685078f8/packages/cli-kit/src/public/node/plugins/tunnel.ts#L1">packages/cli-kit/src/public/node/plugins/tunnel.ts:1</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/Shopify/cli/blob/75b36c57a/packages/cli-kit/src/public/node/plugins/tunnel.ts#L1">packages/cli-kit/src/public/node/plugins/tunnel.ts:1</a></li></ul></aside>
 <section class="tsd-panel-group">
 <section class="tsd-panel tsd-typography"></section></section>
 <section class="tsd-panel-group tsd-index-group">
@@ -29,6 +29,7 @@
 <section class="tsd-index-section">
 <h3 class="tsd-index-heading">Interfaces</h3>
 <div class="tsd-index-list"><a href="../interfaces/node_plugins_tunnel.HookReturnPerTunnelPlugin.html" class="tsd-index-link tsd-kind-interface tsd-parent-kind-module"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-interface)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6" id="icon-256-path"></rect><path d="M9.51 16V15.016H11.298V8.224H9.51V7.24H14.19V8.224H12.402V15.016H14.19V16H9.51Z" fill="var(--color-text)" id="icon-256-text"></path></svg><span>Hook<wbr/>Return<wbr/>Per<wbr/>Tunnel<wbr/>Plugin</span></a>
+<a href="../interfaces/node_plugins_tunnel.TunnelClient.html" class="tsd-index-link tsd-kind-interface tsd-parent-kind-module"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-256-path"></use><use href="#icon-256-text"></use></svg><span>Tunnel<wbr/>Client</span></a>
 </div></section>
 <section class="tsd-index-section">
 <h3 class="tsd-index-heading">Type Aliases</h3>
@@ -37,6 +38,7 @@
 <a href="../types/node_plugins_tunnel.TunnelStartAction.html" class="tsd-index-link tsd-kind-type-alias tsd-parent-kind-module"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg><span>Tunnel<wbr/>Start<wbr/>Action</span></a>
 <a href="../types/node_plugins_tunnel.TunnelStartFunction.html" class="tsd-index-link tsd-kind-type-alias tsd-parent-kind-module"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg><span>Tunnel<wbr/>Start<wbr/>Function</span></a>
 <a href="../types/node_plugins_tunnel.TunnelStartReturn.html" class="tsd-index-link tsd-kind-type-alias tsd-parent-kind-module"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg><span>Tunnel<wbr/>Start<wbr/>Return</span></a>
+<a href="../types/node_plugins_tunnel.TunnelStatusType.html" class="tsd-index-link tsd-kind-type-alias tsd-parent-kind-module"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg><span>Tunnel<wbr/>Status<wbr/>Type</span></a>
 </div></section>
 <section class="tsd-index-section">
 <h3 class="tsd-index-heading">Functions</h3>
@@ -82,6 +84,7 @@
 <li class="tsd-kind-module"><a href="node_archiver.html">node/archiver</a></li>
 <li class="tsd-kind-module"><a href="node_base_command.html">node/base-<wbr/>command</a></li>
 <li class="tsd-kind-module"><a href="node_cli.html">node/cli</a></li>
+<li class="tsd-kind-module"><a href="node_colors.html">node/colors</a></li>
 <li class="tsd-kind-module"><a href="node_context_fqdn.html">node/context/fqdn</a></li>
 <li class="tsd-kind-module"><a href="node_context_local.html">node/context/local</a></li>
 <li class="tsd-kind-module"><a href="node_context_spin.html">node/context/spin</a></li>
@@ -129,11 +132,13 @@
 <ul>
 <li class="tsd-kind-class tsd-parent-kind-module"><a href="../classes/node_plugins_tunnel.TunnelError.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-128-path"></use><use href="#icon-128-text"></use></svg>Tunnel<wbr/>Error</a></li>
 <li class="tsd-kind-interface tsd-parent-kind-module"><a href="../interfaces/node_plugins_tunnel.HookReturnPerTunnelPlugin.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-256-path"></use><use href="#icon-256-text"></use></svg>Hook<wbr/>Return<wbr/>Per<wbr/>Tunnel<wbr/>Plugin</a></li>
+<li class="tsd-kind-interface tsd-parent-kind-module"><a href="../interfaces/node_plugins_tunnel.TunnelClient.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-256-path"></use><use href="#icon-256-text"></use></svg>Tunnel<wbr/>Client</a></li>
 <li class="tsd-kind-type-alias tsd-parent-kind-module"><a href="../types/node_plugins_tunnel.TunnelErrorType.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Tunnel<wbr/>Error<wbr/>Type</a></li>
 <li class="tsd-kind-type-alias tsd-parent-kind-module"><a href="../types/node_plugins_tunnel.TunnelProviderFunction.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Tunnel<wbr/>Provider<wbr/>Function</a></li>
 <li class="tsd-kind-type-alias tsd-parent-kind-module"><a href="../types/node_plugins_tunnel.TunnelStartAction.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Tunnel<wbr/>Start<wbr/>Action</a></li>
 <li class="tsd-kind-type-alias tsd-parent-kind-module"><a href="../types/node_plugins_tunnel.TunnelStartFunction.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Tunnel<wbr/>Start<wbr/>Function</a></li>
 <li class="tsd-kind-type-alias tsd-parent-kind-module"><a href="../types/node_plugins_tunnel.TunnelStartReturn.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Tunnel<wbr/>Start<wbr/>Return</a></li>
+<li class="tsd-kind-type-alias tsd-parent-kind-module"><a href="../types/node_plugins_tunnel.TunnelStatusType.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Tunnel<wbr/>Status<wbr/>Type</a></li>
 <li class="tsd-kind-function tsd-parent-kind-module"><a href="../functions/node_plugins_tunnel.defineProvider.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>define<wbr/>Provider</a></li>
 <li class="tsd-kind-function tsd-parent-kind-module"><a href="../functions/node_plugins_tunnel.startTunnel.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>start<wbr/>Tunnel</a></li></ul></nav></div></div>
 <div class="container tsd-generator">

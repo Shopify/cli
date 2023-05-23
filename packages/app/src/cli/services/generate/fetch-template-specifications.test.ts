@@ -10,25 +10,19 @@ describe('fetchTemplateSpecifications', () => {
   test('returns the remote and local specs', async () => {
     // Given
     vi.mocked(partnersRequest).mockResolvedValue({templateSpecifications: testRemoteExtensionTemplates})
+    const enabledLocalTemplates = ['checkout_ui_extension', 'theme']
 
     // When
-    const got: ExtensionTemplate[] = await fetchExtensionTemplates('token')
+    const got: ExtensionTemplate[] = await fetchExtensionTemplates('token', enabledLocalTemplates)
 
     // Then
-    expect(got.length).toEqual(13)
+    expect(got.length).toEqual(6)
     const identifiers = got.map((spec) => spec.identifier)
     expect(identifiers).toContain('cart_checkout_validation')
     expect(identifiers).toContain('cart_transform')
     expect(identifiers).toContain('product_discounts')
     expect(identifiers).toContain('order_discounts')
     expect(identifiers).toContain('theme_app_extension')
-    expect(identifiers).toContain('post_purchase_ui')
     expect(identifiers).toContain('checkout_ui')
-    expect(identifiers).toContain('customer_accounts_ui_extension')
-    expect(identifiers).toContain('pos_ui')
-    expect(identifiers).toContain('subscription_ui')
-    expect(identifiers).toContain('tax_calculation')
-    expect(identifiers).toContain('ui_extension')
-    expect(identifiers).toContain('web_pixel')
   })
 })

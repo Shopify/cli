@@ -26,8 +26,6 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   supportedFlavors: ExtensionFlavor[]
   gated: boolean
   helpURL?: string
-  templateURL?: string
-  templatePath?: (lang?: string) => string | undefined
   dependency?: string
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
@@ -69,13 +67,13 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   configuration: TConfiguration
   configurationPath: string
   outputBundlePath: string
-  _usingExtensionsFramework: boolean
 
+  private useExtensionsFramework: boolean
   private specification: ExtensionSpecification
 
   get graphQLType() {
     if (this.features.includes('function')) {
-      if (this._usingExtensionsFramework) return 'FUNCTION'
+      if (this.useExtensionsFramework) return 'FUNCTION'
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const functionConfig: any = this.configuration
       return functionConfig.type.toUpperCase()
@@ -112,7 +110,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   set usingExtensionsFramework(value: boolean) {
-    this._usingExtensionsFramework = value
+    this.useExtensionsFramework = value
   }
 
   constructor(options: {
@@ -130,7 +128,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.devUUID = `dev-${randomUUID()}`
     this.localIdentifier = basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
-    this._usingExtensionsFramework = false
+    this.useExtensionsFramework = false
     if (this.specification.identifier === 'theme') {
       this.outputBundlePath = this.directory
     } else {
@@ -243,7 +241,6 @@ export interface CreateExtensionSpecType<TConfiguration extends BaseConfigType =
  * supportedFlavors: {name: string; value: string}[] // list of supported flavors (default: 'javascript', 'typescript', 'typescript-react', 'javascript-react')
  * helpURL?: string // url to the help page for the extension, shown after generating the extension
  * dependency?: {name: string; version: string} // dependency to be added to the extension's package.json
- * templatePath?: string // path to the template to be used when generating the extension
  * graphQLType?: string // GraphQL type of the extension (default: same as "identifier")
  * schema?: ZodSchemaType<TConfiguration> // schema used to validate the extension's configuration (default: BaseUIExtensionSchema)
  * getBundleExtensionStdinContent?: (configuration: TConfiguration) => string // function to generate the content of the stdin file used to bundle the extension
