@@ -56,7 +56,7 @@ const spec = createExtensionSpecification({
   supportedFlavors: defaultFunctionsFlavors,
   partnersWebIdentifier: 'function',
   graphQLType: 'function',
-  appModuleFeatures: (_) => ['function'],
+  appModuleFeatures: (_) => ['function', 'bundling'],
   findEntryPath: async (directory) => {
     return (
       await Promise.all(

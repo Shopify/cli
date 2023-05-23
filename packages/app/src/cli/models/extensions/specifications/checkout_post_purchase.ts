@@ -13,7 +13,7 @@ const spec = createExtensionSpecification({
   helpURL: 'https://shopify.dev/docs/apps/checkout/post-purchase',
   schema: BaseSchema,
   findEntryPath: findUIEntryPath,
-  appModuleFeatures: (_) => ['ui_preview', 'bundling'],
+  appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild'],
   deployConfig: async (config, _) => {
     return {metafields: config.metafields}
   },

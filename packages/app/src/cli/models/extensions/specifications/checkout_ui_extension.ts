@@ -22,7 +22,7 @@ const spec = createExtensionSpecification({
   partnersWebIdentifier: 'checkout_ui_extension',
   schema: CheckoutSchema,
   findEntryPath: findUIEntryPath,
-  appModuleFeatures: (_) => ['ui_preview', 'bundling', 'cart_url'],
+  appModuleFeatures: (_) => ['ui_preview', 'bundling', 'cart_url', 'esbuild'],
   deployConfig: async (config, directory) => {
     return {
       extension_points: config.extensionPoints,

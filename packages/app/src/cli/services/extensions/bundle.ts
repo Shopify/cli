@@ -1,4 +1,4 @@
-import {buildThemeExtensions, ThemeExtensionBuildOptions} from '../build/extension.js'
+import {ExtensionBuildOptions, buildThemeExtension} from '../build/extension.js'
 import {context as esContext, BuildResult, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {copyFile, glob} from '@shopify/cli-kit/node/fs'
@@ -7,6 +7,8 @@ import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
 import type {StdinOptions, build as esBuild} from 'esbuild'
+import {ExtensionInstance} from '../../models/extensions/specification.js'
+import {Extension} from '../../models/app/extensions.js'
 
 const require = createRequire(import.meta.url)
 
@@ -64,26 +66,23 @@ export async function bundleExtension(options: BundleOptions) {
   }
 }
 
-export async function bundleThemeExtensions(options: ThemeExtensionBuildOptions): Promise<void> {
-  if (options.extensions.length === 0) return
-
-  await buildThemeExtensions(options)
+export async function bundleThemeExtension(
+  extension: ExtensionInstance,
+  options: ExtensionBuildOptions,
+): Promise<void> {
+  await buildThemeExtension(extension, options)
 
   if (useThemebundling()) {
-    await Promise.all(
-      options.extensions.map(async (extension) => {
-        options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
-        const files = await glob(joinPath(extension.directory, '/**/*'))
+    options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
+    const files = await glob(joinPath(extension.directory, '/**/*'))
 
-        await Promise.all(
-          files.map(function (filepath) {
-            if (!(filepath.includes('.gitkeep') || filepath.includes('.toml'))) {
-              const relativePathName = relativePath(extension.directory, filepath)
-              const outputFile = joinPath(extension.outputBundlePath, relativePathName)
-              return copyFile(filepath, outputFile)
-            }
-          }),
-        )
+    await Promise.all(
+      files.map(function (filepath) {
+        if (!(filepath.includes('.gitkeep') || filepath.includes('.toml'))) {
+          const relativePathName = relativePath(extension.directory, filepath)
+          const outputFile = joinPath(extension.outputBundlePath, relativePathName)
+          return copyFile(filepath, outputFile)
+        }
       }),
     )
   }

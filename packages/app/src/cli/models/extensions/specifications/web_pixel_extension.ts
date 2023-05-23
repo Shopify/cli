@@ -27,7 +27,7 @@ const spec = createExtensionSpecification({
   supportedFlavors: defaultExtensionFlavors.filter((flavor) => !flavor.value.includes('react')),
   schema: WebPixelSchema,
   findEntryPath: findUIEntryPath,
-  appModuleFeatures: (_) => ['bundling'],
+  appModuleFeatures: (_) => ['bundling', 'esbuild'],
   deployConfig: async (config, _) => {
     return {
       runtime_context: config.runtimeContext,

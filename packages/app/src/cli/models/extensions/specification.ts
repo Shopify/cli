@@ -1,7 +1,15 @@
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
-import {ExtensionFlavor} from '../app/extensions.js'
+import {ExtensionFlavor, FunctionExtension} from '../app/extensions.js'
 import {blocks, defaultExtensionFlavors} from '../../constants.js'
+import {
+  ExtensionBuildOptions,
+  buildFunctionExtension,
+  buildThemeExtension,
+  buildUIExtension,
+} from '../../services/build/extension.js'
+import {bundleThemeExtension} from '../../services/extensions/bundle.js'
+import {Identifiers} from '../app/identifiers.js'
 import {ok, Result} from '@shopify/cli-kit/node/result'
 import {capitalize, constantize} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -9,7 +17,7 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
 
-export type ExtensionFeature = 'ui_preview' | 'function' | 'theme' | 'bundling' | 'cart_url'
+export type ExtensionFeature = 'ui_preview' | 'function' | 'theme' | 'bundling' | 'cart_url' | 'esbuild'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -141,11 +149,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.localIdentifier = basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
     this.useExtensionsFramework = false
-    if (this.specification.identifier === 'theme') {
-      this.outputBundlePath = this.directory
-    } else {
-      this.outputBundlePath = joinPath(this.directory, 'dist/main.js')
-    }
+    this.outputBundlePath = ''
   }
 
   deployConfig(): Promise<{[key: string]: unknown}> {
@@ -220,6 +224,30 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   get isJavaScript() {
     return Boolean(this.entrySourceFilePath?.endsWith('.js') || this.entrySourceFilePath?.endsWith('.ts'))
+  }
+
+  async buildStep(options: ExtensionBuildOptions) {
+    if (this.features.includes('theme')) {
+      return buildThemeExtension(this, options)
+    } else if (this.features.includes('function')) {
+      return buildFunctionExtension(this as unknown as FunctionExtension, options)
+    } else if (this.features.includes('esbuild')) {
+      return buildUIExtension(this, options)
+    }
+  }
+
+  async bundleStep(options: ExtensionBuildOptions, identifiers: Identifiers, bundleDirectory: string) {
+    if (!this.features.includes('bundling')) return
+    const extensionId = identifiers.extensions[this.localIdentifier]!
+    if (this.features.includes('theme')) {
+      this.outputBundlePath = joinPath(bundleDirectory, extensionId)
+      return bundleThemeExtension(this, options)
+    } else if (this.features.includes('function')) {
+      return buildFunctionExtension(this as unknown as FunctionExtension, options)
+    } else if (this.features.includes('esbuild')) {
+      this.outputBundlePath = joinPath(bundleDirectory, extensionId, 'dist/main.js')
+      return buildUIExtension(this, options)
+    }
   }
 }
 
