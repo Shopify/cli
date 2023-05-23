@@ -145,8 +145,8 @@ describe('runJavy', () => {
       ],
       {
         cwd: ourFunction.directory,
-        stderr,
-        stdout,
+        stderr: 'inherit',
+        stdout: 'inherit',
         signal,
       },
     )
