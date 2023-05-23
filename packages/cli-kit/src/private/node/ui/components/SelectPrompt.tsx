@@ -34,8 +34,6 @@ function SelectPrompt<T>({
   if (choices.length === 0) {
     throw new Error('SelectPrompt requires at least one choice')
   }
-  const initialValue =
-    typeof defaultValue === 'undefined' ? undefined : choices.find((choice) => choice.value === defaultValue)
   const [answer, setAnswer] = useState<SelectItem<T> | undefined>(undefined)
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
@@ -129,7 +127,7 @@ function SelectPrompt<T>({
       ) : (
         <Box marginTop={1}>
           <SelectInput
-            defaultValue={initialValue}
+            defaultValue={defaultValue}
             items={choices}
             infoMessage={
               submitWithShortcuts

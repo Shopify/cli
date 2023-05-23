@@ -311,9 +311,15 @@ export const useSelectState = <T>({
 
   useEffect(() => {
     if (options.length === 0) {
-      onChange({item: undefined, usedShortcut: false})
+      onChange({
+        item: undefined,
+        usedShortcut: false,
+      })
     } else if (state.value && state.previousValue !== state.value) {
-      onChange({item: state.value, usedShortcut: false})
+      onChange({
+        item: options.find((option) => option.value === state.value),
+        usedShortcut: false,
+      })
     }
   }, [state.previousValue, state.value, options, onChange])
 

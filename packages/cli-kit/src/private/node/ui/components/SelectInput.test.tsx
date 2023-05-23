@@ -377,9 +377,7 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(
-      <SelectInput items={items} onChange={() => {}} defaultValue={{label: 'Second', value: 'second'}} />,
-    )
+    const renderInstance = render(<SelectInput items={items} onChange={() => {}} defaultValue="second" />)
 
     await waitForInputsToBeReady()
 

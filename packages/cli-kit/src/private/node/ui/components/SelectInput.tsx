@@ -1,5 +1,5 @@
 import {debounce} from '../../../../public/common/function.js'
-import useSelectState from '../hooks/use-select-state.js'
+import {useSelectState} from '../hooks/use-select-state.js'
 import React, {useRef, useCallback, forwardRef} from 'react'
 import {Box, Key, useInput, Text, DOMElement} from 'ink'
 import chalk from 'chalk'
@@ -25,7 +25,7 @@ export interface SelectInputProps<T> {
   enableShortcuts?: boolean
   focus?: boolean
   emptyMessage?: string
-  defaultValue?: Item<T>
+  defaultValue?: T
   highlightedTerm?: string
   loading?: boolean
   errorMessage?: string
@@ -222,8 +222,8 @@ function SelectInputInner<T>(
             item={item}
             previousItem={state.visibleOptions[index - 1]}
             highlightedTerm={highlightedTerm}
-            isSelected={item.value === state.selectedItem?.value}
-            items={state.options}
+            isSelected={item.value === state.focusedValue}
+            items={state.visibleOptions}
             enableShortcuts={enableShortcuts}
             hasAnyGroup={hasAnyGroup}
           />
