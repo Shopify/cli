@@ -1,6 +1,6 @@
 {
   "name": "@shopify/app",
-  "version": "3.46.0-pre.3",
+  "version": "3.46.0",
   "description": "Utilities for loading, building, and publishing apps.",
   "homepage": "https://github.com/shopify/cli#readme",
   "bugs": {
@@ -43,10 +43,10 @@
   "dependencies": {
     "@luckycatfactory/esbuild-graphql-loader": "3.8.1",
     "@oclif/core": "2.1.4",
-    "@shopify/cli-kit": "3.46.0-pre.3",
+    "@shopify/cli-kit": "3.46.0",
     "@shopify/function-runner": "4.0.2",
-    "@shopify/plugin-cloudflare": "3.46.0-pre.3",
-    "@shopify/plugin-ngrok": "3.46.0-pre.3",
+    "@shopify/plugin-cloudflare": "3.46.0",
+    "@shopify/plugin-ngrok": "3.46.0",
     "abort-controller": "3.0.0",
     "chokidar": "3.5.3",
     "diff": "5.1.0",
@@ -67,8 +67,9 @@
     "@types/ws": "^8.5.4",
     "graphql": "^16.0.0",
     "graphql-tag": "^2.12.6",
-    "vite": "^2.9.13",
-    "vitest": "^0.28.5"
+    "@vitest/coverage-istanbul": "^0.31.0",
+    "vite": "^4.3.6",
+    "vitest": "^0.31.0"
   },
   "engines": {
     "node": ">=14.17.0"

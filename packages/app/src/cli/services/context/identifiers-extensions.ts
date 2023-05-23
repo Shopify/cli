@@ -10,9 +10,17 @@ import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 
+interface AppWithExtensions {
+  extensionRegistrations: RemoteSource[]
+  dashboardManagedExtensionRegistrations: RemoteSource[]
+}
+
 export async function ensureExtensionsIds(
   options: EnsureDeploymentIdsPresenceOptions,
-  initialRemoteExtensions: RemoteSource[],
+  {
+    extensionRegistrations: initialRemoteExtensions,
+    dashboardManagedExtensionRegistrations: dashboardOnlyExtensions,
+  }: AppWithExtensions,
 ): Promise<Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions}, MatchingError>> {
   let remoteExtensions = initialRemoteExtensions
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
@@ -66,6 +74,7 @@ export async function ensureExtensionsIds(
         identifiers: validMatches,
         toCreate: extensionsToCreate,
         onlyRemote: onlyRemoteExtensions,
+        dashboardOnly: options.partnersApp?.betas?.unifiedAppDeployment ? dashboardOnlyExtensions : [],
       },
       options.partnersApp,
     )

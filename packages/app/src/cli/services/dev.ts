@@ -51,6 +51,8 @@ import {partition} from '@shopify/cli-kit/common/collection'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {Writable} from 'stream'
 
+const MANIFEST_VERSION = '3'
+
 export interface DevOptions {
   directory: string
   id?: number
@@ -103,7 +105,7 @@ async function dev(options: DevOptions) {
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
   let localApp = await load({directory: options.directory, specifications})
 
-  if (!options.skipDependenciesInstallation) {
+  if (!options.skipDependenciesInstallation && !localApp.usesWorkspaces) {
     localApp = await installAppDependencies(localApp)
   }
 
@@ -430,6 +432,7 @@ async function devUIExtensionsTarget({
         grantedScopes,
         checkoutCartUrl: cartUrl,
         subscriptionProductUrl,
+        manifestVersion: MANIFEST_VERSION,
       })
     },
   }

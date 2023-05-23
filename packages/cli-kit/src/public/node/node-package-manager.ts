@@ -268,6 +268,11 @@ export interface PackageJson {
   devDependencies?: {[key: string]: string}
 
   /**
+   * The peerDependencies attribute of the package.json
+   */
+  peerDependencies?: {[key: string]: string}
+
+  /**
    * The optional oclif settings attribute of the package.json
    */
   oclif?: {
@@ -293,6 +298,12 @@ export interface PackageJson {
    *  The prettier attribute of the package.json
    */
   prettier?: string
+
+  /**
+   * The private attribute of the package.json.
+   * https://docs.npmjs.com/cli/v9/configuring-npm/package-json#private
+   */
+  private?: boolean
 }
 
 /**
@@ -379,8 +390,7 @@ ${outputToken.json(options)}
     throw PackageJsonNotFoundError(options.directory)
   }
   const existingDependencies = Object.keys(await getDependencies(packageJsonPath))
-  let dependenciesToAdd = dependencies
-  dependenciesToAdd = dependencies.filter((dep) => {
+  const dependenciesToAdd = dependencies.filter((dep) => {
     return !existingDependencies.includes(dep.name)
   })
   if (dependenciesToAdd.length === 0) {
@@ -393,7 +403,6 @@ export async function addNPMDependencies(
   dependencies: DependencyVersion[],
   options: AddNPMDependenciesIfNeededOptions,
 ): Promise<void> {
-  let args: string[]
   const dependenciesWithVersion = dependencies.map((dep) => {
     return dep.version ? `${dep.name}@${dep.version}` : dep.name
   })

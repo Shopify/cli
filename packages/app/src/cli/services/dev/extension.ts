@@ -81,6 +81,12 @@ export interface ExtensionDevOptions {
    * If not provided the first product in the store will be used
    */
   subscriptionProductUrl?: string
+
+  /**
+   * Fixed version for the Dev Server's manifest.
+   * This is exposed in the JSON payload for clients connecting to the Dev Server
+   */
+  manifestVersion: string
 }
 
 export async function devUIExtensions(options: ExtensionDevOptions): Promise<void> {

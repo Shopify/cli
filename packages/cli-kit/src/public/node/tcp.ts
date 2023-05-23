@@ -11,7 +11,7 @@ import * as port from 'get-port-please'
  */
 export async function getAvailableTCPPort(): Promise<number> {
   outputDebug(outputContent`Getting a random port...`)
-  const randomPort = await retryOnError(() => port.getRandomPort())
+  const randomPort = await retryOnError(() => port.getRandomPort('localhost'))
   outputDebug(outputContent`Random port obtained: ${outputToken.raw(`${randomPort}`)}`)
   return randomPort
 }

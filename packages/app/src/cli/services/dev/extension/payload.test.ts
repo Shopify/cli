@@ -54,6 +54,7 @@ describe('getUIExtensionPayload', () => {
         buildDirectory: tmpDir,
         checkoutCartUrl: 'https://my-domain.com/cart',
         subscriptionProductUrl: 'https://my-domain.com/subscription',
+        manifestVersion: '3',
       }
       const development: Partial<UIExtensionPayload['development']> = {
         hidden: true,

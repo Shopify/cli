@@ -1,30 +1,20 @@
-import {GenericSpecification} from './extensions.js'
-import {extensionTypesGroups} from '../../constants.js'
+import {ExtensionFlavor} from './extensions.js'
 
-export interface TemplateSpecification {
+export interface TemplateType {
+  type: string
+  extensionPoints: string[]
+  supportedFlavors: ExtensionFlavor[]
+  url: string
+}
+
+export interface ExtensionTemplate {
   identifier: string
   name: string
   group: string
   supportLinks: string[]
-  types: GenericSpecification[]
+  types: TemplateType[]
 }
 
-export function convertSpecificationsToTemplate(specifications: GenericSpecification[]): TemplateSpecification[] {
-  return specifications.map((spec) => {
-    return {
-      identifier: spec.identifier,
-      name: spec.externalName,
-      group: spec.group || extensionTypesGroups.find((group) => group.extensions.includes(spec.identifier))?.name || '',
-      supportLinks: spec.helpURL ? [spec.helpURL] : [],
-      types: [spec],
-    }
-  })
-}
-
-export function getTypesExternalIdentitifier(templates: TemplateSpecification[]): string[] {
-  return templates.flatMap((template) => template.types.map((type) => type.externalIdentifier))
-}
-
-export function getTypesExternalName(templates: TemplateSpecification[]): string[] {
-  return templates.flatMap((template) => template.types.map((type) => type.externalName))
+export function getTypesExternalName(templates: ExtensionTemplate[]): string[] {
+  return templates.flatMap((template) => template.name)
 }

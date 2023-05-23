@@ -9,7 +9,7 @@ import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
-const dependency = {name: '@shopify/checkout-ui-extensions-react', version: '^0.26.0'}
+const dependency = '@shopify/checkout-ui-extensions'
 
 const UIExtensionSchema = BaseUIExtensionSchema.extend({
   settings: zod
@@ -27,6 +27,7 @@ const spec = createUIExtensionSpecification({
   partnersWebIdentifier: 'ui_extension',
   singleEntryPath: false,
   schema: UIExtensionSchema,
+  isPreviewable: true,
   validate: async (config, directory) => {
     return validateUIExtensionPointConfig(directory, config.extensionPoints)
   },

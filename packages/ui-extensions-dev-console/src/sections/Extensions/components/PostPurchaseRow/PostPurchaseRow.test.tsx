@@ -13,11 +13,17 @@ vi.mock('./components', () => ({
   PostPurchaseModal: () => null,
 }))
 
-vi.mock('..', () => ({
-  Row: (props: any) => props.children,
-  Status: () => null,
-  View: () => null,
-}))
+vi.mock('..', async () => {
+  const actual: any = await vi.importActual('..')
+  return {
+    ...actual,
+    ...{
+      Row: (props: any) => props.children,
+      Status: () => null,
+      View: () => null,
+    },
+  }
+})
 
 mockI18n(en)
 

@@ -10,7 +10,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 describe('ui_extension', async () => {
   interface GetUIExtensionProps {
     directory: string
-    extensionPoints?: {target: string; module: string}[]
+    extensionPoints?: {target: string; module: string; label?: string}[]
   }
 
   async function getTestUIExtension({directory, extensionPoints}: GetUIExtensionProps) {

@@ -2,7 +2,7 @@
 import {isUnitTest, isVerbose} from './context/local.js'
 import {PackageManager} from './node-package-manager.js'
 import {AbortSignal} from './abort.js'
-import colors from '../../private/node/colors.js'
+import colors from './colors.js'
 import {isTruthy} from '../../private/node/context/utilities.js'
 import {
   ColorContentToken,

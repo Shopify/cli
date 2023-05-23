@@ -92,12 +92,12 @@ describe('bundleExtension()', () => {
       'process.env.FOO': JSON.stringify('BAR'),
       'process.env.NODE_ENV': JSON.stringify('production'),
     })
-    expect(vi.mocked(stdout.write).calls[0][0]).toMatchInlineSnapshot(`
+    expect(vi.mocked(stdout.write).mock.calls[0][0]).toMatchInlineSnapshot(`
       "▲ [WARNING] warning text [plugin plugin]
 
       "
     `)
-    expect(vi.mocked(stdout.write).calls[0][0]).toMatchInlineSnapshot(`
+    expect(vi.mocked(stdout.write).mock.calls[0][0]).toMatchInlineSnapshot(`
       "▲ [WARNING] warning text [plugin plugin]
 
       "

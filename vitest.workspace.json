@@ -1,0 +1,12 @@
+[
+  "packages/app",
+  "packages/cli",
+  "packages/cli-kit",
+  "packages/plugin-cloudflare",
+  "packages/plugin-did-you-mean",
+  "packages/plugin-ngrok",
+  "packages/theme",
+  "packages/ui-extensions-dev-console",
+  "packages/ui-extensions-server-kit",
+  "packages/ui-extensions-test-utils"
+]

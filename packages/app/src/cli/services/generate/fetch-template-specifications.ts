@@ -1,50 +1,46 @@
 import {
-  RemoteTemplateSpecification,
   RemoteTemplateSpecificationsQuery,
   RemoteTemplateSpecificationsQuerySchema,
 } from '../../api/graphql/template_specifications.js'
-import {TemplateSpecification} from '../../models/app/template.js'
-import {BaseFunctionConfigurationSchema} from '../../models/extensions/schemas.js'
-import {blocks, templates} from '../../constants.js'
+import {ExtensionTemplate} from '../../models/app/template.js'
+import themeExtension from '../../models/templates/theme-specifications/theme.js'
+import checkoutPostPurchaseExtension from '../../models/templates/ui-specifications/checkout_post_purchase.js'
+import checkoutUIExtension from '../../models/templates/ui-specifications/checkout_ui_extension.js'
+import customerAccountsUIExtension from '../../models/templates/ui-specifications/customer_accounts_ui_extension.js'
+import posUIExtension from '../../models/templates/ui-specifications/pos_ui_extension.js'
+import productSubscriptionUIExtension from '../../models/templates/ui-specifications/product_subscription.js'
+import taxCalculationUIExtension from '../../models/templates/ui-specifications/tax_calculation.js'
+import UIExtension from '../../models/templates/ui-specifications/ui_extension.js'
+import webPixelUIExtension from '../../models/templates/ui-specifications/web_pixel_extension.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
-export async function fetchTemplateSpecifications(token: string): Promise<TemplateSpecification[]> {
-  const params: {version?: string} = {version: templates.specification.remoteVersion}
-  const result: RemoteTemplateSpecificationsQuerySchema = await partnersRequest(
+export async function fetchExtensionTemplates(
+  token: string,
+  availableSpecifications: string[],
+): Promise<ExtensionTemplate[]> {
+  const remoteTemplates: RemoteTemplateSpecificationsQuerySchema = await partnersRequest(
     RemoteTemplateSpecificationsQuery,
     token,
-    params,
   )
-  return result.templateSpecifications.map(mapRemoteTemplateSpecification)
+  const localTemplates = localExtensionTemplates(availableSpecifications)
+  return remoteTemplates.templateSpecifications.concat(localTemplates)
 }
 
-export function mapRemoteTemplateSpecification(
-  remoteTemplateSpecification: RemoteTemplateSpecification,
-): TemplateSpecification {
-  return {
-    identifier: remoteTemplateSpecification.identifier,
-    name: remoteTemplateSpecification.name,
-    group: remoteTemplateSpecification.group,
-    supportLinks: remoteTemplateSpecification.supportLinks,
-    types: remoteTemplateSpecification.types.map((extension) => {
-      return {
-        identifier: remoteTemplateSpecification.identifier,
-        externalIdentifier: remoteTemplateSpecification.identifier,
-        externalName: remoteTemplateSpecification.identifier,
-        gated: false,
-        registrationLimit: blocks.functions.defaultRegistrationLimit,
-        supportedFlavors: extension.supportedFlavors,
-        group: remoteTemplateSpecification.group,
-        category: () => 'function',
-        configSchema: BaseFunctionConfigurationSchema,
-        templateURL: extension.url,
-        helpURL: remoteTemplateSpecification.supportLinks[0]!,
-        templatePath: (flavor: string) => {
-          const supportedFlavor = extension.supportedFlavors.find((supportedFlavor) => supportedFlavor.value === flavor)
-          if (!supportedFlavor) return undefined
-          return supportedFlavor.path
-        },
-      }
-    }),
-  }
+export function localExtensionTemplates(availableSpecifications: string[]): ExtensionTemplate[] {
+  const allLocalTemplates = [
+    themeExtension,
+    checkoutPostPurchaseExtension,
+    checkoutUIExtension,
+    customerAccountsUIExtension,
+    posUIExtension,
+    productSubscriptionUIExtension,
+    taxCalculationUIExtension,
+    UIExtension,
+    webPixelUIExtension,
+  ]
+  return allLocalTemplates.filter(
+    (template) =>
+      availableSpecifications.includes(template.identifier) ||
+      availableSpecifications.includes(template.types[0]!.type),
+  )
 }

@@ -447,7 +447,11 @@ async function getFunctionExtensionUploadURL(
   return res.data.uploadUrlGenerate
 }
 
-export async function functionConfiguration(extension: FunctionExtension, moduleId: string): Promise<object> {
+export async function functionConfiguration(
+  extension: FunctionExtension,
+  moduleId: string,
+  appKey: string,
+): Promise<object> {
   let inputQuery: string | undefined
   if (await fileExists(extension.inputQueryPath)) {
     inputQuery = await readFile(extension.inputQueryPath)
@@ -457,6 +461,7 @@ export async function functionConfiguration(extension: FunctionExtension, module
     title: extension.configuration.name,
     module_id: moduleId,
     description: extension.configuration.description,
+    app_key: appKey,
     api_type: extension.configuration.type,
     api_version: extension.configuration.apiVersion,
     input_query: inputQuery,

@@ -56,6 +56,7 @@ function getMockSetupWebSocketConnectionOptions() {
       updateApp: vi.fn(),
       updateExtensions: vi.fn(),
     },
+    manifestVersion: '3',
   } as unknown as SetupWebSocketConnectionOptions
 }
 
