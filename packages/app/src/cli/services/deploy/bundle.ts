@@ -48,7 +48,10 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
               ui: options.app.extensions.ui
                 .filter((uiExtension) => {
                   // excluding flow action definition extensions from being built.
-                  return uiExtension.type !== 'flow_action_definition' && uiExtension.type !== 'flow_trigger_definition'
+                  return (
+                    uiExtension.type !== 'flow_action_definition_prototype' &&
+                    uiExtension.type !== 'flow_trigger_definition'
+                  )
                 })
                 .map((uiExtension) => {
                   const extensionId = options.identifiers.extensions[uiExtension.localIdentifier]!
