@@ -382,6 +382,10 @@ async function logMetadataForLoadedApp(
   await metadata.addPublicMetadata(async () => {
     const projectType = await getProjectType(app.webs)
 
+    const extensionFunctionCount = app.extensions.function.length
+    const extensionUICount = app.extensions.ui.length
+    const extensionThemeCount = app.extensions.theme.length
+
     const extensionTotalCount = app.allExtensions.length
 
     const webBackendCount = app.webs.filter((web) => web.configuration.type === WebType.Backend).length
@@ -406,6 +410,12 @@ async function logMetadataForLoadedApp(
       app_extensions_breakdown: JSON.stringify(extensionsBreakdownMapping),
       app_extensions_count: extensionTotalCount,
       app_extensions_custom_layout: loadingStrategy.usedCustomLayoutForExtensions,
+      app_extensions_function_any: extensionFunctionCount > 0,
+      app_extensions_function_count: extensionFunctionCount,
+      app_extensions_theme_any: extensionThemeCount > 0,
+      app_extensions_theme_count: extensionThemeCount,
+      app_extensions_ui_any: extensionUICount > 0,
+      app_extensions_ui_count: extensionUICount,
       app_name_hash: hashString(app.name),
       app_path_hash: hashString(app.directory),
       app_scopes: JSON.stringify(
