@@ -29,7 +29,7 @@ import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
 
-import {UIExtensionSpec} from '../models/extensions/ui.js'
+import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -153,10 +153,6 @@ async function dev(options: DevOptions) {
     previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
   }
 
-  if (localApp.extensions.ui.length > 0) {
-    previewUrl = `${proxyUrl}/extensions/dev-console`
-  }
-
   // If we have a real UUID for an extension, use that instead of a random one
   const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
@@ -177,6 +173,7 @@ async function dev(options: DevOptions) {
   )
 
   if (previewableExtensions.length > 0) {
+    previewUrl = `${proxyUrl}/extensions/dev-console`
     const devExt = await devUIExtensionsTarget({
       app: localApp,
       id: remoteApp.id,
@@ -215,7 +212,7 @@ async function dev(options: DevOptions) {
         token,
         extensions: nonPreviewableExtensions,
         remoteExtensions,
-        specifications: specifications as UIExtensionSpec[],
+        specifications,
       }),
     )
   }
@@ -447,7 +444,7 @@ interface DevNonPreviewableExtensionsOptions {
   remoteExtensions: {
     [key: string]: string
   }
-  specifications: UIExtensionSpec[]
+  specifications: ExtensionSpecification[]
 }
 
 export function devNonPreviewableExtensionTarget({

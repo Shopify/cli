@@ -8,6 +8,7 @@ import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {OrganizationApp} from '../../models/organization.js'
+import {ExtensionInstance} from '../../models/extensions/specification.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -72,6 +73,7 @@ const EXTENSION_A: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  features: ['ui_legacy', 'bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -102,6 +104,7 @@ const EXTENSION_A_2: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  features: ['ui_legacy', 'bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -132,6 +135,7 @@ const EXTENSION_B: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  features: ['ui_legacy', 'bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -159,6 +163,7 @@ const FUNCTION_A: FunctionExtension = {
       command: 'make build',
       path: 'dist/index.wasm',
     },
+    metafields: [],
     configurationUi: false,
     apiVersion: '2022-07',
   },
@@ -168,6 +173,7 @@ const FUNCTION_A: FunctionExtension = {
   isJavaScript: false,
   externalType: 'function',
   usingExtensionsFramework: false,
+  features: ['function'],
   publishURL: (_) => Promise.resolve(''),
 }
 
@@ -177,7 +183,7 @@ const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExte
     directory: '/app',
     configurationPath: '/shopify.app.toml',
     configuration: {scopes: 'read_products', extensionDirectories: ['extensions/*']},
-    extensions: {ui: uiExtensions, theme: [], function: functionExtensions},
+    allExtensions: [...uiExtensions, ...functionExtensions] as ExtensionInstance[],
   })
 }
 

@@ -1,7 +1,7 @@
 import {FunctionExtension} from '../../models/app/extensions.js'
 import {App, AppInterface} from '../../models/app/app.js'
 import {load as loadApp} from '../../models/app/loader.js'
-import {loadExtensionsSpecifications} from '../../models/extensions/specifications.js'
+import {loadExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'

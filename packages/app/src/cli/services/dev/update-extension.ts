@@ -5,7 +5,7 @@ import {
 } from '../../api/graphql/update_draft.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {findSpecificationForConfig, parseConfigurationFile} from '../../models/app/loader.js'
-import {UIExtensionSpec} from '../../models/extensions/ui.js'
+import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
@@ -57,7 +57,7 @@ interface UpdateExtensionConfigOptions {
   apiKey: string
   registrationId: string
   stderr: Writable
-  specifications: UIExtensionSpec[]
+  specifications: ExtensionSpecification[]
 }
 
 export async function updateExtensionConfig({

@@ -366,7 +366,7 @@ async function uploadFunctionExtension(
     // NOTE: This is a shim to support CLI projects that currently use the UUID instead of the ULID
     ...(options.identifier?.includes('-') ? {legacyUuid: options.identifier} : {id: options.identifier}),
     title: extension.configuration.name,
-    description: extension.configuration.description,
+    description: extension.configuration.description ?? '',
     apiType: extension.configuration.type,
     apiVersion: extension.configuration.apiVersion,
     inputQuery,
