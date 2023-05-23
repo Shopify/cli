@@ -47,7 +47,7 @@ import {
 } from '@shopify/cli-kit/node/session'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {partition} from '@shopify/cli-kit/common/collection'
+import {groupBy, partition} from '@shopify/cli-kit/common/collection'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {Writable} from 'stream'
 
@@ -157,7 +157,7 @@ async function dev(options: DevOptions) {
   const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
   const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
-  localApp.extensions.ui.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
+  localApp.allExtensions.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
 
   const backendOptions = {
     apiKey,
@@ -167,9 +167,8 @@ async function dev(options: DevOptions) {
     hostname: exposedUrl,
   }
 
-  const [previewableExtensions, nonPreviewableExtensions] = partition(localApp.extensions.ui, (ext) =>
-    ext.features.includes('ui_preview'),
-  )
+  const previewableExtensions = localApp.allExtensions.filter((ext) => ext.isPreviewable)
+  const nonPreviewableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable)
 
   if (previewableExtensions.length > 0) {
     previewUrl = `${proxyUrl}/extensions/dev-console`
@@ -216,9 +215,10 @@ async function dev(options: DevOptions) {
     )
   }
 
-  if (localApp.extensions.theme.length > 0) {
+  const themeExtensions = localApp.allExtensions.filter((ext) => ext.isThemeExtension)
+  if (themeExtensions.length > 0) {
     const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
-    const extension = localApp.extensions.theme[0]!
+    const extension = themeExtensions[0]!
     let optionsToOverwrite = {}
     if (!options.theme) {
       const theme = await new HostThemeManager(adminSession).findOrCreate()

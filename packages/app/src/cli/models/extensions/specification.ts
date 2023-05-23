@@ -105,6 +105,18 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.surface
   }
 
+  get isPreviewable() {
+    return this.features.includes('ui_preview')
+  }
+
+  get isThemeExtension() {
+    return this.features.includes('theme')
+  }
+
+  get isDraftable() {
+    return !this.isPreviewable && !this.isThemeExtension
+  }
+
   get features(): ExtensionFeature[] {
     return this.specification.appModuleFeatures(this.configuration)
   }
