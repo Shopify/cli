@@ -10,12 +10,14 @@ import {
 } from '../../services/build/extension.js'
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
+import {functionConfiguration, uploadWasmBlob} from '../../services/deploy/upload.js'
 import {ok, Result} from '@shopify/cli-kit/node/result'
 import {capitalize, constantize} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
+import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 
 export type ExtensionFeature = 'ui_preview' | 'function' | 'theme' | 'bundling' | 'cart_url' | 'esbuild'
 
@@ -119,6 +121,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   get isThemeExtension() {
     return this.features.includes('theme')
+  }
+
+  get isFunctionExtension() {
+    return this.features.includes('function')
   }
 
   get isDraftable() {
@@ -226,6 +232,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return Boolean(this.entrySourceFilePath?.endsWith('.js') || this.entrySourceFilePath?.endsWith('.ts'))
   }
 
+  get functionExtension(): FunctionExtension {
+    return this as unknown as FunctionExtension
+  }
+
   async buildStep(options: ExtensionBuildOptions) {
     if (this.features.includes('theme')) {
       return buildThemeExtension(this, options)
@@ -248,6 +258,23 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       this.outputBundlePath = joinPath(bundleDirectory, extensionId, 'dist/main.js')
       return buildUIExtension(this, options)
     }
+  }
+
+  async bundleConfig(identifiers: Identifiers, token: string, apiKey: string, unifiedDeployments: boolean) {
+    let config = ''
+    const uuid = identifiers.extensions[this.localIdentifier]!
+
+    if (this.isThemeExtension) {
+      if (!useThemebundling()) return undefined
+      config = '{"theme_extension": {"files": {}}}'
+    } else if (this.isFunctionExtension) {
+      if (!unifiedDeployments) return undefined
+      const {moduleId} = await uploadWasmBlob(this.functionExtension, identifiers.app, token)
+      config = JSON.stringify(await functionConfiguration(this.functionExtension, moduleId, apiKey))
+    } else {
+      config = JSON.stringify(await this.deployConfig())
+    }
+    return {uuid, config, context: ''}
   }
 }
 

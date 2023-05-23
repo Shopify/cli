@@ -47,7 +47,6 @@ import {
 } from '@shopify/cli-kit/node/session'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {groupBy, partition} from '@shopify/cli-kit/common/collection'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {Writable} from 'stream'
 

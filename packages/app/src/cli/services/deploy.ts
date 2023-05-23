@@ -1,11 +1,9 @@
 /* eslint-disable require-atomic-updates */
 import {
   UploadExtensionValidationError,
-  uploadWasmBlob,
   uploadFunctionExtensions,
   uploadThemeExtensions,
   uploadExtensionsBundle,
-  functionConfiguration,
 } from './deploy/upload.js'
 
 import {ensureDeployContext} from './context.js'
@@ -22,6 +20,7 @@ import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo} from '@shopify/cli-kit/node/output'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import type {AlertCustomSection, Task} from '@shopify/cli-kit/node/ui'
 
 interface DeployOptions {
@@ -57,28 +56,6 @@ export async function deploy(options: DeployOptions) {
   outputInfo(`Deploying your work to Shopify Partners. It will be part of ${partnersApp.title}`)
   outputNewline()
 
-  const extensions = await Promise.all(
-    options.app.extensions.ui.map(async (extension) => {
-      return {
-        uuid: identifiers.extensions[extension.localIdentifier]!,
-        config: JSON.stringify(await extension.deployConfig()),
-        context: '',
-      }
-    }),
-  )
-  if (useThemebundling()) {
-    const themeExtensions = await Promise.all(
-      options.app.extensions.theme.map(async (extension) => {
-        return {
-          uuid: identifiers.extensions[extension.localIdentifier]!,
-          config: '{"theme_extension": {"files": {}}}',
-          context: '',
-        }
-      }),
-    )
-    extensions.push(...themeExtensions)
-  }
-
   let registrations: AllAppExtensionRegistrationsQuerySchema
   let validationErrors: UploadExtensionValidationError[] = []
   let deploymentId: number
@@ -95,7 +72,7 @@ export async function deploy(options: DeployOptions) {
         await mkdir(dirname(bundlePath))
       }
       await bundleAndBuildExtensions({app, bundlePath, identifiers})
-
+      const unified = partnersApp.betas?.unifiedAppDeployment ?? false
       const tasks: Task<TasksContext>[] = [
         {
           title: 'Running validation',
@@ -104,27 +81,17 @@ export async function deploy(options: DeployOptions) {
           },
         },
         {
-          title: partnersApp.betas?.unifiedAppDeployment ? 'Creating deployment' : 'Pushing your code to Shopify',
+          title: unified ? 'Creating deployment' : 'Pushing your code to Shopify',
           task: async () => {
-            if (partnersApp.betas?.unifiedAppDeployment) {
-              const functionExtensions = await Promise.all(
-                options.app.extensions.function.map(async (extension) => {
-                  const {moduleId} = await uploadWasmBlob(extension, identifiers.app, token)
-                  return {
-                    uuid: identifiers.extensions[extension.localIdentifier]!,
-                    config: JSON.stringify(await functionConfiguration(extension, moduleId, apiKey)),
-                    context: '',
-                  }
-                }),
-              )
-              extensions.push(...functionExtensions)
-            }
+            const extensions = await Promise.all(
+              options.app.allExtensions.map((ext) => ext.bundleConfig(identifiers, token, apiKey, unified)),
+            )
 
             if (bundle || partnersApp.betas?.unifiedAppDeployment) {
               ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
                 apiKey,
                 bundlePath,
-                extensions,
+                extensions: getArrayRejectingUndefined(extensions),
                 token,
                 extensionIds: identifiers.extensionIds,
               }))
