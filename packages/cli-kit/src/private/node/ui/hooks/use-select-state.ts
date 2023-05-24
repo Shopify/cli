@@ -1,4 +1,4 @@
-import {Item, ItemWithKey} from '../components/SelectInput.js'
+import {ItemWithKey} from '../components/SelectInput.js'
 import {useReducer, useCallback, useMemo, useState} from 'react'
 import {isDeepStrictEqual} from 'node:util'
 
@@ -215,11 +215,6 @@ export interface UseSelectStateProps<T> {
    * Initially selected option's value.
    */
   defaultValue?: T
-
-  /**
-   * Callback for selecting an option.
-   */
-  onChange?: (item: Item<T> | undefined) => void
 }
 
 export type SelectState<T> = Pick<State<T>, 'visibleFromIndex' | 'visibleToIndex' | 'value'> & {
@@ -266,7 +261,7 @@ const createDefaultState = <T>({
   }
 }
 
-export const useSelectState = <T>({visibleOptionCount, options, defaultValue, onChange}: UseSelectStateProps<T>) => {
+export const useSelectState = <T>({visibleOptionCount, options, defaultValue}: UseSelectStateProps<T>) => {
   const [state, dispatch] = useReducer(reducer, {visibleOptionCount, defaultValue, options}, createDefaultState)
   const [lastOptions, setLastOptions] = useState(options)
   const [lastVisibleOptionCount, setLastVisibleOptionCount] = useState(visibleOptionCount)
@@ -276,10 +271,6 @@ export const useSelectState = <T>({visibleOptionCount, options, defaultValue, on
       type: 'reset',
       state: createDefaultState({visibleOptionCount, defaultValue, options}),
     })
-
-    if (options.length === 0 && onChange) {
-      onChange(undefined)
-    }
 
     setLastOptions(options)
   }
@@ -313,12 +304,7 @@ export const useSelectState = <T>({visibleOptionCount, options, defaultValue, on
   }, [])
 
   const visibleOptions = useMemo(() => {
-    return options
-      .map((option, index) => ({
-        ...option,
-        index,
-      }))
-      .slice(state.visibleFromIndex, state.visibleToIndex)
+    return options.slice(state.visibleFromIndex, state.visibleToIndex)
   }, [options, state.visibleFromIndex, state.visibleToIndex])
 
   return {

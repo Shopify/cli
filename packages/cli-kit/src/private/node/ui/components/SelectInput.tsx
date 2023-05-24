@@ -141,7 +141,6 @@ function SelectInputInner<T>(
     visibleOptionCount: limit,
     options: itemsWithKeys,
     defaultValue,
-    onChange,
   })
 
   useEffect(() => {
