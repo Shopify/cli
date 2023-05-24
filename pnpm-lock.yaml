@@ -144,6 +144,7 @@ importers:
       '@shopify/post-purchase-ui-extensions': ^0.13.3
       '@shopify/post-purchase-ui-extensions-react': ^0.13.3
       '@shopify/retail-ui-extensions': 0.19.0
+      '@shopify/shopify-api': 6.1.0
       '@shopify/web-pixels-extension': ^0.1.1
       react: ^17.0.2
     dependencies:
@@ -156,6 +157,7 @@ importers:
       '@shopify/post-purchase-ui-extensions': 0.13.3
       '@shopify/post-purchase-ui-extensions-react': 0.13.3_react@17.0.2
       '@shopify/retail-ui-extensions': 0.19.0
+      '@shopify/shopify-api': registry.npmjs.org/@shopify/shopify-api/6.1.0
       '@shopify/web-pixels-extension': 0.1.6
       react: 17.0.2
 
@@ -4288,7 +4290,7 @@ packages:
   /@types/node-fetch/2.6.2:
     resolution: {integrity: sha512-DHqhlq5jeESLy19TYhLakJ07kNumXWjcDdxXsLUMJZ6ue8VZJj4kLPQVE/2mdHh3xZziNF1xppu5lwmS53HR+A==}
     dependencies:
-      '@types/node': 18.11.18
+      '@types/node': 14.18.36
       form-data: 3.0.1
     dev: false
 
@@ -4298,7 +4300,6 @@ packages:
 
   /@types/node/14.18.36:
     resolution: {integrity: sha512-FXKWbsJ6a1hIrRxv+FoukuHnGTgEzKYGi7kilfMae96AL9UNkPFNWJEEYWzdRI9ooIkbr4AKldyuSTLql06vLQ==}
-    dev: true
 
   /@types/node/15.14.9:
     resolution: {integrity: sha512-qjd88DrCxupx/kJD5yQgZdcYKZKSIGBVDIBE1/LTGcNm3d2Np/jxojkdePDdfnBHJc5W7vSMpbJ1aB7p/Py69A==}
@@ -4393,7 +4394,7 @@ packages:
     resolution: {integrity: sha512-tLfnlJf6A5mB6ddqF159GqcDizfzbMUB1/DeT59/wBNqzRTNNKsaw79A/1TZ84X+f/EwWH8FeuSkjlCLyqS/zQ==}
     dependencies:
       '@types/cookiejar': 2.1.2
-      '@types/node': 18.11.18
+      '@types/node': 14.18.36
     dev: false
 
   /@types/supertest/2.0.12:
@@ -9894,6 +9895,10 @@ packages:
     engines: {node: '>= 0.6.0'}
     dev: true
 
+  /jose/4.11.4:
+    resolution: {integrity: sha512-94FdcR8felat4vaTJyL/WVdtlWLlsnLMZP8v+A0Vru18K3bQ22vn7TtpVh3JlgBFNIlYOUlGqwp/MjRPOnIyCQ==}
+    dev: false
+
   /js-sdsl/4.2.0:
     resolution: {integrity: sha512-dyBIzQBDkCqCu+0upx25Y2jGdbTGxE9fshMsCdK0ViOongpV+n5tXRcZY9v7CaVQ79AGS9KA1KHtojxiM7aXSQ==}
     dev: true
@@ -15280,4 +15285,27 @@ packages:
 
   /zod/3.17.3:
     resolution: {integrity: sha512-4oKP5zvG6GGbMlqBkI5FESOAweldEhSOZ6LI6cG+JzUT7ofj1ZOC0PJudpQOpT1iqOFpYYtX5Pw0+o403y4bcg==}
+    dev: false
+
+  registry.npmjs.org/@shopify/network/1.6.4:
+    resolution: {integrity: sha512-V+//Et386LnYdtNhQ3e33AKYfU25XEt8H5XYeMqPvJZpVvC9Z1lHKQMpmM/zq13VXjPUjt9/sNxHxMP3I6cbJg==, registry: https://npm.shopify.io/node/, tarball: https://registry.npmjs.org/@shopify/network/-/network-1.6.4.tgz}
+    name: '@shopify/network'
+    version: 1.6.4
+    dev: false
+
+  registry.npmjs.org/@shopify/shopify-api/6.1.0:
+    resolution: {integrity: sha512-XUyeqqRLsp8L24allGlezw2ILQ9ej9LvWS0A6GIE6k4Ku3fQDnSDIOVI2LRRkrZG92ZO3CLoM0Lblq0K9Z8RMg==, registry: https://npm.shopify.io/node/, tarball: https://registry.npmjs.org/@shopify/shopify-api/-/shopify-api-6.1.0.tgz}
+    name: '@shopify/shopify-api'
+    version: 6.1.0
+    dependencies:
+      '@shopify/network': registry.npmjs.org/@shopify/network/1.6.4
+      '@types/node-fetch': 2.6.2
+      '@types/supertest': 2.0.12
+      jose: 4.11.4
+      node-fetch: 2.6.7
+      semver: 7.3.8
+      tslib: 2.5.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - encoding
     dev: false

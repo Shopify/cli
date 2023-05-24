@@ -1,0 +1,10 @@
+name = "report-app-1"
+api_access = true
+
+[[extension_points]]
+target = "Admin::Report::Render"
+module = "./src/index.tsx"
+
+[[extension_points]]
+target = "Admin::Report::Button"
+module = "./src/index.tsx"

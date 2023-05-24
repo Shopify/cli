@@ -1,0 +1,5 @@
+name = "admin-app"
+
+[[extension_points]]
+target = "Admin::Apps::Home"
+module = "./src/index.jsx"
