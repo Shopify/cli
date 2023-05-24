@@ -163,7 +163,7 @@ function SelectInputInner<T>(
         const itemWithKey = state.visibleOptions.find((item) => item.key === input)
         const item = items.find((item) => item.value === itemWithKey?.value)
 
-        if (itemWithKey) {
+        if (itemWithKey && !itemWithKey.disabled) {
           // keep this order of operations so that there is no flickering
           if (submitWithShortcuts && onSubmit && item) {
             onSubmit(item)

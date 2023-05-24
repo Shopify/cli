@@ -110,7 +110,11 @@ const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
         return state
       }
 
-      const next = item.next
+      let next = item.next
+
+      while (next && next.disabled) {
+        next = next.next
+      }
 
       if (!next) {
         return state
@@ -148,7 +152,11 @@ const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
         return state
       }
 
-      const previous = item.previous
+      let previous = item.previous
+
+      while (previous && previous.disabled) {
+        previous = previous.previous
+      }
 
       if (!previous) {
         return state
