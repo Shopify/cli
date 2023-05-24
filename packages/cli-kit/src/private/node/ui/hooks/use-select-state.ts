@@ -1,5 +1,5 @@
-import {ItemWithKey, OnChangeOptions} from '../components/SelectInput.js'
-import {useReducer, useCallback, useMemo, useState, useEffect} from 'react'
+import {Item, ItemWithKey} from '../components/SelectInput.js'
+import {useReducer, useCallback, useMemo, useState} from 'react'
 import {isDeepStrictEqual} from 'node:util'
 
 type Option<T> = ItemWithKey<T>
@@ -57,11 +57,6 @@ interface State<T> {
   visibleOptionCount: number
 
   /**
-   * Value of the currently focused option.
-   */
-  focusedValue: T | undefined
-
-  /**
    * Index of the first visible option.
    */
   visibleFromIndex: number
@@ -82,18 +77,19 @@ interface State<T> {
   value: T | undefined
 }
 
-type Action<T> = FocusNextOptionAction | FocusPreviousOptionAction | SelectFocusedOptionAction | ResetAction<T>
+type Action<T> = SelectNextOptionAction<T> | SelectPreviousOptionAction<T> | SelectOptionAction<T> | ResetAction<T>
 
-interface FocusNextOptionAction {
-  type: 'focus-next-option'
+interface SelectNextOptionAction<T> {
+  type: 'select-next-option'
 }
 
-interface FocusPreviousOptionAction {
-  type: 'focus-previous-option'
+interface SelectPreviousOptionAction<T> {
+  type: 'select-previous-option'
 }
 
-interface SelectFocusedOptionAction {
-  type: 'select-focused-option'
+interface SelectOptionAction<T> {
+  type: 'select-option'
+  option: Option<T>
 }
 
 interface ResetAction<T> {
@@ -103,12 +99,12 @@ interface ResetAction<T> {
 
 const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
   switch (action.type) {
-    case 'focus-next-option': {
-      if (!state.focusedValue) {
+    case 'select-next-option': {
+      if (!state.value) {
         return state
       }
 
-      const item = state.optionMap.get(state.focusedValue)
+      const item = state.optionMap.get(state.value)
 
       if (!item) {
         return state
@@ -125,28 +121,28 @@ const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
       if (!needsToScroll) {
         return {
           ...state,
-          focusedValue: next.value,
+          value: next.value,
         }
       }
 
       const nextVisibleToIndex = Math.min(state.optionMap.size, state.visibleToIndex + 1)
-
       const nextVisibleFromIndex = nextVisibleToIndex - state.visibleOptionCount
 
       return {
         ...state,
-        focusedValue: next.value,
+        value: next.value,
         visibleFromIndex: nextVisibleFromIndex,
         visibleToIndex: nextVisibleToIndex,
+        previousValue: state.value,
       }
     }
 
-    case 'focus-previous-option': {
-      if (!state.focusedValue) {
+    case 'select-previous-option': {
+      if (!state.value) {
         return state
       }
 
-      const item = state.optionMap.get(state.focusedValue)
+      const item = state.optionMap.get(state.value)
 
       if (!item) {
         return state
@@ -163,27 +159,33 @@ const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
       if (!needsToScroll) {
         return {
           ...state,
-          focusedValue: previous.value,
+          value: previous.value,
         }
       }
 
       const nextVisibleFromIndex = Math.max(0, state.visibleFromIndex - 1)
-
       const nextVisibleToIndex = nextVisibleFromIndex + state.visibleOptionCount
 
       return {
         ...state,
-        focusedValue: previous.value,
+        value: previous.value,
         visibleFromIndex: nextVisibleFromIndex,
         visibleToIndex: nextVisibleToIndex,
+        previousValue: state.value,
       }
     }
 
-    case 'select-focused-option': {
+    case 'select-option': {
+      const item = state.optionMap.get(action.option.value)
+
+      if (!item) {
+        return state
+      }
+
       return {
         ...state,
+        value: item.value,
         previousValue: state.value,
-        value: state.focusedValue,
       }
     }
 
@@ -217,36 +219,38 @@ export interface UseSelectStateProps<T> {
   /**
    * Callback for selecting an option.
    */
-  onChange: ({item, usedShortcut}: OnChangeOptions<T>) => void
+  onChange?: (item: Item<T> | undefined) => void
 }
 
-export type SelectState<T> = Pick<State<T>, 'focusedValue' | 'visibleFromIndex' | 'visibleToIndex' | 'value'> & {
+export type SelectState<T> = Pick<State<T>, 'visibleFromIndex' | 'visibleToIndex' | 'value'> & {
   /**
    * Visible options.
    */
   visibleOptions: (Option<T> & {index: number})[]
 
   /**
-   * Focus next option and scroll the list down, if needed.
+   * Select next option and scroll the list down, if needed.
    */
-  focusNextOption: () => void
+  selectNextOption: () => void
 
   /**
-   * Focus previous option and scroll the list up, if needed.
+   * Select previous option and scroll the list up, if needed.
    */
-  focusPreviousOption: () => void
+  selectPreviousOption: () => void
 
   /**
-   * Select currently focused option.
+   * Select option directly.
    */
-  selectFocusedOption: () => void
+  selectOption: (option: Option<T>) => void
 }
+
+type CreateDefaultStateProps<T> = Pick<UseSelectStateProps<T>, 'visibleOptionCount' | 'defaultValue' | 'options'>
 
 const createDefaultState = <T>({
   visibleOptionCount: customVisibleOptionCount,
   defaultValue,
   options,
-}: Pick<UseSelectStateProps<T>, 'visibleOptionCount' | 'defaultValue' | 'options'>) => {
+}: CreateDefaultStateProps<T>) => {
   const visibleOptionCount =
     typeof customVisibleOptionCount === 'number' ? Math.min(customVisibleOptionCount, options.length) : options.length
 
@@ -255,23 +259,17 @@ const createDefaultState = <T>({
   return {
     optionMap,
     visibleOptionCount,
-    focusedValue: optionMap.first?.value,
     visibleFromIndex: 0,
     visibleToIndex: visibleOptionCount,
-    previousValue: defaultValue,
-    value: defaultValue,
+    value: defaultValue ?? optionMap.first?.value,
+    previousValue: defaultValue ?? optionMap.first?.value,
   }
 }
 
-export const useSelectState = <T>({
-  visibleOptionCount = 5,
-  options,
-  defaultValue,
-  onChange,
-}: UseSelectStateProps<T>) => {
+export const useSelectState = <T>({visibleOptionCount, options, defaultValue, onChange}: UseSelectStateProps<T>) => {
   const [state, dispatch] = useReducer(reducer, {visibleOptionCount, defaultValue, options}, createDefaultState)
-
   const [lastOptions, setLastOptions] = useState(options)
+  const [lastVisibleOptionCount, setLastVisibleOptionCount] = useState(visibleOptionCount)
 
   if (options !== lastOptions && !isDeepStrictEqual(options, lastOptions)) {
     dispatch({
@@ -279,24 +277,38 @@ export const useSelectState = <T>({
       state: createDefaultState({visibleOptionCount, defaultValue, options}),
     })
 
+    if (options.length === 0 && onChange) {
+      onChange(undefined)
+    }
+
     setLastOptions(options)
   }
 
-  const focusNextOption = useCallback(() => {
+  if (visibleOptionCount !== lastVisibleOptionCount) {
     dispatch({
-      type: 'focus-next-option',
+      type: 'reset',
+      state: createDefaultState({visibleOptionCount, defaultValue, options}),
+    })
+
+    setLastVisibleOptionCount(visibleOptionCount)
+  }
+
+  const selectNextOption = useCallback(() => {
+    dispatch({
+      type: 'select-next-option',
     })
   }, [])
 
-  const focusPreviousOption = useCallback(() => {
+  const selectPreviousOption = useCallback(() => {
     dispatch({
-      type: 'focus-previous-option',
+      type: 'select-previous-option',
     })
   }, [])
 
-  const selectFocusedOption = useCallback(() => {
+  const selectOption = useCallback(({option}: {option: Option<T>}) => {
     dispatch({
-      type: 'select-focused-option',
+      type: 'select-option',
+      option,
     })
   }, [])
 
@@ -309,28 +321,14 @@ export const useSelectState = <T>({
       .slice(state.visibleFromIndex, state.visibleToIndex)
   }, [options, state.visibleFromIndex, state.visibleToIndex])
 
-  useEffect(() => {
-    if (options.length === 0) {
-      onChange({
-        item: undefined,
-        usedShortcut: false,
-      })
-    } else if (state.value && state.previousValue !== state.value) {
-      onChange({
-        item: options.find((option) => option.value === state.value),
-        usedShortcut: false,
-      })
-    }
-  }, [state.previousValue, state.value, options, onChange])
-
   return {
-    focusedValue: state.focusedValue,
     visibleFromIndex: state.visibleFromIndex,
     visibleToIndex: state.visibleToIndex,
     value: state.value,
     visibleOptions,
-    focusNextOption,
-    focusPreviousOption,
-    selectFocusedOption,
+    selectNextOption,
+    selectPreviousOption,
+    selectOption,
+    previousValue: state.previousValue,
   }
 }

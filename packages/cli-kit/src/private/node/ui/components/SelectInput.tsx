@@ -1,6 +1,7 @@
 import {debounce} from '../../../../public/common/function.js'
 import {useSelectState} from '../hooks/use-select-state.js'
-import React, {useRef, useCallback, forwardRef} from 'react'
+import {handleCtrlC} from '../../ui.js'
+import React, {useRef, useCallback, forwardRef, useEffect} from 'react'
 import {Box, Key, useInput, Text, DOMElement} from 'ink'
 import chalk from 'chalk'
 import figures from 'figures'
@@ -13,15 +14,9 @@ declare module 'react' {
     render: (props: P, ref: React.Ref<T>) => JSX.Element | null,
   ): (props: P & React.RefAttributes<T>) => JSX.Element | null
 }
-
-export interface OnChangeOptions<T> {
-  item: Item<T> | undefined
-  usedShortcut: boolean
-}
-
 export interface SelectInputProps<T> {
   items: Item<T>[]
-  onChange: ({item, usedShortcut}: OnChangeOptions<T>) => void
+  onChange?: (item: Item<T> | undefined) => void
   enableShortcuts?: boolean
   focus?: boolean
   emptyMessage?: string
@@ -33,6 +28,8 @@ export interface SelectInputProps<T> {
   morePagesMessage?: string
   infoMessage?: string
   limit?: number
+  submitWithShortcuts?: boolean
+  onSubmit?: (item: Item<T>) => void
 }
 
 export interface Item<T> {
@@ -125,6 +122,8 @@ function SelectInputInner<T>(
     morePagesMessage,
     infoMessage,
     limit,
+    submitWithShortcuts = false,
+    onSubmit,
   }: SelectInputProps<T>,
   ref: React.ForwardedRef<DOMElement>,
 ): JSX.Element | null {
@@ -145,11 +144,17 @@ function SelectInputInner<T>(
     onChange,
   })
 
+  useEffect(() => {
+    if (typeof state.value !== 'undefined' && state.previousValue !== state.value) {
+      onChange?.(items.find((item) => item.value === state.value))
+    }
+  }, [state.previousValue, state.value, items, onChange])
+
   const handleArrows = (key: Key) => {
     if (key.upArrow) {
-      state.focusPreviousOption()
+      state.selectPreviousOption()
     } else if (key.downArrow) {
-      state.focusNextOption()
+      state.selectNextOption()
     }
   }
 
@@ -157,15 +162,19 @@ function SelectInputInner<T>(
     (input: string) => {
       if (state.visibleOptions.map((item) => item.key).includes(input)) {
         const itemWithKey = state.visibleOptions.find((item) => item.key === input)
-        if (itemWithKey !== undefined) {
-          onChange({
-            item: itemWithKey,
-            usedShortcut: true,
-          })
+        const item = items.find((item) => item.value === itemWithKey?.value)
+
+        if (itemWithKey) {
+          // keep this order of operations so that there is no flickering
+          if (submitWithShortcuts && onSubmit && item) {
+            onSubmit(item)
+          }
+
+          state.selectOption({option: itemWithKey})
         }
       }
     },
-    [onChange, state.visibleOptions],
+    [items, onSubmit, state, submitWithShortcuts],
   )
 
   // disable exhaustive-deps because we want to memoize the debounce function itself
@@ -180,6 +189,16 @@ function SelectInputInner<T>(
 
   useInput(
     (input, key) => {
+      handleCtrlC(input, key)
+
+      if (typeof state.value !== 'undefined' && key.return) {
+        const item = items.find((item) => item.value === state.value)
+
+        if (item && onSubmit) {
+          onSubmit(item)
+        }
+      }
+
       // check that no special modifier (shift, control, etc.) is being pressed
       if (enableShortcuts && input.length > 0 && Object.values(key).every((value) => value === false)) {
         const newInputStack = inputStack.current === null ? input : inputStack.current + input
@@ -222,7 +241,7 @@ function SelectInputInner<T>(
             item={item}
             previousItem={state.visibleOptions[index - 1]}
             highlightedTerm={highlightedTerm}
-            isSelected={item.value === state.focusedValue}
+            isSelected={item.value === state.value}
             items={state.visibleOptions}
             enableShortcuts={enableShortcuts}
             hasAnyGroup={hasAnyGroup}
