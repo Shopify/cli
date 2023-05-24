@@ -200,6 +200,7 @@ async function dev(options: DevOptions) {
       appId: apiKey,
       appName: remoteApp.title,
       force: true,
+      deploymentMode: 'legacy',
       token,
       envIdentifiers: prodEnvIdentifiers,
     })

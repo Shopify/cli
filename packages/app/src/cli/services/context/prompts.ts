@@ -2,6 +2,7 @@ import {LocalSource, RemoteSource} from './identifiers.js'
 import {LocalRemoteSource} from './id-matching.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {OrganizationApp} from '../../models/organization.js'
+import {DeploymentMode} from '../context.js'
 import {
   InfoTableSection,
   renderAutocompletePrompt,
@@ -44,6 +45,7 @@ interface SourceSummary {
 
 export async function deployConfirmationPrompt(
   {question, identifiers, toCreate, onlyRemote, dashboardOnly}: SourceSummary,
+  deploymentMode: DeploymentMode,
   partnersApp?: OrganizationApp,
 ): Promise<boolean> {
   const infoTable: InfoTableSection[] = []
@@ -68,7 +70,7 @@ export async function deployConfirmationPrompt(
       items: onlyRemote.map((source) => source.title),
     }
 
-    if (partnersApp?.betas?.unifiedAppDeployment) {
+    if (deploymentMode === 'unified' || deploymentMode === 'unified-skip-release') {
       missingLocallySection = {
         ...missingLocallySection,
         color: 'red',
@@ -83,10 +85,21 @@ export async function deployConfirmationPrompt(
     return new Promise((resolve) => resolve(true))
   }
 
+  const confirmationMessage = (() => {
+    switch (deploymentMode) {
+      case 'legacy':
+        return 'Yes, deploy to push changes'
+      case 'unified':
+        return 'Yes, release this new version'
+      case 'unified-skip-release':
+        return 'Yes, create this new version'
+    }
+  })()
+
   return renderConfirmationPrompt({
     message: question,
     infoTable,
-    confirmationMessage: 'Yes, deploy to push changes',
+    confirmationMessage,
     cancellationMessage: 'No, cancel',
   })
 }

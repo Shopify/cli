@@ -32,6 +32,12 @@ export default class Deploy extends Command {
       char: 'f',
       default: false,
     }),
+    'no-release': Flags.boolean({
+      hidden: false,
+      description: 'Deploy without releasing it to the users.',
+      env: 'SHOPIFY_FLAG_NO_RELEASE',
+      default: false,
+    }),
   }
 
   async run(): Promise<void> {
@@ -43,6 +49,12 @@ export default class Deploy extends Command {
 
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path})
-    await deploy({app, apiKey: flags['api-key'], reset: flags.reset, force: flags.force})
+    await deploy({
+      app,
+      apiKey: flags['api-key'],
+      reset: flags.reset,
+      force: flags.force,
+      noRelease: flags['no-release'],
+    })
   }
 }
