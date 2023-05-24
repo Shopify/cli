@@ -7,6 +7,7 @@ import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/specification.js'
+import {DeploymentMode} from '../context.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -146,6 +147,7 @@ const options = (
   functionExtensions: FunctionExtension[],
   identifiers: any = {},
   partnersApp?: OrganizationApp,
+  deploymentMode: DeploymentMode = 'legacy',
 ) => {
   return {
     app: LOCAL_APP(uiExtensions as ExtensionInstance[], functionExtensions as unknown as ExtensionInstance[]),
@@ -155,6 +157,7 @@ const options = (
     envIdentifiers: {extensions: identifiers},
     force: false,
     partnersApp,
+    deploymentMode,
   }
 }
 
@@ -242,7 +245,13 @@ describe('ensureDeploymentIdsPresence: matchmaking is valid', () => {
 
     // When
     const got = await ensureDeploymentIdsPresence(
-      options([EXTENSION_A, EXTENSION_A_2], [FUNCTION_C], {}, PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA),
+      options(
+        [EXTENSION_A, EXTENSION_A_2],
+        [FUNCTION_C],
+        {},
+        PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA,
+        'unified',
+      ),
     )
 
     // Then

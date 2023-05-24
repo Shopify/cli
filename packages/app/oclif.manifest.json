@@ -115,6 +115,13 @@
           "description": "Deploy without asking for confirmation.",
           "hidden": false,
           "allowNo": false
+        },
+        "no-release": {
+          "name": "no-release",
+          "type": "boolean",
+          "description": "Deploy without releasing it to the users.",
+          "hidden": false,
+          "allowNo": false
         }
       },
       "args": {}

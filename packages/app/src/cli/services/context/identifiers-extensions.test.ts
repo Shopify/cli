@@ -9,6 +9,7 @@ import {testApp} from '../../models/app/app.test-data.js'
 import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/specification.js'
+import {DeploymentMode} from '../context.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -208,6 +209,7 @@ const options = (
   functionExtensions: FunctionExtension[] = [],
   identifiers: any = {},
   partnersApp: OrganizationApp = PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA,
+  deploymentMode: DeploymentMode = 'legacy',
 ) => {
   return {
     app: LOCAL_APP(uiExtensions, functionExtensions),
@@ -217,6 +219,7 @@ const options = (
     envIdentifiers: {extensions: identifiers},
     force: false,
     partnersApp,
+    deploymentMode,
   }
 }
 
@@ -538,7 +541,7 @@ describe('ensureExtensionsIds: includes functions when unifiedAppDeployment beta
 
     // When
     const got = await ensureExtensionsIds(
-      options([EXTENSION_A], [FUNCTION_A], {}, PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA),
+      options([EXTENSION_A], [FUNCTION_A], {}, PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, 'unified'),
       {
         extensionRegistrations: [REGISTRATION_A, FUNCTION_REGISTRATION_A],
         dashboardManagedExtensionRegistrations: [],
@@ -576,7 +579,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
-    await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), {
+    await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2], [], null, undefined, 'unified'), {
       extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2],
       dashboardManagedExtensionRegistrations: [DASHBOARD_REGISTRATION_A],
     })
@@ -584,7 +587,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
     // Then
     expect(deployConfirmationPrompt).toBeCalledWith(
       {
-        question: 'Make the following changes to your extensions in Shopify Partners?',
+        question: `Release a new version of ${PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA.title}?`,
         identifiers: {
           EXTENSION_A: 'UUID_A',
           EXTENSION_A_2: 'UUID_A_2',
@@ -593,6 +596,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
         dashboardOnly: [DASHBOARD_REGISTRATION_A],
         toCreate: [],
       },
+      'unified',
       PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA,
     )
   })
@@ -631,6 +635,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
         dashboardOnly: [],
         toCreate: [],
       },
+      'legacy',
       PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA,
     )
   })

@@ -25,7 +25,7 @@ export async function ensureExtensionsIds(
   let remoteExtensions = initialRemoteExtensions
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
   let functionExtensions: FunctionExtension[] = []
-  if (options.partnersApp?.betas?.unifiedAppDeployment) {
+  if (options.deploymentMode === 'unified' || options.deploymentMode === 'unified-skip-release') {
     functionExtensions = options.app.extensions.function.map((functionExtension) => {
       functionExtension.usingExtensionsFramework = true
       return functionExtension
@@ -68,14 +68,29 @@ export async function ensureExtensionsIds(
   }
 
   if (!options.force) {
+    const question = (() => {
+      switch (options.deploymentMode) {
+        case 'legacy':
+          return 'Make the following changes to your extensions in Shopify Partners?'
+        case 'unified':
+          return `Release a new version of ${options.partnersApp?.title}?`
+        case 'unified-skip-release':
+          return `Create a new version of ${options.partnersApp?.title}?`
+      }
+    })()
+
     const confirmed = await deployConfirmationPrompt(
       {
-        question: 'Make the following changes to your extensions in Shopify Partners?',
+        question,
         identifiers: validMatches,
         toCreate: extensionsToCreate,
         onlyRemote: onlyRemoteExtensions,
-        dashboardOnly: options.partnersApp?.betas?.unifiedAppDeployment ? dashboardOnlyExtensions : [],
+        dashboardOnly:
+          options.deploymentMode === 'unified' || options.deploymentMode === 'unified-skip-release'
+            ? dashboardOnlyExtensions
+            : [],
       },
+      options.deploymentMode,
       options.partnersApp,
     )
     if (!confirmed) return err('user-cancelled')

@@ -30,6 +30,8 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {renderWarning, renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 
 vi.mock('./local-storage.js')
 vi.mock('./dev/fetch')
@@ -43,9 +45,20 @@ vi.mock('./context/identifiers')
 vi.mock('../models/app/loader.js')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/node-package-manager.js')
+vi.mock('@shopify/cli-kit/node/ui')
 
 beforeEach(() => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+
+  // this is needed because using importActual to mock the ui module
+  // creates a circular dependency between ui and context/local
+  // so we need to mock the whole module and just replace the functions we use
+  vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
+    for (const task of tasks) {
+      // eslint-disable-next-line no-await-in-loop
+      await task.task({}, task)
+    }
+  })
 })
 
 const APP1: OrganizationApp = {
@@ -68,6 +81,17 @@ const APP2: OrganizationApp = {
   grantedScopes: [],
   betas: {
     unifiedAppDeployment: false,
+  },
+}
+const APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA: OrganizationApp = {
+  id: '2',
+  title: 'app2',
+  apiKey: 'key2',
+  organizationId: '1',
+  apiSecretKeys: [{secret: 'secret2'}],
+  grantedScopes: [],
+  betas: {
+    unifiedAppDeployment: true,
   },
 }
 
@@ -132,6 +156,7 @@ const options = (app: AppInterface): DeployContextOptions => {
     app,
     reset: false,
     force: false,
+    noRelease: false,
   }
 }
 
@@ -272,7 +297,25 @@ describe('ensureDevContext', () => {
       directory: INPUT.directory,
       orgId: ORG1.id,
     })
-    expect(outputMock.output()).toMatch(/Using your previous dev settings:/)
+    expect(renderInfo).toHaveBeenCalledWith({
+      body: [
+        {
+          list: {
+            items: [
+              'Org:          org1',
+              'App:          undefined',
+              'Dev store:    domain1',
+              'Update URLs:  Not yet configured',
+            ],
+          },
+        },
+        '\nTo reset your default dev config, run',
+        {
+          command: 'npm run dev -- --reset',
+        },
+      ],
+      headline: 'Using your previous dev settings:',
+    })
     expect(fetchOrgAndApps).not.toBeCalled()
   })
 
@@ -462,6 +505,83 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
+  })
+
+  test('shows a warning banner when the unified app deployment beta is enabled', async () => {
+    // Given
+    const app = testApp()
+    const identifiers = {
+      app: APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA.apiKey,
+      extensions: {},
+      extensionIds: {},
+    }
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA.apiKey})
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+
+    // When
+    const got = await ensureDeployContext(options(app))
+
+    // Then
+    expect(renderWarning).toHaveBeenCalledWith({
+      headline: '`deploy` now releases changes to users.',
+      body: [
+        {command: formatPackageManagerCommand(app.packageManager, 'deploy')},
+        'will release all your extensions to users. You no longer have to publish extensions from the Partner Dashboard.',
+        '\n\nAdd the `--no-release` flag to create an app version without releasing it to users.',
+      ],
+      reference: [
+        {
+          link: {
+            label: 'Introducing streamlined extension deployment from the CLI',
+            url: 'https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment',
+          },
+        },
+      ],
+    })
+  })
+
+  test('shows an info banner when the unified app deployment beta is disabled', async () => {
+    // Given
+    const app = testApp()
+    const identifiers = {
+      app: APP1.apiKey,
+      extensions: {},
+      extensionIds: {},
+    }
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP1.apiKey})
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+
+    // When
+    const got = await ensureDeployContext(options(app))
+
+    // Then
+    expect(renderInfo).toHaveBeenCalledWith({
+      headline: 'For an improved `deploy` command, turn on unified deployment.',
+      body: [
+        'When you turn on unified deployment for this app,',
+        {command: formatPackageManagerCommand(app.packageManager, 'deploy')},
+        'will:\n',
+        {
+          list: {
+            items: [
+              'Bundle all your extensions together to create an app version',
+              'Release your extensions and go live to users',
+            ],
+          },
+        },
+        '\nYou will no longer have to publish extensions from the Partner Dashboard.',
+      ],
+      reference: [
+        {
+          link: {
+            label: 'Introducing streamlined extension deployment from the CLI',
+            url: 'https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment',
+          },
+        },
+      ],
+    })
   })
 })
 
