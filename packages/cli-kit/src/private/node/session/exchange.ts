@@ -49,14 +49,14 @@ export async function exchangeAccessForApplicationTokens(
 ): Promise<{[x: string]: ApplicationToken}> {
   const token = identityToken.accessToken
 
-  const [partners, storefront] = await Promise.all([
-    requestAppToken('partners', token, scopes.partners),
-    requestAppToken('storefront-renderer', token, scopes.storefront),
+  const [partners] = await Promise.all([
+    // requestAppToken('partners', token, scopes.partners),
+    // requestAppToken('storefront-renderer', token, scopes.storefront),
+    requestAppToken('business-platform', token, scopes.storefront),
   ])
 
   const result = {
     ...partners,
-    ...storefront,
   }
 
   if (store) {
@@ -132,25 +132,31 @@ async function requestAppToken(
   scopes: string[] = [],
   store?: string,
 ): Promise<{[x: string]: ApplicationToken}> {
+  console.log(`Requesting token for api: ${api}`)
   const appId = applicationId(api)
   const clientId = await getIdentityClientId()
-
+  let newScopes: string[] = scopes
+  if (api === 'business-platform') {
+    newScopes = ['https://api.shopify.com/auth/destinations.readonly']
+  }
   const params = {
     grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
     requested_token_type: 'urn:ietf:params:oauth:token-type:access_token',
     subject_token_type: 'urn:ietf:params:oauth:token-type:access_token',
     client_id: clientId,
     audience: appId,
-    scope: scopes.join(' '),
+    scope: '',
     subject_token: token,
     ...(api === 'admin' && {destination: `https://${store}/admin`}),
   }
+  console.log(params)
 
   let identifier = appId
   if (api === 'admin' && store) {
     identifier = `${store}-${appId}`
   }
   const tokenResult = await tokenRequest(params)
+  console.log(`token for api: ${api}, result: ${JSON.stringify(tokenResult)}`)
   const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
   const appToken = await buildApplicationToken(value)
   return {[identifier]: appToken}
@@ -181,7 +187,9 @@ async function tokenRequest(params: {[key: string]: string}): Promise<Result<Tok
   const fqdn = await identityFqdn()
   const url = new URL(`https://${fqdn}/oauth/token`)
   url.search = new URLSearchParams(Object.entries(params)).toString()
+  console.log('starting request')
   const res = await shopifyFetch(url.href, {method: 'POST'})
+  console.log(res)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: any = await res.json()
 

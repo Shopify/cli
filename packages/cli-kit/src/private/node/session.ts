@@ -102,6 +102,7 @@ export async function ensureAuthenticated(
   }
 
   const currentSession = (await secureStore.fetch()) || {}
+  console.log(currentSession)
   const fqdnSession = currentSession[fqdn]!
   const scopes = getFlattenScopes(applications)
 
@@ -330,7 +331,7 @@ function getFlattenScopes(apps: OAuthApplications): string[] {
   const admin = apps.adminApi?.scopes || []
   const partner = apps.partnersApi?.scopes || []
   const storefront = apps.storefrontRendererApi?.scopes || []
-  const requestedScopes = [...admin, ...partner, ...storefront]
+  const requestedScopes = [...admin, ...partner, ...storefront, 'https://api.shopify.com/auth/destinations.readonly']
   return allDefaultScopes(requestedScopes)
 }
 
