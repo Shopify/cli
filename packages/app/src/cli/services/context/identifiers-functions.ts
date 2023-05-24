@@ -33,13 +33,16 @@ export async function ensureFunctionsIds(
   }
 
   if (!options.force) {
-    const confirmed = await deployConfirmationPrompt({
-      question: 'Make the following changes to your functions in Shopify Partners?',
-      identifiers: validMatches,
-      toCreate: functionsToCreate,
-      onlyRemote: onlyRemoteFunctions,
-      dashboardOnly: [],
-    })
+    const confirmed = await deployConfirmationPrompt(
+      {
+        question: 'Make the following changes to your functions in Shopify Partners?',
+        identifiers: validMatches,
+        toCreate: functionsToCreate,
+        onlyRemote: onlyRemoteFunctions,
+        dashboardOnly: [],
+      },
+      options.deploymentMode,
+    )
     if (!confirmed) return err('user-cancelled')
   }
 

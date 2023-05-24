@@ -4,6 +4,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {OrganizationApp} from '../../models/organization.js'
+import {DeploymentMode} from '../context.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -15,6 +16,7 @@ export interface EnsureDeploymentIdsPresenceOptions {
   appName: string
   envIdentifiers: Partial<Identifiers>
   force: boolean
+  deploymentMode: DeploymentMode
   partnersApp?: OrganizationApp
 }
 
@@ -43,7 +45,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
 
   let functions: IdentifiersExtensions = {}
 
-  if (!options.partnersApp?.betas?.unifiedAppDeployment) {
+  if (options.deploymentMode === 'legacy') {
     const result = await ensureFunctionsIds(options, remoteSpecifications.app.functions)
     if (result.isErr()) throw handleIdsError(result.error, options.appName, options.app.packageManager)
     functions = result.value
