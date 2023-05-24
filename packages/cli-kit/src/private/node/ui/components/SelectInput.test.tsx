@@ -292,7 +292,7 @@ describe('SelectInput', async () => {
 
          [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
-    expect(onChange).toHaveBeenCalledWith(items[6])
+    expect(onChange).toHaveBeenLastCalledWith(items[6])
   })
 
   test('allows disabling shortcuts', async () => {
