@@ -10,6 +10,8 @@ interface InitOptions {
 interface InitOutput {
   name: string
   template: string
+  // e.g. 'node', 'ruby', 'php'
+  templateType: keyof typeof templateURLMap | 'custom'
 }
 
 // Eventually this list should be taken from a remote location
@@ -64,10 +66,11 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
     })
   }
 
-  const answers = {
+  const answers: InitOutput = {
     ...options,
     name,
     template,
+    templateType: Object.hasOwn(templateURLMap, template) ? (template as keyof typeof templateURLMap) : 'custom',
   }
 
   const templateURL = templateURLMap[answers.template as keyof typeof templateURLMap]
