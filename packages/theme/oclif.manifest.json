@@ -1329,6 +1329,40 @@
         }
       },
       "args": {}
+    },
+    "theme:update:run": {
+      "id": "theme:update:run",
+      "description": "Run an 'update_extension.json' script in a theme.",
+      "strict": true,
+      "pluginName": "@shopify/theme",
+      "pluginAlias": "@shopify/theme",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to your theme directory.",
+          "multiple": false,
+          "default": "."
+        }
+      },
+      "args": {}
     }
   }
 }
