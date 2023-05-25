@@ -45,12 +45,12 @@ describe('ensure we are within a function context', () => {
     let ranCallback = false
 
     // When
-    await inFunctionContext(new Config({root: ''}), 'random/dir', async (_app, _fun) => {
-      ranCallback = true
-    })
+    await expect(
+      inFunctionContext(new Config({root: ''}), 'random/dir', async (_app, _fun) => {
+        ranCallback = true
+      }),
+    ).rejects.toThrowError()
 
-    // Then
     expect(ranCallback).toBe(false)
-    expect(renderFatalError).toHaveBeenCalledOnce()
   })
 })

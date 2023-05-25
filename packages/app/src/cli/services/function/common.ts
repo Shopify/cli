@@ -3,7 +3,6 @@ import {App, AppInterface} from '../../models/app/app.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {loadExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
-import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Config, Flags} from '@oclif/core'
 
@@ -29,8 +28,6 @@ export async function inFunctionContext(
   if (ourFunction) {
     return callback(app, ourFunction)
   } else {
-    renderFatalError(
-      new AbortError('Run this command from a function directory or use `--path` to specify a function directory.'),
-    )
+    throw new AbortError('Run this command from a function directory or use `--path` to specify a function directory.')
   }
 }
