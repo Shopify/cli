@@ -104,7 +104,8 @@ export async function buildUIExtension(extension: UIExtension, options: Extensio
       stderr: options.stderr,
       stdout: options.stdout,
     })
-  } else {
+  } else if (extension.type === 'tax_calculation') {
+    // Workaround for tax_calculations because they remote spec NEEDS a valid js file to be included.
     await touchFile(extension.outputBundlePath)
     await writeFile(extension.outputBundlePath, '(()=>{})();')
   }
