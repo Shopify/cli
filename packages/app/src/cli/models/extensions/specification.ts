@@ -155,7 +155,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.localIdentifier = basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
     this.useExtensionsFramework = false
-    this.outputBundlePath = ''
+    this.outputBundlePath = this.directory
+
+    if (this.features.includes('esbuild')) {
+      this.outputBundlePath = joinPath(this.directory, 'dist/main.js')
+    }
   }
 
   deployConfig(): Promise<{[key: string]: unknown}> {
@@ -260,21 +264,30 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async bundleConfig(identifiers: Identifiers, token: string, apiKey: string, unifiedDeployments: boolean) {
+  async bundleConfig({
+    identifiers,
+    token,
+    apiKey,
+    unifiedAppDeployment,
+  }: {
+    identifiers: Identifiers
+    token: string
+    apiKey: string
+    unifiedAppDeployment: boolean
+  }) {
     let config = ''
-    const uuid = identifiers.extensions[this.localIdentifier]!
 
     if (this.isThemeExtension) {
       if (!useThemebundling()) return undefined
       config = '{"theme_extension": {"files": {}}}'
     } else if (this.isFunctionExtension) {
-      if (!unifiedDeployments) return undefined
+      if (!unifiedAppDeployment) return undefined
       const {moduleId} = await uploadWasmBlob(this.functionExtension, identifiers.app, token)
       config = JSON.stringify(await functionConfiguration(this.functionExtension, moduleId, apiKey))
     } else {
       config = JSON.stringify(await this.deployConfig())
     }
-    return {uuid, config, context: ''}
+    return {uuid: identifiers.extensions[this.localIdentifier]!, config, context: ''}
   }
 }
 

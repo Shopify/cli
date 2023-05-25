@@ -1,6 +1,7 @@
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 
 const spec = createExtensionSpecification({
   identifier: 'theme',
@@ -9,7 +10,10 @@ const spec = createExtensionSpecification({
   partnersWebIdentifier: 'theme_app_extension',
   graphQLType: 'theme_app_extension',
   supportedFlavors: [],
-  appModuleFeatures: (_) => ['theme', 'bundling'],
+  appModuleFeatures: (_) => {
+    if (useThemebundling()) return ['bundling', 'theme']
+    return ['theme']
+  },
   previewMessage() {
     const link = outputToken.link(
       'dev doc instructions',

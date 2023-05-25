@@ -11,7 +11,7 @@ import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
-import {Extension} from '../models/app/extensions.js'
+import {Extension, FunctionExtension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
@@ -59,12 +59,11 @@ export async function deploy(options: DeployOptions) {
   let registrations: AllAppExtensionRegistrationsQuerySchema
   let validationErrors: UploadExtensionValidationError[] = []
   let deploymentId: number
+  const unifiedAppDeployment = partnersApp.betas?.unifiedAppDeployment ?? false
 
   await inTemporaryDirectory(async (tmpDir) => {
     try {
-      const bundleTheme = useThemebundling() && app.extensions.theme.length !== 0
-      const bundleUI = app.extensions.ui.length !== 0
-      const bundle = bundleTheme || bundleUI
+      const bundle = app.allExtensions.some((ext) => ext.features.includes('bundling'))
       let bundlePath: string | undefined
 
       if (bundle) {
@@ -72,7 +71,6 @@ export async function deploy(options: DeployOptions) {
         await mkdir(dirname(bundlePath))
       }
       await bundleAndBuildExtensions({app, bundlePath, identifiers})
-      const unified = partnersApp.betas?.unifiedAppDeployment ?? false
       const tasks: Task<TasksContext>[] = [
         {
           title: 'Running validation',
@@ -81,13 +79,15 @@ export async function deploy(options: DeployOptions) {
           },
         },
         {
-          title: unified ? 'Creating deployment' : 'Pushing your code to Shopify',
+          title: unifiedAppDeployment ? 'Creating deployment' : 'Pushing your code to Shopify',
           task: async () => {
             const extensions = await Promise.all(
-              options.app.allExtensions.map((ext) => ext.bundleConfig(identifiers, token, apiKey, unified)),
+              options.app.allExtensions.flatMap((ext) =>
+                ext.bundleConfig({identifiers, token, apiKey, unifiedAppDeployment}),
+              ),
             )
 
-            if (bundle || partnersApp.betas?.unifiedAppDeployment) {
+            if (bundle || unifiedAppDeployment) {
               ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
                 apiKey,
                 bundlePath,
@@ -98,11 +98,16 @@ export async function deploy(options: DeployOptions) {
             }
 
             if (!useThemebundling()) {
-              await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
+              const themeExtensions = options.app.allExtensions.filter((ext) => ext.isThemeExtension)
+              await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, token})
             }
 
-            if (!partnersApp.betas?.unifiedAppDeployment) {
-              identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
+            if (!unifiedAppDeployment) {
+              const functions = options.app.allExtensions.filter((ext) => ext.isFunctionExtension)
+              identifiers = await uploadFunctionExtensions(functions as unknown as FunctionExtension[], {
+                identifiers,
+                token,
+              })
             }
 
             app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
@@ -121,7 +126,7 @@ export async function deploy(options: DeployOptions) {
         registrations,
         validationErrors,
         deploymentId,
-        unifiedDeployment: Boolean(partnersApp.betas?.unifiedAppDeployment),
+        unifiedDeployment: Boolean(unifiedAppDeployment),
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -191,10 +196,6 @@ async function outputCompletionMessage({
     return result
   }
 
-  const outputDeployedAndLivedMessage = (extension: Extension) => {
-    return `${extension.localIdentifier} is live`
-  }
-
   const outputNextStep = async (extension: Extension) => {
     const extensionId =
       registrations.app.extensionRegistrations.find((registration) => {
@@ -222,12 +223,13 @@ async function outputCompletionMessage({
     },
   ]
 
-  if (app.extensions.ui.length !== 0 || app.extensions.theme.length !== 0) {
+  const nonFunctionExtensions = app.allExtensions.filter((ext) => !ext.isFunctionExtension)
+  if (nonFunctionExtensions.length > 0) {
     customSections.push({
       title: 'Next steps',
       body: {
         list: {
-          items: await Promise.all([...app.extensions.ui, ...app.extensions.theme].map(outputNextStep)),
+          items: await Promise.all(nonFunctionExtensions.map(outputNextStep)),
         },
       },
     })
