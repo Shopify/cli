@@ -468,8 +468,8 @@ export function devNonPreviewableExtensionTarget({
               setupConfigWatcher({extension, token, apiKey, registrationId, stdout, stderr, signal, specifications}),
             ]
 
-            // Only extensions with bundling feature should be whatched using esbuild
-            if (extension.features.includes('bundling')) {
+            // Only extensions with esbuild feature should be whatched using esbuild
+            if (extension.features.includes('esbuild')) {
               actions.push(
                 setupNonPreviewableExtensionBundler({
                   extension,

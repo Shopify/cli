@@ -236,7 +236,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return Boolean(this.entrySourceFilePath?.endsWith('.js') || this.entrySourceFilePath?.endsWith('.ts'))
   }
 
-  get functionExtension(): FunctionExtension {
+  get functionExtension(): FunctionExtension | undefined {
+    if (!this.features.includes('function')) return undefined
     return this as unknown as FunctionExtension
   }
 
@@ -244,7 +245,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     if (this.features.includes('theme')) {
       return buildThemeExtension(this, options)
     } else if (this.features.includes('function')) {
-      return buildFunctionExtension(this as unknown as FunctionExtension, options)
+      return buildFunctionExtension(this.functionExtension!, options)
     } else if (this.features.includes('esbuild')) {
       return buildUIExtension(this, options)
     }
@@ -257,7 +258,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       this.outputBundlePath = joinPath(bundleDirectory, extensionId)
       return bundleThemeExtension(this, options)
     } else if (this.features.includes('function')) {
-      return buildFunctionExtension(this as unknown as FunctionExtension, options)
+      return buildFunctionExtension(this.functionExtension!, options)
     } else if (this.features.includes('esbuild')) {
       this.outputBundlePath = joinPath(bundleDirectory, extensionId, 'dist/main.js')
       return buildUIExtension(this, options)
@@ -282,8 +283,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       config = '{"theme_extension": {"files": {}}}'
     } else if (this.isFunctionExtension) {
       if (!unifiedAppDeployment) return undefined
-      const {moduleId} = await uploadWasmBlob(this.functionExtension, identifiers.app, token)
-      config = JSON.stringify(await functionConfiguration(this.functionExtension, moduleId, apiKey))
+      const {moduleId} = await uploadWasmBlob(this.functionExtension!, identifiers.app, token)
+      config = JSON.stringify(await functionConfiguration(this.functionExtension!, moduleId, apiKey))
     } else {
       config = JSON.stringify(await this.deployConfig())
     }
