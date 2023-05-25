@@ -40,7 +40,10 @@ export function outputExtensionsMessages(app: AppInterface) {
   outputThemeExtensionsMessage(app.extensions.theme)
 }
 
-export function addFooter(renderConcurrentOptions: RenderConcurrentOptions, previewUrl: string | undefined): RenderConcurrentOptions {
+export function addFooter(
+  renderConcurrentOptions: RenderConcurrentOptions,
+  previewUrl: string | undefined,
+): RenderConcurrentOptions {
   if (!previewUrl) return renderConcurrentOptions
 
   return {

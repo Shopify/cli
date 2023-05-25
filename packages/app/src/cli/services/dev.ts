@@ -33,11 +33,11 @@ import {UIExtensionSpec} from '../models/extensions/ui.js'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {renderConcurrent, RenderConcurrentOptions} from '@shopify/cli-kit/node/ui'
+import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
-import {exec, openURL} from '@shopify/cli-kit/node/system'
+import {exec} from '@shopify/cli-kit/node/system'
 import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/context/spin'
 import {
   AdminSession,
@@ -277,9 +277,14 @@ async function dev(options: DevOptions) {
   await reportAnalyticsEvent({config: options.commandConfig})
 
   if (proxyTargets.length === 0) {
-    await renderConcurrent(addFooter({
-      processes: additionalProcesses,
-    }, previewUrl))
+    await renderConcurrent(
+      addFooter(
+        {
+          processes: additionalProcesses,
+        },
+        previewUrl,
+      ),
+    )
   } else {
     await runConcurrentHTTPProcessesAndPathForwardTraffic({
       previewUrl,
