@@ -1,9 +1,9 @@
 import {appFlags} from '../../../flags.js'
-import {migrate} from '../../../services/migrate.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import Command from '../../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../../models/extensions/specifications.js'
+import {writeExistingFlowDashboardExtensions} from '../../../services/write_existing_flow_dashboard_extensions.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -49,6 +49,14 @@ export default class AppMigrateExtension extends Command {
 
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path})
-    await migrate({app, apiKey: flags['api-key'], reset: flags.reset, force: flags.force, label: flags.label})
+
+    await writeExistingFlowDashboardExtensions({
+      app,
+      apiKey: flags['api-key'],
+      reset: flags.reset,
+      force: flags.force,
+      label: flags.label,
+    })
+    // await migrate({app, apiKey: flags['api-key'], reset: flags.reset, force: flags.force, label: flags.label})
   }
 }
