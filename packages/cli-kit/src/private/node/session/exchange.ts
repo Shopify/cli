@@ -145,7 +145,8 @@ async function requestAppToken(
     subject_token_type: 'urn:ietf:params:oauth:token-type:access_token',
     client_id: clientId,
     audience: appId,
-    scope: '',
+    destination: '',
+    scope: 'https://api.shopify.com/auth/destinations.readonly',
     subject_token: token,
     ...(api === 'admin' && {destination: `https://${store}/admin`}),
   }
@@ -156,7 +157,7 @@ async function requestAppToken(
     identifier = `${store}-${appId}`
   }
   const tokenResult = await tokenRequest(params)
-  console.log(`token for api: ${api}, result: ${JSON.stringify(tokenResult)}`)
+  console.log(`token for api: ${api}, result: ${JSON.stringify(tokenResult.valueOrAbort().access_token)}`)
   const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
   const appToken = await buildApplicationToken(value)
   return {[identifier]: appToken}
@@ -189,7 +190,6 @@ async function tokenRequest(params: {[key: string]: string}): Promise<Result<Tok
   url.search = new URLSearchParams(Object.entries(params)).toString()
   console.log('starting request')
   const res = await shopifyFetch(url.href, {method: 'POST'})
-  console.log(res)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: any = await res.json()
 
