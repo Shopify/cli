@@ -7,7 +7,7 @@ import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {Flags} from '@oclif/core'
 
 export default class UpdateRun extends ThemeCommand {
-  static description = `Run an 'update_extension.json' script in a theme.`
+  static description = `Run the theme update process.`
 
   static flags = {
     ...globalFlags,

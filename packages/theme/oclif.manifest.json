@@ -1332,7 +1332,7 @@
     },
     "theme:update:run": {
       "id": "theme:update:run",
-      "description": "Run an 'update_extension.json' script in a theme.",
+      "description": "Run the theme update process.",
       "strict": true,
       "pluginName": "@shopify/theme",
       "pluginAlias": "@shopify/theme",
