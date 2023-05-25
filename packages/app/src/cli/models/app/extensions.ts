@@ -56,5 +56,4 @@ export type UIExtension<TConfiguration extends BaseConfigType = BaseConfigType> 
   previewMessage(url: string, storeFqdn: string): TokenizedString | undefined
   shouldFetchCartUrl(): boolean
   hasExtensionPointTarget(target: string): boolean
-  isPreviewable: boolean
 }

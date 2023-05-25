@@ -11,7 +11,6 @@ const spec = createExtensionSpecification({
   dependency,
   partnersWebIdentifier: 'pos_ui_extension',
   schema: BaseSchema,
-  isPreviewable: true,
   appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild'],
   deployConfig: async (config, directory) => {
     const result = await getDependencyVersion(dependency, directory)

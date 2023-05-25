@@ -12,7 +12,6 @@ const spec = createExtensionSpecification({
   graphQLType: 'subscription_management',
   partnersWebIdentifier: 'product_subscription',
   schema: BaseSchema,
-  isPreviewable: true,
   appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild'],
   deployConfig: async (_, directory) => {
     const result = await getDependencyVersion(dependency, directory)

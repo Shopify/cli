@@ -35,7 +35,6 @@ const spec = createExtensionSpecification({
       }) !== undefined
     return needsCart ? [...basic, 'cart_url'] : basic
   },
-  isPreviewable: true,
   validate: async (config, directory) => {
     return validateUIExtensionPointConfig(directory, config.extensionPoints)
   },

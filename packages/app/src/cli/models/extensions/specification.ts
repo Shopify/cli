@@ -44,7 +44,6 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   shouldFetchCartUrl?(config: TConfiguration): boolean
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config: TConfiguration) => ExtensionFeature[]
-  isPreviewable: boolean
 }
 
 /**
@@ -115,7 +114,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get isDraftable() {
-    return !this.features.includes('ui_preview') && !this.features.includes('theme')
+    return (
+      !this.features.includes('ui_preview') && !this.features.includes('theme') && !this.features.includes('function')
+    )
   }
 
   get features(): ExtensionFeature[] {
@@ -282,7 +283,6 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     schema: BaseSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     supportedFlavors: defaultExtensionFlavors,
-    isPreviewable: false,
   }
   return {...defaults, ...spec}
 }

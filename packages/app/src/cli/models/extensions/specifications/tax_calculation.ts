@@ -22,7 +22,6 @@ const spec = createExtensionSpecification({
       metafields: config.metafields,
     }
   },
-  isPreviewable: false,
 })
 
 export default spec

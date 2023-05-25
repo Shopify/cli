@@ -35,7 +35,6 @@ const spec = createExtensionSpecification({
   dependency,
   partnersWebIdentifier: 'customer_accounts_ui_extension',
   schema: CustomerAccountsSchema,
-  isPreviewable: true,
   appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild'],
   deployConfig: async (config, directory) => {
     return {
