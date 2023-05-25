@@ -7,8 +7,8 @@ import {exec} from '@shopify/cli-kit/node/system'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
-import {Writable} from 'stream'
 import {touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {Writable} from 'stream'
 
 export interface ExtensionBuildOptions {
   /**
