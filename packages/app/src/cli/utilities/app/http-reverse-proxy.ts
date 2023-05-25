@@ -1,10 +1,10 @@
+import {addFooter} from '../../services/dev/output.js'
 import {renderConcurrent, RenderConcurrentOptions} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {OutputProcess, outputDebug, outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 import * as http from 'http'
-import { addFooter } from '../../services/dev/output.js'
 
 export interface ReverseHTTPProxyTarget {
   /** The prefix to include in the logs
@@ -112,7 +112,7 @@ ${outputToken.json(JSON.stringify(rules))}
     server.close()
   })
 
-  let renderConcurrentOptions: RenderConcurrentOptions = {
+  const renderConcurrentOptions: RenderConcurrentOptions = {
     processes: [...processes, ...additionalProcesses],
     abortSignal: abortController.signal,
   }
