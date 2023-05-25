@@ -2,9 +2,9 @@ import {renderConcurrent, RenderConcurrentOptions} from '@shopify/cli-kit/node/u
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {OutputProcess, outputDebug, outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
-import {openURL} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 import * as http from 'http'
+import { addFooter } from '../../services/dev/output.js'
 
 export interface ReverseHTTPProxyTarget {
   /** The prefix to include in the logs
@@ -117,34 +117,7 @@ ${outputToken.json(JSON.stringify(rules))}
     abortSignal: abortController.signal,
   }
 
-  if (previewUrl) {
-    renderConcurrentOptions = {
-      ...renderConcurrentOptions,
-      onInput: (input, _key, exit) => {
-        if (input === 'p' && previewUrl) {
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
-          openURL(previewUrl)
-        } else if (input === 'q') {
-          exit()
-        }
-      },
-      footer: {
-        shortcuts: [
-          {
-            key: 'p',
-            action: 'preview in your browser',
-          },
-          {
-            key: 'q',
-            action: 'quit',
-          },
-        ],
-        subTitle: `Preview URL: ${previewUrl}`,
-      },
-    }
-  }
-
-  await Promise.all([renderConcurrent(renderConcurrentOptions), server.listen(portNumber)])
+  await Promise.all([renderConcurrent(addFooter(renderConcurrentOptions, previewUrl)), server.listen(portNumber)])
 }
 
 function match(rules: {[key: string]: string}, req: http.IncomingMessage) {
