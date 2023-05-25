@@ -8,6 +8,7 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
+import {touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 
 export interface ExtensionBuildOptions {
   /**
@@ -89,19 +90,24 @@ export async function buildUIExtensions(options: BuildUIExtensionsOptions): Prom
 export async function buildUIExtension(extension: UIExtension, options: ExtensionBuildOptions): Promise<void> {
   options.stdout.write(`Bundling UI extension ${extension.localIdentifier}...`)
 
-  await bundleExtension({
-    minify: true,
-    outputBundlePath: extension.outputBundlePath,
-    stdin: {
-      contents: extension.getBundleExtensionStdinContent(),
-      resolveDir: extension.directory,
-      loader: 'tsx',
-    },
-    environment: 'production',
-    env: options.app.dotenv?.variables ?? {},
-    stderr: options.stderr,
-    stdout: options.stdout,
-  })
+  if (extension.features.includes('esbuild')) {
+    await bundleExtension({
+      minify: true,
+      outputBundlePath: extension.outputBundlePath,
+      stdin: {
+        contents: extension.getBundleExtensionStdinContent(),
+        resolveDir: extension.directory,
+        loader: 'tsx',
+      },
+      environment: 'production',
+      env: options.app.dotenv?.variables ?? {},
+      stderr: options.stderr,
+      stdout: options.stdout,
+    })
+  } else {
+    await touchFile(extension.outputBundlePath)
+    await writeFile(extension.outputBundlePath, '(()=>{})();')
+  }
 
   await extension.buildValidation()
 

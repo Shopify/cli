@@ -9,7 +9,7 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
 
-export type ExtensionFeature = 'ui' | 'ui_legacy' | 'function' | 'theme' | 'bundling' | 'cart_url'
+export type ExtensionFeature = 'ui_preview' | 'function' | 'theme' | 'bundling' | 'cart_url' | 'esbuild'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -107,7 +107,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get isPreviewable() {
-    return this.specification.isPreviewable
+    return this.features.includes('ui_preview')
+  }
+
+  get isThemeExtension() {
+    return this.features.includes('theme')
+  }
+
+  get isDraftable() {
+    return !this.features.includes('ui_preview') && !this.features.includes('theme')
   }
 
   get features(): ExtensionFeature[] {

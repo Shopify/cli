@@ -28,7 +28,7 @@ const spec = createExtensionSpecification({
   singleEntryPath: false,
   schema: UIExtensionSchema,
   appModuleFeatures: (config) => {
-    const basic: ExtensionFeature[] = ['ui', 'bundling']
+    const basic: ExtensionFeature[] = ['ui_preview', 'bundling', 'esbuild']
     const needsCart =
       config.extensionPoints?.find((extensionPoint) => {
         return getExtensionPointTargetSurface(extensionPoint.target) === 'checkout'
