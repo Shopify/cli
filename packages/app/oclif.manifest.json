@@ -119,9 +119,23 @@
         "no-release": {
           "name": "no-release",
           "type": "boolean",
-          "description": "Deploy without releasing it to the users.",
+          "description": "Creates a version but doesn't release it - it's not made available to merchants.",
           "hidden": false,
           "allowNo": false
+        },
+        "message": {
+          "name": "message",
+          "type": "option",
+          "description": "Optional message that will be associated with this version. This is for internal use only and won't be available externally.",
+          "hidden": false,
+          "multiple": false
+        },
+        "version": {
+          "name": "version",
+          "type": "option",
+          "description": "Optional version tag that will be associated with this app version. If not provided, an auto-generated identifier will be generated for this app version.",
+          "hidden": false,
+          "multiple": false
         }
       },
       "args": {}

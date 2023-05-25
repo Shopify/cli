@@ -40,6 +40,12 @@ interface DeployOptions {
 
   /** If true, deploy app without releasing it to the users */
   noRelease: boolean
+
+  /** App version message */
+  message?: string
+
+  /** App version identifier */
+  version?: string
 }
 
 interface TasksContext {
@@ -154,6 +160,8 @@ export async function deploy(options: DeployOptions) {
                 deploymentMode,
                 token,
                 extensionIds: identifiers.extensionIds,
+                message: options.message,
+                version: options.version,
               }))
             }
 

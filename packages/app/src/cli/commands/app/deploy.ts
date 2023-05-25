@@ -34,9 +34,21 @@ export default class Deploy extends Command {
     }),
     'no-release': Flags.boolean({
       hidden: false,
-      description: 'Deploy without releasing it to the users.',
+      description: "Creates a version but doesn't release it - it's not made available to merchants.",
       env: 'SHOPIFY_FLAG_NO_RELEASE',
       default: false,
+    }),
+    message: Flags.string({
+      hidden: false,
+      description:
+        "Optional message that will be associated with this version. This is for internal use only and won't be available externally.",
+      env: 'SHOPIFY_FLAG_MESSAGE',
+    }),
+    version: Flags.string({
+      hidden: false,
+      description:
+        'Optional version tag that will be associated with this app version. If not provided, an auto-generated identifier will be generated for this app version.',
+      env: 'SHOPIFY_FLAG_VERSION',
     }),
   }
 
@@ -55,6 +67,8 @@ export default class Deploy extends Command {
       reset: flags.reset,
       force: flags.force,
       noRelease: flags['no-release'],
+      message: flags.message,
+      version: flags.version,
     })
   }
 }
