@@ -775,6 +775,59 @@ describe('uploadExtensionsBundle', () => {
     })
   })
 
+  test('calls a mutation on partners with a message and a version', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
+      vi.mocked(partnersRequest)
+        .mockResolvedValueOnce({
+          deploymentGenerateSignedUploadUrl: {
+            signedUploadUrl: 'signed-upload-url',
+          },
+        })
+        .mockResolvedValueOnce({
+          appDeploy: {
+            deployment: {
+              appModuleVersions: [],
+            },
+            id: '2',
+          },
+        })
+      const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
+      vi.mocked<any>(formData).mockReturnValue(mockedFormData)
+      vi.mocked(randomUUID).mockReturnValue('random-uuid')
+      // When
+      await writeFile(joinPath(tmpDir, 'test.zip'), '')
+      await uploadExtensionsBundle({
+        apiKey: 'app-id',
+        bundlePath: joinPath(tmpDir, 'test.zip'),
+        appModules: [{uuid: '123', config: '{}', context: ''}],
+        token: 'api-token',
+        extensionIds: {},
+        deploymentMode: 'unified',
+        message: 'test',
+        version: '1.0.0',
+      })
+
+      // Then
+      expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
+        apiKey: 'app-id',
+        bundleUrl: 'signed-upload-url',
+        appModules: [
+          {
+            config: '{}',
+            context: '',
+            uuid: '123',
+          },
+        ],
+        uuid: 'random-uuid',
+        skipPublish: false,
+        message: 'test',
+        versionTag: '1.0.0',
+      })
+    })
+  })
+
   test('calls a mutation on partners when there are no extensions', async () => {
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
     vi.mocked(partnersRequest).mockResolvedValueOnce({
