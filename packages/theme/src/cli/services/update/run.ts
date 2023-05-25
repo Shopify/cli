@@ -130,9 +130,7 @@ async function isUpdaterIsProgress(ctx: Context, session: AdminSession, startTim
 }
 
 /**
- * FIXME:
- * - Trigger the Updater API instead of creating a theme
- * - Remove the warning from `packages/theme/src/cli/commands/theme/update/run.ts`
+ * FIXME: Trigger the Updater API instead of creating a theme
  *
  * Trigger the Updater API
  *
