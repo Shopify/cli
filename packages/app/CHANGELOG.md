@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.46.1
+
+### Patch Changes
+
+- f4b8e5381: Fix running Javy as subprocess
+  - @shopify/cli-kit@3.46.1
+  - @shopify/plugin-ngrok@3.46.1
+  - @shopify/plugin-cloudflare@3.46.1
+
 ## 3.46.0
 
 ### Minor Changes

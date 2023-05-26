@@ -1,5 +1,5 @@
 {
-  "version": "3.46.0",
+  "version": "3.46.1",
   "commands": {
     "init": {
       "id": "init",
