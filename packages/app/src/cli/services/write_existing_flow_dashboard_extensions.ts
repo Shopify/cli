@@ -1,9 +1,8 @@
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {fetchAppAndIdentifiers} from './context.js'
-import {fetchExtension} from './migrate/pull-flow-dashboard-extensions.js'
 import {AppInterface} from '../models/app/app.js'
+import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 
-import {FetchExtensionQuerySchema} from '../api/graphql/extension_configurations.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 interface DeployOptions {
@@ -29,15 +28,25 @@ export async function writeExistingFlowDashboardExtensions(options: DeployOption
   const initialRemoteExtensions = await fetchAppExtensionRegistrations({token, apiKey: partnersApp.apiKey})
 
   const {dashboardManagedExtensionRegistrations} = initialRemoteExtensions.app
-  const fetchExtensionPromises: Promise<FetchExtensionQuerySchema>[] = []
-  console.log('Fetching extensions', dashboardManagedExtensionRegistrations)
-  dashboardManagedExtensionRegistrations.forEach((dashboardManagedExtensionRegistration) => {
-    const {uuid, type} = dashboardManagedExtensionRegistration
-    const appId = partnersApp.id
-    const promise = fetchExtension(uuid, appId, type)
-    fetchExtensionPromises.push(promise)
+  dashboardManagedExtensionRegistrations.forEach((extension) => {
+    if (extension && extension.activeVersion && extension.activeVersion.config) {
+      writeExtensionToml(extension)
+    }
   })
-  console.log('Running fetch extension promises')
-  const data = await Promise.all(fetchExtensionPromises)
-  console.log(data)
 }
+
+async function getTemplatePath(name: string): Promise<string> {
+  const templatePath = await findPathUp(`templates/${name}`, {
+    cwd: dirname(fileURLToPath(import.meta.url)),
+    type: 'directory',
+  })
+  if (templatePath) {
+    return templatePath
+  } else {
+    throw new BugError(`Couldn't find the template ${name} in @shopify/app.`)
+  }
+}
+
+const writeExtensionToml = (extension: any) => {
+  const templatePath =
+});

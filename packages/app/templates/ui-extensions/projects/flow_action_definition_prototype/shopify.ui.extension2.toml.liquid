@@ -1,0 +1,26 @@
+name = "{{name}}"
+type = "{{type}}"
+
+[task]
+title = "{{title}}"
+description = "{{description}}"
+url = "{{url}}"
+{{% if validationUrl %}}
+validation_url = "{{validationUrl}}"
+{{% endif %}}
+{{% if customConfigurationPageUrl %}}
+custom_configuration_page_url = "{{customConfigurationPageUrl}}"
+{{% endif %}}
+{{% if customConfigurationPagePreviewUrl %}}
+custom_configuration_page_preview_url = "{{customConfigurationPagePreviewUrl}}"
+{{% endif %}}
+
+{{% for field in fields %}}
+[[task.fields]]
+name = {{field.name}}
+label = {{field.label}}
+description = {{field.description}}
+required = {{field.required}}
+id = {{field.id}}
+uiType = {{field.uiType}}
+{{% endfor %}}

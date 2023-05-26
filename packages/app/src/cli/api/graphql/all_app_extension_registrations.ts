@@ -14,6 +14,11 @@ export const AllAppExtensionRegistrationsQuery = gql`
         uuid
         title
         type
+        activeVersion {
+          id
+          uuid
+          config
+        }
       }
       functions {
         id
@@ -42,6 +47,11 @@ export interface AllAppExtensionRegistrationsQuerySchema {
       uuid: string
       title: string
       type: string
+      activeVersion: {
+        id: string
+        uuid: string
+        config: string
+      }
     }[]
     functions: {
       id: string
