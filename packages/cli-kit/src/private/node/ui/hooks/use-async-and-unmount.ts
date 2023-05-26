@@ -1,5 +1,5 @@
 import {useApp} from 'ink'
-import {useEffect} from 'react'
+import {useEffect, useRef} from 'react'
 
 interface Options {
   onFulfilled?: () => unknown
@@ -11,16 +11,25 @@ export default function useAsyncAndUnmount(
   {onFulfilled = () => {}, onRejected = () => {}}: Options = {},
 ) {
   const {exit: unmountInk} = useApp()
+  const isMounted = useRef(true)
 
   useEffect(() => {
     asyncFunction()
       .then(() => {
-        onFulfilled()
-        unmountInk()
+        if (isMounted.current) {
+          onFulfilled()
+          unmountInk()
+        }
       })
       .catch((error) => {
-        onRejected(error)
-        unmountInk(error)
+        if (isMounted.current) {
+          onRejected(error)
+          unmountInk(error)
+        }
       })
-  }, [])
+
+    return () => {
+      isMounted.current = false
+    }
+  }, [asyncFunction, onFulfilled, onRejected, unmountInk])
 }

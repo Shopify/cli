@@ -109,7 +109,8 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   const websocketConnection = setupWebsocketConnection({...options, httpServer, payloadStore})
   outputDebug(`Setting up the UI extensions bundler and file watching...`, options.stdout)
   const fileWatcher = await setupBundlerAndFileWatcher({devOptions, payloadStore})
-
+  // eslint-disable-next-line no-warning-comments
+  // TODO: Think about maing this function not resolve until the file watcher is closed
   options.signal.addEventListener('abort', () => {
     fileWatcher.close()
     websocketConnection.close()

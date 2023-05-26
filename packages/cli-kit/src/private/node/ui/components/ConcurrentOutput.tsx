@@ -5,7 +5,7 @@ import {handleCtrlC} from '../../ui.js'
 import {addOrUpdateConcurrentUIEventOutput} from '../../demo-recorder.js'
 import {treeKill} from '../../tree-kill.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
-import React, {FunctionComponent, useState} from 'react'
+import React, {FunctionComponent, useCallback, useMemo, useState} from 'react'
 import {Box, Key, Static, Text, useInput, TextProps, useStdin} from 'ink'
 import stripAnsi from 'strip-ansi'
 import figures from 'figures'
@@ -79,37 +79,43 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   footer,
 }) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
-  const concurrentColors: TextProps['color'][] = ['yellow', 'cyan', 'magenta', 'green', 'blue']
+  const concurrentColors: TextProps['color'][] = useMemo(() => ['yellow', 'cyan', 'magenta', 'green', 'blue'], [])
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
   const {isRawModeSupported} = useStdin()
   const [state, setState] = useState<ConcurrentOutputState>(ConcurrentOutputState.Running)
 
-  function lineColor(index: number) {
-    const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
-    return concurrentColors[colorIndex]!
-  }
+  const lineColor = useCallback(
+    (index: number) => {
+      const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
+      return concurrentColors[colorIndex]!
+    },
+    [concurrentColors],
+  )
 
-  const writableStream = (process: OutputProcess, index: number) => {
-    return new Writable({
-      write(chunk, _encoding, next) {
-        const lines = stripAnsi(chunk.toString('utf8').replace(/(\n)$/, '')).split(/\n/)
-        addOrUpdateConcurrentUIEventOutput({prefix: process.prefix, index, output: lines.join('\n')}, {footer})
+  const writableStream = useCallback(
+    (process: OutputProcess, index: number) => {
+      return new Writable({
+        write(chunk, _encoding, next) {
+          const lines = stripAnsi(chunk.toString('utf8').replace(/(\n)$/, '')).split(/\n/)
+          addOrUpdateConcurrentUIEventOutput({prefix: process.prefix, index, output: lines.join('\n')}, {footer})
 
-        setProcessOutput((previousProcessOutput) => [
-          ...previousProcessOutput,
-          {
-            color: lineColor(index),
-            prefix: process.prefix,
-            lines,
-          },
-        ])
+          setProcessOutput((previousProcessOutput) => [
+            ...previousProcessOutput,
+            {
+              color: lineColor(index),
+              prefix: process.prefix,
+              lines,
+            },
+          ])
 
-        next()
-      },
-    })
-  }
+          next()
+        },
+      })
+    },
+    [footer, lineColor],
+  )
 
-  const runProcesses = () => {
+  const runProcesses = useCallback(() => {
     return Promise.all(
       processes.map(async (process, index) => {
         const stdout = writableStream(process, index)
@@ -118,7 +124,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         await process.action(stdout, stderr, abortSignal)
       }),
     )
-  }
+  }, [abortSignal, processes, writableStream])
 
   useInput(
     (input, key) => {
@@ -131,13 +137,13 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     {isActive: typeof onInput !== 'undefined' && Boolean(isRawModeSupported)},
   )
 
+  const stop = useCallback(() => {
+    setState(ConcurrentOutputState.Stopped)
+  }, [setState])
+
   useAsyncAndUnmount(runProcesses, {
-    onFulfilled: () => {
-      setState(ConcurrentOutputState.Stopped)
-    },
-    onRejected: () => {
-      setState(ConcurrentOutputState.Stopped)
-    },
+    onFulfilled: stop,
+    onRejected: stop,
   })
 
   const {isAborted} = useAbortSignal(abortSignal)

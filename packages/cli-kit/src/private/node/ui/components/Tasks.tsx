@@ -6,7 +6,7 @@ import {handleCtrlC} from '../../ui.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import {Box, Text, useInput, useStdin} from 'ink'
-import React, {useRef, useState} from 'react'
+import React, {useCallback, useRef, useState} from 'react'
 
 const loadingBarChar = '▀'
 
@@ -72,7 +72,7 @@ function Tasks<TContext>({
   const ctx = useRef<TContext>({} as TContext)
   const {isRawModeSupported} = useStdin()
 
-  const runTasks = async () => {
+  const runTasks = useCallback(async () => {
     for (const task of tasks) {
       setCurrentTask(task)
 
@@ -88,16 +88,20 @@ function Tasks<TContext>({
         }
       }
     }
-  }
+  }, [tasks])
+
+  const onFulfilled = useCallback(() => {
+    setState(TasksState.Success)
+    onComplete(ctx.current)
+  }, [onComplete, setState])
+
+  const onRejected = useCallback(() => {
+    setState(TasksState.Failure)
+  }, [setState])
 
   useAsyncAndUnmount(runTasks, {
-    onFulfilled: () => {
-      setState(TasksState.Success)
-      onComplete(ctx.current)
-    },
-    onRejected: () => {
-      setState(TasksState.Failure)
-    },
+    onFulfilled,
+    onRejected,
   })
 
   useInput(
