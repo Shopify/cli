@@ -1,5 +1,5 @@
-import {addFooter} from '../../services/dev/output.js'
-import {renderConcurrent, RenderConcurrentOptions} from '@shopify/cli-kit/node/ui'
+import {renderDevConsole} from '../../services/dev/output.js'
+import {RenderConcurrentOptions} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {OutputProcess, outputDebug, outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
@@ -117,7 +117,7 @@ ${outputToken.json(JSON.stringify(rules))}
     abortSignal: abortController.signal,
   }
 
-  await Promise.all([renderConcurrent(addFooter(renderConcurrentOptions, previewUrl)), server.listen(portNumber)])
+  await Promise.all([renderDevConsole(renderConcurrentOptions, previewUrl), server.listen(portNumber)])
 }
 
 function match(rules: {[key: string]: string}, req: http.IncomingMessage) {

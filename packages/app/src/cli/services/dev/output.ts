@@ -3,7 +3,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {RenderConcurrentOptions, renderInfo} from '@shopify/cli-kit/node/ui'
+import {renderConcurrent, RenderConcurrentOptions, renderInfo} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
 
@@ -40,36 +40,36 @@ export function outputExtensionsMessages(app: AppInterface) {
   outputThemeExtensionsMessage(app.extensions.theme)
 }
 
-export function addFooter(
-  renderConcurrentOptions: RenderConcurrentOptions,
-  previewUrl: string | undefined,
-): RenderConcurrentOptions {
-  if (!previewUrl) return renderConcurrentOptions
+export function renderDevConsole(renderConcurrentOptions: RenderConcurrentOptions, previewUrl: string | undefined) {
+  let options = renderConcurrentOptions
 
-  return {
-    ...renderConcurrentOptions,
-    onInput: (input, _key, exit) => {
-      if (input === 'p' && previewUrl) {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        openURL(previewUrl)
-      } else if (input === 'q') {
-        exit()
-      }
-    },
-    footer: {
-      shortcuts: [
-        {
-          key: 'p',
-          action: 'preview in your browser',
-        },
-        {
-          key: 'q',
-          action: 'quit',
-        },
-      ],
-      subTitle: `Preview URL: ${previewUrl}`,
-    },
+  if (previewUrl) {
+    options = {
+      ...options,
+      onInput: (input, _key, exit) => {
+        if (input === 'p' && previewUrl) {
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          openURL(previewUrl)
+        } else if (input === 'q') {
+          exit()
+        }
+      },
+      footer: {
+        shortcuts: [
+          {
+            key: 'p',
+            action: 'preview in your browser',
+          },
+          {
+            key: 'q',
+            action: 'quit',
+          },
+        ],
+        subTitle: `Preview URL: ${previewUrl}`,
+      },
+    }
   }
+  return renderConcurrent(options)
 }
 
 function outputFunctionsMessage(extensions: FunctionExtension[]) {
