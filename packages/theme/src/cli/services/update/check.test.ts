@@ -164,7 +164,7 @@ describe('check', () => {
     }
   })
 
-  test(`when operation an operation doesn't have the id property`, async () => {
+  test(`when operation an operation doesn't have the action property`, async () => {
     const actions = ['add', 'delete', 'copy', 'move', 'update']
 
     for (const action of actions) {
