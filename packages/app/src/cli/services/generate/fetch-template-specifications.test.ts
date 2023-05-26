@@ -13,7 +13,7 @@ describe('fetchTemplateSpecifications', () => {
     const enabledLocalTemplates = ['checkout_ui_extension', 'theme']
 
     // When
-    const got: ExtensionTemplate[] = await fetchExtensionTemplates('token', enabledLocalTemplates)
+    const got: ExtensionTemplate[] = await fetchExtensionTemplates('token', 'apiKey', enabledLocalTemplates)
 
     // Then
     expect(got.length).toEqual(6)
