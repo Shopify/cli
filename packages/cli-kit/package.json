@@ -126,7 +126,7 @@
     "gradient-string": "2.0.2",
     "graphql": "16.4.0",
     "graphql-request": "5.2.0",
-    "ink": "4.0.0",
+    "ink": "4.2.0",
     "is-interactive": "2.0.0",
     "js-yaml": "4.1.0",
     "kill-port-process": "3.1.0",

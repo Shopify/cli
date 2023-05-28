@@ -90,14 +90,13 @@ function Item<T>({
   }
 
   return (
-    <Box key={item.key} flexDirection="column" marginTop={items.indexOf(item) !== 0 && title ? 1 : 0}>
+    <Box key={item.key} flexDirection="column" marginTop={items.indexOf(item) !== 0 && title ? 1 : 0} minHeight={title ? 2 : 1}>
       {title ? (
-        <Box marginLeft={3}>
+        <Box marginLeft={3} key={title} flexDirection="column">
           <Text bold>{title}</Text>
         </Box>
       ) : null}
-
-      <Box key={item.key}>
+      <Box key={item.label}>
         <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
         <Text color={isSelected ? 'cyan' : undefined}>{enableShortcuts ? `(${item.key}) ${label}` : label}</Text>
       </Box>
@@ -131,13 +130,15 @@ function SelectInputInner<T>(
     ...item,
     key: item.key ?? (index + 1).toString(),
   })) as ItemWithKey<T>[]
+  const allGroups = new Set(itemsWithKeys.map((item) => item.group))
+  const numGroups = Array.from(allGroups).length
   const defaultValueIndex = defaultValue ? items.findIndex((item) => item.value === defaultValue.value) : -1
   const initialIndex = defaultValueIndex === -1 ? 0 : defaultValueIndex
   const hasLimit = typeof limit !== 'undefined' && items.length > limit
   const inputStack = useRef<string | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(initialIndex)
   const [rotateIndex, setRotateIndex] = useState(0)
-  const slicedItemsWithKeys = hasLimit ? rotateArray(itemsWithKeys, rotateIndex).slice(0, limit) : itemsWithKeys
+  const slicedItemsWithKeys = hasLimit ? rotateArray(itemsWithKeys, rotateIndex) : itemsWithKeys
   const previousItems = useRef<Item<T>[] | undefined>(undefined)
 
   const changeSelection = useCallback(
@@ -197,8 +198,11 @@ function SelectInputInner<T>(
     } else if (key.downArrow) {
       const atLastIndex = selectedIndex === (hasLimit ? limit : items.length) - 1
       const nextIndex = hasLimit ? selectedIndex : 0
-      const nextRotateIndex = atLastIndex ? rotateIndex - 1 : rotateIndex
-      const nextSelectedIndex = atLastIndex ? nextIndex : selectedIndex + 1
+
+      const shouldRotate = hasLimit && selectedIndex >= limit / 3 - 1
+      const nextRotateIndex = shouldRotate ? rotateIndex - 1 : rotateIndex
+
+      const nextSelectedIndex = (shouldRotate || atLastIndex) ? nextIndex : selectedIndex + 1
 
       changeSelection({newSelectedIndex: nextSelectedIndex, newRotateIndex: nextRotateIndex})
     }
@@ -267,18 +271,20 @@ function SelectInputInner<T>(
   } else {
     return (
       <Box flexDirection="column" ref={ref}>
-        {slicedItemsWithKeys.map((item, index) => (
-          <Item
-            key={item.key}
-            item={item}
-            previousItem={slicedItemsWithKeys[index - 1]}
-            highlightedTerm={highlightedTerm}
-            selectedIndex={selectedIndex}
-            items={slicedItemsWithKeys}
-            enableShortcuts={enableShortcuts}
-            hasAnyGroup={hasAnyGroup}
-          />
-        ))}
+        <Box height={hasLimit ? limit : items.length + numGroups * 2} flexDirection="column" flexWrap="nowrap" overflowY="hidden">
+          {slicedItemsWithKeys.map((item, index) => (
+            <Item
+              key={item.key}
+              item={item}
+              previousItem={slicedItemsWithKeys[index - 1]}
+              highlightedTerm={highlightedTerm}
+              selectedIndex={selectedIndex}
+              items={slicedItemsWithKeys}
+              enableShortcuts={enableShortcuts}
+              hasAnyGroup={hasAnyGroup}
+            />
+          ))}
+        </Box>
 
         <Box marginTop={1} marginLeft={3} flexDirection="column">
           {hasMorePages ? (
@@ -287,7 +293,7 @@ function SelectInputInner<T>(
               {morePagesMessage ? `  ${morePagesMessage}` : null}
             </Text>
           ) : null}
-          {hasLimit ? <Text dimColor>{`Showing ${limit} of ${items.length} items.`}</Text> : null}
+          {hasLimit ? <Text dimColor>{`Showing ${limit} of ${items.length + numGroups * 2} lines (${items.length} options).`}</Text> : null}
           <Text dimColor>
             {infoMessage
               ? infoMessage
