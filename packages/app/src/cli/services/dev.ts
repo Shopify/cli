@@ -300,29 +300,18 @@ interface DevWebOptions {
 }
 
 async function devBackendTarget(options: DevWebOptions): Promise<OutputProcess> {
-  const {commands} = options.web.configuration
-  const [cmd, ...args] = commands.dev.split(' ')
-  const env = {
-    ...(await getDevEnvironmentVariables(options)),
-    // SERVER_PORT is the convention Artisan uses
-    PORT: `${options.backendPort}`,
-    SERVER_PORT: `${options.backendPort}`,
-    BACKEND_PORT: `${options.backendPort}`,
-  }
-
+  const dev = await devWeb(options, {
+    port: options.backendPort,
+    dynamicEnv: (_port: number) => ({
+      PORT: `${options.backendPort}`,
+      SERVER_PORT: `${options.backendPort}`,
+      BACKEND_PORT: `${options.backendPort}`,
+    })
+  })
   return {
-    prefix: options.web.configuration.type,
+    prefix: dev.logPrefix,
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-      await exec(cmd!, args, {
-        cwd: options.web.directory,
-        stdout,
-        stderr,
-        signal,
-        env: {
-          ...process.env,
-          ...env,
-        },
-      })
+      await dev.action(stdout, stderr, signal, options.backendPort)
     },
   }
 }
@@ -360,40 +349,22 @@ function devThemeExtensionTarget(
 }
 
 async function devFrontendProxyTarget(options: DevWebOptions): Promise<ReverseHTTPProxyTarget> {
+  return devWeb(options, {
+    port: options.web.configuration.port,
+    dynamicEnv: (port: number) => ({
+      PORT: `${port}`,
+      FRONTEND_PORT: `${port}`,
+      // Note: These are Laravel variables for backwards compatibility with 2.0 templates.
+      SERVER_PORT: `${port}`,
+    })
+  })
+}
+
+async function devWeb(options: DevWebOptions, {port, dynamicEnv}: {port?: number; dynamicEnv: (port: number) => object}): Promise<ReverseHTTPProxyTarget> {
   const {commands} = options.web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
 
   const env = {
-    ...(await getDevEnvironmentVariables(options)),
-    BACKEND_PORT: `${options.backendPort}`,
-    APP_URL: options.hostname,
-    APP_ENV: 'development',
-  }
-
-  return {
-    logPrefix: options.web.configuration.type,
-    customPort: options.web.configuration.port,
-    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
-      await exec(cmd!, args, {
-        cwd: options.web.directory,
-        stdout,
-        stderr,
-        env: {
-          ...env,
-          PORT: `${port}`,
-          FRONTEND_PORT: `${port}`,
-          // Note: These are Laravel variables for backwards compatibility with 2.0 templates.
-          SERVER_PORT: `${port}`,
-        },
-        signal,
-      })
-    },
-  }
-}
-
-async function getDevEnvironmentVariables(options: DevWebOptions) {
-  return {
-    ...process.env,
     SHOPIFY_API_KEY: options.apiKey,
     SHOPIFY_API_SECRET: options.apiSecret,
     HOST: options.hostname,
@@ -402,6 +373,26 @@ async function getDevEnvironmentVariables(options: DevWebOptions) {
     ...(isSpinEnvironment() && {
       SHOP_CUSTOM_DOMAIN: `shopify.${await spinFqdn()}`,
     }),
+    BACKEND_PORT: `${options.backendPort}`,
+    APP_URL: options.hostname,
+    APP_ENV: 'development',
+  }
+
+  return {
+    logPrefix: options.web.configuration.type,
+    customPort: port,
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
+      await exec(cmd!, args, {
+        cwd: options.web.directory,
+        stdout,
+        stderr,
+        signal,
+        env: {
+          ...env,
+          ...dynamicEnv(port),
+        },
+      })
+    },
   }
 }
 
