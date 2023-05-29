@@ -2,8 +2,6 @@ import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
 import {defaultFunctionsFlavors} from '../../../constants.js'
 import {zod} from '@shopify/cli-kit/node/schema'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {fileExists} from '@shopify/cli-kit/node/fs'
 
 export type FunctionConfigType = zod.infer<typeof FunctionExtensionSchema>
 export const FunctionExtensionSchema = BaseSchema.extend({
@@ -57,15 +55,6 @@ const spec = createExtensionSpecification({
   partnersWebIdentifier: 'function',
   graphQLType: 'function',
   appModuleFeatures: (_) => ['function'],
-  findEntryPath: async (directory) => {
-    return (
-      await Promise.all(
-        ['src/index.js', 'src/index.ts', 'src/main.rs']
-          .map((relativePath) => joinPath(directory, relativePath))
-          .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
-      )
-    ).find((sourcePath) => sourcePath !== undefined)
-  },
 })
 
 export default spec

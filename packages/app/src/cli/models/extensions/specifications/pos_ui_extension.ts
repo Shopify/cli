@@ -1,7 +1,6 @@
 import {getDependencyVersion} from '../../app/app.js'
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
-import {findUIEntryPath} from '../common.js'
 import {BugError} from '@shopify/cli-kit/node/error'
 
 const dependency = '@shopify/retail-ui-extensions'
@@ -12,7 +11,6 @@ const spec = createExtensionSpecification({
   dependency,
   partnersWebIdentifier: 'pos_ui_extension',
   schema: BaseSchema,
-  findEntryPath: findUIEntryPath,
   appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild'],
   deployConfig: async (config, directory) => {
     const result = await getDependencyVersion(dependency, directory)

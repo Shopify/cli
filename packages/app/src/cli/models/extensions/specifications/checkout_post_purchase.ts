@@ -1,4 +1,3 @@
-import {findUIEntryPath} from '../common.js'
 import {BaseSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
@@ -12,7 +11,6 @@ const spec = createExtensionSpecification({
   partnersWebIdentifier: 'post_purchase',
   helpURL: 'https://shopify.dev/docs/apps/checkout/post-purchase',
   schema: BaseSchema,
-  findEntryPath: findUIEntryPath,
   appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild'],
   deployConfig: async (config, _) => {
     return {metafields: config.metafields}

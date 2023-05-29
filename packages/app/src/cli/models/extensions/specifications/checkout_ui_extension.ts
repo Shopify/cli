@@ -1,7 +1,6 @@
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
-import {findUIEntryPath} from '../common.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const dependency = '@shopify/checkout-ui-extensions'
@@ -21,7 +20,6 @@ const spec = createExtensionSpecification({
   dependency,
   partnersWebIdentifier: 'checkout_ui_extension',
   schema: CheckoutSchema,
-  findEntryPath: findUIEntryPath,
   appModuleFeatures: (_) => ['ui_preview', 'bundling', 'cart_url', 'esbuild'],
   deployConfig: async (config, directory) => {
     return {

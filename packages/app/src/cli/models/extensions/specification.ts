@@ -53,7 +53,6 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   shouldFetchCartUrl?(config: TConfiguration): boolean
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config: TConfiguration) => ExtensionFeature[]
-  findEntryPath?: (directory: string) => Promise<string | undefined>
 }
 
 /**
@@ -348,7 +347,6 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     schema: BaseSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     supportedFlavors: defaultExtensionFlavors,
-    findEntryPath: async () => undefined,
   }
   return {...defaults, ...spec}
 }

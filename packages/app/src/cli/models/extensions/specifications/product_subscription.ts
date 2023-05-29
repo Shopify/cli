@@ -1,7 +1,6 @@
 import {getDependencyVersion} from '../../app/app.js'
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
-import {findUIEntryPath} from '../common.js'
 import {BugError} from '@shopify/cli-kit/node/error'
 
 const dependency = '@shopify/admin-ui-extensions'
@@ -13,7 +12,6 @@ const spec = createExtensionSpecification({
   graphQLType: 'subscription_management',
   partnersWebIdentifier: 'product_subscription',
   schema: BaseSchema,
-  findEntryPath: findUIEntryPath,
   appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild'],
   deployConfig: async (_, directory) => {
     const result = await getDependencyVersion(dependency, directory)

@@ -1,7 +1,6 @@
 import {createExtensionSpecification} from '../specification.js'
 import {defaultExtensionFlavors} from '../../../constants.js'
 import {BaseSchema} from '../schemas.js'
-import {findUIEntryPath} from '../common.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileSize} from '@shopify/cli-kit/node/fs'
@@ -26,7 +25,6 @@ const spec = createExtensionSpecification({
   partnersWebIdentifier: 'web_pixel',
   supportedFlavors: defaultExtensionFlavors.filter((flavor) => !flavor.value.includes('react')),
   schema: WebPixelSchema,
-  findEntryPath: findUIEntryPath,
   appModuleFeatures: (_) => ['bundling', 'esbuild'],
   deployConfig: async (config, _) => {
     return {
