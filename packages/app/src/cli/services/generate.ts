@@ -75,7 +75,7 @@ async function buildPromptOptions(
     directory: joinPath(options.directory, 'extensions'),
     app,
     extensionTemplates: validTemplates ?? [],
-    unavailableExtensions: getTypesExternalName(templatesOverlimit ?? []),
+    unavailableExtensions: templatesOverlimit ?? [],
     reset: options.reset,
   }
 }

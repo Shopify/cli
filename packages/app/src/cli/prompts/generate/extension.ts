@@ -12,7 +12,7 @@ export interface GenerateExtensionPromptOptions {
   directory: string
   app: AppInterface
   extensionTemplates: ExtensionTemplate[]
-  unavailableExtensions: string[]
+  unavailableExtensions: ExtensionTemplate[]
   reset: boolean
 }
 
@@ -27,18 +27,14 @@ export interface GenerateExtensionContentOutput {
   flavor?: ExtensionFlavorValue
 }
 
-export function buildChoices(extensionTemplates: ExtensionTemplate[], unavailableExtensions: string[] = []) {
-  const templateSpecChoices = extensionTemplates.map((spec) => {
-    const disabled = unavailableExtensions.includes(spec.identifier)
-    const label = disabled ? `${spec.name} (limit reached)` : spec.name
+export function buildChoices(extensionTemplates: ExtensionTemplate[], unavailableExtensions: ExtensionTemplate[] = []) {
+  const templateSpecChoices = [...extensionTemplates.map((spec) => {
+    return {label: spec.name, value: spec.identifier, group: spec.group || 'Other'}
+  }), ...unavailableExtensions.map((spec) => {
+    const label = `${spec.name} (limit reached)`
+    return {label, value: spec.identifier, group: spec.group || 'Other', disabled: true}
+  })]
 
-    return {
-      label,
-      value: spec.identifier,
-      group: spec.group || 'Other',
-      disabled,
-    }
-  })
   return templateSpecChoices.sort((c1, c2) => c1.label.localeCompare(c2.label))
 }
 
