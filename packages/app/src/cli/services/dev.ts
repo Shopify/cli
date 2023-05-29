@@ -103,7 +103,6 @@ async function dev(options: DevOptions) {
     localApp = await installAppDependencies(localApp)
   }
 
-  const frontendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Frontend)
   const backendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Backend)
   const webhooksPath = localApp.webs.map(({configuration}) => configuration.webhooks_path).find((path) => path) || '/api/webhooks'
   const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated
@@ -177,20 +176,17 @@ async function dev(options: DevOptions) {
     backendPort,
   }
 
-  if (backendConfig) {
-    const backendOptions: DevWebOptions = {...webOptions, web: backendConfig, hostname: exposedUrl}
-    additionalProcesses.push(await devNonProxyTarget(backendOptions, backendOptions.backendPort))
-  }
+  await Promise.all(localApp.webs.map(async (web) => {
+    const isBackend = web.configuration.type === WebType.Backend
+    const hostname = isBackend ? exposedUrl : frontendUrl
+    const fullWebOptions: DevWebOptions = {...webOptions, web, hostname}
 
-  if (frontendConfig) {
-    const frontendOptions: DevWebOptions = {...webOptions, web: frontendConfig, hostname: frontendUrl}
-
-    if (usingLocalhost) {
-      additionalProcesses.push(await devNonProxyTarget(frontendOptions, frontendPort))
+    if (isBackend || usingLocalhost) {
+      additionalProcesses.push(await devNonProxyTarget(fullWebOptions, frontendPort))
     } else {
-      proxyTargets.push(await devProxyTarget(frontendOptions))
+      proxyTargets.push(await devProxyTarget(fullWebOptions))
     }
-  }
+  }))
 
   const previewableExtensions = localApp.allExtensions.filter((ext) => ext.isPreviewable)
   const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable)
