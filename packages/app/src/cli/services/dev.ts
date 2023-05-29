@@ -317,7 +317,15 @@ async function devBackendTarget(options: DevWebOptions, port: number): Promise<O
 }
 
 async function devFrontendNonProxyTarget(options: DevWebOptions, port: number): Promise<OutputProcess> {
-  const devFrontend = await devFrontendProxyTarget(options)
+  const devFrontend = await devWeb(options, {
+    port: port,
+    dynamicEnv: (port: number) => ({
+      PORT: `${port}`,
+      FRONTEND_PORT: `${port}`,
+      // Note: These are Laravel variables for backwards compatibility with 2.0 templates.
+      SERVER_PORT: `${port}`,
+    })
+  })
   return {
     prefix: devFrontend.logPrefix,
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
