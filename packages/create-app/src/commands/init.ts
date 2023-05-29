@@ -6,6 +6,7 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 // eslint-disable-next-line node/prefer-global/url
 import {URL} from 'url'
 
@@ -56,6 +57,10 @@ export default class Init extends Command {
       template: flags.template,
       directory: flags.path,
     })
+
+    await addPublicMetadata(() => ({
+      cmd_create_app_template: promptAnswers.templateType,
+    }))
 
     await initService({
       name: promptAnswers.name,
