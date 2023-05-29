@@ -71,14 +71,6 @@ export interface DevOptions {
   notify?: string
 }
 
-interface DevWebOptions {
-  backendPort: number
-  apiKey: string
-  apiSecret?: string
-  hostname?: string
-  scopes?: AppConfiguration['scopes']
-}
-
 async function dev(options: DevOptions) {
   // Be optimistic about tunnel creation and do it as early as possible
   const tunnelPort = await getAvailableTCPPort()
@@ -239,11 +231,11 @@ async function dev(options: DevOptions) {
   }
 
   if (backendConfig) {
-    additionalProcesses.push(await devBackendTarget(backendConfig, backendOptions))
+    additionalProcesses.push(await devBackendTarget({web: backendConfig, ...backendOptions}))
   }
 
   if (frontendConfig) {
-    const frontendOptions: DevFrontendTargetOptions = {
+    const frontendOptions: DevWebOptions = {
       web: frontendConfig,
       apiKey,
       scopes: localApp.configuration.scopes,
@@ -253,9 +245,9 @@ async function dev(options: DevOptions) {
     }
 
     if (usingLocalhost) {
-      additionalProcesses.push(devFrontendNonProxyTarget(frontendOptions, frontendPort))
+      additionalProcesses.push(await devFrontendNonProxyTarget(frontendOptions, frontendPort))
     } else {
-      proxyTargets.push(devFrontendProxyTarget(frontendOptions))
+      proxyTargets.push(await devFrontendProxyTarget(frontendOptions))
     }
   }
 
@@ -298,13 +290,45 @@ async function dev(options: DevOptions) {
   }
 }
 
-interface DevFrontendTargetOptions extends DevWebOptions {
+interface DevWebOptions {
   web: Web
   backendPort: number
+  apiKey: string
+  apiSecret?: string
+  hostname?: string
+  scopes?: AppConfiguration['scopes']
 }
 
-function devFrontendNonProxyTarget(options: DevFrontendTargetOptions, port: number): OutputProcess {
-  const devFrontend = devFrontendProxyTarget(options)
+async function devBackendTarget(options: DevWebOptions): Promise<OutputProcess> {
+  const {commands} = options.web.configuration
+  const [cmd, ...args] = commands.dev.split(' ')
+  const env = {
+    ...(await getDevEnvironmentVariables(options)),
+    // SERVER_PORT is the convention Artisan uses
+    PORT: `${options.backendPort}`,
+    SERVER_PORT: `${options.backendPort}`,
+    BACKEND_PORT: `${options.backendPort}`,
+  }
+
+  return {
+    prefix: options.web.configuration.type,
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+      await exec(cmd!, args, {
+        cwd: options.web.directory,
+        stdout,
+        stderr,
+        signal,
+        env: {
+          ...process.env,
+          ...env,
+        },
+      })
+    },
+  }
+}
+
+async function devFrontendNonProxyTarget(options: DevWebOptions, port: number): Promise<OutputProcess> {
+  const devFrontend = await devFrontendProxyTarget(options)
   return {
     prefix: devFrontend.logPrefix,
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
@@ -335,9 +359,16 @@ function devThemeExtensionTarget(
   }
 }
 
-function devFrontendProxyTarget(options: DevFrontendTargetOptions): ReverseHTTPProxyTarget {
+async function devFrontendProxyTarget(options: DevWebOptions): Promise<ReverseHTTPProxyTarget> {
   const {commands} = options.web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
+
+  const env = {
+    ...(await getDevEnvironmentVariables(options)),
+    BACKEND_PORT: `${options.backendPort}`,
+    APP_URL: options.hostname,
+    APP_ENV: 'development',
+  }
 
   return {
     logPrefix: options.web.configuration.type,
@@ -348,13 +379,10 @@ function devFrontendProxyTarget(options: DevFrontendTargetOptions): ReverseHTTPP
         stdout,
         stderr,
         env: {
-          ...(await getDevEnvironmentVariables(options)),
-          BACKEND_PORT: `${options.backendPort}`,
+          ...env,
           PORT: `${port}`,
           FRONTEND_PORT: `${port}`,
-          APP_URL: options.hostname,
-          APP_ENV: 'development',
-          // Note: These are Laravel varaibles for backwards compatibility with 2.0 templates.
+          // Note: These are Laravel variables for backwards compatibility with 2.0 templates.
           SERVER_PORT: `${port}`,
         },
         signal,
@@ -374,34 +402,6 @@ async function getDevEnvironmentVariables(options: DevWebOptions) {
     ...(isSpinEnvironment() && {
       SHOP_CUSTOM_DOMAIN: `shopify.${await spinFqdn()}`,
     }),
-  }
-}
-
-async function devBackendTarget(web: Web, options: DevWebOptions): Promise<OutputProcess> {
-  const {commands} = web.configuration
-  const [cmd, ...args] = commands.dev.split(' ')
-  const env = {
-    ...(await getDevEnvironmentVariables(options)),
-    // SERVER_PORT is the convention Artisan uses
-    PORT: `${options.backendPort}`,
-    SERVER_PORT: `${options.backendPort}`,
-    BACKEND_PORT: `${options.backendPort}`,
-  }
-
-  return {
-    prefix: web.configuration.type,
-    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-      await exec(cmd!, args, {
-        cwd: web.directory,
-        stdout,
-        stderr,
-        signal,
-        env: {
-          ...process.env,
-          ...env,
-        },
-      })
-    },
   }
 }
 
