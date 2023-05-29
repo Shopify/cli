@@ -231,7 +231,7 @@ async function dev(options: DevOptions) {
   }
 
   if (backendConfig) {
-    additionalProcesses.push(await devBackendTarget({web: backendConfig, ...backendOptions}))
+    additionalProcesses.push(await devBackendTarget({web: backendConfig, ...backendOptions}, backendOptions.backendPort))
   }
 
   if (frontendConfig) {
@@ -299,13 +299,13 @@ interface DevWebOptions {
   scopes?: AppConfiguration['scopes']
 }
 
-async function devBackendTarget(options: DevWebOptions): Promise<OutputProcess> {
+async function devBackendTarget(options: DevWebOptions, port: number): Promise<OutputProcess> {
   const dev = await devWeb(options, {
-    port: options.backendPort,
-    dynamicEnv: (_port: number) => ({
-      PORT: `${options.backendPort}`,
-      SERVER_PORT: `${options.backendPort}`,
-      BACKEND_PORT: `${options.backendPort}`,
+    port: port,
+    dynamicEnv: (port: number) => ({
+      PORT: `${port}`,
+      SERVER_PORT: `${port}`,
+      BACKEND_PORT: `${port}`,
     })
   })
   return {
