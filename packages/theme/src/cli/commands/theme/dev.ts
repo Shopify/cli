@@ -142,7 +142,7 @@ export default class Dev extends ThemeCommand {
 
 async function refreshTokens(store: string, password: string | undefined) {
   const adminSession = await ensureAuthenticatedThemes(store, password, [], true)
-  const storefrontToken = await ensureAuthenticatedStorefront([], password, true)
+  const storefrontToken = await ensureAuthenticatedStorefront([], password)
   await execCLI2(['theme', 'token', '--admin', adminSession.token, '--sfr', storefrontToken])
   return adminSession
 }
