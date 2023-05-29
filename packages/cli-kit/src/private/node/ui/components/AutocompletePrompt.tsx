@@ -61,10 +61,6 @@ function AutocompletePrompt<T>({
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [selectInputHeight, setSelectInputHeight] = useState(0)
   const [limit, setLimit] = useState(searchResults.length)
-  const numberOfGroups = uniqBy(
-    searchResults.filter((choice) => choice.group),
-    'group',
-  ).length
 
   const paginatedSearch = useCallback(
     async (term: string) => {
@@ -93,7 +89,7 @@ function AutocompletePrompt<T>({
     function onResize() {
       const availableSpace = stdout.rows - (wrapperHeight - selectInputHeight)
       // rough estimate of the limit needed based on the space available
-      const newLimit = Math.max(2, availableSpace - numberOfGroups * 2 - 4)
+      const newLimit = Math.max(2, availableSpace - 4)
 
       if (newLimit < limit) {
         stdout.write(ansiEscapes.clearTerminal)
@@ -108,7 +104,7 @@ function AutocompletePrompt<T>({
     return () => {
       stdout.off('resize', onResize)
     }
-  }, [wrapperHeight, selectInputHeight, searchResults.length, stdout, limit, numberOfGroups])
+  }, [wrapperHeight, selectInputHeight, searchResults.length, stdout, limit])
 
   const {isAborted} = useAbortSignal(abortSignal)
 

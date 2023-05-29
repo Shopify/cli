@@ -43,10 +43,6 @@ function SelectPrompt<T>({
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [selectInputHeight, setSelectInputHeight] = useState(0)
   const [limit, setLimit] = useState(choices.length)
-  const numberOfGroups = uniqBy(
-    choices.filter((choice) => choice.group),
-    'group',
-  ).length
 
   const wrapperRef = useCallback((node) => {
     if (node !== null) {
@@ -66,7 +62,7 @@ function SelectPrompt<T>({
     function onResize() {
       const availableSpace = stdout.rows - (wrapperHeight - selectInputHeight)
       // rough estimate of the limit needed based on the space available
-      const newLimit = Math.max(2, availableSpace - numberOfGroups * 2 - 4)
+      const newLimit = Math.max(2, availableSpace - 4)
 
       if (newLimit < limit) {
         stdout.write(ansiEscapes.clearTerminal)
@@ -81,7 +77,7 @@ function SelectPrompt<T>({
     return () => {
       stdout.off('resize', onResize)
     }
-  }, [wrapperHeight, selectInputHeight, choices.length, numberOfGroups, stdout, limit])
+  }, [wrapperHeight, selectInputHeight, choices.length, stdout, limit])
 
   const submitAnswer = useCallback(
     (answer: SelectItem<T>) => {
