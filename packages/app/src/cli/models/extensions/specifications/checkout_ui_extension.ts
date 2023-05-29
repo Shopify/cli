@@ -20,8 +20,7 @@ const spec = createExtensionSpecification({
   dependency,
   partnersWebIdentifier: 'checkout_ui_extension',
   schema: CheckoutSchema,
-  isPreviewable: true,
-  appModuleFeatures: (_) => ['ui_legacy', 'bundling', 'cart_url'],
+  appModuleFeatures: (_) => ['ui_preview', 'bundling', 'cart_url', 'esbuild'],
   deployConfig: async (config, directory) => {
     return {
       extension_points: config.extensionPoints,

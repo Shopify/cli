@@ -110,7 +110,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
   }
 }
 
-interface SetupNonPrevieableExtensionBundlerOptions {
+interface SetupDraftableExtensionBundlerOptions {
   extension: UIExtension
   app: AppInterface
   url: string
@@ -122,7 +122,7 @@ interface SetupNonPrevieableExtensionBundlerOptions {
   signal: AbortSignal
 }
 
-export async function setupNonPreviewableExtensionBundler({
+export async function setupDraftableExtensionBundler({
   extension,
   app,
   url,
@@ -132,7 +132,7 @@ export async function setupNonPreviewableExtensionBundler({
   stderr,
   stdout,
   signal,
-}: SetupNonPrevieableExtensionBundlerOptions) {
+}: SetupDraftableExtensionBundlerOptions) {
   return bundleExtension({
     minify: false,
     outputBundlePath: extension.outputBundlePath,

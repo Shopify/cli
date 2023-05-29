@@ -80,7 +80,7 @@ const EXTENSION_A: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
-  features: ['ui_legacy', 'bundling'],
+  features: ['ui_preview', 'bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -90,7 +90,6 @@ const EXTENSION_A: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  isPreviewable: true,
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -111,7 +110,7 @@ const EXTENSION_A_2: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
-  features: ['ui_legacy', 'bundling'],
+  features: ['ui_preview', 'bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -121,7 +120,6 @@ const EXTENSION_A_2: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  isPreviewable: true,
 }
 
 const EXTENSION_B: UIExtension = {
@@ -143,7 +141,7 @@ const EXTENSION_B: UIExtension = {
   externalType: 'checkout_ui',
   publishURL: (_) => Promise.resolve(''),
   surface: 'surface',
-  features: ['ui_legacy', 'bundling'],
+  features: ['ui_preview', 'bundling'],
   validate: () => Promise.resolve({} as any),
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
@@ -152,7 +150,6 @@ const EXTENSION_B: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  isPreviewable: true,
 }
 
 const EXTENSION_B_2: UIExtension = {
@@ -173,7 +170,7 @@ const EXTENSION_B_2: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
-  features: ['ui_legacy', 'bundling'],
+  features: ['ui_preview', 'bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -183,7 +180,6 @@ const EXTENSION_B_2: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  isPreviewable: true,
 }
 
 const EXTENSION_C: UIExtension = {
@@ -204,7 +200,7 @@ const EXTENSION_C: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
-  features: ['ui_legacy', 'bundling'],
+  features: ['ui_preview', 'bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -214,7 +210,6 @@ const EXTENSION_C: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  isPreviewable: true,
 }
 
 const EXTENSION_D: UIExtension = {
@@ -245,7 +240,6 @@ const EXTENSION_D: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  isPreviewable: false,
 }
 
 const LEGACY_FUNCTION_A: FunctionExtension = {
