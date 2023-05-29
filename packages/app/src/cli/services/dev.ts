@@ -231,7 +231,7 @@ async function dev(options: DevOptions) {
   }
 
   if (backendConfig) {
-    additionalProcesses.push(await devBackendTarget({web: backendConfig, ...backendOptions}, backendOptions.backendPort))
+    additionalProcesses.push(await devNonProxyTarget({web: backendConfig, ...backendOptions}, backendOptions.backendPort))
   }
 
   if (frontendConfig) {
@@ -245,7 +245,7 @@ async function dev(options: DevOptions) {
     }
 
     if (usingLocalhost) {
-      additionalProcesses.push(await devFrontendNonProxyTarget(frontendOptions, frontendPort))
+      additionalProcesses.push(await devNonProxyTarget(frontendOptions, frontendPort))
     } else {
       proxyTargets.push(await devFrontendProxyTarget(frontendOptions))
     }
@@ -299,25 +299,8 @@ interface DevWebOptions {
   scopes?: AppConfiguration['scopes']
 }
 
-async function devBackendTarget(options: DevWebOptions, port: number): Promise<OutputProcess> {
+async function devNonProxyTarget(options: DevWebOptions, port: number): Promise<OutputProcess> {
   const dev = await devWeb(options, {
-    port: port,
-    dynamicEnv: (port: number) => ({
-      PORT: `${port}`,
-      SERVER_PORT: `${port}`,
-      BACKEND_PORT: `${port}`,
-    })
-  })
-  return {
-    prefix: dev.logPrefix,
-    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-      await dev.action(stdout, stderr, signal, options.backendPort)
-    },
-  }
-}
-
-async function devFrontendNonProxyTarget(options: DevWebOptions, port: number): Promise<OutputProcess> {
-  const devFrontend = await devWeb(options, {
     port: port,
     dynamicEnv: (port: number) => ({
       PORT: `${port}`,
@@ -327,9 +310,9 @@ async function devFrontendNonProxyTarget(options: DevWebOptions, port: number): 
     })
   })
   return {
-    prefix: devFrontend.logPrefix,
+    prefix: dev.logPrefix,
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-      await devFrontend.action(stdout, stderr, signal, port)
+      await dev.action(stdout, stderr, signal, port)
     },
   }
 }
