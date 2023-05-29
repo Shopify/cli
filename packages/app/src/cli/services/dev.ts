@@ -103,7 +103,7 @@ async function dev(options: DevOptions) {
     localApp = await installAppDependencies(localApp)
   }
 
-  const backendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Backend)
+  const backendConfig = localApp.webs.find((web) => isWebType(web, WebType.Backend))
   const webhooksPath = localApp.webs.map(({configuration}) => configuration.webhooks_path).find((path) => path) || '/api/webhooks'
   const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated
 
@@ -177,14 +177,14 @@ async function dev(options: DevOptions) {
   }
 
   await Promise.all(localApp.webs.map(async (web) => {
-    const isBackend = web.configuration.type === WebType.Backend
-    const hostname = isBackend ? exposedUrl : frontendUrl
+    const isFrontend = isWebType(web, WebType.Frontend)
+    const hostname = isFrontend ? frontendUrl : exposedUrl
     const fullWebOptions: DevWebOptions = {...webOptions, web, hostname}
 
-    if (isBackend || usingLocalhost) {
-      additionalProcesses.push(await devNonProxyTarget(fullWebOptions, frontendPort))
-    } else {
+    if (isFrontend && !usingLocalhost) {
       proxyTargets.push(await devProxyTarget(fullWebOptions))
+    } else {
+      additionalProcesses.push(await devNonProxyTarget(fullWebOptions, frontendPort))
     }
   }))
 
@@ -291,6 +291,10 @@ async function dev(options: DevOptions) {
       additionalProcesses,
     })
   }
+}
+
+function isWebType(web: Web, type: WebType): boolean {
+  return web.configuration.type === type
 }
 
 interface DevWebOptions {
