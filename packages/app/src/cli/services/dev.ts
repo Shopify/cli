@@ -105,13 +105,13 @@ async function dev(options: DevOptions) {
 
   const frontendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Frontend)
   const backendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Backend)
-  const webhooksPath =
-    backendConfig?.configuration?.webhooks_path || frontendConfig?.configuration?.webhooks_path || '/api/webhooks'
+  const webhooksPath = localApp.webs.map(({configuration}) => configuration.webhooks_path).find((path) => path) || '/api/webhooks'
   const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated
 
+  const initiateUpdateUrls = localApp.webs.length > 0 && options.update
   let shouldUpdateURLs = false
 
-  await validateCustomPorts(backendConfig, frontendConfig)
+  await validateCustomPorts(localApp.webs)
 
   const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, currentURLs] = await Promise.all([
     generateFrontendURL({
@@ -123,14 +123,26 @@ async function dev(options: DevOptions) {
     getURLs(apiKey, token),
   ])
 
-  /** If the app doesn't have web/ the link message is not necessary */
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
   const proxyTargets: ReverseHTTPProxyTarget[] = []
   const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
 
   let previewUrl
-  if (frontendConfig || backendConfig) {
+
+  if (initiateUpdateUrls) {
+    const newURLs = generatePartnersURLs(
+      exposedUrl,
+      localApp.webs.map(({configuration}) => configuration.authCallbackPath).find((path) => path)
+    )
+    shouldUpdateURLs = await shouldOrPromptUpdateURLs({
+      currentURLs,
+      appDirectory: localApp.directory,
+      cachedUpdateURLs,
+      newApp: remoteApp.newApp,
+    })
+    if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
+    await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
     previewUrl = buildAppURLForWeb(storeFqdn, apiKey)
     if (options.update) {
       const newURLs = generatePartnersURLs(
@@ -154,12 +166,30 @@ async function dev(options: DevOptions) {
   const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
   localApp.allExtensions.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
 
-  const backendOptions = {
+  const additionalProcesses: OutputProcess[] = []
+
+  const apiSecret = (remoteApp.apiSecret as string) ?? ''
+
+  const webOptions = {
     apiKey,
-    backendPort,
     scopes: localApp.configuration.scopes,
-    apiSecret: (remoteApp.apiSecret as string) ?? '',
-    hostname: exposedUrl,
+    apiSecret,
+    backendPort,
+  }
+
+  if (backendConfig) {
+    const backendOptions: DevWebOptions = {...webOptions, web: backendConfig, hostname: exposedUrl}
+    additionalProcesses.push(await devNonProxyTarget(backendOptions, backendOptions.backendPort))
+  }
+
+  if (frontendConfig) {
+    const frontendOptions: DevWebOptions = {...webOptions, web: frontendConfig, hostname: frontendUrl}
+
+    if (usingLocalhost) {
+      additionalProcesses.push(await devNonProxyTarget(frontendOptions, frontendPort))
+    } else {
+      proxyTargets.push(await devProxyTarget(frontendOptions))
+    }
   }
 
   const previewableExtensions = localApp.allExtensions.filter((ext) => ext.isPreviewable)
@@ -184,8 +214,6 @@ async function dev(options: DevOptions) {
   // Remove this once theme app extensions and functions are displayed
   // by the dev console
   outputExtensionsMessages(localApp)
-
-  const additionalProcesses: OutputProcess[] = []
 
   if (draftableExtensions.length > 0) {
     const {extensionIds: remoteExtensions} = await ensureDeploymentIdsPresence({
@@ -230,27 +258,6 @@ async function dev(options: DevOptions) {
     additionalProcesses.push(devExt)
   }
 
-  if (backendConfig) {
-    additionalProcesses.push(await devNonProxyTarget({web: backendConfig, ...backendOptions}, backendOptions.backendPort))
-  }
-
-  if (frontendConfig) {
-    const frontendOptions: DevWebOptions = {
-      web: frontendConfig,
-      apiKey,
-      scopes: localApp.configuration.scopes,
-      apiSecret: (remoteApp.apiSecret as string) ?? '',
-      hostname: frontendUrl,
-      backendPort,
-    }
-
-    if (usingLocalhost) {
-      additionalProcesses.push(await devNonProxyTarget(frontendOptions, frontendPort))
-    } else {
-      proxyTargets.push(await devProxyTarget(frontendOptions))
-    }
-  }
-
   if (sendUninstallWebhook) {
     additionalProcesses.push({
       prefix: 'webhooks',
@@ -262,7 +269,7 @@ async function dev(options: DevOptions) {
           stdout,
           token,
           address: `http://localhost:${deliveryPort}${webhooksPath}`,
-          sharedSecret: backendOptions.apiSecret,
+          sharedSecret: apiSecret,
           storeFqdn,
         })
       },
@@ -520,26 +527,21 @@ async function logMetadataForDev(options: {
   }))
 }
 
-async function validateCustomPorts(backendConfig?: Web, frontendConfig?: Web) {
-  const backendPort = backendConfig?.configuration.port
-  const frontendPort = frontendConfig?.configuration.port
-  if (backendPort && frontendPort && backendPort === frontendPort) {
-    throw new AbortError(`Backend and frontend ports must be different. Found ${backendPort} for both.`)
+async function validateCustomPorts(webConfigs: Web[]) {
+  const allPorts = webConfigs.map((config) => config.configuration.port).filter((port) => port)
+  const duplicatedPort = allPorts.find((port, index) => allPorts.indexOf(port) !== index)
+  if (duplicatedPort) {
+    throw new AbortError(
+      `Found port ${duplicatedPort} for multiple webs.`,
+      'Please define a unique port for each web.',
+    )
   }
-
-  if (backendPort) {
-    const portAvailable = await checkPortAvailability(backendPort)
+  await Promise.all(allPorts.map(async (port) => {
+    const portAvailable = await checkPortAvailability(port!)
     if (!portAvailable) {
-      throw new AbortError(`Backend port ${backendPort} is not available, please choose a different one.`)
+      throw new AbortError(`Hard-coded port ${port} is not available, please choose a different one.`)
     }
-  }
-
-  if (frontendPort) {
-    const portAvailable = await checkPortAvailability(frontendPort)
-    if (!portAvailable) {
-      throw new AbortError(`Frontend port ${frontendPort} is not available, please choose a different one.`)
-    }
-  }
+  }))
 }
 
 export default dev
