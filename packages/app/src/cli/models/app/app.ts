@@ -15,6 +15,7 @@ export const AppConfigurationSchema = zod.object({
 export enum WebType {
   Frontend = 'frontend',
   Backend = 'backend',
+  Background = 'background',
 }
 
 const ensurePathStartsWithSlash = (arg: unknown) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg)
@@ -32,7 +33,7 @@ const baseWebConfigurationSchema = zod.object({
     dev: zod.string(),
   }),
 })
-const webTypes = zod.enum([WebType.Frontend, WebType.Backend]).default(WebType.Frontend)
+const webTypes = zod.enum([WebType.Frontend, WebType.Backend, WebType.Background]).default(WebType.Frontend)
 export const WebConfigurationSchema = zod.union([
   baseWebConfigurationSchema.extend({type: webTypes}),
   baseWebConfigurationSchema.extend({roles: zod.array(webTypes)}),
