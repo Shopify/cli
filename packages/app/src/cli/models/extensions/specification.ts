@@ -32,6 +32,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   additionalIdentifiers: string[]
   partnersWebIdentifier: string
   surface: string
+  singleEntryPath: boolean
   registrationLimit: number
   supportedFlavors: ExtensionFlavor[]
   gated: boolean
@@ -343,6 +344,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     externalName: capitalize(spec.identifier.replace(/_/g, ' ')),
     surface: 'unknown',
     partnersWebIdentifier: spec.identifier,
+    singleEntryPath: true,
     gated: false,
     schema: BaseSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,

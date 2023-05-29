@@ -25,6 +25,7 @@ const spec = createExtensionSpecification({
   surface: 'all',
   dependency,
   partnersWebIdentifier: 'ui_extension',
+  singleEntryPath: false,
   schema: UIExtensionSchema,
   appModuleFeatures: (config) => {
     const basic: ExtensionFeature[] = ['ui_preview', 'bundling', 'esbuild']
