@@ -38,8 +38,9 @@ export interface LocalSource {
 export type MatchingError = 'pending-remote' | 'invalid-environment' | 'user-cancelled'
 
 export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPresenceOptions) {
-  // We need local extensions to deploy
-  if (!options.app.hasExtensions()) return {app: options.appId, extensions: {}, extensionIds: {}}
+  // We need local extensions to deploy when deploymentMode is 'legacy'
+  if (!options.app.hasExtensions() && options.deploymentMode === 'legacy')
+    return {app: options.appId, extensions: {}, extensionIds: {}}
 
   const remoteSpecifications = await fetchAppExtensionRegistrations({token: options.token, apiKey: options.appId})
 
