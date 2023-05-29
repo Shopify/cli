@@ -7,7 +7,6 @@ import {execThemeCheckCLI} from '@shopify/cli-kit/node/ruby'
 import {exec} from '@shopify/cli-kit/node/system'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
-import {touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 export interface ExtensionBuildOptions {
@@ -55,10 +54,6 @@ export async function buildThemeExtension(extension: ExtensionInstance, options:
   })
 }
 
-interface BuildUIExtensionsOptions {
-  app: AppInterface
-}
-
 /**
  * It builds the UI extensions.
  * @param options - Build options.
@@ -66,25 +61,19 @@ interface BuildUIExtensionsOptions {
 export async function buildUIExtension(extension: UIExtension, options: ExtensionBuildOptions): Promise<void> {
   options.stdout.write(`Bundling UI extension ${extension.localIdentifier}...`)
 
-  if (extension.features.includes('esbuild')) {
-    await bundleExtension({
-      minify: true,
-      outputBundlePath: extension.outputBundlePath,
-      stdin: {
-        contents: extension.getBundleExtensionStdinContent(),
-        resolveDir: extension.directory,
-        loader: 'tsx',
-      },
-      environment: 'production',
-      env: options.app.dotenv?.variables ?? {},
-      stderr: options.stderr,
-      stdout: options.stdout,
-    })
-  } else if (extension.type === 'tax_calculation') {
-    // Workaround for tax_calculations because they remote spec NEEDS a valid js file to be included.
-    await touchFile(extension.outputBundlePath)
-    await writeFile(extension.outputBundlePath, '(()=>{})();')
-  }
+  await bundleExtension({
+    minify: true,
+    outputBundlePath: extension.outputBundlePath,
+    stdin: {
+      contents: extension.getBundleExtensionStdinContent(),
+      resolveDir: extension.directory,
+      loader: 'tsx',
+    },
+    environment: 'production',
+    env: options.app.dotenv?.variables ?? {},
+    stderr: options.stderr,
+    stdout: options.stdout,
+  })
 
   await extension.buildValidation()
 
