@@ -132,7 +132,7 @@ describe('check', () => {
     expect(errors).toEqual(['The "operations" array must contain at least 1 element(s)'])
   })
 
-  test(`when operation an operation doesn't have the id property`, async () => {
+  test(`when an operation doesn't have the id property`, async () => {
     const actions = ['add', 'delete', 'copy', 'move', 'update']
 
     for (const action of actions) {
