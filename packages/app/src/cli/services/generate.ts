@@ -45,6 +45,7 @@ export interface GenerateOptions {
 
 async function generate(options: GenerateOptions) {
   const templateSpecifications = await getTemplateSpecifications(options)
+  console.log(templateSpecifications)
   const specificationTypes = templateSpecifications.flatMap((specification) => specification.types) ?? []
   const app: AppInterface = await loadApp({directory: options.directory, specifications: specificationTypes})
 
@@ -54,7 +55,7 @@ async function generate(options: GenerateOptions) {
   await saveAnalyticsMetadata(promptAnswers, options.type)
 
   const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options)
-  const generatedExtensions = await generateExtension(generateExtensionOptions)
+  const generatedExtensions = await generateExtension(generateExtensionOptions, app)
 
   renderSuccessMessages(generatedExtensions, app.packageManager)
 }

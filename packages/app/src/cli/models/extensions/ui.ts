@@ -39,6 +39,7 @@ export interface UIExtensionSpec<TConfiguration extends BaseConfigContents = Bas
   ) => TokenizedString | undefined
   shouldFetchCartUrl?(config: TConfiguration): boolean
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
+  apiKey?: string
 }
 
 /**

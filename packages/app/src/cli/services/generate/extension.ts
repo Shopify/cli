@@ -6,6 +6,7 @@ import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
 import {buildGraphqlTypes} from '../function/build.js'
 import {ensureFunctionExtensionFlavorExists} from '../function/common.js'
+import {getActiveDashboardExtensions} from '../getActiveDashboardExtensions.js'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
@@ -39,6 +40,7 @@ export interface ExtensionInitOptions<TSpec extends GenericSpecification = Gener
   extensionFlavor?: ExtensionFlavorValue
   specification: TSpec
   extensionType: string
+  apiKey?: string
 }
 
 interface ExtensionDirectory {
@@ -74,7 +76,10 @@ export interface GeneratedExtension {
   specification: GenericSpecification
 }
 
-export async function generateExtension(extensionOptions: ExtensionInitOptions[]): Promise<GeneratedExtension[]> {
+export async function generateExtension(
+  extensionOptions: ExtensionInitOptions[],
+  app: AppInterface,
+): Promise<GeneratedExtension[]> {
   return Promise.all(
     extensionOptions.flatMap(async (options) => {
       const extensionDirectory = await ensureExtensionDirectoryExists({app: options.app, name: options.name})
@@ -86,7 +91,12 @@ export async function generateExtension(extensionOptions: ExtensionInitOptions[]
           await functionExtensionInit({...(options as FunctionExtensionInitOptions), extensionDirectory})
           break
         case 'ui':
-          await uiExtensionInit({...(options as UIExtensionInitOptions), extensionDirectory})
+          await uiExtensionInit({
+            ...(options as UIExtensionInitOptions),
+            extensionDirectory,
+            app,
+            apiKey: options.apiKey,
+          })
           break
       }
       return {directory: relativizePath(extensionDirectory), specification: options.specification}
@@ -105,6 +115,7 @@ async function uiExtensionInit({
   app,
   extensionFlavor,
   extensionDirectory,
+  apiKey,
 }: UIExtensionInitOptions) {
   const tasks = [
     {
@@ -133,18 +144,30 @@ async function uiExtensionInit({
           throw new BugError(`Couldn't find the template for '${specification.externalName}'`)
         }
 
-        const srcFileExtension = getSrcFileExtension(extensionFlavor ?? 'vanilla-js')
-        await recursiveLiquidTemplateCopy(templateDirectory, extensionDirectory, {
-          srcFileExtension,
-          flavor: extensionFlavor ?? '',
-          type: specification.identifier,
-          name,
-        })
+        const activeDashboardExtensions = await getActiveDashboardExtensions({app, apiKey})
+        console.log(activeDashboardExtensions)
 
-        if (extensionFlavor) {
-          await changeIndexFileExtension(extensionDirectory, srcFileExtension)
-          await removeUnwantedTemplateFilesPerFlavor(extensionDirectory, extensionFlavor)
+        if (activeDashboardExtensions.length > 0) {
+          for await (const extension of activeDashboardExtensions) {
+            if (extension === undefined) continue
+            const srcFileExtension = getSrcFileExtension(extensionFlavor ?? 'vanilla-js')
+            const extensionConfig = JSON.parse(extension.activeVersion.config)
+            console.log('got extension config', extensionConfig)
+
+            await recursiveLiquidTemplateCopy(templateDirectory, extensionDirectory, {
+              srcFileExtension,
+              flavor: extensionFlavor ?? '',
+              type: specification.identifier,
+              name,
+              ...extensionConfig,
+            })
+          }
         }
+        console.log('done')
+        // if (extensionFlavor) {
+        //   await changeIndexFileExtension(extensionDirectory, srcFileExtension)
+        //   await removeUnwantedTemplateFilesPerFlavor(extensionDirectory, extensionFlavor)
+        // }
       },
     },
   ]
