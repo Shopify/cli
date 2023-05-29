@@ -7,6 +7,8 @@ import themeExtension from '../../models/templates/theme-specifications/theme.js
 import checkoutPostPurchaseExtension from '../../models/templates/ui-specifications/checkout_post_purchase.js'
 import checkoutUIExtension from '../../models/templates/ui-specifications/checkout_ui_extension.js'
 import customerAccountsUIExtension from '../../models/templates/ui-specifications/customer_accounts_ui_extension.js'
+import flowActionDefinitionExtension from '../../models/templates/ui-specifications/flow_action_definition.js'
+import flowTriggerDefinitionExtension from '../../models/templates/ui-specifications/flow_trigger_definition.js'
 import posUIExtension from '../../models/templates/ui-specifications/pos_ui_extension.js'
 import productSubscriptionUIExtension from '../../models/templates/ui-specifications/product_subscription.js'
 import taxCalculationUIExtension from '../../models/templates/ui-specifications/tax_calculation.js'
@@ -39,6 +41,8 @@ export function localExtensionTemplates(availableSpecifications: string[]): Exte
     taxCalculationUIExtension,
     UIExtension,
     webPixelUIExtension,
+    flowTriggerDefinitionExtension,
+    flowActionDefinitionExtension,
   ]
   return allLocalTemplates.filter(
     (template) =>
