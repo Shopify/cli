@@ -132,6 +132,66 @@ describe('check', () => {
     expect(errors).toEqual(['The "operations" array must contain at least 1 element(s)'])
   })
 
+  test(`when an operation doesn't have the id property`, async () => {
+    const actions = ['add', 'delete', 'copy', 'move', 'update']
+
+    for (const action of actions) {
+      // Given
+      const script = '/tmp/update_extension.json'
+
+      vi.spyOn(file, 'fileExists').mockResolvedValue(true)
+      vi.spyOn(file, 'readFile').mockResolvedValueOnce(
+        mockedFileContent({
+          ...data(),
+          operations: [
+            {
+              actions: [
+                {
+                  ...operation(action),
+                },
+              ],
+            },
+          ],
+        }),
+      )
+
+      // When
+      // eslint-disable-next-line no-await-in-loop
+      const errors = await checkErrors(script)
+
+      // Then
+      expect(errors).toEqual([`The "operations/0/id" property is required`])
+    }
+  })
+
+  test(`when an operation doesn't have the action property`, async () => {
+    const actions = ['add', 'delete', 'copy', 'move', 'update']
+
+    for (const action of actions) {
+      // Given
+      const script = '/tmp/update_extension.json'
+
+      vi.spyOn(file, 'fileExists').mockResolvedValue(true)
+      vi.spyOn(file, 'readFile').mockResolvedValueOnce(
+        mockedFileContent({
+          ...data(),
+          operations: [
+            {
+              id: 'operation_x',
+            },
+          ],
+        }),
+      )
+
+      // When
+      // eslint-disable-next-line no-await-in-loop
+      const errors = await checkErrors(script)
+
+      // Then
+      expect(errors).toEqual([`The "operations/0/actions" property is required`])
+    }
+  })
+
   test(`when operations contain a step with an invalid file property`, async () => {
     const actions = ['add', 'delete', 'copy', 'move', 'update']
 
@@ -145,7 +205,8 @@ describe('check', () => {
           ...data(),
           operations: [
             {
-              operation_x: [
+              id: 'operation_x',
+              actions: [
                 {
                   ...operation(action),
                   file: 123,
@@ -161,7 +222,7 @@ describe('check', () => {
       const errors = await checkErrors(script)
 
       // Then
-      expect(errors).toEqual([`The "operations/0/operation_x/0" doesn't have the expected attributes`])
+      expect(errors).toEqual([`The "operations/0/actions/0" doesn't have the expected attributes`])
     }
   })
 
@@ -178,7 +239,8 @@ describe('check', () => {
           ...data(),
           operations: [
             {
-              operation_x: [
+              id: 'operation_x',
+              actions: [
                 {
                   ...operation(action),
                   key: 123,
@@ -194,7 +256,7 @@ describe('check', () => {
       const errors = await checkErrors(script)
 
       // Then
-      expect(errors).toEqual([`The "operations/0/operation_x/0" doesn't have the expected attributes`])
+      expect(errors).toEqual([`The "operations/0/actions/0" doesn't have the expected attributes`])
     }
   })
 
@@ -211,7 +273,8 @@ describe('check', () => {
           ...data(),
           operations: [
             {
-              operation_x: [
+              id: 'operation_x',
+              actions: [
                 {
                   ...operation(action),
                   from_key: 123,
@@ -227,7 +290,7 @@ describe('check', () => {
       const errors = await checkErrors(script)
 
       // Then
-      expect(errors).toEqual([`The "operations/0/operation_x/0" doesn't have the expected attributes`])
+      expect(errors).toEqual([`The "operations/0/actions/0" doesn't have the expected attributes`])
     }
   })
 
@@ -244,7 +307,8 @@ describe('check', () => {
           ...data(),
           operations: [
             {
-              operation_x: [
+              id: 'operation_x',
+              actions: [
                 {
                   ...operation(action),
                   action: 'action',
@@ -260,7 +324,7 @@ describe('check', () => {
       const errors = await checkErrors(script)
 
       // Then
-      expect(errors).toEqual([`The "operations/0/operation_x/0" doesn't have the expected attributes`])
+      expect(errors).toEqual([`The "operations/0/actions/0" doesn't have the expected attributes`])
     }
   })
 
@@ -276,7 +340,8 @@ describe('check', () => {
           ...data(),
           operations: [
             {
-              operation_x: [
+              id: 'operation_x',
+              actions: [
                 {
                   action,
                   file: 'file.json',
@@ -294,7 +359,7 @@ describe('check', () => {
       const errors = await checkErrors(script)
 
       // Then
-      expect(errors).toEqual([`The "operations/0/operation_x/0" doesn't have the expected attributes`])
+      expect(errors).toEqual([`The "operations/0/actions/0" doesn't have the expected attributes`])
     }
   })
 
@@ -311,7 +376,8 @@ describe('check', () => {
           ...data(),
           operations: [
             {
-              operation_x: [
+              id: 'operation_x',
+              actions: [
                 {
                   action,
                   file: 'file.json',
@@ -327,7 +393,7 @@ describe('check', () => {
       const errors = await checkErrors(script)
 
       // Then
-      expect(errors).toEqual([`The "operations/0/operation_x/0" doesn't have the expected attributes`])
+      expect(errors).toEqual([`The "operations/0/actions/0" doesn't have the expected attributes`])
     }
   })
 
@@ -364,7 +430,8 @@ describe('check', () => {
           ...data(),
           operations: [
             {
-              operation_x: [
+              id: 'operation_x',
+              actions: [
                 {
                   ...operation(action),
                   extra_property: 'extra_value',
@@ -380,7 +447,7 @@ describe('check', () => {
       const errors = await checkErrors(script)
 
       // Then
-      expect(errors).toEqual([`The "extra_property" at "operations/0/operation_x/0" is not a permitted key`])
+      expect(errors).toEqual([`The "extra_property" at "operations/0/actions/0" is not a permitted key`])
     }
   })
 })
@@ -403,7 +470,8 @@ function data() {
     theme_version: '1.0.0',
     operations: [
       {
-        operation_x: [
+        id: 'operation_x',
+        actions: [
           {
             action: 'move',
             file: 'file.json',
@@ -420,7 +488,8 @@ function data() {
         ],
       },
       {
-        operation_y: [
+        id: 'operation_y',
+        actions: [
           {
             action: 'add',
             file: 'file.json',
