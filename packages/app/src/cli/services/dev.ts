@@ -294,7 +294,13 @@ async function dev(options: DevOptions) {
 }
 
 function isWebType(web: Web, type: WebType): boolean {
-  return web.configuration.type === type
+  if ('type' in web.configuration) {
+    if (web.configuration.type === type) return true
+  }
+  if ('roles' in web.configuration) {
+    if (web.configuration.roles.includes(type)) return true
+  }
+  return false
 }
 
 interface DevWebOptions {
@@ -368,8 +374,16 @@ async function devWeb(options: DevWebOptions, {port, dynamicEnv}: {port?: number
     APP_ENV: 'development',
   }
 
+  const logPrefixParts = ["web"]
+  if ('type' in options.web.configuration) {
+    logPrefixParts.push(options.web.configuration.type)
+  }
+  if ('roles' in options.web.configuration) {
+    logPrefixParts.push(...options.web.configuration.roles)
+  }
+
   return {
-    logPrefix: options.web.configuration.type,
+    logPrefix: logPrefixParts.join('-'),
     customPort: port,
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
       await exec(cmd!, args, {

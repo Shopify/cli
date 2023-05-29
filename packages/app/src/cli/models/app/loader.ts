@@ -371,8 +371,8 @@ export async function loadAppName(appDirectory: string): Promise<string> {
 }
 
 async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'frontend' | undefined> {
-  const backendWebs = webs.filter((web) => web.configuration.type === WebType.Backend)
-  const frontendWebs = webs.filter((web) => web.configuration.type === WebType.Frontend)
+  const backendWebs = webs.filter((web) => isWebType(web, WebType.Backend))
+  const frontendWebs = webs.filter((web) => isWebType(web, WebType.Frontend))
   if (backendWebs.length > 1) {
     outputDebug('Unable to decide project type as multiple web backends')
     return
@@ -398,6 +398,16 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'f
   return undefined
 }
 
+function isWebType(web: Web, type: WebType): boolean {
+  if ('type' in web.configuration) {
+    if (web.configuration.type === type) return true
+  }
+  if ('roles' in web.configuration) {
+    if (web.configuration.roles?.includes(type)) return true
+  }
+  return false
+}
+
 async function logMetadataForLoadedApp(
   app: App,
   loadingStrategy: {
@@ -414,12 +424,12 @@ async function logMetadataForLoadedApp(
 
     const extensionTotalCount = app.allExtensions.length
 
-    const webBackendCount = app.webs.filter((web) => web.configuration.type === WebType.Backend).length
+    const webBackendCount = app.webs.filter((web) => isWebType(web, WebType.Backend)).length
     const webBackendFramework =
       webBackendCount === 1
-        ? app.webs.filter((web) => web.configuration.type === WebType.Backend)[0]?.framework
+        ? app.webs.filter((web) => isWebType(web, WebType.Backend))[0]?.framework
         : undefined
-    const webFrontendCount = app.webs.filter((web) => web.configuration.type === WebType.Frontend).length
+    const webFrontendCount = app.webs.filter((web) => isWebType(web, WebType.Frontend)).length
 
     const extensionsBreakdownMapping: {[key: string]: number} = {}
     for (const extension of app.allExtensions) {
