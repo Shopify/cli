@@ -44,6 +44,6 @@ export default class Console extends ThemeCommand {
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     setTimeout(() => openURL(authUrl), 2000)
 
-    return execCLI2(['theme', 'console'], {adminSession, storefrontToken})
+    return execCLI2(['theme', 'console'], {store, adminToken: adminSession.token, storefrontToken})
   }
 }

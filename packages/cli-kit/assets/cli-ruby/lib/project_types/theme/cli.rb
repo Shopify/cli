@@ -20,6 +20,7 @@ module Theme
     subcommand :Share, "share", Project.project_filepath("commands/share")
     subcommand :LanguageServer, "language-server", Project.project_filepath("commands/language_server")
     subcommand :Console, "console", Project.project_filepath("commands/console")
+    subcommand :Token, "token", Project.project_filepath("commands/token")
   end
   ShopifyCLI::Commands.register("Theme::Command", "theme")
 
