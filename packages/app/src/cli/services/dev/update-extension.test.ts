@@ -67,6 +67,50 @@ describe('updateExtensionDraft()', () => {
     })
   })
 
+  test('updates draft successfully when extension doesnt support esbuild', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configuration = {
+        productionApiBaseUrl: 'url1',
+        benchmarkApiBaseUrl: 'url2',
+        type: 'tax_calculation',
+      } as any
+
+      const mockExtension: UIExtension = await testUIExtension({
+        devUUID: '1',
+        configuration,
+        directory: tmpDir,
+      })
+
+      await mkdir(joinPath(tmpDir, 'dist'))
+
+      vi.mocked(partnersRequest).mockResolvedValue({
+        extensionUpdateDraft: {
+          userErrors: [],
+        },
+      })
+
+      await updateExtensionDraft({
+        extension: mockExtension,
+        token,
+        apiKey,
+        registrationId,
+        stderr,
+      })
+
+      expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
+        apiKey,
+        context: undefined,
+        registrationId,
+        config: '{"production_api_base_url":"url1","benchmark_api_base_url":"url2"}',
+      })
+
+      // Check if outputDebug is called with success message
+      expect(outputDebug).toHaveBeenCalledWith(
+        `Drafts updated successfully for extension: ${mockExtension.localIdentifier}`,
+      )
+    })
+  })
+
   test('handles user errors with stderr message', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const mockExtension: UIExtension = await testUIExtension({

@@ -27,9 +27,12 @@ export async function updateExtensionDraft({
   registrationId,
   stderr,
 }: UpdateExtensionDraftOptions) {
-  const content = await readFile(extension.outputBundlePath)
-  if (!content) return
-  const encodedFile = Buffer.from(content).toString('base64')
+  let encodedFile: string | undefined
+  if (extension.features.includes('esbuild')) {
+    const content = await readFile(extension.outputBundlePath)
+    if (!content) return
+    encodedFile = Buffer.from(content).toString('base64')
+  }
 
   const extensionInput: ExtensionUpdateDraftInput = {
     apiKey,

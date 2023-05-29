@@ -128,7 +128,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get isDraftable() {
-    return !this.isPreviewable && !this.isThemeExtension
+    return !this.isPreviewable && !this.isThemeExtension && !this.isFunctionExtension
   }
 
   get features(): ExtensionFeature[] {

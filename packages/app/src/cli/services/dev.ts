@@ -14,7 +14,7 @@ import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
-import {setupConfigWatcher, setupNonPreviewableExtensionBundler} from './dev/extension/bundler.js'
+import {setupConfigWatcher, setupDraftableExtensionBundler} from './dev/extension/bundler.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -110,7 +110,8 @@ async function dev(options: DevOptions) {
 
   const frontendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Frontend)
   const backendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Backend)
-  const webhooksPath = backendConfig?.configuration?.webhooksPath || '/api/webhooks'
+  const webhooksPath =
+    backendConfig?.configuration?.webhooksPath || frontendConfig?.configuration?.webhooksPath || '/api/webhooks'
   const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated
 
   const initiateUpdateUrls = (frontendConfig || backendConfig) && options.update
@@ -167,7 +168,7 @@ async function dev(options: DevOptions) {
   }
 
   const previewableExtensions = localApp.allExtensions.filter((ext) => ext.isPreviewable)
-  const nonPreviewableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable)
+  const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable)
 
   if (previewableExtensions.length > 0) {
     previewUrl = `${proxyUrl}/extensions/dev-console`
@@ -191,7 +192,7 @@ async function dev(options: DevOptions) {
 
   const additionalProcesses: OutputProcess[] = []
 
-  if (nonPreviewableExtensions.length > 0) {
+  if (draftableExtensions.length > 0) {
     const {extensionIds: remoteExtensions} = await ensureDeploymentIdsPresence({
       app: localApp,
       appId: apiKey,
@@ -202,12 +203,12 @@ async function dev(options: DevOptions) {
     })
 
     additionalProcesses.push(
-      devNonPreviewableExtensionTarget({
+      devDraftableExtensionTarget({
         app: localApp,
         apiKey,
         url: proxyUrl,
         token,
-        extensions: nonPreviewableExtensions,
+        extensions: draftableExtensions,
         remoteExtensions,
         specifications,
       }),
@@ -259,10 +260,13 @@ async function dev(options: DevOptions) {
     additionalProcesses.push({
       prefix: 'webhooks',
       action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+        // If we have a backend, use that port, otherwise use the frontend port
+        const deliveryPort = backendConfig ? backendPort : frontendPort
+
         await sendUninstallWebhookToAppServer({
           stdout,
           token,
-          address: `http://localhost:${backendOptions.backendPort}${webhooksPath}`,
+          address: `http://localhost:${deliveryPort}${webhooksPath}`,
           sharedSecret: backendOptions.apiSecret,
           storeFqdn,
         })
@@ -433,7 +437,7 @@ async function devUIExtensionsTarget({
   }
 }
 
-interface DevNonPreviewableExtensionsOptions {
+interface DevDraftableExtensionsOptions {
   app: AppInterface
   apiKey: string
   url: string
@@ -445,7 +449,7 @@ interface DevNonPreviewableExtensionsOptions {
   specifications: ExtensionSpecification[]
 }
 
-export function devNonPreviewableExtensionTarget({
+export function devDraftableExtensionTarget({
   extensions,
   app,
   url,
@@ -453,7 +457,7 @@ export function devNonPreviewableExtensionTarget({
   token,
   remoteExtensions,
   specifications,
-}: DevNonPreviewableExtensionsOptions) {
+}: DevDraftableExtensionsOptions) {
   return {
     prefix: 'extensions',
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
@@ -463,7 +467,6 @@ export function devNonPreviewableExtensionTarget({
             const registrationId = remoteExtensions[extension.localIdentifier]
             if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
 
-            // All non-previewable extensions have config file to watch
             const actions = [
               setupConfigWatcher({extension, token, apiKey, registrationId, stdout, stderr, signal, specifications}),
             ]
@@ -471,7 +474,7 @@ export function devNonPreviewableExtensionTarget({
             // Only extensions with esbuild feature should be whatched using esbuild
             if (extension.features.includes('esbuild')) {
               actions.push(
-                setupNonPreviewableExtensionBundler({
+                setupDraftableExtensionBundler({
                   extension,
                   app,
                   url,

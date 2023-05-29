@@ -16,11 +16,13 @@ import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export async function fetchExtensionTemplates(
   token: string,
+  apiKey: string,
   availableSpecifications: string[],
 ): Promise<ExtensionTemplate[]> {
   const remoteTemplates: RemoteTemplateSpecificationsQuerySchema = await partnersRequest(
     RemoteTemplateSpecificationsQuery,
     token,
+    {apiKey},
   )
   const localTemplates = localExtensionTemplates(availableSpecifications)
   return remoteTemplates.templateSpecifications.concat(localTemplates)

@@ -106,7 +106,8 @@ export function createRuntimeMetadataContainer<
 // We want to track anything that ends up getting sent to monorail as `cmd_all_*` and
 // `cmd_app_*`
 type CmdFieldsFromMonorail = PickByPrefix<MonorailEventPublic, 'cmd_all_'> &
-  PickByPrefix<MonorailEventPublic, 'cmd_app_'>
+  PickByPrefix<MonorailEventPublic, 'cmd_app_'> &
+  PickByPrefix<MonorailEventPublic, 'cmd_create_app_'>
 
 const coreData = createRuntimeMetadataContainer<
   CmdFieldsFromMonorail,
