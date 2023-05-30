@@ -1,7 +1,7 @@
 import {PartnersURLs} from './urls.js'
 import {AppInterface} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {ExtensionInstance} from '../../models/extensions/specification.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {renderConcurrent, RenderConcurrentOptions, renderInfo} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'

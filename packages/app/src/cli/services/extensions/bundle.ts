@@ -1,5 +1,5 @@
 import {ExtensionBuildOptions} from '../build/extension.js'
-import {ExtensionInstance} from '../../models/extensions/specification.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {context as esContext, BuildResult, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {copyFile, glob} from '@shopify/cli-kit/node/fs'
