@@ -40,7 +40,7 @@ export function outputExtensionsMessages(app: AppInterface) {
   outputThemeExtensionsMessage(app.extensions.theme)
 }
 
-export function renderDevConsole(renderConcurrentOptions: RenderConcurrentOptions, previewUrl: string | undefined) {
+export function renderDev(renderConcurrentOptions: RenderConcurrentOptions, previewUrl: string | undefined) {
   let options = renderConcurrentOptions
 
   if (previewUrl) {
