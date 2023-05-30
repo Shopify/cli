@@ -22,6 +22,7 @@ export interface Extension {
   externalType: string
   graphQLType: string
   publishURL(options: {orgId: string; appId: string; extensionId?: string}): Promise<string>
+  deployConfig(): Promise<{[key: string]: unknown} | undefined>
   features: ExtensionFeature[]
 }
 
@@ -52,7 +53,6 @@ export type UIExtension<TConfiguration extends BaseConfigType = BaseConfigType> 
   validate(): Promise<Result<unknown, string>>
   preDeployValidation(): Promise<void>
   buildValidation(): Promise<void>
-  deployConfig(): Promise<{[key: string]: unknown}>
   previewMessage(url: string, storeFqdn: string): TokenizedString | undefined
   shouldFetchCartUrl(): boolean
   hasExtensionPointTarget(target: string): boolean

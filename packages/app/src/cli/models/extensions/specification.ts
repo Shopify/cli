@@ -17,7 +17,6 @@ import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
-import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 
 export type ExtensionFeature = 'ui_preview' | 'function' | 'theme' | 'bundling' | 'cart_url' | 'esbuild'
 
@@ -41,7 +40,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
   getBundleExtensionStdinContent?: (config: TConfiguration) => string
-  deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
+  deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown} | undefined>
   validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
@@ -162,8 +161,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  deployConfig(): Promise<{[key: string]: unknown}> {
-    return this.specification.deployConfig?.(this.configuration, this.directory) ?? Promise.resolve({})
+  deployConfig(): Promise<{[key: string]: unknown} | undefined> {
+    return this.specification.deployConfig?.(this.configuration, this.directory) ?? Promise.resolve(undefined)
   }
 
   validate() {
@@ -237,14 +236,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get functionExtension(): FunctionExtension | undefined {
-    if (!this.features.includes('function')) return undefined
+    if (!this.isFunctionExtension) return undefined
     return this as unknown as FunctionExtension
   }
 
   async buildStep(options: ExtensionBuildOptions) {
-    if (this.features.includes('theme')) {
+    if (this.isThemeExtension) {
       return buildThemeExtension(this, options)
-    } else if (this.features.includes('function')) {
+    } else if (this.isFunctionExtension) {
       return buildFunctionExtension(this.functionExtension!, options)
     } else if (this.features.includes('esbuild')) {
       return buildUIExtension(this, options)
@@ -252,44 +251,34 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async bundleStep(options: ExtensionBuildOptions, identifiers: Identifiers, bundleDirectory: string) {
-    if (!this.features.includes('bundling')) return
     const extensionId = identifiers.extensions[this.localIdentifier]!
-    if (this.features.includes('theme')) {
-      this.outputBundlePath = joinPath(bundleDirectory, extensionId)
-      return bundleThemeExtension(this, options)
-    } else if (this.features.includes('function')) {
-      return buildFunctionExtension(this.functionExtension!, options)
-    } else if (this.features.includes('esbuild')) {
-      this.outputBundlePath = joinPath(bundleDirectory, extensionId, 'dist/main.js')
-      return buildUIExtension(this, options)
-    }
-  }
-
-  async bundleConfig({
-    identifiers,
-    token,
-    apiKey,
-    unifiedAppDeployment,
-  }: {
-    identifiers: Identifiers
-    token: string
-    apiKey: string
-    unifiedAppDeployment: boolean
-  }) {
-    let config = ''
+    const outputFile = this.features.includes('esbuild') ? 'dist/main.js' : ''
+    this.outputBundlePath = joinPath(bundleDirectory, extensionId, outputFile)
+    await this.buildStep(options)
 
     if (this.isThemeExtension) {
-      if (!useThemebundling()) return undefined
-      config = '{"theme_extension": {"files": {}}}'
-    } else if (this.isFunctionExtension) {
-      if (!unifiedAppDeployment) return undefined
-      const {moduleId} = await uploadWasmBlob(this.functionExtension!, identifiers.app, token)
-      config = JSON.stringify(await functionConfiguration(this.functionExtension!, moduleId, apiKey))
-    } else {
-      config = JSON.stringify(await this.deployConfig())
+      await bundleThemeExtension(this, options)
     }
-    return {uuid: identifiers.extensions[this.localIdentifier]!, config, context: ''}
   }
+
+  async bundleConfig({identifiers, token, apiKey, unifiedAppDeployment}: ExtensionBundleConfigOptions) {
+    let configValue = await this.deployConfig()
+
+    if (this.isFunctionExtension && unifiedAppDeployment) {
+      const {moduleId} = await uploadWasmBlob(this.functionExtension!, identifiers.app, token)
+      configValue = await functionConfiguration(this.functionExtension!, moduleId, apiKey)
+    }
+
+    if (!configValue) return undefined
+    return {uuid: identifiers.extensions[this.localIdentifier]!, config: JSON.stringify(configValue), context: ''}
+  }
+}
+
+export interface ExtensionBundleConfigOptions {
+  identifiers: Identifiers
+  token: string
+  apiKey: string
+  unifiedAppDeployment: boolean
 }
 
 /**
