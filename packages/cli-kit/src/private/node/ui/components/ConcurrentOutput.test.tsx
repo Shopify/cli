@@ -239,6 +239,8 @@ describe('ConcurrentOutput', () => {
       "0000-00-00 00:00:00 │ backend │ first backend message
       0000-00-00 00:00:00 │ backend │ second backend message
       0000-00-00 00:00:00 │ backend │ third backend message
+
+      Preview URL: https://shopify.com
       "
     `)
 
@@ -286,11 +288,13 @@ describe('ConcurrentOutput', () => {
       "0000-00-00 00:00:00 │ backend │ first backend message
       0000-00-00 00:00:00 │ backend │ second backend message
       0000-00-00 00:00:00 │ backend │ third backend message
+
+      Preview URL: https://shopify.com
       "
     `)
   })
 
-  test("doesn't render the footer when the processes resolve", async () => {
+  test("doesn't render the shortcuts when the processes resolve", async () => {
     // Given
     const backendProcess = {
       prefix: 'backend',
@@ -329,6 +333,8 @@ describe('ConcurrentOutput', () => {
       "0000-00-00 00:00:00 │ backend │ first backend message
       0000-00-00 00:00:00 │ backend │ second backend message
       0000-00-00 00:00:00 │ backend │ third backend message
+
+      Preview URL: https://shopify.com
       "
     `)
   })

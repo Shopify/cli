@@ -3,8 +3,9 @@ import {AppInterface} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/specification.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {renderConcurrent, RenderConcurrentOptions, renderInfo} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {openURL} from '@shopify/cli-kit/node/system'
 
 export async function outputUpdateURLsResult(
   updated: boolean,
@@ -37,6 +38,38 @@ export async function outputUpdateURLsResult(
 export function outputExtensionsMessages(app: AppInterface) {
   outputFunctionsMessage(app.allExtensions.filter((ext) => ext.isFunctionExtension))
   outputThemeExtensionsMessage(app.allExtensions.filter((ext) => ext.isThemeExtension))
+}
+
+export function renderDev(renderConcurrentOptions: RenderConcurrentOptions, previewUrl: string | undefined) {
+  let options = renderConcurrentOptions
+
+  if (previewUrl) {
+    options = {
+      ...options,
+      onInput: (input, _key, exit) => {
+        if (input === 'p' && previewUrl) {
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          openURL(previewUrl)
+        } else if (input === 'q') {
+          exit()
+        }
+      },
+      footer: {
+        shortcuts: [
+          {
+            key: 'p',
+            action: 'preview in your browser',
+          },
+          {
+            key: 'q',
+            action: 'quit',
+          },
+        ],
+        subTitle: `Preview URL: ${previewUrl}`,
+      },
+    }
+  }
+  return renderConcurrent(options)
 }
 
 function outputFunctionsMessage(extensions: ExtensionInstance[]) {
