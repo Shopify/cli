@@ -149,6 +149,8 @@ async function requestAppToken(
     ...(api === 'admin' && {destination: `https://${store}/admin`}),
   }
 
+  console.log(params)
+
   let identifier = appId
   if (api === 'admin' && store) {
     identifier = `${store}-${appId}`

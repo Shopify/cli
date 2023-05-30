@@ -83,7 +83,7 @@ describe('exchange code for identity token', () => {
 })
 
 describe('exchange identity token for application tokens', () => {
-  const scopes = {admin: [], partners: [], storefront: []}
+  const scopes = {admin: [], partners: [], storefront: [], businessPlatform: []}
 
   test('returns tokens for all APIs if a store is passed', async () => {
     // Given
