@@ -33,6 +33,8 @@ function defaultApiScopes(api: API): string[] {
       return ['devtools']
     case 'partners':
       return ['cli']
+    case 'business-platform':
+      return ['destinations']
     default:
       throw new BugError(`Unknown API: ${api}`)
   }
@@ -50,6 +52,8 @@ function scopeTransform(scope: string): string {
       return 'https://api.shopify.com/auth/partners.app.cli.access'
     case 'devtools':
       return 'https://api.shopify.com/auth/shop.storefront-renderer.devtools'
+    case 'destinations':
+      return 'https://api.shopify.com/auth/destinations.readonly'
     default:
       return scope
   }

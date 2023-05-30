@@ -54,9 +54,6 @@ export function applicationId(api: API): string {
       } else {
         return 'ace6dc89-b526-456d-a942-4b8ef6acda4b'
       }
-
-      // return '32ff8ee5-82b8-4d93-9f8a-c6997cefb7dc'
-      // return 'ace6dc89-b526-456d-a942-4b8ef6acda4b'
     }
     default:
       throw new BugError(`Application id for API of type: ${api}`)
