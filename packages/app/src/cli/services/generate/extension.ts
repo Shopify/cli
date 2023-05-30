@@ -147,23 +147,32 @@ async function uiExtensionInit({
         const activeDashboardExtensions = await getActiveDashboardExtensions({app, apiKey})
         console.log(activeDashboardExtensions)
 
+        const promises = []
         if (activeDashboardExtensions.length > 0) {
-          for await (const extension of activeDashboardExtensions) {
+          for (const extension of activeDashboardExtensions) {
             if (extension === undefined) continue
             const srcFileExtension = getSrcFileExtension(extensionFlavor ?? 'vanilla-js')
             const extensionConfig = JSON.parse(extension.activeVersion.config)
             console.log('got extension config', extensionConfig)
 
-            await recursiveLiquidTemplateCopy(templateDirectory, extensionDirectory, {
-              srcFileExtension,
-              flavor: extensionFlavor ?? '',
-              type: specification.identifier,
-              name,
-              ...extensionConfig,
-            })
+            promises.push(
+              recursiveLiquidTemplateCopy(templateDirectory, extensionDirectory, {
+                srcFileExtension,
+                flavor: extensionFlavor ?? '',
+                type: specification.identifier,
+                name,
+                ...extensionConfig,
+              }),
+            )
           }
         }
-        console.log('done')
+        Promise.all(promises)
+          .then((results) => {
+            console.log('done', results)
+          })
+          .catch((err) => {
+            console.log('error', err)
+          })
         // if (extensionFlavor) {
         //   await changeIndexFileExtension(extensionDirectory, srcFileExtension)
         //   await removeUnwantedTemplateFilesPerFlavor(extensionDirectory, extensionFlavor)

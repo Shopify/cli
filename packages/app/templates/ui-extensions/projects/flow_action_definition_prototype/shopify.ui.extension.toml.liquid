@@ -5,22 +5,22 @@ type = "{{type}}"
 title = "{{title}}"
 description = "{{description}}"
 url = "{{url}}"
-{{% if validationUrl %}}
+{% if validationUrl %}
 validation_url = "{{validationUrl}}"
-{{% endif %}}
-{{% if customConfigurationPageUrl %}}
+{% endif %}
+{% if customConfigurationPageUrl %}
 custom_configuration_page_url = "{{customConfigurationPageUrl}}"
-{{% endif %}}
-{{% if customConfigurationPagePreviewUrl %}}
+{% endif %}
+{% if customConfigurationPagePreviewUrl %}
 custom_configuration_page_preview_url = "{{customConfigurationPagePreviewUrl}}"
-{{% endif %}}
+{% endif %}
 
-{{% for field in fields %}}
+{% for field in fields %}
 [[task.fields]]
-name = {{field.name}}
-label = {{field.label}}
-description = {{field.description}}
+name = "{{field.name}}"
+label = "{{field.label}}"
+description = "{{field.description}}"
 required = {{field.required}}
-id = {{field.id}}
-uiType = {{field.uiType}}
-{{% endfor %}}
+id = "{{field.id}}"
+uiType = "{{field.uiType}}"
+{% endfor %}
