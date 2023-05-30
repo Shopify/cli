@@ -11,7 +11,6 @@ import React, {ReactElement, useCallback, useLayoutEffect, useRef, useState} fro
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
 import figures from 'figures'
 import ansiEscapes from 'ansi-escapes'
-import {uniqBy} from '@shopify/cli-kit/common/array'
 
 export interface SearchResults<T> {
   data: SelectItem<T>[]
@@ -60,12 +59,7 @@ function AutocompletePrompt<T>({
   const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [selectInputHeight, setSelectInputHeight] = useState(0)
-  const [limit, setLimit] = useState(searchResults.length)
-  const numberOfGroups = uniqBy(
-    searchResults.filter((choice) => choice.group),
-    'group',
-  ).length
-  const getAvailableLines = () => stdout.rows - (wrapperHeight - selectInputHeight) - 4
+  const getAvailableLines = () => stdout.rows - (wrapperHeight - selectInputHeight) - 5
   const [availableLines, setAvailableLines] = useState(getAvailableLines())
 
   const paginatedSearch = useCallback(
@@ -93,25 +87,8 @@ function AutocompletePrompt<T>({
 
   useLayoutEffect(() => {
     function onResize() {
-      const availableLines = getAvailableLines()
-      setAvailableLines(availableLines)
-
-      // Calculate a rough estimate of the limit needed based on the space available.
-      // Always ensure at least 2 items are displayed.
-
-      // We lose a line every time a new group appears past the first.
-      // If we have many groups, a maximum of availableLines / 2 groups can appear.
-      // With few groups, a maximum of numberOfGroups groups can appear.
-      // If there are no groups, we don't lose any lines.
-      const maxLinesLostToGroups = Math.max(0, Math.min(availableLines / 2, numberOfGroups) - 1)
-
-      const newLimit = Math.max(2, availableLines - maxLinesLostToGroups)
-
-      if (newLimit < limit) {
-        stdout.write(ansiEscapes.clearTerminal)
-      }
-
-      setLimit(Math.min(Math.floor(newLimit), searchResults.length))
+      const newAvailableLines = getAvailableLines()
+      setAvailableLines(newAvailableLines)
     }
 
     onResize()
@@ -120,7 +97,7 @@ function AutocompletePrompt<T>({
     return () => {
       stdout.off('resize', onResize)
     }
-  }, [wrapperHeight, selectInputHeight, searchResults.length, stdout, limit, numberOfGroups])
+  }, [wrapperHeight, selectInputHeight, stdout])
 
   const {isAborted} = useAbortSignal(abortSignal)
 
@@ -239,7 +216,6 @@ function AutocompletePrompt<T>({
             hasMorePages={hasMorePages}
             morePagesMessage="Find what you're looking for by typing its name."
             ref={inputRef}
-            limit={limit}
             availableLines={availableLines}
           />
         </Box>

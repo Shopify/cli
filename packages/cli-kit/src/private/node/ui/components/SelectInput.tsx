@@ -1,10 +1,11 @@
 import {isEqual} from '../../../../public/common/lang.js'
 import {debounce} from '../../../../public/common/function.js'
 import React, {useState, useEffect, useRef, useCallback, forwardRef} from 'react'
-import {Box, Key, useInput, Text, DOMElement} from 'ink'
+import {Box, Key, useInput, useStdout, Text, DOMElement} from 'ink'
 import chalk from 'chalk'
 import figures from 'figures'
 import {createRequire} from 'module'
+import ansiEscapes from 'ansi-escapes'
 
 const require = createRequire(import.meta.url)
 
@@ -36,8 +37,7 @@ export interface SelectInputProps<T> {
   hasMorePages?: boolean
   morePagesMessage?: string
   infoMessage?: string
-  limit?: number
-  availableLines?: number
+  availableLines: number
 }
 
 export interface Item<T> {
@@ -96,7 +96,7 @@ function Item<T>({
   const isLastInGroup = (typeof nextItem === 'undefined' || item.group !== nextItem.group) && hasAnyGroup
 
   const maxGroupWidth = Math.max(...allItems.map((item) => item.group?.length || 0))
-  const leftSideWidth = Math.min(maxGroupWidth, 28) + 5
+  const leftSideWidth = Math.min(maxGroupWidth, 28) + 8
   const rightSideWidth = Math.max(...allItems.map((item) => item.label.length)) + 3
 
 
@@ -139,26 +139,28 @@ function SelectInputInner<T>(
     hasMorePages = false,
     morePagesMessage,
     infoMessage,
-    limit,
     availableLines,
   }: SelectInputProps<T>,
   ref: React.ForwardedRef<DOMElement>,
 ): JSX.Element | null {
-  availableLines = availableLines || initialItems.length
   const sortBy = require('lodash/sortBy')
   const hasAnyGroup = initialItems.some((item) => typeof item.group !== 'undefined')
-  const numberOfGroups = new Set(initialItems.map((item) => item.group)).size
   const items = sortBy(initialItems, 'group') as Item<T>[]
   const itemsWithKeys = items.map((item, index) => ({
     ...item,
     key: item.key ?? (index + 1).toString(),
   })) as ItemWithKey<T>[]
+
+  const numberOfGroups = new Set(items.map((item) => item.group)).size
+  const limit = calculateLimit(availableLines, numberOfGroups, items.length)
+  const hasLimit = items.length > limit
+
   const defaultValueIndex = defaultValue ? items.findIndex((item) => item.value === defaultValue.value) : -1
   const initialIndex = defaultValueIndex === -1 ? 0 : defaultValueIndex
-  const hasLimit = typeof limit !== 'undefined' && items.length > limit
   const inputStack = useRef<string | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(initialIndex)
   const [rotateIndex, setRotateIndex] = useState(0)
+
   const slicedItemsWithKeys = hasLimit ? rotateArray(itemsWithKeys, rotateIndex) : itemsWithKeys
   const previousItems = useRef<Item<T>[] | undefined>(undefined)
 
@@ -219,7 +221,7 @@ function SelectInputInner<T>(
     } else if (key.downArrow) {
       const atLastIndex = selectedIndex === (hasLimit ? limit : items.length) - 1
       const nextIndex = hasLimit ? selectedIndex : 0
-      const shouldRotate = hasLimit && selectedIndex >= availableLines! / 2 - 1
+      const shouldRotate = hasLimit && selectedIndex >= availableLines / 2 - 1
       const nextRotateIndex = shouldRotate ? rotateIndex - 1 : rotateIndex
 
       const nextSelectedIndex = (shouldRotate || atLastIndex) ? nextIndex : selectedIndex + 1
@@ -325,6 +327,23 @@ function SelectInputInner<T>(
       </Box>
     )
   }
+}
+
+const calculateLimit = function(availableLines: number, numGroups: number, numItems: number) {
+  // Calculate a rough estimate of the limit needed based on the space available.
+  // Always ensure at least 2 items are displayed.
+
+  // We lose a line every time a new group appears past the first.
+  // If we have many groups, a maximum of availableLines / 2 groups can appear.
+  // With few groups, a maximum of numberOfGroups groups can appear.
+  // If there are no groups, we don't lose any lines.
+  const maxLinesLostToGroups = Math.max(0, Math.min(availableLines / 2, numGroups) - 1)
+
+  const newLimit = Math.max(2, availableLines - maxLinesLostToGroups)
+
+  useStdout().write(ansiEscapes.clearTerminal)
+
+  return Math.min(Math.floor(newLimit), numItems)
 }
 
 export const SelectInput = forwardRef(SelectInputInner)

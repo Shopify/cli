@@ -25,7 +25,7 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} availableLines={10} />)
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, ARROW_UP)
@@ -58,7 +58,7 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} availableLines={10} />)
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
@@ -91,7 +91,7 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} availableLines={10} />)
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, '2')
@@ -124,7 +124,7 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} availableLines={10} />)
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, '1', '0')
@@ -156,7 +156,7 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} availableLines={10} />)
 
     await waitForInputsToBeReady()
     // nothing changes when pressing a key that doesn't exist
@@ -191,7 +191,7 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} availableLines={10} />)
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, 't')
@@ -223,7 +223,7 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} availableLines={10} />)
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
@@ -256,7 +256,7 @@ describe('SelectInput', async () => {
       {label: 'tenth', value: 'tenth'},
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} availableLines={10} />)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   [1mAutomations[22m
@@ -344,7 +344,7 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={onChange} enableShortcuts={false} />)
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} enableShortcuts={false} availableLines={10} />)
 
     await waitForInputsToBeReady()
     // input doesn't change on shortcut pressed
@@ -378,7 +378,7 @@ describe('SelectInput', async () => {
     ]
 
     const renderInstance = render(
-      <SelectInput items={items} onChange={() => {}} defaultValue={{label: 'Second', value: 'second'}} />,
+      <SelectInput items={items} onChange={() => {}} defaultValue={{label: 'Second', value: 'second'}} availableLines={10} />,
     )
 
     await waitForInputsToBeReady()
@@ -414,6 +414,7 @@ describe('SelectInput', async () => {
         onChange={() => {}}
         morePagesMessage="Keep scrolling to see more items"
         hasMorePages
+        availableLines={10}
       />,
     )
 
@@ -443,7 +444,7 @@ describe('SelectInput', async () => {
       {label: 'tenth', value: 'tenth'},
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={() => {}} limit={5} />)
+    const renderInstance = render(<SelectInput items={items} onChange={() => {}} availableLines={8} />)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   [1mAutomations[22m
