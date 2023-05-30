@@ -22,8 +22,8 @@ const spec = createExtensionSpecification({
     )
     return outputContent`Follow the ${link} by deploying your work as a draft`
   },
-  deployConfig: async (config, _): Promise<{[key: string]: unknown}> => {
-    if (useThemebundling()) return {}
+  deployConfig: async () => {
+    if (useThemebundling()) return undefined
     return {theme_extension: {files: {}}}
   },
 })

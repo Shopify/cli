@@ -69,20 +69,18 @@ export async function bundleThemeExtension(
   extension: ExtensionInstance,
   options: ExtensionBuildOptions,
 ): Promise<void> {
-  if (useThemebundling()) {
-    options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
-    const files = await glob(joinPath(extension.directory, '/**/*'))
+  options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
+  const files = await glob(joinPath(extension.directory, '/**/*'))
 
-    await Promise.all(
-      files.map(function (filepath) {
-        if (!(filepath.includes('.gitkeep') || filepath.includes('.toml'))) {
-          const relativePathName = relativePath(extension.directory, filepath)
-          const outputFile = joinPath(extension.outputBundlePath, relativePathName)
-          return copyFile(filepath, outputFile)
-        }
-      }),
-    )
-  }
+  await Promise.all(
+    files.map(function (filepath) {
+      if (!(filepath.includes('.gitkeep') || filepath.includes('.toml'))) {
+        const relativePathName = relativePath(extension.directory, filepath)
+        const outputFile = joinPath(extension.outputBundlePath, relativePathName)
+        return copyFile(filepath, outputFile)
+      }
+    }),
+  )
 }
 
 function onResult(result: Awaited<ReturnType<typeof esBuild>> | null, options: BundleOptions) {

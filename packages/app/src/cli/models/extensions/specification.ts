@@ -17,6 +17,8 @@ import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
+import {useThemebundling} from '@shopify/cli-kit/node/context/local.js'
+import {touchFile, writeFile} from '@shopify/cli-kit/node/fs.js'
 
 export type ExtensionFeature = 'ui_preview' | 'function' | 'theme' | 'bundling' | 'cart_url' | 'esbuild'
 
@@ -248,6 +250,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     } else if (this.features.includes('esbuild')) {
       return buildUIExtension(this, options)
     }
+
+    // Workaround for tax_calculations because they remote spec NEEDS a valid js file to be included.
+    if (this.type === 'tax_calculation') {
+      await touchFile(this.outputBundlePath)
+      await writeFile(this.outputBundlePath, '(()=>{})();')
+    }
   }
 
   async bundleStep(options: ExtensionBuildOptions, identifiers: Identifiers, bundleDirectory: string) {
@@ -256,15 +264,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.outputBundlePath = joinPath(bundleDirectory, extensionId, outputFile)
     await this.buildStep(options)
 
-    if (this.isThemeExtension) {
+    if (this.isThemeExtension && useThemebundling()) {
       await bundleThemeExtension(this, options)
     }
   }
 
-  async bundleConfig({identifiers, token, apiKey, unifiedAppDeployment}: ExtensionBundleConfigOptions) {
+  async bundleConfig({identifiers, token, apiKey, unifiedDeployment}: ExtensionBundleConfigOptions) {
     let configValue = await this.deployConfig()
 
-    if (this.isFunctionExtension && unifiedAppDeployment) {
+    if (this.isFunctionExtension && unifiedDeployment) {
       const {moduleId} = await uploadWasmBlob(this.functionExtension!, identifiers.app, token)
       configValue = await functionConfiguration(this.functionExtension!, moduleId, apiKey)
     }
@@ -278,7 +286,7 @@ export interface ExtensionBundleConfigOptions {
   identifiers: Identifiers
   token: string
   apiKey: string
-  unifiedAppDeployment: boolean
+  unifiedDeployment: boolean
 }
 
 /**

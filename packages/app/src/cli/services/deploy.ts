@@ -59,7 +59,7 @@ export async function deploy(options: DeployOptions) {
   let registrations: AllAppExtensionRegistrationsQuerySchema
   let validationErrors: UploadExtensionValidationError[] = []
   let deploymentId: number
-  const unifiedAppDeployment = partnersApp.betas?.unifiedAppDeployment ?? false
+  const unifiedDeployment = partnersApp.betas?.unifiedAppDeployment ?? false
 
   await inTemporaryDirectory(async (tmpDir) => {
     try {
@@ -79,15 +79,15 @@ export async function deploy(options: DeployOptions) {
           },
         },
         {
-          title: unifiedAppDeployment ? 'Creating deployment' : 'Pushing your code to Shopify',
+          title: unifiedDeployment ? 'Creating deployment' : 'Pushing your code to Shopify',
           task: async () => {
             const extensions = await Promise.all(
               options.app.allExtensions.flatMap((ext) =>
-                ext.bundleConfig({identifiers, token, apiKey, unifiedAppDeployment}),
+                ext.bundleConfig({identifiers, token, apiKey, unifiedDeployment}),
               ),
             )
 
-            if (bundle || unifiedAppDeployment) {
+            if (bundle || unifiedDeployment) {
               ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
                 apiKey,
                 bundlePath,
@@ -102,7 +102,7 @@ export async function deploy(options: DeployOptions) {
               await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, token})
             }
 
-            if (!unifiedAppDeployment) {
+            if (!unifiedDeployment) {
               const functions = options.app.allExtensions.filter((ext) => ext.isFunctionExtension)
               identifiers = await uploadFunctionExtensions(functions as unknown as FunctionExtension[], {
                 identifiers,
@@ -126,7 +126,7 @@ export async function deploy(options: DeployOptions) {
         registrations,
         validationErrors,
         deploymentId,
-        unifiedDeployment: Boolean(unifiedAppDeployment),
+        unifiedDeployment,
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
