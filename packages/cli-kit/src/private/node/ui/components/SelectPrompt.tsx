@@ -43,6 +43,13 @@ function SelectPrompt<T>({
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [selectInputHeight, setSelectInputHeight] = useState(0)
   const [limit, setLimit] = useState(choices.length)
+  const numberOfGroups = uniqBy(
+    choices.filter((choice) => choice.group),
+    'group',
+  ).length
+  const getAvailableLines = () => stdout.rows - (wrapperHeight - selectInputHeight) - 4
+  const [availableLines, setAvailableLines] = useState(getAvailableLines())
+
 
   const wrapperRef = useCallback((node) => {
     if (node !== null) {
@@ -60,14 +67,15 @@ function SelectPrompt<T>({
 
   useLayoutEffect(() => {
     function onResize() {
-      const availableSpace = stdout.rows - (wrapperHeight - selectInputHeight)
       // rough estimate of the limit needed based on the space available
-      const newLimit = Math.max(2, availableSpace - 4)
+      const maxVisibleGroups = Math.min(availableLines / 2, numberOfGroups)
+      const newLimit = Math.max(2, availableLines - maxVisibleGroups)
 
       if (newLimit < limit) {
         stdout.write(ansiEscapes.clearTerminal)
       }
 
+      setAvailableLines(getAvailableLines())
       setLimit(Math.min(newLimit, choices.length))
     }
 
@@ -77,7 +85,7 @@ function SelectPrompt<T>({
     return () => {
       stdout.off('resize', onResize)
     }
-  }, [wrapperHeight, selectInputHeight, choices.length, stdout, limit])
+  }, [wrapperHeight, selectInputHeight, choices.length, stdout, limit, numberOfGroups])
 
   const submitAnswer = useCallback(
     (answer: SelectItem<T>) => {
@@ -140,6 +148,7 @@ function SelectPrompt<T>({
               }
             }}
             limit={limit}
+            availableLines={availableLines}
             ref={inputRef}
           />
         </Box>

@@ -37,6 +37,7 @@ export interface SelectInputProps<T> {
   morePagesMessage?: string
   infoMessage?: string
   limit?: number
+  availableLines?: number
 }
 
 export interface Item<T> {
@@ -98,11 +99,13 @@ function Item<T>({
   const leftSideWidth = Math.min(maxGroupWidth, 28) + 5
   const rightSideWidth = Math.max(...allItems.map((item) => item.label.length)) + 3
 
+
   return (
-    <Box key={item.key} flexDirection="row" minHeight={1} width={leftSideWidth + rightSideWidth + 4}>
+    <Box key={item.key} flexDirection="row" minHeight={isLastInGroup ? 2 : 1} width={leftSideWidth + rightSideWidth + 4}>
       {hasAnyGroup ? (
         <Box
           marginLeft={1}
+          marginRight={0}
           key={title}
           flexDirection="column"
           width={leftSideWidth}
@@ -111,12 +114,11 @@ function Item<T>({
           <Text bold>{title ?? ''}</Text>
         </Box>
       ) : null}
-      <Box key={item.label} marginLeft={1} width={leftSideWidth + rightSideWidth}>
-        {hasAnyGroup ? (
-          <Text bold>{title ? '┏' : isLastInGroup ? '╹' : '┃'} </Text>
-        ) : null}
+      <Box key={item.label} marginLeft={0} width={leftSideWidth + rightSideWidth}>
         <Box marginRight={1} marginLeft={0}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
-        <Text color={isSelected ? 'cyan' : undefined}>{enableShortcuts ? `(${item.key}) ${label}` : label}</Text>
+        <Text color={isSelected ? 'cyan' : undefined}>
+          {enableShortcuts ? `(${item.key}) ${label}` : label}
+        </Text>
       </Box>
     </Box>
   )
@@ -138,11 +140,14 @@ function SelectInputInner<T>(
     morePagesMessage,
     infoMessage,
     limit,
+    availableLines,
   }: SelectInputProps<T>,
   ref: React.ForwardedRef<DOMElement>,
 ): JSX.Element | null {
+  availableLines = availableLines || initialItems.length
   const sortBy = require('lodash/sortBy')
   const hasAnyGroup = initialItems.some((item) => typeof item.group !== 'undefined')
+  const numberOfGroups = new Set(initialItems.map((item) => item.group)).size
   const items = sortBy(initialItems, 'group') as Item<T>[]
   const itemsWithKeys = items.map((item, index) => ({
     ...item,
@@ -154,7 +159,7 @@ function SelectInputInner<T>(
   const inputStack = useRef<string | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(initialIndex)
   const [rotateIndex, setRotateIndex] = useState(0)
-  const slicedItemsWithKeys = hasLimit ? rotateArray(itemsWithKeys, rotateIndex).slice(0, limit) : itemsWithKeys
+  const slicedItemsWithKeys = hasLimit ? rotateArray(itemsWithKeys, rotateIndex) : itemsWithKeys
   const previousItems = useRef<Item<T>[] | undefined>(undefined)
 
   const changeSelection = useCallback(
@@ -214,8 +219,10 @@ function SelectInputInner<T>(
     } else if (key.downArrow) {
       const atLastIndex = selectedIndex === (hasLimit ? limit : items.length) - 1
       const nextIndex = hasLimit ? selectedIndex : 0
-      const nextRotateIndex = atLastIndex ? rotateIndex - 1 : rotateIndex
-      const nextSelectedIndex = atLastIndex ? nextIndex : selectedIndex + 1
+      const shouldRotate = hasLimit && selectedIndex >= availableLines! / 2 - 1
+      const nextRotateIndex = shouldRotate ? rotateIndex - 1 : rotateIndex
+
+      const nextSelectedIndex = (shouldRotate || atLastIndex) ? nextIndex : selectedIndex + 1
 
       changeSelection({newSelectedIndex: nextSelectedIndex, newRotateIndex: nextRotateIndex})
     }
@@ -284,7 +291,7 @@ function SelectInputInner<T>(
   } else {
     return (
       <Box flexDirection="column" ref={ref}>
-        <Box height={hasLimit ? limit : items.length} flexDirection="column" flexWrap="nowrap" overflowY="hidden">
+        <Box height={Math.min(availableLines, items.length + numberOfGroups)} flexDirection="column" flexWrap="nowrap" overflowY="hidden">
           {slicedItemsWithKeys.map((item, index) => (
             <Item
               key={item.key}
@@ -308,7 +315,7 @@ function SelectInputInner<T>(
               {morePagesMessage ? `  ${morePagesMessage}` : null}
             </Text>
           ) : null}
-          {hasLimit ? <Text dimColor>{`Showing ${limit} of ${items.length} items.`}</Text> : null}
+          {hasLimit ? <Text dimColor>{`${items.length} options available.`}</Text> : null}
           <Text dimColor>
             {infoMessage
               ? infoMessage
