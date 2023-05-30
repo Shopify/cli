@@ -131,10 +131,10 @@ export default class Dev extends ThemeCommand {
 
     renderLinks(store, flags.theme!, flags.host, flags.port)
 
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    setInterval(async () => {
+    setInterval(() => {
       outputDebug('Refreshing theme session tokens...')
-      await refreshTokens(store, flags.password)
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      refreshTokens(store, flags.password)
     }, this.ThemeRefreshTimeoutInMs)
     await execCLI2(command, {store})
   }
