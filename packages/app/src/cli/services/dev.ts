@@ -9,7 +9,7 @@ import {
 } from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
-import {outputExtensionsMessages, outputUpdateURLsResult, renderDevConsole} from './dev/output.js'
+import {outputExtensionsMessages, outputUpdateURLsResult, renderDev} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
@@ -276,7 +276,7 @@ async function dev(options: DevOptions) {
   await reportAnalyticsEvent({config: options.commandConfig})
 
   if (proxyTargets.length === 0) {
-    await renderDevConsole(
+    await renderDev(
       {
         processes: additionalProcesses,
       },

@@ -1,4 +1,4 @@
-import {renderDevConsole} from '../../services/dev/output.js'
+import {renderDev} from '../../services/dev/output.js'
 import {RenderConcurrentOptions} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -117,7 +117,7 @@ ${outputToken.json(JSON.stringify(rules))}
     abortSignal: abortController.signal,
   }
 
-  await Promise.all([renderDevConsole(renderConcurrentOptions, previewUrl), server.listen(portNumber)])
+  await Promise.all([renderDev(renderConcurrentOptions, previewUrl), server.listen(portNumber)])
 }
 
 function match(rules: {[key: string]: string}, req: http.IncomingMessage) {
