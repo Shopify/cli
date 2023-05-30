@@ -17,8 +17,8 @@ import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
-import {useThemebundling} from '@shopify/cli-kit/node/context/local.js'
-import {touchFile, writeFile} from '@shopify/cli-kit/node/fs.js'
+import {useThemebundling} from '@shopify/cli-kit/node/context/local'
+import {touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 
 export type ExtensionFeature = 'ui_preview' | 'function' | 'theme' | 'bundling' | 'cart_url' | 'esbuild'
 
@@ -260,7 +260,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async bundleStep(options: ExtensionBuildOptions, identifiers: Identifiers, bundleDirectory: string) {
     const extensionId = identifiers.extensions[this.localIdentifier]!
-    const outputFile = this.features.includes('esbuild') ? 'dist/main.js' : ''
+    const outputFile = this.isThemeExtension ? '' : 'dist/main.js'
     this.outputBundlePath = joinPath(bundleDirectory, extensionId, outputFile)
     await this.buildStep(options)
 
