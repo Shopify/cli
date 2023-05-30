@@ -23,7 +23,7 @@ const spec = createExtensionSpecification({
     return outputContent`Follow the ${link} by deploying your work as a draft`
   },
   deployConfig: async () => {
-    if (useThemebundling()) return undefined
+    if (!useThemebundling()) return undefined
     return {theme_extension: {files: {}}}
   },
 })

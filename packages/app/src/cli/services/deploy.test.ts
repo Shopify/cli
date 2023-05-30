@@ -115,7 +115,7 @@ describe('deploy', () => {
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
-      extensions: [{uuid: themeExtension.localIdentifier, config: '{"theme_extension": {"files": {}}}', context: ''}],
+      extensions: [{uuid: themeExtension.localIdentifier, config: '{"theme_extension":{"files":{}}}', context: ''}],
       token: 'api-token',
       extensionIds: {},
     })
@@ -215,7 +215,7 @@ describe('deploy', () => {
       bundlePath: expect.stringMatching(/bundle.zip$/),
       extensions: [
         {uuid: uiExtension.localIdentifier, config: '{}', context: ''},
-        {uuid: themeExtension.localIdentifier, config: '{"theme_extension": {"files": {}}}', context: ''},
+        {uuid: themeExtension.localIdentifier, config: '{"theme_extension":{"files":{}}}', context: ''},
       ],
       token: 'api-token',
       extensionIds: {},
