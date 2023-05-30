@@ -773,6 +773,13 @@
           "description": "The API key to fetch the schema with.",
           "required": false,
           "multiple": false
+        },
+        "stdout": {
+          "name": "stdout",
+          "type": "boolean",
+          "description": "Output the schema to stdout instead of writing to a file.",
+          "required": false,
+          "allowNo": false
         }
       },
       "args": {}
@@ -949,6 +956,13 @@
           "description": "The API key to fetch the schema with.",
           "required": false,
           "multiple": false
+        },
+        "stdout": {
+          "name": "stdout",
+          "type": "boolean",
+          "description": "Output the schema to stdout instead of writing to a file.",
+          "required": false,
+          "allowNo": false
         }
       },
       "args": {}
