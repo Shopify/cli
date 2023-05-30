@@ -1,5 +1,5 @@
-import {devNonPreviewableExtensionTarget} from './dev.js'
-import {setupConfigWatcher, setupNonPreviewableExtensionBundler} from './dev/extension/bundler.js'
+import {devDraftableExtensionTarget} from './dev.js'
+import {setupConfigWatcher, setupDraftableExtensionBundler} from './dev/extension/bundler.js'
 import {testApp, testUIExtension} from '../models/app/app.test-data.js'
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -8,8 +8,8 @@ import {Writable} from 'node:stream'
 
 vi.mock('./dev/extension/bundler.js')
 
-describe('devNonPreviewableExtensionTarget()', () => {
-  test('calls setupNonPreviewableExtensionBundler and setupConfigWatcher on each extension', async () => {
+describe('devDraftableExtensionTarget()', () => {
+  test('calls setupDraftableExtensionBundler and setupConfigWatcher on each extension', async () => {
     const abortController = new AbortController()
     const stdout = new Writable()
     const stderr = new Writable()
@@ -30,7 +30,7 @@ describe('devNonPreviewableExtensionTarget()', () => {
     remoteExtensions[extension2.localIdentifier] = 'mock-registration-id-2'
     const specifications = await loadLocalExtensionsSpecifications()
 
-    const process = devNonPreviewableExtensionTarget({
+    const process = devDraftableExtensionTarget({
       extensions,
       app,
       url: 'mock-url',
@@ -43,7 +43,7 @@ describe('devNonPreviewableExtensionTarget()', () => {
     await process.action(stdout, stderr, abortController.signal)
 
     extensions.forEach((ext) => {
-      expect(setupNonPreviewableExtensionBundler).toHaveBeenCalledWith({
+      expect(setupDraftableExtensionBundler).toHaveBeenCalledWith({
         extension: ext,
         token: 'mock-token',
         apiKey: 'mock-api-key',

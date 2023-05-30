@@ -2,7 +2,7 @@ import {
   FileWatcherOptions,
   setupBundlerAndFileWatcher,
   setupConfigWatcher,
-  setupNonPreviewableExtensionBundler,
+  setupDraftableExtensionBundler,
 } from './bundler.js'
 import * as bundle from '../../extensions/bundle.js'
 import {testUIExtension} from '../../../models/app/app.test-data.js'
@@ -367,7 +367,7 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
   test('calls bundleExtension with the correct parameters', async () => {
     vi.spyOn(bundle, 'bundleExtension').mockResolvedValue(undefined)
 
-    await setupNonPreviewableExtensionBundler({
+    await setupDraftableExtensionBundler({
       extension: mockExtension,
       app,
       url: 'mock/url',
@@ -401,7 +401,7 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
   })
 
   test('calls updateExtensionDraft when the bundle is built successfully', async () => {
-    await setupNonPreviewableExtensionBundler({
+    await setupDraftableExtensionBundler({
       extension: mockExtension,
       app,
       url: 'mock/url',
@@ -427,7 +427,7 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
   })
 
   test('does not call updateExtensionDraft when the bundle has errors', async () => {
-    await setupNonPreviewableExtensionBundler({
+    await setupDraftableExtensionBundler({
       extension: mockExtension,
       app,
       url: 'mock/url',

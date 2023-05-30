@@ -60,7 +60,6 @@ const EXTENSION_A: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  isPreviewable: true,
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -91,7 +90,6 @@ const EXTENSION_A_2: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  isPreviewable: true,
 }
 
 const FUNCTION_C: FunctionExtension = {

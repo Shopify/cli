@@ -23,7 +23,7 @@ describe('init', () => {
       defaultValue: expect.stringMatching(/^\w+-\w+-app$/),
       validate: expect.any(Function),
     })
-    expect(got).toEqual({...options, ...answers})
+    expect(got).toEqual({...options, ...answers, templateType: 'custom'})
   })
 
   test('when name is passed', async () => {
@@ -37,6 +37,6 @@ describe('init', () => {
 
     // Then
     expect(renderTextPrompt).not.toHaveBeenCalled()
-    expect(got).toEqual({...options, ...answers})
+    expect(got).toEqual({...options, ...answers, templateType: 'custom'})
   })
 })

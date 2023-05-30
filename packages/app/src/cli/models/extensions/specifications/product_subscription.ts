@@ -12,8 +12,7 @@ const spec = createExtensionSpecification({
   graphQLType: 'subscription_management',
   partnersWebIdentifier: 'product_subscription',
   schema: BaseSchema,
-  isPreviewable: true,
-  appModuleFeatures: (_) => ['ui_legacy', 'bundling'],
+  appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild'],
   deployConfig: async (_, directory) => {
     const result = await getDependencyVersion(dependency, directory)
     if (result === 'not_found') throw new BugError(`Dependency ${dependency} not found`)

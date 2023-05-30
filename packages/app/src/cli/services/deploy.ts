@@ -66,6 +66,7 @@ export async function deploy(options: DeployOptions) {
       }
     }),
   )
+
   if (useThemebundling()) {
     const themeExtensions = await Promise.all(
       options.app.extensions.theme.map(async (extension) => {
