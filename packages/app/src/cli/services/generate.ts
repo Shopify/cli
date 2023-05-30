@@ -45,7 +45,11 @@ export interface GenerateOptions {
 
 async function generate(options: GenerateOptions) {
   const templateSpecifications = await getTemplateSpecifications(options)
-  console.log(templateSpecifications)
+  console.log('template specs', templateSpecifications)
+  templateSpecifications.forEach((spec) => {
+    console.log('types', spec.types)
+  })
+
   const specificationTypes = templateSpecifications.flatMap((specification) => specification.types) ?? []
   const app: AppInterface = await loadApp({directory: options.directory, specifications: specificationTypes})
 
