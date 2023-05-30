@@ -2,16 +2,13 @@ import {fetchAppAndIdentifiers} from './context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {fetchTemplateSpecifications} from './generate/fetch-template-specifications.js'
 import {getActiveDashboardExtensions} from './getActiveDashboardExtensions.js'
-import {blocks} from '../../constants.js'
+import {ExtensionInitOptions, generateExtension} from './generate/extension.js'
 import {AppInterface} from '../models/app/app.js'
 import {convertSpecificationsToTemplate} from '../models/app/template.js'
 import {UIExtensionSpec} from '../models/extensions/ui.js'
+import {GenericSpecification} from '../models/app/extensions.js'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {fileExists, findPathUp, mkdir} from '@shopify/cli-kit/node/fs'
-import {joinPath, moduleDirectory} from '@shopify/cli-kit/node/path'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {hyphenate} from '@shopify/cli-kit/common/string'
 
 interface MigrateOptions {
   /** The app to be built and uploaded */
@@ -33,8 +30,7 @@ interface MigrateOptions {
 
 export async function migrate(options: MigrateOptions) {
   const token = await ensureAuthenticatedPartners()
-  const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
-  const extensionDirectory = await ensureExtensionDirectoryExists({app: options.app, name: options.name})
+  const [partnersApp, _] = await fetchAppAndIdentifiers(options, token)
   const specifications = await fetchSpecifications({token, apiKey: partnersApp.apiKey, config: options.config})
   const localTemplateSpecifications = convertSpecificationsToTemplate(specifications)
   const remoteTemplateSpecifications = await fetchTemplateSpecifications(token)
@@ -45,53 +41,25 @@ export async function migrate(options: MigrateOptions) {
   ) as UIExtensionSpec
 
   const activeDashboardExtensions = await getActiveDashboardExtensions({app: options.app, apiKey: partnersApp.apiKey})
-  const templateDirectory =
-    specification.templatePath ??
-    (await findPathUp(`templates/ui-extensions/projects/${specification.identifier}`, {
-      type: 'directory',
-      cwd: moduleDirectory(import.meta.url),
-    }))
 
-  if (!templateDirectory) {
-    throw new BugError(`Couldn't find the template for '${specification.externalName}'`)
-  }
-
-  const promises = []
   if (activeDashboardExtensions.length > 0) {
     for (const extension of activeDashboardExtensions) {
       if (extension === undefined) continue
-      const srcFileExtension = 'vanilla-js'
       const extensionConfig = JSON.parse(extension.activeVersion.config)
       console.log('got extension config', extensionConfig)
 
-      promises.push(
-        recursiveLiquidTemplateCopy(templateDirectory, extensionDirectory, {
-          srcFileExtension,
-          flavor: extensionFlavor ?? '',
-          type: specification.identifier,
-          name,
-          ...extensionConfig,
-        }),
-      )
+      const generateExtensionOptions: ExtensionInitOptions<GenericSpecification>[] = [
+        {
+          name: extension.title,
+          specification,
+          app: options.app,
+          extensionType: specification.identifier,
+          extensionConfig,
+        },
+      ]
+
+      // eslint-disable-next-line no-await-in-loop
+      await generateExtension(generateExtensionOptions, options.app)
     }
   }
-  Promise.all(promises)
-    .then((results) => {
-      console.log('done', results)
-    })
-    .catch((err) => {
-      console.log('error', err)
-    })
-}
-
-async function ensureExtensionDirectoryExists({name, app}: {name: string; app: AppInterface}): Promise<string> {
-  const hyphenizedName = hyphenate(name)
-  const extensionDirectory = joinPath(app.directory, blocks.extensions.directoryName, hyphenizedName)
-  if (await fileExists(extensionDirectory)) {
-    throw new AbortError(
-      `\nA directory with this name (${hyphenizedName}) already exists.\nChoose a new name for your extension.`,
-    )
-  }
-  await mkdir(extensionDirectory)
-  return extensionDirectory
 }

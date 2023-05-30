@@ -6,7 +6,6 @@ import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
 import {buildGraphqlTypes} from '../function/build.js'
 import {ensureFunctionExtensionFlavorExists} from '../function/common.js'
-import {getActiveDashboardExtensions} from '../getActiveDashboardExtensions.js'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
@@ -40,7 +39,7 @@ export interface ExtensionInitOptions<TSpec extends GenericSpecification = Gener
   extensionFlavor?: ExtensionFlavorValue
   specification: TSpec
   extensionType: string
-  apiKey?: string
+  extensionConfig?: object
 }
 
 interface ExtensionDirectory {
@@ -95,7 +94,7 @@ export async function generateExtension(
             ...(options as UIExtensionInitOptions),
             extensionDirectory,
             app,
-            apiKey: options.apiKey,
+            extensionConfig: options.extensionConfig,
           })
           break
       }
@@ -115,7 +114,7 @@ async function uiExtensionInit({
   app,
   extensionFlavor,
   extensionDirectory,
-  apiKey,
+  extensionConfig,
 }: UIExtensionInitOptions) {
   const tasks = [
     {
@@ -144,39 +143,20 @@ async function uiExtensionInit({
           throw new BugError(`Couldn't find the template for '${specification.externalName}'`)
         }
 
-        const activeDashboardExtensions = await getActiveDashboardExtensions({app, apiKey})
-        console.log(activeDashboardExtensions)
+        const srcFileExtension = getSrcFileExtension(extensionFlavor ?? 'vanilla-js')
 
-        const promises = []
-        if (activeDashboardExtensions.length > 0) {
-          for (const extension of activeDashboardExtensions) {
-            if (extension === undefined) continue
-            const srcFileExtension = getSrcFileExtension(extensionFlavor ?? 'vanilla-js')
-            const extensionConfig = JSON.parse(extension.activeVersion.config)
-            console.log('got extension config', extensionConfig)
+        await recursiveLiquidTemplateCopy(templateDirectory, extensionDirectory, {
+          srcFileExtension,
+          flavor: extensionFlavor ?? '',
+          type: specification.identifier,
+          name,
+          ...extensionConfig,
+        })
 
-            promises.push(
-              recursiveLiquidTemplateCopy(templateDirectory, extensionDirectory, {
-                srcFileExtension,
-                flavor: extensionFlavor ?? '',
-                type: specification.identifier,
-                name,
-                ...extensionConfig,
-              }),
-            )
-          }
+        if (extensionFlavor) {
+          await changeIndexFileExtension(extensionDirectory, srcFileExtension)
+          await removeUnwantedTemplateFilesPerFlavor(extensionDirectory, extensionFlavor)
         }
-        Promise.all(promises)
-          .then((results) => {
-            console.log('done', results)
-          })
-          .catch((err) => {
-            console.log('error', err)
-          })
-        // if (extensionFlavor) {
-        //   await changeIndexFileExtension(extensionDirectory, srcFileExtension)
-        //   await removeUnwantedTemplateFilesPerFlavor(extensionDirectory, extensionFlavor)
-        // }
       },
     },
   ]
