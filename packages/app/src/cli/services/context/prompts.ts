@@ -73,8 +73,9 @@ export async function deployConfirmationPrompt(
     if (deploymentMode === 'unified' || deploymentMode === 'unified-skip-release') {
       missingLocallySection = {
         ...missingLocallySection,
+        header: 'Removed',
         color: 'red',
-        helperText: 'Extensions missing locally will be removed for users when you publish this deployment',
+        helperText: 'Will be removed for users when this version is released.',
       }
     }
 
