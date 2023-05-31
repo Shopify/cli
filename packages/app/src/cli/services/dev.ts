@@ -9,7 +9,7 @@ import {
 } from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
-import {outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
+import {outputExtensionsMessages, outputUpdateURLsResult, renderDev} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
@@ -33,7 +33,6 @@ import {UIExtensionSpec} from '../models/extensions/ui.js'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
@@ -114,7 +113,6 @@ async function dev(options: DevOptions) {
   const webhooksPath = backendConfig?.configuration?.webhooksPath || '/api/webhooks'
   const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated
 
-  const initiateUpdateUrls = (frontendConfig || backendConfig) && options.update
   let shouldUpdateURLs = false
 
   await validateCustomPorts(backendConfig, frontendConfig)
@@ -136,25 +134,22 @@ async function dev(options: DevOptions) {
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
 
   let previewUrl
-
-  if (initiateUpdateUrls) {
-    const newURLs = generatePartnersURLs(
-      exposedUrl,
-      backendConfig?.configuration.authCallbackPath ?? frontendConfig?.configuration.authCallbackPath,
-    )
-    shouldUpdateURLs = await shouldOrPromptUpdateURLs({
-      currentURLs,
-      appDirectory: localApp.directory,
-      cachedUpdateURLs,
-      newApp: remoteApp.newApp,
-    })
-    if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
-    await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
+  if (frontendConfig || backendConfig) {
     previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
-  }
-
-  if (localApp.extensions.ui.length > 0) {
-    previewUrl = `${proxyUrl}/extensions/dev-console`
+    if (options.update) {
+      const newURLs = generatePartnersURLs(
+        exposedUrl,
+        backendConfig?.configuration.authCallbackPath ?? frontendConfig?.configuration.authCallbackPath,
+      )
+      shouldUpdateURLs = await shouldOrPromptUpdateURLs({
+        currentURLs,
+        appDirectory: localApp.directory,
+        cachedUpdateURLs,
+        newApp: remoteApp.newApp,
+      })
+      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
+      await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
+    }
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
@@ -177,6 +172,7 @@ async function dev(options: DevOptions) {
   )
 
   if (previewableExtensions.length > 0) {
+    previewUrl = `${proxyUrl}/extensions/dev-console`
     const devExt = await devUIExtensionsTarget({
       app: localApp,
       id: remoteApp.id,
@@ -280,7 +276,12 @@ async function dev(options: DevOptions) {
   await reportAnalyticsEvent({config: options.commandConfig})
 
   if (proxyTargets.length === 0) {
-    await renderConcurrent({processes: additionalProcesses})
+    await renderDev(
+      {
+        processes: additionalProcesses,
+      },
+      previewUrl,
+    )
   } else {
     await runConcurrentHTTPProcessesAndPathForwardTraffic({
       previewUrl,
