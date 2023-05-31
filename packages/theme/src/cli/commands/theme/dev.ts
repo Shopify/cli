@@ -136,7 +136,7 @@ export default class Dev extends ThemeCommand {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       refreshTokens(store, flags.password)
     }, this.ThemeRefreshTimeoutInMs)
-    await execCLI2(command, {store})
+    await execCLI2(command, {store, adminToken: adminSession.token})
   }
 }
 
