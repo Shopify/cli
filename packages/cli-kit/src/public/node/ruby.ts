@@ -8,7 +8,6 @@ import {getEnvironmentVariables} from './environment.js'
 import {isSpinEnvironment, spinFqdn} from './context/spin.js'
 import {firstPartyDev} from './context/local.js'
 import {pathConstants} from '../../private/node/constants.js'
-import {AdminSession} from '../../public/node/session.js'
 import {outputContent, outputToken} from '../../public/node/output.js'
 import {isTruthy} from '../../private/node/context/utilities.js'
 import {coerceSemverVersion} from '../../private/node/semver.js'
@@ -25,8 +24,10 @@ export const MinWdmWindowsVersion = '0.1.0'
 const shopifyGems = envPaths('shopify-gems')
 
 interface ExecCLI2Options {
-  // Contains token and store to pass to CLI 2.0, which will be set as environment variables
-  adminSession?: AdminSession
+  // Contains store to pass to CLI 2.0 as environment variable
+  store?: string
+  // Contains token for admin access to pass to CLI 2.0 as environment variable
+  adminToken?: string
   // Contains token for storefront access to pass to CLI 2.0 as environment variable
   storefrontToken?: string
   // Contains token for partners access to pass to CLI 2.0 as environment variable
@@ -56,8 +57,8 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
   const env: NodeJS.ProcessEnv = {
     ...currentEnv,
     SHOPIFY_CLI_STOREFRONT_RENDERER_AUTH_TOKEN: options.storefrontToken,
-    SHOPIFY_CLI_ADMIN_AUTH_TOKEN: options.adminSession?.token,
-    SHOPIFY_SHOP: options.adminSession?.storeFqdn,
+    SHOPIFY_CLI_ADMIN_AUTH_TOKEN: options.adminToken,
+    SHOPIFY_SHOP: options.store,
     SHOPIFY_CLI_AUTH_TOKEN: options.token,
     SHOPIFY_CLI_RUN_AS_SUBPROCESS: 'true',
     SHOPIFY_CLI_RUBY_BIN: rubyExecutable(),
