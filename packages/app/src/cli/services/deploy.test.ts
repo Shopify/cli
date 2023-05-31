@@ -128,6 +128,60 @@ describe('deploy', () => {
     })
   })
 
+  test('passes a message to uploadExtensionsBundle() when a message arg is present', async () => {
+    // Given
+    const app = testApp()
+
+    // When
+    await testDeployBundle(
+      app,
+      {
+        id: 'app-id',
+        organizationId: 'org-id',
+        title: 'app-title',
+        grantedScopes: [],
+        betas: {unifiedAppDeployment: true},
+      },
+      {
+        message: 'Deployed from CLI with flag',
+      },
+    )
+
+    // Then
+    expect(uploadExtensionsBundle).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Deployed from CLI with flag',
+      }),
+    )
+  })
+
+  test('passes a version to uploadExtensionsBundle() when a version arg is present', async () => {
+    // Given
+    const app = testApp()
+
+    // When
+    await testDeployBundle(
+      app,
+      {
+        id: 'app-id',
+        organizationId: 'org-id',
+        title: 'app-title',
+        grantedScopes: [],
+        betas: {unifiedAppDeployment: true},
+      },
+      {
+        version: '1.1.0',
+      },
+    )
+
+    // Then
+    expect(uploadExtensionsBundle).toHaveBeenCalledWith(
+      expect.objectContaining({
+        version: '1.1.0',
+      }),
+    )
+  })
+
   test('deploys the app with no extensions and beta flag', async () => {
     const app = testApp({allExtensions: []})
     vi.mocked(renderTextPrompt).mockResolvedValueOnce('')
@@ -439,6 +493,8 @@ async function testDeployBundle(
   options?: {
     force?: boolean
     noRelease?: boolean
+    message?: string
+    version?: string
   },
 ) {
   // Given
@@ -490,5 +546,7 @@ async function testDeployBundle(
     reset: false,
     force: Boolean(options?.force),
     noRelease: Boolean(options?.noRelease),
+    message: options?.message,
+    version: options?.version,
   })
 }

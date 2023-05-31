@@ -7,13 +7,25 @@ export const AppDeploy = gql`
     $bundleUrl: String
     $appModules: [AppModuleSettings!]
     $skipPublish: Boolean
+    $message: String
+    $versionTag: String
   ) {
     appDeploy(
-      input: {apiKey: $apiKey, uuid: $uuid, bundleUrl: $bundleUrl, appModules: $appModules, skipPublish: $skipPublish}
+      input: {
+        apiKey: $apiKey
+        uuid: $uuid
+        bundleUrl: $bundleUrl
+        appModules: $appModules
+        skipPublish: $skipPublish
+        message: $message
+        versionTag: $versionTag
+      }
     ) {
       deployment {
         uuid
         id
+        message
+        versionTag
         appModuleVersions {
           uuid
           registrationUuid
@@ -45,6 +57,8 @@ export interface AppDeployVariables {
   bundleUrl?: string
   appModules?: AppModuleSettings[]
   skipPublish?: boolean
+  message?: string
+  versionTag?: string
 }
 
 interface ErrorDetail {

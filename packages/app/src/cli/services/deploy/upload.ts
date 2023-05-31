@@ -90,6 +90,12 @@ interface UploadExtensionsBundleOptions {
 
   /** The mode of the deployment */
   deploymentMode: DeploymentMode
+
+  /** App version message */
+  message?: string
+
+  /** App version identifier */
+  version?: string
 }
 
 export interface UploadExtensionValidationError {
@@ -132,6 +138,8 @@ export async function uploadExtensionsBundle(
     apiKey: options.apiKey,
     uuid: deploymentUUID,
     skipPublish: !(options.deploymentMode === 'unified'),
+    message: options.message,
+    versionTag: options.version,
   }
 
   if (signedURL) {
