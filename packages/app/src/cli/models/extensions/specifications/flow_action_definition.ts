@@ -3,7 +3,7 @@ import {createExtensionSpecification} from '../specification.js'
 
 import {zod} from '@shopify/cli-kit/node/schema'
 
-// TODO: we need to figure out if we can do inter field validation (e.g. CCP requires Preview and validation URLs)
+// PENDING: we need to figure out if we can do inter field validation (e.g. CCP requires Preview and validation URLs)
 const FlowActionDefinitionExtensionSchema = BaseSchema.extend({
   name: zod.string(),
   type: zod.literal('flow_action_definition'),
@@ -36,7 +36,7 @@ const flowActionDefinitionSpecification = createExtensionSpecification({
   singleEntryPath: false,
   appModuleFeatures: (_) => [],
   deployConfig: async (config, _) => {
-    // TODO: we'll need to figure out a solution for how we manage generating UUIDs for fields
+    // PENDING: we'll need to figure out a solution for how we manage generating UUIDs for fields
     // we can either ask the partner to provide them, or we can generate them for them but we'll need to update the config file
     return {
       title: config.task.title,

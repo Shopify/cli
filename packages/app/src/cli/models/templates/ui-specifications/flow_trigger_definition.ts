@@ -17,7 +17,7 @@ const flowTriggerDefinitionExtension: ExtensionTemplate = {
         {
           name: 'Config only',
           value: 'config-only',
-          path: 'templates/ui-extensions/projects/flow_trigger_definition',
+          path: 'templates/extensions/projects/flow_trigger_definition',
         },
       ],
     },
