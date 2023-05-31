@@ -293,7 +293,11 @@ class AppLoader {
 
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = dirname(configurationPath)
-      const specification = await findSpecificationForConfig(this.specifications, configurationPath, this.abortOrReport)
+      const specification = await findSpecificationForConfig(
+        this.specifications,
+        configurationPath,
+        this.abortOrReport.bind(this),
+      )
 
       if (!specification) return
 
