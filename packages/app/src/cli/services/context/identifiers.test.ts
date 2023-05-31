@@ -263,3 +263,46 @@ describe('ensureDeploymentIdsPresence: matchmaking is valid', () => {
     })
   })
 })
+
+describe('app has no local extensions', () => {
+  test('ensureDeploymentIdsPresence() returns early when deploymentMode is legacy', async () => {
+    // When
+    const got = await ensureDeploymentIdsPresence(options([], []))
+
+    // Then
+    expect(fetchAppExtensionRegistrations).not.toHaveBeenCalled()
+    expect(ensureFunctionsIds).not.toHaveBeenCalled()
+    expect(ensureExtensionsIds).not.toHaveBeenCalled()
+    expect(got).toEqual({app: 'appId', extensions: {}, extensionIds: {}})
+  })
+
+  test('ensureDeploymentIdsPresence() fully executes when deploymentMode is unified', async () => {
+    // Given
+    vi.mocked(ensureExtensionsIds).mockResolvedValue(ok({extensions: {}, extensionIds: {}}))
+
+    // When
+    const got = await ensureDeploymentIdsPresence(
+      options([], [], {}, PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, 'unified'),
+    )
+
+    // Then
+    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
+    expect(ensureExtensionsIds).toHaveBeenCalledOnce()
+    expect(got).toEqual({app: 'appId', extensions: {}, extensionIds: {}})
+  })
+
+  test('ensureDeploymentIdsPresence() fully executes when deploymentMode is unified-skip-release', async () => {
+    // Given
+    vi.mocked(ensureExtensionsIds).mockResolvedValue(ok({extensions: {}, extensionIds: {}}))
+
+    // When
+    const got = await ensureDeploymentIdsPresence(
+      options([], [], {}, PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, 'unified-skip-release'),
+    )
+
+    // Then
+    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
+    expect(ensureExtensionsIds).toHaveBeenCalledOnce()
+    expect(got).toEqual({app: 'appId', extensions: {}, extensionIds: {}})
+  })
+})

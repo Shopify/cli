@@ -82,10 +82,6 @@ export async function deployConfirmationPrompt(
     infoTable.push(missingLocallySection)
   }
 
-  if (Object.keys(infoTable).length === 0) {
-    return new Promise((resolve) => resolve(true))
-  }
-
   const confirmationMessage = (() => {
     switch (deploymentMode) {
       case 'legacy':
