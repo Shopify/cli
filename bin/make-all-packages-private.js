@@ -21,8 +21,8 @@ program
     const packageJsons = await glob(path.join(packagesDirectory, '*/package.json'))
     await Promise.all(packageJsons.map(async (packageJsonPath) => {
       const json = JSON.parse(await readFile(packageJsonPath, 'utf8'))
-      if (json.publishConfig) json.publishConfig = {access: 'restricted'}
-      await outputFile(packageJsonPath, JSON.stringify(json, null, 2))
+      if (!json.private) json.publishConfig = {access: 'restricted'}
+      await outputFile(packageJsonPath, JSON.stringify(json, null, 2) + '\n', 'utf8')
     }))
    })
 
