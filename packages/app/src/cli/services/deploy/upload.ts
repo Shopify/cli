@@ -446,38 +446,3 @@ async function getFunctionExtensionUploadURL(
   )
   return res.data.uploadUrlGenerate
 }
-
-export async function functionConfiguration(
-  extension: FunctionExtension,
-  moduleId: string,
-  appKey: string,
-): Promise<{[key: string]: unknown}> {
-  let inputQuery: string | undefined
-  if (await fileExists(extension.inputQueryPath)) {
-    inputQuery = await readFile(extension.inputQueryPath)
-  }
-
-  return {
-    title: extension.configuration.name,
-    module_id: moduleId,
-    description: extension.configuration.description,
-    app_key: appKey,
-    api_type: extension.configuration.type,
-    api_version: extension.configuration.apiVersion,
-    input_query: inputQuery,
-    input_query_variables: extension.configuration.input?.variables
-      ? {
-          single_json_metafield: extension.configuration.input.variables,
-        }
-      : undefined,
-    ui: extension.configuration.ui?.paths
-      ? {
-          app_bridge: {
-            details_path: extension.configuration.ui.paths.details,
-            create_path: extension.configuration.ui.paths.create,
-          },
-        }
-      : undefined,
-    enable_creation_ui: extension.configuration.ui?.enable_create ?? true,
-  }
-}

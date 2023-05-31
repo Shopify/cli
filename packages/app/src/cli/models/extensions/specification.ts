@@ -29,7 +29,12 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
   getBundleExtensionStdinContent?: (config: TConfiguration) => string
-  deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown} | undefined>
+  deployConfig?: (
+    config: TConfiguration,
+    directory: string,
+    apiKey?: string,
+    moduleId?: string,
+  ) => Promise<{[key: string]: unknown} | undefined>
   validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>

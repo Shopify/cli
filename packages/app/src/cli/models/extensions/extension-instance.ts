@@ -10,7 +10,7 @@ import {
 } from '../../services/build/extension.js'
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
-import {functionConfiguration, uploadWasmBlob} from '../../services/deploy/upload.js'
+import {uploadWasmBlob} from '../../services/deploy/upload.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -126,8 +126,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  deployConfig(): Promise<{[key: string]: unknown} | undefined> {
-    return this.specification.deployConfig?.(this.configuration, this.directory) ?? Promise.resolve(undefined)
+  deployConfig(apiKey?: string, moduleId?: string): Promise<{[key: string]: unknown} | undefined> {
+    return (
+      this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId) ??
+      Promise.resolve(undefined)
+    )
   }
 
   validate() {
@@ -236,8 +239,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     let configValue = await this.deployConfig()
 
     if (this.isFunctionExtension && unifiedDeployment) {
-      const {moduleId} = await uploadWasmBlob(this.functionExtension!, identifiers.app, token)
-      configValue = await functionConfiguration(this.functionExtension!, moduleId, apiKey)
+      if (unifiedDeployment) {
+        const {moduleId} = await uploadWasmBlob(this.functionExtension!, identifiers.app, token)
+        configValue = await this.deployConfig(apiKey, moduleId)
+      } else {
+        return undefined
+      }
     }
 
     if (!configValue) return undefined
