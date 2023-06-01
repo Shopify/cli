@@ -138,6 +138,21 @@ function buildGenerateOptions(
       app,
       extensionType: extensionContent.specification.identifier,
       cloneUrl: options.cloneUrl,
+      extensionConfig: {
+        fields: [
+          {
+            name: 'Test field',
+            label: 'Test label',
+            description: 'Test description',
+            required: false,
+            id: 'test_field',
+            uiType: 'text-field',
+          },
+        ],
+        title: 'Test title',
+        description: 'Test description',
+        url: 'https://test.com',
+      },
     }
   })
 }

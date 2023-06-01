@@ -5,6 +5,8 @@ type = "{{type}}"
 title = "{{title}}"
 description = "{{description}}"
 url = "{{url}}"
+schema_patch_path = "../flow.schema.patch.graphql"
+return_type_ref = "SomeTypeFromYourSchema"
 {% if validationUrl %}
 validation_url = "{{validationUrl}}"
 {% endif %}
