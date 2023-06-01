@@ -624,9 +624,9 @@ describe('SelectInput', async () => {
     )
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "   (f) First
+      "[36m>[39m  [36m(f) First[39m
          [2m(s) Second[22m
-      [36m>[39m  [36m(t) Third[39m
+         (t) Third
 
          [2mPress ↑↓ arrows to select, enter to confirm[22m"
     `)
@@ -634,7 +634,7 @@ describe('SelectInput', async () => {
     await waitForInputsToBeReady()
     await sendInputAndWait(renderInstance, 100, ENTER)
 
-    expect(onSubmit).toHaveBeenCalledWith(items[2])
+    expect(onSubmit).toHaveBeenCalledWith(items[0])
   })
 
   test('selects the next non-disabled option if the first option is disabled', async () => {
