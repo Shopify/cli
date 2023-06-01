@@ -10,11 +10,11 @@ export async function prompts() {
   await renderSelectPrompt({
     message: 'Associate your project with the org Castile Ventures?',
     choices: [
-      {label: 'first', value: 'first', key: 'f'},
+      {label: 'first', value: 'first', key: 'f', disabled: true},
       {label: 'second', value: 'second', key: 's'},
       {label: 'third (limit reached)', value: 'third', disabled: true},
       {label: 'fourth (limit reached)', value: 'fourth', disabled: true},
-      {label: 'fifth', value: 'fifth', group: 'Automations', key: 'a'},
+      {label: 'fifth', value: 'fifth', group: 'Automations', key: 'a', disabled: true},
       {label: 'sixth', value: 'sixth', group: 'Automations'},
       {label: 'seventh', value: 'seventh'},
       {label: 'eighth (limit reached)', value: 'eighth', group: 'Merchant Admin', disabled: true},
