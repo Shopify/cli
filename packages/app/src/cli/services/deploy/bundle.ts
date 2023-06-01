@@ -24,7 +24,11 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
         return {
           prefix: extension.localIdentifier,
           action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-            await extension.bundleStep({stderr, stdout, signal, app: options.app}, options.identifiers, bundleDirectory)
+            await extension.buildForBundle(
+              {stderr, stdout, signal, app: options.app},
+              options.identifiers,
+              bundleDirectory,
+            )
           },
         }
       }),
