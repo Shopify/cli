@@ -54,7 +54,7 @@
     "graphql-request": "5.2.0",
     "h3": "0.7.21",
     "http-proxy": "1.18.1",
-    "javy-cli": "0.1.4",
+    "javy-cli": "0.1.5",
     "serve-static": "1.15.0",
     "ws": "8.13.0"
   },
