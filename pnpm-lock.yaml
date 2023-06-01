@@ -1,4 +1,8 @@
-lockfileVersion: '6.0'
+lockfileVersion: '6.1'
+
+settings:
+  autoInstallPeers: false
+  excludeLinksFromLockfile: false
 
 overrides:
   '@types/react': 17.0.2
@@ -136,7 +140,7 @@ importers:
         specifier: ^0.2.1
         version: 0.2.1
       ts-node:
-        specifier: ^10.7.0
+        specifier: ^10.9.1
         version: 10.9.1(@types/node@14.18.36)(typescript@4.9.5)
       tslib:
         specifier: ^2.5.0
@@ -767,7 +771,7 @@ importers:
         specifier: ^1.60.0
         version: 1.62.1
       ts-node:
-        specifier: ^10.2.1
+        specifier: ^10.9.1
         version: 10.9.1(@types/node@14.18.36)(typescript@4.9.5)
       typescript:
         specifier: 4.9.5
@@ -818,7 +822,7 @@ importers:
         specifier: ^17.0.2
         version: 17.0.2(react@17.0.2)
       ts-node:
-        specifier: ^10.2.1
+        specifier: ^10.9.1
         version: 10.9.1(@types/node@14.18.36)(typescript@4.9.5)
       typescript:
         specifier: 4.9.5
@@ -860,7 +864,7 @@ importers:
         specifier: ^17.0.2
         version: 17.0.2(react@17.0.2)
       ts-node:
-        specifier: ^10.2.1
+        specifier: ^10.9.1
         version: 10.9.1(@types/node@14.18.36)(typescript@4.9.5)
       typescript:
         specifier: 4.9.5
