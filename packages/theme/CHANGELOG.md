@@ -1,5 +1,13 @@
 # @shopify/theme
 
+## 3.46.2
+
+### Patch Changes
+
+- fc0b6b10a: Fix theme dev re-authentication
+- Updated dependencies [fc0b6b10a]
+  - @shopify/cli-kit@3.46.2
+
 ## 3.46.1
 
 ### Patch Changes

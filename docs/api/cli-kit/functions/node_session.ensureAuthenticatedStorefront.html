@@ -18,7 +18,7 @@
 <h1>Function ensureAuthenticatedStorefront</h1></div>
 <section class="tsd-panel">
 <ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
-<li class="tsd-signature tsd-anchor-link" id="ensureAuthenticatedStorefront">ensure<wbr/>Authenticated<wbr/>Storefront<span class="tsd-signature-symbol">(</span>scopes<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span>, password<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span><a href="#ensureAuthenticatedStorefront" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" id="icon-anchor-a"></path><path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" id="icon-anchor-b"></path><path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" id="icon-anchor-c"></path></svg></a></li>
+<li class="tsd-signature tsd-anchor-link" id="ensureAuthenticatedStorefront">ensure<wbr/>Authenticated<wbr/>Storefront<span class="tsd-signature-symbol">(</span>scopes<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span>, password<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span>, forceRefresh<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span><a href="#ensureAuthenticatedStorefront" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" id="icon-anchor-a"></path><path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" id="icon-anchor-b"></path><path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" id="icon-anchor-c"></path></svg></a></li>
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>Ensure that we have a valid session to access the Storefront API.</p>
 
@@ -34,10 +34,14 @@
 <li>
 <h5>password: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = undefined</span></h5>
 <div class="tsd-comment tsd-typography"><p>Optional password to use.</p>
+</div></li>
+<li>
+<h5>forceRefresh: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></h5>
+<div class="tsd-comment tsd-typography"><p>Optional flag to force a refresh of the token.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Shopify/cli/blob/41a4bbf8d/packages/cli-kit/src/public/node/session.ts#L48">packages/cli-kit/src/public/node/session.ts:48</a></li></ul></aside></li></ul></section></div>
+<li>Defined in <a href="https://github.com/Shopify/cli/blob/8ea72cb11/packages/cli-kit/src/public/node/session.ts#L49">packages/cli-kit/src/public/node/session.ts:49</a></li></ul></aside></li></ul></section></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">

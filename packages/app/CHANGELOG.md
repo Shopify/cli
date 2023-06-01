@@ -1,5 +1,16 @@
 # @shopify/app
 
+## 3.46.2
+
+### Patch Changes
+
+- 821fa51a1: Fix installing function dependencies when using npm with workspaces
+- c7b2d7aec: Display dev command footer when using no-update or/and no-tunnel
+- Updated dependencies [fc0b6b10a]
+  - @shopify/cli-kit@3.46.2
+  - @shopify/plugin-cloudflare@3.46.2
+  - @shopify/plugin-ngrok@3.46.2
+
 ## 3.46.1
 
 ### Patch Changes
