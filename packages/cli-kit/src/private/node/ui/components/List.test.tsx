@@ -55,7 +55,7 @@ describe('List', async () => {
     const {lastFrame} = render(<List {...options} />)
 
     expect(lastFrame()).toMatchInlineSnapshot(`
-      "[1m[31mList title[39m[22m
+      "[31mList title[39m
         [31m•[39m [31mItem 1[39m
         [31m•[39m [31mItem 2[39m
         [31m•[39m [31mItem 3[39m"

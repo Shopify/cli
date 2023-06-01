@@ -53,9 +53,9 @@ const FatalError: FunctionComponent<FatalErrorProps> = ({error}) => {
       {error.nextSteps && error.nextSteps.length > 0 ? <List title="Next steps" items={error.nextSteps} /> : null}
 
       {error.customSections && error.customSections.length > 0 ? (
-        <Box flexDirection="column">
+        <Box flexDirection="column" gap={1}>
           {error.customSections.map((section, index) => (
-            <Box key={index} flexDirection="column" marginTop={1}>
+            <Box key={index} flexDirection="column">
               {section.title ? <Text bold>{section.title}</Text> : null}
               <TokenizedText item={section.body} />
             </Box>
