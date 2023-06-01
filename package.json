@@ -29,7 +29,7 @@
     "refresh-documentation": "nx run-many --target=refresh-documentation --all --skip-nx-cache"
   },
   "devDependencies": {
-    "@apollo/client": "^3.7.13",
+    "@apollo/client": "^3.7.15",
     "@babel/core": "^7.21.4",
     "@bugsnag/source-maps": "^2.3.1",
     "@changesets/cli": "2.26.1",
