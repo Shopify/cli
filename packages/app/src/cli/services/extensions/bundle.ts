@@ -6,7 +6,8 @@ import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
-import type {StdinOptions, build as esBuild} from 'esbuild'
+import type {StdinOptions, build as esBuild, Plugin} from 'esbuild'
+import {outputDebug} from '@shopify/cli-kit/node/output.js'
 
 const require = createRequire(import.meta.url)
 
@@ -127,7 +128,7 @@ function getESBuildOptions(options: BundleOptions): Parameters<typeof esContext>
     },
     legalComments: 'none',
     minify: options.minify,
-    plugins: getPlugins(),
+    plugins: getPlugins(options.stdin.resolveDir),
     target: 'es6',
     resolveExtensions: ['.tsx', '.ts', '.js', '.json', '.esnext', '.mjs', '.ejs'],
   }
@@ -152,12 +153,37 @@ type ESBuildPlugins = Parameters<typeof esContext>[0]['plugins']
  * It returns the plugins that should be used with ESBuild.
  * @returns List of plugins.
  */
-function getPlugins(): ESBuildPlugins {
+function getPlugins(resolveDir: string | undefined): ESBuildPlugins {
   const plugins = []
 
   if (isGraphqlPackageAvailable()) {
     const {default: graphqlLoader} = require('@luckycatfactory/esbuild-graphql-loader')
     plugins.push(graphqlLoader())
+  }
+
+  if (resolveDir) {
+    let resolvedReactPath: string | undefined
+    try {
+      resolvedReactPath = require.resolve('react', {paths: [resolveDir]})
+    } catch {
+      // If weren't able to find React, that's fine. Extension may not be using it!
+      outputDebug(`Unable to load React in ${resolveDir}, skipping React de-duplication`)
+    }
+
+    if (resolvedReactPath) {
+      outputDebug(`Deduplicating React dependency for ${resolveDir}, using ${resolvedReactPath}`)
+      const DeduplicateReactPlugin: Plugin = {
+        name: 'dedup-react',
+        setup({onResolve}) {
+          onResolve({filter: /^react$/}, (args) => {
+            return {
+              path: resolvedReactPath,
+            }
+          })
+        },
+      }
+      plugins.push(DeduplicateReactPlugin)
+    }
   }
 
   return plugins
