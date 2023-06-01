@@ -1,4 +1,8 @@
-lockfileVersion: '6.0'
+lockfileVersion: '6.1'
+
+settings:
+  autoInstallPeers: false
+  excludeLinksFromLockfile: false
 
 overrides:
   '@types/react': 17.0.2
@@ -761,7 +765,7 @@ importers:
         specifier: ^16.9.11
         version: 16.9.19
       '@vitejs/plugin-react-refresh':
-        specifier: ^1.3.1
+        specifier: ^1.3.6
         version: 1.3.6
       sass:
         specifier: ^1.60.0
@@ -800,7 +804,7 @@ importers:
         specifier: ^16.9.11
         version: 16.9.19
       '@vitejs/plugin-react-refresh':
-        specifier: ^1.3.1
+        specifier: ^1.3.6
         version: 1.3.6
       jest-websocket-mock:
         specifier: ^2.2.1
