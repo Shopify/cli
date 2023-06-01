@@ -25,7 +25,6 @@ import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant
 import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
-import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
 
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
@@ -104,11 +103,9 @@ async function dev(options: DevOptions) {
   }
 
   const backendConfig = localApp.webs.find((web) => isWebType(web, WebType.Backend))
-  const webhooksPath = localApp.webs.map(({configuration}) => configuration.webhooks_path).find((path) => path) || '/api/webhooks'
+  const webhooksPath =
+    localApp.webs.map(({configuration}) => configuration.webhooks_path).find((path) => path) || '/api/webhooks'
   const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated
-
-  const initiateUpdateUrls = localApp.webs.length > 0 && options.update
-  let shouldUpdateURLs = false
 
   await validateCustomPorts(localApp.webs)
 
@@ -127,12 +124,13 @@ async function dev(options: DevOptions) {
   const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
 
-  let previewUrl
+  const initiateUpdateUrls = localApp.webs.length > 0 && options.update
+  let shouldUpdateURLs = false
 
   if (initiateUpdateUrls) {
     const newURLs = generatePartnersURLs(
       exposedUrl,
-      localApp.webs.map(({configuration}) => configuration.authCallbackPath).find((path) => path)
+      localApp.webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
     )
     shouldUpdateURLs = await shouldOrPromptUpdateURLs({
       currentURLs,
@@ -142,21 +140,6 @@ async function dev(options: DevOptions) {
     })
     if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
     await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
-    previewUrl = buildAppURLForWeb(storeFqdn, apiKey)
-    if (options.update) {
-      const newURLs = generatePartnersURLs(
-        exposedUrl,
-        backendConfig?.configuration.auth_callback_path ?? frontendConfig?.configuration.auth_callback_path,
-      )
-      shouldUpdateURLs = await shouldOrPromptUpdateURLs({
-        currentURLs,
-        appDirectory: localApp.directory,
-        cachedUpdateURLs,
-        newApp: remoteApp.newApp,
-      })
-      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
-      await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
-    }
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
@@ -176,20 +159,24 @@ async function dev(options: DevOptions) {
     backendPort,
   }
 
-  await Promise.all(localApp.webs.map(async (web) => {
-    const isFrontend = isWebType(web, WebType.Frontend)
-    const hostname = isFrontend ? frontendUrl : exposedUrl
-    const fullWebOptions: DevWebOptions = {...webOptions, web, hostname}
+  await Promise.all(
+    localApp.webs.map(async (web) => {
+      const isFrontend = isWebType(web, WebType.Frontend)
+      const hostname = isFrontend ? frontendUrl : exposedUrl
+      const fullWebOptions: DevWebOptions = {...webOptions, web, hostname}
 
-    if (isFrontend && !usingLocalhost) {
-      proxyTargets.push(await devProxyTarget(fullWebOptions))
-    } else {
-      additionalProcesses.push(await devNonProxyTarget(fullWebOptions, frontendPort))
-    }
-  }))
+      if (isFrontend && !usingLocalhost) {
+        proxyTargets.push(await devProxyTarget(fullWebOptions))
+      } else {
+        additionalProcesses.push(await devNonProxyTarget(fullWebOptions, frontendPort))
+      }
+    }),
+  )
 
   const previewableExtensions = localApp.allExtensions.filter((ext) => ext.isPreviewable)
   const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable)
+
+  let previewUrl
 
   if (previewableExtensions.length > 0) {
     previewUrl = `${proxyUrl}/extensions/dev-console`
@@ -352,11 +339,14 @@ async function devProxyTarget(options: DevWebOptions): Promise<ReverseHTTPProxyT
       FRONTEND_PORT: `${port}`,
       // Note: These are Laravel variables for backwards compatibility with 2.0 templates.
       SERVER_PORT: `${port}`,
-    })
+    }),
   })
 }
 
-async function devWeb(options: DevWebOptions, {port, dynamicEnv}: {port?: number; dynamicEnv: (port: number) => object}): Promise<ReverseHTTPProxyTarget> {
+async function devWeb(
+  options: DevWebOptions,
+  {port, dynamicEnv}: {port?: number; dynamicEnv: (port: number) => object},
+): Promise<ReverseHTTPProxyTarget> {
   const {commands} = options.web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
 
@@ -374,7 +364,7 @@ async function devWeb(options: DevWebOptions, {port, dynamicEnv}: {port?: number
     APP_ENV: 'development',
   }
 
-  const logPrefixParts = ["web"]
+  const logPrefixParts = ['web']
   if ('type' in options.web.configuration) {
     logPrefixParts.push(options.web.configuration.type)
   }
@@ -545,17 +535,16 @@ async function validateCustomPorts(webConfigs: Web[]) {
   const allPorts = webConfigs.map((config) => config.configuration.port).filter((port) => port)
   const duplicatedPort = allPorts.find((port, index) => allPorts.indexOf(port) !== index)
   if (duplicatedPort) {
-    throw new AbortError(
-      `Found port ${duplicatedPort} for multiple webs.`,
-      'Please define a unique port for each web.',
-    )
+    throw new AbortError(`Found port ${duplicatedPort} for multiple webs.`, 'Please define a unique port for each web.')
   }
-  await Promise.all(allPorts.map(async (port) => {
-    const portAvailable = await checkPortAvailability(port!)
-    if (!portAvailable) {
-      throw new AbortError(`Hard-coded port ${port} is not available, please choose a different one.`)
-    }
-  }))
+  await Promise.all(
+    allPorts.map(async (port) => {
+      const portAvailable = await checkPortAvailability(port!)
+      if (!portAvailable) {
+        throw new AbortError(`Hard-coded port ${port} is not available, please choose a different one.`)
+      }
+    }),
+  )
 }
 
 export default dev

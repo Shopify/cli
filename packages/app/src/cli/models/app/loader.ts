@@ -426,9 +426,7 @@ async function logMetadataForLoadedApp(
 
     const webBackendCount = app.webs.filter((web) => isWebType(web, WebType.Backend)).length
     const webBackendFramework =
-      webBackendCount === 1
-        ? app.webs.filter((web) => isWebType(web, WebType.Backend))[0]?.framework
-        : undefined
+      webBackendCount === 1 ? app.webs.filter((web) => isWebType(web, WebType.Backend))[0]?.framework : undefined
     const webFrontendCount = app.webs.filter((web) => isWebType(web, WebType.Frontend)).length
 
     const extensionsBreakdownMapping: {[key: string]: number} = {}
