@@ -18,7 +18,7 @@
     "@babel/core": "7.21.4",
     "@shopify/eslint-plugin": "42.1.0",
     "@typescript-eslint/eslint-plugin": "5.57.0",
-    "@typescript-eslint/parser": "5.59.2",
+    "@typescript-eslint/parser": "5.59.8",
     "eslint-config-prettier": "8.8.0",
     "eslint-plugin-import": "2.27.5",
     "eslint-plugin-jsdoc": "39.3.6",
