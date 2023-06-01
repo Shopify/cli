@@ -3,7 +3,7 @@ import {Box, Text, TextProps} from 'ink'
 import React, {FunctionComponent} from 'react'
 
 interface ListProps {
-  title?: string
+  title?: TokenItem<InlineToken>
   items: TokenItem<InlineToken>[]
   ordered?: boolean
   margin?: boolean
@@ -20,8 +20,8 @@ const List: FunctionComponent<ListProps> = ({title, items, margin = true, ordere
   return (
     <Box flexDirection="column">
       {title ? (
-        <Text bold color={color}>
-          {title}
+        <Text color={color}>
+          <TokenizedText item={title} />
         </Text>
       ) : null}
       {items.map((item, index) => (

@@ -13,6 +13,7 @@ query GetExtensionRegistrations($api_key: String!, $type: String) {
       uuid
       title
       draftVersion {
+        config
         registrationId
         context
         lastUserInteractionAt

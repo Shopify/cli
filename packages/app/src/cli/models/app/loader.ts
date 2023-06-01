@@ -1,11 +1,8 @@
-import {UIExtension, ThemeExtension, FunctionExtension, Extension, GenericSpecification} from './extensions.js'
 import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
-import {UIExtensionInstance, UIExtensionSpec} from '../extensions/ui.js'
-import {ThemeExtensionInstance, ThemeExtensionSpec} from '../extensions/theme.js'
-import {BaseFunctionConfigurationSchema, ThemeExtensionSchema, TypeSchema} from '../extensions/schemas.js'
-import {FunctionInstance} from '../extensions/functions.js'
+import {ExtensionInstance, ExtensionSpecification} from '../extensions/specification.js'
+import {TypeSchema} from '../extensions/schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -28,6 +25,102 @@ import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/c
 const defaultExtensionDirectory = 'extensions/*'
 
 export type AppLoaderMode = 'strict' | 'report'
+
+type AbortOrReport = <T>(errorMessage: OutputMessage, fallback: T, configurationPath: string) => T
+
+async function loadConfigurationFile(
+  filepath: string,
+  abortOrReport: AbortOrReport,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  decode: (input: any) => any = decodeToml,
+): Promise<unknown> {
+  if (!(await fileExists(filepath))) {
+    return abortOrReport(
+      outputContent`Couldn't find the configuration file at ${outputToken.path(filepath)}`,
+      '',
+      filepath,
+    )
+  }
+  const configurationContent = await readFile(filepath)
+  let configuration: object
+  try {
+    configuration = decode(configurationContent)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    // TOML errors have line, pos and col properties
+    if (err.line && err.pos && err.col) {
+      return abortOrReport(
+        outputContent`Fix the following error in ${outputToken.path(filepath)}:\n${err.message}`,
+        null,
+        filepath,
+      )
+    } else {
+      throw err
+    }
+  }
+  // Convert snake_case keys to camelCase before returning
+  return {
+    ...Object.fromEntries(Object.entries(configuration).map((kv) => [camelize(kv[0]), kv[1]])),
+  }
+}
+
+export async function parseConfigurationFile<TSchema extends zod.ZodType>(
+  schema: TSchema,
+  filepath: string,
+  abortOrReport: AbortOrReport,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  decode: (input: any) => any = decodeToml,
+): Promise<zod.TypeOf<TSchema>> {
+  const fallbackOutput = {} as zod.TypeOf<TSchema>
+
+  const configurationObject = await loadConfigurationFile(filepath, abortOrReport, decode)
+  if (!configurationObject) return fallbackOutput
+
+  const parseResult = schema.safeParse(configurationObject)
+
+  if (!parseResult.success) {
+    const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
+    return abortOrReport(
+      outputContent`Fix a schema error in ${outputToken.path(filepath)}:\n${formattedError}`,
+      fallbackOutput,
+      filepath,
+    )
+  }
+  return parseResult.data
+}
+
+export function findSpecificationForType(specifications: ExtensionSpecification[], type: string) {
+  return specifications.find(
+    (spec) =>
+      spec.identifier === type || spec.externalIdentifier === type || spec.additionalIdentifiers?.includes(type),
+  )
+}
+
+export async function findSpecificationForConfig(
+  specifications: ExtensionSpecification[],
+  configurationPath: string,
+  abortOrReport: AbortOrReport,
+) {
+  const fileContent = await readFile(configurationPath)
+  const obj = decodeToml(fileContent)
+  const {type} = TypeSchema.parse(obj)
+  const specification = findSpecificationForType(specifications, type)
+
+  if (!specification) {
+    const isShopifolk = await isShopify()
+    const shopifolkMessage = '\nYou might need to enable some beta flags on your Organization or App'
+    abortOrReport(
+      outputContent`Unknown extension type ${outputToken.yellow(type)} in ${outputToken.path(configurationPath)}. ${
+        isShopifolk ? shopifolkMessage : ''
+      }`,
+      undefined,
+      configurationPath,
+    )
+    return undefined
+  }
+
+  return specification
+}
 
 export class AppErrors {
   private errors: {
@@ -54,7 +147,7 @@ export class AppErrors {
 interface AppLoaderConstructorArgs {
   directory: string
   mode?: AppLoaderMode
-  specifications: GenericSpecification[]
+  specifications: ExtensionSpecification[]
 }
 
 /**
@@ -72,7 +165,7 @@ class AppLoader {
   private appDirectory = ''
   private configurationPath = ''
   private errors: AppErrors = new AppErrors()
-  private specifications: GenericSpecification[]
+  private specifications: ExtensionSpecification[]
 
   constructor({directory, mode, specifications}: AppLoaderConstructorArgs) {
     this.mode = mode ?? 'strict'
@@ -81,7 +174,16 @@ class AppLoader {
   }
 
   findSpecificationForType(type: string) {
-    return this.specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
+    return findSpecificationForType(this.specifications, type)
+  }
+
+  parseConfigurationFile<TSchema extends zod.ZodType>(
+    schema: TSchema,
+    filepath: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    decode: (input: any) => any = decodeToml,
+  ) {
+    return parseConfigurationFile(schema, filepath, this.abortOrReport.bind(this), decode)
   }
 
   async loaded() {
@@ -89,15 +191,9 @@ class AppLoader {
     const configurationPath = await this.getConfigurationPath()
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
     const dotenv = await this.loadDotEnv()
-    const {functions, usedCustomLayout: usedCustomLayoutForFunctionExtensions} = await this.loadFunctions(
-      configuration.extensionDirectories,
-    )
-    const {uiExtensions, usedCustomLayout: usedCustomLayoutForUIExtensions} = await this.loadUIExtensions(
-      configuration.extensionDirectories,
-    )
-    const {themeExtensions, usedCustomLayout: usedCustomLayoutForThemeExtensions} = await this.loadThemeExtensions(
-      configuration.extensionDirectories,
-    )
+
+    const {allExtensions, usedCustomLayout} = await this.loadExtensions(configuration.extensionDirectories)
+
     const packageJSONPath = joinPath(this.appDirectory, 'package.json')
     const name = await loadAppName(this.appDirectory)
     const nodeDependencies = await getDependencies(packageJSONPath)
@@ -114,9 +210,7 @@ class AppLoader {
       configurationPath,
       nodeDependencies,
       webs,
-      uiExtensions,
-      themeExtensions,
-      functions,
+      allExtensions,
       usesWorkspaces,
       dotenv,
     )
@@ -125,9 +219,7 @@ class AppLoader {
 
     await logMetadataForLoadedApp(appClass, {
       usedCustomLayoutForWeb,
-      usedCustomLayoutForUIExtensions,
-      usedCustomLayoutForFunctionExtensions,
-      usedCustomLayoutForThemeExtensions,
+      usedCustomLayoutForExtensions: usedCustomLayout,
     })
 
     return appClass
@@ -191,203 +283,78 @@ class AppLoader {
     }
   }
 
-  async loadConfigurationFile(
-    filepath: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    decode: (input: any) => any = decodeToml,
-  ): Promise<unknown> {
-    if (!(await fileExists(filepath))) {
-      return this.abortOrReport(
-        outputContent`Couldn't find the configuration file at ${outputToken.path(filepath)}`,
-        '',
-        filepath,
-      )
-    }
-    const configurationContent = await readFile(filepath)
-    let configuration: object
-    try {
-      configuration = decode(configurationContent)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      // TOML errors have line, pos and col properties
-      if (err.line && err.pos && err.col) {
-        return this.abortOrReport(
-          outputContent`Fix the following error in ${outputToken.path(filepath)}:\n${err.message}`,
-          null,
-          filepath,
-        )
-      } else {
-        throw err
-      }
-    }
-    // Convert snake_case keys to camelCase before returning
-    return {
-      ...Object.fromEntries(Object.entries(configuration).map((kv) => [camelize(kv[0]), kv[1]])),
-    }
-  }
-
-  async parseConfigurationFile<TSchema extends zod.ZodType>(
-    schema: TSchema,
-    filepath: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    decode: (input: any) => any = decodeToml,
-  ): Promise<zod.TypeOf<TSchema>> {
-    const fallbackOutput = {} as zod.TypeOf<TSchema>
-
-    const configurationObject = await this.loadConfigurationFile(filepath, decode)
-    if (!configurationObject) return fallbackOutput
-
-    const parseResult = schema.safeParse(configurationObject)
-
-    if (!parseResult.success) {
-      const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
-      return this.abortOrReport(
-        outputContent`Fix a schema error in ${outputToken.path(filepath)}:\n${formattedError}`,
-        fallbackOutput,
-        filepath,
-      )
-    }
-    return parseResult.data
-  }
-
-  async loadUIExtensions(
+  async loadExtensions(
     extensionDirectories?: string[],
-  ): Promise<{uiExtensions: UIExtension[]; usedCustomLayout: boolean}> {
+  ): Promise<{allExtensions: ExtensionInstance[]; usedCustomLayout: boolean}> {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
-      return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.ui}`)
+      return joinPath(this.appDirectory, extensionPath, '*.extension.toml')
     })
     const configPaths = await glob(extensionConfigPaths)
 
     const extensions = configPaths.map(async (configurationPath) => {
       const directory = dirname(configurationPath)
-      const fileContent = await readFile(configurationPath)
-      const obj = decodeToml(fileContent)
-      const {type} = TypeSchema.parse(obj)
-      const specification = this.findSpecificationForType(type) as UIExtensionSpec | undefined
+      const specification = await findSpecificationForConfig(
+        this.specifications,
+        configurationPath,
+        this.abortOrReport.bind(this),
+      )
 
-      if (!specification) {
-        const isShopifolk = await isShopify()
-        const shopifolkMessage = '\nYou might need to enable some beta flags on your Organization or App'
-        this.abortOrReport(
-          outputContent`Unknown extension type ${outputToken.yellow(type)} in ${outputToken.path(configurationPath)}. ${
-            isShopifolk ? shopifolkMessage : ''
-          }`,
-          undefined,
-          configurationPath,
-        )
-        return undefined
-      }
+      if (!specification) return
 
       const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
+      const entryPath = await this.findEntryPath(directory, specification)
 
-      let entryPath
-      if (specification.singleEntryPath) {
-        entryPath = (
-          await Promise.all(
-            ['index']
-              .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
-              .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
-              .map((relativePath) => joinPath(directory, relativePath))
-              .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
-          )
-        ).find((sourcePath) => sourcePath !== undefined)
-        if (!entryPath) {
-          this.abortOrReport(
-            outputContent`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${outputToken.path(
-              directory,
-            )} or ${outputToken.path(joinPath(directory, 'src'))}`,
-            undefined,
-            directory,
-          )
-        }
-      }
-
-      const extensionInstance = new UIExtensionInstance({
+      const extensionInstance = new ExtensionInstance({
         configuration,
         configurationPath,
-        entryPath: entryPath ?? '',
+        entryPath,
         directory,
         specification,
       })
 
-      if (configuration.type) {
-        const validateResult = await extensionInstance.validate()
-        if (validateResult.isErr()) {
-          this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
-        }
+      const validateResult = await extensionInstance.validate()
+      if (validateResult.isErr()) {
+        this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
       }
+
       return extensionInstance
     })
 
-    const uiExtensions = getArrayRejectingUndefined(await Promise.all(extensions))
-    return {uiExtensions, usedCustomLayout: extensionDirectories !== undefined}
+    const allExtensions = getArrayRejectingUndefined(await Promise.all(extensions))
+    return {allExtensions, usedCustomLayout: extensionDirectories !== undefined}
   }
 
-  async loadFunctions(
-    extensionDirectories?: string[],
-  ): Promise<{functions: FunctionExtension[]; usedCustomLayout: boolean}> {
-    const functionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
-      return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.function}`)
-    })
-    const configPaths = await glob(functionConfigPaths)
-
-    const allFunctions = configPaths.map(async (configurationPath) => {
-      const directory = dirname(configurationPath)
-      const configuration = await this.parseConfigurationFile(BaseFunctionConfigurationSchema, configurationPath)
-
-      const entryPath = (
+  async findEntryPath(directory: string, specification: ExtensionSpecification) {
+    let entryPath
+    if (specification.singleEntryPath) {
+      entryPath = (
+        await Promise.all(
+          ['index']
+            .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
+            .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
+            .map((relativePath) => joinPath(directory, relativePath))
+            .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
+        )
+      ).find((sourcePath) => sourcePath !== undefined)
+      if (!entryPath) {
+        this.abortOrReport(
+          outputContent`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${outputToken.path(
+            directory,
+          )} or ${outputToken.path(joinPath(directory, 'src'))}`,
+          undefined,
+          directory,
+        )
+      }
+    } else if (specification.identifier === 'function') {
+      entryPath = (
         await Promise.all(
           ['src/index.js', 'src/index.ts', 'src/main.rs']
             .map((relativePath) => joinPath(directory, relativePath))
             .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
         )
       ).find((sourcePath) => sourcePath !== undefined)
-
-      return new FunctionInstance({
-        configuration,
-        configurationPath,
-        entryPath,
-        directory,
-      })
-    })
-    const functions = getArrayRejectingUndefined(await Promise.all(allFunctions))
-    return {functions, usedCustomLayout: extensionDirectories !== undefined}
-  }
-
-  async loadThemeExtensions(
-    extensionDirectories?: string[],
-  ): Promise<{themeExtensions: ThemeExtension[]; usedCustomLayout: boolean}> {
-    const themeConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
-      return joinPath(this.appDirectory, extensionPath, `${configurationFileNames.extension.theme}`)
-    })
-    const configPaths = await glob(themeConfigPaths)
-
-    const extensions = configPaths.map(async (configurationPath) => {
-      const directory = dirname(configurationPath)
-      const configuration = await this.parseConfigurationFile(ThemeExtensionSchema, configurationPath)
-      const specification = this.findSpecificationForType('theme') as ThemeExtensionSpec | undefined
-
-      if (!specification) {
-        this.abortOrReport(
-          outputContent`Unknown theme type ${outputToken.yellow('theme')} in ${outputToken.path(configurationPath)}`,
-          undefined,
-          configurationPath,
-        )
-        return undefined
-      }
-
-      return new ThemeExtensionInstance({
-        configuration,
-        configurationPath,
-        directory,
-        specification,
-        outputBundlePath: directory,
-      })
-    })
-
-    const themeExtensions = getArrayRejectingUndefined(await Promise.all(extensions))
-
-    return {themeExtensions, usedCustomLayout: extensionDirectories !== undefined}
+    }
+    return entryPath
   }
 
   abortOrReport<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {
@@ -437,9 +404,7 @@ async function logMetadataForLoadedApp(
   app: App,
   loadingStrategy: {
     usedCustomLayoutForWeb: boolean
-    usedCustomLayoutForUIExtensions: boolean
-    usedCustomLayoutForFunctionExtensions: boolean
-    usedCustomLayoutForThemeExtensions: boolean
+    usedCustomLayoutForExtensions: boolean
   },
 ) {
   await metadata.addPublicMetadata(async () => {
@@ -449,7 +414,7 @@ async function logMetadataForLoadedApp(
     const extensionUICount = app.extensions.ui.length
     const extensionThemeCount = app.extensions.theme.length
 
-    const extensionTotalCount = extensionFunctionCount + extensionUICount + extensionThemeCount
+    const extensionTotalCount = app.allExtensions.length
 
     const webBackendCount = app.webs.filter((web) => web.configuration.type === WebType.Backend).length
     const webBackendFramework =
@@ -458,9 +423,8 @@ async function logMetadataForLoadedApp(
         : undefined
     const webFrontendCount = app.webs.filter((web) => web.configuration.type === WebType.Frontend).length
 
-    const allExtensions: Extension[] = [...app.extensions.function, ...app.extensions.theme, ...app.extensions.ui]
     const extensionsBreakdownMapping: {[key: string]: number} = {}
-    for (const extension of allExtensions) {
+    for (const extension of app.allExtensions) {
       if (extensionsBreakdownMapping[extension.type] === undefined) {
         extensionsBreakdownMapping[extension.type] = 1
       } else {
@@ -473,19 +437,13 @@ async function logMetadataForLoadedApp(
       app_extensions_any: extensionTotalCount > 0,
       app_extensions_breakdown: JSON.stringify(extensionsBreakdownMapping),
       app_extensions_count: extensionTotalCount,
-      app_extensions_custom_layout:
-        loadingStrategy.usedCustomLayoutForFunctionExtensions ||
-        loadingStrategy.usedCustomLayoutForThemeExtensions ||
-        loadingStrategy.usedCustomLayoutForUIExtensions,
+      app_extensions_custom_layout: loadingStrategy.usedCustomLayoutForExtensions,
       app_extensions_function_any: extensionFunctionCount > 0,
       app_extensions_function_count: extensionFunctionCount,
-      app_extensions_function_custom_layout: loadingStrategy.usedCustomLayoutForFunctionExtensions,
       app_extensions_theme_any: extensionThemeCount > 0,
       app_extensions_theme_count: extensionThemeCount,
-      app_extensions_theme_custom_layout: loadingStrategy.usedCustomLayoutForThemeExtensions,
       app_extensions_ui_any: extensionUICount > 0,
       app_extensions_ui_count: extensionUICount,
-      app_extensions_ui_custom_layout: loadingStrategy.usedCustomLayoutForUIExtensions,
       app_name_hash: hashString(app.name),
       app_path_hash: hashString(app.directory),
       app_scopes: JSON.stringify(

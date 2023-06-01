@@ -30,11 +30,7 @@ describe('bundleExtension()', () => {
           FOO: 'BAR',
         },
       },
-      extensions: {
-        ui: [extension],
-        theme: [],
-        function: [],
-      },
+      allExtensions: [extension],
     })
     const esbuildWatch = vi.fn()
     const esbuildDispose = vi.fn()
@@ -92,12 +88,12 @@ describe('bundleExtension()', () => {
       'process.env.FOO': JSON.stringify('BAR'),
       'process.env.NODE_ENV': JSON.stringify('production'),
     })
-    expect(vi.mocked(stdout.write).calls[0][0]).toMatchInlineSnapshot(`
+    expect(vi.mocked(stdout.write).mock.calls[0][0]).toMatchInlineSnapshot(`
       "▲ [WARNING] warning text [plugin plugin]
 
       "
     `)
-    expect(vi.mocked(stdout.write).calls[0][0]).toMatchInlineSnapshot(`
+    expect(vi.mocked(stdout.write).mock.calls[0][0]).toMatchInlineSnapshot(`
       "▲ [WARNING] warning text [plugin plugin]
 
       "
@@ -117,11 +113,7 @@ describe('bundleExtension()', () => {
           FOO: 'BAR',
         },
       },
-      extensions: {
-        ui: [extension],
-        theme: [],
-        function: [],
-      },
+      allExtensions: [extension],
     })
     const stdout: any = {
       write: vi.fn(),

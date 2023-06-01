@@ -1,5 +1,55 @@
 # @shopify/theme
 
+## 3.46.0
+
+### Minor Changes
+
+- 162504891: Introduce the `--notify` flag in the shopify app/theme dev commands
+- d2d1b96a6: Introduce support for update extension files
+- 9de04da4d: Introduce `.jpeg` support for theme app extensions
+- 151684a25: - Improve rule for lazy loading to prevent developers from overusing it
+  - Introduce `--update-docs` flag to synchronously update Theme Check resources (objects, filters, and tags)
+
+### Patch Changes
+
+- 3b1da7747: Fix unavailable constant reference in theme dev
+- 94d197f63: Display clear error message when prompting fails due to non-TTY terminal
+- 9e06083e4: Fix localhost link in the `shopify theme dev` command
+- 595233406: Fix description for `shopify theme open` flags
+- Updated dependencies [d9ef6c3f6]
+- Updated dependencies [33881af95]
+- Updated dependencies [2729e3784]
+- Updated dependencies [3b1da7747]
+- Updated dependencies [a7c1eabeb]
+- Updated dependencies [cc37858fb]
+- Updated dependencies [1707ef75a]
+- Updated dependencies [94d197f63]
+- Updated dependencies [162504891]
+- Updated dependencies [9e4c97b52]
+- Updated dependencies [9de04da4d]
+- Updated dependencies [f95e3a1d5]
+- Updated dependencies [1c8afb7f4]
+- Updated dependencies [151684a25]
+- Updated dependencies [37b53a5be]
+- Updated dependencies [01988114d]
+- Updated dependencies [beda7c241]
+- Updated dependencies [07d0be690]
+- Updated dependencies [6663b3a8f]
+- Updated dependencies [3169c1e44]
+- Updated dependencies [069e38ecf]
+  - @shopify/cli-kit@3.46.0
+
+## 3.46.0-pre.3
+
+### Patch Changes
+
+- Updated dependencies [d9ef6c3f6]
+- Updated dependencies [cc37858fb]
+- Updated dependencies [1c8afb7f4]
+- Updated dependencies [6663b3a8f]
+- Updated dependencies [069e38ecf]
+  - @shopify/cli-kit@3.46.0-pre.3
+
 ## 3.46.0-pre.2
 
 ### Minor Changes

@@ -1,8 +1,8 @@
+import {treeKill} from './tree-kill.js'
 import {collectLog, consoleLog, Logger, LogLevel, outputWhereAppropriate} from '../../public/node/output.js'
 import {isUnitTest} from '../../public/node/context/local.js'
 import {ReactElement} from 'react'
 import {Key, render as inkRender, RenderOptions} from 'ink'
-import treeKill from 'tree-kill'
 import {EventEmitter} from 'events'
 
 interface RenderOnceOptions {
@@ -19,7 +19,7 @@ export function renderOnce(
 
   if (output) {
     if (isUnitTest()) collectLog(logLevel, output)
-    outputWhereAppropriate(logLevel, logger, output)
+    outputWhereAppropriate(logLevel, logger, output, {skipUIEvent: true})
   }
 
   unmount()
@@ -79,6 +79,6 @@ const renderString = (element: ReactElement, renderOptions?: RenderOptions): Ins
 export function handleCtrlC(input: string, key: Key) {
   if (input === 'c' && key.ctrl) {
     // Exceptions thrown in hooks aren't caught by our errorHandler.
-    treeKill(process.pid, 'SIGINT')
+    treeKill('SIGINT')
   }
 }

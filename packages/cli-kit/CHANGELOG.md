@@ -1,5 +1,48 @@
 # @shopify/cli-kit
 
+## 3.46.0
+
+### Minor Changes
+
+- 162504891: Introduce the `--notify` flag in the shopify app/theme dev commands
+- 9de04da4d: Introduce `.jpeg` support for theme app extensions
+- 1c8afb7f4: lookupMimeType and setMimeTypes using mrmime
+- 151684a25: - Improve rule for lazy loading to prevent developers from overusing it
+  - Introduce `--update-docs` flag to synchronously update Theme Check resources (objects, filters, and tags)
+- 01988114d: Add support for Google Cloud Shell
+- 3169c1e44: Introduce partial support for --no-color mode
+
+### Patch Changes
+
+- d9ef6c3f6: Add support to display an empty value when the input in configured to allow empty values
+- 33881af95: fixes theme preview for new shopify cdn url format
+- 2729e3784: Fix autocomplete height resize when items are split in groups
+- 3b1da7747: Fix unavailable constant reference in theme dev
+- a7c1eabeb: Add support for theme app extensions in Spin
+- cc37858fb: Disable concurrent output component in a non tty terminal
+- 1707ef75a: Set current CLI3 version as the version used by the cli-ruby API requests
+- 94d197f63: Display clear error message when prompting fails due to non-TTY terminal
+- 9e4c97b52: Add abortSignal to async ui function parameters
+- f95e3a1d5: Do not proxy /localization and /cart/ requests
+- 37b53a5be: Install exact versions with NPM by default
+- beda7c241: Fix peer dependency resolution issue with npm
+- 07d0be690: Fix localhost as host to run the library get port please
+- 6663b3a8f: ciPlatform: return metadata from environment variables
+- 069e38ecf: Fix graphql query for products to only retrieve published products
+
+## 3.46.0-pre.3
+
+### Minor Changes
+
+- 1c8afb7f4: lookupMimeType and setMimeTypes using mrmime
+
+### Patch Changes
+
+- d9ef6c3f6: Add support to display an empty value when the input in configured to allow empty values
+- cc37858fb: Disable concurrent output component in a non tty terminal
+- 6663b3a8f: ciPlatform: return metadata from environment variables
+- 069e38ecf: Fix graphql query for products to only retrieve published products
+
 ## 3.46.0-pre.2
 
 ### Minor Changes

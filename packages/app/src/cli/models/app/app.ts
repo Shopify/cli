@@ -1,5 +1,6 @@
 import {Extension, FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {AppErrors} from './loader.js'
+import {ExtensionInstance} from '../extensions/specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -55,6 +56,7 @@ export interface AppInterface {
   webs: Web[]
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
+  allExtensions: ExtensionInstance[]
   extensions: {
     ui: UIExtension[]
     theme: ThemeExtension[]
@@ -79,6 +81,7 @@ export class App implements AppInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
+  allExtensions: ExtensionInstance[]
   extensions: {
     ui: UIExtension[]
     theme: ThemeExtension[]
@@ -95,13 +98,17 @@ export class App implements AppInterface {
     configurationPath: string,
     nodeDependencies: {[key: string]: string},
     webs: Web[],
-    ui: UIExtension[],
-    theme: ThemeExtension[],
-    functions: FunctionExtension[],
+    extensions: ExtensionInstance[],
     usesWorkspaces: boolean,
     dotenv?: DotEnvFile,
     errors?: AppErrors,
   ) {
+    // Temporary workaround while we migrate to use appModule features.
+    const functionsExt = extensions.filter((extension) => extension.features.includes('function'))
+    const themes = extensions.filter((extension) => extension.features.includes('theme'))
+    const uis = extensions.filter(
+      (extension) => !extension.features.includes('function') && !extension.features.includes('theme'),
+    )
     this.name = name
     this.idEnvironmentVariableName = idEnvironmentVariableName
     this.directory = directory
@@ -111,10 +118,11 @@ export class App implements AppInterface {
     this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
+    this.allExtensions = extensions
     this.extensions = {
-      ui,
-      theme,
-      function: functions,
+      ui: uis,
+      theme: themes,
+      function: functionsExt as unknown as FunctionExtension[],
     }
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
@@ -126,9 +134,7 @@ export class App implements AppInterface {
   }
 
   hasExtensions(): boolean {
-    return (
-      this.extensions.ui.length !== 0 || this.extensions.function.length !== 0 || this.extensions.theme.length !== 0
-    )
+    return this.allExtensions.length > 0
   }
 
   hasUIExtensions(): boolean {
@@ -136,8 +142,7 @@ export class App implements AppInterface {
   }
 
   extensionsForType(specification: {identifier: string; externalIdentifier: string}): Extension[] {
-    const allExternsions = [...this.extensions.ui, ...this.extensions.function, ...this.extensions.theme]
-    return allExternsions.filter(
+    return this.allExtensions.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
   }
@@ -159,7 +164,7 @@ export async function getUIExtensionRendererVersion(
   // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)
   const rendererDependency = extension.dependency
   if (!rendererDependency) return undefined
-  return getDependencyVersion(rendererDependency.name, app.directory)
+  return getDependencyVersion(rendererDependency, app.directory)
 }
 
 export async function getDependencyVersion(dependency: string, directory: string): Promise<RendererVersionResult> {

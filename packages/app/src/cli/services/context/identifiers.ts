@@ -23,6 +23,7 @@ export interface RemoteSource {
   type: string
   id: string
   title: string
+  draftVersion?: {config: string}
 }
 
 export interface LocalSource {
@@ -40,11 +41,15 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
 
   const remoteSpecifications = await fetchAppExtensionRegistrations({token: options.token, apiKey: options.appId})
 
-  const result = await ensureFunctionsIds(options, remoteSpecifications.app.functions)
-  if (result.isErr()) throw handleIdsError(result.error, options.appName, options.app.packageManager)
-  const functions: IdentifiersExtensions = result.value
+  let functions: IdentifiersExtensions = {}
 
-  const extensions = await ensureExtensionsIds(options, remoteSpecifications.app.extensionRegistrations)
+  if (!options.partnersApp?.betas?.unifiedAppDeployment) {
+    const result = await ensureFunctionsIds(options, remoteSpecifications.app.functions)
+    if (result.isErr()) throw handleIdsError(result.error, options.appName, options.app.packageManager)
+    functions = result.value
+  }
+
+  const extensions = await ensureExtensionsIds(options, remoteSpecifications.app)
   if (extensions.isErr()) throw handleIdsError(extensions.error, options.appName, options.app.packageManager)
 
   return {

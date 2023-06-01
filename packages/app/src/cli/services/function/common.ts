@@ -1,14 +1,10 @@
 import {FunctionExtension} from '../../models/app/extensions.js'
 import {App, AppInterface} from '../../models/app/app.js'
 import {load as loadApp} from '../../models/app/loader.js'
-import {loadExtensionsSpecifications} from '../../models/extensions/specifications.js'
-import {FunctionSpec} from '../../models/extensions/functions.js'
-import {ExtensionFlavorValue} from '../generate/extension.js'
-import {resolvePath, cwd, joinPath} from '@shopify/cli-kit/node/path'
-import {renderFatalError} from '@shopify/cli-kit/node/ui'
+import {loadExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Config, Flags} from '@oclif/core'
-import {fileExists} from '@shopify/cli-kit/node/fs'
 
 export const functionFlags = {
   path: Flags.string({
@@ -32,21 +28,6 @@ export async function inFunctionContext(
   if (ourFunction) {
     return callback(app, ourFunction)
   } else {
-    renderFatalError(
-      new AbortError('Run this command from a function directory or use `--path` to specify a function directory.'),
-    )
+    throw new AbortError('Run this command from a function directory or use `--path` to specify a function directory.')
   }
-}
-
-export async function ensureFunctionExtensionFlavorExists(
-  specification: FunctionSpec,
-  extensionFlavor: ExtensionFlavorValue,
-  templateDownloadDir: string,
-): Promise<string> {
-  const templatePath = specification.templatePath(extensionFlavor)
-  const origin = joinPath(templateDownloadDir, templatePath)
-  if (!(await fileExists(origin))) {
-    throw new AbortError(`\nExtension '${specification.externalName}' is not available for ${extensionFlavor}`)
-  }
-  return origin
 }

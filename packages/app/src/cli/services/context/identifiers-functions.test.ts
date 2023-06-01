@@ -48,12 +48,15 @@ const FUNCTION_A: FunctionExtension = {
     },
     configurationUi: false,
     apiVersion: '2022-07',
+    metafields: [],
   },
   buildCommand: 'make build',
   buildWasmPath: '/function/dist/index.wasm',
   inputQueryPath: '/function/input.graphql',
   isJavaScript: false,
   externalType: 'function',
+  usingExtensionsFramework: false,
+  features: ['function'],
   publishURL: (_) => Promise.resolve(''),
 }
 
@@ -74,12 +77,15 @@ const FUNCTION_A_2: FunctionExtension = {
     },
     configurationUi: false,
     apiVersion: '2022-07',
+    metafields: [],
   },
   buildCommand: 'make build',
   buildWasmPath: '/function/dist/index.wasm',
   inputQueryPath: '/function/input.graphql',
   isJavaScript: false,
   externalType: 'function',
+  usingExtensionsFramework: false,
+  features: ['function'],
   publishURL: (_) => Promise.resolve(''),
 }
 
@@ -100,12 +106,15 @@ const FUNCTION_B: FunctionExtension = {
     },
     configurationUi: false,
     apiVersion: '2022-07',
+    metafields: [],
   },
   buildCommand: 'make build',
   buildWasmPath: '/function/dist/index.wasm',
   inputQueryPath: '/function/input.graphql',
   isJavaScript: false,
   externalType: 'function',
+  usingExtensionsFramework: false,
+  features: ['function'],
   publishURL: (_) => Promise.resolve(''),
 }
 
@@ -340,6 +349,7 @@ describe('ensureFunctionsIds: asks user to confirm deploy', () => {
       },
       onlyRemote: [],
       toCreate: [],
+      dashboardOnly: [],
     })
   })
 
@@ -348,7 +358,7 @@ describe('ensureFunctionsIds: asks user to confirm deploy', () => {
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {FUNCTION_A: 'ID_A', FUNCTION_A_2: 'ID_A_2'},
       toCreate: [],
-      toConfirm: [],
+      toConfirm: [{local: FUNCTION_A, remote: REGISTRATION_A}],
       toManualMatch: {
         local: [],
         remote: [],
@@ -363,5 +373,6 @@ describe('ensureFunctionsIds: asks user to confirm deploy', () => {
 
     // Then
     expect(deployConfirmationPrompt).not.toBeCalled()
+    expect(matchConfirmationPrompt).toBeCalled()
   })
 })

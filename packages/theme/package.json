@@ -1,6 +1,6 @@
 {
   "name": "@shopify/theme",
-  "version": "3.46.0-pre.2",
+  "version": "3.46.0",
   "private": false,
   "description": "Utilities for building and publishing themes",
   "homepage": "https://github.com/shopify/cli#readme",
@@ -25,7 +25,8 @@
     "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "test": "nx run theme:test",
     "test:watch": "nx test:watch",
-    "type-check": "nx type-check"
+    "type-check": "nx type-check",
+    "schema:generate": "node scripts/schema/generate.js && pnpm nx lint:fix"
   },
   "eslintConfig": {
     "extends": [
@@ -34,12 +35,13 @@
   },
   "dependencies": {
     "@oclif/core": "2.1.4",
-    "@shopify/cli-kit": "3.46.0-pre.2"
+    "@shopify/cli-kit": "3.46.0"
   },
   "devDependencies": {
     "@types/node": "14.18.36",
-    "vite": "^2.9.13",
-    "vitest": "^0.28.5",
+    "json-schema-to-zod": "0.6.3",
+    "vite": "^4.3.6",
+    "vitest": "^0.31.0",
     "node-stream-zip": "^1.15.0"
   },
   "engines": {

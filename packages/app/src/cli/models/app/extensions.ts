@@ -1,28 +1,11 @@
-import {FunctionSpec, FunctionConfigType} from '../extensions/functions.js'
-import {ThemeConfigContents, ThemeExtensionSpec} from '../extensions/theme.js'
-import {UIExtensionSpec} from '../extensions/ui.js'
-import {BaseConfigContents} from '../extensions/schemas.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
+import {BaseConfigType} from '../extensions/schemas.js'
+import {ExtensionFeature} from '../extensions/specification.js'
+import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {TokenizedString} from '@shopify/cli-kit/node/output'
 import {Result} from '@shopify/cli-kit/node/result'
-import {DependencyVersion} from '@shopify/cli-kit/node/node-package-manager'
 
 export type ExtensionCategory = 'ui' | 'function' | 'theme'
-
-/**
- * Common interface for ExtensionSpec and FunctionSpec
- */
-export interface GenericSpecification {
-  identifier: string
-  externalIdentifier: string
-  externalName: string
-  registrationLimit: number
-  helpURL?: string
-  supportedFlavors: ExtensionFlavor[]
-  gated: boolean
-  category: () => ExtensionCategory
-  group?: string
-}
 
 export interface ExtensionFlavor {
   name: string
@@ -39,30 +22,32 @@ export interface Extension {
   externalType: string
   graphQLType: string
   publishURL(options: {orgId: string; appId: string; extensionId?: string}): Promise<string>
+  features: ExtensionFeature[]
 }
 
-export type FunctionExtension<TConfiguration extends FunctionConfigType = FunctionConfigType> = Extension & {
-  configuration: TConfiguration
+export type FunctionExtension = Extension & {
+  configuration: FunctionConfigType
   entrySourceFilePath?: string
   buildCommand: string | undefined
   buildWasmPath: string
   inputQueryPath: string
   isJavaScript: boolean
+  usingExtensionsFramework: boolean
 }
 
-export type ThemeExtension<TConfiguration extends ThemeConfigContents = ThemeConfigContents> = Extension & {
-  configuration: TConfiguration
+export type ThemeExtension = Extension & {
+  configuration: BaseConfigType
   previewMessage(url: string, storeFqdn: string): TokenizedString | undefined
   outputBundlePath: string
 }
 
-export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigContents> = Extension & {
+export type UIExtension<TConfiguration extends BaseConfigType = BaseConfigType> = Extension & {
   configuration: TConfiguration
   entrySourceFilePath?: string
   outputBundlePath: string
   devUUID: string
   surface: string
-  dependency?: DependencyVersion
+  dependency?: string
   getBundleExtensionStdinContent(): string
   validate(): Promise<Result<unknown, string>>
   preDeployValidation(): Promise<void>
@@ -71,16 +56,4 @@ export type UIExtension<TConfiguration extends BaseConfigContents = BaseConfigCo
   previewMessage(url: string, storeFqdn: string): TokenizedString | undefined
   shouldFetchCartUrl(): boolean
   hasExtensionPointTarget(target: string): boolean
-}
-
-export function isUIExtension(spec: GenericSpecification): spec is UIExtensionSpec {
-  return spec.category() === 'ui'
-}
-
-export function isThemeExtension(spec: GenericSpecification): spec is ThemeExtensionSpec {
-  return spec.category() === 'theme'
-}
-
-export function isFunctionExtension(spec: GenericSpecification): spec is FunctionSpec {
-  return spec.category() === 'function'
 }

@@ -57,6 +57,7 @@ export async function fileServerMiddleware(
     '.css': 'text/css',
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
     '.wav': 'audio/wav',
     '.mp3': 'audio/mpeg',
     '.svg': 'image/svg+xml',
@@ -188,7 +189,7 @@ export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlew
         app: {
           apiKey: devOptions.apiKey,
         },
-        version: '3',
+        version: devOptions.manifestVersion,
         root: {
           url: new URL('/extensions', devOptions.url).toString(),
         },

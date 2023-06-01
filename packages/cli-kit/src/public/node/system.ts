@@ -16,6 +16,8 @@ export interface ExecOptions {
   stdio?: 'inherit'
   input?: string
   signal?: AbortSignal
+  // Custom handler if process exits with a non-zero code
+  externalErrorHandler?: (error: unknown) => Promise<void>
 }
 
 /**
@@ -73,9 +75,13 @@ export async function exec(command: string, args: string[], options?: ExecOption
     // Windows will throw an error whenever the process is killed, no matter the reason.
     // The aborted flag tell use that we killed it, so we can ignore the error.
     if (aborted) return
-    const abortError = new ExternalError(processError.message, command, args)
-    abortError.stack = processError.stack
-    throw abortError
+    if (options?.externalErrorHandler) {
+      await options?.externalErrorHandler(processError)
+    } else {
+      const abortError = new ExternalError(processError.message, command, args)
+      abortError.stack = processError.stack
+      throw abortError
+    }
   }
 }
 

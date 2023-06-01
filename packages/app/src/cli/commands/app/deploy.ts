@@ -3,7 +3,7 @@ import {deploy} from '../../services/deploy.js'
 import {AppInterface} from '../../models/app/app.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import Command from '../../utilities/app-command.js'
-import {loadExtensionsSpecifications} from '../../models/extensions/specifications.js'
+import {loadExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -32,12 +32,6 @@ export default class Deploy extends Command {
       char: 'f',
       default: false,
     }),
-    label: Flags.string({
-      // we can make this visible once we've rolled out unified deployments
-      hidden: true,
-      description: 'The deployment label. Will be shown in the Partners Dashboard.',
-      env: 'SHOPIFY_FLAG_LABEL',
-    }),
   }
 
   async run(): Promise<void> {
@@ -49,6 +43,6 @@ export default class Deploy extends Command {
 
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path})
-    await deploy({app, apiKey: flags['api-key'], reset: flags.reset, force: flags.force, label: flags.label})
+    await deploy({app, apiKey: flags['api-key'], reset: flags.reset, force: flags.force})
   }
 }

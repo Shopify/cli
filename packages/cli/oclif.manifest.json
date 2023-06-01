@@ -1,5 +1,5 @@
 {
-  "version": "3.46.0-pre.2",
+  "version": "3.46.0",
   "commands": {
     "upgrade": {
       "id": "upgrade",
@@ -39,6 +39,100 @@
       "pluginName": "@shopify/cli",
       "pluginAlias": "@shopify/cli",
       "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    },
+    "debug:command-flags": {
+      "id": "debug:command-flags",
+      "description": "View all the available command flags",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {
+        "csv": {
+          "name": "csv",
+          "type": "boolean",
+          "description": "Output as CSV",
+          "allowNo": false
+        }
+      },
+      "args": {}
+    },
+    "demo:catalog": {
+      "id": "demo:catalog",
+      "description": "Browse the catalog for steps",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    },
+    "demo:generate-file": {
+      "id": "demo:generate-file",
+      "summary": "Creates a JSON file alongside a JSON schema that will validate it",
+      "description": "Create a command design file",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The directory for generating the demo file.",
+          "hidden": false,
+          "multiple": false,
+          "default": "."
+        },
+        "file": {
+          "name": "file",
+          "type": "option",
+          "description": "The name of the demo file.",
+          "hidden": false,
+          "required": true,
+          "multiple": false
+        }
+      },
+      "args": {}
+    },
+    "demo": {
+      "id": "demo",
+      "description": "Demo a command design defined in a file",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {
+        "file": {
+          "name": "file",
+          "type": "option",
+          "description": "The path to the design file.",
+          "hidden": false,
+          "multiple": false,
+          "default": "."
+        }
+      },
+      "args": {}
+    },
+    "demo:print-ai-prompt": {
+      "id": "demo:print-ai-prompt",
+      "description": "Prints the prompts for a chat-enabled LLM to generate a demo",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "hidden": true,
       "aliases": [],
       "flags": {},
       "args": {}

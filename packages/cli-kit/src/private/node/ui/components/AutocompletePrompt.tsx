@@ -5,10 +5,13 @@ import {TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {debounce} from '../../../../public/common/function.js'
+import {AbortSignal} from '../../../../public/node/abort.js'
+import useAbortSignal from '../hooks/use-abort-signal.js'
 import React, {ReactElement, useCallback, useLayoutEffect, useRef, useState} from 'react'
 import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
 import figures from 'figures'
 import ansiEscapes from 'ansi-escapes'
+import {uniqBy} from '@shopify/cli-kit/common/array'
 
 export interface SearchResults<T> {
   data: SelectItem<T>[]
@@ -24,6 +27,7 @@ export interface AutocompletePromptProps<T> {
   infoTable?: InfoTableProps['table']
   hasMorePages?: boolean
   search: (term: string) => Promise<SearchResults<T>>
+  abortSignal?: AbortSignal
 }
 
 enum PromptState {
@@ -43,6 +47,7 @@ function AutocompletePrompt<T>({
   onSubmit,
   search,
   hasMorePages: initialHasMorePages = false,
+  abortSignal,
 }: React.PropsWithChildren<AutocompletePromptProps<T>>): ReactElement | null {
   const paginatedInitialChoices = initialChoices.slice(0, PAGE_SIZE)
   const [answer, setAnswer] = useState<SelectItem<T> | undefined>(paginatedInitialChoices[0])
@@ -56,6 +61,10 @@ function AutocompletePrompt<T>({
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [selectInputHeight, setSelectInputHeight] = useState(0)
   const [limit, setLimit] = useState(searchResults.length)
+  const numberOfGroups = uniqBy(
+    searchResults.filter((choice) => choice.group),
+    'group',
+  ).length
 
   const paginatedSearch = useCallback(
     async (term: string) => {
@@ -84,7 +93,7 @@ function AutocompletePrompt<T>({
     function onResize() {
       const availableSpace = stdout.rows - (wrapperHeight - selectInputHeight)
       // rough estimate of the limit needed based on the space available
-      const newLimit = Math.max(2, availableSpace - 4)
+      const newLimit = Math.max(2, availableSpace - numberOfGroups * 2 - 4)
 
       if (newLimit < limit) {
         stdout.write(ansiEscapes.clearTerminal)
@@ -99,7 +108,9 @@ function AutocompletePrompt<T>({
     return () => {
       stdout.off('resize', onResize)
     }
-  }, [wrapperHeight, selectInputHeight, searchResults.length, stdout, limit])
+  }, [wrapperHeight, selectInputHeight, searchResults.length, stdout, limit, numberOfGroups])
+
+  const {isAborted} = useAbortSignal(abortSignal)
 
   useInput((input, key) => {
     handleCtrlC(input, key)
@@ -155,7 +166,7 @@ function AutocompletePrompt<T>({
     [initialHasMorePages, paginatedInitialChoices, paginatedSearch],
   )
 
-  return (
+  return isAborted ? null : (
     <Box flexDirection="column" marginBottom={1} ref={wrapperRef}>
       <Box>
         <Box marginRight={2}>

@@ -26,7 +26,7 @@ export async function getExtensionsPayloadStoreRawPayload(
       mobileUrl: buildAppURLForMobile(options.storeFqdn, options.apiKey),
     },
     appId: options.id,
-    version: '3',
+    version: options.manifestVersion,
     root: {
       url: new URL('/extensions', options.url).toString(),
     },

@@ -32,7 +32,7 @@ export default class Dev extends Command {
     }),
     'skip-dependencies-installation': Flags.boolean({
       hidden: false,
-      description: 'Skips the installation of dependencies.',
+      description: 'Skips the installation of dependencies. Deprecated, use workspaces instead.',
       env: 'SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION',
       default: false,
     }),
@@ -70,6 +70,7 @@ export default class Dev extends Command {
       hidden: true,
       description: 'Select the tunnel provider',
       env: 'SHOPIFY_FLAG_TUNNEL',
+      default: 'cloudflare',
       options: ['cloudflare', 'ngrok'],
       exclusive: ['tunnel-url', 'no-tunnel'],
     }),

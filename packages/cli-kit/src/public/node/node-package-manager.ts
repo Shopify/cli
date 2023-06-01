@@ -268,6 +268,11 @@ export interface PackageJson {
   devDependencies?: {[key: string]: string}
 
   /**
+   * The peerDependencies attribute of the package.json
+   */
+  peerDependencies?: {[key: string]: string}
+
+  /**
    * The optional oclif settings attribute of the package.json
    */
   oclif?: {
@@ -293,6 +298,12 @@ export interface PackageJson {
    *  The prettier attribute of the package.json
    */
   prettier?: string
+
+  /**
+   * The private attribute of the package.json.
+   * https://docs.npmjs.com/cli/v9/configuring-npm/package-json#private
+   */
+  private?: boolean
 }
 
 /**
@@ -379,8 +390,7 @@ ${outputToken.json(options)}
     throw PackageJsonNotFoundError(options.directory)
   }
   const existingDependencies = Object.keys(await getDependencies(packageJsonPath))
-  let dependenciesToAdd = dependencies
-  dependenciesToAdd = dependencies.filter((dep) => {
+  const dependenciesToAdd = dependencies.filter((dep) => {
     return !existingDependencies.includes(dep.name)
   })
   if (dependenciesToAdd.length === 0) {
@@ -393,7 +403,6 @@ export async function addNPMDependencies(
   dependencies: DependencyVersion[],
   options: AddNPMDependenciesIfNeededOptions,
 ): Promise<void> {
-  let args: string[]
   const dependenciesWithVersion = dependencies.map((dep) => {
     return dep.version ? `${dep.name}@${dep.version}` : dep.name
   })
@@ -405,7 +414,7 @@ export async function addNPMDependencies(
       // makes the task easier and npm can then proceed.
       for (const dep of dependenciesWithVersion) {
         // eslint-disable-next-line no-await-in-loop
-        await installDependencies(options, argumentsToAddDependenciesWithNPM([dep], options.type))
+        await installDependencies(options, argumentsToAddDependenciesWithNPM(dep, options.type))
       }
       break
     case 'yarn':
@@ -444,9 +453,9 @@ export async function addNPMDependenciesWithoutVersionIfNeeded(
  * @param type - The dependency type.
  * @returns An array with the arguments.
  */
-function argumentsToAddDependenciesWithNPM(dependencies: string[], type: DependencyType): string[] {
+function argumentsToAddDependenciesWithNPM(dependency: string, type: DependencyType): string[] {
   let command = ['install']
-  command = command.concat(dependencies)
+  command = command.concat(dependency)
   switch (type) {
     case 'dev':
       command.push('--save-dev')
@@ -457,6 +466,10 @@ function argumentsToAddDependenciesWithNPM(dependencies: string[], type: Depende
     case 'prod':
       command.push('--save-prod')
       break
+  }
+  // NPM adds ^ to the installed version by default. We want to install exact versions unless specified otherwise.
+  if (dependency.match(/@\d/g)) {
+    command.push('--save-exact')
   }
   return command
 }

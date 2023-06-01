@@ -3,7 +3,7 @@ import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import {showEnv} from '../../../services/app/env/show.js'
 import Command from '../../../utilities/app-command.js'
-import {loadExtensionsSpecifications} from '../../../models/extensions/specifications.js'
+import {loadExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 

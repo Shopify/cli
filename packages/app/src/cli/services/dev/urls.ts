@@ -3,15 +3,17 @@ import {AppInterface} from '../../models/app/app.js'
 import {UpdateURLsQuery, UpdateURLsQuerySchema, UpdateURLsQueryVariables} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery, GetURLsQuerySchema, GetURLsQueryVariables} from '../../api/graphql/get_urls.js'
 import {setAppInfo} from '../local-storage.js'
-import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isValidURL} from '@shopify/cli-kit/common/url'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {appHost, appPort, isSpin, spinFqdn} from '@shopify/cli-kit/node/context/spin'
 import {codespaceURL, gitpodURL} from '@shopify/cli-kit/node/context/local'
-import {runTunnelPlugin, TunnelPluginError} from '@shopify/cli-kit/node/plugins'
+import {fanoutHooks} from '@shopify/cli-kit/node/plugins'
 import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
+import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export interface PartnersURLs {
   applicationUrl: string
@@ -20,11 +22,10 @@ export interface PartnersURLs {
 
 export interface FrontendURLOptions {
   app: AppInterface
-  tunnelProvider?: string
   noTunnel: boolean
   tunnelUrl?: string
-  useCloudflareTunnels: boolean
   commandConfig: Config
+  tunnelClient: TunnelClient
 }
 
 export interface FrontendURLResult {
@@ -85,17 +86,39 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     frontendUrl = 'http://localhost'
     usingLocalhost = true
   } else {
-    frontendPort = await getAvailableTCPPort()
-    const defaultProvider = options.useCloudflareTunnels ? 'cloudflare' : 'ngrok'
-    const provider = options.tunnelProvider || defaultProvider
-    frontendUrl = await generateURL(options.commandConfig, provider, frontendPort)
+    const url = await pollTunnelURL(options.tunnelClient)
+    frontendPort = options.tunnelClient.port
+    frontendUrl = url
   }
 
   return {frontendUrl, frontendPort, usingLocalhost}
 }
 
-export async function generateURL(config: Config, tunnelProvider: string, frontendPort: number): Promise<string> {
-  return (await runTunnelPlugin(config, frontendPort, tunnelProvider)).mapError(mapRunTunnelPluginError).valueOrAbort()
+/**
+ * Poll the tunnel provider every 0.5 until an URL or error is returned.
+ */
+async function pollTunnelURL(tunnelClient: TunnelClient): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    let retries = 0
+    const pollTunnelStatus = async () => {
+      const result = tunnelClient.getTunnelStatus()
+      outputDebug(`Polling tunnel status for ${tunnelClient.provider} (attempt ${retries}): ${result.status}`)
+      if (result.status === 'error') return reject(new BugError(result.message))
+      if (result.status === 'connected') {
+        resolve(result.url)
+      } else {
+        retries += 1
+        startPolling()
+      }
+    }
+    const startPolling = () => {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      setTimeout(pollTunnelStatus, 500)
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    pollTunnelStatus()
+  })
 }
 
 export function generatePartnersURLs(baseURL: string, authCallbackPath?: string | string[]): PartnersURLs {
@@ -186,31 +209,26 @@ export function validatePartnersURLs(urls: PartnersURLs): void {
   })
 }
 
-function mapRunTunnelPluginError(tunnelPluginError: TunnelPluginError) {
-  const alternative = tunnelPluginError.provider === 'cloudflare' ? 'ngrok' : 'cloudflare'
-  switch (tunnelPluginError.type) {
-    case 'no-provider':
-      return new BugError(`We couldn't find the ${tunnelPluginError.provider} tunnel plugin`)
-    case 'multiple-urls':
-      return new BugError(`Multiple tunnel plugins for ${tunnelPluginError.provider} found`)
-    case 'unknown':
-      return new AbortError(`${tunnelPluginError.provider} failed to start the tunnel.\n${tunnelPluginError.message}`, [
-        'What to try:',
-        {
-          list: {
-            items: [
-              ['Try to run the command again'],
-              [
-                'Add the flag',
-                {command: `--tunnel ${alternative}`},
-                `to use ${alternative} as the tunnel provider instead of ${tunnelPluginError.provider}`,
-              ],
-              ['Add the flag', {command: '--tunnel-url {URL}'}, 'to use a custom tunnel URL'],
-            ],
-          },
+export async function startTunnelPlugin(config: Config, port: number, provider: string): Promise<TunnelClient> {
+  const hooks = await fanoutHooks(config, 'tunnel_start', {port, provider})
+  const results = Object.values(hooks).filter(
+    (tunnelResponse) => !tunnelResponse?.isErr() || tunnelResponse.error.type !== 'invalid-provider',
+  )
+  if (results.length > 1) throw new BugError(`Multiple tunnel plugins for ${provider} found`)
+  const first = results[0]
+  if (!first) throw new BugError(`We couldn't find the ${provider} tunnel plugin`)
+  if (first.isErr()) {
+    throw new AbortError(`${provider} failed to start the tunnel.\n${first.error.message}`, [
+      'What to try:',
+      {
+        list: {
+          items: [
+            ['Try to run the command again'],
+            ['Add the flag', {command: '--tunnel-url {URL}'}, 'to use a custom tunnel URL'],
+          ],
         },
-      ])
-    default:
-      return new AbortSilentError()
+      },
+    ])
   }
+  return first.value
 }

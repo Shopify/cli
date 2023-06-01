@@ -21,8 +21,12 @@ module ShopifyCLI
 
           # Proxy the request, and replace the URLs in the response
           status, headers, body = @app.call(env)
-          body = replace_font_urls(body)
-          [status, headers, body]
+          content_type = headers["Content-Type"] || headers["content-type"]
+          if content_type.nil? || content_type == "" || content_type&.start_with?("text/")
+            [status, headers, replace_font_urls(body)]
+          else
+            [status, headers, body]
+          end
         end
 
         private

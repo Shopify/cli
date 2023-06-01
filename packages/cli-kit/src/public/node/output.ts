@@ -2,7 +2,7 @@
 import {isUnitTest, isVerbose} from './context/local.js'
 import {PackageManager} from './node-package-manager.js'
 import {AbortSignal} from './abort.js'
-import colors from '../../private/node/colors.js'
+import colors from './colors.js'
 import {isTruthy} from '../../private/node/context/utilities.js'
 import {
   ColorContentToken,
@@ -18,6 +18,7 @@ import {
   RawContentToken,
   SubHeadingContentToken,
 } from '../../private/node/content-tokens.js'
+import {recordUIEvent} from '../../private/node/demo-recorder.js'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'stream'
 import type {Change} from 'diff'
@@ -367,20 +368,31 @@ export function consoleWarn(message: string): void {
   console.warn(withOrWithoutStyle(message))
 }
 
+interface OutputWhereAppropriateOptions {
+  skipUIEvent?: boolean
+}
+
 /**
  * Writes a message to the appropiated logger.
  *
  * @param logLevel - The log level to use to determine if the message should be output.
  * @param logger - The logger to use to output the message.
  * @param message - The message to output.
+ * @param options - Additional options.
  */
-export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, message: string): void {
+export function outputWhereAppropriate(
+  logLevel: LogLevel,
+  logger: Logger,
+  message: string,
+  options: OutputWhereAppropriateOptions = {skipUIEvent: false},
+): void {
   if (shouldOutput(logLevel)) {
     if (logger instanceof Writable) {
       logger.write(message)
     } else {
       logger(message)
     }
+    if (!options?.skipUIEvent) recordUIEvent({type: 'output', properties: {content: message}})
   }
 }
 

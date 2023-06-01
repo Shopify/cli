@@ -1,11 +1,20 @@
 import {ensureDevContext} from './context.js'
-import {generateFrontendURL, generatePartnersURLs, getURLs, shouldOrPromptUpdateURLs, updateURLs} from './dev/urls.js'
+import {
+  generateFrontendURL,
+  generatePartnersURLs,
+  getURLs,
+  shouldOrPromptUpdateURLs,
+  startTunnelPlugin,
+  updateURLs,
+} from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
-import {outputExtensionsMessages, outputUpdateURLsResult} from './dev/output.js'
+import {outputExtensionsMessages, outputUpdateURLsResult, renderDev} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
+import {ensureDeploymentIdsPresence} from './context/identifiers.js'
+import {setupConfigWatcher, setupDraftableExtensionBundler} from './dev/extension/bundler.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -19,10 +28,11 @@ import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
+
+import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
@@ -39,6 +49,8 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {Writable} from 'stream'
 
+const MANIFEST_VERSION = '3'
+
 export interface DevOptions {
   directory: string
   id?: number
@@ -51,7 +63,7 @@ export interface DevOptions {
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
   tunnelUrl?: string
-  tunnelProvider?: string
+  tunnelProvider: string
   noTunnel: boolean
   theme?: string
   themeExtensionPort?: number
@@ -67,6 +79,11 @@ interface DevWebOptions {
 }
 
 async function dev(options: DevOptions) {
+  // Be optimistic about tunnel creation and do it as early as possible
+  const tunnelPort = await getAvailableTCPPort()
+
+  let tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, options.tunnelProvider)
+
   const token = await ensureAuthenticatedPartners()
   const {
     storeFqdn,
@@ -76,20 +93,26 @@ async function dev(options: DevOptions) {
     useCloudflareTunnels,
   } = await ensureDevContext(options, token)
 
+  if (!useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
+    // If we can't use cloudflare, stop the previous optimistic tunnel and start a new one
+    tunnelClient.stopTunnel()
+    tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, 'ngrok')
+  }
+
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
   let localApp = await load({directory: options.directory, specifications})
 
-  if (!options.skipDependenciesInstallation) {
+  if (!options.skipDependenciesInstallation && !localApp.usesWorkspaces) {
     localApp = await installAppDependencies(localApp)
   }
 
   const frontendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Frontend)
   const backendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Backend)
-  const webhooksPath = backendConfig?.configuration?.webhooksPath || '/api/webhooks'
+  const webhooksPath =
+    backendConfig?.configuration?.webhooksPath || frontendConfig?.configuration?.webhooksPath || '/api/webhooks'
   const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated
 
-  const initiateUpdateUrls = (frontendConfig || backendConfig) && options.update
   let shouldUpdateURLs = false
 
   await validateCustomPorts(backendConfig, frontendConfig)
@@ -98,7 +121,7 @@ async function dev(options: DevOptions) {
     generateFrontendURL({
       ...options,
       app: localApp,
-      useCloudflareTunnels,
+      tunnelClient,
     }),
     getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
     getURLs(apiKey, token),
@@ -111,32 +134,29 @@ async function dev(options: DevOptions) {
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
 
   let previewUrl
-
-  if (initiateUpdateUrls) {
-    const newURLs = generatePartnersURLs(
-      exposedUrl,
-      backendConfig?.configuration.authCallbackPath ?? frontendConfig?.configuration.authCallbackPath,
-    )
-    shouldUpdateURLs = await shouldOrPromptUpdateURLs({
-      currentURLs,
-      appDirectory: localApp.directory,
-      cachedUpdateURLs,
-      newApp: remoteApp.newApp,
-    })
-    if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
-    await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
+  if (frontendConfig || backendConfig) {
     previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
-  }
-
-  if (localApp.extensions.ui.length > 0) {
-    previewUrl = `${proxyUrl}/extensions/dev-console`
+    if (options.update) {
+      const newURLs = generatePartnersURLs(
+        exposedUrl,
+        backendConfig?.configuration.authCallbackPath ?? frontendConfig?.configuration.authCallbackPath,
+      )
+      shouldUpdateURLs = await shouldOrPromptUpdateURLs({
+        currentURLs,
+        appDirectory: localApp.directory,
+        cachedUpdateURLs,
+        newApp: remoteApp.newApp,
+      })
+      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
+      await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
+    }
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
   const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
   const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
-  localApp.extensions.ui.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
+  localApp.allExtensions.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
 
   const backendOptions = {
     apiKey,
@@ -146,7 +166,11 @@ async function dev(options: DevOptions) {
     hostname: exposedUrl,
   }
 
-  if (localApp.extensions.ui.length > 0) {
+  const previewableExtensions = localApp.allExtensions.filter((ext) => ext.isPreviewable)
+  const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable)
+
+  if (previewableExtensions.length > 0) {
+    previewUrl = `${proxyUrl}/extensions/dev-console`
     const devExt = await devUIExtensionsTarget({
       app: localApp,
       id: remoteApp.id,
@@ -156,6 +180,7 @@ async function dev(options: DevOptions) {
       grantedScopes: remoteApp.grantedScopes,
       subscriptionProductUrl: options.subscriptionProductUrl,
       checkoutCartUrl: options.checkoutCartUrl,
+      extensions: previewableExtensions,
     })
     proxyTargets.push(devExt)
   }
@@ -166,9 +191,33 @@ async function dev(options: DevOptions) {
 
   const additionalProcesses: OutputProcess[] = []
 
-  if (localApp.extensions.theme.length > 0) {
+  if (draftableExtensions.length > 0) {
+    const {extensionIds: remoteExtensions} = await ensureDeploymentIdsPresence({
+      app: localApp,
+      appId: apiKey,
+      appName: remoteApp.title,
+      force: true,
+      token,
+      envIdentifiers: prodEnvIdentifiers,
+    })
+
+    additionalProcesses.push(
+      devDraftableExtensionTarget({
+        app: localApp,
+        apiKey,
+        url: proxyUrl,
+        token,
+        extensions: draftableExtensions,
+        remoteExtensions,
+        specifications,
+      }),
+    )
+  }
+
+  const themeExtensions = localApp.allExtensions.filter((ext) => ext.isThemeExtension)
+  if (themeExtensions.length > 0) {
     const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
-    const extension = localApp.extensions.theme[0]!
+    const extension = themeExtensions[0]!
     let optionsToOverwrite = {}
     if (!options.theme) {
       const theme = await new HostThemeManager(adminSession).findOrCreate()
@@ -210,10 +259,13 @@ async function dev(options: DevOptions) {
     additionalProcesses.push({
       prefix: 'webhooks',
       action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+        // If we have a backend, use that port, otherwise use the frontend port
+        const deliveryPort = backendConfig ? backendPort : frontendPort
+
         await sendUninstallWebhookToAppServer({
           stdout,
           token,
-          address: `http://localhost:${backendOptions.backendPort}${webhooksPath}`,
+          address: `http://localhost:${deliveryPort}${webhooksPath}`,
           sharedSecret: backendOptions.apiSecret,
           storeFqdn,
         })
@@ -226,7 +278,12 @@ async function dev(options: DevOptions) {
   await reportAnalyticsEvent({config: options.commandConfig})
 
   if (proxyTargets.length === 0) {
-    await renderConcurrent({processes: additionalProcesses})
+    await renderDev(
+      {
+        processes: additionalProcesses,
+      },
+      previewUrl,
+    )
   } else {
     await runConcurrentHTTPProcessesAndPathForwardTraffic({
       previewUrl,
@@ -345,6 +402,7 @@ interface DevUIExtensionsTargetOptions {
   id?: string
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
+  extensions: UIExtension[]
 }
 
 async function devUIExtensionsTarget({
@@ -356,8 +414,9 @@ async function devUIExtensionsTarget({
   grantedScopes,
   subscriptionProductUrl,
   checkoutCartUrl,
+  extensions,
 }: DevUIExtensionsTargetOptions): Promise<ReverseHTTPProxyTarget> {
-  const cartUrl = await buildCartURLIfNeeded(app.extensions.ui, storeFqdn, checkoutCartUrl)
+  const cartUrl = await buildCartURLIfNeeded(extensions, storeFqdn, checkoutCartUrl)
   return {
     logPrefix: 'extensions',
     pathPrefix: '/extensions',
@@ -365,7 +424,7 @@ async function devUIExtensionsTarget({
       await devUIExtensions({
         app,
         id,
-        extensions: app.extensions.ui,
+        extensions,
         stdout,
         stderr,
         signal,
@@ -376,7 +435,66 @@ async function devUIExtensionsTarget({
         grantedScopes,
         checkoutCartUrl: cartUrl,
         subscriptionProductUrl,
+        manifestVersion: MANIFEST_VERSION,
       })
+    },
+  }
+}
+
+interface DevDraftableExtensionsOptions {
+  app: AppInterface
+  apiKey: string
+  url: string
+  token: string
+  extensions: UIExtension[]
+  remoteExtensions: {
+    [key: string]: string
+  }
+  specifications: ExtensionSpecification[]
+}
+
+export function devDraftableExtensionTarget({
+  extensions,
+  app,
+  url,
+  apiKey,
+  token,
+  remoteExtensions,
+  specifications,
+}: DevDraftableExtensionsOptions) {
+  return {
+    prefix: 'extensions',
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+      await Promise.all(
+        extensions
+          .map((extension) => {
+            const registrationId = remoteExtensions[extension.localIdentifier]
+            if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
+
+            const actions = [
+              setupConfigWatcher({extension, token, apiKey, registrationId, stdout, stderr, signal, specifications}),
+            ]
+
+            // Only extensions with esbuild feature should be whatched using esbuild
+            if (extension.features.includes('esbuild')) {
+              actions.push(
+                setupDraftableExtensionBundler({
+                  extension,
+                  app,
+                  url,
+                  token,
+                  apiKey,
+                  registrationId,
+                  stderr,
+                  stdout,
+                  signal,
+                }),
+              )
+            }
+            return actions
+          })
+          .flat(),
+      )
     },
   }
 }
