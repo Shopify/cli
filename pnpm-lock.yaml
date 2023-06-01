@@ -1,4 +1,8 @@
-lockfileVersion: '6.0'
+lockfileVersion: '6.1'
+
+settings:
+  autoInstallPeers: false
+  excludeLinksFromLockfile: false
 
 overrides:
   '@types/react': 17.0.2
@@ -393,8 +397,8 @@ importers:
         specifier: 1.0.1
         version: 1.0.1
       node-abort-controller:
-        specifier: 3.0.1
-        version: 3.0.1
+        specifier: 3.1.1
+        version: 3.1.1
       node-fetch:
         specifier: 3.3.1
         version: 3.3.1
@@ -9560,8 +9564,8 @@ packages:
       lower-case: 2.0.2
       tslib: 2.5.2
 
-  /node-abort-controller@3.0.1:
-    resolution: {integrity: sha512-/ujIVxthRs+7q6hsdjHMaj8hRG9NuWmwrz+JdRwZ14jdFoKSkm+vDsCbF9PLpnSqjaWQJuTmVtcWHNLr+vrOFw==}
+  /node-abort-controller@3.1.1:
+    resolution: {integrity: sha512-AGK2yQKIjRuqnc6VkX2Xj5d+QW8xZ87pa1UK6yA6ouUyuxfHuMP6umE5QK7UmTeOAymo+Zx1Fxiuw9rVx8taHQ==}
     dev: false
 
   /node-addon-api@3.2.1:
