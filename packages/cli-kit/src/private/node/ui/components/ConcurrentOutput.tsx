@@ -152,9 +152,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
                 <Box key={index} flexDirection="row" gap={1}>
                   {showTimestamps ? (
                     <Box gap={1}>
-                      <Text color={chunk.color}>
-                        {new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}
-                      </Text>
+                      <Text color={chunk.color}>{new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}</Text>
 
                       <Text bold color={chunk.color}>
                         {figures.lineVertical}
