@@ -14,7 +14,7 @@ import {
   generateExtensionTemplate,
   ExtensionFlavorValue,
 } from '../services/generate/extension.js'
-import {ExtensionTemplate, TemplateType, getTypesExternalName} from '../models/app/template.js'
+import {ExtensionTemplate, TemplateType} from '../models/app/template.js'
 import {blocks} from '../constants.js'
 import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
