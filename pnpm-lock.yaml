@@ -1,4 +1,8 @@
-lockfileVersion: '6.0'
+lockfileVersion: '6.1'
+
+settings:
+  autoInstallPeers: false
+  excludeLinksFromLockfile: false
 
 overrides:
   '@types/react': 17.0.2
@@ -215,8 +219,8 @@ importers:
         specifier: ^8.5.4
         version: 8.5.4
       '@vitest/coverage-istanbul':
-        specifier: ^0.31.0
-        version: 0.31.1(vitest@0.31.1)
+        specifier: ^0.31.4
+        version: 0.31.4(vitest@0.31.1)
       graphql:
         specifier: ^16.0.0
         version: 16.4.0
@@ -264,8 +268,8 @@ importers:
         specifier: 14.18.36
         version: 14.18.36
       '@vitest/coverage-istanbul':
-        specifier: ^0.31.0
-        version: 0.31.1(vitest@0.31.1)
+        specifier: ^0.31.4
+        version: 0.31.4(vitest@0.31.1)
       vite:
         specifier: 4.3.6
         version: 4.3.6(@types/node@14.18.36)
@@ -475,8 +479,8 @@ importers:
         specifier: ^7.3.13
         version: 7.5.0
       '@vitest/coverage-istanbul':
-        specifier: ^0.31.0
-        version: 0.31.1(vitest@0.31.1)
+        specifier: ^0.31.4
+        version: 0.31.4(vitest@0.31.1)
       node-stream-zip:
         specifier: ^1.15.0
         version: 1.15.0
@@ -4653,8 +4657,8 @@ packages:
       - supports-color
     dev: false
 
-  /@vitest/coverage-istanbul@0.31.1(vitest@0.31.1):
-    resolution: {integrity: sha512-wLVROukTxWflIub4QUT5TenA2zx2ypUjRp636yiMTidN5hvRhnUNEEkRavJMEpYuWYYMN23E7EmAxo/MzRRmIA==}
+  /@vitest/coverage-istanbul@0.31.4(vitest@0.31.1):
+    resolution: {integrity: sha512-nQsWQzatd4NXyM7uiIimInOiCopn7gwhFaA8kbBY7u5eYbKyHkMYVgAyqr1gvyPWe4wINdKonqdyQIc110RJkw==}
     peerDependencies:
       vitest: '>=0.30.0 <1'
     dependencies:
