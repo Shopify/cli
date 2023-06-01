@@ -2,7 +2,6 @@ import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderTas
 import {AbortSignal} from './abort.js'
 import {BugError, FatalError, AbortError} from './error.js'
 import {mockAndCaptureOutput} from './testing/output.js'
-import {Stdout} from '../../private/node/ui.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import supportsHyperlinks from 'supports-hyperlinks'
 import {Writable} from 'stream'
@@ -86,9 +85,6 @@ describe('renderInfo', async () => {
           },
         },
       ],
-      renderOptions: {
-        stdout: new Stdout({columns: 80}) as any,
-      },
     })
 
     // Then
@@ -136,9 +132,6 @@ describe('renderSuccess', async () => {
     // When
     renderSuccess({
       headline: 'Title.',
-      renderOptions: {
-        stdout: new Stdout({columns: 80}) as any,
-      },
     })
 
     // Then
@@ -167,9 +160,6 @@ describe('renderWarning', async () => {
       ],
       nextSteps: ['First', 'Second'],
       orderedNextSteps: true,
-      renderOptions: {
-        stdout: new Stdout({columns: 80}) as any,
-      },
     })
 
     // Then
@@ -209,11 +199,6 @@ describe('renderFatalError', async () => {
         "Couldn't connect to the Shopify Partner Dashboard.",
         'Check your internet connection and try again.',
       ),
-      {
-        renderOptions: {
-          stdout: new Stdout({columns: 80}) as any,
-        },
-      },
     )
 
     // Then
@@ -242,11 +227,7 @@ describe('renderFatalError', async () => {
           at Module.load (internal/modules/cjs/loader.js:985:32)
           at Function.Module._load (internal/modules/cjs/loader.js:878:14)
     `
-    renderFatalError(error, {
-      renderOptions: {
-        stdout: new Stdout({columns: 80}) as any,
-      },
-    })
+    renderFatalError(error)
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
@@ -293,11 +274,7 @@ describe('renderFatalError', async () => {
 
     // When
     const error = new AbortError('No Organization found', undefined, nextSteps)
-    renderFatalError(error, {
-      renderOptions: {
-        stdout: new Stdout({columns: 80}) as any,
-      },
-    })
+    renderFatalError(error)
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
@@ -335,11 +312,7 @@ describe('renderConcurrent', async () => {
       await renderConcurrent({processes: [throwingProcess]})
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
-      renderFatalError(error as FatalError, {
-        renderOptions: {
-          stdout: new Stdout({columns: 80}) as any,
-        },
-      })
+      renderFatalError(error as FatalError)
     }
 
     // Then
@@ -373,9 +346,6 @@ describe('renderTasks', async () => {
     } catch (error: any) {
       renderWarning({
         headline: error.message,
-        renderOptions: {
-          stdout: new Stdout({columns: 80}) as any,
-        },
       })
     }
 
