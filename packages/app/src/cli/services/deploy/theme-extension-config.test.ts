@@ -1,6 +1,6 @@
 import {themeExtensionConfig} from './theme-extension-config.js'
-import themeSpec from '../../models/extensions/theme-specifications/theme.js'
-import {ThemeExtensionInstance} from '../../models/extensions/theme.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {ExtensionInstance} from '../../models/extensions/specification.js'
 import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
@@ -9,15 +9,17 @@ describe('themeExtensionConfig', () => {
   test('builds a base64 encoded payload containing all theme files', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const themeExtension = new ThemeExtensionInstance({
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'theme')!
+      const themeExtension = new ExtensionInstance({
         configuration: {
           name: 'theme extension name',
           type: 'theme' as const,
+          metafields: [],
         },
         configurationPath: '',
         directory: tmpDir,
-        specification: themeSpec,
-        outputBundlePath: tmpDir,
+        specification,
       })
 
       await mkdir(joinPath(tmpDir, 'blocks'))
@@ -37,15 +39,17 @@ describe('themeExtensionConfig', () => {
   test('excludes system files', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const themeExtension = new ThemeExtensionInstance({
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'theme')!
+      const themeExtension = new ExtensionInstance({
         configuration: {
           name: 'theme extension name',
           type: 'theme' as const,
+          metafields: [],
         },
         configurationPath: '',
         directory: tmpDir,
-        specification: themeSpec,
-        outputBundlePath: tmpDir,
+        specification,
       })
 
       await mkdir(joinPath(tmpDir, 'blocks'))

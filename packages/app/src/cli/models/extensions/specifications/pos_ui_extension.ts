@@ -1,17 +1,17 @@
 import {getDependencyVersion} from '../../app/app.js'
-import {createUIExtensionSpecification} from '../ui.js'
-import {BaseUIExtensionSchema} from '../schemas.js'
+import {createExtensionSpecification} from '../specification.js'
+import {BaseSchema} from '../schemas.js'
 import {BugError} from '@shopify/cli-kit/node/error'
 
 const dependency = '@shopify/retail-ui-extensions'
 
-const spec = createUIExtensionSpecification({
+const spec = createExtensionSpecification({
   identifier: 'pos_ui_extension',
   surface: 'pos',
   dependency,
   partnersWebIdentifier: 'pos_ui_extension',
-  schema: BaseUIExtensionSchema,
-  isPreviewable: true,
+  schema: BaseSchema,
+  appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild'],
   deployConfig: async (config, directory) => {
     const result = await getDependencyVersion(dependency, directory)
     if (result === 'not_found') throw new BugError(`Dependency ${dependency} not found`)

@@ -16,7 +16,7 @@ import {
 } from '../services/generate/extension.js'
 import {ExtensionTemplate, TemplateType, getTypesExternalName} from '../models/app/template.js'
 import {blocks} from '../constants.js'
-import {GenericSpecification} from '../models/app/extensions.js'
+import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -44,7 +44,7 @@ async function generate(options: GenerateOptions) {
   const specifications = await fetchSpecifications({token, apiKey, config: options.config})
   const app: AppInterface = await loadApp({directory: options.directory, specifications})
   const availableSpecifications = specifications.map((spec) => spec.identifier)
-  const extensionTemplates = await fetchExtensionTemplates(token, availableSpecifications)
+  const extensionTemplates = await fetchExtensionTemplates(token, apiKey, availableSpecifications)
 
   const promptOptions = await buildPromptOptions(extensionTemplates, specifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)
@@ -59,7 +59,7 @@ async function generate(options: GenerateOptions) {
 
 async function buildPromptOptions(
   extensionTemplates: ExtensionTemplate[],
-  specifications: GenericSpecification[],
+  specifications: ExtensionSpecification[],
   app: AppInterface,
   options: GenerateOptions,
 ): Promise<GenerateExtensionPromptOptions> {
@@ -82,7 +82,7 @@ async function buildPromptOptions(
 
 function checkLimits(
   extensionTemplates: ExtensionTemplate[],
-  specifications: GenericSpecification[],
+  specifications: ExtensionSpecification[],
   app: AppInterface,
 ) {
   const iterateeFunction = (template: ExtensionTemplate) => {
@@ -92,7 +92,7 @@ function checkLimits(
   return groupBy(extensionTemplates, iterateeFunction)
 }
 
-function limitReached(app: AppInterface, specifications: GenericSpecification[], templateType: TemplateType) {
+function limitReached(app: AppInterface, specifications: ExtensionSpecification[], templateType: TemplateType) {
   const type = templateType.type
   if (type === 'function') {
     return app.extensions.function.length >= blocks.functions.defaultRegistrationLimit
@@ -187,7 +187,7 @@ async function handleTypeParameter(
   typeFlag: string | undefined,
   app: AppInterface,
   extensionTemplates: ExtensionTemplate[],
-  specifications: GenericSpecification[],
+  specifications: ExtensionSpecification[],
 ): Promise<ExtensionTemplate | undefined> {
   if (!typeFlag) return
 

@@ -6,6 +6,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {FunctionExtension, UIExtension} from '../../models/app/extensions.js'
 import {testApp} from '../../models/app/app.test-data.js'
 import {OrganizationApp} from '../../models/organization.js'
+import {ExtensionInstance} from '../../models/extensions/specification.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -49,6 +50,7 @@ const EXTENSION_A: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  features: [],
   validate: () => Promise.resolve({} as any),
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
@@ -58,7 +60,6 @@ const EXTENSION_A: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  isPreviewable: true,
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -79,6 +80,7 @@ const EXTENSION_A_2: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  features: [],
   validate: () => Promise.resolve({} as any),
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
@@ -88,7 +90,6 @@ const EXTENSION_A_2: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  isPreviewable: true,
 }
 
 const FUNCTION_C: FunctionExtension = {
@@ -108,6 +109,7 @@ const FUNCTION_C: FunctionExtension = {
     },
     configurationUi: false,
     apiVersion: '2022-07',
+    metafields: [],
   },
   buildCommand: 'make build',
   buildWasmPath: '/function/dist/index.wasm',
@@ -115,16 +117,17 @@ const FUNCTION_C: FunctionExtension = {
   isJavaScript: false,
   externalType: 'function',
   usingExtensionsFramework: false,
+  features: [],
   publishURL: (_) => Promise.resolve(''),
 }
 
-const LOCAL_APP = (uiExtensions: UIExtension[], functionExtensions: FunctionExtension[] = []): AppInterface => {
+const LOCAL_APP = (uiExtensions: ExtensionInstance[], functionExtensions: ExtensionInstance[] = []): AppInterface => {
   return testApp({
     name: 'my-app',
     directory: '/app',
     configurationPath: '/shopify.app.toml',
     configuration: {scopes: 'read_products', extensionDirectories: ['extensions/*']},
-    extensions: {ui: uiExtensions, theme: [], function: functionExtensions},
+    allExtensions: [...uiExtensions, ...functionExtensions],
   })
 }
 
@@ -145,7 +148,7 @@ const options = (
   partnersApp?: OrganizationApp,
 ) => {
   return {
-    app: LOCAL_APP(uiExtensions, functionExtensions),
+    app: LOCAL_APP(uiExtensions as ExtensionInstance[], functionExtensions as unknown as ExtensionInstance[]),
     token: 'token',
     appId: 'appId',
     appName: 'appName',

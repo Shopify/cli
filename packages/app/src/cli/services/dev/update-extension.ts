@@ -5,7 +5,7 @@ import {
 } from '../../api/graphql/update_draft.js'
 import {UIExtension} from '../../models/app/extensions.js'
 import {findSpecificationForConfig, parseConfigurationFile} from '../../models/app/loader.js'
-import {UIExtensionSpec} from '../../models/extensions/ui.js'
+import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
@@ -27,9 +27,12 @@ export async function updateExtensionDraft({
   registrationId,
   stderr,
 }: UpdateExtensionDraftOptions) {
-  const content = await readFile(extension.outputBundlePath)
-  if (!content) return
-  const encodedFile = Buffer.from(content).toString('base64')
+  let encodedFile: string | undefined
+  if (extension.features.includes('esbuild')) {
+    const content = await readFile(extension.outputBundlePath)
+    if (!content) return
+    encodedFile = Buffer.from(content).toString('base64')
+  }
 
   const extensionInput: ExtensionUpdateDraftInput = {
     apiKey,
@@ -57,7 +60,7 @@ interface UpdateExtensionConfigOptions {
   apiKey: string
   registrationId: string
   stderr: Writable
-  specifications: UIExtensionSpec[]
+  specifications: ExtensionSpecification[]
 }
 
 export async function updateExtensionConfig({

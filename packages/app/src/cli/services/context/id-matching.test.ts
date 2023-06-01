@@ -80,6 +80,7 @@ const EXTENSION_A: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  features: ['ui_preview', 'bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -89,7 +90,6 @@ const EXTENSION_A: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  isPreviewable: true,
 }
 
 const EXTENSION_A_2: UIExtension = {
@@ -110,6 +110,7 @@ const EXTENSION_A_2: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  features: ['ui_preview', 'bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -119,7 +120,6 @@ const EXTENSION_A_2: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  isPreviewable: true,
 }
 
 const EXTENSION_B: UIExtension = {
@@ -141,6 +141,7 @@ const EXTENSION_B: UIExtension = {
   externalType: 'checkout_ui',
   publishURL: (_) => Promise.resolve(''),
   surface: 'surface',
+  features: ['ui_preview', 'bundling'],
   validate: () => Promise.resolve({} as any),
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
@@ -149,7 +150,6 @@ const EXTENSION_B: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  isPreviewable: true,
 }
 
 const EXTENSION_B_2: UIExtension = {
@@ -170,6 +170,7 @@ const EXTENSION_B_2: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  features: ['ui_preview', 'bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -179,7 +180,6 @@ const EXTENSION_B_2: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  isPreviewable: true,
 }
 
 const EXTENSION_C: UIExtension = {
@@ -200,6 +200,7 @@ const EXTENSION_C: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  features: ['ui_preview', 'bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -209,7 +210,6 @@ const EXTENSION_C: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  isPreviewable: true,
 }
 
 const EXTENSION_D: UIExtension = {
@@ -230,6 +230,7 @@ const EXTENSION_D: UIExtension = {
   devUUID: 'devUUID',
   externalType: 'checkout_ui',
   surface: 'surface',
+  features: ['bundling'],
   preDeployValidation: () => Promise.resolve(),
   buildValidation: () => Promise.resolve(),
   deployConfig: () => Promise.resolve({}),
@@ -239,10 +240,9 @@ const EXTENSION_D: UIExtension = {
   getBundleExtensionStdinContent: () => '',
   shouldFetchCartUrl: () => true,
   hasExtensionPointTarget: (target: string) => true,
-  isPreviewable: false,
 }
 
-const FUNCTION_A: FunctionExtension = {
+const LEGACY_FUNCTION_A: FunctionExtension = {
   idEnvironmentVariableName: 'FUNCTION_A_ID',
   localIdentifier: 'FUNCTION_A',
   configurationPath: '/function/shopify.function.extension.toml',
@@ -259,6 +259,7 @@ const FUNCTION_A: FunctionExtension = {
     },
     configurationUi: false,
     apiVersion: '2022-07',
+    metafields: [],
   },
   buildCommand: 'make build',
   buildWasmPath: '/function/dist/index.wasm',
@@ -266,14 +267,57 @@ const FUNCTION_A: FunctionExtension = {
   isJavaScript: false,
   externalType: 'function',
   usingExtensionsFramework: false,
+  features: ['function'],
   publishURL: (_) => Promise.resolve(''),
+}
+
+const FUNCTION_A: FunctionExtension = {
+  idEnvironmentVariableName: 'FUNCTION_A_ID',
+  localIdentifier: 'FUNCTION_A',
+  configurationPath: '/function/shopify.function.extension.toml',
+  directory: '/function',
+  type: 'function',
+  graphQLType: 'function',
+  configuration: {
+    name: 'FUNCTION A',
+    type: 'function',
+    description: 'Function',
+    build: {
+      command: 'make build',
+      path: 'dist/index.wasm',
+    },
+    configurationUi: false,
+    apiVersion: '2022-07',
+    metafields: [],
+  },
+  buildCommand: 'make build',
+  buildWasmPath: '/function/dist/index.wasm',
+  inputQueryPath: '/function/input.graphql',
+  isJavaScript: false,
+  externalType: 'function',
+  usingExtensionsFramework: false,
+  features: ['function'],
+  publishURL: (_) => Promise.resolve(''),
+}
+
+const REGISTRATION_LEGACY_FUNCTION_A = {
+  uuid: 'FUNCTION_UUID_A',
+  id: 'FUNCTION_A',
+  title: 'FUNCTION A',
+  type: 'PRODUCT_DISCOUNTS',
 }
 
 const REGISTRATION_FUNCTION_A = {
   uuid: 'FUNCTION_UUID_A',
   id: 'FUNCTION_A',
   title: 'FUNCTION A',
-  type: 'PRODUCT_DISCOUNTS',
+  type: 'FUNCTION',
+  draftVersion: {
+    config: JSON.stringify({
+      legacy_function_id: 'LEGACY_FUNCTION_ULID_A',
+      legacy_function_uuid: 'LEGACY_FUNCTION_UUID_A',
+    }),
+  },
 }
 
 describe('automaticMatchmaking: some local, no remote ones', () => {
@@ -681,7 +725,7 @@ describe('automaticMatchmaking: functions', () => {
 
   test('updates existing function', async () => {
     // When
-    const got = await automaticMatchmaking([FUNCTION_A], [REGISTRATION_FUNCTION_A], {}, 'id')
+    const got = await automaticMatchmaking([LEGACY_FUNCTION_A], [REGISTRATION_LEGACY_FUNCTION_A], {}, 'id')
 
     // Then
     const expected = {
@@ -690,6 +734,95 @@ describe('automaticMatchmaking: functions', () => {
       toCreate: [],
       toManualMatch: {local: [], remote: []},
     }
+    expect(got).toEqual(expected)
+  })
+})
+
+describe('automaticMatchmaking: migrates functions with legacy IDs to extension IDs', () => {
+  test('updates function when using legacy ID and value exists on remote', async () => {
+    // When
+    const got = await automaticMatchmaking(
+      [FUNCTION_A],
+      [REGISTRATION_FUNCTION_A],
+      {FUNCTION_A: 'LEGACY_FUNCTION_ULID_A'},
+      'id',
+    )
+
+    // Then
+    const expected = {
+      identifiers: {FUNCTION_A: 'FUNCTION_UUID_A'},
+      toConfirm: [],
+      toCreate: [],
+      toManualMatch: {local: [], remote: []},
+    }
+
+    expect(got).toEqual(expected)
+  })
+
+  test('updates function when using legacy UUID and value exists on remote', async () => {
+    // When
+    const got = await automaticMatchmaking(
+      [FUNCTION_A],
+      [REGISTRATION_FUNCTION_A],
+      {FUNCTION_A: 'LEGACY_FUNCTION_UUID_A'},
+      'id',
+    )
+
+    // Then
+    const expected = {
+      identifiers: {FUNCTION_A: 'FUNCTION_UUID_A'},
+      toConfirm: [],
+      toCreate: [],
+      toManualMatch: {local: [], remote: []},
+    }
+
+    expect(got).toEqual(expected)
+  })
+
+  test('creates local function when it does not exist on remote', async () => {
+    // When
+    const got = await automaticMatchmaking([FUNCTION_A], [], {}, 'id')
+
+    // Then
+    const expected = {
+      identifiers: {},
+      toConfirm: [],
+      toCreate: [FUNCTION_A],
+      toManualMatch: {local: [], remote: []},
+    }
+    expect(got).toEqual(expected)
+  })
+
+  test('creates local function when no matching registration exists on remote', async () => {
+    // When
+    const identifiers = {FUNCTION_A: 'SOME_OTHER_LEGACY_UUID'}
+    const got = await automaticMatchmaking([FUNCTION_A], [REGISTRATION_FUNCTION_A], identifiers, 'id')
+
+    // Then
+    const expected = {
+      identifiers,
+      toConfirm: [],
+      toCreate: [FUNCTION_A],
+      toManualMatch: {local: [], remote: [REGISTRATION_FUNCTION_A]},
+    }
+
+    expect(got).toEqual(expected)
+  })
+
+  test('creates local function when remote registration does not specify legacy ID', async () => {
+    // When
+    const {draftVersion, ...registration} = REGISTRATION_FUNCTION_A
+    const identifiers = {FUNCTION_A: 'SOME_OTHER_LEGACY_UUID'}
+    const got = await automaticMatchmaking([FUNCTION_A], [registration], identifiers, 'id')
+
+    // Then
+    const expected = {
+      identifiers,
+      toConfirm: [],
+      toCreate: [FUNCTION_A],
+      toManualMatch: {local: [], remote: [registration]},
+    }
+
     expect(got).toEqual(expected)
   })
 })

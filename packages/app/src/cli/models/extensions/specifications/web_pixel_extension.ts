@@ -1,6 +1,6 @@
-import {createUIExtensionSpecification} from '../ui.js'
+import {createExtensionSpecification} from '../specification.js'
 import {defaultExtensionFlavors} from '../../../constants.js'
-import {BaseUIExtensionSchema} from '../schemas.js'
+import {BaseSchema} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileSize} from '@shopify/cli-kit/node/fs'
@@ -11,20 +11,21 @@ const BUNDLE_SIZE_LIMIT = BUNDLE_SIZE_LIMIT_KB * kilobytes
 
 const dependency = '@shopify/web-pixels-extension'
 
-const WebPixelSchema = BaseUIExtensionSchema.extend({
+const WebPixelSchema = BaseSchema.extend({
   runtimeContext: zod.string(),
   version: zod.string().optional(),
   configuration: zod.any(),
   settings: zod.any(),
 })
 
-const spec = createUIExtensionSpecification({
+const spec = createExtensionSpecification({
   identifier: 'web_pixel_extension',
   surface: 'unknown',
   dependency,
   partnersWebIdentifier: 'web_pixel',
   supportedFlavors: defaultExtensionFlavors.filter((flavor) => !flavor.value.includes('react')),
   schema: WebPixelSchema,
+  appModuleFeatures: (_) => ['bundling', 'esbuild'],
   deployConfig: async (config, _) => {
     return {
       runtime_context: config.runtimeContext,
@@ -51,7 +52,6 @@ const spec = createUIExtensionSpecification({
     return Promise.resolve()
   },
   previewMessage: () => undefined,
-  isPreviewable: false,
 })
 
 export default spec

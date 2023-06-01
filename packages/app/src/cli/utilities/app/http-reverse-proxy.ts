@@ -1,8 +1,8 @@
-import {renderConcurrent, RenderConcurrentOptions} from '@shopify/cli-kit/node/ui'
+import {renderDev} from '../../services/dev/output.js'
+import {RenderConcurrentOptions} from '@shopify/cli-kit/node/ui'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {OutputProcess, outputDebug, outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
-import {openURL} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 import * as http from 'http'
 
@@ -112,39 +112,12 @@ ${outputToken.json(JSON.stringify(rules))}
     server.close()
   })
 
-  let renderConcurrentOptions: RenderConcurrentOptions = {
+  const renderConcurrentOptions: RenderConcurrentOptions = {
     processes: [...processes, ...additionalProcesses],
     abortSignal: abortController.signal,
   }
 
-  if (previewUrl) {
-    renderConcurrentOptions = {
-      ...renderConcurrentOptions,
-      onInput: (input, _key, exit) => {
-        if (input === 'p' && previewUrl) {
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
-          openURL(previewUrl)
-        } else if (input === 'q') {
-          exit()
-        }
-      },
-      footer: {
-        shortcuts: [
-          {
-            key: 'p',
-            action: 'preview in your browser',
-          },
-          {
-            key: 'q',
-            action: 'quit',
-          },
-        ],
-        subTitle: `Preview URL: ${previewUrl}`,
-      },
-    }
-  }
-
-  await Promise.all([renderConcurrent(renderConcurrentOptions), server.listen(portNumber)])
+  await Promise.all([renderDev(renderConcurrentOptions, previewUrl), server.listen(portNumber)])
 }
 
 function match(rules: {[key: string]: string}, req: http.IncomingMessage) {

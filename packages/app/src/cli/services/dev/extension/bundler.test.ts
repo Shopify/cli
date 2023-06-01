@@ -2,13 +2,13 @@ import {
   FileWatcherOptions,
   setupBundlerAndFileWatcher,
   setupConfigWatcher,
-  setupNonPreviewableExtensionBundler,
+  setupDraftableExtensionBundler,
 } from './bundler.js'
 import * as bundle from '../../extensions/bundle.js'
 import {testUIExtension} from '../../../models/app/app.test-data.js'
 import {UIExtension} from '../../../models/app/extensions.js'
-import {loadLocalUIExtensionsSpecifications} from '../../../models/extensions/specifications.js'
 import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
 import {BuildResult} from 'esbuild'
@@ -215,7 +215,7 @@ describe('setupConfigWatcher()', async () => {
   const registrationId = 'mock-registration-id'
   const stdout = new Writable()
   const stderr = new Writable()
-  const specifications = await loadLocalUIExtensionsSpecifications()
+  const specifications = await loadLocalExtensionsSpecifications()
 
   test('starts watching the configuration file', async () => {
     const chokidarCloseSpy = vi.fn()
@@ -367,7 +367,7 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
   test('calls bundleExtension with the correct parameters', async () => {
     vi.spyOn(bundle, 'bundleExtension').mockResolvedValue(undefined)
 
-    await setupNonPreviewableExtensionBundler({
+    await setupDraftableExtensionBundler({
       extension: mockExtension,
       app,
       url: 'mock/url',
@@ -401,7 +401,7 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
   })
 
   test('calls updateExtensionDraft when the bundle is built successfully', async () => {
-    await setupNonPreviewableExtensionBundler({
+    await setupDraftableExtensionBundler({
       extension: mockExtension,
       app,
       url: 'mock/url',
@@ -427,7 +427,7 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
   })
 
   test('does not call updateExtensionDraft when the bundle has errors', async () => {
-    await setupNonPreviewableExtensionBundler({
+    await setupDraftableExtensionBundler({
       extension: mockExtension,
       app,
       url: 'mock/url',
