@@ -1,4 +1,8 @@
-lockfileVersion: '6.0'
+lockfileVersion: '6.1'
+
+settings:
+  autoInstallPeers: false
+  excludeLinksFromLockfile: false
 
 overrides:
   '@types/react': 17.0.2
@@ -73,7 +77,7 @@ importers:
         specifier: 0.17.18
         version: 0.17.18
       eslint:
-        specifier: ^8.37.0
+        specifier: ^8.41.0
         version: 8.41.0
       execa:
         specifier: ^5.1.1
@@ -567,7 +571,7 @@ importers:
         version: 5.1.1
     devDependencies:
       eslint:
-        specifier: ^8.37.0
+        specifier: ^8.41.0
         version: 8.41.0
       prettier:
         specifier: 2.8.8
@@ -13495,7 +13499,7 @@ packages:
     name: '@shopify/eslint-plugin-cli'
     version: 3.45.0
     peerDependencies:
-      eslint: ^8.37.0
+      eslint: ^8.41.0
     dependencies:
       '@babel/core': 7.21.4
       '@shopify/eslint-plugin': 42.1.0(@babel/core@7.21.4)(eslint@8.41.0)(prettier@2.8.8)(typescript@4.9.5)
