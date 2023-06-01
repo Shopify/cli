@@ -60,7 +60,7 @@
     "liquidjs": "^10.6.0",
     "node-fetch": "^3.3.1",
     "nx": "15.9.2",
-    "oclif": "3.8.2",
+    "oclif": "3.9.0",
     "octokit-plugin-create-pull-request": "^3.12.2",
     "pathe": "1.1.0",
     "pin-github-action": "^1.8.0",
