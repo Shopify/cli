@@ -558,4 +558,136 @@ describe('SelectInput', async () => {
 
     expect(onSubmit).not.toHaveBeenCalled()
   })
+
+  test('supports disabled options', async () => {
+    const onSubmit = vi.fn()
+    const items = [
+      {
+        label: 'First',
+        value: 'first',
+        key: 'f',
+      },
+      {
+        label: 'Second',
+        value: 'second',
+        key: 's',
+        disabled: true,
+      },
+      {
+        label: 'Third',
+        value: 'third',
+        key: 't',
+      },
+    ]
+
+    const renderInstance = render(<SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} />)
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "   (f) First
+         [2m(s) Second[22m
+      [36m>[39m  [36m(t) Third[39m
+
+         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+    `)
+
+    await sendInputAndWait(renderInstance, 100, ENTER)
+
+    expect(onSubmit).toHaveBeenCalledWith(items[2])
+  })
+
+  test("default value can't be a disabled option", async () => {
+    const items = [
+      {
+        label: 'First',
+        value: 'first',
+        key: 'f',
+      },
+      {
+        label: 'Second',
+        value: 'second',
+        key: 's',
+        disabled: true,
+      },
+      {
+        label: 'Third',
+        value: 'third',
+        key: 't',
+      },
+    ]
+
+    const renderInstance = render(
+      <SelectInput items={items} onChange={() => {}} onSubmit={() => {}} defaultValue="second" />,
+    )
+
+    expect(renderInstance.lastFrame()).toContain('Default value "second" is disabled')
+  })
+
+  test('selects the next non-disabled option if the first option is disabled', async () => {
+    const onSubmit = vi.fn()
+    const items = [
+      {
+        label: 'First',
+        value: 'first',
+        key: 'f',
+        disabled: true,
+      },
+      {
+        label: 'Second',
+        value: 'second',
+        key: 's',
+        disabled: true,
+      },
+      {
+        label: 'Third',
+        value: 'third',
+        key: 't',
+      },
+    ]
+
+    const renderInstance = render(<SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} />)
+
+    await waitForInputsToBeReady()
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "   [2m(f) First[22m
+         [2m(s) Second[22m
+      [36m>[39m  [36m(t) Third[39m
+
+         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+    `)
+
+    await sendInputAndWait(renderInstance, 100, ENTER)
+
+    expect(onSubmit).toHaveBeenCalledWith(items[2])
+  })
+
+  test('throws an error if there are no enabled options', async () => {
+    const items = [
+      {
+        label: 'First',
+        value: 'first',
+        key: 'f',
+        disabled: true,
+      },
+      {
+        label: 'Second',
+        value: 'second',
+        key: 's',
+        disabled: true,
+      },
+      {
+        label: 'Third',
+        value: 'third',
+        key: 't',
+        disabled: true,
+      },
+    ]
+
+    const renderInstance = render(<SelectInput items={items} onChange={() => {}} onSubmit={() => {}} />)
+
+    expect(renderInstance.lastFrame()).toContain('No enabled options')
+  })
 })
