@@ -101,7 +101,7 @@
     "@oclif/core": "2.1.4",
     "@types/archiver": "5.3.2",
     "abort-controller": "3.0.0",
-    "ansi-escapes": "6.0.0",
+    "ansi-escapes": "6.2.0",
     "archiver": "5.3.1",
     "chalk": "5.2.0",
     "change-case": "4.1.2",
