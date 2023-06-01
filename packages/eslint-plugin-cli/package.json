@@ -15,7 +15,7 @@
   "license": "MIT",
   "author": "Shopify Inc.",
   "dependencies": {
-    "@babel/core": "7.21.4",
+    "@babel/core": "7.22.1",
     "@shopify/eslint-plugin": "42.1.0",
     "@typescript-eslint/eslint-plugin": "5.57.0",
     "@typescript-eslint/parser": "5.59.2",
