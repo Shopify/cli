@@ -28,12 +28,15 @@ export interface GenerateExtensionContentOutput {
 }
 
 export function buildChoices(extensionTemplates: ExtensionTemplate[], unavailableExtensions: ExtensionTemplate[] = []) {
-  const templateSpecChoices = [...extensionTemplates.map((spec) => {
-    return {label: spec.name, value: spec.identifier, group: spec.group || 'Other'}
-  }), ...unavailableExtensions.map((spec) => {
-    const label = `${spec.name} (limit reached)`
-    return {label, value: spec.identifier, group: spec.group || 'Other', disabled: true}
-  })]
+  const templateSpecChoices = [
+    ...extensionTemplates.map((spec) => {
+      return {label: spec.name, value: spec.identifier, group: spec.group || 'Other'}
+    }),
+    ...unavailableExtensions.map((spec) => {
+      const label = `${spec.name} (limit reached)`
+      return {label, value: spec.identifier, group: spec.group || 'Other', disabled: true}
+    }),
+  ]
 
   return templateSpecChoices.sort((c1, c2) => c1.label.localeCompare(c2.label))
 }
