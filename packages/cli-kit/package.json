@@ -167,7 +167,7 @@
     "@vitest/coverage-istanbul": "^0.31.0",
     "node-stream-zip": "^1.15.0",
     "ts-morph": "^17.0.1",
-    "typedoc": "^0.23.26",
+    "typedoc": "^0.24.7",
     "typescript": "4.9.5",
     "vite": "^4.3.6",
     "vitest": "^0.31.0"
