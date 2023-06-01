@@ -598,7 +598,8 @@ describe('SelectInput', async () => {
     expect(onSubmit).toHaveBeenCalledWith(items[2])
   })
 
-  test("default value can't be a disabled option", async () => {
+  test('default value will be skipped if the option is disabled', async () => {
+    const onSubmit = vi.fn()
     const items = [
       {
         label: 'First',
@@ -619,10 +620,21 @@ describe('SelectInput', async () => {
     ]
 
     const renderInstance = render(
-      <SelectInput items={items} onChange={() => {}} onSubmit={() => {}} defaultValue="second" />,
+      <SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} defaultValue="second" />,
     )
 
-    expect(renderInstance.lastFrame()).toContain('Default value "second" is disabled')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "   (f) First
+         [2m(s) Second[22m
+      [36m>[39m  [36m(t) Third[39m
+
+         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+    `)
+
+    await waitForInputsToBeReady()
+    await sendInputAndWait(renderInstance, 100, ENTER)
+
+    expect(onSubmit).toHaveBeenCalledWith(items[2])
   })
 
   test('selects the next non-disabled option if the first option is disabled', async () => {

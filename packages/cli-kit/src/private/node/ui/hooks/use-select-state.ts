@@ -260,10 +260,6 @@ const createDefaultState = <T>({
   const optionMap = new OptionMap(options)
   const defaultOption = typeof defaultValue === 'undefined' ? undefined : optionMap.get(defaultValue)
 
-  if (defaultOption?.disabled) {
-    throw new Error(`Default value "${defaultValue}" is disabled`)
-  }
-
   let option = defaultOption ?? optionMap.first
 
   while (option && option.disabled) {
