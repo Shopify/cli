@@ -166,7 +166,6 @@ describe('deploy', () => {
       enable_creation_ui: true,
     }
     vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
-    // vi.mocked(functionConfiguration).mockResolvedValue(mockedFunctionConfiguration)
 
     // When
     await testDeployBundle(app, {

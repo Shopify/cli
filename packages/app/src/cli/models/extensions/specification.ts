@@ -32,7 +32,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   deployConfig?: (
     config: TConfiguration,
     directory: string,
-    apiKey?: string,
+    apiKey: string,
     moduleId?: string,
   ) => Promise<{[key: string]: unknown} | undefined>
   validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
