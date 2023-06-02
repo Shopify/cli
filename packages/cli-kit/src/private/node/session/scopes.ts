@@ -21,7 +21,7 @@ export function allDefaultScopes(extraScopes: string[] = []): string[] {
  * @returns Array of scopes
  */
 export function apiScopes(api: API, extraScopes: string[] = []): string[] {
-  const scopes = ['openid', ...defaultApiScopes(api), ...extraScopes.map(scopeTransform)].map(scopeTransform)
+  const scopes = [...defaultApiScopes(api), ...extraScopes.map(scopeTransform)].map(scopeTransform)
   return Array.from(new Set(scopes))
 }
 
@@ -33,6 +33,8 @@ function defaultApiScopes(api: API): string[] {
       return ['devtools']
     case 'partners':
       return ['cli']
+    case 'business-platform':
+      return ['destinations']
     default:
       throw new BugError(`Unknown API: ${api}`)
   }
@@ -50,6 +52,8 @@ function scopeTransform(scope: string): string {
       return 'https://api.shopify.com/auth/partners.app.cli.access'
     case 'devtools':
       return 'https://api.shopify.com/auth/shop.storefront-renderer.devtools'
+    case 'destinations':
+      return 'https://api.shopify.com/auth/destinations.readonly'
     default:
       return scope
   }
