@@ -9,7 +9,6 @@ import execa, { node } from "execa";
 import path from "path";
 import os from "os";
 import fs from "fs";
-import { lockFileExists } from "nx/src/plugins/js/lock-file/lock-file.js";
 
 const require = createRequire(import.meta.url);
 const { program } = require("commander");
