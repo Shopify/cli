@@ -10,7 +10,7 @@ import {
   testRemoteExtensionTemplates,
   testThemeExtensions,
 } from '../models/app/app.test-data.js'
-import {ExtensionInstance} from '../models/extensions/specification.js'
+import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import generateExtensionPrompts from '../prompts/generate/extension.js'
 import {describe, expect, vi, beforeAll, afterEach, test} from 'vitest'
 import {Config} from '@oclif/core'

@@ -4,7 +4,8 @@ import {
   ExtensionUpdateSchema,
 } from '../../api/graphql/update_draft.js'
 import {findSpecificationForConfig, parseConfigurationFile} from '../../models/app/loader.js'
-import {ExtensionInstance, ExtensionSpecification} from '../../models/extensions/specification.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
