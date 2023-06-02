@@ -238,7 +238,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   async bundleConfig({identifiers, token, apiKey, unifiedDeployment}: ExtensionBundleConfigOptions) {
     let configValue = await this.deployConfig(apiKey, undefined)
 
-    if (this.isFunctionExtension && unifiedDeployment) {
+    if (this.isFunctionExtension) {
       if (unifiedDeployment) {
         const {moduleId} = await uploadWasmBlob(this.functionExtension!, identifiers.app, token)
         configValue = await this.deployConfig(apiKey, moduleId)
