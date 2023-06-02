@@ -119,6 +119,7 @@ const FUNCTION_C: FunctionExtension = {
   usingExtensionsFramework: false,
   features: [],
   publishURL: (_) => Promise.resolve(''),
+  deployConfig: () => Promise.resolve({}),
 }
 
 const LOCAL_APP = (uiExtensions: ExtensionInstance[], functionExtensions: ExtensionInstance[] = []): AppInterface => {

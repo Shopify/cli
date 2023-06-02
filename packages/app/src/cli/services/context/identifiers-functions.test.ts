@@ -58,6 +58,7 @@ const FUNCTION_A: FunctionExtension = {
   usingExtensionsFramework: false,
   features: ['function'],
   publishURL: (_) => Promise.resolve(''),
+  deployConfig: () => Promise.resolve({}),
 }
 
 const FUNCTION_A_2: FunctionExtension = {
@@ -87,6 +88,7 @@ const FUNCTION_A_2: FunctionExtension = {
   usingExtensionsFramework: false,
   features: ['function'],
   publishURL: (_) => Promise.resolve(''),
+  deployConfig: () => Promise.resolve({}),
 }
 
 const FUNCTION_B: FunctionExtension = {
@@ -116,6 +118,7 @@ const FUNCTION_B: FunctionExtension = {
   usingExtensionsFramework: false,
   features: ['function'],
   publishURL: (_) => Promise.resolve(''),
+  deployConfig: () => Promise.resolve({}),
 }
 
 const LOCAL_APP = (functionExtensions: FunctionExtension[]): AppInterface => {

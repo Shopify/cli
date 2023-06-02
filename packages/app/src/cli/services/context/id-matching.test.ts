@@ -269,6 +269,7 @@ const LEGACY_FUNCTION_A: FunctionExtension = {
   usingExtensionsFramework: false,
   features: ['function'],
   publishURL: (_) => Promise.resolve(''),
+  deployConfig: () => Promise.resolve({}),
 }
 
 const FUNCTION_A: FunctionExtension = {
@@ -298,6 +299,7 @@ const FUNCTION_A: FunctionExtension = {
   usingExtensionsFramework: false,
   features: ['function'],
   publishURL: (_) => Promise.resolve(''),
+  deployConfig: () => Promise.resolve({}),
 }
 
 const REGISTRATION_LEGACY_FUNCTION_A = {

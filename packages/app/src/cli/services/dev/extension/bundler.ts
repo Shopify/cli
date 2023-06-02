@@ -3,9 +3,8 @@ import {ExtensionDevOptions} from '../extension.js'
 import {bundleExtension} from '../../extensions/bundle.js'
 
 import {AppInterface} from '../../../models/app/app.js'
-import {UIExtension} from '../../../models/app/extensions.js'
 import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
-import {ExtensionSpecification} from '../../../models/extensions/specification.js'
+import {ExtensionInstance, ExtensionSpecification} from '../../../models/extensions/specification.js'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
@@ -111,7 +110,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
 }
 
 interface SetupDraftableExtensionBundlerOptions {
-  extension: UIExtension
+  extension: ExtensionInstance
   app: AppInterface
   url: string
   token: string
@@ -164,7 +163,7 @@ export async function setupDraftableExtensionBundler({
 }
 
 interface SetupConfigWatcherOptions {
-  extension: UIExtension
+  extension: ExtensionInstance
   token: string
   apiKey: string
   registrationId: string

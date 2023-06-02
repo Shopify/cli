@@ -1,13 +1,24 @@
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
-import {ExtensionFlavor} from '../app/extensions.js'
+import {ExtensionFlavor, FunctionExtension} from '../app/extensions.js'
 import {blocks, defaultExtensionFlavors} from '../../constants.js'
+import {
+  ExtensionBuildOptions,
+  buildFunctionExtension,
+  buildThemeExtension,
+  buildUIExtension,
+} from '../../services/build/extension.js'
+import {bundleThemeExtension} from '../../services/extensions/bundle.js'
+import {Identifiers} from '../app/identifiers.js'
+import {functionConfiguration, uploadWasmBlob} from '../../services/deploy/upload.js'
 import {ok, Result} from '@shopify/cli-kit/node/result'
 import {capitalize, constantize} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
+import {useThemebundling} from '@shopify/cli-kit/node/context/local'
+import {touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 
 export type ExtensionFeature = 'ui_preview' | 'function' | 'theme' | 'bundling' | 'cart_url' | 'esbuild'
 
@@ -31,7 +42,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
   getBundleExtensionStdinContent?: (config: TConfiguration) => string
-  deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown}>
+  deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown} | undefined>
   validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
@@ -145,15 +156,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.localIdentifier = basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
     this.useExtensionsFramework = false
-    if (this.specification.identifier === 'theme') {
-      this.outputBundlePath = this.directory
-    } else {
+    this.outputBundlePath = this.directory
+
+    if (this.features.includes('esbuild')) {
       this.outputBundlePath = joinPath(this.directory, 'dist/main.js')
     }
   }
 
-  deployConfig(): Promise<{[key: string]: unknown}> {
-    return this.specification.deployConfig?.(this.configuration, this.directory) ?? Promise.resolve({})
+  deployConfig(): Promise<{[key: string]: unknown} | undefined> {
+    return this.specification.deployConfig?.(this.configuration, this.directory) ?? Promise.resolve(undefined)
   }
 
   validate() {
@@ -225,6 +236,57 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   get isJavaScript() {
     return Boolean(this.entrySourceFilePath?.endsWith('.js') || this.entrySourceFilePath?.endsWith('.ts'))
   }
+
+  get functionExtension(): FunctionExtension | undefined {
+    if (!this.isFunctionExtension) return undefined
+    return this as unknown as FunctionExtension
+  }
+
+  async build(options: ExtensionBuildOptions) {
+    if (this.isThemeExtension) {
+      return buildThemeExtension(this, options)
+    } else if (this.isFunctionExtension) {
+      return buildFunctionExtension(this.functionExtension!, options)
+    } else if (this.features.includes('esbuild')) {
+      return buildUIExtension(this, options)
+    }
+
+    // Workaround for tax_calculations because they remote spec NEEDS a valid js file to be included.
+    if (this.type === 'tax_calculation') {
+      await touchFile(this.outputBundlePath)
+      await writeFile(this.outputBundlePath, '(()=>{})();')
+    }
+  }
+
+  async buildForBundle(options: ExtensionBuildOptions, identifiers: Identifiers, bundleDirectory: string) {
+    const extensionId = identifiers.extensions[this.localIdentifier]!
+    const outputFile = this.isThemeExtension ? '' : 'dist/main.js'
+    this.outputBundlePath = joinPath(bundleDirectory, extensionId, outputFile)
+    await this.build(options)
+
+    if (this.isThemeExtension && useThemebundling()) {
+      await bundleThemeExtension(this, options)
+    }
+  }
+
+  async bundleConfig({identifiers, token, apiKey, unifiedDeployment}: ExtensionBundleConfigOptions) {
+    let configValue = await this.deployConfig()
+
+    if (this.isFunctionExtension && unifiedDeployment) {
+      const {moduleId} = await uploadWasmBlob(this.functionExtension!, identifiers.app, token)
+      configValue = await functionConfiguration(this.functionExtension!, moduleId, apiKey)
+    }
+
+    if (!configValue) return undefined
+    return {uuid: identifiers.extensions[this.localIdentifier]!, config: JSON.stringify(configValue), context: ''}
+  }
+}
+
+export interface ExtensionBundleConfigOptions {
+  identifiers: Identifiers
+  token: string
+  apiKey: string
+  unifiedDeployment: boolean
 }
 
 /**
@@ -254,7 +316,6 @@ export interface CreateExtensionSpecType<TConfiguration extends BaseConfigType =
  * externalIdentifier: string // identifier used externally (default: same as "identifier")
  * partnersWebIdentifier: string // identifier used in the partners web UI (default: same as "identifier")
  * surface?: string // surface where the extension is going to be rendered (default: 'unknown')
- * singleEntryPath: boolean // whether the extension has a single entry point (default: true)
  * supportedFlavors: {name: string; value: string}[] // list of supported flavors (default: 'javascript', 'typescript', 'typescript-react', 'javascript-react')
  * helpURL?: string // url to the help page for the extension, shown after generating the extension
  * dependency?: {name: string; version: string} // dependency to be added to the extension's package.json
