@@ -242,7 +242,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this as unknown as FunctionExtension
   }
 
-  async build(options: ExtensionBuildOptions) {
+  async build(options: ExtensionBuildOptions): Promise<void> {
     if (this.isThemeExtension) {
       return buildThemeExtension(this, options)
     } else if (this.isFunctionExtension) {
