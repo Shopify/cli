@@ -3,10 +3,10 @@ import {handleDeprecations} from './partners.js'
 import {businessPlatformFqdn} from '../context/fqdn.js'
 
 /**
- * Executes a GraphQL query against the Partners API.
+ * Executes a GraphQL query against the Business Platform API.
  *
  * @param query - GraphQL query to execute.
- * @param token - Partners token.
+ * @param token - Business Platform token.
  * @param variables - GraphQL variables to pass to the query.
  * @returns The response of the query of generic type <T>.
  */
