@@ -205,7 +205,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this as unknown as FunctionExtension
   }
 
-  async buildStep(options: ExtensionBuildOptions) {
+  async build(options: ExtensionBuildOptions): Promise<void> {
     if (this.isThemeExtension) {
       return buildThemeExtension(this, options)
     } else if (this.isFunctionExtension) {
@@ -221,11 +221,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async bundleStep(options: ExtensionBuildOptions, identifiers: Identifiers, bundleDirectory: string) {
+  async buildForBundle(options: ExtensionBuildOptions, identifiers: Identifiers, bundleDirectory: string) {
     const extensionId = identifiers.extensions[this.localIdentifier]!
     const outputFile = this.isThemeExtension ? '' : 'dist/main.js'
     this.outputBundlePath = joinPath(bundleDirectory, extensionId, outputFile)
-    await this.buildStep(options)
+    await this.build(options)
 
     if (this.isThemeExtension && useThemebundling()) {
       await bundleThemeExtension(this, options)
