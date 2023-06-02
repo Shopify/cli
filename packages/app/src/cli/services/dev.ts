@@ -29,6 +29,7 @@ import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
 
+import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
@@ -447,7 +448,7 @@ interface DevDraftableExtensionsOptions {
   apiKey: string
   url: string
   token: string
-  extensions: UIExtension[]
+  extensions: ExtensionInstance[]
   remoteExtensions: {
     [key: string]: string
   }

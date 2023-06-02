@@ -502,7 +502,7 @@ export async function functionConfiguration(
   extension: FunctionExtension,
   moduleId: string,
   appKey: string,
-): Promise<object> {
+): Promise<{[key: string]: unknown}> {
   let inputQuery: string | undefined
   if (await fileExists(extension.inputQueryPath)) {
     inputQuery = await readFile(extension.inputQueryPath)

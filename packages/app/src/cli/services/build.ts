@@ -1,4 +1,3 @@
-import {buildThemeExtensions, buildFunctionExtension, buildUIExtensions} from './build/extension.js'
 import buildWeb from './web.js'
 import {installAppDependencies} from './dependencies.js'
 import {AppInterface, Web} from '../models/app/app.js'
@@ -32,24 +31,11 @@ async function build(options: BuildOptions) {
           },
         }
       }),
-      {
-        prefix: 'theme_extensions',
-        action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-          await buildThemeExtensions({
-            app: options.app,
-            extensions: options.app.extensions.theme,
-            stdout,
-            stderr,
-            signal,
-          })
-        },
-      },
-      ...(await buildUIExtensions({app: options.app})),
-      ...options.app.extensions.function.map((functionExtension) => {
+      ...options.app.allExtensions.map((ext) => {
         return {
-          prefix: functionExtension.localIdentifier,
+          prefix: ext.localIdentifier,
           action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-            await buildFunctionExtension(functionExtension, {stdout, stderr, signal, app: options.app})
+            await ext.build({stdout, stderr, signal, app: options.app})
           },
         }
       }),

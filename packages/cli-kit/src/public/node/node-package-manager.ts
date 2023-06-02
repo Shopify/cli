@@ -154,7 +154,7 @@ export async function installNPMDependenciesRecursively(
 
 interface InstallNodeModulesOptions {
   directory: string
-  args: string[]
+  args?: string[]
   packageManager: PackageManager
   stdout?: Writable
   stderr?: Writable

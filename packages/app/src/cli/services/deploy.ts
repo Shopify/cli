@@ -1,11 +1,9 @@
 /* eslint-disable require-atomic-updates */
 import {
   UploadExtensionValidationError,
-  uploadWasmBlob,
   uploadFunctionExtensions,
   uploadThemeExtensions,
   uploadExtensionsBundle,
-  functionConfiguration,
 } from './deploy/upload.js'
 
 import {DeploymentMode, ensureDeployContext} from './context.js'
@@ -13,7 +11,7 @@ import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
-import {Extension} from '../models/app/extensions.js'
+import {Extension, FunctionExtension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
@@ -22,6 +20,7 @@ import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import type {AlertCustomSection, Task} from '@shopify/cli-kit/node/ui'
 
 interface DeployOptions {
@@ -77,38 +76,14 @@ export async function deploy(options: DeployOptions) {
 
   outputNewline()
 
-  const appModules = await Promise.all(
-    options.app.extensions.ui.map(async (extension) => {
-      return {
-        uuid: identifiers.extensions[extension.localIdentifier]!,
-        config: JSON.stringify(await extension.deployConfig()),
-        context: '',
-      }
-    }),
-  )
-
-  if (useThemebundling()) {
-    const themeExtensions = await Promise.all(
-      options.app.extensions.theme.map(async (extension) => {
-        return {
-          uuid: identifiers.extensions[extension.localIdentifier]!,
-          config: '{"theme_extension": {"files": {}}}',
-          context: '',
-        }
-      }),
-    )
-    appModules.push(...themeExtensions)
-  }
-
   let registrations: AllAppExtensionRegistrationsQuerySchema
   let validationErrors: UploadExtensionValidationError[] = []
   let deploymentId: number
+  const unifiedDeployment = partnersApp.betas?.unifiedAppDeployment ?? false
 
   await inTemporaryDirectory(async (tmpDir) => {
     try {
-      const bundleTheme = useThemebundling() && app.extensions.theme.length !== 0
-      const bundleUI = app.extensions.ui.length !== 0
-      const bundle = bundleTheme || bundleUI
+      const bundle = app.allExtensions.some((ext) => ext.features.includes('bundling'))
       let bundlePath: string | undefined
 
       if (bundle) {
@@ -138,25 +113,17 @@ export async function deploy(options: DeployOptions) {
         {
           title: uploadTaskTitle,
           task: async () => {
-            if (deploymentMode === 'unified' || deploymentMode === 'unified-skip-release') {
-              const functionExtensions = await Promise.all(
-                options.app.extensions.function.map(async (extension) => {
-                  const {moduleId} = await uploadWasmBlob(extension, identifiers.app, token)
-                  return {
-                    uuid: identifiers.extensions[extension.localIdentifier]!,
-                    config: JSON.stringify(await functionConfiguration(extension, moduleId, apiKey)),
-                    context: '',
-                  }
-                }),
-              )
-              appModules.push(...functionExtensions)
-            }
+            const appModules = await Promise.all(
+              options.app.allExtensions.flatMap((ext) =>
+                ext.bundleConfig({identifiers, token, apiKey, deploymentMode}),
+              ),
+            )
 
-            if (bundle || deploymentMode === 'unified' || deploymentMode === 'unified-skip-release') {
+            if (bundle || unifiedDeployment) {
               ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
                 apiKey,
                 bundlePath,
-                appModules,
+                appModules: getArrayRejectingUndefined(appModules),
                 deploymentMode,
                 token,
                 extensionIds: identifiers.extensionIds,
@@ -166,11 +133,16 @@ export async function deploy(options: DeployOptions) {
             }
 
             if (!useThemebundling()) {
-              await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})
+              const themeExtensions = options.app.allExtensions.filter((ext) => ext.isThemeExtension)
+              await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, token})
             }
 
             if (deploymentMode === 'legacy') {
-              identifiers = await uploadFunctionExtensions(app.extensions.function, {identifiers, token})
+              const functions = options.app.allExtensions.filter((ext) => ext.isFunctionExtension)
+              identifiers = await uploadFunctionExtensions(functions as unknown as FunctionExtension[], {
+                identifiers,
+                token,
+              })
             }
 
             app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
@@ -277,10 +249,6 @@ async function outputCompletionMessage({
     return result
   }
 
-  const outputDeployedAndLivedMessage = (extension: Extension) => {
-    return `${extension.localIdentifier} is live`
-  }
-
   const outputNextStep = async (extension: Extension) => {
     const extensionId =
       registrations.app.extensionRegistrations.find((registration) => {
@@ -308,12 +276,13 @@ async function outputCompletionMessage({
     },
   ]
 
-  if (app.extensions.ui.length !== 0 || app.extensions.theme.length !== 0) {
+  const nonFunctionExtensions = app.allExtensions.filter((ext) => !ext.isFunctionExtension)
+  if (nonFunctionExtensions.length > 0) {
     customSections.push({
       title: 'Next steps',
       body: {
         list: {
-          items: await Promise.all([...app.extensions.ui, ...app.extensions.theme].map(outputNextStep)),
+          items: await Promise.all(nonFunctionExtensions.map(outputNextStep)),
         },
       },
     })

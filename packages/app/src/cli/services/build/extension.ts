@@ -1,13 +1,12 @@
 import {AppInterface} from '../../models/app/app.js'
-import {UIExtension, FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
+import {UIExtension, FunctionExtension} from '../../models/app/extensions.js'
 import {bundleExtension} from '../extensions/bundle.js'
 import {buildJSFunction} from '../function/build.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {execThemeCheckCLI} from '@shopify/cli-kit/node/ruby'
 import {exec} from '@shopify/cli-kit/node/system'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
-import {OutputProcess} from '@shopify/cli-kit/node/output'
-import {touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 export interface ExtensionBuildOptions {
@@ -41,45 +40,17 @@ export interface ExtensionBuildOptions {
   app: AppInterface
 }
 
-export interface ThemeExtensionBuildOptions extends ExtensionBuildOptions {
-  /**
-   * The UI extensions to be built.
-   */
-  extensions: ThemeExtension[]
-}
-
 /**
  * It builds the theme extensions.
  * @param options - Build options.
  */
-export async function buildThemeExtensions(options: ThemeExtensionBuildOptions): Promise<void> {
-  if (options.extensions.length === 0) return
+export async function buildThemeExtension(extension: ExtensionInstance, options: ExtensionBuildOptions): Promise<void> {
   options.stdout.write(`Running theme check on your Theme app extension...`)
-  const themeDirectories = options.extensions.map((extension) => extension.directory)
   await execThemeCheckCLI({
-    directories: themeDirectories,
+    directories: [extension.directory],
     args: ['-C', ':theme_app_extension'],
     stdout: options.stdout,
     stderr: options.stderr,
-  })
-}
-
-interface BuildUIExtensionsOptions {
-  app: AppInterface
-}
-
-export async function buildUIExtensions(options: BuildUIExtensionsOptions): Promise<OutputProcess[]> {
-  if (options.app.extensions.ui.length === 0) {
-    return []
-  }
-
-  return options.app.extensions.ui.map((uiExtension) => {
-    return {
-      prefix: uiExtension.localIdentifier,
-      action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-        await buildUIExtension(uiExtension, {stdout, stderr, signal, app: options.app})
-      },
-    }
   })
 }
 
@@ -90,25 +61,19 @@ export async function buildUIExtensions(options: BuildUIExtensionsOptions): Prom
 export async function buildUIExtension(extension: UIExtension, options: ExtensionBuildOptions): Promise<void> {
   options.stdout.write(`Bundling UI extension ${extension.localIdentifier}...`)
 
-  if (extension.features.includes('esbuild')) {
-    await bundleExtension({
-      minify: true,
-      outputBundlePath: extension.outputBundlePath,
-      stdin: {
-        contents: extension.getBundleExtensionStdinContent(),
-        resolveDir: extension.directory,
-        loader: 'tsx',
-      },
-      environment: 'production',
-      env: options.app.dotenv?.variables ?? {},
-      stderr: options.stderr,
-      stdout: options.stdout,
-    })
-  } else if (extension.type === 'tax_calculation') {
-    // Workaround for tax_calculations because they remote spec NEEDS a valid js file to be included.
-    await touchFile(extension.outputBundlePath)
-    await writeFile(extension.outputBundlePath, '(()=>{})();')
-  }
+  await bundleExtension({
+    minify: true,
+    outputBundlePath: extension.outputBundlePath,
+    stdin: {
+      contents: extension.getBundleExtensionStdinContent(),
+      resolveDir: extension.directory,
+      loader: 'tsx',
+    },
+    environment: 'production',
+    env: options.app.dotenv?.variables ?? {},
+    stderr: options.stderr,
+    stdout: options.stdout,
+  })
 
   await extension.buildValidation()
 
