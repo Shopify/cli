@@ -35,7 +35,7 @@ async function build(options: BuildOptions) {
         return {
           prefix: ext.localIdentifier,
           action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-            await ext.buildStep({stdout, stderr, signal, app: options.app})
+            await ext.build({stdout, stderr, signal, app: options.app})
           },
         }
       }),
