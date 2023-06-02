@@ -111,6 +111,23 @@ ${outputToken.json(scopes)}
 }
 
 /**
+ * Ensure that we have a valid session to access the Business Platform API.
+ *
+ * @param scopes - Optional array of extra scopes to authenticate with.
+ * @returns The access token for the Business Platform API.
+ */
+export async function ensureAuthenticatedBusinessPlatform(scopes: string[] = []): Promise<string> {
+  outputDebug(outputContent`Ensuring that the user is authenticated with the Business Platform API with the following scopes:
+${outputToken.json(scopes)}
+`)
+  const tokens = await ensureAuthenticated({businessPlatformApi: {scopes}}, process.env)
+  if (!tokens.businessPlatform) {
+    throw new BugError('No business-platform token found after ensuring authenticated')
+  }
+  return tokens.businessPlatform
+}
+
+/**
  * Logout from Shopify.
  *
  * @returns A promise that resolves when the logout is complete.

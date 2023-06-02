@@ -4,9 +4,9 @@ import {Headers} from 'form-data'
 import {ClientError} from 'graphql-request'
 import {performance} from 'perf_hooks'
 
-export type API = 'admin' | 'storefront-renderer' | 'partners'
+export type API = 'admin' | 'storefront-renderer' | 'partners' | 'business-platform'
 
-export const allAPIs: API[] = ['admin', 'storefront-renderer', 'partners']
+export const allAPIs: API[] = ['admin', 'storefront-renderer', 'partners', 'business-platform']
 
 interface RequestOptions<T> {
   request: Promise<T>
