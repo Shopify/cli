@@ -26,6 +26,8 @@ import {
   AppFunctionSetMutationSchema,
   AppFunctionSetVariables,
 } from '../../api/graphql/functions/app_function_set.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -354,7 +356,7 @@ async function uploadFunctionExtension(
   extension: FunctionExtension,
   options: UploadFunctionExtensionOptions,
 ): Promise<string> {
-  const {url} = await uploadWasmBlob(extension, options.apiKey, options.token)
+  const {url} = await uploadWasmBlob(extension.localIdentifier, extension.outputPath, options.apiKey, options.token)
 
   let inputQuery: string | undefined
   if (await fileExists(extension.inputQueryPath)) {
@@ -397,29 +399,28 @@ ${outputToken.json(userErrors)}
 }
 
 export async function uploadWasmBlob(
-  extension: FunctionExtension,
+  extensionIdentifier: string,
+  wasmPath: string,
   apiKey: string,
   token: string,
 ): Promise<{url: string; moduleId: string}> {
   const {url, moduleId, headers, maxSize} = await getFunctionExtensionUploadURL({apiKey, token})
   headers['Content-Type'] = 'application/wasm'
 
-  const functionContent = await readFile(extension.outputPath, {})
+  const functionContent = await readFile(wasmPath, {})
   const res = await fetch(url, {body: functionContent, headers, method: 'PUT'})
   const resBody = res.body?.read()?.toString() || ''
 
   if (res.status === 200) {
     return {url, moduleId}
   } else if (res.status === 400 && resBody.includes('EntityTooLarge')) {
-    const errorMessage = outputContent`The size of the Wasm binary file for Function ${extension.localIdentifier} is too large. It must be less than ${maxSize}.`
+    const errorMessage = outputContent`The size of the Wasm binary file for Function ${extensionIdentifier} is too large. It must be less than ${maxSize}.`
     throw new AbortError(errorMessage)
   } else if (res.status >= 400 && res.status < 500) {
-    const errorMessage = outputContent`Something went wrong uploading the Function ${
-      extension.localIdentifier
-    }. The server responded with status ${res.status.toString()} and body: ${resBody}`
+    const errorMessage = outputContent`Something went wrong uploading the Function ${extensionIdentifier}. The server responded with status ${res.status.toString()} and body: ${resBody}`
     throw new BugError(errorMessage)
   } else {
-    const errorMessage = outputContent`Something went wrong uploading the Function ${extension.localIdentifier}. Try again.`
+    const errorMessage = outputContent`Something went wrong uploading the Function ${extensionIdentifier}. Try again.`
     throw new AbortError(errorMessage)
   }
 }

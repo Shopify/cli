@@ -64,6 +64,7 @@ const spec = createExtensionSpecification({
     if (await fileExists(inputQueryPath)) {
       inputQuery = await readFile(inputQueryPath)
     }
+
     return {
       title: config.name,
       module_id: moduleId,

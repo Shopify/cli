@@ -227,7 +227,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   async buildForBundle(options: ExtensionBuildOptions, identifiers: Identifiers, bundleDirectory: string) {
     const extensionId = identifiers.extensions[this.localIdentifier]!
     const outputFile = this.isThemeExtension ? '' : 'dist/main.js'
-    this.outputPath = joinPath(bundleDirectory, extensionId, outputFile)
+
+    if (this.features.includes('bundling')) {
+      // Modules that are going to be inclued in the bundle should be built in the bundle directory
+      this.outputPath = joinPath(bundleDirectory, extensionId, outputFile)
+    }
+
     await this.build(options)
 
     if (this.isThemeExtension && useThemebundling()) {
@@ -240,7 +245,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     if (this.isFunctionExtension) {
       if (unifiedDeployment) {
-        const {moduleId} = await uploadWasmBlob(this.functionExtension!, identifiers.app, token)
+        const {moduleId} = await uploadWasmBlob(this.localIdentifier, this.outputPath, identifiers.app, token)
         configValue = await this.deployConfig(apiKey, moduleId)
       } else {
         return undefined
