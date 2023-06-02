@@ -22,7 +22,6 @@ export interface Extension {
   externalType: string
   graphQLType: string
   publishURL(options: {orgId: string; appId: string; extensionId?: string}): Promise<string>
-  deployConfig(): Promise<{[key: string]: unknown} | undefined>
   features: ExtensionFeature[]
 }
 

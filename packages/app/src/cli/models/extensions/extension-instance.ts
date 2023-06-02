@@ -126,7 +126,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  deployConfig(apiKey?: string, moduleId?: string): Promise<{[key: string]: unknown} | undefined> {
+  deployConfig(apiKey: string, moduleId?: string): Promise<{[key: string]: unknown} | undefined> {
     return (
       this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId) ??
       Promise.resolve(undefined)
@@ -236,7 +236,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async bundleConfig({identifiers, token, apiKey, unifiedDeployment}: ExtensionBundleConfigOptions) {
-    let configValue = await this.deployConfig()
+    let configValue = await this.deployConfig(apiKey, undefined)
 
     if (this.isFunctionExtension && unifiedDeployment) {
       if (unifiedDeployment) {
