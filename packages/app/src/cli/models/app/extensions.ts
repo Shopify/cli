@@ -29,7 +29,7 @@ export type FunctionExtension = Extension & {
   configuration: FunctionConfigType
   entrySourceFilePath?: string
   buildCommand: string | undefined
-  buildWasmPath: string
+  outputPath: string
   inputQueryPath: string
   isJavaScript: boolean
   usingExtensionsFramework: boolean
@@ -38,13 +38,13 @@ export type FunctionExtension = Extension & {
 export type ThemeExtension = Extension & {
   configuration: BaseConfigType
   previewMessage(url: string, storeFqdn: string): TokenizedString | undefined
-  outputBundlePath: string
+  outputPath: string
 }
 
 export type UIExtension<TConfiguration extends BaseConfigType = BaseConfigType> = Extension & {
   configuration: TConfiguration
   entrySourceFilePath?: string
-  outputBundlePath: string
+  outputPath: string
   devUUID: string
   surface: string
   dependency?: string

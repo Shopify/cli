@@ -602,7 +602,7 @@ scopes = "read_products"
     const app = await load({directory: tmpDir, specifications})
 
     // Then
-    expect(app.extensions.function[0]!.buildWasmPath).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
+    expect(app.extensions.function[0]!.outputPath).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
   })
 
   test(`defaults the function wasm path if not configured`, async () => {
@@ -625,7 +625,7 @@ scopes = "read_products"
     const app = await load({directory: tmpDir, specifications})
 
     // Then
-    expect(app.extensions.function[0]!.buildWasmPath).toMatch(/.+dist\/index.wasm$/)
+    expect(app.extensions.function[0]!.outputPath).toMatch(/.+dist\/index.wasm$/)
   })
 
   test(`updates metadata after loading`, async () => {

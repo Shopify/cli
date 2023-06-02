@@ -29,7 +29,7 @@ export async function updateExtensionDraft({
 }: UpdateExtensionDraftOptions) {
   let encodedFile: string | undefined
   if (extension.features.includes('esbuild')) {
-    const content = await readFile(extension.outputBundlePath)
+    const content = await readFile(extension.outputPath)
     if (!content) return
     encodedFile = Buffer.from(content).toString('base64')
   }

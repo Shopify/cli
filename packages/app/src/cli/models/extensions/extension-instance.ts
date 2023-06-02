@@ -40,7 +40,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   directory: string
   configuration: TConfiguration
   configurationPath: string
-  outputBundlePath: string
+  outputPath: string
 
   private useExtensionsFramework: boolean
   private specification: ExtensionSpecification
@@ -119,10 +119,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.localIdentifier = basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
     this.useExtensionsFramework = false
-    this.outputBundlePath = this.directory
+    this.outputPath = this.directory
 
     if (this.features.includes('esbuild')) {
-      this.outputBundlePath = joinPath(this.directory, 'dist/main.js')
+      this.outputPath = joinPath(this.directory, 'dist/main.js')
+    }
+
+    if (this.isFunctionExtension) {
+      const config = this.configuration as unknown as FunctionConfigType
+      this.outputPath = joinPath(this.directory, config.build.path ?? joinPath('dist', 'index.wasm'))
     }
   }
 
@@ -190,11 +195,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return config.build.command
   }
 
-  get buildWasmPath() {
-    const config = this.configuration as unknown as FunctionConfigType
-    return joinPath(this.directory, config.build.path ?? joinPath('dist', 'index.wasm'))
-  }
-
   get inputQueryPath() {
     return joinPath(this.directory, 'input.graphql')
   }
@@ -219,15 +219,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     // Workaround for tax_calculations because they remote spec NEEDS a valid js file to be included.
     if (this.type === 'tax_calculation') {
-      await touchFile(this.outputBundlePath)
-      await writeFile(this.outputBundlePath, '(()=>{})();')
+      await touchFile(this.outputPath)
+      await writeFile(this.outputPath, '(()=>{})();')
     }
   }
 
   async buildForBundle(options: ExtensionBuildOptions, identifiers: Identifiers, bundleDirectory: string) {
     const extensionId = identifiers.extensions[this.localIdentifier]!
     const outputFile = this.isThemeExtension ? '' : 'dist/main.js'
-    this.outputBundlePath = joinPath(bundleDirectory, extensionId, outputFile)
+    this.outputPath = joinPath(bundleDirectory, extensionId, outputFile)
     await this.build(options)
 
     if (this.isThemeExtension && useThemebundling()) {
