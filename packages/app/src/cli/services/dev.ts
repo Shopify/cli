@@ -294,11 +294,11 @@ interface DevWebOptions {
 }
 
 async function devNonProxyTarget(options: DevWebOptions, port: number): Promise<OutputProcess> {
-  const dev = await devProxyTarget(options)
+  const {logPrefix, action} = await devProxyTarget(options)
   return {
-    prefix: dev.logPrefix,
+    prefix: logPrefix,
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-      await dev.action(stdout, stderr, signal, port)
+      await action(stdout, stderr, signal, port)
     },
   }
 }
@@ -326,21 +326,8 @@ function devThemeExtensionTarget(
 }
 
 async function devProxyTarget(options: DevWebOptions): Promise<ReverseHTTPProxyTarget> {
-  return devWeb(options, {
-    port: options.web.configuration.port,
-    dynamicEnv: (port: number) => ({
-      PORT: `${port}`,
-      FRONTEND_PORT: `${port}`,
-      // Note: These are Laravel variables for backwards compatibility with 2.0 templates.
-      SERVER_PORT: `${port}`,
-    }),
-  })
-}
+  const port =  options.web.configuration.port
 
-async function devWeb(
-  options: DevWebOptions,
-  {port, dynamicEnv}: {port?: number; dynamicEnv: (port: number) => object},
-): Promise<ReverseHTTPProxyTarget> {
   const {commands} = options.web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
 
@@ -370,7 +357,10 @@ async function devWeb(
         signal,
         env: {
           ...env,
-          ...dynamicEnv(port),
+          PORT: `${port}`,
+          FRONTEND_PORT: `${port}`,
+          // Note: These are Laravel variables for backwards compatibility with 2.0 templates.
+          SERVER_PORT: `${port}`,
         },
       })
     },
