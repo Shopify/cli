@@ -273,9 +273,13 @@ class AppLoader {
   }
 
   async loadWeb(WebConfigurationFile: string): Promise<Web> {
+    const config = await this.parseConfigurationFile(WebConfigurationSchema, WebConfigurationFile)
+    const roles = new Set('roles' in config ? config.roles : [])
+    if ('type' in config) roles.add(config.type)
+    const {type, ...processedWebConfiguration} = {...config, roles: Array.from(roles), type: undefined}
     return {
       directory: dirname(WebConfigurationFile),
-      configuration: await this.parseConfigurationFile(WebConfigurationSchema, WebConfigurationFile),
+      configuration: processedWebConfiguration,
       framework: await resolveFramework(dirname(WebConfigurationFile)),
     }
   }
@@ -399,13 +403,7 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'f
 }
 
 function isWebType(web: Web, type: WebType): boolean {
-  if ('type' in web.configuration) {
-    if (web.configuration.type === type) return true
-  }
-  if ('roles' in web.configuration) {
-    if (web.configuration.roles?.includes(type)) return true
-  }
-  return false
+  return web.configuration.roles.includes(type)
 }
 
 async function logMetadataForLoadedApp(

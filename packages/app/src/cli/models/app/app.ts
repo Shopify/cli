@@ -38,14 +38,16 @@ export const WebConfigurationSchema = zod.union([
   baseWebConfigurationSchema.extend({type: webTypes}),
   baseWebConfigurationSchema.extend({roles: zod.array(webTypes)}),
 ])
+export const ProcessedWebConfigurationSchema = baseWebConfigurationSchema.extend({roles: zod.array(webTypes)})
 
 export type AppConfiguration = zod.infer<typeof AppConfigurationSchema>
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
+export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
 
 export interface Web {
   directory: string
-  configuration: WebConfiguration
+  configuration: ProcessedWebConfiguration
   framework?: string
 }
 

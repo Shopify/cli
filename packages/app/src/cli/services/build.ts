@@ -24,15 +24,8 @@ async function build(options: BuildOptions) {
   await renderConcurrent({
     processes: [
       ...options.app.webs.map((web: Web) => {
-        const prefixParts = ['web']
-        if ('type' in web.configuration) {
-          prefixParts.push(web.configuration.type)
-        }
-        if ('roles' in web.configuration) {
-          prefixParts.push(...web.configuration.roles)
-        }
         return {
-          prefix: prefixParts.join('-'),
+          prefix: ['web', ...web.configuration.roles].join('-'),
           action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
             await buildWeb('build', {web, stdout, stderr, signal, env})
           },

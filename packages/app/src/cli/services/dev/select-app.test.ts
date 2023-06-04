@@ -20,7 +20,7 @@ const LOCAL_APP: AppInterface = testApp({
     {
       directory: '',
       configuration: {
-        type: WebType.Backend,
+        roles: [WebType.Backend],
         commands: {dev: ''},
       },
     },

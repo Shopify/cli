@@ -270,12 +270,7 @@ scopes = "read_products"
     // Then
     expect(app.webs.length).toBe(1)
     const web = app.webs[0]!
-    if ('type' in web.configuration) {
-      expect(web.configuration.type).toBe('backend')
-    }
-    if ('roles' in web.configuration) {
-      expect(web.configuration.roles).toEqual(['backend'])
-    }
+    expect(web.configuration.roles).toEqual(['backend'])
   })
 
   test('loads the app with custom located web blocks', async () => {
