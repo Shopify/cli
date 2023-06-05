@@ -326,7 +326,7 @@ function devThemeExtensionTarget(
 }
 
 async function devProxyTarget(options: DevWebOptions): Promise<ReverseHTTPProxyTarget> {
-  const port =  options.web.configuration.port
+  const port = options.web.configuration.port
 
   const {commands} = options.web.configuration
   const [cmd, ...args] = commands.dev.split(' ')
@@ -344,7 +344,6 @@ async function devProxyTarget(options: DevWebOptions): Promise<ReverseHTTPProxyT
     APP_URL: options.hostname,
     APP_ENV: 'development',
   }
-
 
   return {
     logPrefix: ['web', ...options.web.configuration.roles].join('-'),
