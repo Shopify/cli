@@ -15,7 +15,7 @@ import {Extension, FunctionExtension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
 import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderSuccess, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo} from '@shopify/cli-kit/node/output'
@@ -43,6 +43,12 @@ interface TasksContext {
 }
 
 export async function deploy(options: DeployOptions) {
+  renderWarning({
+    headline: ['Stay tuned for changes to', {command: 'deploy'}, {char: '.'}],
+    body: "With the next CLI release, you'll have a cleaner way of releasing your extensions.\n\nYou'll be able to release all your extensions straight from the CLI. And you'll be able to track changes with app versions",
+    reference: [{link: {url: '', label: 'Introducing Deployments 2.0'}}],
+  })
+
   // eslint-disable-next-line prefer-const
   let {app, identifiers, partnersApp, token} = await ensureDeployContext(options)
   const apiKey = identifiers.app
