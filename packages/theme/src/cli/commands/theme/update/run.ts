@@ -16,7 +16,6 @@ export default class UpdateRun extends ThemeCommand {
     script: Flags.string({
       description: `The path to the 'update_extension.json' script.`,
       env: 'SHOPIFY_FLAG_SCRIPT',
-      default: `./update_extension.json`,
     }),
     'source-theme': Flags.string({
       description: 'The theme ID or name of the theme at the previous version.',

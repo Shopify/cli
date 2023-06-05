@@ -1371,8 +1371,7 @@
           "name": "script",
           "type": "option",
           "description": "The path to the 'update_extension.json' script.",
-          "multiple": false,
-          "default": "./update_extension.json"
+          "multiple": false
         },
         "source-theme": {
           "name": "source-theme",

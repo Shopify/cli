@@ -14,12 +14,12 @@ import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 interface Context {
   get theme(): Theme
   set theme(value: Theme)
-  get scriptContent(): string
-  set scriptContent(value: string)
+  get scriptContent(): string | undefined
+  set scriptContent(value: string | undefined)
 }
 
 interface Options {
-  script: string
+  script?: string
   'source-theme': string
   'target-theme': string
 }
@@ -67,6 +67,10 @@ export async function run(session: AdminSession, options: Options) {
 
 async function check(ctx: Context, options: Options) {
   const {script} = options
+
+  if (!script) {
+    return
+  }
 
   await sleep(1)
   await checkScript(script)
@@ -143,7 +147,7 @@ async function isUpdaterIsProgress(ctx: Context, session: AdminSession, startTim
  */
 async function triggerUpdaterAPI(
   session: AdminSession,
-  _updateExtension: string,
+  _updateExtension: string | undefined,
   source: number,
   target: number,
 ): Promise<Theme> {
