@@ -1,7 +1,6 @@
 import {updateExtensionConfig, updateExtensionDraft} from './update-extension.js'
 import {ExtensionUpdateDraftMutation} from '../../api/graphql/update_draft.js'
 import {testUIExtension} from '../../models/app/app.test-data.js'
-import {UIExtension} from '../../models/app/extensions.js'
 import {findSpecificationForConfig, parseConfigurationFile} from '../../models/app/loader.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -28,7 +27,7 @@ describe('updateExtensionDraft()', () => {
         type: 'web_pixel_extension',
       } as any
 
-      const mockExtension: UIExtension = await testUIExtension({
+      const mockExtension = await testUIExtension({
         devUUID: '1',
         configuration,
         directory: tmpDir,
@@ -75,7 +74,7 @@ describe('updateExtensionDraft()', () => {
         type: 'tax_calculation',
       } as any
 
-      const mockExtension: UIExtension = await testUIExtension({
+      const mockExtension = await testUIExtension({
         devUUID: '1',
         configuration,
         directory: tmpDir,
@@ -113,7 +112,7 @@ describe('updateExtensionDraft()', () => {
 
   test('handles user errors with stderr message', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      const mockExtension: UIExtension = await testUIExtension({
+      const mockExtension = await testUIExtension({
         devUUID: '1',
         directory: tmpDir,
         type: 'web_pixel_extension',
@@ -153,7 +152,7 @@ describe('updateExtensionConfig()', () => {
         type: 'web_pixel_extension',
       } as any
 
-      const mockExtension: UIExtension = await testUIExtension({
+      const mockExtension = await testUIExtension({
         devUUID: '1',
         configuration,
         directory: tmpDir,

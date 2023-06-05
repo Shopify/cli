@@ -41,33 +41,21 @@ const FatalError: FunctionComponent<FatalErrorProps> = ({error}) => {
   return (
     <Banner type={tool ? 'external_error' : 'error'}>
       {tool ? (
-        <Box marginBottom={1}>
-          <Text>
-            Error coming from <Command command={tool} />
-          </Text>
-        </Box>
+        <Text>
+          Error coming from <Command command={tool} />
+        </Text>
       ) : null}
 
-      <Box>
-        {error.formattedMessage ? <TokenizedText item={error.formattedMessage} /> : <Text>{error.message}</Text>}
-      </Box>
+      {error.formattedMessage ? <TokenizedText item={error.formattedMessage} /> : <Text>{error.message}</Text>}
 
-      {error.tryMessage ? (
-        <Box marginTop={1}>
-          <TokenizedText item={error.tryMessage} />
-        </Box>
-      ) : null}
+      {error.tryMessage ? <TokenizedText item={error.tryMessage} /> : null}
 
-      {error.nextSteps && error.nextSteps.length > 0 ? (
-        <Box marginTop={1}>
-          <List title="Next steps" items={error.nextSteps} />
-        </Box>
-      ) : null}
+      {error.nextSteps && error.nextSteps.length > 0 ? <List title="Next steps" items={error.nextSteps} /> : null}
 
       {error.customSections && error.customSections.length > 0 ? (
-        <Box flexDirection="column">
+        <Box flexDirection="column" gap={1}>
           {error.customSections.map((section, index) => (
-            <Box key={index} flexDirection="column" marginTop={1}>
+            <Box key={index} flexDirection="column">
               {section.title ? <Text bold>{section.title}</Text> : null}
               <TokenizedText item={section.body} />
             </Box>
@@ -76,7 +64,7 @@ const FatalError: FunctionComponent<FatalErrorProps> = ({error}) => {
       ) : null}
 
       {stack && stack.items.length !== 0 ? (
-        <Box marginTop={1} flexDirection="column">
+        <Box flexDirection="column">
           <Text>To investigate the issue, examine this stack trace:</Text>
           {stack.items.map((item, index) => (
             <Box flexDirection="column" key={index} paddingLeft={2}>

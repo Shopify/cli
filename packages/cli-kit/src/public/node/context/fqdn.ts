@@ -34,6 +34,24 @@ export async function partnersFqdn(): Promise<string> {
 }
 
 /**
+ * It returns the BusinessPlatform' API service we should interact with.
+ *
+ * @returns Fully-qualified domain of the partners service we should interact with.
+ */
+export async function businessPlatformFqdn(): Promise<string> {
+  const environment = serviceEnvironment()
+  const productionFqdn = 'destinations.shopifysvc.com'
+  switch (environment) {
+    case 'local':
+      return 'business-platform.myshopify.io'
+    case 'spin':
+      return `business-platform.${await spinFqdn()}`
+    default:
+      return productionFqdn
+  }
+}
+
+/**
  * It returns the Identity service we should interact with.
  *
  * @returns Fully-qualified domain of the Identity service we should interact with.

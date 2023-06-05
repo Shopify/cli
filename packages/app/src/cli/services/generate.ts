@@ -15,7 +15,6 @@ import {
   ExtensionFlavorValue,
 } from '../services/generate/extension.js'
 import {ExtensionTemplate, TemplateType} from '../models/app/template.js'
-import {blocks} from '../constants.js'
 import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Config} from '@oclif/core'
@@ -94,13 +93,9 @@ function checkLimits(
 
 function limitReached(app: AppInterface, specifications: ExtensionSpecification[], templateType: TemplateType) {
   const type = templateType.type
-  if (type === 'function') {
-    return app.extensions.function.length >= blocks.functions.defaultRegistrationLimit
-  } else {
-    const specification = specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
-    const existingExtensions = app.extensionsForType({identifier: type, externalIdentifier: type})
-    return existingExtensions.length >= (specification?.registrationLimit || 1)
-  }
+  const specification = specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
+  const existingExtensions = app.extensionsForType({identifier: type, externalIdentifier: type})
+  return existingExtensions.length >= (specification?.registrationLimit || 1)
 }
 
 async function saveAnalyticsMetadata(promptAnswers: GenerateExtensionPromptOutput, typeFlag: string | undefined) {

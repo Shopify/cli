@@ -1,7 +1,7 @@
 import {PartnersURLs} from './urls.js'
 import {AppInterface} from '../../models/app/app.js'
-import {FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {OrganizationApp} from '../../models/organization.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {renderConcurrent, RenderConcurrentOptions, renderInfo} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
@@ -36,8 +36,8 @@ export async function outputUpdateURLsResult(
 }
 
 export function outputExtensionsMessages(app: AppInterface) {
-  outputFunctionsMessage(app.extensions.function)
-  outputThemeExtensionsMessage(app.extensions.theme)
+  outputFunctionsMessage(app.allExtensions.filter((ext) => ext.isFunctionExtension))
+  outputThemeExtensionsMessage(app.allExtensions.filter((ext) => ext.isThemeExtension))
 }
 
 export function renderDev(renderConcurrentOptions: RenderConcurrentOptions, previewUrl: string | undefined) {
@@ -72,7 +72,7 @@ export function renderDev(renderConcurrentOptions: RenderConcurrentOptions, prev
   return renderConcurrent(options)
 }
 
-function outputFunctionsMessage(extensions: FunctionExtension[]) {
+function outputFunctionsMessage(extensions: ExtensionInstance[]) {
   if (extensions.length === 0) return
   const names = extensions.map((ext) => ext.configuration.name)
   const heading = outputToken.heading(names.join(', '))
@@ -81,7 +81,7 @@ One testing option is to use a separate app dedicated to staging.`
   outputInfo(outputContent`${heading}\n${message}\n`)
 }
 
-function outputThemeExtensionsMessage(extensions: ThemeExtension[]) {
+function outputThemeExtensionsMessage(extensions: ExtensionInstance[]) {
   if (extensions.length === 0) return
   for (const extension of extensions) {
     const message = extension.previewMessage('', '')

@@ -24,7 +24,8 @@ export async function inFunctionContext(
   const specifications = await loadExtensionsSpecifications(config)
   const app: AppInterface = await loadApp({specifications, directory: path})
 
-  const ourFunction = app.extensions.function.find((fun) => fun.directory === path)
+  const allFunctions = app.allExtensions.filter((ext) => ext.isFunctionExtension)
+  const ourFunction = allFunctions.find((fun) => fun.directory === path) as FunctionExtension | undefined
   if (ourFunction) {
     return callback(app, ourFunction)
   } else {

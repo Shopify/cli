@@ -14,6 +14,7 @@ export interface ExchangeScopes {
   admin: string[]
   partners: string[]
   storefront: string[]
+  businessPlatform: string[]
 }
 /**
  * Given a valid authorization code, request an identity access token.
@@ -49,14 +50,16 @@ export async function exchangeAccessForApplicationTokens(
 ): Promise<{[x: string]: ApplicationToken}> {
   const token = identityToken.accessToken
 
-  const [partners, storefront] = await Promise.all([
+  const [partners, storefront, businessPlatform] = await Promise.all([
     requestAppToken('partners', token, scopes.partners),
     requestAppToken('storefront-renderer', token, scopes.storefront),
+    requestAppToken('business-platform', token, scopes.businessPlatform),
   ])
 
   const result = {
     ...partners,
     ...storefront,
+    ...businessPlatform,
   }
 
   if (store) {
