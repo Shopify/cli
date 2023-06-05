@@ -675,31 +675,4 @@ describe('SelectInput', async () => {
 
     expect(onSubmit).toHaveBeenCalledWith(items[2])
   })
-
-  test('throws an error if there are no enabled options', async () => {
-    const items = [
-      {
-        label: 'First',
-        value: 'first',
-        key: 'f',
-        disabled: true,
-      },
-      {
-        label: 'Second',
-        value: 'second',
-        key: 's',
-        disabled: true,
-      },
-      {
-        label: 'Third',
-        value: 'third',
-        key: 't',
-        disabled: true,
-      },
-    ]
-
-    const renderInstance = render(<SelectInput items={items} onChange={() => {}} onSubmit={() => {}} />)
-
-    expect(renderInstance.lastFrame()).toContain('No enabled options')
-  })
 })

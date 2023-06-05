@@ -258,6 +258,7 @@ const createDefaultState = <T>({
     typeof customVisibleOptionCount === 'number' ? Math.min(customVisibleOptionCount, options.length) : options.length
 
   const optionMap = new OptionMap(options)
+
   const defaultOption = typeof defaultValue === 'undefined' ? undefined : optionMap.get(defaultValue)
 
   let option = defaultOption && !defaultOption.disabled ? defaultOption : optionMap.first
@@ -266,17 +267,13 @@ const createDefaultState = <T>({
     option = option.next
   }
 
-  if (!option) {
-    throw new Error('No enabled options')
-  }
-
   return {
     optionMap,
     visibleOptionCount,
     visibleFromIndex: 0,
     visibleToIndex: visibleOptionCount,
-    value: option.value,
-    previousValue: option.value,
+    value: option?.value,
+    previousValue: option?.value,
   }
 }
 
