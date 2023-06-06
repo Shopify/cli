@@ -92,7 +92,8 @@ function AutocompletePrompt<T>({
     function onResize() {
       const availableSpace = stdout.rows - (wrapperHeight - selectInputHeight)
       // rough estimate of the limit needed based on the space available
-      const newLimit = Math.max(2, availableSpace - numberOfGroups * 2 - 4)
+      const maxVisibleGroups = Math.floor(Math.min(availableSpace / 2, numberOfGroups))
+      const newLimit = Math.max(2, availableSpace - (maxVisibleGroups - 1) * 2 - 4)
 
       if (newLimit < limit) {
         stdout.write(ansiEscapes.clearTerminal)
