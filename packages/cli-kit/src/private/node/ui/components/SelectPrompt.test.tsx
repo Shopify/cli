@@ -17,6 +17,7 @@ vi.mock('ink', async () => {
 })
 
 const ARROW_DOWN = '\u001B[B'
+const ARROW_UP = '\u001B[A'
 const ENTER = '\r'
 
 beforeEach(() => {
@@ -339,6 +340,46 @@ describe('SelectPrompt', async () => {
 
          (1) yes
       [36m>[39m  [36m(2) no[39m
+
+         [2mPress ↑↓ arrows to select, enter to confirm[22m
+      "
+    `)
+  })
+
+  test('allows selecting a different option after having selected an option with a falsy value', async () => {
+    const items = [
+      {label: 'yes', value: true},
+      {label: 'no', value: false},
+    ]
+
+    const renderInstance = render(
+      <SelectPrompt
+        message="Associate your project with the org Castile Ventures?"
+        choices={items}
+        onSubmit={() => {}}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "?  Associate your project with the org Castile Ventures?
+
+         (1) yes
+      [36m>[39m  [36m(2) no[39m
+
+         [2mPress ↑↓ arrows to select, enter to confirm[22m
+      "
+    `)
+
+    await sendInputAndWaitForChange(renderInstance, ARROW_UP)
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "?  Associate your project with the org Castile Ventures?
+
+      [36m>[39m  [36m(1) yes[39m
+         (2) no
 
          [2mPress ↑↓ arrows to select, enter to confirm[22m
       "

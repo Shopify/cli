@@ -100,7 +100,7 @@ interface ResetAction<T> {
 const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
   switch (action.type) {
     case 'select-next-option': {
-      if (!state.value) {
+      if (typeof state.value === 'undefined') {
         return state
       }
 
@@ -142,7 +142,7 @@ const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
     }
 
     case 'select-previous-option': {
-      if (!state.value) {
+      if (typeof state.value === 'undefined') {
         return state
       }
 
