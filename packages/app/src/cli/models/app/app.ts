@@ -57,11 +57,6 @@ export interface AppInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
-  extensions: {
-    ui: UIExtension[]
-    theme: ThemeExtension[]
-    function: FunctionExtension[]
-  }
   errors?: AppErrors
   hasExtensions: () => boolean
   hasUIExtensions: () => boolean
@@ -82,11 +77,6 @@ export class App implements AppInterface {
   dotenv?: DotEnvFile
   errors?: AppErrors
   allExtensions: ExtensionInstance[]
-  extensions: {
-    ui: UIExtension[]
-    theme: ThemeExtension[]
-    function: FunctionExtension[]
-  }
 
   // eslint-disable-next-line max-params
   constructor(
@@ -103,12 +93,6 @@ export class App implements AppInterface {
     dotenv?: DotEnvFile,
     errors?: AppErrors,
   ) {
-    // Temporary workaround while we migrate to use appModule features.
-    const functionsExt = extensions.filter((extension) => extension.features.includes('function'))
-    const themes = extensions.filter((extension) => extension.features.includes('theme'))
-    const uis = extensions.filter(
-      (extension) => !extension.features.includes('function') && !extension.features.includes('theme'),
-    )
     this.name = name
     this.idEnvironmentVariableName = idEnvironmentVariableName
     this.directory = directory
@@ -119,11 +103,6 @@ export class App implements AppInterface {
     this.webs = webs
     this.dotenv = dotenv
     this.allExtensions = extensions
-    this.extensions = {
-      ui: uis,
-      theme: themes,
-      function: functionsExt as unknown as FunctionExtension[],
-    }
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
   }
@@ -138,13 +117,25 @@ export class App implements AppInterface {
   }
 
   hasUIExtensions(): boolean {
-    return this.extensions.ui.length > 0
+    return this.uiExtensions.length > 0
   }
 
   extensionsForType(specification: {identifier: string; externalIdentifier: string}): Extension[] {
     return this.allExtensions.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
+  }
+
+  get functionExtensions(): ExtensionInstance[] {
+    return this.allExtensions.filter((extension) => extension.isFunctionExtension)
+  }
+
+  get themeExtensions(): ExtensionInstance[] {
+    return this.allExtensions.filter((extension) => extension.isThemeExtension)
+  }
+
+  get uiExtensions(): ExtensionInstance[] {
+    return this.allExtensions.filter((extension) => extension.isESBuildExtension)
   }
 }
 
