@@ -247,7 +247,7 @@ function SelectInputInner<T>(
   } else {
     return (
       <Box flexDirection="column" ref={ref}>
-        <Box flexDirection="column" height={availableLines} overflowY="hidden" flexWrap="nowrap">
+        <Box flexDirection="column" height={availableLines} overflowY="hidden">
           {state.visibleOptions.map((item, index) => (
             <Item
               key={item.key}
