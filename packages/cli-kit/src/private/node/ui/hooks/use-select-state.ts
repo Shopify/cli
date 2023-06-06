@@ -320,7 +320,7 @@ export const useSelectState = <T>({visibleOptionCount, options, defaultValue}: U
   }, [])
 
   const visibleOptions = useMemo(() => {
-    return options.slice(state.visibleFromIndex, state.visibleToIndex)
+    return options.slice(state.visibleFromIndex)
   }, [options, state.visibleFromIndex, state.visibleToIndex])
 
   return {

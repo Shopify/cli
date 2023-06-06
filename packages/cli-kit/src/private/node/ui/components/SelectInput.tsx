@@ -234,20 +234,17 @@ function SelectInputInner<T>(
       </Box>
     )
   } else {
-    const firstValue = state.visibleOptions[0]!.value
-    const firstIndex = itemsWithKeys.findIndex((item) => item.value === firstValue)
-    const itemsToDisplay = itemsWithKeys.slice(firstIndex)
     return (
       <Box flexDirection="column" ref={ref}>
         <Box flexDirection="column" height={availableLines} overflowY="hidden" flexWrap="nowrap">
-          {itemsToDisplay.map((item, index) => (
+          {state.visibleOptions.map((item, index) => (
             <Item
               key={item.key}
               item={item}
-              previousItem={itemsToDisplay[index - 1]}
+              previousItem={state.visibleOptions[index - 1]}
               highlightedTerm={highlightedTerm}
               isSelected={item.value === state.value}
-              items={itemsToDisplay}
+              items={state.visibleOptions}
               enableShortcuts={enableShortcuts}
               hasAnyGroup={hasAnyGroup}
             />
