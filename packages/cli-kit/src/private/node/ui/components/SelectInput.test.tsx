@@ -312,7 +312,9 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={onChange} enableShortcuts={false} availableLines={10} />)
+    const renderInstance = render(
+      <SelectInput items={items} onChange={onChange} enableShortcuts={false} availableLines={10} />,
+    )
 
     await waitForInputsToBeReady()
     // input doesn't change on shortcut pressed
@@ -344,7 +346,9 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={() => {}} defaultValue="second" availableLines={10} />)
+    const renderInstance = render(
+      <SelectInput items={items} onChange={() => {}} defaultValue="second" availableLines={10} />,
+    )
 
     await waitForInputsToBeReady()
 
@@ -468,7 +472,9 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} availableLines={10} />)
+    const renderInstance = render(
+      <SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} availableLines={10} />,
+    )
 
     await waitForInputsToBeReady()
     await sendInputAndWait(renderInstance, 100, ENTER)
@@ -493,7 +499,9 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} availableLines={10} />)
+    const renderInstance = render(
+      <SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} availableLines={10} />,
+    )
 
     await waitForInputsToBeReady()
     await sendInputAndWait(renderInstance, 100, ARROW_DOWN)
@@ -552,7 +560,9 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} availableLines={10} />)
+    const renderInstance = render(
+      <SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} availableLines={10} />,
+    )
 
     await waitForInputsToBeReady()
     await sendInputAndWait(renderInstance, 500, 's')
@@ -581,7 +591,9 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} availableLines={10} />)
+    const renderInstance = render(
+      <SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} availableLines={10} />,
+    )
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
@@ -660,7 +672,9 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} availableLines={10} />)
+    const renderInstance = render(
+      <SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} availableLines={10} />,
+    )
 
     await waitForInputsToBeReady()
 

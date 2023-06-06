@@ -91,7 +91,12 @@ function Item<T>({
   }
 
   return (
-    <Box key={item.key} flexDirection="column" marginTop={items.indexOf(item) !== 0 && title ? 1 : 0} minHeight={title ? 2 : 1}>
+    <Box
+      key={item.key}
+      flexDirection="column"
+      marginTop={items.indexOf(item) !== 0 && title ? 1 : 0}
+      minHeight={title ? 2 : 1}
+    >
       {title ? (
         <Box marginLeft={3}>
           <Text bold>{title}</Text>
