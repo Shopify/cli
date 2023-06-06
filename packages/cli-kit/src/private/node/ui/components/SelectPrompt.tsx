@@ -38,7 +38,7 @@ function SelectPrompt<T>({
   const {stdout} = useStdout()
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [selectInputHeight, setSelectInputHeight] = useState(0)
-  const getAvailableLines = () => stdout.rows - (wrapperHeight - selectInputHeight) - 4
+  const getAvailableLines = () => stdout.rows - (wrapperHeight - selectInputHeight) - 5
   const [availableLines, setAvailableLines] = useState(getAvailableLines())
 
   const wrapperRef = useCallback((node) => {
